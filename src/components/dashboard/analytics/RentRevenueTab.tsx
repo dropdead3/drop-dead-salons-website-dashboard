@@ -5,6 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { DollarSign, Users, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
+import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 
 interface RentRevenueTabProps {
   organizationId: string;
@@ -120,145 +121,181 @@ export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
     <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">MTD Collected</p>
-                <p className="text-2xl font-bold">
-                  ${(stats?.currentMonthCollected || 0).toFixed(0)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  of ${(stats?.currentMonthExpected || 0).toFixed(0)} expected
-                </p>
+        <VisibilityGate 
+          elementKey="rent_mtd_collected" 
+          elementName="MTD Rent Collected" 
+          elementCategory="Analytics Hub - Rent"
+        >
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">MTD Collected</p>
+                  <p className="text-2xl font-bold">
+                    ${(stats?.currentMonthCollected || 0).toFixed(0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    of ${(stats?.currentMonthExpected || 0).toFixed(0)} expected
+                  </p>
+                </div>
+                <div className="p-3 rounded-full bg-green-500/10">
+                  <DollarSign className="h-5 w-5 text-green-500" />
+                </div>
               </div>
-              <div className="p-3 rounded-full bg-green-500/10">
-                <DollarSign className="h-5 w-5 text-green-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </VisibilityGate>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Collection Rate</p>
-                <p className="text-2xl font-bold">
-                  {(stats?.collectionRate || 0).toFixed(1)}%
-                </p>
-                <Progress value={stats?.collectionRate || 0} className="h-2 mt-2" />
+        <VisibilityGate 
+          elementKey="rent_collection_rate" 
+          elementName="Collection Rate" 
+          elementCategory="Analytics Hub - Rent"
+        >
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Collection Rate</p>
+                  <p className="text-2xl font-bold">
+                    {(stats?.collectionRate || 0).toFixed(1)}%
+                  </p>
+                  <Progress value={stats?.collectionRate || 0} className="h-2 mt-2" />
+                </div>
+                <div className="p-3 rounded-full bg-blue-500/10">
+                  <CheckCircle className="h-5 w-5 text-blue-500" />
+                </div>
               </div>
-              <div className="p-3 rounded-full bg-blue-500/10">
-                <CheckCircle className="h-5 w-5 text-blue-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </VisibilityGate>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Overdue</p>
-                <p className="text-2xl font-bold text-red-500">
-                  ${(stats?.overdueAmount || 0).toFixed(0)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.overdueCount || 0} payments
-                </p>
+        <VisibilityGate 
+          elementKey="rent_overdue" 
+          elementName="Overdue Rent" 
+          elementCategory="Analytics Hub - Rent"
+        >
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Overdue</p>
+                  <p className="text-2xl font-bold text-red-500">
+                    ${(stats?.overdueAmount || 0).toFixed(0)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {stats?.overdueCount || 0} payments
+                  </p>
+                </div>
+                <div className="p-3 rounded-full bg-red-500/10">
+                  <AlertCircle className="h-5 w-5 text-red-500" />
+                </div>
               </div>
-              <div className="p-3 rounded-full bg-red-500/10">
-                <AlertCircle className="h-5 w-5 text-red-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </VisibilityGate>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Active Renters</p>
-                <p className="text-2xl font-bold">{stats?.activeRenters || 0}</p>
-                <p className="text-xs text-muted-foreground">
-                  ${(stats?.lateFees || 0).toFixed(0)} in late fees
-                </p>
+        <VisibilityGate 
+          elementKey="rent_active_renters" 
+          elementName="Active Renters" 
+          elementCategory="Analytics Hub - Rent"
+        >
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Active Renters</p>
+                  <p className="text-2xl font-bold">{stats?.activeRenters || 0}</p>
+                  <p className="text-xs text-muted-foreground">
+                    ${(stats?.lateFees || 0).toFixed(0)} in late fees
+                  </p>
+                </div>
+                <div className="p-3 rounded-full bg-purple-500/10">
+                  <Users className="h-5 w-5 text-purple-500" />
+                </div>
               </div>
-              <div className="p-3 rounded-full bg-purple-500/10">
-                <Users className="h-5 w-5 text-purple-500" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </VisibilityGate>
       </div>
 
       {/* Revenue Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Rent Revenue Trend</CardTitle>
-          <CardDescription>Monthly collected vs expected rent</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={stats?.chartData || []}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis dataKey="month" className="text-xs" />
-                <YAxis className="text-xs" tickFormatter={(v) => `$${v}`} />
-                <Tooltip 
-                  formatter={(value: number) => `$${value.toFixed(2)}`}
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))',
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="expected" 
-                  stroke="hsl(var(--muted-foreground))" 
-                  fill="hsl(var(--muted))" 
-                  strokeWidth={2}
-                  name="Expected"
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="collected" 
-                  stroke="hsl(var(--primary))" 
-                  fill="hsl(var(--primary))" 
-                  fillOpacity={0.3}
-                  strokeWidth={2}
-                  name="Collected"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      <VisibilityGate 
+        elementKey="rent_revenue_chart" 
+        elementName="Rent Revenue Trend" 
+        elementCategory="Analytics Hub - Rent"
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Rent Revenue Trend</CardTitle>
+            <CardDescription>Monthly collected vs expected rent</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={stats?.chartData || []}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="month" className="text-xs" />
+                  <YAxis className="text-xs" tickFormatter={(v) => `$${v}`} />
+                  <Tooltip 
+                    formatter={(value: number) => `$${value.toFixed(2)}`}
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px',
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="expected" 
+                    stroke="hsl(var(--muted-foreground))" 
+                    fill="hsl(var(--muted))" 
+                    strokeWidth={2}
+                    name="Expected"
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="collected" 
+                    stroke="hsl(var(--primary))" 
+                    fill="hsl(var(--primary))" 
+                    fillOpacity={0.3}
+                    strokeWidth={2}
+                    name="Collected"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </VisibilityGate>
 
       {/* YTD Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Year-to-Date Summary</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center p-4 rounded-lg bg-muted">
-              <p className="text-sm text-muted-foreground">Total Collected</p>
-              <p className="text-3xl font-bold">${(stats?.totalCollected || 0).toFixed(0)}</p>
+      <VisibilityGate 
+        elementKey="rent_ytd_summary" 
+        elementName="YTD Rent Summary" 
+        elementCategory="Analytics Hub - Rent"
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Year-to-Date Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center p-4 rounded-lg bg-muted">
+                <p className="text-sm text-muted-foreground">Total Collected</p>
+                <p className="text-3xl font-bold">${(stats?.totalCollected || 0).toFixed(0)}</p>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-muted">
+                <p className="text-sm text-muted-foreground">Total Expected</p>
+                <p className="text-3xl font-bold">${(stats?.totalExpected || 0).toFixed(0)}</p>
+              </div>
+              <div className="text-center p-4 rounded-lg bg-muted">
+                <p className="text-sm text-muted-foreground">Late Fees Collected</p>
+                <p className="text-3xl font-bold">${(stats?.lateFees || 0).toFixed(0)}</p>
+              </div>
             </div>
-            <div className="text-center p-4 rounded-lg bg-muted">
-              <p className="text-sm text-muted-foreground">Total Expected</p>
-              <p className="text-3xl font-bold">${(stats?.totalExpected || 0).toFixed(0)}</p>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-muted">
-              <p className="text-sm text-muted-foreground">Late Fees Collected</p>
-              <p className="text-3xl font-bold">${(stats?.lateFees || 0).toFixed(0)}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </VisibilityGate>
     </div>
   );
 }

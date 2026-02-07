@@ -60,10 +60,10 @@ const operationsReports = [
 ];
 
 const financialReports = [
-  { id: 'revenue-trend', name: 'Revenue Trend', description: 'Daily/weekly/monthly trends', icon: TrendingUp },
-  { id: 'commission', name: 'Commission Report', description: 'Staff earnings calculations', icon: DollarSign },
+  { id: 'revenue-trend', name: 'Revenue Trend', description: 'Daily/weekly/monthly trends', icon: TrendingUp, visibilityKey: 'report_revenue_trend' },
+  { id: 'commission', name: 'Commission Report', description: 'Staff earnings calculations', icon: DollarSign, visibilityKey: 'report_commission' },
   { id: 'goals', name: 'Goal Progress', description: 'Team and individual goal tracking', icon: BarChart3 },
-  { id: 'yoy', name: 'Year-over-Year', description: 'Historical performance comparison', icon: TrendingUp },
+  { id: 'yoy', name: 'Year-over-Year', description: 'Historical performance comparison', icon: TrendingUp, visibilityKey: 'report_yoy' },
 ];
 
 interface ReportsTabContentProps {
@@ -82,18 +82,36 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
     setSelectedReport(null);
   };
 
-  const renderReportCards = (reports: typeof salesReports) => (
+  const renderReportCards = (reports: typeof salesReports | typeof financialReports) => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {reports.map((report) => (
-        <ReportCard
-          key={report.id}
-          id={report.id}
-          name={report.name}
-          description={report.description}
-          icon={report.icon}
-          onSelect={handleReportSelect}
-        />
-      ))}
+      {reports.map((report) => {
+        const visibilityKey = 'visibilityKey' in report ? report.visibilityKey : undefined;
+        const card = (
+          <ReportCard
+            key={report.id}
+            id={report.id}
+            name={report.name}
+            description={report.description}
+            icon={report.icon}
+            onSelect={handleReportSelect}
+          />
+        );
+        
+        if (visibilityKey) {
+          return (
+            <VisibilityGate
+              key={report.id}
+              elementKey={visibilityKey}
+              elementName={report.name}
+              elementCategory="Reports - Financial"
+            >
+              {card}
+            </VisibilityGate>
+          );
+        }
+        
+        return card;
+      })}
     </div>
   );
 
