@@ -9,7 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, User, CheckCircle, XCircle, Loader2, ExternalLink } from 'lucide-react';
+import { Calendar, Clock, User, CheckCircle, XCircle, Loader2, ExternalLink, ClipboardList, MessageSquareMore } from 'lucide-react';
+import { AccountabilityOverview } from '@/components/coaching/AccountabilityOverview';
+import { ManagerMeetingRequest } from '@/components/coaching/ManagerMeetingRequest';
+import { PendingMeetingRequests } from '@/components/coaching/PendingMeetingRequests';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useAvailableCoaches, useOneOnOneMeetings, useCreateMeeting, useUpdateMeetingStatus } from '@/hooks/useOneOnOneMeetings';
@@ -19,6 +22,7 @@ const meetingTypes = [
   { value: 'coaching', label: 'Coaching Session' },
   { value: 'check_in', label: 'Check-in' },
   { value: 'feedback', label: 'Feedback Review' },
+  { value: 'sas', label: 'Success Alignment Session (SAS)' },
   { value: 'other', label: 'Other' },
 ];
 
@@ -188,10 +192,20 @@ export default function ScheduleMeeting() {
         </div>
 
         <Tabs defaultValue="schedule" className="space-y-6">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto gap-1">
             <TabsTrigger value="schedule">Schedule New</TabsTrigger>
             <TabsTrigger value="my-meetings">My Meetings</TabsTrigger>
             {isCoach && <TabsTrigger value="requests">Requests</TabsTrigger>}
+            {isCoach && (
+              <TabsTrigger value="commitments" className="flex items-center gap-1">
+                <ClipboardList className="h-4 w-4" />
+                My Commitments
+              </TabsTrigger>
+            )}
+            <TabsTrigger value="meeting-requests" className="flex items-center gap-1">
+              <MessageSquareMore className="h-4 w-4" />
+              Meeting Requests
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="schedule">
@@ -346,6 +360,23 @@ export default function ScheduleMeeting() {
               </div>
             </TabsContent>
           )}
+
+          {isCoach && (
+            <TabsContent value="commitments">
+              <AccountabilityOverview />
+            </TabsContent>
+          )}
+
+          <TabsContent value="meeting-requests">
+            <div className="space-y-4">
+              {isCoach && (
+                <div className="flex justify-end">
+                  <ManagerMeetingRequest />
+                </div>
+              )}
+              <PendingMeetingRequests viewAs={isCoach ? 'manager' : 'team_member'} />
+            </div>
+          </TabsContent>
         </Tabs>
       </div>
     </DashboardLayout>

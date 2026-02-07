@@ -4718,6 +4718,53 @@ export type Database = {
           },
         ]
       }
+      meeting_requests: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          id: string
+          linked_meeting_id: string | null
+          manager_id: string
+          priority: string
+          reason: string
+          status: string
+          team_member_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          linked_meeting_id?: string | null
+          manager_id: string
+          priority?: string
+          reason: string
+          status?: string
+          team_member_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          linked_meeting_id?: string | null
+          manager_id?: string
+          priority?: string
+          reason?: string
+          status?: string
+          team_member_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_requests_linked_meeting_id_fkey"
+            columns: ["linked_meeting_id"]
+            isOneToOne: false
+            referencedRelation: "one_on_one_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_preferences: {
         Row: {
           announcement_enabled: boolean
