@@ -8,6 +8,7 @@ import {
   Store,
   Globe,
   ClipboardList,
+  CalendarClock,
 } from 'lucide-react';
 
 interface HubLinkProps {
@@ -60,6 +61,13 @@ const hubLinks: HubLinkProps[] = [
     label: 'Onboarding Hub', 
     colorClass: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/20',
     permission: 'view_team_overview',
+  },
+  { 
+    href: '/dashboard/schedule-meeting', 
+    icon: CalendarClock, 
+    label: 'Schedule 1:1', 
+    colorClass: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20',
+    permission: 'schedule_meetings',
   },
 ];
 

@@ -17,7 +17,7 @@ const LINK_CONFIG: Record<string, { label: string }> = {
   '/dashboard/admin/operational-analytics': { label: 'Operational Analytics' },
   
   '/dashboard/assistant-schedule': { label: 'Assistant Schedule' },
-  '/dashboard/schedule-meeting': { label: 'Schedule 1:1 Meeting' },
+  '/dashboard/schedule-meeting': { label: 'Meetings & Accountability' },
   '/dashboard/onboarding': { label: 'Onboarding' },
   '/dashboard/handbooks': { label: 'Handbooks' },
   '/dashboard/admin/birthdays': { label: 'Birthdays & Anniversaries' },

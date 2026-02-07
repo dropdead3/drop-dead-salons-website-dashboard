@@ -185,9 +185,9 @@ export default function ScheduleMeeting() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-2xl font-display font-medium mb-2">Schedule 1:1 Meeting</h1>
+          <h1 className="text-2xl font-display font-medium mb-2">Meetings & Accountability</h1>
           <p className="text-muted-foreground">
-            Book time with a coach or manager for feedback, check-ins, or support.
+            Schedule 1:1 meetings, track commitments, and manage meeting requests.
           </p>
         </div>
 

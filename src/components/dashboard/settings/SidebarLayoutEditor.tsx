@@ -109,7 +109,7 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   '/dashboard/admin/sales': { label: 'Sales Dashboard', icon: DollarSign },
   '/dashboard/admin/operational-analytics': { label: 'Operational Analytics', icon: BarChart3 },
   '/dashboard/assistant-schedule': { label: 'Assistant Schedule', icon: Users },
-  '/dashboard/schedule-meeting': { label: 'Schedule 1:1 Meeting', icon: CalendarClock },
+  '/dashboard/schedule-meeting': { label: 'Meetings & Accountability', icon: CalendarClock },
   '/dashboard/onboarding': { label: 'Onboarding', icon: Users },
   '/dashboard/handbooks': { label: 'Handbooks', icon: FileText },
   '/dashboard/admin/birthdays': { label: 'Birthdays & Anniversaries', icon: Cake },
