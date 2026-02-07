@@ -3,7 +3,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 
-export type PayrollProvider = 'gusto' | 'quickbooks';
+export type PayrollProvider = 
+  | 'gusto' 
+  | 'quickbooks' 
+  | 'adp' 
+  | 'paychex' 
+  | 'square' 
+  | 'onpay' 
+  | 'homebase' 
+  | 'rippling' 
+  | 'wave';
+  
 export type ConnectionStatus = 'pending' | 'connected' | 'disconnected' | 'error';
 
 export interface PayrollConnection {
@@ -49,9 +59,21 @@ export function usePayrollConnection() {
   const { data: providerStatus } = useQuery({
     queryKey: ['payroll-providers-status', organizationId],
     queryFn: async () => {
-      if (!organizationId) return { gusto: false, quickbooks: false };
+      if (!organizationId) {
+        return { 
+          gusto: false, 
+          quickbooks: false,
+          adp: false,
+          paychex: false,
+          square: false,
+          onpay: false,
+          homebase: false,
+          rippling: false,
+          wave: false,
+        };
+      }
       
-      // Check both providers
+      // Check available providers (currently only gusto and quickbooks have integrations)
       const [gustoResult, qbResult] = await Promise.all([
         supabase.functions.invoke('gusto-oauth', {
           body: { action: 'status' },
@@ -66,6 +88,14 @@ export function usePayrollConnection() {
       return {
         gusto: gustoResult.data?.configured || false,
         quickbooks: qbResult.data?.configured || false,
+        // Coming soon providers - not yet configured
+        adp: false,
+        paychex: false,
+        square: false,
+        onpay: false,
+        homebase: false,
+        rippling: false,
+        wave: false,
       };
     },
     enabled: !!organizationId,
@@ -176,7 +206,17 @@ export function usePayrollConnection() {
     error,
     isConnected: connection?.connection_status === 'connected',
     provider: connection?.provider || null,
-    providerStatus: providerStatus || { gusto: false, quickbooks: false },
+    providerStatus: providerStatus || { 
+      gusto: false, 
+      quickbooks: false,
+      adp: false,
+      paychex: false,
+      square: false,
+      onpay: false,
+      homebase: false,
+      rippling: false,
+      wave: false,
+    },
     initiateConnection: initiateConnection.mutate,
     isConnecting: initiateConnection.isPending,
     handleCallback: handleCallback.mutate,
