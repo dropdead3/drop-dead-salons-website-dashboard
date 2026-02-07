@@ -788,7 +788,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
       <aside 
         className={cn(
           "hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:border-r lg:border-border lg:bg-card transition-[width] duration-200 ease-in-out",
-          sidebarCollapsed ? "lg:w-16" : "lg:w-64"
+          sidebarCollapsed ? "lg:w-16" : "lg:w-72"
         )}
       >
         <SidebarNavContent
@@ -822,7 +822,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
               <Menu className="w-5 h-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
+          <SheetContent side="left" className="w-72 p-0">
             <SidebarNavContent
               mainNavItems={mainNavItems}
               growthNavItems={growthNavItems}
@@ -901,7 +901,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-amber-950 text-center text-sm font-medium lg:pl-64 overflow-hidden shadow-lg relative"
+            className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-amber-950 text-center text-sm font-medium lg:pl-72 overflow-hidden shadow-lg relative"
           >
             {/* Animated background pattern */}
             <motion.div 
@@ -981,7 +981,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
       {/* Platform Organization Context Banner */}
       <div className={cn(
         "transition-[padding-left] duration-200 ease-in-out",
-        sidebarCollapsed ? "lg:pl-16" : "lg:pl-64"
+        sidebarCollapsed ? "lg:pl-16" : "lg:pl-72"
       )}>
         <PlatformContextBanner />
       </div>
@@ -992,7 +992,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
       {/* Desktop Top Bar */}
       <div className={cn(
         "hidden lg:block sticky top-0 z-30 transition-[padding-left] duration-200 ease-in-out",
-        sidebarCollapsed ? "lg:pl-16" : "lg:pl-64"
+        sidebarCollapsed ? "lg:pl-16" : "lg:pl-72"
       )}>
         <div className="flex items-center justify-between h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
           {/* Left side - Sidebar toggle */}
@@ -1089,7 +1089,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <main className={cn(
         "transition-[padding-left] duration-200 ease-in-out",
-        sidebarCollapsed ? "lg:pl-16" : "lg:pl-64"
+        sidebarCollapsed ? "lg:pl-16" : "lg:pl-72"
       )}>
         <div className={cn("min-h-screen flex flex-col", isAdmin && "lg:pt-0")}>
           <div className="flex-1">
