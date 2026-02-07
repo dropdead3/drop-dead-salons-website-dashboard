@@ -33,7 +33,6 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   main: [
     '/dashboard',
     '/dashboard/schedule',
-    '/dashboard/directory',
   ],
   growth: [
     '/dashboard/training',
@@ -60,6 +59,9 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   ],
   manager: [
     '/dashboard/admin/management',
+    '/dashboard/admin/analytics',
+    '/dashboard/directory',
+    '/dashboard/clients',
     '/dashboard/admin/payroll',
     '/dashboard/admin/booth-renters',
   ],
