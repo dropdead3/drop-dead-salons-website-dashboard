@@ -23,6 +23,7 @@ import {
   Sparkles,
   ChevronRight,
   ArrowLeft,
+  Video,
 } from 'lucide-react';
 
 interface ManagementCardProps {
@@ -179,6 +180,13 @@ export default function ManagementHub() {
             title="Client Engine Tracker"
             description="Program enrollment and participation rates"
             colorClass="bg-orange-500/10 text-orange-600 dark:text-orange-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/training-hub"
+            icon={Video}
+            title="Training Hub"
+            description="Manage training library and track completions"
+            colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
           />
         </CategorySection>
 
