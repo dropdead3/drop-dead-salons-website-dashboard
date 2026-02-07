@@ -16,6 +16,7 @@ import { PayrollProviderSelector } from '@/components/dashboard/payroll/PayrollP
 import { PayrollConnectionCard } from '@/components/dashboard/payroll/PayrollConnectionCard';
 import { PayrollHistoryTable } from '@/components/dashboard/payroll/PayrollHistoryTable';
 import { EmployeePayrollList } from '@/components/dashboard/payroll/EmployeePayrollList';
+import { PayScheduleCard } from '@/components/dashboard/payroll/PayScheduleCard';
 import { RunPayrollWizard } from '@/components/dashboard/payroll/RunPayrollWizard';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -143,6 +144,8 @@ export default function Payroll() {
 
               <TabsContent value="settings">
                 <div className="grid gap-6 md:grid-cols-2">
+                  <PayScheduleCard />
+                  
                   <PayrollConnectionCard />
                   
                   {!isConnected && (

@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'lastMonth';
+type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToPayday' | 'lastMonth';
 
 const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
   today: 'Today',
@@ -38,6 +38,7 @@ const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
   '30d': 'Last 30 days',
   thisWeek: 'This Week',
   thisMonth: 'This Month',
+  todayToPayday: 'Today to Next Pay Day',
   lastMonth: 'Last Month',
 };
 

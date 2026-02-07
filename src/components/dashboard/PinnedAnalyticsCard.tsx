@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { format, startOfMonth, subDays, startOfWeek } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subDays, startOfWeek } from 'date-fns';
 import { VisibilityGate } from '@/components/visibility';
 import { AggregateSalesCard, DateRange as SalesDateRange } from '@/components/dashboard/AggregateSalesCard';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
@@ -16,8 +16,9 @@ import { OperationsQuickStats } from '@/components/dashboard/operations/Operatio
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import type { FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { getNextPayDay, type PayScheduleSettings } from '@/hooks/usePaySchedule';
 
-export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'lastMonth';
+export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth';
 
 // Map dashboard date range to Sales Overview date range
 function mapToSalesDateRange(dashboardRange: DateRangeType): SalesDateRange {
@@ -29,6 +30,7 @@ function mapToSalesDateRange(dashboardRange: DateRangeType): SalesDateRange {
     'thisWeek': 'thisWeek',
     'thisMonth': 'mtd',
     'todayToEom': 'todayToEom',
+    'todayToPayday': 'todayToEom', // Fallback for sales card
     'lastMonth': '30d',
   };
   return mapping[dashboardRange] || 'today';
@@ -37,7 +39,10 @@ function mapToSalesDateRange(dashboardRange: DateRangeType): SalesDateRange {
 export { type FilterContext };
 
 // Helper function to get date range
-export function getDateRange(dateRange: DateRangeType): { dateFrom: string; dateTo: string } {
+export function getDateRange(
+  dateRange: DateRangeType, 
+  payScheduleSettings?: PayScheduleSettings | null
+): { dateFrom: string; dateTo: string } {
   const now = new Date();
   switch (dateRange) {
     case 'today':
@@ -60,6 +65,13 @@ export function getDateRange(dateRange: DateRangeType): { dateFrom: string; date
         dateFrom: format(startOfMonth(now), 'yyyy-MM-dd'), 
         dateTo: format(now, 'yyyy-MM-dd') 
       };
+    case 'todayToPayday': {
+      const nextPayDay = getNextPayDay(payScheduleSettings || null);
+      return { 
+        dateFrom: format(now, 'yyyy-MM-dd'), 
+        dateTo: format(nextPayDay, 'yyyy-MM-dd') 
+      };
+    }
     case 'lastMonth': {
       const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);

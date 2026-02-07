@@ -17,6 +17,7 @@ const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
   thisWeek: 'This Week',
   thisMonth: 'This Month',
   todayToEom: 'Today to EOM',
+  todayToPayday: 'Today to Next Pay Day',
   lastMonth: 'Last Month',
 };
 

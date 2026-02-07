@@ -1,10 +1,12 @@
+import { useMemo } from 'react';
 import { format, subDays, startOfMonth, endOfMonth, addDays } from 'date-fns';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Clock } from 'lucide-react';
+import { CalendarIcon, Clock, CalendarCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePaySchedule } from '@/hooks/usePaySchedule';
 
 interface PayPeriodStepProps {
   payPeriodStart: string | null;
@@ -24,6 +26,19 @@ export function PayPeriodStep({
   onCheckDateChange,
 }: PayPeriodStepProps) {
   const today = new Date();
+  const { currentPeriod, nextPayDay } = usePaySchedule();
+
+  // Dynamic preset based on configured pay schedule
+  const paySchedulePreset = useMemo(() => {
+    return {
+      label: 'Current Pay Period',
+      getRange: () => ({
+        start: currentPeriod.periodStart,
+        end: currentPeriod.periodEnd,
+      }),
+      checkDate: currentPeriod.nextPayDay,
+    };
+  }, [currentPeriod]);
 
   // Quick presets
   const presets = [
@@ -60,6 +75,13 @@ export function PayPeriodStep({
     },
   ];
 
+  const applyPaySchedulePreset = () => {
+    const { start, end } = paySchedulePreset.getRange();
+    onPayPeriodStartChange(format(start, 'yyyy-MM-dd'));
+    onPayPeriodEndChange(format(end, 'yyyy-MM-dd'));
+    onCheckDateChange(format(paySchedulePreset.checkDate, 'yyyy-MM-dd'));
+  };
+
   const applyPreset = (preset: (typeof presets)[0]) => {
     const { start, end } = preset.getRange();
     onPayPeriodStartChange(format(start, 'yyyy-MM-dd'));
@@ -80,6 +102,16 @@ export function PayPeriodStep({
 
       {/* Quick Presets */}
       <div className="flex flex-wrap gap-2">
+        {/* Pay Schedule Preset - Primary */}
+        <Button
+          variant="default"
+          size="sm"
+          onClick={applyPaySchedulePreset}
+        >
+          <CalendarCheck className="h-3 w-3 mr-1" />
+          Current Pay Period
+        </Button>
+        
         {presets.map((preset) => (
           <Button
             key={preset.label}

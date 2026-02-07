@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -5,6 +6,7 @@ import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { usePayrollCalculations, EmployeeCompensation } from './usePayrollCalculations';
 import { EmployeePayrollSettings, PayType } from './useEmployeePayrollSettings';
 import { startOfMonth, endOfMonth, format, subDays, addDays } from 'date-fns';
+import { usePaySchedule, getCurrentPayPeriod } from './usePaySchedule';
 
 export interface PayStub {
   id: string;
@@ -46,6 +48,7 @@ export interface MyPayData {
 }
 
 function inferCurrentPayPeriod(): CurrentPeriod {
+  // Default fallback when no pay schedule is configured
   const today = new Date();
   const dayOfMonth = today.getDate();
   
@@ -76,8 +79,20 @@ export function useMyPayData(): MyPayData {
   const { selectedOrganization } = useOrganizationContext();
   const organizationId = selectedOrganization?.id;
   const { calculateEmployeeCompensation, getWeeksInPeriod } = usePayrollCalculations();
+  const { settings: payScheduleSettings, isLoading: payScheduleLoading } = usePaySchedule();
 
-  const currentPeriod = inferCurrentPayPeriod();
+  // Use configured pay schedule or fall back to inferred period
+  const currentPeriod = useMemo(() => {
+    if (payScheduleSettings) {
+      const period = getCurrentPayPeriod(payScheduleSettings);
+      return {
+        startDate: format(period.periodStart, 'yyyy-MM-dd'),
+        endDate: format(period.periodEnd, 'yyyy-MM-dd'),
+        checkDate: format(period.nextPayDay, 'yyyy-MM-dd'),
+      };
+    }
+    return inferCurrentPayPeriod();
+  }, [payScheduleSettings]);
 
   // Fetch employee's payroll settings
   const { data: settings, isLoading: settingsLoading, error: settingsError } = useQuery({
