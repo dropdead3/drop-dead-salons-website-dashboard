@@ -1,83 +1,111 @@
 
 
-# Add Full-Screen QR Code View for In-Person Onboarding
+# Add Granular Revenue Visibility Controls for Management Roles
 
 ## Overview
 
-Add an "Open on Screen" button to the Staff Signup QR Code card that opens a full-screen, distraction-free view of the QR code. This is designed for in-person onboarding scenarios where a new staff member is sitting next to you and can scan the code directly from your screen.
+Enhance the visibility system by wrapping additional revenue-sensitive components in `VisibilityGate` so they can be hidden from management roles. The Role Access Configurator already supports this, but some revenue components are not yet gated.
 
 ---
 
-## Design
+## Current Capabilities (Already Working)
 
-The full-screen view will:
-- Cover the entire viewport with a clean, branded background
-- Display a large, easy-to-scan QR code in the center
-- Include minimal branding (Drop Dead logo, "Staff Portal" text)
-- Show a close button (X) in the corner to exit
-- Support keyboard escape to close
-- Animate in smoothly using framer-motion
+These elements are already controllable via Settings > Access & Visibility > Role Access:
+
+| Element Key | Name | Category |
+|-------------|------|----------|
+| `analytics_sales_tab` | Sales | Page Tabs |
+| `analytics_rent_tab` | Rent | Page Tabs |
+| `sales_commission_subtab` | Commission | Page Tabs |
+| `reports_sales_subtab` | Sales Reports | Page Tabs |
+| `reports_financial_subtab` | Financial Reports | Page Tabs |
+| `revenue_trend_chart` | Revenue Trend | Analytics Hub - Sales |
+| `revenue_forecast` | Revenue Forecast | Analytics Hub - Sales |
+| `commission_tiers` | Commission Tiers | Analytics Hub - Sales |
+
+To hide sales/revenue from managers now, you can go to:
+**Settings > Access & Visibility > Role Access > Select "Manager" > Page Tabs panel**
+
+Then toggle off:
+- Sales (hides entire Sales tab)
+- Rent (hides entire Rent tab)
+- Commission (hides commission sub-tab)
+- Financial Reports (hides financial reports section)
 
 ---
 
-## Changes
+## Changes: Add Missing Visibility Controls
 
-### 1. Create Full-Screen QR Component
+The following components need `VisibilityGate` wrappers to enable granular control:
 
-**File: `src/components/dashboard/QRCodeFullScreen.tsx`** (new file)
+### 1. Rent Revenue Tab Cards
 
-A new component that renders a full-screen overlay with:
+**File: `src/components/dashboard/analytics/RentRevenueTab.tsx`**
 
-| Element | Description |
-|---------|-------------|
-| Overlay | Dark semi-transparent backdrop with blur |
-| Container | Centered card with branded styling |
-| QR Code | Large 300px QR code (easily scannable from ~2-3 feet) |
-| Branding | Drop Dead logo and "Staff Portal" text |
-| Instructions | "Scan to create your staff account" |
-| URL fallback | Small text showing the URL for manual entry |
-| Close button | X button in top-right corner |
-| Keyboard support | ESC key to close |
+Wrap each summary card and chart with visibility controls:
+
+| New Element Key | Name | What It Controls |
+|-----------------|------|------------------|
+| `rent_mtd_collected` | MTD Rent Collected | Monthly rent collection amount |
+| `rent_collection_rate` | Collection Rate | Rent collection percentage |
+| `rent_overdue` | Overdue Rent | Overdue amounts and counts |
+| `rent_active_renters` | Active Renters | Renter count and late fees |
+| `rent_revenue_chart` | Rent Revenue Trend | Historical rent chart |
+| `rent_ytd_summary` | YTD Rent Summary | Year-to-date rent totals |
+
+### 2. Reports Tab - Financial Reports
+
+**File: `src/components/dashboard/analytics/ReportsTabContent.tsx`**
+
+Wrap individual financial report cards:
+
+| New Element Key | Name | What It Controls |
+|-----------------|------|------------------|
+| `report_commission` | Commission Report | Staff earnings calculations |
+| `report_revenue_trend` | Revenue Trend Report | Daily/weekly/monthly trends |
+| `report_yoy` | Year-over-Year Report | Historical comparison |
+
+---
+
+## Implementation Details
+
+### RentRevenueTab.tsx Changes
 
 ```tsx
-interface QRCodeFullScreenProps {
-  isOpen: boolean;
-  onClose: () => void;
-  url: string;
-}
+// Import VisibilityGate
+import { VisibilityGate } from '@/components/visibility/VisibilityGate';
+
+// Wrap each card
+<VisibilityGate 
+  elementKey="rent_mtd_collected" 
+  elementName="MTD Rent Collected" 
+  elementCategory="Analytics Hub - Rent"
+>
+  <Card>
+    {/* MTD Collected content */}
+  </Card>
+</VisibilityGate>
 ```
 
----
+### ReportsTabContent.tsx Changes
 
-### 2. Update QRCodeCard Component
+Wrap individual report cards in the financial category:
 
-**File: `src/pages/dashboard/admin/AccountManagement.tsx`**
-
-Add a new "Open on Screen" button alongside Preview and Download:
-
-| Current | New |
-|---------|-----|
-| Preview, Download | Open on Screen, Preview, Download |
-
-Changes:
-- Import the new `QRCodeFullScreen` component
-- Add state: `const [fullscreenOpen, setFullscreenOpen] = useState(false)`
-- Add new button with `Monitor` or `Maximize2` icon
-- Render `QRCodeFullScreen` component conditionally
-
-The button layout will become a 3-column grid:
 ```tsx
-<div className="grid grid-cols-3 gap-2">
-  <Button onClick={() => setFullscreenOpen(true)}>
-    <Maximize2 /> Open on Screen
-  </Button>
-  <Button onClick={() => setPreviewOpen(true)}>
-    <Eye /> Preview
-  </Button>
-  <Button onClick={downloadQRCode}>
-    <Download /> Download
-  </Button>
-</div>
+const financialReports = [
+  { id: 'revenue-trend', visibilityKey: 'report_revenue_trend', ... },
+  { id: 'commission', visibilityKey: 'report_commission', ... },
+  ...
+];
+
+// In renderReportCards, wrap each card:
+<VisibilityGate 
+  elementKey={report.visibilityKey || `report_${report.id}`}
+  elementName={report.name}
+  elementCategory="Reports"
+>
+  <ReportCard ... />
+</VisibilityGate>
 ```
 
 ---
@@ -86,35 +114,32 @@ The button layout will become a 3-column grid:
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/QRCodeFullScreen.tsx` | Create new full-screen QR overlay component |
-| `src/pages/dashboard/admin/AccountManagement.tsx` | Add "Open on Screen" button and integrate full-screen component |
+| `src/components/dashboard/analytics/RentRevenueTab.tsx` | Wrap 6 cards/sections with VisibilityGate |
+| `src/components/dashboard/analytics/ReportsTabContent.tsx` | Add visibility keys to financial report cards |
 
 ---
 
-## Visual Result
+## Usage After Implementation
 
-When clicking "Open on Screen":
+To hide all revenue/financial data from managers:
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                                                          [X]   │
-│                                                                 │
-│                         DROP DEAD®                              │
-│                        Staff Portal                             │
-│                                                                 │
-│                     ┌─────────────────┐                         │
-│                     │                 │                         │
-│                     │   [QR CODE]     │                         │
-│                     │   300 x 300     │                         │
-│                     │                 │                         │
-│                     └─────────────────┘                         │
-│                                                                 │
-│               Scan to create your staff account                 │
-│                                                                 │
-│              Or visit: yoursite.com/staff-login                 │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
+1. Go to **Settings > Access & Visibility > Role Access**
+2. Select **Manager** role
+3. In **Page Tabs** panel:
+   - Toggle OFF: `Sales`, `Rent`, `Commission`, `Financial Reports`
+4. In **Widgets** panel (after implementation):
+   - Toggle OFF: All items under "Analytics Hub - Rent" category
 
-The QR code will be large enough to scan from 2-3 feet away, making it perfect for in-person onboarding scenarios.
+This gives you full control over which revenue-related data each role can see.
+
+---
+
+## Testing Steps
+
+1. Navigate to Settings > Access & Visibility > Role Access
+2. Select the "Manager" role
+3. Go to "Page Tabs" panel
+4. Toggle OFF the "Sales" tab trigger
+5. Log in as a Manager user and verify the Sales tab is hidden in Analytics Hub
+6. Repeat for Rent, Commission, and Financial Reports tabs
 
