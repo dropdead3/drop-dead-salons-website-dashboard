@@ -146,10 +146,15 @@ const housekeepingNavItems: NavItem[] = [
 ];
 
 const growthNavItems: NavItem[] = [
-  { href: '/dashboard/training', label: 'Training', icon: Video, permission: 'view_training' },
-  { href: '/dashboard/program', label: 'New-Client Engine Program', icon: Target, permission: 'access_client_engine' },
-  { href: '/dashboard/admin/team', label: 'Program Team Overview', icon: Users, permission: 'view_team_overview' },
-  { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, permission: 'ring_the_bell' },
+  // Training - visible to management + stylists + stylist assistants
+  { href: '/dashboard/training', label: 'Training', icon: Video, permission: 'view_training', roles: ['super_admin', 'admin', 'manager', 'stylist', 'stylist_assistant'] },
+  // New-Client Engine Program - only stylists + stylist assistants
+  { href: '/dashboard/program', label: 'New-Client Engine Program', icon: Target, permission: 'access_client_engine', roles: ['stylist', 'stylist_assistant'] },
+  // Program Team Overview - only management
+  { href: '/dashboard/admin/team', label: 'Program Team Overview', icon: Users, permission: 'view_team_overview', roles: ['super_admin', 'admin', 'manager'] },
+  // Ring the Bell - only stylists + stylist assistants
+  { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, permission: 'ring_the_bell', roles: ['stylist', 'stylist_assistant'] },
+  // My Graduation - only stylist assistants
   { href: '/dashboard/my-graduation', label: 'My Graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist_assistant'] },
 ];
 
@@ -415,7 +420,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
     navigate('/staff-login');
   };
 
-  // Filter nav items based on permissions (primary) or roles (fallback)
+  // Filter nav items based on permissions AND roles (both must pass if specified)
   const filterNavItems = (items: NavItem[]) => {
     return items.filter(item => {
       // Check platform role restriction first (uses hierarchy)
@@ -426,13 +431,20 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
         if (!hasRequiredPlatformRole) return false;
       }
       
-      // Check permission
+      // Check permission if specified
+      let hasRequiredPermission = true;
       if (item.permission) {
-        return hasPermission(item.permission);
+        hasRequiredPermission = hasPermission(item.permission);
       }
-      // Fallback to role-based check
-      if (!item.roles) return true; // No roles or permission specified = visible to all
-      return item.roles.some(role => roles.includes(role));
+      
+      // Check roles if specified
+      let hasRequiredRole = true;
+      if (item.roles && item.roles.length > 0) {
+        hasRequiredRole = item.roles.some(role => roles.includes(role));
+      }
+      
+      // Must have both permission (if specified) AND role (if specified)
+      return hasRequiredPermission && hasRequiredRole;
     });
   };
 
