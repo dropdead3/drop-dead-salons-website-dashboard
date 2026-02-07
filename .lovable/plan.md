@@ -1,341 +1,490 @@
 
-# Training Hub Configurator Implementation Plan
 
-## Summary
+# Comprehensive Feature Implementation Plan
 
-Create a comprehensive **Training Hub** administrative interface that allows super admins and managers to:
-1. Upload and manage training videos
-2. Assign videos to specific roles
-3. Assign videos to individual team members
-4. Track team completion progress
-5. Send training reminders
+## Overview
 
-This follows the established pattern from `Handbooks.tsx` and integrates into the Management Hub.
+This plan covers the implementation of **four major features** in order of priority:
 
----
-
-## Current State Analysis
-
-### Existing Infrastructure
-| Component | Status |
-|-----------|--------|
-| `training_videos` table | Exists with `required_for_roles` array column |
-| `training_progress` table | Exists with `user_id`, `video_id`, `completed_at` |
-| `training-videos` storage bucket | Exists (private) |
-| Role-based filtering | Implemented in `Training.tsx` |
-| Individual assignments | Not implemented |
-
-### Database Tables Available
-```text
-training_videos:
-├── id, title, description
-├── video_url, storage_path, thumbnail_url
-├── category, order_index, duration_minutes
-├── required_for_roles (app_role[])
-└── is_active, created_at
-
-training_progress:
-├── id, user_id, video_id
-├── completed_at, watch_progress
-└── notes, created_at
-```
+1. **Training Reminders** - Automated notifications for overdue/upcoming training deadlines
+2. **Achievement Badges System** - Gamification with milestones and unlockable badges
+3. **Team Challenges** - Manager-created competitions with leaderboards
+4. **Shift Swap System** - Marketplace for trading shifts with approval workflow
 
 ---
 
-## Implementation Approach
+## Feature 1: Training Reminders
 
-### Phase 1: Database Schema Update
+### Purpose
+Automate email and in-app notifications when team members have overdue or upcoming training deadlines, following the established pattern from `send-handbook-reminders`.
 
-**New table: `training_assignments`**
-For individual training assignments beyond role-based visibility:
+### Database Schema
 
 ```sql
-CREATE TABLE training_assignments (
+-- No new tables needed - uses existing:
+-- training_assignments (has due_date)
+-- training_progress (tracks completion)
+-- notifications (for in-app alerts)
+-- email_templates (for email content)
+```
+
+### Email Template Entry
+
+| template_key | subject | description |
+|--------------|---------|-------------|
+| `training_reminder` | `Training Due Soon: {{training_title}}` | Standard reminder |
+| `training_overdue` | `OVERDUE: Complete Your Training` | Urgent reminder |
+
+### Edge Function: `send-training-reminders`
+
+**Logic Flow:**
+1. Fetch all `training_assignments` with `due_date` in next 3 days OR past due
+2. Cross-reference with `training_progress` to find incomplete
+3. For each user with incomplete trainings:
+   - Check `notification_preferences` (opt-out respect)
+   - Insert in-app notification
+   - Send email via Resend API
+
+**Notification Types:**
+- `training_due_soon` - 3 days before due date
+- `training_overdue` - After due date passes
+
+### Scheduling
+- Run via pg_cron daily at 9:00 AM
+
+### Files to Create
+
+| File | Description |
+|------|-------------|
+| `supabase/functions/send-training-reminders/index.ts` | Edge function |
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| Database | Insert email templates |
+| `supabase/config.toml` | Register function with `verify_jwt = false` |
+
+---
+
+## Feature 2: Achievement Badges System
+
+### Purpose
+Award badges for milestones like training completion, first sale, client milestones, and streak achievements. Extends the existing `leaderboard_achievements` system.
+
+### Existing Infrastructure
+The project already has:
+- `leaderboard_achievements` table (badge definitions)
+- `user_achievements` table (earned badges)
+- `useLeaderboardAchievements` hook
+
+### New Achievement Categories
+
+| Key | Name | Trigger | Threshold |
+|-----|------|---------|-----------|
+| `training_first` | First Training Complete | Training progress | 1 video |
+| `training_master` | Training Master | Training progress | All videos |
+| `bell_first` | First Bell | Ring the bell | 1 bell |
+| `bell_10` | Bell Ringer | Ring the bell | 10 bells |
+| `bell_100` | Bell Champion | Ring the bell | 100 bells |
+| `streak_7` | Week Warrior | Daily streak | 7 days |
+| `streak_30` | Monthly Master | Daily streak | 30 days |
+| `client_50` | Client Builder | Unique clients | 50 clients |
+| `client_100` | Client Century | Unique clients | 100 clients |
+| `retail_1000` | Retail Pro | Retail sales | $1,000 |
+| `retail_5000` | Retail Star | Retail sales | $5,000 |
+| `perfect_attendance` | Perfect Attendance | No missed days | 30 days |
+| `team_player` | Team Player | Shift swaps helped | 5 swaps |
+
+### Components to Build
+
+**1. AchievementShowcaseCard.tsx**
+- Displays earned badges on profile
+- Shows locked badges with progress
+- Animated unlock effect
+
+**2. AchievementNotificationToast.tsx**
+- Celebratory popup when badge earned
+- Confetti animation
+- Share to team option
+
+**3. AchievementsConfigPanel.tsx** (Admin)
+- CRUD for achievement definitions
+- Enable/disable badges
+- Adjust thresholds
+
+### Achievement Trigger System
+
+Create a centralized service to check and grant achievements:
+
+```typescript
+// src/services/achievementService.ts
+export async function checkAndGrantAchievements(
+  userId: string,
+  context: {
+    trainingCompleted?: number;
+    bellsRung?: number;
+    streakDays?: number;
+    retailSales?: number;
+    clientsServed?: number;
+  }
+) {
+  // Check each achievement type against thresholds
+  // Grant if criteria met and not already earned
+}
+```
+
+### Integration Points
+
+| Event | Location | Action |
+|-------|----------|--------|
+| Training video marked complete | `Training.tsx` | Check training badges |
+| Bell rung | `RingTheBell.tsx` | Check bell badges |
+| Daily completion | Program page | Check streak badges |
+| Appointment completed | Schedule | Check client badges |
+| Retail sale logged | POS integration | Check retail badges |
+
+### Files to Create
+
+| File | Description |
+|------|-------------|
+| `src/services/achievementService.ts` | Centralized achievement logic |
+| `src/components/achievements/AchievementNotificationToast.tsx` | Unlock celebration |
+| `src/components/achievements/AchievementProgressCard.tsx` | Progress display |
+| `src/pages/dashboard/admin/AchievementsConfig.tsx` | Admin management |
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| Database | Insert new achievement definitions |
+| `src/pages/dashboard/Training.tsx` | Trigger training achievements |
+| `src/pages/dashboard/RingTheBell.tsx` | Trigger bell achievements |
+| `src/components/dashboard/LeaderboardContent.tsx` | Display achievements |
+| `src/pages/dashboard/MyProfile.tsx` | Show earned badges |
+
+---
+
+## Feature 3: Team Challenges
+
+### Purpose
+Allow managers to create time-limited competitions between team members or locations with leaderboards, progress tracking, and rewards.
+
+### Database Schema
+
+```sql
+-- Challenge definitions
+CREATE TABLE public.team_challenges (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  video_id UUID REFERENCES training_videos(id) ON DELETE CASCADE NOT NULL,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  assigned_by UUID REFERENCES auth.users(id) NOT NULL,
-  due_date TIMESTAMPTZ,
-  is_required BOOLEAN DEFAULT true,
-  notes TEXT,
+  title TEXT NOT NULL,
+  description TEXT,
+  challenge_type TEXT NOT NULL, -- 'individual', 'team', 'location'
+  metric_type TEXT NOT NULL, -- 'bells', 'retail', 'new_clients', 'retention', 'training'
+  goal_value NUMERIC,
+  start_date TIMESTAMPTZ NOT NULL,
+  end_date TIMESTAMPTZ NOT NULL,
+  status TEXT DEFAULT 'draft', -- 'draft', 'active', 'completed', 'cancelled'
+  prize_description TEXT,
+  created_by UUID NOT NULL,
   created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(video_id, user_id)
+  rules JSONB DEFAULT '{}'
+);
+
+-- Challenge participants
+CREATE TABLE public.challenge_participants (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  challenge_id UUID REFERENCES team_challenges(id) ON DELETE CASCADE,
+  user_id UUID, -- null for location-based
+  location_id TEXT,
+  team_name TEXT,
+  current_value NUMERIC DEFAULT 0,
+  rank INTEGER,
+  joined_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(challenge_id, user_id)
+);
+
+-- Challenge progress history (for charts)
+CREATE TABLE public.challenge_progress_snapshots (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  challenge_id UUID REFERENCES team_challenges(id) ON DELETE CASCADE,
+  participant_id UUID REFERENCES challenge_participants(id) ON DELETE CASCADE,
+  value_at_snapshot NUMERIC,
+  snapshot_date DATE,
+  created_at TIMESTAMPTZ DEFAULT now()
 );
 ```
 
-### Phase 2: Training Hub Admin Page
+### Challenge Types
 
-Create `/dashboard/admin/training-hub` with three tabs:
+| Type | Description | Example |
+|------|-------------|---------|
+| `individual` | Person vs person | Most bells this week |
+| `team` | Named teams compete | Team A vs Team B retail sales |
+| `location` | Location vs location | Salon location competition |
 
-**Tab 1: Video Library**
-- Upload new videos to storage bucket
-- Edit video metadata (title, description, category)
-- Set role visibility (`required_for_roles`)
-- Drag-and-drop reordering
-- Toggle active/inactive status
-- Delete videos
+### Metric Types
 
-**Tab 2: Individual Assignments**
-- Search/select team members
-- Assign specific videos with optional due dates
-- View pending assignments by person
-- Bulk assignment to multiple users
+| Metric | Data Source |
+|--------|-------------|
+| `bells` | `ring_the_bell_entries` |
+| `retail` | `phorest_performance_metrics` |
+| `new_clients` | `phorest_performance_metrics` |
+| `retention` | `phorest_performance_metrics` |
+| `training` | `training_progress` |
 
-**Tab 3: Team Progress**
-- View completion rates by role
-- View completion rates by individual
-- Filter by category/video
-- Export progress reports
-- Send reminder notifications
+### Components to Build
 
----
+**1. ChallengeCard.tsx**
+- Active challenge display
+- Progress bar
+- Time remaining
+- Current standings preview
 
-## File Structure
+**2. ChallengeLeaderboard.tsx**
+- Full standings table
+- Progress charts over time
+- Trend indicators
 
-```text
-src/pages/dashboard/admin/
-├── TrainingHub.tsx              # Main hub page with tabs
+**3. CreateChallengeWizard.tsx**
+- Step 1: Basic info (title, description, dates)
+- Step 2: Challenge type and metric
+- Step 3: Participants/teams
+- Step 4: Goals and prizes
+- Step 5: Review and launch
 
-src/components/training/
-├── VideoLibraryManager.tsx      # CRUD for videos
-├── VideoUploadDialog.tsx        # Upload/edit dialog
-├── IndividualAssignments.tsx    # Assign to individuals
-├── TeamProgressDashboard.tsx    # Progress tracking
-├── TrainingAssignmentCard.tsx   # Display assignment
-└── TrainingProgressTable.tsx    # Progress table component
-```
+**4. ChallengesDashboard.tsx**
+- Active challenges grid
+- Past challenges history
+- Create new button (managers only)
 
----
+### Edge Function: `update-challenge-standings`
 
-## Detailed Component Specifications
+Scheduled function to:
+1. Calculate current values for all active challenges
+2. Update `challenge_participants.current_value`
+3. Recalculate ranks
+4. Insert daily snapshot for trending
 
-### 1. TrainingHub.tsx (Main Container)
+### Navigation Integration
 
-```typescript
-// Layout with 3 tabs: Library, Assignments, Progress
-const tabs = [
-  { value: 'library', label: 'Video Library', icon: Video },
-  { value: 'assignments', label: 'Assignments', icon: UserPlus },
-  { value: 'progress', label: 'Team Progress', icon: BarChart3 },
-];
-```
-
-### 2. VideoLibraryManager.tsx
-
-Features:
-- Grid/list view toggle for existing videos
-- "Add Video" button opens `VideoUploadDialog`
-- Each video card shows:
-  - Thumbnail (or placeholder)
-  - Title, category, duration
-  - Role badges (who can see)
-  - Active/inactive toggle
-  - Edit/Delete actions
-- Drag-and-drop for `order_index` reordering
-
-### 3. VideoUploadDialog.tsx
-
-Form fields:
-- **Title** (required)
-- **Description** (textarea)
-- **Category** (select from predefined list)
-- **Duration** (auto-calculated or manual entry in minutes)
-- **Video Upload** (to storage bucket or external URL)
-- **Thumbnail Upload** (optional)
-- **Role Visibility** (multi-select role chips)
-- **Active Status** (toggle)
-
-Upload flow:
-1. User selects video file
-2. Upload to `training-videos` bucket
-3. Generate signed URL or use `storage_path`
-4. Save metadata to `training_videos` table
-
-### 4. IndividualAssignments.tsx
-
-Features:
-- Team member search/autocomplete
-- Video multi-select dropdown
-- Due date picker (optional)
-- Required toggle
-- Notes field
-- View existing assignments grouped by:
-  - By Person: "John has 3 incomplete trainings"
-  - By Video: "Safety Training assigned to 12 people"
-- Bulk actions:
-  - Assign video to all stylists
-  - Remove assignment
-  - Update due date
-
-### 5. TeamProgressDashboard.tsx
-
-Displays:
-- Overall completion percentage (progress bar)
-- Breakdown by role (bar chart)
-- Breakdown by category
-- Individual leaderboard (who's completed most)
-- Overdue assignments alert
-- Filter by:
-  - Date range
-  - Role
-  - Category
-  - Completion status
-
-Table columns:
-- Team Member
-- Total Videos (for their roles)
-- Completed
-- In Progress
-- Not Started
-- Last Activity
-
----
-
-## Navigation Integration
-
-### Add to Management Hub
-
-Add a new card in the "Team Development" category:
+Add to Management Hub under "Team Development":
 
 ```typescript
 <ManagementCard
-  href="/dashboard/admin/training-hub"
-  icon={Video}
-  title="Training Hub"
-  description="Manage training library and track completions"
-  stat={stats?.incompleteTrainings || null}
-  statLabel="incomplete"
-  colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
+  href="/dashboard/admin/challenges"
+  icon={Trophy}
+  title="Team Challenges"
+  description="Create and manage team competitions"
+  colorClass="bg-yellow-500/10 text-yellow-600"
 />
 ```
 
-### Add Route
+### User-Facing Widget
 
-```typescript
-{ path: 'admin/training-hub', element: <TrainingHub /> }
-```
+Add challenge preview widget to Command Center for participants.
 
----
+### Files to Create
 
-## Video Visibility Logic Update
+| File | Description |
+|------|-------------|
+| `src/pages/dashboard/admin/ChallengesDashboard.tsx` | Challenge management |
+| `src/pages/dashboard/admin/ChallengeDetail.tsx` | Single challenge view |
+| `src/components/challenges/ChallengeCard.tsx` | Challenge preview card |
+| `src/components/challenges/ChallengeLeaderboard.tsx` | Full standings |
+| `src/components/challenges/CreateChallengeWizard.tsx` | Creation wizard |
+| `src/components/challenges/ChallengeProgressChart.tsx` | Progress visualization |
+| `src/hooks/useChallenges.ts` | Challenge data hooks |
+| `supabase/functions/update-challenge-standings/index.ts` | Standings calculator |
 
-Modify `Training.tsx` to also include individually assigned videos:
+### Files to Modify
 
-```typescript
-// Current: Role-based only
-const roleFilteredVideos = videos.filter(v => 
-  v.required_for_roles?.some(r => userRoles.includes(r))
-);
-
-// New: Role-based OR individually assigned
-const visibleVideos = videos.filter(v => {
-  // Check role-based visibility
-  if (!v.required_for_roles?.length) return true;
-  if (v.required_for_roles.some(r => userRoles.includes(r))) return true;
-  
-  // Check individual assignment
-  return individualAssignments.some(a => a.video_id === v.id);
-});
-```
+| File | Changes |
+|------|---------|
+| `src/pages/dashboard/admin/ManagementHub.tsx` | Add Challenges card |
+| `src/App.tsx` | Add routes |
+| `src/components/dashboard/CommandCenter.tsx` | Add challenge widget |
 
 ---
 
-## Files to Create/Modify
+## Feature 4: Shift Swap System
 
-| File | Action | Description |
-|------|--------|-------------|
-| `src/pages/dashboard/admin/TrainingHub.tsx` | Create | Main hub page with tabs |
-| `src/components/training/VideoLibraryManager.tsx` | Create | Video CRUD grid |
-| `src/components/training/VideoUploadDialog.tsx` | Create | Upload/edit form |
-| `src/components/training/IndividualAssignments.tsx` | Create | User assignment UI |
-| `src/components/training/TeamProgressDashboard.tsx` | Create | Progress tracking |
-| `src/pages/dashboard/Training.tsx` | Modify | Include individual assignments |
-| `src/pages/dashboard/admin/ManagementHub.tsx` | Modify | Add Training Hub card |
-| `src/App.tsx` | Modify | Add route |
+### Purpose
+Enable team members to post and claim shift swaps with a manager approval workflow.
 
----
-
-## Database Migration
+### Database Schema
 
 ```sql
--- Create individual training assignments table
-CREATE TABLE public.training_assignments (
+-- Shift swap listings
+CREATE TABLE public.shift_swaps (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  video_id UUID REFERENCES public.training_videos(id) ON DELETE CASCADE NOT NULL,
-  user_id UUID NOT NULL,
-  assigned_by UUID NOT NULL,
-  due_date TIMESTAMPTZ,
-  is_required BOOLEAN DEFAULT true,
-  notes TEXT,
+  requester_id UUID NOT NULL,
+  original_date DATE NOT NULL,
+  original_start_time TIME NOT NULL,
+  original_end_time TIME NOT NULL,
+  location_id TEXT,
+  swap_type TEXT NOT NULL, -- 'swap', 'cover', 'giveaway'
+  reason TEXT,
+  status TEXT DEFAULT 'open', -- 'open', 'claimed', 'pending_approval', 'approved', 'denied', 'cancelled', 'expired'
+  claimer_id UUID,
+  claimer_date DATE, -- for swap: the date claimer offers
+  claimer_start_time TIME,
+  claimer_end_time TIME,
+  manager_id UUID,
+  manager_notes TEXT,
+  approved_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(video_id, user_id)
+  expires_at TIMESTAMPTZ
 );
 
--- Enable RLS
-ALTER TABLE public.training_assignments ENABLE ROW LEVEL SECURITY;
-
--- RLS policies
-CREATE POLICY "Users can view their own assignments"
-ON public.training_assignments FOR SELECT
-TO authenticated
-USING (user_id = auth.uid());
-
-CREATE POLICY "Managers can view all assignments"
-ON public.training_assignments FOR SELECT
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.user_roles
-    WHERE user_id = auth.uid()
-    AND role IN ('super_admin', 'admin', 'manager')
-  )
-);
-
-CREATE POLICY "Managers can manage assignments"
-ON public.training_assignments FOR ALL
-TO authenticated
-USING (
-  EXISTS (
-    SELECT 1 FROM public.user_roles
-    WHERE user_id = auth.uid()
-    AND role IN ('super_admin', 'admin', 'manager')
-  )
+-- Swap comments/messages
+CREATE TABLE public.shift_swap_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  swap_id UUID REFERENCES shift_swaps(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  message TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
 );
 ```
 
----
+### Swap Types
 
-## UI/UX Considerations
+| Type | Description | Flow |
+|------|-------------|------|
+| `swap` | Trade shifts with someone | Requester posts → Claimer offers their shift → Manager approves |
+| `cover` | Need someone to cover | Requester posts → Claimer picks up → Manager approves |
+| `giveaway` | Give away shift completely | Requester posts → Claimer claims → Manager approves |
 
-1. **Upload Progress**: Show progress bar during video upload
-2. **Validation**: Prevent duplicate assignments
-3. **Confirmation**: Confirm before deleting videos with progress data
-4. **Bulk Actions**: Allow assigning videos to entire role groups
-5. **Mobile**: Responsive design for tablet/phone access
-6. **Toast Notifications**: Success/error feedback for all actions
+### Status Flow
 
----
+```text
+open → claimed → pending_approval → approved/denied
+  ↓
+cancelled/expired
+```
 
-## Technical Notes
+### Components to Build
 
-1. **Storage Bucket**: The `training-videos` bucket is private - use signed URLs for playback
-2. **File Size**: Consider adding file size limits and validation for uploads
-3. **Video Formats**: Accept common formats (mp4, webm, mov)
-4. **Thumbnail Generation**: Consider auto-generating thumbnails or requiring upload
-5. **Progress Calculation**: Individual assignments count toward personal progress
-6. **Super Admin Override**: Super admins always see all videos and all progress
+**1. ShiftSwapMarketplace.tsx**
+- Grid of available swaps
+- Filter by date, location, type
+- My requests tab
+- My claims tab
+
+**2. PostSwapDialog.tsx**
+- Select shift from calendar
+- Choose swap type
+- Add reason (optional)
+- Set expiration
+
+**3. ClaimSwapDialog.tsx**
+- View shift details
+- For swaps: select shift to offer
+- For covers: confirm pickup
+- Add message
+
+**4. SwapApprovalQueue.tsx** (Managers)
+- Pending approvals list
+- Requester/claimer details
+- Approve/deny with notes
+- Bulk actions
+
+**5. SwapNotificationCard.tsx**
+- In-app notification for swap updates
+- Quick action buttons
+
+### Notification Triggers
+
+| Event | Notify |
+|-------|--------|
+| New swap posted | All eligible team members |
+| Swap claimed | Requester |
+| Pending approval | Manager |
+| Approved | Both parties |
+| Denied | Both parties |
+
+### Edge Function: `expire-shift-swaps`
+
+Daily cleanup:
+1. Mark expired swaps (past expires_at)
+2. Mark swaps where original_date has passed
+
+### Files to Create
+
+| File | Description |
+|------|-------------|
+| `src/pages/dashboard/ShiftSwapMarketplace.tsx` | Main marketplace page |
+| `src/components/shifts/PostSwapDialog.tsx` | Create swap listing |
+| `src/components/shifts/ClaimSwapDialog.tsx` | Claim a swap |
+| `src/components/shifts/SwapCard.tsx` | Swap listing card |
+| `src/components/shifts/SwapApprovalQueue.tsx` | Manager approval UI |
+| `src/components/shifts/MySwapsPanel.tsx` | User's swaps list |
+| `src/hooks/useShiftSwaps.ts` | Swap data hooks |
+| `supabase/functions/expire-shift-swaps/index.ts` | Expiration cleanup |
+| `supabase/functions/notify-shift-swap/index.ts` | Swap notifications |
+
+### Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/pages/dashboard/admin/ManagementHub.tsx` | Add Swap Approvals card |
+| `src/App.tsx` | Add routes |
+| Sidebar config | Add Shift Swaps nav item |
 
 ---
 
 ## Implementation Order
 
-1. Database migration (create `training_assignments` table)
-2. Create component files structure
-3. Build `VideoLibraryManager` with CRUD
-4. Build `VideoUploadDialog` with storage integration
-5. Build `IndividualAssignments` panel
-6. Build `TeamProgressDashboard`
-7. Assemble `TrainingHub.tsx` with tabs
-8. Update `Training.tsx` to include individual assignments
-9. Add to Management Hub and routing
-10. Test end-to-end flow
+### Phase 1: Training Reminders (1-2 hours)
+1. Create `send-training-reminders` edge function
+2. Insert email templates
+3. Register in config.toml
+4. Set up pg_cron schedule
+
+### Phase 2: Achievement Badges (3-4 hours)
+1. Insert new achievement definitions
+2. Create achievement service
+3. Build notification toast component
+4. Integrate triggers into existing pages
+5. Build admin config panel
+
+### Phase 3: Team Challenges (4-5 hours)
+1. Create database tables with RLS
+2. Build challenge hooks and types
+3. Create challenge components
+4. Build creation wizard
+5. Create standings update function
+6. Add to Management Hub and routing
+
+### Phase 4: Shift Swap System (4-5 hours)
+1. Create database tables with RLS
+2. Build swap hooks and types
+3. Create marketplace page
+4. Build post/claim dialogs
+5. Build manager approval queue
+6. Create notification and expiration functions
+7. Add routing and navigation
+
+---
+
+## Technical Notes
+
+### RLS Policies Pattern
+All new tables follow established patterns:
+- Users can view their own data
+- Managers can view/manage all
+- Super admins have full access
+
+### Notification Integration
+All features integrate with existing `notifications` table for in-app alerts.
+
+### Email Templates
+All email content stored in `email_templates` table for easy customization.
+
+### Mobile Responsiveness
+All new components designed mobile-first following existing patterns.
+
+### Real-time Updates
+Enable Supabase Realtime for:
+- `team_challenges` - Live leaderboard updates
+- `shift_swaps` - Instant swap notifications
+
