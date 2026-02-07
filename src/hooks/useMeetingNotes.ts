@@ -12,6 +12,7 @@ export interface MeetingNote {
   content: string;
   topic_category: TopicCategory;
   is_private: boolean;
+  photo_urls: string[];
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +46,7 @@ export function useCreateMeetingNote() {
       content: string;
       topic_category: TopicCategory;
       is_private?: boolean;
+      photo_urls?: string[];
     }) => {
       const { data: note, error } = await supabase
         .from('meeting_notes')
@@ -54,6 +56,7 @@ export function useCreateMeetingNote() {
           content: data.content,
           topic_category: data.topic_category,
           is_private: data.is_private ?? false,
+          photo_urls: data.photo_urls || [],
         })
         .select()
         .single();
@@ -86,6 +89,7 @@ export function useUpdateMeetingNote() {
       content?: string;
       topic_category?: TopicCategory;
       is_private?: boolean;
+      photo_urls?: string[];
     }) => {
       const { error } = await supabase
         .from('meeting_notes')
