@@ -1,393 +1,471 @@
 
 
-# Add "Today to Next Pay Day" Filter with Pay Schedule Configuration
+# Payroll Hub Analytics Enhancement Plan
 
-## Overview
+## Executive Summary
 
-Add a new date range filter option "Today to Next Pay Day" that dynamically calculates the date range based on configurable pay schedule settings. This pay schedule configuration will also integrate with the native payroll system.
-
----
-
-## Changes Summary
-
-| Change | Description |
-|--------|-------------|
-| Database migration | Create `organization_payroll_settings` table to store pay schedule configuration |
-| New hook | Create `usePaySchedule` hook to manage pay schedule settings and calculate next pay day |
-| Update DateRangeType | Add `todayToPayday` option to all DateRangeType definitions |
-| Update filter bars | Add "Today to Next Pay Day" option to analytics filter dropdowns |
-| Update getDateRange | Calculate date range based on stored pay schedule settings |
-| Pay Schedule Settings UI | Add configuration card in Payroll Settings tab |
-| Integrate with payroll wizard | Pre-populate pay period dates based on schedule |
+Transform the Payroll Hub into an enterprise-grade analytics dashboard with real-time payroll insights, forecasting, commission optimization, and deep per-stylist compensation analysis. This plan leverages existing Phorest sales data, commission tier configuration, and payroll history to deliver actionable financial intelligence.
 
 ---
 
-## Database Schema
+## Current State Analysis
 
-### New Table: `organization_payroll_settings`
+**What exists:**
+- Basic payroll wizard with steps for hours, commissions, adjustments, and review
+- Commission tier system with service/product splits
+- Employee payroll settings (hourly, salary, commission combinations)
+- Payroll history table with expandable details
+- Sales data from `phorest_daily_sales_summary`
+- Pay schedule configuration
 
-```sql
-CREATE TABLE organization_payroll_settings (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-  
-  -- Pay schedule type: 'semi_monthly', 'bi_weekly', 'weekly', 'monthly'
-  pay_schedule_type TEXT NOT NULL DEFAULT 'semi_monthly',
-  
-  -- For semi-monthly: day of month for first pay day (e.g., 1, 15)
-  semi_monthly_first_day INTEGER DEFAULT 1,
-  semi_monthly_second_day INTEGER DEFAULT 15,
-  
-  -- For bi-weekly: day of week (0=Sunday, 1=Monday, etc.)
-  bi_weekly_day_of_week INTEGER DEFAULT 5, -- Friday
-  bi_weekly_start_date DATE, -- Anchor date for bi-weekly calculation
-  
-  -- For weekly: day of week
-  weekly_day_of_week INTEGER DEFAULT 5, -- Friday
-  
-  -- For monthly: day of month
-  monthly_pay_day INTEGER DEFAULT 1,
-  
-  -- Days after period end when check is issued
-  days_until_check INTEGER DEFAULT 5,
-  
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW(),
-  
-  UNIQUE(organization_id)
-);
-
--- Enable RLS
-ALTER TABLE organization_payroll_settings ENABLE ROW LEVEL SECURITY;
-
--- RLS policies for admin access
-CREATE POLICY "Admins can manage pay schedule settings"
-  ON organization_payroll_settings
-  FOR ALL
-  TO authenticated
-  USING (
-    organization_id IN (
-      SELECT om.organization_id FROM organization_members om
-      JOIN user_roles ur ON ur.user_id = auth.uid()
-      WHERE om.user_id = auth.uid()
-      AND ur.role IN ('admin', 'super_admin', 'owner')
-    )
-  );
-
--- All org members can read
-CREATE POLICY "Org members can read pay schedule"
-  ON organization_payroll_settings
-  FOR SELECT
-  TO authenticated
-  USING (
-    organization_id IN (
-      SELECT organization_id FROM organization_members WHERE user_id = auth.uid()
-    )
-  );
-```
+**What's missing:**
+- Real-time payroll forecasting and projections
+- Per-employee commission tier progression visualization
+- Historical payroll trend analysis with charts
+- Labor cost analysis and optimization insights
+- Period-over-period comparison tools
+- Commission tier performance analytics
 
 ---
 
-## Technical Implementation
+## Proposed Architecture
 
-### 1. New Hook: `usePaySchedule.ts`
+### New Tab Structure
 
-```typescript
-// src/hooks/usePaySchedule.ts
-
-export type PayScheduleType = 'semi_monthly' | 'bi_weekly' | 'weekly' | 'monthly';
-
-export interface PayScheduleSettings {
-  id: string;
-  organization_id: string;
-  pay_schedule_type: PayScheduleType;
-  semi_monthly_first_day: number;
-  semi_monthly_second_day: number;
-  bi_weekly_day_of_week: number;
-  bi_weekly_start_date: string | null;
-  weekly_day_of_week: number;
-  monthly_pay_day: number;
-  days_until_check: number;
-}
-
-export interface PayPeriodInfo {
-  periodStart: Date;
-  periodEnd: Date;
-  nextPayDay: Date;
-}
-
-export function usePaySchedule() {
-  // Query to fetch organization pay schedule settings
-  // Function to calculate next pay day based on schedule type
-  // Function to get current pay period
-  // Mutation to update settings
-}
-
-export function getNextPayDay(settings: PayScheduleSettings): Date {
-  // Calculate next pay day based on schedule type
-}
-
-export function getCurrentPayPeriod(settings: PayScheduleSettings): PayPeriodInfo {
-  // Calculate current pay period dates
-}
-```
-
-**Key Functions:**
-
-- `getNextPayDay()` - Calculates the next pay day based on schedule type
-- `getCurrentPayPeriod()` - Returns current period start/end and next check date
-- `getPayPeriodForPayDay(payDay: Date)` - Returns the pay period that ends on a specific pay day
+| Tab | Purpose | Status |
+|-----|---------|--------|
+| **Overview** | Executive dashboard with KPIs and forecasts | NEW |
+| Run Payroll | Existing wizard | EXISTS |
+| History | Enhanced with analytics | ENHANCE |
+| Team Breakdown | Per-employee deep-dive | NEW |
+| Commission Insights | Tier performance & optimization | NEW |
+| Settings | Pay schedule & provider config | EXISTS |
 
 ---
 
-### 2. Update DateRangeType Definitions
+## Phase 1: Payroll Overview Dashboard
 
-**Files to update:**
-- `src/components/dashboard/PinnedAnalyticsCard.tsx`
-- `src/components/dashboard/AnalyticsFilterBar.tsx`
-- `src/components/dashboard/AnalyticsFilterBadge.tsx`
-- `src/components/dashboard/CommandCenterAnalytics.tsx`
-- `src/pages/dashboard/admin/AnalyticsHub.tsx`
-
-**Add new type:**
-```typescript
-export type DateRangeType = 
-  | 'today' 
-  | 'yesterday' 
-  | '7d' 
-  | '30d' 
-  | 'thisWeek' 
-  | 'thisMonth' 
-  | 'todayToEom' 
-  | 'todayToPayday'  // NEW
-  | 'lastMonth';
-```
-
-**Add label:**
-```typescript
-const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
-  // ... existing labels
-  todayToPayday: 'Today to Next Pay Day',
-};
-```
-
----
-
-### 3. Update `getDateRange()` Function
-
-**File: `src/components/dashboard/PinnedAnalyticsCard.tsx`**
-
-```typescript
-import { usePaySchedule, getNextPayDay } from '@/hooks/usePaySchedule';
-
-export function getDateRange(
-  dateRange: DateRangeType, 
-  payScheduleSettings?: PayScheduleSettings
-): { dateFrom: string; dateTo: string } {
-  const now = new Date();
-  
-  switch (dateRange) {
-    // ... existing cases
-    
-    case 'todayToPayday': {
-      if (!payScheduleSettings) {
-        // Fallback to end of month if no settings
-        return { 
-          dateFrom: format(now, 'yyyy-MM-dd'), 
-          dateTo: format(endOfMonth(now), 'yyyy-MM-dd') 
-        };
-      }
-      const nextPayDay = getNextPayDay(payScheduleSettings);
-      return { 
-        dateFrom: format(now, 'yyyy-MM-dd'), 
-        dateTo: format(nextPayDay, 'yyyy-MM-dd') 
-      };
-    }
-    
-    default:
-      return { dateFrom: format(now, 'yyyy-MM-dd'), dateTo: format(now, 'yyyy-MM-dd') };
-  }
-}
-```
-
----
-
-### 4. Pay Schedule Settings Card
-
-**New Component: `src/components/dashboard/payroll/PayScheduleCard.tsx`**
-
-A settings card that allows admins to configure:
-
-| Field | Description |
-|-------|-------------|
-| Schedule Type | Semi-monthly, Bi-weekly, Weekly, Monthly |
-| Pay Days | Specific days based on schedule type |
-| Days Until Check | How many days after period end the check is issued |
-
-**UI Preview:**
+### 1.1 Executive KPI Cards
 
 ```text
-┌─────────────────────────────────────────────────┐
-│ Pay Schedule                                     │
-├─────────────────────────────────────────────────┤
-│                                                  │
-│ Schedule Type: [Semi-Monthly ▼]                 │
-│                                                  │
-│ Pay Days:                                        │
-│   First Pay Day:  [1st ▼]  of the month        │
-│   Second Pay Day: [15th ▼] of the month        │
-│                                                  │
-│ Days Until Check: [5 ▼] days after period end  │
-│                                                  │
-│ ─────────────────────────────────────────────   │
-│ Next Pay Day: February 15, 2026                 │
-│ Current Period: Feb 1 - Feb 15, 2026            │
-│                                                  │
-│                              [Save Changes]      │
-└─────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         PAYROLL OVERVIEW                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │ NEXT PAYROLL │  │ YTD PAYROLL  │  │ AVG LABOR    │  │ COMMISSION   │    │
+│  │   FORECAST   │  │    TOTAL     │  │    COST      │  │    RATIO     │    │
+│  │  $47,250     │  │  $284,500    │  │    32%       │  │    45%       │    │
+│  │  ▲ 3.2%      │  │  of revenue  │  │  of revenue  │  │  of gross pay│    │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘    │
+│                                                                              │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │ EMPLOYER     │  │ ACTIVE       │  │ OVERTIME     │  │ TIPS         │    │
+│  │ TAX BURDEN   │  │ EMPLOYEES    │  │   HOURS      │  │  COLLECTED   │    │
+│  │  $4,580      │  │     12       │  │    28 hrs    │  │   $3,240     │    │
+│  │  9.7% of pay │  │  on payroll  │  │  this period │  │  this period │    │
+│  └──────────────┘  └──────────────┘  └──────────────┘  └──────────────┘    │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
----
+**KPIs to Track:**
+- Next Payroll Forecast (calculated from current period sales + hours estimate)
+- YTD Total Payroll Cost
+- Labor Cost as % of Revenue
+- Commission as % of Gross Pay
+- Employer Tax Liability
+- Active Employee Count
+- Total Overtime Hours
+- Tips Collected
 
-### 5. Integrate with Payroll Wizard
+### 1.2 Payroll Forecast Chart
 
-**File: `src/components/dashboard/payroll/steps/PayPeriodStep.tsx`**
+Interactive area chart showing:
+- Historical payroll amounts (last 12 pay periods)
+- Rolling average trendline
+- Forecast for next 2-3 periods based on:
+  - Current period sales data
+  - Historical averages
+  - Scheduled appointments (if available)
+  - Commission tier calculations
 
-Add a new preset based on the configured pay schedule:
-
+**Forecast Algorithm:**
 ```typescript
-// Add dynamic preset based on pay schedule
-const paySchedulePreset = useMemo(() => {
-  if (!paySchedule) return null;
-  
-  const period = getCurrentPayPeriod(paySchedule);
-  return {
-    label: 'Current Pay Period',
-    getRange: () => ({
-      start: period.periodStart,
-      end: period.periodEnd,
-    }),
-    checkDate: period.nextPayDay,
+interface PayrollForecast {
+  periodStart: string;
+  periodEnd: string;
+  projectedGross: number;
+  projectedNet: number;
+  projectedCommissions: number;
+  projectedTaxes: number;
+  confidence: 'high' | 'medium' | 'low';
+  factors: {
+    salesProjection: number;
+    scheduledAppointments: number;
+    historicalAverage: number;
   };
-}, [paySchedule]);
+}
+```
 
-// Render as first preset option
-{paySchedulePreset && (
-  <Button variant="default" size="sm" onClick={() => applyPreset(paySchedulePreset)}>
-    <CalendarCheck className="h-3 w-3 mr-1" />
-    Current Pay Period
-  </Button>
-)}
+### 1.3 Compensation Breakdown Pie Chart
+
+Visual breakdown showing:
+- Base Pay (Hourly + Salary) %
+- Service Commissions %
+- Product Commissions %
+- Bonuses %
+- Tips %
+
+---
+
+## Phase 2: Team Breakdown Analytics
+
+### 2.1 Employee Compensation Table with Drill-Down
+
+Enhanced table showing all employees with:
+
+| Column | Description |
+|--------|-------------|
+| Employee | Name + photo + pay type badge |
+| Base Pay | Hourly/salary amount |
+| Commission Rate | Current tier + progress to next tier |
+| Period Sales | Service + Product revenue |
+| Projected Pay | Calculated based on current sales |
+| YTD Earnings | Total earnings this year |
+| Trend | Sparkline of last 6 periods |
+
+### 2.2 Individual Employee Detail Modal
+
+Click into any employee to see:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        SARAH JOHNSON - COMPENSATION DETAIL                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ┌─────────────────────────────────┐  ┌─────────────────────────────────┐  │
+│  │  PAY CONFIGURATION              │  │  CURRENT PERIOD PROJECTION      │  │
+│  │  ─────────────────              │  │  ─────────────────────────────  │  │
+│  │  Type: Hourly + Commission      │  │  Service Revenue:    $8,450    │  │
+│  │  Hourly Rate: $18.00            │  │  Product Revenue:    $1,230    │  │
+│  │  Commission: Enabled            │  │  Current Tier: "Bronze" (35%)  │  │
+│  │  Service Rate: 35%              │  │  ───────────────────────────── │  │
+│  │  Product Rate: 10%              │  │  Hourly (80 hrs): $1,440       │  │
+│  │                                 │  │  Service Comm:    $2,957       │  │
+│  │                                 │  │  Product Comm:    $123         │  │
+│  │                                 │  │  ═══════════════════════════════│  │
+│  │                                 │  │  PROJECTED GROSS: $4,520       │  │
+│  └─────────────────────────────────┘  └─────────────────────────────────┘  │
+│                                                                              │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │  TIER PROGRESSION                                                      │  │
+│  │  ─────────────────────────────────────────────────────────────────────│  │
+│  │  Current: Bronze (35%) │ Next: Silver (40%) at $10,000 service rev   │  │
+│  │                                                                        │  │
+│  │  [████████████████████░░░░░░░░░░] 84.5% to next tier                  │  │
+│  │   $8,450 of $10,000                                                   │  │
+│  │                                                                        │  │
+│  │  💡 $1,550 more in services to unlock 5% higher commission rate       │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                              │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │  EARNINGS HISTORY (Last 6 Pay Periods)                                │  │
+│  │  [Area chart showing gross pay trend over time]                       │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### 6. Update My Pay Data Hook
+## Phase 3: Commission Insights & Optimization
 
-**File: `src/hooks/useMyPayData.ts`**
+### 3.1 Commission Tier Performance Dashboard
 
-Replace hardcoded `inferCurrentPayPeriod()` with dynamic calculation:
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        COMMISSION TIER ANALYTICS                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  TIER DISTRIBUTION (Current Period)                                         │
+│  ┌─────────────────────────────────────────────────────────────────────────┐│
+│  │                                                                          ││
+│  │   Bronze (30-35%)  ████████████████  6 stylists ($48,200 revenue)      ││
+│  │   Silver (40%)     ████████         3 stylists ($32,100 revenue)       ││
+│  │   Gold (45%)       ████             2 stylists ($28,400 revenue)       ││
+│  │   Platinum (50%)   ██               1 stylist  ($18,600 revenue)       ││
+│  │                                                                          ││
+│  └─────────────────────────────────────────────────────────────────────────┘│
+│                                                                              │
+│  TIER PROGRESSION OPPORTUNITIES                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐│
+│  │  3 stylists are within 15% of reaching the next tier                    ││
+│  │                                                                          ││
+│  │  👤 Sarah J.   Bronze → Silver   $1,550 more needed   (84.5% complete) ││
+│  │  👤 Mike R.    Silver → Gold     $2,100 more needed   (79.0% complete) ││
+│  │  👤 Lisa K.    Bronze → Silver   $3,200 more needed   (68.0% complete) ││
+│  └─────────────────────────────────────────────────────────────────────────┘│
+│                                                                              │
+│  COMMISSION IMPACT ANALYSIS                                                  │
+│  ┌─────────────────────────────────────────────────────────────────────────┐│
+│  │  This Period:     $18,450 in commissions   (36% of gross payroll)      ││
+│  │  If all hit next tier: +$2,340 additional  (potential 12.7% increase)  ││
+│  │  Revenue needed:  +$12,850 in services                                  ││
+│  └─────────────────────────────────────────────────────────────────────────┘│
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 3.2 Commission Tier Editor Enhancement
+
+Add visual tier editor with:
+- Drag-to-adjust tier thresholds
+- Revenue band visualization
+- Impact simulator ("What if service commission was 40% instead of 35%?")
+- Historical effectiveness analysis
+
+---
+
+## Phase 4: Payroll Forecasting Engine
+
+### 4.1 New Hook: `usePayrollForecasting`
 
 ```typescript
-import { usePaySchedule, getCurrentPayPeriod } from './usePaySchedule';
+// src/hooks/usePayrollForecasting.ts
 
-export function useMyPayData(): MyPayData {
-  const { settings: paySchedule } = usePaySchedule();
+export interface PayrollProjection {
+  periodLabel: string;
+  periodStart: string;
+  periodEnd: string;
   
-  // Use configured pay schedule instead of hardcoded logic
-  const currentPeriod = useMemo(() => {
-    if (!paySchedule) return inferCurrentPayPeriod(); // Fallback
-    const period = getCurrentPayPeriod(paySchedule);
-    return {
-      startDate: format(period.periodStart, 'yyyy-MM-dd'),
-      endDate: format(period.periodEnd, 'yyyy-MM-dd'),
-      checkDate: format(period.nextPayDay, 'yyyy-MM-dd'),
-    };
-  }, [paySchedule]);
+  // Projected values
+  projectedGrossPay: number;
+  projectedCommissions: number;
+  projectedTaxes: number;
+  projectedNetPay: number;
   
-  // ... rest of the hook
+  // Breakdown
+  byEmployee: EmployeeProjection[];
+  
+  // Confidence metrics
+  confidenceLevel: 'high' | 'medium' | 'low';
+  dataPointsUsed: number;
+  
+  // Comparison
+  vsLastPeriod: number; // percentage change
+  vsYearAgo: number; // percentage change
 }
+
+export interface EmployeeProjection {
+  employeeId: string;
+  employeeName: string;
+  photoUrl: string | null;
+  
+  currentPeriodSales: {
+    services: number;
+    products: number;
+  };
+  
+  projectedSales: {
+    services: number;
+    products: number;
+  };
+  
+  currentTier: string;
+  tierProgress: number; // 0-100
+  nextTierThreshold: number | null;
+  
+  projectedCompensation: {
+    basePay: number;
+    serviceCommission: number;
+    productCommission: number;
+    totalGross: number;
+  };
+}
+
+export function usePayrollForecasting(organizationId: string) {
+  // Calculate projections based on:
+  // 1. Current period sales to-date
+  // 2. Days remaining in period
+  // 3. Historical daily averages
+  // 4. Scheduled appointments (if available)
+  // 5. Seasonality adjustments
+}
+```
+
+### 4.2 Forecasting Algorithm
+
+**Step 1: Current Period Projection**
+```
+projectedSales = currentSales + (dailyAverage × daysRemaining)
+```
+
+**Step 2: Apply Commission Tiers**
+```
+For each employee:
+  - Calculate projected revenue
+  - Determine which tier they'll land in
+  - Calculate commission at that tier rate
+```
+
+**Step 3: Aggregate Totals**
+```
+projectedGross = Σ(basePay + commissions + tips)
+projectedTaxes = projectedGross × taxRates
+projectedNet = projectedGross - projectedTaxes - deductions
 ```
 
 ---
 
-## Pay Schedule Calculation Logic
+## Phase 5: Enhanced History & Analytics
 
-### Semi-Monthly (1st and 15th)
+### 5.1 Historical Trend Charts
 
-```typescript
-function getNextSemiMonthlyPayDay(settings: PayScheduleSettings): Date {
-  const today = new Date();
-  const currentDay = today.getDate();
-  const { semi_monthly_first_day, semi_monthly_second_day } = settings;
-  
-  if (currentDay < semi_monthly_first_day) {
-    return new Date(today.getFullYear(), today.getMonth(), semi_monthly_first_day);
-  } else if (currentDay < semi_monthly_second_day) {
-    return new Date(today.getFullYear(), today.getMonth(), semi_monthly_second_day);
-  } else {
-    // Next month's first pay day
-    return new Date(today.getFullYear(), today.getMonth() + 1, semi_monthly_first_day);
-  }
-}
+Add to History tab:
+
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  PAYROLL TRENDS (Last 12 Periods)                                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  [Stacked area chart showing:]                                              │
+│  - Total Gross Pay                                                          │
+│  - Commission portion                                                       │
+│  - Base pay portion                                                         │
+│  - Tax withholdings                                                         │
+│                                                                              │
+│  [Toggle between: Absolute $ | % of Revenue | Per Employee Avg]            │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Bi-Weekly (every other Friday)
+### 5.2 Period-over-Period Comparison
 
-```typescript
-function getNextBiWeeklyPayDay(settings: PayScheduleSettings): Date {
-  const today = new Date();
-  const anchor = new Date(settings.bi_weekly_start_date);
-  const dayOfWeek = settings.bi_weekly_day_of_week;
-  
-  // Calculate weeks since anchor
-  const weeksSinceAnchor = differenceInWeeks(today, anchor);
-  const weeksToNextPayDay = weeksSinceAnchor % 2 === 0 ? 0 : 1;
-  
-  // Find next occurrence of pay day
-  const nextPayWeekStart = addWeeks(anchor, weeksSinceAnchor + weeksToNextPayDay);
-  return setDay(nextPayWeekStart, dayOfWeek);
-}
+```text
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  PERIOD COMPARISON                                                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  Compare: [Jan 16-31 ▼] vs [Jan 1-15 ▼]                                    │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐│
+│  │  Metric              Period 1        Period 2        Change             ││
+│  │  ───────────────────────────────────────────────────────────────────────││
+│  │  Gross Payroll       $45,200         $47,800         +5.8% ▲            ││
+│  │  Commissions         $18,400         $19,200         +4.3% ▲            ││
+│  │  Avg per Employee    $3,766          $3,983          +5.8% ▲            ││
+│  │  Overtime Hours      24 hrs          32 hrs          +33.3% ▲           ││
+│  │  Labor Cost %        31.2%           30.8%           -0.4% ▼            ││
+│  └─────────────────────────────────────────────────────────────────────────┘│
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Files to Create
+## Database Changes Required
 
-| File | Purpose |
+### New Table: `payroll_forecasts` (optional, for caching)
+
+```sql
+CREATE TABLE payroll_forecasts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id),
+  period_start DATE NOT NULL,
+  period_end DATE NOT NULL,
+  forecast_data JSONB NOT NULL,
+  calculated_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  UNIQUE(organization_id, period_start, period_end)
+);
+```
+
+### New Table: `payroll_analytics_snapshots` (for historical trends)
+
+```sql
+CREATE TABLE payroll_analytics_snapshots (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id),
+  snapshot_date DATE NOT NULL,
+  metrics JSONB NOT NULL,
+  -- Sample metrics:
+  -- {
+  --   "ytd_gross": 284500,
+  --   "ytd_commissions": 128250,
+  --   "labor_cost_ratio": 0.32,
+  --   "commission_ratio": 0.45,
+  --   "active_employees": 12,
+  --   "avg_pay_per_employee": 3954
+  -- }
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  
+  UNIQUE(organization_id, snapshot_date)
+);
+```
+
+---
+
+## New Components to Create
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `PayrollOverview.tsx` | `src/components/dashboard/payroll/` | Executive dashboard with KPIs |
+| `PayrollForecastChart.tsx` | `src/components/dashboard/payroll/analytics/` | Forecast visualization |
+| `CompensationBreakdownChart.tsx` | `src/components/dashboard/payroll/analytics/` | Pie chart of pay types |
+| `TeamCompensationTable.tsx` | `src/components/dashboard/payroll/analytics/` | Employee grid with projections |
+| `EmployeeCompensationModal.tsx` | `src/components/dashboard/payroll/analytics/` | Deep-dive employee modal |
+| `TierProgressionCard.tsx` | `src/components/dashboard/payroll/analytics/` | Commission tier progress |
+| `CommissionInsights.tsx` | `src/components/dashboard/payroll/` | Tier analytics tab content |
+| `PayrollTrendChart.tsx` | `src/components/dashboard/payroll/analytics/` | Historical stacked area chart |
+| `PeriodComparisonCard.tsx` | `src/components/dashboard/payroll/analytics/` | Side-by-side comparison |
+
+## New Hooks to Create
+
+| Hook | Purpose |
 |------|---------|
-| `src/hooks/usePaySchedule.ts` | Hook for managing pay schedule settings |
-| `src/components/dashboard/payroll/PayScheduleCard.tsx` | Settings UI component |
+| `usePayrollForecasting` | Calculate projections for current/future periods |
+| `usePayrollAnalytics` | Aggregate metrics for overview dashboard |
+| `useEmployeeCompensationDetails` | Per-employee deep-dive data |
+| `useTierDistribution` | Commission tier analytics |
+| `usePayrollTrends` | Historical trend data for charts |
+
+---
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/PinnedAnalyticsCard.tsx` | Add `todayToPayday` type and calculation |
-| `src/components/dashboard/AnalyticsFilterBar.tsx` | Add new filter option |
-| `src/components/dashboard/AnalyticsFilterBadge.tsx` | Add label for new option |
-| `src/components/dashboard/CommandCenterAnalytics.tsx` | Add new filter option |
-| `src/pages/dashboard/admin/AnalyticsHub.tsx` | Add new filter option |
-| `src/pages/dashboard/admin/Payroll.tsx` | Add PayScheduleCard to Settings tab |
-| `src/components/dashboard/payroll/steps/PayPeriodStep.tsx` | Add "Current Pay Period" preset |
-| `src/hooks/useMyPayData.ts` | Use configured pay schedule |
+| `src/pages/dashboard/admin/Payroll.tsx` | Add new tabs, restructure layout |
+| `src/hooks/useCommissionTiers.ts` | Add tier progression calculation |
+| `src/hooks/usePayrollCalculations.ts` | Add forecasting methods |
+| `src/components/dashboard/payroll/PayrollHistoryTable.tsx` | Add trend charts |
 
 ---
 
-## User Experience
+## Implementation Priority
 
-| Role | Can Configure Pay Schedule? | Can Use "Today to Next Pay Day" Filter? |
-|------|-----------------------------|----------------------------------------|
-| Admin/Owner | Yes | Yes |
-| Manager | No | Yes |
-| Stylist | No | Yes (for My Stats) |
+| Priority | Feature | Estimated Complexity |
+|----------|---------|---------------------|
+| 1 | Overview Dashboard with KPIs | Medium |
+| 2 | Current Period Forecasting | Medium |
+| 3 | Team Breakdown Table | Medium |
+| 4 | Employee Detail Modal with Tier Progress | Medium |
+| 5 | Commission Insights Tab | High |
+| 6 | Historical Trend Charts | Medium |
+| 7 | Period Comparison Tool | Low |
+| 8 | Forecast Chart (multi-period) | High |
 
 ---
 
-## Default Values
+## Additional Enhancement Suggestions
 
-If no pay schedule is configured:
-- Falls back to semi-monthly schedule (1st and 15th)
-- "Today to Next Pay Day" calculates based on this default
-- Users are prompted to configure in Payroll Settings
+1. **Export Capabilities**: PDF payroll reports, CSV data exports
+2. **Notification System**: Alerts when employees approach tier thresholds
+3. **Budget vs Actual**: Set payroll budget and track variance
+4. **Seasonal Analysis**: Identify high/low payroll months
+5. **What-If Simulator**: "If we hire 2 more stylists..." impact analysis
+6. **Commission Leaderboard**: Gamify sales with rankings
+7. **Mobile Payroll Summary**: Quick stats for managers on-the-go
+8. **Audit Trail**: Track all payroll adjustments and overrides
 
