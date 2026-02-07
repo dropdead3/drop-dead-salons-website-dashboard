@@ -1,174 +1,146 @@
 
-# Double-Click to Hide Numbers Feature
+# Role-Based Visibility for GROWTH Navigation Section
 
-## Overview
+## Summary
 
-Add a "double-click to hide" interaction to all financial amounts. When numbers are **visible** (not blurred), double-clicking any sales/financial number will immediately blur all numbers across the dashboard. This provides a quick privacy mode for when someone walks up to your screen.
-
----
-
-## How It Works
-
-| Current State | User Action | Result |
-|---------------|-------------|--------|
-| Numbers visible | Double-click any amount | All numbers blur immediately |
-| Numbers blurred | Single-click any amount | Confirmation dialog to reveal |
-| Numbers blurred | Double-click any amount | No action (already hidden) |
+Configure the GROWTH navigation section so that:
+- **Training** → Visible to Management + Stylists + Stylist Assistants
+- **Program Team Overview** → Visible only to Management (super_admin, admin, manager)
+- **New-Client Engine Program** → Visible only to Stylists + Stylist Assistants
+- **Ring the Bell** → Visible only to Stylists + Stylist Assistants
+- **My Graduation** → Visible only to Stylist Assistants (already configured)
 
 ---
 
 ## Implementation Approach
 
-### 1. Add `quickHide()` Function to Context
+### Option A: Modify Filter Logic + Add Roles (Recommended)
 
-Add a new function to `HideNumbersContext` that immediately hides numbers without confirmation (since hiding is the "safe" action):
+Update `filterNavItems` to check **both** permission AND roles when both are specified, then add `roles` restrictions to nav items.
 
-```typescript
-interface HideNumbersContextType {
-  hideNumbers: boolean;
-  toggleHideNumbers: () => void;
-  requestUnhide: () => void;
-  quickHide: () => void;  // NEW - instant hide on double-click
-  isLoading: boolean;
-}
+**Current logic:**
+```
+if permission → check permission only
+else if roles → check roles
+else → show to all
 ```
 
-### 2. Update `BlurredAmount` Component
-
-Add `onDoubleClick` handler that calls `quickHide()` when numbers are visible:
-
-```typescript
-<Component 
-  className={className}
-  onDoubleClick={() => !hideNumbers && quickHide()}
-  title={!hideNumbers ? 'Double-click to hide' : 'Click to reveal'}
->
-  {children}
-</Component>
+**New logic:**
+```
+if permission → check permission
+  if also has roles → also check roles (must have both)
+else if roles → check roles
+else → show to all
 ```
 
-### 3. Update `AnimatedBlurredAmount` Component
+### Changes
 
-Same pattern - add double-click handler:
+#### 1. Update `filterNavItems` function
+
+Modify the function to respect both `permission` AND `roles` when both are specified:
 
 ```typescript
-<span
-  ref={elementRef}
-  onDoubleClick={() => !hideNumbers && quickHide()}
-  title={hideNumbers ? 'Click to reveal' : 'Double-click to hide'}
->
-  {prefix}{formattedValue}{suffix}
-</span>
+const filterNavItems = (items: NavItem[]) => {
+  return items.filter(item => {
+    // Check platform role restriction first (uses hierarchy)
+    if (item.platformRoles && item.platformRoles.length > 0) {
+      const hasRequiredPlatformRole = item.platformRoles.some(
+        role => hasPlatformRoleOrHigher(role)
+      );
+      if (!hasRequiredPlatformRole) return false;
+    }
+    
+    // Check permission if specified
+    let hasRequiredPermission = true;
+    if (item.permission) {
+      hasRequiredPermission = hasPermission(item.permission);
+    }
+    
+    // Check roles if specified
+    let hasRequiredRole = true;
+    if (item.roles && item.roles.length > 0) {
+      hasRequiredRole = item.roles.some(role => roles.includes(role));
+    }
+    
+    // Must have both permission (if specified) AND role (if specified)
+    return hasRequiredPermission && hasRequiredRole;
+  });
+};
+```
+
+#### 2. Update `growthNavItems` array
+
+```typescript
+const growthNavItems: NavItem[] = [
+  // Training - visible to management + stylists + stylist assistants
+  { 
+    href: '/dashboard/training', 
+    label: 'Training', 
+    icon: Video, 
+    permission: 'view_training',
+    roles: ['super_admin', 'admin', 'manager', 'stylist', 'stylist_assistant']
+  },
+  // New-Client Engine Program - only stylists + stylist assistants
+  { 
+    href: '/dashboard/program', 
+    label: 'New-Client Engine Program', 
+    icon: Target, 
+    permission: 'access_client_engine',
+    roles: ['stylist', 'stylist_assistant']
+  },
+  // Program Team Overview - only management (permission already restricts this)
+  { 
+    href: '/dashboard/admin/team', 
+    label: 'Program Team Overview', 
+    icon: Users, 
+    permission: 'view_team_overview',
+    roles: ['super_admin', 'admin', 'manager']
+  },
+  // Ring the Bell - only stylists + stylist assistants
+  { 
+    href: '/dashboard/ring-the-bell', 
+    label: 'Ring the Bell', 
+    icon: Bell, 
+    permission: 'ring_the_bell',
+    roles: ['stylist', 'stylist_assistant']
+  },
+  // My Graduation - only stylist assistants (already configured)
+  { 
+    href: '/dashboard/my-graduation', 
+    label: 'My Graduation', 
+    icon: GraduationCap, 
+    permission: 'view_my_graduation', 
+    roles: ['stylist_assistant'] 
+  },
+];
 ```
 
 ---
 
-## User Experience
+## Role Visibility Summary
 
-**When numbers are visible:**
-- Hovering over amounts shows tooltip: "Double-click to hide"
-- Double-clicking instantly blurs all financial data
-- Single-click does nothing (no accidental triggers)
-
-**When numbers are hidden:**
-- Hovering shows tooltip: "Click to reveal"
-- Single-click opens confirmation dialog
-- Double-click has no effect
+| Link | super_admin | admin | manager | stylist | stylist_assistant |
+|------|-------------|-------|---------|---------|-------------------|
+| Training | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Program Team Overview | ✓ | ✓ | ✓ | ✗ | ✗ |
+| New-Client Engine Program | ✗ | ✗ | ✗ | ✓ | ✓ |
+| Ring the Bell | ✗ | ✗ | ✗ | ✓ | ✓ |
+| My Graduation | ✗ | ✗ | ✗ | ✗ | ✓ |
 
 ---
 
 ## Files to Modify
 
-| File | Changes |
-|------|---------|
-| `src/contexts/HideNumbersContext.tsx` | Add `quickHide()` function to context; update `BlurredAmount` component with `onDoubleClick` |
-| `src/components/ui/AnimatedBlurredAmount.tsx` | Add `onDoubleClick` handler for quick hide |
+| File | Change |
+|------|--------|
+| `src/components/dashboard/DashboardLayout.tsx` | Update `filterNavItems` function to check both permission AND roles; update `growthNavItems` array with role restrictions |
 
 ---
 
-## Technical Details
+## Technical Notes
 
-### `quickHide()` Function
+1. **Dual Check Logic**: The updated filter ensures that if BOTH `permission` and `roles` are specified, the user must satisfy BOTH conditions. This prevents permission-only bypass.
 
-```typescript
-// Called on double-click - immediately hides without confirmation
-const quickHide = async () => {
-  if (!user || hideNumbers) return; // Already hidden or not logged in
-  
-  setHideNumbers(true);
-  
-  // Persist to database
-  try {
-    await supabase
-      .from('employee_profiles')
-      .update({ hide_numbers: true })
-      .eq('user_id', user.id);
-  } catch (err) {
-    console.error('Error saving hide_numbers preference:', err);
-  }
-};
-```
+2. **Backward Compatibility**: Items that only have `permission` OR only have `roles` will continue to work as before.
 
-### Updated `BlurredAmount` Component
-
-```typescript
-export function BlurredAmount({ 
-  children, 
-  className,
-  as: Component = 'span'
-}: BlurredAmountProps) {
-  const { hideNumbers, requestUnhide, quickHide } = useHideNumbers();
-  
-  const handleDoubleClick = () => {
-    if (!hideNumbers) {
-      quickHide();
-    }
-  };
-  
-  if (!hideNumbers) {
-    return (
-      <Component 
-        className={cn(className, 'cursor-pointer')} 
-        onDoubleClick={handleDoubleClick}
-        title="Double-click to hide"
-      >
-        {children}
-      </Component>
-    );
-  }
-  
-  return (
-    <Component 
-      className={cn(className, 'blur-md select-none cursor-pointer transition-all duration-200')} 
-      tabIndex={0}
-      onClick={requestUnhide}
-      onKeyDown={(e) => e.key === 'Enter' && requestUnhide()}
-      title="Click to reveal"
-    >
-      {children}
-    </Component>
-  );
-}
-```
-
----
-
-## Benefits
-
-1. **Quick Privacy**: Instantly hide sensitive data when someone approaches
-2. **Intuitive**: Double-click is a natural "toggle" gesture
-3. **No Confirmation Needed**: Hiding is the safe/secure action
-4. **Reversible**: Click the eye icon in header or click blurred amount to reveal
-
----
-
-## Implementation Steps
-
-| Step | Task |
-|------|------|
-| 1 | Add `quickHide` function to `HideNumbersContextType` interface |
-| 2 | Implement `quickHide` in `HideNumbersProvider` |
-| 3 | Export `quickHide` in context value |
-| 4 | Update `BlurredAmount` to handle double-click when visible |
-| 5 | Update `AnimatedBlurredAmount` to handle double-click when visible |
-| 6 | Add cursor and title hints for discoverability |
+3. **Super Admin Override**: Note that super_admin is explicitly included in the roles arrays where they should have access. This ensures super admins see what they need to see.
