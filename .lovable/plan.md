@@ -1,197 +1,152 @@
 
-# Coaching & Accountability System
+# Leadership Accountability Overview & Meeting Request System
 
 ## Overview
 
-This feature transforms the existing basic 1:1 meeting scheduling into a comprehensive coaching and accountability platform. Coaches and leadership can log detailed meeting notes, create follow-up action items with reminders, track accountability goals, and send check-in reports to team members.
+This feature adds three key capabilities to the coaching system:
+
+1. **Accountability Overview** - A dedicated dashboard for leadership showing all accountability items they've committed to help stylists with
+2. **Meeting Request System** - Allow managers to request that stylists schedule a meeting with them
+3. **New Meeting Type** - Add "Success Alignment Session" (SAS) to meeting types
 
 ---
 
-## Architecture
+## Feature Details
 
-### Database Schema
+### 1. Accountability Overview Tab
 
-```text
-one_on_one_meetings (existing)
-    │
-    ├── meeting_notes (NEW)
-    │   ├── Structured note-taking with templates
-    │   ├── Private vs. shared visibility
-    │   └── Rich text content
-    │
-    ├── accountability_items (NEW)
-    │   ├── Action items with due dates
-    │   ├── Check-in reminders
-    │   ├── Completion tracking
-    │   └── Status workflow
-    │
-    └── meeting_reports (NEW)
-        ├── Generated check-in reports
-        ├── Email delivery status
-        └── Team member acknowledgment
-```
+A new **"My Commitments"** tab in the Schedule Meeting page for coaches/managers showing:
+
+- All accountability items where they are the coach, grouped by team member
+- Filter by status (pending, in progress, overdue, completed)
+- Quick view of due dates and priorities
+- Easy navigation to the meeting where each item was created
+- Summary stats (total items, overdue count, completion rate)
+
+This flips the perspective - instead of "what I assigned to stylists," it shows "what I promised to help stylists achieve."
+
+### 2. Manager-Initiated Meeting Requests
+
+New database table and UI flow allowing managers to request a stylist schedules a meeting:
+
+**Flow:**
+1. Manager selects a team member and creates a "meeting request"
+2. System sends a notification to the stylist
+3. Stylist sees the request in their Schedule Meeting page
+4. Stylist schedules the actual meeting (selecting date/time)
+5. Flow continues with normal meeting confirmation
+
+This is different from the current flow where only stylists initiate meetings.
+
+### 3. Success Alignment Session (SAS) Meeting Type
+
+Add new meeting type with value `sas` and label "Success Alignment Session (SAS)" to the existing meeting types list.
 
 ---
 
-## Database Tables
+## Database Changes
 
-### 1. `meeting_notes`
-Stores detailed, structured notes from each 1:1 meeting.
+### New Table: `meeting_requests`
+
+Tracks manager-initiated requests for team members to schedule meetings.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | id | UUID | Primary key |
-| meeting_id | UUID | References one_on_one_meetings |
-| coach_id | UUID | The coach who wrote the note |
-| content | TEXT | Rich text note content |
-| topic_category | TEXT | Discussion topic (performance, goals, feedback, development, personal, other) |
-| is_private | BOOLEAN | Private to coach only vs. shared with team member |
-| created_at | TIMESTAMP | When note was created |
-| updated_at | TIMESTAMP | Last modification |
-
-### 2. `accountability_items`
-Tracks action items and goals that need follow-up.
-
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| meeting_id | UUID | Origin meeting (nullable for standalone items) |
-| coach_id | UUID | Coach who created the item |
-| team_member_id | UUID | Team member responsible |
-| title | TEXT | Brief action item title |
-| description | TEXT | Detailed description |
-| due_date | DATE | When item should be completed |
-| reminder_date | DATE | When to send reminder notification |
-| reminder_sent | BOOLEAN | Track if reminder was sent |
-| status | TEXT | pending, in_progress, completed, cancelled |
-| priority | TEXT | low, medium, high |
-| completed_at | TIMESTAMP | When marked complete |
-| completion_notes | TEXT | Notes on completion |
-| created_at | TIMESTAMP | Creation timestamp |
+| manager_id | UUID | Manager who requested the meeting |
+| team_member_id | UUID | Stylist who should schedule |
+| reason | TEXT | Why the meeting is being requested |
+| priority | TEXT | low, medium, high, urgent |
+| status | TEXT | pending, scheduled, cancelled, expired |
+| linked_meeting_id | UUID | The meeting created in response (nullable) |
+| expires_at | DATE | Optional deadline to schedule by |
+| created_at | TIMESTAMP | When request was created |
 | updated_at | TIMESTAMP | Last update |
 
-### 3. `meeting_reports`
-Stores generated check-in reports sent to team members.
+### Modification: Add meeting type
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| meeting_id | UUID | References the meeting |
-| coach_id | UUID | Who generated the report |
-| team_member_id | UUID | Report recipient |
-| report_content | TEXT | Compiled report content (markdown) |
-| included_notes | JSONB | Which note IDs were included |
-| included_items | JSONB | Which accountability items were included |
-| sent_at | TIMESTAMP | When email was sent |
-| acknowledged_at | TIMESTAMP | When team member acknowledged |
-| created_at | TIMESTAMP | Creation timestamp |
+No schema change needed - meeting_type is already a TEXT field. Just update the frontend constants.
 
 ---
 
-## Feature Components
+## Component Changes
 
-### 1. Enhanced Meeting Details Page
-**Path:** `/dashboard/meeting/:id`
+### 1. Update `src/pages/dashboard/ScheduleMeeting.tsx`
 
-A dedicated page for viewing and managing a specific 1:1 meeting with:
+**Add new tab: "My Commitments"** (visible only to coaches)
+- Shows accountability items where coach_id = current user
+- Grouped by team member with avatar + name headers
+- Each item shows: title, due date, priority, status
+- Click to navigate to meeting details
+- Stats header: X active items, Y overdue
 
-- **Meeting Summary Header** - Date, time, participants, status
-- **Notes Section** - Add/edit meeting notes with topic categorization
-- **Accountability Items Panel** - Create and track action items
-- **Report Generator** - Build and send check-in reports
-- **Meeting History** - View past meetings with this team member
+**Add new tab: "Meeting Requests"** (visible to all)
+- For managers: show requests they've sent
+- For stylists: show requests awaiting their scheduling
 
-### 2. Coach Dashboard Tab (ScheduleMeeting.tsx enhancement)
-Add a new **"Coaching Hub"** tab for coaches showing:
+**Update meeting types constant:**
+```typescript
+const meetingTypes = [
+  { value: 'coaching', label: 'Coaching Session' },
+  { value: 'check_in', label: 'Check-in' },
+  { value: 'feedback', label: 'Feedback Review' },
+  { value: 'sas', label: 'Success Alignment Session (SAS)' },
+  { value: 'other', label: 'Other' },
+];
+```
 
-- Upcoming meetings with quick-access
-- Pending accountability items across all team members
-- Overdue items requiring follow-up
-- Recent meeting activity
+### 2. Update `src/pages/dashboard/MeetingDetails.tsx`
 
-### 3. Meeting Notes Component
-A rich note-taking interface with:
+Add SAS to meeting types map for display.
 
-- Topic category selection (dropdown)
-- Private/shared visibility toggle
-- Auto-save functionality
-- Note templates for common meeting types
+### 3. Create `src/components/coaching/ManagerMeetingRequest.tsx`
 
-### 4. Accountability Item Manager
-Interface for creating and tracking accountability items:
+Dialog/form for managers to:
+- Select team member from directory
+- Enter reason for meeting request
+- Set priority level
+- Optionally set deadline
 
-- Create new items linked to meetings
-- Set due dates and reminder dates
-- Priority levels with visual indicators
-- Status workflow (pending → in_progress → completed)
-- Quick completion with notes
+### 4. Create `src/components/coaching/PendingMeetingRequests.tsx`
 
-### 5. Check-in Report Builder
-Generate and send summary reports:
+Card showing:
+- For stylists: pending requests from managers to schedule
+- For managers: status of requests they've sent
 
-- Select notes to include (respects privacy settings)
-- Include open accountability items
-- Preview before sending
-- Email delivery via edge function
-- Track acknowledgment
+### 5. Create `src/components/coaching/AccountabilityOverview.tsx`
 
-### 6. Team Member View
-For team members to see their:
-
-- Shared meeting notes
-- Assigned accountability items
-- Received check-in reports
-- Acknowledgment actions
+Dashboard component showing all commitments:
+- Stats bar: total active, overdue, completed this week
+- Team member sections with their items
+- Filter and sort controls
+- Quick status update capabilities
 
 ---
 
-## Edge Functions
+## New Hooks
 
-### 1. `send-accountability-reminders`
-Scheduled function (daily via pg_cron) that:
+### `src/hooks/useMeetingRequests.ts`
 
-- Queries accountability_items where reminder_date = today
-- Sends notifications to both coach and team member
-- Creates in-app notifications
-- Sends email reminders if enabled
-- Marks reminder_sent = true
-
-### 2. `send-meeting-report`
-Invoked when coach sends a check-in report:
-
-- Compiles selected notes and accountability items
-- Generates formatted email
-- Sends via Resend
-- Creates in-app notification for team member
-- Records in meeting_reports table
-
-### 3. `check-overdue-items`
-Daily check for overdue accountability items:
-
-- Finds items past due_date with status not completed
-- Escalates to coach with notification
-- Optional: sends gentle reminder to team member
+- `useMeetingRequests()` - Fetch requests for current user
+- `useCreateMeetingRequest()` - Manager creates request
+- `useUpdateMeetingRequestStatus()` - Update status
+- `useLinkMeetingToRequest()` - Connect scheduled meeting to request
 
 ---
 
-## UI/UX Flow
+## Notification Integration
 
-### For Coaches (Admin/Manager)
+When a manager creates a meeting request:
 
-1. **Schedule Meeting** - Use existing flow
-2. **Conduct Meeting** - Meeting occurs
-3. **Log Notes** - Open meeting details, add categorized notes
-4. **Create Action Items** - Add accountability items with due dates
-5. **Set Reminders** - Configure reminder dates for follow-up
-6. **Send Report** - Generate and email check-in summary
-7. **Track Progress** - Monitor item completion from dashboard
+1. Insert into `notifications` table:
+   - user_id: team_member_id
+   - type: `meeting_request`
+   - title: "{Manager Name} has requested a meeting"
+   - message: "{Reason}"
+   - link: `/dashboard/schedule-meeting?tab=requests`
 
-### For Team Members
-
-1. **View Meeting History** - See past 1:1s
-2. **Access Shared Notes** - Read non-private notes
-3. **Track Action Items** - View assigned items and mark progress
-4. **Acknowledge Reports** - Confirm receipt of check-in reports
+2. Stylist sees notification in bell menu
+3. Clicking navigates to schedule meeting with request context
 
 ---
 
@@ -199,66 +154,63 @@ Daily check for overdue accountability items:
 
 | File | Purpose |
 |------|---------|
-| `supabase/functions/send-accountability-reminders/index.ts` | Daily reminder edge function |
-| `supabase/functions/send-meeting-report/index.ts` | Report email sender |
-| `src/pages/dashboard/MeetingDetails.tsx` | Full meeting view with notes/items |
-| `src/components/coaching/MeetingNotes.tsx` | Notes management component |
-| `src/components/coaching/AccountabilityItems.tsx` | Action items manager |
-| `src/components/coaching/ReportBuilder.tsx` | Check-in report generator |
-| `src/components/coaching/TeamMemberAccountability.tsx` | Team member view of their items |
-| `src/hooks/useMeetingNotes.ts` | Notes CRUD operations |
-| `src/hooks/useAccountabilityItems.ts` | Accountability items hook |
-| `src/hooks/useMeetingReports.ts` | Reports management hook |
+| `src/hooks/useMeetingRequests.ts` | CRUD operations for meeting requests |
+| `src/components/coaching/AccountabilityOverview.tsx` | Leadership commitments dashboard |
+| `src/components/coaching/ManagerMeetingRequest.tsx` | Request meeting dialog |
+| `src/components/coaching/PendingMeetingRequests.tsx` | View pending requests |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/dashboard/ScheduleMeeting.tsx` | Add Coaching Hub tab, link to meeting details |
-| `src/hooks/useOneOnOneMeetings.ts` | Add meeting completion workflow |
-| `src/components/dashboard/DashboardLayout.tsx` | Add coaching nav item if needed |
+| `src/pages/dashboard/ScheduleMeeting.tsx` | Add tabs, update meeting types |
+| `src/pages/dashboard/MeetingDetails.tsx` | Add SAS to type map |
+| `src/hooks/useOneOnOneMeetings.ts` | Add hook to link meeting to request |
+| `src/hooks/useAccountabilityItems.ts` | Add hook for coach overview query |
 
 ---
 
-## Notification Types
+## UI Flow Summary
 
-| Type | Recipient | Trigger |
-|------|-----------|---------|
-| `accountability_reminder` | Coach + Team Member | reminder_date reached |
-| `accountability_overdue` | Coach | due_date passed without completion |
-| `meeting_report_received` | Team Member | Coach sends check-in report |
-| `item_completed` | Coach | Team member marks item complete |
+### Manager Creating Meeting Request
 
----
+1. Open Schedule Meeting page
+2. Click "Request Meeting" button (new)
+3. Select team member from dropdown
+4. Enter reason and priority
+5. Submit - notification sent to stylist
 
-## Enhancement Suggestions
+### Stylist Responding to Request
 
-1. **Meeting Templates** - Pre-built agenda templates for coaching, performance reviews, goal-setting, etc.
+1. See notification in bell
+2. Navigate to Schedule Meeting
+3. See "Pending Requests" section
+4. Click "Schedule" on a request
+5. Normal meeting scheduling flow (with manager pre-selected)
+6. Meeting linked to original request
 
-2. **Goal Tracking Integration** - Link accountability items to larger quarterly/annual goals for team members
+### Manager Viewing Commitments
 
-3. **Analytics Dashboard** - Track coaching effectiveness metrics:
-   - Average items completed on time
-   - Meeting frequency per team member
-   - Topic distribution analysis
-   - Trend tracking over time
-
-4. **AI Meeting Summarizer** - Use the AI assistant to help coaches summarize notes or suggest action items based on discussion content
-
-5. **Recurring Accountability Items** - Create repeating action items (e.g., weekly check-ins, monthly reviews)
-
-6. **Progress Photos/Attachments** - Allow uploading evidence of completed work
-
-7. **360-Degree Feedback** - Enable team members to add their own notes/reflections on meetings
-
-8. **Calendar Integration** - Sync accountability due dates with external calendars
+1. Open Schedule Meeting page
+2. Click "My Commitments" tab
+3. See all accountability items organized by team member
+4. Filter by status, click to see meeting context
+5. Track overdue items easily
 
 ---
 
-## Technical Considerations
+## Technical Notes
 
-- **RLS Policies**: Coaches can see all their meetings/notes; team members only see shared content
-- **Email Templates**: Add new templates for accountability reminders and meeting reports
-- **notification_preferences**: Add toggles for coaching-related notifications
-- **Realtime**: Enable for accountability_items so status updates appear instantly
+### RLS Policies for meeting_requests
 
+- Managers can create requests where manager_id = their user_id
+- Team members can view requests where team_member_id = their user_id
+- Managers can view their own requests
+- Only team member can update status to 'scheduled'
+- Only manager can cancel
+
+### Integration Points
+
+- Accountability items already have coach_id - reuse for overview
+- Notifications table already exists - add new type
+- Team directory hook available for member selection
