@@ -344,6 +344,11 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
         'view_command_center', 'view_team_directory', 'view_handbooks', 'view_onboarding',
         'view_own_stats', 'view_booking_calendar', 'view_own_appointments'
       ],
+      bookkeeper: [
+        'view_command_center', 'manage_payroll', 'view_payroll_reports', 'manage_employee_compensation',
+        'view_transactions', 'view_sales_analytics', 'view_all_stats', 'view_all_locations_analytics',
+        'view_rent_analytics', 'export_financial_data'
+      ],
     };
     return rolePermissionMap[role] || [];
   };

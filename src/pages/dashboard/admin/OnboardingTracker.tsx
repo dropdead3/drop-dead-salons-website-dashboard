@@ -132,6 +132,7 @@ const ROLE_LABELS: Record<AppRole, string> = {
   admin_assistant: 'Admin Assistant',
   operations_assistant: 'Operations Assistant',
   booth_renter: 'Booth Renter',
+  bookkeeper: 'Bookkeeper',
 };
 
 export default function OnboardingTracker() {
