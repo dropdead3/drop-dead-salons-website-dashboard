@@ -1,99 +1,102 @@
 
-# Hide Sales Overview and Forecasting Cards from Manager Role on Command Center
+# Hide Sales Reports When Sales Visibility is Disabled
 
-## Overview
+## Problem
 
-Ensure that when the Manager role has Sales visibility turned off, the Sales Overview card and Forecasting (Revenue Forecast) card on the Command Center dashboard are also hidden.
+In the Analytics & Reports page (Reports tab), sales-related reports are still visible for the Manager role even when the Sales visibility toggle is OFF:
 
----
+- Daily Sales Summary
+- Sales by Stylist  
+- Sales by Location
+- Product Sales Report
 
-## Current Issue
-
-The visibility system has **separate controls** for:
-1. **Analytics Hub tabs** (e.g., `analytics_sales_tab`) - Controls access to the full analytics page
-2. **Command Center pinned cards** (e.g., `sales_overview`, `week_ahead_forecast`) - Controls which cards appear on the dashboard home
-
-Currently:
-- `analytics_sales_tab` is **OFF** for Manager ✅
-- `sales_overview` is **ON** for Manager ❌
-- `week_ahead_forecast` is **ON** for Manager ❌
-- `revenue_forecast` is **ON** for Manager ❌
-
-This means Managers can still see sales revenue data on the Command Center even though the Analytics Sales tab is hidden.
+These reports display revenue data that should be restricted when `analytics_sales_tab` is disabled.
 
 ---
 
 ## Solution
 
-Enhance the pinned analytics cards on the Command Center to respect **both** the card-level visibility AND the parent tab visibility. If a user cannot access the Sales tab, they should also not see sales-related cards on the Command Center.
+Apply the same pattern used for the Command Center cards: inherit visibility from the parent `analytics_sales_tab`. When sales visibility is disabled, the Sales report category and all its reports should be hidden.
 
-### Changes to PinnedAnalyticsCard.tsx
+---
 
-**File: `src/components/dashboard/PinnedAnalyticsCard.tsx`**
+## Changes
 
-Add a secondary visibility check - if the parent analytics tab is hidden, also hide the related pinned cards:
+### Update ReportsTabContent.tsx
 
-| Card ID | Parent Tab Key | Description |
-|---------|----------------|-------------|
-| `sales_overview` | `analytics_sales_tab` | Sales Overview |
-| `top_performers` | `analytics_sales_tab` | Top Performers |
-| `revenue_breakdown` | `analytics_sales_tab` | Revenue Breakdown |
-| `team_goals` | `analytics_sales_tab` | Team Goals |
-| `week_ahead_forecast` | `analytics_sales_tab` | Forecasting Card |
-| `capacity_utilization` | `analytics_operations_tab` | Capacity Utilization |
-| `operations_stats` | `analytics_operations_tab` | Operations Stats |
+**File: `src/components/dashboard/analytics/ReportsTabContent.tsx`**
+
+| Change | Description |
+|--------|-------------|
+| Import `useElementVisibility` | Check if parent sales tab is visible |
+| Add visibility check for Sales category | Hide entire "Sales" sub-tab if sales visibility is off |
+| Wrap Sales TabsContent | Don't render sales reports content if hidden |
+| Auto-redirect logic | If user lands on "sales" category and it's hidden, redirect to first visible category |
 
 ```tsx
-// Define parent tab relationships
-const CARD_TO_TAB_MAP: Record<string, string> = {
-  'sales_overview': 'analytics_sales_tab',
-  'top_performers': 'analytics_sales_tab',
-  'revenue_breakdown': 'analytics_sales_tab',
-  'team_goals': 'analytics_sales_tab',
-  'week_ahead_forecast': 'analytics_sales_tab',
-  'capacity_utilization': 'analytics_operations_tab',
-  'operations_stats': 'analytics_operations_tab',
-  // ... etc
-};
+import { VisibilityGate, useElementVisibility } from '@/components/visibility/VisibilityGate';
 
-export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProps) {
-  // Check parent tab visibility
-  const parentTabKey = CARD_TO_TAB_MAP[cardId];
-  const parentTabVisible = useElementVisibility(parentTabKey || '');
-  
-  // If parent tab is hidden and we have a mapping, don't render
-  if (parentTabKey && !parentTabVisible) {
-    return null;
+// Check if parent sales tab is visible (determines if sales reports should show)
+const salesTabVisible = useElementVisibility('analytics_sales_tab');
+
+// Update report categories to filter based on visibility
+const visibleCategories = reportCategories.filter(cat => {
+  if (cat.id === 'sales' && !salesTabVisible) return false;
+  // Add other category visibility checks as needed
+  return true;
+});
+
+// Auto-redirect if current category is hidden
+useEffect(() => {
+  if (activeCategory === 'sales' && !salesTabVisible) {
+    const firstVisible = visibleCategories[0]?.id || 'staff';
+    setActiveCategory(firstVisible);
   }
-  
-  // ... rest of component
-}
+}, [activeCategory, salesTabVisible, visibleCategories]);
+```
+
+Then update the tab content rendering:
+
+```tsx
+{/* Only render Sales content if visible */}
+{salesTabVisible && (
+  <TabsContent value="sales" className="mt-6">
+    {renderReportCards(salesReports)}
+  </TabsContent>
+)}
 ```
 
 ---
 
-## Alternative: UI-Based Fix
+## Report Category to Parent Tab Mapping
 
-If you prefer not to change code, the Manager role's visibility can be updated directly in the Role Access Configurator:
-
-1. Go to **Settings > Access & Visibility > Role Access**
-2. Select **Manager** role
-3. Click the **Widgets** tab
-4. Find and toggle **OFF** these elements:
-   - Under "Sales" category: **Sales Overview**
-   - Under "Leadership Widgets" category: **Forecasting**
-   - Under "Analytics Hub - Sales" category: **Revenue Forecast**
-
-This approach requires manual configuration but gives full control over each element independently.
+| Report Category | Parent Visibility Key | Should Hide When |
+|-----------------|----------------------|------------------|
+| Sales | `analytics_sales_tab` | Sales tab hidden |
+| Staff | (always visible) | - |
+| Clients | (always visible) | - |
+| Operations | `analytics_operations_tab` | Operations tab hidden (optional) |
+| Financial | `analytics_sales_tab` | Sales tab hidden (financial includes revenue) |
 
 ---
 
-## Recommended Approach
+## Technical Details
 
-Implement the code-based solution because:
-1. It creates a logical relationship - if you can't access the Sales tab, you shouldn't see sales cards on the Command Center
-2. It reduces admin configuration burden
-3. It prevents accidental exposure of restricted data
+### Default Category Fallback
+
+When sales visibility is OFF and user tries to access the sales report category:
+1. The Sales sub-tab trigger will not render
+2. The Sales TabsContent will not render
+3. If `activeCategory === 'sales'`, auto-redirect to "staff" (next available category)
+
+### Financial Reports Consideration
+
+Financial reports (Revenue Trend, Commission, YoY) should also be hidden when sales visibility is off since they contain revenue data. Two options:
+
+1. **Hide entire Financial category** when sales is hidden
+2. **Keep Financial visible** but hide revenue-specific reports within it
+
+Option 1 is safer since most financial reports contain revenue data.
 
 ---
 
@@ -101,16 +104,24 @@ Implement the code-based solution because:
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/PinnedAnalyticsCard.tsx` | Add parent tab visibility check |
+| `src/components/dashboard/analytics/ReportsTabContent.tsx` | Add visibility checks for Sales and Financial categories |
 
 ---
 
-## Result
+## Visual Result
 
-When the Manager role has `analytics_sales_tab` set to hidden:
-- ✅ Sales tab in Analytics Hub is hidden
-- ✅ Sales Overview card on Command Center is automatically hidden
-- ✅ Forecasting card on Command Center is automatically hidden
-- ✅ Revenue Breakdown card on Command Center is automatically hidden
+When Sales visibility is OFF for Manager role:
 
-Managers will only see Command Center cards for analytics sections they have access to.
+**Before (Current - Broken)**
+```
+Sub-tabs: [Sales] [Staff] [Clients] [Operations] [Financial]
+Content: Shows Daily Sales Summary, Sales by Stylist, Sales by Location, Product Sales Report
+```
+
+**After (Fixed)**
+```
+Sub-tabs: [Staff] [Clients] [Operations]
+Content: Auto-redirects to Staff reports if user was on Sales
+```
+
+Manager will no longer see any sales reports or financial reports when the parent sales visibility is disabled.
