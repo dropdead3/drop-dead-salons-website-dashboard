@@ -10416,7 +10416,16 @@ export type Database = {
         | "walkin"
         | "other"
         | "salon_lead"
-      payroll_provider: "gusto" | "quickbooks"
+      payroll_provider:
+        | "gusto"
+        | "quickbooks"
+        | "adp"
+        | "paychex"
+        | "square"
+        | "onpay"
+        | "homebase"
+        | "rippling"
+        | "wave"
       program_status: "active" | "paused" | "completed" | "restarted"
       stylist_type: "independent" | "commission" | "salon_owner"
       ticket_priority: "low" | "medium" | "high" | "urgent"
@@ -10612,7 +10621,17 @@ export const Constants = {
         "other",
         "salon_lead",
       ],
-      payroll_provider: ["gusto", "quickbooks"],
+      payroll_provider: [
+        "gusto",
+        "quickbooks",
+        "adp",
+        "paychex",
+        "square",
+        "onpay",
+        "homebase",
+        "rippling",
+        "wave",
+      ],
       program_status: ["active", "paused", "completed", "restarted"],
       stylist_type: ["independent", "commission", "salon_owner"],
       ticket_priority: ["low", "medium", "high", "urgent"],

@@ -19,7 +19,12 @@ import { usePayrollConnection } from '@/hooks/usePayrollConnection';
 import { usePayroll } from '@/hooks/usePayroll';
 import { formatDistanceToNow } from 'date-fns';
 
-const providerConfig = {
+const providerConfig: Record<string, {
+  name: string;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+  accentColor: string;
+}> = {
   gusto: {
     name: 'Gusto',
     icon: DollarSign,
@@ -31,6 +36,48 @@ const providerConfig = {
     icon: Calculator,
     color: 'text-green-500 bg-green-500/10 border-green-500/20',
     accentColor: 'bg-green-500',
+  },
+  adp: {
+    name: 'ADP',
+    icon: RefreshCw,
+    color: 'text-red-500 bg-red-500/10 border-red-500/20',
+    accentColor: 'bg-red-500',
+  },
+  paychex: {
+    name: 'Paychex',
+    icon: CheckCircle,
+    color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+    accentColor: 'bg-blue-500',
+  },
+  square: {
+    name: 'Square Payroll',
+    icon: DollarSign,
+    color: 'text-slate-700 bg-slate-500/10 border-slate-500/20',
+    accentColor: 'bg-slate-700',
+  },
+  onpay: {
+    name: 'OnPay',
+    icon: DollarSign,
+    color: 'text-teal-500 bg-teal-500/10 border-teal-500/20',
+    accentColor: 'bg-teal-500',
+  },
+  homebase: {
+    name: 'Homebase',
+    icon: Clock,
+    color: 'text-purple-500 bg-purple-500/10 border-purple-500/20',
+    accentColor: 'bg-purple-500',
+  },
+  rippling: {
+    name: 'Rippling',
+    icon: RefreshCw,
+    color: 'text-indigo-500 bg-indigo-500/10 border-indigo-500/20',
+    accentColor: 'bg-indigo-500',
+  },
+  wave: {
+    name: 'Wave Payroll',
+    icon: DollarSign,
+    color: 'text-sky-500 bg-sky-500/10 border-sky-500/20',
+    accentColor: 'bg-sky-500',
   },
 };
 

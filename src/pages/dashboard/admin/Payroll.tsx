@@ -13,7 +13,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import { usePayrollConnection } from '@/hooks/usePayrollConnection';
-import { PayrollProviderSelector } from '@/components/dashboard/payroll/PayrollProviderSelector';
+import { PayrollProviderHub } from '@/components/dashboard/payroll/providers/PayrollProviderHub';
 import { PayrollConnectionCard } from '@/components/dashboard/payroll/PayrollConnectionCard';
 import { PayrollHistoryTable } from '@/components/dashboard/payroll/PayrollHistoryTable';
 import { EmployeePayrollList } from '@/components/dashboard/payroll/EmployeePayrollList';
@@ -162,28 +162,36 @@ export default function Payroll() {
               </TabsContent>
 
               <TabsContent value="settings">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <PayScheduleCard />
-                  
-                  <PayrollConnectionCard />
-                  
-                  {!isConnected && (
-                    <PayrollProviderSelector />
+                <div className="space-y-8">
+                  {/* Provider Connection Status */}
+                  {isConnected && (
+                    <div className="grid gap-6 md:grid-cols-2">
+                      <PayrollConnectionCard />
+                      <PayScheduleCard />
+                    </div>
                   )}
                   
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Pay Schedules</CardTitle>
-                      <CardDescription>
-                        Configure when employees get paid.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">
-                        Pay schedule configuration will be synced from your payroll provider once connected.
-                      </p>
-                    </CardContent>
-                  </Card>
+                  {/* Provider Selection Hub */}
+                  {!isConnected && (
+                    <PayrollProviderHub />
+                  )}
+                  
+                  {/* Additional Settings */}
+                  {isConnected && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Pay Schedules</CardTitle>
+                        <CardDescription>
+                          Configure when employees get paid.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Pay schedule configuration will be synced from your payroll provider once connected.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               </TabsContent>
             </Tabs>
