@@ -1,131 +1,197 @@
 
-# Add Help Center, Search & AI Assistant to Top Bar
+# Coaching & Accountability System
 
 ## Overview
 
-This plan adds three features to the dashboard top bar:
-1. **Help Center Quick Access** - A help icon button that opens the Help Center
-2. **Intelligent Search Bar** - A unified search for navigation, help articles, team members, and more
-3. **AI Assistant** - An integrated AI chat capability within the search bar for asking questions
+This feature transforms the existing basic 1:1 meeting scheduling into a comprehensive coaching and accountability platform. Coaches and leadership can log detailed meeting notes, create follow-up action items with reminders, track accountability goals, and send check-in reports to team members.
 
 ---
 
 ## Architecture
 
-### Component Structure
+### Database Schema
 
 ```text
-DashboardLayout.tsx
-└── Desktop Top Bar (lines 992-1066)
-    ├── TopBarSearch (new component)
-    │   ├── Search input with AI toggle
-    │   ├── Results dropdown
-    │   │   ├── Navigation results
-    │   │   ├── Help articles results
-    │   │   ├── Team members results
-    │   │   └── AI response section
-    │   └── AI conversation mode
-    └── Help Center button (new)
+one_on_one_meetings (existing)
+    │
+    ├── meeting_notes (NEW)
+    │   ├── Structured note-taking with templates
+    │   ├── Private vs. shared visibility
+    │   └── Rich text content
+    │
+    ├── accountability_items (NEW)
+    │   ├── Action items with due dates
+    │   ├── Check-in reminders
+    │   ├── Completion tracking
+    │   └── Status workflow
+    │
+    └── meeting_reports (NEW)
+        ├── Generated check-in reports
+        ├── Email delivery status
+        └── Team member acknowledgment
 ```
 
 ---
 
-## Changes Required
+## Database Tables
 
-### 1. Create Edge Function: `ai-assistant`
+### 1. `meeting_notes`
+Stores detailed, structured notes from each 1:1 meeting.
 
-**File:** `supabase/functions/ai-assistant/index.ts`
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| meeting_id | UUID | References one_on_one_meetings |
+| coach_id | UUID | The coach who wrote the note |
+| content | TEXT | Rich text note content |
+| topic_category | TEXT | Discussion topic (performance, goals, feedback, development, personal, other) |
+| is_private | BOOLEAN | Private to coach only vs. shared with team member |
+| created_at | TIMESTAMP | When note was created |
+| updated_at | TIMESTAMP | Last modification |
 
-Creates an edge function that connects to Lovable AI for answering user questions about the dashboard, salon operations, and general help queries.
+### 2. `accountability_items`
+Tracks action items and goals that need follow-up.
 
-- Uses Lovable AI gateway with `google/gemini-3-flash-preview` model
-- System prompt tailored for salon software assistant context
-- Supports streaming responses for real-time typing effect
-- Uses the existing `LOVABLE_API_KEY` (auto-configured)
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| meeting_id | UUID | Origin meeting (nullable for standalone items) |
+| coach_id | UUID | Coach who created the item |
+| team_member_id | UUID | Team member responsible |
+| title | TEXT | Brief action item title |
+| description | TEXT | Detailed description |
+| due_date | DATE | When item should be completed |
+| reminder_date | DATE | When to send reminder notification |
+| reminder_sent | BOOLEAN | Track if reminder was sent |
+| status | TEXT | pending, in_progress, completed, cancelled |
+| priority | TEXT | low, medium, high |
+| completed_at | TIMESTAMP | When marked complete |
+| completion_notes | TEXT | Notes on completion |
+| created_at | TIMESTAMP | Creation timestamp |
+| updated_at | TIMESTAMP | Last update |
 
-### 2. Update `supabase/config.toml`
+### 3. `meeting_reports`
+Stores generated check-in reports sent to team members.
 
-Add the new edge function configuration with JWT verification disabled for public access.
-
-### 3. Create `src/components/dashboard/TopBarSearch.tsx`
-
-A comprehensive search component with:
-
-**Features:**
-- Global search across navigation items, help articles, and team members
-- Keyboard shortcut (Cmd/Ctrl + K) to focus
-- AI mode toggle - when enabled, queries are sent to the AI assistant
-- Search results grouped by type with icons
-- AI response displayed inline with streaming text
-- Click-outside and Escape to close
-
-**Search Sources:**
-- **Navigation** - All sidebar navigation items
-- **Help Articles** - Knowledge base articles via `useKBSearch` hook
-- **Team Members** - Employee profiles for quick access
-- **AI Assistant** - Natural language questions answered by AI
-
-**UI Elements:**
-- Search icon input field
-- Sparkles icon to indicate AI mode
-- Grouped results with type badges
-- AI thinking/typing indicator
-- Result cards with navigation on click
-
-### 4. Update `src/components/dashboard/DashboardLayout.tsx`
-
-**Desktop Top Bar Changes (lines 992-1066):**
-
-- Add `TopBarSearch` component between sidebar toggle and right-side controls
-- Add Help Center quick-access button (HelpCircle icon) to right-side controls
-- Help button links directly to `/dashboard/help`
-
-**Mobile Header Changes (lines 817-893):**
-
-- Add condensed search trigger button
-- Add Help Center button to mobile header actions
-
-### 5. Create `src/hooks/useAIAssistant.ts`
-
-A custom hook for managing AI assistant state and streaming:
-
-- `sendMessage(query: string)` - Sends user query to AI
-- `response` - Current AI response (streamed)
-- `isLoading` - Loading state
-- `error` - Error handling for rate limits (429) and payment (402)
+| Column | Type | Description |
+|--------|------|-------------|
+| id | UUID | Primary key |
+| meeting_id | UUID | References the meeting |
+| coach_id | UUID | Who generated the report |
+| team_member_id | UUID | Report recipient |
+| report_content | TEXT | Compiled report content (markdown) |
+| included_notes | JSONB | Which note IDs were included |
+| included_items | JSONB | Which accountability items were included |
+| sent_at | TIMESTAMP | When email was sent |
+| acknowledged_at | TIMESTAMP | When team member acknowledged |
+| created_at | TIMESTAMP | Creation timestamp |
 
 ---
 
-## Technical Details
+## Feature Components
 
-### AI Assistant Integration
+### 1. Enhanced Meeting Details Page
+**Path:** `/dashboard/meeting/:id`
 
-The AI assistant uses Lovable AI with:
-- **Model:** `google/gemini-3-flash-preview` (fast, balanced capability)
-- **System Prompt:** Contextual for salon software, dashboard navigation, and help
-- **Streaming:** Token-by-token rendering for responsive UX
-- **Error Handling:** Graceful handling of rate limits with user-friendly messages
+A dedicated page for viewing and managing a specific 1:1 meeting with:
 
-### Search Implementation
+- **Meeting Summary Header** - Date, time, participants, status
+- **Notes Section** - Add/edit meeting notes with topic categorization
+- **Accountability Items Panel** - Create and track action items
+- **Report Generator** - Build and send check-in reports
+- **Meeting History** - View past meetings with this team member
 
-```text
-User types query
-    │
-    ├─ If AI mode disabled:
-    │   └─ Filter local data (nav items, cached help articles, team)
-    │
-    └─ If AI mode enabled:
-        └─ Send to AI edge function
-            └─ Stream response back to UI
-```
+### 2. Coach Dashboard Tab (ScheduleMeeting.tsx enhancement)
+Add a new **"Coaching Hub"** tab for coaches showing:
 
-### Keyboard Navigation
+- Upcoming meetings with quick-access
+- Pending accountability items across all team members
+- Overdue items requiring follow-up
+- Recent meeting activity
 
-- `Cmd/Ctrl + K` - Open/focus search
-- `Escape` - Close search
-- `Tab` - Toggle AI mode when search is focused
-- `Enter` on result - Navigate to that item
-- Arrow keys - Navigate through results
+### 3. Meeting Notes Component
+A rich note-taking interface with:
+
+- Topic category selection (dropdown)
+- Private/shared visibility toggle
+- Auto-save functionality
+- Note templates for common meeting types
+
+### 4. Accountability Item Manager
+Interface for creating and tracking accountability items:
+
+- Create new items linked to meetings
+- Set due dates and reminder dates
+- Priority levels with visual indicators
+- Status workflow (pending → in_progress → completed)
+- Quick completion with notes
+
+### 5. Check-in Report Builder
+Generate and send summary reports:
+
+- Select notes to include (respects privacy settings)
+- Include open accountability items
+- Preview before sending
+- Email delivery via edge function
+- Track acknowledgment
+
+### 6. Team Member View
+For team members to see their:
+
+- Shared meeting notes
+- Assigned accountability items
+- Received check-in reports
+- Acknowledgment actions
+
+---
+
+## Edge Functions
+
+### 1. `send-accountability-reminders`
+Scheduled function (daily via pg_cron) that:
+
+- Queries accountability_items where reminder_date = today
+- Sends notifications to both coach and team member
+- Creates in-app notifications
+- Sends email reminders if enabled
+- Marks reminder_sent = true
+
+### 2. `send-meeting-report`
+Invoked when coach sends a check-in report:
+
+- Compiles selected notes and accountability items
+- Generates formatted email
+- Sends via Resend
+- Creates in-app notification for team member
+- Records in meeting_reports table
+
+### 3. `check-overdue-items`
+Daily check for overdue accountability items:
+
+- Finds items past due_date with status not completed
+- Escalates to coach with notification
+- Optional: sends gentle reminder to team member
+
+---
+
+## UI/UX Flow
+
+### For Coaches (Admin/Manager)
+
+1. **Schedule Meeting** - Use existing flow
+2. **Conduct Meeting** - Meeting occurs
+3. **Log Notes** - Open meeting details, add categorized notes
+4. **Create Action Items** - Add accountability items with due dates
+5. **Set Reminders** - Configure reminder dates for follow-up
+6. **Send Report** - Generate and email check-in summary
+7. **Track Progress** - Monitor item completion from dashboard
+
+### For Team Members
+
+1. **View Meeting History** - See past 1:1s
+2. **Access Shared Notes** - Read non-private notes
+3. **Track Action Items** - View assigned items and mark progress
+4. **Acknowledge Reports** - Confirm receipt of check-in reports
 
 ---
 
@@ -133,41 +199,66 @@ User types query
 
 | File | Purpose |
 |------|---------|
-| `supabase/functions/ai-assistant/index.ts` | AI gateway edge function |
-| `src/components/dashboard/TopBarSearch.tsx` | Search bar component with AI |
-| `src/hooks/useAIAssistant.ts` | AI interaction hook |
+| `supabase/functions/send-accountability-reminders/index.ts` | Daily reminder edge function |
+| `supabase/functions/send-meeting-report/index.ts` | Report email sender |
+| `src/pages/dashboard/MeetingDetails.tsx` | Full meeting view with notes/items |
+| `src/components/coaching/MeetingNotes.tsx` | Notes management component |
+| `src/components/coaching/AccountabilityItems.tsx` | Action items manager |
+| `src/components/coaching/ReportBuilder.tsx` | Check-in report generator |
+| `src/components/coaching/TeamMemberAccountability.tsx` | Team member view of their items |
+| `src/hooks/useMeetingNotes.ts` | Notes CRUD operations |
+| `src/hooks/useAccountabilityItems.ts` | Accountability items hook |
+| `src/hooks/useMeetingReports.ts` | Reports management hook |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `supabase/config.toml` | Add ai-assistant function config |
-| `src/components/dashboard/DashboardLayout.tsx` | Add search bar and help button to top bar |
+| `src/pages/dashboard/ScheduleMeeting.tsx` | Add Coaching Hub tab, link to meeting details |
+| `src/hooks/useOneOnOneMeetings.ts` | Add meeting completion workflow |
+| `src/components/dashboard/DashboardLayout.tsx` | Add coaching nav item if needed |
 
 ---
 
-## User Experience Flow
+## Notification Types
 
-1. **Help Center Access:**
-   - Click HelpCircle icon in top bar → Opens `/dashboard/help`
-
-2. **Regular Search:**
-   - Click search bar or press Cmd+K
-   - Type query → See filtered results from nav, help articles, team
-   - Click result → Navigate to that page/section
-
-3. **AI Assistant:**
-   - Click sparkles icon or press Tab in search to enable AI mode
-   - Type natural language question
-   - See AI response stream in real-time
-   - AI provides contextual answers about the dashboard and salon operations
+| Type | Recipient | Trigger |
+|------|-----------|---------|
+| `accountability_reminder` | Coach + Team Member | reminder_date reached |
+| `accountability_overdue` | Coach | due_date passed without completion |
+| `meeting_report_received` | Team Member | Coach sends check-in report |
+| `item_completed` | Coach | Team member marks item complete |
 
 ---
 
-## Example AI Prompts & Responses
+## Enhancement Suggestions
 
-| User Query | AI Response |
-|------------|-------------|
-| "How do I add a new team member?" | "To add a new team member, go to Management Hub → Invitations & Approvals. Click 'Invite Staff' and enter their email..." |
-| "What's the leaderboard based on?" | "The team leaderboard ranks stylists based on weighted metrics including new clients, retail sales, and appointment bookings..." |
-| "How do I request an assistant?" | "Navigate to Team Tools → Assistant Schedule. You'll see your upcoming appointments where you can request assistant support..." |
+1. **Meeting Templates** - Pre-built agenda templates for coaching, performance reviews, goal-setting, etc.
+
+2. **Goal Tracking Integration** - Link accountability items to larger quarterly/annual goals for team members
+
+3. **Analytics Dashboard** - Track coaching effectiveness metrics:
+   - Average items completed on time
+   - Meeting frequency per team member
+   - Topic distribution analysis
+   - Trend tracking over time
+
+4. **AI Meeting Summarizer** - Use the AI assistant to help coaches summarize notes or suggest action items based on discussion content
+
+5. **Recurring Accountability Items** - Create repeating action items (e.g., weekly check-ins, monthly reviews)
+
+6. **Progress Photos/Attachments** - Allow uploading evidence of completed work
+
+7. **360-Degree Feedback** - Enable team members to add their own notes/reflections on meetings
+
+8. **Calendar Integration** - Sync accountability due dates with external calendars
+
+---
+
+## Technical Considerations
+
+- **RLS Policies**: Coaches can see all their meetings/notes; team members only see shared content
+- **Email Templates**: Add new templates for accountability reminders and meeting reports
+- **notification_preferences**: Add toggles for coaching-related notifications
+- **Realtime**: Enable for accountability_items so status updates appear instantly
+
