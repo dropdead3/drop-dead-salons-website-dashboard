@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { getNextPayDay } from '@/hooks/usePaySchedule';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -41,7 +42,7 @@ const baseCategories = [
 
 const rentCategory = { id: 'rent', label: 'Rent', icon: Home };
 
-export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | '90d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'lastMonth' | 'custom';
+export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | '90d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth' | 'custom';
 
 export interface AnalyticsFilters {
   locationId: string;
@@ -117,6 +118,12 @@ export default function AnalyticsHub() {
         return { 
           dateFrom: format(now, 'yyyy-MM-dd'), 
           dateTo: format(endOfMonth(now), 'yyyy-MM-dd') 
+        };
+      case 'todayToPayday':
+        const nextPayDay = getNextPayDay(null); // Uses default settings
+        return { 
+          dateFrom: format(now, 'yyyy-MM-dd'), 
+          dateTo: format(nextPayDay, 'yyyy-MM-dd') 
         };
       case 'lastMonth':
         const lastMonth = subDays(startOfMonth(now), 1);
@@ -201,6 +208,7 @@ export default function AnalyticsHub() {
                 <SelectItem value="thisWeek">This Week</SelectItem>
                 <SelectItem value="thisMonth">This Month</SelectItem>
                 <SelectItem value="todayToEom">Today to EOM</SelectItem>
+                <SelectItem value="todayToPayday">Today to Next Pay Day</SelectItem>
                 <SelectItem value="lastMonth">Last Month</SelectItem>
                 <SelectItem value="custom">Custom Range</SelectItem>
               </SelectContent>

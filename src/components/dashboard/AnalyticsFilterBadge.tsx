@@ -2,7 +2,7 @@ import { MapPin, Calendar } from 'lucide-react';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { cn } from '@/lib/utils';
 
-export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | '90d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'lastMonth' | 'custom';
+export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | '90d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth' | 'custom';
 
 const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
   today: 'Today',
@@ -13,6 +13,7 @@ const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
   thisWeek: 'This Week',
   thisMonth: 'This Month',
   todayToEom: 'Today to EOM',
+  todayToPayday: 'Today to Next Pay Day',
   lastMonth: 'Last Month',
   custom: 'Custom',
 };

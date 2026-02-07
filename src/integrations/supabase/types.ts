@@ -4760,6 +4760,59 @@ export type Database = {
           },
         ]
       }
+      organization_payroll_settings: {
+        Row: {
+          bi_weekly_day_of_week: number
+          bi_weekly_start_date: string | null
+          created_at: string
+          days_until_check: number
+          id: string
+          monthly_pay_day: number
+          organization_id: string
+          pay_schedule_type: string
+          semi_monthly_first_day: number
+          semi_monthly_second_day: number
+          updated_at: string
+          weekly_day_of_week: number
+        }
+        Insert: {
+          bi_weekly_day_of_week?: number
+          bi_weekly_start_date?: string | null
+          created_at?: string
+          days_until_check?: number
+          id?: string
+          monthly_pay_day?: number
+          organization_id: string
+          pay_schedule_type?: string
+          semi_monthly_first_day?: number
+          semi_monthly_second_day?: number
+          updated_at?: string
+          weekly_day_of_week?: number
+        }
+        Update: {
+          bi_weekly_day_of_week?: number
+          bi_weekly_start_date?: string | null
+          created_at?: string
+          days_until_check?: number
+          id?: string
+          monthly_pay_day?: number
+          organization_id?: string
+          pay_schedule_type?: string
+          semi_monthly_first_day?: number
+          semi_monthly_second_day?: number
+          updated_at?: string
+          weekly_day_of_week?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_payroll_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           access_ends_at: string | null
@@ -10186,6 +10239,10 @@ export type Database = {
       is_booth_renter: { Args: { _user_id: string }; Returns: boolean }
       is_coach_or_admin: { Args: { _user_id: string }; Returns: boolean }
       is_org_admin: {
+        Args: { _org_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_org_member: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
       }
