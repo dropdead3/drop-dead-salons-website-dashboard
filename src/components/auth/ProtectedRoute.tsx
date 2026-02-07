@@ -1,6 +1,9 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useViewAs } from '@/contexts/ViewAsContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useEffectivePermissions } from '@/hooks/useEffectivePermissions';
+import { AccessDeniedView } from './AccessDeniedView';
 import { Loader2 } from 'lucide-react';
 
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
@@ -23,6 +26,8 @@ export function ProtectedRoute({
   requireAnyPlatformRole = false,
 }: ProtectedRouteProps) {
   const { user, loading, isCoach, hasPermission, permissions, roles, platformRoles, hasPlatformRoleOrHigher, isPlatformUser } = useAuth();
+  const { isViewingAs, viewAsRole, clearViewAs } = useViewAs();
+  const effectivePermissions = useEffectivePermissions();
   const { data: profile, isLoading: profileLoading } = useEmployeeProfile();
   const location = useLocation();
 
@@ -69,8 +74,25 @@ export function ProtectedRoute({
 
   // Check permission-based access (only if permissions exist for the user's roles)
   // Platform users bypass permission checks for platform routes
-  if (requiredPermission && !isPlatformUser && permissions.length > 0 && !hasPermission(requiredPermission)) {
-    return <Navigate to="/dashboard" replace />;
+  // When in View As mode, use effective permissions for accurate simulation
+  if (requiredPermission && !isPlatformUser) {
+    const hasEffectivePermission = effectivePermissions.includes(requiredPermission);
+    
+    // In View As mode, show access denied view instead of redirecting
+    if (isViewingAs && !hasEffectivePermission) {
+      return (
+        <AccessDeniedView 
+          role={viewAsRole} 
+          permission={requiredPermission}
+          onExitViewAs={clearViewAs}
+        />
+      );
+    }
+    
+    // For real users (not in View As mode), redirect if no permission
+    if (!isViewingAs && permissions.length > 0 && !hasPermission(requiredPermission)) {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   // Legacy coach check (fallback for routes without specific permissions)
