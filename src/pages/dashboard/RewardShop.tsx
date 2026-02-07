@@ -3,8 +3,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Link } from 'react-router-dom';
-import { ArrowLeft, Gift, History, Loader2, Coins } from 'lucide-react';
+import { Gift, History, Loader2, Coins } from 'lucide-react';
 import { RewardCard } from '@/components/points/RewardCard';
 import { PointsHistoryPanel } from '@/components/points/PointsHistoryPanel';
 import {
@@ -56,13 +55,8 @@ export default function RewardShop() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
         {/* Header */}
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to="/dashboard">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-          </Button>
-          <div className="flex-1">
+        <div className="flex items-start justify-between gap-4">
+          <div>
             <h1 className="font-display text-3xl lg:text-4xl">Reward Shop</h1>
             <p className="text-muted-foreground mt-1">
               Redeem your points for amazing rewards
