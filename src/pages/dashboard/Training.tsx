@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -15,6 +15,7 @@ interface TrainingVideo {
   category: string;
   duration_minutes: number | null;
   order_index: number;
+  required_for_roles: string[] | null;
 }
 
 interface TrainingProgress {
@@ -31,7 +32,7 @@ const categories = [
 ];
 
 export default function Training() {
-  const { user } = useAuth();
+  const { user, roles: userRoles } = useAuth();
   const [videos, setVideos] = useState<TrainingVideo[]>([]);
   const [progress, setProgress] = useState<TrainingProgress[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,12 +101,34 @@ export default function Training() {
     ]);
   };
 
-  const filteredVideos = selectedCategory === 'all' 
-    ? videos 
-    : videos.filter(v => v.category === selectedCategory);
+  // Filter videos by user's roles
+  const roleFilteredVideos = useMemo(() => {
+    return videos.filter(video => {
+      // Super admins see everything
+      if (userRoles.includes('super_admin')) return true;
+      
+      // If no roles specified, show to everyone
+      if (!video.required_for_roles || video.required_for_roles.length === 0) {
+        return true;
+      }
+      
+      // Show if user has at least one matching role
+      return video.required_for_roles.some(role => 
+        userRoles.includes(role as any)
+      );
+    });
+  }, [videos, userRoles]);
 
-  const completedCount = progress.filter(p => p.completed_at).length;
-  const totalCount = videos.length;
+  // Apply category filter on top of role-filtered videos
+  const filteredVideos = selectedCategory === 'all' 
+    ? roleFilteredVideos 
+    : roleFilteredVideos.filter(v => v.category === selectedCategory);
+
+  // Calculate progress based on role-filtered videos only
+  const completedCount = progress.filter(p => 
+    p.completed_at && roleFilteredVideos.some(v => v.id === p.video_id)
+  ).length;
+  const totalCount = roleFilteredVideos.length;
   const progressPercent = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   const isComplete = (videoId: string) => {
