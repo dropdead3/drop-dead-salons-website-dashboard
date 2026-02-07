@@ -1,115 +1,99 @@
 
+# Hide Sales Overview and Forecasting Cards from Manager Role on Command Center
 
-# Fix Analytics Tab Visibility - Content Should Hide When Tab Is Disabled
+## Overview
 
-## Problem
+Ensure that when the Manager role has Sales visibility turned off, the Sales Overview card and Forecasting (Revenue Forecast) card on the Command Center dashboard are also hidden.
 
-When visibility toggles are turned off for analytics tabs (like Sales), only the **tab button** is hidden. The **tab content** still displays because:
+---
 
-1. The `VisibilityGate` only wraps the `TabsTrigger`, not the `TabsContent`
-2. The default active tab is `'sales'`, so it renders even when the button is hidden
-3. Users can still see revenue data they shouldn't have access to
+## Current Issue
+
+The visibility system has **separate controls** for:
+1. **Analytics Hub tabs** (e.g., `analytics_sales_tab`) - Controls access to the full analytics page
+2. **Command Center pinned cards** (e.g., `sales_overview`, `week_ahead_forecast`) - Controls which cards appear on the dashboard home
+
+Currently:
+- `analytics_sales_tab` is **OFF** for Manager ✅
+- `sales_overview` is **ON** for Manager ❌
+- `week_ahead_forecast` is **ON** for Manager ❌
+- `revenue_forecast` is **ON** for Manager ❌
+
+This means Managers can still see sales revenue data on the Command Center even though the Analytics Sales tab is hidden.
+
+---
 
 ## Solution
 
-Wrap each `TabsContent` with the same `VisibilityGate` used for its corresponding `TabsTrigger`, and add logic to automatically redirect to the first visible tab when the current tab is hidden.
+Enhance the pinned analytics cards on the Command Center to respect **both** the card-level visibility AND the parent tab visibility. If a user cannot access the Sales tab, they should also not see sales-related cards on the Command Center.
 
----
+### Changes to PinnedAnalyticsCard.tsx
 
-## Changes
+**File: `src/components/dashboard/PinnedAnalyticsCard.tsx`**
 
-### 1. Update AnalyticsHub.tsx
+Add a secondary visibility check - if the parent analytics tab is hidden, also hide the related pinned cards:
 
-**File: `src/pages/dashboard/admin/AnalyticsHub.tsx`**
-
-Add visibility gating to each `TabsContent` and implement auto-redirect logic:
-
-| Change | Description |
-|--------|-------------|
-| Import `useElementVisibility` | Hook to check tab visibility |
-| Add visibility checks | Check if each tab is visible before rendering content |
-| Auto-redirect logic | If current tab is hidden, switch to first visible tab |
-| Wrap `TabsContent` | Each content section respects its tab's visibility |
+| Card ID | Parent Tab Key | Description |
+|---------|----------------|-------------|
+| `sales_overview` | `analytics_sales_tab` | Sales Overview |
+| `top_performers` | `analytics_sales_tab` | Top Performers |
+| `revenue_breakdown` | `analytics_sales_tab` | Revenue Breakdown |
+| `team_goals` | `analytics_sales_tab` | Team Goals |
+| `week_ahead_forecast` | `analytics_sales_tab` | Forecasting Card |
+| `capacity_utilization` | `analytics_operations_tab` | Capacity Utilization |
+| `operations_stats` | `analytics_operations_tab` | Operations Stats |
 
 ```tsx
-import { VisibilityGate, useElementVisibility } from '@/components/visibility/VisibilityGate';
-
-// Check visibility of each tab
-const salesTabVisible = useElementVisibility('analytics_sales_tab');
-const operationsTabVisible = useElementVisibility('analytics_operations_tab');
-const marketingTabVisible = useElementVisibility('analytics_marketing_tab');
-const programTabVisible = useElementVisibility('analytics_program_tab');
-const reportsTabVisible = useElementVisibility('analytics_reports_tab');
-const rentTabVisible = useElementVisibility('analytics_rent_tab');
-
-// Find first visible tab for redirect
-const getFirstVisibleTab = () => {
-  if (salesTabVisible) return 'sales';
-  if (operationsTabVisible) return 'operations';
-  if (marketingTabVisible) return 'marketing';
-  if (programTabVisible) return 'program';
-  if (reportsTabVisible) return 'reports';
-  if (rentTabVisible && isSuperAdmin) return 'rent';
-  return null;
+// Define parent tab relationships
+const CARD_TO_TAB_MAP: Record<string, string> = {
+  'sales_overview': 'analytics_sales_tab',
+  'top_performers': 'analytics_sales_tab',
+  'revenue_breakdown': 'analytics_sales_tab',
+  'team_goals': 'analytics_sales_tab',
+  'week_ahead_forecast': 'analytics_sales_tab',
+  'capacity_utilization': 'analytics_operations_tab',
+  'operations_stats': 'analytics_operations_tab',
+  // ... etc
 };
 
-// Auto-redirect if current tab is hidden
-useEffect(() => {
-  const currentTabHidden = 
-    (activeTab === 'sales' && !salesTabVisible) ||
-    (activeTab === 'operations' && !operationsTabVisible) ||
-    // ... etc for each tab
-  ;
+export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProps) {
+  // Check parent tab visibility
+  const parentTabKey = CARD_TO_TAB_MAP[cardId];
+  const parentTabVisible = useElementVisibility(parentTabKey || '');
   
-  if (currentTabHidden) {
-    const firstVisible = getFirstVisibleTab();
-    if (firstVisible) {
-      setSearchParams({ tab: firstVisible });
-    }
+  // If parent tab is hidden and we have a mapping, don't render
+  if (parentTabKey && !parentTabVisible) {
+    return null;
   }
-}, [activeTab, salesTabVisible, operationsTabVisible, ...]);
-```
-
-Then wrap each `TabsContent`:
-
-```tsx
-<VisibilityGate elementKey="analytics_sales_tab">
-  <TabsContent value="sales" className="mt-6">
-    <SalesTabContent ... />
-  </TabsContent>
-</VisibilityGate>
-
-<VisibilityGate elementKey="analytics_operations_tab">
-  <TabsContent value="operations" className="mt-6">
-    <OperationsTabContent ... />
-  </TabsContent>
-</VisibilityGate>
-
-// ... repeat for all tabs
+  
+  // ... rest of component
+}
 ```
 
 ---
 
-## Technical Details
+## Alternative: UI-Based Fix
 
-### Visibility Check Order
+If you prefer not to change code, the Manager role's visibility can be updated directly in the Role Access Configurator:
 
-The first visible tab fallback priority:
-1. Sales
-2. Operations  
-3. Marketing
-4. Program
-5. Reports
-6. Rent (only for super_admin)
+1. Go to **Settings > Access & Visibility > Role Access**
+2. Select **Manager** role
+3. Click the **Widgets** tab
+4. Find and toggle **OFF** these elements:
+   - Under "Sales" category: **Sales Overview**
+   - Under "Leadership Widgets" category: **Forecasting**
+   - Under "Analytics Hub - Sales" category: **Revenue Forecast**
 
-### Edge Cases Handled
+This approach requires manual configuration but gives full control over each element independently.
 
-| Scenario | Behavior |
-|----------|----------|
-| Current tab hidden | Auto-redirect to first visible tab |
-| All tabs hidden | Show empty state or access denied message |
-| URL directly to hidden tab | Redirect on mount |
-| Role change during session | React to visibility changes dynamically |
+---
+
+## Recommended Approach
+
+Implement the code-based solution because:
+1. It creates a logical relationship - if you can't access the Sales tab, you shouldn't see sales cards on the Command Center
+2. It reduces admin configuration burden
+3. It prevents accidental exposure of restricted data
 
 ---
 
@@ -117,25 +101,16 @@ The first visible tab fallback priority:
 
 | File | Action |
 |------|--------|
-| `src/pages/dashboard/admin/AnalyticsHub.tsx` | Add visibility checks, auto-redirect, wrap TabsContent |
+| `src/components/dashboard/PinnedAnalyticsCard.tsx` | Add parent tab visibility check |
 
 ---
 
-## Visual Result
+## Result
 
-When Sales visibility is turned OFF for Manager role:
+When the Manager role has `analytics_sales_tab` set to hidden:
+- ✅ Sales tab in Analytics Hub is hidden
+- ✅ Sales Overview card on Command Center is automatically hidden
+- ✅ Forecasting card on Command Center is automatically hidden
+- ✅ Revenue Breakdown card on Command Center is automatically hidden
 
-**Before (Current - Broken)**
-```
-Tabs: [Operations] [Marketing] [Program] [Reports] [Rent]
-Content: Still shows Sales Overview with $2,205 revenue
-```
-
-**After (Fixed)**
-```
-Tabs: [Operations] [Marketing] [Program] [Reports] [Rent]
-Content: Shows Operations content (auto-redirected)
-```
-
-The Manager will no longer see any sales or revenue data when those tabs are disabled.
-
+Managers will only see Command Center cards for analytics sections they have access to.
