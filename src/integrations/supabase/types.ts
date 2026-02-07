@@ -5218,6 +5218,7 @@ export type Database = {
           current_period_start: string | null
           go_live_date: string | null
           id: string
+          is_internal: boolean
           legal_name: string | null
           logo_url: string | null
           name: string
@@ -5255,6 +5256,7 @@ export type Database = {
           current_period_start?: string | null
           go_live_date?: string | null
           id?: string
+          is_internal?: boolean
           legal_name?: string | null
           logo_url?: string | null
           name: string
@@ -5292,6 +5294,7 @@ export type Database = {
           current_period_start?: string | null
           go_live_date?: string | null
           id?: string
+          is_internal?: boolean
           legal_name?: string | null
           logo_url?: string | null
           name?: string

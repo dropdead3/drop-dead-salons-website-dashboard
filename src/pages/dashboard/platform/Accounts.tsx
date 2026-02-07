@@ -315,7 +315,12 @@ export default function PlatformAccounts() {
                             )}
                           </div>
                           <div>
-                            <p className="font-medium text-white">{org.name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-white">{org.name}</p>
+                              {org.is_internal && (
+                                <PlatformBadge variant="glow" size="sm">Internal</PlatformBadge>
+                              )}
+                            </div>
                             <p className="text-xs text-slate-500">#{org.account_number}</p>
                           </div>
                         </div>

@@ -26,6 +26,7 @@ export interface Organization {
   business_type: BusinessType;
   account_number: number | null;
   go_live_date: string | null;
+  is_internal: boolean;
 }
 
 export interface OrganizationInsert {
