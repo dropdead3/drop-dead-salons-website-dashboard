@@ -1,113 +1,87 @@
 
-# Move Team Stats & Leaderboard to Management Section for Admins
+# Move Feature Flags to Platform Dashboard
 
 ## Overview
 
-For admin and manager roles, the "Team Stats" and "Team Leaderboard" navigation links will appear under the "Management" section instead of the "Stats & Leaderboard" section. Non-admin users will continue to see "My Stats" and "Team Leaderboard" in the Stats section.
+The Feature Flags management page is currently located in the staff/organization dashboard (`/dashboard/admin/feature-flags`). Since feature flags are a platform-level capability for managing functionality across all organizations, it should be moved to the Platform Admin dashboard (`/dashboard/platform/feature-flags`).
 
 ---
 
-## Approach
+## Changes Required
 
-The cleanest approach is to:
-1. Add "Team Stats" and "Team Leaderboard" links to the `managerNavItems` array (visible only to admins/managers)
-2. Update the `statsNavItems` array to exclude admin roles from seeing these items there
-3. Update the default link order configuration to include these links in the manager section
-4. Update sidebar preview for the settings configurator
+### 1. Create New Platform Feature Flags Page
 
----
+Create a new page at `src/pages/dashboard/platform/FeatureFlags.tsx` that:
+- Uses `PlatformPageContainer` for consistent platform styling
+- Uses platform-specific UI components (`PlatformButton`, etc.)
+- Has a back button to Platform Settings
+- Reuses the existing feature flag logic from hooks
 
-## Changes
+### 2. Update Routes
 
-### File: `src/components/dashboard/DashboardLayout.tsx`
+**File: `src/App.tsx`**
 
-**1. Update `statsNavItems` to exclude admin roles from stats/leaderboard:**
+| Action | Description |
+|--------|-------------|
+| Remove | The existing route at `/dashboard/admin/feature-flags` |
+| Add | New route at `/dashboard/platform/feature-flags` inside the platform layout routes |
+| Add | Import for the new Platform Feature Flags page |
+
+### 3. Update Platform Sidebar
+
+**File: `src/components/platform/layout/PlatformSidebar.tsx`**
+
+Add a new navigation item for Feature Flags:
 
 ```typescript
-const statsNavItems: NavItem[] = [
-  { 
-    href: '/dashboard/stats', 
-    label: 'My Stats', 
-    icon: BarChart3, 
-    permission: 'view_own_stats', 
-    roles: ['stylist', 'stylist_assistant'] // Remove admin, super_admin, manager
-  },
-  { 
-    href: '/dashboard/leaderboard', 
-    label: 'Team Leaderboard', 
-    icon: Trophy, 
-    permission: 'view_leaderboard',
-    roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] // Exclude admins
-  },
-  { href: '/dashboard/my-pay', label: 'My Pay', icon: Wallet, permission: 'view_my_pay' },
-];
+{ 
+  href: '/dashboard/platform/feature-flags', 
+  label: 'Feature Flags', 
+  icon: Flag, 
+  platformRoles: ['platform_owner', 'platform_admin'] 
+}
 ```
 
-**2. Add Team Stats and Team Leaderboard to `managerNavItems`:**
+### 4. Remove from Staff Dashboard Navigation
 
-```typescript
-const managerNavItems: NavItem[] = [
-  { href: '/dashboard/admin/management', label: 'Management Hub', icon: LayoutGrid, permission: 'view_team_overview' },
-  { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
-  { href: '/dashboard/stats', label: 'Team Stats', icon: BarChart3, permission: 'view_all_stats' },
-  { href: '/dashboard/leaderboard', label: 'Team Leaderboard', icon: Trophy, permission: 'view_leaderboard' },
-  { href: '/dashboard/directory', label: 'Team Directory', icon: Contact, permission: 'view_team_directory' },
-  { href: '/dashboard/clients', label: 'Client Directory', icon: Users, permission: 'view_clients' },
-  { href: '/dashboard/admin/payroll', label: 'Payroll Hub', icon: DollarSign, permission: 'manage_payroll' },
-  { href: '/dashboard/admin/booth-renters', label: 'Renter Hub', icon: Store, permission: 'manage_booth_renters' },
-];
-```
+**File: `src/components/dashboard/DashboardLayout.tsx`**
 
----
+Remove the Feature Flags entry from `settingsNavItems` array.
 
-### File: `src/hooks/useSidebarLayout.ts`
+### 5. Update Sidebar Layout Config
 
-**Update `DEFAULT_LINK_ORDER` to include the links in the manager section:**
+**File: `src/hooks/useSidebarLayout.ts`**
 
-```typescript
-manager: [
-  '/dashboard/admin/management',
-  '/dashboard/admin/analytics',
-  '/dashboard/stats',           // Add here
-  '/dashboard/leaderboard',     // Add here
-  '/dashboard/directory',
-  '/dashboard/clients',
-  '/dashboard/admin/payroll',
-  '/dashboard/admin/booth-renters',
-],
-```
+Remove `/dashboard/admin/feature-flags` from the `DEFAULT_LINK_ORDER.settings` array.
+
+### 6. Clean Up Settings UI Components
+
+**Files:**
+- `src/components/dashboard/settings/SidebarPreview.tsx`
+- `src/components/dashboard/settings/SidebarLayoutEditor.tsx`
+
+Remove the Feature Flags route label mapping since it's no longer in the staff dashboard.
 
 ---
 
-### File: `src/components/dashboard/settings/SidebarPreview.tsx`
+## File Summary
 
-**Add route labels for consistency:**
-
-The LINK_CONFIG already has entries for both routes, but we should verify they display correctly.
-
----
-
-### File: `src/components/dashboard/settings/SidebarLayoutEditor.tsx`
-
-**Add route labels for the editor:**
-
-Ensure the ROUTE_LABELS mapping includes entries for these routes in the manager section context.
-
----
-
-## Summary of File Changes
-
-| File | Change |
+| File | Action |
 |------|--------|
-| `src/components/dashboard/DashboardLayout.tsx` | Move stats/leaderboard to managerNavItems, restrict from statsNavItems for admin roles |
-| `src/hooks/useSidebarLayout.ts` | Add routes to manager section in DEFAULT_LINK_ORDER |
-| `src/components/dashboard/settings/SidebarPreview.tsx` | Verify route labels (may already be complete) |
-| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | Verify route labels |
+| `src/pages/dashboard/platform/FeatureFlags.tsx` | Create (new platform-styled page) |
+| `src/App.tsx` | Update routes (remove old, add new platform route) |
+| `src/components/platform/layout/PlatformSidebar.tsx` | Add nav item with Flag icon |
+| `src/components/dashboard/DashboardLayout.tsx` | Remove from settingsNavItems |
+| `src/hooks/useSidebarLayout.ts` | Remove from settings default order |
+| `src/components/dashboard/settings/SidebarPreview.tsx` | Remove route label |
+| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | Remove route label |
 
 ---
 
 ## Result
 
-- **Admin/Manager users**: See "Team Stats" and "Team Leaderboard" under the "Management" section
-- **Stylists/Assistants**: Continue to see "My Stats" and "Team Leaderboard" in the "Stats & Leaderboard" section  
-- **Other roles**: See "Team Leaderboard" in Stats section based on their permissions
+- Feature Flags accessible at `/dashboard/platform/feature-flags`
+- Visible in Platform Admin sidebar for owners and admins
+- Uses platform-consistent dark theme styling
+- Removed from staff/organization dashboard entirely
+- Per-organization flag overrides remain available in Account Detail tabs (already implemented as `AccountFeatureFlagsTab`)
