@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -6,10 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Pencil, Trash2, Lock, Eye, Save, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Lock, Eye, Save, X, Camera, ImageIcon, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useMeetingNotes, useCreateMeetingNote, useUpdateMeetingNote, useDeleteMeetingNote, type TopicCategory, type MeetingNote } from '@/hooks/useMeetingNotes';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +23,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const topicCategories: { value: TopicCategory; label: string; color: string }[] = [
   { value: 'performance', label: 'Performance', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' },
@@ -48,17 +55,85 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
   const [content, setContent] = useState('');
   const [category, setCategory] = useState<TopicCategory>('other');
   const [isPrivate, setIsPrivate] = useState(false);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetForm = () => {
     setContent('');
     setCategory('other');
     setIsPrivate(false);
+    setPhotoUrls([]);
     setIsAdding(false);
     setEditingId(null);
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    const newUrls: string[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          toast.error(`${file.name} is not an image`);
+          continue;
+        }
+
+        // Validate file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error(`${file.name} is too large (max 10MB)`);
+          continue;
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user!.id}/${meetingId}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('meeting-notes')
+          .upload(fileName, file);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          toast.error(`Failed to upload ${file.name}`);
+          continue;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('meeting-notes')
+          .getPublicUrl(fileName);
+
+        newUrls.push(urlData.publicUrl);
+      }
+
+      if (newUrls.length > 0) {
+        setPhotoUrls(prev => [...prev, ...newUrls]);
+        toast.success(`${newUrls.length} photo(s) uploaded`);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload photos');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setPhotoUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSave = async () => {
-    if (!content.trim()) return;
+    if (!content.trim() && photoUrls.length === 0) {
+      toast.error('Please add note content or upload photos');
+      return;
+    }
 
     if (editingId) {
       await updateNote.mutateAsync({
@@ -67,6 +142,7 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
         content,
         topic_category: category,
         is_private: isPrivate,
+        photo_urls: photoUrls,
       });
     } else {
       await createNote.mutateAsync({
@@ -74,6 +150,7 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
         content,
         topic_category: category,
         is_private: isPrivate,
+        photo_urls: photoUrls,
       });
     }
     resetForm();
@@ -84,6 +161,7 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
     setContent(note.content);
     setCategory(note.topic_category);
     setIsPrivate(note.is_private);
+    setPhotoUrls(note.photo_urls || []);
     setIsAdding(true);
   };
 
@@ -148,6 +226,7 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
                 </div>
               </div>
             </div>
+            
             <div className="space-y-2">
               <Label>Note Content</Label>
               <Textarea
@@ -157,8 +236,74 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
                 rows={4}
               />
             </div>
+
+            {/* Photo Upload Section */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Camera className="h-4 w-4" />
+                Handwritten Notes Photos
+              </Label>
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              
+              <div className="flex flex-wrap gap-2">
+                {photoUrls.map((url, index) => (
+                  <div key={index} className="relative group">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <img
+                          src={url}
+                          alt={`Note photo ${index + 1}`}
+                          className="w-20 h-20 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
+                        />
+                      </DialogTrigger>
+                      <DialogContent className="max-w-3xl">
+                        <img src={url} alt={`Note photo ${index + 1}`} className="w-full h-auto" />
+                      </DialogContent>
+                    </Dialog>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => removePhoto(index)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ))}
+                
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-20 h-20 flex flex-col items-center justify-center gap-1"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <>
+                      <ImageIcon className="h-5 w-5" />
+                      <span className="text-xs">Add Photo</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Upload photos of handwritten notes (max 10MB each)
+              </p>
+            </div>
+
             <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={!content.trim() || createNote.isPending || updateNote.isPending}>
+              <Button onClick={handleSave} disabled={(!content.trim() && photoUrls.length === 0) || createNote.isPending || updateNote.isPending}>
                 <Save className="h-4 w-4 mr-1" />
                 {editingId ? 'Update' : 'Save'}
               </Button>
@@ -223,7 +368,30 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
                   )}
                 </div>
               </div>
-              <p className="text-sm whitespace-pre-wrap">{note.content}</p>
+              
+              {note.content && (
+                <p className="text-sm whitespace-pre-wrap">{note.content}</p>
+              )}
+              
+              {/* Display Photos */}
+              {note.photo_urls && note.photo_urls.length > 0 && (
+                <div className="flex flex-wrap gap-2 pt-2">
+                  {note.photo_urls.map((url, index) => (
+                    <Dialog key={index}>
+                      <DialogTrigger asChild>
+                        <img
+                          src={url}
+                          alt={`Handwritten note ${index + 1}`}
+                          className="w-24 h-24 object-cover rounded-lg border cursor-pointer hover:opacity-90 transition-opacity"
+                        />
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+                        <img src={url} alt={`Handwritten note ${index + 1}`} className="w-full h-auto" />
+                      </DialogContent>
+                    </Dialog>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>

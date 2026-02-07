@@ -4638,6 +4638,7 @@ export type Database = {
           id: string
           is_private: boolean
           meeting_id: string
+          photo_urls: string[] | null
           topic_category: string
           updated_at: string
         }
@@ -4648,6 +4649,7 @@ export type Database = {
           id?: string
           is_private?: boolean
           meeting_id: string
+          photo_urls?: string[] | null
           topic_category?: string
           updated_at?: string
         }
@@ -4658,6 +4660,7 @@ export type Database = {
           id?: string
           is_private?: boolean
           meeting_id?: string
+          photo_urls?: string[] | null
           topic_category?: string
           updated_at?: string
         }
