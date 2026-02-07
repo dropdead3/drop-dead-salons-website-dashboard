@@ -1,324 +1,174 @@
 
-# Dashboard Navigation Reorganization: Management Hub
+# Double-Click to Hide Numbers Feature
 
 ## Overview
 
-Consolidate the 16+ Management section links into a single **Management Hub** page, dramatically reducing sidebar clutter. Additionally, add hub quicklinks to the Command Center for rapid access to all major hubs.
+Add a "double-click to hide" interaction to all financial amounts. When numbers are **visible** (not blurred), double-clicking any sales/financial number will immediately blur all numbers across the dashboard. This provides a quick privacy mode for when someone walks up to your screen.
 
 ---
 
-## Current State Analysis
+## How It Works
 
-### Sidebar Management Section (16 Links)
-The `managerNavItems` array currently contains:
-
-| Link | Purpose |
-|------|---------|
-| Lead Management | Recruiting leads |
-| Birthdays & Anniversaries | Team celebrations |
-| Onboarding Hub | New hire progress |
-| Client Engine Tracker | Program participation |
-| Recruiting Pipeline | Hiring funnel |
-| Graduation Tracker | Assistant advancement |
-| Assistant Requests | Help scheduling |
-| Schedule Requests | Time-off approvals |
-| Staff Strikes | Disciplinary tracking |
-| Business Cards | Request management |
-| Headshots | Photo scheduling |
-| Create Announcement | Team communications |
-| Changelog Manager | Platform updates |
-| Renter Hub | Booth renter management |
-| Payroll Hub | Compensation management |
-| Website Editor | Marketing content |
-
-### Existing Hub Patterns
-The project already has well-designed hub pages:
-- **Analytics Hub** (`/dashboard/admin/analytics`) - Tabbed interface with Sales, Operations, Marketing, Program
-- **Payroll Hub** (`/dashboard/admin/payroll`) - Tabs for Overview, Employees, History, Analytics, Settings
-- **Renter Hub** (`/dashboard/admin/booth-renters`) - Tabs for Renters, Payments
-- **Onboarding Hub** (`/dashboard/admin/onboarding-tracker`) - Progress tracking
+| Current State | User Action | Result |
+|---------------|-------------|--------|
+| Numbers visible | Double-click any amount | All numbers blur immediately |
+| Numbers blurred | Single-click any amount | Confirmation dialog to reveal |
+| Numbers blurred | Double-click any amount | No action (already hidden) |
 
 ---
 
-## Proposed Solution
+## Implementation Approach
 
-### 1. Create Management Hub Page
+### 1. Add `quickHide()` Function to Context
 
-A new unified management landing page at `/dashboard/admin/management` that organizes all management functions into logical categories:
+Add a new function to `HideNumbersContext` that immediately hides numbers without confirmation (since hiding is the "safe" action):
 
-```text
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                                                                                      │
-│   MANAGEMENT HUB                                                                     │
-│   Central command for team operations                                               │
-│                                                                                      │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
-│  │                        TEAM DEVELOPMENT                                       │  │
-│  └──────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                      │
-│  ┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐              │
-│  │  📋 Onboarding    │  │  🎓 Graduation    │  │  🎯 Client Engine │              │
-│  │  Hub              │  │  Tracker          │  │  Tracker          │              │
-│  │  12 active        │  │  4 in progress    │  │  85% enrolled     │              │
-│  └───────────────────┘  └───────────────────┘  └───────────────────┘              │
-│                                                                                      │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
-│  │                        SCHEDULING & REQUESTS                                  │  │
-│  └──────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                      │
-│  ┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐              │
-│  │  👋 Assistant     │  │  📅 Schedule      │  │  ⚠️ Staff         │              │
-│  │  Requests         │  │  Requests         │  │  Strikes          │              │
-│  │  3 pending        │  │  5 pending        │  │  2 active         │              │
-│  └───────────────────┘  └───────────────────┘  └───────────────────┘              │
-│                                                                                      │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
-│  │                        RECRUITING & HIRING                                    │  │
-│  └──────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                      │
-│  ┌───────────────────┐  ┌───────────────────┐                                      │
-│  │  📧 Lead          │  │  💼 Recruiting    │                                      │
-│  │  Management       │  │  Pipeline         │                                      │
-│  │  8 new leads      │  │  3 in process     │                                      │
-│  └───────────────────┘  └───────────────────┘                                      │
-│                                                                                      │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
-│  │                        TEAM OPERATIONS                                        │  │
-│  └──────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                      │
-│  ┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐              │
-│  │  🎂 Birthdays &   │  │  💳 Business      │  │  📷 Headshots     │              │
-│  │  Anniversaries    │  │  Cards            │  │                   │              │
-│  │  2 this week      │  │  1 pending        │  │  3 scheduled      │              │
-│  └───────────────────┘  └───────────────────┘  └───────────────────┘              │
-│                                                                                      │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
-│  │                        COMMUNICATIONS                                         │  │
-│  └──────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                      │
-│  ┌───────────────────┐  ┌───────────────────┐                                      │
-│  │  📢 Announcements │  │  ✨ Changelog     │                                      │
-│  │                   │  │  Manager          │                                      │
-│  │  Create new       │  │  12 entries       │                                      │
-│  └───────────────────┘  └───────────────────┘                                      │
-│                                                                                      │
-└─────────────────────────────────────────────────────────────────────────────────────┘
+```typescript
+interface HideNumbersContextType {
+  hideNumbers: boolean;
+  toggleHideNumbers: () => void;
+  requestUnhide: () => void;
+  quickHide: () => void;  // NEW - instant hide on double-click
+  isLoading: boolean;
+}
 ```
 
-### 2. Simplified Sidebar Structure
+### 2. Update `BlurredAmount` Component
 
-Replace the 16 manager links with just 4 hub entries:
+Add `onDoubleClick` handler that calls `quickHide()` when numbers are visible:
 
-```text
-BEFORE (16+ links):                    AFTER (4 links):
-├── Lead Management                    ├── Management Hub ←────── NEW
-├── Birthdays & Anniversaries          ├── Payroll Hub
-├── Onboarding Hub                     ├── Renter Hub  
-├── Client Engine Tracker              └── Website Editor
-├── Recruiting Pipeline
-├── Graduation Tracker
-├── Assistant Requests
-├── Schedule Requests
-├── Staff Strikes
-├── Business Cards
-├── Headshots
-├── Create Announcement
-├── Changelog Manager
-├── Renter Hub
-├── Payroll Hub
-└── Website Editor
+```typescript
+<Component 
+  className={className}
+  onDoubleClick={() => !hideNumbers && quickHide()}
+  title={!hideNumbers ? 'Double-click to hide' : 'Click to reveal'}
+>
+  {children}
+</Component>
 ```
 
-### 3. Command Center Hub Quicklinks
+### 3. Update `AnimatedBlurredAmount` Component
 
-Add a "Hubs" section to the Command Center with quick access cards:
+Same pattern - add double-click handler:
 
-```text
-┌──────────────────────────────────────────────────────────────────┐
-│  🚀 QUICK ACCESS HUBS                                            │
-└──────────────────────────────────────────────────────────────────┘
-
-┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-│ 📊 Analytics│ │ 👥 Manage-  │ │ 💰 Payroll  │ │ 🏪 Renter   │
-│    Hub      │ │    ment Hub │ │    Hub      │ │    Hub      │
-└─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
-
-┌─────────────┐ ┌─────────────┐
-│ 🌐 Website  │ │ 📋 Onboard- │
-│    Editor   │ │    ing Hub  │
-└─────────────┘ └─────────────┘
+```typescript
+<span
+  ref={elementRef}
+  onDoubleClick={() => !hideNumbers && quickHide()}
+  title={hideNumbers ? 'Click to reveal' : 'Double-click to hide'}
+>
+  {prefix}{formattedValue}{suffix}
+</span>
 ```
 
 ---
 
-## Management Hub Categories
+## User Experience
 
-### Category 1: Team Development
-| Link | Description | Stats to Show |
-|------|-------------|---------------|
-| Onboarding Hub | New hire progress tracking | Active onboarding count |
-| Graduation Tracker | Assistant advancement | In-progress graduations |
-| Client Engine Tracker | Program enrollment/participation | Enrollment percentage |
+**When numbers are visible:**
+- Hovering over amounts shows tooltip: "Double-click to hide"
+- Double-clicking instantly blurs all financial data
+- Single-click does nothing (no accidental triggers)
 
-### Category 2: Scheduling & Requests
-| Link | Description | Stats to Show |
-|------|-------------|---------------|
-| Assistant Requests | Help request management | Pending count |
-| Schedule Requests | Time-off/schedule changes | Pending count |
-| Staff Strikes | Disciplinary tracking | Active strikes |
-
-### Category 3: Recruiting & Hiring
-| Link | Description | Stats to Show |
-|------|-------------|---------------|
-| Lead Management | Potential hire inquiries | New leads |
-| Recruiting Pipeline | Hiring process stages | In-process count |
-
-### Category 4: Team Operations
-| Link | Description | Stats to Show |
-|------|-------------|---------------|
-| Birthdays & Anniversaries | Team celebrations | Upcoming this week |
-| Business Cards | Request management | Pending requests |
-| Headshots | Photo session scheduling | Scheduled count |
-
-### Category 5: Communications
-| Link | Description | Stats to Show |
-|------|-------------|---------------|
-| Create Announcement | Team communications | - |
-| Changelog Manager | Platform updates | Total entries |
+**When numbers are hidden:**
+- Hovering shows tooltip: "Click to reveal"
+- Single-click opens confirmation dialog
+- Double-click has no effect
 
 ---
 
-## Technical Implementation
-
-### Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/pages/dashboard/admin/ManagementHub.tsx` | Main hub page with category cards |
-| `src/components/dashboard/management/ManagementHubCard.tsx` | Individual category card component |
-| `src/components/dashboard/management/ManagementQuickStats.tsx` | Stats fetching for badges |
-| `src/components/dashboard/HubQuickLinks.tsx` | Command Center hub grid component |
-
-### Files to Modify
+## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/DashboardLayout.tsx` | Update `managerNavItems` to 4 hub entries |
-| `src/hooks/useSidebarLayout.ts` | Update `DEFAULT_LINK_ORDER.manager` for new structure |
-| `src/pages/dashboard/DashboardHome.tsx` | Add Hub Quicklinks section to Command Center |
-| `src/App.tsx` | Add route for `/dashboard/admin/management` |
-
-### Sidebar Navigation Update
-
-```typescript
-// BEFORE: 16 items in managerNavItems
-const managerNavItems: NavItem[] = [
-  { href: '/dashboard/admin/leads', label: 'Lead Management', ... },
-  { href: '/dashboard/admin/birthdays', label: 'Birthdays & Anniversaries', ... },
-  // ... 14 more items
-];
-
-// AFTER: 4 hub entries
-const managerNavItems: NavItem[] = [
-  { href: '/dashboard/admin/management', label: 'Management Hub', icon: LayoutGrid, permission: 'view_team_overview' },
-  { href: '/dashboard/admin/payroll', label: 'Payroll Hub', icon: DollarSign, permission: 'manage_payroll' },
-  { href: '/dashboard/admin/booth-renters', label: 'Renter Hub', icon: Store, permission: 'manage_booth_renters' },
-  { href: '/dashboard/admin/website-sections', label: 'Website Editor', icon: Globe, permission: 'manage_homepage_stylists' },
-];
-```
+| `src/contexts/HideNumbersContext.tsx` | Add `quickHide()` function to context; update `BlurredAmount` component with `onDoubleClick` |
+| `src/components/ui/AnimatedBlurredAmount.tsx` | Add `onDoubleClick` handler for quick hide |
 
 ---
 
-## Hub Quicklinks Component
+## Technical Details
+
+### `quickHide()` Function
 
 ```typescript
-// src/components/dashboard/HubQuickLinks.tsx
-const hubs = [
-  { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, color: 'blue' },
-  { href: '/dashboard/admin/management', label: 'Management Hub', icon: LayoutGrid, color: 'purple' },
-  { href: '/dashboard/admin/payroll', label: 'Payroll Hub', icon: DollarSign, color: 'green' },
-  { href: '/dashboard/admin/booth-renters', label: 'Renter Hub', icon: Store, color: 'amber' },
-  { href: '/dashboard/admin/website-sections', label: 'Website Editor', icon: Globe, color: 'rose' },
-  { href: '/dashboard/admin/onboarding-tracker', label: 'Onboarding Hub', icon: ClipboardList, color: 'cyan' },
-];
+// Called on double-click - immediately hides without confirmation
+const quickHide = async () => {
+  if (!user || hideNumbers) return; // Already hidden or not logged in
+  
+  setHideNumbers(true);
+  
+  // Persist to database
+  try {
+    await supabase
+      .from('employee_profiles')
+      .update({ hide_numbers: true })
+      .eq('user_id', user.id);
+  } catch (err) {
+    console.error('Error saving hide_numbers preference:', err);
+  }
+};
 ```
 
----
-
-## Implementation Steps
-
-| Step | Task | Complexity |
-|------|------|------------|
-| 1 | Create `ManagementHub.tsx` with category grid layout | Medium |
-| 2 | Create `ManagementHubCard.tsx` for individual tiles | Low |
-| 3 | Create stats hooks for pending counts | Medium |
-| 4 | Update `managerNavItems` to 4 hub entries | Low |
-| 5 | Create `HubQuickLinks.tsx` component | Low |
-| 6 | Add Hub Quicklinks section to `DashboardHome.tsx` | Low |
-| 7 | Add route for Management Hub in `App.tsx` | Low |
-| 8 | Update sidebar layout defaults | Low |
-
----
-
-## Visual Design
-
-### Management Hub Card Design
-
-Each card follows the premium card aesthetic:
-- Subtle gradient background by category
-- Icon with brand accent color
-- Title and description
-- Live stat badge (pending counts, active items)
-- Hover lift animation
-- Arrow indicator for navigation
+### Updated `BlurredAmount` Component
 
 ```typescript
-<Card className="group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer">
-  <CardContent className="p-6">
-    <div className="flex items-start justify-between">
-      <div className="flex items-center gap-3">
-        <div className={cn("p-2.5 rounded-lg", bgColorClass)}>
-          <Icon className={cn("w-5 h-5", textColorClass)} />
-        </div>
-        <div>
-          <h3 className="font-medium">{title}</h3>
-          <p className="text-sm text-muted-foreground">{description}</p>
-        </div>
-      </div>
-      {stat && (
-        <Badge variant="secondary">{stat}</Badge>
-      )}
-    </div>
-  </CardContent>
-</Card>
+export function BlurredAmount({ 
+  children, 
+  className,
+  as: Component = 'span'
+}: BlurredAmountProps) {
+  const { hideNumbers, requestUnhide, quickHide } = useHideNumbers();
+  
+  const handleDoubleClick = () => {
+    if (!hideNumbers) {
+      quickHide();
+    }
+  };
+  
+  if (!hideNumbers) {
+    return (
+      <Component 
+        className={cn(className, 'cursor-pointer')} 
+        onDoubleClick={handleDoubleClick}
+        title="Double-click to hide"
+      >
+        {children}
+      </Component>
+    );
+  }
+  
+  return (
+    <Component 
+      className={cn(className, 'blur-md select-none cursor-pointer transition-all duration-200')} 
+      tabIndex={0}
+      onClick={requestUnhide}
+      onKeyDown={(e) => e.key === 'Enter' && requestUnhide()}
+      title="Click to reveal"
+    >
+      {children}
+    </Component>
+  );
+}
 ```
-
-### Hub Quicklinks Design (Command Center)
-
-Compact grid of hub tiles with:
-- Colored icon
-- Hub name
-- Subtle hover state
-- Consistent sizing
 
 ---
 
 ## Benefits
 
-1. **Reduced Cognitive Load**: 16 links → 4 hub entries = 75% reduction
-2. **Faster Navigation**: Direct access to commonly used hubs from Command Center
-3. **Logical Grouping**: Related functions organized by category
-4. **Live Stats**: Pending counts surface actionable items at a glance
-5. **Consistent UX**: Follows established hub patterns (Analytics, Payroll, Renter)
-6. **Mobile Friendly**: Fewer sidebar items = better mobile experience
+1. **Quick Privacy**: Instantly hide sensitive data when someone approaches
+2. **Intuitive**: Double-click is a natural "toggle" gesture
+3. **No Confirmation Needed**: Hiding is the safe/secure action
+4. **Reversible**: Click the eye icon in header or click blurred amount to reveal
 
 ---
 
-## Future Enhancements
+## Implementation Steps
 
-1. **Customizable Hub Order**: Drag-and-drop hub card arrangement
-2. **Pinned Favorites**: Star frequently used sub-pages for quick access
-3. **Hub Search**: Search across all hub content from one place
-4. **Activity Feed**: Recent actions across all management areas
-5. **Role-Based Hub Views**: Different default hubs per role
-
+| Step | Task |
+|------|------|
+| 1 | Add `quickHide` function to `HideNumbersContextType` interface |
+| 2 | Implement `quickHide` in `HideNumbersProvider` |
+| 3 | Export `quickHide` in context value |
+| 4 | Update `BlurredAmount` to handle double-click when visible |
+| 5 | Update `AnimatedBlurredAmount` to handle double-click when visible |
+| 6 | Add cursor and title hints for discoverability |
