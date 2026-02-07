@@ -134,10 +134,7 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard, permission: 'view_command_center' },
-  { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
   { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar' },
-  { href: '/dashboard/directory', label: 'Team Directory', icon: Contact, permission: 'view_team_directory' },
-  { href: '/dashboard/clients', label: 'Client Directory', icon: Users, permission: 'view_clients' },
 ];
 
 const housekeepingNavItems: NavItem[] = [
@@ -178,6 +175,9 @@ const teamToolsNavItems: NavItem[] = [
 // Manager-accessible admin items - consolidated into hubs
 const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/management', label: 'Management Hub', icon: LayoutGrid, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
+  { href: '/dashboard/directory', label: 'Team Directory', icon: Contact, permission: 'view_team_directory' },
+  { href: '/dashboard/clients', label: 'Client Directory', icon: Users, permission: 'view_clients' },
   { href: '/dashboard/admin/payroll', label: 'Payroll Hub', icon: DollarSign, permission: 'manage_payroll' },
   { href: '/dashboard/admin/booth-renters', label: 'Renter Hub', icon: Store, permission: 'manage_booth_renters' },
 ];
