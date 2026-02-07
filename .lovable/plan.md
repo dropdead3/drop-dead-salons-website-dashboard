@@ -1,186 +1,341 @@
 
-# Role-Based Training Video Filtering
+# Training Hub Configurator Implementation Plan
 
 ## Summary
 
-Enable training videos to be filtered by user roles. Users with multiple roles (e.g., a Manager who is also a Stylist) will see videos targeted at **any** of their roles. The existing `required_for_roles` column on the `training_videos` table will be used to specify which roles should see each video.
+Create a comprehensive **Training Hub** administrative interface that allows super admins and managers to:
+1. Upload and manage training videos
+2. Assign videos to specific roles
+3. Assign videos to individual team members
+4. Track team completion progress
+5. Send training reminders
+
+This follows the established pattern from `Handbooks.tsx` and integrates into the Management Hub.
 
 ---
 
-## How It Works
+## Current State Analysis
 
-| Video's `required_for_roles` | User's Roles | Video Visible? |
-|------------------------------|--------------|----------------|
-| `null` or `[]` | Any | Yes (universal) |
-| `['stylist']` | `['manager']` | No |
-| `['stylist']` | `['stylist', 'manager']` | Yes |
-| `['manager', 'admin']` | `['manager']` | Yes |
-| `['stylist', 'stylist_assistant']` | `['stylist_assistant']` | Yes |
+### Existing Infrastructure
+| Component | Status |
+|-----------|--------|
+| `training_videos` table | Exists with `required_for_roles` array column |
+| `training_progress` table | Exists with `user_id`, `video_id`, `completed_at` |
+| `training-videos` storage bucket | Exists (private) |
+| Role-based filtering | Implemented in `Training.tsx` |
+| Individual assignments | Not implemented |
+
+### Database Tables Available
+```text
+training_videos:
+├── id, title, description
+├── video_url, storage_path, thumbnail_url
+├── category, order_index, duration_minutes
+├── required_for_roles (app_role[])
+└── is_active, created_at
+
+training_progress:
+├── id, user_id, video_id
+├── completed_at, watch_progress
+└── notes, created_at
+```
 
 ---
 
 ## Implementation Approach
 
-### 1. Update `TrainingVideo` Interface
+### Phase 1: Database Schema Update
 
-Add the `required_for_roles` field to the TypeScript interface:
+**New table: `training_assignments`**
+For individual training assignments beyond role-based visibility:
 
-```typescript
-interface TrainingVideo {
-  id: string;
-  title: string;
-  description: string | null;
-  video_url: string | null;
-  category: string;
-  duration_minutes: number | null;
-  order_index: number;
-  required_for_roles: string[] | null;  // NEW
-}
+```sql
+CREATE TABLE training_assignments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  video_id UUID REFERENCES training_videos(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  assigned_by UUID REFERENCES auth.users(id) NOT NULL,
+  due_date TIMESTAMPTZ,
+  is_required BOOLEAN DEFAULT true,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(video_id, user_id)
+);
 ```
 
-### 2. Import User Roles from AuthContext
+### Phase 2: Training Hub Admin Page
 
-The `Training.tsx` component already imports `useAuth`. Extract the user's roles:
+Create `/dashboard/admin/training-hub` with three tabs:
 
-```typescript
-const { user, roles: userRoles } = useAuth();
+**Tab 1: Video Library**
+- Upload new videos to storage bucket
+- Edit video metadata (title, description, category)
+- Set role visibility (`required_for_roles`)
+- Drag-and-drop reordering
+- Toggle active/inactive status
+- Delete videos
+
+**Tab 2: Individual Assignments**
+- Search/select team members
+- Assign specific videos with optional due dates
+- View pending assignments by person
+- Bulk assignment to multiple users
+
+**Tab 3: Team Progress**
+- View completion rates by role
+- View completion rates by individual
+- Filter by category/video
+- Export progress reports
+- Send reminder notifications
+
+---
+
+## File Structure
+
+```text
+src/pages/dashboard/admin/
+├── TrainingHub.tsx              # Main hub page with tabs
+
+src/components/training/
+├── VideoLibraryManager.tsx      # CRUD for videos
+├── VideoUploadDialog.tsx        # Upload/edit dialog
+├── IndividualAssignments.tsx    # Assign to individuals
+├── TeamProgressDashboard.tsx    # Progress tracking
+├── TrainingAssignmentCard.tsx   # Display assignment
+└── TrainingProgressTable.tsx    # Progress table component
 ```
 
-### 3. Filter Videos by Role
+---
 
-After fetching videos, filter to only include those matching the user's roles:
+## Detailed Component Specifications
+
+### 1. TrainingHub.tsx (Main Container)
 
 ```typescript
-// Filter videos by user's roles
-const roleFilteredVideos = videos.filter(video => {
-  // If no roles specified, show to everyone
-  if (!video.required_for_roles || video.required_for_roles.length === 0) {
-    return true;
-  }
-  // Show if user has at least one matching role
-  return video.required_for_roles.some(role => userRoles.includes(role));
+// Layout with 3 tabs: Library, Assignments, Progress
+const tabs = [
+  { value: 'library', label: 'Video Library', icon: Video },
+  { value: 'assignments', label: 'Assignments', icon: UserPlus },
+  { value: 'progress', label: 'Team Progress', icon: BarChart3 },
+];
+```
+
+### 2. VideoLibraryManager.tsx
+
+Features:
+- Grid/list view toggle for existing videos
+- "Add Video" button opens `VideoUploadDialog`
+- Each video card shows:
+  - Thumbnail (or placeholder)
+  - Title, category, duration
+  - Role badges (who can see)
+  - Active/inactive toggle
+  - Edit/Delete actions
+- Drag-and-drop for `order_index` reordering
+
+### 3. VideoUploadDialog.tsx
+
+Form fields:
+- **Title** (required)
+- **Description** (textarea)
+- **Category** (select from predefined list)
+- **Duration** (auto-calculated or manual entry in minutes)
+- **Video Upload** (to storage bucket or external URL)
+- **Thumbnail Upload** (optional)
+- **Role Visibility** (multi-select role chips)
+- **Active Status** (toggle)
+
+Upload flow:
+1. User selects video file
+2. Upload to `training-videos` bucket
+3. Generate signed URL or use `storage_path`
+4. Save metadata to `training_videos` table
+
+### 4. IndividualAssignments.tsx
+
+Features:
+- Team member search/autocomplete
+- Video multi-select dropdown
+- Due date picker (optional)
+- Required toggle
+- Notes field
+- View existing assignments grouped by:
+  - By Person: "John has 3 incomplete trainings"
+  - By Video: "Safety Training assigned to 12 people"
+- Bulk actions:
+  - Assign video to all stylists
+  - Remove assignment
+  - Update due date
+
+### 5. TeamProgressDashboard.tsx
+
+Displays:
+- Overall completion percentage (progress bar)
+- Breakdown by role (bar chart)
+- Breakdown by category
+- Individual leaderboard (who's completed most)
+- Overdue assignments alert
+- Filter by:
+  - Date range
+  - Role
+  - Category
+  - Completion status
+
+Table columns:
+- Team Member
+- Total Videos (for their roles)
+- Completed
+- In Progress
+- Not Started
+- Last Activity
+
+---
+
+## Navigation Integration
+
+### Add to Management Hub
+
+Add a new card in the "Team Development" category:
+
+```typescript
+<ManagementCard
+  href="/dashboard/admin/training-hub"
+  icon={Video}
+  title="Training Hub"
+  description="Manage training library and track completions"
+  stat={stats?.incompleteTrainings || null}
+  statLabel="incomplete"
+  colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
+/>
+```
+
+### Add Route
+
+```typescript
+{ path: 'admin/training-hub', element: <TrainingHub /> }
+```
+
+---
+
+## Video Visibility Logic Update
+
+Modify `Training.tsx` to also include individually assigned videos:
+
+```typescript
+// Current: Role-based only
+const roleFilteredVideos = videos.filter(v => 
+  v.required_for_roles?.some(r => userRoles.includes(r))
+);
+
+// New: Role-based OR individually assigned
+const visibleVideos = videos.filter(v => {
+  // Check role-based visibility
+  if (!v.required_for_roles?.length) return true;
+  if (v.required_for_roles.some(r => userRoles.includes(r))) return true;
+  
+  // Check individual assignment
+  return individualAssignments.some(a => a.video_id === v.id);
 });
 ```
 
-### 4. Update Category Filtering
+---
 
-Apply category filter on top of role-filtered videos:
+## Files to Create/Modify
 
-```typescript
-const filteredVideos = selectedCategory === 'all' 
-  ? roleFilteredVideos 
-  : roleFilteredVideos.filter(v => v.category === selectedCategory);
-```
+| File | Action | Description |
+|------|--------|-------------|
+| `src/pages/dashboard/admin/TrainingHub.tsx` | Create | Main hub page with tabs |
+| `src/components/training/VideoLibraryManager.tsx` | Create | Video CRUD grid |
+| `src/components/training/VideoUploadDialog.tsx` | Create | Upload/edit form |
+| `src/components/training/IndividualAssignments.tsx` | Create | User assignment UI |
+| `src/components/training/TeamProgressDashboard.tsx` | Create | Progress tracking |
+| `src/pages/dashboard/Training.tsx` | Modify | Include individual assignments |
+| `src/pages/dashboard/admin/ManagementHub.tsx` | Modify | Add Training Hub card |
+| `src/App.tsx` | Modify | Add route |
 
-### 5. Update Progress Calculation
+---
 
-Calculate progress based on role-filtered videos (not all videos):
+## Database Migration
 
-```typescript
-const completedCount = progress.filter(p => 
-  p.completed_at && roleFilteredVideos.some(v => v.id === p.video_id)
-).length;
-const totalCount = roleFilteredVideos.length;
+```sql
+-- Create individual training assignments table
+CREATE TABLE public.training_assignments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  video_id UUID REFERENCES public.training_videos(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID NOT NULL,
+  assigned_by UUID NOT NULL,
+  due_date TIMESTAMPTZ,
+  is_required BOOLEAN DEFAULT true,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(video_id, user_id)
+);
+
+-- Enable RLS
+ALTER TABLE public.training_assignments ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies
+CREATE POLICY "Users can view their own assignments"
+ON public.training_assignments FOR SELECT
+TO authenticated
+USING (user_id = auth.uid());
+
+CREATE POLICY "Managers can view all assignments"
+ON public.training_assignments FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_id = auth.uid()
+    AND role IN ('super_admin', 'admin', 'manager')
+  )
+);
+
+CREATE POLICY "Managers can manage assignments"
+ON public.training_assignments FOR ALL
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_id = auth.uid()
+    AND role IN ('super_admin', 'admin', 'manager')
+  )
+);
 ```
 
 ---
 
-## User Experience
+## UI/UX Considerations
 
-**For a Stylist:**
-- Sees videos with `required_for_roles` containing `'stylist'` OR `null`/empty
-- Progress shows X/Y where Y = stylist-relevant videos only
-
-**For a Manager who is also a Stylist:**
-- Sees videos for both `'manager'` AND `'stylist'` roles
-- Sees universal videos (no role restriction)
-- Progress reflects total relevant videos for both roles
-
-**For a Super Admin:**
-- Sees ALL videos regardless of role restrictions (has access to everything)
-
----
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/pages/dashboard/Training.tsx` | Add role filtering, update interface, fix progress calculation |
-
----
-
-## Code Changes
-
-### Updated `Training.tsx` Component
-
-```typescript
-// 1. Update interface
-interface TrainingVideo {
-  id: string;
-  title: string;
-  description: string | null;
-  video_url: string | null;
-  category: string;
-  duration_minutes: number | null;
-  order_index: number;
-  required_for_roles: string[] | null;
-}
-
-// 2. Extract roles from auth context
-const { user, roles: userRoles } = useAuth();
-
-// 3. Memoize role-filtered videos
-const roleFilteredVideos = useMemo(() => {
-  return videos.filter(video => {
-    // Super admins see everything
-    if (userRoles.includes('super_admin')) return true;
-    
-    // If no roles specified, show to everyone
-    if (!video.required_for_roles || video.required_for_roles.length === 0) {
-      return true;
-    }
-    
-    // Show if user has at least one matching role
-    return video.required_for_roles.some(role => 
-      userRoles.includes(role as any)
-    );
-  });
-}, [videos, userRoles]);
-
-// 4. Apply category filter on role-filtered videos
-const filteredVideos = selectedCategory === 'all' 
-  ? roleFilteredVideos 
-  : roleFilteredVideos.filter(v => v.category === selectedCategory);
-
-// 5. Fix progress calculation
-const completedCount = progress.filter(p => 
-  p.completed_at && roleFilteredVideos.some(v => v.id === p.video_id)
-).length;
-const totalCount = roleFilteredVideos.length;
-```
+1. **Upload Progress**: Show progress bar during video upload
+2. **Validation**: Prevent duplicate assignments
+3. **Confirmation**: Confirm before deleting videos with progress data
+4. **Bulk Actions**: Allow assigning videos to entire role groups
+5. **Mobile**: Responsive design for tablet/phone access
+6. **Toast Notifications**: Success/error feedback for all actions
 
 ---
 
 ## Technical Notes
 
-1. **Super Admin Override**: Super admins will see all training videos regardless of role restrictions
-
-2. **Null/Empty Handling**: Videos with `required_for_roles` set to `null` or empty array `[]` are treated as universal (visible to all)
-
-3. **Progress Accuracy**: The progress bar only counts videos the user can see, so a Stylist with 5/10 completed reflects their 10 relevant videos, not the total 50 in the system
-
-4. **Category + Role**: Both filters stack - a Stylist viewing "Technique" category only sees technique videos that are also role-visible to them
-
-5. **No Database Changes**: This uses the existing `required_for_roles` column that's already in the database
+1. **Storage Bucket**: The `training-videos` bucket is private - use signed URLs for playback
+2. **File Size**: Consider adding file size limits and validation for uploads
+3. **Video Formats**: Accept common formats (mp4, webm, mov)
+4. **Thumbnail Generation**: Consider auto-generating thumbnails or requiring upload
+5. **Progress Calculation**: Individual assignments count toward personal progress
+6. **Super Admin Override**: Super admins always see all videos and all progress
 
 ---
 
-## Setting Up Role-Specific Training
+## Implementation Order
 
-Admins can populate the `required_for_roles` field when adding/editing training videos:
-
-- **Management Training**: `['super_admin', 'admin', 'manager']`
-- **Stylist Training**: `['stylist']`
-- **Assistant Training**: `['stylist_assistant']`
-- **Universal (Everyone)**: Leave `null` or empty `[]`
-- **Multiple Roles**: `['stylist', 'stylist_assistant']`
+1. Database migration (create `training_assignments` table)
+2. Create component files structure
+3. Build `VideoLibraryManager` with CRUD
+4. Build `VideoUploadDialog` with storage integration
+5. Build `IndividualAssignments` panel
+6. Build `TeamProgressDashboard`
+7. Assemble `TrainingHub.tsx` with tabs
+8. Update `Training.tsx` to include individual assignments
+9. Add to Management Hub and routing
+10. Test end-to-end flow
