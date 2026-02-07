@@ -159,8 +159,8 @@ const growthNavItems: NavItem[] = [
 
 
 const statsNavItems: NavItem[] = [
-  { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant', 'admin', 'super_admin', 'manager'] },
-  { href: '/dashboard/leaderboard', label: 'Team Leaderboard', icon: Trophy, permission: 'view_leaderboard' },
+  { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant'] },
+  { href: '/dashboard/leaderboard', label: 'Team Leaderboard', icon: Trophy, permission: 'view_leaderboard', roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
   { href: '/dashboard/my-pay', label: 'My Pay', icon: Wallet, permission: 'view_my_pay' },
 ];
 
@@ -176,6 +176,8 @@ const teamToolsNavItems: NavItem[] = [
 const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/management', label: 'Management Hub', icon: LayoutGrid, permission: 'view_team_overview' },
   { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
+  { href: '/dashboard/stats', label: 'Team Stats', icon: BarChart3, permission: 'view_all_stats' },
+  { href: '/dashboard/leaderboard', label: 'Team Leaderboard', icon: Trophy, permission: 'view_leaderboard' },
   { href: '/dashboard/directory', label: 'Team Directory', icon: Contact, permission: 'view_team_directory' },
   { href: '/dashboard/clients', label: 'Client Directory', icon: Users, permission: 'view_clients' },
   { href: '/dashboard/admin/payroll', label: 'Payroll Hub', icon: DollarSign, permission: 'manage_payroll' },
