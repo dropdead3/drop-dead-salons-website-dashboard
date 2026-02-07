@@ -1,59 +1,40 @@
 
 
-# Rename Navigation & Add Quick Link
+# Widen Dashboard Sidebar
 
-## Overview
+## Problem
 
-This update renames "Schedule 1:1 Meeting" to "Meetings & Accountability" throughout the application and adds a new quicklink to the Command Center for quick access.
+The current sidebar width of 256px (`w-64`) is too narrow to display longer navigation labels like "Meetings & Accountability" without the text wrapping to two lines, as shown in the screenshot.
 
----
+## Solution
 
-## Changes
+Increase the sidebar width from `w-64` (256px) to `w-72` (288px) to accommodate longer navigation labels on a single line.
 
-### 1. Rename Navigation Item
+## Changes Required
 
-Update the label from "Schedule 1:1 Meeting" to "Meetings & Accountability" in:
+### File: `src/components/dashboard/DashboardLayout.tsx`
 
-| File | Location |
-|------|----------|
-| `src/components/dashboard/DashboardLayout.tsx` | Sidebar navigation items array |
-| `src/components/dashboard/settings/SidebarPreview.tsx` | Preview route labels |
-| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | Route label mapping |
-| `src/pages/dashboard/ScheduleMeeting.tsx` | Page title and description |
+Update all width references from `w-64` / `pl-64` to `w-72` / `pl-72`:
 
-### 2. Add Command Center Quick Link
+| Line | Current | Updated | Purpose |
+|------|---------|---------|---------|
+| 791 | `lg:w-64` | `lg:w-72` | Desktop sidebar expanded width |
+| 825 | `w-64` | `w-72` | Mobile sheet sidebar width |
+| 904 | `lg:pl-64` | `lg:pl-72` | View-as banner left padding |
+| 984 | `lg:pl-64` | `lg:pl-72` | Platform context banner left padding |
+| 995 | `lg:pl-64` | `lg:pl-72` | Desktop top bar left padding |
 
-Add a new entry to the `hubLinks` array in `HubQuickLinks.tsx`:
+There are likely additional `pl-64` references in the main content area that also need updating:
 
-```typescript
-{ 
-  href: '/dashboard/schedule-meeting', 
-  icon: CalendarClock, 
-  label: 'Schedule 1:1', 
-  colorClass: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-500/20',
-  permission: 'schedule_meetings',
-}
-```
-
-This provides quick access directly from the Command Center hub grid.
-
----
-
-## Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/components/dashboard/DashboardLayout.tsx` | Update label to "Meetings & Accountability" |
-| `src/components/dashboard/settings/SidebarPreview.tsx` | Update label to "Meetings & Accountability" |
-| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | Update label to "Meetings & Accountability" |
-| `src/pages/dashboard/ScheduleMeeting.tsx` | Update page heading to "Meetings & Accountability" |
-| `src/components/dashboard/HubQuickLinks.tsx` | Add CalendarClock import and new quicklink entry |
-
----
+| Location | Current | Updated | Purpose |
+|----------|---------|---------|---------|
+| Main content wrapper | `lg:pl-64` | `lg:pl-72` | Main content left margin for sidebar |
 
 ## Result
 
-- Sidebar navigation shows "Meetings & Accountability"
-- Page title reflects the broader scope of the feature
-- Command Center displays a new "Schedule 1:1" quicklink with indigo styling for users with the `schedule_meetings` permission
+After this change:
+- Sidebar will be 288px wide (32px wider)
+- All navigation labels including "Meetings & Accountability" will fit on a single line
+- No text wrapping in sidebar navigation items
+- Content area will shift accordingly to maintain proper alignment
 
