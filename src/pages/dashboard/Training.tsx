@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -73,6 +74,21 @@ export default function Training() {
     setLoading(false);
   };
 
+  // Fetch individual assignments for this user
+  const { data: individualAssignments = [] } = useQuery({
+    queryKey: ['my-training-assignments', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('training_assignments')
+        .select('video_id')
+        .eq('user_id', user.id);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
+
   const markComplete = async (videoId: string) => {
     if (!user) return;
 
@@ -101,11 +117,16 @@ export default function Training() {
     ]);
   };
 
-  // Filter videos by user's roles
+  // Filter videos by user's roles OR individual assignments
   const roleFilteredVideos = useMemo(() => {
     return videos.filter(video => {
       // Super admins see everything
       if (userRoles.includes('super_admin')) return true;
+      
+      // Check if individually assigned to this user
+      if (individualAssignments.some(a => a.video_id === video.id)) {
+        return true;
+      }
       
       // If no roles specified, show to everyone
       if (!video.required_for_roles || video.required_for_roles.length === 0) {
@@ -117,7 +138,7 @@ export default function Training() {
         userRoles.includes(role as any)
       );
     });
-  }, [videos, userRoles]);
+  }, [videos, userRoles, individualAssignments]);
 
   // Apply category filter on top of role-filtered videos
   const filteredVideos = selectedCategory === 'all' 

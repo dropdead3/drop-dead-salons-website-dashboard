@@ -9605,6 +9605,47 @@ export type Database = {
           },
         ]
       }
+      training_assignments: {
+        Row: {
+          assigned_by: string
+          created_at: string | null
+          due_date: string | null
+          id: string
+          is_required: boolean | null
+          notes: string | null
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          assigned_by: string
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          is_required?: boolean | null
+          notes?: string | null
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          assigned_by?: string
+          created_at?: string | null
+          due_date?: string | null
+          id?: string
+          is_required?: boolean | null
+          notes?: string | null
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_assignments_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "training_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_progress: {
         Row: {
           completed_at: string | null
