@@ -60,6 +60,8 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   manager: [
     '/dashboard/admin/management',
     '/dashboard/admin/analytics',
+    '/dashboard/stats',
+    '/dashboard/leaderboard',
     '/dashboard/directory',
     '/dashboard/clients',
     '/dashboard/admin/payroll',
