@@ -1,11 +1,11 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { getNextPayDay } from '@/hooks/usePaySchedule';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { VisibilityGate } from '@/components/visibility/VisibilityGate';
+import { VisibilityGate, useElementVisibility } from '@/components/visibility/VisibilityGate';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -63,6 +63,43 @@ export default function AnalyticsHub() {
   const analyticsCategories = isSuperAdmin 
     ? [...baseCategories, rentCategory] 
     : baseCategories;
+  
+  // Check visibility of each tab
+  const salesTabVisible = useElementVisibility('analytics_sales_tab');
+  const operationsTabVisible = useElementVisibility('analytics_operations_tab');
+  const marketingTabVisible = useElementVisibility('analytics_marketing_tab');
+  const programTabVisible = useElementVisibility('analytics_program_tab');
+  const reportsTabVisible = useElementVisibility('analytics_reports_tab');
+  const rentTabVisible = useElementVisibility('analytics_rent_tab');
+  
+  // Find first visible tab for redirect
+  const getFirstVisibleTab = useCallback(() => {
+    if (salesTabVisible) return 'sales';
+    if (operationsTabVisible) return 'operations';
+    if (marketingTabVisible) return 'marketing';
+    if (programTabVisible) return 'program';
+    if (reportsTabVisible) return 'reports';
+    if (rentTabVisible && isSuperAdmin) return 'rent';
+    return null;
+  }, [salesTabVisible, operationsTabVisible, marketingTabVisible, programTabVisible, reportsTabVisible, rentTabVisible, isSuperAdmin]);
+  
+  // Auto-redirect if current tab is hidden
+  useEffect(() => {
+    const currentTabHidden = 
+      (activeTab === 'sales' && !salesTabVisible) ||
+      (activeTab === 'operations' && !operationsTabVisible) ||
+      (activeTab === 'marketing' && !marketingTabVisible) ||
+      (activeTab === 'program' && !programTabVisible) ||
+      (activeTab === 'reports' && !reportsTabVisible) ||
+      (activeTab === 'rent' && (!rentTabVisible || !isSuperAdmin));
+    
+    if (currentTabHidden) {
+      const firstVisible = getFirstVisibleTab();
+      if (firstVisible) {
+        setSearchParams({ tab: firstVisible });
+      }
+    }
+  }, [activeTab, salesTabVisible, operationsTabVisible, marketingTabVisible, programTabVisible, reportsTabVisible, rentTabVisible, isSuperAdmin, getFirstVisibleTab, setSearchParams]);
   
   // Location access control
   const { 
@@ -286,38 +323,50 @@ export default function AnalyticsHub() {
             ))}
           </TabsList>
 
-          <TabsContent value="sales" className="mt-6">
-            <SalesTabContent 
-              filters={filters} 
-              subTab={subTab}
-              onSubTabChange={handleSubTabChange}
-            />
-          </TabsContent>
+          <VisibilityGate elementKey="analytics_sales_tab">
+            <TabsContent value="sales" className="mt-6">
+              <SalesTabContent 
+                filters={filters} 
+                subTab={subTab}
+                onSubTabChange={handleSubTabChange}
+              />
+            </TabsContent>
+          </VisibilityGate>
 
-          <TabsContent value="operations" className="mt-6">
-            <OperationsTabContent 
-              filters={filters}
-              subTab={subTab}
-              onSubTabChange={handleSubTabChange}
-            />
-          </TabsContent>
+          <VisibilityGate elementKey="analytics_operations_tab">
+            <TabsContent value="operations" className="mt-6">
+              <OperationsTabContent 
+                filters={filters}
+                subTab={subTab}
+                onSubTabChange={handleSubTabChange}
+              />
+            </TabsContent>
+          </VisibilityGate>
 
-          <TabsContent value="marketing" className="mt-6">
-            <MarketingTabContent filters={filters} />
-          </TabsContent>
+          <VisibilityGate elementKey="analytics_marketing_tab">
+            <TabsContent value="marketing" className="mt-6">
+              <MarketingTabContent filters={filters} />
+            </TabsContent>
+          </VisibilityGate>
 
-          <TabsContent value="program" className="mt-6">
-            <ProgramTabContent filters={filters} />
-          </TabsContent>
+          <VisibilityGate elementKey="analytics_program_tab">
+            <TabsContent value="program" className="mt-6">
+              <ProgramTabContent filters={filters} />
+            </TabsContent>
+          </VisibilityGate>
 
-          <TabsContent value="reports" className="mt-6">
-            <ReportsTabContent filters={filters} />
-          </TabsContent>
+          <VisibilityGate elementKey="analytics_reports_tab">
+            <TabsContent value="reports" className="mt-6">
+              <ReportsTabContent filters={filters} />
+            </TabsContent>
+          </VisibilityGate>
 
           {isSuperAdmin && effectiveOrganization?.id && (
-            <TabsContent value="rent" className="mt-6">
-              <RentRevenueTab organizationId={effectiveOrganization.id} />
-            </TabsContent>
+            <VisibilityGate elementKey="analytics_rent_tab">
+              <TabsContent value="rent" className="mt-6">
+                <RentRevenueTab organizationId={effectiveOrganization.id} />
+              </TabsContent>
+            </VisibilityGate>
           )}
         </Tabs>
       </div>
