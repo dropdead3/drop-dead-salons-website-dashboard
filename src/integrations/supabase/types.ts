@@ -114,6 +114,68 @@ export type Database = {
           },
         ]
       }
+      accountability_items: {
+        Row: {
+          coach_id: string
+          completed_at: string | null
+          completion_notes: string | null
+          created_at: string
+          description: string | null
+          due_date: string | null
+          id: string
+          meeting_id: string | null
+          priority: string
+          reminder_date: string | null
+          reminder_sent: boolean
+          status: string
+          team_member_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          coach_id: string
+          completed_at?: string | null
+          completion_notes?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          meeting_id?: string | null
+          priority?: string
+          reminder_date?: string | null
+          reminder_sent?: boolean
+          status?: string
+          team_member_id: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          coach_id?: string
+          completed_at?: string | null
+          completion_notes?: string | null
+          created_at?: string
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          meeting_id?: string | null
+          priority?: string
+          reminder_date?: string | null
+          reminder_sent?: boolean
+          status?: string
+          team_member_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accountability_items_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "one_on_one_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcement_reads: {
         Row: {
           announcement_id: string
@@ -4567,6 +4629,94 @@ export type Database = {
           utm_campaign?: string
         }
         Relationships: []
+      }
+      meeting_notes: {
+        Row: {
+          coach_id: string
+          content: string
+          created_at: string
+          id: string
+          is_private: boolean
+          meeting_id: string
+          topic_category: string
+          updated_at: string
+        }
+        Insert: {
+          coach_id: string
+          content: string
+          created_at?: string
+          id?: string
+          is_private?: boolean
+          meeting_id: string
+          topic_category?: string
+          updated_at?: string
+        }
+        Update: {
+          coach_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_private?: boolean
+          meeting_id?: string
+          topic_category?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_notes_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "one_on_one_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meeting_reports: {
+        Row: {
+          acknowledged_at: string | null
+          coach_id: string
+          created_at: string
+          id: string
+          included_items: Json | null
+          included_notes: Json | null
+          meeting_id: string
+          report_content: string
+          sent_at: string | null
+          team_member_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          coach_id: string
+          created_at?: string
+          id?: string
+          included_items?: Json | null
+          included_notes?: Json | null
+          meeting_id: string
+          report_content: string
+          sent_at?: string | null
+          team_member_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          coach_id?: string
+          created_at?: string
+          id?: string
+          included_items?: Json | null
+          included_notes?: Json | null
+          meeting_id?: string
+          report_content?: string
+          sent_at?: string | null
+          team_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meeting_reports_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "one_on_one_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notification_preferences: {
         Row: {

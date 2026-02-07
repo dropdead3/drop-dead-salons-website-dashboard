@@ -1,0 +1,270 @@
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Send, Eye, FileText, CheckCircle2 } from 'lucide-react';
+import { format } from 'date-fns';
+import { useMeetingNotes, type MeetingNote } from '@/hooks/useMeetingNotes';
+import { useMeetingAccountabilityItems, type AccountabilityItem } from '@/hooks/useAccountabilityItems';
+import { useMeetingReports, useCreateMeetingReport, useSendMeetingReport } from '@/hooks/useMeetingReports';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import ReactMarkdown from 'react-markdown';
+
+interface ReportBuilderProps {
+  meetingId: string;
+  teamMemberId: string;
+  teamMemberName: string;
+}
+
+export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: ReportBuilderProps) {
+  const { data: notes } = useMeetingNotes(meetingId);
+  const { data: items } = useMeetingAccountabilityItems(meetingId);
+  const { data: reports } = useMeetingReports(meetingId);
+  const createReport = useCreateMeetingReport();
+  const sendReport = useSendMeetingReport();
+
+  const [isBuilding, setIsBuilding] = useState(false);
+  const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [additionalContent, setAdditionalContent] = useState('');
+  const [previewContent, setPreviewContent] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Filter only non-private notes for report
+  const shareableNotes = notes?.filter(n => !n.is_private) || [];
+  const activeItems = items?.filter(i => i.status !== 'cancelled') || [];
+
+  const generateReportContent = () => {
+    let content = `# Check-in Report\n\n`;
+    content += `**Meeting Date:** ${format(new Date(), 'MMMM d, yyyy')}\n`;
+    content += `**Team Member:** ${teamMemberName}\n\n`;
+
+    if (selectedNotes.length > 0) {
+      content += `## Meeting Notes\n\n`;
+      selectedNotes.forEach(noteId => {
+        const note = shareableNotes.find(n => n.id === noteId);
+        if (note) {
+          content += `### ${note.topic_category.charAt(0).toUpperCase() + note.topic_category.slice(1)}\n`;
+          content += `${note.content}\n\n`;
+        }
+      });
+    }
+
+    if (selectedItems.length > 0) {
+      content += `## Action Items\n\n`;
+      selectedItems.forEach(itemId => {
+        const item = activeItems.find(i => i.id === itemId);
+        if (item) {
+          const status = item.status === 'completed' ? '✅' : item.status === 'in_progress' ? '🔄' : '⏳';
+          content += `- ${status} **${item.title}**`;
+          if (item.due_date) {
+            content += ` (Due: ${format(new Date(item.due_date), 'MMM d')})`;
+          }
+          content += '\n';
+          if (item.description) {
+            content += `  - ${item.description}\n`;
+          }
+        }
+      });
+      content += '\n';
+    }
+
+    if (additionalContent.trim()) {
+      content += `## Additional Notes\n\n${additionalContent}\n`;
+    }
+
+    return content;
+  };
+
+  const handlePreview = () => {
+    setPreviewContent(generateReportContent());
+    setShowPreview(true);
+  };
+
+  const handleCreateAndSend = async () => {
+    const content = generateReportContent();
+    const report = await createReport.mutateAsync({
+      meeting_id: meetingId,
+      team_member_id: teamMemberId,
+      report_content: content,
+      included_notes: selectedNotes,
+      included_items: selectedItems,
+    });
+
+    await sendReport.mutateAsync(report.id);
+    setIsBuilding(false);
+    setSelectedNotes([]);
+    setSelectedItems([]);
+    setAdditionalContent('');
+  };
+
+  const sentReports = reports?.filter(r => r.sent_at) || [];
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <CardTitle className="text-lg">Check-in Reports</CardTitle>
+        {!isBuilding && (
+          <Button size="sm" onClick={() => setIsBuilding(true)}>
+            <FileText className="h-4 w-4 mr-1" />
+            Build Report
+          </Button>
+        )}
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isBuilding && (
+          <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Include Meeting Notes</Label>
+              {shareableNotes.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No shareable notes available</p>
+              ) : (
+                <div className="space-y-2">
+                  {shareableNotes.map((note) => (
+                    <div key={note.id} className="flex items-start gap-2">
+                      <Checkbox
+                        id={`note-${note.id}`}
+                        checked={selectedNotes.includes(note.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedNotes([...selectedNotes, note.id]);
+                          } else {
+                            setSelectedNotes(selectedNotes.filter(id => id !== note.id));
+                          }
+                        }}
+                      />
+                      <label htmlFor={`note-${note.id}`} className="text-sm cursor-pointer flex-1">
+                        <Badge variant="outline" className="mr-2 text-xs">
+                          {note.topic_category}
+                        </Badge>
+                        {note.content.slice(0, 100)}...
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              <Label className="text-base font-medium">Include Action Items</Label>
+              {activeItems.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No action items available</p>
+              ) : (
+                <div className="space-y-2">
+                  {activeItems.map((item) => (
+                    <div key={item.id} className="flex items-start gap-2">
+                      <Checkbox
+                        id={`item-${item.id}`}
+                        checked={selectedItems.includes(item.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedItems([...selectedItems, item.id]);
+                          } else {
+                            setSelectedItems(selectedItems.filter(id => id !== item.id));
+                          }
+                        }}
+                      />
+                      <label htmlFor={`item-${item.id}`} className="text-sm cursor-pointer flex-1">
+                        <span className="font-medium">{item.title}</span>
+                        {item.due_date && (
+                          <span className="text-muted-foreground ml-2">
+                            Due: {format(new Date(item.due_date), 'MMM d')}
+                          </span>
+                        )}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Additional Message (optional)</Label>
+              <Textarea
+                value={additionalContent}
+                onChange={(e) => setAdditionalContent(e.target.value)}
+                placeholder="Any additional notes or context for the team member..."
+                rows={3}
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handlePreview}>
+                <Eye className="h-4 w-4 mr-1" />
+                Preview
+              </Button>
+              <Button
+                onClick={handleCreateAndSend}
+                disabled={createReport.isPending || sendReport.isPending || (selectedNotes.length === 0 && selectedItems.length === 0 && !additionalContent.trim())}
+              >
+                <Send className="h-4 w-4 mr-1" />
+                Send Report
+              </Button>
+              <Button variant="ghost" onClick={() => setIsBuilding(false)}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {sentReports.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-muted-foreground">Sent Reports</h4>
+            {sentReports.map((report) => (
+              <div key={report.id} className="p-3 border rounded-lg flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    Sent {format(new Date(report.sent_at!), 'MMM d, yyyy h:mm a')}
+                  </span>
+                  {report.acknowledged_at && (
+                    <Badge variant="outline" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                      Acknowledged
+                    </Badge>
+                  )}
+                </div>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm">
+                      <Eye className="h-4 w-4 mr-1" />
+                      View
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Report Content</DialogTitle>
+                    </DialogHeader>
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown>{report.report_content}</ReactMarkdown>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {!isBuilding && sentReports.length === 0 && (
+          <p className="text-muted-foreground text-sm text-center py-4">
+            No reports sent yet. Build a report to summarize this meeting.
+          </p>
+        )}
+      </CardContent>
+
+      <Dialog open={showPreview} onOpenChange={setShowPreview}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Report Preview</DialogTitle>
+          </DialogHeader>
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            <ReactMarkdown>{previewContent}</ReactMarkdown>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+}

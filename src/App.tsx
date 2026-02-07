@@ -58,6 +58,7 @@ import MyHandbooks from "./pages/dashboard/MyHandbooks";
 import Onboarding from "./pages/dashboard/Onboarding";
 import AssistantSchedule from "./pages/dashboard/AssistantSchedule";
 import ScheduleMeeting from "./pages/dashboard/ScheduleMeeting";
+import MeetingDetails from "./pages/dashboard/MeetingDetails";
 import MyProfile from "./pages/dashboard/MyProfile";
 import ViewProfile from "./pages/dashboard/ViewProfile";
 import TeamDirectory from "./pages/dashboard/TeamDirectory";
@@ -186,6 +187,7 @@ const App = () => (
                       <Route path="/dashboard/onboarding" element={<ProtectedRoute requiredPermission="view_onboarding"><Onboarding /></ProtectedRoute>} />
                       <Route path="/dashboard/assistant-schedule" element={<ProtectedRoute requiredPermission="view_assistant_schedule"><AssistantSchedule /></ProtectedRoute>} />
                       <Route path="/dashboard/schedule-meeting" element={<ProtectedRoute requiredPermission="schedule_meetings"><ScheduleMeeting /></ProtectedRoute>} />
+                      <Route path="/dashboard/meeting/:id" element={<ProtectedRoute requiredPermission="schedule_meetings"><MeetingDetails /></ProtectedRoute>} />
                       <Route path="/dashboard/my-graduation" element={<ProtectedRoute requiredPermission="view_my_graduation"><MyGraduation /></ProtectedRoute>} />
                       <Route path="/dashboard/clients" element={<ProtectedRoute requiredPermission="view_clients"><ClientDirectory /></ProtectedRoute>} />
                       <Route path="/dashboard/my-clients" element={<Navigate to="/dashboard/clients" replace />} />
