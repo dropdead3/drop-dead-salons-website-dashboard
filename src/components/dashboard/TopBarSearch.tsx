@@ -187,7 +187,7 @@ export function TopBarSearch() {
             ) : (
               <Search className="w-4 h-4 text-muted-foreground" />
             )}
-            <Input
+            <input
               ref={inputRef}
               type="text"
               placeholder={aiMode ? "Ask me anything..." : "Search navigation, team..."}
@@ -197,7 +197,7 @@ export function TopBarSearch() {
                 setSelectedIndex(0);
               }}
               onKeyDown={handleKeyDown}
-              className="flex-1 border-0 bg-transparent focus-visible:ring-0 px-0 h-8"
+              className="flex-1 bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground"
               autoCapitalize="off"
             />
             <Button
