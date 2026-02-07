@@ -1,27 +1,24 @@
 
-
-# Add Shift Swaps & Rewards to Team Member Sidebar
+# Combine Team Tools & Get Help Sections
 
 ## Overview
 
-Add a new "Team Tools" sidebar section visible to team member roles (stylist, stylist_assistant, receptionist, booth_renter) containing links to **Shift Swaps** and **Rewards**.
+Merge the "Team Tools" and "Get Help" sections into a single "Team Tools" section containing all four navigation items.
 
 ---
 
-## Implementation Details
+## Changes Required
 
-### 1. Add New "Team Tools" Section
+### 1. Update `src/hooks/useSidebarLayout.ts`
 
-Update `src/hooks/useSidebarLayout.ts` to include a new built-in section:
-
-**Changes to DEFAULT_SECTION_ORDER:**
+**Remove `getHelp` from DEFAULT_SECTION_ORDER:**
 ```typescript
 export const DEFAULT_SECTION_ORDER = [
   'main',
   'growth', 
   'stats',
-  'teamTools',    // NEW - after stats, before getHelp
-  'getHelp',
+  'teamTools',    // Combined section
+  // 'getHelp' - REMOVED
   'housekeeping',
   'manager',
   'website',
@@ -30,71 +27,73 @@ export const DEFAULT_SECTION_ORDER = [
 ];
 ```
 
-**Changes to SECTION_LABELS:**
+**Remove `getHelp` from SECTION_LABELS:**
 ```typescript
 export const SECTION_LABELS: Record<string, string> = {
-  // ... existing labels ...
+  main: 'Main',
+  growth: 'Growth',
+  stats: 'Stats & Leaderboard',
   teamTools: 'Team Tools',
+  // getHelp: 'Get Help' - REMOVED
+  housekeeping: 'Housekeeping',
+  // ... rest stays same
 };
 ```
 
-**Changes to DEFAULT_LINK_ORDER:**
+**Merge links in DEFAULT_LINK_ORDER:**
 ```typescript
-export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
-  // ... existing sections ...
-  teamTools: [
-    '/dashboard/shift-swaps',
-    '/dashboard/rewards',
-  ],
-  // ... rest of sections ...
-};
+teamTools: [
+  '/dashboard/shift-swaps',
+  '/dashboard/rewards',
+  '/dashboard/assistant-schedule',
+  '/dashboard/schedule-meeting',
+],
+// Remove the separate getHelp entry
 ```
 
 ---
 
-### 2. Update Sidebar Preview Component
+### 2. Update `src/components/dashboard/DashboardLayout.tsx`
 
-Update `src/components/dashboard/settings/SidebarPreview.tsx` to include the new link labels:
-
+**Merge `baseGetHelpNavItems` into `teamToolsNavItems`:**
 ```typescript
-const LINK_CONFIG: Record<string, { label: string }> = {
-  // ... existing links ...
-  '/dashboard/shift-swaps': { label: 'Shift Swaps' },
-  '/dashboard/rewards': { label: 'Rewards' },
-};
+const teamToolsNavItems: NavItem[] = [
+  { href: '/dashboard/shift-swaps', label: 'Shift Swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
+  { href: '/dashboard/rewards', label: 'Rewards', icon: Gift },
+  { href: '/dashboard/assistant-schedule', label: 'Assistant Schedule', icon: Users, permission: 'view_assistant_schedule' },
+  { href: '/dashboard/schedule-meeting', label: 'Schedule 1:1 Meeting', icon: CalendarClock, permission: 'schedule_meetings' },
+];
 ```
 
----
-
-### 3. Configure Default Role Visibility
-
-The Team Tools section should be visible by default to these roles:
-- `stylist`
-- `stylist_assistant`
-- `receptionist`
-- `booth_renter`
-
-And hidden from leadership roles by default (they can access via other hubs):
-- `admin`, `super_admin`, `manager` - hidden
-
-Since the Role Access Configurator now controls visibility, we'll set the section to be visible globally, and leadership can hide it via the configurator if desired.
+**Remove separate `getHelpNavItems` prop** from `SidebarNavContent` component calls.
 
 ---
 
-## Files to Modify
+### 3. Update `src/components/dashboard/SidebarNavContent.tsx`
 
-| File | Changes |
-|------|---------|
-| `src/hooks/useSidebarLayout.ts` | Add `teamTools` to `DEFAULT_SECTION_ORDER`, `SECTION_LABELS`, and `DEFAULT_LINK_ORDER` |
-| `src/components/dashboard/settings/SidebarPreview.tsx` | Add shift-swaps and rewards to `LINK_CONFIG` |
+- Remove `getHelpNavItems` from props interface
+- Remove `getHelp` from `sectionItemsMap`
+- Remove from `allNavItemsByHref` spread
+- Remove from dependency arrays
+
+---
+
+### 4. Update `src/components/dashboard/settings/SidebarPreview.tsx`
+
+Ensure both Assistant Schedule and Schedule 1:1 Meeting are in the `LINK_CONFIG`:
+```typescript
+'/dashboard/assistant-schedule': { label: 'Assistant Schedule' },
+'/dashboard/schedule-meeting': { label: 'Schedule 1:1 Meeting' },
+```
 
 ---
 
 ## Result
 
-After implementation:
-- Team members will see a new **"Team Tools"** section in their sidebar
-- Contains **Shift Swaps** (icon: ArrowLeftRight) and **Rewards** (icon: Gift)
-- Fully configurable via the Role Access Configurator if visibility adjustments are needed
-- Links are already registered in `SidebarLayoutEditor.tsx` with proper icons
+The sidebar will show a single **"Team Tools"** section containing:
+1. Shift Swaps
+2. Rewards
+3. Assistant Schedule
+4. Schedule 1:1 Meeting
 
+All items remain individually configurable via the Role Access Configurator.
