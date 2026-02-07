@@ -1,219 +1,258 @@
 
+# Bookkeeper/Accountant Role Implementation Plan
 
-# Fix Synthetic Bold Fonts & Reinforce Typography Rules
+## Overview
 
-## Issue Identified
-
-The screenshot shows synthetic bold fonts being applied to text throughout the Payroll Provider Hub. This violates the established design system rules which specify:
-
-- **font-display (Termina)**: Max weight is 500 (medium) only. NEVER use font-bold or font-semibold
-- **font-sans (Aeonik Pro)**: Weight 400-500 only. NEVER use uppercase or all-caps
-
-The following components are using prohibited font weights:
-
-| File | Violations |
-|------|------------|
-| `ProviderCard.tsx` | Lines 65, 141, 161, 189, 196 (`font-semibold`, `font-bold`) |
-| `PayrollProviderHub.tsx` | Lines 32, 78 (`font-semibold`, `font-bold`) |
-| `ProviderDetailSheet.tsx` | Lines 49, 73, 97, 114, 130, 139, 153 (`font-semibold`, `font-bold`) |
-| `PayrollKPICards.tsx` | Line 63 (`font-bold`) |
-| `TeamCompensationTable.tsx` | Lines 122, 126, 132, 138, 219 (`font-semibold`, `font-bold`) |
-| `CommissionInsights.tsx` | Lines 73, 87, 104, 153, 168, 182, 197 (`font-semibold`, `font-bold`) |
+Add a dedicated "Bookkeeper" role to the system that allows external accounting professionals to access payroll operations, sales data, and financial reports without having full administrative access. This role will be invite-only by admins/managers and will have a focused permission set for financial operations.
 
 ---
 
-## Solution
+## Current System Analysis
 
-### 1. Create Design Guide Rule File
+**Existing Role Infrastructure:**
+- `app_role` enum in Supabase contains: `admin`, `manager`, `stylist`, `receptionist`, `assistant`, `stylist_assistant`, `admin_assistant`, `operations_assistant`, `super_admin`, `booth_renter`
+- Roles are stored in the `roles` table with metadata (icon, color, category)
+- User roles are tracked in `user_roles` table
+- Permissions are assigned via `role_permissions` table
+- Invitation system exists via `staff_invitations` table
 
-Create a new documentation file that codifies typography rules for reference during development:
+**Relevant Existing Permissions:**
+| Permission | Category | Purpose |
+|------------|----------|---------|
+| `manage_payroll` | Payroll | Run payroll and manage settings |
+| `view_payroll_reports` | Payroll | View payroll history |
+| `manage_employee_compensation` | Payroll | Edit pay rates |
+| `view_all_stats` | Management | View team statistics |
+| `view_transactions` | finances | View transaction history |
+| `view_rent_analytics` | analytics | Access rent revenue data |
+| `view_all_locations_analytics` | Management | Multi-location analytics |
 
-**New File: `src/lib/design-rules.ts`**
+---
 
-```typescript
-/**
- * DROP DEAD DESIGN SYSTEM RULES
- * 
- * These rules MUST be followed across all components.
- * Violations will cause visual inconsistencies and synthetic font rendering.
- */
+## Technical Implementation
 
-export const TYPOGRAPHY_RULES = {
-  // Maximum allowed font weight - NEVER exceed this
-  MAX_FONT_WEIGHT: 500,
-  
-  // Prohibited classes - NEVER use these
-  PROHIBITED_CLASSES: [
-    'font-bold',      // Weight 700 - BANNED
-    'font-semibold',  // Weight 600 - BANNED
-    'font-extrabold', // Weight 800 - BANNED
-    'font-black',     // Weight 900 - BANNED
-  ],
-  
-  // Allowed weight classes
-  ALLOWED_CLASSES: [
-    'font-normal',    // Weight 400 - OK
-    'font-medium',    // Weight 500 - OK (maximum)
-    'font-light',     // Weight 300 - OK
-  ],
-  
-  // Font-specific rules
-  FONT_RULES: {
-    'font-display': {
-      font: 'Termina',
-      maxWeight: 500,
-      transform: 'uppercase',
-      letterSpacing: '0.08em',
-      note: 'Headlines, buttons, navigation'
-    },
-    'font-sans': {
-      font: 'Aeonik Pro',
-      maxWeight: 500,
-      transform: 'normal', // NEVER uppercase
-      note: 'Body text, paragraphs, UI labels'
-    }
-  }
-} as const;
+### 1. Database Migration
 
-/**
- * Use this instead of font-bold/font-semibold:
- * 
- * BAD:  className="font-bold text-lg"
- * GOOD: className="font-medium text-lg"
- * 
- * For emphasis without bold:
- * - Use larger font size (text-lg, text-xl)
- * - Use color contrast (text-foreground vs text-muted-foreground)
- * - Use letter-spacing (tracking-wide)
- */
+**Add `bookkeeper` to `app_role` enum:**
+
+```sql
+-- Add bookkeeper to the app_role enum
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'bookkeeper';
 ```
 
-### 2. Update Design System Page
+**Insert role metadata into `roles` table:**
 
-Enhance the existing typography documentation in `DesignSystem.tsx` with a visual warning banner:
-
-```typescript
-// Add to the typography section
-<div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 mb-4">
-  <p className="text-sm text-destructive font-medium">
-    CRITICAL RULE: Never use font-bold or font-semibold. 
-    Maximum weight is font-medium (500).
-  </p>
-</div>
+```sql
+INSERT INTO public.roles (
+  name, 
+  display_name, 
+  description, 
+  color, 
+  icon, 
+  category, 
+  sort_order, 
+  is_system, 
+  is_active
+) VALUES (
+  'bookkeeper',
+  'Bookkeeper',
+  'External accounting access for payroll, sales data, and financial reports',
+  'emerald',
+  'Calculator',
+  'operations',
+  15,
+  true,
+  true
+) ON CONFLICT (name) DO NOTHING;
 ```
 
-### 3. Fix All Violating Components
+**Create new bookkeeper-specific permissions:**
 
-Replace all prohibited font weights with `font-medium`:
+```sql
+-- New permission for viewing sales analytics (separate from view_all_stats)
+INSERT INTO public.permissions (name, display_name, description, category)
+VALUES 
+  ('view_sales_analytics', 'View Sales Analytics', 'Access sales dashboards and revenue reports', 'finances'),
+  ('export_financial_data', 'Export Financial Data', 'Download CSV/PDF reports for payroll and sales', 'finances')
+ON CONFLICT (name) DO NOTHING;
+```
 
----
+**Assign default permissions to bookkeeper role:**
 
-#### `src/components/dashboard/payroll/providers/ProviderCard.tsx`
-
-| Line | Before | After |
-|------|--------|-------|
-| 65 | `font-semibold` | `font-medium` |
-| 141 | `font-bold` | `font-medium` |
-| 161 | `font-medium` | (already correct) |
-| 189 | `font-bold` | `font-medium` |
-| 196 | `font-semibold` | `font-medium` |
-
----
-
-#### `src/components/dashboard/payroll/providers/PayrollProviderHub.tsx`
-
-| Line | Before | After |
-|------|--------|-------|
-| 32 | `font-semibold` | `font-medium` |
-| 78 | `font-bold` | `font-medium tracking-tight` |
-
----
-
-#### `src/components/dashboard/payroll/providers/ProviderDetailSheet.tsx`
-
-| Line | Before | After |
-|------|--------|-------|
-| 49 | `font-medium` | (already correct) |
-| 73 | `font-semibold` | `font-medium` |
-| 97 | `font-semibold` | `font-medium` |
-| 114 | `font-semibold` | `font-medium` |
-| 130 | `font-semibold` | `font-medium` |
-| 139 | `font-bold` | `font-medium` |
-| 153 | `font-semibold` | `font-medium` |
-
----
-
-#### `src/components/dashboard/payroll/analytics/PayrollKPICards.tsx`
-
-| Line | Before | After |
-|------|--------|-------|
-| 63 | `font-bold` | `font-medium` |
+```sql
+-- Get the bookkeeper role's permission assignments
+INSERT INTO public.role_permissions (role, permission_id, granted_by)
+SELECT 
+  'bookkeeper'::app_role,
+  p.id,
+  NULL
+FROM public.permissions p
+WHERE p.name IN (
+  -- Payroll permissions
+  'manage_payroll',
+  'view_payroll_reports',
+  'manage_employee_compensation',
+  -- Financial/Sales permissions
+  'view_transactions',
+  'view_sales_analytics',
+  'view_all_stats',
+  'view_all_locations_analytics',
+  'view_rent_analytics',
+  'export_financial_data',
+  -- Basic access
+  'view_command_center'
+)
+ON CONFLICT DO NOTHING;
+```
 
 ---
 
-#### `src/components/dashboard/payroll/analytics/TeamCompensationTable.tsx`
+### 2. Role Configuration
 
-| Line | Before | After |
-|------|--------|-------|
-| 122 | `font-semibold` | `font-medium` |
-| 126 | `font-semibold` | `font-medium` |
-| 132 | `font-semibold` | `font-medium` |
-| 138 | `font-bold` | `font-medium` |
-| 219 | `font-bold` | `font-medium` |
-
----
-
-#### `src/components/dashboard/payroll/CommissionInsights.tsx`
-
-| Line | Before | After |
-|------|--------|-------|
-| 73 | `font-bold` | `font-medium` |
-| 87 | `font-bold` | `font-medium` |
-| 104 | `font-bold` | `font-medium` |
-| 153 | `font-semibold` | `font-medium` |
-| 168 | `font-bold` | `font-medium` |
-| 182 | `font-semibold` | `font-medium` |
-| 197 | `font-bold` | `font-medium` |
+| Property | Value |
+|----------|-------|
+| **Name** | `bookkeeper` |
+| **Display Name** | Bookkeeper |
+| **Description** | External accounting access for payroll, sales data, and financial reports |
+| **Icon** | Calculator |
+| **Color** | emerald (green-ish, representing money/accounting) |
+| **Category** | operations |
+| **System Role** | Yes (prevents accidental deletion) |
 
 ---
 
-## Visual Hierarchy Without Bold
+### 3. Permission Matrix for Bookkeeper
 
-To maintain visual distinction without synthetic bold:
+| Permission | Included | Reason |
+|------------|----------|--------|
+| `manage_payroll` | Yes | Run payroll cycles |
+| `view_payroll_reports` | Yes | Access payroll history |
+| `manage_employee_compensation` | Yes | Configure pay rates |
+| `view_all_stats` | Yes | Team performance data |
+| `view_transactions` | Yes | Transaction records |
+| `view_rent_analytics` | Yes | Renter revenue tracking |
+| `view_all_locations_analytics` | Yes | Multi-location data |
+| `view_sales_analytics` | Yes (new) | Sales dashboards |
+| `export_financial_data` | Yes (new) | Download reports |
+| `view_command_center` | Yes | Basic dashboard access |
 
-| Technique | Example |
-|-----------|---------|
-| Size | Use `text-lg`, `text-xl`, `text-2xl` for emphasis |
-| Color | Use `text-foreground` vs `text-muted-foreground` |
-| Tracking | Add `tracking-wide` or `tracking-wider` for display text |
-| Spacing | Use larger margins/padding around important text |
+**Explicitly EXCLUDED permissions:**
+- `view_clients` (no client PII access)
+- `manage_team` (no HR functions)
+- `view_handbooks` (internal docs)
+- `manage_announcements` (internal comms)
+- `view_assistant_schedule` (operational)
+- All platform admin permissions
 
 ---
 
-## Files to Create
+### 4. Invitation Flow Enhancement
 
-| File | Purpose |
-|------|---------|
-| `src/lib/design-rules.ts` | Codified typography rules for reference |
+The existing `InviteStaffDialog` already supports all roles from the `roles` table via `useRoleUtils().roleOptions`. Once the bookkeeper role is added to the database, it will automatically appear in the role selector.
 
-## Files to Modify
+**Optional Enhancement:** Add a visual distinction for external roles:
+
+```typescript
+// In InviteStaffDialog, consider grouping roles
+const externalRoles = ['bookkeeper', 'booth_renter'];
+const isExternalRole = externalRoles.includes(role);
+```
+
+---
+
+### 5. Navigation & Access Control
+
+**Bookkeeper's Dashboard Experience:**
+
+When a bookkeeper logs in, they should see a focused navigation:
+
+| Section | Visible |
+|---------|---------|
+| Command Center | Yes (limited widgets) |
+| Payroll Hub | Yes (full access) |
+| Sales Dashboard | Yes (view only) |
+| Analytics Hub | Yes (financial metrics) |
+| Team Directory | Limited (names/photos only) |
+| Schedule | No |
+| Client Directory | No |
+| Settings | No |
+
+**Implementation:** The existing permission-based navigation filtering will handle this automatically via `VisibilityGate` and sidebar configuration.
+
+---
+
+### 6. Security Considerations
+
+1. **No Employee Profile Creation:** Bookkeepers use the standard invitation flow but may not need full employee profiles. Consider optional profile creation.
+
+2. **Audit Logging:** All bookkeeper actions (payroll runs, data exports) should be logged via existing audit mechanisms.
+
+3. **Session Management:** Standard session handling applies; no special requirements.
+
+4. **RLS Policies:** Existing RLS policies on financial tables should work since bookkeeper users will have the appropriate role in `user_roles`.
+
+---
+
+### 7. Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/payroll/providers/ProviderCard.tsx` | Replace font-bold/semibold with font-medium |
-| `src/components/dashboard/payroll/providers/PayrollProviderHub.tsx` | Replace font-bold/semibold with font-medium |
-| `src/components/dashboard/payroll/providers/ProviderDetailSheet.tsx` | Replace font-bold/semibold with font-medium |
-| `src/components/dashboard/payroll/analytics/PayrollKPICards.tsx` | Replace font-bold with font-medium |
-| `src/components/dashboard/payroll/analytics/TeamCompensationTable.tsx` | Replace font-bold/semibold with font-medium |
-| `src/components/dashboard/payroll/CommissionInsights.tsx` | Replace font-bold/semibold with font-medium |
-| `src/pages/dashboard/DesignSystem.tsx` | Add visual warning banner for typography rules |
+| `supabase/migrations/XXXXX.sql` | Add enum value, role record, and permissions |
+
+**No code changes required** - the existing infrastructure handles:
+- Role display via `useRoleUtils()` and `roles` table
+- Permission checking via `useAuth().hasPermission()`
+- Invitation flow via `useStaffInvitations()`
+- Navigation filtering via sidebar visibility configuration
 
 ---
 
-## Memory Update
+### 8. Visual Design
 
-The existing memory note `style/typography-constraints` already documents this rule. This implementation reinforces it with:
-1. A dedicated design rules file for programmatic reference
-2. Visual warning in the Design System page
-3. All current violations fixed
+**Role Badge:**
+- Color: Emerald green (financial/accounting association)
+- Icon: Calculator (lucide-react)
+- Category: Operations
 
+**Sample Badge Rendering:**
+```
+┌─────────────────┐
+│ 🧮 Bookkeeper   │  ← Emerald green badge with Calculator icon
+└─────────────────┘
+```
+
+---
+
+## Implementation Steps
+
+| Step | Task | Complexity |
+|------|------|------------|
+| 1 | Create database migration with enum addition | Low |
+| 2 | Insert role metadata into `roles` table | Low |
+| 3 | Create new financial permissions | Low |
+| 4 | Assign default permissions to bookkeeper | Low |
+| 5 | Test invitation flow with bookkeeper role | Low |
+| 6 | Verify navigation visibility | Low |
+
+---
+
+## Testing Checklist
+
+- [ ] Bookkeeper appears in role selector when inviting staff
+- [ ] New bookkeeper can sign up via invitation link
+- [ ] Bookkeeper can access Payroll Hub
+- [ ] Bookkeeper can access Sales Dashboard
+- [ ] Bookkeeper can run payroll cycles
+- [ ] Bookkeeper cannot access Client Directory
+- [ ] Bookkeeper cannot access Settings
+- [ ] Bookkeeper actions are logged in audit trail
+
+---
+
+## Future Enhancements
+
+1. **Dedicated Bookkeeper Dashboard:** A focused landing page showing only financial KPIs
+2. **Accountant Sub-Role:** Separate read-only "Accountant" role for external auditors
+3. **External Access Portal:** Dedicated login flow for external professionals
+4. **Data Export Automation:** Scheduled report delivery to bookkeeper email
+5. **Multi-Org Bookkeeper:** Allow one bookkeeper to access multiple organizations
