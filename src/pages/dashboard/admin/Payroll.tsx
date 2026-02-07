@@ -4,12 +4,13 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { 
-  DollarSign, 
+  LayoutDashboard,
   History, 
   Users, 
   Settings,
   Play,
-  Plus
+  Plus,
+  TrendingUp
 } from 'lucide-react';
 import { usePayrollConnection } from '@/hooks/usePayrollConnection';
 import { PayrollProviderSelector } from '@/components/dashboard/payroll/PayrollProviderSelector';
@@ -18,6 +19,8 @@ import { PayrollHistoryTable } from '@/components/dashboard/payroll/PayrollHisto
 import { EmployeePayrollList } from '@/components/dashboard/payroll/EmployeePayrollList';
 import { PayScheduleCard } from '@/components/dashboard/payroll/PayScheduleCard';
 import { RunPayrollWizard } from '@/components/dashboard/payroll/RunPayrollWizard';
+import { PayrollOverview } from '@/components/dashboard/payroll/PayrollOverview';
+import { CommissionInsights } from '@/components/dashboard/payroll/CommissionInsights';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -46,8 +49,8 @@ export default function Payroll() {
       <PlatformPageContainer>
         <div className="space-y-6">
           <PlatformPageHeader
-            title="Payroll"
-            description="Manage employee compensation, run payroll, and view reports."
+            title="Payroll Hub"
+            description="Analytics, forecasting, and compensation management for your team."
             actions={
               !showWizard && (
                 <Button onClick={() => setShowWizard(true)}>
@@ -74,8 +77,12 @@ export default function Payroll() {
               onCancel={() => setShowWizard(false)} 
             />
           ) : (
-            <Tabs defaultValue="run" className="space-y-6">
+            <Tabs defaultValue="overview" className="space-y-6">
               <TabsList>
+                <TabsTrigger value="overview" className="flex items-center gap-1.5">
+                  <LayoutDashboard className="h-4 w-4" />
+                  Overview
+                </TabsTrigger>
                 <TabsTrigger value="run" className="flex items-center gap-1.5">
                   <Play className="h-4 w-4" />
                   Run Payroll
@@ -84,9 +91,13 @@ export default function Payroll() {
                   <History className="h-4 w-4" />
                   History
                 </TabsTrigger>
-                <TabsTrigger value="employees" className="flex items-center gap-1.5">
+                <TabsTrigger value="team" className="flex items-center gap-1.5">
                   <Users className="h-4 w-4" />
-                  Employees
+                  Team
+                </TabsTrigger>
+                <TabsTrigger value="commissions" className="flex items-center gap-1.5">
+                  <TrendingUp className="h-4 w-4" />
+                  Commissions
                 </TabsTrigger>
                 <TabsTrigger value="settings" className="flex items-center gap-1.5">
                   <Settings className="h-4 w-4" />
@@ -94,11 +105,15 @@ export default function Payroll() {
                 </TabsTrigger>
               </TabsList>
 
+              <TabsContent value="overview">
+                <PayrollOverview />
+              </TabsContent>
+
               <TabsContent value="run">
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
-                      <DollarSign className="h-5 w-5" />
+                      <Play className="h-5 w-5" />
                       Run Payroll
                     </CardTitle>
                     <CardDescription>
@@ -138,8 +153,12 @@ export default function Payroll() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="employees">
+              <TabsContent value="team">
                 <EmployeePayrollList />
+              </TabsContent>
+
+              <TabsContent value="commissions">
+                <CommissionInsights />
               </TabsContent>
 
               <TabsContent value="settings">

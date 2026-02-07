@@ -5036,6 +5036,38 @@ export type Database = {
           },
         ]
       }
+      payroll_analytics_snapshots: {
+        Row: {
+          created_at: string | null
+          id: string
+          metrics: Json
+          organization_id: string
+          snapshot_date: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          metrics?: Json
+          organization_id: string
+          snapshot_date: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          metrics?: Json
+          organization_id?: string
+          snapshot_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_analytics_snapshots_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payroll_connections: {
         Row: {
           access_token_encrypted: string | null
@@ -5090,6 +5122,50 @@ export type Database = {
             foreignKeyName: "payroll_connections_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll_forecasts: {
+        Row: {
+          calculated_at: string | null
+          confidence_level: string
+          created_at: string | null
+          forecast_data: Json
+          id: string
+          organization_id: string
+          period_end: string
+          period_start: string
+          updated_at: string | null
+        }
+        Insert: {
+          calculated_at?: string | null
+          confidence_level?: string
+          created_at?: string | null
+          forecast_data?: Json
+          id?: string
+          organization_id: string
+          period_end: string
+          period_start: string
+          updated_at?: string | null
+        }
+        Update: {
+          calculated_at?: string | null
+          confidence_level?: string
+          created_at?: string | null
+          forecast_data?: Json
+          id?: string
+          organization_id?: string
+          period_end?: string
+          period_start?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_forecasts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
