@@ -7,6 +7,8 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Video, Play, CheckCircle, Clock, Loader2 } from 'lucide-react';
+import { useAchievements } from '@/hooks/useAchievements';
+import { AchievementNotificationToast } from '@/components/achievements/AchievementNotificationToast';
 
 interface TrainingVideo {
   id: string;
@@ -38,6 +40,7 @@ export default function Training() {
   const [progress, setProgress] = useState<TrainingProgress[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const { checkAchievements, currentAchievement, isToastVisible, dismissCurrentAchievement } = useAchievements();
 
   useEffect(() => {
     if (user) {
@@ -115,6 +118,9 @@ export default function Training() {
       ...prev.filter(p => p.video_id !== videoId),
       { video_id: videoId, completed_at: new Date().toISOString() }
     ]);
+    
+    // Check for training achievements
+    checkAchievements('training');
   };
 
   // Filter videos by user's roles OR individual assignments
@@ -261,6 +267,15 @@ export default function Training() {
               </Card>
             ))}
           </div>
+        )}
+
+        {/* Achievement Toast */}
+        {currentAchievement && (
+          <AchievementNotificationToast
+            achievement={currentAchievement}
+            isVisible={isToastVisible}
+            onClose={dismissCurrentAchievement}
+          />
         )}
       </div>
     </DashboardLayout>
