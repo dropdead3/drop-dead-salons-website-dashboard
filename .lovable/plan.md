@@ -1,127 +1,116 @@
 
-# Hide Sales Reports When Sales Visibility is Disabled
+# Restrict Payroll Hub Access for Manager Role
 
-## Problem
+## Current State Analysis
 
-In the Analytics & Reports page (Reports tab), sales-related reports are still visible for the Manager role even when the Sales visibility toggle is OFF:
+Based on my investigation of the codebase and database:
 
-- Daily Sales Summary
-- Sales by Stylist  
-- Sales by Location
-- Product Sales Report
+| Role | Has `manage_payroll` Permission |
+|------|--------------------------------|
+| super_admin | ✅ Yes |
+| admin | ✅ Yes |
+| bookkeeper | ✅ Yes |
+| manager | ❌ No |
+| stylist | ❌ No |
+| receptionist | ❌ No |
 
-These reports display revenue data that should be restricted when `analytics_sales_tab` is disabled.
+**The database is already correctly configured** - Managers do not have the `manage_payroll` permission. A real Manager user logging in would be blocked from the Payroll Hub by the `ProtectedRoute` component.
 
----
+## What You're Seeing
 
-## Solution
+The screenshot shows the Payroll Hub visible while using **"View As Manager"** mode. This happens because:
 
-Apply the same pattern used for the Command Center cards: inherit visibility from the parent `analytics_sales_tab`. When sales visibility is disabled, the Sales report category and all its reports should be hidden.
+1. **ProtectedRoute** checks the real logged-in user's permissions (your admin account)
+2. **"View As"** only simulates the experience for navigation filtering, not page-level access control
 
----
+This is actually working as designed - admins can navigate to any page even while "viewing as" another role to verify what content would display (you'll notice the navigation already hides the Payroll Hub link when viewing as Manager).
 
-## Changes
+## Two Options for Improvement
 
-### Update ReportsTabContent.tsx
+### Option A: Accurate "View As" Simulation (Recommended)
 
-**File: `src/components/dashboard/analytics/ReportsTabContent.tsx`**
+Make the "View As" feature enforce page-level access restrictions, providing a fully accurate simulation of what a Manager would experience:
 
-| Change | Description |
-|--------|-------------|
-| Import `useElementVisibility` | Check if parent sales tab is visible |
-| Add visibility check for Sales category | Hide entire "Sales" sub-tab if sales visibility is off |
-| Wrap Sales TabsContent | Don't render sales reports content if hidden |
-| Auto-redirect logic | If user lands on "sales" category and it's hidden, redirect to first visible category |
+**Changes Required:**
+
+1. **Create `useEffectivePermissions` hook** - A shared hook that returns simulated permissions when in View As mode, real permissions otherwise
+
+2. **Update ProtectedRoute** - Check effective permissions (respecting View As) instead of real permissions:
 
 ```tsx
-import { VisibilityGate, useElementVisibility } from '@/components/visibility/VisibilityGate';
+// In ProtectedRoute.tsx
+import { useViewAs } from '@/contexts/ViewAsContext';
+import { useEffectivePermissions } from '@/hooks/useEffectivePermissions';
 
-// Check if parent sales tab is visible (determines if sales reports should show)
-const salesTabVisible = useElementVisibility('analytics_sales_tab');
+const { isViewingAs, viewAsRole } = useViewAs();
+const effectivePermissions = useEffectivePermissions();
 
-// Update report categories to filter based on visibility
-const visibleCategories = reportCategories.filter(cat => {
-  if (cat.id === 'sales' && !salesTabVisible) return false;
-  // Add other category visibility checks as needed
-  return true;
-});
-
-// Auto-redirect if current category is hidden
-useEffect(() => {
-  if (activeCategory === 'sales' && !salesTabVisible) {
-    const firstVisible = visibleCategories[0]?.id || 'staff';
-    setActiveCategory(firstVisible);
+// If viewing as another role, use simulated permissions
+if (requiredPermission && isViewingAs) {
+  if (!effectivePermissions.includes(requiredPermission)) {
+    return <Navigate to="/dashboard" replace />;
   }
-}, [activeCategory, salesTabVisible, visibleCategories]);
+}
 ```
 
-Then update the tab content rendering:
+3. **Add "Access Denied" feedback** - When an admin in View As mode tries to access a restricted page, show a clear message:
 
 ```tsx
-{/* Only render Sales content if visible */}
-{salesTabVisible && (
-  <TabsContent value="sales" className="mt-6">
-    {renderReportCards(salesReports)}
-  </TabsContent>
-)}
+if (isViewingAs && !effectivePermissions.includes(requiredPermission)) {
+  return (
+    <AccessDeniedView 
+      role={viewAsRole} 
+      permission={requiredPermission}
+      onExitViewAs={clearViewAs}
+    />
+  );
+}
 ```
 
----
+### Option B: Grant Permission via Role Access Configurator
 
-## Report Category to Parent Tab Mapping
+If you want specific Managers to access Payroll Hub, you can grant the `manage_payroll` permission to the Manager role:
 
-| Report Category | Parent Visibility Key | Should Hide When |
-|-----------------|----------------------|------------------|
-| Sales | `analytics_sales_tab` | Sales tab hidden |
-| Staff | (always visible) | - |
-| Clients | (always visible) | - |
-| Operations | `analytics_operations_tab` | Operations tab hidden (optional) |
-| Financial | `analytics_sales_tab` | Sales tab hidden (financial includes revenue) |
+1. Go to **Settings > Access & Visibility > Role Access**
+2. Select **Permissions Matrix** tab
+3. Find **Manager** role
+4. Toggle ON: `manage_payroll`
 
----
-
-## Technical Details
-
-### Default Category Fallback
-
-When sales visibility is OFF and user tries to access the sales report category:
-1. The Sales sub-tab trigger will not render
-2. The Sales TabsContent will not render
-3. If `activeCategory === 'sales'`, auto-redirect to "staff" (next available category)
-
-### Financial Reports Consideration
-
-Financial reports (Revenue Trend, Commission, YoY) should also be hidden when sales visibility is off since they contain revenue data. Two options:
-
-1. **Hide entire Financial category** when sales is hidden
-2. **Keep Financial visible** but hide revenue-specific reports within it
-
-Option 1 is safer since most financial reports contain revenue data.
+This would give all Managers access to Payroll Hub. For individual manager access, you would need to:
+- Create a custom role (e.g., "Senior Manager" with payroll access)
+- Assign that role to specific managers
 
 ---
 
-## File Summary
+## Recommended Approach
 
-| File | Action |
+**Option A** provides the best solution because:
+- It makes the "View As" feature fully accurate for testing role experiences
+- It respects existing permission controls without database changes
+- It helps admins verify what each role can actually access
+- Real Manager users are already blocked by the current permission configuration
+
+---
+
+## Files to Modify
+
+| File | Change |
 |------|--------|
-| `src/components/dashboard/analytics/ReportsTabContent.tsx` | Add visibility checks for Sales and Financial categories |
+| `src/hooks/useEffectivePermissions.ts` | New hook - returns simulated or real permissions based on View As mode |
+| `src/components/auth/ProtectedRoute.tsx` | Check effective permissions instead of real permissions when in View As mode |
+| `src/components/auth/AccessDeniedView.tsx` | New component - shows friendly message when View As blocks access |
 
 ---
 
-## Visual Result
+## Result After Implementation
 
-When Sales visibility is OFF for Manager role:
+When using "View As Manager":
+- ✅ Payroll Hub link hidden from navigation (already works)
+- ✅ Direct URL `/dashboard/admin/payroll` redirects to dashboard with message
+- ✅ Clear feedback that Manager role cannot access this page
+- ✅ Easy exit from View As mode to regain full access
 
-**Before (Current - Broken)**
-```
-Sub-tabs: [Sales] [Staff] [Clients] [Operations] [Financial]
-Content: Shows Daily Sales Summary, Sales by Stylist, Sales by Location, Product Sales Report
-```
-
-**After (Fixed)**
-```
-Sub-tabs: [Staff] [Clients] [Operations]
-Content: Auto-redirects to Staff reports if user was on Sales
-```
-
-Manager will no longer see any sales reports or financial reports when the parent sales visibility is disabled.
+When logged in as actual Manager:
+- ✅ Payroll Hub link not visible in navigation
+- ✅ Direct URL access blocked, redirects to dashboard
+- ✅ No access to any payroll data or functions
