@@ -18,6 +18,7 @@ interface HideNumbersContextType {
   hideNumbers: boolean;
   toggleHideNumbers: () => void;
   requestUnhide: () => void;
+  quickHide: () => void;
   isLoading: boolean;
 }
 
@@ -134,8 +135,25 @@ export function HideNumbersProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Quick hide - called on double-click, immediately hides without confirmation
+  const quickHide = async () => {
+    if (!user || hideNumbers) return; // Already hidden or not logged in
+    
+    setHideNumbers(true);
+    
+    // Persist to database
+    try {
+      await supabase
+        .from('employee_profiles')
+        .update({ hide_numbers: true })
+        .eq('user_id', user.id);
+    } catch (err) {
+      console.error('Error saving hide_numbers preference:', err);
+    }
+  };
+
   return (
-    <HideNumbersContext.Provider value={{ hideNumbers, toggleHideNumbers, requestUnhide, isLoading }}>
+    <HideNumbersContext.Provider value={{ hideNumbers, toggleHideNumbers, requestUnhide, quickHide, isLoading }}>
       {children}
       <HideNumbersConfirmDialog 
         open={showConfirmDialog} 
@@ -166,10 +184,24 @@ export function BlurredAmount({
   className,
   as: Component = 'span'
 }: BlurredAmountProps) {
-  const { hideNumbers, requestUnhide } = useHideNumbers();
+  const { hideNumbers, requestUnhide, quickHide } = useHideNumbers();
+  
+  const handleDoubleClick = () => {
+    if (!hideNumbers) {
+      quickHide();
+    }
+  };
   
   if (!hideNumbers) {
-    return <Component className={className}>{children}</Component>;
+    return (
+      <Component 
+        className={cn(className, 'cursor-pointer')} 
+        onDoubleClick={handleDoubleClick}
+        title="Double-click to hide"
+      >
+        {children}
+      </Component>
+    );
   }
   
   return (

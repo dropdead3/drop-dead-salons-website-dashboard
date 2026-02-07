@@ -20,7 +20,7 @@ export function AnimatedBlurredAmount({
   decimals = 0,
   className = '',
 }: AnimatedBlurredAmountProps) {
-  const { hideNumbers, requestUnhide } = useHideNumbers();
+  const { hideNumbers, requestUnhide, quickHide } = useHideNumbers();
   const [displayValue, setDisplayValue] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
   const previousValue = useRef(0);
@@ -98,6 +98,12 @@ export function AnimatedBlurredAmount({
     }
   };
 
+  const handleDoubleClick = () => {
+    if (!hideNumbers) {
+      quickHide();
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && hideNumbers) {
       requestUnhide();
@@ -109,10 +115,11 @@ export function AnimatedBlurredAmount({
       ref={elementRef}
       className={cn(
         className,
-        hideNumbers && 'blur-md select-none cursor-pointer transition-all duration-200'
+        hideNumbers ? 'blur-md select-none cursor-pointer transition-all duration-200' : 'cursor-pointer'
       )}
-      title={hideNumbers ? 'Click to reveal' : undefined}
+      title={hideNumbers ? 'Click to reveal' : 'Double-click to hide'}
       onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
       onKeyDown={handleKeyDown}
       tabIndex={hideNumbers ? 0 : undefined}
     >
