@@ -119,23 +119,23 @@ function EmployeeRow({ employee, isExpanded, onToggle }: EmployeeRowProps) {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Base Pay</p>
-                <p className="font-semibold">{formatCurrency(employee.projectedCompensation.basePay)}</p>
+                <p className="font-medium">{formatCurrency(employee.projectedCompensation.basePay)}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Service Commission</p>
-                <p className="font-semibold text-blue-600">
+                <p className="font-medium text-blue-600">
                   {formatCurrency(employee.projectedCompensation.serviceCommission)}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Product Commission</p>
-                <p className="font-semibold text-purple-600">
+                <p className="font-medium text-purple-600">
                   {formatCurrency(employee.projectedCompensation.productCommission)}
                 </p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground uppercase tracking-wide">Projected Total</p>
-                <p className="font-bold text-lg">
+                <p className="font-medium text-lg">
                   {formatCurrency(employee.projectedCompensation.totalGross)}
                 </p>
               </div>
@@ -216,7 +216,7 @@ export function TeamCompensationTable({ employees, isLoading, periodLabel }: Tea
           </div>
           <div className="text-right">
             <p className="text-sm text-muted-foreground">Total Projected</p>
-            <p className="text-2xl font-bold">{formatCurrency(totalProjected)}</p>
+            <p className="text-2xl font-medium">{formatCurrency(totalProjected)}</p>
           </div>
         </div>
       </CardHeader>

@@ -70,7 +70,7 @@ export function CommissionInsights() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Current Period Commissions</p>
-                <p className="text-2xl font-bold">{formatCurrency(impactAnalysis.currentPeriodCommissions)}</p>
+                <p className="text-2xl font-medium">{formatCurrency(impactAnalysis.currentPeriodCommissions)}</p>
               </div>
             </div>
           </CardContent>
@@ -84,7 +84,7 @@ export function CommissionInsights() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Potential Additional</p>
-                <p className="text-2xl font-bold text-emerald-600">
+                <p className="text-2xl font-medium text-emerald-600">
                   +{formatCurrency(impactAnalysis.potentialAdditional)}
                 </p>
                 <p className="text-xs text-muted-foreground">if all hit next tier</p>
@@ -101,7 +101,7 @@ export function CommissionInsights() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Near Next Tier</p>
-                <p className="text-2xl font-bold">{progressionOpportunities.length}</p>
+                <p className="text-2xl font-medium">{progressionOpportunities.length}</p>
                 <p className="text-xs text-muted-foreground">stylists within 25%</p>
               </div>
             </div>
@@ -150,7 +150,7 @@ export function CommissionInsights() {
             <div className="space-y-6">
               {/* Service Tiers */}
               <div>
-                <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
                   <Badge variant="outline">Services</Badge>
                 </h4>
                 <div className="space-y-2">
@@ -165,7 +165,7 @@ export function CommissionInsights() {
                           {formatCurrency(tier.min_revenue)} - {tier.max_revenue ? formatCurrency(tier.max_revenue) : '∞'}
                         </p>
                       </div>
-                      <Badge className="text-sm font-bold">
+                      <Badge className="text-sm font-medium">
                         {(tier.commission_rate * 100).toFixed(0)}%
                       </Badge>
                     </div>
@@ -179,7 +179,7 @@ export function CommissionInsights() {
               {/* Product Tiers */}
               {productTiers.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                  <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
                     <Badge variant="outline">Products</Badge>
                   </h4>
                   <div className="space-y-2">
@@ -194,7 +194,7 @@ export function CommissionInsights() {
                             {formatCurrency(tier.min_revenue)} - {tier.max_revenue ? formatCurrency(tier.max_revenue) : '∞'}
                           </p>
                         </div>
-                        <Badge variant="secondary" className="text-sm font-bold">
+                        <Badge variant="secondary" className="text-sm font-medium">
                           {(tier.commission_rate * 100).toFixed(0)}%
                         </Badge>
                       </div>

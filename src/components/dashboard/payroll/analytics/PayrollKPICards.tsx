@@ -60,7 +60,7 @@ function KPICard({ title, value, subtitle, trend, icon: Icon, iconClassName, isL
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <p className="text-sm text-muted-foreground font-medium">{title}</p>
-            <p className="text-2xl font-bold mt-1">{value}</p>
+            <p className="text-2xl font-medium mt-1">{value}</p>
             {subtitle && (
               <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>
             )}

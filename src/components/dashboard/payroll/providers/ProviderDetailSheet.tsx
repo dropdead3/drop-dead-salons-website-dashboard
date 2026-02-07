@@ -70,7 +70,7 @@ export function ProviderDetailSheet({
 
           {/* Key Features */}
           <div className="space-y-4">
-            <h4 className="font-semibold uppercase text-xs tracking-wider text-muted-foreground">
+            <h4 className="font-medium uppercase text-xs tracking-wider text-muted-foreground">
               Key Features
             </h4>
             <div className="space-y-3">
@@ -94,7 +94,7 @@ export function ProviderDetailSheet({
 
           {/* Best For */}
           <div className="space-y-4">
-            <h4 className="font-semibold uppercase text-xs tracking-wider text-muted-foreground">
+            <h4 className="font-medium uppercase text-xs tracking-wider text-muted-foreground">
               Best For
             </h4>
             <div className="space-y-2">
@@ -111,7 +111,7 @@ export function ProviderDetailSheet({
 
           {/* Integrations */}
           <div className="space-y-4">
-            <h4 className="font-semibold uppercase text-xs tracking-wider text-muted-foreground">
+            <h4 className="font-medium uppercase text-xs tracking-wider text-muted-foreground">
               Integrations
             </h4>
             <div className="flex flex-wrap gap-2">
@@ -127,7 +127,7 @@ export function ProviderDetailSheet({
 
           {/* Pricing */}
           <div className="space-y-4">
-            <h4 className="font-semibold uppercase text-xs tracking-wider text-muted-foreground">
+            <h4 className="font-medium uppercase text-xs tracking-wider text-muted-foreground">
               Pricing
             </h4>
             <div 
@@ -136,7 +136,7 @@ export function ProviderDetailSheet({
                 background: `linear-gradient(135deg, ${provider.gradientFrom}10, ${provider.gradientTo}05)` 
               }}
             >
-              <p className="text-2xl font-bold" style={{ color: provider.brandColor }}>
+              <p className="text-2xl font-medium" style={{ color: provider.brandColor }}>
                 {provider.pricing.pricingModel}
               </p>
               {provider.pricing.basePrice !== null && (
@@ -150,7 +150,7 @@ export function ProviderDetailSheet({
           {/* CTA */}
           <div className="pt-4 space-y-3">
             <Button
-              className="w-full font-semibold h-12 text-base"
+              className="w-full font-medium h-12 text-base"
               style={isAvailable ? {
                 background: `linear-gradient(135deg, ${provider.gradientFrom}, ${provider.gradientTo})`,
                 color: 'white',
