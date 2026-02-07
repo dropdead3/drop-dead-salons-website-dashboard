@@ -1,303 +1,192 @@
 
-# High-End Payroll Provider Selection Hub
 
-## Overview
+# Fix Synthetic Bold Fonts & Reinforce Typography Rules
 
-Transform the payroll provider selector into a premium, high-end selection experience featuring popular providers used by beauty businesses. The redesign will present providers in a sophisticated card grid with detailed capabilities, tiered recommendations, and a modern fintech aesthetic.
+## Issue Identified
 
----
+The screenshot shows synthetic bold fonts being applied to text throughout the Payroll Provider Hub. This violates the established design system rules which specify:
 
-## Research: Popular Beauty Industry Payroll Providers
+- **font-display (Termina)**: Max weight is 500 (medium) only. NEVER use font-bold or font-semibold
+- **font-sans (Aeonik Pro)**: Weight 400-500 only. NEVER use uppercase or all-caps
 
-| Provider | Target Audience | Key Strength |
-|----------|-----------------|--------------|
-| **Gusto** | Small-Medium Salons | Full-service with benefits |
-| **QuickBooks Payroll** | Accounting-focused | QuickBooks ecosystem |
-| **ADP** | Large Salons/Chains | Enterprise-grade compliance |
-| **Paychex** | Medium Businesses | HR + Payroll bundle |
-| **Square Payroll** | Square POS users | Seamless POS integration |
-| **OnPay** | Service Businesses | Commission tracking |
-| **Homebase** | Hourly Teams | Scheduling integration |
-| **Rippling** | Modern Businesses | All-in-one HR platform |
-| **Wave Payroll** | Very Small | Free option |
+The following components are using prohibited font weights:
 
----
-
-## Design Vision
-
-### Premium Selection Interface
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                                                                                      │
-│                    ✦  SELECT YOUR PAYROLL PROVIDER  ✦                               │
-│                                                                                      │
-│       Connect your preferred payroll service to automate compensation,              │
-│       taxes, and compliance for your team.                                          │
-│                                                                                      │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
-│  │  ★ RECOMMENDED FOR BEAUTY BUSINESSES                                         │  │
-│  └──────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                      │
-│  ┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐        │
-│  │    ┌──────────┐     │  │    ┌──────────┐     │  │    ┌──────────┐     │        │
-│  │    │  GUSTO   │     │  │    │  SQUARE  │     │  │    │  ONPAY   │     │        │
-│  │    └──────────┘     │  │    └──────────┘     │  │    └──────────┘     │        │
-│  │                     │  │                     │  │                     │        │
-│  │  Full-service HR    │  │  POS Integration    │  │  Commission Pro     │        │
-│  │  & Benefits         │  │  Made Easy          │  │  For Services       │        │
-│  │                     │  │                     │  │                     │        │
-│  │  ✓ Direct Deposit   │  │  ✓ Square Sync      │  │  ✓ Tip Tracking     │        │
-│  │  ✓ Tax Filing       │  │  ✓ Tip Management   │  │  ✓ Commission Calc  │        │
-│  │  ✓ Benefits Admin   │  │  ✓ Auto-import hrs  │  │  ✓ Unlimited Runs   │        │
-│  │  ✓ W-2s & 1099s     │  │  ✓ Next-day deposit │  │  ✓ Tax Filing       │        │
-│  │                     │  │                     │  │                     │        │
-│  │  ───────────────    │  │  ───────────────    │  │  ───────────────    │        │
-│  │  FROM $40/MO        │  │  FROM $35/MO        │  │  FROM $40/MO        │        │
-│  │                     │  │                     │  │                     │        │
-│  │  [ CONNECT GUSTO ]  │  │  [ CONNECT SQUARE ] │  │  [ CONNECT ONPAY ]  │        │
-│  └─────────────────────┘  └─────────────────────┘  └─────────────────────┘        │
-│                                                                                      │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
-│  │  ENTERPRISE & ACCOUNTING                                                      │  │
-│  └──────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                      │
-│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐        │
-│  │  QUICKBOOKS   │  │     ADP       │  │   PAYCHEX     │  │   RIPPLING    │        │
-│  │  Accounting   │  │  Enterprise   │  │  Full HR      │  │  All-in-One   │        │
-│  │  Integration  │  │  Grade        │  │  Bundle       │  │  Modern       │        │
-│  │ [  CONNECT  ] │  │ [  CONNECT  ] │  │ [  CONNECT  ] │  │ [  CONNECT  ] │        │
-│  └───────────────┘  └───────────────┘  └───────────────┘  └───────────────┘        │
-│                                                                                      │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐  │
-│  │  BUDGET-FRIENDLY                                                              │  │
-│  └──────────────────────────────────────────────────────────────────────────────┘  │
-│                                                                                      │
-│  ┌───────────────────────────────┐  ┌───────────────────────────────┐              │
-│  │  HOMEBASE                     │  │  WAVE PAYROLL                 │              │
-│  │  Free Scheduling + Payroll   │  │  Free for Small Teams         │              │
-│  │  [  CONNECT  ]                │  │  [  CONNECT  ]                │              │
-│  └───────────────────────────────┘  └───────────────────────────────┘              │
-│                                                                                      │
-│  ─────────────────────────────────────────────────────────────────────────────────  │
-│                                                                                      │
-│  Don't see your provider?  [ REQUEST INTEGRATION ]                                  │
-│                                                                                      │
-└─────────────────────────────────────────────────────────────────────────────────────┘
-```
+| File | Violations |
+|------|------------|
+| `ProviderCard.tsx` | Lines 65, 141, 161, 189, 196 (`font-semibold`, `font-bold`) |
+| `PayrollProviderHub.tsx` | Lines 32, 78 (`font-semibold`, `font-bold`) |
+| `ProviderDetailSheet.tsx` | Lines 49, 73, 97, 114, 130, 139, 153 (`font-semibold`, `font-bold`) |
+| `PayrollKPICards.tsx` | Line 63 (`font-bold`) |
+| `TeamCompensationTable.tsx` | Lines 122, 126, 132, 138, 219 (`font-semibold`, `font-bold`) |
+| `CommissionInsights.tsx` | Lines 73, 87, 104, 153, 168, 182, 197 (`font-semibold`, `font-bold`) |
 
 ---
 
-## Technical Implementation
+## Solution
 
-### 1. Expand PayrollProvider Type
+### 1. Create Design Guide Rule File
 
-**File: `src/hooks/usePayrollConnection.ts`**
+Create a new documentation file that codifies typography rules for reference during development:
+
+**New File: `src/lib/design-rules.ts`**
 
 ```typescript
-export type PayrollProvider = 
-  | 'gusto' 
-  | 'quickbooks' 
-  | 'adp' 
-  | 'paychex' 
-  | 'square' 
-  | 'onpay' 
-  | 'homebase' 
-  | 'rippling' 
-  | 'wave';
+/**
+ * DROP DEAD DESIGN SYSTEM RULES
+ * 
+ * These rules MUST be followed across all components.
+ * Violations will cause visual inconsistencies and synthetic font rendering.
+ */
+
+export const TYPOGRAPHY_RULES = {
+  // Maximum allowed font weight - NEVER exceed this
+  MAX_FONT_WEIGHT: 500,
+  
+  // Prohibited classes - NEVER use these
+  PROHIBITED_CLASSES: [
+    'font-bold',      // Weight 700 - BANNED
+    'font-semibold',  // Weight 600 - BANNED
+    'font-extrabold', // Weight 800 - BANNED
+    'font-black',     // Weight 900 - BANNED
+  ],
+  
+  // Allowed weight classes
+  ALLOWED_CLASSES: [
+    'font-normal',    // Weight 400 - OK
+    'font-medium',    // Weight 500 - OK (maximum)
+    'font-light',     // Weight 300 - OK
+  ],
+  
+  // Font-specific rules
+  FONT_RULES: {
+    'font-display': {
+      font: 'Termina',
+      maxWeight: 500,
+      transform: 'uppercase',
+      letterSpacing: '0.08em',
+      note: 'Headlines, buttons, navigation'
+    },
+    'font-sans': {
+      font: 'Aeonik Pro',
+      maxWeight: 500,
+      transform: 'normal', // NEVER uppercase
+      note: 'Body text, paragraphs, UI labels'
+    }
+  }
+} as const;
+
+/**
+ * Use this instead of font-bold/font-semibold:
+ * 
+ * BAD:  className="font-bold text-lg"
+ * GOOD: className="font-medium text-lg"
+ * 
+ * For emphasis without bold:
+ * - Use larger font size (text-lg, text-xl)
+ * - Use color contrast (text-foreground vs text-muted-foreground)
+ * - Use letter-spacing (tracking-wide)
+ */
 ```
 
-### 2. Provider Configuration Data
+### 2. Update Design System Page
 
-Create a comprehensive provider catalog:
+Enhance the existing typography documentation in `DesignSystem.tsx` with a visual warning banner:
 
 ```typescript
-interface PayrollProviderConfig {
-  id: PayrollProvider;
-  name: string;
-  tagline: string;
-  description: string;
-  logo: string; // or icon component
-  brandColor: string;
-  gradientFrom: string;
-  gradientTo: string;
-  tier: 'recommended' | 'enterprise' | 'budget';
-  pricing: {
-    basePrice: number;
-    perEmployee: number;
-    pricingModel: string;
-  };
-  features: string[];
-  bestFor: string[];
-  integrations: string[];
-  status: 'available' | 'coming_soon' | 'request';
-}
-```
-
-### 3. Provider Data
-
-| Provider | Tier | Pricing | Status |
-|----------|------|---------|--------|
-| Gusto | Recommended | $40/mo + $6/person | Available |
-| Square Payroll | Recommended | $35/mo + $6/person | Coming Soon |
-| OnPay | Recommended | $40/mo + $6/person | Coming Soon |
-| QuickBooks | Enterprise | $50/mo + $6/person | Available |
-| ADP | Enterprise | Custom pricing | Coming Soon |
-| Paychex | Enterprise | Custom pricing | Coming Soon |
-| Rippling | Enterprise | $35/mo + $8/person | Coming Soon |
-| Homebase | Budget | Free tier available | Coming Soon |
-| Wave | Budget | Free (limited) | Coming Soon |
-
----
-
-## Component Architecture
-
-### New Components
-
-| Component | Purpose |
-|-----------|---------|
-| `PayrollProviderHub.tsx` | Main container with tier sections |
-| `ProviderCard.tsx` | Individual provider card with premium styling |
-| `ProviderDetailSheet.tsx` | Side sheet with full provider details |
-| `ProviderComparisonModal.tsx` | Compare 2-3 providers side-by-side |
-
-### File Structure
-
-```
-src/components/dashboard/payroll/providers/
-├── PayrollProviderHub.tsx       # Main selection hub
-├── ProviderCard.tsx             # Individual card
-├── ProviderDetailSheet.tsx      # Full details panel
-├── ProviderComparisonModal.tsx  # Side-by-side compare
-├── providerConfig.ts            # Provider data & types
-└── ProviderLogo.tsx             # Brand logo component
-```
-
----
-
-## UI/UX Design Details
-
-### Card Design
-
-**Premium Provider Card:**
-- Subtle gradient background using brand colors
-- Glass-morphism border effect
-- Hover state with lift animation (`hover:shadow-xl hover:-translate-y-1`)
-- Status badge (Ready, Coming Soon, Request)
-- Feature checkmarks with brand accent color
-- Pricing display with "FROM" prefix
-- Full-width CTA button
-
-**Coming Soon Treatment:**
-- Reduced opacity (0.7)
-- "Coming Soon" badge in amber
-- Button shows "Request Early Access"
-- Gentle pulse animation on badge
-
-### Section Headers
-
-```typescript
-// Premium section header styling
-<div className="relative">
-  <div className="absolute inset-0 flex items-center">
-    <div className="w-full border-t border-border/50" />
-  </div>
-  <div className="relative flex justify-center">
-    <span className="bg-background px-4 text-sm font-medium text-muted-foreground uppercase tracking-widest">
-      ★ Recommended for Beauty Businesses
-    </span>
-  </div>
+// Add to the typography section
+<div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 mb-4">
+  <p className="text-sm text-destructive font-medium">
+    CRITICAL RULE: Never use font-bold or font-semibold. 
+    Maximum weight is font-medium (500).
+  </p>
 </div>
 ```
 
-### Responsive Layout
+### 3. Fix All Violating Components
 
-- Desktop: 3 recommended cards, 4 enterprise cards, 2 budget cards per row
-- Tablet: 2 cards per row
-- Mobile: 1 card per row, stacked vertically
+Replace all prohibited font weights with `font-medium`:
 
 ---
 
-## Provider Logos
+#### `src/components/dashboard/payroll/providers/ProviderCard.tsx`
 
-Use brand-colored icon components since actual logos require licensing:
-
-| Provider | Icon | Brand Color |
-|----------|------|-------------|
-| Gusto | `DollarSign` | Orange `#F45D22` |
-| QuickBooks | `Calculator` | Green `#2CA01C` |
-| Square | `Square` | Black `#000000` |
-| ADP | `Building2` | Red `#D0271D` |
-| Paychex | `ShieldCheck` | Blue `#0033A0` |
-| OnPay | `CircleDollarSign` | Teal `#00A19A` |
-| Homebase | `Home` | Purple `#7C3AED` |
-| Rippling | `Waves` | Blue `#4F46E5` |
-| Wave | `Waves` | Blue `#2563EB` |
+| Line | Before | After |
+|------|--------|-------|
+| 65 | `font-semibold` | `font-medium` |
+| 141 | `font-bold` | `font-medium` |
+| 161 | `font-medium` | (already correct) |
+| 189 | `font-bold` | `font-medium` |
+| 196 | `font-semibold` | `font-medium` |
 
 ---
 
-## Provider Detail Sheet
+#### `src/components/dashboard/payroll/providers/PayrollProviderHub.tsx`
 
-When a user clicks "Learn More" or hovers for details:
-
-```text
-┌────────────────────────────────────────┐
-│  ← Back                    GUSTO       │
-├────────────────────────────────────────┤
-│                                        │
-│  [Large Logo/Icon]                     │
-│                                        │
-│  FULL-SERVICE PAYROLL                  │
-│  FOR GROWING BEAUTY BUSINESSES         │
-│                                        │
-│  ────────────────────────────────────  │
-│                                        │
-│  KEY FEATURES                          │
-│  ✓ Automated tax filing & payments     │
-│  ✓ Direct deposit (2-4 day or same-day)│
-│  ✓ Employee self-onboarding            │
-│  ✓ W-2s, 1099s, new hire reporting     │
-│  ✓ Health insurance & 401(k) options   │
-│  ✓ PTO tracking & management           │
-│                                        │
-│  BEST FOR                              │
-│  • Salons with 5-50 employees          │
-│  • Teams needing benefits              │
-│  • Multi-location operations           │
-│                                        │
-│  INTEGRATIONS                          │
-│  QuickBooks • Xero • Time tracking     │
-│                                        │
-│  ────────────────────────────────────  │
-│                                        │
-│  PRICING                               │
-│  $40/month base + $6/employee          │
-│                                        │
-│  [ CONNECT GUSTO ]                     │
-│                                        │
-└────────────────────────────────────────┘
-```
+| Line | Before | After |
+|------|--------|-------|
+| 32 | `font-semibold` | `font-medium` |
+| 78 | `font-bold` | `font-medium tracking-tight` |
 
 ---
 
-## Database Updates
+#### `src/components/dashboard/payroll/providers/ProviderDetailSheet.tsx`
 
-### Update `payroll_connections.provider` constraint
+| Line | Before | After |
+|------|--------|-------|
+| 49 | `font-medium` | (already correct) |
+| 73 | `font-semibold` | `font-medium` |
+| 97 | `font-semibold` | `font-medium` |
+| 114 | `font-semibold` | `font-medium` |
+| 130 | `font-semibold` | `font-medium` |
+| 139 | `font-bold` | `font-medium` |
+| 153 | `font-semibold` | `font-medium` |
 
-Migration to allow new provider values:
+---
 
-```sql
--- Update the provider enum/constraint to allow new values
-ALTER TABLE payroll_connections 
-DROP CONSTRAINT IF EXISTS payroll_connections_provider_check;
+#### `src/components/dashboard/payroll/analytics/PayrollKPICards.tsx`
 
-ALTER TABLE payroll_connections 
-ADD CONSTRAINT payroll_connections_provider_check 
-CHECK (provider IN (
-  'gusto', 'quickbooks', 'adp', 'paychex', 
-  'square', 'onpay', 'homebase', 'rippling', 'wave'
-));
-```
+| Line | Before | After |
+|------|--------|-------|
+| 63 | `font-bold` | `font-medium` |
+
+---
+
+#### `src/components/dashboard/payroll/analytics/TeamCompensationTable.tsx`
+
+| Line | Before | After |
+|------|--------|-------|
+| 122 | `font-semibold` | `font-medium` |
+| 126 | `font-semibold` | `font-medium` |
+| 132 | `font-semibold` | `font-medium` |
+| 138 | `font-bold` | `font-medium` |
+| 219 | `font-bold` | `font-medium` |
+
+---
+
+#### `src/components/dashboard/payroll/CommissionInsights.tsx`
+
+| Line | Before | After |
+|------|--------|-------|
+| 73 | `font-bold` | `font-medium` |
+| 87 | `font-bold` | `font-medium` |
+| 104 | `font-bold` | `font-medium` |
+| 153 | `font-semibold` | `font-medium` |
+| 168 | `font-bold` | `font-medium` |
+| 182 | `font-semibold` | `font-medium` |
+| 197 | `font-bold` | `font-medium` |
+
+---
+
+## Visual Hierarchy Without Bold
+
+To maintain visual distinction without synthetic bold:
+
+| Technique | Example |
+|-----------|---------|
+| Size | Use `text-lg`, `text-xl`, `text-2xl` for emphasis |
+| Color | Use `text-foreground` vs `text-muted-foreground` |
+| Tracking | Add `tracking-wide` or `tracking-wider` for display text |
+| Spacing | Use larger margins/padding around important text |
 
 ---
 
@@ -305,39 +194,26 @@ CHECK (provider IN (
 
 | File | Purpose |
 |------|---------|
-| `src/components/dashboard/payroll/providers/providerConfig.ts` | Provider data & types |
-| `src/components/dashboard/payroll/providers/PayrollProviderHub.tsx` | Main hub component |
-| `src/components/dashboard/payroll/providers/ProviderCard.tsx` | Premium card component |
-| `src/components/dashboard/payroll/providers/ProviderDetailSheet.tsx` | Detail panel |
+| `src/lib/design-rules.ts` | Codified typography rules for reference |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/hooks/usePayrollConnection.ts` | Expand PayrollProvider type |
-| `src/components/dashboard/payroll/PayrollConnectionCard.tsx` | Update provider config |
-| `src/pages/dashboard/admin/Payroll.tsx` | Use new PayrollProviderHub |
+| `src/components/dashboard/payroll/providers/ProviderCard.tsx` | Replace font-bold/semibold with font-medium |
+| `src/components/dashboard/payroll/providers/PayrollProviderHub.tsx` | Replace font-bold/semibold with font-medium |
+| `src/components/dashboard/payroll/providers/ProviderDetailSheet.tsx` | Replace font-bold/semibold with font-medium |
+| `src/components/dashboard/payroll/analytics/PayrollKPICards.tsx` | Replace font-bold with font-medium |
+| `src/components/dashboard/payroll/analytics/TeamCompensationTable.tsx` | Replace font-bold/semibold with font-medium |
+| `src/components/dashboard/payroll/CommissionInsights.tsx` | Replace font-bold/semibold with font-medium |
+| `src/pages/dashboard/DesignSystem.tsx` | Add visual warning banner for typography rules |
 
 ---
 
-## Implementation Priority
+## Memory Update
 
-| Step | Task |
-|------|------|
-| 1 | Create `providerConfig.ts` with all provider data |
-| 2 | Create `ProviderCard.tsx` with premium styling |
-| 3 | Create `PayrollProviderHub.tsx` with tiered sections |
-| 4 | Update type definitions and hooks |
-| 5 | Create database migration for expanded provider options |
-| 6 | Add `ProviderDetailSheet.tsx` for deep-dive info |
-| 7 | Update Payroll page to use new hub |
+The existing memory note `style/typography-constraints` already documents this rule. This implementation reinforces it with:
+1. A dedicated design rules file for programmatic reference
+2. Visual warning in the Design System page
+3. All current violations fixed
 
----
-
-## Future Enhancements
-
-1. **Provider Comparison Tool**: Side-by-side feature matrix
-2. **Recommendation Quiz**: "Help me choose" wizard based on business size/needs
-3. **Integration Status Tracker**: Live connection health monitoring
-4. **Provider Reviews**: User testimonials and ratings
-5. **Price Calculator**: Estimate monthly cost based on team size
