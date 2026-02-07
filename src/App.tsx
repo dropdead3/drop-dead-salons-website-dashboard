@@ -78,7 +78,8 @@ import AnalyticsHub from "./pages/dashboard/admin/AnalyticsHub";
 import ManagementHub from "./pages/dashboard/admin/ManagementHub";
 import TrainingHub from "./pages/dashboard/admin/TrainingHub";
 import LeadManagement from "./pages/dashboard/admin/LeadManagement";
-import FeatureFlags from "./pages/dashboard/admin/FeatureFlags";
+import AdminFeatureFlags from "./pages/dashboard/admin/FeatureFlags";
+import PlatformFeatureFlags from "./pages/dashboard/platform/FeatureFlags";
 import ClientDirectory from "./pages/dashboard/ClientDirectory";
 import Schedule from "./pages/dashboard/Schedule";
 import AllNotifications from "./pages/dashboard/AllNotifications";
@@ -240,7 +241,7 @@ const App = () => (
                       <Route path="/dashboard/admin/program-analytics" element={<Navigate to="/dashboard/admin/analytics?tab=program" replace />} />
                       <Route path="/dashboard/admin/reports" element={<Navigate to="/dashboard/admin/analytics?tab=reports" replace />} />
                       <Route path="/dashboard/admin/leads" element={<ProtectedRoute requiredPermission="view_team_overview"><LeadManagement /></ProtectedRoute>} />
-                      <Route path="/dashboard/admin/feature-flags" element={<ProtectedRoute requiredPermission="manage_settings"><FeatureFlags /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/feature-flags" element={<Navigate to="/dashboard/platform/feature-flags" replace />} />
                       <Route path="/dashboard/admin/changelog" element={<ProtectedRoute requiredPermission="manage_announcements"><ChangelogManager /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/import" element={<ProtectedRoute requiredPermission="manage_settings"><DataImport /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/payroll" element={<ProtectedRoute requiredPermission="manage_payroll"><Payroll /></ProtectedRoute>} />
@@ -289,6 +290,7 @@ const App = () => (
                         <Route path="settings" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformSettings /></ProtectedRoute>} />
                         <Route path="settings/integrations/:integrationId" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformIntegrationDetail /></ProtectedRoute>} />
                         <Route path="permissions" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformPermissions /></ProtectedRoute>} />
+                        <Route path="feature-flags" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformFeatureFlags /></ProtectedRoute>} />
                       </Route>
 
                         <Route path="*" element={<NotFound />} />

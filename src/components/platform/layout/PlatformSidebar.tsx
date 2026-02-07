@@ -20,7 +20,8 @@ import {
   Clock,
   Activity,
   Bell,
-  CreditCard
+  CreditCard,
+  Flag
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -63,6 +64,7 @@ const platformNavItems: NavItem[] = [
   { href: '/dashboard/platform/knowledge-base', label: 'Knowledge Base', icon: BookOpen, platformRoles: ['platform_owner', 'platform_admin'] },
   { href: '/dashboard/platform/revenue', label: 'Revenue', icon: DollarSign, platformRoles: ['platform_owner', 'platform_admin'] },
   { href: '/dashboard/platform/permissions', label: 'Permissions', icon: Shield, platformRoles: ['platform_owner', 'platform_admin'] },
+  { href: '/dashboard/platform/feature-flags', label: 'Feature Flags', icon: Flag, platformRoles: ['platform_owner', 'platform_admin'] },
   { href: '/dashboard/platform/settings', label: 'Settings', icon: Settings, platformRoles: ['platform_owner', 'platform_admin'] },
 ];
 

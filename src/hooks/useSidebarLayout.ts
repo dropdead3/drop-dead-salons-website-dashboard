@@ -78,7 +78,6 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
     '/dashboard/admin/accounts',
     '/dashboard/admin/roles',
     '/dashboard/admin/settings',
-    '/dashboard/admin/feature-flags',
   ],
   platform: [
     '/dashboard/platform/overview',
