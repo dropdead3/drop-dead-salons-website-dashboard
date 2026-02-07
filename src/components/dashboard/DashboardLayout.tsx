@@ -114,7 +114,7 @@ import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 // Dark mode is now scoped via DashboardThemeContext
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
-
+import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
 // Role colors/icons now come from useRoleUtils hook
 
 interface DashboardLayoutProps {
@@ -1018,6 +1018,11 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
             </Tooltip>
           </div>
 
+          {/* Center - Search Bar */}
+          <div className="flex-1 flex justify-center px-4">
+            <TopBarSearch />
+          </div>
+
           {/* Next Client Indicator - Stylists and Assistants only */}
           {(isStylistRole || isStylistAssistantRole) && (
             <NextClientIndicator userId={isViewingAsUser && viewAsUser ? viewAsUser.id : user?.id} />
@@ -1025,6 +1030,22 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
           
           {/* Right side - User controls */}
           <div className="flex items-center gap-3">
+          {/* Help Center Quick Access */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                asChild
+              >
+                <Link to="/dashboard/help">
+                  <HelpCircle className="w-4 h-4" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">Help Center</TooltipContent>
+          </Tooltip>
           {/* Organization Switcher - Platform users only */}
           {isPlatformUser && <OrganizationSwitcher compact />}
           {/* Hide Numbers Toggle */}
