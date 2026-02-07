@@ -1,203 +1,317 @@
 
+# Phase 3: Training Enhancements, Team Communication & Points Economy
 
-# Phase 2: Complete Team Challenges & Shift Swap System
+## Overview
 
-## Summary
+Phase 3 focuses on three major feature sets that extend existing functionality and add new communication capabilities:
 
-This plan completes the remaining UI pages and components for **Team Challenges** and **Shift Swap System**. The database tables, hooks, and some components were created in the previous implementation phase. Now we need to build the actual pages and remaining components.
-
----
-
-## Current State
-
-### Already Implemented
-| Feature | Component | Status |
-|---------|-----------|--------|
-| Team Challenges | Database tables (`team_challenges`, `challenge_participants`, `challenge_progress_snapshots`) | Done |
-| Team Challenges | Hooks (`useChallenges.ts`) | Done |
-| Team Challenges | `ChallengeCard.tsx` | Done |
-| Team Challenges | `ChallengeLeaderboard.tsx` | Done |
-| Team Challenges | `CreateChallengeWizard.tsx` | Done |
-| Team Challenges | ManagementHub navigation card | Done |
-| Shift Swaps | Database tables (`shift_swaps`, `shift_swap_messages`) | Done |
-| Shift Swaps | Hooks (`useShiftSwaps.ts`) | Done |
-| Shift Swaps | ManagementHub navigation card | Done |
-
-### Missing (To Build Now)
-| Feature | Component | Description |
-|---------|-----------|-------------|
-| Team Challenges | `ChallengesDashboard.tsx` | Main admin page at `/dashboard/admin/challenges` |
-| Team Challenges | `ChallengeDetail.tsx` | Single challenge view at `/dashboard/admin/challenges/:id` |
-| Team Challenges | Command Center widget | Active challenges preview for participants |
-| Team Challenges | Route registration | Add to App.tsx |
-| Shift Swaps | `ShiftSwapMarketplace.tsx` | Team member marketplace at `/dashboard/shift-swaps` |
-| Shift Swaps | `SwapCard.tsx` | Individual swap listing display |
-| Shift Swaps | `PostSwapDialog.tsx` | Create new swap request |
-| Shift Swaps | `ClaimSwapDialog.tsx` | Claim an available swap |
-| Shift Swaps | `SwapApprovalQueue.tsx` | Manager approval interface at `/dashboard/admin/shift-swaps` |
-| Shift Swaps | `MySwapsPanel.tsx` | User's swap requests and claims |
-| Shift Swaps | Route registration | Add to App.tsx |
-| Shift Swaps | Sidebar navigation | Add shift swaps link for team members |
+1. **Training Hub Enhancements** - PDF certificates and comprehension quizzes
+2. **Digital Daily Huddle Notes** - Pre-shift meeting notes and daily goals
+3. **Points Economy System** - Gamified points for actions with a reward shop
 
 ---
 
-## Implementation Details
+## Feature 1: Training Hub Enhancements
 
-### Part A: Team Challenges Pages
+### 1A. PDF Training Certificates
 
-#### 1. ChallengesDashboard.tsx (`/dashboard/admin/challenges`)
+Generate downloadable certificates when team members complete all required trainings.
 
-Admin interface to manage all challenges with:
-- Grid of active/draft/completed challenges using `ChallengeCard`
-- Status filter tabs (All, Active, Draft, Completed)
-- "Create Challenge" button opens `CreateChallengeWizard`
-- Quick actions: Start, End, Delete challenges
-- Stats overview (total participants, active challenges count)
+**Components:**
+- `TrainingCertificateGenerator.tsx` - PDF generation using existing jsPDF pattern
+- Certificate button on Training page when 100% complete
+- Certificate design with:
+  - Company branding
+  - Team member name
+  - Completion date
+  - List of completed modules
+  - Digital signature/seal
 
-```text
-Layout:
-┌────────────────────────────────────────────┐
-│ ← Back    Team Challenges                  │
-│           Create and manage competitions   │
-├────────────────────────────────────────────┤
-│ [All] [Active] [Draft] [Completed]  + New  │
-├────────────────────────────────────────────┤
-│ ┌──────────┐ ┌──────────┐ ┌──────────┐    │
-│ │ Challenge│ │ Challenge│ │ Challenge│    │
-│ │ Card     │ │ Card     │ │ Card     │    │
-│ └──────────┘ └──────────┘ └──────────┘    │
-└────────────────────────────────────────────┘
+**Integration Points:**
+- Add "Download Certificate" button to Training.tsx when progress is 100%
+- Uses existing `jsPDF` library (already installed)
+
+### 1B. Comprehension Quizzes
+
+Optional quizzes attached to training videos to verify understanding.
+
+**Database Schema:**
+```sql
+-- Quiz definitions
+CREATE TABLE training_quizzes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  video_id UUID REFERENCES training_videos(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  passing_score INTEGER DEFAULT 80, -- percentage
+  is_required BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Quiz questions
+CREATE TABLE training_quiz_questions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  quiz_id UUID REFERENCES training_quizzes(id) ON DELETE CASCADE,
+  question_text TEXT NOT NULL,
+  question_type TEXT DEFAULT 'multiple_choice', -- 'multiple_choice', 'true_false'
+  options JSONB, -- array of options for MC
+  correct_answer TEXT NOT NULL,
+  order_index INTEGER DEFAULT 0
+);
+
+-- User quiz attempts
+CREATE TABLE training_quiz_attempts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  quiz_id UUID REFERENCES training_quizzes(id) ON DELETE CASCADE,
+  score INTEGER,
+  passed BOOLEAN,
+  answers JSONB,
+  completed_at TIMESTAMPTZ DEFAULT now()
+);
 ```
 
-#### 2. ChallengeDetail.tsx (`/dashboard/admin/challenges/:id`)
-
-Single challenge view with:
-- Challenge header (title, status, dates, metric)
-- Full leaderboard using `ChallengeLeaderboard`
-- Participant management (add/remove)
-- Edit challenge settings
-- Progress chart over time
-- Actions: Start challenge, End challenge, Cancel
-
-#### 3. Active Challenges Widget
-
-A compact widget for the dashboard showing:
-- User's active challenges (max 3)
-- Current rank and progress
-- Click to view full leaderboard
+**Components:**
+- `QuizCard.tsx` - Quiz interface with questions
+- `QuizResultsDialog.tsx` - Show score and pass/fail
+- `QuizBuilder.tsx` - Admin quiz creation (in Training Hub)
 
 ---
 
-### Part B: Shift Swap System Pages & Components
+## Feature 2: Digital Daily Huddle Notes
 
-#### 1. ShiftSwapMarketplace.tsx (`/dashboard/shift-swaps`)
+A system for managers to create and share daily pre-shift notes with the team.
 
-Main marketplace for all team members:
+### Purpose
+- Document daily goals and focus areas
+- Share important announcements before shifts
+- Track recurring topics and action items
+- Build team alignment and communication
 
-```text
-Layout:
-┌────────────────────────────────────────────┐
-│ ← Back    Shift Swap Marketplace           │
-│           Trade, cover, or give away shifts│
-├────────────────────────────────────────────┤
-│ [Available] [My Requests] [My Claims]      │
-├────────────────────────────────────────────┤
-│ + Post a Shift          Filter: [All v]   │
-├────────────────────────────────────────────┤
-│ ┌──────────────────────────────────────┐  │
-│ │ SwapCard: Jane needs cover for 2/10  │  │
-│ │ 9am-5pm @ Main Location              │  │
-│ │ [Claim This Shift]                   │  │
-│ └──────────────────────────────────────┘  │
-└────────────────────────────────────────────┘
+### Database Schema
+
+```sql
+-- Daily huddle entries
+CREATE TABLE daily_huddles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  huddle_date DATE NOT NULL DEFAULT CURRENT_DATE,
+  location_id TEXT,
+  created_by UUID NOT NULL,
+  
+  -- Content sections
+  focus_of_the_day TEXT,
+  sales_goals JSONB, -- { retail: number, service: number }
+  announcements TEXT,
+  birthdays_celebrations TEXT,
+  training_reminders TEXT,
+  wins_from_yesterday TEXT,
+  
+  -- Metadata
+  is_published BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  
+  UNIQUE(huddle_date, location_id)
+);
+
+-- Huddle acknowledgments (who read it)
+CREATE TABLE huddle_acknowledgments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  huddle_id UUID REFERENCES daily_huddles(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL,
+  acknowledged_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(huddle_id, user_id)
+);
+
+-- Huddle templates (for recurring formats)
+CREATE TABLE huddle_templates (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  location_id TEXT,
+  template_content JSONB,
+  is_default BOOLEAN DEFAULT false,
+  created_by UUID NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 ```
 
-Features:
-- Three tabs: Available swaps, My posted requests, My claims
-- Filter by swap type, date range, location
-- "Post a Shift" button opens `PostSwapDialog`
-- Each swap shows `SwapCard` with claim action
+### Components
 
-#### 2. SwapCard.tsx
+**Admin/Manager:**
+- `DailyHuddleEditor.tsx` - Create/edit huddle notes
+- `HuddleTemplateManager.tsx` - Save and manage templates
+- `HuddleHistoryList.tsx` - View past huddles
 
-Display component for individual swap listings:
-- Requester avatar and name
-- Shift date and time
-- Location badge
-- Swap type badge (Swap, Cover, Giveaway)
-- Status indicator
-- Claim button or status text
-- Time remaining (if expires_at set)
+**Team Member:**
+- `TodaysHuddleCard.tsx` - Dashboard widget showing today's notes
+- `HuddleAcknowledgmentButton.tsx` - Mark as read
+- `HuddleArchive.tsx` - Browse past huddles
 
-#### 3. PostSwapDialog.tsx
+### Pages
+- `/dashboard/admin/daily-huddle` - Manager creation page
+- Widget on Command Center for team members
 
-Form dialog to create a swap request:
-- Date picker for shift date
-- Time inputs for start/end
-- Location selector
-- Swap type radio (Swap, Cover, Giveaway)
-- Reason textarea (optional)
-- Expiration date (optional)
+### Notification Flow
+- Option to send push/email when huddle published
+- Acknowledgment tracking for accountability
 
-#### 4. ClaimSwapDialog.tsx
+---
 
-Dialog when claiming a swap:
-- Shows original shift details
-- For "swap" type: date/time pickers for shift to offer in return
-- For "cover/giveaway": confirmation only
-- Optional message to requester
-- Submit sends to pending_approval
+## Feature 3: Points Economy System
 
-#### 5. MySwapsPanel.tsx
+A comprehensive points system that rewards actions throughout the platform.
 
-Panel showing user's swap activity:
-- Posted requests with status
-- Claims in progress
-- Cancel option for open requests
-- View history toggle
+### Concept
+Team members earn points for positive actions:
+- Completing training videos
+- Ringing the bell
+- Giving high fives
+- Completing challenges
+- Shift swaps (helping teammates)
+- Perfect attendance streaks
 
-#### 6. SwapApprovalQueue.tsx (`/dashboard/admin/shift-swaps`)
+Points can be redeemed for rewards in a "Reward Shop."
 
-Manager interface for approvals:
+### Database Schema
 
-```text
-Layout:
-┌────────────────────────────────────────────┐
-│ ← Back    Shift Swap Approvals             │
-│           Review and approve swap requests │
-├────────────────────────────────────────────┤
-│ [Pending (3)] [Approved] [Denied]          │
-├────────────────────────────────────────────┤
-│ ┌──────────────────────────────────────┐  │
-│ │ Jane → Mike                          │  │
-│ │ Swap: 2/10 9-5 ↔ 2/12 10-6          │  │
-│ │ [Approve] [Deny]  Notes: [____]      │  │
-│ └──────────────────────────────────────┘  │
-└────────────────────────────────────────────┘
+```sql
+-- Points ledger (all point transactions)
+CREATE TABLE points_ledger (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  points INTEGER NOT NULL, -- positive for earn, negative for spend
+  action_type TEXT NOT NULL, -- 'training_complete', 'bell_ring', 'high_five', 'challenge_win', 'shift_swap', 'reward_redeem'
+  reference_id UUID, -- optional: the ID of related entity
+  description TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Point rules (how many points per action)
+CREATE TABLE points_rules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  action_type TEXT NOT NULL UNIQUE,
+  points_awarded INTEGER NOT NULL,
+  description TEXT,
+  is_active BOOLEAN DEFAULT true,
+  max_daily INTEGER, -- optional daily cap
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Rewards catalog
+CREATE TABLE rewards_catalog (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  description TEXT,
+  points_cost INTEGER NOT NULL,
+  category TEXT, -- 'time_off', 'merchandise', 'experience', 'recognition'
+  quantity_available INTEGER, -- null = unlimited
+  image_url TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Reward redemptions
+CREATE TABLE reward_redemptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  reward_id UUID REFERENCES rewards_catalog(id),
+  points_spent INTEGER NOT NULL,
+  status TEXT DEFAULT 'pending', -- 'pending', 'approved', 'fulfilled', 'denied'
+  notes TEXT,
+  manager_id UUID,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  fulfilled_at TIMESTAMPTZ
+);
 ```
 
-Features:
-- List of pending approvals with details
-- Quick approve/deny buttons
-- Optional manager notes
-- Bulk actions for multiple approvals
-- History tabs for approved/denied
+### Default Point Values
+
+| Action | Points |
+|--------|--------|
+| Complete training video | 10 |
+| Ring the bell | 25 |
+| Give a high five | 5 |
+| Receive a high five | 2 |
+| Win a challenge | 100 |
+| Complete shift swap | 15 |
+| 7-day streak | 50 |
+| 30-day streak | 200 |
+
+### Components
+
+**User-Facing:**
+- `PointsBalanceCard.tsx` - Shows current balance (dashboard widget)
+- `PointsHistoryPanel.tsx` - Transaction history
+- `RewardShop.tsx` - Browse and redeem rewards (`/dashboard/rewards`)
+- `RewardCard.tsx` - Individual reward display
+- `RedemptionConfirmDialog.tsx` - Confirm before spending points
+
+**Admin:**
+- `PointsConfigPanel.tsx` - Manage point rules
+- `RewardsManager.tsx` - CRUD for rewards catalog
+- `RedemptionQueue.tsx` - Approve/fulfill redemptions
+
+### Integration Points
+
+Modify existing files to award points:
+- `Training.tsx` - Award points on video completion
+- `RingTheBell.tsx` - Award points on bell ring
+- `useShiftSwaps.ts` - Award points on swap approval
+- `useChallenges.ts` - Award points on challenge completion
+
+### Service Layer
+
+```typescript
+// src/services/pointsService.ts
+export async function awardPoints(
+  userId: string,
+  actionType: string,
+  referenceId?: string,
+  description?: string
+): Promise<{ success: boolean; pointsAwarded: number }> {
+  // Fetch rule for action type
+  // Check daily cap if applicable
+  // Insert into points_ledger
+  // Return result
+}
+
+export async function getUserPointsBalance(userId: string): Promise<number> {
+  // Sum all points in ledger for user
+}
+
+export async function redeemReward(
+  userId: string,
+  rewardId: string
+): Promise<{ success: boolean; error?: string }> {
+  // Check balance
+  // Check availability
+  // Create redemption record
+  // Deduct points
+}
+```
 
 ---
 
 ## Files to Create
 
-| File | Description |
-|------|-------------|
-| `src/pages/dashboard/admin/ChallengesDashboard.tsx` | Main challenges management page |
-| `src/pages/dashboard/admin/ChallengeDetail.tsx` | Single challenge view/edit |
-| `src/components/challenges/ActiveChallengesWidget.tsx` | Dashboard widget |
-| `src/pages/dashboard/ShiftSwapMarketplace.tsx` | Team member marketplace |
-| `src/pages/dashboard/admin/ShiftSwapApprovals.tsx` | Manager approval page |
-| `src/components/shifts/SwapCard.tsx` | Swap listing card |
-| `src/components/shifts/PostSwapDialog.tsx` | Create swap form |
-| `src/components/shifts/ClaimSwapDialog.tsx` | Claim swap form |
-| `src/components/shifts/MySwapsPanel.tsx` | User's swaps list |
+| Category | File | Description |
+|----------|------|-------------|
+| Training | `src/components/training/TrainingCertificateButton.tsx` | Certificate download button |
+| Training | `src/components/training/QuizCard.tsx` | Quiz taking interface |
+| Training | `src/components/training/QuizBuilder.tsx` | Admin quiz creation |
+| Training | `src/components/training/QuizResultsDialog.tsx` | Quiz results display |
+| Huddle | `src/pages/dashboard/admin/DailyHuddle.tsx` | Manager huddle page |
+| Huddle | `src/components/huddle/HuddleEditor.tsx` | Create/edit huddle |
+| Huddle | `src/components/huddle/TodaysHuddleCard.tsx` | Dashboard widget |
+| Huddle | `src/components/huddle/HuddleArchive.tsx` | Past huddles list |
+| Huddle | `src/hooks/useHuddles.ts` | Huddle data hooks |
+| Points | `src/pages/dashboard/RewardShop.tsx` | Browse rewards |
+| Points | `src/pages/dashboard/admin/PointsConfig.tsx` | Admin config |
+| Points | `src/components/points/PointsBalanceCard.tsx` | Balance widget |
+| Points | `src/components/points/PointsHistoryPanel.tsx` | Transaction list |
+| Points | `src/components/points/RewardCard.tsx` | Reward display |
+| Points | `src/components/points/RedemptionQueue.tsx` | Admin approvals |
+| Points | `src/services/pointsService.ts` | Points logic |
+| Points | `src/hooks/usePoints.ts` | Points data hooks |
 
 ---
 
@@ -205,78 +319,77 @@ Features:
 
 | File | Changes |
 |------|---------|
-| `src/App.tsx` | Add routes for challenges and shift swaps |
-| `src/lib/sidebarConfig.ts` | Add Shift Swaps nav item for team members |
-
----
-
-## Route Configuration
-
-```typescript
-// Challenges routes
-<Route path="/dashboard/admin/challenges" element={
-  <ProtectedRoute requiredPermission="manage_team_challenges">
-    <ChallengesDashboard />
-  </ProtectedRoute>
-} />
-<Route path="/dashboard/admin/challenges/:challengeId" element={
-  <ProtectedRoute requiredPermission="manage_team_challenges">
-    <ChallengeDetail />
-  </ProtectedRoute>
-} />
-
-// Shift Swap routes
-<Route path="/dashboard/shift-swaps" element={
-  <ProtectedRoute>
-    <ShiftSwapMarketplace />
-  </ProtectedRoute>
-} />
-<Route path="/dashboard/admin/shift-swaps" element={
-  <ProtectedRoute requiredPermission="manage_schedule_requests">
-    <ShiftSwapApprovals />
-  </ProtectedRoute>
-} />
-```
+| Database | Create new tables (quizzes, huddles, points) |
+| `src/pages/dashboard/Training.tsx` | Add certificate button, quiz integration, point awards |
+| `src/pages/dashboard/RingTheBell.tsx` | Award points on bell ring |
+| `src/pages/dashboard/admin/ManagementHub.tsx` | Add Daily Huddle card |
+| `src/components/dashboard/CommandCenter.tsx` | Add huddle widget, points widget |
+| `src/App.tsx` | Add new routes |
+| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | Add Rewards nav item |
+| `src/hooks/useShiftSwaps.ts` | Award points on approval |
+| `src/hooks/useChallenges.ts` | Award points on challenge win |
 
 ---
 
 ## Navigation Updates
 
-### Sidebar Addition
-Add "Shift Swaps" to sidebar for stylist/assistant/receptionist roles:
-- Icon: `ArrowLeftRight`
-- Path: `/dashboard/shift-swaps`
-- Position: Near Schedule section
+### New Sidebar Items
+- **Rewards** - `/dashboard/rewards` (for all team members)
 
----
-
-## Technical Notes
-
-### Permission Mapping
-- `manage_team_challenges` - Required for admin challenge pages (may need to add to permissions if not exists)
-- `manage_schedule_requests` - Required for swap approval (already exists)
-- All authenticated users can access shift swap marketplace
-
-### Component Reuse
-- Uses existing `ChallengeCard`, `ChallengeLeaderboard`, `CreateChallengeWizard`
-- Uses existing hooks from `useChallenges.ts` and `useShiftSwaps.ts`
-- Follows established dialog patterns (Sheet for mobile, Dialog for desktop)
-
-### Real-time Considerations
-- Shift swaps will benefit from real-time updates (already enabled in previous migration)
-- Challenge standings can update on page refresh for now
+### Management Hub Additions
+- **Daily Huddle** - Under "Communications" category
+- **Points & Rewards** - Under "Team Operations" category
 
 ---
 
 ## Implementation Order
 
-1. Create shift swap components (SwapCard, PostSwapDialog, ClaimSwapDialog, MySwapsPanel)
-2. Create ShiftSwapMarketplace page
-3. Create SwapApprovalQueue page (admin)
-4. Create ChallengesDashboard page
-5. Create ChallengeDetail page
-6. Create ActiveChallengesWidget
-7. Update App.tsx with all routes
-8. Update sidebar config with Shift Swaps link
-9. Test end-to-end flows
+### Step 1: Database Schema (All Tables)
+Create all new tables with RLS policies in a single migration.
 
+### Step 2: Points Economy Core
+1. Create `pointsService.ts`
+2. Create `usePoints.ts` hook
+3. Build `PointsBalanceCard.tsx` widget
+4. Build `RewardShop.tsx` page
+5. Build admin `PointsConfig.tsx` and `RewardsManager.tsx`
+6. Integrate point awards into existing features
+
+### Step 3: Daily Huddle System
+1. Create `useHuddles.ts` hook
+2. Build `DailyHuddle.tsx` admin page
+3. Build `HuddleEditor.tsx` component
+4. Build `TodaysHuddleCard.tsx` widget
+5. Add to Command Center and Management Hub
+
+### Step 4: Training Enhancements
+1. Build `TrainingCertificateButton.tsx`
+2. Build quiz components
+3. Add `QuizBuilder.tsx` to Training Hub
+4. Integrate into Training page
+
+### Step 5: Routing & Navigation
+1. Update `App.tsx` with new routes
+2. Update sidebar configuration
+3. Update Management Hub cards
+
+---
+
+## Technical Notes
+
+### Points Calculation Performance
+- Use database function for balance calculation to avoid N+1 queries
+- Consider caching balance in user profile for fast reads (update via trigger)
+
+### Huddle Publishing
+- Real-time subscription for instant team notification
+- Email option via existing Resend integration
+
+### Quiz Randomization
+- Questions can be shuffled per attempt
+- Store attempt details for analytics
+
+### Reward Fulfillment
+- Manager approval workflow
+- Notification on status change
+- Audit trail for accountability
