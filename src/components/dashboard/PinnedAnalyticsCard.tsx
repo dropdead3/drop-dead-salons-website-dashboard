@@ -124,11 +124,6 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
   const parentTabKey = CARD_TO_TAB_MAP[cardId];
   const parentTabVisible = useElementVisibility(parentTabKey || '');
   
-  // If there's a parent tab mapping and it's hidden, don't render the card
-  if (parentTabKey && !parentTabVisible) {
-    return null;
-  }
-  
   const locationFilter = filters.locationId !== 'all' ? filters.locationId : undefined;
   
   // Create filter context for cards that display it
@@ -137,7 +132,7 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     dateRange: filters.dateRange,
   };
   
-  // Fetch data for cards that need it
+  // Fetch data for cards that need it - ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   const { data: salesData } = useSalesMetrics({ 
     dateFrom: filters.dateFrom, 
     dateTo: filters.dateTo,
@@ -156,6 +151,12 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     photo_url: p.photo_url,
     totalRevenue: p.totalRevenue,
   })) || [];
+  
+  // If parent tab is hidden and we have a mapping, don't render the card
+  // This check MUST come AFTER all hooks are called
+  if (parentTabKey && !parentTabVisible) {
+    return null;
+  }
   
   switch (cardId) {
     case 'operations_stats':
