@@ -38,6 +38,8 @@ const LINK_CONFIG: Record<string, { label: string }> = {
   '/dashboard/admin/accounts': { label: 'Invitations & Approvals' },
   '/dashboard/admin/roles': { label: 'Manage Users & Roles' },
   '/dashboard/admin/settings': { label: 'Settings' },
+  '/dashboard/shift-swaps': { label: 'Shift Swaps' },
+  '/dashboard/rewards': { label: 'Rewards' },
 };
 
 interface SidebarPreviewProps {

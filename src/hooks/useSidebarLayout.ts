@@ -7,6 +7,7 @@ export const DEFAULT_SECTION_ORDER = [
   'main',
   'growth', 
   'stats',
+  'teamTools',
   'getHelp',
   'housekeeping',
   'manager',
@@ -20,6 +21,7 @@ export const SECTION_LABELS: Record<string, string> = {
   main: 'Main',
   growth: 'Growth',
   stats: 'Stats & Leaderboard',
+  teamTools: 'Team Tools',
   getHelp: 'Get Help',
   housekeeping: 'Housekeeping',
   manager: 'Management',
@@ -47,6 +49,10 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
     '/dashboard/my-clients',
     '/dashboard/leaderboard',
     '/dashboard/admin/analytics',
+  ],
+  teamTools: [
+    '/dashboard/shift-swaps',
+    '/dashboard/rewards',
   ],
   getHelp: [
     '/dashboard/assistant-schedule',
