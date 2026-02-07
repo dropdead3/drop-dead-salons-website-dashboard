@@ -1,123 +1,83 @@
 
 
-# Add Internal Organization Flag for Platform-Owned Organizations
+# Add Full-Screen QR Code View for In-Person Onboarding
 
 ## Overview
 
-Add an `is_internal` flag to the organizations table to mark platform-owned organizations (like Drop Dead Salons) that should never be billed. These organizations will display a visual indicator in the Platform Admin accounts list and bypass billing requirements.
+Add an "Open on Screen" button to the Staff Signup QR Code card that opens a full-screen, distraction-free view of the QR code. This is designed for in-person onboarding scenarios where a new staff member is sitting next to you and can scan the code directly from your screen.
+
+---
+
+## Design
+
+The full-screen view will:
+- Cover the entire viewport with a clean, branded background
+- Display a large, easy-to-scan QR code in the center
+- Include minimal branding (Drop Dead logo, "Staff Portal" text)
+- Show a close button (X) in the corner to exit
+- Support keyboard escape to close
+- Animate in smoothly using framer-motion
 
 ---
 
 ## Changes
 
-### 1. Database Migration
+### 1. Create Full-Screen QR Component
 
-Add the `is_internal` boolean column to the `organizations` table and set Drop Dead Salons as internal.
+**File: `src/components/dashboard/QRCodeFullScreen.tsx`** (new file)
 
-```sql
--- Add is_internal flag to organizations table
-ALTER TABLE public.organizations 
-ADD COLUMN is_internal BOOLEAN NOT NULL DEFAULT false;
+A new component that renders a full-screen overlay with:
 
--- Mark Drop Dead Salons as internal (platform-owned)
-UPDATE public.organizations 
-SET is_internal = true 
-WHERE id = 'fa23cd95-decf-436a-adba-4561b0ecc14d';
-
--- Add a comment for documentation
-COMMENT ON COLUMN public.organizations.is_internal IS 
-  'True for platform-owned organizations that should not be billed';
-```
-
----
-
-### 2. Update Type Definitions
-
-**File: `src/hooks/useOrganizations.ts`**
-
-Add `is_internal` to the `Organization` interface:
-
-```typescript
-export interface Organization {
-  // ...existing fields
-  is_internal?: boolean;
-}
-```
-
----
-
-### 3. Update Accounts List UI
-
-**File: `src/pages/dashboard/platform/Accounts.tsx`**
-
-Add a visual indicator (badge) next to internal organizations in the table:
-
-| Element | Change |
-|---------|--------|
-| Account Cell | Add "Internal" badge with special styling next to the org name |
-| Filter | Add an "Internal" filter option to the status/type filters |
-
-The badge will be styled distinctly (using the `primary` or `glow` variant) to stand out:
+| Element | Description |
+|---------|-------------|
+| Overlay | Dark semi-transparent backdrop with blur |
+| Container | Centered card with branded styling |
+| QR Code | Large 300px QR code (easily scannable from ~2-3 feet) |
+| Branding | Drop Dead logo and "Staff Portal" text |
+| Instructions | "Scan to create your staff account" |
+| URL fallback | Small text showing the URL for manual entry |
+| Close button | X button in top-right corner |
+| Keyboard support | ESC key to close |
 
 ```tsx
-<div>
-  <div className="flex items-center gap-2">
-    <p className="font-medium text-white">{org.name}</p>
-    {org.is_internal && (
-      <PlatformBadge variant="glow" size="sm">Internal</PlatformBadge>
-    )}
-  </div>
-  <p className="text-xs text-slate-500">#{org.account_number}</p>
+interface QRCodeFullScreenProps {
+  isOpen: boolean;
+  onClose: () => void;
+  url: string;
+}
+```
+
+---
+
+### 2. Update QRCodeCard Component
+
+**File: `src/pages/dashboard/admin/AccountManagement.tsx`**
+
+Add a new "Open on Screen" button alongside Preview and Download:
+
+| Current | New |
+|---------|-----|
+| Preview, Download | Open on Screen, Preview, Download |
+
+Changes:
+- Import the new `QRCodeFullScreen` component
+- Add state: `const [fullscreenOpen, setFullscreenOpen] = useState(false)`
+- Add new button with `Monitor` or `Maximize2` icon
+- Render `QRCodeFullScreen` component conditionally
+
+The button layout will become a 3-column grid:
+```tsx
+<div className="grid grid-cols-3 gap-2">
+  <Button onClick={() => setFullscreenOpen(true)}>
+    <Maximize2 /> Open on Screen
+  </Button>
+  <Button onClick={() => setPreviewOpen(true)}>
+    <Eye /> Preview
+  </Button>
+  <Button onClick={downloadQRCode}>
+    <Download /> Download
+  </Button>
 </div>
-```
-
----
-
-### 4. Update Capacity Logic
-
-**File: `src/hooks/useOrganizationCapacity.ts`**
-
-Optionally enhance the capacity logic to automatically treat internal organizations as having unlimited capacity, even without a billing record. This provides a more robust fallback:
-
-```typescript
-export function calculateCapacity(
-  billing: OrganizationBilling | null,
-  plan: SubscriptionPlan | null,
-  usage: { locationCount: number; userCount: number },
-  isInternal?: boolean  // New optional parameter
-): OrganizationCapacity {
-  // Internal organizations always get unlimited capacity
-  if (isInternal || !plan) {
-    return {
-      locations: { base: -1, purchased: 0, total: -1, used: usage.locationCount, utilization: 0, remaining: -1, isUnlimited: true },
-      users: { base: -1, purchased: 0, total: -1, used: usage.userCount, utilization: 0, remaining: -1, isUnlimited: true },
-      isOverLimit: false,
-      nearLimit: false,
-      locationCostPerMonth: 0,
-      userCostPerMonth: 0,
-      totalAddOnCost: 0,
-    };
-  }
-  // ...rest of logic
-}
-```
-
----
-
-### 5. Update OrganizationListItem Type
-
-**File: `src/hooks/useOrganizations.ts`**
-
-Ensure the list query includes `is_internal`:
-
-```typescript
-export interface OrganizationListItem extends Organization {
-  locationCount: number;
-  stripeLocationsActive: number;
-  hasStripeIssues: boolean;
-  primaryLocation: { ... } | null;
-  // is_internal is inherited from Organization
-}
 ```
 
 ---
@@ -126,29 +86,35 @@ export interface OrganizationListItem extends Organization {
 
 | File | Action |
 |------|--------|
-| Database migration | Add `is_internal` column, set Drop Dead Salons to `true` |
-| `src/hooks/useOrganizations.ts` | Add `is_internal` to Organization interface |
-| `src/pages/dashboard/platform/Accounts.tsx` | Add "Internal" badge in account table rows, add filter option |
-| `src/hooks/useOrganizationCapacity.ts` | Handle `isInternal` flag for automatic unlimited capacity |
-| `src/hooks/useBusinessCapacity.ts` | Pass organization's `is_internal` flag to capacity calculation |
+| `src/components/dashboard/QRCodeFullScreen.tsx` | Create new full-screen QR overlay component |
+| `src/pages/dashboard/admin/AccountManagement.tsx` | Add "Open on Screen" button and integrate full-screen component |
 
 ---
 
 ## Visual Result
 
-In the Platform Accounts list:
+When clicking "Open on Screen":
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│ Account                      │ Type   │ Status │ Plan      │
-├─────────────────────────────────────────────────────────────┤
-│ Drop Dead Salons [Internal]  │ Salon  │ Active │ Enterprise│
-│ #10001                       │        │        │           │
-├─────────────────────────────────────────────────────────────┤
-│ Some Other Salon             │ Salon  │ Active │ Standard  │
-│ #10002                       │        │        │           │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                                                          [X]   │
+│                                                                 │
+│                         DROP DEAD®                              │
+│                        Staff Portal                             │
+│                                                                 │
+│                     ┌─────────────────┐                         │
+│                     │                 │                         │
+│                     │   [QR CODE]     │                         │
+│                     │   300 x 300     │                         │
+│                     │                 │                         │
+│                     └─────────────────┘                         │
+│                                                                 │
+│               Scan to create your staff account                 │
+│                                                                 │
+│              Or visit: yoursite.com/staff-login                 │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-The "Internal" badge will have a glowing violet style to clearly distinguish platform-owned organizations from customer accounts.
+The QR code will be large enough to scan from 2-3 feet away, making it perfect for in-person onboarding scenarios.
 
