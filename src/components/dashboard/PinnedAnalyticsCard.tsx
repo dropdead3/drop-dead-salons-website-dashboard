@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { format, startOfMonth, endOfMonth, subDays, startOfWeek } from 'date-fns';
-import { VisibilityGate } from '@/components/visibility';
+import { VisibilityGate, useElementVisibility } from '@/components/visibility';
 import { AggregateSalesCard, DateRange as SalesDateRange } from '@/components/dashboard/AggregateSalesCard';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUtilizationCard';
@@ -19,6 +19,23 @@ import type { FilterContext } from '@/components/dashboard/AnalyticsFilterBadge'
 import { getNextPayDay, type PayScheduleSettings } from '@/hooks/usePaySchedule';
 
 export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth';
+
+// Map pinned cards to their parent analytics tab visibility keys
+// If the parent tab is hidden, the card should also be hidden
+const CARD_TO_TAB_MAP: Record<string, string> = {
+  'sales_overview': 'analytics_sales_tab',
+  'top_performers': 'analytics_sales_tab',
+  'revenue_breakdown': 'analytics_sales_tab',
+  'team_goals': 'analytics_sales_tab',
+  'week_ahead_forecast': 'analytics_sales_tab',
+  'capacity_utilization': 'analytics_operations_tab',
+  'operations_stats': 'analytics_operations_tab',
+  'new_bookings': 'analytics_operations_tab',
+  'hiring_capacity': 'analytics_operations_tab',
+  'staffing_trends': 'analytics_operations_tab',
+  'stylist_workload': 'analytics_operations_tab',
+  'client_funnel': 'analytics_marketing_tab',
+};
 
 // Map dashboard date range to Sales Overview date range
 function mapToSalesDateRange(dashboardRange: DateRangeType): SalesDateRange {
@@ -103,6 +120,15 @@ interface PinnedAnalyticsCardProps {
  * that have been placed inline with other dashboard sections.
  */
 export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProps) {
+  // Check if parent tab is visible - if not, hide this card
+  const parentTabKey = CARD_TO_TAB_MAP[cardId];
+  const parentTabVisible = useElementVisibility(parentTabKey || '');
+  
+  // If there's a parent tab mapping and it's hidden, don't render the card
+  if (parentTabKey && !parentTabVisible) {
+    return null;
+  }
+  
   const locationFilter = filters.locationId !== 'all' ? filters.locationId : undefined;
   
   // Create filter context for cards that display it
