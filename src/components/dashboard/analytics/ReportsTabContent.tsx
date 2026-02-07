@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { format } from 'date-fns';
 import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
-import { VisibilityGate } from '@/components/visibility/VisibilityGate';
+import { VisibilityGate, useElementVisibility } from '@/components/visibility/VisibilityGate';
 import { 
   FileText, 
   Users, 
@@ -73,6 +73,28 @@ interface ReportsTabContentProps {
 export function ReportsTabContent({ filters }: ReportsTabContentProps) {
   const [activeCategory, setActiveCategory] = useState('sales');
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
+
+  // Check if parent sales tab is visible (determines if sales/financial reports should show)
+  const salesTabVisible = useElementVisibility('analytics_sales_tab');
+
+  // Filter categories based on parent visibility
+  const visibleCategories = useMemo(() => {
+    return reportCategories.filter(cat => {
+      // Hide Sales and Financial categories if sales tab is hidden
+      if ((cat.id === 'sales' || cat.id === 'financial') && !salesTabVisible) {
+        return false;
+      }
+      return true;
+    });
+  }, [salesTabVisible]);
+
+  // Auto-redirect if current category is hidden
+  useEffect(() => {
+    if ((activeCategory === 'sales' || activeCategory === 'financial') && !salesTabVisible) {
+      const firstVisible = visibleCategories[0]?.id || 'staff';
+      setActiveCategory(firstVisible);
+    }
+  }, [activeCategory, salesTabVisible, visibleCategories]);
 
   const handleReportSelect = (reportId: string) => {
     setSelectedReport(reportId);
@@ -207,7 +229,7 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
         </span>
         <Tabs value={activeCategory} onValueChange={setActiveCategory}>
           <SubTabsList>
-            {reportCategories.map((cat) => (
+            {visibleCategories.map((cat) => (
               <VisibilityGate 
                 key={cat.id}
                 elementKey={`reports_${cat.id}_subtab`} 
@@ -222,9 +244,12 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
             ))}
           </SubTabsList>
 
-        <TabsContent value="sales" className="mt-6">
-          {renderReportCards(salesReports)}
-        </TabsContent>
+        {/* Only render Sales content if visible */}
+        {salesTabVisible && (
+          <TabsContent value="sales" className="mt-6">
+            {renderReportCards(salesReports)}
+          </TabsContent>
+        )}
 
         <TabsContent value="staff" className="mt-6">
           {renderReportCards(staffReports)}
@@ -238,9 +263,12 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
           {renderReportCards(operationsReports)}
         </TabsContent>
 
-        <TabsContent value="financial" className="mt-6">
-          {renderReportCards(financialReports)}
-        </TabsContent>
+        {/* Only render Financial content if sales tab is visible */}
+        {salesTabVisible && (
+          <TabsContent value="financial" className="mt-6">
+            {renderReportCards(financialReports)}
+          </TabsContent>
+        )}
         </Tabs>
       </div>
 
