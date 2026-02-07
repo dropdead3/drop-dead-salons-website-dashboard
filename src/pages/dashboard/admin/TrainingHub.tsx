@@ -3,10 +3,11 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Video, UserPlus, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Video, UserPlus, BarChart3, HelpCircle } from 'lucide-react';
 import { VideoLibraryManager } from '@/components/training/VideoLibraryManager';
 import { IndividualAssignments } from '@/components/training/IndividualAssignments';
 import { TeamProgressDashboard } from '@/components/training/TeamProgressDashboard';
+import { TrainingQuizManager } from '@/components/training/TrainingQuizManager';
 
 export default function TrainingHub() {
   const [activeTab, setActiveTab] = useState('library');
@@ -24,14 +25,14 @@ export default function TrainingHub() {
           <div>
             <h1 className="font-display text-3xl lg:text-4xl">Training Hub</h1>
             <p className="text-muted-foreground mt-1">
-              Manage training library, assignments, and track team progress
+              Manage training library, assignments, quizzes, and track team progress
             </p>
           </div>
         </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-lg grid-cols-4">
             <TabsTrigger value="library" className="gap-2">
               <Video className="w-4 h-4" />
               <span className="hidden sm:inline">Library</span>
@@ -39,6 +40,10 @@ export default function TrainingHub() {
             <TabsTrigger value="assignments" className="gap-2">
               <UserPlus className="w-4 h-4" />
               <span className="hidden sm:inline">Assignments</span>
+            </TabsTrigger>
+            <TabsTrigger value="quizzes" className="gap-2">
+              <HelpCircle className="w-4 h-4" />
+              <span className="hidden sm:inline">Quizzes</span>
             </TabsTrigger>
             <TabsTrigger value="progress" className="gap-2">
               <BarChart3 className="w-4 h-4" />
@@ -52,6 +57,10 @@ export default function TrainingHub() {
 
           <TabsContent value="assignments" className="mt-6">
             <IndividualAssignments />
+          </TabsContent>
+
+          <TabsContent value="quizzes" className="mt-6">
+            <TrainingQuizManager />
           </TabsContent>
 
           <TabsContent value="progress" className="mt-6">

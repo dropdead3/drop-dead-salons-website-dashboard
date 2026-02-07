@@ -1983,6 +1983,54 @@ export type Database = {
           },
         ]
       }
+      daily_huddles: {
+        Row: {
+          announcements: string | null
+          birthdays_celebrations: string | null
+          created_at: string | null
+          created_by: string
+          focus_of_the_day: string | null
+          huddle_date: string
+          id: string
+          is_published: boolean | null
+          location_id: string | null
+          sales_goals: Json | null
+          training_reminders: string | null
+          updated_at: string | null
+          wins_from_yesterday: string | null
+        }
+        Insert: {
+          announcements?: string | null
+          birthdays_celebrations?: string | null
+          created_at?: string | null
+          created_by: string
+          focus_of_the_day?: string | null
+          huddle_date?: string
+          id?: string
+          is_published?: boolean | null
+          location_id?: string | null
+          sales_goals?: Json | null
+          training_reminders?: string | null
+          updated_at?: string | null
+          wins_from_yesterday?: string | null
+        }
+        Update: {
+          announcements?: string | null
+          birthdays_celebrations?: string | null
+          created_at?: string | null
+          created_by?: string
+          focus_of_the_day?: string | null
+          huddle_date?: string
+          id?: string
+          is_published?: boolean | null
+          location_id?: string | null
+          sales_goals?: Json | null
+          training_reminders?: string | null
+          updated_at?: string | null
+          wins_from_yesterday?: string | null
+        }
+        Relationships: []
+      }
       daily_metrics: {
         Row: {
           ad_leads: number | null
@@ -3441,6 +3489,65 @@ export type Database = {
           status?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      huddle_acknowledgments: {
+        Row: {
+          acknowledged_at: string | null
+          huddle_id: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          huddle_id?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          huddle_id?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "huddle_acknowledgments_huddle_id_fkey"
+            columns: ["huddle_id"]
+            isOneToOne: false
+            referencedRelation: "daily_huddles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      huddle_templates: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          id: string
+          is_default: boolean | null
+          location_id: string | null
+          name: string
+          template_content: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          id?: string
+          is_default?: boolean | null
+          location_id?: string | null
+          name: string
+          template_content?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          is_default?: boolean | null
+          location_id?: string | null
+          name?: string
+          template_content?: Json | null
         }
         Relationships: []
       }
@@ -6407,6 +6514,66 @@ export type Database = {
         }
         Relationships: []
       }
+      points_ledger: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          points: number
+          reference_id: string | null
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points: number
+          reference_id?: string | null
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          points?: number
+          reference_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      points_rules: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          max_daily: number | null
+          points_awarded: number
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_daily?: number | null
+          points_awarded: number
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_daily?: number | null
+          points_awarded?: number
+        }
+        Relationships: []
+      }
       points_transactions: {
         Row: {
           client_id: string
@@ -8185,6 +8352,86 @@ export type Database = {
           },
         ]
       }
+      reward_redemptions: {
+        Row: {
+          created_at: string | null
+          fulfilled_at: string | null
+          id: string
+          manager_id: string | null
+          notes: string | null
+          points_spent: number
+          reward_id: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          fulfilled_at?: string | null
+          id?: string
+          manager_id?: string | null
+          notes?: string | null
+          points_spent: number
+          reward_id?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          fulfilled_at?: string | null
+          id?: string
+          manager_id?: string | null
+          notes?: string | null
+          points_spent?: number
+          reward_id?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reward_redemptions_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rewards_catalog: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          points_cost: number
+          quantity_available: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          points_cost: number
+          quantity_available?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          points_cost?: number
+          quantity_available?: number | null
+        }
+        Relationships: []
+      }
       ring_the_bell_entries: {
         Row: {
           closing_script: string | null
@@ -9921,6 +10168,117 @@ export type Database = {
           },
         ]
       }
+      training_quiz_attempts: {
+        Row: {
+          answers: Json | null
+          completed_at: string | null
+          id: string
+          passed: boolean | null
+          quiz_id: string | null
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          answers?: Json | null
+          completed_at?: string | null
+          id?: string
+          passed?: boolean | null
+          quiz_id?: string | null
+          score?: number | null
+          user_id: string
+        }
+        Update: {
+          answers?: Json | null
+          completed_at?: string | null
+          id?: string
+          passed?: boolean | null
+          quiz_id?: string | null
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_quiz_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "training_quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_quiz_questions: {
+        Row: {
+          correct_answer: string
+          id: string
+          options: Json | null
+          order_index: number | null
+          question_text: string
+          question_type: string | null
+          quiz_id: string | null
+        }
+        Insert: {
+          correct_answer: string
+          id?: string
+          options?: Json | null
+          order_index?: number | null
+          question_text: string
+          question_type?: string | null
+          quiz_id?: string | null
+        }
+        Update: {
+          correct_answer?: string
+          id?: string
+          options?: Json | null
+          order_index?: number | null
+          question_text?: string
+          question_type?: string | null
+          quiz_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_quiz_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "training_quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_quizzes: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_required: boolean | null
+          passing_score: number | null
+          title: string
+          video_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_required?: boolean | null
+          passing_score?: number | null
+          title: string
+          video_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_required?: boolean | null
+          passing_score?: number | null
+          title?: string
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_quizzes_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "training_videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_videos: {
         Row: {
           category: string
@@ -10501,6 +10859,15 @@ export type Database = {
         }
         Returns: string
       }
+      award_points: {
+        Args: {
+          _action_type: string
+          _description?: string
+          _reference_id?: string
+          _user_id: string
+        }
+        Returns: number
+      }
       calculate_preferred_stylists: {
         Args: never
         Returns: {
@@ -10575,6 +10942,7 @@ export type Database = {
         }[]
       }
       get_user_organization: { Args: { _user_id: string }; Returns: string }
+      get_user_points_balance: { Args: { _user_id: string }; Returns: number }
       has_platform_role: {
         Args: { _role: string; _user_id: string }
         Returns: boolean
