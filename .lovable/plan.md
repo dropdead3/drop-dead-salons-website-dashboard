@@ -1,490 +1,282 @@
 
 
-# Comprehensive Feature Implementation Plan
+# Phase 2: Complete Team Challenges & Shift Swap System
 
-## Overview
+## Summary
 
-This plan covers the implementation of **four major features** in order of priority:
-
-1. **Training Reminders** - Automated notifications for overdue/upcoming training deadlines
-2. **Achievement Badges System** - Gamification with milestones and unlockable badges
-3. **Team Challenges** - Manager-created competitions with leaderboards
-4. **Shift Swap System** - Marketplace for trading shifts with approval workflow
+This plan completes the remaining UI pages and components for **Team Challenges** and **Shift Swap System**. The database tables, hooks, and some components were created in the previous implementation phase. Now we need to build the actual pages and remaining components.
 
 ---
 
-## Feature 1: Training Reminders
+## Current State
 
-### Purpose
-Automate email and in-app notifications when team members have overdue or upcoming training deadlines, following the established pattern from `send-handbook-reminders`.
+### Already Implemented
+| Feature | Component | Status |
+|---------|-----------|--------|
+| Team Challenges | Database tables (`team_challenges`, `challenge_participants`, `challenge_progress_snapshots`) | Done |
+| Team Challenges | Hooks (`useChallenges.ts`) | Done |
+| Team Challenges | `ChallengeCard.tsx` | Done |
+| Team Challenges | `ChallengeLeaderboard.tsx` | Done |
+| Team Challenges | `CreateChallengeWizard.tsx` | Done |
+| Team Challenges | ManagementHub navigation card | Done |
+| Shift Swaps | Database tables (`shift_swaps`, `shift_swap_messages`) | Done |
+| Shift Swaps | Hooks (`useShiftSwaps.ts`) | Done |
+| Shift Swaps | ManagementHub navigation card | Done |
 
-### Database Schema
-
-```sql
--- No new tables needed - uses existing:
--- training_assignments (has due_date)
--- training_progress (tracks completion)
--- notifications (for in-app alerts)
--- email_templates (for email content)
-```
-
-### Email Template Entry
-
-| template_key | subject | description |
-|--------------|---------|-------------|
-| `training_reminder` | `Training Due Soon: {{training_title}}` | Standard reminder |
-| `training_overdue` | `OVERDUE: Complete Your Training` | Urgent reminder |
-
-### Edge Function: `send-training-reminders`
-
-**Logic Flow:**
-1. Fetch all `training_assignments` with `due_date` in next 3 days OR past due
-2. Cross-reference with `training_progress` to find incomplete
-3. For each user with incomplete trainings:
-   - Check `notification_preferences` (opt-out respect)
-   - Insert in-app notification
-   - Send email via Resend API
-
-**Notification Types:**
-- `training_due_soon` - 3 days before due date
-- `training_overdue` - After due date passes
-
-### Scheduling
-- Run via pg_cron daily at 9:00 AM
-
-### Files to Create
-
-| File | Description |
-|------|-------------|
-| `supabase/functions/send-training-reminders/index.ts` | Edge function |
-
-### Files to Modify
-
-| File | Changes |
-|------|---------|
-| Database | Insert email templates |
-| `supabase/config.toml` | Register function with `verify_jwt = false` |
+### Missing (To Build Now)
+| Feature | Component | Description |
+|---------|-----------|-------------|
+| Team Challenges | `ChallengesDashboard.tsx` | Main admin page at `/dashboard/admin/challenges` |
+| Team Challenges | `ChallengeDetail.tsx` | Single challenge view at `/dashboard/admin/challenges/:id` |
+| Team Challenges | Command Center widget | Active challenges preview for participants |
+| Team Challenges | Route registration | Add to App.tsx |
+| Shift Swaps | `ShiftSwapMarketplace.tsx` | Team member marketplace at `/dashboard/shift-swaps` |
+| Shift Swaps | `SwapCard.tsx` | Individual swap listing display |
+| Shift Swaps | `PostSwapDialog.tsx` | Create new swap request |
+| Shift Swaps | `ClaimSwapDialog.tsx` | Claim an available swap |
+| Shift Swaps | `SwapApprovalQueue.tsx` | Manager approval interface at `/dashboard/admin/shift-swaps` |
+| Shift Swaps | `MySwapsPanel.tsx` | User's swap requests and claims |
+| Shift Swaps | Route registration | Add to App.tsx |
+| Shift Swaps | Sidebar navigation | Add shift swaps link for team members |
 
 ---
 
-## Feature 2: Achievement Badges System
+## Implementation Details
 
-### Purpose
-Award badges for milestones like training completion, first sale, client milestones, and streak achievements. Extends the existing `leaderboard_achievements` system.
+### Part A: Team Challenges Pages
 
-### Existing Infrastructure
-The project already has:
-- `leaderboard_achievements` table (badge definitions)
-- `user_achievements` table (earned badges)
-- `useLeaderboardAchievements` hook
+#### 1. ChallengesDashboard.tsx (`/dashboard/admin/challenges`)
 
-### New Achievement Categories
-
-| Key | Name | Trigger | Threshold |
-|-----|------|---------|-----------|
-| `training_first` | First Training Complete | Training progress | 1 video |
-| `training_master` | Training Master | Training progress | All videos |
-| `bell_first` | First Bell | Ring the bell | 1 bell |
-| `bell_10` | Bell Ringer | Ring the bell | 10 bells |
-| `bell_100` | Bell Champion | Ring the bell | 100 bells |
-| `streak_7` | Week Warrior | Daily streak | 7 days |
-| `streak_30` | Monthly Master | Daily streak | 30 days |
-| `client_50` | Client Builder | Unique clients | 50 clients |
-| `client_100` | Client Century | Unique clients | 100 clients |
-| `retail_1000` | Retail Pro | Retail sales | $1,000 |
-| `retail_5000` | Retail Star | Retail sales | $5,000 |
-| `perfect_attendance` | Perfect Attendance | No missed days | 30 days |
-| `team_player` | Team Player | Shift swaps helped | 5 swaps |
-
-### Components to Build
-
-**1. AchievementShowcaseCard.tsx**
-- Displays earned badges on profile
-- Shows locked badges with progress
-- Animated unlock effect
-
-**2. AchievementNotificationToast.tsx**
-- Celebratory popup when badge earned
-- Confetti animation
-- Share to team option
-
-**3. AchievementsConfigPanel.tsx** (Admin)
-- CRUD for achievement definitions
-- Enable/disable badges
-- Adjust thresholds
-
-### Achievement Trigger System
-
-Create a centralized service to check and grant achievements:
-
-```typescript
-// src/services/achievementService.ts
-export async function checkAndGrantAchievements(
-  userId: string,
-  context: {
-    trainingCompleted?: number;
-    bellsRung?: number;
-    streakDays?: number;
-    retailSales?: number;
-    clientsServed?: number;
-  }
-) {
-  // Check each achievement type against thresholds
-  // Grant if criteria met and not already earned
-}
-```
-
-### Integration Points
-
-| Event | Location | Action |
-|-------|----------|--------|
-| Training video marked complete | `Training.tsx` | Check training badges |
-| Bell rung | `RingTheBell.tsx` | Check bell badges |
-| Daily completion | Program page | Check streak badges |
-| Appointment completed | Schedule | Check client badges |
-| Retail sale logged | POS integration | Check retail badges |
-
-### Files to Create
-
-| File | Description |
-|------|-------------|
-| `src/services/achievementService.ts` | Centralized achievement logic |
-| `src/components/achievements/AchievementNotificationToast.tsx` | Unlock celebration |
-| `src/components/achievements/AchievementProgressCard.tsx` | Progress display |
-| `src/pages/dashboard/admin/AchievementsConfig.tsx` | Admin management |
-
-### Files to Modify
-
-| File | Changes |
-|------|---------|
-| Database | Insert new achievement definitions |
-| `src/pages/dashboard/Training.tsx` | Trigger training achievements |
-| `src/pages/dashboard/RingTheBell.tsx` | Trigger bell achievements |
-| `src/components/dashboard/LeaderboardContent.tsx` | Display achievements |
-| `src/pages/dashboard/MyProfile.tsx` | Show earned badges |
-
----
-
-## Feature 3: Team Challenges
-
-### Purpose
-Allow managers to create time-limited competitions between team members or locations with leaderboards, progress tracking, and rewards.
-
-### Database Schema
-
-```sql
--- Challenge definitions
-CREATE TABLE public.team_challenges (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  description TEXT,
-  challenge_type TEXT NOT NULL, -- 'individual', 'team', 'location'
-  metric_type TEXT NOT NULL, -- 'bells', 'retail', 'new_clients', 'retention', 'training'
-  goal_value NUMERIC,
-  start_date TIMESTAMPTZ NOT NULL,
-  end_date TIMESTAMPTZ NOT NULL,
-  status TEXT DEFAULT 'draft', -- 'draft', 'active', 'completed', 'cancelled'
-  prize_description TEXT,
-  created_by UUID NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  rules JSONB DEFAULT '{}'
-);
-
--- Challenge participants
-CREATE TABLE public.challenge_participants (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  challenge_id UUID REFERENCES team_challenges(id) ON DELETE CASCADE,
-  user_id UUID, -- null for location-based
-  location_id TEXT,
-  team_name TEXT,
-  current_value NUMERIC DEFAULT 0,
-  rank INTEGER,
-  joined_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(challenge_id, user_id)
-);
-
--- Challenge progress history (for charts)
-CREATE TABLE public.challenge_progress_snapshots (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  challenge_id UUID REFERENCES team_challenges(id) ON DELETE CASCADE,
-  participant_id UUID REFERENCES challenge_participants(id) ON DELETE CASCADE,
-  value_at_snapshot NUMERIC,
-  snapshot_date DATE,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-### Challenge Types
-
-| Type | Description | Example |
-|------|-------------|---------|
-| `individual` | Person vs person | Most bells this week |
-| `team` | Named teams compete | Team A vs Team B retail sales |
-| `location` | Location vs location | Salon location competition |
-
-### Metric Types
-
-| Metric | Data Source |
-|--------|-------------|
-| `bells` | `ring_the_bell_entries` |
-| `retail` | `phorest_performance_metrics` |
-| `new_clients` | `phorest_performance_metrics` |
-| `retention` | `phorest_performance_metrics` |
-| `training` | `training_progress` |
-
-### Components to Build
-
-**1. ChallengeCard.tsx**
-- Active challenge display
-- Progress bar
-- Time remaining
-- Current standings preview
-
-**2. ChallengeLeaderboard.tsx**
-- Full standings table
-- Progress charts over time
-- Trend indicators
-
-**3. CreateChallengeWizard.tsx**
-- Step 1: Basic info (title, description, dates)
-- Step 2: Challenge type and metric
-- Step 3: Participants/teams
-- Step 4: Goals and prizes
-- Step 5: Review and launch
-
-**4. ChallengesDashboard.tsx**
-- Active challenges grid
-- Past challenges history
-- Create new button (managers only)
-
-### Edge Function: `update-challenge-standings`
-
-Scheduled function to:
-1. Calculate current values for all active challenges
-2. Update `challenge_participants.current_value`
-3. Recalculate ranks
-4. Insert daily snapshot for trending
-
-### Navigation Integration
-
-Add to Management Hub under "Team Development":
-
-```typescript
-<ManagementCard
-  href="/dashboard/admin/challenges"
-  icon={Trophy}
-  title="Team Challenges"
-  description="Create and manage team competitions"
-  colorClass="bg-yellow-500/10 text-yellow-600"
-/>
-```
-
-### User-Facing Widget
-
-Add challenge preview widget to Command Center for participants.
-
-### Files to Create
-
-| File | Description |
-|------|-------------|
-| `src/pages/dashboard/admin/ChallengesDashboard.tsx` | Challenge management |
-| `src/pages/dashboard/admin/ChallengeDetail.tsx` | Single challenge view |
-| `src/components/challenges/ChallengeCard.tsx` | Challenge preview card |
-| `src/components/challenges/ChallengeLeaderboard.tsx` | Full standings |
-| `src/components/challenges/CreateChallengeWizard.tsx` | Creation wizard |
-| `src/components/challenges/ChallengeProgressChart.tsx` | Progress visualization |
-| `src/hooks/useChallenges.ts` | Challenge data hooks |
-| `supabase/functions/update-challenge-standings/index.ts` | Standings calculator |
-
-### Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/pages/dashboard/admin/ManagementHub.tsx` | Add Challenges card |
-| `src/App.tsx` | Add routes |
-| `src/components/dashboard/CommandCenter.tsx` | Add challenge widget |
-
----
-
-## Feature 4: Shift Swap System
-
-### Purpose
-Enable team members to post and claim shift swaps with a manager approval workflow.
-
-### Database Schema
-
-```sql
--- Shift swap listings
-CREATE TABLE public.shift_swaps (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  requester_id UUID NOT NULL,
-  original_date DATE NOT NULL,
-  original_start_time TIME NOT NULL,
-  original_end_time TIME NOT NULL,
-  location_id TEXT,
-  swap_type TEXT NOT NULL, -- 'swap', 'cover', 'giveaway'
-  reason TEXT,
-  status TEXT DEFAULT 'open', -- 'open', 'claimed', 'pending_approval', 'approved', 'denied', 'cancelled', 'expired'
-  claimer_id UUID,
-  claimer_date DATE, -- for swap: the date claimer offers
-  claimer_start_time TIME,
-  claimer_end_time TIME,
-  manager_id UUID,
-  manager_notes TEXT,
-  approved_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  expires_at TIMESTAMPTZ
-);
-
--- Swap comments/messages
-CREATE TABLE public.shift_swap_messages (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  swap_id UUID REFERENCES shift_swaps(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL,
-  message TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-### Swap Types
-
-| Type | Description | Flow |
-|------|-------------|------|
-| `swap` | Trade shifts with someone | Requester posts → Claimer offers their shift → Manager approves |
-| `cover` | Need someone to cover | Requester posts → Claimer picks up → Manager approves |
-| `giveaway` | Give away shift completely | Requester posts → Claimer claims → Manager approves |
-
-### Status Flow
+Admin interface to manage all challenges with:
+- Grid of active/draft/completed challenges using `ChallengeCard`
+- Status filter tabs (All, Active, Draft, Completed)
+- "Create Challenge" button opens `CreateChallengeWizard`
+- Quick actions: Start, End, Delete challenges
+- Stats overview (total participants, active challenges count)
 
 ```text
-open → claimed → pending_approval → approved/denied
-  ↓
-cancelled/expired
+Layout:
+┌────────────────────────────────────────────┐
+│ ← Back    Team Challenges                  │
+│           Create and manage competitions   │
+├────────────────────────────────────────────┤
+│ [All] [Active] [Draft] [Completed]  + New  │
+├────────────────────────────────────────────┤
+│ ┌──────────┐ ┌──────────┐ ┌──────────┐    │
+│ │ Challenge│ │ Challenge│ │ Challenge│    │
+│ │ Card     │ │ Card     │ │ Card     │    │
+│ └──────────┘ └──────────┘ └──────────┘    │
+└────────────────────────────────────────────┘
 ```
 
-### Components to Build
+#### 2. ChallengeDetail.tsx (`/dashboard/admin/challenges/:id`)
 
-**1. ShiftSwapMarketplace.tsx**
-- Grid of available swaps
-- Filter by date, location, type
-- My requests tab
-- My claims tab
+Single challenge view with:
+- Challenge header (title, status, dates, metric)
+- Full leaderboard using `ChallengeLeaderboard`
+- Participant management (add/remove)
+- Edit challenge settings
+- Progress chart over time
+- Actions: Start challenge, End challenge, Cancel
 
-**2. PostSwapDialog.tsx**
-- Select shift from calendar
-- Choose swap type
-- Add reason (optional)
-- Set expiration
+#### 3. Active Challenges Widget
 
-**3. ClaimSwapDialog.tsx**
-- View shift details
-- For swaps: select shift to offer
-- For covers: confirm pickup
-- Add message
-
-**4. SwapApprovalQueue.tsx** (Managers)
-- Pending approvals list
-- Requester/claimer details
-- Approve/deny with notes
-- Bulk actions
-
-**5. SwapNotificationCard.tsx**
-- In-app notification for swap updates
-- Quick action buttons
-
-### Notification Triggers
-
-| Event | Notify |
-|-------|--------|
-| New swap posted | All eligible team members |
-| Swap claimed | Requester |
-| Pending approval | Manager |
-| Approved | Both parties |
-| Denied | Both parties |
-
-### Edge Function: `expire-shift-swaps`
-
-Daily cleanup:
-1. Mark expired swaps (past expires_at)
-2. Mark swaps where original_date has passed
-
-### Files to Create
-
-| File | Description |
-|------|-------------|
-| `src/pages/dashboard/ShiftSwapMarketplace.tsx` | Main marketplace page |
-| `src/components/shifts/PostSwapDialog.tsx` | Create swap listing |
-| `src/components/shifts/ClaimSwapDialog.tsx` | Claim a swap |
-| `src/components/shifts/SwapCard.tsx` | Swap listing card |
-| `src/components/shifts/SwapApprovalQueue.tsx` | Manager approval UI |
-| `src/components/shifts/MySwapsPanel.tsx` | User's swaps list |
-| `src/hooks/useShiftSwaps.ts` | Swap data hooks |
-| `supabase/functions/expire-shift-swaps/index.ts` | Expiration cleanup |
-| `supabase/functions/notify-shift-swap/index.ts` | Swap notifications |
-
-### Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/pages/dashboard/admin/ManagementHub.tsx` | Add Swap Approvals card |
-| `src/App.tsx` | Add routes |
-| Sidebar config | Add Shift Swaps nav item |
+A compact widget for the dashboard showing:
+- User's active challenges (max 3)
+- Current rank and progress
+- Click to view full leaderboard
 
 ---
 
-## Implementation Order
+### Part B: Shift Swap System Pages & Components
 
-### Phase 1: Training Reminders (1-2 hours)
-1. Create `send-training-reminders` edge function
-2. Insert email templates
-3. Register in config.toml
-4. Set up pg_cron schedule
+#### 1. ShiftSwapMarketplace.tsx (`/dashboard/shift-swaps`)
 
-### Phase 2: Achievement Badges (3-4 hours)
-1. Insert new achievement definitions
-2. Create achievement service
-3. Build notification toast component
-4. Integrate triggers into existing pages
-5. Build admin config panel
+Main marketplace for all team members:
 
-### Phase 3: Team Challenges (4-5 hours)
-1. Create database tables with RLS
-2. Build challenge hooks and types
-3. Create challenge components
-4. Build creation wizard
-5. Create standings update function
-6. Add to Management Hub and routing
+```text
+Layout:
+┌────────────────────────────────────────────┐
+│ ← Back    Shift Swap Marketplace           │
+│           Trade, cover, or give away shifts│
+├────────────────────────────────────────────┤
+│ [Available] [My Requests] [My Claims]      │
+├────────────────────────────────────────────┤
+│ + Post a Shift          Filter: [All v]   │
+├────────────────────────────────────────────┤
+│ ┌──────────────────────────────────────┐  │
+│ │ SwapCard: Jane needs cover for 2/10  │  │
+│ │ 9am-5pm @ Main Location              │  │
+│ │ [Claim This Shift]                   │  │
+│ └──────────────────────────────────────┘  │
+└────────────────────────────────────────────┘
+```
 
-### Phase 4: Shift Swap System (4-5 hours)
-1. Create database tables with RLS
-2. Build swap hooks and types
-3. Create marketplace page
-4. Build post/claim dialogs
-5. Build manager approval queue
-6. Create notification and expiration functions
-7. Add routing and navigation
+Features:
+- Three tabs: Available swaps, My posted requests, My claims
+- Filter by swap type, date range, location
+- "Post a Shift" button opens `PostSwapDialog`
+- Each swap shows `SwapCard` with claim action
+
+#### 2. SwapCard.tsx
+
+Display component for individual swap listings:
+- Requester avatar and name
+- Shift date and time
+- Location badge
+- Swap type badge (Swap, Cover, Giveaway)
+- Status indicator
+- Claim button or status text
+- Time remaining (if expires_at set)
+
+#### 3. PostSwapDialog.tsx
+
+Form dialog to create a swap request:
+- Date picker for shift date
+- Time inputs for start/end
+- Location selector
+- Swap type radio (Swap, Cover, Giveaway)
+- Reason textarea (optional)
+- Expiration date (optional)
+
+#### 4. ClaimSwapDialog.tsx
+
+Dialog when claiming a swap:
+- Shows original shift details
+- For "swap" type: date/time pickers for shift to offer in return
+- For "cover/giveaway": confirmation only
+- Optional message to requester
+- Submit sends to pending_approval
+
+#### 5. MySwapsPanel.tsx
+
+Panel showing user's swap activity:
+- Posted requests with status
+- Claims in progress
+- Cancel option for open requests
+- View history toggle
+
+#### 6. SwapApprovalQueue.tsx (`/dashboard/admin/shift-swaps`)
+
+Manager interface for approvals:
+
+```text
+Layout:
+┌────────────────────────────────────────────┐
+│ ← Back    Shift Swap Approvals             │
+│           Review and approve swap requests │
+├────────────────────────────────────────────┤
+│ [Pending (3)] [Approved] [Denied]          │
+├────────────────────────────────────────────┤
+│ ┌──────────────────────────────────────┐  │
+│ │ Jane → Mike                          │  │
+│ │ Swap: 2/10 9-5 ↔ 2/12 10-6          │  │
+│ │ [Approve] [Deny]  Notes: [____]      │  │
+│ └──────────────────────────────────────┘  │
+└────────────────────────────────────────────┘
+```
+
+Features:
+- List of pending approvals with details
+- Quick approve/deny buttons
+- Optional manager notes
+- Bulk actions for multiple approvals
+- History tabs for approved/denied
+
+---
+
+## Files to Create
+
+| File | Description |
+|------|-------------|
+| `src/pages/dashboard/admin/ChallengesDashboard.tsx` | Main challenges management page |
+| `src/pages/dashboard/admin/ChallengeDetail.tsx` | Single challenge view/edit |
+| `src/components/challenges/ActiveChallengesWidget.tsx` | Dashboard widget |
+| `src/pages/dashboard/ShiftSwapMarketplace.tsx` | Team member marketplace |
+| `src/pages/dashboard/admin/ShiftSwapApprovals.tsx` | Manager approval page |
+| `src/components/shifts/SwapCard.tsx` | Swap listing card |
+| `src/components/shifts/PostSwapDialog.tsx` | Create swap form |
+| `src/components/shifts/ClaimSwapDialog.tsx` | Claim swap form |
+| `src/components/shifts/MySwapsPanel.tsx` | User's swaps list |
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/App.tsx` | Add routes for challenges and shift swaps |
+| `src/lib/sidebarConfig.ts` | Add Shift Swaps nav item for team members |
+
+---
+
+## Route Configuration
+
+```typescript
+// Challenges routes
+<Route path="/dashboard/admin/challenges" element={
+  <ProtectedRoute requiredPermission="manage_team_challenges">
+    <ChallengesDashboard />
+  </ProtectedRoute>
+} />
+<Route path="/dashboard/admin/challenges/:challengeId" element={
+  <ProtectedRoute requiredPermission="manage_team_challenges">
+    <ChallengeDetail />
+  </ProtectedRoute>
+} />
+
+// Shift Swap routes
+<Route path="/dashboard/shift-swaps" element={
+  <ProtectedRoute>
+    <ShiftSwapMarketplace />
+  </ProtectedRoute>
+} />
+<Route path="/dashboard/admin/shift-swaps" element={
+  <ProtectedRoute requiredPermission="manage_schedule_requests">
+    <ShiftSwapApprovals />
+  </ProtectedRoute>
+} />
+```
+
+---
+
+## Navigation Updates
+
+### Sidebar Addition
+Add "Shift Swaps" to sidebar for stylist/assistant/receptionist roles:
+- Icon: `ArrowLeftRight`
+- Path: `/dashboard/shift-swaps`
+- Position: Near Schedule section
 
 ---
 
 ## Technical Notes
 
-### RLS Policies Pattern
-All new tables follow established patterns:
-- Users can view their own data
-- Managers can view/manage all
-- Super admins have full access
+### Permission Mapping
+- `manage_team_challenges` - Required for admin challenge pages (may need to add to permissions if not exists)
+- `manage_schedule_requests` - Required for swap approval (already exists)
+- All authenticated users can access shift swap marketplace
 
-### Notification Integration
-All features integrate with existing `notifications` table for in-app alerts.
+### Component Reuse
+- Uses existing `ChallengeCard`, `ChallengeLeaderboard`, `CreateChallengeWizard`
+- Uses existing hooks from `useChallenges.ts` and `useShiftSwaps.ts`
+- Follows established dialog patterns (Sheet for mobile, Dialog for desktop)
 
-### Email Templates
-All email content stored in `email_templates` table for easy customization.
+### Real-time Considerations
+- Shift swaps will benefit from real-time updates (already enabled in previous migration)
+- Challenge standings can update on page refresh for now
 
-### Mobile Responsiveness
-All new components designed mobile-first following existing patterns.
+---
 
-### Real-time Updates
-Enable Supabase Realtime for:
-- `team_challenges` - Live leaderboard updates
-- `shift_swaps` - Instant swap notifications
+## Implementation Order
+
+1. Create shift swap components (SwapCard, PostSwapDialog, ClaimSwapDialog, MySwapsPanel)
+2. Create ShiftSwapMarketplace page
+3. Create SwapApprovalQueue page (admin)
+4. Create ChallengesDashboard page
+5. Create ChallengeDetail page
+6. Create ActiveChallengesWidget
+7. Update App.tsx with all routes
+8. Update sidebar config with Shift Swaps link
+9. Test end-to-end flows
 
