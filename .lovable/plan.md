@@ -1,99 +1,173 @@
 
-# Combine Team Tools & Get Help Sections
+# Add Help Center, Search & AI Assistant to Top Bar
 
 ## Overview
 
-Merge the "Team Tools" and "Get Help" sections into a single "Team Tools" section containing all four navigation items.
+This plan adds three features to the dashboard top bar:
+1. **Help Center Quick Access** - A help icon button that opens the Help Center
+2. **Intelligent Search Bar** - A unified search for navigation, help articles, team members, and more
+3. **AI Assistant** - An integrated AI chat capability within the search bar for asking questions
+
+---
+
+## Architecture
+
+### Component Structure
+
+```text
+DashboardLayout.tsx
+└── Desktop Top Bar (lines 992-1066)
+    ├── TopBarSearch (new component)
+    │   ├── Search input with AI toggle
+    │   ├── Results dropdown
+    │   │   ├── Navigation results
+    │   │   ├── Help articles results
+    │   │   ├── Team members results
+    │   │   └── AI response section
+    │   └── AI conversation mode
+    └── Help Center button (new)
+```
 
 ---
 
 ## Changes Required
 
-### 1. Update `src/hooks/useSidebarLayout.ts`
+### 1. Create Edge Function: `ai-assistant`
 
-**Remove `getHelp` from DEFAULT_SECTION_ORDER:**
-```typescript
-export const DEFAULT_SECTION_ORDER = [
-  'main',
-  'growth', 
-  'stats',
-  'teamTools',    // Combined section
-  // 'getHelp' - REMOVED
-  'housekeeping',
-  'manager',
-  'website',
-  'adminOnly',
-  'platform',
-];
-```
+**File:** `supabase/functions/ai-assistant/index.ts`
 
-**Remove `getHelp` from SECTION_LABELS:**
-```typescript
-export const SECTION_LABELS: Record<string, string> = {
-  main: 'Main',
-  growth: 'Growth',
-  stats: 'Stats & Leaderboard',
-  teamTools: 'Team Tools',
-  // getHelp: 'Get Help' - REMOVED
-  housekeeping: 'Housekeeping',
-  // ... rest stays same
-};
-```
+Creates an edge function that connects to Lovable AI for answering user questions about the dashboard, salon operations, and general help queries.
 
-**Merge links in DEFAULT_LINK_ORDER:**
-```typescript
-teamTools: [
-  '/dashboard/shift-swaps',
-  '/dashboard/rewards',
-  '/dashboard/assistant-schedule',
-  '/dashboard/schedule-meeting',
-],
-// Remove the separate getHelp entry
-```
+- Uses Lovable AI gateway with `google/gemini-3-flash-preview` model
+- System prompt tailored for salon software assistant context
+- Supports streaming responses for real-time typing effect
+- Uses the existing `LOVABLE_API_KEY` (auto-configured)
 
----
+### 2. Update `supabase/config.toml`
 
-### 2. Update `src/components/dashboard/DashboardLayout.tsx`
+Add the new edge function configuration with JWT verification disabled for public access.
 
-**Merge `baseGetHelpNavItems` into `teamToolsNavItems`:**
-```typescript
-const teamToolsNavItems: NavItem[] = [
-  { href: '/dashboard/shift-swaps', label: 'Shift Swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
-  { href: '/dashboard/rewards', label: 'Rewards', icon: Gift },
-  { href: '/dashboard/assistant-schedule', label: 'Assistant Schedule', icon: Users, permission: 'view_assistant_schedule' },
-  { href: '/dashboard/schedule-meeting', label: 'Schedule 1:1 Meeting', icon: CalendarClock, permission: 'schedule_meetings' },
-];
-```
+### 3. Create `src/components/dashboard/TopBarSearch.tsx`
 
-**Remove separate `getHelpNavItems` prop** from `SidebarNavContent` component calls.
+A comprehensive search component with:
 
----
+**Features:**
+- Global search across navigation items, help articles, and team members
+- Keyboard shortcut (Cmd/Ctrl + K) to focus
+- AI mode toggle - when enabled, queries are sent to the AI assistant
+- Search results grouped by type with icons
+- AI response displayed inline with streaming text
+- Click-outside and Escape to close
 
-### 3. Update `src/components/dashboard/SidebarNavContent.tsx`
+**Search Sources:**
+- **Navigation** - All sidebar navigation items
+- **Help Articles** - Knowledge base articles via `useKBSearch` hook
+- **Team Members** - Employee profiles for quick access
+- **AI Assistant** - Natural language questions answered by AI
 
-- Remove `getHelpNavItems` from props interface
-- Remove `getHelp` from `sectionItemsMap`
-- Remove from `allNavItemsByHref` spread
-- Remove from dependency arrays
+**UI Elements:**
+- Search icon input field
+- Sparkles icon to indicate AI mode
+- Grouped results with type badges
+- AI thinking/typing indicator
+- Result cards with navigation on click
+
+### 4. Update `src/components/dashboard/DashboardLayout.tsx`
+
+**Desktop Top Bar Changes (lines 992-1066):**
+
+- Add `TopBarSearch` component between sidebar toggle and right-side controls
+- Add Help Center quick-access button (HelpCircle icon) to right-side controls
+- Help button links directly to `/dashboard/help`
+
+**Mobile Header Changes (lines 817-893):**
+
+- Add condensed search trigger button
+- Add Help Center button to mobile header actions
+
+### 5. Create `src/hooks/useAIAssistant.ts`
+
+A custom hook for managing AI assistant state and streaming:
+
+- `sendMessage(query: string)` - Sends user query to AI
+- `response` - Current AI response (streamed)
+- `isLoading` - Loading state
+- `error` - Error handling for rate limits (429) and payment (402)
 
 ---
 
-### 4. Update `src/components/dashboard/settings/SidebarPreview.tsx`
+## Technical Details
 
-Ensure both Assistant Schedule and Schedule 1:1 Meeting are in the `LINK_CONFIG`:
-```typescript
-'/dashboard/assistant-schedule': { label: 'Assistant Schedule' },
-'/dashboard/schedule-meeting': { label: 'Schedule 1:1 Meeting' },
+### AI Assistant Integration
+
+The AI assistant uses Lovable AI with:
+- **Model:** `google/gemini-3-flash-preview` (fast, balanced capability)
+- **System Prompt:** Contextual for salon software, dashboard navigation, and help
+- **Streaming:** Token-by-token rendering for responsive UX
+- **Error Handling:** Graceful handling of rate limits with user-friendly messages
+
+### Search Implementation
+
+```text
+User types query
+    │
+    ├─ If AI mode disabled:
+    │   └─ Filter local data (nav items, cached help articles, team)
+    │
+    └─ If AI mode enabled:
+        └─ Send to AI edge function
+            └─ Stream response back to UI
 ```
+
+### Keyboard Navigation
+
+- `Cmd/Ctrl + K` - Open/focus search
+- `Escape` - Close search
+- `Tab` - Toggle AI mode when search is focused
+- `Enter` on result - Navigate to that item
+- Arrow keys - Navigate through results
 
 ---
 
-## Result
+## Files to Create
 
-The sidebar will show a single **"Team Tools"** section containing:
-1. Shift Swaps
-2. Rewards
-3. Assistant Schedule
-4. Schedule 1:1 Meeting
+| File | Purpose |
+|------|---------|
+| `supabase/functions/ai-assistant/index.ts` | AI gateway edge function |
+| `src/components/dashboard/TopBarSearch.tsx` | Search bar component with AI |
+| `src/hooks/useAIAssistant.ts` | AI interaction hook |
 
-All items remain individually configurable via the Role Access Configurator.
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `supabase/config.toml` | Add ai-assistant function config |
+| `src/components/dashboard/DashboardLayout.tsx` | Add search bar and help button to top bar |
+
+---
+
+## User Experience Flow
+
+1. **Help Center Access:**
+   - Click HelpCircle icon in top bar → Opens `/dashboard/help`
+
+2. **Regular Search:**
+   - Click search bar or press Cmd+K
+   - Type query → See filtered results from nav, help articles, team
+   - Click result → Navigate to that page/section
+
+3. **AI Assistant:**
+   - Click sparkles icon or press Tab in search to enable AI mode
+   - Type natural language question
+   - See AI response stream in real-time
+   - AI provides contextual answers about the dashboard and salon operations
+
+---
+
+## Example AI Prompts & Responses
+
+| User Query | AI Response |
+|------------|-------------|
+| "How do I add a new team member?" | "To add a new team member, go to Management Hub → Invitations & Approvals. Click 'Invite Staff' and enter their email..." |
+| "What's the leaderboard based on?" | "The team leaderboard ranks stylists based on weighted metrics including new clients, retail sales, and appointment bookings..." |
+| "How do I request an assistant?" | "Navigate to Team Tools → Assistant Schedule. You'll see your upcoming appointments where you can request assistant support..." |
