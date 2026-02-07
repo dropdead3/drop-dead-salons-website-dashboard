@@ -183,15 +183,15 @@ export default function ScheduleMeeting() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-2xl font-display font-medium mb-2">Meetings & Accountability</h1>
-          <p className="text-muted-foreground">
+      <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+        <div>
+          <h1 className="font-display text-3xl lg:text-4xl">Meetings & Accountability</h1>
+          <p className="text-muted-foreground mt-1">
             Schedule 1:1 meetings, track commitments, and manage meeting requests.
           </p>
         </div>
 
-        <Tabs defaultValue="schedule" className="space-y-6">
+        <Tabs defaultValue="schedule">
           <TabsList className="flex-wrap h-auto gap-1">
             <TabsTrigger value="schedule">Schedule New</TabsTrigger>
             <TabsTrigger value="my-meetings">My Meetings</TabsTrigger>
