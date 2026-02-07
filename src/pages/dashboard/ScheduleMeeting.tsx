@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, User, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Calendar, Clock, User, CheckCircle, XCircle, Loader2, ExternalLink } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useAvailableCoaches, useOneOnOneMeetings, useCreateMeeting, useUpdateMeetingStatus } from '@/hooks/useOneOnOneMeetings';
@@ -28,6 +29,7 @@ const timeSlots = [
 ];
 
 export default function ScheduleMeeting() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const roles = useEffectiveRoles();
   const isCoach = roles.includes('admin') || roles.includes('manager') || roles.includes('super_admin');
@@ -90,7 +92,7 @@ export default function ScheduleMeeting() {
   };
 
   const MeetingCard = ({ meeting, showActions = false }: { meeting: typeof meetings[0]; showActions?: boolean }) => (
-    <Card key={meeting.id}>
+    <Card key={meeting.id} className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate(`/dashboard/meeting/${meeting.id}`)}>
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-2">
@@ -126,39 +128,50 @@ export default function ScheduleMeeting() {
             )}
           </div>
           
-          {showActions && meeting.status === 'pending' && (
-            <div className="flex flex-col gap-2">
-              <Button
-                size="sm"
-                onClick={() => updateStatus.mutate({ id: meeting.id, status: 'confirmed' })}
-                disabled={updateStatus.isPending}
-              >
-                <CheckCircle className="w-4 h-4 mr-1" />
-                Confirm
-              </Button>
+          <div className="flex flex-col gap-2 items-end">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/meeting/${meeting.id}`); }}
+            >
+              <ExternalLink className="w-4 h-4 mr-1" />
+              Open
+            </Button>
+            
+            {showActions && meeting.status === 'pending' && (
+              <>
+                <Button
+                  size="sm"
+                  onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: meeting.id, status: 'confirmed' }); }}
+                  disabled={updateStatus.isPending}
+                >
+                  <CheckCircle className="w-4 h-4 mr-1" />
+                  Confirm
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: meeting.id, status: 'cancelled' }); }}
+                  disabled={updateStatus.isPending}
+                >
+                  <XCircle className="w-4 h-4 mr-1" />
+                  Decline
+                </Button>
+              </>
+            )}
+            
+            {!showActions && meeting.status === 'pending' && meeting.requester_id === user?.id && (
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => updateStatus.mutate({ id: meeting.id, status: 'cancelled' })}
+                onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: meeting.id, status: 'cancelled' }); }}
                 disabled={updateStatus.isPending}
               >
                 <XCircle className="w-4 h-4 mr-1" />
-                Decline
+                Cancel
               </Button>
-            </div>
-          )}
-          
-          {!showActions && meeting.status === 'pending' && meeting.requester_id === user?.id && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => updateStatus.mutate({ id: meeting.id, status: 'cancelled' })}
-              disabled={updateStatus.isPending}
-            >
-              <XCircle className="w-4 h-4 mr-1" />
-              Cancel
-            </Button>
-          )}
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
