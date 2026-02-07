@@ -106,6 +106,8 @@ import {
   Wallet,
   Store,
   Receipt,
+  ArrowLeftRight,
+  Gift,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
@@ -169,6 +171,12 @@ const statsNavItems: NavItem[] = [
   { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant', 'admin', 'super_admin', 'manager'] },
   { href: '/dashboard/leaderboard', label: 'Team Leaderboard', icon: Trophy, permission: 'view_leaderboard' },
   { href: '/dashboard/my-pay', label: 'My Pay', icon: Wallet, permission: 'view_my_pay' },
+];
+
+// Team Tools - visible to team members (stylists, assistants, front desk, booth renters)
+const teamToolsNavItems: NavItem[] = [
+  { href: '/dashboard/shift-swaps', label: 'Shift Swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
+  { href: '/dashboard/rewards', label: 'Rewards', icon: Gift },
 ];
 
 // Manager-accessible admin items - consolidated into hubs
@@ -791,6 +799,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
           mainNavItems={mainNavItems}
           growthNavItems={growthNavItems}
           statsNavItems={statsNavItems}
+          teamToolsNavItems={teamToolsNavItems}
           getHelpNavItems={getHelpNavItems}
           housekeepingNavItems={housekeepingNavItems}
           managerNavItems={managerNavItems}
@@ -823,6 +832,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
               mainNavItems={mainNavItems}
               growthNavItems={growthNavItems}
               statsNavItems={statsNavItems}
+              teamToolsNavItems={teamToolsNavItems}
               getHelpNavItems={getHelpNavItems}
               housekeepingNavItems={housekeepingNavItems}
               managerNavItems={managerNavItems}
