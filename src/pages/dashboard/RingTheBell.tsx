@@ -20,6 +20,8 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useBellSound } from '@/hooks/use-bell-sound';
 import { useBellHighFives } from '@/hooks/useBellHighFives';
+import { useAchievements } from '@/hooks/useAchievements';
+import { AchievementNotificationToast } from '@/components/achievements/AchievementNotificationToast';
 import { Bell, DollarSign, Loader2, Sparkles, Users, User, MapPin, X, Target } from 'lucide-react';
 import {
   AlertDialog,
@@ -65,6 +67,7 @@ export default function RingTheBell() {
   const isCoach = roles.includes('admin') || roles.includes('manager') || roles.includes('super_admin');
   const { toast } = useToast();
   const { playBellSound } = useBellSound();
+  const { checkAchievements, currentAchievement, isToastVisible, dismissCurrentAchievement } = useAchievements();
   const [entries, setEntries] = useState<BellEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -336,6 +339,9 @@ export default function RingTheBell() {
       
       // Manually refresh to show the new entry immediately
       fetchEntries();
+      
+      // Check for bell-related achievements
+      checkAchievements('bell');
     }
 
     setSubmitting(false);
@@ -732,6 +738,15 @@ export default function RingTheBell() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Achievement Toast */}
+        {currentAchievement && (
+          <AchievementNotificationToast
+            achievement={currentAchievement}
+            isVisible={isToastVisible}
+            onClose={dismissCurrentAchievement}
+          />
+        )}
       </div>
     </DashboardLayout>
   );

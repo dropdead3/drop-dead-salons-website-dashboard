@@ -1267,6 +1267,89 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_participants: {
+        Row: {
+          challenge_id: string
+          current_value: number | null
+          id: string
+          joined_at: string | null
+          location_id: string | null
+          rank: number | null
+          team_name: string | null
+          user_id: string | null
+        }
+        Insert: {
+          challenge_id: string
+          current_value?: number | null
+          id?: string
+          joined_at?: string | null
+          location_id?: string | null
+          rank?: number | null
+          team_name?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          challenge_id?: string
+          current_value?: number | null
+          id?: string
+          joined_at?: string | null
+          location_id?: string | null
+          rank?: number | null
+          team_name?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_participants_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "team_challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenge_progress_snapshots: {
+        Row: {
+          challenge_id: string
+          created_at: string | null
+          id: string
+          participant_id: string
+          snapshot_date: string
+          value_at_snapshot: number
+        }
+        Insert: {
+          challenge_id: string
+          created_at?: string | null
+          id?: string
+          participant_id: string
+          snapshot_date: string
+          value_at_snapshot: number
+        }
+        Update: {
+          challenge_id?: string
+          created_at?: string | null
+          id?: string
+          participant_id?: string
+          snapshot_date?: string
+          value_at_snapshot?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_progress_snapshots_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "team_challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_progress_snapshots_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "challenge_participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       changelog_entries: {
         Row: {
           author_id: string
@@ -8784,6 +8867,101 @@ export type Database = {
           },
         ]
       }
+      shift_swap_messages: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          swap_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          swap_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          swap_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_swap_messages_swap_id_fkey"
+            columns: ["swap_id"]
+            isOneToOne: false
+            referencedRelation: "shift_swaps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shift_swaps: {
+        Row: {
+          approved_at: string | null
+          claimer_date: string | null
+          claimer_end_time: string | null
+          claimer_id: string | null
+          claimer_start_time: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          location_id: string | null
+          manager_id: string | null
+          manager_notes: string | null
+          original_date: string
+          original_end_time: string
+          original_start_time: string
+          reason: string | null
+          requester_id: string
+          status: string | null
+          swap_type: string
+        }
+        Insert: {
+          approved_at?: string | null
+          claimer_date?: string | null
+          claimer_end_time?: string | null
+          claimer_id?: string | null
+          claimer_start_time?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          location_id?: string | null
+          manager_id?: string | null
+          manager_notes?: string | null
+          original_date: string
+          original_end_time: string
+          original_start_time: string
+          reason?: string | null
+          requester_id: string
+          status?: string | null
+          swap_type: string
+        }
+        Update: {
+          approved_at?: string | null
+          claimer_date?: string | null
+          claimer_end_time?: string | null
+          claimer_id?: string | null
+          claimer_start_time?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          location_id?: string | null
+          manager_id?: string | null
+          manager_notes?: string | null
+          original_date?: string
+          original_end_time?: string
+          original_start_time?: string
+          reason?: string | null
+          requester_id?: string
+          status?: string | null
+          swap_type?: string
+        }
+        Relationships: []
+      }
       signature_presets: {
         Row: {
           config: Json
@@ -9516,6 +9694,65 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      team_challenges: {
+        Row: {
+          challenge_type: string
+          created_at: string | null
+          created_by: string
+          description: string | null
+          end_date: string
+          goal_value: number | null
+          id: string
+          metric_type: string
+          organization_id: string | null
+          prize_description: string | null
+          rules: Json | null
+          start_date: string
+          status: string | null
+          title: string
+        }
+        Insert: {
+          challenge_type: string
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          end_date: string
+          goal_value?: number | null
+          id?: string
+          metric_type: string
+          organization_id?: string | null
+          prize_description?: string | null
+          rules?: Json | null
+          start_date: string
+          status?: string | null
+          title: string
+        }
+        Update: {
+          challenge_type?: string
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          end_date?: string
+          goal_value?: number | null
+          id?: string
+          metric_type?: string
+          organization_id?: string | null
+          prize_description?: string | null
+          rules?: Json | null
+          start_date?: string
+          status?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_challenges_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       testimonials: {
         Row: {

@@ -125,3 +125,6 @@ verify_jwt = false
 
 [functions.expire-promotional-services]
 verify_jwt = false
+
+[functions.send-training-reminders]
+verify_jwt = false

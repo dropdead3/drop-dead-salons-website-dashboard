@@ -24,6 +24,8 @@ import {
   ChevronRight,
   ArrowLeft,
   Video,
+  Trophy,
+  ArrowLeftRight,
 } from 'lucide-react';
 
 interface ManagementCardProps {
@@ -188,6 +190,13 @@ export default function ManagementHub() {
             description="Manage training library and track completions"
             colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
           />
+          <ManagementCard
+            href="/dashboard/admin/challenges"
+            icon={Trophy}
+            title="Team Challenges"
+            description="Create and manage team competitions"
+            colorClass="bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
+          />
         </CategorySection>
 
         {/* Scheduling & Requests */}
@@ -218,6 +227,13 @@ export default function ManagementHub() {
             stat={null}
             statLabel="active"
             colorClass="bg-red-500/10 text-red-600 dark:text-red-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/shift-swaps"
+            icon={ArrowLeftRight}
+            title="Shift Swap Approvals"
+            description="Review and approve shift swap requests"
+            colorClass="bg-teal-500/10 text-teal-600 dark:text-teal-400"
           />
         </CategorySection>
 
