@@ -182,11 +182,11 @@ const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/announcements', label: 'Create Announcement', icon: Bell, permission: 'manage_announcements' },
   { href: '/dashboard/admin/changelog', label: 'Changelog Manager', icon: Sparkles, permission: 'manage_announcements' },
   { href: '/dashboard/admin/booth-renters', label: 'Renter Hub', icon: Store, permission: 'manage_booth_renters' },
+  { href: '/dashboard/admin/payroll', label: 'Payroll Hub', icon: DollarSign, permission: 'manage_payroll' },
 ];
 
 // Full admin-only items (not visible to managers)
 const adminOnlyNavItems: NavItem[] = [
-  { href: '/dashboard/admin/payroll', label: 'Payroll', icon: DollarSign, permission: 'manage_payroll' },
   { href: '/dashboard/admin/accounts', label: 'Invitations & Approvals', icon: UserPlus, permission: 'approve_accounts' },
   { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield, permission: 'manage_user_roles' },
   { href: '/dashboard/admin/feature-flags', label: 'Feature Flags', icon: Flag, permission: 'manage_settings' },
