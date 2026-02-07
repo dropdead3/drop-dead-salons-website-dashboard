@@ -1,0 +1,285 @@
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import {
+  LayoutGrid,
+  ClipboardList,
+  GraduationCap,
+  Target,
+  HandHelping,
+  CalendarClock,
+  AlertTriangle,
+  UserPlus,
+  Briefcase,
+  Cake,
+  CreditCard,
+  Camera,
+  Bell,
+  Sparkles,
+  ChevronRight,
+  ArrowLeft,
+} from 'lucide-react';
+
+interface ManagementCardProps {
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  stat?: string | number | null;
+  statLabel?: string;
+  colorClass?: string;
+}
+
+function ManagementCard({ href, icon: Icon, title, description, stat, statLabel, colorClass = 'bg-primary/10 text-primary' }: ManagementCardProps) {
+  return (
+    <Link to={href}>
+      <Card className="group hover:shadow-lg hover:-translate-y-1 transition-all cursor-pointer h-full border-border/50">
+        <CardContent className="p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <div className={cn("p-2.5 rounded-xl shrink-0", colorClass)}>
+                <Icon className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="font-medium text-sm truncate">{title}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{description}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {stat !== null && stat !== undefined && (
+                <Badge variant="secondary" className="text-xs">
+                  {stat} {statLabel}
+                </Badge>
+              )}
+              <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
+interface CategorySectionProps {
+  title: string;
+  children: React.ReactNode;
+}
+
+function CategorySection({ title, children }: CategorySectionProps) {
+  return (
+    <div className="space-y-3">
+      <h2 className="font-display text-sm tracking-wide text-muted-foreground uppercase">{title}</h2>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+export default function ManagementHub() {
+  // Fetch stats for badges
+  const { data: stats } = useQuery({
+    queryKey: ['management-hub-stats'],
+    queryFn: async () => {
+      // Fetch stats individually to avoid type issues
+      const assistantRequestsResult = await supabase
+        .from('assistant_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      
+      const businessCardsResult = await supabase
+        .from('business_card_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      
+      const headshotsResult = await supabase
+        .from('headshot_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      
+      const graduationsResult = await supabase
+        .from('stylist_program_enrollment')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active')
+        .not('graduation_type', 'is', null);
+      
+      const birthdaysResult = await supabase
+        .from('employee_profiles')
+        .select('birthday')
+        .eq('is_active', true)
+        .not('birthday', 'is', null);
+
+      // Calculate upcoming birthdays this week
+      const today = new Date();
+      const nextWeek = new Date(today);
+      nextWeek.setDate(today.getDate() + 7);
+      
+      const birthdaysThisWeek = (birthdaysResult.data || []).filter(p => {
+        if (!p.birthday) return false;
+        const bday = new Date(p.birthday);
+        const thisYearBday = new Date(today.getFullYear(), bday.getMonth(), bday.getDate());
+        return thisYearBday >= today && thisYearBday <= nextWeek;
+      }).length;
+
+      return {
+        pendingAssistantRequests: assistantRequestsResult.count || 0,
+        pendingBusinessCards: businessCardsResult.count || 0,
+        pendingHeadshots: headshotsResult.count || 0,
+        inProgressGraduations: graduationsResult.count || 0,
+        birthdaysThisWeek,
+      };
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  return (
+    <DashboardLayout>
+      <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex items-start gap-4">
+          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+            <Link to="/dashboard">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="font-display text-3xl lg:text-4xl">Management Hub</h1>
+            <p className="text-muted-foreground mt-1">Central command for team operations</p>
+          </div>
+        </div>
+
+        {/* Team Development */}
+        <CategorySection title="Team Development">
+          <ManagementCard
+            href="/dashboard/admin/onboarding-tracker"
+            icon={ClipboardList}
+            title="Onboarding Hub"
+            description="Track new hire progress and checklist completion"
+            stat={null}
+            statLabel="active"
+            colorClass="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/graduation-tracker"
+            icon={GraduationCap}
+            title="Graduation Tracker"
+            description="Monitor assistant advancement and milestones"
+            stat={stats?.inProgressGraduations || null}
+            statLabel="in progress"
+            colorClass="bg-purple-500/10 text-purple-600 dark:text-purple-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/client-engine-tracker"
+            icon={Target}
+            title="Client Engine Tracker"
+            description="Program enrollment and participation rates"
+            colorClass="bg-orange-500/10 text-orange-600 dark:text-orange-400"
+          />
+        </CategorySection>
+
+        {/* Scheduling & Requests */}
+        <CategorySection title="Scheduling & Requests">
+          <ManagementCard
+            href="/dashboard/admin/assistant-requests"
+            icon={HandHelping}
+            title="Assistant Requests"
+            description="Manage help requests from stylists"
+            stat={stats?.pendingAssistantRequests || null}
+            statLabel="pending"
+            colorClass="bg-blue-500/10 text-blue-600 dark:text-blue-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/schedule-requests"
+            icon={CalendarClock}
+            title="Schedule Requests"
+            description="Time-off and schedule change approvals"
+            stat={null}
+            statLabel="pending"
+            colorClass="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/strikes"
+            icon={AlertTriangle}
+            title="Staff Strikes"
+            description="Track disciplinary actions and warnings"
+            stat={null}
+            statLabel="active"
+            colorClass="bg-red-500/10 text-red-600 dark:text-red-400"
+          />
+        </CategorySection>
+
+        {/* Recruiting & Hiring */}
+        <CategorySection title="Recruiting & Hiring">
+          <ManagementCard
+            href="/dashboard/admin/leads"
+            icon={UserPlus}
+            title="Lead Management"
+            description="Track and follow up with potential hires"
+            colorClass="bg-green-500/10 text-green-600 dark:text-green-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/recruiting"
+            icon={Briefcase}
+            title="Recruiting Pipeline"
+            description="Manage hiring funnel and interview stages"
+            colorClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          />
+        </CategorySection>
+
+        {/* Team Operations */}
+        <CategorySection title="Team Operations">
+          <ManagementCard
+            href="/dashboard/admin/birthdays"
+            icon={Cake}
+            title="Birthdays & Anniversaries"
+            description="Upcoming team celebrations and milestones"
+            stat={stats?.birthdaysThisWeek || null}
+            statLabel="this week"
+            colorClass="bg-pink-500/10 text-pink-600 dark:text-pink-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/business-cards"
+            icon={CreditCard}
+            title="Business Cards"
+            description="Process business card requests"
+            stat={stats?.pendingBusinessCards || null}
+            statLabel="pending"
+            colorClass="bg-slate-500/10 text-slate-600 dark:text-slate-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/headshots"
+            icon={Camera}
+            title="Headshots"
+            description="Schedule and track photo sessions"
+            stat={stats?.pendingHeadshots || null}
+            statLabel="pending"
+            colorClass="bg-violet-500/10 text-violet-600 dark:text-violet-400"
+          />
+        </CategorySection>
+
+        {/* Communications */}
+        <CategorySection title="Communications">
+          <ManagementCard
+            href="/dashboard/admin/announcements"
+            icon={Bell}
+            title="Create Announcement"
+            description="Send team-wide communications"
+            colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/changelog"
+            icon={Sparkles}
+            title="Changelog Manager"
+            description="Document platform updates and releases"
+            colorClass="bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400"
+          />
+        </CategorySection>
+      </div>
+    </DashboardLayout>
+  );
+}
