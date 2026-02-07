@@ -160,12 +160,6 @@ const growthNavItems: NavItem[] = [
   { href: '/dashboard/my-graduation', label: 'My Graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist_assistant'] },
 ];
 
-// Base get help items - the assistant schedule label is computed dynamically in the component
-// Note: Assistant schedule is excluded for admins (they see it in manager section instead)
-const baseGetHelpNavItems: NavItem[] = [
-  { href: '/dashboard/assistant-schedule', label: 'Assistant Schedule', icon: Users, permission: 'view_assistant_schedule' },
-  { href: '/dashboard/schedule-meeting', label: 'Schedule 1:1 Meeting', icon: CalendarClock, permission: 'schedule_meetings' },
-];
 
 const statsNavItems: NavItem[] = [
   { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant', 'admin', 'super_admin', 'manager'] },
@@ -177,6 +171,8 @@ const statsNavItems: NavItem[] = [
 const teamToolsNavItems: NavItem[] = [
   { href: '/dashboard/shift-swaps', label: 'Shift Swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
   { href: '/dashboard/rewards', label: 'Rewards', icon: Gift },
+  { href: '/dashboard/assistant-schedule', label: 'Assistant Schedule', icon: Users, permission: 'view_assistant_schedule' },
+  { href: '/dashboard/schedule-meeting', label: 'Schedule 1:1 Meeting', icon: CalendarClock, permission: 'schedule_meetings' },
 ];
 
 // Manager-accessible admin items - consolidated into hubs
@@ -368,8 +364,8 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
   const isStylistAssistantRole = roles.includes('stylist_assistant') || roles.includes('assistant');
   const isAdminOrManager = roles.includes('admin') || roles.includes('manager') || roles.includes('super_admin');
   
-  // Filter and transform Get Help nav items - exclude assistant schedule for admins/managers
-  const getHelpNavItems: NavItem[] = baseGetHelpNavItems
+  // Transform teamToolsNavItems - dynamic label for assistant schedule based on role
+  const effectiveTeamToolsNavItems: NavItem[] = teamToolsNavItems
     .filter(item => {
       // Admins/managers see assistant requests in their admin section instead
       if (item.href === '/dashboard/assistant-schedule' && isAdminOrManager) {
@@ -799,8 +795,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
           mainNavItems={mainNavItems}
           growthNavItems={growthNavItems}
           statsNavItems={statsNavItems}
-          teamToolsNavItems={teamToolsNavItems}
-          getHelpNavItems={getHelpNavItems}
+          teamToolsNavItems={effectiveTeamToolsNavItems}
           housekeepingNavItems={housekeepingNavItems}
           managerNavItems={managerNavItems}
           websiteNavItems={websiteNavItems}
@@ -832,8 +827,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
               mainNavItems={mainNavItems}
               growthNavItems={growthNavItems}
               statsNavItems={statsNavItems}
-              teamToolsNavItems={teamToolsNavItems}
-              getHelpNavItems={getHelpNavItems}
+              teamToolsNavItems={effectiveTeamToolsNavItems}
               housekeepingNavItems={housekeepingNavItems}
               managerNavItems={managerNavItems}
               websiteNavItems={websiteNavItems}
