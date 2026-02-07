@@ -45,8 +45,8 @@ export const PINNABLE_CARD_IDS = [
 ];
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  sections: ['quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
-  sectionOrder: ['quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sections: ['hub_quicklinks', 'quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sectionOrder: ['hub_quicklinks', 'quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
   pinnedCards: [],
   widgets: ['changelog', 'birthdays', 'anniversaries', 'schedule'],
   hasCompletedSetup: false,
@@ -55,29 +55,41 @@ const DEFAULT_LAYOUT: DashboardLayout = {
 /**
  * Migrate legacy layouts that use 'command_center' as a section.
  * Converts them to inline pinned cards in sectionOrder.
+ * Also ensures new sections like 'hub_quicklinks' are added for existing users.
  */
 function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): DashboardLayout {
+  let migrated = { ...layout };
+  
   // If sectionOrder contains 'command_center', migrate to inline pinned cards
-  if (layout.sectionOrder?.includes('command_center')) {
-    const insertIndex = layout.sectionOrder.indexOf('command_center');
+  if (migrated.sectionOrder?.includes('command_center')) {
+    const insertIndex = migrated.sectionOrder.indexOf('command_center');
     
     // Remove command_center from sections and sectionOrder
-    const newSectionOrder = layout.sectionOrder.filter(id => id !== 'command_center');
-    const newSections = layout.sections.filter(id => id !== 'command_center');
+    const newSectionOrder = migrated.sectionOrder.filter(id => id !== 'command_center');
+    const newSections = migrated.sections.filter(id => id !== 'command_center');
     
     // Insert pinned cards at the command_center position
     const pinnedEntries = pinnedCards.map(id => toPinnedEntry(id));
     newSectionOrder.splice(insertIndex, 0, ...pinnedEntries);
     
-    return { 
-      ...layout, 
+    migrated = { 
+      ...migrated, 
       sectionOrder: newSectionOrder, 
       sections: newSections,
       pinnedCards,
     };
   }
   
-  return layout;
+  // Ensure hub_quicklinks is added for existing layouts (migration for existing users)
+  if (!migrated.sections?.includes('hub_quicklinks')) {
+    migrated = {
+      ...migrated,
+      sections: ['hub_quicklinks', ...(migrated.sections || [])],
+      sectionOrder: ['hub_quicklinks', ...(migrated.sectionOrder || [])],
+    };
+  }
+  
+  return migrated;
 }
 
 // Map roles to template role_name
