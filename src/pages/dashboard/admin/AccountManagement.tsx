@@ -63,11 +63,13 @@ import {
   QrCode,
   Download,
   Eye,
-  Sparkles
+  Sparkles,
+  Maximize2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
 import DropDeadLogo from '@/assets/drop-dead-logo.svg';
+import { QRCodeFullScreen } from '@/components/dashboard/QRCodeFullScreen';
 
 const ROLE_COLORS: Record<string, string> = {
   admin: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
@@ -131,6 +133,7 @@ function QRCodeCard() {
   const qrRef = useRef<HTMLDivElement>(null);
   const staffLoginUrl = getStaffLoginUrl();
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
   const downloadQRCode = () => {
     const canvas = qrRef.current?.querySelector('canvas');
@@ -271,10 +274,18 @@ function QRCodeCard() {
           <p className="font-medium text-foreground">Create Your Staff Account</p>
           <p className="text-xs mt-1 break-all">{staffLoginUrl}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-3 gap-2">
+          <Button 
+            variant="outline" 
+            className="gap-2"
+            onClick={() => setFullscreenOpen(true)}
+          >
+            <Maximize2 className="w-4 h-4" />
+            On Screen
+          </Button>
           <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" className="flex-1 gap-2">
+              <Button variant="outline" className="gap-2">
                 <Eye className="w-4 h-4" />
                 Preview
               </Button>
@@ -295,11 +306,17 @@ function QRCodeCard() {
               </div>
             </DialogContent>
           </Dialog>
-          <Button onClick={downloadQRCode} className="flex-1 gap-2">
+          <Button onClick={downloadQRCode} className="gap-2">
             <Download className="w-4 h-4" />
             Download
           </Button>
         </div>
+
+        <QRCodeFullScreen 
+          isOpen={fullscreenOpen} 
+          onClose={() => setFullscreenOpen(false)} 
+          url={staffLoginUrl} 
+        />
       </CardContent>
     </Card>
   );
