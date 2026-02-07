@@ -1,112 +1,115 @@
 
 
-# Add Granular Revenue Visibility Controls for Management Roles
+# Fix Analytics Tab Visibility - Content Should Hide When Tab Is Disabled
 
-## Overview
+## Problem
 
-Enhance the visibility system by wrapping additional revenue-sensitive components in `VisibilityGate` so they can be hidden from management roles. The Role Access Configurator already supports this, but some revenue components are not yet gated.
+When visibility toggles are turned off for analytics tabs (like Sales), only the **tab button** is hidden. The **tab content** still displays because:
 
----
+1. The `VisibilityGate` only wraps the `TabsTrigger`, not the `TabsContent`
+2. The default active tab is `'sales'`, so it renders even when the button is hidden
+3. Users can still see revenue data they shouldn't have access to
 
-## Current Capabilities (Already Working)
+## Solution
 
-These elements are already controllable via Settings > Access & Visibility > Role Access:
-
-| Element Key | Name | Category |
-|-------------|------|----------|
-| `analytics_sales_tab` | Sales | Page Tabs |
-| `analytics_rent_tab` | Rent | Page Tabs |
-| `sales_commission_subtab` | Commission | Page Tabs |
-| `reports_sales_subtab` | Sales Reports | Page Tabs |
-| `reports_financial_subtab` | Financial Reports | Page Tabs |
-| `revenue_trend_chart` | Revenue Trend | Analytics Hub - Sales |
-| `revenue_forecast` | Revenue Forecast | Analytics Hub - Sales |
-| `commission_tiers` | Commission Tiers | Analytics Hub - Sales |
-
-To hide sales/revenue from managers now, you can go to:
-**Settings > Access & Visibility > Role Access > Select "Manager" > Page Tabs panel**
-
-Then toggle off:
-- Sales (hides entire Sales tab)
-- Rent (hides entire Rent tab)
-- Commission (hides commission sub-tab)
-- Financial Reports (hides financial reports section)
+Wrap each `TabsContent` with the same `VisibilityGate` used for its corresponding `TabsTrigger`, and add logic to automatically redirect to the first visible tab when the current tab is hidden.
 
 ---
 
-## Changes: Add Missing Visibility Controls
+## Changes
 
-The following components need `VisibilityGate` wrappers to enable granular control:
+### 1. Update AnalyticsHub.tsx
 
-### 1. Rent Revenue Tab Cards
+**File: `src/pages/dashboard/admin/AnalyticsHub.tsx`**
 
-**File: `src/components/dashboard/analytics/RentRevenueTab.tsx`**
+Add visibility gating to each `TabsContent` and implement auto-redirect logic:
 
-Wrap each summary card and chart with visibility controls:
-
-| New Element Key | Name | What It Controls |
-|-----------------|------|------------------|
-| `rent_mtd_collected` | MTD Rent Collected | Monthly rent collection amount |
-| `rent_collection_rate` | Collection Rate | Rent collection percentage |
-| `rent_overdue` | Overdue Rent | Overdue amounts and counts |
-| `rent_active_renters` | Active Renters | Renter count and late fees |
-| `rent_revenue_chart` | Rent Revenue Trend | Historical rent chart |
-| `rent_ytd_summary` | YTD Rent Summary | Year-to-date rent totals |
-
-### 2. Reports Tab - Financial Reports
-
-**File: `src/components/dashboard/analytics/ReportsTabContent.tsx`**
-
-Wrap individual financial report cards:
-
-| New Element Key | Name | What It Controls |
-|-----------------|------|------------------|
-| `report_commission` | Commission Report | Staff earnings calculations |
-| `report_revenue_trend` | Revenue Trend Report | Daily/weekly/monthly trends |
-| `report_yoy` | Year-over-Year Report | Historical comparison |
-
----
-
-## Implementation Details
-
-### RentRevenueTab.tsx Changes
+| Change | Description |
+|--------|-------------|
+| Import `useElementVisibility` | Hook to check tab visibility |
+| Add visibility checks | Check if each tab is visible before rendering content |
+| Auto-redirect logic | If current tab is hidden, switch to first visible tab |
+| Wrap `TabsContent` | Each content section respects its tab's visibility |
 
 ```tsx
-// Import VisibilityGate
-import { VisibilityGate } from '@/components/visibility/VisibilityGate';
+import { VisibilityGate, useElementVisibility } from '@/components/visibility/VisibilityGate';
 
-// Wrap each card
-<VisibilityGate 
-  elementKey="rent_mtd_collected" 
-  elementName="MTD Rent Collected" 
-  elementCategory="Analytics Hub - Rent"
->
-  <Card>
-    {/* MTD Collected content */}
-  </Card>
-</VisibilityGate>
+// Check visibility of each tab
+const salesTabVisible = useElementVisibility('analytics_sales_tab');
+const operationsTabVisible = useElementVisibility('analytics_operations_tab');
+const marketingTabVisible = useElementVisibility('analytics_marketing_tab');
+const programTabVisible = useElementVisibility('analytics_program_tab');
+const reportsTabVisible = useElementVisibility('analytics_reports_tab');
+const rentTabVisible = useElementVisibility('analytics_rent_tab');
+
+// Find first visible tab for redirect
+const getFirstVisibleTab = () => {
+  if (salesTabVisible) return 'sales';
+  if (operationsTabVisible) return 'operations';
+  if (marketingTabVisible) return 'marketing';
+  if (programTabVisible) return 'program';
+  if (reportsTabVisible) return 'reports';
+  if (rentTabVisible && isSuperAdmin) return 'rent';
+  return null;
+};
+
+// Auto-redirect if current tab is hidden
+useEffect(() => {
+  const currentTabHidden = 
+    (activeTab === 'sales' && !salesTabVisible) ||
+    (activeTab === 'operations' && !operationsTabVisible) ||
+    // ... etc for each tab
+  ;
+  
+  if (currentTabHidden) {
+    const firstVisible = getFirstVisibleTab();
+    if (firstVisible) {
+      setSearchParams({ tab: firstVisible });
+    }
+  }
+}, [activeTab, salesTabVisible, operationsTabVisible, ...]);
 ```
 
-### ReportsTabContent.tsx Changes
-
-Wrap individual report cards in the financial category:
+Then wrap each `TabsContent`:
 
 ```tsx
-const financialReports = [
-  { id: 'revenue-trend', visibilityKey: 'report_revenue_trend', ... },
-  { id: 'commission', visibilityKey: 'report_commission', ... },
-  ...
-];
-
-// In renderReportCards, wrap each card:
-<VisibilityGate 
-  elementKey={report.visibilityKey || `report_${report.id}`}
-  elementName={report.name}
-  elementCategory="Reports"
->
-  <ReportCard ... />
+<VisibilityGate elementKey="analytics_sales_tab">
+  <TabsContent value="sales" className="mt-6">
+    <SalesTabContent ... />
+  </TabsContent>
 </VisibilityGate>
+
+<VisibilityGate elementKey="analytics_operations_tab">
+  <TabsContent value="operations" className="mt-6">
+    <OperationsTabContent ... />
+  </TabsContent>
+</VisibilityGate>
+
+// ... repeat for all tabs
 ```
+
+---
+
+## Technical Details
+
+### Visibility Check Order
+
+The first visible tab fallback priority:
+1. Sales
+2. Operations  
+3. Marketing
+4. Program
+5. Reports
+6. Rent (only for super_admin)
+
+### Edge Cases Handled
+
+| Scenario | Behavior |
+|----------|----------|
+| Current tab hidden | Auto-redirect to first visible tab |
+| All tabs hidden | Show empty state or access denied message |
+| URL directly to hidden tab | Redirect on mount |
+| Role change during session | React to visibility changes dynamically |
 
 ---
 
@@ -114,32 +117,25 @@ const financialReports = [
 
 | File | Action |
 |------|--------|
-| `src/components/dashboard/analytics/RentRevenueTab.tsx` | Wrap 6 cards/sections with VisibilityGate |
-| `src/components/dashboard/analytics/ReportsTabContent.tsx` | Add visibility keys to financial report cards |
+| `src/pages/dashboard/admin/AnalyticsHub.tsx` | Add visibility checks, auto-redirect, wrap TabsContent |
 
 ---
 
-## Usage After Implementation
+## Visual Result
 
-To hide all revenue/financial data from managers:
+When Sales visibility is turned OFF for Manager role:
 
-1. Go to **Settings > Access & Visibility > Role Access**
-2. Select **Manager** role
-3. In **Page Tabs** panel:
-   - Toggle OFF: `Sales`, `Rent`, `Commission`, `Financial Reports`
-4. In **Widgets** panel (after implementation):
-   - Toggle OFF: All items under "Analytics Hub - Rent" category
+**Before (Current - Broken)**
+```
+Tabs: [Operations] [Marketing] [Program] [Reports] [Rent]
+Content: Still shows Sales Overview with $2,205 revenue
+```
 
-This gives you full control over which revenue-related data each role can see.
+**After (Fixed)**
+```
+Tabs: [Operations] [Marketing] [Program] [Reports] [Rent]
+Content: Shows Operations content (auto-redirected)
+```
 
----
-
-## Testing Steps
-
-1. Navigate to Settings > Access & Visibility > Role Access
-2. Select the "Manager" role
-3. Go to "Page Tabs" panel
-4. Toggle OFF the "Sales" tab trigger
-5. Log in as a Manager user and verify the Sales tab is hidden in Analytics Hub
-6. Repeat for Rent, Commission, and Financial Reports tabs
+The Manager will no longer see any sales or revenue data when those tabs are disabled.
 
