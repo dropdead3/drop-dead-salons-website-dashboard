@@ -62,19 +62,18 @@ export default function HelpCenter() {
     <div className="container max-w-5xl mx-auto py-8 px-4">
       {/* Header */}
       <div className="mb-8">
-        {currentCategory ? (
-          <div className="flex items-center gap-3 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/dashboard/help')}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Help Center
-            </Button>
-          </div>
-        ) : null}
+        {/* Back button - always show, changes destination based on context */}
+        <div className="flex items-center gap-3 mb-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(currentCategory ? '/dashboard/help' : '/dashboard')}
+            className="gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            {currentCategory ? 'Back to Help Center' : 'Back to Dashboard'}
+          </Button>
+        </div>
 
         <div className="text-center mb-6">
           <h1 className="text-3xl font-display mb-2">
