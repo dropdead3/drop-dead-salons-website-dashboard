@@ -1,136 +1,271 @@
 
+# Message Moderation Enhancements: Pin, Delete, Edit
 
-# Thread Reply Enhancements
+## Overview
+
+This plan adds three key moderation features to the Team Chat:
+1. **Pin messages with threads** - Show thread replies alongside pinned messages
+2. **Super Admin-only delete** - Only super admins can delete any message; regular users can only delete their own
+3. **5-minute edit window** - Senders can edit their messages within 5 minutes of sending
+
+---
 
 ## Current State Analysis
 
-The thread functionality already works:
-- Clicking the message bubble icon opens the thread panel
-- Users can send replies in the thread
-- Replies are shown with reactions
+### What's Already Implemented
+- **Pinning**: Works via `usePinnedMessages` hook and `chat_pinned_messages` table
+- **Editing**: `editMessage` mutation exists in `useChatMessages` but UI button is non-functional
+- **Deleting**: Works but allows message owners to delete only (soft delete with `is_deleted` flag)
+- **Super Admin check**: Available via `is_super_admin` on `employee_profiles`
 
-However, the thread input is basic compared to the main chat input and lacks several features.
-
----
-
-## Proposed Enhancements
-
-### 1. Rich Thread Input (Priority: High)
-
-Replace the plain Textarea in `ThreadPanel.tsx` with the full-featured `MentionInput` component used in the main chat. This adds:
-
-- **Emoji picker** - Same picker as main chat
-- **@mentions** - Tag team members in replies
-- **Keyboard shortcuts** - Enter to send, Shift+Enter for newline
-
-```text
-Current Thread Input:
-┌──────────────────────────────────────┐
-│ Reply...                        [>]  │
-└──────────────────────────────────────┘
-
-Enhanced Thread Input:
-┌──────────────────────────────────────┐
-│ [😀] [@] Reply in thread...     [>]  │
-└──────────────────────────────────────┘
-```
-
-### 2. Quote Reply Feature (Priority: High)
-
-Add ability to quote a specific message (parent or reply) when replying:
-
-- Click reply icon on any thread message to quote it
-- Shows preview of quoted text above input
-- Quote is included in the message when sent
-
-```text
-┌──────────────────────────────────────┐
-│ ┌─ Replying to Alex Day ──────────┐  │
-│ │ "Hey, what time is the meeting?" │  │
-│ └────────────────────────── [×] ─┘  │
-│                                      │
-│ [😀] [@] Your reply...          [>]  │
-└──────────────────────────────────────┘
-```
-
-### 3. Thread Header Improvements (Priority: Medium)
-
-Show context about the thread:
-- Original message preview in header
-- Number of participants
-- Last activity timestamp
-
-```text
-┌─────────────────────────────────────┐
-│ 💬 Thread                      [×]  │
-│ 3 participants · Last reply 2m ago  │
-└─────────────────────────────────────┘
-```
-
-### 4. Thread Message Actions (Priority: Medium)
-
-Add more actions to thread messages (currently only reactions):
-- Reply/Quote button on each thread message
-- Delete own replies
-- Edit own replies
-
-### 5. Keyboard Shortcuts (Priority: Low)
-
-- **Escape** - Close thread panel
-- **Cmd/Ctrl + Enter** - Send reply (alternative to Enter)
+### What Needs Enhancement
+1. Pinned messages don't show thread context (reply count/previews)
+2. Edit button shows but doesn't open an editor
+3. Delete is available to all message owners; needs super admin override
+4. No time limit on editing
 
 ---
 
-## Implementation Details
+## Part 1: Enhanced Pinned Messages with Thread Context
 
-### Files to Modify
+### Changes to `usePinnedMessages.ts`
+
+Add thread reply count and preview to pinned message data:
+
+```typescript
+// Fetch reply count for each pinned message
+const { data: replyCounts } = await supabase
+  .from('chat_messages')
+  .select('parent_message_id')
+  .in('parent_message_id', messageIds)
+  .eq('is_deleted', false);
+
+// Also fetch first 2 replies for preview
+const { data: threadPreviews } = await supabase
+  .from('chat_messages')
+  .select('parent_message_id, content, sender:employee_profiles!chat_messages_sender_employee_fkey(...)')
+  .in('parent_message_id', messageIds)
+  .order('created_at', { ascending: true })
+  .limit(2);
+```
+
+### Changes to `PinnedMessagesSheet.tsx`
+
+Display thread info below pinned messages:
+- Show "X replies in thread" badge
+- Add "View thread" button that opens ThreadPanel
+- Show preview of first 1-2 replies
+
+---
+
+## Part 2: Super Admin Delete Permission
+
+### New Hook: `useCanDeleteMessage.ts`
+
+Create a dedicated hook to check delete permissions:
+
+```typescript
+export function useCanDeleteMessage(message: MessageWithSender) {
+  const { user } = useAuth();
+  const { data: profile } = useEmployeeProfile();
+  
+  // Super admins can delete any message
+  if (profile?.is_super_admin) return true;
+  
+  // Regular users can only delete their own messages
+  return message.sender_id === user?.id;
+}
+```
+
+### Changes to `MessageItem.tsx`
+
+Update the delete menu item to check super admin status:
+
+```typescript
+// Props update
+interface MessageItemProps {
+  // ... existing
+  canDelete: boolean; // New prop
+}
+
+// In render
+{canDelete && (
+  <DropdownMenuItem onClick={onDelete} className="text-destructive">
+    <Trash2 className="h-4 w-4 mr-2" />
+    Delete message
+  </DropdownMenuItem>
+)}
+```
+
+### Changes to `MessageList.tsx`
+
+Pass the `canDelete` prop based on permission check:
+
+```typescript
+const isSuperAdmin = userProfile?.is_super_admin;
+
+<MessageItem
+  // ...existing props
+  canDelete={isSuperAdmin || message.sender_id === user?.id}
+/>
+```
+
+### Backend Security (RLS Policy Update)
+
+Add RLS check for delete operation:
+
+```sql
+-- Update chat_messages RLS for delete (update is_deleted)
+CREATE POLICY "Super admins can soft delete any message"
+ON public.chat_messages
+FOR UPDATE
+USING (
+  auth.uid() = sender_id  -- Own messages
+  OR EXISTS (
+    SELECT 1 FROM public.employee_profiles
+    WHERE user_id = auth.uid() AND is_super_admin = true
+  )
+);
+```
+
+---
+
+## Part 3: 5-Minute Edit Window
+
+### Changes to `MessageItem.tsx`
+
+Add time-based edit check:
+
+```typescript
+const canEdit = useMemo(() => {
+  if (message.sender_id !== user?.id) return false;
+  
+  const messageTime = new Date(message.created_at).getTime();
+  const now = Date.now();
+  const fiveMinutes = 5 * 60 * 1000;
+  
+  return (now - messageTime) < fiveMinutes;
+}, [message.created_at, message.sender_id, user?.id]);
+```
+
+### New Component: `MessageEditDialog.tsx`
+
+Create an inline editor or dialog for editing:
+
+```typescript
+interface MessageEditDialogProps {
+  message: MessageWithSender;
+  open: boolean;
+  onClose: () => void;
+  onSave: (content: string) => void;
+}
+```
+
+Features:
+- Pre-populated textarea with current content
+- Character count (optional)
+- Save/Cancel buttons
+- Shows remaining edit time: "X minutes left to edit"
+
+### Changes to `MessageItem.tsx` Props
+
+Add edit handler:
+
+```typescript
+interface MessageItemProps {
+  // ... existing
+  onEdit?: (content: string) => void;
+  canEdit: boolean;
+}
+
+// In component
+const [isEditing, setIsEditing] = useState(false);
+
+{canEdit && (
+  <DropdownMenuItem onClick={() => setIsEditing(true)}>
+    <Pencil className="h-4 w-4 mr-2" />
+    Edit message
+    <span className="ml-auto text-xs text-muted-foreground">
+      {getTimeRemaining(message.created_at)}
+    </span>
+  </DropdownMenuItem>
+)}
+```
+
+### Helper Function: `getEditTimeRemaining`
+
+```typescript
+function getEditTimeRemaining(createdAt: string): string {
+  const messageTime = new Date(createdAt).getTime();
+  const deadline = messageTime + (5 * 60 * 1000);
+  const remaining = deadline - Date.now();
+  
+  if (remaining <= 0) return 'Expired';
+  
+  const minutes = Math.floor(remaining / 60000);
+  const seconds = Math.floor((remaining % 60000) / 1000);
+  
+  return minutes > 0 ? `${minutes}m left` : `${seconds}s left`;
+}
+```
+
+---
+
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/components/team-chat/MessageEditDialog.tsx` | Inline/dialog editor for messages |
+
+## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `ThreadPanel.tsx` | Replace Textarea with MentionInput + EmojiPicker, add quote state, add keyboard listener |
-| `ThreadMessageItem.tsx` | Add reply/quote button, add edit/delete for own messages |
-| `useThreadMessages.ts` | Support quoted message reference in replies |
-| `TeamChatContext.tsx` | Add quoted message state for threads |
+| `src/hooks/team-chat/usePinnedMessages.ts` | Add thread reply count and previews |
+| `src/components/team-chat/PinnedMessagesSheet.tsx` | Show thread context, add "View thread" action |
+| `src/components/team-chat/MessageItem.tsx` | Add `canEdit`, `canDelete` props, edit dialog state, time check |
+| `src/components/team-chat/MessageList.tsx` | Compute and pass `canEdit`/`canDelete` props |
+| `src/components/team-chat/ThreadMessageItem.tsx` | Same edit/delete enhancements for thread replies |
+| `src/hooks/team-chat/useChatMessages.ts` | Add validation for 5-min edit window (optional backend check) |
 
-### Database Consideration
+## Database Changes
 
-For quote replies, we could:
-1. **Simple approach**: Prefix quoted text in message content (e.g., `> Original text\n\nReply`)
-2. **Structured approach**: Add `quoted_message_id` column to `chat_messages` table
+Add RLS policy to ensure server-side enforcement:
 
-The simple approach is recommended initially as it requires no schema changes and Markdown rendering can style the quote.
-
-### Quote Message Format
-
-```text
-> **Alex Day** wrote:
-> Hey, what time is the meeting?
-
-It's at 3pm!
+```sql
+-- Allow super admins to soft-delete any message
+CREATE POLICY "Users can update own messages or super admins any"
+ON public.chat_messages
+FOR UPDATE
+USING (
+  sender_id = auth.uid()
+  OR EXISTS (
+    SELECT 1 FROM public.employee_profiles
+    WHERE user_id = auth.uid() AND is_super_admin = true
+  )
+);
 ```
 
 ---
 
 ## Expected Behavior
 
-| Action | Result |
-|--------|--------|
-| Click reply icon on message in main chat | Opens thread panel for that message |
-| Click emoji button in thread input | Opens full emoji picker |
-| Type @name in thread | Shows mention autocomplete |
-| Click reply icon on thread message | Sets that message as quote, shows preview above input |
-| Click X on quote preview | Clears the quote |
-| Send reply with quote | Message sent with quoted text formatted as blockquote |
-| Press Escape in thread panel | Closes the thread |
-| Hover on own thread reply | Shows edit/delete options |
+| Action | Behavior |
+|--------|----------|
+| Pin a message with replies | Pinned panel shows "X replies" badge and thread preview |
+| Click "View thread" on pinned msg | Opens thread panel for that message |
+| Super admin clicks Delete | Deletes any message with confirmation |
+| Regular user clicks Delete | Only sees delete option on own messages |
+| Click Edit within 5 min | Opens editor with current content |
+| Click Edit after 5 min | Edit option hidden or shows "Cannot edit" |
+| Save edited message | Updates content, sets `is_edited = true` |
 
 ---
 
 ## Summary
 
-These enhancements bring the thread experience up to par with the main chat:
-1. **Rich input** with emoji and mentions
-2. **Quote replies** for context in longer threads  
-3. **Better navigation** with keyboard shortcuts
-4. **Message management** for thread replies
-
+This enhancement adds:
+1. **Rich pinned messages** - Shows thread context so important threads are discoverable
+2. **Role-based deletion** - Super admins moderate all content; users self-moderate
+3. **Time-limited editing** - 5-minute grace period prevents confusion from heavily edited messages
+4. **Consistent UX** - Same patterns in main chat and thread panel
