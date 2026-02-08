@@ -1,32 +1,38 @@
 
-# VAPID Keys Setup
+# Add Notification Preferences to Bell Icon Popover
 
-## What I'll Do
+## Current Issue
+The "Notification Preferences" link is only in the user profile dropdown in `DashboardLayout.tsx`, but:
+- It doesn't appear in the Platform Admin area (`PlatformHeader.tsx`)
+- It's not intuitively placed - users expect notification settings from the bell icon
 
-Now that you have your VAPID keys, I need to:
+## Solution
+Add a "Notification Preferences" link/button to the **footer of the NotificationsPanel** component, right next to the existing "View all updates" link. This ensures it's accessible from everywhere the bell icon appears.
 
-1. **Add Backend Secrets** (for the edge function to send push notifications)
-   - `VAPID_PRIVATE_KEY`: `bSHREtpgW6bGMDqeL2yRxWE1IVrz1IeHkf3jxWNPtq0`
-   - `VAPID_PUBLIC_KEY`: `BDaIVKSs0YqSnui1QZm_4gt5A-J5dkN1OTu4XApL2HC9-wI3t1bn0_DDVgKx0oZcVxiKVD7U6tT8rLzHI1teZI4`
+## Changes
 
-2. **Update Frontend** (for the browser to subscribe to push)
-   - Add `VITE_VAPID_PUBLIC_KEY` to the `.env` file
+### File: `src/components/dashboard/NotificationsPanel.tsx`
 
-3. **Fix the Edge Function** (the current implementation needs proper Web Push encryption)
-   - The `send-push-notification` edge function needs to use proper VAPID authentication
+Update the footer section (lines 575-582) to include two links:
 
-## Files to Modify
+```text
+Current:
+┌─────────────────────────────────────┐
+│       View all updates →            │
+└─────────────────────────────────────┘
 
-| File | Change |
-|------|--------|
-| `.env` | Add `VITE_VAPID_PUBLIC_KEY` |
-| `supabase/functions/send-push-notification/index.ts` | Update to use VAPID keys properly |
+Updated:
+┌─────────────────────────────────────┐
+│  ⚙ Preferences    │  View updates → │
+└─────────────────────────────────────┘
+```
 
-## Quick Setup
+**Implementation:**
+- Add a Settings icon and "Preferences" link to `/dashboard/notifications`
+- Use a 2-column grid layout in the footer
+- Keep the existing "View all updates" link to `/dashboard/changelog`
 
-Once approved, I'll:
-1. Request you to save the private key as a backend secret
-2. Add the public key to the frontend
-3. Update the push notification function
-
-This will enable push notifications to work end-to-end.
+This single change ensures:
+1. Notification preferences are accessible from the bell icon in **all layouts**
+2. The UX is intuitive - users clicking the bell can manage their notification settings
+3. Push notification testing becomes discoverable
