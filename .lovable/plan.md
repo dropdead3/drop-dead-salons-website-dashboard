@@ -1,139 +1,161 @@
 
 
-# DM Archive & Role-Based Sorting
+# Smart Multi-Location Handling for Organization Account Setup
 
-## Overview
+## Problem
 
-Two enhancements to the Direct Messages section:
+Single-location organizations see UI elements that don't make sense for them:
+1. **"Locations" section** in Team Chat sidebar (unnecessary when there's only one location)
+2. **"company-wide" channel** (redundant when everyone is in the same location - "general" serves the same purpose)
+3. **Location channels** (only one would exist, identical to company-wide)
 
-1. **Archive DMs**: Allow users to hide conversations from their sidebar while keeping them searchable. If either party messages again, the DM reappears automatically.
+## Proposed Solution
 
-2. **Role Hierarchy Sorting**: Organize DMs by the other person's role level (Super Admin > Admin > Manager > etc.)
+Add an `is_multi_location` flag to organizations that drives intelligent defaults throughout the platform. This flag can be set during account provisioning and changed later in organization settings.
 
 ---
 
-## Part 1: Archive DMs
+## Database Changes
 
-### Current State
-- The `is_archived` field exists on `chat_channels` but is channel-level (affects all members)
-- DMs are 1:1 private conversations between two users
-- No per-user archive mechanism exists
+### 1. Add `is_multi_location` Column to Organizations
 
-### Proposed Approach
-
-Since DM archiving should be **per-user** (you archive it but your partner still sees it), we'll use the existing `chat_channel_members` table to add a user-specific archive flag.
-
-**Database Change:**
 ```sql
-ALTER TABLE public.chat_channel_members
-ADD COLUMN is_hidden BOOLEAN DEFAULT false;
+ALTER TABLE public.organizations 
+ADD COLUMN is_multi_location BOOLEAN DEFAULT false;
+
+-- Backfill: Set true for orgs with more than 1 location
+UPDATE public.organizations o
+SET is_multi_location = true
+WHERE (
+  SELECT COUNT(*) FROM public.locations l 
+  WHERE l.organization_id = o.id AND l.is_active = true
+) > 1;
 ```
 
-### UI Flow
+### 2. Auto-Update Flag via Trigger
 
-```text
-┌───────────────────────────────────────────────────────────────┐
-│ ⚙  CONVERSATION SETTINGS                                     │
-│                                                               │
-│ ┌─────────────────────────────────────────────────────────┐   │
-│ │ 💬  DM with Alex Day                                    │   │
-│ │     Direct Message                                      │   │
-│ └─────────────────────────────────────────────────────────┘   │
-│                                                               │
-│ ┌─────────────────────────────────────────────────────────┐   │
-│ │ 🗄  Archive Conversation                                │   │
-│ │ Hide from sidebar. Reappears when either of you        │   │
-│ │ sends a new message.                                   │   │
-│ └─────────────────────────────────────────────────────────┘   │
-│                                                               │
-└───────────────────────────────────────────────────────────────┘
+When locations are added/removed, automatically update the flag:
+
+```sql
+CREATE OR REPLACE FUNCTION sync_multi_location_flag()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Count active locations for the org
+  UPDATE public.organizations
+  SET is_multi_location = (
+    SELECT COUNT(*) > 1 FROM public.locations
+    WHERE organization_id = COALESCE(NEW.organization_id, OLD.organization_id)
+    AND is_active = true
+  )
+  WHERE id = COALESCE(NEW.organization_id, OLD.organization_id);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_multi_location_flag
+AFTER INSERT OR UPDATE OR DELETE ON public.locations
+FOR EACH ROW EXECUTE FUNCTION sync_multi_location_flag();
 ```
-
-### Auto-Unarchive Behavior
-
-When a new message is sent:
-1. Database trigger OR application logic checks if either member has `is_hidden = true`
-2. Sets `is_hidden = false` for both members
-3. DM reappears in both users' sidebars
-
-### Searchable When Archived
-
-- Update `useChatChannels` to filter out DMs where `is_hidden = true` from the sidebar
-- Update message search to include ALL DMs (including hidden ones)
-- When searching and selecting an archived DM, it automatically unarchives
 
 ---
 
-## Part 2: DM Role Hierarchy Sorting
+## Team Chat Behavior Changes
 
-### Role Priority Order (from `useUserRoles.ts`)
+### Single-Location Organizations
 
-```text
-Level 1: super_admin    → Primary leadership
-Level 2: admin          → Secondary leadership
-Level 3: manager        → Management
-Level 4: stylist, stylist_assistant, receptionist, etc.
-Level 5: (no role)      → Lowest priority
-```
+| Feature | Behavior |
+|---------|----------|
+| Default channels | Only create "general" (skip "company-wide") |
+| Location channels | Don't create any location-specific channels |
+| Sidebar UI | Hide "Locations" section entirely |
+| Channel init | Simpler setup with just "general" + "DMs" |
 
-### Implementation
+### Multi-Location Organizations
 
-Update `ChannelSidebar.tsx` to sort `dmChannels` by partner's role priority:
+| Feature | Behavior |
+|---------|----------|
+| Default channels | Create both "company-wide" and "general" |
+| Location channels | Create one channel per location |
+| Sidebar UI | Show both "Channels" and "Locations" sections |
+| Channel init | Full setup with location sync |
 
-```typescript
-const ROLE_PRIORITY: Record<string, number> = {
-  super_admin: 1,
-  admin: 2,
-  manager: 3,
-  stylist: 4,
-  receptionist: 5,
-  stylist_assistant: 6,
-  admin_assistant: 7,
-  operations_assistant: 8,
-  booth_renter: 9,
-  bookkeeper: 10,
-  assistant: 11, // Legacy
-};
+---
 
-// Sorting logic
-dmChannels.sort((a, b) => {
-  const roleA = a.dm_partner?.role || 99;
-  const roleB = b.dm_partner?.role || 99;
-  const priorityA = ROLE_PRIORITY[roleA] ?? 99;
-  const priorityB = ROLE_PRIORITY[roleB] ?? 99;
-  
-  if (priorityA !== priorityB) return priorityA - priorityB;
-  // Secondary sort: alphabetical by name
-  return a.dm_partner?.display_name?.localeCompare(b.dm_partner?.display_name) || 0;
-});
-```
+## Code Changes
 
-### Data Requirement
+### 1. Update `useOrganizations.ts` Interface
 
-Need to include the DM partner's **role** in the channel query. Update `useChatChannels.ts` to also fetch roles:
+Add `is_multi_location` to the `Organization` type.
+
+### 2. Modify `useChatChannels.ts` - `useInitializeDefaultChannels`
 
 ```typescript
-// When fetching DM members, also get their role
-const { data: dmMembers } = await supabase
-  .from('chat_channel_members')
-  .select(`
-    channel_id,
-    user_id,
-    employee_profiles!chat_channel_members_employee_fkey (
-      display_name,
-      full_name,
-      photo_url,
-      user_id
-    )
-  `)
-  .in('channel_id', dmChannelIds)
-  .neq('user_id', user.id);
+// Check org's is_multi_location flag
+const isSingleLocation = !effectiveOrganization?.is_multi_location;
 
-// Then fetch roles for these users
-const { data: userRoles } = await supabase
-  .from('user_roles')
-  .select('user_id, role')
-  .in('user_id', dmMembers.map(m => m.user_id));
+// Adjust default channels
+const defaultChannels = isSingleLocation
+  ? [{ name: 'general', description: 'Team discussions', type: 'public' }]
+  : [
+      { name: 'company-wide', description: 'Organization-wide announcements', type: 'public' },
+      { name: 'general', description: 'General discussions', type: 'public' },
+    ];
+
+// Skip location channel creation for single-location orgs
+if (!isSingleLocation) {
+  // Create location channels...
+}
+```
+
+### 3. Update `ChannelSidebar.tsx`
+
+```typescript
+// Get multi-location status from org context
+const { effectiveOrganization } = useOrganizationContext();
+const isMultiLocation = effectiveOrganization?.is_multi_location ?? true;
+
+// Hide Locations section for single-location orgs
+{isMultiLocation && locationChannels.length > 0 && (
+  <Collapsible ...>
+    {/* Locations section */}
+  </Collapsible>
+)}
+```
+
+### 4. Update Account Provisioner Edge Function
+
+Add `is_multi_location` parameter to provisioning request:
+
+```typescript
+interface ProvisioningRequest {
+  // ...existing fields
+  is_multi_location?: boolean;
+}
+
+// Set flag based on initial_locations count or explicit flag
+const isMultiLocation = request.is_multi_location ?? 
+  (request.initial_locations?.length ?? 0) > 1;
+
+// Include in org insert
+const { data: newOrg } = await adminClient
+  .from('organizations')
+  .insert({
+    // ...existing fields
+    is_multi_location: isMultiLocation,
+  })
+```
+
+### 5. Add Toggle to Account Settings Tab
+
+Add a switch in the Platform Admin's organization settings to manually override:
+
+```typescript
+<FeatureToggle
+  label="Multi-Location Organization"
+  description="Enable location-specific chat channels and team groupings"
+  checked={settings.is_multi_location}
+  onCheckedChange={(v) => updateSettings('is_multi_location', v)}
+/>
 ```
 
 ---
@@ -142,31 +164,42 @@ const { data: userRoles } = await supabase
 
 | File | Changes |
 |------|---------|
-| `supabase/migrations/` | Add `is_hidden` column to `chat_channel_members` |
-| `src/hooks/team-chat/useChatChannels.ts` | Filter hidden DMs from sidebar; include partner role in dm_partner object |
-| `src/components/team-chat/ChannelSidebar.tsx` | Sort DM channels by role hierarchy |
-| `src/components/team-chat/ChannelSettingsSheet.tsx` | Add Archive Conversation button for DMs |
-| `src/hooks/team-chat/useDMChannels.ts` | Unarchive DM when starting conversation with existing partner |
-| `src/hooks/team-chat/useMessageSearch.ts` | Ensure archived DMs are still searchable |
+| `supabase/migrations/[new].sql` | Add column, backfill, trigger |
+| `src/hooks/useOrganizations.ts` | Add `is_multi_location` to types |
+| `src/hooks/team-chat/useChatChannels.ts` | Conditional channel creation |
+| `src/components/team-chat/ChannelSidebar.tsx` | Conditional Locations section |
+| `supabase/functions/account-provisioner/index.ts` | Accept and set flag |
+| `src/components/platform/account/AccountSettingsTab.tsx` | Add toggle for admins |
+
+---
+
+## Migration Strategy
+
+1. Add column with default `false`
+2. Backfill based on existing location counts
+3. New orgs get flag set during provisioning
+4. Flag auto-updates when locations are added/removed
+5. Admins can manually override if needed
 
 ---
 
 ## Expected Behavior
 
-| Action | Result |
-|--------|--------|
-| Click "Archive Conversation" on DM | DM hidden from your sidebar only |
-| Search for message in archived DM | Message found, clicking it unarchives the DM |
-| Partner sends you a message | DM automatically reappears in your sidebar |
-| You start a new DM with same person | Existing DM is found and unarchived |
-| View DM list | Sorted by role: Super Admin first, then Admin, Manager, etc. |
+| Scenario | Channels Created | Locations Section |
+|----------|-----------------|-------------------|
+| New single-location org | `general` only | Hidden |
+| New multi-location org (2+ locations) | `company-wide`, `general`, `[location-1]`, `[location-2]` | Visible |
+| Single-location adds second location | Auto-creates `company-wide` + location channels | Becomes visible |
+| Multi-location removes all but one | Keeps existing channels, section hides | Hidden |
 
 ---
 
 ## Summary
 
-These changes make DM management more user-friendly:
-- **Archive**: Declutter your sidebar without losing conversation history
-- **Auto-unarchive**: Never miss messages because you archived someone
-- **Role sorting**: Quickly find conversations with leadership
+This approach:
+- **Simplifies** the experience for small businesses with one location
+- **Scales** properly when organizations grow to multiple locations  
+- **Auto-adapts** when location counts change
+- **Allows override** for special cases (e.g., single location but wants company-wide channel)
+- **Minimal code changes** - mostly conditional logic based on a single flag
 
