@@ -20,7 +20,7 @@ export default function TeamChat() {
   }, [isPlatformUser, effectiveOrganization, organizations, setSelectedOrganization]);
 
   return (
-    <DashboardLayout>
+    <DashboardLayout hideFooter>
       <PlatformPresenceProvider>
         <div className="flex-1 min-h-0 overflow-hidden">
           <TeamChatContainer />

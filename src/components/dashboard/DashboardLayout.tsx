@@ -120,6 +120,7 @@ import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
+  hideFooter?: boolean;
 }
 
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
@@ -211,7 +212,7 @@ const platformNavItems: NavItem[] = [
 
 const SIDEBAR_COLLAPSED_KEY = 'dashboard-sidebar-collapsed';
 
-function DashboardLayoutInner({ children }: DashboardLayoutProps) {
+function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -1074,18 +1075,24 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
       {/* Main Content */}
       <main className={cn(
         "transition-[padding-left] duration-200 ease-in-out",
-        sidebarCollapsed ? "lg:pl-16" : "lg:pl-72"
+        sidebarCollapsed ? "lg:pl-16" : "lg:pl-72",
+        hideFooter && "h-screen overflow-hidden"
       )}>
-        <div className={cn("min-h-screen flex flex-col", isAdmin && "lg:pt-0")}>
-          <div className="flex-1">
+        <div className={cn(
+          hideFooter ? "h-full flex flex-col" : "min-h-screen flex flex-col",
+          isAdmin && "lg:pt-0"
+        )}>
+          <div className={cn("flex-1", hideFooter && "min-h-0 overflow-hidden")}>
             {children}
           </div>
-          {/* Dashboard Footer */}
-          <footer className="py-6 text-center border-t border-border mt-auto">
-            <p className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} Drop Dead · Powered by Drop Dead Salon Software
-            </p>
-          </footer>
+          {/* Dashboard Footer - hidden for full-screen pages */}
+          {!hideFooter && (
+            <footer className="py-6 text-center border-t border-border mt-auto">
+              <p className="text-xs text-muted-foreground">
+                © {new Date().getFullYear()} Drop Dead · Powered by Drop Dead Salon Software
+              </p>
+            </footer>
+          )}
         </div>
       </main>
     </div>
