@@ -166,7 +166,7 @@ const managerNavItems: NavItem[] = [
   // Team Tools group (moved from standalone section)
   { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['super_admin'] },
   { href: '/dashboard/shift-swaps', label: 'Shift Swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
-  { href: '/dashboard/rewards', label: 'Rewards', icon: Gift },
+  { href: '/dashboard/rewards', label: 'Rewards', icon: Gift, roles: ['stylist', 'stylist_assistant', 'receptionist'] },
   { href: '/dashboard/assistant-schedule', label: 'Assistant Scheduling', icon: Users, permission: 'view_assistant_schedule' },
   { href: '/dashboard/schedule-meeting', label: 'Meetings & Accountability', icon: CalendarClock, permission: 'schedule_meetings' },
   // Analytics & Insights group
