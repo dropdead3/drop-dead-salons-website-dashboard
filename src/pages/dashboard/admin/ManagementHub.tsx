@@ -28,6 +28,8 @@ import {
   ArrowLeftRight,
   MessageSquare,
   Coins,
+  MessageSquarePlus,
+  UserCheck,
 } from 'lucide-react';
 
 interface ManagementCardProps {
@@ -321,6 +323,24 @@ export default function ManagementHub() {
             title="Points & Rewards"
             description="Configure point rules and manage reward catalog"
             colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+          />
+        </CategorySection>
+
+        {/* Client Experience */}
+        <CategorySection title="Client Experience">
+          <ManagementCard
+            href="/dashboard/admin/feedback"
+            icon={MessageSquarePlus}
+            title="Feedback Hub"
+            description="Client surveys, reviews, and NPS tracking"
+            colorClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/reengagement"
+            icon={UserCheck}
+            title="Re-engagement"
+            description="Win-back campaigns for inactive clients"
+            colorClass="bg-teal-500/10 text-teal-600 dark:text-teal-400"
           />
         </CategorySection>
       </div>
