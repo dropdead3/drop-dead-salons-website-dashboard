@@ -1,38 +1,50 @@
 
-# Add Notification Preferences to Bell Icon Popover
+# Fix Top Padding on Notification Preferences Page
 
-## Current Issue
-The "Notification Preferences" link is only in the user profile dropdown in `DashboardLayout.tsx`, but:
-- It doesn't appear in the Platform Admin area (`PlatformHeader.tsx`)
-- It's not intuitively placed - users expect notification settings from the bell icon
+## Problem
+The Notification Preferences page (`/dashboard/notifications`) is missing the standardized top/side padding that all other dashboard pages use. As shown in your screenshot, the "NOTIFICATION PREFERENCES" heading is too close to the navigation bar.
 
 ## Solution
-Add a "Notification Preferences" link/button to the **footer of the NotificationsPanel** component, right next to the existing "View all updates" link. This ensures it's accessible from everywhere the bell icon appears.
+Add the standardized container padding pattern to the NotificationPreferences page.
 
-## Changes
+## Change Required
 
-### File: `src/components/dashboard/NotificationsPanel.tsx`
+### File: `src/pages/dashboard/NotificationPreferences.tsx`
 
-Update the footer section (lines 575-582) to include two links:
-
-```text
-Current:
-┌─────────────────────────────────────┐
-│       View all updates →            │
-└─────────────────────────────────────┘
-
-Updated:
-┌─────────────────────────────────────┐
-│  ⚙ Preferences    │  View updates → │
-└─────────────────────────────────────┘
+**Line 117** - Change from:
+```tsx
+<div className="space-y-6 max-w-2xl mx-auto">
 ```
 
-**Implementation:**
-- Add a Settings icon and "Preferences" link to `/dashboard/notifications`
-- Use a 2-column grid layout in the footer
-- Keep the existing "View all updates" link to `/dashboard/changelog`
+**To:**
+```tsx
+<div className="p-6 lg:p-8 space-y-6 max-w-2xl mx-auto">
+```
 
-This single change ensures:
-1. Notification preferences are accessible from the bell icon in **all layouts**
-2. The UX is intuitive - users clicking the bell can manage their notification settings
-3. Push notification testing becomes discoverable
+This adds:
+- `p-6` - 24px padding on mobile
+- `lg:p-8` - 32px padding on desktop
+
+---
+
+## Design Guideline Update
+
+Add this as a hard rule to the project's design system memory:
+
+**Standardized Dashboard Page Padding Rule:**
+
+All dashboard content pages wrapped in `DashboardLayout` must use the container pattern with top/side padding:
+
+| Container Type | Classes |
+|----------------|---------|
+| Full-width pages | `p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6` |
+| Narrow form pages | `p-6 lg:p-8 max-w-2xl mx-auto space-y-6` |
+| Medium content pages | `p-6 lg:p-8 max-w-4xl mx-auto space-y-6` |
+
+**Key rule:** The `p-6 lg:p-8` padding is mandatory for all dashboard pages to ensure content has proper breathing room from edges. Never omit this padding.
+
+---
+
+## Summary
+- Single file edit to add padding classes
+- Update design memory with hard rule about mandatory page edge padding
