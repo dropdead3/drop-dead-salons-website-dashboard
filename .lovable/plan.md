@@ -1,104 +1,151 @@
 
-# Move Schedule to Team Tools for Account Owners & Rename Assistant Schedule
+# Consolidate Staff Account Invitations into Access Hub
 
 ## Overview
 
-For account owners (`super_admin` role), the **Schedule** navigation link will be moved from the Main section into the **Team Tools** sub-group under Management. Additionally, **Assistant Schedule** will be renamed to **Assistant Scheduling** for all users.
+The **Staff Account Invitations** page (`/dashboard/admin/accounts`) will be consolidated into the **Access Hub** as a new tab called "Invitations". This follows the pattern of consolidating access-related functionality into the central Access Hub.
 
 ---
 
-## Current Behavior
+## Current State
 
-| Item | Location | Visibility |
-|------|----------|------------|
-| Schedule | Main section | All users with `view_booking_calendar` permission |
-| Assistant Schedule | Team Tools sub-group | Users with `view_assistant_schedule` permission |
+### Staff Account Invitations Page
+- **Route**: `/dashboard/admin/accounts`
+- **Component**: `AccountManagement.tsx`
+- **Features**:
+  - Staff invitations (send, resend, cancel)
+  - Account approvals (approve/reject)
+  - QR code for staff signup
+  - Stats cards (pending invites, needs approval, etc.)
+  - Two main tabs: Invitations & Approvals
+
+### Access Hub Tabs
+| Tab | Component | Purpose |
+|-----|-----------|---------|
+| Modules | `ModulesTab` | Feature toggles |
+| User Roles | `UserRolesTab` | Assign roles to users |
+| Role Access | `RoleAccessTab` | UI visibility settings |
+| Permissions | `PermissionsTab` | Functional capabilities |
+| Role Config | `RoleConfigTab` | CRUD for roles/templates |
 
 ---
 
 ## Changes Required
 
-### 1. Rename Assistant Schedule to Assistant Scheduling
+### 1. Create New InvitationsTab Component
 
-**File:** `src/components/dashboard/DashboardLayout.tsx`
+**New File**: `src/components/access-hub/InvitationsTab.tsx`
 
-Update the label in `managerNavItems`:
+Extract the invitation and approval functionality from `AccountManagement.tsx` into a new tab component that follows the Access Hub pattern:
+- Remove the `DashboardLayout` wrapper
+- Keep all existing functionality (invitations, approvals, QR code, stats)
+- Accept `canManage` prop like other tabs
+
+---
+
+### 2. Update Access Hub Page
+
+**File**: `src/pages/dashboard/admin/AccessHub.tsx`
+
+Add the new "Invitations" tab:
 
 ```typescript
-// Line 169 - Before
-{ href: '/dashboard/assistant-schedule', label: 'Assistant Schedule', icon: Users, permission: 'view_assistant_schedule' },
+type TabValue = 'modules' | 'user-roles' | 'role-access' | 'permissions' | 'role-config' | 'invitations';
+```
+
+Add to imports and TabsList:
+```typescript
+import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
+
+// Add UserPlus icon
+<TabsTrigger value="invitations" className="gap-2">
+  <UserPlus className="h-4 w-4" />
+  <span className="hidden sm:inline">Invitations</span>
+</TabsTrigger>
+
+<TabsContent value="invitations" className="mt-0">
+  <InvitationsTab canManage={canManage} />
+</TabsContent>
+```
+
+Update grid columns from 5 to 6: `grid-cols-6`
+
+---
+
+### 3. Update Index Exports
+
+**File**: `src/components/access-hub/index.ts`
+
+```typescript
+export { InvitationsTab } from './InvitationsTab';
+```
+
+---
+
+### 4. Remove Staff Account Invitations from Navigation
+
+**File**: `src/components/dashboard/DashboardLayout.tsx`
+
+Remove from `adminOnlyNavItems`:
+```typescript
+// Before
+const adminOnlyNavItems: NavItem[] = [
+  { href: '/dashboard/admin/accounts', label: 'Staff Account Invitations', icon: UserPlus, permission: 'approve_accounts' },
+  { href: '/dashboard/admin/access-hub', label: 'Access Hub', icon: Shield, permission: 'manage_settings' },
+];
 
 // After
-{ href: '/dashboard/assistant-schedule', label: 'Assistant Scheduling', icon: Users, permission: 'view_assistant_schedule' },
-```
-
----
-
-### 2. Add Schedule to managerNavItems for Team Tools
-
-**File:** `src/components/dashboard/DashboardLayout.tsx`
-
-Add the Schedule item to `managerNavItems` (it will be filtered to Team Tools sub-group):
-
-```typescript
-const managerNavItems: NavItem[] = [
-  // Team Tools group (moved from standalone section)
-  { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['super_admin'] }, // NEW: For super_admin only in Team Tools
-  { href: '/dashboard/shift-swaps', label: 'Shift Swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
-  { href: '/dashboard/rewards', label: 'Rewards', icon: Gift },
-  { href: '/dashboard/assistant-schedule', label: 'Assistant Scheduling', icon: Users, permission: 'view_assistant_schedule' },
-  // ... rest of items
+const adminOnlyNavItems: NavItem[] = [
+  { href: '/dashboard/admin/access-hub', label: 'Access Hub', icon: Shield, permission: 'manage_settings' },
 ];
 ```
 
 ---
 
-### 3. Add Schedule path to Team Tools sub-group
+### 5. Add Redirect for Old Route
 
-**File:** `src/hooks/useSidebarLayout.ts`
+**File**: `src/App.tsx`
 
-Update `MANAGEMENT_SUB_GROUPS.teamTools.links` to include the schedule path:
-
+Replace the standalone route with a redirect to Access Hub:
 ```typescript
-teamTools: {
-  id: 'teamTools',
-  label: 'Team Tools',
-  links: [
-    '/dashboard/schedule',           // NEW
-    '/dashboard/shift-swaps',
-    '/dashboard/rewards',
-    '/dashboard/assistant-schedule',
-    '/dashboard/schedule-meeting',
-  ],
-},
-```
+// Before
+<Route path="/dashboard/admin/accounts" element={<ProtectedRoute requiredPermission="approve_accounts"><AccountManagement /></ProtectedRoute>} />
 
-Also update `DEFAULT_LINK_ORDER.manager` to include the schedule path:
-
-```typescript
-manager: [
-  '/dashboard/schedule',            // NEW
-  '/dashboard/shift-swaps',
-  // ... rest
-],
+// After
+<Route path="/dashboard/admin/accounts" element={<Navigate to="/dashboard/admin/access-hub?tab=invitations" replace />} />
 ```
 
 ---
 
-### 4. Hide Schedule from Main section for super_admin
+### 6. Update UserRolesTab Links
 
-**File:** `src/components/dashboard/DashboardLayout.tsx`
+**File**: `src/components/access-hub/UserRolesTab.tsx`
 
-Update `mainNavItems` to exclude `super_admin` from the Schedule item's roles:
-
+Update the links that point to external pages (lines 248-260):
 ```typescript
-const mainNavItems: NavItem[] = [
-  { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard, permission: 'view_command_center' },
-  { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['admin', 'manager', 'stylist', 'stylist_assistant', 'receptionist', 'assistant', 'admin_assistant', 'operations_assistant', 'booth_renter', 'bookkeeper'] },
-];
+// Before
+<Link to="/dashboard/admin/invitations">
+  <UserPlus className="w-4 h-4" />
+  Invite Staff Member
+</Link>
+<Link to="/dashboard/admin/approvals">
+  Account Approvals
+  <ArrowRight className="w-4 h-4" />
+</Link>
+
+// After - Remove these buttons since functionality is now in Invitations tab
+// Or update to use tab navigation within Access Hub
 ```
 
-This explicitly lists all roles EXCEPT `super_admin`, so account owners won't see Schedule in Main but will see it in Team Tools.
+---
+
+### 7. Update Sidebar Preview/Editor Labels
+
+**Files**: 
+- `src/components/dashboard/settings/SidebarPreview.tsx`
+- `src/components/dashboard/settings/SidebarLayoutEditor.tsx`
+
+Remove or update references to `/dashboard/admin/accounts`.
 
 ---
 
@@ -106,18 +153,31 @@ This explicitly lists all roles EXCEPT `super_admin`, so account owners won't se
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/DashboardLayout.tsx` | Rename Assistant Schedule, add Schedule to managerNavItems for super_admin, restrict mainNavItems Schedule from super_admin |
-| `src/hooks/useSidebarLayout.ts` | Add `/dashboard/schedule` to Team Tools links and DEFAULT_LINK_ORDER.manager |
+| `src/components/access-hub/InvitationsTab.tsx` | **NEW** - Extract from AccountManagement |
+| `src/components/access-hub/index.ts` | Add InvitationsTab export |
+| `src/pages/dashboard/admin/AccessHub.tsx` | Add Invitations tab |
+| `src/components/dashboard/DashboardLayout.tsx` | Remove nav item |
+| `src/App.tsx` | Replace route with redirect |
+| `src/components/access-hub/UserRolesTab.tsx` | Update/remove external links |
+| `src/components/dashboard/settings/SidebarPreview.tsx` | Remove accounts reference |
+| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | Remove accounts reference |
 
 ---
 
 ## Result
 
-| Role | Schedule Location |
-|------|------------------|
-| `super_admin` (Account Owner) | Management → Team Tools |
-| All other roles | Main section |
+### Access Hub Tabs (After)
+| Tab | Icon | Purpose |
+|-----|------|---------|
+| Modules | Blocks | Feature toggles |
+| User Roles | Users | Assign roles to users |
+| Role Access | Eye | UI visibility settings |
+| Permissions | Lock | Functional capabilities |
+| Role Config | Settings2 | CRUD for roles/templates |
+| **Invitations** | **UserPlus** | **Staff invitations & approvals** |
 
-| Before | After |
-|--------|-------|
-| Assistant Schedule | Assistant Scheduling |
+### Navigation (After)
+The Admin section will have only one link:
+- Access Hub (contains all access-related functionality)
+
+Old URL `/dashboard/admin/accounts` will redirect to `/dashboard/admin/access-hub?tab=invitations`.
