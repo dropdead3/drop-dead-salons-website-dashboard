@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
 import {
   Collapsible,
   CollapsibleContent,
@@ -91,6 +92,7 @@ interface OnboardingTask {
   link_url: string | null;
   visible_to_roles: AppRole[];
   display_order: number;
+  is_required: boolean;
 }
 
 const BUSINESS_CARD_STYLES = [
@@ -171,7 +173,7 @@ export default function Onboarding() {
         .maybeSingle(),
       supabase
         .from('onboarding_tasks')
-        .select('id, title, description, visible_to_roles, display_order')
+        .select('id, title, description, visible_to_roles, display_order, is_required')
         .eq('is_active', true)
         .order('display_order'),
       supabase
@@ -508,12 +510,19 @@ export default function Onboarding() {
                             {completed && <Check className="w-4 h-4 text-primary-foreground" />}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <span className={cn(
-                              "font-sans text-sm block",
-                              completed && 'text-muted-foreground line-through'
-                            )}>
-                              {task.title}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={cn(
+                                "font-sans text-sm",
+                                completed && 'text-muted-foreground line-through'
+                              )}>
+                                {task.title}
+                              </span>
+                              {task.is_required ? (
+                                <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Required</Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Optional</Badge>
+                              )}
+                            </div>
                             {task.description && (
                               <span className="text-xs text-muted-foreground block mt-0.5">
                                 {task.description}

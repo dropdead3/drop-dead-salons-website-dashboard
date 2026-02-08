@@ -66,6 +66,7 @@ import { EmailTemplatesManager } from '@/components/dashboard/EmailTemplatesMana
 import { EmailVariablesManager } from '@/components/dashboard/EmailVariablesManager';
 import { SignaturePresetsManager } from '@/components/dashboard/SignaturePresetsManager';
 import { OnboardingTasksManager } from '@/components/dashboard/OnboardingTasksManager';
+import { OnboardingConfigurator } from '@/components/dashboard/settings/OnboardingConfigurator';
 import { LeaderboardWeightsManager } from '@/components/dashboard/LeaderboardWeightsManager';
 import { IntegrationsTab } from '@/components/dashboard/IntegrationsTab';
 import { StylistLevelsContent } from '@/components/dashboard/settings/StylistLevelsContent';
@@ -1058,15 +1059,7 @@ export default function Settings() {
 
           {activeCategory === 'onboarding' && (
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-display text-lg">ONBOARDING TASKS</CardTitle>
-                  <CardDescription>Configure onboarding checklist items by role.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <OnboardingTasksManager />
-                </CardContent>
-              </Card>
+              <OnboardingConfigurator />
 
               <Card>
                 <CardHeader>

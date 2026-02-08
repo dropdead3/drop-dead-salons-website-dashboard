@@ -49,7 +49,7 @@ export function useOnboardingProgress(): OnboardingProgress {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('onboarding_tasks')
-        .select('id, visible_to_roles')
+        .select('id, visible_to_roles, is_required')
         .eq('is_active', true);
 
       if (error) throw error;
@@ -164,15 +164,27 @@ export function useOnboardingProgress(): OnboardingProgress {
   const completedTaskIds = new Set(completions.map(c => c.task_key));
   const acknowledgedHandbookIds = new Set(acknowledgements.map(a => a.handbook_id));
 
-  const tasksCompleted = tasks.filter(t => completedTaskIds.has(t.id)).length;
+  // Calculate task completion (prioritize required tasks)
+  const requiredTasks = tasks.filter(t => t.is_required);
+  const optionalTasks = tasks.filter(t => !t.is_required);
+  
+  const requiredTasksCompleted = requiredTasks.filter(t => completedTaskIds.has(t.id)).length;
+  const optionalTasksCompleted = optionalTasks.filter(t => completedTaskIds.has(t.id)).length;
+  const tasksCompleted = requiredTasksCompleted + optionalTasksCompleted;
   const tasksTotal = tasks.length;
+
   const handbooksCompleted = handbooks.filter(h => acknowledgedHandbookIds.has(h.id)).length;
   const handbooksTotal = handbooks.length;
   const hasBusinessCard = !!businessCardData;
   const hasHeadshot = !!headshotData;
 
-  // Calculate percentages
-  const tasksProgress = tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 100;
+  // Calculate percentages - required tasks count fully, optional tasks are bonus
+  // If there are no required tasks, use all tasks for calculation
+  const requiredTasksTotal = requiredTasks.length;
+  const tasksProgress = requiredTasksTotal > 0 
+    ? (requiredTasksCompleted / requiredTasksTotal) * 100 
+    : (tasksTotal > 0 ? (tasksCompleted / tasksTotal) * 100 : 100);
+    
   const handbooksProgress = handbooksTotal > 0 ? (handbooksCompleted / handbooksTotal) * 100 : 100;
   const businessCardProgress = hasBusinessCard ? 100 : 0;
   const headshotProgress = hasHeadshot ? 100 : 0;
