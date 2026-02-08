@@ -211,12 +211,31 @@ export default function ScheduleMeeting() {
     <DashboardLayout>
       <PlatformPageContainer>
         <div className="space-y-8">
-          {/* Header */}
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl">Meetings & Accountability</h1>
-            <p className="text-muted-foreground mt-1">
-              Schedule 1:1 meetings, track commitments, and manage meeting requests.
-            </p>
+          {/* Header with Quick Actions */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+            <div>
+              <h1 className="font-display text-3xl lg:text-4xl">Meetings & Accountability</h1>
+              <p className="text-muted-foreground mt-1">
+                Schedule 1:1 meetings, track commitments, and manage meeting requests.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3 sm:shrink-0">
+              <Link to="/dashboard/schedule-meeting/new">
+                <Button className="gap-2">
+                  <CalendarPlus className="w-4 h-4" />
+                  Schedule Meeting
+                </Button>
+              </Link>
+              <Link to="/dashboard/schedule-meeting/inbox">
+                <Button variant="outline" className="gap-2">
+                  <MessageSquareMore className="w-4 h-4" />
+                  Meeting Inbox
+                  {stats.inboxPending > 0 && (
+                    <Badge variant="secondary" className="ml-1">{stats.inboxPending}</Badge>
+                  )}
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Stats Overview */}
@@ -396,24 +415,6 @@ export default function ScheduleMeeting() {
             </div>
           )}
 
-          {/* Quick Actions */}
-          <div className="flex flex-wrap gap-3">
-            <Link to="/dashboard/schedule-meeting/new">
-              <Button className="gap-2">
-                <CalendarPlus className="w-4 h-4" />
-                Schedule Meeting
-              </Button>
-            </Link>
-            <Link to="/dashboard/schedule-meeting/inbox">
-              <Button variant="outline" className="gap-2">
-                <MessageSquareMore className="w-4 h-4" />
-                Meeting Inbox
-                {stats.inboxPending > 0 && (
-                  <Badge variant="secondary" className="ml-1">{stats.inboxPending}</Badge>
-                )}
-              </Button>
-            </Link>
-          </div>
         </div>
       </PlatformPageContainer>
     </DashboardLayout>
