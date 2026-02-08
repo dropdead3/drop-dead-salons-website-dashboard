@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Search, Filter, Blocks, Info } from 'lucide-react';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +24,7 @@ interface ModulesTabProps {
 export function ModulesTab({ canManage }: ModulesTabProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterState, setFilterState] = useState<FilterState>('all');
+  const { effectiveOrganization } = useOrganizationContext();
 
   const {
     features,
@@ -142,6 +144,20 @@ export function ModulesTab({ canManage }: ModulesTabProps) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Platform user info banner */}
+      {!effectiveOrganization && (
+        <Card className="border-warning/30 bg-warning/5">
+          <CardContent className="pt-4 pb-3">
+            <div className="flex items-center gap-2 text-warning-foreground">
+              <Info className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                Viewing catalog defaults. Select an organization to see org-specific settings.
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Module Categories */}
       {isLoading ? (
