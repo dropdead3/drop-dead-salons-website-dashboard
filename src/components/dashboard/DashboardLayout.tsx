@@ -145,7 +145,7 @@ const housekeepingNavItems: NavItem[] = [
 
 // Growth & Development section
 const growthNavItems: NavItem[] = [
-  { href: '/dashboard/training', label: 'Training', icon: Video, permission: 'view_training', roles: ['super_admin', 'admin', 'manager', 'stylist', 'stylist_assistant'] },
+  { href: '/dashboard/training', label: 'Training', icon: Video, permission: 'view_training', roles: ['admin', 'manager', 'stylist', 'stylist_assistant'] },
   { href: '/dashboard/program', label: 'New-Client Engine Program', icon: Target, permission: 'access_client_engine', roles: ['stylist', 'stylist_assistant'] },
   { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, permission: 'ring_the_bell', roles: ['stylist', 'stylist_assistant'] },
   { href: '/dashboard/my-graduation', label: 'My Graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist_assistant'] },
