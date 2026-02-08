@@ -21,7 +21,7 @@ export default function FeedbackHub() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
