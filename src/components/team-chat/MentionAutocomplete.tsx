@@ -48,8 +48,7 @@ export function MentionAutocomplete({ query, position, onSelect, onClose }: Ment
   return (
     <div
       ref={containerRef}
-      className="absolute z-50 bg-popover border rounded-md shadow-md overflow-hidden"
-      style={{ top: position.top, left: position.left }}
+      className="absolute bottom-full left-0 mb-2 z-50 bg-popover border rounded-md shadow-lg overflow-hidden min-w-[200px]"
     >
       {isLoading ? (
         <div className="px-3 py-2 text-sm text-muted-foreground">Loading...</div>
