@@ -10,6 +10,7 @@ import {
   Lock,
   Users,
   Settings2,
+  UserPlus,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ModulesTab } from '@/components/access-hub/ModulesTab';
@@ -17,8 +18,9 @@ import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
 import { RoleAccessTab } from '@/components/access-hub/RoleAccessTab';
 import { PermissionsTab } from '@/components/access-hub/PermissionsTab';
 import { RoleConfigTab } from '@/components/access-hub/RoleConfigTab';
+import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
 
-type TabValue = 'modules' | 'user-roles' | 'role-access' | 'permissions' | 'role-config';
+type TabValue = 'modules' | 'user-roles' | 'role-access' | 'permissions' | 'role-config' | 'invitations';
 
 export default function AccessHub() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -31,7 +33,7 @@ export default function AccessHub() {
 
   // Sync tab with URL
   useEffect(() => {
-    if (tabParam && ['modules', 'user-roles', 'role-access', 'permissions', 'role-config'].includes(tabParam)) {
+    if (tabParam && ['modules', 'user-roles', 'role-access', 'permissions', 'role-config', 'invitations'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
@@ -68,7 +70,7 @@ export default function AccessHub() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
             <TabsTrigger value="modules" className="gap-2">
               <Blocks className="h-4 w-4" />
               <span className="hidden sm:inline">Modules</span>
@@ -88,6 +90,10 @@ export default function AccessHub() {
             <TabsTrigger value="role-config" className="gap-2">
               <Settings2 className="h-4 w-4" />
               <span className="hidden sm:inline">Role Config</span>
+            </TabsTrigger>
+            <TabsTrigger value="invitations" className="gap-2">
+              <UserPlus className="h-4 w-4" />
+              <span className="hidden sm:inline">Invitations</span>
             </TabsTrigger>
           </TabsList>
 
@@ -109,6 +115,10 @@ export default function AccessHub() {
 
           <TabsContent value="role-config" className="mt-0">
             <RoleConfigTab canManage={canManage} />
+          </TabsContent>
+
+          <TabsContent value="invitations" className="mt-0">
+            <InvitationsTab canManage={canManage} />
           </TabsContent>
         </Tabs>
       </div>
