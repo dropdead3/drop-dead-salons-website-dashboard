@@ -106,7 +106,7 @@ export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete
         )}
 
         {/* Reply count */}
-        {message.reply_count && message.reply_count > 0 && (
+        {message.reply_count > 0 && (
           <button
             onClick={onReply}
             className="flex items-center gap-1 mt-1 text-xs text-primary hover:underline"
