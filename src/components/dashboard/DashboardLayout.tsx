@@ -1076,13 +1076,13 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       <main className={cn(
         "transition-[padding-left] duration-200 ease-in-out",
         sidebarCollapsed ? "lg:pl-16" : "lg:pl-72",
-        hideFooter ? "flex-1 min-h-0 overflow-hidden" : ""
+        hideFooter ? "flex-1 min-h-0 overflow-hidden h-full" : ""
       )}>
         <div className={cn(
           hideFooter ? "h-full flex flex-col" : "min-h-screen flex flex-col",
           isAdmin && "lg:pt-0"
         )}>
-          <div className={cn("flex-1", hideFooter && "min-h-0 overflow-hidden")}>
+          <div className={cn("flex-1", hideFooter && "min-h-0 overflow-hidden h-full")}>
             {children}
           </div>
           {/* Dashboard Footer - hidden for full-screen pages */}
