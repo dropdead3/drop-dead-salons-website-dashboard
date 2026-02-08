@@ -34,7 +34,6 @@ interface SidebarNavContentProps {
   mainNavItems: NavItem[];
   growthNavItems: NavItem[];
   statsNavItems: NavItem[];
-  teamToolsNavItems: NavItem[];
   housekeepingNavItems: NavItem[];
   managerNavItems: NavItem[];
   websiteNavItems: NavItem[];
@@ -60,7 +59,6 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     mainNavItems,
     growthNavItems,
     statsNavItems,
-    teamToolsNavItems,
     housekeepingNavItems,
     managerNavItems,
     websiteNavItems,
@@ -90,13 +88,12 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     main: mainNavItems,
     growth: growthNavItems,
     stats: statsNavItems,
-    teamTools: teamToolsNavItems,
     housekeeping: housekeepingNavItems,
     manager: managerNavItems,
     website: websiteNavItems,
     adminOnly: adminOnlyNavItems,
     platform: platformNavItems,
-  }), [mainNavItems, growthNavItems, statsNavItems, teamToolsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, platformNavItems]);
+  }), [mainNavItems, growthNavItems, statsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, platformNavItems]);
 
   // Create a map of all nav items by href (for custom sections that can contain any link)
   const allNavItemsByHref = useMemo(() => {
@@ -104,7 +101,6 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       ...mainNavItems,
       ...growthNavItems,
       ...statsNavItems,
-      ...teamToolsNavItems,
       ...housekeepingNavItems,
       ...managerNavItems,
       ...websiteNavItems,
@@ -116,7 +112,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       map[item.href] = item;
     });
     return map;
-  }, [mainNavItems, growthNavItems, statsNavItems, teamToolsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, platformNavItems]);
+  }, [mainNavItems, growthNavItems, statsNavItems, housekeepingNavItems, managerNavItems, websiteNavItems, adminOnlyNavItems, platformNavItems]);
 
   // Apply custom link ordering to nav items
   const getOrderedItems = (sectionId: string, items: NavItem[]): NavItem[] => {

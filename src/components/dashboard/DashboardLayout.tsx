@@ -158,8 +158,7 @@ const statsNavItems: NavItem[] = [
   { href: '/dashboard/my-pay', label: 'My Pay', icon: Wallet, permission: 'view_my_pay' },
 ];
 
-// Team Tools section - now consolidated into Management section
-const teamToolsNavItems: NavItem[] = [];
+// Team Tools items are now consolidated into managerNavItems (Management section)
 
 // Management section - consolidated with collapsible sub-groups
 // These are the flat items used for permission checking; UI groups them via CollapsibleNavGroup
@@ -367,26 +366,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
   const isStylistAssistantRole = roles.includes('stylist_assistant') || roles.includes('assistant');
   const isAdminOrManager = roles.includes('admin') || roles.includes('manager') || roles.includes('super_admin');
   
-  // Transform teamToolsNavItems - dynamic label for assistant schedule based on role
-  const effectiveTeamToolsNavItems: NavItem[] = teamToolsNavItems
-    .filter(item => {
-      // Admins/managers see assistant requests in their admin section instead
-      if (item.href === '/dashboard/assistant-schedule' && isAdminOrManager) {
-        return false;
-      }
-      return true;
-    })
-    .map(item => {
-      if (item.href === '/dashboard/assistant-schedule') {
-        const label = isStylistRole 
-          ? 'Request An Assistant' 
-          : isStylistAssistantRole 
-            ? 'Assisting Requests' 
-            : 'Assistant Schedule';
-        return { ...item, label };
-      }
-      return item;
-    });
+  // Team Tools items are now in managerNavItems (Management section) - no separate transformation needed
 
   // Get the user's primary access level for display
   const getAccessLabel = () => {
@@ -798,7 +778,6 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
           mainNavItems={mainNavItems}
           growthNavItems={growthNavItems}
           statsNavItems={statsNavItems}
-          teamToolsNavItems={effectiveTeamToolsNavItems}
           housekeepingNavItems={housekeepingNavItems}
           managerNavItems={managerNavItems}
           websiteNavItems={websiteNavItems}
@@ -831,7 +810,6 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
               mainNavItems={mainNavItems}
               growthNavItems={growthNavItems}
               statsNavItems={statsNavItems}
-              teamToolsNavItems={effectiveTeamToolsNavItems}
               housekeepingNavItems={housekeepingNavItems}
               managerNavItems={managerNavItems}
               websiteNavItems={websiteNavItems}

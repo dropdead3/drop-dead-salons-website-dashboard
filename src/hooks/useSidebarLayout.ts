@@ -18,7 +18,6 @@ export const SECTION_LABELS: Record<string, string> = {
   main: 'Main',
   growth: 'Growth & Development',
   stats: 'My Performance',
-  teamTools: 'Team Tools',
   manager: 'Management',
   adminOnly: 'Admin',
   platform: 'Platform Admin',
