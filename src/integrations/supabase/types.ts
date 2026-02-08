@@ -1613,6 +1613,13 @@ export type Database = {
             referencedRelation: "chat_channels"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "chat_channel_members_employee_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       chat_channels: {
