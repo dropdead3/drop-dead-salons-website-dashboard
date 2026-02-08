@@ -22,7 +22,7 @@ export default function TeamChat() {
   return (
     <DashboardLayout hideFooter>
       <PlatformPresenceProvider>
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="h-full overflow-hidden">
           <TeamChatContainer />
         </div>
       </PlatformPresenceProvider>
