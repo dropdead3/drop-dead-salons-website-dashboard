@@ -103,7 +103,7 @@ export function MessageItem({
         <div className="flex-1 min-w-0">
           {!isConsecutive && (
             <div className="flex items-baseline gap-2 mb-1.5">
-              <span className="font-semibold text-sm">{senderName}</span>
+              <span className="font-semibold text-base">{senderName}</span>
               <span className="text-xs text-muted-foreground">{timestamp}</span>
               {message.is_edited && (
                 <span className="text-xs text-muted-foreground">(edited)</span>
@@ -111,7 +111,7 @@ export function MessageItem({
             </div>
           )}
 
-          <div className="text-sm whitespace-pre-wrap break-words">{renderContentWithMentions(message.content)}</div>
+          <div className="text-base whitespace-pre-wrap break-words">{renderContentWithMentions(message.content)}</div>
 
           {/* Reactions */}
           {message.reactions && message.reactions.length > 0 && (

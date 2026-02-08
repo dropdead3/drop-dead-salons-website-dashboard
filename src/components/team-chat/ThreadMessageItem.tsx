@@ -133,14 +133,14 @@ export function ThreadMessageItem({
 
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 mb-0.5">
-            <span className="font-semibold text-sm">{senderName}</span>
-            <span className="text-[10px] text-muted-foreground">{timestamp}</span>
+            <span className="font-semibold text-base">{senderName}</span>
+            <span className="text-xs text-muted-foreground">{timestamp}</span>
             {message.is_edited && (
               <span className="text-[10px] text-muted-foreground">(edited)</span>
             )}
           </div>
 
-          <div className="text-sm whitespace-pre-wrap break-words">
+          <div className="text-base whitespace-pre-wrap break-words">
             {renderContent()}
           </div>
 
