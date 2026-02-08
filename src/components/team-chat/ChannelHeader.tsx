@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Hash, MapPin, Lock, Users, Settings, Menu, Pin, Search } from 'lucide-react';
+import { Hash, MapPin, Lock, Users, Settings, Menu, Pin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 import { usePlatformPresenceContext } from '@/contexts/PlatformPresenceContext';
@@ -7,7 +7,7 @@ import { usePinnedMessages } from '@/hooks/team-chat/usePinnedMessages';
 import { PinnedMessagesSheet } from './PinnedMessagesSheet';
 import { ChannelSettingsSheet } from './ChannelSettingsSheet';
 import { ChannelMembersSheet } from './ChannelMembersSheet';
-import { SearchDialog } from './SearchDialog';
+import { ExpandableSearch } from './ExpandableSearch';
 import { Badge } from '@/components/ui/badge';
 
 const channelTypeIcons: Record<string, typeof Hash> = {
@@ -26,7 +26,7 @@ export function ChannelHeader() {
   const [isPinnedOpen, setIsPinnedOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMembersOpen, setIsMembersOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSearchExpanded, setIsSearchExpanded] = useState(false);
 
   if (!activeChannel) {
     return (
@@ -43,7 +43,7 @@ export function ChannelHeader() {
 
   return (
     <>
-      <div className="h-14 border-b flex items-center justify-between px-4">
+      <div className="h-14 border-b flex items-center justify-between px-4 relative">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={toggleSidebar}>
             <Menu className="h-5 w-5" />
@@ -54,7 +54,7 @@ export function ChannelHeader() {
             <h1 className="font-semibold">{activeChannel.name}</h1>
           </div>
 
-          {activeChannel.description && (
+          {activeChannel.description && !isSearchExpanded && (
             <span className="hidden md:inline text-sm text-muted-foreground border-l pl-3 ml-1">
               {activeChannel.description}
             </span>
@@ -62,35 +62,40 @@ export function ChannelHeader() {
         </div>
 
         <div className="flex items-center gap-1">
-          <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground mr-2">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>{onlineCount} online</span>
-          </div>
+          {!isSearchExpanded && (
+            <>
+              <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground mr-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{onlineCount} online</span>
+              </div>
+            </>
+          )}
 
-          <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
-            <Search className="h-5 w-5" />
-          </Button>
+          <ExpandableSearch isExpanded={isSearchExpanded} onExpandedChange={setIsSearchExpanded} />
 
-          <Button variant="ghost" size="icon" className="relative" onClick={() => setIsPinnedOpen(true)}>
-            <Pin className="h-5 w-5" />
-            {pinnedCount > 0 && (
-              <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]">
-                {pinnedCount}
-              </Badge>
-            )}
-          </Button>
+          {!isSearchExpanded && (
+            <>
+              <Button variant="ghost" size="icon" className="relative" onClick={() => setIsPinnedOpen(true)}>
+                <Pin className="h-5 w-5" />
+                {pinnedCount > 0 && (
+                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]">
+                    {pinnedCount}
+                  </Badge>
+                )}
+              </Button>
 
-          <Button variant="ghost" size="icon" onClick={() => setIsMembersOpen(true)}>
-            <Users className="h-5 w-5" />
-          </Button>
+              <Button variant="ghost" size="icon" onClick={() => setIsMembersOpen(true)}>
+                <Users className="h-5 w-5" />
+              </Button>
 
-          <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)}>
-            <Settings className="h-5 w-5" />
-          </Button>
+              <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)}>
+                <Settings className="h-5 w-5" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
-      <SearchDialog open={isSearchOpen} onOpenChange={setIsSearchOpen} />
       <PinnedMessagesSheet open={isPinnedOpen} onOpenChange={setIsPinnedOpen} />
       <ChannelSettingsSheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
       <ChannelMembersSheet open={isMembersOpen} onOpenChange={setIsMembersOpen} />
