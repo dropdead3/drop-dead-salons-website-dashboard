@@ -48,7 +48,7 @@ export function MentionAutocomplete({ query, position, onSelect, onClose }: Ment
   return (
     <div
       ref={containerRef}
-      className="absolute bottom-full left-0 mb-2 z-50 bg-popover border rounded-md shadow-lg overflow-hidden min-w-[200px]"
+      className="absolute bottom-full left-0 mb-2 z-50 bg-popover text-popover-foreground border rounded-md shadow-lg overflow-hidden min-w-[200px]"
     >
       {isLoading ? (
         <div className="px-3 py-2 text-sm text-muted-foreground">Loading...</div>
@@ -64,8 +64,8 @@ export function MentionAutocomplete({ query, position, onSelect, onClose }: Ment
                 onClick={() => onSelect(member.userId, name)}
                 className={cn(
                   'w-full flex items-center gap-2 px-3 py-2 text-left',
-                  'hover:bg-accent transition-colors',
-                  index === selectedIndex && 'bg-accent'
+                  'hover:bg-accent hover:text-accent-foreground transition-colors',
+                  index === selectedIndex && 'bg-accent text-accent-foreground'
                 )}
               >
                 <Avatar className="h-6 w-6">
