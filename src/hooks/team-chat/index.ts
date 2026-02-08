@@ -7,3 +7,4 @@ export * from './useSmartActions';
 export * from './useTeamChatAccess';
 export * from './useAIAgentChat';
 export * from './useChannelDisplayName';
+export * from './useWelcomeDMRules';

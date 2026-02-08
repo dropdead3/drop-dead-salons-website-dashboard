@@ -17,6 +17,7 @@ import { DisplaySettingsTab } from './settings/DisplaySettingsTab';
 import { MessagingPermissionsTab } from './settings/MessagingPermissionsTab';
 import { AutoJoinRulesTab } from './settings/AutoJoinRulesTab';
 import { SmartActionsSettingsTab } from './settings/SmartActionsSettingsTab';
+import { WelcomeDMsTab } from './settings/WelcomeDMsTab';
 import { TeamMembersTab } from './settings/TeamMembersTab';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -50,11 +51,12 @@ export function TeamChatAdminSettingsSheet({ open, onOpenChange }: TeamChatAdmin
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
               <TabsTrigger value="channels">Channels</TabsTrigger>
               <TabsTrigger value="display">Display</TabsTrigger>
               <TabsTrigger value="permissions">Perms</TabsTrigger>
-              <TabsTrigger value="auto-join">Auto-Join</TabsTrigger>
+              <TabsTrigger value="auto-join">Auto</TabsTrigger>
+              <TabsTrigger value="welcome">Welcome</TabsTrigger>
               <TabsTrigger value="smart-actions">AI</TabsTrigger>
               <TabsTrigger value="team">Team</TabsTrigger>
             </TabsList>
@@ -74,6 +76,10 @@ export function TeamChatAdminSettingsSheet({ open, onOpenChange }: TeamChatAdmin
 
               <TabsContent value="auto-join" className="mt-0">
                 <AutoJoinRulesTab />
+              </TabsContent>
+
+              <TabsContent value="welcome" className="mt-0">
+                <WelcomeDMsTab settings={settings} onUpdate={updateSettings} />
               </TabsContent>
 
               <TabsContent value="smart-actions" className="mt-0">

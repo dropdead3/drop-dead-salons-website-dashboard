@@ -27,6 +27,8 @@ export interface TeamChatSettings {
   // Notification defaults
   default_notification_setting: 'all' | 'mentions' | 'nothing';
   allow_dnd_override: boolean;
+  // Welcome DMs
+  welcome_dms_enabled: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -51,6 +53,7 @@ const DEFAULT_SETTINGS: Omit<TeamChatSettings, 'id' | 'organization_id' | 'creat
   max_file_size_mb: 25,
   default_notification_setting: 'all',
   allow_dnd_override: false,
+  welcome_dms_enabled: false,
 };
 
 export function useTeamChatSettings() {
