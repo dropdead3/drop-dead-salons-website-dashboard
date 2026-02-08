@@ -77,6 +77,14 @@ import {
   Wallet,
   ArrowLeftRight,
   Gift,
+  Sparkles,
+  HelpCircle,
+  LayoutGrid,
+  TrendingUp,
+  Store,
+  Terminal,
+  Building2,
+  Upload,
 } from 'lucide-react';
 import {
   useSidebarLayout,
@@ -95,24 +103,62 @@ import { SidebarPreview } from './SidebarPreview';
 
 // Map hrefs to their labels and icons
 const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
+  // Main
   '/dashboard': { label: 'Command Center', icon: LayoutDashboard },
   '/dashboard/schedule': { label: 'Schedule', icon: CalendarDays },
-  '/dashboard/directory': { label: 'Team Directory', icon: Contact },
+  
+  // Growth
   '/dashboard/training': { label: 'Training', icon: Video },
   '/dashboard/program': { label: 'New-Client Engine Program', icon: Target },
   '/dashboard/admin/team': { label: 'Program Team Overview', icon: Users },
   '/dashboard/ring-the-bell': { label: 'Ring the Bell', icon: Bell },
   '/dashboard/my-graduation': { label: 'My Graduation', icon: GraduationCap },
+  
+  // Stats
   '/dashboard/stats': { label: 'Stats', icon: BarChart3 },
   '/dashboard/leaderboard': { label: 'Team Leaderboard', icon: Trophy },
-  '/dashboard/my-clients': { label: 'My Clients', icon: Users },
   '/dashboard/my-pay': { label: 'My Pay', icon: Wallet },
-  '/dashboard/admin/sales': { label: 'Sales Dashboard', icon: DollarSign },
-  '/dashboard/admin/operational-analytics': { label: 'Operational Analytics', icon: BarChart3 },
+  
+  // Team Tools
+  '/dashboard/shift-swaps': { label: 'Shift Swaps', icon: ArrowLeftRight },
+  '/dashboard/rewards': { label: 'Rewards', icon: Gift },
   '/dashboard/assistant-schedule': { label: 'Assistant Schedule', icon: Users },
   '/dashboard/schedule-meeting': { label: 'Meetings & Accountability', icon: CalendarClock },
+  
+  // Housekeeping
   '/dashboard/onboarding': { label: 'Onboarding', icon: Users },
   '/dashboard/handbooks': { label: 'Handbooks', icon: FileText },
+  '/dashboard/changelog': { label: "What's New", icon: Sparkles },
+  '/dashboard/help': { label: 'Help Center', icon: HelpCircle },
+  
+  // Management
+  '/dashboard/admin/management': { label: 'Management Hub', icon: LayoutGrid },
+  '/dashboard/admin/analytics': { label: 'Analytics Hub', icon: TrendingUp },
+  '/dashboard/directory': { label: 'Team Directory', icon: Contact },
+  '/dashboard/clients': { label: 'Client Directory', icon: Users },
+  '/dashboard/admin/payroll': { label: 'Payroll Hub', icon: DollarSign },
+  '/dashboard/admin/booth-renters': { label: 'Renter Hub', icon: Store },
+  
+  // Website
+  '/dashboard/admin/website-sections': { label: 'Website Editor', icon: LayoutGrid },
+  
+  // Super Admin
+  '/dashboard/admin/accounts': { label: 'Invitations & Approvals', icon: UserPlus },
+  '/dashboard/admin/roles': { label: 'Manage Users & Roles', icon: Shield },
+  '/dashboard/admin/settings': { label: 'Settings', icon: Settings },
+  
+  // Platform
+  '/dashboard/platform/overview': { label: 'Platform Overview', icon: Terminal },
+  '/dashboard/platform/accounts': { label: 'Accounts', icon: Building2 },
+  '/dashboard/platform/import': { label: 'Migrations', icon: Upload },
+  '/dashboard/platform/revenue': { label: 'Revenue', icon: DollarSign },
+  '/dashboard/platform/permissions': { label: 'Permissions', icon: Shield },
+  '/dashboard/platform/settings': { label: 'Platform Settings', icon: Settings },
+  
+  // Legacy routes (kept for backward compatibility with saved layouts)
+  '/dashboard/my-clients': { label: 'My Clients', icon: Users },
+  '/dashboard/admin/sales': { label: 'Sales Dashboard', icon: DollarSign },
+  '/dashboard/admin/operational-analytics': { label: 'Operational Analytics', icon: BarChart3 },
   '/dashboard/admin/birthdays': { label: 'Birthdays & Anniversaries', icon: Cake },
   '/dashboard/admin/onboarding-tracker': { label: 'Onboarding Hub', icon: Layers },
   '/dashboard/admin/client-engine-tracker': { label: 'Client Engine Tracker', icon: Target },
@@ -128,12 +174,7 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   '/dashboard/admin/gallery': { label: 'Gallery', icon: Images },
   '/dashboard/admin/services': { label: 'Services', icon: Scissors },
   '/dashboard/admin/locations': { label: 'Locations', icon: MapPin },
-  '/dashboard/admin/accounts': { label: 'Invitations & Approvals', icon: UserPlus },
-  '/dashboard/admin/roles': { label: 'Manage Users & Roles', icon: Shield },
-  '/dashboard/admin/settings': { label: 'Settings', icon: Settings },
-  '/dashboard/shift-swaps': { label: 'Shift Swaps', icon: ArrowLeftRight },
   '/dashboard/admin/challenges': { label: 'Team Challenges', icon: Trophy },
-  '/dashboard/rewards': { label: 'Rewards', icon: Gift },
 };
 
 // Sortable Link Component with cross-section drag support
