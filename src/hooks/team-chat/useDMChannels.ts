@@ -32,6 +32,13 @@ export function useDMChannels() {
       });
 
       if (existingDM) {
+        // Unhide the channel for the current user if it was archived
+        await supabase
+          .from('chat_channel_members')
+          .update({ is_hidden: false })
+          .eq('channel_id', existingDM.id)
+          .eq('user_id', user.id);
+          
         return existingDM;
       }
 

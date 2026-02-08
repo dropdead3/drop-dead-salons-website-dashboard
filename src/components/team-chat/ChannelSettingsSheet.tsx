@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Settings, Trash2, Archive, Hash, MapPin, Lock, MessageCircle } from 'lucide-react';
+import { Settings, Trash2, Archive, Hash, MapPin, Lock, MessageCircle, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -97,6 +97,30 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
     },
   });
 
+  // Hide DM conversation (per-user archive)
+  const hideDMMutation = useMutation({
+    mutationFn: async () => {
+      if (!activeChannel?.id || !user?.id) throw new Error('No channel');
+
+      const { error } = await supabase
+        .from('chat_channel_members')
+        .update({ is_hidden: true })
+        .eq('channel_id', activeChannel.id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chat-channels'] });
+      setActiveChannel(null);
+      toast.success('Conversation archived. It will reappear if either of you sends a message.');
+      onOpenChange(false);
+    },
+    onError: () => {
+      toast.error('Failed to archive conversation');
+    },
+  });
+
   if (!activeChannel) return null;
 
   const isDM = activeChannel.type === 'dm';
@@ -161,6 +185,31 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
         </div>
 
         <SheetFooter className="flex-col gap-2">
+          {isDM && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <EyeOff className="h-4 w-4 mr-2" />
+                  Archive Conversation
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Archive this conversation?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will hide the conversation from your sidebar. It will automatically reappear if either of you sends a new message. You can also find it via search.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => hideDMMutation.mutate()}>
+                    Archive
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+          
           {canEdit && (
             <>
               <Button

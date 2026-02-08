@@ -1638,6 +1638,7 @@ export type Database = {
         Row: {
           channel_id: string
           id: string
+          is_hidden: boolean | null
           is_muted: boolean | null
           joined_at: string | null
           last_read_at: string | null
@@ -1649,6 +1650,7 @@ export type Database = {
         Insert: {
           channel_id: string
           id?: string
+          is_hidden?: boolean | null
           is_muted?: boolean | null
           joined_at?: string | null
           last_read_at?: string | null
@@ -1660,6 +1662,7 @@ export type Database = {
         Update: {
           channel_id?: string
           id?: string
+          is_hidden?: boolean | null
           is_muted?: boolean | null
           joined_at?: string | null
           last_read_at?: string | null
