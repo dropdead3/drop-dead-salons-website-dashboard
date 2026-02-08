@@ -22,8 +22,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 import { useChannelMembers } from '@/hooks/team-chat/useChannelMembers';
+import { useChannelMessageCount } from '@/hooks/team-chat/useChannelMessageCount';
+import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -39,6 +46,8 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
   const { isOwner, isAdmin, members } = useChannelMembers(activeChannel?.id || null);
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { data: isPrimaryOwner } = useIsPrimaryOwner();
+  const { data: messageCount = 0 } = useChannelMessageCount(activeChannel?.id || null);
 
   // For DM channels, find the other person's name
   const dmPartnerName = useMemo(() => {
@@ -118,6 +127,36 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
     },
     onError: () => {
       toast.error('Failed to archive conversation');
+    },
+  });
+
+  // Delete channel permanently (primary owner only, empty channels only)
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!activeChannel?.id) throw new Error('No channel');
+
+      // First delete channel members
+      await supabase
+        .from('chat_channel_members')
+        .delete()
+        .eq('channel_id', activeChannel.id);
+
+      // Then delete the channel
+      const { error } = await supabase
+        .from('chat_channels')
+        .delete()
+        .eq('id', activeChannel.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chat-channels'] });
+      setActiveChannel(null);
+      toast.success('Channel deleted permanently');
+      onOpenChange(false);
+    },
+    onError: () => {
+      toast.error('Failed to delete channel');
     },
   });
 
@@ -243,6 +282,54 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
                 </AlertDialogContent>
               </AlertDialog>
             </>
+          )}
+
+          {isPrimaryOwner && !isDM && !activeChannel.is_system && (
+            messageCount === 0 ? (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="destructive" 
+                    className="w-full"
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Channel
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete this channel permanently?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. The channel and all its settings will be permanently removed.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={() => deleteMutation.mutate()}
+                      className="bg-destructive hover:bg-destructive/90"
+                    >
+                      Delete Permanently
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="w-full">
+                    <Button variant="outline" className="w-full" disabled>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Channel
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  This channel has message history and can only be archived
+                </TooltipContent>
+              </Tooltip>
+            )
           )}
         </SheetFooter>
       </SheetContent>
