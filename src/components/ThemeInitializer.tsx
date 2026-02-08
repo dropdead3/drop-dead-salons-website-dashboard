@@ -9,6 +9,11 @@ import { supabase } from '@/integrations/supabase/client';
 export function ThemeInitializer() {
   useEffect(() => {
     const loadCustomTheme = async () => {
+      // Skip theme customization on public routes - only apply on dashboard
+      if (!window.location.pathname.startsWith('/dashboard')) {
+        return;
+      }
+      
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
