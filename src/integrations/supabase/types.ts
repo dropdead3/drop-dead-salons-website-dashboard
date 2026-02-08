@@ -925,6 +925,50 @@ export type Database = {
           },
         ]
       }
+      booking_patterns: {
+        Row: {
+          analyzed_at: string | null
+          avg_bookings: number | null
+          day_of_week: number | null
+          hour_of_day: number | null
+          id: string
+          location_id: string | null
+          organization_id: string | null
+          peak_score: number | null
+          total_samples: number | null
+        }
+        Insert: {
+          analyzed_at?: string | null
+          avg_bookings?: number | null
+          day_of_week?: number | null
+          hour_of_day?: number | null
+          id?: string
+          location_id?: string | null
+          organization_id?: string | null
+          peak_score?: number | null
+          total_samples?: number | null
+        }
+        Update: {
+          analyzed_at?: string | null
+          avg_bookings?: number | null
+          day_of_week?: number | null
+          hour_of_day?: number | null
+          id?: string
+          location_id?: string | null
+          organization_id?: string | null
+          peak_score?: number | null
+          total_samples?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_patterns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booth_rental_contracts: {
         Row: {
           additional_terms: Json | null
@@ -2128,6 +2172,113 @@ export type Database = {
           },
         ]
       }
+      client_automation_log: {
+        Row: {
+          channel: string | null
+          client_id: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          organization_id: string | null
+          phorest_client_id: string | null
+          rule_id: string | null
+          sent_at: string | null
+          status: string | null
+        }
+        Insert: {
+          channel?: string | null
+          client_id?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          phorest_client_id?: string | null
+          rule_id?: string | null
+          sent_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          channel?: string | null
+          client_id?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string | null
+          phorest_client_id?: string | null
+          rule_id?: string | null
+          sent_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_automation_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_automation_log_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "client_automation_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_automation_rules: {
+        Row: {
+          conditions: Json | null
+          created_at: string | null
+          email_template_id: string | null
+          id: string
+          is_active: boolean | null
+          organization_id: string | null
+          priority: number | null
+          rule_name: string
+          rule_type: string
+          sms_template_id: string | null
+          trigger_days: number
+          updated_at: string | null
+        }
+        Insert: {
+          conditions?: Json | null
+          created_at?: string | null
+          email_template_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          priority?: number | null
+          rule_name: string
+          rule_type: string
+          sms_template_id?: string | null
+          trigger_days: number
+          updated_at?: string | null
+        }
+        Update: {
+          conditions?: Json | null
+          created_at?: string | null
+          email_template_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          organization_id?: string | null
+          priority?: number | null
+          rule_name?: string
+          rule_type?: string
+          sms_template_id?: string | null
+          trigger_days?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_automation_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_balances: {
         Row: {
           client_id: string
@@ -3184,6 +3335,68 @@ export type Database = {
             columns: ["location_id"]
             isOneToOne: false
             referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      detected_anomalies: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          anomaly_type: string
+          context: Json | null
+          detected_at: string | null
+          deviation_percent: number | null
+          expected_value: number | null
+          id: string
+          is_acknowledged: boolean | null
+          location_id: string | null
+          metric_value: number | null
+          organization_id: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          severity: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          anomaly_type: string
+          context?: Json | null
+          detected_at?: string | null
+          deviation_percent?: number | null
+          expected_value?: number | null
+          id?: string
+          is_acknowledged?: boolean | null
+          location_id?: string | null
+          metric_value?: number | null
+          organization_id?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          severity: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          anomaly_type?: string
+          context?: Json | null
+          detected_at?: string | null
+          deviation_percent?: number | null
+          expected_value?: number | null
+          id?: string
+          is_acknowledged?: boolean | null
+          location_id?: string | null
+          metric_value?: number | null
+          organization_id?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          severity?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "detected_anomalies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -9669,6 +9882,62 @@ export type Database = {
           },
         ]
       }
+      revenue_forecasts: {
+        Row: {
+          accuracy_score: number | null
+          actual_revenue: number | null
+          confidence_level: string | null
+          created_at: string | null
+          factors: Json | null
+          forecast_date: string
+          forecast_type: string
+          id: string
+          location_id: string | null
+          organization_id: string | null
+          predicted_products: number | null
+          predicted_revenue: number
+          predicted_services: number | null
+        }
+        Insert: {
+          accuracy_score?: number | null
+          actual_revenue?: number | null
+          confidence_level?: string | null
+          created_at?: string | null
+          factors?: Json | null
+          forecast_date: string
+          forecast_type: string
+          id?: string
+          location_id?: string | null
+          organization_id?: string | null
+          predicted_products?: number | null
+          predicted_revenue: number
+          predicted_services?: number | null
+        }
+        Update: {
+          accuracy_score?: number | null
+          actual_revenue?: number | null
+          confidence_level?: string | null
+          created_at?: string | null
+          factors?: Json | null
+          forecast_date?: string
+          forecast_type?: string
+          id?: string
+          location_id?: string | null
+          organization_id?: string | null
+          predicted_products?: number | null
+          predicted_revenue?: number
+          predicted_services?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "revenue_forecasts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reward_redemptions: {
         Row: {
           created_at: string | null
@@ -10202,6 +10471,59 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "booth_rental_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduling_suggestions: {
+        Row: {
+          confidence_score: number | null
+          context: Json | null
+          created_at: string | null
+          id: string
+          location_id: string | null
+          organization_id: string | null
+          service_duration_minutes: number | null
+          staff_user_id: string
+          suggested_date: string
+          suggested_time: string
+          suggestion_type: string
+          was_accepted: boolean | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          location_id?: string | null
+          organization_id?: string | null
+          service_duration_minutes?: number | null
+          staff_user_id: string
+          suggested_date: string
+          suggested_time: string
+          suggestion_type: string
+          was_accepted?: boolean | null
+        }
+        Update: {
+          confidence_score?: number | null
+          context?: Json | null
+          created_at?: string | null
+          id?: string
+          location_id?: string | null
+          organization_id?: string | null
+          service_duration_minutes?: number | null
+          staff_user_id?: string
+          suggested_date?: string
+          suggested_time?: string
+          suggestion_type?: string
+          was_accepted?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduling_suggestions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]

@@ -146,3 +146,15 @@ verify_jwt = false
 
 [functions.demo-assistant]
 verify_jwt = false
+
+[functions.ai-scheduling-copilot]
+verify_jwt = false
+
+[functions.revenue-forecasting]
+verify_jwt = false
+
+[functions.process-client-automations]
+verify_jwt = false
+
+[functions.detect-anomalies]
+verify_jwt = false
