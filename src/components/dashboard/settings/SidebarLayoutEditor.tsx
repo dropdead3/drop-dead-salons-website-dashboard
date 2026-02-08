@@ -142,8 +142,8 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   // Website
   '/dashboard/admin/website-sections': { label: 'Website Editor', icon: LayoutGrid },
   
-  // Super Admin
-  '/dashboard/admin/access-hub': { label: 'Access Hub', icon: Shield },
+  // Access & Permissions
+  '/dashboard/admin/access-hub': { label: 'Access & Permissions Hub', icon: Shield },
   '/dashboard/admin/settings': { label: 'Settings', icon: Settings },
   
   // Platform
