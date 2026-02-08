@@ -1,157 +1,241 @@
 
 
-# Consolidate "Manage Users & Roles" into Access Hub
+# Add Quick Access Hubs Customization
 
 ## Overview
 
-Merge the "Manage Users & Roles" page into the Access Hub to create a single, unified destination for all access control administration. This eliminates confusion from duplicate Permissions tabs and creates a cleaner navigation structure.
+Enable users to customize which Quick Access Hubs appear on their dashboard and in what order, all from within the existing "Customize Dashboard" drawer.
 
 ---
 
-## New Access Hub Structure (6 Tabs)
+## Current State
 
-| Tab | Icon | Description | Source |
-|-----|------|-------------|--------|
-| Modules | Blocks | Organization feature toggles | Existing |
-| User Roles | Users | Assign roles to team members | ManageRoles.tsx (Users tab) |
-| Role Access | Eye | UI visibility per role | Existing |
-| Permissions | Lock | Action-based permissions | Existing (consolidates duplicate) |
-| Role Config | Settings2 | Role CRUD, templates, defaults | ManageRoles.tsx (Manage, Templates, Defaults tabs) |
-| Platform | Flag | Platform user management | Existing |
+- The `HubQuickLinks` component displays a hardcoded list of 9 hub shortcuts
+- The entire "Quick Access Hubs" section can be toggled on/off as a dashboard section
+- Users cannot:
+  - Hide individual hubs they don't need
+  - Reorder hubs to prioritize their favorites
 
 ---
 
-## Implementation Steps
+## Solution
 
-### Step 1: Create UserRolesTab Component
-
-**New file:** `src/components/access-hub/UserRolesTab.tsx`
-
-Extract the "User Roles" tab content from ManageRoles.tsx (~lines 240-513), including:
-- Role statistics overview cards
-- User search functionality
-- User cards with role toggles
-- Super Admin confirmation dialog
-- Role history panel per user
-
-This component will use the existing hooks:
-- `useAllUsersWithRoles`
-- `useToggleUserRole`
-- `useCanApproveAdmin`
-- `useAccountApprovals`
-- `useToggleSuperAdmin`
+Add a new **"Quick Access Hubs"** section to the Customize Dashboard drawer that allows:
+- **Drag-and-drop reordering** of individual hubs
+- **Toggle switches** to show/hide specific hubs
+- Persist preferences to `user_preferences.dashboard_layout`
 
 ---
 
-### Step 2: Create RoleConfigTab Component
+## Implementation Details
 
-**New file:** `src/components/access-hub/RoleConfigTab.tsx`
+### 1. Update Dashboard Layout Type
 
-Combine the "Manage", "Templates", and "Defaults" tabs into a single component with sub-tabs:
-- **Roles** - Uses existing `RoleEditor` component
-- **Templates** - Uses existing `RoleTemplatesManager` component
-- **Defaults** - Uses existing `SystemDefaultsConfigurator` component
+**File:** `src/hooks/useDashboardLayout.ts`
 
-This keeps the existing components but wraps them in a clean sub-tab interface.
-
----
-
-### Step 3: Update AccessHub.tsx
-
-Update the main AccessHub page:
-- Expand `TabValue` type to include `'user-roles'` and `'role-config'`
-- Import the two new tab components
-- Update `TabsList` from 4 columns to 6 columns
-- Add the new `TabsContent` sections
-
----
-
-### Step 4: Update Navigation
-
-**File:** `src/components/dashboard/DashboardLayout.tsx`
-
-Remove "Manage Users & Roles" from `adminOnlyNavItems`:
+Add new fields to the `DashboardLayout` interface:
 
 ```typescript
-const adminOnlyNavItems: NavItem[] = [
-  { href: '/dashboard/admin/accounts', label: 'Invitations & Approvals', ... },
-  // Remove: { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', ... },
-  { href: '/dashboard/admin/access-hub', label: 'Access Hub', ... },
+export interface DashboardLayout {
+  sections: string[];
+  sectionOrder: string[];
+  pinnedCards: string[];
+  widgets: string[];
+  hasCompletedSetup: boolean;
+  // New fields for hub customization
+  hubOrder?: string[];      // Order of hub IDs
+  enabledHubs?: string[];   // Which hubs are visible
+}
+```
+
+Update `DEFAULT_LAYOUT` to include all hubs enabled by default.
+
+---
+
+### 2. Create Sortable Hub Item Component
+
+**New file:** `src/components/dashboard/SortableHubItem.tsx`
+
+A reusable sortable item for hubs in the drawer, similar to `SortableSectionItem`:
+
+```typescript
+interface SortableHubItemProps {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  colorClass: string;
+  isEnabled: boolean;
+  onToggle: () => void;
+}
+```
+
+Features:
+- Drag handle (GripVertical icon)
+- Hub icon with its color accent
+- Label
+- Toggle switch
+
+---
+
+### 3. Export Hub Links from HubQuickLinks
+
+**File:** `src/components/dashboard/HubQuickLinks.tsx`
+
+Export the `hubLinks` array so it can be used by the customization menu:
+
+```typescript
+export const hubLinks: HubLinkProps[] = [
+  // ... existing hubs
 ];
 ```
 
+Also export the `HubLinkProps` interface.
+
 ---
 
-### Step 5: Add URL Redirect
+### 4. Update HubQuickLinks Component
 
-**File:** `src/App.tsx`
+**File:** `src/components/dashboard/HubQuickLinks.tsx`
 
-Add redirect for users with bookmarks to the old URL:
+Accept optional props for custom order and enabled state:
 
 ```typescript
-<Route 
-  path="/dashboard/admin/roles" 
-  element={<Navigate to="/dashboard/admin/access-hub?tab=user-roles" replace />} 
-/>
+interface HubQuickLinksProps {
+  hubOrder?: string[];
+  enabledHubs?: string[];
+}
+
+export function HubQuickLinks({ hubOrder, enabledHubs }: HubQuickLinksProps) {
+  const { hasPermission } = useAuth();
+
+  // Filter by permission first, then by enabled state
+  const permittedHubs = hubLinks.filter(hub => 
+    !hub.permission || hasPermission(hub.permission)
+  );
+
+  // Apply custom order and visibility
+  const visibleHubs = useMemo(() => {
+    let filtered = permittedHubs;
+    
+    // Filter to only enabled hubs if specified
+    if (enabledHubs) {
+      filtered = filtered.filter(hub => enabledHubs.includes(hub.href));
+    }
+    
+    // Apply custom order if specified
+    if (hubOrder) {
+      filtered = [...filtered].sort((a, b) => {
+        const aIndex = hubOrder.indexOf(a.href);
+        const bIndex = hubOrder.indexOf(b.href);
+        if (aIndex === -1 && bIndex === -1) return 0;
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      });
+    }
+    
+    return filtered;
+  }, [permittedHubs, hubOrder, enabledHubs]);
+
+  // ... rest of component
+}
 ```
 
 ---
 
-### Step 6: Clean Up (After Verification)
+### 5. Update DashboardCustomizeMenu
 
-After confirming everything works:
-- Delete `src/pages/dashboard/admin/ManageRoles.tsx`
-- The components it used (`RoleEditor`, `RoleTemplatesManager`, `SystemDefaultsConfigurator`) remain in place since they're reused
+**File:** `src/components/dashboard/DashboardCustomizeMenu.tsx`
+
+Add a new section for hub customization:
+
+```text
+SECTIONS & ANALYTICS    <- existing
+---
+QUICK ACCESS HUBS       <- new section
+[Drag] Analytics Hub       [Toggle]
+[Drag] Management Hub      [Toggle]
+[Drag] Payroll Hub         [Toggle]
+...
+---
+WIDGETS                 <- existing
+```
+
+Implementation:
+- Import `hubLinks` from `HubQuickLinks`
+- Filter hubs by user permission (same logic as the component)
+- Use `SortableContext` with `hubOrder` state
+- Add handlers for `handleHubDragEnd` and `handleToggleHub`
+- Save to `layout.hubOrder` and `layout.enabledHubs`
 
 ---
 
-## Files Summary
+### 6. Update DashboardHome to Pass Hub Preferences
+
+**File:** `src/pages/dashboard/DashboardHome.tsx`
+
+Pass the hub order and enabled state to `HubQuickLinks`:
+
+```typescript
+hub_quicklinks: isLeadership && (
+  <HubQuickLinks 
+    hubOrder={layout.hubOrder}
+    enabledHubs={layout.enabledHubs}
+  />
+),
+```
+
+---
+
+## User Flow
+
+1. User clicks "Customize" button on dashboard
+2. Drawer opens showing all customization options
+3. Scroll to "Quick Access Hubs" section
+4. See list of all available hubs (filtered by their permissions)
+5. Drag to reorder hubs
+6. Toggle to show/hide specific hubs
+7. Changes save automatically
+8. Dashboard updates to reflect new hub order and visibility
+
+---
+
+## Visual Design (in Drawer)
+
+```text
+QUICK ACCESS HUBS
+Drag to reorder. Toggle to show/hide hubs.
+
+[≡] [📈] Analytics Hub           [✓]
+[≡] [⊞]  Management Hub          [✓]
+[≡] [💲] Payroll Hub             [ ]  <- disabled
+[≡] [🏪] Renter Hub              [✓]
+[≡] [🌐] Website Editor          [✓]
+[≡] [💬] Feedback Hub            [✓]
+[≡] [🛡️] Access Hub              [✓]
+[≡] [📋] Onboarding Hub          [✓]
+[≡] [📅] Schedule 1:1            [✓]
+```
+
+---
+
+## Files to Create/Modify
 
 | File | Action |
 |------|--------|
-| `src/components/access-hub/UserRolesTab.tsx` | Create |
-| `src/components/access-hub/RoleConfigTab.tsx` | Create |
-| `src/components/access-hub/index.ts` | Update exports |
-| `src/pages/dashboard/admin/AccessHub.tsx` | Add 2 new tabs |
-| `src/components/dashboard/DashboardLayout.tsx` | Remove "Manage Users & Roles" nav |
-| `src/App.tsx` | Add redirect from old URL |
-| `src/pages/dashboard/admin/ManageRoles.tsx` | Delete (final step) |
-
----
-
-## Visual Result
-
-### Before (Sidebar)
-```
-SUPER ADMIN
-├── Invitations & Approvals
-├── Manage Users & Roles     ← Redundant
-└── Access Hub               ← Incomplete
-
-Settings
-```
-
-### After (Sidebar)
-```
-SUPER ADMIN
-├── Invitations & Approvals
-└── Access Hub               ← All-in-one
-
-Settings
-```
-
-### After (Access Hub Tabs)
-```
-[Modules] [User Roles] [Role Access] [Permissions] [Role Config] [Platform]
-```
+| `src/hooks/useDashboardLayout.ts` | Add `hubOrder` and `enabledHubs` to interface and default |
+| `src/components/dashboard/SortableHubItem.tsx` | Create new component |
+| `src/components/dashboard/HubQuickLinks.tsx` | Export `hubLinks`, accept order/enabled props |
+| `src/components/dashboard/DashboardCustomizeMenu.tsx` | Add hub customization section |
+| `src/pages/dashboard/DashboardHome.tsx` | Pass hub preferences to HubQuickLinks |
 
 ---
 
 ## Benefits
 
-1. Single destination for all access management
-2. No duplicate "Permissions" tabs causing confusion
-3. Cleaner sidebar with fewer admin links
-4. Consistent with hub pattern (Management Hub, Analytics Hub, etc.)
-5. Old bookmarks still work via redirect
+1. Users can hide hubs they never use (cleaner dashboard)
+2. Users can prioritize frequently-used hubs at the start
+3. Follows existing patterns in the codebase (sections, widgets)
+4. Preferences persist across sessions
+5. Permission-based filtering still applies (users only see hubs they have access to)
 
