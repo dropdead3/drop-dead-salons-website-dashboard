@@ -346,8 +346,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
 
       {/* Navigation */}
       <nav ref={internalRef} className="flex-1 py-4 overflow-y-auto">
-        {/* START HERE Priority Section - Only shows when onboarding incomplete */}
-        {!isOnboardingComplete && (
+        {/* START HERE Priority Section - Only shows when onboarding incomplete (not for super_admin/owners) */}
+        {!isOnboardingComplete && !roles.includes('super_admin') && (
           <div className="mb-4">
             {isCollapsed ? (
               <Tooltip>
@@ -462,13 +462,11 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           // Note: When configurator has overrides, these are informational only
           // The configurator is the primary control for visibility
           if (sectionId === 'housekeeping') {
-            // Only filter out onboarding from housekeeping if:
-            // 1. Onboarding is incomplete AND
-            // 2. User is not an admin (admins always see it in housekeeping) AND
-            // 3. The START HERE section will be showing instead
-            const isAdminViewing = roles.includes('admin') || roles.includes('super_admin');
-            if (!isOnboardingComplete && !isAdminViewing) {
-              // Hide from housekeeping - it shows in START HERE at the top instead
+            const isSuperAdmin = roles.includes('super_admin');
+            // Super admins never see onboarding (it's for staff, not owners)
+            // Admins always see it in housekeeping
+            // Other roles see it here only when complete (otherwise it's in START HERE)
+            if (isSuperAdmin || (!isOnboardingComplete && !roles.includes('admin'))) {
               filteredItems = filteredItems.filter(item => 
                 item.href !== '/dashboard/onboarding'
               );
