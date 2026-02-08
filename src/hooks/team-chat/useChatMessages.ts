@@ -168,6 +168,9 @@ export function useChatMessages(channelId: string | null) {
       return data;
     },
     onSuccess: () => {
+      // CRITICAL: Invalidate cache immediately to show the new message
+      queryClient.invalidateQueries({ queryKey: ['chat-messages', channelId] });
+      
       // Update last_read_at for the user in this channel
       if (user?.id && channelId) {
         supabase
