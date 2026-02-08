@@ -49,9 +49,9 @@ export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete
   return (
     <div
       className={cn(
-        'group relative flex items-start gap-4 px-4 py-2 rounded-lg transition-colors',
+        'group relative flex gap-4 px-4 py-2 rounded-lg transition-colors',
         'hover:bg-accent/20',
-        isConsecutive ? 'pt-0.5 ml-16' : 'pt-3'
+        isConsecutive ? 'items-center pt-0.5 ml-16' : 'items-start pt-3'
       )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -67,7 +67,7 @@ export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete
         </div>
       )}
       {isConsecutive && (
-        <div className="w-10 shrink-0 flex items-center justify-end -ml-16">
+        <div className="w-14 shrink-0 flex justify-end -ml-16 pr-2">
           <span className={cn(
             "text-[10px] text-muted-foreground whitespace-nowrap transition-opacity",
             showActions ? "opacity-100" : "opacity-0"
