@@ -94,7 +94,10 @@ export function renderContentWithMentions(content: string): React.ReactNode {
       parts.push(content.slice(lastIndex, match.index));
     }
     parts.push(
-      <span key={match.index} className="text-primary font-medium">
+      <span 
+        key={match.index} 
+        className="inline-flex items-center bg-primary/15 text-primary rounded px-1.5 py-0.5 text-sm font-medium mx-0.5"
+      >
         @{match[1]}
       </span>
     );
