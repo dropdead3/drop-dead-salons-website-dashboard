@@ -1,0 +1,245 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+import type { RealtimeChannel } from '@supabase/supabase-js';
+import type { MessageWithSender } from './useChatMessages';
+
+export function useThreadMessages(parentMessageId: string | null) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const channelRef = useRef<RealtimeChannel | null>(null);
+
+  // Fetch the parent message
+  const { data: parentMessage, isLoading: isLoadingParent } = useQuery({
+    queryKey: ['thread-parent', parentMessageId],
+    queryFn: async () => {
+      if (!parentMessageId) return null;
+
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select(`
+          *,
+          sender:employee_profiles!chat_messages_sender_id_fkey (
+            user_id,
+            full_name,
+            display_name,
+            photo_url
+          )
+        `)
+        .eq('id', parentMessageId)
+        .single();
+
+      if (error) throw error;
+
+      return {
+        ...data,
+        sender: data.sender ? {
+          id: (data.sender as any).user_id,
+          full_name: (data.sender as any).full_name,
+          display_name: (data.sender as any).display_name,
+          photo_url: (data.sender as any).photo_url,
+        } : undefined,
+      } as MessageWithSender;
+    },
+    enabled: !!parentMessageId,
+  });
+
+  // Fetch thread replies
+  const { data: replies, isLoading: isLoadingReplies } = useQuery({
+    queryKey: ['thread-replies', parentMessageId],
+    queryFn: async () => {
+      if (!parentMessageId) return [];
+
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select(`
+          *,
+          sender:employee_profiles!chat_messages_sender_id_fkey (
+            user_id,
+            full_name,
+            display_name,
+            photo_url
+          )
+        `)
+        .eq('parent_message_id', parentMessageId)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      // Get reactions for these messages
+      const messageIds = data?.map((m) => m.id) || [];
+      const { data: reactions } = await supabase
+        .from('chat_message_reactions')
+        .select('message_id, emoji, user_id')
+        .in('message_id', messageIds);
+
+      return data?.map((msg) => {
+        const msgReactions = reactions?.filter((r) => r.message_id === msg.id) || [];
+        const reactionMap = new Map<string, { count: number; users: string[] }>();
+        msgReactions.forEach((r) => {
+          const existing = reactionMap.get(r.emoji) || { count: 0, users: [] };
+          existing.count++;
+          existing.users.push(r.user_id);
+          reactionMap.set(r.emoji, existing);
+        });
+
+        return {
+          ...msg,
+          sender: msg.sender ? {
+            id: (msg.sender as any).user_id,
+            full_name: (msg.sender as any).full_name,
+            display_name: (msg.sender as any).display_name,
+            photo_url: (msg.sender as any).photo_url,
+          } : undefined,
+          reactions: Array.from(reactionMap.entries()).map(([emoji, data]) => ({
+            emoji,
+            count: data.count,
+            users: data.users,
+          })),
+        };
+      }) as MessageWithSender[];
+    },
+    enabled: !!parentMessageId,
+  });
+
+  // Realtime subscription for thread replies
+  useEffect(() => {
+    if (!parentMessageId) return;
+
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+
+    const channel = supabase
+      .channel(`thread-${parentMessageId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `parent_message_id=eq.${parentMessageId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['thread-replies', parentMessageId] });
+          // Also invalidate the parent message's channel to update reply count
+          if (parentMessage?.channel_id) {
+            queryClient.invalidateQueries({ queryKey: ['chat-messages', parentMessage.channel_id] });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_message_reactions',
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['thread-replies', parentMessageId] });
+        }
+      )
+      .subscribe();
+
+    channelRef.current = channel;
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+  }, [parentMessageId, parentMessage?.channel_id, queryClient]);
+
+  // Send reply mutation
+  const sendReplyMutation = useMutation({
+    mutationFn: async (content: string) => {
+      if (!user?.id || !parentMessageId || !parentMessage?.channel_id) {
+        throw new Error('Cannot send reply');
+      }
+
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .insert({
+          channel_id: parentMessage.channel_id,
+          sender_id: user.id,
+          content,
+          parent_message_id: parentMessageId,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['thread-replies', parentMessageId] });
+      if (parentMessage?.channel_id) {
+        queryClient.invalidateQueries({ queryKey: ['chat-messages', parentMessage.channel_id] });
+      }
+    },
+    onError: (error) => {
+      console.error('Failed to send reply:', error);
+      toast.error('Failed to send reply');
+    },
+  });
+
+  // Toggle reaction mutation
+  const addReactionMutation = useMutation({
+    mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('chat_message_reactions')
+        .insert({
+          message_id: messageId,
+          user_id: user.id,
+          emoji,
+        });
+
+      if (error && error.code !== '23505') throw error;
+    },
+  });
+
+  const removeReactionMutation = useMutation({
+    mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+
+      const { error } = await supabase
+        .from('chat_message_reactions')
+        .delete()
+        .eq('message_id', messageId)
+        .eq('user_id', user.id)
+        .eq('emoji', emoji);
+
+      if (error) throw error;
+    },
+  });
+
+  const toggleReaction = async (messageId: string, emoji: string) => {
+    if (!user?.id) return;
+
+    const allMessages = [parentMessage, ...(replies || [])].filter(Boolean) as MessageWithSender[];
+    const message = allMessages.find((m) => m.id === messageId);
+    const reaction = message?.reactions?.find((r) => r.emoji === emoji);
+    const hasReacted = reaction?.users.includes(user.id);
+
+    if (hasReacted) {
+      removeReactionMutation.mutate({ messageId, emoji });
+    } else {
+      addReactionMutation.mutate({ messageId, emoji });
+    }
+  };
+
+  return {
+    parentMessage,
+    replies: replies ?? [],
+    isLoading: isLoadingParent || isLoadingReplies,
+    sendReply: (content: string) => sendReplyMutation.mutate(content),
+    toggleReaction,
+    isSending: sendReplyMutation.isPending,
+  };
+}
