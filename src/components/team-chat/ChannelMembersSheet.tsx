@@ -137,7 +137,9 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
                           {getRoleIcon(member.role)}
                           {isMe && <span className="text-xs text-muted-foreground">(you)</span>}
                         </div>
-                        <span className="text-xs text-muted-foreground capitalize">{member.role}</span>
+                        <span className="text-xs text-muted-foreground capitalize">
+                          {member.role === 'admin' ? 'Channel Admin' : member.role}
+                        </span>
                       </div>
 
                       {isAdmin && !isMe && member.role !== 'owner' && (
@@ -151,12 +153,13 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
                             {member.role !== 'admin' && (
                               <DropdownMenuItem onClick={() => updateRole({ userId: member.userId, role: 'admin' })}>
                                 <Shield className="h-4 w-4 mr-2" />
-                                Make Admin
+                                Make Channel Admin
                               </DropdownMenuItem>
                             )}
                             {member.role === 'admin' && (
                               <DropdownMenuItem onClick={() => updateRole({ userId: member.userId, role: 'member' })}>
-                                Remove Admin
+                                <Shield className="h-4 w-4 mr-2" />
+                                Remove Channel Admin
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem
