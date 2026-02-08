@@ -1,100 +1,46 @@
 
-# Replace Support Tab with "Chat with Leadership"
 
-## Overview
-Replace the ticket-based Support tab with a direct messaging interface that shows available managers and leadership team members. When clicked, it navigates to Team Chat and opens a DM with that person.
+# Fix: Chat Tab Crashing in Help FAB
 
-## Why This is Better
-- **Immediate response**: Chat is real-time vs. waiting for ticket review
-- **Reuses existing infrastructure**: DM channels, Team Chat, presence system
-- **No orphaned tickets**: Current ticket system has no UI for managers to respond
-- **More personal**: Direct human connection vs. impersonal ticket system
+## Problem
+When clicking the "Chat" tab in the Help FAB, the app crashes with an error because the `ChatLeadershipTab` component is trying to use presence tracking (to show online/offline status) but the required provider isn't available outside of Team Chat.
 
-## Technical Approach
+## Root Cause
+The `ChatLeadershipTab` uses `usePlatformPresenceContext()` which requires being wrapped by `PlatformPresenceProvider`. However, the Help FAB is rendered in `DashboardLayout` which doesn't include this provider - it only exists on the Team Chat page.
 
-### Replace SupportTab with ChatLeadershipTab
+## Solution
+Make the presence context usage optional - if the provider isn't available, simply show all members without online/offline status. This is a graceful degradation that keeps the feature functional.
 
-**File:** `src/components/dashboard/help-fab/ChatLeadershipTab.tsx`
+## Technical Changes
 
-Show a list of available managers/admins filtered from `employee_profiles` + `user_roles`:
+### 1. Create a Safe Presence Hook
+**File:** `src/contexts/PlatformPresenceContext.tsx`
 
-```text
-┌─────────────────────────────────────────┐
-│  Chat with Leadership                   │
-│                                         │
-│  👤 Sarah (Manager)                     │  
-│     Online • Tap to chat               │
-│  ─────────────────────────────────      │
-│  👤 Mike (Admin)                        │
-│     Away • Tap to chat                  │
-│  ─────────────────────────────────      │
-│  👤 Lisa (Manager)                      │
-│     Offline • Tap to chat               │
-└─────────────────────────────────────────┘
-```
-
-### Implementation Details
-
-1. **Fetch Leadership Members**
-   - Query `user_roles` for roles: `manager`, `admin`, `super_admin`
-   - Join with `employee_profiles` for names, photos
-   - Exclude current user
-   - Show their online status if presence data is available
-
-2. **On Click Handler**
-   - Call `createDM(userId)` from existing `useDMChannels` hook
-   - Navigate to `/dashboard/team-chat`
-   - The DM will automatically be active (via the hook's `setActiveChannel`)
-
-3. **Update HelpFAB.tsx**
-   - Replace `SupportTab` import with `ChatLeadershipTab`
-   - Rename tab label from "Support" to "Chat"
-
-### New Hook: `useLeadershipMembers`
-
-**File:** `src/hooks/team-chat/useLeadershipMembers.ts`
+Add a new export `usePlatformPresenceContextSafe()` that returns `null` when used outside the provider instead of throwing an error:
 
 ```typescript
-// Fetches employees with leadership roles (manager, admin, super_admin)
-// Returns: { members, isLoading }
+export function usePlatformPresenceContextSafe() {
+  return useContext(PlatformPresenceContext);
+}
 ```
 
-This is cleaner than modifying `useTeamMembers` because:
-- Pre-filters to leadership roles only
-- Includes role display for each member
-- Simpler API without unnecessary filters
+### 2. Update ChatLeadershipTab
+**File:** `src/components/dashboard/help-fab/ChatLeadershipTab.tsx`
 
-## Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/components/dashboard/help-fab/ChatLeadershipTab.tsx` | Leadership chat list |
-| `src/hooks/team-chat/useLeadershipMembers.ts` | Fetch managers/admins |
+- Import `usePlatformPresenceContextSafe` instead of `usePlatformPresenceContext`
+- Handle the case where presence is `null`:
+  - If presence data is available, show online indicators as before
+  - If not available, hide online indicators or show all as "unknown"
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/HelpFAB.tsx` | Replace Support tab with Chat tab |
+| `src/contexts/PlatformPresenceContext.tsx` | Add `usePlatformPresenceContextSafe` function |
+| `src/components/dashboard/help-fab/ChatLeadershipTab.tsx` | Use safe context hook, handle null case |
 
-## Files to Delete
+## Expected Result
+- Chat tab works on all dashboard pages
+- On pages without presence provider: members shown without online/offline status
+- On Team Chat page: full online/offline status shown (if user navigates there later)
 
-| File | Reason |
-|------|--------|
-| `src/components/dashboard/help-fab/SupportTab.tsx` | No longer needed |
-| `src/hooks/useSupportTickets.ts` | No longer needed |
-
-## User Flow
-
-1. User clicks Help FAB
-2. Switches to "Chat" tab
-3. Sees list of managers/admins
-4. Clicks on a person
-5. Gets navigated to Team Chat with that DM open
-6. Can immediately start typing their message
-
-## Edge Cases
-
-- **No leadership found**: Show friendly message "No managers available"
-- **User is a manager**: Still show other managers/admins to chat with
-- **Already has DM with person**: Opens existing conversation (handled by `useDMChannels`)
