@@ -1,90 +1,201 @@
 
-# Add Location and Role Filters to Start DM Dialog
+# TeamChat Admin Settings Panel
 
 ## Overview
 
-The "Start a Conversation" dialog currently only supports text search. We'll add two dropdown filters (Location and Role) to make it easier to find team members, especially in larger organizations.
+Create a comprehensive Slack-inspired admin settings panel for TeamChat, accessible only to account owners (users with `is_super_admin = true`). This panel will provide centralized control over channel behavior, member experience, and permissions.
 
 ## What You'll See
 
-- Two new filter dropdowns above the search input
-- A **Location** dropdown using your existing locations (e.g., "North Mesa", "Gilbert")
-- A **Role** dropdown showing all active roles (e.g., "Admin", "Manager", "Stylist")
-- Filters can be combined with text search
-- Filter badges showing active filters with easy clear buttons
+A new settings icon (gear/cog) in the TeamChat sidebar header that opens a full settings sheet with multiple organized sections, similar to Slack's workspace administration.
 
 ---
 
-## Technical Changes
+## Settings Categories
 
-### 1. Extend the useTeamMembers Hook
+### 1. Channel Defaults & Permissions
 
-Update `src/hooks/team-chat/useTeamMembers.ts` to accept optional location and role parameters:
+| Setting | Description |
+|---------|-------------|
+| Who can create public channels | Super Admin / Admin / Manager / Anyone |
+| Who can create private channels | Super Admin / Admin / Manager / Anyone |
+| Who can archive channels | Admins only / Channel owners / Anyone |
+| Default channels for new members | Multi-select of existing channels (e.g., #general, #company-wide) |
 
-```typescript
-export function useTeamMembers(
-  searchQuery: string = '',
-  locationId?: string,
-  roleFilter?: string
-) {
-  // Existing query with added filters
-  // - Filter by location_id if provided
-  // - Join user_roles table to filter by role
-}
+### 2. Role-Based Auto-Join Rules
+
+Configure which roles automatically join which channels when a team member is created/assigned that role:
+
+| Role | Auto-join Channels |
+|------|-------------------|
+| Super Admin | #company-wide, #general, #managers |
+| Admin | #company-wide, #general, #managers |
+| Manager | #company-wide, #general, #managers |
+| Stylist | #company-wide, #general |
+| Receptionist | #company-wide, #general |
+
+This replaces/enhances the current location-based auto-join with role-based auto-join.
+
+### 3. Display Settings
+
+| Setting | Description |
+|---------|-------------|
+| Display name format | Full name / Display name / First name only |
+| Show profile photos | On / Off |
+| Show role badges in messages | On / Off |
+| Show job title in messages | On / Off |
+| Show location badge in messages | On / Off |
+
+### 4. Messaging Permissions
+
+| Setting | Description |
+|---------|-------------|
+| Who can @everyone / @channel | Admins only / Managers+ / Anyone |
+| Who can pin messages | Admins only / Channel admins / Anyone |
+| Who can delete others' messages | Admins only / Channel admins |
+| Message retention | Forever / 1 year / 6 months / 90 days |
+| Allow file attachments | On / Off |
+| Max file size (MB) | 5 / 10 / 25 / 50 |
+
+### 5. Notification Defaults
+
+| Setting | Description |
+|---------|-------------|
+| Default notification setting | All messages / Mentions only / Nothing |
+| Allow DND override for urgent | On / Off |
+
+---
+
+## Database Changes
+
+### New Table: `team_chat_settings`
+
+```sql
+CREATE TABLE public.team_chat_settings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL UNIQUE REFERENCES organizations(id),
+  
+  -- Channel permissions
+  channel_create_public TEXT DEFAULT 'admin' CHECK (channel_create_public IN ('super_admin', 'admin', 'manager', 'anyone')),
+  channel_create_private TEXT DEFAULT 'admin' CHECK (channel_create_private IN ('super_admin', 'admin', 'manager', 'anyone')),
+  channel_archive_permission TEXT DEFAULT 'admin' CHECK (channel_archive_permission IN ('admin', 'channel_owner', 'anyone')),
+  default_channels TEXT[] DEFAULT ARRAY['general', 'company-wide'],
+  
+  -- Display settings
+  display_name_format TEXT DEFAULT 'display_name' CHECK (display_name_format IN ('full_name', 'display_name', 'first_name')),
+  show_profile_photos BOOLEAN DEFAULT true,
+  show_role_badges BOOLEAN DEFAULT true,
+  show_job_title BOOLEAN DEFAULT false,
+  show_location_badge BOOLEAN DEFAULT false,
+  
+  -- Messaging permissions
+  mention_everyone_permission TEXT DEFAULT 'admin' CHECK (mention_everyone_permission IN ('admin', 'manager', 'anyone')),
+  pin_message_permission TEXT DEFAULT 'channel_admin' CHECK (pin_message_permission IN ('admin', 'channel_admin', 'anyone')),
+  delete_others_messages TEXT DEFAULT 'admin' CHECK (delete_others_messages IN ('admin', 'channel_admin')),
+  message_retention_days INTEGER DEFAULT NULL,
+  allow_file_attachments BOOLEAN DEFAULT true,
+  max_file_size_mb INTEGER DEFAULT 25,
+  
+  -- Notification defaults
+  default_notification_setting TEXT DEFAULT 'all' CHECK (default_notification_setting IN ('all', 'mentions', 'nothing')),
+  allow_dnd_override BOOLEAN DEFAULT false,
+  
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
 ```
 
-Since Supabase doesn't support foreign table filtering in a single query without views, we'll:
-- Fetch user_ids that match the role filter from `user_roles` table (if role filter is set)
-- Apply `.in('user_id', matchingIds)` to filter employee_profiles
+### New Table: `team_chat_role_auto_join`
 
-### 2. Update StartDMDialog Component
+```sql
+CREATE TABLE public.team_chat_role_auto_join (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organizations(id),
+  role TEXT NOT NULL,
+  channel_id UUID NOT NULL REFERENCES chat_channels(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  
+  UNIQUE(organization_id, role, channel_id)
+);
+```
 
-Update `src/components/team-chat/StartDMDialog.tsx`:
+---
 
-| Change | Details |
-|--------|---------|
-| Add state | `locationFilter` and `roleFilter` state variables |
-| Add LocationSelect | Use existing `LocationSelect` component |
-| Add Role Select | Build a select using roles from `useRoles` hook |
-| Update hook call | Pass filters to `useTeamMembers(search, locationFilter, roleFilter)` |
-| Layout | Stack filters horizontally above search input |
+## UI Components
 
-### Layout Preview
+### 1. Settings Trigger in Sidebar
+
+Add a gear icon button in the `ChannelSidebar` header (next to "Team Chat" title), visible only to super admins.
+
+### 2. TeamChatAdminSettingsSheet
+
+A new Sheet component with tabbed navigation:
 
 ```text
-┌─────────────────────────────────────────────┐
-│ 👥 START A CONVERSATION                   ✕ │
-├─────────────────────────────────────────────┤
-│ ┌─────────────────┐  ┌─────────────────┐    │
-│ │ 📍 All Locations │  │ 👤 All Roles    │    │
-│ └─────────────────┘  └─────────────────┘    │
-│ ┌─────────────────────────────────────────┐ │
-│ │ 🔍 Search team members...               │ │
-│ └─────────────────────────────────────────┘ │
-│                                             │
-│   [Avatar] Admin Assistant Test Account     │
-│            admin-assistant-test@test.com    │
-│                                             │
-│   [Avatar] Manager Test Account             │
-│            manager-test@test.com            │
-│                                             │
-└─────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│ ⚙️ TEAM CHAT SETTINGS                              ✕ │
+├──────────────────────────────────────────────────────┤
+│ [Channels] [Display] [Permissions] [Auto-Join]       │
+├──────────────────────────────────────────────────────┤
+│                                                      │
+│ Channel Creation                                     │
+│ ┌──────────────────────────────────────────────────┐│
+│ │ Who can create public channels?                  ││
+│ │ [▾ Admins and above                          ]   ││
+│ └──────────────────────────────────────────────────┘│
+│                                                      │
+│ ┌──────────────────────────────────────────────────┐│
+│ │ Who can create private channels?                 ││
+│ │ [▾ Managers and above                        ]   ││
+│ └──────────────────────────────────────────────────┘│
+│                                                      │
+│ Default Channels for New Members                     │
+│ ┌──────────────────────────────────────────────────┐│
+│ │ ☑ #general  ☑ #company-wide  ☐ #managers        ││
+│ └──────────────────────────────────────────────────┘│
+│                                                      │
+│                              [Save Changes]          │
+└──────────────────────────────────────────────────────┘
 ```
 
 ---
+
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/components/team-chat/TeamChatAdminSettingsSheet.tsx` | Main settings sheet with tabs |
+| `src/hooks/team-chat/useTeamChatSettings.ts` | Hook to fetch/update settings |
+| `src/hooks/team-chat/useTeamChatRoleAutoJoin.ts` | Hook for role-based auto-join rules |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/hooks/team-chat/useTeamMembers.ts` | Add location and role filter parameters, implement role-based filtering via user_roles join |
-| `src/components/team-chat/StartDMDialog.tsx` | Add filter state, LocationSelect dropdown, Role dropdown, pass filters to hook |
+| `src/components/team-chat/ChannelSidebar.tsx` | Add admin settings gear icon in header |
+| `src/components/team-chat/CreateChannelDialog.tsx` | Check permissions before allowing creation |
+| `src/components/team-chat/MessageItem.tsx` | Respect display settings (role badge, title, photo) |
+| `src/hooks/team-chat/useAutoJoinLocationChannels.ts` | Integrate role-based auto-join rules |
+| `src/components/team-chat/index.ts` | Export new component |
+
+---
+
+## Permission Check
+
+The settings button will only be visible to users where:
+```typescript
+const { data: profile } = useEmployeeProfile();
+const canAccessSettings = profile?.is_super_admin === true;
+```
+
+This follows the existing pattern used throughout the app for super admin checks.
 
 ---
 
 ## Benefits
 
-- Faster team member discovery in large organizations
-- Consistent with filters used elsewhere (Team Directory)
-- Uses existing UI components (LocationSelect, useRoles)
-- Filters combine with search for precise results
+- **Centralized Control**: Account owners get Slack-like workspace admin capabilities
+- **Role-Based Automation**: Reduces manual channel management as team grows
+- **Consistent Experience**: Display settings ensure uniform message appearance
+- **Scalable Permissions**: Granular control over who can do what
+- **Organization-Scoped**: Each organization can have its own settings
