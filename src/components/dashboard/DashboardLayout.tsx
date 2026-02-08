@@ -34,6 +34,7 @@ import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
 import { PhorestSyncPopout } from '@/components/dashboard/PhorestSyncPopout';
 import { ImpersonationHistoryPanel } from '@/components/dashboard/ImpersonationHistoryPanel';
 import { CustomLandingPageBanner } from '@/components/dashboard/CustomLandingPageBanner';
+import { HelpFAB } from '@/components/dashboard/HelpFAB';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
 import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
 import { PlatformContextBanner } from '@/components/platform/PlatformContextBanner';
@@ -1104,6 +1105,9 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           )}
         </div>
       </main>
+      
+      {/* Help FAB */}
+      <HelpFAB />
       </div>
     </div>
   );
