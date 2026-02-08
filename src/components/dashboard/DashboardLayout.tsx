@@ -189,6 +189,11 @@ const adminOnlyNavItems: NavItem[] = [
   { href: '/dashboard/admin/accounts', label: 'Invitations & Approvals', icon: UserPlus, permission: 'approve_accounts' },
   { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield, permission: 'manage_user_roles' },
   { href: '/dashboard/admin/access-hub', label: 'Access Hub', icon: Shield, permission: 'manage_settings' },
+  // Settings removed - rendered separately as fixed footer
+];
+
+// Footer items - always pinned to bottom of sidebar
+const footerNavItems: NavItem[] = [
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
 ];
 
@@ -803,6 +808,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
           websiteNavItems={websiteNavItems}
           adminOnlyNavItems={adminOnlyNavItems}
           platformNavItems={platformNavItems}
+          footerNavItems={footerNavItems}
           isPlatformUser={isPlatformUser}
           unreadCount={unreadCount}
           roles={roles}
@@ -835,6 +841,7 @@ function DashboardLayoutInner({ children }: DashboardLayoutProps) {
               websiteNavItems={websiteNavItems}
               adminOnlyNavItems={adminOnlyNavItems}
               platformNavItems={platformNavItems}
+              footerNavItems={footerNavItems}
               isPlatformUser={isPlatformUser}
               unreadCount={unreadCount}
               roles={roles}

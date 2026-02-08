@@ -40,6 +40,7 @@ interface SidebarNavContentProps {
   websiteNavItems: NavItem[];
   adminOnlyNavItems: NavItem[];
   platformNavItems?: NavItem[];
+  footerNavItems?: NavItem[];
   isPlatformUser?: boolean;
   unreadCount: number;
   roles: string[];
@@ -65,6 +66,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     websiteNavItems,
     adminOnlyNavItems,
     platformNavItems = [],
+    footerNavItems = [],
     isPlatformUser = false,
     unreadCount,
     roles,
@@ -551,6 +553,20 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           );
         })}
       </nav>
+
+      {/* Fixed Footer Navigation - always at bottom */}
+      {filterNavItems(footerNavItems).length > 0 && (
+        <div className="border-t border-border py-2 mt-auto">
+          <div className="space-y-1">
+            {filterNavItems(footerNavItems).map((item) => (
+              <NavLink 
+                key={item.href} 
+                {...item}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 });
