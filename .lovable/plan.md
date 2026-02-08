@@ -1,89 +1,67 @@
 
 
-# Add Access Hub Navigation Links
+# Add Missing Sidebar Navigation to Dashboard Pages
 
-## Overview
-Add the **Access & Controls Hub** to two locations:
-1. **Sidebar Navigation** - In the admin-only items section
-2. **Quick Access Hubs** - On the dashboard Command Center
+## Problem
+Five dashboard pages are missing the `DashboardLayout` wrapper, which provides the sidebar navigation. Users on these pages see only the page content without the ability to navigate to other dashboard sections.
 
----
+**Affected Pages:**
+| Page | Current State | Issue |
+|------|---------------|-------|
+| Access Hub | `<div className="p-6 lg:p-8...">` | No sidebar |
+| Booth Renters | `<PlatformPageContainer>` only | No sidebar |
+| Day Rate Calendar | `<div className="container">` | No sidebar |
+| Day Rate Settings | `<div className="container">` | No sidebar |
+| Features Center | `<div className="p-6 lg:p-8...">` | No sidebar |
 
-## Changes Required
-
-### 1. Sidebar Navigation (`DashboardLayout.tsx`)
-
-Add Access Hub to `adminOnlyNavItems` array (line ~188-192):
-
-**Current:**
-```typescript
-const adminOnlyNavItems: NavItem[] = [
-  { href: '/dashboard/admin/accounts', label: 'Invitations & Approvals', icon: UserPlus, permission: 'approve_accounts' },
-  { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield, permission: 'manage_user_roles' },
-  { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
-];
-```
-
-**Updated:**
-```typescript
-const adminOnlyNavItems: NavItem[] = [
-  { href: '/dashboard/admin/accounts', label: 'Invitations & Approvals', icon: UserPlus, permission: 'approve_accounts' },
-  { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield, permission: 'manage_user_roles' },
-  { href: '/dashboard/admin/access-hub', label: 'Access Hub', icon: Shield, permission: 'manage_settings' },
-  { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
-];
-```
-
-**Note:** Using `manage_settings` permission since Access Hub is for super admins who can manage organization settings.
+## Solution
+Wrap each page's content in the `DashboardLayout` component, which provides the consistent sidebar navigation used throughout the dashboard.
 
 ---
 
-### 2. Quick Access Hubs (`HubQuickLinks.tsx`)
+## Implementation
 
-Add Access Hub to the `hubLinks` array:
+### File Changes
 
-**File:** `src/components/dashboard/HubQuickLinks.tsx`
+**1. `src/pages/dashboard/admin/AccessHub.tsx`**
+- Import `DashboardLayout`
+- Wrap the return content in `<DashboardLayout>...</DashboardLayout>`
 
-**Add import:**
-```typescript
-import { Shield } from 'lucide-react';
-```
+**2. `src/pages/dashboard/admin/BoothRenters.tsx`**
+- Import `DashboardLayout`
+- Wrap the `PlatformPageContainer` in `<DashboardLayout>...</DashboardLayout>`
 
-**Add to hubLinks array** (after Feedback Hub, before Onboarding Hub):
-```typescript
-{ 
-  href: '/dashboard/admin/access-hub', 
-  icon: Shield, 
-  label: 'Access Hub', 
-  colorClass: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20',
-  permission: 'manage_settings',
-},
-```
+**3. `src/pages/dashboard/admin/DayRateCalendar.tsx`**
+- Import `DashboardLayout`
+- Wrap the container div in `<DashboardLayout>...</DashboardLayout>`
+
+**4. `src/pages/dashboard/admin/DayRateSettings.tsx`**
+- Import `DashboardLayout`
+- Wrap the container div in `<DashboardLayout>...</DashboardLayout>`
+
+**5. `src/pages/dashboard/admin/FeaturesCenter.tsx`**
+- Import `DashboardLayout`
+- Wrap the main div in `<DashboardLayout>...</DashboardLayout>`
 
 ---
 
-## Visual Result
+## Technical Pattern
 
-### Sidebar (Admin Section)
-```
-Administration
-├── Invitations & Approvals
-├── Manage Users & Roles
-├── Access Hub          ← NEW
-└── Settings
+Each page will follow this consistent pattern:
+
+```typescript
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+
+export default function PageName() {
+  return (
+    <DashboardLayout>
+      {/* existing page content */}
+    </DashboardLayout>
+  );
+}
 ```
 
-### Quick Access Hubs (Dashboard)
-```
-Quick Access Hubs
-┌───────────┬────────────┬────────────┬───────────┐
-│ Analytics │ Management │ Payroll    │ Renter    │
-│ Hub       │ Hub        │ Hub        │ Hub       │
-├───────────┼────────────┼────────────┼───────────┤
-│ Website   │ Feedback   │ Access Hub │ Onboarding│
-│ Editor    │ Hub        │ ← NEW      │ Hub       │
-└───────────┴────────────┴────────────┴───────────┘
-```
+This matches the pattern used by other dashboard pages like `ManagementHub`, `AnalyticsHub`, `Payroll`, `TrainingHub`, etc.
 
 ---
 
@@ -91,16 +69,9 @@ Quick Access Hubs
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/DashboardLayout.tsx` | Add Access Hub to `adminOnlyNavItems` |
-| `src/components/dashboard/HubQuickLinks.tsx` | Add Shield import and Access Hub to `hubLinks` |
-
----
-
-## Access Control
-
-The Access Hub link will be visible to users with the `manage_settings` permission, which is typically:
-- Super Admins
-- Platform Admins (via platform context)
-
-This aligns with the Access Hub page itself, which checks for `super_admin` role or `isPlatformUser`.
+| `src/pages/dashboard/admin/AccessHub.tsx` | Add DashboardLayout wrapper |
+| `src/pages/dashboard/admin/BoothRenters.tsx` | Add DashboardLayout wrapper |
+| `src/pages/dashboard/admin/DayRateCalendar.tsx` | Add DashboardLayout wrapper |
+| `src/pages/dashboard/admin/DayRateSettings.tsx` | Add DashboardLayout wrapper |
+| `src/pages/dashboard/admin/FeaturesCenter.tsx` | Add DashboardLayout wrapper |
 
