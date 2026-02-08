@@ -27,6 +27,7 @@ import {
   PlatformCardDescription,
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
+import { MapPin } from 'lucide-react';
 import { useOrganizationWithStats } from '@/hooks/useOrganizations';
 import { useLocations } from '@/hooks/useLocations';
 import { supabase } from '@/integrations/supabase/client';
@@ -95,27 +96,34 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
   const { data: organization, isLoading: orgLoading } = useOrganizationWithStats(organizationId);
   const { data: locations = [] } = useLocations(organizationId);
   const [settings, setSettings] = useState<OrgSettings>(defaultSettings);
+  const [isMultiLocation, setIsMultiLocation] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
   // Load settings from organization
   useEffect(() => {
-    if (organization?.settings) {
-      const orgSettings = organization.settings as Partial<OrgSettings>;
-      setSettings({
-        feature_flags: {
-          ...defaultSettings.feature_flags,
-          ...(orgSettings.feature_flags || {}),
-        },
-        notifications: {
-          ...defaultSettings.notifications,
-          ...(orgSettings.notifications || {}),
-        },
-        defaults: {
-          ...defaultSettings.defaults,
-          ...(orgSettings.defaults || {}),
-        },
-      });
+    if (organization) {
+      // Load is_multi_location from organization (cast to access the field)
+      const orgData = organization as any;
+      setIsMultiLocation(orgData.is_multi_location ?? false);
+      
+      if (organization.settings) {
+        const orgSettings = organization.settings as Partial<OrgSettings>;
+        setSettings({
+          feature_flags: {
+            ...defaultSettings.feature_flags,
+            ...(orgSettings.feature_flags || {}),
+          },
+          notifications: {
+            ...defaultSettings.notifications,
+            ...(orgSettings.notifications || {}),
+          },
+          defaults: {
+            ...defaultSettings.defaults,
+            ...(orgSettings.defaults || {}),
+          },
+        });
+      }
     }
   }, [organization]);
 
@@ -133,17 +141,26 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
     setHasChanges(true);
   };
 
+  const handleMultiLocationChange = (checked: boolean) => {
+    setIsMultiLocation(checked);
+    setHasChanges(true);
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
       const { error } = await supabase
         .from('organizations')
-        .update({ settings: JSON.parse(JSON.stringify(settings)) })
+        .update({ 
+          settings: JSON.parse(JSON.stringify(settings)),
+          is_multi_location: isMultiLocation,
+        })
         .eq('id', organizationId);
 
       if (error) throw error;
 
       queryClient.invalidateQueries({ queryKey: ['organization-with-stats', organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['organization', organizationId] });
       toast.success('Settings saved successfully');
       setHasChanges(false);
     } catch (err: any) {
@@ -164,6 +181,27 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
 
   return (
     <div className="space-y-6">
+      {/* Organization Structure */}
+      <PlatformCard variant="glass">
+        <PlatformCardHeader>
+          <PlatformCardTitle className="flex items-center gap-2">
+            <MapPin className="h-5 w-5 text-violet-400" />
+            Organization Structure
+          </PlatformCardTitle>
+          <PlatformCardDescription>
+            Configure how the organization handles multiple locations
+          </PlatformCardDescription>
+        </PlatformCardHeader>
+        <PlatformCardContent className="space-y-4">
+          <FeatureToggle
+            label="Multi-Location Organization"
+            description="Enable location-specific chat channels and team groupings. When disabled, the 'Locations' section in Team Chat will be hidden and only a 'general' channel will be created for new organizations."
+            checked={isMultiLocation}
+            onCheckedChange={handleMultiLocationChange}
+          />
+        </PlatformCardContent>
+      </PlatformCard>
+
       {/* Feature Flags */}
       <PlatformCard variant="glass">
         <PlatformCardHeader>

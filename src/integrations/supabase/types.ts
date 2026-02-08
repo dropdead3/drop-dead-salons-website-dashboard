@@ -6060,6 +6060,7 @@ export type Database = {
           go_live_date: string | null
           id: string
           is_internal: boolean
+          is_multi_location: boolean | null
           legal_name: string | null
           logo_url: string | null
           name: string
@@ -6098,6 +6099,7 @@ export type Database = {
           go_live_date?: string | null
           id?: string
           is_internal?: boolean
+          is_multi_location?: boolean | null
           legal_name?: string | null
           logo_url?: string | null
           name: string
@@ -6136,6 +6138,7 @@ export type Database = {
           go_live_date?: string | null
           id?: string
           is_internal?: boolean
+          is_multi_location?: boolean | null
           legal_name?: string | null
           logo_url?: string | null
           name?: string

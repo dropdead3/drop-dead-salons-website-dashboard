@@ -12,6 +12,7 @@ interface ProvisioningRequest {
   admin_name: string;
   plan_type?: 'basic' | 'professional' | 'enterprise';
   trial_days?: number;
+  is_multi_location?: boolean;
   initial_locations?: Array<{
     name: string;
     address?: string;
@@ -68,6 +69,10 @@ Deno.serve(async (req) => {
     const selectedPlan = request.plan_type || 'professional';
     const pricing = planPricing[selectedPlan];
 
+    // Determine multi-location status - explicit flag or based on initial locations count
+    const isMultiLocation = request.is_multi_location ?? 
+      (request.initial_locations?.length ?? 0) > 1;
+
     // Create organization
     const { data: newOrg, error: orgError } = await adminClient
       .from('organizations')
@@ -80,6 +85,7 @@ Deno.serve(async (req) => {
         monthly_price: pricing.monthly_price,
         price_per_user: pricing.price_per_user,
         plan_type: selectedPlan,
+        is_multi_location: isMultiLocation,
       })
       .select()
       .single();

@@ -9,6 +9,7 @@ import { useAutoJoinLocationChannels } from '@/hooks/team-chat/useAutoJoinLocati
 import { useUnreadMessages } from '@/hooks/team-chat/useUnreadMessages';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { CreateChannelDialog } from './CreateChannelDialog';
 import { StartDMDialog } from './StartDMDialog';
 import { TeamChatAdminSettingsSheet } from './TeamChatAdminSettingsSheet';
@@ -78,6 +79,7 @@ function ChannelItem({ channel, isActive, onClick, unreadCount }: ChannelItemPro
 export function ChannelSidebar() {
   const { channels, isLoading, joinChannel } = useChatChannels();
   const { activeChannel, setActiveChannel } = useTeamChatContext();
+  const { effectiveOrganization } = useOrganizationContext();
   const { data: profile } = useEmployeeProfile();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDMOpen, setIsDMOpen] = useState(false);
@@ -91,6 +93,9 @@ export function ChannelSidebar() {
 
   // Only super admins can access settings
   const canAccessSettings = profile?.is_super_admin === true;
+  
+  // Check if organization is multi-location
+  const isMultiLocation = effectiveOrganization?.is_multi_location ?? true;
 
   const channelIds = channels.map((c) => c.id);
   const { getUnreadCount, markAsRead } = useUnreadMessages(channelIds);
@@ -219,8 +224,8 @@ export function ChannelSidebar() {
             </CollapsibleContent>
           </Collapsible>
 
-          {/* Location Channels */}
-          {locationChannels.length > 0 && (
+          {/* Location Channels - Only show for multi-location organizations */}
+          {isMultiLocation && locationChannels.length > 0 && (
             <Collapsible open={sectionsOpen.locations} onOpenChange={() => toggleSection('locations')}>
               <CollapsibleTrigger className="flex items-center gap-1 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground">
                 {sectionsOpen.locations ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}

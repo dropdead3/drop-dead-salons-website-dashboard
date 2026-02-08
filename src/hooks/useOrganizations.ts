@@ -27,6 +27,7 @@ export interface Organization {
   account_number: number | null;
   go_live_date: string | null;
   is_internal: boolean;
+  is_multi_location: boolean;
 }
 
 export interface OrganizationInsert {
