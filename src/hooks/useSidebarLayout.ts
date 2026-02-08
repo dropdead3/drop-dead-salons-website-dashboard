@@ -3,29 +3,61 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // Default section order matching the sidebar structure
+// Consolidated from 9 sections to 6 sections (housekeeping items relocated to top bar)
 export const DEFAULT_SECTION_ORDER = [
   'main',
-  'growth', 
-  'stats',
+  'growth',      // Renamed to "Growth & Development"
+  'stats',       // Renamed to "My Performance"
   'teamTools',
-  'housekeeping',
-  'manager',
-  'website',
-  'adminOnly',
+  'manager',     // Now includes website + sub-groups (Analytics, People, Operations)
+  'adminOnly',   // Renamed to "Admin"
   'platform',
 ];
 
 // Section labels for display
 export const SECTION_LABELS: Record<string, string> = {
   main: 'Main',
-  growth: 'Growth',
-  stats: 'Stats & Leaderboard',
+  growth: 'Growth & Development',
+  stats: 'My Performance',
   teamTools: 'Team Tools',
-  housekeeping: 'Housekeeping',
   manager: 'Management',
-  website: 'Website',
-  adminOnly: 'Super Admin',
+  adminOnly: 'Admin',
   platform: 'Platform Admin',
+  // Legacy labels for backward compatibility
+  housekeeping: 'Resources',
+  website: 'Website',
+};
+
+// Management section sub-groups for collapsible organization
+export const MANAGEMENT_SUB_GROUPS = {
+  analytics: {
+    id: 'analytics',
+    label: 'Analytics & Insights',
+    links: [
+      '/dashboard/admin/analytics',
+      '/dashboard/stats',
+      '/dashboard/leaderboard',
+    ],
+  },
+  people: {
+    id: 'people',
+    label: 'People',
+    links: [
+      '/dashboard/directory',
+      '/dashboard/clients',
+      '/dashboard/admin/team',
+    ],
+  },
+  operations: {
+    id: 'operations',
+    label: 'Operations',
+    links: [
+      '/dashboard/admin/management',
+      '/dashboard/admin/payroll',
+      '/dashboard/admin/booth-renters',
+      '/dashboard/admin/website-sections',
+    ],
+  },
 };
 
 // Default link order for each section
@@ -37,7 +69,6 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   growth: [
     '/dashboard/training',
     '/dashboard/program',
-    '/dashboard/admin/team',
     '/dashboard/ring-the-bell',
     '/dashboard/my-graduation',
   ],
@@ -52,29 +83,22 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
     '/dashboard/assistant-schedule',
     '/dashboard/schedule-meeting',
   ],
-  housekeeping: [
-    '/dashboard/onboarding',
-    '/dashboard/handbooks',
-    '/dashboard/changelog',
-    '/dashboard/help',
-  ],
+  // Manager section now includes all management items + website (grouped in UI)
   manager: [
-    '/dashboard/admin/management',
     '/dashboard/admin/analytics',
     '/dashboard/stats',
     '/dashboard/leaderboard',
     '/dashboard/directory',
     '/dashboard/clients',
+    '/dashboard/admin/team',
+    '/dashboard/admin/management',
     '/dashboard/admin/payroll',
     '/dashboard/admin/booth-renters',
-  ],
-  website: [
     '/dashboard/admin/website-sections',
   ],
   adminOnly: [
     '/dashboard/admin/accounts',
-    '/dashboard/admin/roles',
-    '/dashboard/admin/settings',
+    '/dashboard/admin/access-hub',
   ],
   platform: [
     '/dashboard/platform/overview',
