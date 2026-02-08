@@ -1,167 +1,220 @@
 
+# Onboarding Configurator Implementation Plan
 
-# Fix: Dark Mode Logo and Page Title Color Bug
+## Overview
 
-## Problem Analysis
+Create an Onboarding Configurator that allows account owners to configure what appears in each role's onboarding experience and whether each item is required or optional.
 
-Looking at the screenshot, there are two color issues in dark mode:
-1. **Logo in sidebar**: The "DROP DEAD" logo appears in the correct cream/oat color (this seems OK)
-2. **Page title "MANAGEMENT HUB"**: Displays with extremely low contrast (almost invisible) against the dark background
+## Current System Analysis
 
-### Root Cause
+### Existing Components
+| Component | Role Visibility | Required/Optional |
+|-----------|----------------|-------------------|
+| Onboarding Tasks | Per-task `visible_to_roles` array | Not supported |
+| Handbooks (Onboarding category) | Per-handbook `visible_to_roles` array | Not supported |
+| Business Card Request | Hardcoded for all roles | Not configurable |
+| Headshot Request | Hardcoded for all roles | Not configurable |
 
-The bug is caused by **CSS variable inheritance and scoping**:
+### Gaps Identified
+1. No way to mark tasks as "required" vs "optional" per role
+2. Business cards and headshots cannot be configured per role
+3. No unified interface for configuring the entire onboarding experience
 
-**How dark mode is applied (`DashboardLayout.tsx` lines 1129-1137):**
+---
+
+## Database Changes
+
+### Add `is_required` Column to `onboarding_tasks`
+Add a simple boolean column to track if a task is required:
+
+```sql
+ALTER TABLE onboarding_tasks 
+ADD COLUMN is_required boolean DEFAULT true NOT NULL;
+```
+
+### Create `onboarding_section_config` Table
+Store per-role configuration for the non-task sections:
+
+```sql
+CREATE TABLE onboarding_section_config (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid REFERENCES organizations(id) ON DELETE CASCADE,
+  section_key text NOT NULL,  -- 'business_card', 'headshot', 'handbooks'
+  role text NOT NULL,
+  is_enabled boolean DEFAULT true,
+  is_required boolean DEFAULT false,
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now(),
+  UNIQUE(organization_id, section_key, role)
+);
+
+-- Enable RLS
+ALTER TABLE onboarding_section_config ENABLE ROW LEVEL SECURITY;
+
+-- Policies for org admins
+CREATE POLICY "Org admins can manage onboarding config"
+  ON onboarding_section_config
+  FOR ALL
+  USING (public.is_org_admin(auth.uid(), organization_id));
+```
+
+---
+
+## New Components
+
+### 1. OnboardingConfigurator (Main Component)
+**Location**: `src/components/dashboard/settings/OnboardingConfigurator.tsx`
+
+**Features**:
+- Role selector (similar to RoleAccessConfigurator pattern)
+- Tabbed interface for different onboarding sections
+- Visual configuration for each section
+
+```text
++------------------------------------------+
+| ONBOARDING CONFIGURATOR                  |
++------------------------------------------+
+| [Role Pills: Stylist | Assistant | ...]  |
++------------------------------------------+
+| Selected: Stylist                        |
++------------------------------------------+
+| Tabs: [Tasks] [Handbooks] [Requests]     |
++------------------------------------------+
+| Tasks Tab:                               |
+| +--------------------------------------+ |
+| | [x] Complete profile          [Req]  | |
+| | [x] Review policies           [Opt]  | |
+| | [ ] Schedule orientation      [Opt]  | |
+| +--------------------------------------+ |
++------------------------------------------+
+```
+
+### 2. OnboardingTasksConfigPanel
+**Purpose**: Configure which tasks each role sees and whether they're required
+
+| Column | Description |
+|--------|-------------|
+| Checkbox | Enable/disable for this role |
+| Task Title | Name of the onboarding task |
+| Required Toggle | Mark as required or optional |
+
+### 3. OnboardingSectionsConfigPanel  
+**Purpose**: Configure business cards, headshots, and handbook sections per role
+
+| Section | Options |
+|---------|---------|
+| Business Card Request | Enable/disable, Required/Optional |
+| Headshot Session | Enable/disable, Required/Optional |
+| Handbook Acknowledgments | Enable/disable, Required/Optional |
+
+---
+
+## Hooks
+
+### `useOnboardingConfig`
+Fetch and manage onboarding configuration:
+
 ```typescript
-<div className={cn(
-  resolvedTheme === 'dark' && 'dark',  // Applies .dark class
-  `theme-${colorTheme}`,                // Applies theme-cream class
-  ...
-)}>
-```
-
-**Issue 1: Page Title Color**
-
-The page title in `ManagementHub.tsx` uses:
-```tsx
-<h1 className="font-display text-3xl lg:text-4xl">Management Hub</h1>
-```
-
-This element inherits `text-foreground` by default from the body. In dark mode with `.dark.theme-cream`, the CSS defines:
-```css
---foreground: 40 20% 92%;  /* Light cream color */
-```
-
-However, looking at the screenshot, the title appears very faded/gray rather than cream. This suggests:
-- The `.dark` class is being applied but the theme class may not be correctly combined
-- Or there's a CSS specificity issue where another rule is overriding the foreground color
-
-**Issue 2: CSS Selector Specificity**
-
-Looking at `src/index.css` lines 190-244:
-```css
-.dark.theme-cream,
-.dark:not([class*="theme-"]) {
-  --foreground: 40 20% 92%;  /* Should be light cream */
-  ...
+interface OnboardingSectionConfig {
+  section_key: string;
+  role: string;
+  is_enabled: boolean;
+  is_required: boolean;
 }
+
+export function useOnboardingConfig(organizationId: string | undefined);
+export function useUpdateOnboardingConfig();
 ```
 
-The selector `.dark.theme-cream` requires **both classes on the same element**. But in `DashboardLayout.tsx`, the wrapper div has both classes, so this should work.
-
-**The Real Issue: The wrapper div scope**
-
-The dark mode wrapper applies classes to a `<div>` inside the component, but CSS variables are being read from the `:root` or other ancestors. The page titles and other elements may be reading CSS variables from an ancestor that doesn't have the `.dark` class properly applied.
-
-**Checking the actual CSS variable chain:**
-- `:root` or `.theme-cream` → light mode variables
-- `.dark.theme-cream` → dark mode variables
-- If elements outside the dark wrapper try to read `--foreground`, they get light mode values (dark text on dark bg = invisible)
+### Update `useOnboardingProgress`
+Modify to respect required vs optional when calculating completion:
+- Required items must be completed for 100%
+- Optional items contribute bonus progress
 
 ---
 
-## Solution
+## UI Integration
 
-The fix requires ensuring CSS variables are properly scoped within the dark mode wrapper and that all child elements inherit from it correctly.
+### Access Point
+Add "Onboarding" as a new settings category in the Settings page, or enhance the existing "Onboarding" category to include the configurator.
 
-### Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/components/dashboard/DashboardLayout.tsx` | Apply dark mode to document root or ensure proper scoping |
-| `src/index.css` | Review CSS variable selectors for proper cascade |
-
-### Approach 1: Apply dark class to document root (Recommended)
-
-Instead of scoping `.dark` to a wrapper div, apply it to `document.documentElement` when in dark mode:
-
+**Settings.tsx changes**:
 ```typescript
-// In DashboardLayout.tsx or a dedicated effect
-useEffect(() => {
-  const root = document.documentElement;
-  if (resolvedTheme === 'dark') {
-    root.classList.add('dark');
-  } else {
-    root.classList.remove('dark');
-  }
-}, [resolvedTheme]);
+// Update the 'onboarding' category to show the configurator
+case 'onboarding':
+  return <OnboardingConfigurator />;
 ```
 
-This ensures all CSS variable lookups find the correct dark mode values.
-
-### Approach 2: Ensure wrapper div provides CSS variable context
-
-Add explicit CSS to make the wrapper div establish a new CSS variable context:
-
-```css
-/* In index.css */
-.dark.theme-cream {
-  /* All dark mode variables */
-  color: hsl(var(--foreground));
-  background-color: hsl(var(--background));
-}
-```
-
-And ensure the wrapper div uses these:
-```tsx
-<div className={cn(
-  resolvedTheme === 'dark' && 'dark',
-  `theme-${colorTheme}`,
-  'bg-background text-foreground min-h-screen'  // Explicitly apply colors
-)}>
-```
+### Onboarding Page Updates
+Modify `Onboarding.tsx` to:
+1. Read `is_required` from tasks
+2. Visually distinguish required vs optional items
+3. Show "Required" or "Optional" badges
+4. Respect section-level enable/disable settings
 
 ---
 
-## Implementation Details
+## Files to Create
 
-### Step 1: Update DashboardLayout.tsx
+| File | Purpose |
+|------|---------|
+| `src/components/dashboard/settings/OnboardingConfigurator.tsx` | Main configurator component |
+| `src/components/dashboard/settings/OnboardingTasksConfigPanel.tsx` | Tasks configuration panel |
+| `src/components/dashboard/settings/OnboardingSectionsConfigPanel.tsx` | Sections (BC, HS, Handbooks) config |
+| `src/hooks/useOnboardingConfig.ts` | Data fetching and mutation hooks |
 
-Add a `useEffect` to sync the `dark` class to `document.documentElement`:
+## Files to Modify
 
-```typescript
-useEffect(() => {
-  const root = document.documentElement;
-  const colorTheme = localStorage.getItem('dd-color-theme') || 'cream';
-  
-  // Apply theme class
-  root.classList.remove('theme-cream', 'theme-rose', 'theme-sage', 'theme-ocean');
-  root.classList.add(`theme-${colorTheme}`);
-  
-  // Apply dark mode
-  if (resolvedTheme === 'dark') {
-    root.classList.add('dark');
-  } else {
-    root.classList.remove('dark');
-  }
-}, [resolvedTheme]);
-```
-
-### Step 2: Update wrapper div
-
-Ensure the wrapper div also has explicit background and text colors:
-
-```tsx
-<div className={cn(
-  resolvedTheme === 'dark' && 'dark',
-  `theme-${colorTheme}`,
-  'bg-background text-foreground',  // Explicit color application
-  ...
-)}>
-```
-
-### Step 3: Review conflicting theme resets
-
-Check that `Layout.tsx` (public website) doesn't interfere with dashboard pages by ensuring theme resets only run on non-dashboard routes (already implemented via route check).
+| File | Changes |
+|------|---------|
+| `src/pages/dashboard/admin/Settings.tsx` | Replace simple OnboardingTasksManager with OnboardingConfigurator |
+| `src/pages/dashboard/Onboarding.tsx` | Display required/optional badges, hide disabled sections |
+| `src/hooks/useOnboardingProgress.ts` | Account for required vs optional in progress calculation |
+| `src/components/dashboard/OnboardingTasksManager.tsx` | Add `is_required` toggle to task creation/editing |
 
 ---
 
-## Summary
+## User Experience Flow
 
-| Before | After |
-|--------|-------|
-| Dark mode CSS variables not reaching all elements | CSS variables properly inherited via root element |
-| Page title barely visible (low contrast) | Page title displays in proper cream color |
-| Theme classes applied to wrapper div only | Theme classes applied to document root for proper cascade |
+### For Account Owners (Configuration)
+1. Navigate to Settings → Onboarding
+2. See the Onboarding Configurator with role pills at the top
+3. Click a role (e.g., "Stylist")
+4. View all onboarding items organized by section
+5. Toggle items on/off and mark as required/optional
+6. Changes save automatically
 
+### For Team Members (Onboarding Experience)
+1. Navigate to their Onboarding page
+2. See only the items configured for their role(s)
+3. Required items shown with a "Required" badge
+4. Optional items shown with an "Optional" badge
+5. Progress bar calculates based on required items (optional = bonus)
+
+---
+
+## Visual Design
+
+### Required Badge
+```tsx
+<Badge variant="destructive" className="text-[10px]">Required</Badge>
+```
+
+### Optional Badge
+```tsx
+<Badge variant="outline" className="text-[10px]">Optional</Badge>
+```
+
+### Progress Calculation
+- Required items: Must complete for "Onboarding Complete" status
+- Optional items: Shown as bonus completion (e.g., "100% + 2 bonus items")
+
+---
+
+## Migration Path
+
+1. Run database migration to add `is_required` column
+2. Default all existing tasks to `is_required = true` (backward compatible)
+3. Create `onboarding_section_config` table
+4. Deploy new UI components
+5. Existing functionality continues working; new configuration is opt-in
