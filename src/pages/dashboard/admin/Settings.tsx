@@ -57,6 +57,7 @@ import {
   FileCheck,
   Plus,
   Gift,
+  Trophy,
 } from 'lucide-react';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
@@ -67,6 +68,7 @@ import { EmailVariablesManager } from '@/components/dashboard/EmailVariablesMana
 import { SignaturePresetsManager } from '@/components/dashboard/SignaturePresetsManager';
 import { OnboardingTasksManager } from '@/components/dashboard/OnboardingTasksManager';
 import { OnboardingConfigurator } from '@/components/dashboard/settings/OnboardingConfigurator';
+import { LeaderboardConfigurator } from '@/components/dashboard/settings/LeaderboardConfigurator';
 import { LeaderboardWeightsManager } from '@/components/dashboard/LeaderboardWeightsManager';
 import { IntegrationsTab } from '@/components/dashboard/IntegrationsTab';
 import { StylistLevelsContent } from '@/components/dashboard/settings/StylistLevelsContent';
@@ -117,7 +119,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'access-hub' | 'schedule' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | null;
+type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'access-hub' | 'schedule' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -693,8 +695,14 @@ export default function Settings() {
     onboarding: {
       id: 'onboarding',
       label: 'Onboarding',
-      description: 'Tasks & leaderboard scoring',
+      description: 'Tasks & role configuration',
       icon: Rocket,
+    },
+    leaderboard: {
+      id: 'leaderboard',
+      label: 'Leaderboard',
+      description: 'Scoring weights & achievements',
+      icon: Trophy,
     },
     integrations: {
       id: 'integrations',
@@ -1058,19 +1066,11 @@ export default function Settings() {
           )}
 
           {activeCategory === 'onboarding' && (
-            <div className="space-y-6">
-              <OnboardingConfigurator />
+            <OnboardingConfigurator />
+          )}
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-display text-lg">LEADERBOARD SCORING</CardTitle>
-                  <CardDescription>Adjust weight distribution for performance metrics.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <LeaderboardWeightsManager />
-                </CardContent>
-              </Card>
-            </div>
+          {activeCategory === 'leaderboard' && (
+            <LeaderboardConfigurator />
           )}
 
           {activeCategory === 'integrations' && (
