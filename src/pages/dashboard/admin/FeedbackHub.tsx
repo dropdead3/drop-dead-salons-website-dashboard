@@ -2,11 +2,12 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { MessageSquareText, BarChart3, Users, Send, Star } from 'lucide-react';
+import { MessageSquareText, BarChart3, Users, Send, Star, Settings } from 'lucide-react';
 import { NPSScoreCard } from '@/components/feedback/NPSScoreCard';
 import { FeedbackResponseList } from '@/components/feedback/FeedbackResponseList';
+import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useFeedbackSurveys, useCreateFeedbackRequest } from '@/hooks/useFeedbackSurveys';
+import { useFeedbackSurveys } from '@/hooks/useFeedbackSurveys';
 import { useStaffFeedbackStats } from '@/hooks/useNPSAnalytics';
 import { useState } from 'react';
 
@@ -47,6 +48,10 @@ export default function FeedbackHub() {
             <TabsTrigger value="staff" className="gap-2">
               <Users className="h-4 w-4" />
               By Staff
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="gap-2">
+              <Settings className="h-4 w-4" />
+              Review Settings
             </TabsTrigger>
           </TabsList>
 
@@ -127,6 +132,10 @@ export default function FeedbackHub() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-6">
+            <ReviewThresholdSettings />
           </TabsContent>
         </Tabs>
       </div>

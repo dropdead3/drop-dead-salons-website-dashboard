@@ -5,9 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Star, ThumbsUp, ThumbsDown, CheckCircle2, Loader2 } from 'lucide-react';
+import { Star, ThumbsUp, ThumbsDown, Loader2 } from 'lucide-react';
 import { useFeedbackByToken, useSubmitFeedback } from '@/hooks/useFeedbackSurveys';
+import { useReviewThresholdSettings, checkPassesReviewGate, checkBelowFollowUpThreshold } from '@/hooks/useReviewThreshold';
+import { ReviewShareScreen } from '@/components/feedback/ReviewShareScreen';
+import { ReviewThankYouScreen } from '@/components/feedback/ReviewThankYouScreen';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 function StarRatingInput({ 
   value, 
@@ -83,11 +87,14 @@ function NPSInput({ value, onChange }: { value: number | null; onChange: (v: num
   );
 }
 
+type SubmissionState = 'form' | 'share' | 'thankyou';
+
 export default function ClientFeedback() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   
   const { data: feedback, isLoading, error } = useFeedbackByToken(token || undefined);
+  const { data: thresholdSettings } = useReviewThresholdSettings();
   const submitFeedback = useSubmitFeedback();
 
   const [npsScore, setNpsScore] = useState<number | null>(null);
@@ -98,7 +105,9 @@ export default function ClientFeedback() {
   const [wouldRecommend, setWouldRecommend] = useState<boolean | null>(null);
   const [comments, setComments] = useState('');
   const [isPublic, setIsPublic] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [submissionState, setSubmissionState] = useState<SubmissionState>('form');
+  const [passedGate, setPassedGate] = useState(false);
+  const [showManagerFollowUp, setShowManagerFollowUp] = useState(false);
 
   if (!token) {
     return (
@@ -132,25 +141,42 @@ export default function ClientFeedback() {
     );
   }
 
-  if (feedback.responded_at || submitted) {
+  if (feedback.responded_at) {
+    return <ReviewThankYouScreen showManagerFollowUp={false} />;
+  }
+
+  // Show share screen for happy customers
+  if (submissionState === 'share' && thresholdSettings) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="pt-6 text-center space-y-4">
-            <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto" />
-            <h2 className="text-xl font-semibold">Thank You!</h2>
-            <p className="text-muted-foreground">
-              Your feedback has been submitted. We appreciate you taking the time to help us improve.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <ReviewShareScreen
+        settings={thresholdSettings}
+        comments={comments}
+        feedbackToken={token}
+        onSkip={() => setSubmissionState('thankyou')}
+      />
     );
+  }
+
+  // Show thank you screen
+  if (submissionState === 'thankyou') {
+    return <ReviewThankYouScreen showManagerFollowUp={showManagerFollowUp} />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Determine if passes review gate
+    const passes = thresholdSettings 
+      ? checkPassesReviewGate(thresholdSettings, overallRating, npsScore)
+      : false;
+    
+    const belowThreshold = thresholdSettings
+      ? checkBelowFollowUpThreshold(thresholdSettings, overallRating)
+      : false;
+    
+    setPassedGate(passes);
+    setShowManagerFollowUp(belowThreshold);
+
     await submitFeedback.mutateAsync({
       token,
       npsScore: npsScore ?? undefined,
@@ -162,8 +188,30 @@ export default function ClientFeedback() {
       comments: comments || undefined,
       isPublic,
     });
-    
-    setSubmitted(true);
+
+    // Update with gate status
+    await supabase
+      .from('client_feedback_responses')
+      .update({ passed_review_gate: passes })
+      .eq('token', token);
+
+    // If low score, trigger manager notification
+    if (belowThreshold && thresholdSettings?.privateFollowUpEnabled) {
+      try {
+        await supabase.functions.invoke('notify-low-score', {
+          body: { token }
+        });
+      } catch (err) {
+        console.error('Failed to notify manager:', err);
+      }
+    }
+
+    // Route to appropriate screen
+    if (passes && (thresholdSettings?.googleReviewUrl || thresholdSettings?.appleReviewUrl)) {
+      setSubmissionState('share');
+    } else {
+      setSubmissionState('thankyou');
+    }
   };
 
   return (

@@ -1627,11 +1627,16 @@ export type Database = {
           comments: string | null
           created_at: string | null
           expires_at: string | null
+          external_review_clicked: string | null
+          external_review_clicked_at: string | null
           id: string
           is_public: boolean | null
+          manager_notified: boolean | null
+          manager_notified_at: string | null
           nps_score: number | null
           organization_id: string | null
           overall_rating: number | null
+          passed_review_gate: boolean | null
           responded_at: string | null
           service_quality: number | null
           staff_friendliness: number | null
@@ -1647,11 +1652,16 @@ export type Database = {
           comments?: string | null
           created_at?: string | null
           expires_at?: string | null
+          external_review_clicked?: string | null
+          external_review_clicked_at?: string | null
           id?: string
           is_public?: boolean | null
+          manager_notified?: boolean | null
+          manager_notified_at?: string | null
           nps_score?: number | null
           organization_id?: string | null
           overall_rating?: number | null
+          passed_review_gate?: boolean | null
           responded_at?: string | null
           service_quality?: number | null
           staff_friendliness?: number | null
@@ -1667,11 +1677,16 @@ export type Database = {
           comments?: string | null
           created_at?: string | null
           expires_at?: string | null
+          external_review_clicked?: string | null
+          external_review_clicked_at?: string | null
           id?: string
           is_public?: boolean | null
+          manager_notified?: boolean | null
+          manager_notified_at?: string | null
           nps_score?: number | null
           organization_id?: string | null
           overall_rating?: number | null
+          passed_review_gate?: boolean | null
           responded_at?: string | null
           service_quality?: number | null
           staff_friendliness?: number | null
