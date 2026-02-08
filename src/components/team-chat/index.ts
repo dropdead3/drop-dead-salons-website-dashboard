@@ -14,6 +14,7 @@ export * from './ChannelSettingsSheet';
 export * from './ChannelMembersSheet';
 export * from './UserStatusPicker';
 export * from './MentionAutocomplete';
+export * from './MentionInput';
 export * from './AttachmentDisplay';
 export * from './TeamChatAdminSettingsSheet';
 export * from './SmartActionToast';
