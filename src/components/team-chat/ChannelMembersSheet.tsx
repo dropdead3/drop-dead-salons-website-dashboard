@@ -15,8 +15,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import {
   Select,
@@ -29,11 +27,13 @@ import { useTeamChatContext } from '@/contexts/TeamChatContext';
 import { useChannelMembers } from '@/hooks/team-chat/useChannelMembers';
 import { useTeamMembers } from '@/hooks/team-chat/useTeamMembers';
 import { useAuth } from '@/contexts/AuthContext';
-import { cn } from '@/lib/utils';
 import { Loader2, MoreHorizontal, UserPlus } from 'lucide-react';
+import { ALL_ROLES, ROLE_LABELS } from '@/hooks/useUserRoles';
+import { getIconByName } from '@/lib/iconResolver';
+import type { Database } from '@/integrations/supabase/types';
 
 type SortOption = 'name-asc' | 'name-desc' | 'role';
-type RoleFilter = 'all' | 'owner' | 'admin' | 'member';
+type AppRole = Database['public']['Enums']['app_role'];
 
 interface ChannelMembersSheetProps {
   open: boolean;
@@ -48,8 +48,31 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
   const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [showAddMember, setShowAddMember] = useState(false);
   const [sortOption, setSortOption] = useState<SortOption>('role');
-  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
   const { members: teamMembers } = useTeamMembers(searchQuery);
+
+  // Get unique account roles present in the channel for the filter dropdown
+  const availableAccountRoles = useMemo(() => {
+    const rolesInChannel = new Set<AppRole>();
+    members.forEach((m) => {
+      m.accountRoles.forEach((role) => rolesInChannel.add(role));
+    });
+    // Return roles in the order defined by ALL_ROLES
+    return ALL_ROLES.filter((role) => rolesInChannel.has(role));
+  }, [members]);
+
+  // Get primary display role for a member (first account role, or fallback)
+  const getPrimaryAccountRole = (accountRoles: AppRole[]): string => {
+    if (accountRoles.length === 0) return 'Team Member';
+    // Prioritize by role hierarchy
+    const roleOrder: AppRole[] = ['super_admin', 'admin', 'manager', 'stylist', 'receptionist', 'stylist_assistant', 'admin_assistant', 'operations_assistant', 'booth_renter', 'bookkeeper', 'assistant'];
+    for (const role of roleOrder) {
+      if (accountRoles.includes(role)) {
+        return ROLE_LABELS[role] || role;
+      }
+    }
+    return ROLE_LABELS[accountRoles[0]] || accountRoles[0];
+  };
 
   // Filter and sort members
   const filteredAndSortedMembers = useMemo(() => {
@@ -64,9 +87,9 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
       });
     }
 
-    // Filter by role
+    // Filter by account role
     if (roleFilter !== 'all') {
-      result = result.filter((m) => m.role === roleFilter);
+      result = result.filter((m) => m.accountRoles.includes(roleFilter as AppRole));
     }
 
     // Sort
@@ -79,10 +102,10 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
       } else if (sortOption === 'name-desc') {
         return nameB.localeCompare(nameA);
       } else {
-        // Sort by role: owner > admin > member
-        const roleOrder = { owner: 0, admin: 1, member: 2 };
-        const roleCompare = roleOrder[a.role] - roleOrder[b.role];
-        if (roleCompare !== 0) return roleCompare;
+        // Sort by channel role first (owner > admin > member), then by account role
+        const channelRoleOrder = { owner: 0, admin: 1, member: 2 };
+        const channelRoleCompare = channelRoleOrder[a.role] - channelRoleOrder[b.role];
+        if (channelRoleCompare !== 0) return channelRoleCompare;
         return nameA.localeCompare(nameB);
       }
     });
@@ -95,7 +118,7 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
     (tm) => !members.some((m) => m.userId === tm.userId)
   );
 
-  const getRoleIcon = (role: string) => {
+  const getChannelRoleIcon = (role: string) => {
     if (role === 'owner') return <Crown className="h-3 w-3 text-yellow-500" />;
     if (role === 'admin') return <Shield className="h-3 w-3 text-blue-500" />;
     return null;
@@ -127,16 +150,18 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
             </div>
             
             <div className="flex gap-2">
-              <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as RoleFilter)}>
+              <Select value={roleFilter} onValueChange={setRoleFilter}>
                 <SelectTrigger className="flex-1">
                   <Filter className="h-4 w-4 mr-2" />
                   <SelectValue placeholder="Filter by role" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
-                  <SelectItem value="owner">Owners</SelectItem>
-                  <SelectItem value="admin">Channel Admins</SelectItem>
-                  <SelectItem value="member">Members</SelectItem>
+                  {availableAccountRoles.map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {ROLE_LABELS[role] || role}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -221,6 +246,8 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
                   const name = member.profile.displayName || member.profile.fullName || 'Unknown';
                   const initials = name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
                   const isMe = member.userId === user?.id;
+                  const primaryRole = getPrimaryAccountRole(member.accountRoles);
+                  const channelRoleIcon = getChannelRoleIcon(member.role);
 
                   return (
                     <div
@@ -234,11 +261,13 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <span className="font-medium text-sm truncate">{name}</span>
-                          {getRoleIcon(member.role)}
+                          {channelRoleIcon}
                           {isMe && <span className="text-xs text-muted-foreground">(you)</span>}
                         </div>
-                        <span className="text-xs text-muted-foreground capitalize">
-                          {member.role === 'admin' ? 'Channel Admin' : member.role}
+                        <span className="text-xs text-muted-foreground">
+                          {primaryRole}
+                          {member.role === 'owner' && ' (Channel Owner)'}
+                          {member.role === 'admin' && ' (Channel Admin)'}
                         </span>
                       </div>
 

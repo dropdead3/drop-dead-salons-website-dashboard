@@ -5,11 +5,13 @@ import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 
 type MemberRole = Database['public']['Enums']['chat_member_role'];
+type AppRole = Database['public']['Enums']['app_role'];
 
 export interface ChannelMember {
   id: string;
   userId: string;
   role: MemberRole;
+  accountRoles: AppRole[];
   joinedAt: string | null;
   profile: {
     displayName: string | null;
@@ -27,6 +29,7 @@ export function useChannelMembers(channelId: string | null) {
     queryFn: async () => {
       if (!channelId) return [];
 
+      // Fetch channel members with profile data
       const { data, error } = await supabase
         .from('chat_channel_members')
         .select(`
@@ -44,10 +47,27 @@ export function useChannelMembers(channelId: string | null) {
 
       if (error) throw error;
 
+      // Get all user IDs to fetch their account roles
+      const userIds = data?.map((m) => m.user_id) || [];
+      
+      // Fetch account roles for all members
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', userIds);
+
+      // Create a map of user_id to roles array
+      const rolesMap = new Map<string, AppRole[]>();
+      rolesData?.forEach((r) => {
+        const existing = rolesMap.get(r.user_id) || [];
+        rolesMap.set(r.user_id, [...existing, r.role as AppRole]);
+      });
+
       return data?.map((m) => ({
         id: m.id,
         userId: m.user_id,
         role: m.role,
+        accountRoles: rolesMap.get(m.user_id) || [],
         joinedAt: m.joined_at,
         profile: {
           displayName: (m.profile as any)?.display_name,
