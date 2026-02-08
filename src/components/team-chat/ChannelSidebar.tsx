@@ -59,10 +59,12 @@ export function ChannelSidebar() {
   const initializeChannels = useInitializeDefaultChannels();
   const autoJoinChannels = useAutoJoinLocationChannels();
   const hasAutoJoined = useRef(false);
+  const hasInitialized = useRef(false);
 
   // Initialize default channels on first load if none exist
   useEffect(() => {
-    if (!isLoading && channels.length === 0) {
+    if (!isLoading && channels.length === 0 && !hasInitialized.current) {
+      hasInitialized.current = true;
       initializeChannels.mutate();
     }
   }, [isLoading, channels.length]);
