@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +14,7 @@ import {
   Shield,
 } from 'lucide-react';
 
-interface HubLinkProps {
+export interface HubLinkProps {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   label: string;
@@ -21,7 +22,7 @@ interface HubLinkProps {
   permission?: string;
 }
 
-const hubLinks: HubLinkProps[] = [
+export const hubLinks: HubLinkProps[] = [
   { 
     href: '/dashboard/admin/analytics', 
     icon: TrendingUp, 
@@ -87,13 +88,42 @@ const hubLinks: HubLinkProps[] = [
   },
 ];
 
-export function HubQuickLinks() {
+interface HubQuickLinksProps {
+  hubOrder?: string[];
+  enabledHubs?: string[];
+}
+
+export function HubQuickLinks({ hubOrder, enabledHubs }: HubQuickLinksProps) {
   const { hasPermission } = useAuth();
 
-  // Filter to only show hubs the user has permission for
-  const visibleHubs = hubLinks.filter(hub => 
+  // Filter by permission first
+  const permittedHubs = hubLinks.filter(hub => 
     !hub.permission || hasPermission(hub.permission)
   );
+
+  // Apply custom order and visibility
+  const visibleHubs = useMemo(() => {
+    let filtered = permittedHubs;
+    
+    // Filter to only enabled hubs if specified
+    if (enabledHubs && enabledHubs.length > 0) {
+      filtered = filtered.filter(hub => enabledHubs.includes(hub.href));
+    }
+    
+    // Apply custom order if specified
+    if (hubOrder && hubOrder.length > 0) {
+      filtered = [...filtered].sort((a, b) => {
+        const aIndex = hubOrder.indexOf(a.href);
+        const bIndex = hubOrder.indexOf(b.href);
+        if (aIndex === -1 && bIndex === -1) return 0;
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      });
+    }
+    
+    return filtered;
+  }, [permittedHubs, hubOrder, enabledHubs]);
 
   if (visibleHubs.length === 0) {
     return null;

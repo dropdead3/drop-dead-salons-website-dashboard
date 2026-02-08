@@ -10,6 +10,9 @@ export interface DashboardLayout {
   pinnedCards: string[];   // Tracks which cards are pinned (for visibility)
   widgets: string[];
   hasCompletedSetup: boolean;
+  // Hub customization
+  hubOrder?: string[];     // Order of hub hrefs
+  enabledHubs?: string[];  // Which hubs are visible (by href)
 }
 
 export interface DashboardTemplate {
@@ -177,6 +180,8 @@ export function useDashboardLayout() {
     pinnedCards: (parsedLayout.pinnedCards as string[]) || [],
     widgets: (parsedLayout.widgets as string[]) || [],
     hasCompletedSetup: (parsedLayout.hasCompletedSetup as boolean) || false,
+    hubOrder: (parsedLayout.hubOrder as string[]) || undefined,
+    enabledHubs: (parsedLayout.enabledHubs as string[]) || undefined,
   } : null;
   
   const hasCompletedSetup = rawSavedLayout?.hasCompletedSetup ?? false;
@@ -213,6 +218,8 @@ export function useSaveDashboardLayout() {
         pinnedCards: layout.pinnedCards,
         widgets: layout.widgets,
         hasCompletedSetup: layout.hasCompletedSetup,
+        hubOrder: layout.hubOrder,
+        enabledHubs: layout.enabledHubs,
       };
 
       // First check if user preferences exist
