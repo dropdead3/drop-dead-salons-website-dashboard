@@ -1,205 +1,224 @@
 
+# Emoji Picker & Chat Enhancements
 
-# Smart Multi-Location Handling for Organization Account Setup
+## Problem Summary
 
-## Problem
-
-Single-location organizations see UI elements that don't make sense for them:
-1. **"Locations" section** in Team Chat sidebar (unnecessary when there's only one location)
-2. **"company-wide" channel** (redundant when everyone is in the same location - "general" serves the same purpose)
-3. **Location channels** (only one would exist, identical to company-wide)
-
-## Proposed Solution
-
-Add an `is_multi_location` flag to organizations that drives intelligent defaults throughout the platform. This flag can be set during account provisioning and changed later in organization settings.
+The emoji button (Smile icon) in the message input area doesn't do anything - it has **no onClick handler**. Additionally, the paperclip/attachment button is also non-functional. This plan fixes the emoji picker and adds several chat enhancements.
 
 ---
 
-## Database Changes
+## Part 1: Emoji Picker for Message Input
 
-### 1. Add `is_multi_location` Column to Organizations
+### Current State
+- Line 109-110 in `MessageInput.tsx`: `<Button variant="ghost" size="icon" disabled={!canSend}><Smile /></Button>` - **no onClick handler**
+- Message reactions work fine with a quick reactions popover (6 emojis)
+- No full emoji picker installed
 
-```sql
-ALTER TABLE public.organizations 
-ADD COLUMN is_multi_location BOOLEAN DEFAULT false;
+### Solution
 
--- Backfill: Set true for orgs with more than 1 location
-UPDATE public.organizations o
-SET is_multi_location = true
-WHERE (
-  SELECT COUNT(*) FROM public.locations l 
-  WHERE l.organization_id = o.id AND l.is_active = true
-) > 1;
+Install `emoji-picker-react` (most popular React emoji picker with 578k weekly downloads) and create an `EmojiPickerPopover` component that can be reused.
+
+**Installation:**
+```bash
+npm install emoji-picker-react
 ```
 
-### 2. Auto-Update Flag via Trigger
+**New Component: `EmojiPickerPopover.tsx`**
+- Wraps `emoji-picker-react` in a Radix Popover
+- Supports themes (light/dark) via `next-themes`
+- Emits selected emoji to parent
+- Configurable: show/hide search, categories, skin tone picker
 
-When locations are added/removed, automatically update the flag:
-
-```sql
-CREATE OR REPLACE FUNCTION sync_multi_location_flag()
-RETURNS TRIGGER AS $$
-BEGIN
-  -- Count active locations for the org
-  UPDATE public.organizations
-  SET is_multi_location = (
-    SELECT COUNT(*) > 1 FROM public.locations
-    WHERE organization_id = COALESCE(NEW.organization_id, OLD.organization_id)
-    AND is_active = true
-  )
-  WHERE id = COALESCE(NEW.organization_id, OLD.organization_id);
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER update_multi_location_flag
-AFTER INSERT OR UPDATE OR DELETE ON public.locations
-FOR EACH ROW EXECUTE FUNCTION sync_multi_location_flag();
+**Integration in `MessageInput.tsx`:**
+```typescript
+<EmojiPickerPopover onEmojiSelect={insertEmoji}>
+  <Button variant="ghost" size="icon" disabled={!canSend}>
+    <Smile className="h-5 w-5" />
+  </Button>
+</EmojiPickerPopover>
 ```
+
+The `insertEmoji` function will insert the selected emoji at the cursor position in the contenteditable editor.
 
 ---
 
-## Team Chat Behavior Changes
+## Part 2: Enhanced Message Reactions
 
-### Single-Location Organizations
+### Current State
+- Quick reactions limited to 6 emojis: 👍 ❤️ 😂 😮 😢 🎉
+- No way to add custom emoji reactions
 
-| Feature | Behavior |
-|---------|----------|
-| Default channels | Only create "general" (skip "company-wide") |
-| Location channels | Don't create any location-specific channels |
-| Sidebar UI | Hide "Locations" section entirely |
-| Channel init | Simpler setup with just "general" + "DMs" |
+### Enhancement
 
-### Multi-Location Organizations
+Add a "+" button after the quick reactions that opens the full emoji picker:
 
-| Feature | Behavior |
-|---------|----------|
-| Default channels | Create both "company-wide" and "general" |
-| Location channels | Create one channel per location |
-| Sidebar UI | Show both "Channels" and "Locations" sections |
-| Channel init | Full setup with location sync |
+```text
+┌─────────────────────────────────────┐
+│  👍  ❤️  😂  😮  😢  🎉  [+]      │
+└─────────────────────────────────────┘
+                              ↓
+              Full emoji picker popover
+```
+
+**Files to update:**
+- `MessageItem.tsx` - Add the "+" button with `EmojiPickerPopover`
+- `ThreadMessageItem.tsx` - Same enhancement for thread reactions
 
 ---
 
-## Code Changes
+## Part 3: File Attachments (Optional Enhancement)
 
-### 1. Update `useOrganizations.ts` Interface
+### Current State
+- Paperclip button exists but has no functionality
+- `AttachmentDisplay.tsx` component exists (ready to display attachments)
+- Settings for file attachments exist (`allow_file_attachments`, `max_file_size_mb`)
+- Storage bucket should exist for chat attachments
 
-Add `is_multi_location` to the `Organization` type.
+### Implementation
 
-### 2. Modify `useChatChannels.ts` - `useInitializeDefaultChannels`
+Create a file upload hook and connect it to the Paperclip button:
 
-```typescript
-// Check org's is_multi_location flag
-const isSingleLocation = !effectiveOrganization?.is_multi_location;
+1. **New hook: `useChatAttachments.ts`**
+   - Upload files to Supabase Storage
+   - Track upload progress
+   - Return file URL for embedding in messages
 
-// Adjust default channels
-const defaultChannels = isSingleLocation
-  ? [{ name: 'general', description: 'Team discussions', type: 'public' }]
-  : [
-      { name: 'company-wide', description: 'Organization-wide announcements', type: 'public' },
-      { name: 'general', description: 'General discussions', type: 'public' },
-    ];
-
-// Skip location channel creation for single-location orgs
-if (!isSingleLocation) {
-  // Create location channels...
-}
-```
-
-### 3. Update `ChannelSidebar.tsx`
-
-```typescript
-// Get multi-location status from org context
-const { effectiveOrganization } = useOrganizationContext();
-const isMultiLocation = effectiveOrganization?.is_multi_location ?? true;
-
-// Hide Locations section for single-location orgs
-{isMultiLocation && locationChannels.length > 0 && (
-  <Collapsible ...>
-    {/* Locations section */}
-  </Collapsible>
-)}
-```
-
-### 4. Update Account Provisioner Edge Function
-
-Add `is_multi_location` parameter to provisioning request:
-
-```typescript
-interface ProvisioningRequest {
-  // ...existing fields
-  is_multi_location?: boolean;
-}
-
-// Set flag based on initial_locations count or explicit flag
-const isMultiLocation = request.is_multi_location ?? 
-  (request.initial_locations?.length ?? 0) > 1;
-
-// Include in org insert
-const { data: newOrg } = await adminClient
-  .from('organizations')
-  .insert({
-    // ...existing fields
-    is_multi_location: isMultiLocation,
-  })
-```
-
-### 5. Add Toggle to Account Settings Tab
-
-Add a switch in the Platform Admin's organization settings to manually override:
-
-```typescript
-<FeatureToggle
-  label="Multi-Location Organization"
-  description="Enable location-specific chat channels and team groupings"
-  checked={settings.is_multi_location}
-  onCheckedChange={(v) => updateSettings('is_multi_location', v)}
-/>
-```
+2. **Update `MessageInput.tsx`:**
+   - Add hidden file input
+   - Paperclip button triggers file picker
+   - Show attachment preview before sending
+   - Include attachment metadata in message
 
 ---
 
-## Files to Modify
+## Part 4: Fix Console Warning
+
+### Problem
+```
+Warning: Function components cannot be given refs. Did you mean to use React.forwardRef()?
+Check the render method of `MessageItem`.
+```
+
+This occurs because `DropdownMenu` is being used without proper ref handling.
+
+### Fix
+
+Wrap the `MessageItem` component with `React.forwardRef` or ensure the DropdownMenuTrigger has a proper child that accepts refs.
+
+---
+
+## Implementation Plan
+
+### Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/components/team-chat/EmojiPickerPopover.tsx` | Reusable emoji picker in popover |
+| `src/hooks/team-chat/useChatAttachments.ts` | File upload handling |
+
+### Files to Modify
 
 | File | Changes |
 |------|---------|
-| `supabase/migrations/[new].sql` | Add column, backfill, trigger |
-| `src/hooks/useOrganizations.ts` | Add `is_multi_location` to types |
-| `src/hooks/team-chat/useChatChannels.ts` | Conditional channel creation |
-| `src/components/team-chat/ChannelSidebar.tsx` | Conditional Locations section |
-| `supabase/functions/account-provisioner/index.ts` | Accept and set flag |
-| `src/components/platform/account/AccountSettingsTab.tsx` | Add toggle for admins |
+| `src/components/team-chat/MessageInput.tsx` | Add emoji picker to Smile button, wire up Paperclip |
+| `src/components/team-chat/MentionInput.tsx` | Add `insertText` method for emoji insertion |
+| `src/components/team-chat/MessageItem.tsx` | Add full emoji picker option, fix ref warning |
+| `src/components/team-chat/ThreadMessageItem.tsx` | Add full emoji picker option |
 
 ---
 
-## Migration Strategy
+## Technical Details
 
-1. Add column with default `false`
-2. Backfill based on existing location counts
-3. New orgs get flag set during provisioning
-4. Flag auto-updates when locations are added/removed
-5. Admins can manually override if needed
+### Emoji Insertion Logic
+
+For the contenteditable editor in `MentionInput.tsx`:
+
+```typescript
+const insertEmoji = (emoji: string) => {
+  if (!editorRef.current) return;
+  
+  editorRef.current.focus();
+  const selection = window.getSelection();
+  if (!selection) return;
+  
+  // Get current range or create one at end
+  let range: Range;
+  if (selection.rangeCount > 0 && editorRef.current.contains(selection.anchorNode)) {
+    range = selection.getRangeAt(0);
+  } else {
+    range = document.createRange();
+    range.selectNodeContents(editorRef.current);
+    range.collapse(false);
+  }
+  
+  // Insert emoji
+  const textNode = document.createTextNode(emoji);
+  range.insertNode(textNode);
+  
+  // Move cursor after emoji
+  range.setStartAfter(textNode);
+  range.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(range);
+  
+  setIsEmpty(false);
+};
+```
+
+### EmojiPickerPopover Component
+
+```typescript
+import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
+import { useTheme } from 'next-themes';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
+interface EmojiPickerPopoverProps {
+  children: React.ReactNode;
+  onEmojiSelect: (emoji: string) => void;
+}
+
+export function EmojiPickerPopover({ children, onEmojiSelect }: EmojiPickerPopoverProps) {
+  const { resolvedTheme } = useTheme();
+  const [open, setOpen] = useState(false);
+  
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    onEmojiSelect(emojiData.emoji);
+    setOpen(false);
+  };
+  
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{children}</PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="end" side="top">
+        <EmojiPicker
+          onEmojiClick={handleEmojiClick}
+          theme={resolvedTheme === 'dark' ? Theme.DARK : Theme.LIGHT}
+          lazyLoadEmojis
+          skinTonesDisabled
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
+```
 
 ---
 
 ## Expected Behavior
 
-| Scenario | Channels Created | Locations Section |
-|----------|-----------------|-------------------|
-| New single-location org | `general` only | Hidden |
-| New multi-location org (2+ locations) | `company-wide`, `general`, `[location-1]`, `[location-2]` | Visible |
-| Single-location adds second location | Auto-creates `company-wide` + location channels | Becomes visible |
-| Multi-location removes all but one | Keeps existing channels, section hides | Hidden |
+| Action | Result |
+|--------|--------|
+| Click Smile button in message input | Opens full emoji picker, inserts emoji at cursor |
+| Click "+" in message reaction popover | Opens full emoji picker for custom reactions |
+| Click Paperclip button | Opens file picker, shows preview before send |
+| Send message with attachment | Message includes file link/preview |
 
 ---
 
 ## Summary
 
-This approach:
-- **Simplifies** the experience for small businesses with one location
-- **Scales** properly when organizations grow to multiple locations  
-- **Auto-adapts** when location counts change
-- **Allows override** for special cases (e.g., single location but wants company-wide channel)
-- **Minimal code changes** - mostly conditional logic based on a single flag
-
+This plan delivers:
+1. **Working emoji picker** for the message input
+2. **Extended reactions** with full emoji selection
+3. **File attachment support** (bonus enhancement)
+4. **Console warning fix** for better DX
