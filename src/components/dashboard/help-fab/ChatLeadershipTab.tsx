@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, MessageCircle, Crown, Shield } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -6,6 +7,9 @@ import { useLeadershipMembers, LeadershipMember } from '@/hooks/team-chat/useLea
 import { useDMChannels } from '@/hooks/team-chat/useDMChannels';
 import { usePlatformPresenceContextSafe } from '@/contexts/PlatformPresenceContext';
 import { OnlineIndicator } from '@/components/platform/ui/OnlineIndicator';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useOrganizations } from '@/hooks/useOrganizations';
 import { cn } from '@/lib/utils';
 
 const roleLabels: Record<string, string> = {
@@ -87,9 +91,20 @@ function MemberItem({ member, isOnline, onSelect, isLoading }: MemberItemProps) 
 
 export function ChatLeadershipTab() {
   const navigate = useNavigate();
+  const { isPlatformUser } = useAuth();
+  const { effectiveOrganization, setSelectedOrganization } = useOrganizationContext();
+  const { data: organizations } = useOrganizations();
   const { members, isLoading } = useLeadershipMembers();
   const { createDM, isCreating } = useDMChannels();
   const presence = usePlatformPresenceContextSafe();
+
+  // Auto-select org for platform users (mirrors TeamChat.tsx logic)
+  useEffect(() => {
+    if (isPlatformUser && !effectiveOrganization && organizations?.length > 0) {
+      const defaultOrg = organizations.find(o => o.slug === 'drop-dead-salons') || organizations[0];
+      setSelectedOrganization(defaultOrg);
+    }
+  }, [isPlatformUser, effectiveOrganization, organizations, setSelectedOrganization]);
   
   // Helper to check online status - returns null if presence unavailable
   const checkOnline = (userId: string): boolean | null => {
