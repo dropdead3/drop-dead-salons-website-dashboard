@@ -1,61 +1,49 @@
 
-# Thread Reply Visual Indicator (L-Line Design)
+# Add L-Line Threading Indicator to Main Chat
 
 ## Goal
 
-Add a visual "L" shaped line indicator that connects the parent message to its replies, creating a clear visual hierarchy that shows the relationship between messages - similar to how comment threads work in apps like GitHub or Reddit.
+Add a visual "L" shaped line indicator to messages in the main chat when they have replies. This will visually show the threading relationship directly in the message list, not just in the thread panel.
 
-## Visual Design
+## Current vs. Desired
+
+**Current**: Messages with replies just show a "2 replies" text link
+
+**Desired**: Messages with replies show an L-line connector with a preview or indicator of the thread
 
 ```text
 ┌────────────────────────────────────────┐
 │  [Avatar] Parent Message               │
 │           Message content here...      │
 │                                        │
-│     │                                  │  ← Vertical line starts
-│     ├── [Avatar] Reply 1               │  ← L-connector
-│     │            Reply content...      │
-│     │                                  │
-│     ├── [Avatar] Reply 2               │  ← L-connector
-│     │            Reply content...      │
-│     │                                  │
-│     └── [Avatar] Reply 3               │  ← Final reply (rounded corner)
-│                  Reply content...      │
+│     │                                  │  ← Vertical line  
+│     └── 💬 2 replies                   │  ← L-connector to reply indicator
+│                                        │
+│  [Avatar] Another Message              │
 └────────────────────────────────────────┘
 ```
 
-## Implementation Approach
+## Implementation
 
-### 1. Update `ThreadPanel.tsx` - Add threading line container
+### Changes to `MessageItem.tsx`
 
-Wrap the replies section in a container with the vertical thread line:
+Wrap the reply count indicator with the L-line visual:
 
 ```tsx
-{/* Replies with thread line */}
-{replies.length > 0 && (
-  <div className="relative ml-5 pl-4 border-l-2 border-muted-foreground/20">
-    {/* L-connector for each reply */}
-    <div className="space-y-0">
-      {replies.map((reply, index) => (
-        <div key={reply.id} className="relative">
-          {/* Horizontal line connector */}
-          <div className="absolute -left-4 top-4 w-4 h-px bg-muted-foreground/20" />
-          
-          <ThreadMessageItem ... />
-        </div>
-      ))}
-    </div>
+{/* Reply count with L-line threading */}
+{message.reply_count > 0 && (
+  <div className="relative mt-1 ml-5 pl-4 border-l-2 border-muted-foreground/20">
+    {/* Horizontal connector */}
+    <div className="absolute -left-4 top-2 w-4 h-px bg-muted-foreground/20" />
+    
+    <button
+      onClick={onReply}
+      className="flex items-center gap-1 text-xs text-primary hover:underline"
+    >
+      <MessageSquare className="h-3 w-3" />
+      {message.reply_count} {message.reply_count === 1 ? 'reply' : 'replies'}
+    </button>
   </div>
-)}
-```
-
-### 2. Update `ThreadMessageItem.tsx` - Add connector dot
-
-Add a small dot or circle at the connection point:
-
-```tsx
-{!isParent && (
-  <div className="absolute -left-[18px] top-4 h-2 w-2 rounded-full bg-muted-foreground/30" />
 )}
 ```
 
@@ -63,21 +51,19 @@ Add a small dot or circle at the connection point:
 
 | Element | Style |
 |---------|-------|
-| Vertical line | `border-l-2 border-muted-foreground/20` - subtle gray line |
-| Horizontal connector | `w-4 h-px bg-muted-foreground/20` - extends from vertical line to avatar |
-| Connection point | Small dot or rounded corner at intersection |
-| Indentation | `ml-5` (20px) indent for replies |
+| Vertical line | `border-l-2 border-muted-foreground/20` - subtle gray left border |
+| Horizontal connector | `w-4 h-px bg-muted-foreground/20` - extends from vertical line to reply indicator |
+| Indentation | `ml-5` (20px) - aligns with avatar column |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/team-chat/ThreadPanel.tsx` | Add vertical line container around replies, add horizontal connectors |
-| `src/components/team-chat/ThreadMessageItem.tsx` | Minor padding adjustments for proper alignment |
+| `src/components/team-chat/MessageItem.tsx` | Wrap reply count in L-line container with horizontal connector |
 
-## Benefits
+## Result
 
-- Clear visual hierarchy showing parent-child relationship
-- Familiar pattern from GitHub, Reddit, and other threaded UIs
-- Subtle styling that doesn't overwhelm the content
-- Responsive - works within the thread panel width constraints
+- Creates visual consistency between main chat and thread panel
+- Shows threading relationship at a glance without opening the thread
+- Subtle styling that doesn't overwhelm the main message content
+- Clickable area maintained for opening the full thread
