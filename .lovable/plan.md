@@ -1,117 +1,150 @@
 
 
-# Fix Duplicate Channels in Team Chat
+# Team Chat Enhancement Roadmap
 
-## Problem
-
-Duplicate channels exist in the database and are being displayed:
-- `company-wide` x2
-- `general` x2
-- `north-mesa` x2
-- `val-vista-lakes` x2
-
-### Root Cause
-
-Race condition in channel initialization:
-1. The `useEffect` in `ChannelSidebar` triggers `initializeChannels.mutate()` when `channels.length === 0`
-2. React Strict Mode (or rapid re-renders) can call this effect multiple times
-3. The mutex check (`existingChannels.length > 0`) happens too late - by the time the first call creates channels, the second call has already passed the check
-4. No `useRef` guard to prevent duplicate mutation calls (unlike the auto-join hook which has one)
+Based on analyzing the current implementation, here are the most impactful features to add next, prioritized by user value and building on existing infrastructure.
 
 ---
 
-## Solution
+## Priority 1: Thread Replies Panel
 
-### Part 1: Clean Up Existing Duplicates
+**Why First**: The context already has `openThread()`/`closeThread()` methods and messages track `parent_message_id` + `reply_count`. Just missing the UI.
 
-Delete the duplicate channels from the database, keeping only the first-created instance of each:
+| Component | Purpose |
+|-----------|---------|
+| `ThreadPanel.tsx` | Slide-out panel showing parent message + replies |
+| Update `TeamChatContainer` | Render thread panel when `threadMessageId` is set |
+| Update `useChatMessages` | Add `useThreadMessages()` hook for fetching replies |
 
-```sql
--- Delete duplicate channels, keeping the oldest one for each name+organization+type
-DELETE FROM chat_channels
-WHERE id IN (
-  SELECT id FROM (
-    SELECT id, 
-           ROW_NUMBER() OVER (
-             PARTITION BY organization_id, name, type 
-             ORDER BY created_at ASC
-           ) as rn
-    FROM chat_channels
-  ) ranked
-  WHERE rn > 1
-);
-```
-
-### Part 2: Prevent Future Duplicates
-
-#### A. Add ref guard to initialization (like auto-join has)
-
-```typescript
-// In ChannelSidebar.tsx
-const hasInitialized = useRef(false);
-
-useEffect(() => {
-  if (!isLoading && channels.length === 0 && !hasInitialized.current) {
-    hasInitialized.current = true;
-    initializeChannels.mutate();
-  }
-}, [isLoading, channels.length]);
-```
-
-#### B. Add database constraint to prevent duplicates at DB level
-
-```sql
--- Add unique constraint on (organization_id, name, type) for system channels
-CREATE UNIQUE INDEX chat_channels_org_name_type_unique 
-ON chat_channels (organization_id, name, type) 
-WHERE is_system = true;
-```
-
-This ensures that even if race conditions occur, the database will reject duplicate inserts.
-
-#### C. Use upsert pattern in initialization
-
-Change the INSERT logic to use conflict handling:
-
-```typescript
-const { data: newChannel, error } = await supabase
-  .from('chat_channels')
-  .upsert({
-    ...channel,
-    organization_id: effectiveOrganization.id,
-    created_by: user.id,
-    is_system: true,
-  }, { 
-    onConflict: 'organization_id,name,type',
-    ignoreDuplicates: true 
-  })
-  .select()
-  .single();
-```
+**User Experience**:
+- Click "X replies" on any message to open thread panel on the right
+- Panel shows original message at top, replies below
+- Dedicated input to reply in thread
+- Close button to collapse panel
 
 ---
 
-## Files to Modify
+## Priority 2: File Attachments
 
-| File | Change |
-|------|--------|
-| `src/components/team-chat/ChannelSidebar.tsx` | Add `hasInitialized` ref guard |
-| `src/hooks/team-chat/useChatChannels.ts` | Use upsert pattern in initialization |
+**Why Second**: The `chat_attachments` table already exists. Just need upload UI and display.
 
-## Database Changes
+| Component | Purpose |
+|-----------|---------|
+| Storage bucket | Create `chat-attachments` bucket |
+| `AttachmentUpload.tsx` | Drag-drop or click to upload files |
+| Update `MessageInput` | Wire up the existing Paperclip button |
+| Update `MessageItem` | Display attached images/files |
 
-| Change | Purpose |
-|--------|---------|
-| Delete duplicate channels | Clean up existing data |
-| Add partial unique index | Prevent future duplicates at DB level |
+**Supported Types**:
+- Images (inline preview)
+- Documents (download link with icon)
+- Limit: 10MB per file
 
 ---
 
-## Result
+## Priority 3: Direct Messages (DMs)
 
-| Before | After |
-|--------|-------|
-| 2x company-wide, 2x general, etc. | 1 of each channel |
-| Race condition can create duplicates | Database constraint prevents duplicates |
-| No initialization guard | Ref prevents multiple mutation calls |
+**Why Third**: The `dm` and `group_dm` channel types already exist in the schema.
+
+| Component | Purpose |
+|-----------|---------|
+| `StartDMDialog.tsx` | Search and select team members |
+| Update `ChannelSidebar` | Wire up the + button in DMs section |
+| `useDMChannels` hook | Create/fetch DM channels between users |
+
+**Behavior**:
+- Click + in Direct Messages section
+- Search for team member by name
+- Creates a private channel with just those two users
+- Channel name shows other person's name (not "dm-uuid")
+
+---
+
+## Priority 4: Unread Message Indicators
+
+**Why Fourth**: High user value for knowing where to focus attention.
+
+| Component | Purpose |
+|-----------|---------|
+| Update `useChatChannels` | Compare `last_read_at` with latest message timestamp |
+| Update `ChannelItem` | Show unread count badge |
+| Update `ChannelSidebar` | Bold unread channels |
+
+**Behavior**:
+- Unread count badge appears on channels with new messages
+- Opening a channel marks messages as read
+- Bold channel name until read
+
+---
+
+## Priority 5: @Mentions with Autocomplete
+
+**Why Fifth**: Common chat pattern that increases engagement.
+
+| Component | Purpose |
+|-----------|---------|
+| `MentionAutocomplete.tsx` | Dropdown showing matching team members |
+| Update `MessageInput` | Detect `@` trigger and show autocomplete |
+| Update `MessageItem` | Highlight mentions in message content |
+| Notification system | Notify users when mentioned |
+
+---
+
+## Priority 6: Pinned Messages
+
+**Why Sixth**: The `chat_pinned_messages` table exists but isn't used.
+
+| Component | Purpose |
+|-----------|---------|
+| `PinnedMessagesPanel.tsx` | List of pinned messages for channel |
+| Update `MessageItem` dropdown | Add "Pin message" option |
+| Update `ChannelHeader` | Pin icon showing pinned count |
+
+---
+
+## Priority 7: User Status & Availability
+
+**Why Seventh**: The `chat_user_status` table exists with status types.
+
+| Component | Purpose |
+|-----------|---------|
+| `UserStatusPicker.tsx` | Set status (online, away, busy, offline) |
+| Update avatars | Show status dot indicator |
+| Custom status message | "In a meeting", "On vacation", etc. |
+
+---
+
+## Priority 8: Message Search
+
+**Full-text search across all messages in channels you have access to.**
+
+| Component | Purpose |
+|-----------|---------|
+| `SearchDialog.tsx` | Global search modal (Cmd+K) |
+| Search results | Show message previews with context |
+| Jump to message | Navigate to specific message in channel |
+
+---
+
+## Priority 9: Channel Settings & Members Panel
+
+**Why Last**: Less frequently used but needed for complete feature set.
+
+| Component | Purpose |
+|-----------|---------|
+| `ChannelSettingsSheet.tsx` | Edit name, description, archive |
+| `ChannelMembersSheet.tsx` | View/manage channel members |
+| Wire up Settings/Users buttons | Currently non-functional in header |
+
+---
+
+## Recommended Starting Point
+
+I recommend building **Thread Replies Panel** first because:
+1. Context already has the methods (`openThread`, `closeThread`, `threadMessageId`)
+2. Messages already track `parent_message_id` and display `reply_count`
+3. High user value - threaded conversations are essential for organized discussions
+4. Foundation for more complex features like notifications
+
+Would you like me to implement the Thread Replies Panel, or would you prefer a different enhancement?
 
