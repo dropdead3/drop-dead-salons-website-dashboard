@@ -22,6 +22,7 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   loyalty: '#F59E0B',    // Amber/Gold (Loyalty & Rewards)
   feedback: '#10B981',   // Emerald (Client Feedback)
   'access-hub': '#8B5CF6', // Purple (Shield theme)
+  leaderboard: '#EAB308', // Gold/Trophy color
 };
 
 // Section groups for organized layout
@@ -29,7 +30,7 @@ export const SECTION_GROUPS = [
   {
     id: 'operations',
     label: 'Business Operations',
-    categories: ['business', 'locations', 'schedule', 'dayrate', 'forms', 'levels', 'onboarding', 'handbooks', 'loyalty', 'feedback'],
+    categories: ['business', 'locations', 'schedule', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'handbooks', 'loyalty', 'feedback'],
   },
   {
     id: 'team',
