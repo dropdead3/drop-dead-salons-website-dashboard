@@ -2,12 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { toast } from 'sonner';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import type { MessageWithSender } from './useChatMessages';
 
 export function useThreadMessages(parentMessageId: string | null) {
   const { user } = useAuth();
+  const { data: userProfile } = useEmployeeProfile();
   const queryClient = useQueryClient();
   const channelRef = useRef<RealtimeChannel | null>(null);
 
@@ -154,7 +156,7 @@ export function useThreadMessages(parentMessageId: string | null) {
     };
   }, [parentMessageId, parentMessage?.channel_id, queryClient]);
 
-  // Send reply mutation
+  // Send reply mutation with optimistic updates for instant UI
   const sendReplyMutation = useMutation({
     mutationFn: async (content: string) => {
       if (!user?.id || !parentMessageId || !parentMessage?.channel_id) {
@@ -175,15 +177,65 @@ export function useThreadMessages(parentMessageId: string | null) {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    // Optimistic update: add reply instantly before server confirms
+    onMutate: async (content: string) => {
+      // Cancel any outgoing refetches to prevent race conditions
+      await queryClient.cancelQueries({ queryKey: ['thread-replies', parentMessageId] });
+
+      // Snapshot current replies for potential rollback
+      const previousReplies = queryClient.getQueryData<MessageWithSender[]>(
+        ['thread-replies', parentMessageId]
+      );
+
+      // Create optimistic message with temp ID
+      const optimisticReply: MessageWithSender = {
+        id: `temp-${Date.now()}`,
+        channel_id: parentMessage?.channel_id || '',
+        sender_id: user!.id,
+        content,
+        parent_message_id: parentMessageId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        is_edited: false,
+        is_deleted: false,
+        deleted_at: null,
+        content_html: null,
+        metadata: null,
+        sender: userProfile ? {
+          id: userProfile.user_id,
+          full_name: userProfile.full_name,
+          display_name: userProfile.display_name,
+          photo_url: userProfile.photo_url,
+        } : undefined,
+        reactions: [],
+      };
+
+      // Add optimistic reply to cache immediately
+      queryClient.setQueryData<MessageWithSender[]>(
+        ['thread-replies', parentMessageId],
+        (old = []) => [...old, optimisticReply]
+      );
+
+      // Return context for rollback
+      return { previousReplies };
+    },
+    onError: (error, _content, context) => {
+      console.error('Failed to send reply:', error);
+      // Rollback on error
+      if (context?.previousReplies) {
+        queryClient.setQueryData(
+          ['thread-replies', parentMessageId],
+          context.previousReplies
+        );
+      }
+      toast.error('Failed to send reply');
+    },
+    onSettled: () => {
+      // Sync with server to replace temp ID with real ID
       queryClient.invalidateQueries({ queryKey: ['thread-replies', parentMessageId] });
       if (parentMessage?.channel_id) {
         queryClient.invalidateQueries({ queryKey: ['chat-messages', parentMessage.channel_id] });
       }
-    },
-    onError: (error) => {
-      console.error('Failed to send reply:', error);
-      toast.error('Failed to send reply');
     },
   });
 
