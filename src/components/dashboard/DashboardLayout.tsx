@@ -187,7 +187,6 @@ const managerNavItems: NavItem[] = [
 // Full admin-only items (not visible to managers)
 const adminOnlyNavItems: NavItem[] = [
   { href: '/dashboard/admin/accounts', label: 'Invitations & Approvals', icon: UserPlus, permission: 'approve_accounts' },
-  { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield, permission: 'manage_user_roles' },
   { href: '/dashboard/admin/access-hub', label: 'Access Hub', icon: Shield, permission: 'manage_settings' },
   // Settings removed - rendered separately as fixed footer
 ];
