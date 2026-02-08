@@ -13,6 +13,30 @@ export function Layout({ children }: LayoutProps) {
   const [footerHeight, setFooterHeight] = useState(0);
   const footerRef = useRef<HTMLDivElement>(null);
 
+  // Force light mode and reset any dashboard theme overrides for public website
+  useEffect(() => {
+    const root = document.documentElement;
+    
+    // Remove dark mode class
+    root.classList.remove('dark');
+    
+    // Ensure cream theme is applied
+    root.classList.remove('theme-rose', 'theme-sage', 'theme-ocean');
+    root.classList.add('theme-cream');
+    
+    // Clear any custom CSS variable overrides from dashboard theme
+    const style = root.style;
+    const propsToRemove: string[] = [];
+    for (let i = 0; i < style.length; i++) {
+      const prop = style[i];
+      // Only remove custom properties that could be from dashboard theme
+      if (prop.startsWith('--') && !prop.includes('radix')) {
+        propsToRemove.push(prop);
+      }
+    }
+    propsToRemove.forEach(prop => style.removeProperty(prop));
+  }, []);
+
   useEffect(() => {
     const updateFooterHeight = () => {
       if (footerRef.current) {
@@ -42,7 +66,7 @@ export function Layout({ children }: LayoutProps) {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <div className="min-h-screen flex flex-col relative theme-cream" style={{ colorScheme: 'light' }}>
       {/* Fixed footer that reveals as content scrolls */}
       <div 
         ref={footerRef}
