@@ -1,239 +1,98 @@
 
 
-# Leaderboard Configurator Implementation Plan
+# Hide Training and Onboarding from Account Owners
 
 ## Overview
 
-Create a dedicated **Leaderboard Configurator** settings section that houses all leaderboard-related configuration, following the same pattern as the OnboardingConfigurator.
+Account owners (users with `super_admin` role) should not see the **Training** or **Onboarding** navigation items in the sidebar. These features are intended for staff members, not the business owner.
 
 ---
 
-## Current State
+## Current Behavior
 
-The LeaderboardWeightsManager is currently misplaced inside the **Onboarding** settings section (lines 1064-1072 of Settings.tsx). This creates confusion since leaderboard scoring has nothing to do with onboarding.
-
-### Existing Leaderboard Features
-
-| Feature | Description | Current Status |
-|---------|-------------|----------------|
-| **Scoring Weights** | Configure weight distribution for metrics | ✅ Exists (LeaderboardWeightsManager) |
-| **Achievements** | Badge definitions and categories | ✅ Exists in DB (`leaderboard_achievements`) |
-| **History** | Weekly snapshots of rankings | ✅ Exists in DB (`leaderboard_history`) |
+| Nav Item | Current Visibility |
+|----------|-------------------|
+| **Training** | `super_admin`, `admin`, `manager`, `stylist`, `stylist_assistant` |
+| **Onboarding** (START HERE) | All users when onboarding incomplete |
+| **Onboarding** (housekeeping) | All users when complete, OR admin/super_admin always |
 
 ---
 
-## Solution
+## Changes Required
 
-Create a new **"Leaderboard"** settings category with a dedicated **LeaderboardConfigurator** component that organizes all leaderboard settings with tabs.
+### 1. Hide Training from Super Admins
 
-### New Settings Card
+**File:** `src/components/dashboard/DashboardLayout.tsx`
 
-| Property | Value |
-|----------|-------|
-| ID | `leaderboard` |
-| Label | Leaderboard |
-| Description | Scoring weights & achievements |
-| Icon | Trophy |
-
----
-
-## Component Structure
-
-```text
-LeaderboardConfigurator
-├── Tab: Scoring Weights
-│   └── LeaderboardWeightsManager (existing component, moved here)
-│
-└── Tab: Achievements
-    └── AchievementsConfigPanel (new)
-        ├── List of achievement definitions
-        ├── Enable/disable achievements
-        └── Edit badge colors and requirements
-```
-
----
-
-## Implementation Details
-
-### 1. Add New Settings Category
-
-**File: `src/hooks/useSettingsLayout.ts`**
-
-Add `leaderboard` to the color defaults and section groups:
+Remove `super_admin` from the Training nav item's roles array:
 
 ```typescript
-// In DEFAULT_ICON_COLORS
-leaderboard: '#EAB308', // Gold/Trophy color
+// Line 148 - Before
+{ href: '/dashboard/training', label: 'Training', icon: Video, permission: 'view_training', roles: ['super_admin', 'admin', 'manager', 'stylist', 'stylist_assistant'] },
 
-// In SECTION_GROUPS - add to 'operations' group
-categories: ['business', 'locations', 'schedule', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'handbooks', 'loyalty', 'feedback'],
+// After
+{ href: '/dashboard/training', label: 'Training', icon: Video, permission: 'view_training', roles: ['admin', 'manager', 'stylist', 'stylist_assistant'] },
 ```
 
-### 2. Create LeaderboardConfigurator Component
+### 2. Hide "START HERE" Section from Super Admins
 
-**File: `src/components/dashboard/settings/LeaderboardConfigurator.tsx`**
+**File:** `src/components/dashboard/SidebarNavContent.tsx`
 
-Main component with tabbed interface:
+Modify the START HERE priority section to exclude `super_admin`:
 
 ```typescript
-export function LeaderboardConfigurator() {
-  return (
-    <div className="space-y-6">
-      <Tabs defaultValue="scoring">
-        <TabsList>
-          <TabsTrigger value="scoring">
-            <Scale className="w-4 h-4 mr-2" />
-            Scoring Weights
-          </TabsTrigger>
-          <TabsTrigger value="achievements">
-            <Trophy className="w-4 h-4 mr-2" />
-            Achievements
-          </TabsTrigger>
-        </TabsList>
+// Line 350 - Before
+{!isOnboardingComplete && (
 
-        <TabsContent value="scoring">
-          <Card>
-            <CardHeader>
-              <CardTitle>SCORING ALGORITHM</CardTitle>
-              <CardDescription>
-                Configure how the overall leaderboard score is calculated.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <LeaderboardWeightsManager />
-            </CardContent>
-          </Card>
-        </TabsContent>
+// After  
+{!isOnboardingComplete && !roles.includes('super_admin') && (
+```
 
-        <TabsContent value="achievements">
-          <AchievementsConfigPanel />
-        </TabsContent>
-      </Tabs>
-    </div>
+### 3. Hide Onboarding from Housekeeping for Super Admins
+
+**File:** `src/components/dashboard/SidebarNavContent.tsx`
+
+Update the housekeeping section logic to always hide onboarding from super_admin:
+
+```typescript
+// Lines 469-475 - Before
+const isAdminViewing = roles.includes('admin') || roles.includes('super_admin');
+if (!isOnboardingComplete && !isAdminViewing) {
+  filteredItems = filteredItems.filter(item => 
+    item.href !== '/dashboard/onboarding'
+  );
+}
+
+// After
+const isSuperAdmin = roles.includes('super_admin');
+// Super admins never see onboarding; admins see it in housekeeping
+if (isSuperAdmin || (!isOnboardingComplete && !roles.includes('admin'))) {
+  filteredItems = filteredItems.filter(item => 
+    item.href !== '/dashboard/onboarding'
   );
 }
 ```
 
-### 3. Create AchievementsConfigPanel
-
-**File: `src/components/dashboard/settings/AchievementsConfigPanel.tsx`**
-
-Manage achievement definitions:
-
-```typescript
-export function AchievementsConfigPanel() {
-  // Fetch achievements from leaderboard_achievements table
-  // Display as cards with:
-  // - Icon preview
-  // - Badge color picker
-  // - Toggle for is_active
-  // - Edit button for name/description/requirements
-}
-```
-
-### 4. Update Settings.tsx
-
-**File: `src/pages/dashboard/admin/Settings.tsx`**
-
-#### a) Update SettingsCategory type (line 120):
-```typescript
-type SettingsCategory = '...' | 'leaderboard' | '...' | null;
-```
-
-#### b) Add category to categoriesMap:
-```typescript
-leaderboard: {
-  id: 'leaderboard',
-  label: 'Leaderboard',
-  description: 'Scoring weights & achievements',
-  icon: Trophy,
-},
-```
-
-#### c) Update onboarding section (remove LeaderboardWeightsManager):
-```typescript
-{activeCategory === 'onboarding' && (
-  <OnboardingConfigurator />
-)}
-```
-
-#### d) Add leaderboard section:
-```typescript
-{activeCategory === 'leaderboard' && (
-  <LeaderboardConfigurator />
-)}
-```
-
-#### e) Update onboarding description:
-```typescript
-onboarding: {
-  id: 'onboarding',
-  label: 'Onboarding',
-  description: 'Tasks & role configuration',  // Changed from 'Tasks & leaderboard scoring'
-  icon: Rocket,
-},
-```
-
 ---
-
-## Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/components/dashboard/settings/LeaderboardConfigurator.tsx` | Main configurator with tabs |
-| `src/components/dashboard/settings/AchievementsConfigPanel.tsx` | Manage achievement definitions |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/pages/dashboard/admin/Settings.tsx` | Add leaderboard category, remove weights from onboarding |
-| `src/hooks/useSettingsLayout.ts` | Add `leaderboard` to defaults and section groups |
+| `src/components/dashboard/DashboardLayout.tsx` | Remove `super_admin` from Training roles |
+| `src/components/dashboard/SidebarNavContent.tsx` | Hide START HERE and Onboarding from super_admin |
 
 ---
 
-## Visual Layout
+## Result
 
-```text
-+----------------------------------------------+
-| 🏆 LEADERBOARD CONFIGURATOR                  |
-+----------------------------------------------+
-| Tabs: [ Scoring Weights ] [ Achievements ]   |
-+----------------------------------------------+
-| [Scoring Weights Tab]                        |
-| +------------------------------------------+ |
-| | ⚖️  SCORING ALGORITHM                    | |
-| | Configure how the overall score is       | |
-| | calculated from metrics.                 | |
-| +------------------------------------------+ |
-| | New Clients ====[=====]======  30%       | |
-| | Retention   ====[===]========  25%       | |
-| | Retail      ====[==]=========  20%       | |
-| | Extensions  ====[===]========  25%       | |
-| |                                          | |
-| | Total: 100%                              | |
-| | [Reset Defaults]          [Save Weights] | |
-| +------------------------------------------+ |
-+----------------------------------------------+
+After these changes:
 
-+----------------------------------------------+
-| [Achievements Tab]                           |
-| +------------------------------------------+ |
-| | 🏅 ACHIEVEMENT DEFINITIONS               | |
-| +------------------------------------------+ |
-| | ☑ 🥇 Top Performer          [Edit] [●]   | |
-| | ☑ 🔥 5-Week Streak          [Edit] [●]   | |
-| | ☑ 💎 100 New Clients        [Edit] [●]   | |
-| | ☐ 🚀 Rising Star (disabled) [Edit] [○]   | |
-| +------------------------------------------+ |
-+----------------------------------------------+
-```
+| Nav Item | New Visibility |
+|----------|---------------|
+| **Training** | `admin`, `manager`, `stylist`, `stylist_assistant` (not super_admin) |
+| **Onboarding** (START HERE) | All users EXCEPT `super_admin` when incomplete |
+| **Onboarding** (housekeeping) | `admin` always sees it; `super_admin` never sees it |
 
----
-
-## Migration Notes
-
-1. No database changes required - uses existing tables
-2. LeaderboardWeightsManager component is reused, not modified
-3. Settings card order will auto-update with new category (handled by useSettingsLayout)
+Account owners can focus on management functions without seeing staff-oriented navigation items.
 
