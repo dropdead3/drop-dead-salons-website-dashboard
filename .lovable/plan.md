@@ -1,300 +1,248 @@
 
-# Phase 3: Client Engagement Tools
+# Review Threshold & Smart Review Routing System
 
-Build on the existing client directory and appointment system to add three key engagement features:
-1. **Client Feedback/Reviews** - Post-appointment surveys with NPS tracking
-2. **Loyalty Rewards Dashboard** - Client-facing view of their points, tier status, rewards
-3. **Automated Re-engagement** - Trigger outreach when clients haven't visited in X days
+Build an intelligent review collection system that gates public reviews based on quality thresholds, and routes happy customers to leave reviews on Google and Apple Maps while capturing negative feedback privately for improvement.
 
 ---
 
-## Current Infrastructure
+## Key Concept: "Review Gating"
 
-### Existing Tables
-| Table | Purpose |
-|-------|---------|
-| `phorest_clients` | Client data with `last_visit`, `visit_count`, `total_spend` |
-| `appointments` | Appointment records with `status`, `client_id`, `staff_user_id` |
-| `client_loyalty_points` | Points balance per client (`current_points`, `lifetime_points`, `tier`) |
-| `loyalty_tiers` | Tier definitions (Bronze, Silver, Gold, Platinum) |
-| `loyalty_program_settings` | Program configuration (points per dollar, multipliers) |
-| `email_templates` | Reusable email templates with variable support |
-| `service_communication_flows` | Per-service communication triggers |
+The flow works like this:
 
-### Existing Hooks & Services
-- `useClientLoyaltyPoints` - Fetch client points and history
-- `useLoyaltySettings` - Program configuration
-- `useEmailTemplates` - Email template management
-- `LoyaltyProgramConfigurator` - Admin settings UI
+```text
+Customer completes appointment
+           ↓
+Receives feedback survey link
+           ↓
+Submits ratings (NPS, overall, etc.)
+           ↓
+   ┌───────────────────────────┐
+   │   RATING CHECK            │
+   │   Overall ≥ threshold?    │
+   └───────────────────────────┘
+           ↓                ↓
+      YES (Happy)       NO (Unhappy)
+           ↓                ↓
+   Show "Share" Screen    Show Thank You
+   - Google Reviews         + Private
+   - Apple Maps             follow-up
+   - Copy to clipboard
+```
 
 ---
 
-## 1. Client Feedback System
+## Implementation Plan
 
-### Database Schema
+### 1. Database: Review Settings Storage
+
+Add review threshold settings to `site_settings` table (follows existing pattern):
+
+**Settings key:** `review_threshold_settings`
+
+```typescript
+interface ReviewThresholdSettings {
+  // Threshold configuration
+  minimumOverallRating: number;      // 1-5 stars (default: 4)
+  minimumNPSScore: number;           // 0-10 (default: 8)
+  requireBothToPass: boolean;        // AND vs OR logic (default: false = OR)
+  
+  // Review platform URLs
+  googleReviewUrl: string;           // e.g., "https://g.page/r/CdGh..."
+  appleReviewUrl: string;            // Apple Maps review link
+  yelpReviewUrl: string;             // Optional Yelp link
+  facebookReviewUrl: string;         // Optional Facebook link
+  
+  // Customization
+  publicReviewPromptTitle: string;   // "We're so glad you loved your visit!"
+  publicReviewPromptMessage: string; // "Would you mind sharing on..."
+  privateFollowUpEnabled: boolean;   // Send manager alert for low scores
+  privateFollowUpThreshold: number;  // Alert when score below this (default: 3)
+}
+```
+
+### 2. Enhanced Feedback Response Table
+
+Add new columns to track review routing:
 
 ```sql
--- Client feedback surveys table
-CREATE TABLE client_feedback_surveys (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  name TEXT NOT NULL,
-  description TEXT,
-  is_active BOOLEAN DEFAULT true,
-  trigger_type TEXT DEFAULT 'post_appointment', -- post_appointment, manual, follow_up
-  delay_hours INTEGER DEFAULT 24,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Individual feedback responses
-CREATE TABLE client_feedback_responses (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  survey_id UUID REFERENCES client_feedback_surveys(id),
-  client_id UUID REFERENCES phorest_clients(id),
-  appointment_id UUID REFERENCES appointments(id),
-  staff_user_id UUID,
-  nps_score INTEGER CHECK (nps_score >= 0 AND nps_score <= 10),
-  overall_rating INTEGER CHECK (overall_rating >= 1 AND overall_rating <= 5),
-  service_quality INTEGER CHECK (service_quality >= 1 AND service_quality <= 5),
-  staff_friendliness INTEGER CHECK (staff_friendliness >= 1 AND staff_friendliness <= 5),
-  cleanliness INTEGER CHECK (cleanliness >= 1 AND cleanliness <= 5),
-  would_recommend BOOLEAN,
-  comments TEXT,
-  is_public BOOLEAN DEFAULT false,
-  responded_at TIMESTAMPTZ DEFAULT now(),
-  token TEXT UNIQUE, -- For anonymous survey links
-  expires_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- NPS tracking aggregates (for analytics)
-CREATE TABLE nps_daily_snapshots (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  snapshot_date DATE NOT NULL,
-  total_responses INTEGER DEFAULT 0,
-  promoters INTEGER DEFAULT 0,  -- 9-10
-  passives INTEGER DEFAULT 0,   -- 7-8
-  detractors INTEGER DEFAULT 0, -- 0-6
-  nps_score INTEGER, -- calculated: ((promoters - detractors) / total) * 100
-  average_rating NUMERIC(3,2),
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(organization_id, snapshot_date)
-);
+ALTER TABLE client_feedback_responses ADD COLUMN IF NOT EXISTS
+  passed_review_gate BOOLEAN,
+  external_review_clicked TEXT,  -- 'google', 'apple', 'yelp', 'facebook', 'copied'
+  external_review_clicked_at TIMESTAMPTZ,
+  manager_notified BOOLEAN DEFAULT false,
+  manager_notified_at TIMESTAMPTZ;
 ```
 
-### Edge Function: `send-feedback-request`
-Triggered after appointment completion to send survey link to client.
+### 3. Review Gate Logic (Post-Submit Screen)
 
-### Frontend Components
-| Component | Description |
-|-----------|-------------|
-| `FeedbackSurveyPage` | Public page where clients submit feedback (no login required) |
-| `FeedbackDashboard` | Admin view of all responses, NPS trends, staff ratings |
-| `NPSScoreCard` | Widget showing current NPS with trend indicator |
-| `FeedbackResponseList` | Filterable list of recent responses |
-| `StaffFeedbackReport` | Per-stylist feedback breakdown |
+After submitting feedback, show one of two screens based on scores:
 
-### Files to Create
+**Happy Customer Screen (Passed Threshold):**
 ```text
-src/pages/ClientFeedback.tsx              # Public survey page
-src/pages/dashboard/admin/FeedbackHub.tsx # Admin dashboard
-src/components/feedback/NPSScoreCard.tsx
-src/components/feedback/FeedbackResponseList.tsx
-src/components/feedback/FeedbackTrends.tsx
-src/hooks/useFeedbackSurveys.ts
-src/hooks/useNPSAnalytics.ts
-supabase/functions/send-feedback-request/index.ts
+┌─────────────────────────────────────────────┐
+│  ⭐ We're Thrilled You Loved Your Visit!   │
+│                                             │
+│  Your feedback means the world to us.       │
+│  Would you mind taking a moment to share    │
+│  your experience?                           │
+│                                             │
+│  ┌─────────────────────────────────────┐   │
+│  │ 📋 Copy Your Review                 │   │
+│  │ ────────────────────────────────────│   │
+│  │ "Amazing experience! The staff..."  │   │
+│  │                        [Copy Text]  │   │
+│  └─────────────────────────────────────┘   │
+│                                             │
+│  Now paste it on:                           │
+│                                             │
+│  [🔵 Google Reviews]  [🍎 Apple Maps]      │
+│                                             │
+│  [Skip - I'll do it later]                 │
+└─────────────────────────────────────────────┘
 ```
+
+**Unhappy Customer Screen (Below Threshold):**
+```text
+┌─────────────────────────────────────────────┐
+│  💚 Thank You for Your Honest Feedback     │
+│                                             │
+│  We're sorry your visit wasn't perfect.     │
+│  Your feedback has been shared with our     │
+│  management team.                           │
+│                                             │
+│  We'd love to make it right. A manager      │
+│  will reach out to you shortly.             │
+│                                             │
+│  [Return Home]                              │
+└─────────────────────────────────────────────┘
+```
+
+### 4. Smart Copy-to-Clipboard Feature
+
+Since one-click posting to Google/Apple isn't possible (no API), we use:
+
+1. **Pre-fill clipboard** with their review text
+2. **Open review platform** in new tab
+3. **Show paste instructions** with visual guide
+
+```typescript
+const handleShareToGoogle = async () => {
+  // Copy review text to clipboard
+  await navigator.clipboard.writeText(comments);
+  
+  // Track the click
+  await trackExternalReviewClick('google');
+  
+  // Open Google review page
+  window.open(googleReviewUrl, '_blank');
+  
+  // Show toast with paste instructions
+  toast.info('Review copied! Paste it on the Google page that just opened.');
+};
+```
+
+### 5. Admin Settings UI
+
+Add a "Review Settings" card to the Feedback Hub:
+
+```text
+┌─────────────────────────────────────────────────────┐
+│  ⚙️ Review Gate Settings                            │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  Threshold Configuration                            │
+│  ─────────────────────────────────────────────     │
+│  Minimum Rating to Show Public Review Prompt:       │
+│  [★★★★☆ 4 stars ▼]                                 │
+│                                                     │
+│  Minimum NPS Score:  [8 ▼]                         │
+│                                                     │
+│  ☐ Require BOTH to pass (otherwise either is OK)   │
+│                                                     │
+│  Review Platform Links                              │
+│  ─────────────────────────────────────────────     │
+│  Google Reviews URL: [https://g.page/r/... ]       │
+│  Apple Maps URL:     [https://maps.apple.com/... ] │
+│  Yelp URL (optional):[                           ] │
+│                                                     │
+│  Low Score Alerts                                   │
+│  ─────────────────────────────────────────────     │
+│  ☑ Notify managers for scores below: [3 ▼]        │
+│                                                     │
+│  [Save Settings]                                    │
+└─────────────────────────────────────────────────────┘
+```
+
+### 6. Manager Alerts for Low Scores
+
+Edge function triggered when score is below threshold:
+
+- Sends email to managers/admin
+- Includes client info, ratings, and comments
+- Links to full feedback record in dashboard
+
+### 7. Analytics: Review Funnel Tracking
+
+Add metrics to Feedback Hub:
+
+| Metric | Description |
+|--------|-------------|
+| Gate Pass Rate | % of reviews that passed threshold |
+| Google Click Rate | % who clicked Google review button |
+| Apple Click Rate | % who clicked Apple Maps button |
+| Copy Rate | % who copied their review text |
+| Low Score Alerts | Count of manager notifications sent |
 
 ---
 
-## 2. Client Loyalty Dashboard
+## Files to Create/Modify
 
-### Purpose
-A client-facing portal where clients can view their loyalty status without needing a full user account.
-
-### Access Method
-Clients access via a unique tokenized link sent after appointments or available via QR code at checkout.
-
-### Database Additions
-```sql
--- Client portal access tokens
-CREATE TABLE client_portal_tokens (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id UUID REFERENCES phorest_clients(id) NOT NULL,
-  token TEXT UNIQUE NOT NULL,
-  expires_at TIMESTAMPTZ,
-  last_accessed_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-```
-
-### Frontend Components
-
-| Component | Description |
-|-----------|-------------|
-| `ClientLoyaltyPortal` | Public page showing client's rewards status |
-| `ClientTierProgress` | Visual progress bar to next tier |
-| `ClientPointsHistory` | Transaction history for the client |
-| `ClientAvailableRewards` | Rewards they can redeem |
-| `ClientRedemptionHistory` | Past redemptions |
-
-### Portal Layout
-```text
-+--------------------------------------------------+
-|  🎁 YOUR REWARDS                                  |
-|  Welcome back, Sarah!                             |
-+--------------------------------------------------+
-|                                                   |
-|  TIER STATUS                                      |
-|  +---------------------------------------------+  |
-|  | 💎 GOLD MEMBER                              |  |
-|  | 1,250 points | 750 to Platinum              |  |
-|  | [=================-----] 62%                |  |
-|  +---------------------------------------------+  |
-|                                                   |
-|  AVAILABLE REWARDS                                |
-|  +-------------+ +-------------+ +-------------+  |
-|  | Free Blowout| | $10 Off    | | Product Set |  |
-|  | 500 pts     | | 750 pts    | | 1000 pts    |  |
-|  | [Redeem]    | | [Redeem]   | | [Soon!]     |  |
-|  +-------------+ +-------------+ +-------------+  |
-|                                                   |
-|  RECENT ACTIVITY                                  |
-|  • Jan 15: +50 pts (Haircut)                     |
-|  • Jan 3: -500 pts (Redeemed: Free Blowout)     |
-|  • Dec 28: +75 pts (Color Service)              |
-+--------------------------------------------------+
-```
-
-### Files to Create
-```text
-src/pages/ClientPortal.tsx                    # Public loyalty portal
-src/components/client-portal/TierProgressCard.tsx
-src/components/client-portal/AvailableRewardsGrid.tsx
-src/components/client-portal/PointsActivityFeed.tsx
-src/hooks/useClientPortalData.ts
-```
+| File | Changes |
+|------|---------|
+| `src/hooks/useReviewThreshold.ts` | New hook for threshold settings (CRUD) |
+| `src/pages/ClientFeedback.tsx` | Add post-submit gate logic and share screen |
+| `src/components/feedback/ReviewShareScreen.tsx` | New component for happy customer share flow |
+| `src/components/feedback/ReviewThankYouScreen.tsx` | New component for private feedback thank you |
+| `src/components/feedback/ReviewThresholdSettings.tsx` | Admin settings card |
+| `src/pages/dashboard/admin/FeedbackHub.tsx` | Add settings tab with threshold config |
+| `supabase/functions/notify-low-score/index.ts` | Edge function for manager alerts |
+| **Migration** | Add columns to `client_feedback_responses` |
 
 ---
 
-## 3. Automated Re-engagement System
+## Getting Review URLs
 
-### Purpose
-Automatically identify clients who haven't visited in X days and trigger outreach campaigns.
+**Google Reviews:**
+1. Search for your business on Google Maps
+2. Click "Write a review" button
+3. Copy the URL - it will look like `https://g.page/r/CdGhXyz123/review`
 
-### Database Schema
-```sql
--- Re-engagement campaign definitions
-CREATE TABLE reengagement_campaigns (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  name TEXT NOT NULL,
-  description TEXT,
-  inactivity_days INTEGER NOT NULL DEFAULT 60,
-  is_active BOOLEAN DEFAULT true,
-  email_template_id UUID REFERENCES email_templates(id),
-  sms_enabled BOOLEAN DEFAULT false,
-  offer_type TEXT, -- 'discount', 'bonus_points', 'free_addon', null
-  offer_value TEXT, -- e.g., '15%', '100 points', 'Free conditioning treatment'
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
+**Apple Maps:**
+1. Open Apple Maps on iOS/Mac
+2. Search for business → Share → Copy Link
+3. Or use: `https://maps.apple.com/?address=...` with place ID
 
--- Track which clients have been contacted
-CREATE TABLE reengagement_outreach (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  campaign_id UUID REFERENCES reengagement_campaigns(id),
-  client_id UUID REFERENCES phorest_clients(id),
-  last_visit_date TIMESTAMPTZ,
-  days_inactive INTEGER,
-  contacted_at TIMESTAMPTZ DEFAULT now(),
-  channel TEXT, -- 'email', 'sms'
-  status TEXT DEFAULT 'sent', -- sent, opened, clicked, converted, unsubscribed
-  converted_at TIMESTAMPTZ,
-  converted_appointment_id UUID REFERENCES appointments(id),
-  UNIQUE(campaign_id, client_id)
-);
-```
-
-### Edge Function: `check-client-inactivity`
-Runs daily to identify at-risk clients and trigger outreach.
-
-```text
-Logic Flow:
-1. Query clients where last_visit < (today - X days)
-2. Exclude clients already contacted in this campaign
-3. Exclude banned/unsubscribed clients
-4. For each matching client:
-   a. Create outreach record
-   b. Send email via Resend
-   c. Log result
-5. Track conversions when client books again
-```
-
-### Admin UI Components
-
-| Component | Description |
-|-----------|-------------|
-| `ReengagementCampaignList` | List of campaigns with stats |
-| `ReengagementCampaignEditor` | Create/edit campaign settings |
-| `AtRiskClientsTable` | Clients due for re-engagement |
-| `ReengagementAnalytics` | Conversion rates, ROI tracking |
-
-### Integration with Client Directory
-Add visual indicators in the existing Client Directory:
-- "Last contacted" badge showing recent outreach
-- Quick action button to manually trigger re-engagement email
-- Filter for "Pending re-engagement" status
-
-### Files to Create
-```text
-src/pages/dashboard/admin/ReengagementHub.tsx
-src/components/reengagement/CampaignList.tsx
-src/components/reengagement/CampaignEditor.tsx
-src/components/reengagement/AtRiskClientsQueue.tsx
-src/components/reengagement/ConversionTracking.tsx
-src/hooks/useReengagementCampaigns.ts
-src/hooks/useAtRiskClients.ts
-supabase/functions/check-client-inactivity/index.ts
-supabase/functions/send-reengagement-email/index.ts
-```
-
----
-
-## Implementation Order
-
-| Phase | Feature | Effort |
-|-------|---------|--------|
-| 3.1 | Client Feedback System (DB + Edge Function + Survey Page) | Medium |
-| 3.2 | Feedback Dashboard (Admin analytics + NPS tracking) | Medium |
-| 3.3 | Client Loyalty Portal (Public page + token system) | Medium |
-| 3.4 | Re-engagement Campaigns (DB + Admin UI) | Medium |
-| 3.5 | Automated Outreach (Edge functions + cron) | Medium |
-| 3.6 | Conversion Tracking & Analytics | Low |
+**Yelp:**
+- `https://www.yelp.com/writeareview/biz/YOUR-BUSINESS-ID`
 
 ---
 
 ## Technical Notes
 
-### Email Templates Required
-Create new email templates for:
-1. `feedback_request` - Post-appointment survey invitation
-2. `client_portal_access` - Link to loyalty portal
-3. `reengagement_offer` - Win-back campaign email
-4. `reengagement_reminder` - Follow-up if no response
+### Why Copy + Open vs Direct Post?
+- Google and Apple don't offer public APIs for posting reviews
+- This is intentional to prevent fake reviews
+- The "copy text + open in new tab" pattern is industry standard
+- Used by Podium, Birdeye, and other review management platforms
 
-### Security Considerations
-- Client portal uses secure tokens (not guessable UUIDs)
-- Tokens expire after 30 days by default
-- Feedback surveys use one-time tokens
-- RLS policies to isolate data by organization
+### Review Platform Detection
+Optionally detect user's device/browser to prioritize:
+- iOS/Safari users → Emphasize Apple Maps
+- Android/Chrome users → Emphasize Google
+- Desktop → Show both equally
 
-### Existing Pattern Alignment
-- Uses existing `email_templates` table for all communications
-- Follows `service_communication_flows` pattern for triggers
-- Integrates with `phorest_clients` for client data
-- Uses `appointments` table for triggering post-visit surveys
+### Compliance Note
+Review gating is legal and common, but avoid:
+- Explicitly asking only happy customers to review (we ask all, just route differently)
+- Offering incentives for positive reviews
+- Preventing unhappy customers from reviewing publicly if they choose to
