@@ -1,0 +1,87 @@
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
+import { MessageCircleQuestion, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AIHelpTab } from './help-fab/AIHelpTab';
+import { SupportTab } from './help-fab/SupportTab';
+
+export function HelpFAB() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('ai-help');
+  const location = useLocation();
+  
+  // Hide on Team Chat page since it has its own AI panel
+  if (location.pathname === '/dashboard/team-chat') {
+    return null;
+  }
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <motion.div
+          className="fixed bottom-6 right-6 z-50"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.5 }}
+        >
+          <Button
+            size="icon"
+            className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow"
+            aria-label="Help & Support"
+          >
+            <AnimatePresence mode="wait">
+              {isOpen ? (
+                <motion.div
+                  key="close"
+                  initial={{ rotate: -90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: 90, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <X className="h-6 w-6" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="help"
+                  initial={{ rotate: 90, opacity: 0 }}
+                  animate={{ rotate: 0, opacity: 1 }}
+                  exit={{ rotate: -90, opacity: 0 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <MessageCircleQuestion className="h-6 w-6" />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </Button>
+        </motion.div>
+      </PopoverTrigger>
+      
+      <PopoverContent
+        side="top"
+        align="end"
+        sideOffset={16}
+        className="w-[380px] h-[480px] p-0 overflow-hidden"
+      >
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
+          <div className="border-b bg-muted/30 px-4 pt-3 pb-2">
+            <TabsList className="w-full">
+              <TabsTrigger value="ai-help" className="flex-1">AI Help</TabsTrigger>
+              <TabsTrigger value="support" className="flex-1">Support</TabsTrigger>
+            </TabsList>
+          </div>
+          
+          <TabsContent value="ai-help" className="flex-1 m-0 overflow-hidden">
+            <AIHelpTab />
+          </TabsContent>
+          
+          <TabsContent value="support" className="flex-1 m-0 overflow-hidden">
+            <SupportTab />
+          </TabsContent>
+        </Tabs>
+      </PopoverContent>
+    </Popover>
+  );
+}
