@@ -1,184 +1,125 @@
 
-# Add Role-Based Staff Invitation to Management Hub
+# Fix: Isolate Dashboard Theme from Public Website
 
-## Overview
+## Problem
 
-Add a staff invitation feature to the Management Hub that allows managers to invite team members with role-based restrictions:
-- **Managers/Admins** can invite: Stylist, Front Desk (Receptionist), Stylist Assistant
-- **Super Admins only** can invite: Super Admin, Admin, Manager (and all lower roles)
+The public-facing website (homepage, services, booking, etc.) inherits the dashboard's dark mode and custom theme colors when:
+1. A staff member has dark mode enabled in dashboard settings
+2. Custom theme color overrides are saved in user preferences
+3. The preview iframe in Website Editor displays the wrong theme
 
-This follows the existing role hierarchy pattern and ensures proper access control.
+This happens because:
+- `ThemeInitializer` applies CSS variable overrides to `document.documentElement` (global)
+- `DashboardThemeProvider` wraps the entire app including public routes
+- The public `Layout` component has no theme isolation
 
----
+## Solution
 
-## Role Hierarchy & Permission Logic
+Create a clear separation between dashboard themes and public website themes:
 
-| Inviting User Role | Can Invite These Roles |
-|-------------------|------------------------|
-| Manager | stylist, receptionist, stylist_assistant, operations_assistant |
-| Admin | All manager-invitable roles + admin_assistant, bookkeeper |
-| Super Admin | All roles including admin, super_admin, manager |
+### 1. Create `PublicThemeWrapper` Component
 
-The logic:
-1. **Leadership roles** (super_admin, admin, manager) require Super Admin to invite
-2. **Operational/stylists roles** can be invited by Manager or above
+Wrap all public routes in a component that:
+- Explicitly resets any custom CSS variable overrides
+- Forces light mode by excluding the `.dark` class
+- Applies the default cream theme class
 
----
-
-## Changes Required
-
-### 1. New Component: `ManagementInviteCard.tsx`
-
-Create a dedicated invitation card for the Management Hub with:
-- Visual "Invite Team Member" card matching existing ManagementCard style
-- Role-filtered dropdown based on current user's permissions
-- Email input with validation
-- Pending invitations count badge
-- Success/error feedback
-
-### 2. New Hook: `useInvitableRoles.ts`
-
-Create a hook that returns which roles the current user can invite:
 ```typescript
-function useInvitableRoles() {
-  // Returns filtered role options based on:
-  // - Current user's roles (manager, admin, super_admin)
-  // - Whether user has is_super_admin flag
-  // - Role category (leadership vs operations/stylists)
+// src/components/layout/PublicThemeWrapper.tsx
+export function PublicThemeWrapper({ children }) {
+  useEffect(() => {
+    // Reset any custom theme variables on public routes
+    const root = document.documentElement;
+    root.classList.remove('dark');
+    // Ensure default theme
+    root.classList.add('theme-cream');
+  }, []);
+  
+  return <div className="theme-cream public-website">{children}</div>;
 }
 ```
 
-### 3. Update `ManagementHub.tsx`
+### 2. Update `ThemeInitializer` to Skip Public Routes
 
-Add a new "Team Invitations" category section containing:
-- ManagementInviteCard component (dialog-based invite flow)
-- Link to full invitation management (Account Management page)
+Modify to only apply custom theme overrides when on dashboard routes:
 
-### 4. Enhanced `InviteStaffDialog.tsx` (Refactor)
-
-Update to accept a `restrictedRoles` prop that filters the available roles:
 ```typescript
-interface InviteStaffDialogProps {
-  allowedRoles?: AppRole[];  // If provided, only show these roles
-  trigger?: React.ReactNode; // Custom trigger element
+const loadCustomTheme = async () => {
+  // Skip theme customization on public routes
+  if (!window.location.pathname.startsWith('/dashboard')) {
+    return;
+  }
+  // ... rest of existing logic
+};
+```
+
+### 3. Update `Layout` Component
+
+Wrap the layout with explicit theme isolation:
+
+```typescript
+export function Layout({ children }: LayoutProps) {
+  // Force light mode for public website
+  return (
+    <div className="theme-cream" style={{ colorScheme: 'light' }}>
+      {/* existing layout */}
+    </div>
+  );
 }
 ```
 
----
+### 4. Update `App.tsx` Route Structure
 
-## UI/UX Design
-
-### Management Hub Addition
-
-New section "Team Invitations" with:
-```
-┌─────────────────────────────────────────────────┐
-│ 👤+ Invite Team Member                     [→]  │
-│ Send invitations to new staff members           │
-│                                    3 pending    │
-└─────────────────────────────────────────────────┘
-┌─────────────────────────────────────────────────┐
-│ 📋 Manage Invitations                      [→]  │
-│ View and manage all pending invitations         │
-└─────────────────────────────────────────────────┘
-```
-
-### Invitation Dialog
-
-```
-┌─────────────────────────────────────────────────┐
-│ ✉ Invite New Team Member                        │
-├─────────────────────────────────────────────────┤
-│                                                 │
-│ Email Address                                   │
-│ ┌─────────────────────────────────────────────┐ │
-│ │ name@example.com                            │ │
-│ └─────────────────────────────────────────────┘ │
-│                                                 │
-│ Role                                            │
-│ ┌─────────────────────────────────────────────┐ │
-│ │ Stylist                               ▼     │ │
-│ └─────────────────────────────────────────────┘ │
-│ ⓘ Only Super Admins can invite Admin roles     │ │ (shown when applicable)
-│                                                 │
-│                        [Cancel] [Send Invite]   │
-└─────────────────────────────────────────────────┘
-```
+Restructure to separate theme contexts:
+- Public routes: Outside `DashboardThemeProvider` or with explicit light mode
+- Dashboard routes: Inside `DashboardThemeProvider` with theme switching
 
 ---
 
-## Role Restriction Logic
+## Files to Modify
 
-```typescript
-// Leadership roles - Super Admin only
-const LEADERSHIP_ROLES = ['super_admin', 'admin', 'manager', 'admin_assistant'];
-
-// General roles - Manager and above can invite
-const GENERAL_ROLES = ['stylist', 'receptionist', 'stylist_assistant', 
-                       'operations_assistant', 'booth_renter', 'bookkeeper'];
-
-function getInvitableRoles(userRoles: AppRole[], isSuperAdmin: boolean): AppRole[] {
-  // Super Admin can invite all roles
-  if (isSuperAdmin || userRoles.includes('super_admin')) {
-    return [...LEADERSHIP_ROLES, ...GENERAL_ROLES];
-  }
-  
-  // Admin can invite general roles + some operational
-  if (userRoles.includes('admin')) {
-    return GENERAL_ROLES;
-  }
-  
-  // Manager can invite front-line roles
-  if (userRoles.includes('manager')) {
-    return ['stylist', 'receptionist', 'stylist_assistant', 'operations_assistant'];
-  }
-  
-  return [];
-}
-```
-
----
-
-## Security Considerations
-
-1. **Client-side filtering** - The role dropdown only shows roles the user can invite
-2. **Server-side validation** - The `useCreateInvitation` hook should verify permission before creating
-3. **RLS policies** - The existing `staff_invitations` table RLS should be checked/enhanced
-
----
-
-## Enhancements
-
-1. **Quick invite from Management Hub** - One-click access without navigating away
-2. **Pending count badge** - Shows pending invitations at a glance
-3. **Role descriptions** - Show what each role can access when selecting
-4. **Super Admin notice** - Clear indication when certain roles require elevated permissions
-5. **Capacity awareness** - Integrate with existing `useBusinessCapacity` hook
-
----
+| File | Change |
+|------|--------|
+| `src/components/layout/Layout.tsx` | Add theme isolation wrapper with explicit light mode |
+| `src/components/ThemeInitializer.tsx` | Skip theme application on non-dashboard routes |
+| `src/App.tsx` | Restructure providers to scope dashboard theme to dashboard routes only |
 
 ## Files to Create
 
 | File | Purpose |
-|------|---------|
-| `src/hooks/useInvitableRoles.ts` | Role permission logic |
-| `src/components/management/ManagementInviteDialog.tsx` | Role-restricted invite dialog |
+|------|--------|
+| `src/components/layout/PublicThemeWrapper.tsx` | *(Optional)* Dedicated wrapper for public routes |
 
-## Files to Modify
+---
 
-| File | Changes |
-|------|---------|
-| `src/pages/dashboard/admin/ManagementHub.tsx` | Add Team Invitations section |
-| `src/hooks/useStaffInvitations.ts` | Add role permission validation |
+## Implementation Details
+
+### Layout.tsx Changes
+
+The public website layout will:
+1. Add `theme-cream` class to ensure consistent light theme
+2. Add inline `colorScheme: 'light'` to prevent system dark mode inheritance
+3. Clear any `.dark` class that might be inherited
+
+### ThemeInitializer.tsx Changes
+
+The initializer will:
+1. Check `window.location.pathname` before applying custom themes
+2. Only apply overrides when on `/dashboard/*` routes
+3. On public routes, explicitly remove any existing custom CSS variables
+
+### App.tsx Changes
+
+Move `DashboardThemeProvider` to wrap only dashboard routes:
+1. Keep it outside for now but have `ThemeInitializer` check route
+2. The `DashboardLayout` already scopes the `.dark` class, so the main fix is in `ThemeInitializer`
 
 ---
 
 ## Summary
 
-This implementation:
-- Adds invitation capability directly in the Management Hub for quick access
-- Enforces proper role hierarchy (Super Admin required for leadership roles)
-- Reuses existing invitation infrastructure
-- Follows the established design patterns in the codebase
-- Includes proper security validation on both client and server
-
+| Before | After |
+|--------|-------|
+| Custom themes apply globally | Custom themes only apply to dashboard |
+| Public website inherits dark mode | Public website always uses light cream theme |
+| Preview iframe shows wrong colors | Preview iframe shows correct public appearance |
