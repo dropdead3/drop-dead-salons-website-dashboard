@@ -1,88 +1,100 @@
 
-# Unified Help FAB with AI Assistant + Support
+# Replace Support Tab with "Chat with Leadership"
 
 ## Overview
-Create a floating action button (FAB) in the bottom-right corner of all dashboard pages that provides quick access to AI help and support ticket functionality via a tabbed popover interface.
+Replace the ticket-based Support tab with a direct messaging interface that shows available managers and leadership team members. When clicked, it navigates to Team Chat and opens a DM with that person.
 
-## Components to Create
+## Why This is Better
+- **Immediate response**: Chat is real-time vs. waiting for ticket review
+- **Reuses existing infrastructure**: DM channels, Team Chat, presence system
+- **No orphaned tickets**: Current ticket system has no UI for managers to respond
+- **More personal**: Direct human connection vs. impersonal ticket system
 
-### 1. HelpFAB Component
-**File:** `src/components/dashboard/HelpFAB.tsx`
+## Technical Approach
 
-A floating button with a help/message icon that:
-- Shows on all screen sizes (not mobile-only like ChangelogFAB)
-- Uses framer-motion for smooth animations
-- Opens a popover with two tabs
+### Replace SupportTab with ChatLeadershipTab
 
-### 2. HelpFABPanel Component  
-**File:** `src/components/dashboard/HelpFABPanel.tsx`
+**File:** `src/components/dashboard/help-fab/ChatLeadershipTab.tsx`
 
-A popover panel containing:
-- **Tab 1: AI Help** - Chat interface using the existing `useAIAssistant` hook for quick questions
-- **Tab 2: Support** - Form to submit support tickets + view recent tickets
+Show a list of available managers/admins filtered from `employee_profiles` + `user_roles`:
 
-## UI Design
-
-```
+```text
 ┌─────────────────────────────────────────┐
-│  [AI Help]  [Support]                   │
-├─────────────────────────────────────────┤
+│  Chat with Leadership                   │
 │                                         │
-│  (Content based on active tab)          │
-│                                         │
-│  AI Help: Chat interface with           │
-│  example prompts                        │
-│                                         │
-│  Support: Submit ticket form +          │
-│  list of recent tickets                 │
-│                                         │
-├─────────────────────────────────────────┤
-│  [Input field]              [Send]      │
+│  👤 Sarah (Manager)                     │  
+│     Online • Tap to chat               │
+│  ─────────────────────────────────      │
+│  👤 Mike (Admin)                        │
+│     Away • Tap to chat                  │
+│  ─────────────────────────────────      │
+│  👤 Lisa (Manager)                      │
+│     Offline • Tap to chat               │
 └─────────────────────────────────────────┘
-
-        ┌──────┐
-        │  ?   │  <-- FAB button (fixed bottom-right)
-        └──────┘
 ```
 
-## Technical Details
+### Implementation Details
 
-### AI Help Tab
-- Reuse `useAIAssistant` hook for streaming responses
-- Show example prompts when empty
-- Render responses with markdown support
-- Keep conversation history during session
+1. **Fetch Leadership Members**
+   - Query `user_roles` for roles: `manager`, `admin`, `super_admin`
+   - Join with `employee_profiles` for names, photos
+   - Exclude current user
+   - Show their online status if presence data is available
 
-### Support Tab
-- Form with title, description, priority dropdown
-- Submit to `support_tickets` table
-- Show list of user's recent tickets with status badges
-- Uses existing enums: `ticket_priority` and `ticket_status`
+2. **On Click Handler**
+   - Call `createDM(userId)` from existing `useDMChannels` hook
+   - Navigate to `/dashboard/team-chat`
+   - The DM will automatically be active (via the hook's `setActiveChannel`)
 
-### FAB Positioning
-- Fixed position: `bottom-6 right-6`
-- Z-index: `z-50` to stay above content
-- Higher than mobile nav (which uses `bottom-20`)
-- Uses Popover for the panel (anchored to FAB)
+3. **Update HelpFAB.tsx**
+   - Replace `SupportTab` import with `ChatLeadershipTab`
+   - Rename tab label from "Support" to "Chat"
+
+### New Hook: `useLeadershipMembers`
+
+**File:** `src/hooks/team-chat/useLeadershipMembers.ts`
+
+```typescript
+// Fetches employees with leadership roles (manager, admin, super_admin)
+// Returns: { members, isLoading }
+```
+
+This is cleaner than modifying `useTeamMembers` because:
+- Pre-filters to leadership roles only
+- Includes role display for each member
+- Simpler API without unnecessary filters
 
 ## Files to Create
 
 | File | Purpose |
 |------|---------|
-| `src/components/dashboard/HelpFAB.tsx` | Main FAB component with popover |
-| `src/components/dashboard/help-fab/AIHelpTab.tsx` | AI chat interface tab |
-| `src/components/dashboard/help-fab/SupportTab.tsx` | Support ticket form/list tab |
-| `src/hooks/useSupportTickets.ts` | Hook for submitting/fetching tickets |
+| `src/components/dashboard/help-fab/ChatLeadershipTab.tsx` | Leadership chat list |
+| `src/hooks/team-chat/useLeadershipMembers.ts` | Fetch managers/admins |
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/DashboardLayout.tsx` | Add `<HelpFAB />` before closing `</div>` of layout |
+| `src/components/dashboard/HelpFAB.tsx` | Replace Support tab with Chat tab |
 
-## Implementation Notes
+## Files to Delete
 
-1. **Popover vs Sheet**: Using Popover (not Sheet) to keep it anchored to the FAB and allow users to reference content behind it
-2. **Panel Size**: Approximately 380px wide, 480px tall - compact but functional
-3. **State Persistence**: Chat history persists during session, clears on page refresh
-4. **Hide on Team Chat**: Consider hiding the FAB on `/dashboard/team-chat` since that page has its own AI panel
+| File | Reason |
+|------|--------|
+| `src/components/dashboard/help-fab/SupportTab.tsx` | No longer needed |
+| `src/hooks/useSupportTickets.ts` | No longer needed |
+
+## User Flow
+
+1. User clicks Help FAB
+2. Switches to "Chat" tab
+3. Sees list of managers/admins
+4. Clicks on a person
+5. Gets navigated to Team Chat with that DM open
+6. Can immediately start typing their message
+
+## Edge Cases
+
+- **No leadership found**: Show friendly message "No managers available"
+- **User is a manager**: Still show other managers/admins to chat with
+- **Already has DM with person**: Opens existing conversation (handled by `useDMChannels`)
