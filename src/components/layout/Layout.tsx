@@ -13,6 +13,14 @@ export function Layout({ children }: LayoutProps) {
   const [footerHeight, setFooterHeight] = useState(0);
   const footerRef = useRef<HTMLDivElement>(null);
 
+  // Immediately force light mode during render (before useEffect) to prevent flash
+  if (typeof document !== 'undefined') {
+    const root = document.documentElement;
+    root.classList.remove('dark');
+    root.classList.remove('theme-rose', 'theme-sage', 'theme-ocean');
+    root.classList.add('theme-cream');
+  }
+
   // Force light mode and reset any dashboard theme overrides for public website
   useEffect(() => {
     const root = document.documentElement;
