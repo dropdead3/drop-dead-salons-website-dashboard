@@ -176,6 +176,69 @@ export type Database = {
           },
         ]
       }
+      ai_agent_actions: {
+        Row: {
+          action_params: Json
+          action_type: string
+          channel_id: string | null
+          created_at: string
+          error_message: string | null
+          executed_at: string | null
+          expires_at: string | null
+          id: string
+          message_id: string | null
+          organization_id: string | null
+          result: Json | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          action_params?: Json
+          action_type: string
+          channel_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          executed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          message_id?: string | null
+          organization_id?: string | null
+          result?: Json | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          action_params?: Json
+          action_type?: string
+          channel_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          executed_at?: string | null
+          expires_at?: string | null
+          id?: string
+          message_id?: string | null
+          organization_id?: string | null
+          result?: Json | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_agent_actions_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_agent_actions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcement_reads: {
         Row: {
           announcement_id: string
