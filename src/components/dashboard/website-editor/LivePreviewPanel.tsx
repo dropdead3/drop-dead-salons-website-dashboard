@@ -103,7 +103,7 @@ export function LivePreviewPanel({ onClose }: LivePreviewPanelProps) {
         >
           <iframe
             key={refreshKey}
-            src="/"
+            src="/?preview=true"
             className="w-full h-full border-0"
             title="Website Preview"
             onLoad={() => setIsLoading(false)}
