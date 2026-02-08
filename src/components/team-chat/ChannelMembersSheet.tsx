@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Users, Crown, Shield, UserMinus, Search } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Users, Crown, Shield, UserMinus, Search, ArrowUpDown, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,13 +15,25 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 import { useChannelMembers } from '@/hooks/team-chat/useChannelMembers';
 import { useTeamMembers } from '@/hooks/team-chat/useTeamMembers';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import { Loader2, MoreHorizontal, UserPlus } from 'lucide-react';
+
+type SortOption = 'name-asc' | 'name-desc' | 'role';
+type RoleFilter = 'all' | 'owner' | 'admin' | 'member';
 
 interface ChannelMembersSheetProps {
   open: boolean;
@@ -33,10 +45,52 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
   const { activeChannel } = useTeamChatContext();
   const { members, isLoading, addMember, removeMember, updateRole, isAdmin } = useChannelMembers(activeChannel?.id || null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [memberSearchQuery, setMemberSearchQuery] = useState('');
   const [showAddMember, setShowAddMember] = useState(false);
+  const [sortOption, setSortOption] = useState<SortOption>('role');
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const { members: teamMembers } = useTeamMembers(searchQuery);
 
-  // Filter out existing members
+  // Filter and sort members
+  const filteredAndSortedMembers = useMemo(() => {
+    let result = [...members];
+
+    // Filter by search query
+    if (memberSearchQuery) {
+      const query = memberSearchQuery.toLowerCase();
+      result = result.filter((m) => {
+        const name = m.profile.displayName || m.profile.fullName || '';
+        return name.toLowerCase().includes(query);
+      });
+    }
+
+    // Filter by role
+    if (roleFilter !== 'all') {
+      result = result.filter((m) => m.role === roleFilter);
+    }
+
+    // Sort
+    result.sort((a, b) => {
+      const nameA = (a.profile.displayName || a.profile.fullName || '').toLowerCase();
+      const nameB = (b.profile.displayName || b.profile.fullName || '').toLowerCase();
+
+      if (sortOption === 'name-asc') {
+        return nameA.localeCompare(nameB);
+      } else if (sortOption === 'name-desc') {
+        return nameB.localeCompare(nameA);
+      } else {
+        // Sort by role: owner > admin > member
+        const roleOrder = { owner: 0, admin: 1, member: 2 };
+        const roleCompare = roleOrder[a.role] - roleOrder[b.role];
+        if (roleCompare !== 0) return roleCompare;
+        return nameA.localeCompare(nameB);
+      }
+    });
+
+    return result;
+  }, [members, memberSearchQuery, roleFilter, sortOption]);
+
+  // Filter out existing members for add member search
   const availableMembers = teamMembers.filter(
     (tm) => !members.some((m) => m.userId === tm.userId)
   );
@@ -60,6 +114,46 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
         </SheetHeader>
 
         <div className="py-4 space-y-4">
+          {/* Search and Filter Controls */}
+          <div className="space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search members..."
+                value={memberSearchQuery}
+                onChange={(e) => setMemberSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <Select value={roleFilter} onValueChange={(v) => setRoleFilter(v as RoleFilter)}>
+                <SelectTrigger className="flex-1">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="owner">Owners</SelectItem>
+                  <SelectItem value="admin">Channel Admins</SelectItem>
+                  <SelectItem value="member">Members</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
+                <SelectTrigger className="flex-1">
+                  <ArrowUpDown className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="role">By Role</SelectItem>
+                  <SelectItem value="name-asc">Name A-Z</SelectItem>
+                  <SelectItem value="name-desc">Name Z-A</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           {isAdmin && (
             <Button
               variant="outline"
@@ -76,7 +170,7 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search team members..."
+                  placeholder="Search team members to add..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"
@@ -114,10 +208,16 @@ export function ChannelMembersSheet({ open, onOpenChange }: ChannelMembersSheetP
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
+          ) : filteredAndSortedMembers.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              {memberSearchQuery || roleFilter !== 'all' 
+                ? 'No members match your filters' 
+                : 'No members in this channel'}
+            </div>
           ) : (
-            <ScrollArea className="h-[calc(100vh-16rem)]">
+            <ScrollArea className="h-[calc(100vh-22rem)]">
               <div className="space-y-1">
-                {members.map((member) => {
+                {filteredAndSortedMembers.map((member) => {
                   const name = member.profile.displayName || member.profile.fullName || 'Unknown';
                   const initials = name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
                   const isMe = member.userId === user?.id;
