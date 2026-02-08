@@ -6,10 +6,15 @@ import type { ChannelWithMembership } from './useChatChannels';
  * For other channels, returns the channel name as-is.
  */
 export function getChannelDisplayName(channel: ChannelWithMembership): string {
-  if ((channel.type === 'dm' || channel.type === 'group_dm') && channel.dm_partner) {
-    return channel.dm_partner.display_name;
+  if (channel.type === 'dm' || channel.type === 'group_dm') {
+    // Prefer dm_partner if available
+    if (channel.dm_partner?.display_name) {
+      return channel.dm_partner.display_name;
+    }
+    // Fallback: return a cleaner name for DMs without partner info
+    return 'Team Member';
   }
-  return channel.name;
+  return channel.name || 'Channel';
 }
 
 /**
