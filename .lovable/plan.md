@@ -1,45 +1,134 @@
 
-# Enhance @Mention Display in Messages
+# Improve Chat Message Layout & Visual Hierarchy
 
 ## Current Issue
-The @mention in chat messages uses only `text-primary font-medium`, which doesn't visually separate it enough from the surrounding text. Users may miss that someone has been tagged.
+Looking at your screenshot, the current layout has:
+- Avatar and message content on the same horizontal line
+- Minimal visual separation between user info and the actual message
+- Consecutive messages stack tightly, making it harder to scan
 
-## Solution: Styled Pill/Badge for Mentions
-Apply a background color and padding to make mentions look like distinct, interactive tags - similar to how Slack displays them.
+## Proposed Enhancement: Two-Tier Layout
 
-## Visual Result
-Before: `@Alex Day yo can you see this` (just colored text)
-After: `@Alex Day` appears as a pill/badge with background, clearly separated from "yo can you see this"
+I recommend a **stacked header design** where the user's name and photo are on their own row, with messages indented below. This creates a clearer visual hierarchy similar to Discord/Slack.
 
-## Technical Changes
+### Visual Preview
 
-### File: `src/components/team-chat/MentionAutocomplete.tsx`
-
-Update the `renderContentWithMentions` function (lines 96-100):
-
-**Current:**
-```tsx
-<span key={match.index} className="text-primary font-medium">
-  @{match[1]}
-</span>
+**Current layout:**
+```
+[Avatar] Name • 2 hours ago
+         Message content here
+         Another message
+         More messages...
 ```
 
-**New:**
-```tsx
-<span 
-  key={match.index} 
-  className="inline-flex items-center bg-primary/15 text-primary rounded px-1.5 py-0.5 text-sm font-medium mx-0.5"
->
-  @{match[1]}
-</span>
+**Proposed layout:**
+```
+[Avatar] Name                    2 hours ago
+         ┌─────────────────────────────────┐
+         │ Message content here            │
+         └─────────────────────────────────┘
+         Another message (no box for consecutive)
+         More messages...
 ```
 
-## Styling Breakdown
-- `bg-primary/15` - Subtle background tint using the primary color at 15% opacity
-- `rounded` - Rounded corners for the pill shape
-- `px-1.5 py-0.5` - Horizontal and vertical padding to give it breathing room
-- `mx-0.5` - Small horizontal margin to separate from adjacent text
-- `inline-flex items-center` - Ensures proper vertical alignment with surrounding text
-- `text-sm font-medium` - Consistent text sizing and weight
+## Design Choices
 
-This matches the styling used in the input field's mention chips, creating a consistent experience from composing to viewing messages.
+### Option A: Subtle Card Style (Recommended)
+- First message in a group gets a subtle background card
+- Consecutive messages are simple indented text
+- Creates visual "message blocks" for each sender
+
+### Option B: Clean Indentation Only
+- Just increase spacing and indent messages further
+- More minimal, less visual noise
+- Similar to iMessage/WhatsApp style
+
+I recommend **Option A** as it better distinguishes message boundaries while maintaining the professional look.
+
+---
+
+## Technical Implementation
+
+### Changes to `MessageItem.tsx`
+
+1. **Increase message indentation** - Push message content further right to create more separation from avatar
+2. **Add subtle background to first message** - Apply `bg-muted/30` or similar for visual grouping
+3. **Increase vertical spacing** - More padding between messages from different senders
+4. **Enhance typography hierarchy** - Slightly larger name, more prominent timestamp positioning
+
+### Specific Code Changes
+
+**Container styling (line 51-55):**
+```tsx
+// Before
+'group relative flex items-start gap-3 px-2 py-1 rounded-md transition-colors',
+'hover:bg-accent/30',
+isConsecutive && 'pt-0'
+
+// After - More vertical breathing room
+'group relative flex items-start gap-4 px-4 py-2 rounded-lg transition-colors',
+'hover:bg-accent/20',
+isConsecutive ? 'pt-0.5 ml-16' : 'pt-3'  // Indent consecutive messages
+```
+
+**Avatar sizing (line 60-65):**
+- Keep 10x10 avatar for first message (good size)
+- Ensure proper alignment with new spacing
+
+**Name/timestamp header (lines 79-86):**
+```tsx
+// Add more visual weight to the header
+<div className="flex items-baseline gap-2 mb-1.5">
+  <span className="font-semibold text-sm">{senderName}</span>
+  <span className="text-xs text-muted-foreground">{timestamp}</span>
+</div>
+```
+
+**Message content wrapper (line 89):**
+```tsx
+// Add subtle background for first message in a group
+<div className={cn(
+  "text-sm whitespace-pre-wrap break-words",
+  !isConsecutive && "bg-muted/30 rounded-lg px-3 py-2 mt-1"
+)}>
+  {renderContentWithMentions(message.content)}
+</div>
+```
+
+**Consecutive message spacing (lines 67-74):**
+```tsx
+// Indent consecutive messages to align with message content, not avatar
+{isConsecutive && (
+  <div className="w-10 shrink-0 flex items-center justify-end">
+    <span className={cn(
+      "text-[10px] text-muted-foreground whitespace-nowrap transition-opacity",
+      showActions ? "opacity-100" : "opacity-0"
+    )}>
+      {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+    </span>
+  </div>
+)}
+```
+
+### Changes to `MessageList.tsx`
+
+**Increase spacing between message groups (line 95):**
+```tsx
+// From space-y-1 to space-y-2 for more breathing room
+<div className="space-y-2">
+```
+
+---
+
+## Summary of Visual Improvements
+
+| Aspect | Before | After |
+|--------|--------|-------|
+| Gap between avatar and content | 12px (gap-3) | 16px (gap-4) |
+| Horizontal padding | 8px (px-2) | 16px (px-4) |
+| Vertical padding | 4px (py-1) | 8px (py-2) |
+| First message styling | Plain text | Subtle card background |
+| Consecutive message indent | None | Aligned with message content |
+| Spacing between messages | 4px (space-y-1) | 8px (space-y-2) |
+
+This creates a cleaner, more scannable chat interface while maintaining good information density.
