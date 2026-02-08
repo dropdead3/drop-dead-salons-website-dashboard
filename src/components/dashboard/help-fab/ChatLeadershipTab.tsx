@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLeadershipMembers, LeadershipMember } from '@/hooks/team-chat/useLeadershipMembers';
 import { useDMChannels } from '@/hooks/team-chat/useDMChannels';
-import { usePlatformPresenceContext } from '@/contexts/PlatformPresenceContext';
+import { usePlatformPresenceContextSafe } from '@/contexts/PlatformPresenceContext';
 import { OnlineIndicator } from '@/components/platform/ui/OnlineIndicator';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +27,13 @@ interface MemberItemProps {
   isLoading: boolean;
 }
 
+interface MemberItemProps {
+  member: LeadershipMember;
+  isOnline: boolean | null; // null means presence data unavailable
+  onSelect: (userId: string) => void;
+  isLoading: boolean;
+}
+
 function MemberItem({ member, isOnline, onSelect, isLoading }: MemberItemProps) {
   const RoleIcon = roleIcons[member.role] || Shield;
   const initials = member.display_name
@@ -35,6 +42,8 @@ function MemberItem({ member, isOnline, onSelect, isLoading }: MemberItemProps) 
     .join('')
     .slice(0, 2)
     .toUpperCase();
+
+  const hasPresenceData = isOnline !== null;
 
   return (
     <button
@@ -53,9 +62,11 @@ function MemberItem({ member, isOnline, onSelect, isLoading }: MemberItemProps) 
             {initials}
           </AvatarFallback>
         </Avatar>
-        <div className="absolute -bottom-0.5 -right-0.5">
-          <OnlineIndicator isOnline={isOnline} size="sm" />
-        </div>
+        {hasPresenceData && (
+          <div className="absolute -bottom-0.5 -right-0.5">
+            <OnlineIndicator isOnline={isOnline} size="sm" />
+          </div>
+        )}
       </div>
 
       <div className="flex-1 min-w-0">
@@ -64,7 +75,8 @@ function MemberItem({ member, isOnline, onSelect, isLoading }: MemberItemProps) 
           <RoleIcon className="h-3.5 w-3.5 text-primary shrink-0" />
         </div>
         <p className="text-xs text-muted-foreground">
-          {roleLabels[member.role] || 'Leadership'} • {isOnline ? 'Online' : 'Offline'}
+          {roleLabels[member.role] || 'Leadership'}
+          {hasPresenceData && ` • ${isOnline ? 'Online' : 'Offline'}`}
         </p>
       </div>
 
@@ -77,7 +89,13 @@ export function ChatLeadershipTab() {
   const navigate = useNavigate();
   const { members, isLoading } = useLeadershipMembers();
   const { createDM, isCreating } = useDMChannels();
-  const { isOnline } = usePlatformPresenceContext();
+  const presence = usePlatformPresenceContextSafe();
+  
+  // Helper to check online status - returns null if presence unavailable
+  const checkOnline = (userId: string): boolean | null => {
+    if (!presence) return null;
+    return presence.isOnline(userId);
+  };
 
   const handleSelectMember = async (userId: string) => {
     try {
@@ -108,11 +126,14 @@ export function ChatLeadershipTab() {
     );
   }
 
-  // Sort by online status, then by name
+  // Sort by online status (if available), then by name
   const sortedMembers = [...members].sort((a, b) => {
-    const aOnline = isOnline(a.user_id);
-    const bOnline = isOnline(b.user_id);
-    if (aOnline !== bOnline) return bOnline ? 1 : -1;
+    const aOnline = checkOnline(a.user_id);
+    const bOnline = checkOnline(b.user_id);
+    // If presence data is available, sort online users first
+    if (aOnline !== null && bOnline !== null && aOnline !== bOnline) {
+      return bOnline ? 1 : -1;
+    }
     return a.display_name.localeCompare(b.display_name);
   });
 
@@ -131,7 +152,7 @@ export function ChatLeadershipTab() {
             <MemberItem
               key={member.user_id}
               member={member}
-              isOnline={isOnline(member.user_id)}
+              isOnline={checkOnline(member.user_id)}
               onSelect={handleSelectMember}
               isLoading={isCreating}
             />
