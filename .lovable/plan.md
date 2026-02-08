@@ -1,98 +1,194 @@
 
-# Fix Live Preview to Display Correct Light Theme
 
-## Problem Analysis
+# Sidebar Navigation Enhancement Plan
 
-The Website Editor's Live Preview iframe displays the public website in dark mode when the dashboard is set to dark mode. This happens because:
+## Current State Analysis
 
-1. **Shared localStorage**: Both the parent dashboard and iframe share the same origin, meaning localStorage values are shared
-2. **next-themes ThemeProvider**: The global `ThemeProvider` from `next-themes` in `App.tsx` applies theme classes to `document.documentElement`
-3. **Race conditions**: Even though `Layout.tsx` has code to reset the theme, there may be timing issues with theme application
+### Navigation Sections (9 total)
 
-## Root Cause
+| Section | Items | Primary Audience |
+|---------|-------|------------------|
+| **Main** | 2 (Command Center, Schedule) | Everyone |
+| **Growth** | 5 (Training, Program, Team Overview, Ring the Bell, My Graduation) | Stylists/Assistants + Management |
+| **Stats & Leaderboard** | 3 (My Stats, Leaderboard, My Pay) | Stylists/Assistants |
+| **Team Tools** | 4 (Shift Swaps, Rewards, Assistant Schedule, Meetings) | Team Members |
+| **Housekeeping** | 4 (Onboarding, Handbooks, What's New, Help Center) | Everyone |
+| **Management** | 8 items | Managers/Admins |
+| **Website** | 1 (Website Editor) | Admins |
+| **Super Admin** | 2 (Invitations, Access Hub) | Admins |
+| **Platform Admin** | 6 items | Platform Team |
 
-Looking at the architecture:
-- The iframe loads `/` which runs the full React app
-- `App.tsx` wraps everything in `ThemeProvider` from `next-themes`
-- `DashboardThemeProvider` stores its state in `dashboard-theme` localStorage key
-- The `Layout` component does reset classes in a `useEffect`, but this may run after initial render causes a flash
+### Key Issues Identified
 
-## Solution
+1. **Management Section Overload**: 8 items creates visual clutter and excessive scrolling
+2. **Naming Inconsistency**: "Super Admin" section contains Access Hub, which is available to admins too
+3. **Redundant Items**: Team Stats and Leaderboard appear in both "Stats & Leaderboard" and "Management" sections
+4. **Low-Value Space Usage**: "Housekeeping" uses sidebar real estate for items that could live elsewhere (What's New, Help)
+5. **Single-Item Section**: "Website" section has only 1 item
 
-Enhance the preview iframe to pass a query parameter that tells the public site to force light mode, bypassing any stored theme preferences.
+---
 
-### Implementation Steps
+## Proposed Consolidation
 
-#### 1. Update `LivePreviewPanel.tsx`
+### New Structure (6 sections instead of 9)
 
-Add a `?preview=true` query parameter to the iframe src:
-
-```typescript
-<iframe
-  key={refreshKey}
-  src="/?preview=true"  // Add preview flag
-  className="w-full h-full border-0"
-  title="Website Preview"
-  onLoad={() => setIsLoading(false)}
-/>
+```text
++----------------------------+
+| Main                       |
+|   Command Center           |
+|   Schedule                 |
++----------------------------+
+| Growth & Development       |  (renamed from "Growth")
+|   Training                 |
+|   Program                  |
+|   Ring the Bell            |
+|   My Graduation            |
++----------------------------+
+| My Performance             |  (renamed from "Stats & Leaderboard")
+|   My Stats / Team Stats    |
+|   Team Leaderboard         |
+|   My Pay                   |
++----------------------------+
+| Team Tools                 |
+|   Shift Swaps              |
+|   Rewards                  |
+|   Assistant Schedule       |
+|   Meetings & Accountability|
++----------------------------+
+| Management                 |  (consolidated)
+| > Analytics & Insights     |  <- Collapsible group
+|     Analytics Hub          |
+|     Team Stats             |
+|     Team Leaderboard       |
+| > People                   |  <- Collapsible group
+|     Team Directory         |
+|     Client Directory       |
+|     Program Team Overview  |
+| > Operations               |  <- Collapsible group
+|     Management Hub         |
+|     Payroll Hub            |
+|     Renter Hub             |
+|     Website Editor         |
++----------------------------+
+| Admin                      |  (renamed from "Super Admin")
+|   Invitations & Approvals  |
+|   Access Hub               |
++----------------------------+
+| [Settings]                 |  <- Fixed footer (already implemented)
++----------------------------+
 ```
 
-#### 2. Update `Layout.tsx`
+### Housekeeping Items Relocation
 
-Check for the `preview` query parameter and force light theme immediately:
+| Item | New Location |
+|------|--------------|
+| **Onboarding** | Keep as "START HERE" priority section (already exists) |
+| **Handbooks** | Move to quick-access menu in top bar (accessible via Help icon) |
+| **What's New** | Move to top bar notification bell dropdown |
+| **Help Center** | Move to top bar (dedicated help icon already exists) |
 
-```typescript
-useEffect(() => {
-  const root = document.documentElement;
-  
-  // Check if we're in preview mode (loaded in iframe from website editor)
-  const isPreview = new URLSearchParams(window.location.search).get('preview') === 'true';
-  
-  // Force light mode for public website (always, but especially in preview)
-  root.classList.remove('dark');
-  root.classList.remove('theme-rose', 'theme-sage', 'theme-ocean');
-  root.classList.add('theme-cream');
-  
-  // Clear any custom CSS variable overrides
-  // ... existing code ...
-}, []);
-```
+---
 
-#### 3. Update Index.tsx (Homepage)
+## Implementation Details
 
-Ensure the homepage also respects the preview parameter by wrapping in light theme context if needed.
+### 1. Collapsible Sub-Groups for Management
 
-### Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/components/dashboard/website-editor/LivePreviewPanel.tsx` | Add `?preview=true` to iframe src |
-| `src/components/layout/Layout.tsx` | Ensure theme reset runs synchronously and respects preview mode |
-
-### Additional Enhancement
-
-Move the theme reset logic to run **before** React render by adding inline styles or using a more aggressive reset:
+Add collapsible groups using the existing Collapsible component from Radix UI.
 
 ```typescript
-// In Layout.tsx - run reset immediately, not just in useEffect
-export function Layout({ children }: LayoutProps) {
-  // Immediately force light mode (runs during render, not after)
-  if (typeof document !== 'undefined') {
-    const root = document.documentElement;
-    root.classList.remove('dark');
-    root.classList.add('theme-cream');
-  }
-  
-  // ... rest of component
+// New component: CollapsibleNavGroup
+interface CollapsibleNavGroupProps {
+  label: string;
+  icon: React.ComponentType;
+  items: NavItem[];
+  defaultOpen?: boolean;
 }
 ```
 
-This ensures the theme is correct from the very first paint, eliminating any flash of incorrect theme colors.
+Each group expands/collapses independently, with state persisted to localStorage.
 
-## Summary
+### 2. Section Consolidation
 
-| Before | After |
-|--------|-------|
-| Preview inherits dashboard dark mode | Preview always shows correct light/cream theme |
-| Flash of wrong theme on load | Immediate correct theme application |
-| Shared theme state causes conflicts | Preview mode bypasses theme persistence |
+**Merge these sections:**
+- "Website" (1 item) into "Management > Operations"
+- Remove "Housekeeping" entirely (items relocated)
+- Rename "Super Admin" to "Admin"
+
+**Update constants in `useSidebarLayout.ts`:**
+
+```typescript
+export const DEFAULT_SECTION_ORDER = [
+  'main',
+  'growth',
+  'stats',
+  'teamTools',
+  'manager',     // Now includes website + sub-groups
+  'adminOnly',   // Renamed display label to "Admin"
+  'platform',
+];
+```
+
+### 3. Relocate Housekeeping Items
+
+**Top Bar Changes:**
+- Add "What's New" badge/indicator to the existing notification bell
+- Add Handbooks to the Help dropdown menu
+- Help Center already accessible via search (Cmd+K)
+
+### 4. Label Updates
+
+| Old | New |
+|-----|-----|
+| Stats & Leaderboard | My Performance |
+| Growth | Growth & Development |
+| Super Admin | Admin |
+| Housekeeping | *removed* |
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/hooks/useSidebarLayout.ts` | Update `DEFAULT_SECTION_ORDER`, `SECTION_LABELS`, and `DEFAULT_LINK_ORDER` |
+| `src/components/dashboard/DashboardLayout.tsx` | Restructure nav item arrays, add collapsible group logic |
+| `src/components/dashboard/SidebarNavContent.tsx` | Implement `CollapsibleNavGroup` for Management section |
+| `src/components/dashboard/TopBarSearch.tsx` | Add Handbooks and What's New to quick access |
+| `src/components/dashboard/NotificationsPanel.tsx` | Add "What's New" tab or section |
+
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/components/dashboard/CollapsibleNavGroup.tsx` | Reusable collapsible group for sidebar |
+
+---
+
+## Visual Summary
+
+```text
+BEFORE (9 sections, flat)     AFTER (6 sections, grouped)
++------------------------+    +------------------------+
+| Main (2)               |    | Main (2)               |
+| Growth (5)             |    | Growth & Development (4)|
+| Stats (3)              |    | My Performance (3)     |
+| Team Tools (4)         |    | Team Tools (4)         |
+| Housekeeping (4)       |    | Management (10 grouped)|
+| Management (8)         |    |   > Analytics (3)      |
+| Website (1)            |    |   > People (3)         |
+| Super Admin (2)        |    |   > Operations (4)     |
+| Platform (6)           |    | Admin (2)              |
++------------------------+    | Platform (6)           |
+                              +------------------------+
+                              + Top Bar: Help, Handbooks
+                              + Bell: What's New
+```
+
+---
+
+## Migration Notes
+
+1. **Backward Compatibility**: Existing `sidebar_layout` database config will continue to work; new sections merge with stored preferences
+2. **Role Visibility**: Collapsible state is purely UI; visibility still controlled by `roleVisibility` config in Access Hub
+3. **Custom Sections**: User-created custom sections remain unaffected
+
