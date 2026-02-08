@@ -8,7 +8,7 @@ export * from './CreateChannelDialog';
 export * from './ThreadPanel';
 export * from './ThreadMessageItem';
 export * from './StartDMDialog';
-export * from './SearchDialog';
+export * from './ExpandableSearch';
 export * from './PinnedMessagesSheet';
 export * from './ChannelSettingsSheet';
 export * from './ChannelMembersSheet';
