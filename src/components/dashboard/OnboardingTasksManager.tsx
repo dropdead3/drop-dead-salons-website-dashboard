@@ -45,6 +45,7 @@ interface OnboardingTask {
   visible_to_roles: AppRole[];
   display_order: number;
   is_active: boolean;
+  is_required: boolean;
   link_url: string | null;
 }
 
@@ -75,6 +76,7 @@ export function OnboardingTasksManager() {
   const [linkUrl, setLinkUrl] = useState('');
   const [selectedRoles, setSelectedRoles] = useState<AppRole[]>([]);
   const [isActive, setIsActive] = useState(true);
+  const [isRequired, setIsRequired] = useState(true);
 
   useEffect(() => {
     fetchTasks();
@@ -101,6 +103,7 @@ export function OnboardingTasksManager() {
     setLinkUrl('');
     setSelectedRoles([]);
     setIsActive(true);
+    setIsRequired(true);
     setDialogOpen(true);
   };
 
@@ -111,6 +114,7 @@ export function OnboardingTasksManager() {
     setLinkUrl(task.link_url || '');
     setSelectedRoles(task.visible_to_roles || []);
     setIsActive(task.is_active);
+    setIsRequired(task.is_required);
     setDialogOpen(true);
   };
 
@@ -135,7 +139,8 @@ export function OnboardingTasksManager() {
           description: description.trim() || null,
           link_url: linkUrl.trim() || null,
           visible_to_roles: selectedRoles,
-          is_active: isActive
+          is_active: isActive,
+          is_required: isRequired
         })
         .eq('id', editingTask.id);
 
@@ -157,6 +162,7 @@ export function OnboardingTasksManager() {
           link_url: linkUrl.trim() || null,
           visible_to_roles: selectedRoles,
           is_active: isActive,
+          is_required: isRequired,
           display_order: maxOrder + 1
         });
 
@@ -292,8 +298,13 @@ export function OnboardingTasksManager() {
                     {task.link_url && (
                       <ExternalLink className="w-3 h-3 text-primary" />
                     )}
+                    {task.is_required ? (
+                      <Badge variant="destructive" className="text-[10px]">Required</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px]">Optional</Badge>
+                    )}
                     {!task.is_active && (
-                      <Badge variant="secondary" className="text-xs">Inactive</Badge>
+                      <Badge variant="secondary" className="text-[10px]">Inactive</Badge>
                     )}
                   </div>
                   {task.description && (
@@ -418,6 +429,17 @@ export function OnboardingTasksManager() {
                   </label>
                 ))}
               </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="is-required"
+                checked={isRequired}
+                onCheckedChange={(checked) => setIsRequired(checked === true)}
+              />
+              <Label htmlFor="is-required" className="cursor-pointer">
+                Task is required for onboarding completion
+              </Label>
             </div>
 
             <div className="flex items-center gap-2">

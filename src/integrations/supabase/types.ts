@@ -5143,6 +5143,47 @@ export type Database = {
           },
         ]
       }
+      onboarding_section_config: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_enabled: boolean
+          is_required: boolean
+          organization_id: string | null
+          role: string
+          section_key: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean
+          is_required?: boolean
+          organization_id?: string | null
+          role: string
+          section_key: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean
+          is_required?: boolean
+          organization_id?: string | null
+          role?: string
+          section_key?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "onboarding_section_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_task_completions: {
         Row: {
           completed_at: string
@@ -5171,6 +5212,7 @@ export type Database = {
           display_order: number
           id: string
           is_active: boolean
+          is_required: boolean
           link_url: string | null
           title: string
           updated_at: string
@@ -5182,6 +5224,7 @@ export type Database = {
           display_order?: number
           id?: string
           is_active?: boolean
+          is_required?: boolean
           link_url?: string | null
           title: string
           updated_at?: string
@@ -5193,6 +5236,7 @@ export type Database = {
           display_order?: number
           id?: string
           is_active?: boolean
+          is_required?: boolean
           link_url?: string | null
           title?: string
           updated_at?: string
