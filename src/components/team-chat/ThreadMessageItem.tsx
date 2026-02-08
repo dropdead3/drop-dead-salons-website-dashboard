@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Smile } from 'lucide-react';
+import { Smile, Plus } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import type { MessageWithSender } from '@/hooks/team-chat/useChatMessages';
+import { EmojiPickerPopover } from './EmojiPickerPopover';
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🎉'];
 
@@ -105,6 +106,11 @@ export function ThreadMessageItem({ message, onReact, isParent }: ThreadMessageI
                   {emoji}
                 </button>
               ))}
+              <EmojiPickerPopover onEmojiSelect={onReact} side="right">
+                <button className="text-base hover:scale-110 transition-transform p-0.5 text-muted-foreground hover:text-foreground">
+                  <Plus className="h-3 w-3" />
+                </button>
+              </EmojiPickerPopover>
             </div>
           </PopoverContent>
         </Popover>
