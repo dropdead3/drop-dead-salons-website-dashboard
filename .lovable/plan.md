@@ -1,228 +1,86 @@
 
-# Auto-Join Users to Default & Location Channels
 
-## Overview
+# Fix: Platform User Access to Team Chat
 
-Enhance the Team Chat initialization to automatically grant users access to:
-1. **Organization-wide channels** (`#company-wide`, `#general`) - All org members automatically join
-2. **Location channels** (`#[location-name]`) - Users auto-join based on their assigned locations
+## Problem
 
----
-
-## Current Issues
-
-| Problem | Impact |
-|---------|--------|
-| Only channel creator is auto-joined | Other org members see channels but must manually join |
-| Location assignment not checked | Users assigned to locations don't automatically get access to those channels |
-| No sync when location changes | User's location-based memberships don't update when profile changes |
+Platform users (like you, Alex Day) don't have an organization assigned to their profile. The Team Chat requires an `effectiveOrganization` to load channels, but for platform users this is `null` unless they manually select an organization.
 
 ---
 
-## Solution Components
+## Solution Options
 
-### 1. Hook for User Location-Based Channel Sync
+### Option A: Auto-Select Default Organization (Recommended)
 
-Create a new hook `useAutoJoinChannels` that:
-- Runs when Team Chat loads
-- Checks user's assigned locations (`location_id` / `location_ids`)
-- Automatically joins them to:
-  - All public system channels (`company-wide`, `general`)
-  - Location channels matching their assignments
+When a platform user opens Team Chat without an organization selected, automatically select the default organization ("Drop Dead Salons") so they can immediately see and use channels.
 
-### 2. Enhanced Channel Initialization
+| Change | File |
+|--------|------|
+| Detect missing org in Team Chat | `src/pages/dashboard/TeamChat.tsx` |
+| Auto-select default org for platform users | Uses `setSelectedOrganization` from context |
 
-Update `useInitializeDefaultChannels` to:
-- After creating channels, fetch ALL org members
-- Auto-join everyone to public system channels
-- Auto-join users to location channels based on their profile
+### Option B: Show Prompt to Select Organization
 
-### 3. RLS Policy Adjustment
+Display a message prompting the platform user to select an organization before using Team Chat.
 
-The current RLS allows members to view channels they belong to. We need to ensure:
-- Users can INSERT their own membership for public/location channels they should access
+| Change | File |
+|--------|------|
+| Add organization selector prompt | `src/components/team-chat/TeamChatContainer.tsx` |
 
 ---
 
-## Implementation
+## Recommended Implementation (Option A)
 
-### New Hook: `useAutoJoinLocationChannels.ts`
-
-```typescript
-// Automatically joins the current user to channels they should have access to
-export function useAutoJoinLocationChannels() {
-  const { user } = useAuth();
-  const { effectiveOrganization } = useOrganizationContext();
-  const { data: profile } = useEmployeeProfile();
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async () => {
-      // 1. Get user's assigned location IDs
-      const locationIds = profile?.location_ids?.length 
-        ? profile.location_ids 
-        : (profile?.location_id ? [profile.location_id] : []);
-
-      // 2. Get all public + location channels for the org
-      const { data: channels } = await supabase
-        .from('chat_channels')
-        .select('*')
-        .eq('organization_id', effectiveOrganization.id)
-        .eq('is_archived', false)
-        .in('type', ['public', 'location']);
-
-      // 3. Get user's current memberships
-      const { data: existingMemberships } = await supabase
-        .from('chat_channel_members')
-        .select('channel_id')
-        .eq('user_id', user.id);
-
-      const memberChannelIds = new Set(existingMemberships?.map(m => m.channel_id));
-
-      // 4. Determine which channels to join
-      const channelsToJoin = channels?.filter(channel => {
-        // Skip if already a member
-        if (memberChannelIds.has(channel.id)) return false;
-        
-        // Join all public system channels
-        if (channel.type === 'public') return true;
-        
-        // Join location channels matching user's assignments
-        if (channel.type === 'location' && channel.location_id) {
-          return locationIds.includes(channel.location_id);
-        }
-        
-        return false;
-      }) || [];
-
-      // 5. Batch insert memberships
-      if (channelsToJoin.length > 0) {
-        await supabase
-          .from('chat_channel_members')
-          .insert(channelsToJoin.map(ch => ({
-            channel_id: ch.id,
-            user_id: user.id,
-            role: 'member',
-          })));
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chat-channels'] });
-    },
-  });
-}
-```
-
-### Update ChannelSidebar.tsx
-
-Add the auto-join call after initialization:
+### Changes to TeamChat.tsx
 
 ```typescript
-const autoJoinChannels = useAutoJoinLocationChannels();
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizations } from '@/hooks/useOrganizations';
+import { useEffect } from 'react';
 
-useEffect(() => {
-  if (!isLoading && channels.length > 0) {
-    // Auto-join user to appropriate channels based on profile
-    autoJoinChannels.mutate();
-  }
-}, [isLoading, channels.length]);
-```
+export default function TeamChat() {
+  const { isPlatformUser } = useAuth();
+  const { effectiveOrganization, setSelectedOrganization } = useOrganizationContext();
+  const { data: organizations } = useOrganizations();
 
-### Enhance useInitializeDefaultChannels
+  // Auto-select first organization for platform users if none selected
+  useEffect(() => {
+    if (isPlatformUser && !effectiveOrganization && organizations?.length > 0) {
+      // Select the default organization (Drop Dead Salons)
+      const defaultOrg = organizations.find(o => o.slug === 'drop-dead-salons') || organizations[0];
+      setSelectedOrganization(defaultOrg);
+    }
+  }, [isPlatformUser, effectiveOrganization, organizations, setSelectedOrganization]);
 
-After creating channels, auto-join all org members:
-
-```typescript
-// After creating channels, auto-join all org members to public channels
-const { data: orgMembers } = await supabase
-  .from('employee_profiles')
-  .select('user_id, location_id, location_ids')
-  .eq('organization_id', effectiveOrganization.id)
-  .eq('is_active', true)
-  .eq('is_approved', true);
-
-// For each public channel, add all org members
-for (const channel of createdPublicChannels) {
-  const memberships = orgMembers?.map(member => ({
-    channel_id: channel.id,
-    user_id: member.user_id,
-    role: 'member',
-  })) || [];
-  
-  await supabase
-    .from('chat_channel_members')
-    .upsert(memberships, { onConflict: 'channel_id,user_id' });
-}
-
-// For each location channel, add members assigned to that location
-for (const locChannel of createdLocationChannels) {
-  const locationMembers = orgMembers?.filter(m => {
-    const memberLocations = m.location_ids?.length 
-      ? m.location_ids 
-      : (m.location_id ? [m.location_id] : []);
-    return memberLocations.includes(locChannel.location_id);
-  }) || [];
-  
-  const memberships = locationMembers.map(member => ({
-    channel_id: locChannel.id,
-    user_id: member.user_id,
-    role: 'member',
-  }));
-  
-  if (memberships.length > 0) {
-    await supabase
-      .from('chat_channel_members')
-      .upsert(memberships, { onConflict: 'channel_id,user_id' });
-  }
+  // ... rest of component
 }
 ```
 
 ---
-
-## Database Changes
-
-Add a unique constraint if not already present to allow upsert:
-
-```sql
--- Add unique constraint for upsert support
-ALTER TABLE public.chat_channel_members
-ADD CONSTRAINT chat_channel_members_channel_user_unique 
-UNIQUE (channel_id, user_id);
-```
-
----
-
-## Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/hooks/team-chat/useAutoJoinLocationChannels.ts` | Auto-join user to appropriate channels |
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/hooks/team-chat/useChatChannels.ts` | Enhance initialization to auto-add all org members |
-| `src/components/team-chat/ChannelSidebar.tsx` | Call auto-join hook on load |
-| `src/hooks/team-chat/index.ts` | Export new hook |
-
----
-
-## Behavior After Implementation
-
-| Scenario | Result |
-|----------|--------|
-| New organization first opens Team Chat | All org members auto-joined to `#company-wide`, `#general`, and their location channels |
-| Existing user opens Team Chat | Automatically joined to any channels they should have access to but aren't members of yet |
-| User's location assignment changes | Next time they open Team Chat, they're joined to new location channels |
-| New employee joins organization | On first Team Chat access, auto-joined to appropriate channels |
+| `src/pages/dashboard/TeamChat.tsx` | Auto-select organization for platform users |
 
 ---
 
 ## Result
 
-Users will automatically be members of:
-- `#company-wide` and `#general` channels (all org members)
-- `#[location-name]` channels matching their assigned locations
+| Before | After |
+|--------|-------|
+| Platform user sees empty channel list | Platform user automatically views "Drop Dead Salons" channels |
+| Must manually switch org in header | Team Chat works immediately |
+| Confusing empty state | Channels load as expected |
 
-No manual joining required - the system handles membership based on organizational structure and location assignments.
+---
+
+## Alternative: User Action Required
+
+If auto-selection is not desired, you can manually:
+1. Click the organization switcher in the dashboard header
+2. Select "Drop Dead Salons" (or any organization)
+3. Team Chat will then show that organization's channels
+
