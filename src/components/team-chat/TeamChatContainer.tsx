@@ -9,7 +9,7 @@ function TeamChatLayout() {
   const { isSidebarOpen } = useTeamChatContext();
 
   return (
-    <div className="flex h-full bg-background">
+    <div className="flex h-[calc(100vh-8rem)] bg-background">
       {/* Sidebar */}
       <div
         className={cn(
