@@ -9,14 +9,18 @@ import {
   Eye, 
   Lock,
   Flag,
+  Users,
+  Settings2,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ModulesTab } from '@/components/access-hub/ModulesTab';
+import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
 import { RoleAccessTab } from '@/components/access-hub/RoleAccessTab';
 import { PermissionsTab } from '@/components/access-hub/PermissionsTab';
+import { RoleConfigTab } from '@/components/access-hub/RoleConfigTab';
 import { PlatformTab } from '@/components/access-hub/PlatformTab';
 
-type TabValue = 'modules' | 'role-access' | 'permissions' | 'platform';
+type TabValue = 'modules' | 'user-roles' | 'role-access' | 'permissions' | 'role-config' | 'platform';
 
 export default function AccessHub() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -29,7 +33,7 @@ export default function AccessHub() {
 
   // Sync tab with URL
   useEffect(() => {
-    if (tabParam && ['modules', 'role-access', 'permissions', 'platform'].includes(tabParam)) {
+    if (tabParam && ['modules', 'user-roles', 'role-access', 'permissions', 'role-config', 'platform'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
@@ -66,10 +70,14 @@ export default function AccessHub() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
             <TabsTrigger value="modules" className="gap-2">
               <Blocks className="h-4 w-4" />
               <span className="hidden sm:inline">Modules</span>
+            </TabsTrigger>
+            <TabsTrigger value="user-roles" className="gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">User Roles</span>
             </TabsTrigger>
             <TabsTrigger value="role-access" className="gap-2">
               <Eye className="h-4 w-4" />
@@ -78,6 +86,10 @@ export default function AccessHub() {
             <TabsTrigger value="permissions" className="gap-2">
               <Lock className="h-4 w-4" />
               <span className="hidden sm:inline">Permissions</span>
+            </TabsTrigger>
+            <TabsTrigger value="role-config" className="gap-2">
+              <Settings2 className="h-4 w-4" />
+              <span className="hidden sm:inline">Role Config</span>
             </TabsTrigger>
             <TabsTrigger value="platform" className="gap-2">
               <Flag className="h-4 w-4" />
@@ -89,12 +101,20 @@ export default function AccessHub() {
             <ModulesTab canManage={canManage} />
           </TabsContent>
 
+          <TabsContent value="user-roles" className="mt-0">
+            <UserRolesTab canManage={canManage} />
+          </TabsContent>
+
           <TabsContent value="role-access" className="mt-0">
             <RoleAccessTab canManage={canManage} />
           </TabsContent>
 
           <TabsContent value="permissions" className="mt-0">
             <PermissionsTab canManage={canManage} />
+          </TabsContent>
+
+          <TabsContent value="role-config" className="mt-0">
+            <RoleConfigTab canManage={canManage} />
           </TabsContent>
 
           <TabsContent value="platform" className="mt-0">

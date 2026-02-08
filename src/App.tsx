@@ -41,7 +41,7 @@ import Handbooks from "./pages/dashboard/admin/Handbooks";
 import AdminSettings from "./pages/dashboard/admin/Settings";
 import AdminAnnouncements from "./pages/dashboard/admin/Announcements";
 import HomepageStylists from "./pages/dashboard/admin/HomepageStylists";
-import ManageRoles from "./pages/dashboard/admin/ManageRoles";
+// ManageRoles removed - consolidated into AccessHub
 import AccountManagement from "./pages/dashboard/admin/AccountManagement";
 import TestimonialsManager from "./pages/dashboard/admin/TestimonialsManager";
 import ServicesManager from "./pages/dashboard/admin/ServicesManager";
@@ -238,7 +238,7 @@ const App = () => (
                       <Route path="/dashboard/admin/announcement-bar" element={<Navigate to="/dashboard/admin/website-sections?tab=banner" replace />} />
                       <Route path="/dashboard/admin/locations" element={<Navigate to="/dashboard/admin/website-sections?tab=locations" replace />} />
                       <Route path="/dashboard/admin/website-sections" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><WebsiteSectionsHub /></ProtectedRoute>} />
-                      <Route path="/dashboard/admin/roles" element={<ProtectedRoute requiredPermission="manage_user_roles"><ManageRoles /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/roles" element={<Navigate to="/dashboard/admin/access-hub?tab=user-roles" replace />} />
                       <Route path="/dashboard/admin/accounts" element={<ProtectedRoute requiredPermission="approve_accounts"><AccountManagement /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/settings" element={<ProtectedRoute requiredPermission="manage_settings"><AdminSettings /></ProtectedRoute>} />
