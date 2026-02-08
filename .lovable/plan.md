@@ -1,77 +1,192 @@
 
 
-# Include Account Owner as Welcome Sender Option
+# Role-Based Welcome Senders
 
-## Problem
+## Overview
 
-Currently, the "Add Welcome Sender" dialog excludes the currently logged-in user from the sender list. This means if the Account Owner wants to send a welcome message to new hires, they can't select themselves.
+Instead of tying welcome messages to a specific user (who might leave or change roles), attach them to a **role**. The system will dynamically find whoever currently holds that role and send the welcome message from them.
 
-## Solution
-
-Modify the `useLeadershipMembers` hook to include the current user as an option, with a special designation (e.g., "You") or prioritized at the top of the list.
+**Key Benefits:**
+- If a Manager leaves, messages automatically come from the new Manager
+- If no one has the role, that welcome rule is automatically inactive (no errors)
+- More maintainable and resilient to team changes
 
 ---
 
-## Technical Changes
+## How It Works
 
-### Update `useLeadershipMembers` Hook
+```text
+Current Flow (user-based):
+┌─────────────────────────────┐
+│ Rule: Send from Sarah Chen  │ ──→ Sarah leaves ──→ Rule breaks!
+└─────────────────────────────┘
 
-**File:** `src/hooks/team-chat/useLeadershipMembers.ts`
-
-Remove the filter that excludes the current user:
-```typescript
-// Before: .neq('user_id', user?.id ?? '')
-// After: Remove this line
+New Flow (role-based):
+┌─────────────────────────────┐
+│ Rule: Send from "Manager"   │ ──→ Sarah leaves ──→ New manager sends
+└─────────────────────────────┘
+                              ──→ No manager? ──→ Rule auto-deactivates
 ```
 
-Add a flag `isCurrentUser` to each member so the UI can highlight them differently.
+---
 
-Update the interface:
-```typescript
-export interface LeadershipMember {
-  user_id: string;
-  display_name: string;
-  full_name: string | null;
-  photo_url: string | null;
-  role: string;
-  isCurrentUser?: boolean; // NEW
-}
+## Database Changes
+
+**Modify `team_chat_welcome_rules` table:**
+- Replace `sender_user_id` with `sender_role` (app_role type)
+- Drop the unique constraint on `(organization_id, sender_user_id)`
+- Add new unique constraint on `(organization_id, sender_role)` to prevent duplicate role configs
+
+**Migration SQL:**
+```sql
+-- Add sender_role column
+ALTER TABLE public.team_chat_welcome_rules 
+ADD COLUMN sender_role TEXT NOT NULL DEFAULT 'manager';
+
+-- Drop old unique constraint
+ALTER TABLE public.team_chat_welcome_rules 
+DROP CONSTRAINT IF EXISTS team_chat_welcome_rules_organization_id_sender_user_id_key;
+
+-- Add new unique constraint  
+ALTER TABLE public.team_chat_welcome_rules
+ADD CONSTRAINT team_chat_welcome_rules_org_role_unique 
+UNIQUE(organization_id, sender_role);
+
+-- Eventually drop sender_user_id (after migration)
+ALTER TABLE public.team_chat_welcome_rules 
+DROP COLUMN IF EXISTS sender_user_id;
 ```
 
-Sort to put current user first in the list.
+---
 
-### Update `WelcomeSenderDialog` Component
+## UI Changes
 
-**File:** `src/components/team-chat/settings/WelcomeSenderDialog.tsx`
+### WelcomeSenderDialog
+Replace the user picker with a **role selector**:
 
-- Display "(You)" next to the current user's name
-- Apply subtle visual distinction (e.g., border or badge)
-- Current user appears at the top of the list
-
-**Updated member row for current user:**
-```
+```text
+Before (user picker):
 ┌─────────────────────────────────────────────────────────────┐
-│  [Avatar]  Your Name (You)                    Account Owner │
+│  Select Sender                                              │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ 🔍 Search team members...                              │ │
+│  ├────────────────────────────────────────────────────────┤ │
+│  │ [Avatar] Sarah Chen (You)                   Super Admin│ │
+│  │ [Avatar] Mike Johnson                          Manager │ │
+│  └────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
-│  [Avatar]  Manager Name                             Manager │
+
+After (role picker):
+┌─────────────────────────────────────────────────────────────┐
+│  Select Sender Role                                         │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ ○ Super Admin    - Complete system access              │ │
+│  │ ● Manager        - Can manage team, view reports       │ │
+│  │ ○ Admin          - Full access to all features         │ │
+│  └────────────────────────────────────────────────────────┘ │
+│                                                             │
+│  Currently filling this role:                               │
+│  ┌────────────────────────────────────────────────────────┐ │
+│  │ [Avatar] Mike Johnson                                  │ │
+│  └────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────┘
+```
+
+### WelcomeDMsTab
+Update the rule cards to show role instead of user:
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│ [≡]  👔 Manager                                      [Edit] │
+│      "Welcome to the team, [new_member_name]! 👋..."        │
+│      Currently: Mike Johnson • Sends to: All roles          │
+└─────────────────────────────────────────────────────────────┘
+│ [≡]  👑 Super Admin                           (No one) [!]  │
+│      "Hey [new_member_name]! I'm the owner..."              │
+│      Currently: Unassigned • Sends to: Stylists             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+When no one has the role, show a warning badge "No one assigned" and the rule appears dimmed.
+
+---
+
+## Edge Function Updates
+
+**`send-welcome-dms` function changes:**
+1. Read `sender_role` instead of `sender_user_id`
+2. Query `user_roles` to find users with that role in the organization
+3. Pick the first matching user (or primary owner for super_admin)
+4. If no user has the role, skip the rule (auto-deactivate behavior)
+5. Send message from the resolved user
+
+```typescript
+// Pseudocode for role resolution
+async function resolveSenderForRole(orgId: string, role: string): Promise<User | null> {
+  const { data: usersWithRole } = await supabase
+    .from('user_roles')
+    .select('user_id')
+    .eq('role', role);
+  
+  if (!usersWithRole?.length) return null; // No one has this role
+  
+  // Get the first user's profile from this org
+  const { data: sender } = await supabase
+    .from('employee_profiles')
+    .select('*')
+    .eq('organization_id', orgId)
+    .in('user_id', usersWithRole.map(u => u.user_id))
+    .single();
+    
+  return sender;
+}
 ```
 
 ---
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/hooks/team-chat/useLeadershipMembers.ts` | Remove exclusion filter, add `isCurrentUser` flag, sort current user first |
-| `src/components/team-chat/settings/WelcomeSenderDialog.tsx` | Show "(You)" label for current user |
+| File | Changes |
+|------|---------|
+| `supabase/migrations/` | Add migration to change schema from `sender_user_id` to `sender_role` |
+| `src/hooks/team-chat/useWelcomeDMRules.ts` | Update types and queries for role-based rules |
+| `src/components/team-chat/settings/WelcomeSenderDialog.tsx` | Replace user picker with role selector |
+| `src/components/team-chat/settings/WelcomeDMsTab.tsx` | Update display to show role + current holder |
+| `supabase/functions/send-welcome-dms/index.ts` | Resolve sender from role at runtime |
 
 ---
 
-## Expected Result
+## New Hook: useRoleMembers
 
-- Account Owner sees themselves in the sender list
-- Current user is labeled with "(You)" for clarity
-- Current user appears at the top of the list for easy selection
-- Account Owner can now configure welcome messages from themselves
+Create a helper hook to get which users currently hold a specific role in the organization:
+
+**File:** `src/hooks/team-chat/useRoleMembers.ts`
+
+```typescript
+export function useRoleMembers(role: string) {
+  // Returns array of users who have this role in the current org
+  // Used to show "Currently: Mike Johnson" in the UI
+}
+```
+
+---
+
+## Expected Behavior
+
+| Scenario | Result |
+|----------|--------|
+| Manager configured, Mike is Manager | Welcome sent from Mike |
+| Manager configured, Mike leaves, Jane becomes Manager | Welcome sent from Jane |
+| Manager configured, no one has Manager role | Rule is skipped (no error) |
+| Super Admin configured, owner exists | Welcome sent from owner |
+
+---
+
+## Summary
+
+This change makes the welcome DM system more resilient by:
+1. Decoupling messages from specific users
+2. Auto-resolving the sender at message time
+3. Gracefully handling vacant roles
+4. Showing admins who currently fills each role
 
