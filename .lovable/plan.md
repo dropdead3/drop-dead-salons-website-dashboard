@@ -1,47 +1,83 @@
 
-# Fix Thread Reply Font Size
+# Thread Reply Visual Indicator (L-Line Design)
 
-## Problem
+## Goal
 
-Thread reply messages use `text-xs` (12px) font size while the main chat uses `text-sm` (14px). This creates a visually inconsistent experience where thread replies appear too small.
+Add a visual "L" shaped line indicator that connects the parent message to its replies, creating a clear visual hierarchy that shows the relationship between messages - similar to how comment threads work in apps like GitHub or Reddit.
 
-## Current Styling Comparison
+## Visual Design
 
-| Element | Main Chat (MessageItem) | Thread Reply (ThreadMessageItem) |
-|---------|------------------------|----------------------------------|
-| Message text | `text-sm` | `text-xs` ← too small |
-| Sender name | `text-sm` | `text-xs` ← too small |
-| Timestamp | `text-xs` | `text-[10px]` |
-| Avatar | `h-10 w-10` | `h-8 w-8` |
-
-## Solution
-
-Update `ThreadMessageItem.tsx` to match the main chat font sizes for replies (non-parent messages).
-
-### Changes to `ThreadMessageItem.tsx`
-
-**Line 134** - Sender name:
-```tsx
-// Before
-<span className={cn('font-semibold', isParent ? 'text-sm' : 'text-xs')}>{senderName}</span>
-
-// After
-<span className="font-semibold text-sm">{senderName}</span>
+```text
+┌────────────────────────────────────────┐
+│  [Avatar] Parent Message               │
+│           Message content here...      │
+│                                        │
+│     │                                  │  ← Vertical line starts
+│     ├── [Avatar] Reply 1               │  ← L-connector
+│     │            Reply content...      │
+│     │                                  │
+│     ├── [Avatar] Reply 2               │  ← L-connector
+│     │            Reply content...      │
+│     │                                  │
+│     └── [Avatar] Reply 3               │  ← Final reply (rounded corner)
+│                  Reply content...      │
+└────────────────────────────────────────┘
 ```
 
-**Line 141** - Message content:
-```tsx
-// Before
-<div className={cn('whitespace-pre-wrap break-words', isParent ? 'text-sm' : 'text-xs')}>
+## Implementation Approach
 
-// After
-<div className="text-sm whitespace-pre-wrap break-words">
+### 1. Update `ThreadPanel.tsx` - Add threading line container
+
+Wrap the replies section in a container with the vertical thread line:
+
+```tsx
+{/* Replies with thread line */}
+{replies.length > 0 && (
+  <div className="relative ml-5 pl-4 border-l-2 border-muted-foreground/20">
+    {/* L-connector for each reply */}
+    <div className="space-y-0">
+      {replies.map((reply, index) => (
+        <div key={reply.id} className="relative">
+          {/* Horizontal line connector */}
+          <div className="absolute -left-4 top-4 w-4 h-px bg-muted-foreground/20" />
+          
+          <ThreadMessageItem ... />
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 ```
 
-## Summary
+### 2. Update `ThreadMessageItem.tsx` - Add connector dot
 
-| File | Change |
-|------|--------|
-| `src/components/team-chat/ThreadMessageItem.tsx` | Change reply text from `text-xs` to `text-sm` to match main chat |
+Add a small dot or circle at the connection point:
 
-This ensures consistent typography between main chat and thread panel for a cohesive reading experience.
+```tsx
+{!isParent && (
+  <div className="absolute -left-[18px] top-4 h-2 w-2 rounded-full bg-muted-foreground/30" />
+)}
+```
+
+## Visual Elements
+
+| Element | Style |
+|---------|-------|
+| Vertical line | `border-l-2 border-muted-foreground/20` - subtle gray line |
+| Horizontal connector | `w-4 h-px bg-muted-foreground/20` - extends from vertical line to avatar |
+| Connection point | Small dot or rounded corner at intersection |
+| Indentation | `ml-5` (20px) indent for replies |
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/components/team-chat/ThreadPanel.tsx` | Add vertical line container around replies, add horizontal connectors |
+| `src/components/team-chat/ThreadMessageItem.tsx` | Minor padding adjustments for proper alignment |
+
+## Benefits
+
+- Clear visual hierarchy showing parent-child relationship
+- Familiar pattern from GitHub, Reddit, and other threaded UIs
+- Subtle styling that doesn't overwhelm the content
+- Responsive - works within the thread panel width constraints
