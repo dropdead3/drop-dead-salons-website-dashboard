@@ -74,33 +74,30 @@ export function MessageItem({
     <>
       <div
         className={cn(
-          'group relative flex gap-4 px-4 py-2 rounded-lg transition-colors',
-          'hover:bg-accent/20',
-          isConsecutive ? 'items-center pt-0.5 ml-16' : 'items-start pt-3'
+          'group relative flex gap-4 px-5 py-1.5 -mx-2 rounded-lg transition-colors',
+          'hover:bg-accent/30',
+          isConsecutive ? 'items-center' : 'items-start pt-2'
         )}
         onMouseEnter={() => setShowActions(true)}
         onMouseLeave={() => setShowActions(false)}
         onDoubleClick={onReply}
       >
-        {/* Avatar or timestamp spacer */}
-        {!isConsecutive && (
-          <div className="w-10 shrink-0">
+        {/* Left column: Avatar or Timestamp */}
+        <div className="w-10 shrink-0 flex items-start justify-center">
+          {!isConsecutive ? (
             <Avatar className="h-10 w-10">
               <AvatarImage src={message.sender?.photo_url || undefined} />
               <AvatarFallback className="text-xs">{initials}</AvatarFallback>
             </Avatar>
-          </div>
-        )}
-        {isConsecutive && (
-          <div className="w-14 shrink-0 flex justify-end -ml-16 pr-2">
+          ) : (
             <span className={cn(
-              "text-[10px] text-muted-foreground whitespace-nowrap transition-opacity",
+              "text-[10px] text-muted-foreground whitespace-nowrap transition-opacity pt-0.5",
               showActions ? "opacity-100" : "opacity-0"
             )}>
               {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Message content */}
         <div className="flex-1 min-w-0">
