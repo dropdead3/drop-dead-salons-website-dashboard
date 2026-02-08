@@ -1,51 +1,106 @@
 
-
-# Fix Chat with Leadership - Auto-Select Org for Platform Users
+# Fix DM Channel Display Names
 
 ## Problem
-The Chat tab shows "No managers available" because platform users don't have an organization selected by default. The `useLeadershipMembers` hook returns an empty array when `effectiveOrganization` is `null`.
+When a DM is created, it displays in the sidebar and header as "dm-1770582595901" (a timestamp-based internal name) instead of showing the other person's name like "Alex". The user expects to see the person they're chatting with, not a technical identifier.
+
+## Root Cause
+1. DM channels are stored with an internal name like `dm-${Date.now()}` for database purposes
+2. The UI components (`ChannelSidebar`, `ChannelHeader`, `MessageList`, `MessageInput`) simply display `channel.name` directly
+3. There's no logic to resolve DM channel names to the other participant's display name
 
 ## Solution
-Apply the same auto-select behavior that Team Chat uses: when a platform user opens the Chat tab without an org selected, automatically select a default organization so leadership members are loaded.
+Fetch DM member information when loading channels, then use a helper function to display the correct name based on channel type.
 
 ## Technical Approach
 
-### Update ChatLeadershipTab Component
+### 1. Extend `useChatChannels` to Include DM Member Info
 
-Add the same auto-select logic that exists in `TeamChat.tsx`:
+When fetching DM channels, also fetch the channel members with their profile info so we know who the other person is.
 
+Update the `ChannelWithMembership` interface to include:
 ```typescript
-// In ChatLeadershipTab.tsx
-const { isPlatformUser } = useAuth();
-const { effectiveOrganization, setSelectedOrganization } = useOrganizationContext();
-const { data: organizations } = useOrganizations();
-
-// Auto-select org for platform users (mirrors TeamChat.tsx logic)
-useEffect(() => {
-  if (isPlatformUser && !effectiveOrganization && organizations?.length > 0) {
-    const defaultOrg = organizations.find(o => o.slug === 'drop-dead-salons') || organizations[0];
-    setSelectedOrganization(defaultOrg);
-  }
-}, [isPlatformUser, effectiveOrganization, organizations, setSelectedOrganization]);
+export interface ChannelWithMembership extends ChatChannel {
+  membership?: ChatChannelMember;
+  unread_count?: number;
+  dm_partner?: {
+    user_id: string;
+    display_name: string;
+    photo_url: string | null;
+  };
+}
 ```
 
-## Flow Confirmation
+### 2. Create a Display Name Utility Hook
 
-The DM flow works correctly:
-1. **User clicks manager** → Calls `createDM(userId)`
-2. **createDM checks for existing DM** → If found, returns existing channel
-3. **If no existing DM** → Creates new DM channel with both users as members
-4. **Navigate to Team Chat** → User lands on `/dashboard/team-chat` with the conversation ready
+**File:** `src/hooks/team-chat/useChannelDisplayName.ts`
 
-This means clicking the same manager twice will open the same conversation, not create duplicates.
+A simple hook/utility that:
+- For DM channels: returns the other person's name (from `dm_partner`)
+- For other channels: returns `channel.name` as-is
+
+```typescript
+export function getChannelDisplayName(channel: ChannelWithMembership): string {
+  if (channel.type === 'dm' && channel.dm_partner) {
+    return channel.dm_partner.display_name;
+  }
+  return channel.name;
+}
+```
+
+### 3. Update UI Components
+
+Replace `channel.name` with `getChannelDisplayName(channel)` in:
+
+| Component | Location | Change |
+|-----------|----------|--------|
+| `ChannelSidebar.tsx` | Line 49 | DM items show partner name |
+| `ChannelHeader.tsx` | Line 54 | Header shows partner name |
+| `MessageList.tsx` | Line 57 | Welcome message shows partner name |
+| `MessageInput.tsx` | Lines 87-88 | Placeholder uses partner name |
+
+### 4. Ensure DM Reuse Works Correctly
+
+The existing `useDMChannels.createDM()` logic already:
+- Checks for existing DM channels between both users
+- Returns the existing channel if found
+- Only creates a new channel if none exists
+
+This means clicking "Alex" twice will reuse the same conversation, not create duplicates.
+
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/hooks/team-chat/useChannelDisplayName.ts` | Helper to get channel display name |
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/help-fab/ChatLeadershipTab.tsx` | Add auto-select org logic for platform users |
+| `src/hooks/team-chat/useChatChannels.ts` | Fetch DM member profiles, add `dm_partner` to channel data |
+| `src/hooks/team-chat/index.ts` | Export new hook |
+| `src/components/team-chat/ChannelSidebar.tsx` | Use display name helper for DM channels |
+| `src/components/team-chat/ChannelHeader.tsx` | Use display name helper |
+| `src/components/team-chat/MessageList.tsx` | Use display name helper |
+| `src/components/team-chat/MessageInput.tsx` | Use display name helper |
 
 ## Expected Result
-- Platform users see leadership members immediately when opening Chat tab
-- Regular organization users continue to see their org's managers (no change)
-- Clicking a manager creates or opens existing DM, then navigates to Team Chat
+
+**Before:**
+```
+DIRECT MESSAGES
+  dm-1770582595901
+```
+
+**After:**
+```
+DIRECT MESSAGES
+  Alex Smith
+```
+
+The conversation with Alex will:
+- Show "Alex Smith" in the sidebar
+- Show "Alex Smith" in the header when viewing the DM
+- Show "Welcome to Alex Smith" when starting the conversation
+- Always open the same conversation (no duplicates)
