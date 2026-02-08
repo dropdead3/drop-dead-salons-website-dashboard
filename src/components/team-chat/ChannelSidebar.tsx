@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Hash, MapPin, Lock, Plus, ChevronDown, ChevronRight, Users } from 'lucide-react';
+import { Hash, MapPin, Lock, Plus, ChevronDown, ChevronRight, Users, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -7,8 +7,10 @@ import { useChatChannels, useInitializeDefaultChannels, type ChannelWithMembersh
 import { useAutoJoinLocationChannels } from '@/hooks/team-chat/useAutoJoinLocationChannels';
 import { useUnreadMessages } from '@/hooks/team-chat/useUnreadMessages';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { CreateChannelDialog } from './CreateChannelDialog';
 import { StartDMDialog } from './StartDMDialog';
+import { TeamChatAdminSettingsSheet } from './TeamChatAdminSettingsSheet';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 
@@ -59,13 +61,18 @@ function ChannelItem({ channel, isActive, onClick, unreadCount }: ChannelItemPro
 export function ChannelSidebar() {
   const { channels, isLoading, joinChannel } = useChatChannels();
   const { activeChannel, setActiveChannel } = useTeamChatContext();
+  const { data: profile } = useEmployeeProfile();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDMOpen, setIsDMOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [sectionsOpen, setSectionsOpen] = useState({
     channels: true,
     locations: true,
     direct: true,
   });
+
+  // Only super admins can access settings
+  const canAccessSettings = profile?.is_super_admin === true;
 
   const channelIds = channels.map((c) => c.id);
   const { getUnreadCount, markAsRead } = useUnreadMessages(channelIds);
@@ -121,8 +128,19 @@ export function ChannelSidebar() {
 
   return (
     <div className="flex flex-col h-full bg-sidebar border-r">
-      <div className="p-4 border-b">
+      <div className="p-4 border-b flex items-center justify-between">
         <h2 className="font-semibold text-lg">Team Chat</h2>
+        {canAccessSettings && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => setIsSettingsOpen(true)}
+            title="Team Chat Settings"
+          >
+            <Settings className="h-4 w-4" />
+          </Button>
+        )}
       </div>
 
       <ScrollArea className="flex-1">
@@ -206,6 +224,7 @@ export function ChannelSidebar() {
 
       <CreateChannelDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
       <StartDMDialog open={isDMOpen} onOpenChange={setIsDMOpen} />
+      <TeamChatAdminSettingsSheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
     </div>
   );
 }

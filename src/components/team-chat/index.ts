@@ -15,3 +15,4 @@ export * from './ChannelMembersSheet';
 export * from './UserStatusPicker';
 export * from './MentionAutocomplete';
 export * from './AttachmentDisplay';
+export * from './TeamChatAdminSettingsSheet';
