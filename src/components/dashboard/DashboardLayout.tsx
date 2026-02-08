@@ -1126,10 +1126,33 @@ export function DashboardLayout(props: DashboardLayoutProps) {
     ? localStorage.getItem('dd-color-theme') || 'cream'
     : 'cream';
   
+  // Sync dark mode and theme classes to document root for proper CSS variable cascade
+  useEffect(() => {
+    const root = document.documentElement;
+    
+    // Apply theme class to root
+    root.classList.remove('theme-cream', 'theme-rose', 'theme-sage', 'theme-ocean');
+    root.classList.add(`theme-${colorTheme}`);
+    
+    // Apply dark mode to root - ensures all CSS variables inherit correctly
+    if (resolvedTheme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    
+    // Cleanup on unmount (e.g., navigating away from dashboard)
+    return () => {
+      // Don't remove classes on cleanup to avoid flash during navigation
+      // They'll be managed by the next layout component
+    };
+  }, [resolvedTheme, colorTheme]);
+  
   return (
     <div className={cn(
       resolvedTheme === 'dark' && 'dark',
       `theme-${colorTheme}`,
+      'bg-background text-foreground', // Explicit color application for proper inheritance
       isPlatformRoute && 'platform-theme platform-gradient-radial min-h-screen'
     )}>
       <DashboardLayoutInner {...props} />
