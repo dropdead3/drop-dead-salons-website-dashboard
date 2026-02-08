@@ -2,11 +2,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
+import type { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 export interface WelcomeRule {
   id: string;
   organization_id: string;
-  sender_user_id: string;
+  sender_role: AppRole;
   message_template: string;
   target_roles: string[] | null;
   target_locations: string[] | null;
@@ -15,17 +18,10 @@ export interface WelcomeRule {
   sort_order: number;
   created_at: string;
   updated_at: string;
-  // Joined data
-  sender?: {
-    user_id: string;
-    display_name: string | null;
-    full_name: string | null;
-    photo_url: string | null;
-  };
 }
 
 export interface WelcomeRuleInput {
-  sender_user_id: string;
+  sender_role: AppRole;
   message_template: string;
   target_roles?: string[] | null;
   target_locations?: string[] | null;
@@ -45,15 +41,7 @@ export function useWelcomeDMRules() {
 
       const { data, error } = await supabase
         .from('team_chat_welcome_rules')
-        .select(`
-          *,
-          sender:employee_profiles!sender_user_id (
-            user_id,
-            display_name,
-            full_name,
-            photo_url
-          )
-        `)
+        .select('*')
         .eq('organization_id', effectiveOrganization.id)
         .order('sort_order', { ascending: true });
 
@@ -74,7 +62,7 @@ export function useWelcomeDMRules() {
         .from('team_chat_welcome_rules')
         .insert({
           organization_id: effectiveOrganization.id,
-          sender_user_id: input.sender_user_id,
+          sender_role: input.sender_role,
           message_template: input.message_template,
           target_roles: input.target_roles || null,
           target_locations: input.target_locations || null,
@@ -95,7 +83,7 @@ export function useWelcomeDMRules() {
     onError: (error: any) => {
       console.error('Failed to add welcome rule:', error);
       if (error.code === '23505') {
-        toast.error('This person is already configured as a welcome sender');
+        toast.error('This role is already configured as a welcome sender');
       } else {
         toast.error('Failed to add welcome sender');
       }
@@ -184,7 +172,7 @@ export function useWelcomeDMRules() {
 // Template variable replacements
 export const WELCOME_TEMPLATE_VARIABLES = [
   { key: '[new_member_name]', label: 'New Member Name', description: "The new hire's display name" },
-  { key: '[sender_name]', label: 'Sender Name', description: 'Your display name' },
+  { key: '[sender_name]', label: 'Sender Name', description: 'Sender display name' },
   { key: '[role]', label: 'Role', description: "New member's role" },
   { key: '[location_name]', label: 'Location', description: 'Assigned location name' },
 ];

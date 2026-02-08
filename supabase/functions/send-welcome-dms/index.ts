@@ -8,7 +8,7 @@ const corsHeaders = {
 interface WelcomeRule {
   id: string;
   organization_id: string;
-  sender_user_id: string;
+  sender_role: string;
   message_template: string;
   target_roles: string[] | null;
   target_locations: string[] | null;
@@ -47,6 +47,45 @@ function replaceTemplateVariables(
     result = result.replace(/\[location_name\]/g, variables.location_name);
   }
   return result;
+}
+
+/**
+ * Resolves a sender from a role by finding users who have that role in the organization.
+ * Returns the first user found, or null if no one has the role.
+ */
+async function resolveSenderForRole(
+  supabase: any,
+  orgId: string,
+  role: string
+): Promise<{ user_id: string; display_name: string; full_name: string | null } | null> {
+  // Get users with this role
+  const { data: usersWithRole, error: roleError } = await supabase
+    .from('user_roles')
+    .select('user_id')
+    .eq('role', role);
+
+  if (roleError || !usersWithRole?.length) {
+    console.log(`No users found with role "${role}"`);
+    return null;
+  }
+
+  const userIds = usersWithRole.map((u: any) => u.user_id);
+
+  // Get the first user's profile from this org
+  const { data: sender, error: profileError } = await supabase
+    .from('employee_profiles')
+    .select('user_id, display_name, full_name')
+    .eq('organization_id', orgId)
+    .in('user_id', userIds)
+    .limit(1)
+    .single();
+
+  if (profileError || !sender) {
+    console.log(`No employee profile found for role "${role}" in org ${orgId}`);
+    return null;
+  }
+
+  return sender;
 }
 
 Deno.serve(async (req) => {
@@ -104,7 +143,7 @@ Deno.serve(async (req) => {
       .select('role')
       .eq('user_id', new_member_user_id);
 
-    const roles = memberRoles?.map(r => r.role) || [];
+    const roles = memberRoles?.map((r: any) => r.role) || [];
 
     // Get location name if applicable
     let locationName = '';
@@ -140,12 +179,12 @@ Deno.serve(async (req) => {
       );
     }
 
-    const results: { sender_id: string; success: boolean; error?: string }[] = [];
+    const results: { sender_role: string; sender_id?: string; success: boolean; error?: string }[] = [];
 
     for (const rule of rules as WelcomeRule[]) {
       // Check if this rule targets specific roles
       if (rule.target_roles && rule.target_roles.length > 0) {
-        const hasMatchingRole = roles.some(r => rule.target_roles!.includes(r));
+        const hasMatchingRole = roles.some((r: string) => rule.target_roles!.includes(r));
         if (!hasMatchingRole) {
           console.log(`Skipping rule ${rule.id}: role mismatch`);
           continue;
@@ -160,33 +199,34 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Check if already sent
+      // Resolve the sender from the role
+      const sender = await resolveSenderForRole(supabase, organization_id, rule.sender_role);
+      
+      if (!sender) {
+        console.log(`Skipping rule ${rule.id}: no user has role "${rule.sender_role}"`);
+        results.push({ 
+          sender_role: rule.sender_role, 
+          success: false, 
+          error: `No user has role "${rule.sender_role}"` 
+        });
+        continue;
+      }
+
+      // Check if already sent from this role (using sender_role in tracking)
       const { data: alreadySent } = await supabase
         .from('team_chat_welcome_sent')
         .select('id')
         .eq('organization_id', organization_id)
         .eq('recipient_user_id', new_member_user_id)
-        .eq('sender_user_id', rule.sender_user_id)
+        .eq('sender_user_id', sender.user_id)
         .maybeSingle();
 
       if (alreadySent) {
-        console.log(`Skipping rule ${rule.id}: already sent`);
+        console.log(`Skipping rule ${rule.id}: already sent from this sender`);
         continue;
       }
 
       try {
-        // Get sender's profile
-        const { data: sender } = await supabase
-          .from('employee_profiles')
-          .select('user_id, display_name, full_name')
-          .eq('user_id', rule.sender_user_id)
-          .single();
-
-        if (!sender) {
-          results.push({ sender_id: rule.sender_user_id, success: false, error: 'Sender not found' });
-          continue;
-        }
-
         // Check if DM channel already exists
         const { data: existingChannels } = await supabase
           .from('chat_channels')
@@ -201,7 +241,7 @@ Deno.serve(async (req) => {
           for (const channel of existingChannels) {
             const memberIds = (channel.chat_channel_members as any[]).map(m => m.user_id);
             if (memberIds.length === 2 && 
-                memberIds.includes(rule.sender_user_id) && 
+                memberIds.includes(sender.user_id) && 
                 memberIds.includes(new_member_user_id)) {
               channelId = channel.id;
               break;
@@ -217,13 +257,18 @@ Deno.serve(async (req) => {
               name: `dm-${Date.now()}`,
               type: 'dm',
               organization_id: organization_id,
-              created_by: rule.sender_user_id,
+              created_by: sender.user_id,
             })
             .select()
             .single();
 
           if (channelError || !newChannel) {
-            results.push({ sender_id: rule.sender_user_id, success: false, error: 'Failed to create DM channel' });
+            results.push({ 
+              sender_role: rule.sender_role, 
+              sender_id: sender.user_id, 
+              success: false, 
+              error: 'Failed to create DM channel' 
+            });
             continue;
           }
 
@@ -231,7 +276,7 @@ Deno.serve(async (req) => {
 
           // Add both users as members
           await supabase.from('chat_channel_members').insert([
-            { channel_id: channelId, user_id: rule.sender_user_id, role: 'owner' },
+            { channel_id: channelId, user_id: sender.user_id, role: 'owner' },
             { channel_id: channelId, user_id: new_member_user_id, role: 'member' },
           ]);
         }
@@ -259,14 +304,19 @@ Deno.serve(async (req) => {
           .from('chat_messages')
           .insert({
             channel_id: channelId,
-            sender_id: rule.sender_user_id,
+            sender_id: sender.user_id,
             content: messageContent,
           })
           .select()
           .single();
 
         if (messageError) {
-          results.push({ sender_id: rule.sender_user_id, success: false, error: 'Failed to send message' });
+          results.push({ 
+            sender_role: rule.sender_role, 
+            sender_id: sender.user_id, 
+            success: false, 
+            error: 'Failed to send message' 
+          });
           continue;
         }
 
@@ -274,16 +324,21 @@ Deno.serve(async (req) => {
         await supabase.from('team_chat_welcome_sent').insert({
           organization_id: organization_id,
           recipient_user_id: new_member_user_id,
-          sender_user_id: rule.sender_user_id,
+          sender_user_id: sender.user_id,
           channel_id: channelId,
           message_id: message.id,
         });
 
-        results.push({ sender_id: rule.sender_user_id, success: true });
+        results.push({ sender_role: rule.sender_role, sender_id: sender.user_id, success: true });
 
       } catch (err) {
         console.error(`Error processing rule ${rule.id}:`, err);
-        results.push({ sender_id: rule.sender_user_id, success: false, error: String(err) });
+        results.push({ 
+          sender_role: rule.sender_role, 
+          sender_id: sender.user_id, 
+          success: false, 
+          error: String(err) 
+        });
       }
     }
 

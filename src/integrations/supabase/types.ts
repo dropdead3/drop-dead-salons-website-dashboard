@@ -11334,7 +11334,7 @@ export type Database = {
           is_active: boolean | null
           message_template: string
           organization_id: string
-          sender_user_id: string
+          sender_role: string
           sort_order: number | null
           target_locations: string[] | null
           target_roles: string[] | null
@@ -11347,7 +11347,7 @@ export type Database = {
           is_active?: boolean | null
           message_template: string
           organization_id: string
-          sender_user_id: string
+          sender_role?: string
           sort_order?: number | null
           target_locations?: string[] | null
           target_roles?: string[] | null
@@ -11360,7 +11360,7 @@ export type Database = {
           is_active?: boolean | null
           message_template?: string
           organization_id?: string
-          sender_user_id?: string
+          sender_role?: string
           sort_order?: number | null
           target_locations?: string[] | null
           target_roles?: string[] | null

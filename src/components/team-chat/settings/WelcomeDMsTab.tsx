@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -6,11 +6,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { MessageSquarePlus, Pencil, Trash2, Plus, GripVertical, Send } from 'lucide-react';
+import { MessageSquarePlus, Pencil, Trash2, Plus, GripVertical, Send, AlertCircle, Crown, Shield, Briefcase } from 'lucide-react';
 import { useWelcomeDMRules, WELCOME_TEMPLATE_VARIABLES } from '@/hooks/team-chat/useWelcomeDMRules';
+import { useRoleMembersBatch } from '@/hooks/team-chat/useRoleMembers';
 import type { TeamChatSettings, TeamChatSettingsUpdate } from '@/hooks/team-chat/useTeamChatSettings';
 import { WelcomeSenderDialog } from './WelcomeSenderDialog';
 import type { WelcomeRule } from '@/hooks/team-chat/useWelcomeDMRules';
+import type { Database } from '@/integrations/supabase/types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,16 +24,32 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
+type AppRole = Database['public']['Enums']['app_role'];
+
 interface WelcomeDMsTabProps {
   settings: TeamChatSettings;
   onUpdate: (updates: TeamChatSettingsUpdate) => void;
 }
+
+const ROLE_DISPLAY: Record<string, { label: string; icon: typeof Crown }> = {
+  super_admin: { label: 'Account Owner', icon: Crown },
+  admin: { label: 'Admin', icon: Shield },
+  manager: { label: 'Manager', icon: Briefcase },
+};
 
 export function WelcomeDMsTab({ settings, onUpdate }: WelcomeDMsTabProps) {
   const { rules, isLoading, deleteRule, isDeleting } = useWelcomeDMRules();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<WelcomeRule | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Get all unique sender roles from rules to batch fetch members
+  const senderRoles = useMemo(() => 
+    [...new Set(rules.map(r => r.sender_role))] as AppRole[],
+    [rules]
+  );
+
+  const { data: roleMembersMap, isLoading: loadingMembers } = useRoleMembersBatch(senderRoles);
 
   const welcomeEnabled = (settings as any).welcome_dms_enabled ?? false;
 
@@ -70,7 +88,7 @@ export function WelcomeDMsTab({ settings, onUpdate }: WelcomeDMsTabProps) {
         <div>
           <h3 className="font-medium">Auto Welcome DMs</h3>
           <p className="text-sm text-muted-foreground">
-            Automatically send personalized welcome messages to new team members from designated people.
+            Automatically send personalized welcome messages to new team members from designated roles.
           </p>
         </div>
       </div>
@@ -97,7 +115,7 @@ export function WelcomeDMsTab({ settings, onUpdate }: WelcomeDMsTabProps) {
               <div>
                 <h3 className="text-sm font-medium">Welcome Senders</h3>
                 <p className="text-xs text-muted-foreground">
-                  New members will receive DMs from these people
+                  New members will receive DMs from whoever holds these roles
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={handleAdd}>
@@ -125,68 +143,113 @@ export function WelcomeDMsTab({ settings, onUpdate }: WelcomeDMsTabProps) {
               </Card>
             ) : (
               <div className="space-y-3">
-                {rules.map((rule) => (
-                  <Card key={rule.id} className={!rule.is_active ? 'opacity-60' : ''}>
-                    <CardContent className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="cursor-grab text-muted-foreground hover:text-foreground">
-                          <GripVertical className="h-5 w-5" />
-                        </div>
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={rule.sender?.photo_url || undefined} />
-                          <AvatarFallback>
-                            {(rule.sender?.display_name || rule.sender?.full_name || 'U').charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">
-                              {rule.sender?.display_name || rule.sender?.full_name || 'Unknown'}
-                            </span>
-                            {!rule.is_active && (
-                              <Badge variant="secondary" className="text-xs">
-                                Disabled
-                              </Badge>
-                            )}
+                {rules.map((rule) => {
+                  const roleInfo = ROLE_DISPLAY[rule.sender_role] || { label: rule.sender_role, icon: Briefcase };
+                  const RoleIcon = roleInfo.icon;
+                  const members = roleMembersMap?.[rule.sender_role] || [];
+                  const currentHolder = members[0];
+                  const hasHolder = members.length > 0;
+
+                  return (
+                    <Card 
+                      key={rule.id} 
+                      className={`${!rule.is_active ? 'opacity-60' : ''} ${!hasHolder ? 'border-warning' : ''}`}
+                    >
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="cursor-grab text-muted-foreground hover:text-foreground">
+                            <GripVertical className="h-5 w-5" />
                           </div>
-                          <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                            "{rule.message_template}"
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Badge variant="outline" className="text-xs">
-                              {getRoleDisplay(rule.target_roles)}
-                            </Badge>
-                            {rule.delay_minutes > 0 && (
-                              <Badge variant="outline" className="text-xs">
-                                {rule.delay_minutes < 60
-                                  ? `${rule.delay_minutes}m delay`
-                                  : `${Math.round(rule.delay_minutes / 60)}h delay`}
+                          
+                          {/* Role Icon instead of Avatar */}
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                            rule.sender_role === 'super_admin' 
+                              ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-600' 
+                              : 'bg-primary/10 text-primary'
+                          }`}>
+                            <RoleIcon className="h-5 w-5" />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">{roleInfo.label}</span>
+                              {!rule.is_active && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Disabled
+                                </Badge>
+                              )}
+                              {!hasHolder && (
+                                <Badge variant="outline" className="text-xs text-warning border-warning">
+                                  <AlertCircle className="h-3 w-3 mr-1" />
+                                  No one assigned
+                                </Badge>
+                              )}
+                            </div>
+                            
+                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                              "{rule.message_template}"
+                            </p>
+                            
+                            <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                              {/* Current holder info */}
+                              {loadingMembers ? (
+                                <span>Loading...</span>
+                              ) : hasHolder ? (
+                                <div className="flex items-center gap-1.5">
+                                  <Avatar className="h-4 w-4">
+                                    <AvatarImage src={currentHolder.photo_url || undefined} />
+                                    <AvatarFallback className="text-[8px]">
+                                      {currentHolder.display_name.charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span>Currently: {currentHolder.display_name}</span>
+                                  {members.length > 1 && (
+                                    <span className="text-muted-foreground">+{members.length - 1} more</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-warning">Will auto-activate when role is filled</span>
+                              )}
+                              <span className="text-muted-foreground/50">•</span>
+                              <Badge variant="outline" className="text-xs h-5">
+                                {getRoleDisplay(rule.target_roles)}
                               </Badge>
-                            )}
+                              {rule.delay_minutes > 0 && (
+                                <>
+                                  <span className="text-muted-foreground/50">•</span>
+                                  <Badge variant="outline" className="text-xs h-5">
+                                    {rule.delay_minutes < 60
+                                      ? `${rule.delay_minutes}m delay`
+                                      : `${Math.round(rule.delay_minutes / 60)}h delay`}
+                                  </Badge>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleEdit(rule)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={() => setDeleteConfirmId(rule.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleEdit(rule)}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => setDeleteConfirmId(rule.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -221,7 +284,7 @@ export function WelcomeDMsTab({ settings, onUpdate }: WelcomeDMsTabProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Remove welcome sender?</AlertDialogTitle>
             <AlertDialogDescription>
-              This person will no longer send automatic welcome DMs to new team members.
+              This role will no longer send automatic welcome DMs to new team members.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
