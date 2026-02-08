@@ -1,116 +1,70 @@
 
+# Fix Missing Padding on FeedbackHub Page
 
-# Add Feedback Hub to Management Hub & Quick Links
+## Problem
+The FeedbackHub page (`/dashboard/admin/feedback`) is missing container padding, causing content to touch the viewport edges. This is visible in the screenshot where the header and cards have no breathing room.
 
-## Overview
-Add the **Feedback Hub** to two locations for easier access:
-1. **Management Hub** - Under a new "Client Experience" section
-2. **Hub Quick Links** - On the main dashboard
-
-Access will be controlled by the `manage_settings` permission, which super admins and account owners already have.
-
----
+## Root Cause
+The page wraps content in `<div className="space-y-6">` but omits the standard padding classes used by all other dashboard admin pages.
 
 ## Current State
-
-| Location | Has Feedback Hub? |
-|----------|-------------------|
-| Management Hub | No |
-| Hub Quick Links | No |
-| Direct URL | Yes (`/dashboard/admin/feedback`) |
-
----
-
-## Changes
-
-### 1. Management Hub - Add "Client Experience" Section
-
-Add a new category section with Feedback Hub and Re-engagement Hub cards:
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  CLIENT EXPERIENCE                                          │
-├─────────────────────────────────────────────────────────────┤
-│  ┌─────────────────┐  ┌─────────────────┐                  │
-│  │ 💬 Feedback Hub │  │ 🔄 Re-engagement│                  │
-│  │ Client surveys  │  │ Win-back        │                  │
-│  │ and NPS tracking│  │ campaigns       │                  │
-│  └─────────────────┘  └─────────────────┘                  │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 2. Hub Quick Links - Add Feedback Hub
-
-Add a Feedback Hub tile after Website Editor:
-
-```text
-[Analytics] [Management] [Payroll] [Renter] [Website] [Feedback*] [Onboarding] [Schedule 1:1]
-                                                       ↑ NEW
-```
-
----
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/pages/dashboard/admin/ManagementHub.tsx` | Add "Client Experience" section with Feedback Hub and Re-engagement Hub cards |
-| `src/components/dashboard/HubQuickLinks.tsx` | Add Feedback Hub link with `manage_settings` permission |
-
----
-
-## Implementation Details
-
-### ManagementHub.tsx Changes
-
-Add new imports:
-- `MessageSquarePlus` icon for Feedback Hub
-- `UserCheck` icon for Re-engagement Hub
-
-Add new section after "Points & Rewards":
 ```tsx
-{/* Client Experience */}
-<CategorySection title="Client Experience">
-  <ManagementCard
-    href="/dashboard/admin/feedback"
-    icon={MessageSquarePlus}
-    title="Feedback Hub"
-    description="Client surveys, reviews, and NPS tracking"
-    colorClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-  />
-  <ManagementCard
-    href="/dashboard/admin/reengagement"
-    icon={UserCheck}
-    title="Re-engagement"
-    description="Win-back campaigns for inactive clients"
-    colorClass="bg-teal-500/10 text-teal-600 dark:text-teal-400"
-  />
-</CategorySection>
+<DashboardLayout>
+  <div className="space-y-6">  {/* Missing padding! */}
+    {/* content */}
+  </div>
+</DashboardLayout>
 ```
 
-### HubQuickLinks.tsx Changes
+## Fix
+Apply the standardized dashboard admin page pattern:
 
-Add new link entry:
 ```tsx
-{
-  href: '/dashboard/admin/feedback',
-  icon: MessageSquarePlus,
-  label: 'Feedback Hub',
-  colorClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20',
-  permission: 'manage_settings',
-}
+<DashboardLayout>
+  <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+    {/* content */}
+  </div>
+</DashboardLayout>
+```
+
+## Standard Dashboard Page Layout Pattern
+
+Based on codebase analysis, dashboard admin pages follow this consistent pattern:
+
+| Classes | Purpose |
+|---------|---------|
+| `p-6` | Base padding (24px) on mobile |
+| `lg:p-8` | Increased padding (32px) on desktop |
+| `max-w-[1600px]` | Maximum content width |
+| `mx-auto` | Center the container |
+| `space-y-6` or `space-y-8` | Vertical spacing between sections |
+
+## File to Modify
+
+| File | Change |
+|------|--------|
+| `src/pages/dashboard/admin/FeedbackHub.tsx` | Add `p-6 lg:p-8 max-w-[1600px] mx-auto` to container div |
+
+## Implementation
+Update line 24 from:
+```tsx
+<div className="space-y-6">
+```
+To:
+```tsx
+<div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
 ```
 
 ---
 
-## Access Control
+## Prevention Note
+For future pages, the standard wrapper pattern for dashboard admin pages should always be:
 
-The `manage_settings` permission is already assigned to:
-- Super Admin role
-- Admin role
-- Manager role (typically)
-
-Account owners are super admins, so they automatically have this permission.
-
-No database changes needed - existing permission structure handles access.
-
+```tsx
+<DashboardLayout>
+  <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
+    {/* Header */}
+    {/* Content */}
+  </div>
+</DashboardLayout>
+```
