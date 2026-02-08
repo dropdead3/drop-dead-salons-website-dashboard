@@ -114,7 +114,7 @@ export default function NotificationPreferences() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6 max-w-2xl mx-auto">
+      <div className="p-6 lg:p-8 space-y-6 max-w-2xl mx-auto">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-display tracking-wide">Notification Preferences</h1>
