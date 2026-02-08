@@ -6,6 +6,9 @@ import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { ManagementInviteDialog } from '@/components/management/ManagementInviteDialog';
+import { usePendingInvitations } from '@/hooks/useStaffInvitations';
+import { useInvitableRoles } from '@/hooks/useInvitableRoles';
 import {
   LayoutGrid,
   ClipboardList,
@@ -30,6 +33,7 @@ import {
   Coins,
   MessageSquarePlus,
   UserCheck,
+  ClipboardCheck,
 } from 'lucide-react';
 
 interface ManagementCardProps {
@@ -89,6 +93,10 @@ function CategorySection({ title, children }: CategorySectionProps) {
 }
 
 export default function ManagementHub() {
+  const { canInvite } = useInvitableRoles();
+  const { data: pendingInvitations } = usePendingInvitations();
+  const pendingInvitationCount = pendingInvitations?.length || 0;
+
   // Fetch stats for badges
   const { data: stats } = useQuery({
     queryKey: ['management-hub-stats'],
@@ -240,6 +248,22 @@ export default function ManagementHub() {
             colorClass="bg-teal-500/10 text-teal-600 dark:text-teal-400"
           />
         </CategorySection>
+
+        {/* Team Invitations - Only shown if user can invite */}
+        {canInvite && (
+          <CategorySection title="Team Invitations">
+            <ManagementInviteDialog variant="card" />
+            <ManagementCard
+              href="/dashboard/admin/account-management"
+              icon={ClipboardCheck}
+              title="Manage Invitations"
+              description="View and manage all pending invitations"
+              stat={pendingInvitationCount > 0 ? pendingInvitationCount : null}
+              statLabel="pending"
+              colorClass="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+            />
+          </CategorySection>
+        )}
 
         {/* Recruiting & Hiring */}
         <CategorySection title="Recruiting & Hiring">

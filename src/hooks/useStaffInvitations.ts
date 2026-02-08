@@ -70,12 +70,30 @@ export function usePendingInvitations() {
 
 export function useCreateInvitation() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
+  const { user, roles: userRoles } = useAuth();
   const { toast } = useToast();
 
   return useMutation({
     mutationFn: async ({ email, role }: { email: string; role: AppRole }) => {
       if (!user) throw new Error('Not authenticated');
+      
+      // Role hierarchy validation
+      const leadershipRoles: AppRole[] = ['super_admin', 'admin', 'manager'];
+      const isSuperAdmin = userRoles.includes('super_admin');
+      const isAdmin = userRoles.includes('admin');
+      const isManager = userRoles.includes('manager');
+      
+      // Check if user can invite this role
+      if (leadershipRoles.includes(role)) {
+        if (!isSuperAdmin) {
+          throw new Error('Only Super Admins can invite leadership roles (Admin, Manager, Super Admin)');
+        }
+      } else {
+        // General roles - manager or above can invite
+        if (!isSuperAdmin && !isAdmin && !isManager) {
+          throw new Error('You do not have permission to invite team members');
+        }
+      }
       
       // Check if there's already a pending invitation for this email
       const { data: existing } = await supabase
