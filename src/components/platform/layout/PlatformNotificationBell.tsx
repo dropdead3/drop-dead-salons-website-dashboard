@@ -9,6 +9,7 @@ import {
   Zap,
   Building2,
   Clock,
+  Settings,
   CheckCircle,
   X
 } from 'lucide-react';
@@ -167,13 +168,21 @@ export function PlatformNotificationBell() {
         </ScrollArea>
 
         {/* Footer */}
-        <div className="border-t border-slate-700/50 p-2">
+        <div className="border-t border-slate-700/50 p-2 grid grid-cols-2 gap-1">
+          <Link
+            to="/dashboard/notifications"
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-center py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800/50 rounded transition-colors"
+          >
+            <Settings className="h-3 w-3 mr-1" />
+            Preferences
+          </Link>
           <Link
             to="/dashboard/platform/notifications"
             onClick={() => setOpen(false)}
-            className="flex items-center justify-center w-full py-2 text-sm text-violet-400 hover:text-violet-300 hover:bg-slate-800/50 rounded transition-colors"
+            className="flex items-center justify-center py-2 text-sm text-violet-400 hover:text-violet-300 hover:bg-slate-800/50 rounded transition-colors"
           >
-            View All Notifications
+            View All
           </Link>
         </div>
       </PopoverContent>
