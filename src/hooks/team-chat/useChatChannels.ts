@@ -208,6 +208,17 @@ export function useInitializeDefaultChannels() {
         return; // Already initialized
       }
 
+      // Get all org members for auto-joining
+      const { data: orgMembers } = await supabase
+        .from('employee_profiles')
+        .select('user_id, location_id, location_ids')
+        .eq('organization_id', effectiveOrganization.id)
+        .eq('is_active', true)
+        .eq('is_approved', true);
+
+      const createdPublicChannels: { id: string }[] = [];
+      const createdLocationChannels: { id: string; location_id: string }[] = [];
+
       // Create default system channels
       const defaultChannels = [
         { name: 'company-wide', description: 'Organization-wide announcements', icon: 'megaphone', type: 'public' as const },
@@ -231,7 +242,9 @@ export function useInitializeDefaultChannels() {
           continue;
         }
 
-        // Auto-join creator
+        createdPublicChannels.push({ id: newChannel.id });
+
+        // Auto-join creator as owner
         await supabase
           .from('chat_channel_members')
           .insert({
@@ -267,6 +280,9 @@ export function useInitializeDefaultChannels() {
             .single();
 
           if (!error && locChannel) {
+            createdLocationChannels.push({ id: locChannel.id, location_id: location.id });
+
+            // Auto-join creator as owner
             await supabase
               .from('chat_channel_members')
               .insert({
@@ -274,6 +290,51 @@ export function useInitializeDefaultChannels() {
                 user_id: user.id,
                 role: 'owner',
               });
+          }
+        }
+      }
+
+      // Auto-join all org members to public channels
+      if (orgMembers && orgMembers.length > 0) {
+        for (const channel of createdPublicChannels) {
+          const memberships = orgMembers
+            .filter(member => member.user_id !== user.id) // Skip creator (already owner)
+            .map(member => ({
+              channel_id: channel.id,
+              user_id: member.user_id,
+              role: 'member' as const,
+            }));
+
+          if (memberships.length > 0) {
+            await supabase
+              .from('chat_channel_members')
+              .upsert(memberships, { onConflict: 'channel_id,user_id' });
+          }
+        }
+
+        // Auto-join members to location channels based on their assignments
+        for (const locChannel of createdLocationChannels) {
+          const locationMembers = orgMembers.filter(m => {
+            if (m.user_id === user.id) return false; // Skip creator
+            const memberLocations: string[] = [];
+            if (m.location_ids && Array.isArray(m.location_ids) && m.location_ids.length > 0) {
+              memberLocations.push(...m.location_ids);
+            } else if (m.location_id) {
+              memberLocations.push(m.location_id);
+            }
+            return memberLocations.includes(locChannel.location_id);
+          });
+
+          const memberships = locationMembers.map(member => ({
+            channel_id: locChannel.id,
+            user_id: member.user_id,
+            role: 'member' as const,
+          }));
+
+          if (memberships.length > 0) {
+            await supabase
+              .from('chat_channel_members')
+              .upsert(memberships, { onConflict: 'channel_id,user_id' });
           }
         }
       }
