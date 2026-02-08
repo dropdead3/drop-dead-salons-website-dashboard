@@ -1,60 +1,92 @@
 
 
-# Fix: Platform User Access to Team Chat
+# Fix Duplicate Channels in Team Chat
 
 ## Problem
 
-Platform users (like you, Alex Day) don't have an organization assigned to their profile. The Team Chat requires an `effectiveOrganization` to load channels, but for platform users this is `null` unless they manually select an organization.
+Duplicate channels exist in the database and are being displayed:
+- `company-wide` x2
+- `general` x2
+- `north-mesa` x2
+- `val-vista-lakes` x2
+
+### Root Cause
+
+Race condition in channel initialization:
+1. The `useEffect` in `ChannelSidebar` triggers `initializeChannels.mutate()` when `channels.length === 0`
+2. React Strict Mode (or rapid re-renders) can call this effect multiple times
+3. The mutex check (`existingChannels.length > 0`) happens too late - by the time the first call creates channels, the second call has already passed the check
+4. No `useRef` guard to prevent duplicate mutation calls (unlike the auto-join hook which has one)
 
 ---
 
-## Solution Options
+## Solution
 
-### Option A: Auto-Select Default Organization (Recommended)
+### Part 1: Clean Up Existing Duplicates
 
-When a platform user opens Team Chat without an organization selected, automatically select the default organization ("Drop Dead Salons") so they can immediately see and use channels.
+Delete the duplicate channels from the database, keeping only the first-created instance of each:
 
-| Change | File |
-|--------|------|
-| Detect missing org in Team Chat | `src/pages/dashboard/TeamChat.tsx` |
-| Auto-select default org for platform users | Uses `setSelectedOrganization` from context |
+```sql
+-- Delete duplicate channels, keeping the oldest one for each name+organization+type
+DELETE FROM chat_channels
+WHERE id IN (
+  SELECT id FROM (
+    SELECT id, 
+           ROW_NUMBER() OVER (
+             PARTITION BY organization_id, name, type 
+             ORDER BY created_at ASC
+           ) as rn
+    FROM chat_channels
+  ) ranked
+  WHERE rn > 1
+);
+```
 
-### Option B: Show Prompt to Select Organization
+### Part 2: Prevent Future Duplicates
 
-Display a message prompting the platform user to select an organization before using Team Chat.
-
-| Change | File |
-|--------|------|
-| Add organization selector prompt | `src/components/team-chat/TeamChatContainer.tsx` |
-
----
-
-## Recommended Implementation (Option A)
-
-### Changes to TeamChat.tsx
+#### A. Add ref guard to initialization (like auto-join has)
 
 ```typescript
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { useOrganizations } from '@/hooks/useOrganizations';
-import { useEffect } from 'react';
+// In ChannelSidebar.tsx
+const hasInitialized = useRef(false);
 
-export default function TeamChat() {
-  const { isPlatformUser } = useAuth();
-  const { effectiveOrganization, setSelectedOrganization } = useOrganizationContext();
-  const { data: organizations } = useOrganizations();
+useEffect(() => {
+  if (!isLoading && channels.length === 0 && !hasInitialized.current) {
+    hasInitialized.current = true;
+    initializeChannels.mutate();
+  }
+}, [isLoading, channels.length]);
+```
 
-  // Auto-select first organization for platform users if none selected
-  useEffect(() => {
-    if (isPlatformUser && !effectiveOrganization && organizations?.length > 0) {
-      // Select the default organization (Drop Dead Salons)
-      const defaultOrg = organizations.find(o => o.slug === 'drop-dead-salons') || organizations[0];
-      setSelectedOrganization(defaultOrg);
-    }
-  }, [isPlatformUser, effectiveOrganization, organizations, setSelectedOrganization]);
+#### B. Add database constraint to prevent duplicates at DB level
 
-  // ... rest of component
-}
+```sql
+-- Add unique constraint on (organization_id, name, type) for system channels
+CREATE UNIQUE INDEX chat_channels_org_name_type_unique 
+ON chat_channels (organization_id, name, type) 
+WHERE is_system = true;
+```
+
+This ensures that even if race conditions occur, the database will reject duplicate inserts.
+
+#### C. Use upsert pattern in initialization
+
+Change the INSERT logic to use conflict handling:
+
+```typescript
+const { data: newChannel, error } = await supabase
+  .from('chat_channels')
+  .upsert({
+    ...channel,
+    organization_id: effectiveOrganization.id,
+    created_by: user.id,
+    is_system: true,
+  }, { 
+    onConflict: 'organization_id,name,type',
+    ignoreDuplicates: true 
+  })
+  .select()
+  .single();
 ```
 
 ---
@@ -63,7 +95,15 @@ export default function TeamChat() {
 
 | File | Change |
 |------|--------|
-| `src/pages/dashboard/TeamChat.tsx` | Auto-select organization for platform users |
+| `src/components/team-chat/ChannelSidebar.tsx` | Add `hasInitialized` ref guard |
+| `src/hooks/team-chat/useChatChannels.ts` | Use upsert pattern in initialization |
+
+## Database Changes
+
+| Change | Purpose |
+|--------|---------|
+| Delete duplicate channels | Clean up existing data |
+| Add partial unique index | Prevent future duplicates at DB level |
 
 ---
 
@@ -71,16 +111,7 @@ export default function TeamChat() {
 
 | Before | After |
 |--------|-------|
-| Platform user sees empty channel list | Platform user automatically views "Drop Dead Salons" channels |
-| Must manually switch org in header | Team Chat works immediately |
-| Confusing empty state | Channels load as expected |
-
----
-
-## Alternative: User Action Required
-
-If auto-selection is not desired, you can manually:
-1. Click the organization switcher in the dashboard header
-2. Select "Drop Dead Salons" (or any organization)
-3. Team Chat will then show that organization's channels
+| 2x company-wide, 2x general, etc. | 1 of each channel |
+| Race condition can create duplicates | Database constraint prevents duplicates |
+| No initialization guard | Ref prevents multiple mutation calls |
 
