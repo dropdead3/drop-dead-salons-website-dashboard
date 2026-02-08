@@ -30,13 +30,13 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, value, label, colorClass }: StatCardProps) {
   return (
-    <Card className="p-4">
+    <Card className="p-4 bg-card dark:bg-card">
       <div className="flex items-center gap-3">
         <div className={cn("w-10 h-10 flex items-center justify-center rounded-lg", colorClass)}>
           <Icon className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-2xl font-display font-medium">{value}</p>
+          <p className="text-2xl font-display font-medium text-foreground">{value}</p>
           <p className="text-xs text-muted-foreground">{label}</p>
         </div>
       </div>
@@ -271,7 +271,7 @@ export default function ScheduleMeeting() {
           </div>
 
           {/* Upcoming Meetings Preview */}
-          <Card>
+          <Card className="bg-card dark:bg-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-display uppercase tracking-wide text-muted-foreground flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
@@ -321,7 +321,7 @@ export default function ScheduleMeeting() {
           {isCoach && (
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Pending Requests Card */}
-              <Card>
+              <Card className="bg-card dark:bg-card">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-display uppercase tracking-wide text-muted-foreground flex items-center gap-2">
                     <Inbox className="w-4 h-4" />
@@ -362,7 +362,7 @@ export default function ScheduleMeeting() {
               </Card>
 
               {/* Active Commitments Card */}
-              <Card>
+              <Card className="bg-card dark:bg-card">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm font-display uppercase tracking-wide text-muted-foreground flex items-center gap-2">
                     <ClipboardList className="w-4 h-4" />
