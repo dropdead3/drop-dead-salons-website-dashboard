@@ -1,253 +1,102 @@
 
-# Update Sidebar Navigation Editor to Match Current Navigation
+# Fix Visibility State Display in Sidebar Navigation Editor
 
 ## Problem
-The Sidebar Navigation Editor (Role Access Configurator) displays outdated navigation items that don't match the current sidebar structure. The editor shows old routes and is missing newer hub pages and consolidated navigation items.
+When viewing role-specific navigation settings, the editor doesn't properly show which links are hidden. Looking at the screenshot:
+- The **actual sidebar** (left) shows only ~8 items in Management
+- The **editor** (right) shows 18/18 items as "visible" 
 
-## Current vs Expected Navigation Structure
+The visibility toggles (eye icons) are all showing as "visible" because the editor only checks role-specific overrides, ignoring the global hidden state.
 
-### Main Section
-| Current Editor | Actual Sidebar |
-|----------------|----------------|
-| Command Center ✓ | Command Center |
-| Schedule ✓ | Schedule |
+## Root Cause
+In `SidebarLayoutEditor.tsx`, the `currentHiddenLinks` calculation only returns role-specific hidden links when a role is selected:
 
-### Growth Section
-| Current Editor | Actual Sidebar |
-|----------------|----------------|
-| Training ✓ | Training |
-| New-Client Engine Program ✓ | New-Client Engine Program |
-| Program Team Overview ✓ | Program Team Overview |
-| Ring the Bell ✓ | Ring the Bell |
-| My Graduation ✓ | My Graduation |
+```typescript
+const currentHiddenLinks = useMemo(() => {
+  if (selectedRole === 'global') {
+    return localHiddenLinks;  // Global hidden state
+  }
+  return localRoleVisibility[selectedRole]?.hiddenLinks || {};  // Role-only, missing global!
+}, ...);
+```
 
-### Stats & Leaderboard Section
-| Current Editor | Actual Sidebar | Status |
-|----------------|----------------|--------|
-| Stats ✓ | Stats (My Stats/Team Stats) | ✓ |
-| My Clients ❌ | — | Remove |
-| Team Leaderboard ✓ | Team Leaderboard | ✓ |
-| Sales Dashboard ❌ | — | Remove (now in Analytics Hub) |
-| Operational Analytics ❌ | — | Remove (now in Analytics Hub) |
-| — | My Pay | **ADD** |
+This means:
+- Items hidden globally don't appear hidden when viewing a role
+- The visibility state in the editor doesn't match what users actually see
 
-### Team Tools Section
-| Current Editor | Actual Sidebar |
-|----------------|----------------|
-| Shift Swaps ✓ | Shift Swaps |
-| Rewards ✓ | Rewards |
-| Assistant Schedule ✓ | Assistant Schedule |
-| Meetings & Accountability ✓ | Meetings & Accountability |
-
-### Housekeeping Section  
-| Current Editor | Actual Sidebar | Status |
-|----------------|----------------|--------|
-| Onboarding ✓ | Onboarding | ✓ |
-| Handbooks ✓ | Handbooks | ✓ |
-| — | What's New | **ADD** |
-| — | Help Center | **ADD** |
-
-### Management Section
-| Current Editor | Actual Sidebar | Status |
-|----------------|----------------|--------|
-| — | Management Hub | **ADD** |
-| — | Analytics Hub | **ADD** |
-| Stats ✓ | Team Stats | ✓ |
-| Team Leaderboard ✓ | Team Leaderboard | ✓ |
-| Team Directory ✓ | Team Directory | ✓ |
-| — | Client Directory | **ADD** |
-| — | Payroll Hub | **ADD** |
-| — | Renter Hub | **ADD** |
-
-### Website Section
-| Current Editor | Actual Sidebar | Status |
-|----------------|----------------|--------|
-| Homepage Stylists ❌ | — | Remove |
-| Testimonials ❌ | — | Remove |
-| Gallery ❌ | — | Remove |
-| Services ❌ | — | Remove |
-| Locations ❌ | — | Remove |
-| — | Website Editor | **ADD** |
-
-### Super Admin Section
-| Current Editor | Actual Sidebar |
-|----------------|----------------|
-| Invitations & Approvals ✓ | Invitations & Approvals |
-| Manage Users & Roles ✓ | Manage Users & Roles |
-| Settings ✓ | Settings |
-
----
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/hooks/useSidebarLayout.ts` | Update `DEFAULT_LINK_ORDER` to match current navigation structure |
-| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | Update `LINK_CONFIG` with current routes and add new icons |
+## Solution
+Merge global hidden links with role-specific hidden links when calculating `currentHiddenLinks` for a role view.
 
 ---
 
 ## Technical Implementation
 
-### 1. Update `useSidebarLayout.ts` - DEFAULT_LINK_ORDER
+### File: `src/components/dashboard/settings/SidebarLayoutEditor.tsx`
+
+**Update `currentHiddenSections` calculation (around line 629):**
 
 ```typescript
-export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
-  main: [
-    '/dashboard',
-    '/dashboard/schedule',
-  ],
-  growth: [
-    '/dashboard/training',
-    '/dashboard/program',
-    '/dashboard/admin/team',
-    '/dashboard/ring-the-bell',
-    '/dashboard/my-graduation',
-  ],
-  stats: [
-    '/dashboard/stats',
-    '/dashboard/leaderboard',
-    '/dashboard/my-pay',
-  ],
-  teamTools: [
-    '/dashboard/shift-swaps',
-    '/dashboard/rewards',
-    '/dashboard/assistant-schedule',
-    '/dashboard/schedule-meeting',
-  ],
-  housekeeping: [
-    '/dashboard/onboarding',
-    '/dashboard/handbooks',
-    '/dashboard/changelog',
-    '/dashboard/help',
-  ],
-  manager: [
-    '/dashboard/admin/management',
-    '/dashboard/admin/analytics',
-    '/dashboard/stats',
-    '/dashboard/leaderboard',
-    '/dashboard/directory',
-    '/dashboard/clients',
-    '/dashboard/admin/payroll',
-    '/dashboard/admin/booth-renters',
-  ],
-  website: [
-    '/dashboard/admin/website-sections',
-  ],
-  adminOnly: [
-    '/dashboard/admin/accounts',
-    '/dashboard/admin/roles',
-    '/dashboard/admin/settings',
-  ],
-  platform: [
-    '/dashboard/platform/overview',
-    '/dashboard/platform/accounts',
-    '/dashboard/platform/import',
-    '/dashboard/platform/revenue',
-    '/dashboard/platform/permissions',
-    '/dashboard/platform/settings',
-  ],
-};
+const currentHiddenSections = useMemo(() => {
+  if (selectedRole === 'global') {
+    return localHiddenSections;
+  }
+  // Merge global hidden with role-specific hidden
+  const roleHidden = localRoleVisibility[selectedRole]?.hiddenSections || [];
+  return [...new Set([...localHiddenSections, ...roleHidden])];
+}, [selectedRole, localHiddenSections, localRoleVisibility]);
 ```
 
-### 2. Update `SidebarLayoutEditor.tsx` - LINK_CONFIG
-
-Add missing entries and update icons:
+**Update `currentHiddenLinks` calculation (around line 636):**
 
 ```typescript
-const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
-  // Main
-  '/dashboard': { label: 'Command Center', icon: LayoutDashboard },
-  '/dashboard/schedule': { label: 'Schedule', icon: CalendarDays },
+const currentHiddenLinks = useMemo(() => {
+  if (selectedRole === 'global') {
+    return localHiddenLinks;
+  }
+  // Merge global hidden links with role-specific hidden links
+  const roleHiddenLinks = localRoleVisibility[selectedRole]?.hiddenLinks || {};
+  const merged: Record<string, string[]> = {};
   
-  // Growth
-  '/dashboard/training': { label: 'Training', icon: Video },
-  '/dashboard/program': { label: 'New-Client Engine Program', icon: Target },
-  '/dashboard/admin/team': { label: 'Program Team Overview', icon: Users },
-  '/dashboard/ring-the-bell': { label: 'Ring the Bell', icon: Bell },
-  '/dashboard/my-graduation': { label: 'My Graduation', icon: GraduationCap },
+  // Start with global hidden links
+  Object.entries(localHiddenLinks).forEach(([sectionId, links]) => {
+    merged[sectionId] = [...links];
+  });
   
-  // Stats
-  '/dashboard/stats': { label: 'Stats', icon: BarChart3 },
-  '/dashboard/leaderboard': { label: 'Team Leaderboard', icon: Trophy },
-  '/dashboard/my-pay': { label: 'My Pay', icon: Wallet },
+  // Add role-specific hidden links
+  Object.entries(roleHiddenLinks).forEach(([sectionId, links]) => {
+    if (merged[sectionId]) {
+      merged[sectionId] = [...new Set([...merged[sectionId], ...links])];
+    } else {
+      merged[sectionId] = [...links];
+    }
+  });
   
-  // Team Tools
-  '/dashboard/shift-swaps': { label: 'Shift Swaps', icon: ArrowLeftRight },
-  '/dashboard/rewards': { label: 'Rewards', icon: Gift },
-  '/dashboard/assistant-schedule': { label: 'Assistant Schedule', icon: Users },
-  '/dashboard/schedule-meeting': { label: 'Meetings & Accountability', icon: CalendarClock },
-  
-  // Housekeeping
-  '/dashboard/onboarding': { label: 'Onboarding', icon: Users },
-  '/dashboard/handbooks': { label: 'Handbooks', icon: FileText },
-  '/dashboard/changelog': { label: "What's New", icon: Sparkles },
-  '/dashboard/help': { label: 'Help Center', icon: HelpCircle },
-  
-  // Management
-  '/dashboard/admin/management': { label: 'Management Hub', icon: LayoutGrid },
-  '/dashboard/admin/analytics': { label: 'Analytics Hub', icon: TrendingUp },
-  '/dashboard/directory': { label: 'Team Directory', icon: Contact },
-  '/dashboard/clients': { label: 'Client Directory', icon: Users },
-  '/dashboard/admin/payroll': { label: 'Payroll Hub', icon: DollarSign },
-  '/dashboard/admin/booth-renters': { label: 'Renter Hub', icon: Store },
-  
-  // Website
-  '/dashboard/admin/website-sections': { label: 'Website Editor', icon: LayoutGrid },
-  
-  // Super Admin
-  '/dashboard/admin/accounts': { label: 'Invitations & Approvals', icon: UserPlus },
-  '/dashboard/admin/roles': { label: 'Manage Users & Roles', icon: Shield },
-  '/dashboard/admin/settings': { label: 'Settings', icon: Settings },
-  
-  // Platform (for completeness)
-  '/dashboard/platform/overview': { label: 'Platform Overview', icon: Terminal },
-  '/dashboard/platform/accounts': { label: 'Accounts', icon: Building2 },
-  '/dashboard/platform/import': { label: 'Migrations', icon: Upload },
-  '/dashboard/platform/revenue': { label: 'Revenue', icon: DollarSign },
-  '/dashboard/platform/permissions': { label: 'Permissions', icon: Shield },
-  '/dashboard/platform/settings': { label: 'Platform Settings', icon: Settings },
-};
-```
-
-### 3. Add Missing Icon Imports in SidebarLayoutEditor.tsx
-
-```typescript
-import {
-  // ... existing imports ...
-  Sparkles,
-  HelpCircle,
-  LayoutGrid,
-  TrendingUp,
-  Store,
-  Terminal,
-  Building2,
-  Upload,
-} from 'lucide-react';
+  return merged;
+}, [selectedRole, localHiddenLinks, localRoleVisibility]);
 ```
 
 ---
 
-## Legacy Routes to Remove
+## Visual Behavior After Fix
 
-The following routes in `LINK_CONFIG` are no longer in the main sidebar and can be kept for backward compatibility with any existing saved configurations, but should not appear in `DEFAULT_LINK_ORDER`:
-
-- `/dashboard/my-clients` - Moved to Client Directory 
-- `/dashboard/admin/sales` - Consolidated into Analytics Hub
-- `/dashboard/admin/operational-analytics` - Consolidated into Analytics Hub
-- `/dashboard/admin/homepage-stylists` - Consolidated into Website Editor
-- `/dashboard/admin/testimonials` - Consolidated into Website Editor
-- `/dashboard/admin/gallery` - Consolidated into Website Editor
-- `/dashboard/admin/services` - Consolidated into Website Editor
-- `/dashboard/admin/locations` - Consolidated into Website Editor
-- Various admin hub sub-pages (birthdays, strikes, etc.) - Now accessed through Management Hub
+| Before | After |
+|--------|-------|
+| Role view shows 18/18 visible | Role view shows accurate count (e.g., 8/18 visible) |
+| All eye icons show "visible" | Hidden items show "Hidden" badge + EyeOff icon |
+| Toggling visibility doesn't reflect global state | Global + role hidden items properly merged |
 
 ---
 
-## Outcome
+## Files to Modify
 
-After this update:
-1. The Sidebar Navigation Editor will accurately reflect the current dashboard navigation
-2. Roles can properly control visibility for all current navigation items
-3. New items like Management Hub, Analytics Hub, and Website Editor will be configurable
-4. Legacy routes remain in LINK_CONFIG for backward compatibility with existing saved layouts
+| File | Change |
+|------|--------|
+| `src/components/dashboard/settings/SidebarLayoutEditor.tsx` | Update `currentHiddenSections` and `currentHiddenLinks` memos to merge global + role visibility |
+
+---
+
+## Additional Consideration
+The toggle handlers (`handleToggleLinkVisibility`, `handleToggleSectionVisibility`) are correctly written - they only modify the role-specific overrides when a role is selected. This is the right behavior since:
+- Global hidden items should remain hidden for all roles
+- Role-specific overrides add additional restrictions for that role
+- The merged view shows the effective visibility (global + role)
