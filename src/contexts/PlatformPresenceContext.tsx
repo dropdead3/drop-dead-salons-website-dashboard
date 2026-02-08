@@ -34,3 +34,8 @@ export function usePlatformPresenceContext() {
   }
   return context;
 }
+
+// Safe version that returns null when used outside provider (for graceful degradation)
+export function usePlatformPresenceContextSafe() {
+  return useContext(PlatformPresenceContext);
+}
