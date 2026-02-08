@@ -5,14 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ExternalLink, Rocket } from 'lucide-react';
+import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
 import { SidebarSyncStatusWidget } from './SidebarSyncStatusWidget';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
-
+import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, MANAGEMENT_SUB_GROUPS, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
+import { CollapsibleNavGroup, type NavSubGroup } from './CollapsibleNavGroup';
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
 
 interface NavItem {
@@ -503,6 +503,52 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             return undefined;
           };
           
+          // Build management sub-groups for collapsible rendering
+          const buildManagementSubGroups = (): NavSubGroup[] => {
+            const groups: NavSubGroup[] = [];
+            
+            // Analytics & Insights group
+            const analyticsItems = filteredItems.filter(item => 
+              MANAGEMENT_SUB_GROUPS.analytics.links.includes(item.href)
+            );
+            if (analyticsItems.length > 0) {
+              groups.push({
+                id: 'analytics',
+                label: MANAGEMENT_SUB_GROUPS.analytics.label,
+                icon: TrendingUp,
+                items: analyticsItems,
+              });
+            }
+            
+            // People group
+            const peopleItems = filteredItems.filter(item => 
+              MANAGEMENT_SUB_GROUPS.people.links.includes(item.href)
+            );
+            if (peopleItems.length > 0) {
+              groups.push({
+                id: 'people',
+                label: MANAGEMENT_SUB_GROUPS.people.label,
+                icon: Users,
+                items: peopleItems,
+              });
+            }
+            
+            // Operations group
+            const operationsItems = filteredItems.filter(item => 
+              MANAGEMENT_SUB_GROUPS.operations.links.includes(item.href)
+            );
+            if (operationsItems.length > 0) {
+              groups.push({
+                id: 'operations',
+                label: MANAGEMENT_SUB_GROUPS.operations.label,
+                icon: LayoutGrid,
+                items: operationsItems,
+              });
+            }
+            
+            return groups;
+          };
+          
           return (
             <div key={sectionId}>
               {/* Show divider for all sections except the first one */}
@@ -512,43 +558,36 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 </div>
               )}
               
-              {/* Section header - special case for website with external link */}
+              {/* Section header */}
               {!isCollapsed && sectionId !== 'main' && (
-                <div className={cn(
-                  "px-4 mb-2",
-                  sectionId === 'website' && "flex items-center justify-between"
-                )}>
+                <div className="px-4 mb-2">
                   <p className="text-xs uppercase tracking-wider text-foreground font-display font-medium">
                     {sectionLabel}
                   </p>
-                  {sectionId === 'website' && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <a 
-                          href="/" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="p-1 rounded hover:bg-muted transition-colors"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground hover:text-foreground" />
-                        </a>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">View Website</TooltipContent>
-                    </Tooltip>
-                  )}
                 </div>
               )}
               
-              {/* Links */}
-              <div className="space-y-1">
-                {filteredItems.map((item) => (
-                  <NavLink 
-                    key={item.href} 
-                    {...item} 
-                    badgeCount={getBadgeCount(item.href)}
-                  />
-                ))}
-              </div>
+              {/* Links - use CollapsibleNavGroup for manager section */}
+              {sectionId === 'manager' ? (
+                <CollapsibleNavGroup
+                  groups={buildManagementSubGroups()}
+                  sectionLabel={sectionLabel}
+                  isCollapsed={isCollapsed}
+                  onNavClick={onNavClick}
+                  getNavLabel={getNavLabel}
+                  hiddenLinks={sectionHiddenLinks}
+                />
+              ) : (
+                <div className="space-y-1">
+                  {filteredItems.map((item) => (
+                    <NavLink 
+                      key={item.href} 
+                      {...item} 
+                      badgeCount={getBadgeCount(item.href)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}

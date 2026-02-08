@@ -137,34 +137,28 @@ const mainNavItems: NavItem[] = [
   { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar' },
 ];
 
+// Housekeeping items relocated to top bar (What's New -> Bell, Handbooks/Help -> Help menu)
+// Only Onboarding remains, shown via START HERE priority section
 const housekeepingNavItems: NavItem[] = [
   { href: '/dashboard/onboarding', label: 'Onboarding', icon: Users, permission: 'view_onboarding' },
-  { href: '/dashboard/handbooks', label: 'Handbooks', icon: FileText, permission: 'view_handbooks' },
-  { href: '/dashboard/changelog', label: "What's New", icon: Sparkles },
-  { href: '/dashboard/help', label: 'Help Center', icon: HelpCircle },
 ];
 
+// Growth & Development section
 const growthNavItems: NavItem[] = [
-  // Training - visible to management + stylists + stylist assistants
   { href: '/dashboard/training', label: 'Training', icon: Video, permission: 'view_training', roles: ['super_admin', 'admin', 'manager', 'stylist', 'stylist_assistant'] },
-  // New-Client Engine Program - only stylists + stylist assistants
   { href: '/dashboard/program', label: 'New-Client Engine Program', icon: Target, permission: 'access_client_engine', roles: ['stylist', 'stylist_assistant'] },
-  // Program Team Overview - only management
-  { href: '/dashboard/admin/team', label: 'Program Team Overview', icon: Users, permission: 'view_team_overview', roles: ['super_admin', 'admin', 'manager'] },
-  // Ring the Bell - only stylists + stylist assistants
   { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, permission: 'ring_the_bell', roles: ['stylist', 'stylist_assistant'] },
-  // My Graduation - only stylist assistants
   { href: '/dashboard/my-graduation', label: 'My Graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist_assistant'] },
 ];
 
-
+// My Performance section (for stylists/assistants)
 const statsNavItems: NavItem[] = [
   { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant'] },
   { href: '/dashboard/leaderboard', label: 'Team Leaderboard', icon: Trophy, permission: 'view_leaderboard', roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
   { href: '/dashboard/my-pay', label: 'My Pay', icon: Wallet, permission: 'view_my_pay' },
 ];
 
-// Team Tools - visible to team members (stylists, assistants, front desk, booth renters)
+// Team Tools section
 const teamToolsNavItems: NavItem[] = [
   { href: '/dashboard/shift-swaps', label: 'Shift Swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
   { href: '/dashboard/rewards', label: 'Rewards', icon: Gift },
@@ -172,23 +166,28 @@ const teamToolsNavItems: NavItem[] = [
   { href: '/dashboard/schedule-meeting', label: 'Meetings & Accountability', icon: CalendarClock, permission: 'schedule_meetings' },
 ];
 
-// Manager-accessible admin items - consolidated into hubs
+// Management section - consolidated with collapsible sub-groups
+// These are the flat items used for permission checking; UI groups them via CollapsibleNavGroup
 const managerNavItems: NavItem[] = [
-  { href: '/dashboard/admin/management', label: 'Management Hub', icon: LayoutGrid, permission: 'view_team_overview' },
+  // Analytics & Insights group
   { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
   { href: '/dashboard/stats', label: 'Team Stats', icon: BarChart3, permission: 'view_all_stats' },
   { href: '/dashboard/leaderboard', label: 'Team Leaderboard', icon: Trophy, permission: 'view_leaderboard' },
+  // People group
   { href: '/dashboard/directory', label: 'Team Directory', icon: Contact, permission: 'view_team_directory' },
   { href: '/dashboard/clients', label: 'Client Directory', icon: Users, permission: 'view_clients' },
+  { href: '/dashboard/admin/team', label: 'Program Team Overview', icon: Users, permission: 'view_team_overview' },
+  // Operations group (includes former Website section)
+  { href: '/dashboard/admin/management', label: 'Management Hub', icon: LayoutGrid, permission: 'view_team_overview' },
   { href: '/dashboard/admin/payroll', label: 'Payroll Hub', icon: DollarSign, permission: 'manage_payroll' },
   { href: '/dashboard/admin/booth-renters', label: 'Renter Hub', icon: Store, permission: 'manage_booth_renters' },
+  { href: '/dashboard/admin/website-sections', label: 'Website Editor', icon: Globe, permission: 'manage_homepage_stylists' },
 ];
 
-// Full admin-only items (not visible to managers)
+// Admin section (renamed from Super Admin)
 const adminOnlyNavItems: NavItem[] = [
   { href: '/dashboard/admin/accounts', label: 'Invitations & Approvals', icon: UserPlus, permission: 'approve_accounts' },
   { href: '/dashboard/admin/access-hub', label: 'Access Hub', icon: Shield, permission: 'manage_settings' },
-  // Settings removed - rendered separately as fixed footer
 ];
 
 // Footer items - always pinned to bottom of sidebar
@@ -196,10 +195,8 @@ const footerNavItems: NavItem[] = [
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
 ];
 
-// Website management items - consolidated into single entry
-const websiteNavItems: NavItem[] = [
-  { href: '/dashboard/admin/website-sections', label: 'Website Editor', icon: LayoutGrid, permission: 'manage_homepage_stylists' },
-];
+// Website items merged into managerNavItems (Operations group)
+const websiteNavItems: NavItem[] = [];
 
 // Platform admin nav items - only for platform team members
 const platformNavItems: NavItem[] = [

@@ -34,9 +34,12 @@ const NAV_ITEMS: SearchResult[] = [
   { type: 'navigation', title: 'Analytics Hub', path: '/dashboard/admin/analytics', icon: <Navigation className="w-4 h-4" /> },
   { type: 'navigation', title: 'Management Hub', path: '/dashboard/admin/management', icon: <Navigation className="w-4 h-4" /> },
   { type: 'navigation', title: 'Payroll Hub', path: '/dashboard/admin/payroll', icon: <Navigation className="w-4 h-4" /> },
-  { type: 'navigation', title: 'Renter Hub', path: '/dashboard/admin/renters', icon: <Navigation className="w-4 h-4" /> },
-  { type: 'navigation', title: 'Help Center', path: '/dashboard/help', icon: <BookOpen className="w-4 h-4" /> },
+  { type: 'navigation', title: 'Renter Hub', path: '/dashboard/admin/booth-renters', icon: <Navigation className="w-4 h-4" /> },
   { type: 'navigation', title: 'Profile', path: '/dashboard/profile', icon: <Navigation className="w-4 h-4" /> },
+  // Relocated from Housekeeping section
+  { type: 'help', title: 'Help Center', path: '/dashboard/help', icon: <BookOpen className="w-4 h-4" /> },
+  { type: 'help', title: 'Handbooks', subtitle: 'Employee guides & resources', path: '/dashboard/handbooks', icon: <BookOpen className="w-4 h-4" /> },
+  { type: 'help', title: "What's New", subtitle: 'Latest updates & features', path: '/dashboard/changelog', icon: <Sparkles className="w-4 h-4" /> },
 ];
 
 export function TopBarSearch() {
