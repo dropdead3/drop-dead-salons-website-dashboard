@@ -11258,6 +11258,7 @@ export type Database = {
           smart_action_types: string[] | null
           smart_actions_enabled: boolean | null
           updated_at: string | null
+          welcome_dms_enabled: boolean | null
         }
         Insert: {
           allow_dnd_override?: boolean | null
@@ -11285,6 +11286,7 @@ export type Database = {
           smart_action_types?: string[] | null
           smart_actions_enabled?: boolean | null
           updated_at?: string | null
+          welcome_dms_enabled?: boolean | null
         }
         Update: {
           allow_dnd_override?: boolean | null
@@ -11312,12 +11314,115 @@ export type Database = {
           smart_action_types?: string[] | null
           smart_actions_enabled?: boolean | null
           updated_at?: string | null
+          welcome_dms_enabled?: boolean | null
         }
         Relationships: [
           {
             foreignKeyName: "team_chat_settings_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_chat_welcome_rules: {
+        Row: {
+          created_at: string | null
+          delay_minutes: number | null
+          id: string
+          is_active: boolean | null
+          message_template: string
+          organization_id: string
+          sender_user_id: string
+          sort_order: number | null
+          target_locations: string[] | null
+          target_roles: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delay_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          message_template: string
+          organization_id: string
+          sender_user_id: string
+          sort_order?: number | null
+          target_locations?: string[] | null
+          target_roles?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delay_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          message_template?: string
+          organization_id?: string
+          sender_user_id?: string
+          sort_order?: number | null
+          target_locations?: string[] | null
+          target_roles?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_chat_welcome_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_chat_welcome_sent: {
+        Row: {
+          channel_id: string
+          id: string
+          message_id: string | null
+          organization_id: string
+          recipient_user_id: string
+          sender_user_id: string
+          sent_at: string | null
+        }
+        Insert: {
+          channel_id: string
+          id?: string
+          message_id?: string | null
+          organization_id: string
+          recipient_user_id: string
+          sender_user_id: string
+          sent_at?: string | null
+        }
+        Update: {
+          channel_id?: string
+          id?: string
+          message_id?: string | null
+          organization_id?: string
+          recipient_user_id?: string
+          sender_user_id?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_chat_welcome_sent_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_chat_welcome_sent_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_chat_welcome_sent_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
