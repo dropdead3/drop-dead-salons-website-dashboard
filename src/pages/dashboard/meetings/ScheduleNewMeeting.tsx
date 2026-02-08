@@ -8,8 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, X } from 'lucide-react';
 import { useAvailableCoaches, useCreateMeeting } from '@/hooks/useOneOnOneMeetings';
+import { useNavigate } from 'react-router-dom';
 
 const meetingTypes = [
   { value: 'coaching', label: 'Coaching Session' },
@@ -26,6 +27,7 @@ const timeSlots = [
 ];
 
 export default function ScheduleNewMeeting() {
+  const navigate = useNavigate();
   const { data: coaches = [], isLoading: loadingCoaches } = useAvailableCoaches();
   const createMeeting = useCreateMeeting();
 
@@ -81,7 +83,14 @@ export default function ScheduleNewMeeting() {
             </p>
           </div>
 
-          <Card>
+          <Card className="relative">
+            <button
+              onClick={() => navigate('/dashboard/schedule-meeting')}
+              className="absolute top-4 right-4 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-5 h-5" />
+            </button>
             <CardHeader>
               <CardTitle>Request a Meeting</CardTitle>
               <CardDescription>
