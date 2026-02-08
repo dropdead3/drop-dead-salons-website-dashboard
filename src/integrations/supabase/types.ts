@@ -1765,6 +1765,13 @@ export type Database = {
             referencedRelation: "chat_messages"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "chat_messages_sender_employee_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       chat_pinned_messages: {

@@ -21,7 +21,7 @@ export function usePinnedMessages(channelId: string | null) {
           pinned_by,
           message:chat_messages (
             *,
-            sender:employee_profiles!chat_messages_sender_id_fkey (
+            sender:employee_profiles!chat_messages_sender_employee_fkey (
               user_id,
               full_name,
               display_name,
