@@ -282,11 +282,18 @@ export function useInitializeDefaultChannels() {
       const createdPublicChannels: { id: string }[] = [];
       const createdLocationChannels: { id: string; location_id: string }[] = [];
 
-      // Create default system channels
-      const defaultChannels = [
-        { name: 'company-wide', description: 'Organization-wide announcements', icon: 'megaphone', type: 'public' as const },
-        { name: 'general', description: 'General discussions', icon: 'hash', type: 'public' as const },
-      ];
+      // Check if organization is multi-location
+      const isMultiLocation = effectiveOrganization.is_multi_location ?? false;
+
+      // Create default system channels - only include company-wide for multi-location orgs
+      const defaultChannels = isMultiLocation
+        ? [
+            { name: 'company-wide', description: 'Organization-wide announcements', icon: 'megaphone', type: 'public' as const },
+            { name: 'general', description: 'General discussions', icon: 'hash', type: 'public' as const },
+          ]
+        : [
+            { name: 'general', description: 'Team discussions', icon: 'hash', type: 'public' as const },
+          ];
 
       for (const channel of defaultChannels) {
         const { data: newChannel, error } = await supabase
@@ -317,42 +324,45 @@ export function useInitializeDefaultChannels() {
           });
       }
 
-      // Get locations and create location channels
-      const { data: locations } = await supabase
-        .from('locations')
-        .select('id, name')
-        .eq('organization_id', effectiveOrganization.id)
-        .eq('is_active', true);
+      // Only create location channels for multi-location organizations
+      if (isMultiLocation) {
+        // Get locations and create location channels
+        const { data: locations } = await supabase
+          .from('locations')
+          .select('id, name')
+          .eq('organization_id', effectiveOrganization.id)
+          .eq('is_active', true);
 
-      if (locations) {
-        for (const location of locations) {
-          const slug = location.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-          const { data: locChannel, error } = await supabase
-            .from('chat_channels')
-            .insert({
-              name: slug,
-              description: `Channel for ${location.name}`,
-              icon: 'map-pin',
-              type: 'location' as const,
-              location_id: location.id,
-              organization_id: effectiveOrganization.id,
-              created_by: user.id,
-              is_system: true,
-            })
-            .select()
-            .single();
-
-          if (!error && locChannel) {
-            createdLocationChannels.push({ id: locChannel.id, location_id: location.id });
-
-            // Auto-join creator as owner
-            await supabase
-              .from('chat_channel_members')
+        if (locations) {
+          for (const location of locations) {
+            const slug = location.name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            const { data: locChannel, error } = await supabase
+              .from('chat_channels')
               .insert({
-                channel_id: locChannel.id,
-                user_id: user.id,
-                role: 'owner',
-              });
+                name: slug,
+                description: `Channel for ${location.name}`,
+                icon: 'map-pin',
+                type: 'location' as const,
+                location_id: location.id,
+                organization_id: effectiveOrganization.id,
+                created_by: user.id,
+                is_system: true,
+              })
+              .select()
+              .single();
+
+            if (!error && locChannel) {
+              createdLocationChannels.push({ id: locChannel.id, location_id: location.id });
+
+              // Auto-join creator as owner
+              await supabase
+                .from('chat_channel_members')
+                .insert({
+                  channel_id: locChannel.id,
+                  user_id: user.id,
+                  role: 'owner',
+                });
+            }
           }
         }
       }
