@@ -1,125 +1,89 @@
 
-# Fix: Modules Not Showing for Platform Users
+# Pin Settings to Bottom of Super Admin Section
 
-## Root Cause
+## Problem
+In the Super Admin navigation section, the Settings link should always appear at the bottom, but it's currently appearing before Access Hub.
 
-The current user is a **platform user** (`platform_owner` role). The `OrganizationContext` logic returns `null` for `effectiveOrganization` when platform users haven't explicitly selected an organization:
-
+## Current Order in Code (`adminOnlyNavItems`)
 ```typescript
-// OrganizationContext.tsx lines 79-83
-if (isPlatformUser) {
-  return selectedOrganization;  // null if no selection
-}
+const adminOnlyNavItems: NavItem[] = [
+  { href: '/dashboard/admin/accounts', label: 'Invitations & Approvals', ... },
+  { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', ... },
+  { href: '/dashboard/admin/access-hub', label: 'Access Hub', ... },
+  { href: '/dashboard/admin/settings', label: 'Settings', ... },  // Already last!
+];
 ```
 
-The `useOrganizationFeatures` hook then disables its query when there's no organization:
-
-```typescript
-// useOrganizationFeatures.ts line 101
-enabled: !!orgId,  // Query never runs when orgId is null
-```
-
-**Result:** Platform users see "0 of 0 enabled" because the feature catalog is never fetched.
-
----
+The array order looks correct, but the issue is that the sidebar has a **configurable layout system** (`useSidebarLayout`) that may have a custom `linkOrder` reordering Settings before Access Hub.
 
 ## Solution
-
-Modify the `useOrganizationFeatures` hook to fetch the **feature catalog** even when no organization is selected. This allows platform users to see all available modules (with their default states) without requiring an organization selection.
-
-When an organization IS selected, the hook will merge organization-specific overrides as it currently does.
+Move Settings out of the dynamic section rendering and pin it as a fixed footer item at the bottom of the navigation, similar to how "START HERE" is handled at the top.
 
 ---
 
-## Changes Required
+## Technical Changes
 
-### File: `src/hooks/useOrganizationFeatures.ts`
+### File: `src/components/dashboard/DashboardLayout.tsx`
 
-**Update `useOrganizationFeatures` to handle "no org" case:**
+**Remove Settings from `adminOnlyNavItems`:**
 
 ```typescript
-export function useOrganizationFeatures() {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
+// Line 188-193: Remove Settings from this array
+const adminOnlyNavItems: NavItem[] = [
+  { href: '/dashboard/admin/accounts', label: 'Invitations & Approvals', icon: UserPlus, permission: 'approve_accounts' },
+  { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield, permission: 'manage_user_roles' },
+  { href: '/dashboard/admin/access-hub', label: 'Access Hub', icon: Shield, permission: 'manage_settings' },
+  // Settings removed - will be rendered separately as fixed footer
+];
+```
 
-  return useQuery({
-    queryKey: ['organization-features', orgId ?? 'catalog-only'],
-    queryFn: async (): Promise<MergedFeature[]> => {
-      // Always fetch the catalog
-      const { data: catalog, error: catalogError } = await supabase
-        .from('feature_catalog')
-        .select('*')
-        .order('display_order', { ascending: true });
+**Create a new constant for footer items:**
 
-      if (catalogError) throw catalogError;
+```typescript
+const footerNavItems: NavItem[] = [
+  { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
+];
+```
 
-      // If no org selected, return catalog with default values
-      if (!orgId) {
-        return (catalog || []).map(item => ({
-          ...item,
-          is_enabled: item.default_enabled,
-          has_override: false,
-          disabled_at: null,
-          last_known_config: {},
-        })) as MergedFeature[];
-      }
+**Pass footer items to SidebarNavContent:**
 
-      // Get org-specific overrides
-      const { data: orgFeatures, error: orgError } = await supabase
-        .from('organization_features')
-        .select('*')
-        .eq('organization_id', orgId);
+```typescript
+<SidebarNavContent
+  // ... existing props
+  footerNavItems={footerNavItems}
+/>
+```
 
-      if (orgError) throw orgError;
+---
 
-      // Create a map of org overrides
-      const overrideMap = new Map<string, OrganizationFeature>();
-      for (const feature of orgFeatures || []) {
-        overrideMap.set(feature.feature_key, feature as OrganizationFeature);
-      }
+### File: `src/components/dashboard/SidebarNavContent.tsx`
 
-      // Merge catalog with org overrides
-      return (catalog || []).map(item => {
-        const override = overrideMap.get(item.feature_key);
-        return {
-          ...item,
-          is_enabled: override ? override.is_enabled : item.default_enabled,
-          has_override: !!override,
-          disabled_at: override?.disabled_at || null,
-          last_known_config: override?.last_known_config || {},
-        } as MergedFeature;
-      });
-    },
-    // Always enabled - just change behavior based on orgId presence
-    enabled: true,
-  });
+**Add `footerNavItems` prop:**
+
+```typescript
+interface SidebarNavContentProps {
+  // ... existing props
+  footerNavItems?: NavItem[];
 }
 ```
 
-### File: `src/components/access-hub/ModulesTab.tsx`
+**Render footer items at the bottom (after the nav, before closing div):**
 
-**Add visual indicator when viewing catalog without org context:**
-
-Add an info banner when `effectiveOrganization` is null to inform platform users they're seeing default values:
+After the `<nav>` element (line 553), add a footer section:
 
 ```typescript
-import { useOrganizationContext } from '@/contexts/OrganizationContext';
-
-// Inside the component:
-const { effectiveOrganization } = useOrganizationContext();
-
-// Add this banner above the module categories when no org is selected:
-{!effectiveOrganization && (
-  <Card className="border-amber-500/30 bg-amber-500/5">
-    <CardContent className="pt-4 pb-3">
-      <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-        <Info className="h-4 w-4" />
-        <span className="text-sm font-medium">
-          Viewing catalog defaults. Select an organization to see org-specific settings.
-        </span>
-      </div>
-    </CardContent>
-  </Card>
+{/* Fixed Footer Navigation - always at bottom */}
+{filterNavItems(footerNavItems || []).length > 0 && (
+  <div className="border-t border-border py-2">
+    <div className="space-y-1">
+      {filterNavItems(footerNavItems || []).map((item) => (
+        <NavLink 
+          key={item.href} 
+          {...item}
+        />
+      ))}
+    </div>
+  </div>
 )}
 ```
 
@@ -127,24 +91,24 @@ const { effectiveOrganization } = useOrganizationContext();
 
 ## Visual Result
 
-### Before (Platform User, No Org Selected)
+### Before
 ```
-0 of 0 enabled | 0 core (always on)
-[Empty - "No modules match your search criteria"]
+SUPER ADMIN
+├── Invitations & Approvals
+├── Manage Users & Roles
+├── Settings          ← Out of place
+└── Access Hub
 ```
 
-### After (Platform User, No Org Selected)
+### After
 ```
-[Amber Banner] Viewing catalog defaults. Select an organization...
+SUPER ADMIN
+├── Invitations & Approvals
+├── Manage Users & Roles
+└── Access Hub
 
-20 of 25 enabled | 3 core (always on)
-[Core Features]
-  ├── Command Center (enabled by default)
-  ├── Schedule (enabled by default)
-  └── Team Directory (enabled by default)
-[Team Development]
-  ├── Training Hub
-  └── ...
+───────────────────────
+Settings              ← Always at bottom
 ```
 
 ---
@@ -153,15 +117,12 @@ const { effectiveOrganization } = useOrganizationContext();
 
 | File | Change |
 |------|--------|
-| `src/hooks/useOrganizationFeatures.ts` | Remove `enabled: !!orgId`, handle null org case with catalog defaults |
-| `src/components/access-hub/ModulesTab.tsx` | Add info banner for platform users without org selection |
+| `src/components/dashboard/DashboardLayout.tsx` | Remove Settings from `adminOnlyNavItems`, create `footerNavItems`, pass to SidebarNavContent |
+| `src/components/dashboard/SidebarNavContent.tsx` | Add `footerNavItems` prop, render at bottom of sidebar |
 
 ---
 
-## Behavior Summary
-
-| User Type | Org Selected? | What They See |
-|-----------|---------------|---------------|
-| Regular User | N/A (auto from profile) | Their org's feature states |
-| Platform User | Yes | Selected org's feature states |
-| Platform User | No | **Catalog defaults** + info banner |
+## Benefits
+- Settings is **always** pinned to the bottom regardless of sidebar layout customization
+- Consistent UX pattern (similar to how many apps pin Settings at bottom)
+- Cannot be accidentally reordered by the layout configurator
