@@ -8,14 +8,16 @@ import type { Database } from '@/integrations/supabase/types';
 type ChatChannel = Database['public']['Tables']['chat_channels']['Row'];
 type ChatChannelInsert = Database['public']['Tables']['chat_channels']['Insert'];
 type ChatChannelMember = Database['public']['Tables']['chat_channel_members']['Row'];
+type AppRole = Database['public']['Enums']['app_role'];
 
 export interface ChannelWithMembership extends ChatChannel {
-  membership?: ChatChannelMember;
+  membership?: ChatChannelMember & { is_hidden?: boolean };
   unread_count?: number;
   dm_partner?: {
     user_id: string;
     display_name: string;
     photo_url: string | null;
+    roles: AppRole[];
   };
 }
 
@@ -36,6 +38,7 @@ export function useChatChannels() {
           channel_id,
           role,
           is_muted,
+          is_hidden,
           last_read_at,
           chat_channels (*)
         `)
@@ -56,10 +59,14 @@ export function useChatChannels() {
       // Merge and dedupe
       const channelMap = new Map<string, ChannelWithMembership>();
 
-      // Add member channels first with membership info
+      // Add member channels first with membership info (excluding hidden DMs)
       memberChannels?.forEach((mc) => {
         const channel = mc.chat_channels as unknown as ChatChannel;
         if (channel) {
+          // Skip hidden DM channels from sidebar
+          const isDM = channel.type === 'dm' || channel.type === 'group_dm';
+          if (isDM && mc.is_hidden) return;
+          
           channelMap.set(channel.id, {
             ...channel,
             membership: {
@@ -68,11 +75,12 @@ export function useChatChannels() {
               user_id: user.id,
               role: mc.role,
               is_muted: mc.is_muted,
+              is_hidden: mc.is_hidden,
               muted_until: null,
               last_read_at: mc.last_read_at,
               joined_at: null,
               updated_at: null,
-            } as ChatChannelMember,
+            } as ChatChannelMember & { is_hidden?: boolean },
           });
         }
       });
@@ -105,6 +113,20 @@ export function useChatChannels() {
           .in('channel_id', dmChannelIds)
           .neq('user_id', user.id);
 
+        // Fetch roles for DM partners
+        const partnerUserIds = dmMembers?.map((m) => m.user_id) || [];
+        const { data: userRoles } = await supabase
+          .from('user_roles')
+          .select('user_id, role')
+          .in('user_id', partnerUserIds);
+
+        // Build roles map
+        const rolesMap = new Map<string, AppRole[]>();
+        userRoles?.forEach((r) => {
+          const existing = rolesMap.get(r.user_id) || [];
+          rolesMap.set(r.user_id, [...existing, r.role as AppRole]);
+        });
+
         // Map partner info to channels
         dmMembers?.forEach((member) => {
           const channel = channelMap.get(member.channel_id);
@@ -114,6 +136,7 @@ export function useChatChannels() {
               user_id: member.user_id,
               display_name: profile?.display_name || profile?.full_name || 'Unknown',
               photo_url: profile?.photo_url || null,
+              roles: rolesMap.get(member.user_id) || [],
             };
           }
         });

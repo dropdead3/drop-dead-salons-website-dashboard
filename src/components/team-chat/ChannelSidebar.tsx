@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Hash, MapPin, Lock, Plus, ChevronDown, ChevronRight, Users, Settings, Bot, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -15,6 +15,21 @@ import { TeamChatAdminSettingsSheet } from './TeamChatAdminSettingsSheet';
 import { AIChatPanel } from './AIChatPanel';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
+
+// Role priority for sorting DMs (lower = higher priority)
+const ROLE_PRIORITY: Record<string, number> = {
+  super_admin: 1,
+  admin: 2,
+  manager: 3,
+  stylist: 4,
+  receptionist: 5,
+  stylist_assistant: 6,
+  admin_assistant: 7,
+  operations_assistant: 8,
+  booth_renter: 9,
+  bookkeeper: 10,
+  assistant: 11,
+};
 
 const channelTypeIcons: Record<string, typeof Hash> = {
   public: Hash,
@@ -111,7 +126,28 @@ export function ChannelSidebar() {
 
   const publicChannels = channels.filter((c) => c.type === 'public' || c.type === 'private');
   const locationChannels = channels.filter((c) => c.type === 'location');
-  const dmChannels = channels.filter((c) => c.type === 'dm' || c.type === 'group_dm');
+  
+  // Sort DM channels by role hierarchy
+  const sortedDmChannels = useMemo(() => {
+    const dms = channels.filter((c) => c.type === 'dm' || c.type === 'group_dm');
+    return dms.sort((a, b) => {
+      // Get highest priority role for each partner
+      const getRolePriority = (roles: string[] | undefined) => {
+        if (!roles || roles.length === 0) return 99;
+        return Math.min(...roles.map((r) => ROLE_PRIORITY[r] ?? 99));
+      };
+      
+      const priorityA = getRolePriority(a.dm_partner?.roles);
+      const priorityB = getRolePriority(b.dm_partner?.roles);
+      
+      if (priorityA !== priorityB) return priorityA - priorityB;
+      
+      // Secondary sort: alphabetical by name
+      const nameA = a.dm_partner?.display_name || '';
+      const nameB = b.dm_partner?.display_name || '';
+      return nameA.localeCompare(nameB);
+    });
+  }, [channels]);
 
   const handleChannelClick = (channel: ChannelWithMembership) => {
     // Join if not a member
@@ -216,12 +252,12 @@ export function ChannelSidebar() {
               </Button>
             </div>
             <CollapsibleContent className="mt-1 space-y-0.5">
-              {dmChannels.length === 0 ? (
+              {sortedDmChannels.length === 0 ? (
                 <p className="text-xs text-muted-foreground px-3 py-2">
                   Click + to start a conversation
                 </p>
               ) : (
-                dmChannels.map((channel) => (
+                sortedDmChannels.map((channel) => (
                   <ChannelItem
                     key={channel.id}
                     channel={channel}
