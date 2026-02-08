@@ -1,125 +1,98 @@
 
-# Fix: Isolate Dashboard Theme from Public Website
+# Fix Live Preview to Display Correct Light Theme
 
-## Problem
+## Problem Analysis
 
-The public-facing website (homepage, services, booking, etc.) inherits the dashboard's dark mode and custom theme colors when:
-1. A staff member has dark mode enabled in dashboard settings
-2. Custom theme color overrides are saved in user preferences
-3. The preview iframe in Website Editor displays the wrong theme
+The Website Editor's Live Preview iframe displays the public website in dark mode when the dashboard is set to dark mode. This happens because:
 
-This happens because:
-- `ThemeInitializer` applies CSS variable overrides to `document.documentElement` (global)
-- `DashboardThemeProvider` wraps the entire app including public routes
-- The public `Layout` component has no theme isolation
+1. **Shared localStorage**: Both the parent dashboard and iframe share the same origin, meaning localStorage values are shared
+2. **next-themes ThemeProvider**: The global `ThemeProvider` from `next-themes` in `App.tsx` applies theme classes to `document.documentElement`
+3. **Race conditions**: Even though `Layout.tsx` has code to reset the theme, there may be timing issues with theme application
+
+## Root Cause
+
+Looking at the architecture:
+- The iframe loads `/` which runs the full React app
+- `App.tsx` wraps everything in `ThemeProvider` from `next-themes`
+- `DashboardThemeProvider` stores its state in `dashboard-theme` localStorage key
+- The `Layout` component does reset classes in a `useEffect`, but this may run after initial render causes a flash
 
 ## Solution
 
-Create a clear separation between dashboard themes and public website themes:
+Enhance the preview iframe to pass a query parameter that tells the public site to force light mode, bypassing any stored theme preferences.
 
-### 1. Create `PublicThemeWrapper` Component
+### Implementation Steps
 
-Wrap all public routes in a component that:
-- Explicitly resets any custom CSS variable overrides
-- Forces light mode by excluding the `.dark` class
-- Applies the default cream theme class
+#### 1. Update `LivePreviewPanel.tsx`
+
+Add a `?preview=true` query parameter to the iframe src:
 
 ```typescript
-// src/components/layout/PublicThemeWrapper.tsx
-export function PublicThemeWrapper({ children }) {
-  useEffect(() => {
-    // Reset any custom theme variables on public routes
-    const root = document.documentElement;
-    root.classList.remove('dark');
-    // Ensure default theme
-    root.classList.add('theme-cream');
-  }, []);
+<iframe
+  key={refreshKey}
+  src="/?preview=true"  // Add preview flag
+  className="w-full h-full border-0"
+  title="Website Preview"
+  onLoad={() => setIsLoading(false)}
+/>
+```
+
+#### 2. Update `Layout.tsx`
+
+Check for the `preview` query parameter and force light theme immediately:
+
+```typescript
+useEffect(() => {
+  const root = document.documentElement;
   
-  return <div className="theme-cream public-website">{children}</div>;
-}
+  // Check if we're in preview mode (loaded in iframe from website editor)
+  const isPreview = new URLSearchParams(window.location.search).get('preview') === 'true';
+  
+  // Force light mode for public website (always, but especially in preview)
+  root.classList.remove('dark');
+  root.classList.remove('theme-rose', 'theme-sage', 'theme-ocean');
+  root.classList.add('theme-cream');
+  
+  // Clear any custom CSS variable overrides
+  // ... existing code ...
+}, []);
 ```
 
-### 2. Update `ThemeInitializer` to Skip Public Routes
+#### 3. Update Index.tsx (Homepage)
 
-Modify to only apply custom theme overrides when on dashboard routes:
+Ensure the homepage also respects the preview parameter by wrapping in light theme context if needed.
 
-```typescript
-const loadCustomTheme = async () => {
-  // Skip theme customization on public routes
-  if (!window.location.pathname.startsWith('/dashboard')) {
-    return;
-  }
-  // ... rest of existing logic
-};
-```
-
-### 3. Update `Layout` Component
-
-Wrap the layout with explicit theme isolation:
-
-```typescript
-export function Layout({ children }: LayoutProps) {
-  // Force light mode for public website
-  return (
-    <div className="theme-cream" style={{ colorScheme: 'light' }}>
-      {/* existing layout */}
-    </div>
-  );
-}
-```
-
-### 4. Update `App.tsx` Route Structure
-
-Restructure to separate theme contexts:
-- Public routes: Outside `DashboardThemeProvider` or with explicit light mode
-- Dashboard routes: Inside `DashboardThemeProvider` with theme switching
-
----
-
-## Files to Modify
+### Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/layout/Layout.tsx` | Add theme isolation wrapper with explicit light mode |
-| `src/components/ThemeInitializer.tsx` | Skip theme application on non-dashboard routes |
-| `src/App.tsx` | Restructure providers to scope dashboard theme to dashboard routes only |
+| `src/components/dashboard/website-editor/LivePreviewPanel.tsx` | Add `?preview=true` to iframe src |
+| `src/components/layout/Layout.tsx` | Ensure theme reset runs synchronously and respects preview mode |
 
-## Files to Create
+### Additional Enhancement
 
-| File | Purpose |
-|------|--------|
-| `src/components/layout/PublicThemeWrapper.tsx` | *(Optional)* Dedicated wrapper for public routes |
+Move the theme reset logic to run **before** React render by adding inline styles or using a more aggressive reset:
 
----
+```typescript
+// In Layout.tsx - run reset immediately, not just in useEffect
+export function Layout({ children }: LayoutProps) {
+  // Immediately force light mode (runs during render, not after)
+  if (typeof document !== 'undefined') {
+    const root = document.documentElement;
+    root.classList.remove('dark');
+    root.classList.add('theme-cream');
+  }
+  
+  // ... rest of component
+}
+```
 
-## Implementation Details
-
-### Layout.tsx Changes
-
-The public website layout will:
-1. Add `theme-cream` class to ensure consistent light theme
-2. Add inline `colorScheme: 'light'` to prevent system dark mode inheritance
-3. Clear any `.dark` class that might be inherited
-
-### ThemeInitializer.tsx Changes
-
-The initializer will:
-1. Check `window.location.pathname` before applying custom themes
-2. Only apply overrides when on `/dashboard/*` routes
-3. On public routes, explicitly remove any existing custom CSS variables
-
-### App.tsx Changes
-
-Move `DashboardThemeProvider` to wrap only dashboard routes:
-1. Keep it outside for now but have `ThemeInitializer` check route
-2. The `DashboardLayout` already scopes the `.dark` class, so the main fix is in `ThemeInitializer`
-
----
+This ensures the theme is correct from the very first paint, eliminating any flash of incorrect theme colors.
 
 ## Summary
 
 | Before | After |
 |--------|-------|
-| Custom themes apply globally | Custom themes only apply to dashboard |
-| Public website inherits dark mode | Public website always uses light cream theme |
-| Preview iframe shows wrong colors | Preview iframe shows correct public appearance |
+| Preview inherits dashboard dark mode | Preview always shows correct light/cream theme |
+| Flash of wrong theme on load | Immediate correct theme application |
+| Shared theme state causes conflicts | Preview mode bypasses theme persistence |
