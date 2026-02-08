@@ -9104,36 +9104,62 @@ export type Database = {
           category: string | null
           created_at: string | null
           description: string | null
+          end_date: string | null
+          icon: string | null
           id: string
           image_url: string | null
           is_active: boolean | null
+          is_featured: boolean | null
           name: string
+          organization_id: string | null
           points_cost: number
           quantity_available: number | null
+          sort_order: number | null
+          start_date: string | null
         }
         Insert: {
           category?: string | null
           created_at?: string | null
           description?: string | null
+          end_date?: string | null
+          icon?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          is_featured?: boolean | null
           name: string
+          organization_id?: string | null
           points_cost: number
           quantity_available?: number | null
+          sort_order?: number | null
+          start_date?: string | null
         }
         Update: {
           category?: string | null
           created_at?: string | null
           description?: string | null
+          end_date?: string | null
+          icon?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          is_featured?: boolean | null
           name?: string
+          organization_id?: string | null
           points_cost?: number
           quantity_available?: number | null
+          sort_order?: number | null
+          start_date?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "rewards_catalog_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       ring_the_bell_entries: {
         Row: {

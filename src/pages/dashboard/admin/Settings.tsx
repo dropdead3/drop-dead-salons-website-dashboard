@@ -83,6 +83,7 @@ import { SmsTemplatesManager } from '@/components/dashboard/SmsTemplatesManager'
 import { FormsTemplatesContent } from '@/components/dashboard/settings/FormsTemplatesContent';
 import { MetricsGlossaryContent } from '@/components/dashboard/settings/MetricsGlossaryContent';
 import { LoyaltySettingsContent } from '@/components/dashboard/settings/LoyaltySettingsContent';
+import { TeamRewardsConfigurator } from '@/components/dashboard/settings/TeamRewardsConfigurator';
 import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
 import { MessageSquareHeart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -119,7 +120,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'access-hub' | 'schedule' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | null;
+type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'access-hub' | 'schedule' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -788,6 +789,12 @@ export default function Settings() {
       description: 'Review thresholds & platform links',
       icon: MessageSquareHeart,
     },
+    'team-rewards': {
+      id: 'team-rewards',
+      label: 'Team Rewards',
+      description: 'Staff points economy & reward catalog',
+      icon: Gift,
+    },
   };
 
   const orderedCategories = useMemo(() => {
@@ -1270,6 +1277,8 @@ export default function Settings() {
           {activeCategory === 'dayrate' && <DayRateSettingsContent />}
 
           {activeCategory === 'loyalty' && <LoyaltySettingsContent />}
+
+          {activeCategory === 'team-rewards' && <TeamRewardsConfigurator />}
 
           {activeCategory === 'feedback' && (
             <Card>

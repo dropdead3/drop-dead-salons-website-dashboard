@@ -28,6 +28,12 @@ export interface Reward {
   quantity_available: number | null;
   image_url: string | null;
   is_active: boolean;
+  icon?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  organization_id?: string | null;
+  sort_order?: number | null;
+  is_featured?: boolean | null;
 }
 
 export interface RewardRedemption {
