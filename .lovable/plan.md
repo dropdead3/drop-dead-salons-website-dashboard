@@ -1,69 +1,82 @@
 
-# Add L-Line Threading Indicator to Main Chat
+# Enlarge Chat Message and Staff Name Font Sizes
 
-## Goal
+## Problem
 
-Add a visual "L" shaped line indicator to messages in the main chat when they have replies. This will visually show the threading relationship directly in the message list, not just in the thread panel.
+Current font sizes are too small and difficult to read:
+- Staff names use `text-sm` (14px)
+- Message content uses `text-sm` (14px)
+- Thread timestamps use `text-[10px]` (10px)
 
-## Current vs. Desired
+## Proposed Changes
 
-**Current**: Messages with replies just show a "2 replies" text link
+Increase font sizes from `text-sm` (14px) to `text-base` (16px) for primary content to improve readability.
 
-**Desired**: Messages with replies show an L-line connector with a preview or indicator of the thread
+### Font Size Comparison
 
-```text
-┌────────────────────────────────────────┐
-│  [Avatar] Parent Message               │
-│           Message content here...      │
-│                                        │
-│     │                                  │  ← Vertical line  
-│     └── 💬 2 replies                   │  ← L-connector to reply indicator
-│                                        │
-│  [Avatar] Another Message              │
-└────────────────────────────────────────┘
-```
-
-## Implementation
-
-### Changes to `MessageItem.tsx`
-
-Wrap the reply count indicator with the L-line visual:
-
-```tsx
-{/* Reply count with L-line threading */}
-{message.reply_count > 0 && (
-  <div className="relative mt-1 ml-5 pl-4 border-l-2 border-muted-foreground/20">
-    {/* Horizontal connector */}
-    <div className="absolute -left-4 top-2 w-4 h-px bg-muted-foreground/20" />
-    
-    <button
-      onClick={onReply}
-      className="flex items-center gap-1 text-xs text-primary hover:underline"
-    >
-      <MessageSquare className="h-3 w-3" />
-      {message.reply_count} {message.reply_count === 1 ? 'reply' : 'replies'}
-    </button>
-  </div>
-)}
-```
-
-## Visual Elements
-
-| Element | Style |
-|---------|-------|
-| Vertical line | `border-l-2 border-muted-foreground/20` - subtle gray left border |
-| Horizontal connector | `w-4 h-px bg-muted-foreground/20` - extends from vertical line to reply indicator |
-| Indentation | `ml-5` (20px) - aligns with avatar column |
+| Element | Current | Proposed |
+|---------|---------|----------|
+| Sender name | `text-sm` (14px) | `text-base` (16px) |
+| Message content | `text-sm` (14px) | `text-base` (16px) |
+| Timestamp | `text-xs` (12px) | `text-xs` (12px) - keep small |
+| Thread timestamp | `text-[10px]` (10px) | `text-xs` (12px) |
 
 ## Files to Modify
 
+### 1. `MessageItem.tsx` (Main Chat)
+
+**Line 106** - Sender name:
+```tsx
+// Before
+<span className="font-semibold text-sm">{senderName}</span>
+
+// After  
+<span className="font-semibold text-base">{senderName}</span>
+```
+
+**Line 114** - Message content:
+```tsx
+// Before
+<div className="text-sm whitespace-pre-wrap break-words">
+
+// After
+<div className="text-base whitespace-pre-wrap break-words">
+```
+
+### 2. `ThreadMessageItem.tsx` (Thread Panel)
+
+**Line 136** - Sender name:
+```tsx
+// Before
+<span className="font-semibold text-sm">{senderName}</span>
+
+// After
+<span className="font-semibold text-base">{senderName}</span>
+```
+
+**Line 137** - Timestamp (slightly larger):
+```tsx
+// Before
+<span className="text-[10px] text-muted-foreground">{timestamp}</span>
+
+// After
+<span className="text-xs text-muted-foreground">{timestamp}</span>
+```
+
+**Line 143** - Message content:
+```tsx
+// Before
+<div className="text-sm whitespace-pre-wrap break-words">
+
+// After
+<div className="text-base whitespace-pre-wrap break-words">
+```
+
+## Summary
+
 | File | Changes |
 |------|---------|
-| `src/components/team-chat/MessageItem.tsx` | Wrap reply count in L-line container with horizontal connector |
+| `src/components/team-chat/MessageItem.tsx` | Increase sender name and message content to `text-base` |
+| `src/components/team-chat/ThreadMessageItem.tsx` | Increase sender name, message content to `text-base`, timestamp to `text-xs` |
 
-## Result
-
-- Creates visual consistency between main chat and thread panel
-- Shows threading relationship at a glance without opening the thread
-- Subtle styling that doesn't overwhelm the main message content
-- Clickable area maintained for opening the full thread
+This will make chat messages significantly more readable while maintaining visual hierarchy (timestamps remain smaller than main content).
