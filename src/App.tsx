@@ -95,6 +95,7 @@ import ChangelogManager from "./pages/dashboard/admin/ChangelogManager";
 import MetricsGlossary from "./pages/dashboard/MetricsGlossary";
 import PublicBooking from "./pages/PublicBooking";
 import DayRateBooking from "./pages/DayRateBooking";
+import ProductDemo from "./pages/ProductDemo";
 import DayRateSettings from "./pages/dashboard/admin/DayRateSettings";
 import DayRateCalendar from "./pages/dashboard/admin/DayRateCalendar";
 import DataImport from "./pages/dashboard/admin/DataImport";
@@ -152,6 +153,7 @@ import JobsPage from "./pages/dashboard/platform/Jobs";
 import SystemHealthPage from "./pages/dashboard/platform/SystemHealth";
 import StripeHealthPage from "./pages/dashboard/platform/StripeHealth";
 import NotificationsPage from "./pages/dashboard/platform/Notifications";
+import DemoFeatures from "./pages/dashboard/platform/DemoFeatures";
 import { PlatformLayout } from "./components/platform/layout/PlatformLayout";
 
 const queryClient = new QueryClient();
@@ -185,6 +187,7 @@ const App = () => (
                       <Route path="/platform-login" element={<PlatformLogin />} />
                       <Route path="/book" element={<PublicBooking />} />
                       <Route path="/day-rate" element={<DayRateBooking />} />
+                      <Route path="/demo" element={<ProductDemo />} />
                       <Route path="/feedback" element={<ClientFeedbackPage />} />
                       <Route path="/rewards" element={<ClientPortalPage />} />
 
@@ -319,6 +322,7 @@ const App = () => (
                         <Route path="settings/integrations/:integrationId" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformIntegrationDetail /></ProtectedRoute>} />
                         <Route path="permissions" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformPermissions /></ProtectedRoute>} />
                         <Route path="feature-flags" element={<ProtectedRoute requirePlatformRole="platform_admin"><PlatformFeatureFlags /></ProtectedRoute>} />
+                        <Route path="demo-features" element={<ProtectedRoute requirePlatformRole="platform_admin"><DemoFeatures /></ProtectedRoute>} />
                       </Route>
 
                         <Route path="*" element={<NotFound />} />

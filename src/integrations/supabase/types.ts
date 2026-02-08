@@ -7767,6 +7767,60 @@ export type Database = {
           },
         ]
       }
+      product_features: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          demo_video_url: string | null
+          description: string | null
+          display_order: number | null
+          feature_key: string
+          id: string
+          is_active: boolean | null
+          is_highlighted: boolean | null
+          name: string
+          problem_keywords: string[] | null
+          related_features: string[] | null
+          screenshot_url: string | null
+          tagline: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          demo_video_url?: string | null
+          description?: string | null
+          display_order?: number | null
+          feature_key: string
+          id?: string
+          is_active?: boolean | null
+          is_highlighted?: boolean | null
+          name: string
+          problem_keywords?: string[] | null
+          related_features?: string[] | null
+          screenshot_url?: string | null
+          tagline?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          demo_video_url?: string | null
+          description?: string | null
+          display_order?: number | null
+          feature_key?: string
+          id?: string
+          is_active?: boolean | null
+          is_highlighted?: boolean | null
+          name?: string
+          problem_keywords?: string[] | null
+          related_features?: string[] | null
+          screenshot_url?: string | null
+          tagline?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           barcode: string | null
