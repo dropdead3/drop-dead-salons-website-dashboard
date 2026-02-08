@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { MoreHorizontal, MessageSquare, Smile, Trash2, Pencil, Pin } from 'lucide-react';
+import { MoreHorizontal, MessageSquare, Smile, Trash2, Pencil, Pin, Plus } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import type { MessageWithSender } from '@/hooks/team-chat/useChatMessages';
 import { renderContentWithMentions } from './MentionAutocomplete';
+import { EmojiPickerPopover } from './EmojiPickerPopover';
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🎉'];
 
@@ -143,6 +144,11 @@ export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete
                     {emoji}
                   </button>
                 ))}
+                <EmojiPickerPopover onEmojiSelect={onReact} side="right">
+                  <button className="text-lg hover:scale-110 transition-transform p-1 text-muted-foreground hover:text-foreground">
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </EmojiPickerPopover>
               </div>
             </PopoverContent>
           </Popover>
