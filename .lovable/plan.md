@@ -1,50 +1,88 @@
 
-# Fix Top Padding on Notification Preferences Page
+# Unified Help FAB with AI Assistant + Support
 
-## Problem
-The Notification Preferences page (`/dashboard/notifications`) is missing the standardized top/side padding that all other dashboard pages use. As shown in your screenshot, the "NOTIFICATION PREFERENCES" heading is too close to the navigation bar.
+## Overview
+Create a floating action button (FAB) in the bottom-right corner of all dashboard pages that provides quick access to AI help and support ticket functionality via a tabbed popover interface.
 
-## Solution
-Add the standardized container padding pattern to the NotificationPreferences page.
+## Components to Create
 
-## Change Required
+### 1. HelpFAB Component
+**File:** `src/components/dashboard/HelpFAB.tsx`
 
-### File: `src/pages/dashboard/NotificationPreferences.tsx`
+A floating button with a help/message icon that:
+- Shows on all screen sizes (not mobile-only like ChangelogFAB)
+- Uses framer-motion for smooth animations
+- Opens a popover with two tabs
 
-**Line 117** - Change from:
-```tsx
-<div className="space-y-6 max-w-2xl mx-auto">
+### 2. HelpFABPanel Component  
+**File:** `src/components/dashboard/HelpFABPanel.tsx`
+
+A popover panel containing:
+- **Tab 1: AI Help** - Chat interface using the existing `useAIAssistant` hook for quick questions
+- **Tab 2: Support** - Form to submit support tickets + view recent tickets
+
+## UI Design
+
+```
+┌─────────────────────────────────────────┐
+│  [AI Help]  [Support]                   │
+├─────────────────────────────────────────┤
+│                                         │
+│  (Content based on active tab)          │
+│                                         │
+│  AI Help: Chat interface with           │
+│  example prompts                        │
+│                                         │
+│  Support: Submit ticket form +          │
+│  list of recent tickets                 │
+│                                         │
+├─────────────────────────────────────────┤
+│  [Input field]              [Send]      │
+└─────────────────────────────────────────┘
+
+        ┌──────┐
+        │  ?   │  <-- FAB button (fixed bottom-right)
+        └──────┘
 ```
 
-**To:**
-```tsx
-<div className="p-6 lg:p-8 space-y-6 max-w-2xl mx-auto">
-```
+## Technical Details
 
-This adds:
-- `p-6` - 24px padding on mobile
-- `lg:p-8` - 32px padding on desktop
+### AI Help Tab
+- Reuse `useAIAssistant` hook for streaming responses
+- Show example prompts when empty
+- Render responses with markdown support
+- Keep conversation history during session
 
----
+### Support Tab
+- Form with title, description, priority dropdown
+- Submit to `support_tickets` table
+- Show list of user's recent tickets with status badges
+- Uses existing enums: `ticket_priority` and `ticket_status`
 
-## Design Guideline Update
+### FAB Positioning
+- Fixed position: `bottom-6 right-6`
+- Z-index: `z-50` to stay above content
+- Higher than mobile nav (which uses `bottom-20`)
+- Uses Popover for the panel (anchored to FAB)
 
-Add this as a hard rule to the project's design system memory:
+## Files to Create
 
-**Standardized Dashboard Page Padding Rule:**
+| File | Purpose |
+|------|---------|
+| `src/components/dashboard/HelpFAB.tsx` | Main FAB component with popover |
+| `src/components/dashboard/help-fab/AIHelpTab.tsx` | AI chat interface tab |
+| `src/components/dashboard/help-fab/SupportTab.tsx` | Support ticket form/list tab |
+| `src/hooks/useSupportTickets.ts` | Hook for submitting/fetching tickets |
 
-All dashboard content pages wrapped in `DashboardLayout` must use the container pattern with top/side padding:
+## Files to Modify
 
-| Container Type | Classes |
-|----------------|---------|
-| Full-width pages | `p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6` |
-| Narrow form pages | `p-6 lg:p-8 max-w-2xl mx-auto space-y-6` |
-| Medium content pages | `p-6 lg:p-8 max-w-4xl mx-auto space-y-6` |
+| File | Change |
+|------|--------|
+| `src/components/dashboard/DashboardLayout.tsx` | Add `<HelpFAB />` before closing `</div>` of layout |
 
-**Key rule:** The `p-6 lg:p-8` padding is mandatory for all dashboard pages to ensure content has proper breathing room from edges. Never omit this padding.
+## Implementation Notes
 
----
-
-## Summary
-- Single file edit to add padding classes
-- Update design memory with hard rule about mandatory page edge padding
+1. **Popover vs Sheet**: Using Popover (not Sheet) to keep it anchored to the FAB and allow users to reference content behind it
+2. **Panel Size**: Approximately 380px wide, 480px tall - compact but functional
+3. **State Persistence**: Chat history persists during session, clears on page refresh
+4. **Hide on Team Chat**: Consider hiding the FAB on `/dashboard/team-chat` since that page has its own AI panel
