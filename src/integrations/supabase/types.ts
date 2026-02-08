@@ -1619,6 +1619,142 @@ export type Database = {
           },
         ]
       }
+      client_feedback_responses: {
+        Row: {
+          appointment_id: string | null
+          cleanliness: number | null
+          client_id: string | null
+          comments: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_public: boolean | null
+          nps_score: number | null
+          organization_id: string | null
+          overall_rating: number | null
+          responded_at: string | null
+          service_quality: number | null
+          staff_friendliness: number | null
+          staff_user_id: string | null
+          survey_id: string | null
+          token: string
+          would_recommend: boolean | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          cleanliness?: number | null
+          client_id?: string | null
+          comments?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          nps_score?: number | null
+          organization_id?: string | null
+          overall_rating?: number | null
+          responded_at?: string | null
+          service_quality?: number | null
+          staff_friendliness?: number | null
+          staff_user_id?: string | null
+          survey_id?: string | null
+          token: string
+          would_recommend?: boolean | null
+        }
+        Update: {
+          appointment_id?: string | null
+          cleanliness?: number | null
+          client_id?: string | null
+          comments?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_public?: boolean | null
+          nps_score?: number | null
+          organization_id?: string | null
+          overall_rating?: number | null
+          responded_at?: string | null
+          service_quality?: number | null
+          staff_friendliness?: number | null
+          staff_user_id?: string | null
+          survey_id?: string | null
+          token?: string
+          would_recommend?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_feedback_responses_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_feedback_responses_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_feedback_responses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_feedback_responses_survey_id_fkey"
+            columns: ["survey_id"]
+            isOneToOne: false
+            referencedRelation: "client_feedback_surveys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_feedback_surveys: {
+        Row: {
+          created_at: string | null
+          delay_hours: number | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          organization_id: string | null
+          trigger_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delay_hours?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          organization_id?: string | null
+          trigger_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delay_hours?: number | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          organization_id?: string | null
+          trigger_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_feedback_surveys_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_form_signatures: {
         Row: {
           appointment_id: string | null
@@ -1748,6 +1884,51 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_portal_tokens: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          last_accessed_at: string | null
+          organization_id: string | null
+          token: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          organization_id?: string | null
+          token: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          last_accessed_at?: string | null
+          organization_id?: string | null
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_portal_tokens_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_portal_tokens_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -4858,6 +5039,53 @@ export type Database = {
         }
         Relationships: []
       }
+      nps_daily_snapshots: {
+        Row: {
+          average_rating: number | null
+          created_at: string | null
+          detractors: number | null
+          id: string
+          nps_score: number | null
+          organization_id: string | null
+          passives: number | null
+          promoters: number | null
+          snapshot_date: string
+          total_responses: number | null
+        }
+        Insert: {
+          average_rating?: number | null
+          created_at?: string | null
+          detractors?: number | null
+          id?: string
+          nps_score?: number | null
+          organization_id?: string | null
+          passives?: number | null
+          promoters?: number | null
+          snapshot_date: string
+          total_responses?: number | null
+        }
+        Update: {
+          average_rating?: number | null
+          created_at?: string | null
+          detractors?: number | null
+          id?: string
+          nps_score?: number | null
+          organization_id?: string | null
+          passives?: number | null
+          promoters?: number | null
+          snapshot_date?: string
+          total_responses?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nps_daily_snapshots_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       onboarding_task_completions: {
         Row: {
           completed_at: string
@@ -7681,6 +7909,130 @@ export type Database = {
           slug?: string
         }
         Relationships: []
+      }
+      reengagement_campaigns: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          email_template_id: string | null
+          id: string
+          inactivity_days: number
+          is_active: boolean | null
+          name: string
+          offer_type: string | null
+          offer_value: string | null
+          organization_id: string | null
+          sms_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          email_template_id?: string | null
+          id?: string
+          inactivity_days?: number
+          is_active?: boolean | null
+          name: string
+          offer_type?: string | null
+          offer_value?: string | null
+          organization_id?: string | null
+          sms_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          email_template_id?: string | null
+          id?: string
+          inactivity_days?: number
+          is_active?: boolean | null
+          name?: string
+          offer_type?: string | null
+          offer_value?: string | null
+          organization_id?: string | null
+          sms_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reengagement_campaigns_email_template_id_fkey"
+            columns: ["email_template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reengagement_campaigns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reengagement_outreach: {
+        Row: {
+          campaign_id: string | null
+          channel: string | null
+          client_id: string | null
+          contacted_at: string | null
+          converted_appointment_id: string | null
+          converted_at: string | null
+          created_at: string | null
+          days_inactive: number | null
+          id: string
+          last_visit_date: string | null
+          status: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          channel?: string | null
+          client_id?: string | null
+          contacted_at?: string | null
+          converted_appointment_id?: string | null
+          converted_at?: string | null
+          created_at?: string | null
+          days_inactive?: number | null
+          id?: string
+          last_visit_date?: string | null
+          status?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          channel?: string | null
+          client_id?: string | null
+          contacted_at?: string | null
+          converted_appointment_id?: string | null
+          converted_at?: string | null
+          created_at?: string | null
+          days_inactive?: number | null
+          id?: string
+          last_visit_date?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reengagement_outreach_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "reengagement_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reengagement_outreach_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reengagement_outreach_converted_appointment_id_fkey"
+            columns: ["converted_appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       referral_conversions: {
         Row: {
@@ -11123,6 +11475,7 @@ export type Database = {
         }[]
       }
       current_user_is_coach: { Args: never; Returns: boolean }
+      generate_secure_token: { Args: never; Returns: string }
       get_booth_renter_profile_id: {
         Args: { _user_id: string }
         Returns: string
