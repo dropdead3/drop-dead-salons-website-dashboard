@@ -10,6 +10,7 @@ import {
   ClipboardList,
   CalendarClock,
   MessageSquarePlus,
+  Shield,
 } from 'lucide-react';
 
 interface HubLinkProps {
@@ -61,6 +62,13 @@ const hubLinks: HubLinkProps[] = [
     icon: MessageSquarePlus, 
     label: 'Feedback Hub', 
     colorClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20',
+    permission: 'manage_settings',
+  },
+  { 
+    href: '/dashboard/admin/access-hub', 
+    icon: Shield, 
+    label: 'Access Hub', 
+    colorClass: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20',
     permission: 'manage_settings',
   },
   {
