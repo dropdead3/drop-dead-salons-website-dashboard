@@ -779,7 +779,7 @@ export default function Settings() {
     },
     loyalty: {
       id: 'loyalty',
-      label: 'Loyalty & Rewards',
+      label: 'Client Rewards',
       description: 'Points, tiers & gift cards',
       icon: Gift,
     },
