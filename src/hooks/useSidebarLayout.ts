@@ -32,6 +32,7 @@ export const MANAGEMENT_SUB_GROUPS = {
     id: 'teamTools',
     label: 'Team Tools',
     links: [
+      '/dashboard/schedule',
       '/dashboard/shift-swaps',
       '/dashboard/rewards',
       '/dashboard/assistant-schedule',
@@ -87,6 +88,7 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   ],
   // Manager section now includes all management items + website + team tools (grouped in UI)
   manager: [
+    '/dashboard/schedule',
     '/dashboard/shift-swaps',
     '/dashboard/rewards',
     '/dashboard/assistant-schedule',
