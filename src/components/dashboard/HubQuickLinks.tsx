@@ -9,6 +9,7 @@ import {
   Globe,
   ClipboardList,
   CalendarClock,
+  MessageSquarePlus,
 } from 'lucide-react';
 
 interface HubLinkProps {
@@ -56,6 +57,13 @@ const hubLinks: HubLinkProps[] = [
     permission: 'manage_homepage_stylists',
   },
   { 
+    href: '/dashboard/admin/feedback', 
+    icon: MessageSquarePlus, 
+    label: 'Feedback Hub', 
+    colorClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20',
+    permission: 'manage_settings',
+  },
+  {
     href: '/dashboard/admin/onboarding-tracker', 
     icon: ClipboardList, 
     label: 'Onboarding Hub', 
