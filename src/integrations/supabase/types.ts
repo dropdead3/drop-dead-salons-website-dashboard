@@ -3064,6 +3064,48 @@ export type Database = {
           },
         ]
       }
+      feature_catalog: {
+        Row: {
+          category: string
+          created_at: string | null
+          default_enabled: boolean | null
+          description: string | null
+          display_order: number | null
+          feature_key: string
+          feature_name: string
+          icon_name: string | null
+          id: string
+          is_core: boolean | null
+          requires_features: string[] | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string | null
+          default_enabled?: boolean | null
+          description?: string | null
+          display_order?: number | null
+          feature_key: string
+          feature_name: string
+          icon_name?: string | null
+          id?: string
+          is_core?: boolean | null
+          requires_features?: string[] | null
+        }
+        Update: {
+          category?: string
+          created_at?: string | null
+          default_enabled?: boolean | null
+          description?: string | null
+          display_order?: number | null
+          feature_key?: string
+          feature_name?: string
+          icon_name?: string | null
+          id?: string
+          is_core?: boolean | null
+          requires_features?: string[] | null
+        }
+        Relationships: []
+      }
       feature_flags: {
         Row: {
           category: string | null
@@ -5386,6 +5428,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "organization_feature_flags_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_features: {
+        Row: {
+          created_at: string | null
+          disabled_at: string | null
+          enabled_at: string | null
+          feature_key: string
+          id: string
+          is_enabled: boolean
+          last_known_config: Json | null
+          organization_id: string
+          updated_at: string | null
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          disabled_at?: string | null
+          enabled_at?: string | null
+          feature_key: string
+          id?: string
+          is_enabled?: boolean
+          last_known_config?: Json | null
+          organization_id: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          disabled_at?: string | null
+          enabled_at?: string | null
+          feature_key?: string
+          id?: string
+          is_enabled?: boolean
+          last_known_config?: Json | null
+          organization_id?: string
+          updated_at?: string | null
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_features_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
