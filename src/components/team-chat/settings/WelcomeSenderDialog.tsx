@@ -15,7 +15,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Eye } from 'lucide-react';
+import { Search, Eye, User } from 'lucide-react';
+import { ROLE_LABELS } from '@/hooks/useUserRoles';
 import { useLeadershipMembers } from '@/hooks/team-chat/useLeadershipMembers';
 import { useWelcomeDMRules, WELCOME_TEMPLATE_VARIABLES, replaceTemplateVariables } from '@/hooks/team-chat/useWelcomeDMRules';
 import type { WelcomeRule } from '@/hooks/team-chat/useWelcomeDMRules';
@@ -165,18 +166,25 @@ export function WelcomeSenderDialog({ open, onOpenChange, editingRule }: Welcome
                         key={member.user_id}
                         type="button"
                         onClick={() => setSelectedUserId(member.user_id)}
-                        className={`w-full flex items-center gap-3 p-3 hover:bg-muted transition-colors ${
+                        className={`w-full flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors ${
                           selectedUserId === member.user_id ? 'bg-primary/10' : ''
-                        }`}
+                        } ${member.isCurrentUser ? 'border-l-2 border-primary' : ''}`}
                       >
                         <Avatar className="h-8 w-8">
                           <AvatarImage src={member.photo_url || undefined} />
                           <AvatarFallback>{member.display_name.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <div className="text-left flex-1">
-                          <div className="font-medium text-sm">{member.display_name}</div>
-                          <div className="text-xs text-muted-foreground capitalize">{member.role}</div>
+                        <div className="text-left flex-1 min-w-0">
+                          <div className="font-medium text-sm flex items-center gap-1.5">
+                            {member.display_name}
+                            {member.isCurrentUser && (
+                              <span className="text-xs text-muted-foreground">(You)</span>
+                            )}
+                          </div>
                         </div>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {ROLE_LABELS[member.role as keyof typeof ROLE_LABELS] || member.role}
+                        </span>
                         {selectedUserId === member.user_id && (
                           <Badge variant="secondary" className="text-xs">Selected</Badge>
                         )}

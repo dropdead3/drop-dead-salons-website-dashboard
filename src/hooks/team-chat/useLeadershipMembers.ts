@@ -9,6 +9,7 @@ export interface LeadershipMember {
   full_name: string | null;
   photo_url: string | null;
   role: string;
+  isCurrentUser?: boolean;
 }
 
 export function useLeadershipMembers() {
@@ -37,8 +38,7 @@ export function useLeadershipMembers() {
         .select('user_id, display_name, full_name, photo_url')
         .eq('organization_id', effectiveOrganization.id)
         .eq('is_approved', true)
-        .in('user_id', leadershipUserIds)
-        .neq('user_id', user?.id ?? '');
+        .in('user_id', leadershipUserIds);
 
       if (profileError) throw profileError;
 
@@ -54,13 +54,21 @@ export function useLeadershipMembers() {
         }
       });
 
-      return (profiles || []).map((p) => ({
+      const mappedMembers = (profiles || []).map((p) => ({
         user_id: p.user_id,
         display_name: p.display_name || p.full_name || 'Unknown',
         full_name: p.full_name,
         photo_url: p.photo_url,
         role: roleMap.get(p.user_id) || 'manager',
+        isCurrentUser: p.user_id === user?.id,
       }));
+
+      // Sort current user first
+      return mappedMembers.sort((a, b) => {
+        if (a.isCurrentUser) return -1;
+        if (b.isCurrentUser) return 1;
+        return 0;
+      });
     },
     enabled: !!effectiveOrganization?.id && !!user,
   });
