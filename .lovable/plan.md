@@ -1,195 +1,136 @@
 
+# Enable Browser Push Notifications
 
-# Team Member Management Tab for Chat Settings
+## Current Status
 
-## Overview
+You have **most of the infrastructure already built**! The push notification system is about 80% complete:
 
-Add a new "Team" tab to the Team Chat Settings panel that provides a centralized view of all team members and their channel access. Admins can:
-- See all team members and which channels they're in
-- Add or remove channel access for each member
-- Enable/disable chat access entirely per member
-
----
-
-## User Interface Design
-
-```text
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  TEAM CHAT SETTINGS                                                    [X]  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│  [Channels] [Display] [Permissions] [Auto-Join] [AI Actions] [Team]        │
-│                                                              ▲ NEW TAB      │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  TEAM MEMBER ACCESS                                                         │
-│  Manage chat access and channel memberships for your team                   │
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │  [Search by name...]            [Filter by role: All Roles  v]     │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │  [Photo] Eric Day                                                   │    │
-│  │          Super Admin                                                │    │
-│  │          ─────────────────────────────────────────────────────────  │    │
-│  │          Channels: #general, #company-wide, #north-mesa, +1 more   │    │
-│  │                                                                     │    │
-│  │          [Manage Channels]              Chat Access: [ON] [====]   │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │  [Photo] Stylist Test Account                                       │    │
-│  │          Stylist                                                    │    │
-│  │          ─────────────────────────────────────────────────────────  │    │
-│  │          Channels: #general, #company-wide                          │    │
-│  │                                                                     │    │
-│  │          [Manage Channels]              Chat Access: [ON] [====]   │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │  [Photo] Former Employee                                            │    │
-│  │          Stylist                                                    │    │
-│  │          ─────────────────────────────────────────────────────────  │    │
-│  │          Channels: (Chat disabled)                                  │    │
-│  │                                                                     │    │
-│  │          [Manage Channels]              Chat Access: [OFF] [    ]  │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Channel Management Dialog
-
-When clicking "Manage Channels", a dialog appears with checkboxes for all available channels:
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│  MANAGE CHANNEL ACCESS                                 [X]  │
-│  Eric Day                                                   │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  System Channels                                            │
-│  ─────────────────────────────────────────────────────────  │
-│  [x] #company-wide     Organization-wide announcements      │
-│  [x] #general          General discussions                  │
-│                                                             │
-│  Location Channels                                          │
-│  ─────────────────────────────────────────────────────────  │
-│  [x] #north-mesa       Channel for North Mesa               │
-│  [ ] #val-vista-lakes  Channel for Val Vista Lakes          │
-│                                                             │
-│  Custom Channels                                            │
-│  ─────────────────────────────────────────────────────────  │
-│  [x] #marketing        (no other custom channels)           │
-│                                                             │
-│               [Cancel]                    [Save Changes]    │
-└─────────────────────────────────────────────────────────────┘
-```
+| Component | Status |
+|-----------|--------|
+| Service Worker | ✅ Ready |
+| Subscribe/Unsubscribe UI | ✅ Ready |
+| Push subscriptions table | ✅ Ready |
+| Edge function to send | ⚠️ Needs Web Push encryption |
+| **VAPID Keys** | ❌ **Missing - BLOCKER** |
+| Chat notification triggers | ❌ Not built |
+| Chat notification preferences | ❌ Not built |
 
 ---
 
-## Technical Architecture
+## Step 1: Generate and Configure VAPID Keys
+
+VAPID (Voluntary Application Server Identification) keys are **required** for Web Push to work. You need to generate a key pair:
+
+### How to Generate Keys
+
+Run this command in any terminal:
+```bash
+npx web-push generate-vapid-keys
+```
+
+This will output:
+```
+Public Key: BNxRW...
+Private Key: DFk2H...
+```
+
+### What You'll Need to Provide
+
+1. **VITE_VAPID_PUBLIC_KEY** - Goes in the frontend (I'll add this)
+2. **VAPID_PUBLIC_KEY** - Backend secret (I'll request this)
+3. **VAPID_PRIVATE_KEY** - Backend secret (I'll request this)
+
+---
+
+## Step 2: Fix Web Push Encryption
+
+The current edge function uses a simplified approach that won't work reliably. I'll update it to use proper **RFC 8291 Web Push encryption**.
+
+```text
+┌────────────────┐         ┌─────────────────┐         ┌───────────────┐
+│  Your Server   │ ──────► │  Push Service   │ ──────► │ User Browser  │
+│  (Edge Func)   │ VAPID   │ (FCM/Mozilla)   │         │  (Service     │
+│                │ signed  │                 │         │   Worker)     │
+└────────────────┘         └─────────────────┘         └───────────────┘
+```
+
+**Technical changes:**
+- Add proper payload encryption using p256dh and auth keys
+- Use VAPID JWT authentication
+- Add web-push npm package for Deno
+
+---
+
+## Step 3: Add Chat Notification Preferences
+
+Extend the notification preferences to include chat-specific options:
+
+| Preference | Description |
+|------------|-------------|
+| `dm_notifications_enabled` | Get notified for new direct messages |
+| `mention_notifications_enabled` | Get notified when someone @mentions you |
+| `channel_notifications_enabled` | Get notified for new messages in channels |
+
+Users can customize which chat events trigger push notifications.
+
+---
+
+## Step 4: Integrate Chat with Push Notifications
+
+Create a trigger that sends push notifications when:
+
+1. **Direct Message received** → Notify recipient if not online
+2. **@Mentioned in a channel** → Notify mentioned user
+3. **New message in subscribed channel** → Notify based on preferences
+
+```text
+┌─────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+│  User sends     │ ──► │  Database        │ ──► │  Edge Function   │
+│  message        │     │  Trigger         │     │  send-push       │
+└─────────────────┘     └──────────────────┘     └──────────────────┘
+                                                          │
+                                                          ▼
+                                               ┌──────────────────┐
+                                               │  Push to         │
+                                               │  recipient(s)    │
+                                               └──────────────────┘
+```
+
+---
+
+## Implementation Plan
 
 ### Database Changes
+1. Add chat notification preference columns to `notification_preferences`
+2. Create database trigger on `chat_messages` table for push notifications
 
-Add a `chat_enabled` column to `employee_profiles` to track whether a user has chat access:
+### Edge Function Updates
+1. Fix `send-push-notification` with proper Web Push encryption
+2. Create `notify-chat-message` edge function for chat-specific logic
 
-```sql
-ALTER TABLE employee_profiles 
-ADD COLUMN chat_enabled BOOLEAN DEFAULT true;
-```
-
-No new tables needed - we'll use existing `chat_channel_members` for channel access.
-
-### New Hook: `useTeamChatAccess`
-
-Fetches all team members with their channel memberships and chat status:
-
-```typescript
-interface TeamMemberChatAccess {
-  userId: string;
-  displayName: string;
-  fullName: string;
-  photoUrl: string | null;
-  accountRoles: AppRole[];
-  chatEnabled: boolean;
-  channels: {
-    id: string;
-    name: string;
-    type: 'public' | 'private' | 'location' | 'dm';
-  }[];
-}
-
-function useTeamChatAccess() {
-  // Fetch all org members with their channel memberships
-  // and chat_enabled status
-}
-```
-
-### New Component: `TeamMembersTab.tsx`
-
-Settings tab component that displays:
-- Searchable/filterable list of team members
-- Each member card shows:
-  - Photo, name, role
-  - Current channel memberships (as chips/tags)
-  - "Manage Channels" button opening the dialog
-  - Chat enabled/disabled toggle switch
-
-### New Component: `ManageChannelsDialog.tsx`
-
-Dialog for bulk managing a user's channel access:
-- Lists all non-DM channels in the organization
-- Grouped by type (System, Location, Custom)
-- Checkboxes to add/remove membership
-- Bulk add/remove via mutations
+### Frontend Updates
+1. Add VAPID public key to environment
+2. Add chat notification preferences to notification settings page
 
 ---
 
-## Files to Create
+## Files to Create/Modify
 
-| File | Purpose |
-|------|---------|
-| `src/components/team-chat/settings/TeamMembersTab.tsx` | Main tab component with member list |
-| `src/components/team-chat/ManageChannelsDialog.tsx` | Dialog for managing a member's channel access |
-| `src/hooks/team-chat/useTeamChatAccess.ts` | Hook to fetch member access data and mutations |
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/components/team-chat/TeamChatAdminSettingsSheet.tsx` | Add "Team" tab (6th tab) |
-| `src/hooks/team-chat/index.ts` | Export new hook |
-| Database migration | Add `chat_enabled` column to `employee_profiles` |
+| File | Action |
+|------|--------|
+| `supabase/functions/send-push-notification/index.ts` | Update with proper Web Push |
+| `supabase/functions/notify-chat-message/index.ts` | Create - Chat notification handler |
+| `src/hooks/useNotificationPreferences.ts` | Add chat preferences |
+| `src/pages/dashboard/NotificationPreferences.tsx` | Add chat notification UI |
+| Database migration | Add columns + trigger |
 
 ---
 
-## Feature Capabilities
+## Next Steps
 
-| Feature | Description |
-|---------|-------------|
-| **View all members** | See every team member with their current channel access |
-| **Search & filter** | Find members by name or filter by account role |
-| **Manage channels** | Add/remove a user from any channel via checkbox interface |
-| **Enable/disable chat** | Toggle switch to completely enable/disable chat for a user |
-| **Bulk operations** | Channel management dialog allows adding to multiple channels at once |
+Before I can implement this, I need you to:
 
----
+1. **Generate VAPID keys** by running: `npx web-push generate-vapid-keys`
+2. **Share the keys** when prompted - I'll securely store them as backend secrets
 
-## Security Considerations
-
-- Only Super Admins and Admins can access the Team tab
-- Audit log entries for chat enable/disable actions
-- Cannot disable chat for Super Admins (self-protection)
-- RLS policies on `chat_channel_members` already handle authorization
-
----
-
-## Benefits
-
-1. **Centralized control** - Manage all user access from one place
-2. **Quick onboarding** - Add new hires to all relevant channels instantly
-3. **Safe offboarding** - Disable chat access without deleting the user
-4. **Visibility** - See who has access to what at a glance
-5. **Audit trail** - Track when chat was enabled/disabled for compliance
-
+Would you like me to proceed with the implementation once you have the VAPID keys?
