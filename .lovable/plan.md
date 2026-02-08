@@ -1,68 +1,77 @@
 
-# Fix Team Chat Bottom Gap
+# Fix Team Chat to Fill Full Window Height
 
 ## Problem
 
-The Team Chat page shows a visible gap at the bottom where the dashboard footer is appearing. This breaks the full-height immersive chat experience.
+The Team Chat has a large gap at the bottom because:
+1. The `DashboardLayout` always renders a footer
+2. The parent container uses `min-h-screen flex flex-col` which doesn't properly constrain height
+3. The `flex-1` on the children wrapper doesn't fill remaining space correctly in this context
 
-### Root Cause
-
-Multiple conflicting height calculations:
-
-| Component | Current Height | Issue |
-|-----------|----------------|-------|
-| `TeamChat.tsx` wrapper | `h-[calc(100vh-4rem)]` | Subtracts header height |
-| `TeamChatContainer` | `h-[calc(100vh-8rem)]` | Different calculation, creates gap |
-| `DashboardLayout` footer | Always visible | Should be hidden for full-height pages |
+### Current Structure
+```
+DashboardLayout
+├── <main> (with padding for sidebar)
+│   └── <div class="min-h-screen flex flex-col">
+│       ├── <div class="flex-1">{children}</div>  ← Chat here, not filling space
+│       └── <footer>                              ← Always visible, causing gap
+```
 
 ---
 
 ## Solution
 
-### Option A: Hide Footer for Team Chat (Recommended)
+Add a `hideFooter` prop to `DashboardLayout` and use proper height constraints for full-screen pages like Team Chat.
 
-Pass a prop to indicate the page should be full-height without footer.
+### Changes
 
 | File | Change |
 |------|--------|
-| `DashboardLayout.tsx` | Add `hideFooter` prop support |
+| `DashboardLayout.tsx` | Add `hideFooter` prop, conditionally render footer |
+| `DashboardLayout.tsx` | Use `h-screen` with `overflow-hidden` when footer is hidden |
 | `TeamChat.tsx` | Pass `hideFooter` to layout |
-| `TeamChatContainer.tsx` | Use `h-full` instead of fixed calc |
 
-### Option B: Simpler Fix - CSS Only
+### 1. Update DashboardLayout.tsx
 
-Make the chat fill the remaining space properly using flexbox.
-
-| File | Change |
-|------|--------|
-| `TeamChat.tsx` | Use `flex-1` and `min-h-0` |
-| `TeamChatContainer.tsx` | Use `h-full` instead of fixed viewport calc |
-
----
-
-## Recommended Changes
-
-### 1. Update TeamChat.tsx
-
-Change the wrapper from fixed calc to flex-based filling:
-
+**Add prop to interface:**
 ```tsx
-<div className="flex-1 min-h-0 overflow-hidden">
-  <TeamChatContainer />
-</div>
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+  hideFooter?: boolean; // For full-screen pages like Team Chat
+}
 ```
 
-### 2. Update TeamChatContainer.tsx
-
-Change from viewport-based height to container-filling:
-
+**Update main content area (lines 1074-1090):**
 ```tsx
-<div className="flex h-full bg-background">
+<main className={cn(
+  "transition-[padding-left] duration-200 ease-in-out",
+  sidebarCollapsed ? "lg:pl-16" : "lg:pl-72",
+  hideFooter && "h-screen overflow-hidden"
+)}>
+  <div className={cn(
+    hideFooter ? "h-full flex flex-col" : "min-h-screen flex flex-col",
+    isAdmin && "lg:pt-0"
+  )}>
+    <div className={cn("flex-1", hideFooter && "min-h-0 overflow-hidden")}>
+      {children}
+    </div>
+    {/* Dashboard Footer - hidden for full-screen pages */}
+    {!hideFooter && (
+      <footer className="py-6 text-center border-t border-border mt-auto">
+        <p className="text-xs text-muted-foreground">
+          © {new Date().getFullYear()} Drop Dead · Powered by Drop Dead Salon Software
+        </p>
+      </footer>
+    )}
+  </div>
+</main>
 ```
 
-### 3. Update DashboardLayout.tsx (Optional Enhancement)
+### 2. Update TeamChat.tsx
 
-Add support for hiding footer on full-height pages like Team Chat.
+```tsx
+<DashboardLayout hideFooter>
+```
 
 ---
 
@@ -70,8 +79,8 @@ Add support for hiding footer on full-height pages like Team Chat.
 
 | File | Change |
 |------|--------|
-| `src/pages/dashboard/TeamChat.tsx` | Use flex-based height filling |
-| `src/components/team-chat/TeamChatContainer.tsx` | Use `h-full` instead of `calc` |
+| `src/components/dashboard/DashboardLayout.tsx` | Add `hideFooter` prop support |
+| `src/pages/dashboard/TeamChat.tsx` | Pass `hideFooter` to layout |
 
 ---
 
@@ -79,6 +88,6 @@ Add support for hiding footer on full-height pages like Team Chat.
 
 | Before | After |
 |--------|-------|
-| Footer visible below chat | Chat fills entire available space |
-| Fixed viewport calculations conflict | Flexbox properly fills container |
-| Gap at bottom | Seamless full-height chat |
+| Footer visible below chat | Footer hidden on Team Chat |
+| Chat doesn't fill space | Chat fills entire available height |
+| Gap at bottom | Full-screen immersive chat experience |
