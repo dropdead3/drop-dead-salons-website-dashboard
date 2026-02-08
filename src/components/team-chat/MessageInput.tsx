@@ -69,8 +69,16 @@ export function MessageInput() {
   if (!activeChannel) return null;
 
   const canSend = !!activeChannel.membership;
-  const displayName = getChannelDisplayName(activeChannel);
   const isDM = activeChannel.type === 'dm' || activeChannel.type === 'group_dm';
+  
+  // Get display name - for DMs, try to get partner name from members if dm_partner isn't available
+  let displayName = getChannelDisplayName(activeChannel);
+  if (isDM && displayName === 'Team Member' && members.length > 0) {
+    const partner = members.find(m => m.profile?.displayName || m.profile?.fullName);
+    if (partner) {
+      displayName = partner.profile.displayName || partner.profile.fullName || displayName;
+    }
+  }
 
   return (
     <div className="border-t p-4">

@@ -52,8 +52,17 @@ export function MessageList() {
   }
 
   if (messages.length === 0) {
-    const displayName = getChannelDisplayName(activeChannel);
     const isDM = activeChannel.type === 'dm' || activeChannel.type === 'group_dm';
+    
+    // For DMs, try to get partner name from dm_partner or from members list
+    let displayName = getChannelDisplayName(activeChannel);
+    if (isDM && displayName === 'Team Member' && members.length > 0) {
+      // Find a member with a display name
+      const partner = members.find(m => m.profile?.displayName || m.profile?.fullName);
+      if (partner) {
+        displayName = partner.profile.displayName || partner.profile.fullName || displayName;
+      }
+    }
     
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
