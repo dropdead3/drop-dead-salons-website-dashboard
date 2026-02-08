@@ -33,7 +33,7 @@ export function useMessageSearch(query: string, enabled: boolean = true) {
         .from('chat_messages')
         .select(`
           *,
-          sender:employee_profiles!chat_messages_sender_id_fkey (
+          sender:employee_profiles!chat_messages_sender_employee_fkey (
             user_id,
             full_name,
             display_name,

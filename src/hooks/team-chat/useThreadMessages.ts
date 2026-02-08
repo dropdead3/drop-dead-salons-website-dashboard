@@ -21,7 +21,7 @@ export function useThreadMessages(parentMessageId: string | null) {
         .from('chat_messages')
         .select(`
           *,
-          sender:employee_profiles!chat_messages_sender_id_fkey (
+          sender:employee_profiles!chat_messages_sender_employee_fkey (
             user_id,
             full_name,
             display_name,
@@ -56,7 +56,7 @@ export function useThreadMessages(parentMessageId: string | null) {
         .from('chat_messages')
         .select(`
           *,
-          sender:employee_profiles!chat_messages_sender_id_fkey (
+          sender:employee_profiles!chat_messages_sender_employee_fkey (
             user_id,
             full_name,
             display_name,
