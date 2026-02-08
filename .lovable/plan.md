@@ -1,145 +1,134 @@
 
-
-# Role-Based Welcome Senders
+# Automatic Location Channel Assignment on Profile Update
 
 ## Overview
 
-Instead of tying welcome messages to a specific user (who might leave or change roles), attach them to a **role**. The system will dynamically find whoever currently holds that role and send the welcome message from them.
-
-**Key Benefits:**
-- If a Manager leaves, messages automatically come from the new Manager
-- If no one has the role, that welcome rule is automatically inactive (no errors)
-- More maintainable and resilient to team changes
+When a team member updates their assigned locations (via their own profile or through admin editing), they should automatically be added to the corresponding location-specific chat channels. This ensures chat access stays in sync with location assignments.
 
 ---
 
-## How It Works
+## Current State
+
+1. **`useAutoJoinLocationChannels` hook** - Already exists and runs when a user first opens Team Chat
+   - Only runs once per session (uses `hasRun` ref)
+   - Joins user to public channels and location channels matching their profile
+
+2. **Profile update flow** - Uses `useUpdateEmployeeProfile` hook
+   - Updates `location_id` and `location_ids` fields
+   - Does NOT trigger any chat channel sync
+
+**Problem**: If an admin assigns a user to "Val Vista Lakes" location, that user won't see the Val Vista Lakes chat channel until they refresh or re-enter Team Chat.
+
+---
+
+## Proposed Solution
+
+Create a **database trigger** that automatically syncs chat channel memberships whenever `employee_profiles.location_ids` changes. This is the most reliable approach because:
+
+1. Works regardless of which UI/API updates the profile
+2. Runs server-side, so it works even if the user isn't logged in
+3. Can handle both adding AND removing locations
+
+---
+
+## Implementation Details
+
+### Database Trigger Function
+
+Create a PostgreSQL function that:
+1. Detects changes to `location_id` or `location_ids` columns
+2. Finds location-type channels matching the new/removed locations
+3. Adds/removes the user from those channels
 
 ```text
-Current Flow (user-based):
-┌─────────────────────────────┐
-│ Rule: Send from Sarah Chen  │ ──→ Sarah leaves ──→ Rule breaks!
-└─────────────────────────────┘
-
-New Flow (role-based):
-┌─────────────────────────────┐
-│ Rule: Send from "Manager"   │ ──→ Sarah leaves ──→ New manager sends
-└─────────────────────────────┘
-                              ──→ No manager? ──→ Rule auto-deactivates
+When employee_profiles UPDATE:
+  ┌─────────────────────────────────────────────────────────────┐
+  │ Compare OLD.location_ids vs NEW.location_ids                │
+  │                                                             │
+  │ NEW locations not in OLD → Add to matching location channels│
+  │ OLD locations not in NEW → Remove from matching channels    │
+  └─────────────────────────────────────────────────────────────┘
 ```
 
----
+### SQL Migration
 
-## Database Changes
-
-**Modify `team_chat_welcome_rules` table:**
-- Replace `sender_user_id` with `sender_role` (app_role type)
-- Drop the unique constraint on `(organization_id, sender_user_id)`
-- Add new unique constraint on `(organization_id, sender_role)` to prevent duplicate role configs
-
-**Migration SQL:**
 ```sql
--- Add sender_role column
-ALTER TABLE public.team_chat_welcome_rules 
-ADD COLUMN sender_role TEXT NOT NULL DEFAULT 'manager';
-
--- Drop old unique constraint
-ALTER TABLE public.team_chat_welcome_rules 
-DROP CONSTRAINT IF EXISTS team_chat_welcome_rules_organization_id_sender_user_id_key;
-
--- Add new unique constraint  
-ALTER TABLE public.team_chat_welcome_rules
-ADD CONSTRAINT team_chat_welcome_rules_org_role_unique 
-UNIQUE(organization_id, sender_role);
-
--- Eventually drop sender_user_id (after migration)
-ALTER TABLE public.team_chat_welcome_rules 
-DROP COLUMN IF EXISTS sender_user_id;
-```
-
----
-
-## UI Changes
-
-### WelcomeSenderDialog
-Replace the user picker with a **role selector**:
-
-```text
-Before (user picker):
-┌─────────────────────────────────────────────────────────────┐
-│  Select Sender                                              │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │ 🔍 Search team members...                              │ │
-│  ├────────────────────────────────────────────────────────┤ │
-│  │ [Avatar] Sarah Chen (You)                   Super Admin│ │
-│  │ [Avatar] Mike Johnson                          Manager │ │
-│  └────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-
-After (role picker):
-┌─────────────────────────────────────────────────────────────┐
-│  Select Sender Role                                         │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │ ○ Super Admin    - Complete system access              │ │
-│  │ ● Manager        - Can manage team, view reports       │ │
-│  │ ○ Admin          - Full access to all features         │ │
-│  └────────────────────────────────────────────────────────┘ │
-│                                                             │
-│  Currently filling this role:                               │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │ [Avatar] Mike Johnson                                  │ │
-│  └────────────────────────────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### WelcomeDMsTab
-Update the rule cards to show role instead of user:
-
-```text
-┌─────────────────────────────────────────────────────────────┐
-│ [≡]  👔 Manager                                      [Edit] │
-│      "Welcome to the team, [new_member_name]! 👋..."        │
-│      Currently: Mike Johnson • Sends to: All roles          │
-└─────────────────────────────────────────────────────────────┘
-│ [≡]  👑 Super Admin                           (No one) [!]  │
-│      "Hey [new_member_name]! I'm the owner..."              │
-│      Currently: Unassigned • Sends to: Stylists             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-When no one has the role, show a warning badge "No one assigned" and the rule appears dimmed.
-
----
-
-## Edge Function Updates
-
-**`send-welcome-dms` function changes:**
-1. Read `sender_role` instead of `sender_user_id`
-2. Query `user_roles` to find users with that role in the organization
-3. Pick the first matching user (or primary owner for super_admin)
-4. If no user has the role, skip the rule (auto-deactivate behavior)
-5. Send message from the resolved user
-
-```typescript
-// Pseudocode for role resolution
-async function resolveSenderForRole(orgId: string, role: string): Promise<User | null> {
-  const { data: usersWithRole } = await supabase
-    .from('user_roles')
-    .select('user_id')
-    .eq('role', role);
+-- Function to sync chat channel memberships based on location assignments
+CREATE OR REPLACE FUNCTION public.sync_location_channel_memberships()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  old_locations TEXT[];
+  new_locations TEXT[];
+  added_locations TEXT[];
+  removed_locations TEXT[];
+  org_id UUID;
+BEGIN
+  -- Get organization_id
+  org_id := COALESCE(NEW.organization_id, OLD.organization_id);
   
-  if (!usersWithRole?.length) return null; // No one has this role
+  -- Build location arrays (handle both location_id and location_ids)
+  old_locations := COALESCE(OLD.location_ids, ARRAY[]::TEXT[]);
+  IF OLD.location_id IS NOT NULL AND NOT (OLD.location_id = ANY(old_locations)) THEN
+    old_locations := array_append(old_locations, OLD.location_id);
+  END IF;
   
-  // Get the first user's profile from this org
-  const { data: sender } = await supabase
-    .from('employee_profiles')
-    .select('*')
-    .eq('organization_id', orgId)
-    .in('user_id', usersWithRole.map(u => u.user_id))
-    .single();
-    
-  return sender;
-}
+  new_locations := COALESCE(NEW.location_ids, ARRAY[]::TEXT[]);
+  IF NEW.location_id IS NOT NULL AND NOT (NEW.location_id = ANY(new_locations)) THEN
+    new_locations := array_append(new_locations, NEW.location_id);
+  END IF;
+  
+  -- Find added locations
+  added_locations := ARRAY(
+    SELECT unnest(new_locations)
+    EXCEPT
+    SELECT unnest(old_locations)
+  );
+  
+  -- Find removed locations
+  removed_locations := ARRAY(
+    SELECT unnest(old_locations)
+    EXCEPT
+    SELECT unnest(new_locations)
+  );
+  
+  -- Add user to location channels for newly added locations
+  IF array_length(added_locations, 1) > 0 THEN
+    INSERT INTO public.chat_channel_members (channel_id, user_id, role)
+    SELECT c.id, NEW.user_id, 'member'
+    FROM public.chat_channels c
+    WHERE c.organization_id = org_id
+      AND c.type = 'location'
+      AND c.location_id = ANY(added_locations)
+      AND c.is_archived = false
+    ON CONFLICT (channel_id, user_id) DO NOTHING;
+  END IF;
+  
+  -- Remove user from location channels for removed locations
+  IF array_length(removed_locations, 1) > 0 THEN
+    DELETE FROM public.chat_channel_members
+    WHERE user_id = NEW.user_id
+      AND channel_id IN (
+        SELECT c.id FROM public.chat_channels c
+        WHERE c.organization_id = org_id
+          AND c.type = 'location'
+          AND c.location_id = ANY(removed_locations)
+      );
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+-- Create trigger on employee_profiles
+DROP TRIGGER IF EXISTS sync_location_channels_on_profile_update ON public.employee_profiles;
+CREATE TRIGGER sync_location_channels_on_profile_update
+  AFTER UPDATE OF location_id, location_ids ON public.employee_profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.sync_location_channel_memberships();
 ```
 
 ---
@@ -148,45 +137,31 @@ async function resolveSenderForRole(orgId: string, role: string): Promise<User |
 
 | File | Changes |
 |------|---------|
-| `supabase/migrations/` | Add migration to change schema from `sender_user_id` to `sender_role` |
-| `src/hooks/team-chat/useWelcomeDMRules.ts` | Update types and queries for role-based rules |
-| `src/components/team-chat/settings/WelcomeSenderDialog.tsx` | Replace user picker with role selector |
-| `src/components/team-chat/settings/WelcomeDMsTab.tsx` | Update display to show role + current holder |
-| `supabase/functions/send-welcome-dms/index.ts` | Resolve sender from role at runtime |
+| `supabase/migrations/[new].sql` | Add trigger function and trigger |
 
 ---
 
-## New Hook: useRoleMembers
+## Behavior Matrix
 
-Create a helper hook to get which users currently hold a specific role in the organization:
-
-**File:** `src/hooks/team-chat/useRoleMembers.ts`
-
-```typescript
-export function useRoleMembers(role: string) {
-  // Returns array of users who have this role in the current org
-  // Used to show "Currently: Mike Johnson" in the UI
-}
-```
+| Action | Result |
+|--------|--------|
+| Admin assigns user to "Val Vista Lakes" | User auto-joined to val-vista-lakes channel |
+| User adds "North Mesa" to their locations | User auto-joined to north-mesa channel |
+| Admin removes "Val Vista Lakes" from user | User removed from val-vista-lakes channel |
+| User updates unrelated profile fields | No channel changes |
+| New location channel created | Existing users NOT auto-added (future enhancement) |
 
 ---
 
-## Expected Behavior
+## Edge Cases Handled
 
-| Scenario | Result |
-|----------|--------|
-| Manager configured, Mike is Manager | Welcome sent from Mike |
-| Manager configured, Mike leaves, Jane becomes Manager | Welcome sent from Jane |
-| Manager configured, no one has Manager role | Rule is skipped (no error) |
-| Super Admin configured, owner exists | Welcome sent from owner |
+1. **Duplicate memberships** - Uses `ON CONFLICT DO NOTHING`
+2. **Archived channels** - Only syncs to non-archived channels
+3. **Both location_id and location_ids** - Handles legacy and new fields
+4. **Cross-organization** - Scoped by organization_id
 
 ---
 
 ## Summary
 
-This change makes the welcome DM system more resilient by:
-1. Decoupling messages from specific users
-2. Auto-resolving the sender at message time
-3. Gracefully handling vacant roles
-4. Showing admins who currently fills each role
-
+This database trigger approach ensures location-based chat channel access is always synchronized with the user's profile assignments, regardless of how the profile is updated (self-edit, admin edit, API, etc.).
