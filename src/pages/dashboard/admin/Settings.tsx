@@ -452,7 +452,7 @@ function UserCard({
           </SelectTrigger>
           <SelectContent className="bg-popover">
             <SelectGroup>
-              <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Leadership</SelectLabel>
+              <SelectLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Leadership</SelectLabel>
               {dynamicRoleOptions
                 .filter(role => ['super_admin', 'admin', 'manager', 'general_manager', 'assistant_manager'].includes(role.value))
                 .map(role => (
@@ -462,7 +462,7 @@ function UserCard({
                 ))}
             </SelectGroup>
             <SelectGroup>
-              <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Operations</SelectLabel>
+              <SelectLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Operations</SelectLabel>
               {dynamicRoleOptions
                 .filter(role => ['director_of_operations', 'operations_assistant', 'receptionist', 'front_desk'].includes(role.value))
                 .map(role => (
@@ -472,7 +472,7 @@ function UserCard({
                 ))}
             </SelectGroup>
             <SelectGroup>
-              <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Stylists</SelectLabel>
+              <SelectLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Stylists</SelectLabel>
               {dynamicRoleOptions
                 .filter(role => ['stylist', 'stylist_assistant'].includes(role.value))
                 .map(role => (
@@ -488,7 +488,7 @@ function UserCard({
               if (otherRoles.length === 0) return null;
               return (
                 <SelectGroup>
-                  <SelectLabel className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Other</SelectLabel>
+                  <SelectLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Other</SelectLabel>
                   {otherRoles.map(role => (
                     <SelectItem key={role.value} value={role.value}>
                       {role.label}

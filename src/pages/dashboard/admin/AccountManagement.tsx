@@ -657,7 +657,7 @@ export default function AccountManagement() {
                 <Send className="w-5 h-5 text-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{pendingInviteCount}</p>
+                <p className="text-2xl font-medium">{pendingInviteCount}</p>
                 <p className="text-sm text-muted-foreground">Pending Invites</p>
               </div>
             </CardContent>
@@ -668,7 +668,7 @@ export default function AccountManagement() {
                 <Clock className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{pendingApprovalCount}</p>
+                <p className="text-2xl font-medium">{pendingApprovalCount}</p>
                 <p className="text-sm text-muted-foreground">Needs Approval</p>
               </div>
             </CardContent>
@@ -679,7 +679,7 @@ export default function AccountManagement() {
                 <UserCheck className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{approvedCount}</p>
+                <p className="text-2xl font-medium">{approvedCount}</p>
                 <p className="text-sm text-muted-foreground">Approved</p>
               </div>
             </CardContent>
@@ -690,7 +690,7 @@ export default function AccountManagement() {
                 <Crown className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{superAdminCount}</p>
+                <p className="text-2xl font-medium">{superAdminCount}</p>
                 <p className="text-sm text-muted-foreground">Super Admins</p>
               </div>
             </CardContent>

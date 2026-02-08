@@ -36,7 +36,7 @@ export function BookingHeader({ step, title, subtitle, onClose, onBack }: Bookin
             </div>
           )}
           <div>
-            <h2 className="font-semibold text-base">{title}</h2>
+            <h2 className="font-medium text-base">{title}</h2>
             <p className="text-xs text-muted-foreground">{subtitle}</p>
           </div>
         </div>

@@ -116,7 +116,7 @@ export default function DataImport() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">1</span>
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">1</span>
                   Select Import Source
                 </CardTitle>
                 <CardDescription>
@@ -149,7 +149,7 @@ export default function DataImport() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">2</span>
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">2</span>
                     Select Data Type
                   </CardTitle>
                   <CardDescription>
@@ -194,7 +194,7 @@ export default function DataImport() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-bold">3</span>
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">3</span>
                     Upload & Configure
                   </CardTitle>
                   <CardDescription>

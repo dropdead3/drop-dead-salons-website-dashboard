@@ -73,7 +73,7 @@ export function ConfirmStep({
                 </AvatarFallback>
               </Avatar>
               <div>
-                <div className="font-semibold">{client?.name}</div>
+                <div className="font-medium">{client?.name}</div>
                 <div className="text-sm text-muted-foreground">
                   {client?.phone || client?.email || 'No contact info'}
                 </div>
@@ -83,7 +83,7 @@ export function ConfirmStep({
 
           {/* Appointment Details */}
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Appointment Details
             </h3>
 
@@ -143,7 +143,7 @@ export function ConfirmStep({
 
           {/* Services */}
           <div className="space-y-3">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Services
             </h3>
             <div className="bg-card border border-border rounded-xl divide-y divide-border">
@@ -159,7 +159,7 @@ export function ConfirmStep({
                     </div>
                   </div>
                   {service.price !== null && (
-                    <span className="font-semibold text-sm">${service.price.toFixed(0)}</span>
+                    <span className="font-medium text-sm">${service.price.toFixed(0)}</span>
                   )}
                 </div>
               ))}
@@ -170,7 +170,7 @@ export function ConfirmStep({
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <StickyNote className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                 Notes (optional)
               </h3>
             </div>

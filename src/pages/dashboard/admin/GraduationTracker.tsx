@@ -497,7 +497,7 @@ export default function GraduationTracker() {
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold flex items-center gap-3">
+            <h1 className="text-3xl font-medium flex items-center gap-3">
               <GraduationCap className="h-8 w-8 text-primary" />
               Graduation Tracker
             </h1>
@@ -516,7 +516,7 @@ export default function GraduationTracker() {
                   <Users className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.total}</p>
+                  <p className="text-2xl font-medium">{stats.total}</p>
                   <p className="text-sm text-muted-foreground">Total Assistants</p>
                 </div>
               </div>
@@ -529,7 +529,7 @@ export default function GraduationTracker() {
                   <Clock className="h-5 w-5 text-amber-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.pendingReviews}</p>
+                  <p className="text-2xl font-medium">{stats.pendingReviews}</p>
                   <p className="text-sm text-muted-foreground">Pending Reviews</p>
                 </div>
               </div>
@@ -542,7 +542,7 @@ export default function GraduationTracker() {
                   <AlertCircle className="h-5 w-5 text-rose-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.needsRevision}</p>
+                  <p className="text-2xl font-medium">{stats.needsRevision}</p>
                   <p className="text-sm text-muted-foreground">Needs Revision</p>
                 </div>
               </div>
@@ -555,7 +555,7 @@ export default function GraduationTracker() {
                   <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{stats.graduated}</p>
+                  <p className="text-2xl font-medium">{stats.graduated}</p>
                   <p className="text-sm text-muted-foreground">Ready to Graduate</p>
                 </div>
               </div>

@@ -85,25 +85,25 @@ export function ReferralProgramManager({ organizationId }: ReferralProgramManage
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{activeLinks.length}</div>
+            <div className="text-2xl font-medium">{activeLinks.length}</div>
             <p className="text-sm text-muted-foreground">Active Links</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">{totalConversions}</div>
+            <div className="text-2xl font-medium">{totalConversions}</div>
             <p className="text-sm text-muted-foreground">Total Referrals</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">${totalRevenue.toFixed(0)}</div>
+            <div className="text-2xl font-medium">${totalRevenue.toFixed(0)}</div>
             <p className="text-sm text-muted-foreground">Revenue Generated</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-medium">
               {totalConversions > 0 ? `$${(totalRevenue / totalConversions).toFixed(0)}` : '$0'}
             </div>
             <p className="text-sm text-muted-foreground">Avg. Referral Value</p>

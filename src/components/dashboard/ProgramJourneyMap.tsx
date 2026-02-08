@@ -181,7 +181,7 @@ function WeekNodeIcon({
           sizeClasses,
           "rounded-full bg-primary text-primary-foreground flex items-center justify-center ring-4 ring-primary/20"
         )}>
-          <span className="text-xs font-bold">{weekNumber}</span>
+          <span className="text-xs font-medium">{weekNumber}</span>
         </div>
       );
     case 'upcoming':

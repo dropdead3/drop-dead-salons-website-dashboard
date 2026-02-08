@@ -106,7 +106,7 @@ export function FlashSaleBanner({
         <div className="flex items-center gap-3">
           <Zap className="h-5 w-5 animate-pulse" />
           <div>
-            <p className="font-semibold text-sm md:text-base">
+            <p className="font-medium text-sm md:text-base">
               {bannerText || `⚡ FLASH SALE: ${discountText} on ${promotionName}`}
             </p>
           </div>
@@ -129,7 +129,7 @@ export function FlashSaleBanner({
           <Button
             size="sm"
             variant="secondary"
-            className="bg-white text-black hover:bg-gray-100 font-semibold"
+            className="bg-white text-black hover:bg-gray-100 font-medium"
             asChild
           >
             <a href={bookingUrl}>Book Now</a>
@@ -152,7 +152,7 @@ export function FlashSaleBanner({
 function TimeBlock({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex items-center">
-      <span className="bg-white/20 px-1.5 py-0.5 rounded font-mono font-bold">
+      <span className="bg-white/20 px-1.5 py-0.5 rounded font-mono font-medium">
         {value.toString().padStart(2, '0')}
       </span>
       <span className="text-xs ml-0.5 mr-1.5">{label}</span>

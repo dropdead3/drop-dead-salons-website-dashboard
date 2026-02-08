@@ -151,7 +151,7 @@ export function CampaignBudgetManager({ open, onOpenChange }: CampaignBudgetMana
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Total Budget</span>
                   </div>
-                  <p className="text-2xl font-bold tabular-nums mt-1">
+                  <p className="text-2xl font-medium tabular-nums mt-1">
                     ${totalBudget.toLocaleString()}
                   </p>
                 </CardContent>
@@ -162,7 +162,7 @@ export function CampaignBudgetManager({ open, onOpenChange }: CampaignBudgetMana
                     <DollarSign className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Total Spend</span>
                   </div>
-                  <p className="text-2xl font-bold tabular-nums mt-1">
+                  <p className="text-2xl font-medium tabular-nums mt-1">
                     ${totalSpend.toLocaleString()}
                   </p>
                 </CardContent>

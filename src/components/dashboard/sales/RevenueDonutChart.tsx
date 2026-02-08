@@ -119,7 +119,7 @@ export function RevenueDonutChart({
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground">Retail %</span>
                 <MetricInfoTooltip description="Product Revenue ÷ Total Revenue × 100. Shows retail sales as a percentage of all revenue." />
-                <span className="font-semibold text-foreground">
+                <span className="font-medium text-foreground">
                   {100 - servicePercent}%
                 </span>
               </div>

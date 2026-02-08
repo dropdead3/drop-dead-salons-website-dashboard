@@ -52,7 +52,7 @@ export default function AccessHub() {
               <Shield className="h-5 w-5" />
             </div>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold tracking-tight">Access & Controls Hub</h1>
+              <h1 className="text-2xl font-medium tracking-tight">Access & Controls Hub</h1>
               <p className="text-muted-foreground">
                 Manage modules, permissions, and visibility in one place
               </p>

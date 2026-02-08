@@ -70,15 +70,15 @@ function CampaignCard({ campaign }: { campaign: ReengagementCampaign }) {
         {stats && (
           <div className="grid grid-cols-3 gap-2 text-center text-sm">
             <div>
-              <p className="font-semibold">{stats.totalOutreach}</p>
+              <p className="font-medium">{stats.totalOutreach}</p>
               <p className="text-xs text-muted-foreground">Sent</p>
             </div>
             <div>
-              <p className="font-semibold">{stats.converted}</p>
+              <p className="font-medium">{stats.converted}</p>
               <p className="text-xs text-muted-foreground">Converted</p>
             </div>
             <div>
-              <p className="font-semibold text-green-600">{stats.conversionRate}%</p>
+              <p className="font-medium text-green-600">{stats.conversionRate}%</p>
               <p className="text-xs text-muted-foreground">Rate</p>
             </div>
           </div>
@@ -222,7 +222,7 @@ export default function ReengagementHub() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{activeCampaigns.length}</p>
+              <p className="text-3xl font-medium">{activeCampaigns.length}</p>
             </CardContent>
           </Card>
           
@@ -234,7 +234,7 @@ export default function ReengagementHub() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">{atRiskClients?.length || 0}</p>
+              <p className="text-3xl font-medium">{atRiskClients?.length || 0}</p>
               <p className="text-xs text-muted-foreground">
                 Inactive 60+ days
               </p>
@@ -249,7 +249,7 @@ export default function ReengagementHub() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">--</p>
+              <p className="text-3xl font-medium">--</p>
               <p className="text-xs text-muted-foreground">
                 Across all campaigns
               </p>

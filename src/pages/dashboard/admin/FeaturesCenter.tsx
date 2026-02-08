@@ -91,7 +91,7 @@ export default function FeaturesCenter() {
               <Blocks className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Features Center</h1>
+              <h1 className="text-2xl font-medium tracking-tight">Features Center</h1>
               <p className="text-muted-foreground">
                 Customize which features are available in your organization
               </p>
