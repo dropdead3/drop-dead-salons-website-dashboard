@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -26,6 +27,7 @@ export interface MessageWithSender extends ChatMessage {
 
 export function useChatMessages(channelId: string | null) {
   const { user } = useAuth();
+  const { data: userProfile } = useEmployeeProfile();
   const queryClient = useQueryClient();
   const channelRef = useRef<RealtimeChannel | null>(null);
 
@@ -167,8 +169,55 @@ export function useChatMessages(channelId: string | null) {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      // CRITICAL: Invalidate cache immediately to show the new message
+    onMutate: async ({ content, parentMessageId }) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ['chat-messages', channelId] });
+
+      // Snapshot previous messages for rollback
+      const previousMessages = queryClient.getQueryData<MessageWithSender[]>(['chat-messages', channelId]);
+
+      // Create optimistic message with user's profile info
+      const optimisticMessage: MessageWithSender = {
+        id: `temp-${Date.now()}`,
+        channel_id: channelId!,
+        sender_id: user!.id,
+        content,
+        content_html: null,
+        parent_message_id: parentMessageId || null,
+        is_edited: false,
+        is_deleted: false,
+        deleted_at: null,
+        metadata: {},
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        sender: userProfile ? {
+          id: userProfile.user_id,
+          full_name: userProfile.full_name,
+          display_name: userProfile.display_name,
+          photo_url: userProfile.photo_url,
+        } : undefined,
+        reactions: [],
+        reply_count: 0,
+      };
+
+      // Add optimistic message to cache immediately
+      queryClient.setQueryData<MessageWithSender[]>(
+        ['chat-messages', channelId],
+        (old = []) => [...old, optimisticMessage]
+      );
+
+      return { previousMessages };
+    },
+    onError: (error, _variables, context) => {
+      // Rollback to previous messages on error
+      if (context?.previousMessages) {
+        queryClient.setQueryData(['chat-messages', channelId], context.previousMessages);
+      }
+      console.error('Failed to send message:', error);
+      toast.error('Failed to send message');
+    },
+    onSettled: () => {
+      // Refetch to sync with server (replaces temp ID with real ID)
       queryClient.invalidateQueries({ queryKey: ['chat-messages', channelId] });
       
       // Update last_read_at for the user in this channel
@@ -180,10 +229,6 @@ export function useChatMessages(channelId: string | null) {
           .eq('user_id', user.id)
           .then(() => {});
       }
-    },
-    onError: (error) => {
-      console.error('Failed to send message:', error);
-      toast.error('Failed to send message');
     },
   });
 
