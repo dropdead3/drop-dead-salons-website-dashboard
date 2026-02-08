@@ -117,6 +117,12 @@ import RewardShop from "./pages/dashboard/RewardShop";
 import PointsConfig from "./pages/dashboard/admin/PointsConfig";
 import DailyHuddle from "./pages/dashboard/admin/DailyHuddle";
 
+// Phase 3: Client Engagement Tools
+import ClientFeedbackPage from "./pages/ClientFeedback";
+import ClientPortalPage from "./pages/ClientPortal";
+import FeedbackHub from "./pages/dashboard/admin/FeedbackHub";
+import ReengagementHub from "./pages/dashboard/admin/ReengagementHub";
+
 // Renter Portal pages
 import RenterPortal from "./pages/dashboard/RenterPortal";
 import RenterPayRent from "./pages/dashboard/RenterPayRent";
@@ -174,6 +180,8 @@ const App = () => (
                       <Route path="/platform-login" element={<PlatformLogin />} />
                       <Route path="/book" element={<PublicBooking />} />
                       <Route path="/day-rate" element={<DayRateBooking />} />
+                      <Route path="/feedback" element={<ClientFeedbackPage />} />
+                      <Route path="/rewards" element={<ClientPortalPage />} />
 
                       {/* Protected dashboard routes */}
                       <Route path="/dashboard" element={<ProtectedRoute requiredPermission="view_command_center"><DashboardHome /></ProtectedRoute>} />
@@ -261,6 +269,8 @@ const App = () => (
                       <Route path="/dashboard/register" element={<ProtectedRoute requiredPermission="process_retail_sales"><Register /></ProtectedRoute>} />
                       <Route path="/dashboard/settings/loyalty" element={<ProtectedRoute requiredPermission="manage_loyalty_program"><LoyaltyProgram /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/booth-renters" element={<ProtectedRoute requiredPermission="manage_booth_renters"><BoothRenters /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/feedback" element={<ProtectedRoute requiredPermission="manage_settings"><FeedbackHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/reengagement" element={<ProtectedRoute requiredPermission="manage_settings"><ReengagementHub /></ProtectedRoute>} />
                       
                       {/* Team Challenges routes */}
                       <Route path="/dashboard/admin/challenges" element={<ProtectedRoute requiredPermission="view_team_overview"><ChallengesDashboard /></ProtectedRoute>} />
