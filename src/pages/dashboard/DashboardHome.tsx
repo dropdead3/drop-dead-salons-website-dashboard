@@ -353,7 +353,10 @@ function DashboardSections({
   // Build section components map (excludes pinned cards - those are rendered separately)
   const sectionComponents = useMemo(() => ({
     hub_quicklinks: isLeadership && (
-      <HubQuickLinks />
+      <HubQuickLinks 
+        hubOrder={layout.hubOrder}
+        enabledHubs={layout.enabledHubs}
+      />
     ),
     
     quick_actions: showQuickActions && (

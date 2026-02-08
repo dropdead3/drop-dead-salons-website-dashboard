@@ -42,6 +42,7 @@ import {
 } from '@/hooks/useDashboardLayout';
 import { Link } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   DndContext, 
   closestCenter, 
@@ -60,6 +61,8 @@ import {
 import { SortableSectionItem } from './SortableSectionItem';
 import { SortableWidgetItem } from './SortableWidgetItem';
 import { SortablePinnedCardItem } from './SortablePinnedCardItem';
+import { SortableHubItem } from './SortableHubItem';
+import { hubLinks } from './HubQuickLinks';
 import { useDashboardVisibility, useToggleDashboardVisibility, useRegisterVisibilityElement } from '@/hooks/useDashboardVisibility';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -264,6 +267,31 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const unpinnedCards = useMemo(() => {
     return PINNABLE_CARDS.filter(card => !isCardPinned(card.id));
   }, [visibilityData]);
+  
+  // Get hubs filtered by user permission for customization
+  const { hasPermission } = useAuth();
+  const permittedHubs = useMemo(() => {
+    return hubLinks.filter(hub => !hub.permission || hasPermission(hub.permission));
+  }, [hasPermission]);
+  
+  // Compute ordered hubs from layout preferences
+  const orderedHubs = useMemo(() => {
+    const savedOrder = layout.hubOrder || [];
+    const enabledHubs = layout.enabledHubs;
+    const hubHrefs = permittedHubs.map(h => h.href);
+    
+    // Start with hubs in saved order that are still permitted
+    const result = savedOrder.filter(href => hubHrefs.includes(href));
+    
+    // Add any permitted hubs not in saved order
+    for (const href of hubHrefs) {
+      if (!result.includes(href)) {
+        result.push(href);
+      }
+    }
+    
+    return result;
+  }, [layout.hubOrder, permittedHubs]);
 
   const handleToggleSection = (sectionId: string) => {
     const sections = layout.sections.includes(sectionId)
@@ -366,6 +394,29 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   const handleResetToDefault = () => {
     resetToDefault.mutate();
   };
+  
+  // Hub customization handlers
+  const handleToggleHub = (hubHref: string) => {
+    const currentEnabled = layout.enabledHubs || permittedHubs.map(h => h.href);
+    const newEnabled = currentEnabled.includes(hubHref)
+      ? currentEnabled.filter(h => h !== hubHref)
+      : [...currentEnabled, hubHref];
+    
+    saveLayout.mutate({ ...layout, enabledHubs: newEnabled, hubOrder: orderedHubs });
+  };
+  
+  const handleHubDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    
+    const oldIndex = orderedHubs.indexOf(active.id as string);
+    const newIndex = orderedHubs.indexOf(over.id as string);
+    const newOrder = arrayMove(orderedHubs, oldIndex, newIndex);
+    
+    // Preserve enabled state or default to all enabled
+    const currentEnabled = layout.enabledHubs || permittedHubs.map(h => h.href);
+    saveLayout.mutate({ ...layout, hubOrder: newOrder, enabledHubs: currentEnabled });
+  };
 
   if (isLoading) return null;
 
@@ -451,6 +502,53 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
           </div>
 
           <Separator />
+
+          {/* Quick Access Hubs - Leadership only */}
+          {roleContext?.isLeadership && permittedHubs.length > 0 && (
+            <>
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-3">QUICK ACCESS HUBS</h3>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Drag to reorder. Toggle to show/hide hubs.
+                </p>
+                <DndContext 
+                  sensors={sensors} 
+                  collisionDetection={closestCenter} 
+                  onDragEnd={handleHubDragEnd}
+                >
+                  <SortableContext 
+                    items={orderedHubs} 
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <div className="space-y-1">
+                      {orderedHubs.map(hubHref => {
+                        const hub = permittedHubs.find(h => h.href === hubHref);
+                        if (!hub) return null;
+                        const Icon = hub.icon;
+                        const isEnabled = layout.enabledHubs 
+                          ? layout.enabledHubs.includes(hub.href)
+                          : true; // Default to enabled if no preference set
+                        return (
+                          <SortableHubItem
+                            key={hub.href}
+                            id={hub.href}
+                            label={hub.label}
+                            icon={<Icon className="w-4 h-4" />}
+                            colorClass={hub.colorClass}
+                            isEnabled={isEnabled}
+                            onToggle={() => handleToggleHub(hub.href)}
+                          />
+                        );
+                      })}
+                    </div>
+                  </SortableContext>
+                </DndContext>
+              </div>
+
+              <Separator />
+            </>
+          )}
+
 
           {/* Widgets */}
           <div>
