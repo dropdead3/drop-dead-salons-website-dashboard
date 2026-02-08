@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
-import { Bell, Check, ExternalLink, Megaphone, Hand, X, Sparkles } from 'lucide-react';
+import { Bell, Check, ExternalLink, Megaphone, Hand, X, Sparkles, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -572,10 +572,16 @@ export function NotificationsPanel({ unreadCount }: NotificationsPanelProps) {
           </TabsContent>
         </Tabs>
 
-        <div className="p-2 border-t border-border">
+        <div className="p-2 border-t border-border grid grid-cols-2 gap-1">
+          <Link to="/dashboard/notifications">
+            <Button variant="ghost" size="sm" className="w-full justify-start text-xs h-8">
+              <Settings className="w-3 h-3 mr-1" />
+              Preferences
+            </Button>
+          </Link>
           <Link to="/dashboard/changelog">
-            <Button variant="ghost" size="sm" className="w-full justify-center text-xs h-8">
-              View all updates
+            <Button variant="ghost" size="sm" className="w-full justify-end text-xs h-8">
+              View updates
               <ExternalLink className="w-3 h-3 ml-1" />
             </Button>
           </Link>
