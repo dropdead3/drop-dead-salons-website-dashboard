@@ -158,7 +158,7 @@ export function StartDMDialog({ open, onOpenChange }: StartDMDialogProps) {
                       disabled={isCreating}
                       className={cn(
                         'w-full flex items-center gap-3 px-3 py-2 rounded-md text-left',
-                        'hover:bg-accent transition-colors',
+                        'hover:bg-muted/50 transition-colors',
                         isCreating && 'opacity-50 pointer-events-none'
                       )}
                     >
@@ -174,6 +174,11 @@ export function StartDMDialog({ open, onOpenChange }: StartDMDialogProps) {
                           </div>
                         )}
                       </div>
+                      {member.role && (
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {ROLE_LABELS[member.role]}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
