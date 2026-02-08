@@ -1,154 +1,289 @@
 
-# Staff Rewards Configurator
+# Team Communications App (TeamChat)
 
 ## Overview
 
-Create a comprehensive **Rewards Configurator** in Settings for account owners to manage the staff points economy and rewards catalog. This will be a new settings category with tabbed sub-sections for managing rewards, point earning rules, redemption approvals, and analytics.
-
-The configurator will include **default reward templates** that account owners can use immediately or customize, making it easy to implement a team engagement program.
+Build a comprehensive internal team communications platform, similar to Slack, that enables real-time messaging between team members. The app will be accessible as:
+1. **Dashboard Page** - Integrated within the existing dashboard at `/dashboard/team-chat`
+2. **Standalone PWA** - Installable on mobile and desktop devices
+3. **Full-screen mode** - Dedicated layout for focused communication
 
 ---
 
-## Feature Enhancements
+## Core Features
 
-To make this an attractive feature for teams, the configurator will include:
+### 1. Channels & Conversations
 
-| Enhancement | Description |
-|-------------|-------------|
-| **Default Reward Templates** | Pre-built rewards like "Extra Break", "Casual Friday", "Priority Scheduling" with suggested point costs |
-| **Category-Based Organization** | Rewards grouped by type: Time Off, Recognition, Merchandise, Experiences |
-| **Visual Reward Cards** | Image upload support for rewards with branded visuals |
-| **Inventory Management** | Track limited-quantity rewards with stock alerts |
-| **Redemption Analytics** | See popular rewards, redemption trends, and point economy health |
-| **Bulk Actions** | Enable/disable multiple rewards, duplicate templates |
-| **Seasonal Rewards** | Start/end date scheduling for limited-time rewards |
-| **Cost Preview** | Show estimated monthly point liability based on redemption rates |
+| Channel Type | Description | Auto-Created |
+|--------------|-------------|--------------|
+| **#company-wide** | Organization-wide announcements and discussions | Yes |
+| **#[location-name]** | Per-location channels (e.g., #west-hollywood, #beverly-hills) | Yes |
+| **#managers** | Leadership-only channel | Yes |
+| **#general** | Casual conversations | Yes |
+| **Direct Messages** | 1:1 private conversations | No |
+| **Group DMs** | Multi-person private groups | No |
+| **Custom Channels** | User-created topic channels (e.g., #scheduling, #training-tips) | No |
+
+### 2. Messaging Features
+
+- **Real-time messages** using Supabase Realtime
+- **Rich text** with markdown support
+- **@mentions** for users and roles (@stylists, @managers, @all)
+- **Emoji reactions** on messages
+- **Thread replies** for organized conversations
+- **File attachments** (images, documents)
+- **Message search** across channels
+- **Typing indicators** using presence
+- **Read receipts** (seen by)
+- **Message editing and deletion** with audit trail
+- **Pin important messages**
+
+### 3. Presence & Status
+
+Leverages existing `usePlatformPresence` hook:
+- **Online/Offline indicators**
+- **Custom status** (Available, Busy, Do Not Disturb, Away)
+- **Status message** ("In a meeting until 3pm")
+- **Last seen** timestamp for offline users
+
+### 4. Notifications
+
+Integrates with existing `usePushNotifications`:
+- **Desktop/mobile push notifications** for DMs and @mentions
+- **Mute channels** individually
+- **Do Not Disturb** scheduling
+- **Notification preferences** per channel
+
+### 5. Mobile-First Design
+
+- **Responsive layout** with collapsible channel sidebar
+- **Touch-optimized** message interactions
+- **Swipe gestures** for actions (reply, react)
+- **Pull-to-refresh** for latest messages
 
 ---
 
 ## Architecture
 
-### New Settings Category
+### Database Schema
 
-Add a new `team-rewards` category to Settings that consolidates all staff rewards management:
+```text
+chat_channels
+├── id (uuid)
+├── organization_id (uuid, FK)
+├── name (text)
+├── type (enum: 'public', 'private', 'dm', 'group_dm', 'location')
+├── location_id (uuid, nullable, FK to locations)
+├── description (text)
+├── icon (text)
+├── is_archived (boolean)
+├── created_by (uuid, FK)
+├── created_at / updated_at
 
+chat_channel_members
+├── id (uuid)
+├── channel_id (uuid, FK)
+├── user_id (uuid, FK)
+├── role (enum: 'owner', 'admin', 'member')
+├── is_muted (boolean)
+├── muted_until (timestamptz)
+├── last_read_at (timestamptz)
+├── joined_at / updated_at
+
+chat_messages
+├── id (uuid)
+├── channel_id (uuid, FK)
+├── sender_id (uuid, FK)
+├── content (text)
+├── content_html (text) -- rendered markdown
+├── parent_message_id (uuid, nullable) -- for threads
+├── is_edited (boolean)
+├── is_deleted (boolean)
+├── deleted_at (timestamptz)
+├── metadata (jsonb) -- mentions, links, etc.
+├── created_at / updated_at
+
+chat_message_reactions
+├── id (uuid)
+├── message_id (uuid, FK)
+├── user_id (uuid, FK)
+├── emoji (text)
+├── created_at
+
+chat_attachments
+├── id (uuid)
+├── message_id (uuid, FK)
+├── file_url (text)
+├── file_name (text)
+├── file_type (text)
+├── file_size (integer)
+├── created_at
+
+chat_user_status
+├── user_id (uuid, PK)
+├── status (enum: 'available', 'busy', 'dnd', 'away')
+├── status_message (text)
+├── status_expires_at (timestamptz)
+├── updated_at
+
+chat_pinned_messages
+├── id (uuid)
+├── channel_id (uuid, FK)
+├── message_id (uuid, FK)
+├── pinned_by (uuid, FK)
+├── pinned_at
 ```
-Settings
-  └── Team Rewards (new)
-       ├── Catalog       → Manage reward items
-       ├── Earning Rules → Configure point earning actions
-       ├── Approvals     → Manage pending redemptions  
-       └── Analytics     → Redemption trends & insights
+
+### Realtime Configuration
+
+Enable realtime for:
+- `chat_messages` - New messages, edits, deletions
+- `chat_message_reactions` - Reaction updates
+- `chat_channel_members` - Membership changes
+- `chat_user_status` - Status updates
+
+### Component Structure
+
+```text
+src/components/team-chat/
+├── index.ts
+├── TeamChatContainer.tsx          -- Main container with layout
+├── ChannelSidebar.tsx             -- Channel list + DMs
+├── ChannelList.tsx                -- Public/private channels
+├── DirectMessagesList.tsx         -- DM conversations
+├── ChannelHeader.tsx              -- Channel name, members, actions
+├── MessageList.tsx                -- Virtualized message list
+├── MessageItem.tsx                -- Individual message component
+├── MessageInput.tsx               -- Compose with rich text
+├── ThreadPanel.tsx                -- Thread replies sidebar
+├── MembersList.tsx                -- Channel members panel
+├── UserStatusSelector.tsx         -- Status picker dropdown
+├── EmojiPicker.tsx                -- Reaction picker
+├── MentionAutocomplete.tsx        -- @mention suggestions
+├── ChannelSettingsDialog.tsx      -- Channel management
+├── CreateChannelDialog.tsx        -- New channel form
+├── SearchMessages.tsx             -- Global message search
+├── NotificationSettings.tsx       -- Per-channel mute settings
+
+src/hooks/team-chat/
+├── useChatChannels.ts             -- Channel CRUD + membership
+├── useChatMessages.ts             -- Messages with realtime
+├── useChatPresence.ts             -- Enhanced presence for chat
+├── useChatNotifications.ts        -- Push notification integration
+├── useMessageSearch.ts            -- Full-text search
+├── useChatUserStatus.ts           -- Status management
+├── useUnreadCounts.ts             -- Unread message counts
+
+src/pages/dashboard/
+├── TeamChat.tsx                   -- Dashboard-embedded view
+├── TeamChatFullscreen.tsx         -- Standalone full-screen view
+
+src/contexts/
+├── TeamChatContext.tsx            -- Active channel, UI state
 ```
-
-### Database Changes
-
-Extend the `rewards_catalog` table with new columns:
-
-| Column | Type | Purpose |
-|--------|------|---------|
-| `icon` | text | Icon identifier for visual display |
-| `start_date` | timestamptz | When reward becomes available |
-| `end_date` | timestamptz | When reward expires |
-| `organization_id` | uuid | Multi-tenancy support |
-| `sort_order` | integer | Custom ordering |
-| `is_featured` | boolean | Highlight on shop page |
 
 ---
 
-## Component Structure
+## Default Channel Auto-Creation
 
-```
-src/components/dashboard/settings/
-  └── TeamRewardsConfigurator.tsx       (Main container with tabs)
+On organization setup or first chat access:
 
-src/components/rewards-config/
-  ├── index.ts                          (Exports)
-  ├── RewardsCatalogTab.tsx             (CRUD for rewards)
-  ├── RewardFormDialog.tsx              (Create/edit reward form)
-  ├── RewardCard.tsx                    (Display card in config view)
-  ├── EarningRulesTab.tsx               (Manage point earning rules)
-  ├── RedemptionApprovalsTab.tsx        (Admin approval queue)
-  ├── RewardsAnalyticsTab.tsx           (Charts & insights)
-  └── DefaultRewardTemplates.ts         (Pre-built reward data)
-```
+1. **Query locations** from `locations` table
+2. **Create system channels:**
+   - `#company-wide` (type: 'public', organization-wide)
+   - `#general` (type: 'public')
+   - `#managers` (type: 'private', restricted to manager+ roles)
+3. **Create location channels:**
+   - `#[location-slug]` for each active location (type: 'location')
+4. **Auto-add members:**
+   - All org members join `#company-wide` and `#general`
+   - Location-assigned staff join their location channels
+   - Managers/admins join `#managers`
 
 ---
 
-## Default Reward Templates
+## PWA Enhancement
 
-Pre-populated templates for easy setup:
+### Current State
+The project has a basic service worker (`public/sw.js`) for push notifications but no full PWA manifest.
 
-### Time Off Category
-| Reward | Points | Description |
-|--------|--------|-------------|
-| Extra 15-Min Break | 50 | Take an additional 15-minute break |
-| Leave 30 Min Early | 100 | Leave 30 minutes before shift ends |
-| Extended Lunch Hour | 75 | Extend lunch break to 1 hour |
-| Half Day Off | 500 | Take a half day with pay |
+### Required Changes
 
-### Recognition Category
-| Reward | Points | Description |
-|--------|--------|-------------|
-| Parking Spot of the Week | 150 | Premium parking spot for one week |
-| Team Shoutout | 25 | Featured on team announcements |
-| Wall of Fame Feature | 200 | Featured on the Wall of Fame |
+1. **Install vite-plugin-pwa**
+2. **Add manifest** with proper icons and configuration
+3. **Enhanced service worker** for:
+   - Offline message queue
+   - Background sync
+   - Message caching
+4. **Install prompt** component
+5. **Dedicated `/install` page** for onboarding mobile users
 
-### Experiences Category
-| Reward | Points | Description |
-|--------|--------|-------------|
-| Lunch with Leadership | 300 | Lunch with a manager of your choice |
-| Training Choice | 250 | Pick your next training topic |
-| Priority Scheduling | 400 | First choice on schedule requests |
+---
 
-### Merchandise Category
-| Reward | Points | Description |
-|--------|--------|-------------|
-| Company Swag Item | 100 | T-shirt, mug, or branded item |
-| Gift Card ($25) | 500 | $25 gift card to popular retailer |
-| Premium Product Bundle | 750 | Salon products bundle |
+## Navigation Integration
+
+Add to Dashboard sidebar under **Main** section:
+```typescript
+{ 
+  href: '/dashboard/team-chat', 
+  label: 'Team Chat', 
+  icon: MessageSquare, 
+  permission: 'view_team_chat' 
+}
+```
+
+Full-screen route at `/team-chat` for focused messaging.
 
 ---
 
 ## UI Design
 
-### Rewards Catalog Tab
-
+### Desktop Layout (Dashboard Embedded)
+```text
+┌──────────────────────────────────────────────────────────┐
+│  ← Back to Dashboard    #general    ⚡ 12 online    ⚙️   │
+├─────────────┬────────────────────────────────────────────┤
+│             │                                            │
+│  CHANNELS   │  ┌─────────────────────────────────────┐  │
+│  #company   │  │ Sarah (10:30am)                     │  │
+│  #general ●  │  │ Hey team! Schedule update...       │  │
+│  #managers  │  │ 👍 3  ❤️ 2          [Reply] [React] │  │
+│  #west-hwd  │  └─────────────────────────────────────┘  │
+│  #bev-hills │                                            │
+│             │  ┌─────────────────────────────────────┐  │
+│  DIRECT     │  │ Mike (10:45am)                      │  │
+│  @ Sarah ●   │  │ Got it, I'll adjust...             │  │
+│  @ Mike     │  └─────────────────────────────────────┘  │
+│  @ Team A   │                                            │
+│             │                                            │
+│  [+ Channel]│  ┌─────────────────────────────────────┐  │
+│             │  │ 💬 Type a message...    📎  😀  ⏎  │  │
+│             │  └─────────────────────────────────────┘  │
+└─────────────┴────────────────────────────────────────────┘
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  [+ Add Reward]  [Use Template ▼]  [Filter ▼]  [Search...] │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  TIME OFF                                                   │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ ☕            │  │ 🚗            │  │ 🍽️            │      │
-│  │ Extra Break   │  │ Leave Early   │  │ Long Lunch    │      │
-│  │ 50 pts        │  │ 100 pts       │  │ 75 pts        │      │
-│  │ [Edit] [•••]  │  │ [Edit] [•••]  │  │ [Edit] [•••]  │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
-│                                                             │
-│  RECOGNITION                                                │
-│  ┌──────────────┐  ┌──────────────┐                        │
-│  │ 🏆            │  │ ⭐            │                        │
-│  │ Parking Spot  │  │ Wall of Fame  │                        │
-│  │ 150 pts       │  │ 200 pts       │                        │
-│  └──────────────┘  └──────────────┘                        │
-└─────────────────────────────────────────────────────────────┘
+
+### Mobile Layout
+```text
+┌───────────────────────────┐
+│  ☰   #general   👥  ⚙️   │
+├───────────────────────────┤
+│                           │
+│  ┌─────────────────────┐  │
+│  │ Sarah (10:30am)     │  │
+│  │ Hey team! Schedule  │  │
+│  │ update for today... │  │
+│  │ 👍 3  [Swipe: reply]│  │
+│  └─────────────────────┘  │
+│                           │
+│  ┌─────────────────────┐  │
+│  │ Mike (10:45am)      │  │
+│  │ Got it, thanks!     │  │
+│  └─────────────────────┘  │
+│                           │
+├───────────────────────────┤
+│ 💬 Message...   📎 😀 ⏎  │
+└───────────────────────────┘
 ```
-
-### Reward Form Dialog
-
-Fields:
-- Name (required)
-- Description (textarea)
-- Category (select: Time Off, Recognition, Experience, Merchandise)
-- Points Cost (number input with validation)
-- Quantity (optional - leave blank for unlimited)
-- Image URL (optional upload)
-- Icon (icon picker from preset list)
-- Featured (toggle)
-- Active (toggle)
-- Availability Dates (optional date range)
 
 ---
 
@@ -156,83 +291,117 @@ Fields:
 
 | File | Purpose |
 |------|---------|
-| `src/components/dashboard/settings/TeamRewardsConfigurator.tsx` | Main tabbed container |
-| `src/components/rewards-config/RewardsCatalogTab.tsx` | Manage rewards CRUD |
-| `src/components/rewards-config/RewardFormDialog.tsx` | Create/edit dialog |
-| `src/components/rewards-config/RewardConfigCard.tsx` | Display card for config |
-| `src/components/rewards-config/EarningRulesTab.tsx` | Manage earning rules |
-| `src/components/rewards-config/RedemptionApprovalsTab.tsx` | Approval queue |
-| `src/components/rewards-config/RewardsAnalyticsTab.tsx` | Analytics dashboard |
-| `src/components/rewards-config/DefaultRewardTemplates.ts` | Template data |
-| `src/components/rewards-config/index.ts` | Exports |
+| `src/pages/dashboard/TeamChat.tsx` | Main chat page in dashboard |
+| `src/pages/TeamChatFullscreen.tsx` | Standalone full-screen view |
+| `src/components/team-chat/*.tsx` | All chat UI components (15+ files) |
+| `src/hooks/team-chat/*.ts` | Chat-specific hooks (7 files) |
+| `src/contexts/TeamChatContext.tsx` | Chat state management |
+| `supabase/migrations/xxx_chat_schema.sql` | Database schema |
+| `public/manifest.json` | PWA manifest |
+| `src/pages/Install.tsx` | PWA install prompt page |
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/pages/dashboard/admin/Settings.tsx` | Add `team-rewards` category and render TeamRewardsConfigurator |
-| `src/hooks/useSettingsLayout.ts` | Add `team-rewards` to DEFAULT_ORDER and DEFAULT_ICON_COLORS |
-| `src/hooks/usePoints.ts` | Add hooks for reward CRUD with templates |
+| `src/App.tsx` | Add TeamChat routes |
+| `src/components/dashboard/DashboardLayout.tsx` | Add Team Chat nav item |
+| `vite.config.ts` | Add vite-plugin-pwa |
+| `index.html` | Add manifest link and PWA meta tags |
+| `public/sw.js` | Enhance for offline chat |
 
 ---
 
-## Database Migration
+## Implementation Phases
 
-```sql
--- Add new columns to rewards_catalog for enhanced functionality
-ALTER TABLE public.rewards_catalog 
-ADD COLUMN IF NOT EXISTS icon text DEFAULT 'gift',
-ADD COLUMN IF NOT EXISTS start_date timestamptz,
-ADD COLUMN IF NOT EXISTS end_date timestamptz,
-ADD COLUMN IF NOT EXISTS organization_id uuid REFERENCES organizations(id),
-ADD COLUMN IF NOT EXISTS sort_order integer DEFAULT 0,
-ADD COLUMN IF NOT EXISTS is_featured boolean DEFAULT false;
+### Phase 1: Foundation (Core Infrastructure)
+- Database schema and RLS policies
+- Basic channel/message CRUD hooks
+- TeamChatContainer with channel list
+- Message list with realtime
+- Basic message input
 
--- Create index for organization-based queries
-CREATE INDEX IF NOT EXISTS idx_rewards_catalog_org 
-ON public.rewards_catalog(organization_id);
+### Phase 2: Rich Messaging
+- Markdown rendering
+- @mentions with autocomplete
+- Emoji reactions
+- File attachments
+- Message editing/deletion
 
--- Add RLS policy for organization isolation
-CREATE POLICY "Users can view rewards for their organization"
-ON public.rewards_catalog FOR SELECT
-USING (
-  organization_id IS NULL 
-  OR organization_id = (SELECT get_user_organization(auth.uid()))
-);
+### Phase 3: Threads & Organization
+- Thread replies panel
+- Message pinning
+- Channel search
+- Message search
 
-CREATE POLICY "Admins can manage rewards for their organization"
-ON public.rewards_catalog FOR ALL
-USING (
-  public.is_coach_or_admin(auth.uid())
-)
-WITH CHECK (
-  public.is_coach_or_admin(auth.uid())
-);
-```
+### Phase 4: Enhanced UX
+- User status system
+- Unread counts
+- Typing indicators
+- Read receipts
+
+### Phase 5: PWA & Mobile
+- Full PWA manifest
+- Enhanced service worker
+- Install prompt
+- Offline queue
+
+### Phase 6: Admin Controls
+- Channel moderation tools
+- Message reporting
+- Admin-only channels
+- Usage analytics
 
 ---
 
-## Implementation Steps
+## Security Considerations
 
-1. **Database Migration**: Add new columns to `rewards_catalog`
-2. **Create Template Data**: Define default reward templates
-3. **Build RewardsCatalogTab**: CRUD interface for rewards
-4. **Build EarningRulesTab**: Point rules configuration (refactor from PointsConfig)
-5. **Build RedemptionApprovalsTab**: Move approval queue (refactor from PointsConfig)
-6. **Build RewardsAnalyticsTab**: Simple analytics dashboard
-7. **Create TeamRewardsConfigurator**: Combine all tabs
-8. **Add to Settings**: Register new category in Settings page
-9. **Update Layout Config**: Add to DEFAULT_ORDER and icons
+### RLS Policies
+
+- **Channels**: Members can view channels they belong to
+- **Messages**: Only channel members can read/write messages
+- **DMs**: Only participants can access DM channels
+- **Admin channels**: Role-based access for #managers
+
+### Data Protection
+
+- Message content encrypted at rest
+- Attachment URLs expire after 24 hours
+- Deleted messages purged after 30 days
+- Audit log for admin actions
+
+---
+
+## Technical Notes
+
+### Leveraging Existing Infrastructure
+
+| Feature | Existing Code |
+|---------|---------------|
+| Realtime presence | `usePlatformPresence` hook |
+| Push notifications | `usePushNotifications` hook |
+| User profiles | `employee_profiles` table |
+| Locations | `locations` table & `useLocations` hook |
+| Organization context | `OrganizationContext` |
+| UI components | Existing shadcn/ui library |
+| Theme support | Dashboard theme system |
+
+### Performance Optimizations
+
+- **Virtual scrolling** for message lists (react-virtual)
+- **Optimistic updates** for sent messages
+- **Message batching** for bulk loads
+- **Image lazy loading** with blur placeholders
+- **Debounced typing indicators**
 
 ---
 
 ## Result
 
-Account owners will have a centralized, intuitive interface to:
-- Create and manage team rewards with visual previews
-- Use pre-built templates for quick setup
-- Configure point earning rules
-- Approve redemption requests
-- Track engagement analytics
-
-This makes the rewards system easy to implement and maintains engagement through attractive, customizable rewards that staff can work toward.
+A full-featured team communications app that:
+- Provides real-time messaging across the organization
+- Auto-creates location-based channels for easy team coordination
+- Works seamlessly on desktop and mobile
+- Can be installed as a native-like app via PWA
+- Integrates with existing presence and notification systems
+- Maintains security with proper RLS and role-based access
