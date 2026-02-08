@@ -239,7 +239,7 @@ const App = () => (
                       <Route path="/dashboard/admin/locations" element={<Navigate to="/dashboard/admin/website-sections?tab=locations" replace />} />
                       <Route path="/dashboard/admin/website-sections" element={<ProtectedRoute requiredPermission="manage_homepage_stylists"><WebsiteSectionsHub /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/roles" element={<Navigate to="/dashboard/admin/access-hub?tab=user-roles" replace />} />
-                      <Route path="/dashboard/admin/accounts" element={<ProtectedRoute requiredPermission="approve_accounts"><AccountManagement /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/accounts" element={<Navigate to="/dashboard/admin/access-hub?tab=invitations" replace />} />
                       <Route path="/dashboard/admin/stylist-levels" element={<ProtectedRoute requiredPermission="manage_settings"><StylistLevels /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/settings" element={<ProtectedRoute requiredPermission="manage_settings"><AdminSettings /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/business-cards" element={<ProtectedRoute requiredPermission="manage_settings"><BusinessCardRequests /></ProtectedRoute>} />

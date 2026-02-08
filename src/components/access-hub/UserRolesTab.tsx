@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -18,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Search, User, Crown, AlertTriangle, Lock, ArrowRight, Users, UserPlus } from 'lucide-react';
+import { Loader2, Search, User, Crown, AlertTriangle, Lock, Users } from 'lucide-react';
 import { useAllUsersWithRoles, useToggleUserRole } from '@/hooks/useUserRoles';
 import { useRoles } from '@/hooks/useRoles';
 import { getRoleColorClasses } from '@/components/dashboard/RoleColorPicker';
@@ -243,20 +242,6 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
           />
-        </div>
-        <div className="flex items-center gap-3">
-          <Button asChild variant="outline" className="gap-2">
-            <Link to="/dashboard/admin/invitations">
-              <UserPlus className="w-4 h-4" />
-              Invite Staff Member
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="gap-2">
-            <Link to="/dashboard/admin/approvals">
-              Account Approvals
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </Button>
         </div>
       </div>
 

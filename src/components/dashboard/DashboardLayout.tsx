@@ -186,7 +186,6 @@ const managerNavItems: NavItem[] = [
 
 // Admin section (renamed from Super Admin)
 const adminOnlyNavItems: NavItem[] = [
-  { href: '/dashboard/admin/accounts', label: 'Staff Account Invitations', icon: UserPlus, permission: 'approve_accounts' },
   { href: '/dashboard/admin/access-hub', label: 'Access Hub', icon: Shield, permission: 'manage_settings' },
 ];
 
