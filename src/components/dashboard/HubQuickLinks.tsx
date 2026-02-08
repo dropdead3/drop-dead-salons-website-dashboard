@@ -105,8 +105,8 @@ export function HubQuickLinks({ hubOrder, enabledHubs }: HubQuickLinksProps) {
   const visibleHubs = useMemo(() => {
     let filtered = permittedHubs;
     
-    // Filter to only enabled hubs if specified
-    if (enabledHubs && enabledHubs.length > 0) {
+    // Filter to only enabled hubs if specified (empty array = hide all)
+    if (enabledHubs !== undefined) {
       filtered = filtered.filter(hub => enabledHubs.includes(hub.href));
     }
     
