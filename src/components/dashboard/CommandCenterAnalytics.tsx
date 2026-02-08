@@ -241,7 +241,12 @@ export function CommandCenterAnalytics() {
       case 'new_bookings':
         return (
           <VisibilityGate key={cardId} elementKey="new_bookings">
-            <NewBookingsCard />
+            <NewBookingsCard 
+              filterContext={{
+                locationId: locationId,
+                dateRange: dateRange,
+              }}
+            />
           </VisibilityGate>
         );
       case 'week_ahead_forecast':
