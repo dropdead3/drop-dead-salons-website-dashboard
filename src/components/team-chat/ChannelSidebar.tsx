@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { Hash, MapPin, Lock, Plus, ChevronDown, ChevronRight, Users, Settings, Sparkles, Folder } from 'lucide-react';
+import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay, DragStartEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useChatChannels, useInitializeDefaultChannels, type ChannelWithMembership } from '@/hooks/team-chat/useChatChannels';
-import { getChannelDisplayName, getChannelAvatarUrl } from '@/hooks/team-chat/useChannelDisplayName';
 import { useAutoJoinLocationChannels } from '@/hooks/team-chat/useAutoJoinLocationChannels';
 import { useUnreadMessages } from '@/hooks/team-chat/useUnreadMessages';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
@@ -18,8 +18,11 @@ import { CreateChannelDialog } from './CreateChannelDialog';
 import { StartDMDialog } from './StartDMDialog';
 import { TeamChatAdminSettingsSheet } from './TeamChatAdminSettingsSheet';
 import { AIChatPanel } from './AIChatPanel';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { SortableChannelItem } from './SortableChannelItem';
+import { SortableSidebarSection } from './SortableSidebarSection';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { getChannelDisplayName, getChannelAvatarUrl } from '@/hooks/team-chat/useChannelDisplayName';
 
 // Role priority for sorting DMs (lower = higher priority)
 const ROLE_PRIORITY: Record<string, number> = {
@@ -44,7 +47,6 @@ const channelTypeIcons: Record<string, typeof Hash> = {
   group_dm: Users,
 };
 
-// Helper to extract initials from a name
 function getInitials(name: string): string {
   return name
     .split(' ')
@@ -55,31 +57,15 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-interface ChannelItemProps {
-  channel: ChannelWithMembership;
-  isActive: boolean;
-  onClick: () => void;
-  unreadCount: number;
-}
-
-function ChannelItem({ channel, isActive, onClick, unreadCount }: ChannelItemProps) {
+// Non-sortable channel item for drag overlay
+function ChannelItemOverlay({ channel }: { channel: ChannelWithMembership }) {
   const Icon = channelTypeIcons[channel.type] || Hash;
-  const isMember = !!channel.membership;
   const isDM = channel.type === 'dm' || channel.type === 'group_dm';
   const avatarUrl = getChannelAvatarUrl(channel);
   const displayName = getChannelDisplayName(channel);
 
   return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors',
-        'hover:bg-accent/50',
-        isActive && 'bg-accent text-accent-foreground',
-        !isMember && 'opacity-60',
-        unreadCount > 0 && !isActive && 'font-semibold'
-      )}
-    >
+    <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm bg-accent shadow-lg">
       {isDM ? (
         <Avatar className="h-5 w-5 shrink-0">
           <AvatarImage src={avatarUrl || undefined} alt={displayName} />
@@ -91,58 +77,18 @@ function ChannelItem({ channel, isActive, onClick, unreadCount }: ChannelItemPro
         <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
       )}
       <span className="truncate flex-1 text-left">{displayName}</span>
-      {unreadCount > 0 && !isActive && (
-        <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-[10px]">
-          {unreadCount > 99 ? '99+' : unreadCount}
-        </Badge>
-      )}
-      {channel.membership?.is_muted && unreadCount === 0 && (
-        <span className="text-xs text-muted-foreground">muted</span>
-      )}
-    </button>
+    </div>
   );
 }
 
-interface SidebarSectionProps {
+// Section types for ordering
+interface SectionConfig {
   id: string;
-  title: string;
+  type: 'default' | 'custom' | 'locations' | 'direct';
+  name: string;
   icon?: React.ReactNode;
-  isOpen: boolean;
-  onToggle: () => void;
-  onAddClick?: () => void;
   showAddButton?: boolean;
-  children: React.ReactNode;
-}
-
-function SidebarSection({ 
-  id, 
-  title, 
-  icon, 
-  isOpen, 
-  onToggle, 
-  onAddClick, 
-  showAddButton,
-  children 
-}: SidebarSectionProps) {
-  return (
-    <Collapsible open={isOpen} onOpenChange={onToggle}>
-      <div className="flex items-center justify-between px-2">
-        <CollapsibleTrigger className="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground">
-          {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-          {icon}
-          {title}
-        </CollapsibleTrigger>
-        {showAddButton && onAddClick && (
-          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onAddClick}>
-            <Plus className="h-3 w-3" />
-          </Button>
-        )}
-      </div>
-      <CollapsibleContent className="mt-1 space-y-0.5">
-        {children}
-      </CollapsibleContent>
-    </Collapsible>
-  );
+  onAddClick?: () => void;
 }
 
 export function ChannelSidebar() {
@@ -151,13 +97,21 @@ export function ChannelSidebar() {
   const { effectiveOrganization } = useOrganizationContext();
   const { data: profile } = useEmployeeProfile();
   const { sections } = useChatSections();
-  const { isSectionCollapsed, toggleSectionCollapsed } = useChatLayoutPreferences();
+  const { 
+    preferences,
+    isSectionCollapsed, 
+    toggleSectionCollapsed,
+    setSectionsOrder,
+    setChannelsOrder,
+  } = useChatLayoutPreferences();
   const canCreateChannel = useHasChatPermission(CHAT_PERMISSION_KEYS.CREATE_CHANNEL);
   
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDMOpen, setIsDMOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
+  const [draggedChannel, setDraggedChannel] = useState<ChannelWithMembership | null>(null);
+  const [draggedSectionId, setDraggedSectionId] = useState<string | null>(null);
   
   // Local state for section collapse (fallback + immediate UI)
   const [localCollapsed, setLocalCollapsed] = useState<Record<string, boolean>>({});
@@ -175,6 +129,15 @@ export function ChannelSidebar() {
   const autoJoinChannels = useAutoJoinLocationChannels();
   const hasAutoJoined = useRef(false);
   const hasInitialized = useRef(false);
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Minimum drag distance before activation
+      },
+    })
+  );
 
   // Initialize default channels on first load if none exist
   useEffect(() => {
@@ -199,6 +162,66 @@ export function ChannelSidebar() {
       setActiveChannel(generalChannel || channels[0]);
     }
   }, [channels, activeChannel, setActiveChannel]);
+
+  // Build all section configs with user ordering
+  const allSectionConfigs = useMemo((): SectionConfig[] => {
+    const baseSections: SectionConfig[] = [
+      { 
+        id: 'default', 
+        type: 'default', 
+        name: 'Channels', 
+        showAddButton: canCreateChannel,
+        onAddClick: () => setIsCreateOpen(true),
+      },
+      ...sections.map(s => ({
+        id: s.id,
+        type: 'custom' as const,
+        name: s.name,
+        icon: <Folder className="h-3 w-3 mr-1" />,
+      })),
+    ];
+
+    // Add locations section if multi-location
+    if (isMultiLocation) {
+      baseSections.push({
+        id: 'locations',
+        type: 'locations',
+        name: 'Locations',
+      });
+    }
+
+    // Add direct messages section
+    baseSections.push({
+      id: 'direct',
+      type: 'direct',
+      name: 'Direct Messages',
+      showAddButton: true,
+      onAddClick: () => setIsDMOpen(true),
+    });
+
+    // Apply user's section order preference
+    const userOrder = preferences.sections_order;
+    if (userOrder && userOrder.length > 0) {
+      const orderedSections: SectionConfig[] = [];
+      const sectionMap = new Map(baseSections.map(s => [s.id, s]));
+      
+      // Add sections in user's preferred order
+      userOrder.forEach(id => {
+        const section = sectionMap.get(id);
+        if (section) {
+          orderedSections.push(section);
+          sectionMap.delete(id);
+        }
+      });
+      
+      // Add any remaining sections not in user's order
+      sectionMap.forEach(section => orderedSections.push(section));
+      
+      return orderedSections;
+    }
+
+    return baseSections;
+  }, [sections, isMultiLocation, canCreateChannel, preferences.sections_order]);
 
   // Group channels by section
   const channelsBySection = useMemo(() => {
@@ -227,6 +250,31 @@ export function ChannelSidebar() {
 
     return result;
   }, [channels, sections]);
+
+  // Get ordered channels for a section (apply user preferences)
+  const getOrderedChannels = useCallback((sectionId: string, sectionChannels: ChannelWithMembership[]) => {
+    const userOrder = preferences.channels_order[sectionId];
+    if (!userOrder || userOrder.length === 0) {
+      return sectionChannels;
+    }
+
+    const channelMap = new Map(sectionChannels.map(c => [c.id, c]));
+    const ordered: ChannelWithMembership[] = [];
+
+    // Add channels in user's preferred order
+    userOrder.forEach(id => {
+      const channel = channelMap.get(id);
+      if (channel) {
+        ordered.push(channel);
+        channelMap.delete(id);
+      }
+    });
+
+    // Add remaining channels not in user's order
+    channelMap.forEach(channel => ordered.push(channel));
+
+    return ordered;
+  }, [preferences.channels_order]);
 
   // Sort DM channels by role hierarchy
   const sortedDmChannels = useMemo(() => {
@@ -273,6 +321,121 @@ export function ChannelSidebar() {
     toggleSectionCollapsed(sectionId);
   };
 
+  // Handle channel drag end
+  const handleChannelDragEnd = (event: DragEndEvent, sectionId: string) => {
+    const { active, over } = event;
+    setDraggedChannel(null);
+    
+    if (!over || active.id === over.id) return;
+
+    const sectionChannels = sectionId === 'direct' 
+      ? sortedDmChannels 
+      : getOrderedChannels(sectionId, channelsBySection[sectionId] || []);
+    
+    const oldIndex = sectionChannels.findIndex(c => c.id === active.id);
+    const newIndex = sectionChannels.findIndex(c => c.id === over.id);
+    
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newOrder = arrayMove(sectionChannels, oldIndex, newIndex);
+      setChannelsOrder(sectionId, newOrder.map(c => c.id));
+    }
+  };
+
+  // Handle section drag start
+  const handleSectionDragStart = (event: DragStartEvent) => {
+    setDraggedSectionId(event.active.id as string);
+  };
+
+  // Handle section drag end
+  const handleSectionDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setDraggedSectionId(null);
+    
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = allSectionConfigs.findIndex(s => s.id === active.id);
+    const newIndex = allSectionConfigs.findIndex(s => s.id === over.id);
+    
+    if (oldIndex !== -1 && newIndex !== -1) {
+      const newOrder = arrayMove(allSectionConfigs, oldIndex, newIndex);
+      setSectionsOrder(newOrder.map(s => s.id));
+    }
+  };
+
+  // Handle channel drag start
+  const handleChannelDragStart = (event: DragStartEvent) => {
+    const channelId = event.active.id as string;
+    const channel = channels.find(c => c.id === channelId);
+    if (channel) {
+      setDraggedChannel(channel);
+    }
+  };
+
+  // Render section content based on type
+  const renderSectionContent = (config: SectionConfig) => {
+    const sectionChannels = config.id === 'direct'
+      ? sortedDmChannels
+      : config.id === 'locations'
+        ? channelsBySection.locations
+        : getOrderedChannels(config.id, channelsBySection[config.id] || []);
+
+    const channelIdList = sectionChannels.map(c => c.id);
+    const isDragDisabled = config.id === 'direct'; // DMs use role-based sorting
+
+    if (sectionChannels.length === 0) {
+      if (config.id === 'direct') {
+        return (
+          <p className="text-xs text-muted-foreground px-3 py-2">
+            Click + to start a conversation
+          </p>
+        );
+      }
+      if (config.type === 'custom') {
+        return (
+          <p className="text-xs text-muted-foreground px-3 py-2">
+            No channels in this section
+          </p>
+        );
+      }
+      return null;
+    }
+
+    return (
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleChannelDragStart}
+        onDragEnd={(e) => handleChannelDragEnd(e, config.id)}
+      >
+        <SortableContext items={channelIdList} strategy={verticalListSortingStrategy}>
+          {sectionChannels.map((channel) => (
+            <SortableChannelItem
+              key={channel.id}
+              channel={channel}
+              isActive={activeChannel?.id === channel.id}
+              onClick={() => handleChannelClick(channel)}
+              unreadCount={getUnreadCount(channel.id)}
+              isDragEnabled={!isDragDisabled}
+            />
+          ))}
+        </SortableContext>
+        <DragOverlay>
+          {draggedChannel && <ChannelItemOverlay channel={draggedChannel} />}
+        </DragOverlay>
+      </DndContext>
+    );
+  };
+
+  // Skip locations section if empty
+  const visibleSections = allSectionConfigs.filter(config => {
+    if (config.id === 'locations') {
+      return channelsBySection.locations.length > 0;
+    }
+    return true;
+  });
+
+  const sectionIds = visibleSections.map(s => s.id);
+
   return (
     <div className="flex flex-col h-full bg-sidebar border-r">
       <div className="p-4 border-b flex items-center justify-between">
@@ -303,99 +466,30 @@ export function ChannelSidebar() {
 
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-4">
-          {/* Default Channels Section */}
-          <SidebarSection
-            id="default"
-            title="Channels"
-            isOpen={isSectionOpen('default')}
-            onToggle={() => handleToggleSection('default')}
-            showAddButton={canCreateChannel}
-            onAddClick={() => setIsCreateOpen(true)}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleSectionDragStart}
+            onDragEnd={handleSectionDragEnd}
           >
-            {channelsBySection.default.map((channel) => (
-              <ChannelItem
-                key={channel.id}
-                channel={channel}
-                isActive={activeChannel?.id === channel.id}
-                onClick={() => handleChannelClick(channel)}
-                unreadCount={getUnreadCount(channel.id)}
-              />
-            ))}
-          </SidebarSection>
-
-          {/* Custom Sections */}
-          {sections.map((section) => (
-            <SidebarSection
-              key={section.id}
-              id={section.id}
-              title={section.name}
-              icon={<Folder className="h-3 w-3 mr-1" />}
-              isOpen={isSectionOpen(section.id)}
-              onToggle={() => handleToggleSection(section.id)}
-            >
-              {(channelsBySection[section.id] || []).length === 0 ? (
-                <p className="text-xs text-muted-foreground px-3 py-2">
-                  No channels in this section
-                </p>
-              ) : (
-                (channelsBySection[section.id] || []).map((channel) => (
-                  <ChannelItem
-                    key={channel.id}
-                    channel={channel}
-                    isActive={activeChannel?.id === channel.id}
-                    onClick={() => handleChannelClick(channel)}
-                    unreadCount={getUnreadCount(channel.id)}
-                  />
-                ))
-              )}
-            </SidebarSection>
-          ))}
-
-          {/* Location Channels */}
-          {isMultiLocation && channelsBySection.locations.length > 0 && (
-            <SidebarSection
-              id="locations"
-              title="Locations"
-              isOpen={isSectionOpen('locations')}
-              onToggle={() => handleToggleSection('locations')}
-            >
-              {channelsBySection.locations.map((channel) => (
-                <ChannelItem
-                  key={channel.id}
-                  channel={channel}
-                  isActive={activeChannel?.id === channel.id}
-                  onClick={() => handleChannelClick(channel)}
-                  unreadCount={getUnreadCount(channel.id)}
-                />
+            <SortableContext items={sectionIds} strategy={verticalListSortingStrategy}>
+              {visibleSections.map((config) => (
+                <SortableSidebarSection
+                  key={config.id}
+                  id={config.id}
+                  title={config.name}
+                  icon={config.icon}
+                  isOpen={isSectionOpen(config.id)}
+                  onToggle={() => handleToggleSection(config.id)}
+                  showAddButton={config.showAddButton}
+                  onAddClick={config.onAddClick}
+                  isDragEnabled={true}
+                >
+                  {renderSectionContent(config)}
+                </SortableSidebarSection>
               ))}
-            </SidebarSection>
-          )}
-
-          {/* Direct Messages */}
-          <SidebarSection
-            id="direct"
-            title="Direct Messages"
-            isOpen={isSectionOpen('direct')}
-            onToggle={() => handleToggleSection('direct')}
-            showAddButton
-            onAddClick={() => setIsDMOpen(true)}
-          >
-            {sortedDmChannels.length === 0 ? (
-              <p className="text-xs text-muted-foreground px-3 py-2">
-                Click + to start a conversation
-              </p>
-            ) : (
-              sortedDmChannels.map((channel) => (
-                <ChannelItem
-                  key={channel.id}
-                  channel={channel}
-                  isActive={activeChannel?.id === channel.id}
-                  onClick={() => handleChannelClick(channel)}
-                  unreadCount={getUnreadCount(channel.id)}
-                />
-              ))
-            )}
-          </SidebarSection>
+            </SortableContext>
+          </DndContext>
         </div>
       </ScrollArea>
 

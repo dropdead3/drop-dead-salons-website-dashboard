@@ -260,6 +260,25 @@ export function useChatChannels() {
     },
   });
 
+  const updateChannelSectionMutation = useMutation({
+    mutationFn: async ({ channelId, sectionId }: { channelId: string; sectionId: string | null }) => {
+      const { error } = await supabase
+        .from('chat_channels')
+        .update({ section_id: sectionId })
+        .eq('id', channelId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['chat-channels'] });
+      toast.success('Channel section updated');
+    },
+    onError: (error) => {
+      console.error('Failed to update channel section:', error);
+      toast.error('Failed to update channel section');
+    },
+  });
+
   return {
     channels: channels ?? [],
     isLoading,
@@ -267,7 +286,9 @@ export function useChatChannels() {
     createChannel: createChannelMutation.mutate,
     joinChannel: joinChannelMutation.mutate,
     leaveChannel: leaveChannelMutation.mutate,
+    updateChannelSection: updateChannelSectionMutation.mutate,
     isCreating: createChannelMutation.isPending,
+    isUpdatingSection: updateChannelSectionMutation.isPending,
   };
 }
 
