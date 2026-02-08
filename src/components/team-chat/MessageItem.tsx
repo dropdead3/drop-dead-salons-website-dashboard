@@ -57,15 +57,15 @@ export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete
       onMouseLeave={() => setShowActions(false)}
     >
       {/* Avatar or timestamp spacer */}
-      <div className="w-10 shrink-0">
+      <div className="w-12 shrink-0">
         {!isConsecutive && (
-          <Avatar className="h-10 w-10">
+          <Avatar className="h-12 w-12">
             <AvatarImage src={message.sender?.photo_url || undefined} />
             <AvatarFallback className="text-xs">{initials}</AvatarFallback>
           </Avatar>
         )}
         {isConsecutive && showActions && (
-          <span className="text-[10px] text-muted-foreground">
+          <span className="text-[10px] text-muted-foreground whitespace-nowrap">
             {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         )}
