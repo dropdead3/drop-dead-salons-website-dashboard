@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Hash, MapPin, Lock, Plus, ChevronDown, ChevronRight, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useChatChannels, useInitializeDefaultChannels, type ChannelWithMembership } from '@/hooks/team-chat/useChatChannels';
+import { useAutoJoinLocationChannels } from '@/hooks/team-chat/useAutoJoinLocationChannels';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 import { CreateChannelDialog } from './CreateChannelDialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useEffect } from 'react';
 
 const channelTypeIcons: Record<string, typeof Hash> = {
   public: Hash,
@@ -57,11 +57,21 @@ export function ChannelSidebar() {
   });
 
   const initializeChannels = useInitializeDefaultChannels();
+  const autoJoinChannels = useAutoJoinLocationChannels();
+  const hasAutoJoined = useRef(false);
 
   // Initialize default channels on first load if none exist
   useEffect(() => {
     if (!isLoading && channels.length === 0) {
       initializeChannels.mutate();
+    }
+  }, [isLoading, channels.length]);
+
+  // Auto-join user to appropriate channels based on their profile
+  useEffect(() => {
+    if (!isLoading && channels.length > 0 && !hasAutoJoined.current) {
+      hasAutoJoined.current = true;
+      autoJoinChannels.mutate();
     }
   }, [isLoading, channels.length]);
 
