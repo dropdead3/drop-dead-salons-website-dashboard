@@ -10,7 +10,7 @@ function TeamChatLayout() {
   const { isSidebarOpen, threadMessageId } = useTeamChatContext();
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] bg-background">
+    <div className="flex h-full bg-background">
       {/* Sidebar */}
       <div
         className={cn(
