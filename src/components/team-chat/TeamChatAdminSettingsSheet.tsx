@@ -19,6 +19,8 @@ import { AutoJoinRulesTab } from './settings/AutoJoinRulesTab';
 import { SmartActionsSettingsTab } from './settings/SmartActionsSettingsTab';
 import { WelcomeDMsTab } from './settings/WelcomeDMsTab';
 import { TeamMembersTab } from './settings/TeamMembersTab';
+import { ChatPermissionsTab } from './settings/ChatPermissionsTab';
+import { SectionManagementTab } from './settings/SectionManagementTab';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface TeamChatAdminSettingsSheetProps {
@@ -32,14 +34,14 @@ export function TeamChatAdminSettingsSheet({ open, onOpenChange }: TeamChatAdmin
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg">
+      <SheetContent className="w-full sm:max-w-2xl">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
             Team Chat Settings
           </SheetTitle>
           <SheetDescription>
-            Configure permissions, display options, and auto-join rules for your team chat
+            Configure permissions, sections, display options, and auto-join rules
           </SheetDescription>
         </SheetHeader>
 
@@ -51,14 +53,12 @@ export function TeamChatAdminSettingsSheet({ open, onOpenChange }: TeamChatAdmin
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="channels">Channels</TabsTrigger>
-              <TabsTrigger value="display">Display</TabsTrigger>
-              <TabsTrigger value="permissions">Perms</TabsTrigger>
+              <TabsTrigger value="sections">Sections</TabsTrigger>
+              <TabsTrigger value="roles">Roles</TabsTrigger>
               <TabsTrigger value="auto-join">Auto</TabsTrigger>
-              <TabsTrigger value="welcome">Welcome</TabsTrigger>
-              <TabsTrigger value="smart-actions">AI</TabsTrigger>
-              <TabsTrigger value="team">Team</TabsTrigger>
+              <TabsTrigger value="ai">AI</TabsTrigger>
             </TabsList>
 
             <ScrollArea className="h-[calc(100vh-220px)] mt-4 pr-4">
@@ -66,28 +66,20 @@ export function TeamChatAdminSettingsSheet({ open, onOpenChange }: TeamChatAdmin
                 <ChannelPermissionsTab settings={settings} onUpdate={updateSettings} />
               </TabsContent>
 
-              <TabsContent value="display" className="mt-0">
-                <DisplaySettingsTab settings={settings} onUpdate={updateSettings} />
+              <TabsContent value="sections" className="mt-0">
+                <SectionManagementTab />
               </TabsContent>
 
-              <TabsContent value="permissions" className="mt-0">
-                <MessagingPermissionsTab settings={settings} onUpdate={updateSettings} />
+              <TabsContent value="roles" className="mt-0">
+                <ChatPermissionsTab embedded />
               </TabsContent>
 
               <TabsContent value="auto-join" className="mt-0">
                 <AutoJoinRulesTab />
               </TabsContent>
 
-              <TabsContent value="welcome" className="mt-0">
-                <WelcomeDMsTab settings={settings} onUpdate={updateSettings} />
-              </TabsContent>
-
-              <TabsContent value="smart-actions" className="mt-0">
+              <TabsContent value="ai" className="mt-0">
                 <SmartActionsSettingsTab settings={settings} onUpdate={updateSettings} />
-              </TabsContent>
-
-              <TabsContent value="team" className="mt-0">
-                <TeamMembersTab />
               </TabsContent>
             </ScrollArea>
           </Tabs>

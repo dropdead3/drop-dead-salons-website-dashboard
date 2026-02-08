@@ -1700,6 +1700,7 @@ export type Database = {
           location_id: string | null
           name: string
           organization_id: string | null
+          section_id: string | null
           type: Database["public"]["Enums"]["chat_channel_type"]
           updated_at: string | null
         }
@@ -1714,6 +1715,7 @@ export type Database = {
           location_id?: string | null
           name: string
           organization_id?: string | null
+          section_id?: string | null
           type?: Database["public"]["Enums"]["chat_channel_type"]
           updated_at?: string | null
         }
@@ -1728,6 +1730,7 @@ export type Database = {
           location_id?: string | null
           name?: string
           organization_id?: string | null
+          section_id?: string | null
           type?: Database["public"]["Enums"]["chat_channel_type"]
           updated_at?: string | null
         }
@@ -1744,6 +1747,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_channels_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sections"
             referencedColumns: ["id"]
           },
         ]
@@ -1847,6 +1857,44 @@ export type Database = {
           },
         ]
       }
+      chat_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          is_allowed: boolean
+          organization_id: string
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_allowed?: boolean
+          organization_id: string
+          permission_key: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_allowed?: boolean
+          organization_id?: string
+          permission_key?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_permissions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_pinned_messages: {
         Row: {
           channel_id: string
@@ -1882,6 +1930,50 @@ export type Database = {
             columns: ["message_id"]
             isOneToOne: false
             referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_sections: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          icon: string | null
+          id: string
+          is_system: boolean
+          name: string
+          organization_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          icon?: string | null
+          id?: string
+          is_system?: boolean
+          name: string
+          organization_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          icon?: string | null
+          id?: string
+          is_system?: boolean
+          name?: string
+          organization_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_sections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -11844,6 +11936,7 @@ export type Database = {
       }
       user_preferences: {
         Row: {
+          chat_layout: Json | null
           created_at: string
           custom_landing_page: string | null
           custom_theme: Json | null
@@ -11855,6 +11948,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          chat_layout?: Json | null
           created_at?: string
           custom_landing_page?: string | null
           custom_theme?: Json | null
@@ -11866,6 +11960,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          chat_layout?: Json | null
           created_at?: string
           custom_landing_page?: string | null
           custom_theme?: Json | null
@@ -12381,6 +12476,10 @@ export type Database = {
       }
       get_user_organization: { Args: { _user_id: string }; Returns: string }
       get_user_points_balance: { Args: { _user_id: string }; Returns: number }
+      has_chat_permission: {
+        Args: { _org_id: string; _permission_key: string; _user_id: string }
+        Returns: boolean
+      }
       has_platform_role: {
         Args: { _role: string; _user_id: string }
         Returns: boolean

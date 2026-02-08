@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Hash, MapPin, Lock, Plus, ChevronDown, ChevronRight, Users, Settings, Sparkles } from 'lucide-react';
+import { Hash, MapPin, Lock, Plus, ChevronDown, ChevronRight, Users, Settings, Sparkles, Folder } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -11,6 +11,9 @@ import { useUnreadMessages } from '@/hooks/team-chat/useUnreadMessages';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useChatSections } from '@/hooks/team-chat/useChatSections';
+import { useChatLayoutPreferences } from '@/hooks/team-chat/useChatLayoutPreferences';
+import { useHasChatPermission, CHAT_PERMISSION_KEYS } from '@/hooks/team-chat/useChatPermissions';
 import { CreateChannelDialog } from './CreateChannelDialog';
 import { StartDMDialog } from './StartDMDialog';
 import { TeamChatAdminSettingsSheet } from './TeamChatAdminSettingsSheet';
@@ -100,23 +103,67 @@ function ChannelItem({ channel, isActive, onClick, unreadCount }: ChannelItemPro
   );
 }
 
+interface SidebarSectionProps {
+  id: string;
+  title: string;
+  icon?: React.ReactNode;
+  isOpen: boolean;
+  onToggle: () => void;
+  onAddClick?: () => void;
+  showAddButton?: boolean;
+  children: React.ReactNode;
+}
+
+function SidebarSection({ 
+  id, 
+  title, 
+  icon, 
+  isOpen, 
+  onToggle, 
+  onAddClick, 
+  showAddButton,
+  children 
+}: SidebarSectionProps) {
+  return (
+    <Collapsible open={isOpen} onOpenChange={onToggle}>
+      <div className="flex items-center justify-between px-2">
+        <CollapsibleTrigger className="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground">
+          {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+          {icon}
+          {title}
+        </CollapsibleTrigger>
+        {showAddButton && onAddClick && (
+          <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onAddClick}>
+            <Plus className="h-3 w-3" />
+          </Button>
+        )}
+      </div>
+      <CollapsibleContent className="mt-1 space-y-0.5">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 export function ChannelSidebar() {
   const { channels, isLoading, joinChannel } = useChatChannels();
   const { activeChannel, setActiveChannel } = useTeamChatContext();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: profile } = useEmployeeProfile();
+  const { sections } = useChatSections();
+  const { isSectionCollapsed, toggleSectionCollapsed } = useChatLayoutPreferences();
+  const canCreateChannel = useHasChatPermission(CHAT_PERMISSION_KEYS.CREATE_CHANNEL);
+  
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDMOpen, setIsDMOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isAIChatOpen, setIsAIChatOpen] = useState(false);
-  const [sectionsOpen, setSectionsOpen] = useState({
-    channels: true,
-    locations: true,
-    direct: true,
-  });
+  
+  // Local state for section collapse (fallback + immediate UI)
+  const [localCollapsed, setLocalCollapsed] = useState<Record<string, boolean>>({});
 
   // Only super admins can access settings
-  const canAccessSettings = profile?.is_super_admin === true;
+  const canAccessSettings = profile?.is_super_admin === true || profile?.is_primary_owner === true;
   
   // Check if organization is multi-location
   const isMultiLocation = effectiveOrganization?.is_multi_location ?? true;
@@ -153,14 +200,38 @@ export function ChannelSidebar() {
     }
   }, [channels, activeChannel, setActiveChannel]);
 
-  const publicChannels = channels.filter((c) => c.type === 'public' || c.type === 'private');
-  const locationChannels = channels.filter((c) => c.type === 'location');
-  
+  // Group channels by section
+  const channelsBySection = useMemo(() => {
+    const result: Record<string, ChannelWithMembership[]> = {
+      default: [],
+      locations: [],
+      direct: [],
+    };
+
+    // Initialize custom sections
+    sections.forEach(s => {
+      result[s.id] = [];
+    });
+
+    channels.forEach(channel => {
+      if (channel.type === 'dm' || channel.type === 'group_dm') {
+        result.direct.push(channel);
+      } else if (channel.type === 'location') {
+        result.locations.push(channel);
+      } else if (channel.section_id && result[channel.section_id]) {
+        result[channel.section_id].push(channel);
+      } else {
+        result.default.push(channel);
+      }
+    });
+
+    return result;
+  }, [channels, sections]);
+
   // Sort DM channels by role hierarchy
   const sortedDmChannels = useMemo(() => {
-    const dms = channels.filter((c) => c.type === 'dm' || c.type === 'group_dm');
+    const dms = channelsBySection.direct || [];
     return dms.sort((a, b) => {
-      // Get highest priority role for each partner
       const getRolePriority = (roles: string[] | undefined) => {
         if (!roles || roles.length === 0) return 99;
         return Math.min(...roles.map((r) => ROLE_PRIORITY[r] ?? 99));
@@ -171,27 +242,35 @@ export function ChannelSidebar() {
       
       if (priorityA !== priorityB) return priorityA - priorityB;
       
-      // Secondary sort: alphabetical by name
       const nameA = a.dm_partner?.display_name || '';
       const nameB = b.dm_partner?.display_name || '';
       return nameA.localeCompare(nameB);
     });
-  }, [channels]);
+  }, [channelsBySection.direct]);
 
   const handleChannelClick = (channel: ChannelWithMembership) => {
-    // Join if not a member
     if (!channel.membership && (channel.type === 'public' || channel.type === 'location')) {
       joinChannel(channel.id);
     }
     setActiveChannel(channel);
-    // Mark as read when channel is selected
     if (channel.membership) {
       markAsRead(channel.id);
     }
   };
 
-  const toggleSection = (section: keyof typeof sectionsOpen) => {
-    setSectionsOpen((prev) => ({ ...prev, [section]: !prev[section] }));
+  const isSectionOpen = (sectionId: string): boolean => {
+    if (localCollapsed[sectionId] !== undefined) {
+      return !localCollapsed[sectionId];
+    }
+    return !isSectionCollapsed(sectionId);
+  };
+
+  const handleToggleSection = (sectionId: string) => {
+    setLocalCollapsed(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId] ? true : !prev[sectionId]
+    }));
+    toggleSectionCollapsed(sectionId);
   };
 
   return (
@@ -224,69 +303,42 @@ export function ChannelSidebar() {
 
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-4">
-          {/* Public/Private Channels */}
-          <Collapsible open={sectionsOpen.channels} onOpenChange={() => toggleSection('channels')}>
-            <div className="flex items-center justify-between px-2">
-              <CollapsibleTrigger className="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground">
-                {sectionsOpen.channels ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                Channels
-              </CollapsibleTrigger>
-              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setIsCreateOpen(true)}>
-                <Plus className="h-3 w-3" />
-              </Button>
-            </div>
-            <CollapsibleContent className="mt-1 space-y-0.5">
-              {publicChannels.map((channel) => (
-                <ChannelItem
-                  key={channel.id}
-                  channel={channel}
-                  isActive={activeChannel?.id === channel.id}
-                  onClick={() => handleChannelClick(channel)}
-                  unreadCount={getUnreadCount(channel.id)}
-                />
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
+          {/* Default Channels Section */}
+          <SidebarSection
+            id="default"
+            title="Channels"
+            isOpen={isSectionOpen('default')}
+            onToggle={() => handleToggleSection('default')}
+            showAddButton={canCreateChannel}
+            onAddClick={() => setIsCreateOpen(true)}
+          >
+            {channelsBySection.default.map((channel) => (
+              <ChannelItem
+                key={channel.id}
+                channel={channel}
+                isActive={activeChannel?.id === channel.id}
+                onClick={() => handleChannelClick(channel)}
+                unreadCount={getUnreadCount(channel.id)}
+              />
+            ))}
+          </SidebarSection>
 
-          {/* Location Channels - Only show for multi-location organizations */}
-          {isMultiLocation && locationChannels.length > 0 && (
-            <Collapsible open={sectionsOpen.locations} onOpenChange={() => toggleSection('locations')}>
-              <CollapsibleTrigger className="flex items-center gap-1 px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground">
-                {sectionsOpen.locations ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                Locations
-              </CollapsibleTrigger>
-              <CollapsibleContent className="mt-1 space-y-0.5">
-                {locationChannels.map((channel) => (
-                  <ChannelItem
-                    key={channel.id}
-                    channel={channel}
-                    isActive={activeChannel?.id === channel.id}
-                    onClick={() => handleChannelClick(channel)}
-                    unreadCount={getUnreadCount(channel.id)}
-                  />
-                ))}
-              </CollapsibleContent>
-            </Collapsible>
-          )}
-
-          {/* Direct Messages - Always show section */}
-          <Collapsible open={sectionsOpen.direct} onOpenChange={() => toggleSection('direct')}>
-            <div className="flex items-center justify-between px-2">
-              <CollapsibleTrigger className="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground">
-                {sectionsOpen.direct ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                Direct Messages
-              </CollapsibleTrigger>
-              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setIsDMOpen(true)}>
-                <Plus className="h-3 w-3" />
-              </Button>
-            </div>
-            <CollapsibleContent className="mt-1 space-y-0.5">
-              {sortedDmChannels.length === 0 ? (
+          {/* Custom Sections */}
+          {sections.map((section) => (
+            <SidebarSection
+              key={section.id}
+              id={section.id}
+              title={section.name}
+              icon={<Folder className="h-3 w-3 mr-1" />}
+              isOpen={isSectionOpen(section.id)}
+              onToggle={() => handleToggleSection(section.id)}
+            >
+              {(channelsBySection[section.id] || []).length === 0 ? (
                 <p className="text-xs text-muted-foreground px-3 py-2">
-                  Click + to start a conversation
+                  No channels in this section
                 </p>
               ) : (
-                sortedDmChannels.map((channel) => (
+                (channelsBySection[section.id] || []).map((channel) => (
                   <ChannelItem
                     key={channel.id}
                     channel={channel}
@@ -296,8 +348,54 @@ export function ChannelSidebar() {
                   />
                 ))
               )}
-            </CollapsibleContent>
-          </Collapsible>
+            </SidebarSection>
+          ))}
+
+          {/* Location Channels */}
+          {isMultiLocation && channelsBySection.locations.length > 0 && (
+            <SidebarSection
+              id="locations"
+              title="Locations"
+              isOpen={isSectionOpen('locations')}
+              onToggle={() => handleToggleSection('locations')}
+            >
+              {channelsBySection.locations.map((channel) => (
+                <ChannelItem
+                  key={channel.id}
+                  channel={channel}
+                  isActive={activeChannel?.id === channel.id}
+                  onClick={() => handleChannelClick(channel)}
+                  unreadCount={getUnreadCount(channel.id)}
+                />
+              ))}
+            </SidebarSection>
+          )}
+
+          {/* Direct Messages */}
+          <SidebarSection
+            id="direct"
+            title="Direct Messages"
+            isOpen={isSectionOpen('direct')}
+            onToggle={() => handleToggleSection('direct')}
+            showAddButton
+            onAddClick={() => setIsDMOpen(true)}
+          >
+            {sortedDmChannels.length === 0 ? (
+              <p className="text-xs text-muted-foreground px-3 py-2">
+                Click + to start a conversation
+              </p>
+            ) : (
+              sortedDmChannels.map((channel) => (
+                <ChannelItem
+                  key={channel.id}
+                  channel={channel}
+                  isActive={activeChannel?.id === channel.id}
+                  onClick={() => handleChannelClick(channel)}
+                  unreadCount={getUnreadCount(channel.id)}
+                />
+              ))
+            )}
+          </SidebarSection>
         </div>
       </ScrollArea>
 
