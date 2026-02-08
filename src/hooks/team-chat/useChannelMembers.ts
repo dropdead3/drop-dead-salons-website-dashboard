@@ -34,7 +34,7 @@ export function useChannelMembers(channelId: string | null) {
           user_id,
           role,
           joined_at,
-          profile:employee_profiles!chat_channel_members_user_id_fkey (
+          profile:employee_profiles!chat_channel_members_employee_fkey (
             display_name,
             full_name,
             photo_url
