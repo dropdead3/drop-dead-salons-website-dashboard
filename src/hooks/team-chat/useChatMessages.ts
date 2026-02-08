@@ -3,6 +3,7 @@ import { useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
 import type { Database } from '@/integrations/supabase/types';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -25,9 +26,10 @@ export interface MessageWithSender extends ChatMessage {
   reply_count?: number;
 }
 
-export function useChatMessages(channelId: string | null) {
+export function useChatMessages(channelId: string | null, channelType?: string, channelMembers?: string[]) {
   const { user } = useAuth();
   const { data: userProfile } = useEmployeeProfile();
+  const { effectiveOrganization } = useOrganizationContext();
   const queryClient = useQueryClient();
   const channelRef = useRef<RealtimeChannel | null>(null);
 
@@ -215,6 +217,29 @@ export function useChatMessages(channelId: string | null) {
       }
       console.error('Failed to send message:', error);
       toast.error('Failed to send message');
+    },
+    onSuccess: async (data, variables) => {
+      // Trigger AI action detection for DM channels
+      if (channelType === 'dm' && channelMembers && effectiveOrganization?.id && data) {
+        const targetUserId = channelMembers.find(id => id !== user?.id);
+        if (targetUserId) {
+          try {
+            await supabase.functions.invoke('detect-chat-action', {
+              body: {
+                messageId: data.id,
+                messageContent: variables.content,
+                senderId: user?.id,
+                channelId: channelId,
+                organizationId: effectiveOrganization.id,
+                targetUserId,
+              },
+            });
+          } catch (error) {
+            // Silent fail - don't disrupt messaging
+            console.error('Smart action detection failed:', error);
+          }
+        }
+      }
     },
     onSettled: () => {
       // Refetch to sync with server (replaces temp ID with real ID)

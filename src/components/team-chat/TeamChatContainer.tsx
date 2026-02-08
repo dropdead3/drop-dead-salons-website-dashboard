@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { TeamChatProvider, useTeamChatContext } from '@/contexts/TeamChatContext';
+import { SmartActionProvider } from '@/contexts/SmartActionContext';
 import { ChannelSidebar } from './ChannelSidebar';
 import { ChannelHeader } from './ChannelHeader';
 import { MessageList } from './MessageList';
@@ -54,7 +55,9 @@ function TeamChatLayout() {
 export function TeamChatContainer() {
   return (
     <TeamChatProvider>
-      <TeamChatLayout />
+      <SmartActionProvider>
+        <TeamChatLayout />
+      </SmartActionProvider>
     </TeamChatProvider>
   );
 }

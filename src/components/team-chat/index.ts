@@ -16,3 +16,4 @@ export * from './UserStatusPicker';
 export * from './MentionAutocomplete';
 export * from './AttachmentDisplay';
 export * from './TeamChatAdminSettingsSheet';
+export * from './SmartActionToast';

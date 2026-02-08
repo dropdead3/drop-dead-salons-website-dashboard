@@ -1,14 +1,24 @@
-import { useState, useRef, useCallback, KeyboardEvent } from 'react';
+import { useState, useRef, useCallback, KeyboardEvent, useMemo } from 'react';
 import { Send, Paperclip, Smile, AtSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { useChatMessages } from '@/hooks/team-chat/useChatMessages';
+import { useChannelMembers } from '@/hooks/team-chat/useChannelMembers';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 
 export function MessageInput() {
   const { activeChannel } = useTeamChatContext();
-  const { sendMessage, isSending } = useChatMessages(activeChannel?.id || null);
+  const { members } = useChannelMembers(activeChannel?.id || null);
+  
+  // Get member IDs for DM detection
+  const memberIds = useMemo(() => members.map(m => m.userId), [members]);
+  
+  const { sendMessage, isSending } = useChatMessages(
+    activeChannel?.id || null,
+    activeChannel?.type,
+    memberIds
+  );
   const [content, setContent] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
