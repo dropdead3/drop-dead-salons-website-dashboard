@@ -4,3 +4,4 @@ export * from './useAutoJoinLocationChannels';
 export * from './useTeamChatSettings';
 export * from './useTeamChatRoleAutoJoin';
 export * from './useSmartActions';
+export * from './useTeamChatAccess';

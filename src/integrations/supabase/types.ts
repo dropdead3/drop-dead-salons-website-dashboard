@@ -3325,6 +3325,7 @@ export type Database = {
           approved_by: string | null
           bio: string | null
           birthday: string | null
+          chat_enabled: boolean | null
           created_at: string
           dd_certified: boolean | null
           departure_notes: string | null
@@ -3369,6 +3370,7 @@ export type Database = {
           approved_by?: string | null
           bio?: string | null
           birthday?: string | null
+          chat_enabled?: boolean | null
           created_at?: string
           dd_certified?: boolean | null
           departure_notes?: string | null
@@ -3413,6 +3415,7 @@ export type Database = {
           approved_by?: string | null
           bio?: string | null
           birthday?: string | null
+          chat_enabled?: boolean | null
           created_at?: string
           dd_certified?: boolean | null
           departure_notes?: string | null
