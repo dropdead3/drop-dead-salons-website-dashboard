@@ -1,46 +1,51 @@
 
 
-# Fix: Chat Tab Crashing in Help FAB
+# Fix Chat with Leadership - Auto-Select Org for Platform Users
 
 ## Problem
-When clicking the "Chat" tab in the Help FAB, the app crashes with an error because the `ChatLeadershipTab` component is trying to use presence tracking (to show online/offline status) but the required provider isn't available outside of Team Chat.
-
-## Root Cause
-The `ChatLeadershipTab` uses `usePlatformPresenceContext()` which requires being wrapped by `PlatformPresenceProvider`. However, the Help FAB is rendered in `DashboardLayout` which doesn't include this provider - it only exists on the Team Chat page.
+The Chat tab shows "No managers available" because platform users don't have an organization selected by default. The `useLeadershipMembers` hook returns an empty array when `effectiveOrganization` is `null`.
 
 ## Solution
-Make the presence context usage optional - if the provider isn't available, simply show all members without online/offline status. This is a graceful degradation that keeps the feature functional.
+Apply the same auto-select behavior that Team Chat uses: when a platform user opens the Chat tab without an org selected, automatically select a default organization so leadership members are loaded.
 
-## Technical Changes
+## Technical Approach
 
-### 1. Create a Safe Presence Hook
-**File:** `src/contexts/PlatformPresenceContext.tsx`
+### Update ChatLeadershipTab Component
 
-Add a new export `usePlatformPresenceContextSafe()` that returns `null` when used outside the provider instead of throwing an error:
+Add the same auto-select logic that exists in `TeamChat.tsx`:
 
 ```typescript
-export function usePlatformPresenceContextSafe() {
-  return useContext(PlatformPresenceContext);
-}
+// In ChatLeadershipTab.tsx
+const { isPlatformUser } = useAuth();
+const { effectiveOrganization, setSelectedOrganization } = useOrganizationContext();
+const { data: organizations } = useOrganizations();
+
+// Auto-select org for platform users (mirrors TeamChat.tsx logic)
+useEffect(() => {
+  if (isPlatformUser && !effectiveOrganization && organizations?.length > 0) {
+    const defaultOrg = organizations.find(o => o.slug === 'drop-dead-salons') || organizations[0];
+    setSelectedOrganization(defaultOrg);
+  }
+}, [isPlatformUser, effectiveOrganization, organizations, setSelectedOrganization]);
 ```
 
-### 2. Update ChatLeadershipTab
-**File:** `src/components/dashboard/help-fab/ChatLeadershipTab.tsx`
+## Flow Confirmation
 
-- Import `usePlatformPresenceContextSafe` instead of `usePlatformPresenceContext`
-- Handle the case where presence is `null`:
-  - If presence data is available, show online indicators as before
-  - If not available, hide online indicators or show all as "unknown"
+The DM flow works correctly:
+1. **User clicks manager** → Calls `createDM(userId)`
+2. **createDM checks for existing DM** → If found, returns existing channel
+3. **If no existing DM** → Creates new DM channel with both users as members
+4. **Navigate to Team Chat** → User lands on `/dashboard/team-chat` with the conversation ready
+
+This means clicking the same manager twice will open the same conversation, not create duplicates.
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/contexts/PlatformPresenceContext.tsx` | Add `usePlatformPresenceContextSafe` function |
-| `src/components/dashboard/help-fab/ChatLeadershipTab.tsx` | Use safe context hook, handle null case |
+| `src/components/dashboard/help-fab/ChatLeadershipTab.tsx` | Add auto-select org logic for platform users |
 
 ## Expected Result
-- Chat tab works on all dashboard pages
-- On pages without presence provider: members shown without online/offline status
-- On Team Chat page: full online/offline status shown (if user navigates there later)
-
+- Platform users see leadership members immediately when opening Chat tab
+- Regular organization users continue to see their org's managers (no change)
+- Clicking a manager creates or opens existing DM, then navigates to Team Chat
