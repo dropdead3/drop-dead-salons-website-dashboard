@@ -15,14 +15,13 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   program: '#EC4899',    // Pink
   levels: '#14B8A6',     // Teal
   handbooks: '#EAB308',  // Yellow
-  visibility: '#6366F1', // Indigo
   schedule: '#0EA5E9',   // Sky blue
   locations: '#EF4444',  // Red
   dayrate: '#F97316',    // Orange (chair rental)
-  'role-access': '#8B5CF6', // Purple (Shield icon theme)
   forms: '#0EA5E9',      // Sky blue (Forms & Agreements)
   loyalty: '#F59E0B',    // Amber/Gold (Loyalty & Rewards)
   feedback: '#10B981',   // Emerald (Client Feedback)
+  'access-hub': '#8B5CF6', // Purple (Shield theme)
 };
 
 // Section groups for organized layout
@@ -35,7 +34,7 @@ export const SECTION_GROUPS = [
   {
     id: 'team',
     label: 'Access & Visibility',
-    categories: ['users', 'role-access', 'visibility'],
+    categories: ['users', 'access-hub'],
   },
   {
     id: 'custom-programs',

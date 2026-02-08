@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
@@ -116,7 +116,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | 'dayrate' | 'role-access' | 'forms' | 'loyalty' | 'feedback' | null;
+type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'access-hub' | 'schedule' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -520,6 +520,7 @@ export default function Settings() {
   const { colorTheme, setColorTheme, mounted: colorMounted } = useColorTheme();
   const { roleOptions: dynamicRoleOptions, isLoading: rolesLoading } = useRoleUtils();
   const location = useLocation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
@@ -724,11 +725,11 @@ export default function Settings() {
       description: 'Team documents & training',
       icon: BookOpen,
     },
-    visibility: {
-      id: 'visibility',
-      label: 'Visibility Console',
-      description: 'Control dashboard element visibility by role',
-      icon: LayoutDashboard,
+    'access-hub': {
+      id: 'access-hub',
+      label: 'Access & Controls Hub',
+      description: 'Modules, role visibility & permissions',
+      icon: Shield,
     },
     schedule: {
       id: 'schedule',
@@ -747,12 +748,6 @@ export default function Settings() {
       label: 'Day Rate',
       description: 'Chair rentals, pricing & agreements',
       icon: Armchair,
-    },
-    'role-access': {
-      id: 'role-access',
-      label: 'Role Access',
-      description: 'Navigation, tabs & widgets by role',
-      icon: Shield,
     },
     sms: {
       id: 'sms',
@@ -1275,15 +1270,11 @@ export default function Settings() {
 
           {activeCategory === 'handbooks' && <HandbooksContent />}
 
-          {activeCategory === 'visibility' && <CommandCenterContent />}
-
           {activeCategory === 'schedule' && <ScheduleSettingsContent />}
 
           {activeCategory === 'locations' && <LocationsSettingsContent />}
 
           {activeCategory === 'dayrate' && <DayRateSettingsContent />}
-
-          {activeCategory === 'role-access' && <RoleAccessConfigurator />}
 
           {activeCategory === 'loyalty' && <LoyaltySettingsContent />}
 
@@ -1416,6 +1407,8 @@ export default function Settings() {
                             onClick={() => {
                               if (category.id === 'business') {
                                 setBusinessDialogOpen(true);
+                              } else if (category.id === 'access-hub') {
+                                navigate('/dashboard/admin/access-hub');
                               } else {
                                 setActiveCategory(category.id as SettingsCategory);
                               }
