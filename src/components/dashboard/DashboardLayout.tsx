@@ -134,7 +134,7 @@ interface NavItem {
 
 const mainNavItems: NavItem[] = [
   { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard, permission: 'view_command_center' },
-  { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar' },
+  { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['admin', 'manager', 'stylist', 'stylist_assistant', 'receptionist', 'assistant', 'admin_assistant', 'operations_assistant', 'booth_renter', 'bookkeeper'] },
 ];
 
 // Housekeeping items relocated to top bar (What's New -> Bell, Handbooks/Help -> Help menu)
@@ -164,9 +164,10 @@ const statsNavItems: NavItem[] = [
 // These are the flat items used for permission checking; UI groups them via CollapsibleNavGroup
 const managerNavItems: NavItem[] = [
   // Team Tools group (moved from standalone section)
+  { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['super_admin'] },
   { href: '/dashboard/shift-swaps', label: 'Shift Swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
   { href: '/dashboard/rewards', label: 'Rewards', icon: Gift },
-  { href: '/dashboard/assistant-schedule', label: 'Assistant Schedule', icon: Users, permission: 'view_assistant_schedule' },
+  { href: '/dashboard/assistant-schedule', label: 'Assistant Scheduling', icon: Users, permission: 'view_assistant_schedule' },
   { href: '/dashboard/schedule-meeting', label: 'Meetings & Accountability', icon: CalendarClock, permission: 'schedule_meetings' },
   // Analytics & Insights group
   { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
