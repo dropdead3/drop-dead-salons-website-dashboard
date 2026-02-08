@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { MoreHorizontal, MessageSquare, Smile, Trash2, Pencil } from 'lucide-react';
+import { MoreHorizontal, MessageSquare, Smile, Trash2, Pencil, Pin } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,6 +17,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import type { MessageWithSender } from '@/hooks/team-chat/useChatMessages';
+import { renderContentWithMentions } from './MentionAutocomplete';
 
 const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🎉'];
 
@@ -26,9 +27,11 @@ interface MessageItemProps {
   onReact: (emoji: string) => void;
   onReply: () => void;
   onDelete: () => void;
+  onPin?: () => void;
+  isPinned?: boolean;
 }
 
-export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete }: MessageItemProps) {
+export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete, onPin, isPinned }: MessageItemProps) {
   const { user } = useAuth();
   const [showActions, setShowActions] = useState(false);
   const isOwn = message.sender_id === user?.id;
@@ -80,7 +83,7 @@ export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete
           </div>
         )}
 
-        <div className="text-sm whitespace-pre-wrap break-words">{message.content}</div>
+        <div className="text-sm whitespace-pre-wrap break-words">{renderContentWithMentions(message.content)}</div>
 
         {/* Reactions */}
         {message.reactions && message.reactions.length > 0 && (
@@ -149,6 +152,12 @@ export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              {onPin && (
+                <DropdownMenuItem onClick={onPin}>
+                  <Pin className="h-4 w-4 mr-2" />
+                  {isPinned ? 'Unpin message' : 'Pin message'}
+                </DropdownMenuItem>
+              )}
               {isOwn && (
                 <DropdownMenuItem>
                   <Pencil className="h-4 w-4 mr-2" />
