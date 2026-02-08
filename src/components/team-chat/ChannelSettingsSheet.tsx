@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Settings, Trash2, Archive, Hash, MapPin, Lock, MessageCircle, EyeOff } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Settings, Trash2, Archive, Hash, MapPin, Lock, MessageCircle, EyeOff, Folder } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,10 +27,20 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 import { useChannelMembers } from '@/hooks/team-chat/useChannelMembers';
 import { useChannelMessageCount } from '@/hooks/team-chat/useChannelMessageCount';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
+import { useChatChannels } from '@/hooks/team-chat/useChatChannels';
+import { useChatSections } from '@/hooks/team-chat/useChatSections';
+import { useHasChatPermission, CHAT_PERMISSION_KEYS } from '@/hooks/team-chat/useChatPermissions';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -48,6 +58,9 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
   const queryClient = useQueryClient();
   const { data: isPrimaryOwner } = useIsPrimaryOwner();
   const { data: messageCount = 0 } = useChannelMessageCount(activeChannel?.id || null);
+  const { updateChannelSection, isUpdatingSection } = useChatChannels();
+  const { sections } = useChatSections();
+  const canManageSections = useHasChatPermission(CHAT_PERMISSION_KEYS.CREATE_SECTION);
 
   // For DM channels, find the other person's name
   const dmPartnerName = useMemo(() => {
@@ -62,6 +75,16 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
 
   const [name, setName] = useState(activeChannel?.name || '');
   const [description, setDescription] = useState(activeChannel?.description || '');
+  const [selectedSectionId, setSelectedSectionId] = useState<string>(activeChannel?.section_id || 'default');
+
+  // Reset local state when channel changes
+  useEffect(() => {
+    if (activeChannel) {
+      setName(activeChannel.name || '');
+      setDescription(activeChannel.description || '');
+      setSelectedSectionId(activeChannel.section_id || 'default');
+    }
+  }, [activeChannel]);
 
   const updateMutation = useMutation({
     mutationFn: async () => {
@@ -202,6 +225,47 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
                   disabled={!canEdit}
                 />
               </div>
+
+              {/* Section assignment - only show for non-system, non-location channels */}
+              {canManageSections && !activeChannel.is_system && activeChannel.type !== 'location' && (
+                <div className="space-y-2">
+                  <Label htmlFor="section">Section</Label>
+                  <Select
+                    value={selectedSectionId}
+                    onValueChange={(value) => {
+                      setSelectedSectionId(value);
+                      updateChannelSection({
+                        channelId: activeChannel.id,
+                        sectionId: value === 'default' ? null : value,
+                      });
+                    }}
+                    disabled={isUpdatingSection}
+                  >
+                    <SelectTrigger id="section">
+                      <SelectValue placeholder="Select a section" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">
+                        <span className="flex items-center gap-2">
+                          <Hash className="h-3 w-3" />
+                          Channels (default)
+                        </span>
+                      </SelectItem>
+                      {sections.map((section) => (
+                        <SelectItem key={section.id} value={section.id}>
+                          <span className="flex items-center gap-2">
+                            <Folder className="h-3 w-3" />
+                            {section.name}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Move this channel to a different sidebar section
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
