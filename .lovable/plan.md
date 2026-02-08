@@ -1,46 +1,59 @@
 
 
-# Start DM Dialog UI Improvements
+# Include Account Owner as Welcome Sender Option
 
-## Changes Overview
+## Problem
 
-Two UI refinements to the Start a Conversation dialog:
+Currently, the "Add Welcome Sender" dialog excludes the currently logged-in user from the sender list. This means if the Account Owner wants to send a welcome message to new hires, they can't select themselves.
 
-1. **Subtle hover background** - Replace the bright accent hover with a softer background
-2. **Role display** - Show the member's role badge on the right side of each row
+## Solution
+
+Modify the `useLeadershipMembers` hook to include the current user as an option, with a special designation (e.g., "You") or prioritized at the top of the list.
 
 ---
 
-## Technical Details
+## Technical Changes
 
-### 1. Update `useTeamMembers` Hook
+### Update `useLeadershipMembers` Hook
 
-The hook currently doesn't return role information. We need to fetch roles alongside member data.
+**File:** `src/hooks/team-chat/useLeadershipMembers.ts`
 
-**File:** `src/hooks/team-chat/useTeamMembers.ts`
+Remove the filter that excludes the current user:
+```typescript
+// Before: .neq('user_id', user?.id ?? '')
+// After: Remove this line
+```
 
-Add role to the returned data:
-- After fetching employee profiles, query `user_roles` for all returned user IDs
-- Map the primary role (first role) to each member
-- Update the `TeamMember` interface to include `role: string | null`
+Add a flag `isCurrentUser` to each member so the UI can highlight them differently.
 
-### 2. Update `StartDMDialog` Component  
+Update the interface:
+```typescript
+export interface LeadershipMember {
+  user_id: string;
+  display_name: string;
+  full_name: string | null;
+  photo_url: string | null;
+  role: string;
+  isCurrentUser?: boolean; // NEW
+}
+```
 
-**File:** `src/components/team-chat/StartDMDialog.tsx`
+Sort to put current user first in the list.
 
-**Hover effect change:**
-- Change `hover:bg-accent` to `hover:bg-muted/50` for a subtler highlight
+### Update `WelcomeSenderDialog` Component
 
-**Add role display:**
-- Add a right-anchored role badge/label next to the name
-- Use `ROLE_LABELS` to get the human-readable role name
-- Style as muted text or a subtle badge
+**File:** `src/components/team-chat/settings/WelcomeSenderDialog.tsx`
 
-**Updated member row structure:**
+- Display "(You)" next to the current user's name
+- Apply subtle visual distinction (e.g., border or badge)
+- Current user appears at the top of the list
+
+**Updated member row for current user:**
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  [Avatar]  Name                                    Stylist  │
-│            email@example.com                                │
+│  [Avatar]  Your Name (You)                    Account Owner │
+└─────────────────────────────────────────────────────────────┘
+│  [Avatar]  Manager Name                             Manager │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -50,14 +63,15 @@ Add role to the returned data:
 
 | File | Change |
 |------|--------|
-| `src/hooks/team-chat/useTeamMembers.ts` | Fetch and return role for each member |
-| `src/components/team-chat/StartDMDialog.tsx` | Subtle hover + right-aligned role display |
+| `src/hooks/team-chat/useLeadershipMembers.ts` | Remove exclusion filter, add `isCurrentUser` flag, sort current user first |
+| `src/components/team-chat/settings/WelcomeSenderDialog.tsx` | Show "(You)" label for current user |
 
 ---
 
 ## Expected Result
 
-- Hovering over a member row shows a subtle muted background instead of bright accent
-- Each member row displays their role (e.g., "Manager", "Stylist") on the right side
-- Cleaner, more professional appearance matching the screenshot reference
+- Account Owner sees themselves in the sender list
+- Current user is labeled with "(You)" for clarity
+- Current user appears at the top of the list for easy selection
+- Account Owner can now configure welcome messages from themselves
 
