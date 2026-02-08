@@ -49,35 +49,37 @@ export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete
   return (
     <div
       className={cn(
-        'group relative flex items-start gap-3 px-2 py-1 rounded-md transition-colors',
-        'hover:bg-accent/30',
-        isConsecutive && 'pt-0'
+        'group relative flex items-start gap-4 px-4 py-2 rounded-lg transition-colors',
+        'hover:bg-accent/20',
+        isConsecutive ? 'pt-0.5 ml-16' : 'pt-3'
       )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
     >
       {/* Avatar or timestamp spacer */}
-      <div className="w-12 shrink-0">
-        {!isConsecutive && (
-          <Avatar className="h-12 w-12">
+      {!isConsecutive && (
+        <div className="w-10 shrink-0">
+          <Avatar className="h-10 w-10">
             <AvatarImage src={message.sender?.photo_url || undefined} />
             <AvatarFallback className="text-xs">{initials}</AvatarFallback>
           </Avatar>
-        )}
-        {isConsecutive && (
+        </div>
+      )}
+      {isConsecutive && (
+        <div className="w-10 shrink-0 flex items-center justify-end -ml-16">
           <span className={cn(
-            "text-[10px] text-muted-foreground whitespace-nowrap transition-opacity leading-5",
+            "text-[10px] text-muted-foreground whitespace-nowrap transition-opacity",
             showActions ? "opacity-100" : "opacity-0"
           )}>
             {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Message content */}
       <div className="flex-1 min-w-0">
         {!isConsecutive && (
-          <div className="flex items-baseline gap-2 mb-0.5">
+          <div className="flex items-baseline gap-2 mb-1.5">
             <span className="font-semibold text-sm">{senderName}</span>
             <span className="text-xs text-muted-foreground">{timestamp}</span>
             {message.is_edited && (
@@ -86,7 +88,10 @@ export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete
           </div>
         )}
 
-        <div className="text-sm whitespace-pre-wrap break-words">{renderContentWithMentions(message.content)}</div>
+        <div className={cn(
+          "text-sm whitespace-pre-wrap break-words",
+          !isConsecutive && "bg-muted/30 rounded-lg px-3 py-2"
+        )}>{renderContentWithMentions(message.content)}</div>
 
         {/* Reactions */}
         {message.reactions && message.reactions.length > 0 && (

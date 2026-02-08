@@ -92,7 +92,7 @@ export function MessageList() {
               <div className="flex-1 h-px bg-border" />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-2">
               {group.messages.map((message, index) => {
                 const prevMessage = index > 0 ? group.messages[index - 1] : null;
                 const isConsecutive =
