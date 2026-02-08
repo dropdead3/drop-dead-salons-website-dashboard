@@ -1,123 +1,216 @@
 
 
-# Add Team Member Selection to Create Channel Dialog
+# Channel Deletion for Account Owner (Empty Channels Only)
 
 ## Overview
 
-Add the ability to invite team members directly when creating a new channel, eliminating the need to create the channel first and then add members separately. This is especially useful for private channels where you want to immediately specify who should have access.
+Add the ability for the account owner (primary owner) to **permanently delete** channels that have no message history. If a channel has any messages, it can only be archived (existing behavior). This provides a clean way to remove unused/test channels while protecting channels with valuable conversation history.
 
-## Current State
+## Implementation Approach
 
-The `CreateChannelDialog` currently collects:
-- Channel name
-- Description (optional)
-- Privacy toggle (public/private)
-
-After creation, users must navigate to the channel and use the "Add Members" feature in `ChannelMembersSheet` to invite people.
-
-## Proposed Design
-
-### User Experience
-
-1. When "Make private" is toggled ON, show a new "Add members" section
-2. Display a searchable list of team members using the existing `useTeamMembers` hook
-3. Allow multi-select with visual chips showing selected members
-4. Selected members are added to the channel immediately upon creation
+### Logic Flow
 
 ```text
-+------------------------------------+
-| CREATE A CHANNEL                   |
-|------------------------------------|
-| Name                               |
-| # [__________________]             |
-|                                    |
-| Description (optional)             |
-| [______________________]           |
-|                                    |
-| Make private              [ON]     |
-|                                    |
-| Add members  (shows when private)  |
-| +--------------------------------+ |
-| | [x] Sarah Smith                | |
-| | [x] John Doe                   | |
-| +--------------------------------+ |
-| [ Search team members...       ]   |
-| > Available Member 1               |
-| > Available Member 2               |
-|                                    |
-|        [Cancel] [Create Channel]   |
-+------------------------------------+
+┌──────────────────────────────────────────┐
+│           User clicks delete             │
+└───────────────────┬──────────────────────┘
+                    │
+          ┌─────────▼─────────┐
+          │  Is user primary  │
+          │     owner?        │
+          └─────────┬─────────┘
+                    │
+         ┌──────────┴──────────┐
+         No                   Yes
+         │                     │
+    ┌────▼────┐       ┌────────▼────────┐
+    │ No delete│       │ Check message  │
+    │ button   │       │    count       │
+    └──────────┘       └────────┬───────┘
+                                │
+                  ┌─────────────┴─────────────┐
+                  │                           │
+             count = 0                   count > 0
+                  │                           │
+          ┌───────▼───────┐           ┌───────▼───────┐
+          │ Show DELETE   │           │ Show tooltip: │
+          │ button        │           │ "Has history, │
+          │               │           │  archive only"│
+          └───────┬───────┘           └───────────────┘
+                  │
+          ┌───────▼───────┐
+          │ Confirm dialog│
+          │ + delete      │
+          └───────────────┘
 ```
 
 ### Technical Implementation
 
-**1. Update `CreateChannelDialog.tsx`**
+**1. Create a hook to check channel message count**
 
-Add state for selected members:
-```tsx
-const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
-const [memberSearch, setMemberSearch] = useState('');
-const { members: teamMembers, isLoading: loadingMembers } = useTeamMembers(memberSearch);
-```
-
-Add member selection UI that appears when `isPrivate` is true:
-- Search input for filtering team members
-- List of selectable members with avatars
-- Chips/badges showing currently selected members
-- Remove button on each chip to deselect
-
-**2. Update `useChatChannels.ts` createChannel mutation**
-
-Modify to accept an optional `initialMembers` array:
-```tsx
-mutationFn: async (data: Omit<ChatChannelInsert, 'organization_id' | 'created_by'> & { 
-  initialMembers?: string[] 
-}) => {
-  // ... create channel
-  // ... add creator as owner
-  
-  // Add initial members
-  if (data.initialMembers?.length) {
-    const memberships = data.initialMembers.map(userId => ({
-      channel_id: channel.id,
-      user_id: userId,
-      role: 'member' as const,
-    }));
-    await supabase.from('chat_channel_members').insert(memberships);
-  }
+```typescript
+// src/hooks/team-chat/useChannelMessageCount.ts
+export function useChannelMessageCount(channelId: string | null) {
+  return useQuery({
+    queryKey: ['channel-message-count', channelId],
+    queryFn: async () => {
+      if (!channelId) return 0;
+      
+      const { count, error } = await supabase
+        .from('chat_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('channel_id', channelId)
+        .eq('is_deleted', false);
+      
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!channelId,
+  });
 }
 ```
 
-**3. Update submission logic**
+**2. Create a hook to check if user is primary owner**
 
-Pass selected members when creating the channel:
+```typescript
+// src/hooks/useIsPrimaryOwner.ts
+export function useIsPrimaryOwner() {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['is-primary-owner', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return false;
+      
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .select('is_primary_owner')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) return false;
+      return data?.is_primary_owner ?? false;
+    },
+    enabled: !!user?.id,
+  });
+}
+```
+
+**3. Update ChannelSettingsSheet.tsx**
+
+Add a delete mutation and conditional UI:
+
+```typescript
+// Delete mutation - cascades to members, messages are checked before allowing
+const deleteMutation = useMutation({
+  mutationFn: async () => {
+    if (!activeChannel?.id) throw new Error('No channel');
+    
+    // First delete channel members
+    await supabase
+      .from('chat_channel_members')
+      .delete()
+      .eq('channel_id', activeChannel.id);
+    
+    // Then delete the channel
+    const { error } = await supabase
+      .from('chat_channels')
+      .delete()
+      .eq('id', activeChannel.id);
+    
+    if (error) throw error;
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['chat-channels'] });
+    setActiveChannel(null);
+    toast.success('Channel deleted permanently');
+    onOpenChange(false);
+  },
+  onError: () => {
+    toast.error('Failed to delete channel');
+  },
+});
+```
+
+**4. UI Changes in ChannelSettingsSheet**
+
+Add delete button for primary owner when channel is empty:
+
 ```tsx
-createChannel({
-  name: slug,
-  description: description.trim() || null,
-  type: isPrivate ? 'private' : 'public',
-  initialMembers: isPrivate ? selectedMembers : undefined,
-}, { onSuccess: ... });
+{isPrimaryOwner && !isDM && !activeChannel.is_system && (
+  messageCount === 0 ? (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" className="w-full">
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete Channel
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete this channel permanently?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. The channel and all its settings will be permanently removed.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={() => deleteMutation.mutate()}
+            className="bg-destructive hover:bg-destructive/90"
+          >
+            Delete Permanently
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  ) : (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button variant="outline" className="w-full" disabled>
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete Channel
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        This channel has message history and can only be archived
+      </TooltipContent>
+    </Tooltip>
+  )
+)}
 ```
 
 ## File Changes
 
 | File | Changes |
 |------|---------|
-| `src/components/team-chat/CreateChannelDialog.tsx` | Add member selection UI with search, chips for selected members, conditional display for private channels |
-| `src/hooks/team-chat/useChatChannels.ts` | Extend `createChannel` mutation to accept and add initial members |
+| `src/hooks/team-chat/useChannelMessageCount.ts` | **New file** - Hook to check if channel has messages |
+| `src/hooks/useIsPrimaryOwner.ts` | **New file** - Hook to check if current user is primary owner |
+| `src/components/team-chat/ChannelSettingsSheet.tsx` | Add delete mutation, conditional delete UI, toast notifications |
 
-## Benefits
+## Toast Notifications
 
-1. **Streamlined workflow**: Create channel and add members in one step
-2. **Better for private channels**: Especially useful since private channels require explicit membership
-3. **Consistent patterns**: Reuses existing `useTeamMembers` hook and avatar components
-4. **Optional feature**: Only shown when creating private channels (public channels auto-join all members)
+| Action | Toast |
+|--------|-------|
+| Delete success | `"Channel deleted permanently"` (success) |
+| Delete failure | `"Failed to delete channel"` (error) |
+| Archive success | `"Channel archived"` (existing - already has toast) |
+| Update success | `"Channel updated"` (existing - already has toast) |
+
+## Permissions Summary
+
+| User Type | Empty Channel | Channel with History |
+|-----------|---------------|---------------------|
+| Primary Owner | Can delete | Can archive only |
+| Super Admin | Can archive | Can archive |
+| Admin (channel) | Can archive | Can archive |
+| Regular Member | No actions | No actions |
 
 ## Edge Cases Handled
 
-- Clear selected members when toggling privacy off
-- Reset form state (including selected members) on successful creation
-- Exclude current user from selectable list (they're auto-added as owner)
-- Handle empty member selection gracefully
+1. **System channels**: Cannot be deleted (excluded from UI)
+2. **DM channels**: Use per-user hide, not delete (different flow)
+3. **Race condition**: Message count is checked before showing delete option
+4. **Cascade delete**: Channel members are deleted first, then the channel
+5. **Loading states**: Disable buttons while mutations are pending
 
