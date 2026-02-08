@@ -1,141 +1,94 @@
 
-# Fix Team Chat to Fill Full Window Height
+# Fix Messages Not Displaying in Team Chat
 
-## Root Cause Analysis
+## Problem Identified
 
-The current structure has multiple issues preventing the chat from filling the window:
+Messages are being saved correctly to the database but not displaying in the chat UI. 
 
-### Current Structure (Broken)
-```
-<div class="h-screen overflow-hidden flex flex-col">
-  <aside class="fixed...">Sidebar</aside>              -- Fixed, doesn't take space
-  <header class="lg:hidden">Mobile header</header>     -- Takes space on mobile
-  <div>Platform Context Banner</div>                   -- Takes space, NOT flex item
-  <CustomLandingPageBanner />                          -- Takes space, NOT flex item  
-  <div class="sticky">Desktop Top Bar</div>            -- Takes space, sticky
-  <main class="flex-1 min-h-0...">Chat</main>          -- Should fill remaining
-</div>
+### Root Cause
+
+The query in `useChatMessages.ts` uses this join syntax:
+```typescript
+sender:employee_profiles!chat_messages_sender_id_fkey
 ```
 
-The problem: The banners and top bars are placed as siblings but aren't properly participating in the flex column layout. The `main` element has `flex-1` but the intermediate wrappers around banners break the height chain.
+However, the foreign key `chat_messages_sender_id_fkey` references `auth.users(id)`, NOT `employee_profiles`. The Supabase PostgREST API cannot use this foreign key to join to `employee_profiles` because the relationship doesn't exist.
+
+This causes the query to either fail silently or return no data for the sender information.
 
 ---
 
 ## Solution
 
-Restructure the layout so ALL content that takes up vertical space (banners, top bars) is wrapped in a proper flex container that allows `main` to fill remaining space using `flex-1 min-h-0`.
+Replace the foreign key-based join with a proper relationship query that matches `sender_id` to `employee_profiles.user_id`.
 
-### Changes Required
+### Database Changes Required
+
+Add a foreign key from `chat_messages.sender_id` to `employee_profiles.user_id`:
+
+```sql
+-- Add foreign key to enable PostgREST joins
+ALTER TABLE public.chat_messages
+ADD CONSTRAINT chat_messages_sender_employee_fkey
+FOREIGN KEY (sender_id) REFERENCES public.employee_profiles(user_id)
+ON DELETE SET NULL;
+```
+
+### Code Changes
+
+Update the join syntax in these files to use the new foreign key:
 
 | File | Change |
 |------|--------|
-| `DashboardLayout.tsx` | Wrap all content (except fixed sidebar) in a flex column container |
-| `DashboardLayout.tsx` | Ensure banners and top bar are proper flex children |
-| `DashboardLayout.tsx` | Make `main` use `flex-1 min-h-0 overflow-hidden` |
-| `TeamChat.tsx` | Ensure the wrapper uses `h-full` to fill the main area |
+| `src/hooks/team-chat/useChatMessages.ts` | Use `chat_messages_sender_employee_fkey` |
+| `src/hooks/team-chat/useThreadMessages.ts` | Use `chat_messages_sender_employee_fkey` |
+| `src/hooks/team-chat/usePinnedMessages.ts` | Use `chat_messages_sender_employee_fkey` |
+| `src/hooks/team-chat/useMessageSearch.ts` | Use `chat_messages_sender_employee_fkey` |
 
-### Detailed Implementation
+**Example code change in useChatMessages.ts:**
+```typescript
+// Before
+sender:employee_profiles!chat_messages_sender_id_fkey (
 
-#### 1. DashboardLayout.tsx - Restructure the main content area
-
-The key insight: When `hideFooter` is true, wrap everything after the sidebar in a single flex-col container:
-
-```tsx
-return (
-  <div className={cn(
-    "bg-background", 
-    hideFooter ? "h-screen overflow-hidden" : "min-h-screen"
-  )}>
-    {/* Desktop Sidebar - fixed position, doesn't affect flow */}
-    <aside className="hidden lg:fixed ...">...</aside>
-
-    {/* All flowing content in a flex column (when hideFooter) */}
-    <div className={cn(
-      hideFooter && "h-screen flex flex-col",
-      sidebarCollapsed ? "lg:pl-16" : "lg:pl-72"
-    )}>
-      {/* Mobile Header */}
-      <header className="lg:hidden ...">...</header>
-      
-      {/* Banners - only when NOT hideFooter, or make them part of flow */}
-      {!hideFooter && <PlatformContextBanner />}
-      {!hideFooter && <CustomLandingPageBanner />}
-      
-      {/* Desktop Top Bar - shrink-0 to prevent compression */}
-      <div className={cn("hidden lg:block sticky...", hideFooter && "shrink-0")}>
-        ...
-      </div>
-      
-      {/* Main Content - flex-1 to fill remaining space */}
-      <main className={cn(
-        hideFooter ? "flex-1 min-h-0 overflow-hidden" : ""
-      )}>
-        <div className={cn(hideFooter ? "h-full" : "min-h-screen flex flex-col")}>
-          <div className={cn("flex-1", hideFooter && "h-full")}>
-            {children}
-          </div>
-          {!hideFooter && <footer>...</footer>}
-        </div>
-      </main>
-    </div>
-  </div>
-);
-```
-
-#### 2. TeamChat.tsx - Simple h-full wrapper
-
-```tsx
-return (
-  <DashboardLayout hideFooter>
-    <PlatformPresenceProvider>
-      <div className="h-full overflow-hidden">
-        <TeamChatContainer />
-      </div>
-    </PlatformPresenceProvider>
-  </DashboardLayout>
-);
+// After  
+sender:employee_profiles!chat_messages_sender_employee_fkey (
 ```
 
 ---
 
-## Technical Details
+## How Messages Display Sender, Date, and Time
 
-### Key CSS Properties Explained
+Once the fix is applied, each message will display:
 
-| Property | Purpose |
-|----------|---------|
-| `h-screen` | Sets height to 100vh (viewport height) |
-| `flex flex-col` | Arranges children in a column |
-| `flex-1` | Makes element grow to fill available space |
-| `min-h-0` | **Critical** - allows flex children to shrink below content size |
-| `overflow-hidden` | Prevents content from overflowing container |
-| `shrink-0` | Prevents element from shrinking |
-| `h-full` | 100% height of parent |
+| Information | How It's Shown |
+|-------------|----------------|
+| **Sender Name** | From `sender.display_name` or `sender.full_name` |
+| **Avatar** | From `sender.photo_url` |
+| **Relative Time** | "5 minutes ago" via `date-fns` |
+| **Date Headers** | "Saturday, February 8" grouped by day |
+| **Exact Time** | Shown on hover for consecutive messages |
 
-### Why `min-h-0` is Critical
-
-In flexbox, items have a default `min-height: auto` which prevents them from shrinking below their content size. When you want a scrollable area inside a flex container, you need `min-h-0` to allow the item to shrink and enable overflow.
+The `MessageItem` component already handles all this display logic - it just needs the data to arrive correctly.
 
 ---
 
 ## Files to Modify
 
-| File | Lines Affected | Change Type |
-|------|----------------|-------------|
-| `src/components/dashboard/DashboardLayout.tsx` | ~770-1097 | Major restructure of content wrapper |
-| `src/pages/dashboard/TeamChat.tsx` | ~22-30 | Simplify wrapper classes |
+| File | Change |
+|------|--------|
+| Database migration | Add FK from sender_id to employee_profiles.user_id |
+| `src/hooks/team-chat/useChatMessages.ts` | Update join syntax (line 41) |
+| `src/hooks/team-chat/useThreadMessages.ts` | Update join syntax (lines 24, 59) |
+| `src/hooks/team-chat/usePinnedMessages.ts` | Update join syntax (line 24) |
+| `src/hooks/team-chat/useMessageSearch.ts` | Update join syntax (line 36) |
 
 ---
 
 ## Expected Result
 
-| Before | After |
-|--------|-------|
-| Chat ends above footer | Chat fills entire viewport below header |
-| Brown footer visible | No gap, chat extends to bottom |
-| Inconsistent heights | Proper flexbox height chain |
-
-### Visual Comparison
-
-**Before**: Chat → Gap → Footer visible
-**After**: Chat extends to bottom of window (no gap)
+After the fix:
+- Messages will load and display immediately
+- Each message shows the sender's name and avatar
+- Date separators appear between messages from different days
+- Timestamps show relative time ("just now", "5 minutes ago")
+- Hovering shows exact timestamps for consecutive messages
