@@ -10,16 +10,19 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Search, Eye, User } from 'lucide-react';
-import { ROLE_LABELS } from '@/hooks/useUserRoles';
-import { useLeadershipMembers } from '@/hooks/team-chat/useLeadershipMembers';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Eye, AlertCircle, User } from 'lucide-react';
 import { useWelcomeDMRules, WELCOME_TEMPLATE_VARIABLES, replaceTemplateVariables } from '@/hooks/team-chat/useWelcomeDMRules';
+import { useRoleMembers } from '@/hooks/team-chat/useRoleMembers';
+import { useRoleUtils } from '@/hooks/useRoleUtils';
 import type { WelcomeRule } from '@/hooks/team-chat/useWelcomeDMRules';
+import type { Database } from '@/integrations/supabase/types';
+
+type AppRole = Database['public']['Enums']['app_role'];
 
 interface WelcomeSenderDialogProps {
   open: boolean;
@@ -27,9 +30,16 @@ interface WelcomeSenderDialogProps {
   editingRule: WelcomeRule | null;
 }
 
-const ROLE_OPTIONS = [
+// Leadership roles that can send welcome messages
+const SENDER_ROLE_OPTIONS: { value: AppRole; label: string; description: string }[] = [
+  { value: 'super_admin', label: 'Account Owner', description: 'Primary account holder' },
+  { value: 'admin', label: 'Admin', description: 'Full access to all features' },
+  { value: 'manager', label: 'Manager', description: 'Can manage team, view reports' },
+];
+
+const TARGET_ROLE_OPTIONS = [
   { value: 'stylist', label: 'Stylist' },
-  { value: 'assistant', label: 'Assistant' },
+  { value: 'stylist_assistant', label: 'Stylist Assistant' },
   { value: 'receptionist', label: 'Receptionist' },
   { value: 'manager', label: 'Manager' },
   { value: 'admin', label: 'Admin' },
@@ -45,50 +55,43 @@ const DELAY_OPTIONS = [
 const DEFAULT_MESSAGE = "Welcome to the team, [new_member_name]! 👋 My name is [sender_name], and I'm here to help you get started. Feel free to message me anytime with questions!";
 
 export function WelcomeSenderDialog({ open, onOpenChange, editingRule }: WelcomeSenderDialogProps) {
-  const { members, isLoading: loadingMembers } = useLeadershipMembers();
   const { rules, addRule, updateRule, isAdding, isUpdating } = useWelcomeDMRules();
 
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<AppRole | null>(null);
   const [messageTemplate, setMessageTemplate] = useState(DEFAULT_MESSAGE);
   const [targetRoles, setTargetRoles] = useState<string[]>([]);
   const [delayMinutes, setDelayMinutes] = useState(0);
   const [isActive, setIsActive] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [showPreview, setShowPreview] = useState(false);
 
-  // Filter out already configured senders (unless editing that sender)
-  const configuredSenderIds = rules.map(r => r.sender_user_id);
-  const availableMembers = members.filter(m => 
-    !configuredSenderIds.includes(m.user_id) || editingRule?.sender_user_id === m.user_id
-  );
+  // Get members who currently hold the selected role
+  const { data: roleMembers, isLoading: loadingMembers } = useRoleMembers(selectedRole);
 
-  const filteredMembers = availableMembers.filter(m =>
-    m.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (m.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
+  // Filter out already configured roles (unless editing that role)
+  const configuredRoles = rules.map(r => r.sender_role);
+  const availableRoles = SENDER_ROLE_OPTIONS.filter(r =>
+    !configuredRoles.includes(r.value) || editingRule?.sender_role === r.value
   );
 
   // Reset form when dialog opens/closes or editing rule changes
   useEffect(() => {
     if (open) {
       if (editingRule) {
-        setSelectedUserId(editingRule.sender_user_id);
+        setSelectedRole(editingRule.sender_role);
         setMessageTemplate(editingRule.message_template);
         setTargetRoles(editingRule.target_roles || []);
         setDelayMinutes(editingRule.delay_minutes);
         setIsActive(editingRule.is_active);
       } else {
-        setSelectedUserId(null);
+        setSelectedRole(null);
         setMessageTemplate(DEFAULT_MESSAGE);
         setTargetRoles([]);
         setDelayMinutes(0);
         setIsActive(true);
       }
-      setSearchQuery('');
       setShowPreview(false);
     }
   }, [open, editingRule]);
-
-  const selectedMember = members.find(m => m.user_id === selectedUserId);
 
   const handleRoleToggle = (role: string, checked: boolean) => {
     setTargetRoles(prev =>
@@ -101,10 +104,10 @@ export function WelcomeSenderDialog({ open, onOpenChange, editingRule }: Welcome
   };
 
   const handleSubmit = () => {
-    if (!selectedUserId || !messageTemplate.trim()) return;
+    if (!selectedRole || !messageTemplate.trim()) return;
 
     const input = {
-      sender_user_id: selectedUserId,
+      sender_role: selectedRole,
       message_template: messageTemplate.trim(),
       target_roles: targetRoles.length > 0 ? targetRoles : null,
       delay_minutes: delayMinutes,
@@ -120,9 +123,10 @@ export function WelcomeSenderDialog({ open, onOpenChange, editingRule }: Welcome
     onOpenChange(false);
   };
 
+  const currentHolder = roleMembers?.[0];
   const previewMessage = replaceTemplateVariables(messageTemplate, {
     new_member_name: 'Jordan Smith',
-    sender_name: selectedMember?.display_name?.split(' ')[0] || 'Sender',
+    sender_name: currentHolder?.display_name?.split(' ')[0] || 'Team Member',
     role: 'Stylist',
     location_name: 'Downtown Salon',
   });
@@ -138,74 +142,84 @@ export function WelcomeSenderDialog({ open, onOpenChange, editingRule }: Welcome
 
         <ScrollArea className="flex-1 pr-4">
           <div className="space-y-6 py-2">
-            {/* Sender Selection */}
+            {/* Role Selection */}
             {!editingRule && (
               <div className="space-y-3">
-                <Label>Select Sender</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search team members..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
-                </div>
-                <div className="border rounded-md max-h-40 overflow-y-auto">
-                  {loadingMembers ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
-                      Loading...
+                <Label>Select Sender Role</Label>
+                <RadioGroup
+                  value={selectedRole || ''}
+                  onValueChange={(value) => setSelectedRole(value as AppRole)}
+                  className="space-y-2"
+                >
+                  {availableRoles.map((role) => (
+                    <div
+                      key={role.value}
+                      className={`flex items-center space-x-3 p-3 border rounded-lg cursor-pointer transition-colors ${
+                        selectedRole === role.value
+                          ? 'bg-primary/10 border-primary'
+                          : 'hover:bg-muted/50'
+                      }`}
+                      onClick={() => setSelectedRole(role.value)}
+                    >
+                      <RadioGroupItem value={role.value} id={role.value} />
+                      <div className="flex-1">
+                        <Label htmlFor={role.value} className="font-medium cursor-pointer">
+                          {role.label}
+                        </Label>
+                        <p className="text-xs text-muted-foreground">{role.description}</p>
+                      </div>
                     </div>
-                  ) : filteredMembers.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
-                      {searchQuery ? 'No matching members' : 'No available senders'}
-                    </div>
-                  ) : (
-                    filteredMembers.map((member) => (
-                      <button
-                        key={member.user_id}
-                        type="button"
-                        onClick={() => setSelectedUserId(member.user_id)}
-                        className={`w-full flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors ${
-                          selectedUserId === member.user_id ? 'bg-primary/10' : ''
-                        } ${member.isCurrentUser ? 'border-l-2 border-primary' : ''}`}
-                      >
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={member.photo_url || undefined} />
-                          <AvatarFallback>{member.display_name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="text-left flex-1 min-w-0">
-                          <div className="font-medium text-sm flex items-center gap-1.5">
-                            {member.display_name}
-                            {member.isCurrentUser && (
-                              <span className="text-xs text-muted-foreground">(You)</span>
-                            )}
-                          </div>
-                        </div>
-                        <span className="text-xs text-muted-foreground shrink-0">
-                          {ROLE_LABELS[member.role as keyof typeof ROLE_LABELS] || member.role}
-                        </span>
-                        {selectedUserId === member.user_id && (
-                          <Badge variant="secondary" className="text-xs">Selected</Badge>
-                        )}
-                      </button>
-                    ))
-                  )}
-                </div>
+                  ))}
+                </RadioGroup>
+                {availableRoles.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    All available sender roles have been configured.
+                  </p>
+                )}
               </div>
             )}
 
-            {/* Selected Sender Display (when editing) */}
-            {editingRule && selectedMember && (
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={selectedMember.photo_url || undefined} />
-                  <AvatarFallback>{selectedMember.display_name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <div className="font-medium">{selectedMember.display_name}</div>
-                  <div className="text-sm text-muted-foreground capitalize">{selectedMember.role}</div>
+            {/* Selected Role Display (when editing) */}
+            {editingRule && selectedRole && (
+              <div className="p-3 bg-muted rounded-lg">
+                <div className="font-medium">
+                  {SENDER_ROLE_OPTIONS.find(r => r.value === selectedRole)?.label || selectedRole}
                 </div>
+                <p className="text-sm text-muted-foreground">
+                  {SENDER_ROLE_OPTIONS.find(r => r.value === selectedRole)?.description}
+                </p>
+              </div>
+            )}
+
+            {/* Current Role Holder Preview */}
+            {selectedRole && (
+              <div className="space-y-2">
+                <Label className="text-muted-foreground text-xs">Currently filling this role:</Label>
+                {loadingMembers ? (
+                  <div className="p-3 bg-muted/50 rounded-md text-sm text-muted-foreground">
+                    Loading...
+                  </div>
+                ) : roleMembers && roleMembers.length > 0 ? (
+                  <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-md">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={currentHolder?.photo_url || undefined} />
+                      <AvatarFallback>
+                        {currentHolder?.display_name?.charAt(0) || 'U'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">{currentHolder?.display_name}</span>
+                    {roleMembers.length > 1 && (
+                      <Badge variant="secondary" className="text-xs">
+                        +{roleMembers.length - 1} more
+                      </Badge>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 p-3 bg-warning/10 text-warning rounded-md">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm">No one currently has this role</span>
+                  </div>
+                )}
               </div>
             )}
 
@@ -258,14 +272,14 @@ export function WelcomeSenderDialog({ open, onOpenChange, editingRule }: Welcome
             <div className="space-y-2">
               <Label>Send to (leave empty for all roles)</Label>
               <div className="flex flex-wrap gap-3">
-                {ROLE_OPTIONS.map((role) => (
+                {TARGET_ROLE_OPTIONS.map((role) => (
                   <div key={role.value} className="flex items-center gap-2">
                     <Checkbox
-                      id={`role-${role.value}`}
+                      id={`target-role-${role.value}`}
                       checked={targetRoles.includes(role.value)}
                       onCheckedChange={(checked) => handleRoleToggle(role.value, !!checked)}
                     />
-                    <Label htmlFor={`role-${role.value}`} className="text-sm font-normal cursor-pointer">
+                    <Label htmlFor={`target-role-${role.value}`} className="text-sm font-normal cursor-pointer">
                       {role.label}
                     </Label>
                   </div>
@@ -310,7 +324,7 @@ export function WelcomeSenderDialog({ open, onOpenChange, editingRule }: Welcome
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!selectedUserId || !messageTemplate.trim() || isAdding || isUpdating}
+            disabled={!selectedRole || !messageTemplate.trim() || isAdding || isUpdating}
           >
             {editingRule ? 'Save Changes' : 'Add Sender'}
           </Button>
