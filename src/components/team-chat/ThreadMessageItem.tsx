@@ -30,6 +30,7 @@ interface ThreadMessageItemProps {
   onEdit?: (content: string) => void;
   onDelete?: () => void;
   isParent?: boolean;
+  isLast?: boolean;
 }
 
 export function ThreadMessageItem({ 
@@ -38,7 +39,8 @@ export function ThreadMessageItem({
   onQuote,
   onEdit,
   onDelete,
-  isParent 
+  isParent,
+  isLast 
 }: ThreadMessageItemProps) {
   const { user } = useAuth();
   const { data: userProfile } = useEmployeeProfile();

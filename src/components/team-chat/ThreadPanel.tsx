@@ -144,19 +144,27 @@ export function ThreadPanel() {
                 </div>
               )}
 
-              {/* Replies */}
-              <div className="space-y-2">
-                {replies.map((reply) => (
-                  <ThreadMessageItem
-                    key={reply.id}
-                    message={reply}
-                    onReact={(emoji) => toggleReaction(reply.id, emoji)}
-                    onQuote={() => setQuotedMessage(reply)}
-                    onEdit={(content) => editMessage({ messageId: reply.id, content })}
-                    onDelete={() => deleteMessage(reply.id)}
-                  />
-                ))}
-              </div>
+              {/* Replies with L-line threading */}
+              {replies.length > 0 && (
+                <div className="relative ml-5 pl-4 border-l-2 border-muted-foreground/20">
+                  <div className="space-y-0">
+                    {replies.map((reply, index) => (
+                      <div key={reply.id} className="relative">
+                        {/* Horizontal connector line */}
+                        <div className="absolute -left-4 top-4 w-4 h-px bg-muted-foreground/20" />
+                        <ThreadMessageItem
+                          message={reply}
+                          onReact={(emoji) => toggleReaction(reply.id, emoji)}
+                          onQuote={() => setQuotedMessage(reply)}
+                          onEdit={(content) => editMessage({ messageId: reply.id, content })}
+                          onDelete={() => deleteMessage(reply.id)}
+                          isLast={index === replies.length - 1}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div ref={scrollRef} />
             </div>
           </ScrollArea>
