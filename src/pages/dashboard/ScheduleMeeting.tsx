@@ -20,6 +20,7 @@ import {
   Clock,
   AlertCircle,
 } from 'lucide-react';
+import { ManagerMeetingRequest } from '@/components/coaching/ManagerMeetingRequest';
 
 interface StatCardProps {
   icon: React.ComponentType<{ className?: string }>;
@@ -226,6 +227,7 @@ export default function ScheduleMeeting() {
                   Schedule Meeting
                 </Button>
               </Link>
+              {isCoach && <ManagerMeetingRequest />}
               <Link to="/dashboard/schedule-meeting/inbox">
                 <Button variant="outline" className="gap-2">
                   <MessageSquareMore className="w-4 h-4" />
