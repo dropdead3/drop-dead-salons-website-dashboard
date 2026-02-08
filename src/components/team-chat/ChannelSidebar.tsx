@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Hash, MapPin, Lock, Plus, ChevronDown, ChevronRight, Users, Settings } from 'lucide-react';
+import { Hash, MapPin, Lock, Plus, ChevronDown, ChevronRight, Users, Settings, Bot, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -11,6 +11,7 @@ import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { CreateChannelDialog } from './CreateChannelDialog';
 import { StartDMDialog } from './StartDMDialog';
 import { TeamChatAdminSettingsSheet } from './TeamChatAdminSettingsSheet';
+import { AIChatPanel } from './AIChatPanel';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Badge } from '@/components/ui/badge';
 
@@ -65,6 +66,7 @@ export function ChannelSidebar() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isDMOpen, setIsDMOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isAIChatOpen, setIsAIChatOpen] = useState(false);
   const [sectionsOpen, setSectionsOpen] = useState({
     channels: true,
     locations: true,
@@ -130,17 +132,28 @@ export function ChannelSidebar() {
     <div className="flex flex-col h-full bg-sidebar border-r">
       <div className="p-4 border-b flex items-center justify-between">
         <h2 className="font-semibold text-lg">Team Chat</h2>
-        {canAccessSettings && (
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
             className="h-8 w-8"
-            onClick={() => setIsSettingsOpen(true)}
-            title="Team Chat Settings"
+            onClick={() => setIsAIChatOpen(true)}
+            title="AI Assistant"
           >
-            <Settings className="h-4 w-4" />
+            <Sparkles className="h-4 w-4" />
           </Button>
-        )}
+          {canAccessSettings && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setIsSettingsOpen(true)}
+              title="Team Chat Settings"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <ScrollArea className="flex-1">
@@ -225,6 +238,7 @@ export function ChannelSidebar() {
       <CreateChannelDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
       <StartDMDialog open={isDMOpen} onOpenChange={setIsDMOpen} />
       <TeamChatAdminSettingsSheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+      <AIChatPanel open={isAIChatOpen} onOpenChange={setIsAIChatOpen} />
     </div>
   );
 }

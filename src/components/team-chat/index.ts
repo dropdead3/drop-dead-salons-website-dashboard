@@ -18,3 +18,6 @@ export * from './MentionInput';
 export * from './AttachmentDisplay';
 export * from './TeamChatAdminSettingsSheet';
 export * from './SmartActionToast';
+export * from './AIActionPreview';
+export * from './AIMessageContent';
+export * from './AIChatPanel';
