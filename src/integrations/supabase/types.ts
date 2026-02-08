@@ -1820,6 +1820,91 @@ export type Database = {
           },
         ]
       }
+      chat_smart_actions: {
+        Row: {
+          action_type: string
+          channel_id: string
+          confidence: number
+          created_at: string | null
+          detected_intent: string
+          expires_at: string | null
+          extracted_data: Json | null
+          id: string
+          linked_action_id: string | null
+          linked_action_type: string | null
+          message_id: string
+          organization_id: string
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          sender_id: string
+          status: string | null
+          target_user_id: string
+        }
+        Insert: {
+          action_type: string
+          channel_id: string
+          confidence: number
+          created_at?: string | null
+          detected_intent: string
+          expires_at?: string | null
+          extracted_data?: Json | null
+          id?: string
+          linked_action_id?: string | null
+          linked_action_type?: string | null
+          message_id: string
+          organization_id: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          sender_id: string
+          status?: string | null
+          target_user_id: string
+        }
+        Update: {
+          action_type?: string
+          channel_id?: string
+          confidence?: number
+          created_at?: string | null
+          detected_intent?: string
+          expires_at?: string | null
+          extracted_data?: Json | null
+          id?: string
+          linked_action_id?: string | null
+          linked_action_type?: string | null
+          message_id?: string
+          organization_id?: string
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          sender_id?: string
+          status?: string | null
+          target_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_smart_actions_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_smart_actions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_smart_actions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_user_status: {
         Row: {
           status: Database["public"]["Enums"]["chat_user_status_type"] | null
@@ -11102,6 +11187,10 @@ export type Database = {
           show_location_badge: boolean | null
           show_profile_photos: boolean | null
           show_role_badges: boolean | null
+          smart_action_expiry_hours: number | null
+          smart_action_require_approval: boolean | null
+          smart_action_types: string[] | null
+          smart_actions_enabled: boolean | null
           updated_at: string | null
         }
         Insert: {
@@ -11125,6 +11214,10 @@ export type Database = {
           show_location_badge?: boolean | null
           show_profile_photos?: boolean | null
           show_role_badges?: boolean | null
+          smart_action_expiry_hours?: number | null
+          smart_action_require_approval?: boolean | null
+          smart_action_types?: string[] | null
+          smart_actions_enabled?: boolean | null
           updated_at?: string | null
         }
         Update: {
@@ -11148,6 +11241,10 @@ export type Database = {
           show_location_badge?: boolean | null
           show_profile_photos?: boolean | null
           show_role_badges?: boolean | null
+          smart_action_expiry_hours?: number | null
+          smart_action_require_approval?: boolean | null
+          smart_action_types?: string[] | null
+          smart_actions_enabled?: boolean | null
           updated_at?: string | null
         }
         Relationships: [

@@ -16,6 +16,7 @@ import { ChannelPermissionsTab } from './settings/ChannelPermissionsTab';
 import { DisplaySettingsTab } from './settings/DisplaySettingsTab';
 import { MessagingPermissionsTab } from './settings/MessagingPermissionsTab';
 import { AutoJoinRulesTab } from './settings/AutoJoinRulesTab';
+import { SmartActionsSettingsTab } from './settings/SmartActionsSettingsTab';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface TeamChatAdminSettingsSheetProps {
@@ -48,11 +49,12 @@ export function TeamChatAdminSettingsSheet({ open, onOpenChange }: TeamChatAdmin
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="channels">Channels</TabsTrigger>
               <TabsTrigger value="display">Display</TabsTrigger>
               <TabsTrigger value="permissions">Permissions</TabsTrigger>
               <TabsTrigger value="auto-join">Auto-Join</TabsTrigger>
+              <TabsTrigger value="smart-actions">AI Actions</TabsTrigger>
             </TabsList>
 
             <ScrollArea className="h-[calc(100vh-220px)] mt-4 pr-4">
@@ -70,6 +72,10 @@ export function TeamChatAdminSettingsSheet({ open, onOpenChange }: TeamChatAdmin
 
               <TabsContent value="auto-join" className="mt-0">
                 <AutoJoinRulesTab />
+              </TabsContent>
+
+              <TabsContent value="smart-actions" className="mt-0">
+                <SmartActionsSettingsTab settings={settings} onUpdate={updateSettings} />
               </TabsContent>
             </ScrollArea>
           </Tabs>

@@ -1,14 +1,24 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
 import { MessageItem } from './MessageItem';
 import { useChatMessages, type MessageWithSender } from '@/hooks/team-chat/useChatMessages';
 import { usePinnedMessages } from '@/hooks/team-chat/usePinnedMessages';
+import { useChannelMembers } from '@/hooks/team-chat/useChannelMembers';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 
 export function MessageList() {
   const { activeChannel, openThread } = useTeamChatContext();
-  const { messages, isLoading, toggleReaction, deleteMessage } = useChatMessages(activeChannel?.id || null);
+  const { members } = useChannelMembers(activeChannel?.id || null);
+  
+  // Get member IDs for DM detection
+  const memberIds = useMemo(() => members.map(m => m.userId), [members]);
+  
+  const { messages, isLoading, toggleReaction, deleteMessage } = useChatMessages(
+    activeChannel?.id || null,
+    activeChannel?.type,
+    memberIds
+  );
   const { pinMessage, unpinMessage, isPinned, pinnedMessages } = usePinnedMessages(activeChannel?.id || null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageIdRef = useRef<string | null>(null);
