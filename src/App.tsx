@@ -119,6 +119,9 @@ import RewardShop from "./pages/dashboard/RewardShop";
 import PointsConfig from "./pages/dashboard/admin/PointsConfig";
 import DailyHuddle from "./pages/dashboard/admin/DailyHuddle";
 
+// Team Chat
+import TeamChat from "./pages/dashboard/TeamChat";
+
 // Phase 3: Client Engagement Tools
 import ClientFeedbackPage from "./pages/ClientFeedback";
 import ClientPortalPage from "./pages/ClientPortal";
@@ -214,6 +217,7 @@ const App = () => (
                       <Route path="/dashboard/my-clients" element={<Navigate to="/dashboard/clients" replace />} />
                       <Route path="/dashboard/my-pay" element={<ProtectedRoute requiredPermission="view_my_pay"><MyPay /></ProtectedRoute>} />
                       <Route path="/dashboard/schedule" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Schedule /></ProtectedRoute>} />
+                      <Route path="/dashboard/team-chat" element={<ProtectedRoute><TeamChat /></ProtectedRoute>} />
                       <Route path="/dashboard/changelog" element={<ProtectedRoute><Changelog /></ProtectedRoute>} />
                       <Route path="/dashboard/metrics-glossary" element={<ProtectedRoute><MetricsGlossary /></ProtectedRoute>} />
                       <Route path="/dashboard/design-system" element={<ProtectedRoute requiredPermission="manage_settings"><DesignSystem /></ProtectedRoute>} />
