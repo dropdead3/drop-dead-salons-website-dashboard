@@ -85,6 +85,7 @@ import TrainingHub from "./pages/dashboard/admin/TrainingHub";
 import LeadManagement from "./pages/dashboard/admin/LeadManagement";
 import AdminFeatureFlags from "./pages/dashboard/admin/FeatureFlags";
 import FeaturesCenter from "./pages/dashboard/admin/FeaturesCenter";
+import AccessHub from "./pages/dashboard/admin/AccessHub";
 import PlatformFeatureFlags from "./pages/dashboard/platform/FeatureFlags";
 import ClientDirectory from "./pages/dashboard/ClientDirectory";
 import Schedule from "./pages/dashboard/Schedule";
@@ -273,6 +274,7 @@ const App = () => (
                       <Route path="/dashboard/admin/feedback" element={<ProtectedRoute requiredPermission="manage_settings"><FeedbackHub /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/reengagement" element={<ProtectedRoute requiredPermission="manage_settings"><ReengagementHub /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/features" element={<ProtectedRoute requiredPermission="manage_settings"><FeaturesCenter /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/access-hub" element={<ProtectedRoute requiredPermission="manage_settings"><AccessHub /></ProtectedRoute>} />
                       
                       {/* Team Challenges routes */}
                       <Route path="/dashboard/admin/challenges" element={<ProtectedRoute requiredPermission="view_team_overview"><ChallengesDashboard /></ProtectedRoute>} />
