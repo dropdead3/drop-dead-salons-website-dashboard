@@ -1,113 +1,84 @@
-# Team Chat Enhancement Roadmap
 
-Based on analyzing the current implementation, here are the most impactful features to add next, prioritized by user value and building on existing infrastructure.
+# Fix Team Chat Bottom Gap
 
----
+## Problem
 
-## ✅ Priority 1: Thread Replies Panel - COMPLETE
+The Team Chat page shows a visible gap at the bottom where the dashboard footer is appearing. This breaks the full-height immersive chat experience.
 
-| Component | Status |
-|-----------|--------|
-| `ThreadPanel.tsx` | ✅ Created |
-| `ThreadMessageItem.tsx` | ✅ Created |
-| `useThreadMessages.ts` | ✅ Created |
-| Update `TeamChatContainer` | ✅ Done |
+### Root Cause
 
----
+Multiple conflicting height calculations:
 
-## ✅ Priority 2: File Attachments - COMPLETE
-
-| Component | Status |
-|-----------|--------|
-| Storage bucket `chat-attachments` | ✅ Created |
-| `useFileUpload.ts` | ✅ Created |
-| `AttachmentDisplay.tsx` | ✅ Created |
+| Component | Current Height | Issue |
+|-----------|----------------|-------|
+| `TeamChat.tsx` wrapper | `h-[calc(100vh-4rem)]` | Subtracts header height |
+| `TeamChatContainer` | `h-[calc(100vh-8rem)]` | Different calculation, creates gap |
+| `DashboardLayout` footer | Always visible | Should be hidden for full-height pages |
 
 ---
 
-## ✅ Priority 3: Direct Messages (DMs) - COMPLETE
+## Solution
 
-| Component | Status |
-|-----------|--------|
-| `StartDMDialog.tsx` | ✅ Created |
-| `useDMChannels.ts` | ✅ Created |
-| Update `ChannelSidebar` | ✅ Done |
+### Option A: Hide Footer for Team Chat (Recommended)
 
----
+Pass a prop to indicate the page should be full-height without footer.
 
-## ✅ Priority 4: Unread Message Indicators - COMPLETE
+| File | Change |
+|------|--------|
+| `DashboardLayout.tsx` | Add `hideFooter` prop support |
+| `TeamChat.tsx` | Pass `hideFooter` to layout |
+| `TeamChatContainer.tsx` | Use `h-full` instead of fixed calc |
 
-| Component | Status |
-|-----------|--------|
-| `useUnreadMessages.ts` | ✅ Created |
-| Update `ChannelItem` | ✅ Done with badge |
-| Update `ChannelSidebar` | ✅ Bold unread channels |
+### Option B: Simpler Fix - CSS Only
 
----
+Make the chat fill the remaining space properly using flexbox.
 
-## ✅ Priority 5: @Mentions with Autocomplete - COMPLETE
-
-| Component | Status |
-|-----------|--------|
-| `MentionAutocomplete.tsx` | ✅ Created |
-| `renderContentWithMentions()` | ✅ Created |
-| `useTeamMembers.ts` | ✅ Created |
+| File | Change |
+|------|--------|
+| `TeamChat.tsx` | Use `flex-1` and `min-h-0` |
+| `TeamChatContainer.tsx` | Use `h-full` instead of fixed viewport calc |
 
 ---
 
-## ✅ Priority 6: Pinned Messages - COMPLETE
+## Recommended Changes
 
-| Component | Status |
-|-----------|--------|
-| `PinnedMessagesSheet.tsx` | ✅ Created |
-| `usePinnedMessages.ts` | ✅ Created |
-| Update `MessageItem` dropdown | ✅ Done |
-| Update `ChannelHeader` | ✅ Pin icon with count |
+### 1. Update TeamChat.tsx
 
----
+Change the wrapper from fixed calc to flex-based filling:
 
-## ✅ Priority 7: User Status & Availability - COMPLETE
+```tsx
+<div className="flex-1 min-h-0 overflow-hidden">
+  <TeamChatContainer />
+</div>
+```
 
-| Component | Status |
-|-----------|--------|
-| `UserStatusPicker.tsx` | ✅ Created |
-| `StatusDot` component | ✅ Created |
-| `useUserStatus.ts` | ✅ Created |
-| `useUserStatuses.ts` | ✅ Created |
+### 2. Update TeamChatContainer.tsx
 
----
+Change from viewport-based height to container-filling:
 
-## ✅ Priority 8: Message Search - COMPLETE
+```tsx
+<div className="flex h-full bg-background">
+```
 
-| Component | Status |
-|-----------|--------|
-| `SearchDialog.tsx` | ✅ Created (Cmd+K) |
-| `useMessageSearch.ts` | ✅ Created |
-| Jump to channel | ✅ Done |
+### 3. Update DashboardLayout.tsx (Optional Enhancement)
+
+Add support for hiding footer on full-height pages like Team Chat.
 
 ---
 
-## ✅ Priority 9: Channel Settings & Members Panel - COMPLETE
+## Files to Modify
 
-| Component | Status |
-|-----------|--------|
-| `ChannelSettingsSheet.tsx` | ✅ Created |
-| `ChannelMembersSheet.tsx` | ✅ Created |
-| `useChannelMembers.ts` | ✅ Created |
-| Wire up header buttons | ✅ Done |
+| File | Change |
+|------|--------|
+| `src/pages/dashboard/TeamChat.tsx` | Use flex-based height filling |
+| `src/components/team-chat/TeamChatContainer.tsx` | Use `h-full` instead of `calc` |
 
 ---
 
-## Summary
+## Result
 
-All 9 priority features have been implemented:
-
-1. **Thread Replies** - Click reply icon or "X replies" to open side panel
-2. **File Attachments** - Storage bucket ready, display component created
-3. **Direct Messages** - Click + in DMs section to start conversation
-4. **Unread Indicators** - Red badges show unread counts, bold channel names
-5. **@Mentions** - Autocomplete component ready for integration
-6. **Pinned Messages** - Pin/unpin from message dropdown, view in sheet
-7. **User Status** - Status picker with online/away/busy/dnd options
-8. **Message Search** - Press Cmd+K or click search icon for global search
-9. **Channel Settings** - Edit name, description, manage members, archive
+| Before | After |
+|--------|-------|
+| Footer visible below chat | Chat fills entire available space |
+| Fixed viewport calculations conflict | Flexbox properly fills container |
+| Gap at bottom | Seamless full-height chat |
