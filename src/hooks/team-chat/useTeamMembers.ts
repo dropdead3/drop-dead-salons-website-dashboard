@@ -12,6 +12,7 @@ export interface TeamMember {
   fullName: string | null;
   photoUrl: string | null;
   email: string | null;
+  role: AppRole | null;
 }
 
 export function useTeamMembers(
@@ -68,12 +69,31 @@ export function useTeamMembers(
 
       if (error) throw error;
 
+      // Fetch roles for returned users
+      const userIds = data?.map(m => m.user_id) || [];
+      let rolesMap = new Map<string, AppRole>();
+      
+      if (userIds.length > 0) {
+        const { data: rolesData } = await supabase
+          .from('user_roles')
+          .select('user_id, role')
+          .in('user_id', userIds);
+        
+        // Use first role found for each user
+        rolesData?.forEach(r => {
+          if (!rolesMap.has(r.user_id)) {
+            rolesMap.set(r.user_id, r.role as AppRole);
+          }
+        });
+      }
+
       return data?.map((m) => ({
         userId: m.user_id,
         displayName: m.display_name,
         fullName: m.full_name,
         photoUrl: m.photo_url,
         email: m.email,
+        role: rolesMap.get(m.user_id) || null,
       })) as TeamMember[];
     },
     enabled: !!user?.id && !!effectiveOrganization?.id,
