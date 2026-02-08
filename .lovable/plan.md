@@ -1,84 +1,45 @@
 
-# Fix @Mention Display in Chat Input
+# Enhance @Mention Display in Messages
 
-## The Problem
-When you select a team member from the @mention dropdown, the input field shows the raw markdown format:
-```
-@[Alex Day](52c43316-2ba5-4367-96d4-f097f8a492ea)
-```
+## Current Issue
+The @mention in chat messages uses only `text-primary font-medium`, which doesn't visually separate it enough from the surrounding text. Users may miss that someone has been tagged.
 
-Instead, you should see a clean, styled mention like `@Alex Day` that still contains the user ID when the message is sent.
+## Solution: Styled Pill/Badge for Mentions
+Apply a background color and padding to make mentions look like distinct, interactive tags - similar to how Slack displays them.
 
-## Solution: Contenteditable Rich Text Input
+## Visual Result
+Before: `@Alex Day yo can you see this` (just colored text)
+After: `@Alex Day` appears as a pill/badge with background, clearly separated from "yo can you see this"
 
-Since a plain `<textarea>` cannot style text differently, we need to switch to a **contenteditable div** approach. This allows us to:
-- Display mentions as styled chips/badges (e.g., "@Alex Day" in a highlighted style)
-- Keep the underlying data structure with user IDs for storage
-- Maintain the same keyboard behavior (Enter to send, Shift+Enter for newlines)
+## Technical Changes
 
-## Implementation Steps
+### File: `src/components/team-chat/MentionAutocomplete.tsx`
 
-### 1. Create a new MentionInput component
-Replace the textarea with a contenteditable div that:
-- Accepts regular text input
-- Renders selected mentions as styled spans (chips)
-- Tracks mention data separately from the visible text
-- Converts to the storage format `@[Name](id)` when sending
+Update the `renderContentWithMentions` function (lines 96-100):
 
-### 2. Mention chip rendering
-When a user is selected from the autocomplete:
-- Insert a styled, non-editable span showing just `@Alex Day`
-- Store the user ID in a data attribute
-- Style it with a subtle highlight (e.g., `bg-primary/10 text-primary rounded px-1`)
-
-### 3. Extract mentions on send
-When the user sends the message:
-- Parse the contenteditable content
-- Convert mention chips back to `@[DisplayName](userId)` format
-- Send the properly formatted string to the backend
-
-### 4. Handle edge cases
-- Backspace should delete the entire mention chip (not character by character)
-- Cursor navigation should treat mention chips as single units
-- Copy/paste should preserve or strip mentions appropriately
-
----
-
-## Technical Details
-
-### New file: `src/components/team-chat/MentionInput.tsx`
-
-This component will:
-- Use `contentEditable="true"` with a `div` instead of textarea
-- Maintain a state for both the raw HTML content and extracted mention data
-- Handle `onInput` events to detect @triggers
-- Render mentions as inline styled spans with `contentEditable="false"`
-- Provide an `onSend` callback with the properly formatted message
-
-### Key data flow:
-```
-User types "@Al" → Autocomplete opens → User selects "Alex Day"
-                                              ↓
-Input displays: "Hey @Alex Day " (styled chip)
-                                              ↓
-User hits Enter → onSend receives: "Hey @[Alex Day](uuid) "
-```
-
-### Changes to MessageInput.tsx:
-- Replace `<Textarea>` with the new `<MentionInput>` component
-- Remove the existing mention-related state (moved to new component)
-- Pass `onSend` callback that calls `sendMessage`
-
-### Styling for mention chips:
+**Current:**
 ```tsx
-<span
-  contentEditable={false}
-  data-mention-id={userId}
-  data-mention-name={displayName}
-  className="inline-flex items-center bg-primary/10 text-primary rounded px-1 mx-0.5 text-sm font-medium"
->
-  @{displayName}
+<span key={match.index} className="text-primary font-medium">
+  @{match[1]}
 </span>
 ```
 
-This approach keeps the UI clean for the user while preserving all the data needed for notifications and other backend processing.
+**New:**
+```tsx
+<span 
+  key={match.index} 
+  className="inline-flex items-center bg-primary/15 text-primary rounded px-1.5 py-0.5 text-sm font-medium mx-0.5"
+>
+  @{match[1]}
+</span>
+```
+
+## Styling Breakdown
+- `bg-primary/15` - Subtle background tint using the primary color at 15% opacity
+- `rounded` - Rounded corners for the pill shape
+- `px-1.5 py-0.5` - Horizontal and vertical padding to give it breathing room
+- `mx-0.5` - Small horizontal margin to separate from adjacent text
+- `inline-flex items-center` - Ensures proper vertical alignment with surrounding text
+- `text-sm font-medium` - Consistent text sizing and weight
+
+This matches the styling used in the input field's mention chips, creating a consistent experience from composing to viewing messages.
