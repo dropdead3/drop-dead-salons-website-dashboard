@@ -12,6 +12,11 @@ type ChatChannelMember = Database['public']['Tables']['chat_channel_members']['R
 export interface ChannelWithMembership extends ChatChannel {
   membership?: ChatChannelMember;
   unread_count?: number;
+  dm_partner?: {
+    user_id: string;
+    display_name: string;
+    photo_url: string | null;
+  };
 }
 
 export function useChatChannels() {
@@ -78,6 +83,41 @@ export function useChatChannels() {
           channelMap.set(channel.id, channel);
         }
       });
+
+      // For DM channels, fetch the partner's profile info
+      const dmChannelIds = Array.from(channelMap.values())
+        .filter(c => c.type === 'dm' || c.type === 'group_dm')
+        .map(c => c.id);
+
+      if (dmChannelIds.length > 0) {
+        // Get all members for DM channels
+        const { data: dmMembers } = await supabase
+          .from('chat_channel_members')
+          .select(`
+            channel_id,
+            user_id,
+            employee_profiles!chat_channel_members_employee_fkey (
+              display_name,
+              full_name,
+              photo_url
+            )
+          `)
+          .in('channel_id', dmChannelIds)
+          .neq('user_id', user.id);
+
+        // Map partner info to channels
+        dmMembers?.forEach((member) => {
+          const channel = channelMap.get(member.channel_id);
+          if (channel) {
+            const profile = member.employee_profiles as any;
+            channel.dm_partner = {
+              user_id: member.user_id,
+              display_name: profile?.display_name || profile?.full_name || 'Unknown',
+              photo_url: profile?.photo_url || null,
+            };
+          }
+        });
+      }
 
       return Array.from(channelMap.values()).sort((a, b) => {
         // Sort: system channels first, then by name

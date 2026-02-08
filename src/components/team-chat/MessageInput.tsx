@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useChatMessages } from '@/hooks/team-chat/useChatMessages';
 import { useChannelMembers } from '@/hooks/team-chat/useChannelMembers';
+import { getChannelDisplayName } from '@/hooks/team-chat/useChannelDisplayName';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 import { MentionInput } from './MentionInput';
 
@@ -68,6 +69,8 @@ export function MessageInput() {
   if (!activeChannel) return null;
 
   const canSend = !!activeChannel.membership;
+  const displayName = getChannelDisplayName(activeChannel);
+  const isDM = activeChannel.type === 'dm' || activeChannel.type === 'group_dm';
 
   return (
     <div className="border-t p-4">
@@ -84,8 +87,8 @@ export function MessageInput() {
         <MentionInput
           placeholder={
             canSend
-              ? `Message #${activeChannel.name}`
-              : `Join #${activeChannel.name} to send messages`
+              ? (isDM ? `Message ${displayName}` : `Message #${displayName}`)
+              : `Join #${displayName} to send messages`
           }
           disabled={!canSend}
           onSend={handleSend}
