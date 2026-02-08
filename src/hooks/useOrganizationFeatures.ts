@@ -60,15 +60,26 @@ export function useOrganizationFeatures() {
   const orgId = effectiveOrganization?.id;
 
   return useQuery({
-    queryKey: ['organization-features', orgId],
+    queryKey: ['organization-features', orgId ?? 'catalog-only'],
     queryFn: async (): Promise<MergedFeature[]> => {
-      // Get feature catalog
+      // Always fetch the catalog
       const { data: catalog, error: catalogError } = await supabase
         .from('feature_catalog')
         .select('*')
         .order('display_order', { ascending: true });
 
       if (catalogError) throw catalogError;
+
+      // If no org selected, return catalog with default values
+      if (!orgId) {
+        return (catalog || []).map(item => ({
+          ...item,
+          is_enabled: item.default_enabled,
+          has_override: false,
+          disabled_at: null,
+          last_known_config: {},
+        })) as MergedFeature[];
+      }
 
       // Get org-specific overrides
       const { data: orgFeatures, error: orgError } = await supabase
@@ -85,7 +96,7 @@ export function useOrganizationFeatures() {
       }
 
       // Merge catalog with org overrides
-      const merged: MergedFeature[] = (catalog || []).map(item => {
+      return (catalog || []).map(item => {
         const override = overrideMap.get(item.feature_key);
         return {
           ...item,
@@ -95,10 +106,9 @@ export function useOrganizationFeatures() {
           last_known_config: override?.last_known_config || {},
         } as MergedFeature;
       });
-
-      return merged;
     },
-    enabled: !!orgId,
+    // Always enabled - just change behavior based on orgId presence
+    enabled: true,
   });
 }
 
