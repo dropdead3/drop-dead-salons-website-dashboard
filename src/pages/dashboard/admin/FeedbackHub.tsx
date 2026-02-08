@@ -9,6 +9,7 @@ import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSe
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useFeedbackSurveys } from '@/hooks/useFeedbackSurveys';
 import { useStaffFeedbackStats } from '@/hooks/useNPSAnalytics';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useState } from 'react';
 
 export default function FeedbackHub() {
@@ -18,6 +19,8 @@ export default function FeedbackHub() {
 
   const { data: surveys } = useFeedbackSurveys(organizationId);
   const { data: staffStats } = useStaffFeedbackStats(organizationId);
+  const { data: profile } = useEmployeeProfile();
+  const isSuperAdmin = profile?.is_super_admin;
 
   return (
     <DashboardLayout>
@@ -49,10 +52,12 @@ export default function FeedbackHub() {
               <Users className="h-4 w-4" />
               By Staff
             </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-2">
-              <Settings className="h-4 w-4" />
-              Review Settings
-            </TabsTrigger>
+            {isSuperAdmin && (
+              <TabsTrigger value="settings" className="gap-2">
+                <Settings className="h-4 w-4" />
+                Review Settings
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6 mt-6">
@@ -134,9 +139,11 @@ export default function FeedbackHub() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="settings" className="mt-6">
-            <ReviewThresholdSettings />
-          </TabsContent>
+          {isSuperAdmin && (
+            <TabsContent value="settings" className="mt-6">
+              <ReviewThresholdSettings />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </DashboardLayout>

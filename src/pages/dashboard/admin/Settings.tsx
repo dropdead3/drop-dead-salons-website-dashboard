@@ -80,6 +80,8 @@ import { SmsTemplatesManager } from '@/components/dashboard/SmsTemplatesManager'
 import { FormsTemplatesContent } from '@/components/dashboard/settings/FormsTemplatesContent';
 import { MetricsGlossaryContent } from '@/components/dashboard/settings/MetricsGlossaryContent';
 import { LoyaltySettingsContent } from '@/components/dashboard/settings/LoyaltySettingsContent';
+import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
+import { MessageSquareHeart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
 import { useColorTheme, colorThemes } from '@/hooks/useColorTheme';
@@ -114,7 +116,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | 'dayrate' | 'role-access' | 'forms' | 'loyalty' | null;
+type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'visibility' | 'schedule' | 'locations' | 'dayrate' | 'role-access' | 'forms' | 'loyalty' | 'feedback' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -776,6 +778,12 @@ export default function Settings() {
       description: 'Points, tiers & gift cards',
       icon: Gift,
     },
+    feedback: {
+      id: 'feedback',
+      label: 'Feedback Settings',
+      description: 'Review thresholds & platform links',
+      icon: MessageSquareHeart,
+    },
   };
 
   const orderedCategories = useMemo(() => {
@@ -1278,6 +1286,18 @@ export default function Settings() {
           {activeCategory === 'role-access' && <RoleAccessConfigurator />}
 
           {activeCategory === 'loyalty' && <LoyaltySettingsContent />}
+
+          {activeCategory === 'feedback' && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-display text-lg">REVIEW THRESHOLD SETTINGS</CardTitle>
+                <CardDescription>Configure when clients are prompted to leave public reviews.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ReviewThresholdSettings />
+              </CardContent>
+            </Card>
+          )}
         </div>
       </DashboardLayout>
     );
@@ -1360,8 +1380,9 @@ export default function Settings() {
           <div className="space-y-8">
             {SECTION_GROUPS.map((section) => {
               // Get categories for this section, respecting user's order within section
+              // Filter out 'feedback' category for non-super admins
               const sectionCategoryIds = section.categories.filter(id => 
-                localOrder.includes(id) && categoriesMap[id]
+                localOrder.includes(id) && categoriesMap[id] && (id !== 'feedback' || isSuperAdmin)
               );
               
               // Sort by user's localOrder
