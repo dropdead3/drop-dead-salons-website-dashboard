@@ -223,7 +223,7 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
           )}
         </div>
 
-        <SheetFooter className="flex-col gap-2">
+        <SheetFooter className="flex-col sm:flex-col gap-2 pt-4">
           {isDM && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
@@ -250,7 +250,7 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
           )}
           
           {canEdit && (
-            <>
+            <div className="flex flex-col gap-2 w-full">
               <Button
                 onClick={() => updateMutation.mutate()}
                 disabled={updateMutation.isPending}
@@ -259,32 +259,82 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
                 Save Changes
               </Button>
 
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="w-full text-destructive">
-                    <Archive className="h-4 w-4 mr-2" />
-                    Archive Channel
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Archive this channel?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will hide the channel from the sidebar. Members will no longer be able to send messages.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => archiveMutation.mutate()}>
-                      Archive
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </>
+              <div className="flex gap-2 w-full">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" className="flex-1">
+                      <Archive className="h-4 w-4 mr-2" />
+                      Archive Channel
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Archive this channel?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will hide the channel from the sidebar. Members will no longer be able to send messages.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => archiveMutation.mutate()}>
+                        Archive
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+
+                {isPrimaryOwner && !activeChannel.is_system && (
+                  messageCount === 0 ? (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="destructive" 
+                          className="flex-1"
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Channel
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete this channel permanently?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This action cannot be undone. The channel and all its settings will be permanently removed.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={() => deleteMutation.mutate()}
+                            className="bg-destructive hover:bg-destructive/90"
+                          >
+                            Delete Permanently
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  ) : (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="flex-1">
+                          <Button variant="outline" className="w-full" disabled>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Channel
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        This channel has message history and can only be archived
+                      </TooltipContent>
+                    </Tooltip>
+                  )
+                )}
+              </div>
+            </div>
           )}
 
-          {isPrimaryOwner && !isDM && !activeChannel.is_system && (
+          {isPrimaryOwner && !isDM && !activeChannel.is_system && !canEdit && (
             messageCount === 0 ? (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
