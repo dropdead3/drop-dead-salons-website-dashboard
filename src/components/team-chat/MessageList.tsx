@@ -3,11 +3,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2 } from 'lucide-react';
 import { MessageItem } from './MessageItem';
 import { useChatMessages, type MessageWithSender } from '@/hooks/team-chat/useChatMessages';
+import { usePinnedMessages } from '@/hooks/team-chat/usePinnedMessages';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 
 export function MessageList() {
   const { activeChannel, openThread } = useTeamChatContext();
   const { messages, isLoading, toggleReaction, deleteMessage } = useChatMessages(activeChannel?.id || null);
+  const { pinMessage, unpinMessage, isPinned, pinnedMessages } = usePinnedMessages(activeChannel?.id || null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageIdRef = useRef<string | null>(null);
 
@@ -96,6 +98,15 @@ export function MessageList() {
                     onReact={(emoji) => toggleReaction(message.id, emoji)}
                     onReply={() => openThread(message.id)}
                     onDelete={() => deleteMessage(message.id)}
+                    onPin={() => {
+                      const pinnedItem = pinnedMessages.find((pm) => pm.message.id === message.id);
+                      if (pinnedItem) {
+                        unpinMessage(pinnedItem.pinnedId);
+                      } else {
+                        pinMessage(message.id);
+                      }
+                    }}
+                    isPinned={isPinned(message.id)}
                   />
                 );
               })}

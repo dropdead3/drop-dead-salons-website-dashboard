@@ -5,9 +5,12 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useChatChannels, useInitializeDefaultChannels, type ChannelWithMembership } from '@/hooks/team-chat/useChatChannels';
 import { useAutoJoinLocationChannels } from '@/hooks/team-chat/useAutoJoinLocationChannels';
+import { useUnreadMessages } from '@/hooks/team-chat/useUnreadMessages';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 import { CreateChannelDialog } from './CreateChannelDialog';
+import { StartDMDialog } from './StartDMDialog';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Badge } from '@/components/ui/badge';
 
 const channelTypeIcons: Record<string, typeof Hash> = {
   public: Hash,
@@ -21,9 +24,10 @@ interface ChannelItemProps {
   channel: ChannelWithMembership;
   isActive: boolean;
   onClick: () => void;
+  unreadCount: number;
 }
 
-function ChannelItem({ channel, isActive, onClick }: ChannelItemProps) {
+function ChannelItem({ channel, isActive, onClick, unreadCount }: ChannelItemProps) {
   const Icon = channelTypeIcons[channel.type] || Hash;
   const isMember = !!channel.membership;
 
@@ -33,14 +37,20 @@ function ChannelItem({ channel, isActive, onClick }: ChannelItemProps) {
       className={cn(
         'w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors',
         'hover:bg-accent/50',
-        isActive && 'bg-accent text-accent-foreground font-medium',
-        !isMember && 'opacity-60'
+        isActive && 'bg-accent text-accent-foreground',
+        !isMember && 'opacity-60',
+        unreadCount > 0 && !isActive && 'font-semibold'
       )}
     >
       <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-      <span className="truncate">{channel.name}</span>
-      {channel.membership?.is_muted && (
-        <span className="ml-auto text-xs text-muted-foreground">muted</span>
+      <span className="truncate flex-1 text-left">{channel.name}</span>
+      {unreadCount > 0 && !isActive && (
+        <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-[10px]">
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </Badge>
+      )}
+      {channel.membership?.is_muted && unreadCount === 0 && (
+        <span className="text-xs text-muted-foreground">muted</span>
       )}
     </button>
   );
@@ -50,11 +60,15 @@ export function ChannelSidebar() {
   const { channels, isLoading, joinChannel } = useChatChannels();
   const { activeChannel, setActiveChannel } = useTeamChatContext();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isDMOpen, setIsDMOpen] = useState(false);
   const [sectionsOpen, setSectionsOpen] = useState({
     channels: true,
     locations: true,
     direct: true,
   });
+
+  const channelIds = channels.map((c) => c.id);
+  const { getUnreadCount, markAsRead } = useUnreadMessages(channelIds);
 
   const initializeChannels = useInitializeDefaultChannels();
   const autoJoinChannels = useAutoJoinLocationChannels();
@@ -95,6 +109,10 @@ export function ChannelSidebar() {
       joinChannel(channel.id);
     }
     setActiveChannel(channel);
+    // Mark as read when channel is selected
+    if (channel.membership) {
+      markAsRead(channel.id);
+    }
   };
 
   const toggleSection = (section: keyof typeof sectionsOpen) => {
@@ -127,6 +145,7 @@ export function ChannelSidebar() {
                   channel={channel}
                   isActive={activeChannel?.id === channel.id}
                   onClick={() => handleChannelClick(channel)}
+                  unreadCount={getUnreadCount(channel.id)}
                 />
               ))}
             </CollapsibleContent>
@@ -146,40 +165,47 @@ export function ChannelSidebar() {
                     channel={channel}
                     isActive={activeChannel?.id === channel.id}
                     onClick={() => handleChannelClick(channel)}
+                    unreadCount={getUnreadCount(channel.id)}
                   />
                 ))}
               </CollapsibleContent>
             </Collapsible>
           )}
 
-          {/* Direct Messages */}
-          {dmChannels.length > 0 && (
-            <Collapsible open={sectionsOpen.direct} onOpenChange={() => toggleSection('direct')}>
-              <div className="flex items-center justify-between px-2">
-                <CollapsibleTrigger className="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground">
-                  {sectionsOpen.direct ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                  Direct Messages
-                </CollapsibleTrigger>
-                <Button variant="ghost" size="icon" className="h-5 w-5">
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </div>
-              <CollapsibleContent className="mt-1 space-y-0.5">
-                {dmChannels.map((channel) => (
+          {/* Direct Messages - Always show section */}
+          <Collapsible open={sectionsOpen.direct} onOpenChange={() => toggleSection('direct')}>
+            <div className="flex items-center justify-between px-2">
+              <CollapsibleTrigger className="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground">
+                {sectionsOpen.direct ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                Direct Messages
+              </CollapsibleTrigger>
+              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setIsDMOpen(true)}>
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
+            <CollapsibleContent className="mt-1 space-y-0.5">
+              {dmChannels.length === 0 ? (
+                <p className="text-xs text-muted-foreground px-3 py-2">
+                  Click + to start a conversation
+                </p>
+              ) : (
+                dmChannels.map((channel) => (
                   <ChannelItem
                     key={channel.id}
                     channel={channel}
                     isActive={activeChannel?.id === channel.id}
                     onClick={() => handleChannelClick(channel)}
+                    unreadCount={getUnreadCount(channel.id)}
                   />
-                ))}
-              </CollapsibleContent>
-            </Collapsible>
-          )}
+                ))
+              )}
+            </CollapsibleContent>
+          </Collapsible>
         </div>
       </ScrollArea>
 
       <CreateChannelDialog open={isCreateOpen} onOpenChange={setIsCreateOpen} />
+      <StartDMDialog open={isDMOpen} onOpenChange={setIsDMOpen} />
     </div>
   );
 }

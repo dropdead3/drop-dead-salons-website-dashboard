@@ -1,0 +1,124 @@
+import { useState } from 'react';
+import { Search, X, Users } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+import { useTeamMembers } from '@/hooks/team-chat/useTeamMembers';
+import { useDMChannels } from '@/hooks/team-chat/useDMChannels';
+import { useTeamChatContext } from '@/contexts/TeamChatContext';
+import { Loader2 } from 'lucide-react';
+
+interface StartDMDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function StartDMDialog({ open, onOpenChange }: StartDMDialogProps) {
+  const [search, setSearch] = useState('');
+  const { members, isLoading } = useTeamMembers(search);
+  const { createDM, isCreating } = useDMChannels();
+  const { setActiveChannel } = useTeamChatContext();
+
+  const handleSelectMember = async (userId: string) => {
+    try {
+      const channel = await createDM(userId);
+      if (channel) {
+        setActiveChannel(channel as any);
+      }
+      onOpenChange(false);
+      setSearch('');
+    } catch (e) {
+      // Error handled by hook
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Start a Conversation
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search team members..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+              >
+                <X className="h-4 w-4 text-muted-foreground" />
+              </button>
+            )}
+          </div>
+
+          <ScrollArea className="h-64">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : members.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                {search ? 'No members found' : 'Type to search team members'}
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {members.map((member) => {
+                  const name = member.displayName || member.fullName || 'Unknown';
+                  const initials = name
+                    .split(' ')
+                    .map((n) => n[0])
+                    .join('')
+                    .slice(0, 2)
+                    .toUpperCase();
+
+                  return (
+                    <button
+                      key={member.userId}
+                      onClick={() => handleSelectMember(member.userId)}
+                      disabled={isCreating}
+                      className={cn(
+                        'w-full flex items-center gap-3 px-3 py-2 rounded-md text-left',
+                        'hover:bg-accent transition-colors',
+                        isCreating && 'opacity-50 pointer-events-none'
+                      )}
+                    >
+                      <Avatar className="h-9 w-9">
+                        <AvatarImage src={member.photoUrl || undefined} />
+                        <AvatarFallback className="text-xs">{initials}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium text-sm truncate">{name}</div>
+                        {member.email && (
+                          <div className="text-xs text-muted-foreground truncate">
+                            {member.email}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
