@@ -62,13 +62,13 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
       <div className="px-4 py-3 border-b border-border bg-muted/30">
         <div className="flex items-center gap-3">
           <Avatar className="h-12 w-12 bg-primary/10">
-            <AvatarFallback className="text-sm font-semibold text-primary bg-primary/10">
+            <AvatarFallback className="text-sm font-medium text-primary bg-primary/10">
               {initials}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm truncate">{client.name}</span>
+              <span className="font-medium text-sm truncate">{client.name}</span>
               {client.is_vip && (
                 <Badge variant="secondary" className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 text-[10px] px-1.5 py-0">
                   <Star className="w-2.5 h-2.5 mr-0.5" /> VIP
@@ -86,18 +86,18 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
       <div className="grid grid-cols-3 gap-2 px-4 py-3 border-b border-border">
         <Card className="p-2 text-center bg-muted/30 border-0">
           <Calendar className="w-3.5 h-3.5 mx-auto text-muted-foreground mb-0.5" />
-          <p className="font-semibold text-sm">{client.visit_count ?? 0}</p>
+          <p className="font-medium text-sm">{client.visit_count ?? 0}</p>
           <p className="text-[10px] text-muted-foreground">Visits</p>
         </Card>
         <Card className="p-2 text-center bg-muted/30 border-0">
           <TrendingUp className="w-3.5 h-3.5 mx-auto text-muted-foreground mb-0.5" />
-          <p className="font-semibold text-sm">${(client.total_spend ?? 0).toLocaleString()}</p>
+          <p className="font-medium text-sm">${(client.total_spend ?? 0).toLocaleString()}</p>
           <p className="text-[10px] text-muted-foreground">Spent</p>
         </Card>
         <Card className="p-2 text-center bg-muted/30 border-0">
           <Clock className="w-3.5 h-3.5 mx-auto text-muted-foreground mb-0.5" />
           <p className={cn(
-            "font-semibold text-sm",
+            "font-medium text-sm",
             daysSinceVisit && daysSinceVisit > 60 && "text-destructive",
             daysSinceVisit && daysSinceVisit > 30 && daysSinceVisit <= 60 && "text-amber-600"
           )}>

@@ -291,7 +291,7 @@ export default function ServicesManager() {
                 <Scissors className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{totalServices}</p>
+                <p className="text-2xl font-medium">{totalServices}</p>
                 <p className="text-sm text-muted-foreground">Total Services</p>
               </div>
             </CardContent>
@@ -302,7 +302,7 @@ export default function ServicesManager() {
                 <Layers className="w-5 h-5 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{serviceCategories.length}</p>
+                <p className="text-2xl font-medium">{serviceCategories.length}</p>
                 <p className="text-sm text-muted-foreground">Categories</p>
               </div>
             </CardContent>
@@ -314,7 +314,7 @@ export default function ServicesManager() {
                   <Settings2 className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{(stylistLevels || []).length}</p>
+                  <p className="text-2xl font-medium">{(stylistLevels || []).length}</p>
                   <p className="text-sm text-muted-foreground">Stylist Levels</p>
                 </div>
               </CardContent>
@@ -326,7 +326,7 @@ export default function ServicesManager() {
                 <Star className="w-5 h-5 text-amber-600 fill-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{popularServices}</p>
+                <p className="text-2xl font-medium">{popularServices}</p>
                 <p className="text-sm text-muted-foreground">Popular Services</p>
               </div>
             </CardContent>

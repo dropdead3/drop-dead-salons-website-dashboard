@@ -371,7 +371,7 @@ export default function TeamBirthdays() {
                     >
                       <span className={cn(
                         "text-sm font-medium",
-                        isToday && "text-primary font-bold"
+                        isToday && "text-primary"
                       )}>
                         {day}
                       </span>

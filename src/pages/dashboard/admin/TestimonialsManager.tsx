@@ -385,7 +385,7 @@ export default function TestimonialsManager() {
                 <Star className="w-5 h-5 text-amber-600 fill-amber-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{testimonials?.length || 0}</p>
+                <p className="text-2xl font-medium">{testimonials?.length || 0}</p>
                 <p className="text-sm text-muted-foreground">Total Reviews</p>
               </div>
             </CardContent>
@@ -396,7 +396,7 @@ export default function TestimonialsManager() {
                 <Eye className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{visibleCount}</p>
+                <p className="text-2xl font-medium">{visibleCount}</p>
                 <p className="text-sm text-muted-foreground">Visible on Website</p>
               </div>
             </CardContent>

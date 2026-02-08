@@ -39,7 +39,7 @@ export default function PayrollCallback() {
           <Card className="max-w-md w-full">
             <CardContent className="pt-6 text-center">
               <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-              <h2 className="text-xl font-bold mb-2">Successfully Connected!</h2>
+              <h2 className="text-xl font-medium mb-2">Successfully Connected!</h2>
               <p className="text-muted-foreground mb-6">
                 Your payroll provider has been connected. You can now manage payroll for your team.
               </p>
@@ -61,7 +61,7 @@ export default function PayrollCallback() {
           <Card className="max-w-md w-full">
             <CardContent className="pt-6 text-center">
               <XCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
-              <h2 className="text-xl font-bold mb-2">Connection Failed</h2>
+              <h2 className="text-xl font-medium mb-2">Connection Failed</h2>
               <p className="text-muted-foreground mb-4">
                 {errorDescription || 'An error occurred while connecting your payroll provider.'}
               </p>
@@ -85,7 +85,7 @@ export default function PayrollCallback() {
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center">
             <Loader2 className="h-16 w-16 text-primary mx-auto mb-4 animate-spin" />
-            <h2 className="text-xl font-bold mb-2">Connecting...</h2>
+            <h2 className="text-xl font-medium mb-2">Connecting...</h2>
             <p className="text-muted-foreground">
               Please wait while we complete the connection to your payroll provider.
             </p>

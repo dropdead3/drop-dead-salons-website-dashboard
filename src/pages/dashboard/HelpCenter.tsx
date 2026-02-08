@@ -101,7 +101,7 @@ export default function HelpCenter() {
       {/* Search Results */}
       {isSearching && (
         <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-4">
+          <h2 className="text-lg font-medium mb-4">
             Search Results ({searchResults?.length || 0})
           </h2>
           {searchResults && searchResults.length > 0 ? (
@@ -170,7 +170,7 @@ export default function HelpCenter() {
           {/* Featured Articles */}
           {featuredArticles && featuredArticles.length > 0 && (
             <div className="mb-8">
-              <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <h2 className="text-lg font-medium mb-4 flex items-center gap-2">
                 <Star className="h-5 w-5 text-amber-500" />
                 Featured Articles
               </h2>
@@ -202,7 +202,7 @@ export default function HelpCenter() {
 
           {/* Categories */}
           <div>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <h2 className="text-lg font-medium mb-4 flex items-center gap-2">
               <BookOpen className="h-5 w-5" />
               Browse by Category
             </h2>

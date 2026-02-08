@@ -96,7 +96,7 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
           <div className="p-2 rounded-xl bg-violet-500/20">
             <Activity className="h-4 w-4 text-violet-400" />
           </div>
-          <h2 className="text-lg font-semibold text-white">Platform Growth</h2>
+          <h2 className="text-lg font-medium text-white">Platform Growth</h2>
         </div>
         <Skeleton className="h-[200px] w-full rounded-xl bg-slate-700/50" />
         <div className="grid grid-cols-2 gap-4 mt-4">
@@ -114,7 +114,7 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
           <div className="p-2 rounded-xl bg-violet-500/20">
             <Activity className="h-4 w-4 text-violet-400" />
           </div>
-          <h2 className="text-lg font-semibold text-white">Platform Growth</h2>
+          <h2 className="text-lg font-medium text-white">Platform Growth</h2>
         </div>
         <span className="text-xs text-slate-500">Last 6 months</span>
       </div>
@@ -230,7 +230,7 @@ function MetricCard({ label, value, change, icon: Icon, color }: MetricCardProps
           </div>
         )}
       </div>
-      <div className="text-2xl font-semibold text-white">{value}</div>
+      <div className="text-2xl font-medium text-white">{value}</div>
       <div className="text-xs text-slate-500">{label}</div>
     </div>
   );

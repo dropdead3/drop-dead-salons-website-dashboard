@@ -239,19 +239,19 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
             <div className="grid grid-cols-3 gap-4 pt-1">
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Monthly Goal</Label>
-                <p className="text-xl font-semibold">
+                <p className="text-xl font-medium">
                   ${calculatedMonthly.toLocaleString()}
                 </p>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Weekly Goal</Label>
-                <p className="text-xl font-semibold">
+                <p className="text-xl font-medium">
                   ${calculatedWeekly.toLocaleString()}
                 </p>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Yearly Goal</Label>
-                <p className="text-xl font-semibold">
+                <p className="text-xl font-medium">
                   ${calculatedYearly.toLocaleString()}
                 </p>
               </div>

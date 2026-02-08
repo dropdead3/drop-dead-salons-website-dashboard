@@ -73,7 +73,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
+          <h3 className="text-lg font-medium flex items-center gap-2">
             <FlaskConical className="h-5 w-5" />
             A/B Testing
           </h3>
@@ -198,7 +198,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
                     <Crown className="h-4 w-4 text-amber-500" />
                   )}
                 </div>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-medium">
                   {testResults.control.conversion_rate.toFixed(1)}%
                 </div>
                 <p className="text-xs text-muted-foreground">
@@ -212,7 +212,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
                     <Crown className="h-4 w-4 text-amber-500" />
                   )}
                 </div>
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-medium">
                   {testResults.challenger.conversion_rate.toFixed(1)}%
                 </div>
                 <p className="text-xs text-muted-foreground">

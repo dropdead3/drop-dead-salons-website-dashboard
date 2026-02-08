@@ -213,7 +213,7 @@ export default function ScheduleRequests() {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-display font-semibold flex items-center gap-2">
+          <h1 className="text-2xl font-display font-medium flex items-center gap-2">
             <CalendarClock className="w-6 h-6" />
             Schedule Change Requests
           </h1>
@@ -226,7 +226,7 @@ export default function ScheduleRequests() {
         <div className="grid gap-4 grid-cols-3">
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-display font-semibold text-chart-4">
+              <div className="text-2xl font-display font-medium text-chart-4">
                 {stats.pending}
               </div>
               <p className="text-sm text-muted-foreground">Pending</p>
@@ -234,7 +234,7 @@ export default function ScheduleRequests() {
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-display font-semibold text-chart-2">
+              <div className="text-2xl font-display font-medium text-chart-2">
                 {stats.approved}
               </div>
               <p className="text-sm text-muted-foreground">Approved</p>
@@ -242,7 +242,7 @@ export default function ScheduleRequests() {
           </Card>
           <Card>
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-display font-semibold text-destructive">
+              <div className="text-2xl font-display font-medium text-destructive">
                 {stats.denied}
               </div>
               <p className="text-sm text-muted-foreground">Denied</p>
