@@ -43,9 +43,8 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   ],
   stats: [
     '/dashboard/stats',
-    '/dashboard/my-clients',
     '/dashboard/leaderboard',
-    '/dashboard/admin/analytics',
+    '/dashboard/my-pay',
   ],
   teamTools: [
     '/dashboard/shift-swaps',
@@ -56,6 +55,8 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   housekeeping: [
     '/dashboard/onboarding',
     '/dashboard/handbooks',
+    '/dashboard/changelog',
+    '/dashboard/help',
   ],
   manager: [
     '/dashboard/admin/management',
@@ -68,11 +69,7 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
     '/dashboard/admin/booth-renters',
   ],
   website: [
-    '/dashboard/admin/homepage-stylists',
-    '/dashboard/admin/testimonials',
-    '/dashboard/admin/gallery',
-    '/dashboard/admin/services',
-    '/dashboard/admin/locations',
+    '/dashboard/admin/website-sections',
   ],
   adminOnly: [
     '/dashboard/admin/accounts',
@@ -83,6 +80,8 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
     '/dashboard/platform/overview',
     '/dashboard/platform/accounts',
     '/dashboard/platform/import',
+    '/dashboard/platform/revenue',
+    '/dashboard/platform/permissions',
     '/dashboard/platform/settings',
   ],
 };
