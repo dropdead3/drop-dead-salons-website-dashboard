@@ -1,22 +1,11 @@
 
-# Transform Meetings & Accountability into Dashboard Layout
+# Transform Meetings & Accountability into a Dashboard Overview
 
 ## Current State
 
-The page uses tabs to switch between sections:
-- Schedule New (form)
-- My Meetings (list)
-- Requests (coach-only)
-- My Commitments (coach-only, accountability items)
-- Meeting Requests (manager-initiated)
+The page currently shows navigation cards that link to sub-pages, but lacks actual data visualization. You want a dashboard overview similar to the main dashboard with data cards showing real metrics.
 
-## Proposed Transformation
-
-Convert to a card-based dashboard layout matching the Management Hub pattern, with summary stats and quick-access cards.
-
----
-
-## New Page Structure
+## Proposed Layout
 
 ```text
 +--------------------------------------------------+
@@ -24,22 +13,31 @@ Convert to a card-based dashboard layout matching the Management Hub pattern, wi
 |  Schedule 1:1 meetings, track commitments...      |
 +--------------------------------------------------+
 |                                                   |
-|  +------------------+  +------------------+       |
-|  | Quick Stats Card |  | Quick Stats Card |       |
-|  | Upcoming: 3      |  | Pending: 2       |       |
-|  +------------------+  +------------------+       |
+|  OVERVIEW STATS (data cards row)                  |
+|  +-------------+ +-------------+ +-------------+  |
+|  | Upcoming    | | Pending     | | Active      |  |
+|  | Meetings    | | Requests    | | Commitments |  |
+|  |     3       | |     2       | |     5       |  |
+|  +-------------+ +-------------+ +-------------+  |
 |                                                   |
-|  SCHEDULE & MEETINGS                              |
-|  +---------------+  +---------------+             |
-|  | Schedule New  |  | My Meetings   |             |
-|  | Request a 1:1 |  | View upcoming |             |
-|  +---------------+  +---------------+             |
+|  UPCOMING MEETINGS (list preview)                 |
+|  +---------------------------------------------+  |
+|  | Today 2:00 PM - Coaching w/ Sarah           |  |
+|  | Tomorrow 10:00 AM - Check-in w/ Mike        |  |
+|  | Feb 12 - Feedback w/ Lisa                   |  |
+|  | View All Meetings →                         |  |
+|  +---------------------------------------------+  |
 |                                                   |
-|  COACHING (for managers)                          |
-|  +---------------+  +---------------+  +-------+  |
-|  | Requests      |  | Commitments   |  | Inbox |  |
-|  | Pending: 2    |  | Active: 5     |  | 3 new |  |
-|  +---------------+  +---------------+  +-------+  |
+|  [For Coaches Only]                               |
+|  PENDING REQUESTS              ACTIVE COMMITMENTS |
+|  +--------------------+       +----------------+  |
+|  | Mike - Coaching    |       | Sarah: Follow  |  |
+|  | Lisa - Feedback    |       |   up on goals  |  |
+|  | View All →         |       | View All →     |  |
+|  +--------------------+       +----------------+  |
+|                                                   |
+|  QUICK ACTIONS                                    |
+|  [Schedule Meeting] [Meeting Inbox]               |
 +--------------------------------------------------+
 ```
 
@@ -47,131 +45,158 @@ Convert to a card-based dashboard layout matching the Management Hub pattern, wi
 
 ## Implementation Approach
 
-### 1. Create Sub-Pages for Each Section
+### 1. Stats Overview Row
 
-Each card will link to a dedicated route instead of switching tabs:
+Create a row of quick stats cards similar to `OperationsQuickStats`:
 
-| Card | Route | Content |
-|------|-------|---------|
-| Schedule New | `/dashboard/schedule-meeting/new` | The existing form |
-| My Meetings | `/dashboard/schedule-meeting/my-meetings` | List of user's meetings |
-| Requests | `/dashboard/schedule-meeting/requests` | Coach's incoming requests |
-| My Commitments | `/dashboard/schedule-meeting/commitments` | AccountabilityOverview |
-| Meeting Requests | `/dashboard/schedule-meeting/inbox` | PendingMeetingRequests |
+| Stat | Icon | Color | Data Source |
+|------|------|-------|-------------|
+| Upcoming Meetings | Calendar | Blue | `one_on_one_meetings` where date >= today |
+| Pending Requests (coach) | Inbox | Amber | `one_on_one_meetings` where coach_id = user and status = pending |
+| Active Commitments (coach) | ClipboardList | Purple | `accountability_items` where status = pending |
+| Inbox Pending | MessageSquare | Green | `meeting_requests` where team_member = user |
 
-### 2. Transform Main Page to Dashboard
+### 2. Upcoming Meetings Preview
 
-The main `/dashboard/schedule-meeting` route becomes a hub with:
-- **Stats row**: Quick overview (upcoming meetings, pending requests, overdue commitments)
-- **Card grid**: Clickable cards organized by category
+Show the next 3-5 upcoming meetings as a compact list within a card:
+- Date, time, meeting type, and coach/requester name
+- "View All Meetings" link at the bottom
 
-### 3. Reuse ManagementCard Pattern
+### 3. Coaching Section (Coaches Only)
 
-Use the same `ManagementCard` component pattern for consistency:
-- Icon + title + description
-- Badge with counts (e.g., "3 pending")
-- Hover effect with chevron
+Two side-by-side cards:
 
----
+**Pending Requests Card:**
+- Show 3-5 most recent pending meeting requests
+- Quick approve/decline actions
+- "View All Requests" link
 
-## Files to Create/Modify
+**Active Commitments Card:**
+- Show 3-5 active accountability items with due dates
+- Color-code overdue items
+- "View All Commitments" link
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/pages/dashboard/ScheduleMeeting.tsx` | Modify | Transform to dashboard hub with cards |
-| `src/pages/dashboard/meetings/ScheduleNewMeeting.tsx` | Create | Form extracted to own page |
-| `src/pages/dashboard/meetings/MyMeetings.tsx` | Create | Meetings list page |
-| `src/pages/dashboard/meetings/CoachRequests.tsx` | Create | Incoming requests for coaches |
-| `src/pages/dashboard/meetings/Commitments.tsx` | Create | Accountability overview page |
-| `src/pages/dashboard/meetings/MeetingInbox.tsx` | Create | Meeting requests inbox |
-| `src/App.tsx` | Modify | Add new routes |
+### 4. Quick Actions Row
+
+Compact action buttons at the bottom:
+- Schedule New Meeting
+- Meeting Inbox
 
 ---
 
-## Card Definitions
+## Files to Modify
 
-### Schedule & Meetings Category
+| File | Changes |
+|------|---------|
+| `src/pages/dashboard/ScheduleMeeting.tsx` | Complete redesign to dashboard overview with data cards |
 
+---
+
+## Component Structure
+
+### Stats Section
 ```tsx
-<ManagementCard
-  href="/dashboard/schedule-meeting/new"
-  icon={CalendarPlus}
-  title="Schedule Meeting"
-  description="Request a 1:1 with a coach or manager"
-  colorClass="bg-blue-500/10 text-blue-600 dark:text-blue-400"
-/>
-
-<ManagementCard
-  href="/dashboard/schedule-meeting/my-meetings"
-  icon={Calendar}
-  title="My Meetings"
-  description="View your scheduled and past meetings"
-  stat={upcomingCount}
-  statLabel="upcoming"
-  colorClass="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
-/>
+<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+  <Card className="p-4">
+    <div className="flex items-center gap-3">
+      <div className="w-10 h-10 bg-blue-500/10 flex items-center justify-center rounded">
+        <Calendar className="w-5 h-5 text-blue-600" />
+      </div>
+      <div>
+        <p className="text-2xl font-display">{stats.upcomingMeetings}</p>
+        <p className="text-xs text-muted-foreground">Upcoming</p>
+      </div>
+    </div>
+  </Card>
+  {/* ... more stat cards */}
+</div>
 ```
 
-### Coaching Category (Coach Only)
-
+### Upcoming Meetings Preview
 ```tsx
-<ManagementCard
-  href="/dashboard/schedule-meeting/requests"
-  icon={Inbox}
-  title="Meeting Requests"
-  description="Review and respond to meeting requests"
-  stat={pendingRequestsCount}
-  statLabel="pending"
-  colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
-/>
+<Card>
+  <CardHeader>
+    <CardTitle className="text-sm font-display">UPCOMING MEETINGS</CardTitle>
+  </CardHeader>
+  <CardContent>
+    {upcomingMeetings.slice(0, 5).map(meeting => (
+      <div className="flex items-center justify-between py-2 border-b last:border-0">
+        <div>
+          <span className="font-medium">{format(meeting.date, 'MMM d')}</span>
+          <span className="text-muted-foreground"> - {meeting.type}</span>
+        </div>
+        <span className="text-sm text-muted-foreground">
+          with {meeting.coach.name}
+        </span>
+      </div>
+    ))}
+    <Link to="/dashboard/schedule-meeting/my-meetings">
+      <Button variant="ghost" className="w-full mt-2">
+        View All Meetings <ChevronRight />
+      </Button>
+    </Link>
+  </CardContent>
+</Card>
+```
 
-<ManagementCard
-  href="/dashboard/schedule-meeting/commitments"
-  icon={ClipboardList}
-  title="My Commitments"
-  description="Track promises made to team members"
-  stat={activeCommitmentsCount}
-  statLabel="active"
-  colorClass="bg-purple-500/10 text-purple-600 dark:text-purple-400"
-/>
+### Coaching Cards Grid
+```tsx
+{isCoach && (
+  <div className="grid lg:grid-cols-2 gap-6">
+    {/* Pending Requests Card */}
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm font-display flex items-center gap-2">
+          <Inbox className="w-4 h-4" />
+          PENDING REQUESTS
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {pendingRequests.slice(0, 3).map(req => (...))}
+        <Link to="/dashboard/schedule-meeting/requests">
+          View All Requests
+        </Link>
+      </CardContent>
+    </Card>
 
-<ManagementCard
-  href="/dashboard/schedule-meeting/inbox"
-  icon={MessageSquare}
-  title="Meeting Inbox"
-  description="Manager-initiated meeting requests"
-  stat={inboxCount}
-  statLabel="pending"
-  colorClass="bg-green-500/10 text-green-600 dark:text-green-400"
-/>
+    {/* Active Commitments Card */}
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm font-display flex items-center gap-2">
+          <ClipboardList className="w-4 h-4" />
+          ACTIVE COMMITMENTS
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {activeCommitments.slice(0, 3).map(item => (...))}
+        <Link to="/dashboard/schedule-meeting/commitments">
+          View All Commitments
+        </Link>
+      </CardContent>
+    </Card>
+  </div>
+)}
 ```
 
 ---
 
-## Stats Query
+## Data Queries
 
-Fetch counts for badges:
+The page will fetch:
 
-```tsx
-const { data: stats } = useQuery({
-  queryKey: ['meeting-hub-stats', user?.id],
-  queryFn: async () => {
-    // Fetch upcoming meetings count
-    // Fetch pending requests count (for coaches)
-    // Fetch active accountability items count
-    // Fetch meeting inbox count
-    return { upcoming, pendingRequests, activeItems, inboxPending };
-  },
-});
-```
+1. **Upcoming meetings** (full data, not just count)
+2. **Pending requests** (as coach)
+3. **Active accountability items** (as coach)
+4. **Meeting inbox count**
+
+This allows displaying actual meeting previews rather than just navigation cards.
 
 ---
 
 ## Visual Result
 
-- Page transforms from tab-based navigation to a clean dashboard grid
-- Each section becomes its own focused page with back navigation
-- Counts/badges show at-a-glance status on the hub
-- Consistent with Management Hub styling
-- Coach-specific cards only visible to admins/managers
-- Sub-pages use PlatformPageContainer + back button pattern
+- Page transforms from a simple navigation hub to a rich dashboard overview
+- Users immediately see their upcoming meetings and key metrics
+- Coaches get at-a-glance view of pending requests and commitments
+- Quick actions remain available at the bottom
+- Consistent with other dashboard overview patterns in the app
