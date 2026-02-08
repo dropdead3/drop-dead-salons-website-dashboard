@@ -55,6 +55,7 @@ export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete
       )}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
+      onDoubleClick={onReply}
     >
       {/* Avatar or timestamp spacer */}
       {!isConsecutive && (
