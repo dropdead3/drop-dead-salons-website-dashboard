@@ -1,134 +1,139 @@
 
-# Automatic Location Channel Assignment on Profile Update
+
+# DM Archive & Role-Based Sorting
 
 ## Overview
 
-When a team member updates their assigned locations (via their own profile or through admin editing), they should automatically be added to the corresponding location-specific chat channels. This ensures chat access stays in sync with location assignments.
+Two enhancements to the Direct Messages section:
+
+1. **Archive DMs**: Allow users to hide conversations from their sidebar while keeping them searchable. If either party messages again, the DM reappears automatically.
+
+2. **Role Hierarchy Sorting**: Organize DMs by the other person's role level (Super Admin > Admin > Manager > etc.)
 
 ---
 
-## Current State
+## Part 1: Archive DMs
 
-1. **`useAutoJoinLocationChannels` hook** - Already exists and runs when a user first opens Team Chat
-   - Only runs once per session (uses `hasRun` ref)
-   - Joins user to public channels and location channels matching their profile
+### Current State
+- The `is_archived` field exists on `chat_channels` but is channel-level (affects all members)
+- DMs are 1:1 private conversations between two users
+- No per-user archive mechanism exists
 
-2. **Profile update flow** - Uses `useUpdateEmployeeProfile` hook
-   - Updates `location_id` and `location_ids` fields
-   - Does NOT trigger any chat channel sync
+### Proposed Approach
 
-**Problem**: If an admin assigns a user to "Val Vista Lakes" location, that user won't see the Val Vista Lakes chat channel until they refresh or re-enter Team Chat.
+Since DM archiving should be **per-user** (you archive it but your partner still sees it), we'll use the existing `chat_channel_members` table to add a user-specific archive flag.
 
----
-
-## Proposed Solution
-
-Create a **database trigger** that automatically syncs chat channel memberships whenever `employee_profiles.location_ids` changes. This is the most reliable approach because:
-
-1. Works regardless of which UI/API updates the profile
-2. Runs server-side, so it works even if the user isn't logged in
-3. Can handle both adding AND removing locations
-
----
-
-## Implementation Details
-
-### Database Trigger Function
-
-Create a PostgreSQL function that:
-1. Detects changes to `location_id` or `location_ids` columns
-2. Finds location-type channels matching the new/removed locations
-3. Adds/removes the user from those channels
-
-```text
-When employee_profiles UPDATE:
-  ┌─────────────────────────────────────────────────────────────┐
-  │ Compare OLD.location_ids vs NEW.location_ids                │
-  │                                                             │
-  │ NEW locations not in OLD → Add to matching location channels│
-  │ OLD locations not in NEW → Remove from matching channels    │
-  └─────────────────────────────────────────────────────────────┘
+**Database Change:**
+```sql
+ALTER TABLE public.chat_channel_members
+ADD COLUMN is_hidden BOOLEAN DEFAULT false;
 ```
 
-### SQL Migration
+### UI Flow
 
-```sql
--- Function to sync chat channel memberships based on location assignments
-CREATE OR REPLACE FUNCTION public.sync_location_channel_memberships()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-DECLARE
-  old_locations TEXT[];
-  new_locations TEXT[];
-  added_locations TEXT[];
-  removed_locations TEXT[];
-  org_id UUID;
-BEGIN
-  -- Get organization_id
-  org_id := COALESCE(NEW.organization_id, OLD.organization_id);
-  
-  -- Build location arrays (handle both location_id and location_ids)
-  old_locations := COALESCE(OLD.location_ids, ARRAY[]::TEXT[]);
-  IF OLD.location_id IS NOT NULL AND NOT (OLD.location_id = ANY(old_locations)) THEN
-    old_locations := array_append(old_locations, OLD.location_id);
-  END IF;
-  
-  new_locations := COALESCE(NEW.location_ids, ARRAY[]::TEXT[]);
-  IF NEW.location_id IS NOT NULL AND NOT (NEW.location_id = ANY(new_locations)) THEN
-    new_locations := array_append(new_locations, NEW.location_id);
-  END IF;
-  
-  -- Find added locations
-  added_locations := ARRAY(
-    SELECT unnest(new_locations)
-    EXCEPT
-    SELECT unnest(old_locations)
-  );
-  
-  -- Find removed locations
-  removed_locations := ARRAY(
-    SELECT unnest(old_locations)
-    EXCEPT
-    SELECT unnest(new_locations)
-  );
-  
-  -- Add user to location channels for newly added locations
-  IF array_length(added_locations, 1) > 0 THEN
-    INSERT INTO public.chat_channel_members (channel_id, user_id, role)
-    SELECT c.id, NEW.user_id, 'member'
-    FROM public.chat_channels c
-    WHERE c.organization_id = org_id
-      AND c.type = 'location'
-      AND c.location_id = ANY(added_locations)
-      AND c.is_archived = false
-    ON CONFLICT (channel_id, user_id) DO NOTHING;
-  END IF;
-  
-  -- Remove user from location channels for removed locations
-  IF array_length(removed_locations, 1) > 0 THEN
-    DELETE FROM public.chat_channel_members
-    WHERE user_id = NEW.user_id
-      AND channel_id IN (
-        SELECT c.id FROM public.chat_channels c
-        WHERE c.organization_id = org_id
-          AND c.type = 'location'
-          AND c.location_id = ANY(removed_locations)
-      );
-  END IF;
-  
-  RETURN NEW;
-END;
-$$;
+```text
+┌───────────────────────────────────────────────────────────────┐
+│ ⚙  CONVERSATION SETTINGS                                     │
+│                                                               │
+│ ┌─────────────────────────────────────────────────────────┐   │
+│ │ 💬  DM with Alex Day                                    │   │
+│ │     Direct Message                                      │   │
+│ └─────────────────────────────────────────────────────────┘   │
+│                                                               │
+│ ┌─────────────────────────────────────────────────────────┐   │
+│ │ 🗄  Archive Conversation                                │   │
+│ │ Hide from sidebar. Reappears when either of you        │   │
+│ │ sends a new message.                                   │   │
+│ └─────────────────────────────────────────────────────────┘   │
+│                                                               │
+└───────────────────────────────────────────────────────────────┘
+```
 
--- Create trigger on employee_profiles
-DROP TRIGGER IF EXISTS sync_location_channels_on_profile_update ON public.employee_profiles;
-CREATE TRIGGER sync_location_channels_on_profile_update
-  AFTER UPDATE OF location_id, location_ids ON public.employee_profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION public.sync_location_channel_memberships();
+### Auto-Unarchive Behavior
+
+When a new message is sent:
+1. Database trigger OR application logic checks if either member has `is_hidden = true`
+2. Sets `is_hidden = false` for both members
+3. DM reappears in both users' sidebars
+
+### Searchable When Archived
+
+- Update `useChatChannels` to filter out DMs where `is_hidden = true` from the sidebar
+- Update message search to include ALL DMs (including hidden ones)
+- When searching and selecting an archived DM, it automatically unarchives
+
+---
+
+## Part 2: DM Role Hierarchy Sorting
+
+### Role Priority Order (from `useUserRoles.ts`)
+
+```text
+Level 1: super_admin    → Primary leadership
+Level 2: admin          → Secondary leadership
+Level 3: manager        → Management
+Level 4: stylist, stylist_assistant, receptionist, etc.
+Level 5: (no role)      → Lowest priority
+```
+
+### Implementation
+
+Update `ChannelSidebar.tsx` to sort `dmChannels` by partner's role priority:
+
+```typescript
+const ROLE_PRIORITY: Record<string, number> = {
+  super_admin: 1,
+  admin: 2,
+  manager: 3,
+  stylist: 4,
+  receptionist: 5,
+  stylist_assistant: 6,
+  admin_assistant: 7,
+  operations_assistant: 8,
+  booth_renter: 9,
+  bookkeeper: 10,
+  assistant: 11, // Legacy
+};
+
+// Sorting logic
+dmChannels.sort((a, b) => {
+  const roleA = a.dm_partner?.role || 99;
+  const roleB = b.dm_partner?.role || 99;
+  const priorityA = ROLE_PRIORITY[roleA] ?? 99;
+  const priorityB = ROLE_PRIORITY[roleB] ?? 99;
+  
+  if (priorityA !== priorityB) return priorityA - priorityB;
+  // Secondary sort: alphabetical by name
+  return a.dm_partner?.display_name?.localeCompare(b.dm_partner?.display_name) || 0;
+});
+```
+
+### Data Requirement
+
+Need to include the DM partner's **role** in the channel query. Update `useChatChannels.ts` to also fetch roles:
+
+```typescript
+// When fetching DM members, also get their role
+const { data: dmMembers } = await supabase
+  .from('chat_channel_members')
+  .select(`
+    channel_id,
+    user_id,
+    employee_profiles!chat_channel_members_employee_fkey (
+      display_name,
+      full_name,
+      photo_url,
+      user_id
+    )
+  `)
+  .in('channel_id', dmChannelIds)
+  .neq('user_id', user.id);
+
+// Then fetch roles for these users
+const { data: userRoles } = await supabase
+  .from('user_roles')
+  .select('user_id, role')
+  .in('user_id', dmMembers.map(m => m.user_id));
 ```
 
 ---
@@ -137,31 +142,31 @@ CREATE TRIGGER sync_location_channels_on_profile_update
 
 | File | Changes |
 |------|---------|
-| `supabase/migrations/[new].sql` | Add trigger function and trigger |
+| `supabase/migrations/` | Add `is_hidden` column to `chat_channel_members` |
+| `src/hooks/team-chat/useChatChannels.ts` | Filter hidden DMs from sidebar; include partner role in dm_partner object |
+| `src/components/team-chat/ChannelSidebar.tsx` | Sort DM channels by role hierarchy |
+| `src/components/team-chat/ChannelSettingsSheet.tsx` | Add Archive Conversation button for DMs |
+| `src/hooks/team-chat/useDMChannels.ts` | Unarchive DM when starting conversation with existing partner |
+| `src/hooks/team-chat/useMessageSearch.ts` | Ensure archived DMs are still searchable |
 
 ---
 
-## Behavior Matrix
+## Expected Behavior
 
 | Action | Result |
 |--------|--------|
-| Admin assigns user to "Val Vista Lakes" | User auto-joined to val-vista-lakes channel |
-| User adds "North Mesa" to their locations | User auto-joined to north-mesa channel |
-| Admin removes "Val Vista Lakes" from user | User removed from val-vista-lakes channel |
-| User updates unrelated profile fields | No channel changes |
-| New location channel created | Existing users NOT auto-added (future enhancement) |
-
----
-
-## Edge Cases Handled
-
-1. **Duplicate memberships** - Uses `ON CONFLICT DO NOTHING`
-2. **Archived channels** - Only syncs to non-archived channels
-3. **Both location_id and location_ids** - Handles legacy and new fields
-4. **Cross-organization** - Scoped by organization_id
+| Click "Archive Conversation" on DM | DM hidden from your sidebar only |
+| Search for message in archived DM | Message found, clicking it unarchives the DM |
+| Partner sends you a message | DM automatically reappears in your sidebar |
+| You start a new DM with same person | Existing DM is found and unarchived |
+| View DM list | Sorted by role: Super Admin first, then Admin, Manager, etc. |
 
 ---
 
 ## Summary
 
-This database trigger approach ensures location-based chat channel access is always synchronized with the user's profile assignments, regardless of how the profile is updated (self-edit, admin edit, API, etc.).
+These changes make DM management more user-friendly:
+- **Archive**: Declutter your sidebar without losing conversation history
+- **Auto-unarchive**: Never miss messages because you archived someone
+- **Role sorting**: Quickly find conversations with leadership
+
