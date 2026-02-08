@@ -153,15 +153,19 @@ export function useChatChannels() {
   });
 
   const createChannelMutation = useMutation({
-    mutationFn: async (data: Omit<ChatChannelInsert, 'organization_id' | 'created_by'>) => {
+    mutationFn: async (data: Omit<ChatChannelInsert, 'organization_id' | 'created_by'> & { 
+      initialMembers?: string[] 
+    }) => {
       if (!user?.id || !effectiveOrganization?.id) {
         throw new Error('Not authenticated');
       }
 
+      const { initialMembers, ...channelData } = data;
+
       const { data: channel, error } = await supabase
         .from('chat_channels')
         .insert({
-          ...data,
+          ...channelData,
           organization_id: effectiveOrganization.id,
           created_by: user.id,
         })
@@ -180,6 +184,24 @@ export function useChatChannels() {
         });
 
       if (memberError) throw memberError;
+
+      // Add initial members if provided
+      if (initialMembers && initialMembers.length > 0) {
+        const memberships = initialMembers.map(userId => ({
+          channel_id: channel.id,
+          user_id: userId,
+          role: 'member' as const,
+        }));
+
+        const { error: membersError } = await supabase
+          .from('chat_channel_members')
+          .insert(memberships);
+
+        if (membersError) {
+          console.error('Failed to add initial members:', membersError);
+          // Don't throw - channel was created successfully
+        }
+      }
 
       return channel;
     },
