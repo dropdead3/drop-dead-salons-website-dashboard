@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Hash, MapPin, Lock, Plus, ChevronDown, ChevronRight, Users, Settings, Bot, Sparkles } from 'lucide-react';
+import { Hash, MapPin, Lock, Plus, ChevronDown, ChevronRight, Users, Settings, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { useChatChannels, useInitializeDefaultChannels, type ChannelWithMembership } from '@/hooks/team-chat/useChatChannels';
-import { getChannelDisplayName } from '@/hooks/team-chat/useChannelDisplayName';
+import { getChannelDisplayName, getChannelAvatarUrl } from '@/hooks/team-chat/useChannelDisplayName';
 import { useAutoJoinLocationChannels } from '@/hooks/team-chat/useAutoJoinLocationChannels';
 import { useUnreadMessages } from '@/hooks/team-chat/useUnreadMessages';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
@@ -40,6 +41,17 @@ const channelTypeIcons: Record<string, typeof Hash> = {
   group_dm: Users,
 };
 
+// Helper to extract initials from a name
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map(word => word[0])
+    .filter(Boolean)
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 interface ChannelItemProps {
   channel: ChannelWithMembership;
   isActive: boolean;
@@ -50,6 +62,9 @@ interface ChannelItemProps {
 function ChannelItem({ channel, isActive, onClick, unreadCount }: ChannelItemProps) {
   const Icon = channelTypeIcons[channel.type] || Hash;
   const isMember = !!channel.membership;
+  const isDM = channel.type === 'dm' || channel.type === 'group_dm';
+  const avatarUrl = getChannelAvatarUrl(channel);
+  const displayName = getChannelDisplayName(channel);
 
   return (
     <button
@@ -62,8 +77,17 @@ function ChannelItem({ channel, isActive, onClick, unreadCount }: ChannelItemPro
         unreadCount > 0 && !isActive && 'font-semibold'
       )}
     >
-      <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-      <span className="truncate flex-1 text-left">{getChannelDisplayName(channel)}</span>
+      {isDM ? (
+        <Avatar className="h-5 w-5 shrink-0">
+          <AvatarImage src={avatarUrl || undefined} alt={displayName} />
+          <AvatarFallback className="text-[10px] bg-muted">
+            {getInitials(displayName)}
+          </AvatarFallback>
+        </Avatar>
+      ) : (
+        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+      )}
+      <span className="truncate flex-1 text-left">{displayName}</span>
       {unreadCount > 0 && !isActive && (
         <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-[10px]">
           {unreadCount > 99 ? '99+' : unreadCount}
