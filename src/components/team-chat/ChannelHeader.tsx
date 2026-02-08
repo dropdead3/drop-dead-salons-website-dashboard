@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 import { usePlatformPresenceContext } from '@/contexts/PlatformPresenceContext';
 import { usePinnedMessages } from '@/hooks/team-chat/usePinnedMessages';
+import { getChannelDisplayName } from '@/hooks/team-chat/useChannelDisplayName';
 import { PinnedMessagesSheet } from './PinnedMessagesSheet';
 import { ChannelSettingsSheet } from './ChannelSettingsSheet';
 import { ChannelMembersSheet } from './ChannelMembersSheet';
@@ -51,7 +52,7 @@ export function ChannelHeader() {
 
           <div className="flex items-center gap-2">
             <Icon className="h-5 w-5 text-muted-foreground" />
-            <h1 className="font-semibold">{activeChannel.name}</h1>
+            <h1 className="font-semibold">{getChannelDisplayName(activeChannel)}</h1>
           </div>
 
           {activeChannel.description && !isSearchExpanded && (

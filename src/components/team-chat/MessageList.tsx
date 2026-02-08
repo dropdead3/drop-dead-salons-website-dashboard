@@ -5,6 +5,7 @@ import { MessageItem } from './MessageItem';
 import { useChatMessages, type MessageWithSender } from '@/hooks/team-chat/useChatMessages';
 import { usePinnedMessages } from '@/hooks/team-chat/usePinnedMessages';
 import { useChannelMembers } from '@/hooks/team-chat/useChannelMembers';
+import { getChannelDisplayName } from '@/hooks/team-chat/useChannelDisplayName';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 
 export function MessageList() {
@@ -51,12 +52,17 @@ export function MessageList() {
   }
 
   if (messages.length === 0) {
+    const displayName = getChannelDisplayName(activeChannel);
+    const isDM = activeChannel.type === 'dm' || activeChannel.type === 'group_dm';
+    
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-        <div className="text-4xl mb-4">💬</div>
-        <h3 className="font-semibold text-lg">Welcome to #{activeChannel.name}</h3>
+        <div className="text-4xl mb-4">{isDM ? '👋' : '💬'}</div>
+        <h3 className="font-semibold text-lg">
+          {isDM ? `Start a conversation with ${displayName}` : `Welcome to #${displayName}`}
+        </h3>
         <p className="text-muted-foreground text-sm mt-1">
-          {activeChannel.description || 'This is the start of the conversation.'}
+          {activeChannel.description || (isDM ? 'Say hello!' : 'This is the start of the conversation.')}
         </p>
       </div>
     );

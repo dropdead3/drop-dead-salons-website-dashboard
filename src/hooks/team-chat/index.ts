@@ -6,3 +6,4 @@ export * from './useTeamChatRoleAutoJoin';
 export * from './useSmartActions';
 export * from './useTeamChatAccess';
 export * from './useAIAgentChat';
+export * from './useChannelDisplayName';

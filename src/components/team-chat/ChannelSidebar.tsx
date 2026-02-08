@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useChatChannels, useInitializeDefaultChannels, type ChannelWithMembership } from '@/hooks/team-chat/useChatChannels';
+import { getChannelDisplayName } from '@/hooks/team-chat/useChannelDisplayName';
 import { useAutoJoinLocationChannels } from '@/hooks/team-chat/useAutoJoinLocationChannels';
 import { useUnreadMessages } from '@/hooks/team-chat/useUnreadMessages';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
@@ -46,7 +47,7 @@ function ChannelItem({ channel, isActive, onClick, unreadCount }: ChannelItemPro
       )}
     >
       <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-      <span className="truncate flex-1 text-left">{channel.name}</span>
+      <span className="truncate flex-1 text-left">{getChannelDisplayName(channel)}</span>
       {unreadCount > 0 && !isActive && (
         <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-[10px]">
           {unreadCount > 99 ? '99+' : unreadCount}
