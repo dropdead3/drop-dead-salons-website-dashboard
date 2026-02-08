@@ -88,10 +88,7 @@ export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete
           </div>
         )}
 
-        <div className={cn(
-          "text-sm whitespace-pre-wrap break-words",
-          !isConsecutive && "bg-muted/30 rounded-lg px-3 py-2"
-        )}>{renderContentWithMentions(message.content)}</div>
+        <div className="text-sm whitespace-pre-wrap break-words">{renderContentWithMentions(message.content)}</div>
 
         {/* Reactions */}
         {message.reactions && message.reactions.length > 0 && (
