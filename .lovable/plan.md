@@ -1,82 +1,123 @@
 
-# Fix Message Layout: Vertical Alignment, Background Highlight & Padding
+# Instant Thread Replies: Optimistic Updates
 
-## Problem Analysis
+## The Problem
 
-Looking at the screenshot, the current `MessageItem` layout has these issues:
+Currently, when you send a thread reply:
+1. Request goes to server
+2. Wait for database insert (~200-500ms)
+3. `onSuccess` triggers `invalidateQueries`
+4. Another round-trip to fetch updated replies
+5. **Finally** the message appears
 
-1. **Misaligned timestamps**: For consecutive messages, the timestamp "10:47 AM" appears outside the hover background area
-2. **Inconsistent hover background**: The highlight doesn't cover the timestamp area on consecutive messages
-3. **Vertical alignment**: The timestamp isn't vertically centered with the message text
-4. **Inconsistent padding**: The message row structure differs between first message and consecutive messages
+This creates a noticeable delay of 400-1000ms before your reply shows up.
 
-## Root Cause
+## The Solution
 
-The current approach for consecutive messages:
-- Uses `ml-16` on the container (shifts everything right)
-- Then uses `-ml-16` on the timestamp div to pull it back left
-- This creates the timestamp outside the hover background area
+Add **optimistic updates** to the `sendReplyMutation` in `useThreadMessages.ts` - the same pattern already used successfully in the main chat (`useChatMessages.ts`).
 
-## Solution
+With optimistic updates:
+1. Reply appears **instantly** in the UI
+2. Server request happens in background
+3. On success: replace temp ID with real ID
+4. On error: rollback and show error toast
 
-Restructure the layout so:
-1. All messages use the same container structure (no margin shifting)
-2. Consecutive messages show a timestamp placeholder that stays within the hover area
-3. Use proper flexbox alignment for vertical centering
-4. Add consistent padding across all message types
+## Implementation
 
-## Changes to `MessageItem.tsx`
+### Changes to `useThreadMessages.ts`
 
-```text
-Current structure (consecutive):
-┌─────────────────────────────────────────────────┐
-│ [10:47 AM positioned outside] │ Message text    │  ← ml-16 shifts container
-└─────────────────────────────────────────────────┘
+Add `onMutate` callback to `sendReplyMutation`:
 
-New structure (consecutive):
-┌─────────────────────────────────────────────────┐
-│ [10:47 AM] │ Message text                       │  ← timestamp inside hover
-└─────────────────────────────────────────────────┘
+```typescript
+const sendReplyMutation = useMutation({
+  mutationFn: async (content: string) => {
+    // ... existing code
+  },
+  
+  // NEW: Optimistic update
+  onMutate: async (content: string) => {
+    // Cancel outgoing refetches
+    await queryClient.cancelQueries({ queryKey: ['thread-replies', parentMessageId] });
+    
+    // Snapshot for rollback
+    const previousReplies = queryClient.getQueryData<MessageWithSender[]>(
+      ['thread-replies', parentMessageId]
+    );
+    
+    // Create optimistic message
+    const optimisticReply: MessageWithSender = {
+      id: `temp-${Date.now()}`,
+      channel_id: parentMessage?.channel_id!,
+      sender_id: user!.id,
+      content,
+      parent_message_id: parentMessageId,
+      created_at: new Date().toISOString(),
+      // ... sender info from userProfile
+    };
+    
+    // Add to cache immediately
+    queryClient.setQueryData<MessageWithSender[]>(
+      ['thread-replies', parentMessageId],
+      (old = []) => [...old, optimisticReply]
+    );
+    
+    return { previousReplies };
+  },
+  
+  onError: (error, _content, context) => {
+    // Rollback on error
+    if (context?.previousReplies) {
+      queryClient.setQueryData(
+        ['thread-replies', parentMessageId],
+        context.previousReplies
+      );
+    }
+    toast.error('Failed to send reply');
+  },
+  
+  onSettled: () => {
+    // Sync with server (replaces temp ID)
+    queryClient.invalidateQueries({ queryKey: ['thread-replies', parentMessageId] });
+  },
+});
 ```
 
-**Key styling changes:**
-- Remove `ml-16` from consecutive messages
-- Keep consistent `flex gap-4` structure for both message types
-- For consecutive messages, use a fixed-width timestamp area (same as avatar width)
-- Add `items-start` for proper baseline alignment
-- Increase padding from `py-2` to `py-1.5` and adjust `px-4` to `px-5`
+### Dependencies Needed
 
-## Implementation Details
+The hook needs access to `userProfile` to populate the optimistic message's sender info:
 
-```tsx
-// For all messages (both first and consecutive)
-<div className="group relative flex gap-4 px-5 py-1.5 -mx-2 rounded-lg hover:bg-accent/30">
-  
-  {/* Left column: Avatar or Timestamp */}
-  <div className="w-10 shrink-0 flex items-start justify-center">
-    {!isConsecutive ? (
-      <Avatar>...</Avatar>
-    ) : (
-      <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 pt-0.5">
-        {time}
-      </span>
-    )}
-  </div>
-  
-  {/* Right column: Content */}
-  <div className="flex-1 min-w-0">
-    ...
-  </div>
-</div>
+```typescript
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+
+export function useThreadMessages(parentMessageId: string | null) {
+  const { user } = useAuth();
+  const { data: userProfile } = useEmployeeProfile(); // ADD THIS
+  // ...
+}
 ```
 
-## Summary
+## Technical Details
 
-| Issue | Fix |
-|-------|-----|
-| Timestamp outside hover area | Keep timestamp in same container structure |
-| Vertical misalignment | Use consistent `items-start` + padding |
-| Inconsistent hover | Single container structure for all messages |
-| Padding | Increase horizontal/vertical padding |
+| Aspect | Implementation |
+|--------|----------------|
+| **Temp ID format** | `temp-{timestamp}` for uniqueness |
+| **Sender data** | From `userProfile` (display_name, photo_url, etc.) |
+| **Rollback** | Restore previous cache on error |
+| **Sync** | `invalidateQueries` on settle replaces temp with real |
+| **Cancel queries** | Prevents race conditions with in-flight fetches |
 
-This creates a clean, uniform message layout where all elements stay within the hover highlight area.
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/hooks/team-chat/useThreadMessages.ts` | Add `onMutate` optimistic update, import `useEmployeeProfile` |
+
+## Expected Result
+
+| Before | After |
+|--------|-------|
+| 400-1000ms delay before reply appears | Reply appears **instantly** (<16ms) |
+| UI feels sluggish | UI feels responsive like native app |
+| Same pattern as main chat | Consistent experience everywhere |
+
+This is a targeted, single-file change that brings thread replies to the same instant-feeling experience as the main chat.
