@@ -1,108 +1,54 @@
 
-# Fix Role Filter in Channel Members Sheet
+
+# Fix: Alex Not Appearing in "Add Member" Search
 
 ## The Problem
 
-The role filter dropdown in the Channel Members panel is currently filtering by the **chat channel role** (Owner, Channel Admin, Member) instead of the user's **account-level role** (Stylist, Manager, Receptionist, Stylist Assistant, etc.).
+Alex (alexmaxday@gmail.com) is not appearing in the "Add Members" search results because his `employee_profiles` record has `organization_id = NULL`.
 
-As shown in the screenshot, all members display "Member" as their role, but they should display their actual job roles like "Manager", "Stylist", "Receptionist", etc.
-
----
-
-## Solution Overview
-
-Update the Channel Members feature to:
-1. **Fetch account roles** alongside channel membership data
-2. **Display account roles** as the primary role indicator (e.g., "Stylist", "Manager")
-3. **Filter by account roles** using the actual job roles from the system
-4. **Keep channel role as secondary info** (show crown/shield icons for channel owner/admin)
-
----
-
-## Visual Result
-
-```text
-Before:                          After:
-┌────────────────────────┐      ┌────────────────────────┐
-│ Eric Day 👑            │      │ Eric Day 👑            │
-│ Owner                  │      │ Super Admin (Owner)    │
-├────────────────────────┤      ├────────────────────────┤
-│ Manager Test Account   │      │ Manager Test Account   │
-│ Member                 │      │ Manager                │
-├────────────────────────┤      ├────────────────────────┤
-│ Stylist Test Account   │      │ Stylist Test Account   │
-│ Member                 │      │ Stylist                │
-└────────────────────────┘      └────────────────────────┘
-
-Filter Dropdown:                 Filter Dropdown:
-- All Roles                      - All Roles
-- Owners                         - Super Admin
-- Channel Admins                 - Manager
-- Members                        - Stylist
-                                 - Receptionist
-                                 - Stylist Assistant
-                                 - ...
-```
-
----
-
-## Technical Changes
-
-### 1. Update useChannelMembers Hook
-
-Modify the query to join with `user_roles` table to fetch each member's account role:
-
+The `useTeamMembers` hook filters team members by:
 ```typescript
-const { data, error } = await supabase
-  .from('chat_channel_members')
-  .select(`
-    id,
-    user_id,
-    role,
-    joined_at,
-    profile:employee_profiles!chat_channel_members_employee_fkey (
-      display_name,
-      full_name,
-      photo_url
-    ),
-    account_role:user_roles!inner (
-      role
-    )
-  `)
-  .eq('channel_id', channelId);
+.eq('organization_id', effectiveOrganization.id)
 ```
 
-Update the `ChannelMember` interface to include account role.
-
-### 2. Update ChannelMembersSheet Component
-
-**Filter dropdown changes:**
-- Fetch roles using `useRoles()` hook to get all account roles
-- Replace static filter options with dynamic role list
-- Filter members by `accountRole` instead of channel `role`
-
-**Display changes:**
-- Show account role as primary (e.g., "Stylist")
-- Show channel role as secondary indicator (crown for owner, shield for admin)
-
-### 3. Keep Channel Admin Indicators
-
-The crown (owner) and shield (admin) icons will remain to show channel-specific permissions, but the text will show the account role.
+Since Alex's profile isn't associated with any organization, he's excluded from all organization-based queries.
 
 ---
 
-## Files to Modify
+## Database Finding
 
-| File | Changes |
-|------|---------|
-| `src/hooks/team-chat/useChannelMembers.ts` | Add user_roles join to fetch account role |
-| `src/components/team-chat/ChannelMembersSheet.tsx` | Update filter to use account roles, update display |
+| Field | Value |
+|-------|-------|
+| user_id | `52c43316-2ba5-4367-96d4-f097f8a492ea` |
+| full_name | Alex Day |
+| email | alexmaxday@gmail.com |
+| is_approved | true |
+| is_active | true |
+| **organization_id** | **NULL** (this is the problem) |
 
 ---
 
-## Benefits
+## Solution Options
 
-- Users can filter channel members by their job function (Stylist, Manager, etc.)
-- Easier to find specific team members in large channels
-- Maintains channel admin/owner visibility with icons
-- Uses the existing `useRoles()` hook for dynamic role data
+### Option A: Fix Alex's Profile (Data Fix - Recommended)
+Assign Alex to the organization by running this SQL:
+
+```sql
+UPDATE employee_profiles 
+SET organization_id = 'fa23cd95-decf-436a-adba-4561b0ecc14d'
+WHERE user_id = '52c43316-2ba5-4367-96d4-f097f8a492ea';
+```
+
+This is likely a one-off data issue that occurred during account creation.
+
+### Option B: Investigate Root Cause (If This Happens Often)
+If multiple users are missing organization assignments, we should investigate the signup/onboarding flow to ensure `organization_id` is always set when creating employee profiles.
+
+---
+
+## Recommendation
+
+**Run Option A** - This is a data fix that should be applied once. After running the SQL update, Alex will immediately appear in the team member search.
+
+Do you want me to apply this database fix?
+
