@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Settings, Trash2, Archive, Hash, MapPin, Lock } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Settings, Trash2, Archive, Hash, MapPin, Lock, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,6 +27,7 @@ import { useChannelMembers } from '@/hooks/team-chat/useChannelMembers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ChannelSettingsSheetProps {
   open: boolean;
@@ -35,8 +36,20 @@ interface ChannelSettingsSheetProps {
 
 export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsSheetProps) {
   const { activeChannel, setActiveChannel } = useTeamChatContext();
-  const { isOwner, isAdmin } = useChannelMembers(activeChannel?.id || null);
+  const { isOwner, isAdmin, members } = useChannelMembers(activeChannel?.id || null);
+  const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // For DM channels, find the other person's name
+  const dmPartnerName = useMemo(() => {
+    if (activeChannel?.type !== 'dm') return null;
+    const partner = members.find(m => m.userId !== user?.id);
+    return partner?.profile?.displayName || partner?.profile?.fullName || 'Team Member';
+  }, [activeChannel?.type, members, user?.id]);
+
+  const displayName = activeChannel?.type === 'dm'
+    ? `DM with ${dmPartnerName}` 
+    : activeChannel?.name || '';
 
   const [name, setName] = useState(activeChannel?.name || '');
   const [description, setDescription] = useState(activeChannel?.description || '');
@@ -86,9 +99,11 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
 
   if (!activeChannel) return null;
 
-  const ChannelIcon = activeChannel.type === 'location' ? MapPin : 
+  const isDM = activeChannel.type === 'dm';
+  const ChannelIcon = isDM ? MessageCircle :
+                      activeChannel.type === 'location' ? MapPin : 
                       activeChannel.type === 'private' ? Lock : Hash;
-  const canEdit = isAdmin && !activeChannel.is_system;
+  const canEdit = isAdmin && !activeChannel.is_system && !isDM;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -96,7 +111,7 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Channel Settings
+            {isDM ? 'Conversation Settings' : 'Channel Settings'}
           </SheetTitle>
         </SheetHeader>
 
@@ -106,35 +121,39 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
               <ChannelIcon className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <div className="font-semibold">{activeChannel.name}</div>
-              <div className="text-sm text-muted-foreground capitalize">{activeChannel.type} channel</div>
+              <div className="font-semibold">{displayName}</div>
+              <div className="text-sm text-muted-foreground capitalize">
+                {isDM ? 'Direct Message' : `${activeChannel.type} channel`}
+              </div>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Channel name</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                disabled={!canEdit}
-              />
-            </div>
+          {!isDM && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Channel name</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={!canEdit}
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                disabled={!canEdit}
-                rows={3}
-              />
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  disabled={!canEdit}
+                  rows={3}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
-          {activeChannel.is_system && (
+          {activeChannel.is_system && !isDM && (
             <p className="text-sm text-muted-foreground">
               This is a system channel and cannot be modified.
             </p>
