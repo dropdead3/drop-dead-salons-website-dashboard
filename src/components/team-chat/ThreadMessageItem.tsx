@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { Smile, Plus } from 'lucide-react';
+import { Smile, Plus, Reply, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,6 +8,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import type { MessageWithSender } from '@/hooks/team-chat/useChatMessages';
@@ -18,10 +24,20 @@ const QUICK_REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🎉'];
 interface ThreadMessageItemProps {
   message: MessageWithSender;
   onReact: (emoji: string) => void;
+  onQuote?: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
   isParent?: boolean;
 }
 
-export function ThreadMessageItem({ message, onReact, isParent }: ThreadMessageItemProps) {
+export function ThreadMessageItem({ 
+  message, 
+  onReact, 
+  onQuote,
+  onEdit,
+  onDelete,
+  isParent 
+}: ThreadMessageItemProps) {
   const { user } = useAuth();
   const [showActions, setShowActions] = useState(false);
 
@@ -34,6 +50,52 @@ export function ThreadMessageItem({ message, onReact, isParent }: ThreadMessageI
     .toUpperCase();
 
   const timestamp = formatDistanceToNow(new Date(message.created_at), { addSuffix: true });
+  const isOwnMessage = user?.id === message.sender?.id;
+
+  // Parse and render quoted content with special styling
+  const renderContent = () => {
+    const lines = message.content.split('\n');
+    const result: React.ReactNode[] = [];
+    let quoteLines: string[] = [];
+    let inQuote = false;
+
+    lines.forEach((line, i) => {
+      if (line.startsWith('> ')) {
+        inQuote = true;
+        quoteLines.push(line.slice(2)); // Remove "> " prefix
+      } else {
+        if (inQuote && quoteLines.length > 0) {
+          result.push(
+            <div key={`quote-${i}`} className="border-l-2 border-muted-foreground/30 pl-2 mb-2 text-muted-foreground italic">
+              {quoteLines.map((ql, qi) => (
+                <div key={qi}>{ql}</div>
+              ))}
+            </div>
+          );
+          quoteLines = [];
+          inQuote = false;
+        }
+        if (line.trim()) {
+          result.push(<div key={i}>{line}</div>);
+        } else if (i < lines.length - 1) {
+          result.push(<br key={i} />);
+        }
+      }
+    });
+
+    // Handle trailing quote
+    if (quoteLines.length > 0) {
+      result.push(
+        <div key="quote-end" className="border-l-2 border-muted-foreground/30 pl-2 mb-2 text-muted-foreground italic">
+          {quoteLines.map((ql, qi) => (
+            <div key={qi}>{ql}</div>
+          ))}
+        </div>
+      );
+    }
+
+    return result;
+  };
 
   return (
     <div
@@ -59,7 +121,7 @@ export function ThreadMessageItem({ message, onReact, isParent }: ThreadMessageI
         </div>
 
         <div className={cn('whitespace-pre-wrap break-words', isParent ? 'text-sm' : 'text-xs')}>
-          {message.content}
+          {renderContent()}
         </div>
 
         {/* Reactions */}
@@ -85,35 +147,72 @@ export function ThreadMessageItem({ message, onReact, isParent }: ThreadMessageI
 
       {/* Hover actions */}
       {showActions && (
-        <Popover>
-          <PopoverTrigger asChild>
+        <div className="absolute right-1 top-1 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Quote/Reply button */}
+          {onQuote && (
             <Button
               variant="ghost"
               size="icon"
-              className="absolute right-1 top-1 h-6 w-6 opacity-0 group-hover:opacity-100"
+              className="h-6 w-6"
+              onClick={onQuote}
+              title="Reply with quote"
             >
-              <Smile className="h-3 w-3" />
+              <Reply className="h-3 w-3" />
             </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-2" align="end">
-            <div className="flex gap-1">
-              {QUICK_REACTIONS.map((emoji) => (
-                <button
-                  key={emoji}
-                  onClick={() => onReact(emoji)}
-                  className="text-lg hover:scale-125 transition-transform p-0.5"
-                >
-                  {emoji}
-                </button>
-              ))}
-              <EmojiPickerPopover onEmojiSelect={onReact} side="right">
-                <button className="text-base hover:scale-110 transition-transform p-0.5 text-muted-foreground hover:text-foreground">
-                  <Plus className="h-3 w-3" />
-                </button>
-              </EmojiPickerPopover>
-            </div>
-          </PopoverContent>
-        </Popover>
+          )}
+
+          {/* Reaction popover */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-6 w-6">
+                <Smile className="h-3 w-3" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-2" align="end">
+              <div className="flex gap-1">
+                {QUICK_REACTIONS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => onReact(emoji)}
+                    className="text-lg hover:scale-125 transition-transform p-0.5"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+                <EmojiPickerPopover onEmojiSelect={onReact} side="right">
+                  <button className="text-base hover:scale-110 transition-transform p-0.5 text-muted-foreground hover:text-foreground">
+                    <Plus className="h-3 w-3" />
+                  </button>
+                </EmojiPickerPopover>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* More actions for own messages */}
+          {isOwnMessage && (onEdit || onDelete) && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <MoreHorizontal className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {onEdit && (
+                  <DropdownMenuItem onClick={onEdit}>
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit
+                  </DropdownMenuItem>
+                )}
+                {onDelete && (
+                  <DropdownMenuItem onClick={onDelete} className="text-destructive">
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       )}
     </div>
   );
