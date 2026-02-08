@@ -42,7 +42,20 @@ export function usePointsHistory(limit = 50) {
 export function usePointsRules() {
   return useQuery({
     queryKey: ['points-rules'],
-    queryFn: getPointsRules,
+    queryFn: async () => {
+      // Get all rules, not just active ones, for the config view
+      const { data, error } = await (await import('@/integrations/supabase/client')).supabase
+        .from('points_rules')
+        .select('*')
+        .order('points_awarded', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching points rules:', error);
+        return [];
+      }
+
+      return data as PointsRule[];
+    },
   });
 }
 
