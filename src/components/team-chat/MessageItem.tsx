@@ -143,7 +143,7 @@ export function MessageItem({
             
             <button
               onClick={onReply}
-              className="flex items-center gap-1.5 text-sm text-primary hover:underline -mt-0.5"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors -mt-0.5"
             >
               <MessageSquare className="h-3.5 w-3.5" />
               {message.reply_count} {message.reply_count === 1 ? 'reply' : 'replies'}
