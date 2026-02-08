@@ -769,7 +769,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
   };
 
   return (
-    <div className={cn("bg-background", hideFooter ? "h-screen overflow-hidden flex flex-col" : "min-h-screen")}>
+    <div className={cn("bg-background", hideFooter ? "h-screen overflow-hidden" : "min-h-screen")}>
       {/* Desktop Sidebar */}
       <aside 
         className={cn(
@@ -800,8 +800,17 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
         />
       </aside>
 
+      {/* Content wrapper - flex column when hideFooter for proper height chain */}
+      <div className={cn(
+        "transition-[padding-left] duration-200 ease-in-out",
+        sidebarCollapsed ? "lg:pl-16" : "lg:pl-72",
+        hideFooter && "h-screen flex flex-col"
+      )}>
       {/* Mobile Header */}
-      <header className="lg:hidden sticky top-0 z-40 flex items-center justify-between h-16 px-4 border-b border-border bg-background">
+      <header className={cn(
+        "lg:hidden sticky top-0 z-40 flex items-center justify-between h-16 px-4 border-b border-border bg-background",
+        hideFooter && "shrink-0"
+      )}>
         <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon">
@@ -964,21 +973,23 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
         )}
       </AnimatePresence>
 
-      {/* Platform Organization Context Banner */}
-      <div className={cn(
-        "transition-[padding-left] duration-200 ease-in-out",
-        sidebarCollapsed ? "lg:pl-16" : "lg:pl-72"
-      )}>
-        <PlatformContextBanner />
-      </div>
+      {/* Platform Organization Context Banner - hide in full-screen mode */}
+      {!hideFooter && (
+        <div className={cn(
+          "transition-[padding-left] duration-200 ease-in-out",
+          sidebarCollapsed ? "lg:pl-16" : "lg:pl-72"
+        )}>
+          <PlatformContextBanner />
+        </div>
+      )}
 
-      {/* Custom Landing Page Banner */}
-      <CustomLandingPageBanner sidebarCollapsed={sidebarCollapsed} />
+      {/* Custom Landing Page Banner - hide in full-screen mode */}
+      {!hideFooter && <CustomLandingPageBanner sidebarCollapsed={sidebarCollapsed} />}
 
       {/* Desktop Top Bar */}
       <div className={cn(
-        "hidden lg:block sticky top-0 z-30 transition-[padding-left] duration-200 ease-in-out",
-        sidebarCollapsed ? "lg:pl-16" : "lg:pl-72"
+        "hidden lg:block sticky top-0 z-30",
+        hideFooter && "shrink-0"
       )}>
         <div className="flex items-center justify-between h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
           {/* Left side - Sidebar toggle */}
@@ -1074,15 +1085,13 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
 
       {/* Main Content */}
       <main className={cn(
-        "transition-[padding-left] duration-200 ease-in-out",
-        sidebarCollapsed ? "lg:pl-16" : "lg:pl-72",
-        hideFooter ? "flex-1 min-h-0 overflow-hidden h-full" : ""
+        hideFooter ? "flex-1 min-h-0 overflow-hidden" : ""
       )}>
         <div className={cn(
-          hideFooter ? "h-full flex flex-col" : "min-h-screen flex flex-col",
+          hideFooter ? "h-full" : "min-h-screen flex flex-col",
           isAdmin && "lg:pt-0"
         )}>
-          <div className={cn("flex-1", hideFooter && "min-h-0 overflow-hidden h-full")}>
+          <div className={cn("flex-1", hideFooter && "h-full")}>
             {children}
           </div>
           {/* Dashboard Footer - hidden for full-screen pages */}
@@ -1095,6 +1104,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           )}
         </div>
       </main>
+      </div>
     </div>
   );
 }
