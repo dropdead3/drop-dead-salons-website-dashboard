@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid } from 'lucide-react';
+import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid, Briefcase } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
@@ -504,6 +504,19 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           // Build management sub-groups for collapsible rendering
           const buildManagementSubGroups = (): NavSubGroup[] => {
             const groups: NavSubGroup[] = [];
+            
+            // Team Tools group (shown first for better visibility to staff)
+            const teamToolsItems = filteredItems.filter(item => 
+              MANAGEMENT_SUB_GROUPS.teamTools.links.includes(item.href)
+            );
+            if (teamToolsItems.length > 0) {
+              groups.push({
+                id: 'teamTools',
+                label: MANAGEMENT_SUB_GROUPS.teamTools.label,
+                icon: Briefcase,
+                items: teamToolsItems,
+              });
+            }
             
             // Analytics & Insights group
             const analyticsItems = filteredItems.filter(item => 
