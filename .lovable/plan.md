@@ -1,36 +1,84 @@
 
-# Fix Mention Autocomplete Contrast
+# Fix @Mention Display in Chat Input
 
-## Problem
-The @mention dropdown has poor text visibility because the text color isn't explicitly set. In dark mode with the cream theme, both the background and text appear in similar light tones, making names hard to read.
-
-## Solution
-Add explicit text color classes to ensure proper contrast:
-
-### Changes to `MentionAutocomplete.tsx`
-
-1. **Container**: Add `text-popover-foreground` to the outer div so all text inherits a contrasting color
-
-2. **Selected state button**: Add `text-accent-foreground` when selected to ensure the text remains readable against the accent background
-
-3. **Name text**: Ensure the name span has explicit foreground color
-
-### Specific Code Changes
-
-**Line 51** - Add foreground color to container:
-```tsx
-className="absolute bottom-full left-0 mb-2 z-50 bg-popover text-popover-foreground border rounded-md shadow-lg overflow-hidden min-w-[200px]"
+## The Problem
+When you select a team member from the @mention dropdown, the input field shows the raw markdown format:
+```
+@[Alex Day](52c43316-2ba5-4367-96d4-f097f8a492ea)
 ```
 
-**Lines 65-69** - Add foreground color for selected state:
-```tsx
-className={cn(
-  'w-full flex items-center gap-2 px-3 py-2 text-left',
-  'hover:bg-accent hover:text-accent-foreground transition-colors',
-  index === selectedIndex && 'bg-accent text-accent-foreground'
-)}
+Instead, you should see a clean, styled mention like `@Alex Day` that still contains the user ID when the message is sent.
+
+## Solution: Contenteditable Rich Text Input
+
+Since a plain `<textarea>` cannot style text differently, we need to switch to a **contenteditable div** approach. This allows us to:
+- Display mentions as styled chips/badges (e.g., "@Alex Day" in a highlighted style)
+- Keep the underlying data structure with user IDs for storage
+- Maintain the same keyboard behavior (Enter to send, Shift+Enter for newlines)
+
+## Implementation Steps
+
+### 1. Create a new MentionInput component
+Replace the textarea with a contenteditable div that:
+- Accepts regular text input
+- Renders selected mentions as styled spans (chips)
+- Tracks mention data separately from the visible text
+- Converts to the storage format `@[Name](id)` when sending
+
+### 2. Mention chip rendering
+When a user is selected from the autocomplete:
+- Insert a styled, non-editable span showing just `@Alex Day`
+- Store the user ID in a data attribute
+- Style it with a subtle highlight (e.g., `bg-primary/10 text-primary rounded px-1`)
+
+### 3. Extract mentions on send
+When the user sends the message:
+- Parse the contenteditable content
+- Convert mention chips back to `@[DisplayName](userId)` format
+- Send the properly formatted string to the backend
+
+### 4. Handle edge cases
+- Backspace should delete the entire mention chip (not character by character)
+- Cursor navigation should treat mention chips as single units
+- Copy/paste should preserve or strip mentions appropriately
+
+---
+
+## Technical Details
+
+### New file: `src/components/team-chat/MentionInput.tsx`
+
+This component will:
+- Use `contentEditable="true"` with a `div` instead of textarea
+- Maintain a state for both the raw HTML content and extracted mention data
+- Handle `onInput` events to detect @triggers
+- Render mentions as inline styled spans with `contentEditable="false"`
+- Provide an `onSend` callback with the properly formatted message
+
+### Key data flow:
+```
+User types "@Al" → Autocomplete opens → User selects "Alex Day"
+                                              ↓
+Input displays: "Hey @Alex Day " (styled chip)
+                                              ↓
+User hits Enter → onSend receives: "Hey @[Alex Day](uuid) "
 ```
 
-This ensures:
-- Default text uses `popover-foreground` (dark on light, light on dark)
-- Hovered/selected items use `accent-foreground` for proper contrast against the accent background
+### Changes to MessageInput.tsx:
+- Replace `<Textarea>` with the new `<MentionInput>` component
+- Remove the existing mention-related state (moved to new component)
+- Pass `onSend` callback that calls `sendMessage`
+
+### Styling for mention chips:
+```tsx
+<span
+  contentEditable={false}
+  data-mention-id={userId}
+  data-mention-name={displayName}
+  className="inline-flex items-center bg-primary/10 text-primary rounded px-1 mx-0.5 text-sm font-medium"
+>
+  @{displayName}
+</span>
+```
+
+This approach keeps the UI clean for the user while preserving all the data needed for notifications and other backend processing.
