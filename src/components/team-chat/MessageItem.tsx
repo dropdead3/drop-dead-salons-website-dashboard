@@ -64,8 +64,11 @@ export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete
             <AvatarFallback className="text-xs">{initials}</AvatarFallback>
           </Avatar>
         )}
-        {isConsecutive && showActions && (
-          <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+        {isConsecutive && (
+          <span className={cn(
+            "text-[10px] text-muted-foreground whitespace-nowrap transition-opacity",
+            showActions ? "opacity-100" : "opacity-0"
+          )}>
             {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
         )}
