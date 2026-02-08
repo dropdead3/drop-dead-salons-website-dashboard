@@ -49,7 +49,7 @@ export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete
   return (
     <div
       className={cn(
-        'group relative flex gap-3 px-2 py-1 rounded-md transition-colors',
+        'group relative flex items-start gap-3 px-2 py-1 rounded-md transition-colors',
         'hover:bg-accent/30',
         isConsecutive && 'pt-0'
       )}
@@ -66,7 +66,7 @@ export function MessageItem({ message, isConsecutive, onReact, onReply, onDelete
         )}
         {isConsecutive && (
           <span className={cn(
-            "text-[10px] text-muted-foreground whitespace-nowrap transition-opacity",
+            "text-[10px] text-muted-foreground whitespace-nowrap transition-opacity leading-5",
             showActions ? "opacity-100" : "opacity-0"
           )}>
             {new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
