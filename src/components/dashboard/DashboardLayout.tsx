@@ -769,7 +769,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={cn("bg-background", hideFooter ? "h-screen overflow-hidden flex flex-col" : "min-h-screen")}>
       {/* Desktop Sidebar */}
       <aside 
         className={cn(
@@ -1076,7 +1076,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       <main className={cn(
         "transition-[padding-left] duration-200 ease-in-out",
         sidebarCollapsed ? "lg:pl-16" : "lg:pl-72",
-        hideFooter && "h-screen overflow-hidden"
+        hideFooter ? "flex-1 min-h-0 overflow-hidden" : ""
       )}>
         <div className={cn(
           hideFooter ? "h-full flex flex-col" : "min-h-screen flex flex-col",
