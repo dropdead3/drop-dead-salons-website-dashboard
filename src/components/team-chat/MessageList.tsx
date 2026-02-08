@@ -7,22 +7,29 @@ import { usePinnedMessages } from '@/hooks/team-chat/usePinnedMessages';
 import { useChannelMembers } from '@/hooks/team-chat/useChannelMembers';
 import { getChannelDisplayName } from '@/hooks/team-chat/useChannelDisplayName';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 
 export function MessageList() {
+  const { user } = useAuth();
+  const { data: userProfile } = useEmployeeProfile();
   const { activeChannel, openThread } = useTeamChatContext();
   const { members } = useChannelMembers(activeChannel?.id || null);
   
   // Get member IDs for DM detection
   const memberIds = useMemo(() => members.map(m => m.userId), [members]);
   
-  const { messages, isLoading, toggleReaction, deleteMessage } = useChatMessages(
+  const { messages, isLoading, toggleReaction, deleteMessage, editMessage } = useChatMessages(
     activeChannel?.id || null,
     activeChannel?.type,
     memberIds
   );
-  const { pinMessage, unpinMessage, isPinned, pinnedMessages } = usePinnedMessages(activeChannel?.id || null);
+  const { pinMessage, unpinMessage, isPinned, getPinnedItem } = usePinnedMessages(activeChannel?.id || null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const lastMessageIdRef = useRef<string | null>(null);
+
+  // Check if current user is super admin
+  const isSuperAdmin = userProfile?.is_super_admin === true;
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -115,6 +122,9 @@ export function MessageList() {
                   prevMessage.sender_id === message.sender_id &&
                   new Date(message.created_at).getTime() - new Date(prevMessage.created_at).getTime() < 5 * 60 * 1000;
 
+                // User can delete if they're super admin OR if it's their own message
+                const canDeleteMessage = isSuperAdmin || message.sender_id === user?.id;
+
                 return (
                   <MessageItem
                     key={message.id}
@@ -123,8 +133,9 @@ export function MessageList() {
                     onReact={(emoji) => toggleReaction(message.id, emoji)}
                     onReply={() => openThread(message.id)}
                     onDelete={() => deleteMessage(message.id)}
+                    onEdit={(content) => editMessage({ messageId: message.id, content })}
                     onPin={() => {
-                      const pinnedItem = pinnedMessages.find((pm) => pm.message.id === message.id);
+                      const pinnedItem = getPinnedItem(message.id);
                       if (pinnedItem) {
                         unpinMessage(pinnedItem.pinnedId);
                       } else {
@@ -132,6 +143,7 @@ export function MessageList() {
                       }
                     }}
                     isPinned={isPinned(message.id)}
+                    canDelete={canDeleteMessage}
                   />
                 );
               })}

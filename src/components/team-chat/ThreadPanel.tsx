@@ -13,7 +13,16 @@ import { cn } from '@/lib/utils';
 
 export function ThreadPanel() {
   const { threadMessageId, closeThread, activeChannel, quotedMessage, setQuotedMessage } = useTeamChatContext();
-  const { parentMessage, replies, isLoading, sendReply, toggleReaction, isSending } = useThreadMessages(threadMessageId);
+  const { 
+    parentMessage, 
+    replies, 
+    isLoading, 
+    sendReply, 
+    toggleReaction, 
+    editMessage,
+    deleteMessage,
+    isSending 
+  } = useThreadMessages(threadMessageId);
   const scrollRef = useRef<HTMLDivElement>(null);
   const mentionInputRef = useRef<MentionInputRef>(null);
   const lastReplyIdRef = useRef<string | null>(null);
@@ -119,6 +128,8 @@ export function ThreadPanel() {
                     message={parentMessage}
                     onReact={(emoji) => toggleReaction(parentMessage.id, emoji)}
                     onQuote={() => setQuotedMessage(parentMessage)}
+                    onEdit={(content) => editMessage({ messageId: parentMessage.id, content })}
+                    onDelete={() => deleteMessage(parentMessage.id)}
                     isParent
                   />
                 </div>
@@ -141,6 +152,8 @@ export function ThreadPanel() {
                     message={reply}
                     onReact={(emoji) => toggleReaction(reply.id, emoji)}
                     onQuote={() => setQuotedMessage(reply)}
+                    onEdit={(content) => editMessage({ messageId: reply.id, content })}
+                    onDelete={() => deleteMessage(reply.id)}
                   />
                 ))}
               </div>

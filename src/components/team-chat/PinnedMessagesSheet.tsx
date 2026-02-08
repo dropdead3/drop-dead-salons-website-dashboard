@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { X, Pin } from 'lucide-react';
+import { X, Pin, MessageSquare } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import {
   Sheet,
   SheetContent,
@@ -20,8 +20,13 @@ interface PinnedMessagesSheetProps {
 }
 
 export function PinnedMessagesSheet({ open, onOpenChange }: PinnedMessagesSheetProps) {
-  const { activeChannel } = useTeamChatContext();
+  const { activeChannel, openThread } = useTeamChatContext();
   const { pinnedMessages, isLoading, unpinMessage } = usePinnedMessages(activeChannel?.id || null);
+
+  const handleViewThread = (messageId: string) => {
+    openThread(messageId);
+    onOpenChange(false);
+  };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -62,7 +67,40 @@ export function PinnedMessagesSheet({ open, onOpenChange }: PinnedMessagesSheetP
                             {formatDistanceToNow(new Date(pm.message.created_at), { addSuffix: true })}
                           </span>
                         </div>
-                        <p className="text-sm whitespace-pre-wrap">{pm.message.content}</p>
+                        <p className="text-sm whitespace-pre-wrap line-clamp-3">{pm.message.content}</p>
+
+                        {/* Thread info */}
+                        {pm.replyCount > 0 && (
+                          <div className="mt-2 space-y-1">
+                            <Badge variant="secondary" className="text-xs">
+                              <MessageSquare className="h-3 w-3 mr-1" />
+                              {pm.replyCount} {pm.replyCount === 1 ? 'reply' : 'replies'}
+                            </Badge>
+
+                            {/* Thread previews */}
+                            {pm.threadPreviews.length > 0 && (
+                              <div className="ml-2 border-l-2 border-muted pl-2 space-y-1">
+                                {pm.threadPreviews.map((preview) => (
+                                  <div key={preview.id} className="text-xs text-muted-foreground">
+                                    <span className="font-medium text-foreground">
+                                      {preview.sender?.display_name || preview.sender?.full_name || 'Unknown'}:
+                                    </span>{' '}
+                                    <span className="line-clamp-1">{preview.content}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+
+                            <Button
+                              variant="link"
+                              size="sm"
+                              className="h-auto p-0 text-xs"
+                              onClick={() => handleViewThread(pm.message.id)}
+                            >
+                              View thread →
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <Button

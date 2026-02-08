@@ -187,6 +187,71 @@ export function useThreadMessages(parentMessageId: string | null) {
     },
   });
 
+  // Edit message mutation with 5-minute window validation
+  const editMessageMutation = useMutation({
+    mutationFn: async ({ messageId, content }: { messageId: string; content: string }) => {
+      // First verify the message is within the 5-minute edit window
+      const { data: message, error: fetchError } = await supabase
+        .from('chat_messages')
+        .select('created_at, sender_id')
+        .eq('id', messageId)
+        .single();
+
+      if (fetchError) throw fetchError;
+      if (!message) throw new Error('Message not found');
+
+      // Verify ownership
+      if (message.sender_id !== user?.id) {
+        throw new Error('You can only edit your own messages');
+      }
+
+      // Check 5-minute window
+      const messageTime = new Date(message.created_at).getTime();
+      const fiveMinutes = 5 * 60 * 1000;
+      if (Date.now() - messageTime > fiveMinutes) {
+        throw new Error('Edit window has expired (5 minutes)');
+      }
+
+      const { error } = await supabase
+        .from('chat_messages')
+        .update({ content, is_edited: true })
+        .eq('id', messageId)
+        .eq('sender_id', user?.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['thread-replies', parentMessageId] });
+      queryClient.invalidateQueries({ queryKey: ['thread-parent', parentMessageId] });
+      toast.success('Message updated');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to edit message');
+    },
+  });
+
+  // Delete message mutation (soft delete)
+  const deleteMessageMutation = useMutation({
+    mutationFn: async (messageId: string) => {
+      const { error } = await supabase
+        .from('chat_messages')
+        .update({ is_deleted: true, deleted_at: new Date().toISOString() })
+        .eq('id', messageId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['thread-replies', parentMessageId] });
+      if (parentMessage?.channel_id) {
+        queryClient.invalidateQueries({ queryKey: ['chat-messages', parentMessage.channel_id] });
+      }
+      toast.success('Message deleted');
+    },
+    onError: () => {
+      toast.error('Failed to delete message');
+    },
+  });
+
   // Toggle reaction mutation
   const addReactionMutation = useMutation({
     mutationFn: async ({ messageId, emoji }: { messageId: string; emoji: string }) => {
@@ -239,6 +304,8 @@ export function useThreadMessages(parentMessageId: string | null) {
     replies: replies ?? [],
     isLoading: isLoadingParent || isLoadingReplies,
     sendReply: (content: string) => sendReplyMutation.mutate(content),
+    editMessage: editMessageMutation.mutate,
+    deleteMessage: deleteMessageMutation.mutate,
     toggleReaction,
     isSending: sendReplyMutation.isPending,
   };
