@@ -1,133 +1,106 @@
 
 
-# Update Settings Page with Access Hub Link
+# Add Access Hub Navigation Links
 
-## Problem
-The Settings page still shows the old "Role Access" and "Visibility Console" cards, and there's no link to the new **Access & Controls Hub**. Phase 3 of the centralization plan was not yet implemented.
-
-## Solution
-1. Remove the redundant `visibility` and `role-access` cards from Settings
-2. Add a new "Access & Controls Hub" card that links to `/dashboard/admin/access-hub`
-3. Update the section groups to reflect the change
+## Overview
+Add the **Access & Controls Hub** to two locations:
+1. **Sidebar Navigation** - In the admin-only items section
+2. **Quick Access Hubs** - On the dashboard Command Center
 
 ---
 
 ## Changes Required
 
-### File: `src/hooks/useSettingsLayout.ts`
+### 1. Sidebar Navigation (`DashboardLayout.tsx`)
 
-**Update `SECTION_GROUPS`** - Replace `role-access` and `visibility` with `access-hub`:
+Add Access Hub to `adminOnlyNavItems` array (line ~188-192):
 
+**Current:**
 ```typescript
-export const SECTION_GROUPS = [
-  {
-    id: 'operations',
-    label: 'Business Operations',
-    categories: ['business', 'locations', 'schedule', 'dayrate', 'forms', 'levels', 'onboarding', 'handbooks', 'loyalty', 'feedback'],
-  },
-  {
-    id: 'team',
-    label: 'Access & Visibility',
-    categories: ['users', 'access-hub'],  // Changed from ['users', 'role-access', 'visibility']
-  },
-  // ... rest unchanged
+const adminOnlyNavItems: NavItem[] = [
+  { href: '/dashboard/admin/accounts', label: 'Invitations & Approvals', icon: UserPlus, permission: 'approve_accounts' },
+  { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield, permission: 'manage_user_roles' },
+  { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
 ];
 ```
 
-**Update `DEFAULT_ICON_COLORS`** - Add `access-hub`, remove redundant keys:
-
+**Updated:**
 ```typescript
-export const DEFAULT_ICON_COLORS: Record<string, string> = {
-  // ... existing colors ...
-  'access-hub': '#8B5CF6',  // Purple (Shield theme)
-  // Remove 'visibility' and 'role-access' (optional, they just won't be used)
-};
+const adminOnlyNavItems: NavItem[] = [
+  { href: '/dashboard/admin/accounts', label: 'Invitations & Approvals', icon: UserPlus, permission: 'approve_accounts' },
+  { href: '/dashboard/admin/roles', label: 'Manage Users & Roles', icon: Shield, permission: 'manage_user_roles' },
+  { href: '/dashboard/admin/access-hub', label: 'Access Hub', icon: Shield, permission: 'manage_settings' },
+  { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
+];
 ```
+
+**Note:** Using `manage_settings` permission since Access Hub is for super admins who can manage organization settings.
 
 ---
 
-### File: `src/pages/dashboard/admin/Settings.tsx`
+### 2. Quick Access Hubs (`HubQuickLinks.tsx`)
 
-**1. Update `SettingsCategory` type** (line ~119):
+Add Access Hub to the `hubLinks` array:
 
+**File:** `src/components/dashboard/HubQuickLinks.tsx`
+
+**Add import:**
 ```typescript
-type SettingsCategory = 
-  | 'business' | 'email' | 'sms' | 'service-flows' | 'users' 
-  | 'onboarding' | 'integrations' | 'system' | 'program' 
-  | 'levels' | 'handbooks' | 'access-hub' | 'schedule' 
-  | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' 
-  | null;
+import { Shield } from 'lucide-react';
 ```
 
-**2. Update `categoriesMap`** (around line 672):
-
-Remove:
+**Add to hubLinks array** (after Feedback Hub, before Onboarding Hub):
 ```typescript
-visibility: { ... },
-'role-access': { ... },
-```
-
-Add:
-```typescript
-'access-hub': {
-  id: 'access-hub',
-  label: 'Access & Controls Hub',
-  description: 'Modules, role visibility, and permissions',
-  icon: Shield,
+{ 
+  href: '/dashboard/admin/access-hub', 
+  icon: Shield, 
+  label: 'Access Hub', 
+  colorClass: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20',
+  permission: 'manage_settings',
 },
-```
-
-**3. Add navigation handling for Access Hub** (in the category click handler):
-
-When `access-hub` is clicked, navigate to `/dashboard/admin/access-hub` instead of showing a detail panel:
-
-```typescript
-const handleCategoryClick = (categoryId: string) => {
-  if (categoryId === 'access-hub') {
-    navigate('/dashboard/admin/access-hub');
-  } else {
-    setActiveCategory(categoryId as SettingsCategory);
-  }
-};
-```
-
-**4. Import `useNavigate`**:
-
-```typescript
-import { useLocation, useNavigate } from 'react-router-dom';
 ```
 
 ---
 
 ## Visual Result
 
-**Before:**
+### Sidebar (Admin Section)
 ```
-Access & Visibility
-├── Users
-├── Role Access      ← Separate page
-└── Visibility Console   ← Separate page
+Administration
+├── Invitations & Approvals
+├── Manage Users & Roles
+├── Access Hub          ← NEW
+└── Settings
 ```
 
-**After:**
+### Quick Access Hubs (Dashboard)
 ```
-Access & Visibility
-├── Users
-└── Access & Controls Hub  ← Links to /dashboard/admin/access-hub
+Quick Access Hubs
+┌───────────┬────────────┬────────────┬───────────┐
+│ Analytics │ Management │ Payroll    │ Renter    │
+│ Hub       │ Hub        │ Hub        │ Hub       │
+├───────────┼────────────┼────────────┼───────────┤
+│ Website   │ Feedback   │ Access Hub │ Onboarding│
+│ Editor    │ Hub        │ ← NEW      │ Hub       │
+└───────────┴────────────┴────────────┴───────────┘
 ```
 
 ---
 
 ## Files to Modify
 
-| File | Changes |
-|------|---------|
-| `src/hooks/useSettingsLayout.ts` | Update `SECTION_GROUPS` and `DEFAULT_ICON_COLORS` |
-| `src/pages/dashboard/admin/Settings.tsx` | Replace `visibility`/`role-access` with `access-hub` card that navigates to the hub |
+| File | Change |
+|------|--------|
+| `src/components/dashboard/DashboardLayout.tsx` | Add Access Hub to `adminOnlyNavItems` |
+| `src/components/dashboard/HubQuickLinks.tsx` | Add Shield import and Access Hub to `hubLinks` |
 
 ---
 
-## What Stays
+## Access Control
 
-The individual content components (`RoleAccessConfigurator`, `CommandCenterContent`) remain in the codebase as they're now used within the Access Hub tabs. They just won't be directly accessible from Settings anymore.
+The Access Hub link will be visible to users with the `manage_settings` permission, which is typically:
+- Super Admins
+- Platform Admins (via platform context)
+
+This aligns with the Access Hub page itself, which checks for `super_admin` role or `isPlatformUser`.
 
