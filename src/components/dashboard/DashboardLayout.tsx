@@ -108,6 +108,7 @@ import {
   Receipt,
   ArrowLeftRight,
   Gift,
+  MessageSquare,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
@@ -135,6 +136,7 @@ interface NavItem {
 const mainNavItems: NavItem[] = [
   { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard, permission: 'view_command_center' },
   { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['admin', 'manager', 'stylist', 'stylist_assistant', 'receptionist', 'assistant', 'admin_assistant', 'operations_assistant', 'booth_renter', 'bookkeeper'] },
+  { href: '/dashboard/team-chat', label: 'Team Chat', icon: MessageSquare },
 ];
 
 // Housekeeping items relocated to top bar (What's New -> Bell, Handbooks/Help -> Help menu)
