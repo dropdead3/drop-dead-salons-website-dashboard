@@ -4,9 +4,10 @@ import { ChannelSidebar } from './ChannelSidebar';
 import { ChannelHeader } from './ChannelHeader';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
+import { ThreadPanel } from './ThreadPanel';
 
 function TeamChatLayout() {
-  const { isSidebarOpen } = useTeamChatContext();
+  const { isSidebarOpen, threadMessageId } = useTeamChatContext();
 
   return (
     <div className="flex h-[calc(100vh-8rem)] bg-background">
@@ -43,6 +44,9 @@ function TeamChatLayout() {
         <MessageList />
         <MessageInput />
       </div>
+
+      {/* Thread panel */}
+      {threadMessageId && <ThreadPanel />}
     </div>
   );
 }

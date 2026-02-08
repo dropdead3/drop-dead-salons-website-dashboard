@@ -5,3 +5,5 @@ export * from './MessageList';
 export * from './MessageItem';
 export * from './MessageInput';
 export * from './CreateChannelDialog';
+export * from './ThreadPanel';
+export * from './ThreadMessageItem';
