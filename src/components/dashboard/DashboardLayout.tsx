@@ -158,17 +158,17 @@ const statsNavItems: NavItem[] = [
   { href: '/dashboard/my-pay', label: 'My Pay', icon: Wallet, permission: 'view_my_pay' },
 ];
 
-// Team Tools section
-const teamToolsNavItems: NavItem[] = [
-  { href: '/dashboard/shift-swaps', label: 'Shift Swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
-  { href: '/dashboard/rewards', label: 'Rewards', icon: Gift },
-  { href: '/dashboard/assistant-schedule', label: 'Assistant Schedule', icon: Users, permission: 'view_assistant_schedule' },
-  { href: '/dashboard/schedule-meeting', label: 'Meetings & Accountability', icon: CalendarClock, permission: 'schedule_meetings' },
-];
+// Team Tools section - now consolidated into Management section
+const teamToolsNavItems: NavItem[] = [];
 
 // Management section - consolidated with collapsible sub-groups
 // These are the flat items used for permission checking; UI groups them via CollapsibleNavGroup
 const managerNavItems: NavItem[] = [
+  // Team Tools group (moved from standalone section)
+  { href: '/dashboard/shift-swaps', label: 'Shift Swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
+  { href: '/dashboard/rewards', label: 'Rewards', icon: Gift },
+  { href: '/dashboard/assistant-schedule', label: 'Assistant Schedule', icon: Users, permission: 'view_assistant_schedule' },
+  { href: '/dashboard/schedule-meeting', label: 'Meetings & Accountability', icon: CalendarClock, permission: 'schedule_meetings' },
   // Analytics & Insights group
   { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
   { href: '/dashboard/stats', label: 'Team Stats', icon: BarChart3, permission: 'view_all_stats' },

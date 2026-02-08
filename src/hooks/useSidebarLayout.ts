@@ -8,8 +8,7 @@ export const DEFAULT_SECTION_ORDER = [
   'main',
   'growth',      // Renamed to "Growth & Development"
   'stats',       // Renamed to "My Performance"
-  'teamTools',
-  'manager',     // Now includes website + sub-groups (Analytics, People, Operations)
+  'manager',     // Now includes website + sub-groups (Analytics, People, Operations, Team Tools)
   'adminOnly',   // Renamed to "Admin"
   'platform',
 ];
@@ -30,6 +29,16 @@ export const SECTION_LABELS: Record<string, string> = {
 
 // Management section sub-groups for collapsible organization
 export const MANAGEMENT_SUB_GROUPS = {
+  teamTools: {
+    id: 'teamTools',
+    label: 'Team Tools',
+    links: [
+      '/dashboard/shift-swaps',
+      '/dashboard/rewards',
+      '/dashboard/assistant-schedule',
+      '/dashboard/schedule-meeting',
+    ],
+  },
   analytics: {
     id: 'analytics',
     label: 'Analytics & Insights',
@@ -77,14 +86,12 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
     '/dashboard/leaderboard',
     '/dashboard/my-pay',
   ],
-  teamTools: [
+  // Manager section now includes all management items + website + team tools (grouped in UI)
+  manager: [
     '/dashboard/shift-swaps',
     '/dashboard/rewards',
     '/dashboard/assistant-schedule',
     '/dashboard/schedule-meeting',
-  ],
-  // Manager section now includes all management items + website (grouped in UI)
-  manager: [
     '/dashboard/admin/analytics',
     '/dashboard/stats',
     '/dashboard/leaderboard',
