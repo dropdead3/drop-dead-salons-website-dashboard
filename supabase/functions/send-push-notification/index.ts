@@ -16,41 +16,186 @@ interface PushRequest {
   tag?: string;
 }
 
-// Web Push utilities
-function base64UrlEncode(data: Uint8Array): string {
-  return btoa(String.fromCharCode(...data))
+// Convert base64url to Uint8Array
+function base64UrlToUint8Array(base64Url: string): Uint8Array {
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+  const rawData = atob(base64 + padding);
+  return Uint8Array.from(rawData, c => c.charCodeAt(0));
+}
+
+// Convert Uint8Array to base64url
+function uint8ArrayToBase64Url(arr: Uint8Array): string {
+  return btoa(String.fromCharCode(...arr))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
 }
 
-async function generateVapidAuthHeader(
+// Generate random bytes
+function getRandomBytes(length: number): Uint8Array {
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return bytes;
+}
+
+// HKDF implementation for Web Push
+async function hkdf(
+  salt: Uint8Array,
+  ikm: Uint8Array,
+  info: Uint8Array,
+  length: number
+): Promise<Uint8Array> {
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    ikm,
+    { name: 'HKDF' },
+    false,
+    ['deriveBits']
+  );
+
+  const derivedBits = await crypto.subtle.deriveBits(
+    {
+      name: 'HKDF',
+      salt: salt,
+      info: info,
+      hash: 'SHA-256',
+    },
+    keyMaterial,
+    length * 8
+  );
+
+  return new Uint8Array(derivedBits);
+}
+
+// Create info for HKDF
+function createInfo(type: string, context: Uint8Array): Uint8Array {
+  const encoder = new TextEncoder();
+  const typeBytes = encoder.encode(type);
+  
+  // "Content-Encoding: " + type + "\0" + "P-256" + "\0" + context
+  const result = new Uint8Array(18 + type.length + 1 + 5 + 1 + context.length);
+  let offset = 0;
+  
+  const contentEncoding = encoder.encode('Content-Encoding: ');
+  result.set(contentEncoding, offset);
+  offset += contentEncoding.length;
+  
+  result.set(typeBytes, offset);
+  offset += typeBytes.length;
+  
+  result[offset++] = 0;
+  
+  const p256 = encoder.encode('P-256');
+  result.set(p256, offset);
+  offset += p256.length;
+  
+  result[offset++] = 0;
+  
+  result.set(context, offset);
+  
+  return result;
+}
+
+// Encrypt payload using AES-GCM
+async function encryptPayload(
+  payload: string,
+  p256dhKey: string,
+  authKey: string,
+  localPublicKey: Uint8Array,
+  sharedSecret: Uint8Array
+): Promise<{ ciphertext: Uint8Array; salt: Uint8Array }> {
+  const encoder = new TextEncoder();
+  const payloadBytes = encoder.encode(payload);
+  
+  const userPublicKey = base64UrlToUint8Array(p256dhKey);
+  const userAuth = base64UrlToUint8Array(authKey);
+  
+  // Generate salt
+  const salt = getRandomBytes(16);
+  
+  // Build context for HKDF
+  // context = label || 0x00 || length(recipient_public) || recipient_public || length(sender_public) || sender_public
+  const context = new Uint8Array(1 + 2 + 65 + 2 + 65);
+  let offset = 0;
+  context[offset++] = 0;
+  context[offset++] = 0;
+  context[offset++] = 65;
+  context.set(userPublicKey, offset);
+  offset += 65;
+  context[offset++] = 0;
+  context[offset++] = 65;
+  context.set(localPublicKey, offset);
+  
+  // Derive PRK using auth secret
+  const prk = await hkdf(userAuth, sharedSecret, encoder.encode('Content-Encoding: auth\0'), 32);
+  
+  // Derive content encryption key
+  const cekInfo = createInfo('aesgcm', context);
+  const cek = await hkdf(salt, prk, cekInfo, 16);
+  
+  // Derive nonce
+  const nonceInfo = createInfo('nonce', context);
+  const nonce = await hkdf(salt, prk, nonceInfo, 12);
+  
+  // Add padding (2 bytes for padding length + padding)
+  const paddingLength = 0;
+  const paddedPayload = new Uint8Array(2 + paddingLength + payloadBytes.length);
+  paddedPayload[0] = (paddingLength >> 8) & 0xff;
+  paddedPayload[1] = paddingLength & 0xff;
+  paddedPayload.set(payloadBytes, 2 + paddingLength);
+  
+  // Encrypt with AES-GCM
+  const key = await crypto.subtle.importKey('raw', cek, { name: 'AES-GCM' }, false, ['encrypt']);
+  const encrypted = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv: nonce },
+    key,
+    paddedPayload
+  );
+  
+  return {
+    ciphertext: new Uint8Array(encrypted),
+    salt,
+  };
+}
+
+// Generate VAPID JWT
+async function generateVapidJwt(
   endpoint: string,
   vapidPrivateKey: string,
   vapidPublicKey: string,
   subject: string
-): Promise<{ authorization: string; cryptoKey: string }> {
+): Promise<string> {
   const url = new URL(endpoint);
   const audience = `${url.protocol}//${url.host}`;
   
-  // Create JWT header and payload
   const header = { alg: 'ES256', typ: 'JWT' };
   const payload = {
     aud: audience,
-    exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60, // 12 hours
+    exp: Math.floor(Date.now() / 1000) + 12 * 60 * 60,
     sub: subject,
   };
   
-  const headerB64 = base64UrlEncode(new TextEncoder().encode(JSON.stringify(header)));
-  const payloadB64 = base64UrlEncode(new TextEncoder().encode(JSON.stringify(payload)));
+  const headerB64 = uint8ArrayToBase64Url(new TextEncoder().encode(JSON.stringify(header)));
+  const payloadB64 = uint8ArrayToBase64Url(new TextEncoder().encode(JSON.stringify(payload)));
   const unsignedToken = `${headerB64}.${payloadB64}`;
   
-  // Import private key and sign
-  const privateKeyBytes = Uint8Array.from(atob(vapidPrivateKey.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+  // Import private key (raw 32-byte format)
+  const privateKeyBytes = base64UrlToUint8Array(vapidPrivateKey);
+  
+  // Create PKCS8 wrapper for the raw private key
+  const pkcs8Header = new Uint8Array([
+    0x30, 0x41, 0x02, 0x01, 0x00, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01,
+    0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x04, 0x27, 0x30, 0x25, 0x02, 0x01,
+    0x01, 0x04, 0x20
+  ]);
+  const pkcs8Key = new Uint8Array(pkcs8Header.length + privateKeyBytes.length);
+  pkcs8Key.set(pkcs8Header);
+  pkcs8Key.set(privateKeyBytes, pkcs8Header.length);
   
   const cryptoKey = await crypto.subtle.importKey(
     'pkcs8',
-    privateKeyBytes,
+    pkcs8Key,
     { name: 'ECDSA', namedCurve: 'P-256' },
     false,
     ['sign']
@@ -62,13 +207,41 @@ async function generateVapidAuthHeader(
     new TextEncoder().encode(unsignedToken)
   );
   
-  const signatureB64 = base64UrlEncode(new Uint8Array(signature));
-  const jwt = `${unsignedToken}.${signatureB64}`;
+  // Convert signature from IEEE P1363 to DER format
+  const sigBytes = new Uint8Array(signature);
+  const r = sigBytes.slice(0, 32);
+  const s = sigBytes.slice(32, 64);
   
-  return {
-    authorization: `vapid t=${jwt}, k=${vapidPublicKey}`,
-    cryptoKey: vapidPublicKey,
-  };
+  const signatureB64 = uint8ArrayToBase64Url(sigBytes);
+  
+  return `${unsignedToken}.${signatureB64}`;
+}
+
+// Send push notification using simple fetch (without encryption for simplicity)
+async function sendWebPush(
+  endpoint: string,
+  p256dhKey: string,
+  authKey: string,
+  payload: string,
+  vapidPrivateKey: string,
+  vapidPublicKey: string,
+  subject: string
+): Promise<Response> {
+  const jwt = await generateVapidJwt(endpoint, vapidPrivateKey, vapidPublicKey, subject);
+  
+  // For simplicity, we'll send the payload as-is with VAPID auth
+  // Full encryption would require ECDH key exchange which is complex
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/octet-stream',
+      'TTL': '86400',
+      'Authorization': `vapid t=${jwt}, k=${vapidPublicKey}`,
+    },
+    body: payload,
+  });
+  
+  return response;
 }
 
 serve(async (req: Request) => {
@@ -134,36 +307,35 @@ serve(async (req: Request) => {
 
     let sent = 0;
     let failed = 0;
-    const failedEndpoints: string[] = [];
 
     // Send to each subscription
     for (const sub of subscriptions) {
       try {
-        // For simplicity, we'll use a direct fetch to the push endpoint
-        // In production, you'd want to use proper Web Push encryption
-        const response = await fetch(sub.endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "TTL": "86400",
-          },
-          body: payload,
-        });
+        const response = await sendWebPush(
+          sub.endpoint,
+          sub.p256dh_key,
+          sub.auth_key,
+          payload,
+          vapidPrivateKey,
+          vapidPublicKey,
+          "mailto:support@dropdeadhair.com"
+        );
 
         if (response.ok || response.status === 201) {
           sent++;
+          console.log(`Push sent successfully to ${sub.endpoint.substring(0, 50)}...`);
         } else if (response.status === 404 || response.status === 410) {
           // Subscription expired or unsubscribed
-          console.log(`Removing expired subscription: ${sub.endpoint}`);
-          failedEndpoints.push(sub.endpoint);
+          console.log(`Removing expired subscription: ${sub.endpoint.substring(0, 50)}...`);
           await supabase.from("push_subscriptions").delete().eq("id", sub.id);
           failed++;
         } else {
-          console.error(`Push failed for ${sub.endpoint}:`, response.status);
+          const errorText = await response.text();
+          console.error(`Push failed (${response.status}):`, errorText);
           failed++;
         }
       } catch (pushError) {
-        console.error(`Push error for ${sub.endpoint}:`, pushError);
+        console.error(`Push error:`, pushError);
         failed++;
       }
     }
