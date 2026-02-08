@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AIHelpTab } from './help-fab/AIHelpTab';
-import { SupportTab } from './help-fab/SupportTab';
+import { ChatLeadershipTab } from './help-fab/ChatLeadershipTab';
 
 export function HelpFAB() {
   const [isOpen, setIsOpen] = useState(false);
@@ -69,7 +69,7 @@ export function HelpFAB() {
           <div className="border-b bg-muted/30 px-4 pt-3 pb-2">
             <TabsList className="w-full">
               <TabsTrigger value="ai-help" className="flex-1">AI Help</TabsTrigger>
-              <TabsTrigger value="support" className="flex-1">Support</TabsTrigger>
+              <TabsTrigger value="support" className="flex-1">Chat</TabsTrigger>
             </TabsList>
           </div>
           
@@ -78,7 +78,7 @@ export function HelpFAB() {
           </TabsContent>
           
           <TabsContent value="support" className="flex-1 m-0 overflow-hidden">
-            <SupportTab />
+            <ChatLeadershipTab />
           </TabsContent>
         </Tabs>
       </PopoverContent>
