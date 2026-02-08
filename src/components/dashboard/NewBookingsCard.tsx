@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarPlus, UserPlus, RefreshCw, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { CalendarPlus, UserPlus, RefreshCw, TrendingUp, TrendingDown, Minus, MapPin } from 'lucide-react';
 import { useNewBookings } from '@/hooks/useNewBookings';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
@@ -11,7 +11,10 @@ interface NewBookingsCardProps {
 }
 
 export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
-  const { data, isLoading } = useNewBookings();
+  const { data, isLoading } = useNewBookings(filterContext?.locationId);
+
+  // Show location breakdown only when viewing "All Locations"
+  const showLocationBreakdown = !filterContext?.locationId || filterContext.locationId === 'all';
 
   // Trend icon based on percent change
   const TrendIcon = data?.percentChange && data.percentChange > 0 ? TrendingUp 
@@ -90,6 +93,29 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
           </div>
         </div>
       </div>
+
+      {/* Location Breakdown - only shown for "All Locations" and when >1 location has data */}
+      {showLocationBreakdown && data?.locationBreakdown && data.locationBreakdown.length > 1 && (
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-2">
+            <MapPin className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              By Location
+            </span>
+          </div>
+          <div className="space-y-2">
+            {data.locationBreakdown.map(loc => (
+              <div
+                key={loc.locationId}
+                className="flex items-center justify-between p-2 bg-muted/20 rounded-md"
+              >
+                <span className="text-sm">{loc.name}</span>
+                <span className="font-display tabular-nums">{loc.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 30-Day Comparison */}
       <div className="p-4 bg-muted/20 rounded-lg border border-border/50">
