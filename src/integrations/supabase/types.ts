@@ -11041,6 +11041,125 @@ export type Database = {
           },
         ]
       }
+      team_chat_role_auto_join: {
+        Row: {
+          channel_id: string
+          created_at: string | null
+          id: string
+          organization_id: string
+          role: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string | null
+          id?: string
+          organization_id: string
+          role: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string | null
+          id?: string
+          organization_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_chat_role_auto_join_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_chat_role_auto_join_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_chat_settings: {
+        Row: {
+          allow_dnd_override: boolean | null
+          allow_file_attachments: boolean | null
+          channel_archive_permission: string | null
+          channel_create_private: string | null
+          channel_create_public: string | null
+          created_at: string | null
+          default_channels: string[] | null
+          default_notification_setting: string | null
+          delete_others_messages: string | null
+          display_name_format: string | null
+          id: string
+          max_file_size_mb: number | null
+          mention_everyone_permission: string | null
+          message_retention_days: number | null
+          organization_id: string
+          pin_message_permission: string | null
+          show_job_title: boolean | null
+          show_location_badge: boolean | null
+          show_profile_photos: boolean | null
+          show_role_badges: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          allow_dnd_override?: boolean | null
+          allow_file_attachments?: boolean | null
+          channel_archive_permission?: string | null
+          channel_create_private?: string | null
+          channel_create_public?: string | null
+          created_at?: string | null
+          default_channels?: string[] | null
+          default_notification_setting?: string | null
+          delete_others_messages?: string | null
+          display_name_format?: string | null
+          id?: string
+          max_file_size_mb?: number | null
+          mention_everyone_permission?: string | null
+          message_retention_days?: number | null
+          organization_id: string
+          pin_message_permission?: string | null
+          show_job_title?: boolean | null
+          show_location_badge?: boolean | null
+          show_profile_photos?: boolean | null
+          show_role_badges?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          allow_dnd_override?: boolean | null
+          allow_file_attachments?: boolean | null
+          channel_archive_permission?: string | null
+          channel_create_private?: string | null
+          channel_create_public?: string | null
+          created_at?: string | null
+          default_channels?: string[] | null
+          default_notification_setting?: string | null
+          delete_others_messages?: string | null
+          display_name_format?: string | null
+          id?: string
+          max_file_size_mb?: number | null
+          mention_everyone_permission?: string | null
+          message_retention_days?: number | null
+          organization_id?: string
+          pin_message_permission?: string | null
+          show_job_title?: boolean | null
+          show_location_badge?: boolean | null
+          show_profile_photos?: boolean | null
+          show_role_badges?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_chat_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       testimonials: {
         Row: {
           author: string
