@@ -626,18 +626,40 @@ export function SidebarLayoutEditor({ externalSelectedRole }: SidebarLayoutEdito
   );
 
   // Get current hidden sections/links based on selected role
+  // Merge global hidden state with role-specific overrides so the editor
+  // accurately reflects what users actually see in the sidebar
   const currentHiddenSections = useMemo(() => {
     if (selectedRole === 'global') {
       return localHiddenSections;
     }
-    return localRoleVisibility[selectedRole]?.hiddenSections || [];
+    // Merge global hidden with role-specific hidden
+    const roleHidden = localRoleVisibility[selectedRole]?.hiddenSections || [];
+    return [...new Set([...localHiddenSections, ...roleHidden])];
   }, [selectedRole, localHiddenSections, localRoleVisibility]);
 
   const currentHiddenLinks = useMemo(() => {
     if (selectedRole === 'global') {
       return localHiddenLinks;
     }
-    return localRoleVisibility[selectedRole]?.hiddenLinks || {};
+    // Merge global hidden links with role-specific hidden links
+    const roleHiddenLinks = localRoleVisibility[selectedRole]?.hiddenLinks || {};
+    const merged: Record<string, string[]> = {};
+    
+    // Start with global hidden links
+    Object.entries(localHiddenLinks).forEach(([sectionId, links]) => {
+      merged[sectionId] = [...links];
+    });
+    
+    // Add role-specific hidden links
+    Object.entries(roleHiddenLinks).forEach(([sectionId, links]) => {
+      if (merged[sectionId]) {
+        merged[sectionId] = [...new Set([...merged[sectionId], ...links])];
+      } else {
+        merged[sectionId] = [...links];
+      }
+    });
+    
+    return merged;
   }, [selectedRole, localHiddenLinks, localRoleVisibility]);
 
   // Get section name (from SECTION_LABELS for built-in, from customSections for custom)
