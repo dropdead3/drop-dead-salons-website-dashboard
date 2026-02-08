@@ -133,15 +133,20 @@ export function MessageItem({
             </div>
           )}
 
-          {/* Reply count */}
+          {/* Reply count with L-line threading */}
           {message.reply_count > 0 && (
-            <button
-              onClick={onReply}
-              className="flex items-center gap-1 mt-1 text-xs text-primary hover:underline"
-            >
-              <MessageSquare className="h-3 w-3" />
-              {message.reply_count} {message.reply_count === 1 ? 'reply' : 'replies'}
-            </button>
+            <div className="relative mt-1 ml-5 pl-4 border-l-2 border-muted-foreground/20">
+              {/* Horizontal connector */}
+              <div className="absolute -left-4 top-2 w-4 h-px bg-muted-foreground/20" />
+              
+              <button
+                onClick={onReply}
+                className="flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                <MessageSquare className="h-3 w-3" />
+                {message.reply_count} {message.reply_count === 1 ? 'reply' : 'replies'}
+              </button>
+            </div>
           )}
         </div>
 
