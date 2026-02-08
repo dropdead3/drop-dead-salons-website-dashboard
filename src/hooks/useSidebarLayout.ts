@@ -19,7 +19,7 @@ export const SECTION_LABELS: Record<string, string> = {
   growth: 'Growth & Development',
   stats: 'My Performance',
   manager: 'Management',
-  adminOnly: 'Admin',
+  adminOnly: 'Access & Permissions',
   platform: 'Platform Admin',
   // Legacy labels for backward compatibility
   housekeeping: 'Resources',

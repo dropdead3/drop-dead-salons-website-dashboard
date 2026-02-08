@@ -184,9 +184,9 @@ const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/website-sections', label: 'Website Editor', icon: Globe, permission: 'manage_homepage_stylists' },
 ];
 
-// Admin section (renamed from Super Admin)
+// Access & Permissions section
 const adminOnlyNavItems: NavItem[] = [
-  { href: '/dashboard/admin/access-hub', label: 'Access Hub', icon: Shield, permission: 'manage_settings' },
+  { href: '/dashboard/admin/access-hub', label: 'Access & Permissions Hub', icon: Shield, permission: 'manage_settings' },
 ];
 
 // Footer items - always pinned to bottom of sidebar

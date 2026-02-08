@@ -36,7 +36,7 @@ const LINK_CONFIG: Record<string, { label: string }> = {
   '/dashboard/admin/gallery': { label: 'Gallery' },
   '/dashboard/admin/services': { label: 'Services' },
   '/dashboard/admin/locations': { label: 'Locations' },
-  '/dashboard/admin/access-hub': { label: 'Access Hub' },
+  '/dashboard/admin/access-hub': { label: 'Access & Permissions Hub' },
   '/dashboard/admin/settings': { label: 'Settings' },
   '/dashboard/shift-swaps': { label: 'Shift Swaps' },
   '/dashboard/rewards': { label: 'Rewards' },
