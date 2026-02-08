@@ -17,7 +17,7 @@ export function AutoJoinRulesTab() {
 
   // Filter to joinable channels (public, location, or private non-archived)
   const joinableChannels = channels.filter(
-    (c) => (c.type === 'public' || c.type === 'location') && !c.is_archived
+    (c) => (c.type === 'public' || c.type === 'location' || c.type === 'private') && !c.is_archived
   );
 
   // Get current channel IDs for a role (from rules or pending changes)

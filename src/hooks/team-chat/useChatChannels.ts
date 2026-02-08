@@ -295,6 +295,86 @@ export function useInitializeDefaultChannels() {
             { name: 'general', description: 'Team discussions', icon: 'hash', type: 'public' as const },
           ];
 
+      // Create renters private channel (booth renters + leadership)
+      const { data: existingRentersChannel } = await supabase
+        .from('chat_channels')
+        .select('id')
+        .eq('organization_id', effectiveOrganization.id)
+        .eq('name', 'renters')
+        .eq('type', 'private')
+        .maybeSingle();
+
+      if (!existingRentersChannel) {
+        const { data: rentersChannel } = await supabase
+          .from('chat_channels')
+          .insert({
+            name: 'renters',
+            description: 'Private channel for booth renters',
+            icon: 'store',
+            type: 'private' as const,
+            organization_id: effectiveOrganization.id,
+            created_by: user.id,
+            is_system: true,
+          })
+          .select()
+          .single();
+
+        if (rentersChannel) {
+          // Add creator as owner
+          await supabase
+            .from('chat_channel_members')
+            .insert({
+              channel_id: rentersChannel.id,
+              user_id: user.id,
+              role: 'owner',
+            });
+
+          // Auto-add all booth renters to the channel
+          const { data: boothRenters } = await supabase
+            .from('user_roles')
+            .select('user_id')
+            .eq('role', 'booth_renter');
+
+          if (boothRenters && boothRenters.length > 0) {
+            const renterMemberships = boothRenters
+              .filter(r => r.user_id !== user.id)
+              .map(r => ({
+                channel_id: rentersChannel.id,
+                user_id: r.user_id,
+                role: 'member' as const,
+              }));
+
+            if (renterMemberships.length > 0) {
+              await supabase
+                .from('chat_channel_members')
+                .upsert(renterMemberships, { onConflict: 'channel_id,user_id' });
+            }
+          }
+
+          // Auto-add admins/managers to the renters channel
+          const { data: leadershipUsers } = await supabase
+            .from('user_roles')
+            .select('user_id')
+            .in('role', ['super_admin', 'admin', 'manager']);
+
+          if (leadershipUsers && leadershipUsers.length > 0) {
+            const leadershipMemberships = leadershipUsers
+              .filter(l => l.user_id !== user.id)
+              .map(l => ({
+                channel_id: rentersChannel.id,
+                user_id: l.user_id,
+                role: 'member' as const,
+              }));
+
+            if (leadershipMemberships.length > 0) {
+              await supabase
+                .from('chat_channel_members')
+                .upsert(leadershipMemberships, { onConflict: 'channel_id,user_id' });
+            }
+          }
+        }
+      }
+
       for (const channel of defaultChannels) {
         const { data: newChannel, error } = await supabase
           .from('chat_channels')
