@@ -27,6 +27,7 @@ export interface KioskSettings {
   
   // Behavior
   idle_timeout_seconds: number;
+  display_orientation: 'portrait' | 'landscape';
   enable_walk_ins: boolean;
   require_confirmation_tap: boolean;
   show_wait_time_estimate: boolean;
@@ -64,6 +65,7 @@ export const DEFAULT_KIOSK_SETTINGS: Omit<KioskSettings, 'id' | 'organization_id
   check_in_prompt: 'Please enter your phone number to check in',
   success_message: 'You are checked in! Your stylist has been notified.',
   idle_timeout_seconds: 60,
+  display_orientation: 'portrait',
   enable_walk_ins: true,
   require_confirmation_tap: true,
   show_wait_time_estimate: true,

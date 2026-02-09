@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Settings, Lock, Eye, EyeOff, Check, Palette, Type, Clock, Image, Loader2, Shield, Sun, Moon, Monitor } from 'lucide-react';
+import { X, Settings, Lock, Eye, EyeOff, Check, Palette, Type, Clock, Image, Loader2, Shield, Sun, Moon, Monitor, Smartphone, Tablet } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { useKioskValidatePin, useKioskSaveSettings } from '@/hooks/useKioskPinValidation';
@@ -232,6 +232,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
     accent_color: settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color,
     text_color: settings?.text_color || DEFAULT_KIOSK_SETTINGS.text_color,
     theme_mode: settings?.theme_mode || DEFAULT_KIOSK_SETTINGS.theme_mode,
+    display_orientation: settings?.display_orientation || DEFAULT_KIOSK_SETTINGS.display_orientation,
     idle_timeout_seconds: settings?.idle_timeout_seconds || DEFAULT_KIOSK_SETTINGS.idle_timeout_seconds,
     enable_walk_ins: settings?.enable_walk_ins ?? DEFAULT_KIOSK_SETTINGS.enable_walk_ins,
     show_stylist_photo: settings?.show_stylist_photo ?? DEFAULT_KIOSK_SETTINGS.show_stylist_photo,
@@ -668,6 +669,37 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                             : localSettings.theme_mode === 'dark'
                             ? 'Always display in dark mode'
                             : 'Always display in light mode'}
+                        </p>
+                      </SettingGroup>
+
+                      {/* Display Orientation */}
+                      <SettingGroup title="Display Orientation">
+                        <div className="grid grid-cols-2 gap-2">
+                          {(['portrait', 'landscape'] as const).map((orientation) => (
+                            <motion.button
+                              key={orientation}
+                              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
+                                localSettings.display_orientation === orientation 
+                                  ? 'border-2' 
+                                  : 'border-white/10 hover:border-white/20'
+                              }`}
+                              style={localSettings.display_orientation === orientation ? { borderColor: accentColor } : undefined}
+                              onClick={() => updateLocalSetting('display_orientation', orientation)}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              {orientation === 'portrait' ? (
+                                <Smartphone className="w-4 h-4 text-white/80" />
+                              ) : (
+                                <Smartphone className="w-4 h-4 rotate-90 text-white/80" />
+                              )}
+                              <span className="text-sm text-white/80 capitalize">{orientation}</span>
+                            </motion.button>
+                          ))}
+                        </div>
+                        <p className="text-xs text-white/40 mt-2">
+                          {localSettings.display_orientation === 'portrait' 
+                            ? 'Vertical tablet placement (taller than wide)' 
+                            : 'Horizontal tablet placement (wider than tall)'}
                         </p>
                       </SettingGroup>
 

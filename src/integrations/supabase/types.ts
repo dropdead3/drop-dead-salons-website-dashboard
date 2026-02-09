@@ -6780,6 +6780,7 @@ export type Database = {
           button_style: string | null
           check_in_prompt: string | null
           created_at: string | null
+          display_orientation: string
           enable_feedback_prompt: boolean | null
           enable_walk_ins: boolean | null
           exit_pin: string | null
@@ -6809,6 +6810,7 @@ export type Database = {
           button_style?: string | null
           check_in_prompt?: string | null
           created_at?: string | null
+          display_orientation?: string
           enable_feedback_prompt?: boolean | null
           enable_walk_ins?: boolean | null
           exit_pin?: string | null
@@ -6838,6 +6840,7 @@ export type Database = {
           button_style?: string | null
           check_in_prompt?: string | null
           created_at?: string | null
+          display_orientation?: string
           enable_feedback_prompt?: boolean | null
           enable_walk_ins?: boolean | null
           exit_pin?: string | null
@@ -13878,6 +13881,7 @@ export type Database = {
           button_style: string | null
           check_in_prompt: string | null
           created_at: string | null
+          display_orientation: string
           enable_feedback_prompt: boolean | null
           enable_walk_ins: boolean | null
           exit_pin: string | null

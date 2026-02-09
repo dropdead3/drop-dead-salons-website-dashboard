@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save, Palette, Sun, Moon, Monitor, Image } from 'lucide-react';
+import { Loader2, Save, Palette, Sun, Moon, Monitor, Image, Smartphone, Tablet } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,6 +35,7 @@ interface LocalSettings {
   button_style: 'rounded' | 'pill' | 'square';
   logo_url: string | null;
   theme_mode: 'dark' | 'light' | 'auto';
+  display_orientation: 'portrait' | 'landscape';
   idle_timeout_seconds: number;
   enable_walk_ins: boolean;
   require_confirmation_tap: boolean;
@@ -154,6 +155,7 @@ export function KioskSettingsContent() {
     button_style: DEFAULT_KIOSK_SETTINGS.button_style,
     logo_url: DEFAULT_KIOSK_SETTINGS.logo_url,
     theme_mode: DEFAULT_KIOSK_SETTINGS.theme_mode,
+    display_orientation: DEFAULT_KIOSK_SETTINGS.display_orientation,
     idle_timeout_seconds: DEFAULT_KIOSK_SETTINGS.idle_timeout_seconds,
     enable_walk_ins: DEFAULT_KIOSK_SETTINGS.enable_walk_ins,
     require_confirmation_tap: DEFAULT_KIOSK_SETTINGS.require_confirmation_tap,
@@ -206,6 +208,7 @@ export function KioskSettingsContent() {
         button_style: kioskSettings.button_style,
         logo_url: kioskSettings.logo_url,
         theme_mode: kioskSettings.theme_mode,
+        display_orientation: kioskSettings.display_orientation,
         idle_timeout_seconds: kioskSettings.idle_timeout_seconds,
         enable_walk_ins: kioskSettings.enable_walk_ins,
         require_confirmation_tap: kioskSettings.require_confirmation_tap,
@@ -240,6 +243,7 @@ export function KioskSettingsContent() {
         button_style: DEFAULT_KIOSK_SETTINGS.button_style,
         logo_url: DEFAULT_KIOSK_SETTINGS.logo_url,
         theme_mode: DEFAULT_KIOSK_SETTINGS.theme_mode,
+        display_orientation: DEFAULT_KIOSK_SETTINGS.display_orientation,
         idle_timeout_seconds: DEFAULT_KIOSK_SETTINGS.idle_timeout_seconds,
         enable_walk_ins: DEFAULT_KIOSK_SETTINGS.enable_walk_ins,
         require_confirmation_tap: DEFAULT_KIOSK_SETTINGS.require_confirmation_tap,
@@ -373,6 +377,41 @@ export function KioskSettingsContent() {
                       : localSettings.theme_mode === 'dark'
                       ? 'Always display in dark mode'
                       : 'Always display in light mode'}
+                  </p>
+                </div>
+
+                {/* Display Orientation */}
+                <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Tablet className="w-4 h-4 text-muted-foreground" />
+                    <Label className="text-sm font-medium">Display Orientation</Label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['portrait', 'landscape'] as const).map((orientation) => (
+                      <button
+                        key={orientation}
+                        type="button"
+                        className={cn(
+                          "flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-colors",
+                          localSettings.display_orientation === orientation 
+                            ? "border-primary bg-primary/10 text-foreground" 
+                            : "border-border hover:border-primary/50"
+                        )}
+                        onClick={() => updateField('display_orientation', orientation)}
+                      >
+                        {orientation === 'portrait' ? (
+                          <Smartphone className="w-4 h-4" />
+                        ) : (
+                          <Smartphone className="w-4 h-4 rotate-90" />
+                        )}
+                        <span className="text-sm capitalize">{orientation}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {localSettings.display_orientation === 'portrait' 
+                      ? 'Vertical tablet placement (taller than wide)' 
+                      : 'Horizontal tablet placement (wider than tall)'}
                   </p>
                 </div>
 
