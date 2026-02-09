@@ -30,12 +30,6 @@ export function KioskDeployCard({ locationId, locationName }: KioskDeployCardPro
     }
   };
 
-  const handleOpenKiosk = () => {
-    if (kioskUrl) {
-      window.open(kioskUrl, '_blank');
-    }
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -88,11 +82,17 @@ export function KioskDeployCard({ locationId, locationName }: KioskDeployCardPro
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={handleOpenKiosk}
+                asChild
                 className="gap-2"
               >
-                <ExternalLink className="w-4 h-4" />
-                Preview
+                <a 
+                  href={kioskUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  Preview
+                </a>
               </Button>
             </div>
           </div>
