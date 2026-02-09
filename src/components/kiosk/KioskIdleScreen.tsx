@@ -1,49 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings, MapPin } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { KioskSettingsDialog } from './KioskSettingsDialog';
+import { KioskLocationBadge, isBadgeAtTop, isBadgeAtBottom } from './KioskLocationBadge';
 import { cn } from '@/lib/utils';
-
-// Badge position classes - center positions have extra clearance
-const getBadgePositionClasses = (hasBottomCenterBadge: boolean) => ({
-  'top-left': 'top-6 left-6',
-  'top-center': 'top-8 left-1/2 -translate-x-1/2',
-  'top-right': 'top-6 right-6',
-  'bottom-left': 'bottom-6 left-6',
-  'bottom-center': 'bottom-20 left-1/2 -translate-x-1/2', // Raised above pulse dots
-  'bottom-right': 'bottom-6 right-6',
-});
-
-// Badge styles
-function getBadgeStyle(
-  style: 'glass' | 'solid' | 'outline',
-  textColor: string,
-  accentColor: string
-) {
-  switch (style) {
-    case 'solid':
-      return {
-        backgroundColor: accentColor,
-        color: textColor,
-      };
-    case 'outline':
-      return {
-        backgroundColor: 'transparent',
-        border: `1.5px solid ${textColor}40`,
-        color: textColor,
-      };
-    case 'glass':
-    default:
-      return {
-        backgroundColor: `${textColor}10`,
-        backdropFilter: 'blur(12px)',
-        border: `1px solid ${textColor}20`,
-        color: textColor,
-      };
-  }
-}
 
 export function KioskIdleScreen() {
   const { settings, businessSettings, startSession, locationName } = useKiosk();
@@ -90,6 +52,11 @@ export function KioskIdleScreen() {
     xl: 'max-h-36 md:max-h-44 max-w-[400px] md:max-w-[560px]',
   };
 
+  // Determine if badge is shown and its position for layout adjustments
+  const hasBadge = showLocationBadge && !!locationName;
+  const badgeAtTop = hasBadge && isBadgeAtTop(badgePosition);
+  const badgeAtBottom = hasBadge && isBadgeAtBottom(badgePosition);
+
   // Update time every second
   useEffect(() => {
     const timer = setInterval(() => {
@@ -133,7 +100,7 @@ export function KioskIdleScreen() {
 
   return (
     <motion.div
-      className="fixed inset-0 flex flex-col items-center justify-center cursor-pointer select-none overflow-hidden"
+      className="fixed inset-0 flex flex-col cursor-pointer select-none overflow-hidden"
       style={{
         backgroundColor,
         backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : undefined,
@@ -147,7 +114,7 @@ export function KioskIdleScreen() {
     >
       {/* Settings icon - hidden in corner */}
       <motion.button
-        className="absolute top-4 right-4 z-20 w-12 h-12 rounded-xl flex items-center justify-center transition-all"
+        className="absolute top-4 right-4 z-30 w-12 h-12 rounded-xl flex items-center justify-center transition-all"
         style={{ 
           backgroundColor: `${textColor}08`,
           opacity: 0.3,
@@ -223,32 +190,25 @@ export function KioskIdleScreen() {
         </div>
       )}
 
-      {/* Location Badge */}
-      {(() => {
-        const hasBottomCenterBadge = showLocationBadge && badgePosition === 'bottom-center';
-        const badgePositionClasses = getBadgePositionClasses(hasBottomCenterBadge);
-        
-        return showLocationBadge && locationName && (
-          <motion.div
-            className={cn(
-              "absolute z-20 px-4 py-2 rounded-xl",
-              badgePositionClasses[badgePosition]
-            )}
-            style={getBadgeStyle(badgeStyle, textColor, accentColor)}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5 }}
-          >
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4" />
-              <span className="text-sm font-medium">{locationName}</span>
-            </div>
-          </motion.div>
-        );
-      })()}
+      {/* Top Badge Zone - part of flex flow */}
+      {badgeAtTop && (
+        <div className="relative z-20 pt-8">
+          <KioskLocationBadge
+            locationName={locationName!}
+            position={badgePosition}
+            style={badgeStyle}
+            textColor={textColor}
+            accentColor={accentColor}
+          />
+        </div>
+      )}
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-8 -mt-12">
+      {/* Content - flex-1 to take remaining space */}
+      <div className={cn(
+        "relative z-10 flex-1 flex flex-col items-center justify-center text-center px-8",
+        // Adjust vertical centering based on badge presence
+        !badgeAtTop && !badgeAtBottom && "-mt-8"
+      )}>
         {/* Logo with floating animation - or business name text fallback */}
         {logoUrl ? (
           <motion.div
@@ -389,47 +349,55 @@ export function KioskIdleScreen() {
         </motion.div>
       </div>
 
-      {/* Bottom pulse indicator with optional glow - shifts down when bottom-center badge is active */}
-      {(() => {
-        const hasBottomCenterBadge = showLocationBadge && badgePosition === 'bottom-center';
-        return (
-          <motion.div
-            className={cn(
-              "absolute left-1/2 -translate-x-1/2 flex gap-2",
-              hasBottomCenterBadge ? "bottom-8" : "bottom-12"
-            )}
-          >
-            {[0, 1, 2].map((i) => (
-              enableGlowEffects ? (
-                <motion.div
-                  key={i}
-                  className="w-2 h-2 rounded-full"
-                  style={{ backgroundColor: accentColor }}
-                  animate={{
-                    opacity: [0.3, 0.8, 0.3],
-                    scale: [1, 1.2, 1],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                    delay: i * 0.2,
-                  }}
-                />
-              ) : (
-                <div
-                  key={i}
-                  className="w-2 h-2 rounded-full"
-                  style={{ 
-                    backgroundColor: accentColor,
-                    opacity: 0.5,
-                  }}
-                />
-              )
-            ))}
-          </motion.div>
-        );
-      })()}
+      {/* Bottom Badge Zone - part of flex flow */}
+      {badgeAtBottom && (
+        <div className="relative z-20 pb-20">
+          <KioskLocationBadge
+            locationName={locationName!}
+            position={badgePosition}
+            style={badgeStyle}
+            textColor={textColor}
+            accentColor={accentColor}
+          />
+        </div>
+      )}
+
+      {/* Bottom pulse indicator - adjusted position based on badge */}
+      <motion.div
+        className={cn(
+          "absolute left-1/2 -translate-x-1/2 flex gap-2 z-10",
+          badgeAtBottom ? "bottom-8" : "bottom-12"
+        )}
+      >
+        {[0, 1, 2].map((i) => (
+          enableGlowEffects ? (
+            <motion.div
+              key={i}
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: accentColor }}
+              animate={{
+                opacity: [0.3, 0.8, 0.3],
+                scale: [1, 1.2, 1],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: i * 0.2,
+              }}
+            />
+          ) : (
+            <div
+              key={i}
+              className="w-2 h-2 rounded-full"
+              style={{ 
+                backgroundColor: accentColor,
+                opacity: 0.5,
+              }}
+            />
+          )
+        ))}
+      </motion.div>
     </motion.div>
   );
 }

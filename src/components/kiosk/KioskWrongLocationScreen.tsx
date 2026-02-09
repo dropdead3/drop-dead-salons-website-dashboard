@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, Phone, MessageSquare, AlertTriangle, ArrowLeft, Bell, CheckCircle, Loader2, Clock, User } from 'lucide-react';
+import { MapPin, Phone, MessageSquare, ArrowLeft, Bell, CheckCircle, Loader2, Clock, User } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
+import { KioskLocationBadge, isBadgeAtTop, isBadgeAtBottom } from './KioskLocationBadge';
 import { supabase } from '@/integrations/supabase/client';
 import { format, parse } from 'date-fns';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 export function KioskWrongLocationScreen() {
   const { 
@@ -15,6 +17,7 @@ export function KioskWrongLocationScreen() {
     organizationId,
     locationId,
     idleTimeRemaining,
+    locationName,
   } = useKiosk();
 
   const [isNotifying, setIsNotifying] = useState(false);
@@ -25,6 +28,16 @@ export function KioskWrongLocationScreen() {
   const accentColor = settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color;
   const backgroundImageUrl = settings?.background_image_url;
   const logoUrl = settings?.logo_url;
+
+  // Location badge settings
+  const showLocationBadge = settings?.show_location_badge ?? DEFAULT_KIOSK_SETTINGS.show_location_badge;
+  const badgePosition = settings?.location_badge_position ?? DEFAULT_KIOSK_SETTINGS.location_badge_position;
+  const badgeStyle = settings?.location_badge_style ?? DEFAULT_KIOSK_SETTINGS.location_badge_style;
+
+  // Determine badge position for layout adjustments
+  const hasBadge = showLocationBadge && !!locationName;
+  const badgeAtTop = hasBadge && isBadgeAtTop(badgePosition);
+  const badgeAtBottom = hasBadge && isBadgeAtBottom(badgePosition);
 
   const wrongLocationAppointments = session?.wrongLocationAppointments || [];
   const appointment = wrongLocationAppointments[0]; // Show first wrong-location appointment
@@ -106,8 +119,24 @@ export function KioskWrongLocationScreen() {
         }}
       />
 
+      {/* Top Badge Zone */}
+      {badgeAtTop && (
+        <div className="relative z-20 pt-6">
+          <KioskLocationBadge
+            locationName={locationName!}
+            position={badgePosition}
+            style={badgeStyle}
+            textColor={textColor}
+            accentColor={accentColor}
+          />
+        </div>
+      )}
+
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between p-6">
+      <div className={cn(
+        "relative z-10 flex items-center justify-between p-6",
+        badgeAtTop && "pt-4"
+      )}>
         <motion.button
           className="flex items-center gap-2 px-5 py-3 rounded-2xl backdrop-blur-md transition-all"
           style={{ 
@@ -150,7 +179,10 @@ export function KioskWrongLocationScreen() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 pb-8 overflow-auto">
+      <div className={cn(
+        "relative z-10 flex-1 flex flex-col items-center justify-center px-8 overflow-auto",
+        badgeAtBottom && "pb-20"
+      )}>
         <motion.div
           className="text-center max-w-2xl"
           initial={{ scale: 0.9, opacity: 0 }}
@@ -411,6 +443,19 @@ export function KioskWrongLocationScreen() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Bottom Badge Zone */}
+      {badgeAtBottom && (
+        <div className="relative z-20 pb-8">
+          <KioskLocationBadge
+            locationName={locationName!}
+            position={badgePosition}
+            style={badgeStyle}
+            textColor={textColor}
+            accentColor={accentColor}
+          />
+        </div>
+      )}
     </motion.div>
   );
 }

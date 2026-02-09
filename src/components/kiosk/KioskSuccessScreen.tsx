@@ -3,10 +3,12 @@ import { motion } from 'framer-motion';
 import { CheckCircle2, Clock, User, Sparkles } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
+import { KioskLocationBadge, isBadgeAtTop, isBadgeAtBottom } from './KioskLocationBadge';
 import { format, parse } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export function KioskSuccessScreen() {
-  const { settings, session, completeCheckin, isCheckingIn } = useKiosk();
+  const { settings, session, completeCheckin, isCheckingIn, locationName } = useKiosk();
   const [hasCompleted, setHasCompleted] = useState(false);
 
   const successMessage = settings?.success_message || DEFAULT_KIOSK_SETTINGS.success_message;
@@ -18,6 +20,16 @@ export function KioskSuccessScreen() {
   const logoUrl = settings?.logo_url;
   const showWaitTime = settings?.show_wait_time_estimate ?? DEFAULT_KIOSK_SETTINGS.show_wait_time_estimate;
   const enableGlowEffects = settings?.enable_glow_effects ?? DEFAULT_KIOSK_SETTINGS.enable_glow_effects;
+
+  // Location badge settings
+  const showLocationBadge = settings?.show_location_badge ?? DEFAULT_KIOSK_SETTINGS.show_location_badge;
+  const badgePosition = settings?.location_badge_position ?? DEFAULT_KIOSK_SETTINGS.location_badge_position;
+  const badgeStyle = settings?.location_badge_style ?? DEFAULT_KIOSK_SETTINGS.location_badge_style;
+
+  // Determine badge position for layout adjustments
+  const hasBadge = showLocationBadge && !!locationName;
+  const badgeAtTop = hasBadge && isBadgeAtTop(badgePosition);
+  const badgeAtBottom = hasBadge && isBadgeAtBottom(badgePosition);
 
   const appointment = session?.selectedAppointment;
   const client = session?.client;
@@ -42,7 +54,7 @@ export function KioskSuccessScreen() {
 
   return (
     <motion.div
-      className="fixed inset-0 flex flex-col items-center justify-center select-none overflow-hidden"
+      className="fixed inset-0 flex flex-col select-none overflow-hidden"
       style={{
         backgroundColor,
         backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : undefined,
@@ -88,8 +100,24 @@ export function KioskSuccessScreen() {
         ))}
       </div>
 
+      {/* Top Badge Zone */}
+      {badgeAtTop && (
+        <div className="relative z-20 pt-8">
+          <KioskLocationBadge
+            locationName={locationName!}
+            position={badgePosition}
+            style={badgeStyle}
+            textColor={textColor}
+            accentColor={accentColor}
+          />
+        </div>
+      )}
+
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-8">
+      <div className={cn(
+        "relative z-10 flex-1 flex flex-col items-center justify-center text-center px-8",
+        badgeAtBottom && "pb-20"
+      )}>
         {/* Logo */}
         {logoUrl && (
           <motion.img
@@ -280,6 +308,19 @@ export function KioskSuccessScreen() {
           <span className="text-sm">This screen will reset automatically</span>
         </motion.div>
       </div>
+
+      {/* Bottom Badge Zone */}
+      {badgeAtBottom && (
+        <div className="relative z-20 pb-8">
+          <KioskLocationBadge
+            locationName={locationName!}
+            position={badgePosition}
+            style={badgeStyle}
+            textColor={textColor}
+            accentColor={accentColor}
+          />
+        </div>
+      )}
     </motion.div>
   );
 }
