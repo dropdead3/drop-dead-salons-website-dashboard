@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
@@ -58,6 +59,7 @@ import {
   User,
   Check,
   X,
+  ArrowLeft,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -341,15 +343,22 @@ export default function ClientEngineTracker() {
     <DashboardLayout>
       <div className="p-6 lg:p-8 space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-foreground text-background flex items-center justify-center rounded-lg shrink-0">
-            <Target className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-display">CLIENT ENGINE TRACKER</h1>
-            <p className="text-muted-foreground text-sm">
-              Monitor team progress through the 75-day program
-            </p>
+        <div className="flex items-start gap-4">
+          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+            <Link to="/dashboard/admin/management">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+          </Button>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-foreground text-background flex items-center justify-center rounded-lg shrink-0">
+              <Target className="w-5 h-5" />
+            </div>
+            <div>
+              <h1 className="text-xl md:text-2xl font-display">CLIENT ENGINE TRACKER</h1>
+              <p className="text-muted-foreground text-sm">
+                Monitor team progress through the 75-day program
+              </p>
+            </div>
           </div>
         </div>
 

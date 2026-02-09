@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { GenerateTestAccountsButton } from '@/components/dashboard/GenerateTestAccountsButton';
 import { CreateAdminAccountDialog } from '@/components/dashboard/CreateAdminAccountDialog';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -64,7 +65,8 @@ import {
   Download,
   Eye,
   Sparkles,
-  Maximize2
+  Maximize2,
+  ArrowLeft,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
@@ -638,9 +640,16 @@ export default function AccountManagement() {
     <DashboardLayout>
       <div className="p-6 max-w-5xl mx-auto space-y-6">
         <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-display">Account Invitations & Approvals</h1>
-            <p className="text-muted-foreground">Invite new team members and manage account access</p>
+          <div className="flex items-start gap-4">
+            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+              <Link to="/dashboard/admin/management">
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-2xl font-display">Account Invitations & Approvals</h1>
+              <p className="text-muted-foreground">Invite new team members and manage account access</p>
+            </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <CreateAdminAccountDialog onSuccess={() => refetchApprovals()} />

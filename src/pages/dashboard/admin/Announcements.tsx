@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
@@ -34,6 +34,7 @@ import {
   Bell,
   Globe,
   MapPin,
+  ArrowLeft,
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -346,11 +347,18 @@ export default function Announcements() {
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-2">Make An Announcement</h1>
-            <p className="text-muted-foreground font-sans">
-              Post updates and news for the team
-            </p>
+          <div className="flex items-start gap-4">
+            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+              <Link to="/dashboard/admin/management">
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+            </Button>
+            <div>
+              <h1 className="font-display text-3xl lg:text-4xl mb-2">Make An Announcement</h1>
+              <p className="text-muted-foreground font-sans">
+                Post updates and news for the team
+              </p>
+            </div>
           </div>
           
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>

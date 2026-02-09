@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,7 +18,8 @@ import {
   Calendar,
   AlertTriangle,
   CheckCircle2,
-  Loader2
+  Loader2,
+  ArrowLeft,
 } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { 
@@ -200,14 +202,21 @@ export default function ReengagementHub() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="font-display text-2xl font-medium flex items-center gap-2">
-              <RefreshCw className="h-6 w-6 text-primary" />
-              Client Re-engagement
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Win back inactive clients with automated outreach
-            </p>
+          <div className="flex items-start gap-4">
+            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+              <Link to="/dashboard/admin/management">
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+            </Button>
+            <div>
+              <h1 className="font-display text-2xl font-medium flex items-center gap-2">
+                <RefreshCw className="h-6 w-6 text-primary" />
+                Client Re-engagement
+              </h1>
+              <p className="text-muted-foreground text-sm mt-1">
+                Win back inactive clients with automated outreach
+              </p>
+            </div>
           </div>
           <NewCampaignDialog organizationId={organizationId} />
         </div>

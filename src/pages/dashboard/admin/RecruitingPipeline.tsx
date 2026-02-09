@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { 
   useJobApplications, 
@@ -44,7 +44,8 @@ import {
   ChevronRight,
   Loader2,
   Briefcase,
-  Filter
+  Filter,
+  ArrowLeft,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -131,11 +132,18 @@ export default function RecruitingPipeline() {
       <div className="space-y-6 px-4 md:px-8 py-6">
         {/* Header */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <h1 className="text-2xl font-display">Recruiting Pipeline</h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Track and manage job applicants
-            </p>
+          <div className="flex items-start gap-4">
+            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+              <Link to="/dashboard/admin/management">
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-2xl font-display">Recruiting Pipeline</h1>
+              <p className="text-muted-foreground text-sm mt-1">
+                Track and manage job applicants
+              </p>
+            </div>
           </div>
         </div>
 

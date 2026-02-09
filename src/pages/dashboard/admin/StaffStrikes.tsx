@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -48,6 +48,7 @@ import {
   FileText,
   Trash2,
   Pencil,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   useStaffStrikes,
@@ -169,14 +170,21 @@ export default function StaffStrikes() {
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl font-display font-medium mb-2 flex items-center gap-2">
-              <AlertTriangle className="w-6 h-6 text-destructive" />
-              Staff Strikes
-            </h1>
-            <p className="text-muted-foreground">
-              Track write-ups, complaints, warnings, and issues for team members.
-            </p>
+          <div className="flex items-start gap-4">
+            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+              <Link to="/dashboard/admin/management">
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-2xl font-display font-medium mb-2 flex items-center gap-2">
+                <AlertTriangle className="w-6 h-6 text-destructive" />
+                Staff Strikes
+              </h1>
+              <p className="text-muted-foreground">
+                Track write-ups, complaints, warnings, and issues for team members.
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <StrikeExportButton strikes={strikes} filteredStrikes={filteredStrikes} />
