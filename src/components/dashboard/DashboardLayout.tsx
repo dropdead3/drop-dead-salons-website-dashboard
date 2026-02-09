@@ -231,7 +231,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
   
   const toggleSidebarCollapsed = () => setSidebarCollapsed(prev => !prev);
   const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut, isPlatformUser, hasPlatformRoleOrHigher } = useAuth();
-  const { isImpersonating } = useOrganizationContext();
+  const { isImpersonating, isMultiOrgOwner } = useOrganizationContext();
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
   const navigate = useNavigate();
@@ -790,6 +790,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           platformNavItems={platformNavItems}
           footerNavItems={footerNavItems}
           isPlatformUser={isPlatformUser}
+          isMultiOrgOwner={isMultiOrgOwner}
           unreadCount={unreadCount}
           roles={roles}
           effectiveIsCoach={effectiveIsCoach}
@@ -831,6 +832,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
               platformNavItems={platformNavItems}
               footerNavItems={footerNavItems}
               isPlatformUser={isPlatformUser}
+              isMultiOrgOwner={isMultiOrgOwner}
               unreadCount={unreadCount}
               roles={roles}
               effectiveIsCoach={effectiveIsCoach}
