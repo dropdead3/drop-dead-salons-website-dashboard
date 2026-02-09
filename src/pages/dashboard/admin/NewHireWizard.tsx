@@ -227,7 +227,6 @@ export default function NewHireWizard() {
                         <SelectItem value="hourly">Hourly</SelectItem>
                         <SelectItem value="salary">Salary</SelectItem>
                         <SelectItem value="commission">Commission Only</SelectItem>
-                        <SelectItem value="booth_rent">Booth Rent</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

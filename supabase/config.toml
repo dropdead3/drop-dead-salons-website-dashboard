@@ -158,3 +158,6 @@ verify_jwt = false
 
 [functions.detect-anomalies]
 verify_jwt = false
+
+[functions.onboard-renter]
+verify_jwt = false

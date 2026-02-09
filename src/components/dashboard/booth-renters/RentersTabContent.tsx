@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useBoothRenters, type BoothRenterProfile } from '@/hooks/useBoothRenters';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Search, Building2, DollarSign, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
-import { AddRenterDialog } from './AddRenterDialog';
 import { RenterDetailSheet } from './RenterDetailSheet';
 import { IssueContractDialog } from './IssueContractDialog';
 
@@ -24,9 +24,9 @@ interface RentersTabContentProps {
 }
 
 export function RentersTabContent({ organizationId }: RentersTabContentProps) {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
   const [contractDialogOpen, setContractDialogOpen] = useState(false);
   const [selectedRenter, setSelectedRenter] = useState<BoothRenterProfile | null>(null);
@@ -101,9 +101,9 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
             <SelectItem value="terminated">Terminated</SelectItem>
           </SelectContent>
         </Select>
-        <Button className="gap-2" onClick={() => setAddDialogOpen(true)}>
+        <Button className="gap-2" onClick={() => navigate('/dashboard/admin/onboard-renter')}>
           <Plus className="h-4 w-4" />
-          Add Renter
+          Onboard Renter
         </Button>
       </div>
 
@@ -219,11 +219,6 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
       )}
 
       {/* Dialogs */}
-      <AddRenterDialog
-        open={addDialogOpen}
-        onOpenChange={setAddDialogOpen}
-        organizationId={organizationId}
-      />
 
       <RenterDetailSheet
         open={detailSheetOpen}
