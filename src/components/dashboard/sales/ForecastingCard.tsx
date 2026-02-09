@@ -675,35 +675,46 @@ export function ForecastingCard() {
                       const chartLeft = xAxisMap[0].x;
                       const chartRight = chartLeft + xAxisMap[0].width;
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      const badgeFOWidth = 180;
                       const avgText = `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`;
-                      const badgeHeight = 28;
-                      const estimatedBadgeWidth = avgText.length * 8 + 20;
+                      const padX = 8;
+                      const padY = 4;
+                      const fontSize = 12;
+                      const gap = 4;
                       return (
                         <g style={{ pointerEvents: 'none' }}>
-                          <style>{`
-                            @keyframes drawLine { to { stroke-dashoffset: 0; } }
-                            @keyframes fadeInBadge { from { opacity: 0; } to { opacity: 1; } }
-                          `}</style>
-                          <foreignObject x={chartLeft} y={yPos - badgeHeight / 2} width={badgeFOWidth} height={badgeHeight} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
-                            <div style={{ 
-                              fontSize: 12, fontWeight: 600, 
-                              color: 'hsl(25, 100%, 55%)',
-                              backdropFilter: 'blur(6px)',
-                              WebkitBackdropFilter: 'blur(6px)',
-                              background: 'hsl(var(--background) / 0.7)',
-                              border: '1px solid hsl(var(--border) / 0.3)',
-                              borderRadius: 5,
-                              padding: '3px 8px',
-                              whiteSpace: 'nowrap',
-                              display: 'inline-block',
-                              lineHeight: '1',
-                            }}>
-                              {avgText}
-                            </div>
-                          </foreignObject>
+                          <rect
+                            className="avg-badge-rect"
+                            x={chartLeft}
+                            y={yPos - fontSize / 2 - padY}
+                            width={0}
+                            height={fontSize + padY * 2}
+                            rx={5}
+                            fill="hsl(var(--background) / 0.7)"
+                            stroke="hsl(var(--border) / 0.3)"
+                            strokeWidth={1}
+                          />
+                          <text
+                            ref={(el: SVGTextElement | null) => {
+                              if (!el) return;
+                              const textWidth = el.getComputedTextLength();
+                              const badgeWidth = textWidth + padX * 2;
+                              const g = el.parentElement;
+                              if (!g) return;
+                              const rect = g.querySelector('.avg-badge-rect');
+                              const line = g.querySelector('.avg-badge-line');
+                              if (rect) rect.setAttribute('width', String(badgeWidth));
+                              if (line) line.setAttribute('x1', String(chartLeft + badgeWidth + gap));
+                            }}
+                            x={chartLeft + padX}
+                            y={yPos + fontSize / 2 - 2}
+                            style={{ fontSize, fontWeight: 600 }}
+                            fill="hsl(25, 100%, 55%)"
+                          >
+                            {avgText}
+                          </text>
                           <line
-                            x1={chartLeft + estimatedBadgeWidth}
+                            className="avg-badge-line"
+                            x1={chartRight}
                             y1={yPos}
                             x2={chartRight}
                             y2={yPos}
@@ -725,29 +736,46 @@ export function ForecastingCard() {
                       const chartLeft = xAxisMap[0].x;
                       const chartRight = chartLeft + xAxisMap[0].width;
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      const badgeFOWidth = 180;
                       const avgText = `Weekly Avg: $${Math.round(averageWeekly).toLocaleString()}`;
-                      const estimatedBadgeWidth = avgText.length * 7.5 + 16;
+                      const padX = 6;
+                      const padY = 3;
+                      const fontSize = 11;
+                      const gap = 4;
                       return (
                         <g style={{ pointerEvents: 'none' }}>
-                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeFOWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
-                            <div style={{ 
-                              fontSize: 11, fontWeight: 600, 
-                              color: 'hsl(25, 100%, 55%)',
-                              backdropFilter: 'blur(6px)',
-                              WebkitBackdropFilter: 'blur(6px)',
-                              background: 'hsl(var(--background) / 0.7)',
-                              border: '1px solid hsl(var(--border) / 0.3)',
-                              borderRadius: 4,
-                              padding: '1px 6px',
-                              whiteSpace: 'nowrap',
-                              display: 'inline-block',
-                            }}>
-                              {avgText}
-                            </div>
-                          </foreignObject>
+                          <rect
+                            className="avg-badge-rect-weekly"
+                            x={chartLeft}
+                            y={yPos - fontSize / 2 - padY}
+                            width={0}
+                            height={fontSize + padY * 2}
+                            rx={4}
+                            fill="hsl(var(--background) / 0.7)"
+                            stroke="hsl(var(--border) / 0.3)"
+                            strokeWidth={1}
+                          />
+                          <text
+                            ref={(el: SVGTextElement | null) => {
+                              if (!el) return;
+                              const textWidth = el.getComputedTextLength();
+                              const badgeWidth = textWidth + padX * 2;
+                              const g = el.parentElement;
+                              if (!g) return;
+                              const rect = g.querySelector('.avg-badge-rect-weekly');
+                              const line = g.querySelector('.avg-badge-line-weekly');
+                              if (rect) rect.setAttribute('width', String(badgeWidth));
+                              if (line) line.setAttribute('x1', String(chartLeft + badgeWidth + gap));
+                            }}
+                            x={chartLeft + padX}
+                            y={yPos + fontSize / 2 - 2}
+                            style={{ fontSize, fontWeight: 600 }}
+                            fill="hsl(25, 100%, 55%)"
+                          >
+                            {avgText}
+                          </text>
                           <line
-                            x1={chartLeft + estimatedBadgeWidth}
+                            className="avg-badge-line-weekly"
+                            x1={chartRight}
                             y1={yPos}
                             x2={chartRight}
                             y2={yPos}
