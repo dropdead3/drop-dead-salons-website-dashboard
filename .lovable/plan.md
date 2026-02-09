@@ -1,299 +1,340 @@
 
-# Wire Kiosk Settings Icon to Match Dashboard Settings
+# Fix Kiosk Settings Integration Issues
 
-## Overview
+## Problems Identified
 
-The settings icon on the kiosk screen currently opens a limited settings dialog that is missing several options available in the organization dashboard. This plan will update the `KioskSettingsDialog` to include all the same settings as `KioskSettingsContent`, ensuring consistency between the two interfaces.
-
-## Current Gap Analysis
-
-| Setting | Dashboard | Kiosk Dialog |
-|---------|-----------|--------------|
-| Theme Presets | Yes | No |
-| Background Color | Yes | Yes |
-| Accent Color | Yes | Yes |
-| Text Color | Yes | Yes |
-| Button Style | Yes | No |
-| Logo URL | Yes | No |
-| Welcome Title | Yes | Yes |
-| Welcome Subtitle | Yes | Yes |
-| Check-in Prompt | Yes | Yes |
-| Success Message | Yes | Yes |
-| Idle Timeout | Yes | Yes |
-| Enable Walk-Ins | Yes | Yes |
-| Require Confirmation Tap | Yes | No |
-| Show Wait Time Estimate | Yes | Yes |
-| Show Stylist Photo | Yes | Yes |
-| Enable Feedback Prompt | Yes | No |
-| Require Form Signing | Yes | No |
-| Exit PIN | Yes | No |
-
-## Solution
-
-Update the `KioskSettingsDialog` to include all missing settings, maintaining the same dark-themed UI style while adding feature parity with the dashboard.
+1. **Logo input asks for URL** - The kiosk settings have a text field for logo URL instead of using the organization logos already uploaded in business settings
+2. **Not using global color themes** - The kiosk has its own separate theme presets (`KIOSK_THEME_PRESETS`) instead of using the global `colorThemes` from `useColorTheme`
+3. **Missing light/dark mode toggle** - The kiosk has a `theme_mode` field in the database but no UI to configure it, and it doesn't sync with the dashboard's `useDashboardTheme`
+4. **Live preview doesn't match actual kiosk** - The `KioskPreviewPanel` component is a simplified static mockup that differs significantly from the actual `KioskIdleScreen` appearance
 
 ---
 
-## Technical Implementation
+## Solution Overview
 
-### File: `src/components/kiosk/KioskSettingsDialog.tsx`
+### 1. Logo Selection from Business Settings
 
-#### 1. Update LocalSettings State
+**Current state**: Text input for `logo_url`
 
-Add the missing fields to the `localSettings` state:
+**Solution**: Replace with a dropdown that lists:
+- "Organization Logo (Light)" - `businessSettings.logo_light_url`
+- "Organization Logo (Dark)" - `businessSettings.logo_dark_url`
+- "Custom URL" - Only then show text input
+
+**Files affected**:
+- `src/components/dashboard/settings/KioskSettingsContent.tsx`
+- `src/components/kiosk/KioskSettingsDialog.tsx`
+
+---
+
+### 2. Integrate Global Color Themes
+
+**Current state**: Kiosk uses hardcoded `KIOSK_THEME_PRESETS` (cream, dark-luxury, oat-minimal)
+
+**Solution**: 
+- Import and use `colorThemes` from `useColorTheme` as the primary theme options
+- Map the global theme HSL values to hex colors for kiosk settings
+- Keep "Custom" option for manual color overrides
+- Add a "Use Dashboard Theme" toggle that auto-syncs with the user's selected color theme
+
+**Files affected**:
+- `src/hooks/useKioskSettings.ts` - Update presets to derive from global themes
+- `src/components/dashboard/settings/KioskSettingsContent.tsx`
+- `src/components/kiosk/KioskSettingsDialog.tsx`
+
+---
+
+### 3. Add Light/Dark Mode Toggle
+
+**Current state**: `theme_mode` field exists in database (`'dark' | 'light' | 'auto'`) but no UI to set it
+
+**Solution**:
+- Add a "Mode" selector in the Appearance tab with Light/Dark/Auto options
+- Default to the dashboard's current `resolvedTheme` from `useDashboardTheme`
+- The kiosk uses this to:
+  - Select appropriate logo variant (light logo for dark mode, dark logo for light mode)
+  - Apply appropriate color scheme
+
+**Files affected**:
+- `src/components/dashboard/settings/KioskSettingsContent.tsx` - Add mode selector
+- `src/components/kiosk/KioskSettingsDialog.tsx` - Add mode selector
+- Update `localSettings` to include `theme_mode`
+
+---
+
+### 4. Fix Live Preview to Match Actual Kiosk
+
+**Current state**: `KioskPreviewPanel` is a simplified static mockup with different structure
+
+**Solution**: Rewrite `KioskPreviewPanel` to use the same visual structure as `KioskIdleScreen`:
+- Add floating animation for logo
+- Add time/date display
+- Add ambient gradient overlay
+- Add pulsing "Tap to check in" button with glow effect
+- Add bottom pulse indicators
+- Match the exact typography and spacing
+
+**Files affected**:
+- `src/components/dashboard/settings/KioskPreviewPanel.tsx` - Complete rewrite
+
+---
+
+## Detailed Implementation
+
+### Part 1: Update KioskSettings Interface
+
+Add `theme_mode` to the local settings and save/load:
 
 ```typescript
+// In both KioskSettingsContent and KioskSettingsDialog
 const [localSettings, setLocalSettings] = useState({
-  // Existing fields...
-  welcome_title: settings?.welcome_title || DEFAULT_KIOSK_SETTINGS.welcome_title,
-  welcome_subtitle: settings?.welcome_subtitle || '',
-  check_in_prompt: settings?.check_in_prompt || DEFAULT_KIOSK_SETTINGS.check_in_prompt,
-  success_message: settings?.success_message || DEFAULT_KIOSK_SETTINGS.success_message,
-  background_color: settings?.background_color || DEFAULT_KIOSK_SETTINGS.background_color,
-  accent_color: settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color,
-  text_color: settings?.text_color || DEFAULT_KIOSK_SETTINGS.text_color,
-  idle_timeout_seconds: settings?.idle_timeout_seconds || DEFAULT_KIOSK_SETTINGS.idle_timeout_seconds,
-  enable_walk_ins: settings?.enable_walk_ins ?? DEFAULT_KIOSK_SETTINGS.enable_walk_ins,
-  show_stylist_photo: settings?.show_stylist_photo ?? DEFAULT_KIOSK_SETTINGS.show_stylist_photo,
-  show_wait_time_estimate: settings?.show_wait_time_estimate ?? DEFAULT_KIOSK_SETTINGS.show_wait_time_estimate,
-  
-  // NEW fields to add:
-  button_style: settings?.button_style || DEFAULT_KIOSK_SETTINGS.button_style,
-  logo_url: settings?.logo_url || DEFAULT_KIOSK_SETTINGS.logo_url,
-  require_confirmation_tap: settings?.require_confirmation_tap ?? DEFAULT_KIOSK_SETTINGS.require_confirmation_tap,
-  enable_feedback_prompt: settings?.enable_feedback_prompt ?? DEFAULT_KIOSK_SETTINGS.enable_feedback_prompt,
-  require_form_signing: settings?.require_form_signing ?? DEFAULT_KIOSK_SETTINGS.require_form_signing,
-  exit_pin: settings?.exit_pin || DEFAULT_KIOSK_SETTINGS.exit_pin,
+  // ...existing fields
+  theme_mode: settings?.theme_mode || DEFAULT_KIOSK_SETTINGS.theme_mode,
+  // ...
 });
 ```
 
-#### 2. Add Theme Preset State and Logic
+### Part 2: Create Logo Source Selector Component
 
-Import the theme presets and add detection/application logic:
+Replace the Logo URL text input with a selector:
 
 ```typescript
-import { KIOSK_THEME_PRESETS, KioskThemePreset } from '@/hooks/useKioskSettings';
+// New component in settings
+type LogoSource = 'org-light' | 'org-dark' | 'auto' | 'custom';
 
-// Add state for theme preset
-const [themePreset, setThemePreset] = useState<KioskThemePreset | 'custom'>('cream');
+<Select value={logoSource} onValueChange={handleLogoSourceChange}>
+  <SelectItem value="auto">Auto (based on mode)</SelectItem>
+  <SelectItem value="org-light">Organization Logo (Light)</SelectItem>
+  <SelectItem value="org-dark">Organization Logo (Dark)</SelectItem>
+  <SelectItem value="custom">Custom URL</SelectItem>
+</Select>
 
-// Detect current preset function
-const detectPreset = (bg: string, text: string, accent: string): KioskThemePreset | 'custom' => {
-  for (const [key, preset] of Object.entries(KIOSK_THEME_PRESETS)) {
-    if (
-      preset.background_color.toLowerCase() === bg.toLowerCase() &&
-      preset.text_color.toLowerCase() === text.toLowerCase() &&
-      preset.accent_color.toLowerCase() === accent.toLowerCase()
-    ) {
-      return key as KioskThemePreset;
-    }
-  }
-  return 'custom';
-};
-
-// Apply preset function
-const applyPreset = (preset: KioskThemePreset | 'custom') => {
-  setThemePreset(preset);
-  if (preset !== 'custom' && KIOSK_THEME_PRESETS[preset]) {
-    const { background_color, text_color, accent_color } = KIOSK_THEME_PRESETS[preset];
-    setLocalSettings(prev => ({
-      ...prev,
-      background_color,
-      text_color,
-      accent_color,
-    }));
-  }
-};
+{logoSource === 'custom' && (
+  <Input 
+    value={customLogoUrl} 
+    onChange={...} 
+    placeholder="https://..." 
+  />
+)}
 ```
 
-#### 3. Update Appearance Tab UI
+The "Auto" option means:
+- In dark mode: use `logo_light_url`
+- In light mode: use `logo_dark_url`
+- This matches the existing logic in `KioskIdleScreen`
 
-Add theme preset selector and button style dropdown:
+### Part 3: Add Theme Mode Selector
+
+Add to Appearance tab in both settings UIs:
 
 ```typescript
-{activeTab === 'appearance' && (
-  <>
-    {/* Theme Preset Selector */}
-    <SettingGroup title="Theme Preset">
-      <div className="grid grid-cols-2 gap-2">
-        {Object.entries(KIOSK_THEME_PRESETS).map(([key, preset]) => (
-          <motion.button
-            key={key}
-            className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
-              themePreset === key 
-                ? 'border-2' 
-                : 'border-white/10 hover:border-white/20'
-            }`}
-            style={themePreset === key ? { borderColor: accentColor } : undefined}
-            onClick={() => applyPreset(key as KioskThemePreset)}
-          >
-            <div className="flex gap-1">
-              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: preset.background_color }} />
-              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: preset.accent_color }} />
+<SettingGroup title="Mode">
+  <div className="flex gap-2">
+    {(['light', 'dark', 'auto'] as const).map((mode) => (
+      <button
+        key={mode}
+        className={...}
+        onClick={() => updateField('theme_mode', mode)}
+      >
+        {mode === 'light' && <Sun className="w-4 h-4" />}
+        {mode === 'dark' && <Moon className="w-4 h-4" />}
+        {mode === 'auto' && <Monitor className="w-4 h-4" />}
+        <span>{mode.charAt(0).toUpperCase() + mode.slice(1)}</span>
+      </button>
+    ))}
+  </div>
+</SettingGroup>
+```
+
+### Part 4: Integrate Global Color Themes
+
+Replace kiosk-specific presets with global themes:
+
+```typescript
+// Create a helper to convert global themes to kiosk colors
+function convertGlobalThemeToKioskColors(
+  theme: ColorTheme, 
+  isDark: boolean
+): { background_color: string; text_color: string; accent_color: string } {
+  const themeData = colorThemes.find(t => t.id === theme);
+  const preview = isDark ? themeData?.darkPreview : themeData?.lightPreview;
+  
+  return {
+    background_color: hslToHex(preview?.bg || '40 30% 96%'),
+    text_color: hslToHex(preview?.primary || '0 0% 8%'),
+    accent_color: hslToHex(preview?.accent || '35 35% 82%'),
+  };
+}
+```
+
+Theme selector options:
+- Cream (from global)
+- Rose (from global)
+- Sage (from global)
+- Ocean (from global)
+- Custom
+
+### Part 5: Rewrite KioskPreviewPanel
+
+Create a mini version of `KioskIdleScreen` that accurately reflects the kiosk appearance:
+
+```typescript
+export function KioskPreviewPanel({ settings, businessSettings, className }: Props) {
+  const [currentTime, setCurrentTime] = useState(new Date());
+  
+  // Determine theme mode
+  const isDarkMode = settings.theme_mode === 'dark' || 
+    (settings.theme_mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  
+  // Logo selection logic (same as KioskIdleScreen)
+  const logoUrl = settings.logo_url 
+    || (isDarkMode ? businessSettings?.logo_light_url : businessSettings?.logo_dark_url)
+    || null;
+  
+  return (
+    <Card className={cn("sticky top-6", className)}>
+      <CardHeader>...</CardHeader>
+      <CardContent>
+        <div className="relative mx-auto max-w-[280px]">
+          {/* Device frame */}
+          <div className="rounded-[2rem] border-[8px] border-slate-800 bg-slate-800 p-1">
+            {/* Screen - matching actual kiosk structure */}
+            <div 
+              className="aspect-[3/4] rounded-[1.5rem] overflow-hidden relative"
+              style={{ backgroundColor: settings.background_color }}
+            >
+              {/* Ambient gradient overlay */}
+              <div 
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: `radial-gradient(ellipse at center, ${settings.accent_color}15 0%, transparent 60%)` }}
+              />
+              
+              {/* Content - centered like actual kiosk */}
+              <div className="relative z-10 flex flex-col items-center justify-center h-full p-4 text-center">
+                {/* Logo with float animation */}
+                {logoUrl && (
+                  <motion.img 
+                    src={logoUrl} 
+                    alt="Logo" 
+                    className="h-8 w-auto mb-4 object-contain"
+                    animate={{ y: [0, -2, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
+                )}
+                
+                {/* Time display */}
+                <div 
+                  className="text-2xl font-extralight mb-4"
+                  style={{ color: settings.text_color }}
+                >
+                  {formatTime(currentTime)}
+                </div>
+                
+                {/* Welcome text */}
+                <h1 style={{ color: settings.text_color }} className="text-base font-medium mb-1">
+                  {settings.welcome_title || 'Welcome'}
+                </h1>
+                
+                {settings.welcome_subtitle && (
+                  <p style={{ color: settings.text_color }} className="text-xs opacity-70 mb-4">
+                    {settings.welcome_subtitle}
+                  </p>
+                )}
+                
+                {/* Tap to check in - with glow */}
+                <div className="relative mt-4">
+                  <div 
+                    className="absolute inset-0 rounded-full blur-md"
+                    style={{ backgroundColor: settings.accent_color, opacity: 0.3 }}
+                  />
+                  <div 
+                    className={cn("relative px-4 py-2 backdrop-blur-sm", buttonRadiusClass)}
+                    style={{ 
+                      backgroundColor: `${settings.accent_color}20`,
+                      border: `1px solid ${settings.accent_color}60`,
+                    }}
+                  >
+                    <span className="text-xs font-medium" style={{ color: settings.text_color }}>
+                      Tap to check in
+                    </span>
+                  </div>
+                </div>
+                
+                {/* Bottom pulse indicators */}
+                <div className="absolute bottom-3 flex gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <motion.div
+                      key={i}
+                      className="w-1 h-1 rounded-full"
+                      style={{ backgroundColor: settings.accent_color }}
+                      animate={{ opacity: [0.3, 0.8, 0.3] }}
+                      transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.2 }}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
-            <span className="text-sm text-white/80">{preset.name}</span>
-          </motion.button>
-        ))}
-        <motion.button
-          className={`px-4 py-3 rounded-xl border transition-colors ${
-            themePreset === 'custom' 
-              ? 'border-2' 
-              : 'border-white/10 hover:border-white/20'
-          }`}
-          style={themePreset === 'custom' ? { borderColor: accentColor } : undefined}
-          onClick={() => setThemePreset('custom')}
-        >
-          <span className="text-sm text-white/80">Custom</span>
-        </motion.button>
-      </div>
-    </SettingGroup>
-
-    {/* Existing color settings... */}
-    
-    {/* Button Style - NEW */}
-    <SettingGroup title="Button Style">
-      <div className="flex gap-2">
-        {['rounded', 'pill', 'square'].map((style) => (
-          <motion.button
-            key={style}
-            className={`flex-1 px-4 py-3 rounded-xl border transition-colors capitalize ${
-              localSettings.button_style === style 
-                ? 'border-2' 
-                : 'border-white/10 hover:border-white/20'
-            }`}
-            style={localSettings.button_style === style ? { borderColor: accentColor } : undefined}
-            onClick={() => updateLocalSetting('button_style', style as 'rounded' | 'pill' | 'square')}
-          >
-            <span className="text-sm text-white/80">{style}</span>
-          </motion.button>
-        ))}
-      </div>
-    </SettingGroup>
-
-    {/* Logo URL - NEW */}
-    <SettingGroup title="Logo">
-      <TextSetting
-        label="Logo URL"
-        value={localSettings.logo_url || ''}
-        onChange={(v) => updateLocalSetting('logo_url', v || null)}
-        placeholder="https://..."
-        accentColor={accentColor}
-      />
-    </SettingGroup>
-  </>
-)}
-```
-
-#### 4. Update Behavior Tab UI
-
-Add the missing toggle settings:
-
-```typescript
-{activeTab === 'behavior' && (
-  <>
-    {/* Existing Timeouts group... */}
-    
-    <SettingGroup title="Features">
-      <ToggleSetting
-        label="Enable Walk-Ins"
-        description="Allow clients without appointments"
-        value={localSettings.enable_walk_ins}
-        onChange={(v) => updateLocalSetting('enable_walk_ins', v)}
-        accentColor={accentColor}
-      />
-      <ToggleSetting
-        label="Require Confirmation Tap"
-        description="Ask client to confirm before check-in"
-        value={localSettings.require_confirmation_tap}
-        onChange={(v) => updateLocalSetting('require_confirmation_tap', v)}
-        accentColor={accentColor}
-      />
-      <ToggleSetting
-        label="Show Stylist Photo"
-        description="Display stylist photos on appointment cards"
-        value={localSettings.show_stylist_photo}
-        onChange={(v) => updateLocalSetting('show_stylist_photo', v)}
-        accentColor={accentColor}
-      />
-      <ToggleSetting
-        label="Show Wait Time Estimate"
-        description="Display estimated wait time after check-in"
-        value={localSettings.show_wait_time_estimate}
-        onChange={(v) => updateLocalSetting('show_wait_time_estimate', v)}
-        accentColor={accentColor}
-      />
-      <ToggleSetting
-        label="Require Form Signing"
-        description="Prompt new clients to sign intake forms"
-        value={localSettings.require_form_signing}
-        onChange={(v) => updateLocalSetting('require_form_signing', v)}
-        accentColor={accentColor}
-      />
-      <ToggleSetting
-        label="Enable Feedback Prompt"
-        description="Ask for feedback after check-in"
-        value={localSettings.enable_feedback_prompt}
-        onChange={(v) => updateLocalSetting('enable_feedback_prompt', v)}
-        accentColor={accentColor}
-      />
-    </SettingGroup>
-
-    {/* Security - NEW */}
-    <SettingGroup title="Security">
-      <div className="flex items-center justify-between py-2">
-        <div>
-          <div className="text-sm text-white/80">Exit PIN</div>
-          <div className="text-xs text-white/40 mt-0.5">4-digit PIN to exit kiosk mode</div>
+          </div>
+          {/* Home indicator */}
+          <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-24 h-1 bg-slate-600 rounded-full" />
         </div>
-        <input
-          type="text"
-          inputMode="numeric"
-          maxLength={4}
-          className="w-20 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-center font-mono focus:outline-none focus:border-[color]"
-          style={{ '--focus-color': accentColor } as any}
-          value={localSettings.exit_pin}
-          onChange={(e) => {
-            const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-            updateLocalSetting('exit_pin', val);
-          }}
-        />
-      </div>
-    </SettingGroup>
-  </>
-)}
-```
-
-#### 5. Sync Theme Preset on Settings Load
-
-Add a `useEffect` to detect the current theme preset when settings load:
-
-```typescript
-useEffect(() => {
-  if (settings) {
-    setThemePreset(detectPreset(
-      settings.background_color,
-      settings.text_color,
-      settings.accent_color
-    ));
-  }
-}, [settings]);
+      </CardContent>
+    </Card>
+  );
+}
 ```
 
 ---
 
-## Summary
+## Files to Modify
 
-| Change | Purpose |
-|--------|---------|
-| Add 6 missing fields to localSettings | Feature parity with dashboard |
-| Add theme preset selector | Allow quick theme switching like dashboard |
-| Add button style selector | Match dashboard appearance options |
-| Add logo URL field | Allow logo customization |
-| Add require_confirmation_tap toggle | Match dashboard behavior option |
-| Add require_form_signing toggle | Match dashboard behavior option |
-| Add enable_feedback_prompt toggle | Match dashboard behavior option |
-| Add exit_pin field | Allow changing the exit PIN from kiosk |
+| File | Changes |
+|------|---------|
+| `src/hooks/useKioskSettings.ts` | Replace `KIOSK_THEME_PRESETS` with global theme integration; add HSL-to-hex helper |
+| `src/components/dashboard/settings/KioskSettingsContent.tsx` | Add theme mode selector, logo source selector, integrate global themes |
+| `src/components/dashboard/settings/KioskPreviewPanel.tsx` | Complete rewrite to match actual kiosk appearance |
+| `src/components/kiosk/KioskSettingsDialog.tsx` | Add theme mode selector, logo source selector (using businessSettings from context) |
+
+---
+
+## Additional Helper: HSL to Hex Conversion
+
+Since global themes use HSL strings and kiosk settings store hex colors, we need a converter:
+
+```typescript
+// In a utils file or inline
+function hslToHex(hslString: string): string {
+  // Parse "40 30% 96%" format
+  const [h, s, l] = hslString.split(' ').map(v => parseFloat(v));
+  
+  const sNorm = s / 100;
+  const lNorm = l / 100;
+  
+  const c = (1 - Math.abs(2 * lNorm - 1)) * sNorm;
+  const x = c * (1 - Math.abs((h / 60) % 2 - 1));
+  const m = lNorm - c / 2;
+  
+  let r = 0, g = 0, b = 0;
+  
+  if (h < 60) { r = c; g = x; }
+  else if (h < 120) { r = x; g = c; }
+  else if (h < 180) { g = c; b = x; }
+  else if (h < 240) { g = x; b = c; }
+  else if (h < 300) { r = x; b = c; }
+  else { r = c; b = x; }
+  
+  const toHex = (n: number) => Math.round((n + m) * 255).toString(16).padStart(2, '0');
+  
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+}
+```
+
+---
 
 ## Expected Outcome
 
-After these changes, the settings dialog accessible via the gear icon on the kiosk screen will contain all the same configuration options as the organization dashboard's kiosk settings page. Both interfaces will update the same database records, ensuring changes made from either location are reflected immediately.
+1. **Logo**: Users select from organization logos or enter custom URL - no more manual URL entry for existing logos
+2. **Themes**: Kiosk themes match the global color themes used across the dashboard
+3. **Mode**: Explicit light/dark/auto toggle that affects logo selection and overall appearance
+4. **Preview**: Live preview accurately shows how the kiosk will look, including animations and layout
+
