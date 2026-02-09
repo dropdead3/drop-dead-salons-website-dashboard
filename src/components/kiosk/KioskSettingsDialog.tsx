@@ -51,16 +51,21 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
   };
 
   const handlePinDigit = (digit: string) => {
-    if (pinInput.length < 6) {
+    if (pinInput.length < 4) {
       const newPin = pinInput + digit;
       setPinInput(newPin);
       setPinError(false);
       
-      // Auto-submit when 4+ digits
-      if (newPin.length >= 4 && newPin === storedPin) {
-        setIsAuthenticated(true);
-        setPinError(false);
-        setPinInput('');
+      // Auto-submit when 4 digits entered
+      if (newPin.length === 4) {
+        if (newPin === storedPin) {
+          setIsAuthenticated(true);
+          setPinError(false);
+          setPinInput('');
+        } else {
+          setPinError(true);
+          setPinInput('');
+        }
       }
     }
   };
@@ -151,7 +156,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                 
                 <h3 className="text-xl font-medium text-white mb-2">Enter Admin PIN</h3>
                 <p className="text-white/60 mb-8 text-center">
-                  Enter your 4-6 digit PIN to access settings
+                  Enter your 4 digit PIN to access settings
                 </p>
 
                 {/* PIN display */}
@@ -160,7 +165,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                     className="flex gap-3 px-6 py-4 rounded-2xl"
                     style={{ backgroundColor: 'rgba(255,255,255,0.05)' }}
                   >
-                    {[0, 1, 2, 3, 4, 5].map((i) => (
+                    {[0, 1, 2, 3].map((i) => (
                       <div
                         key={i}
                         className={`w-4 h-4 rounded-full transition-all ${
@@ -341,8 +346,8 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                         <TextSetting
                           label="Admin PIN"
                           value={localSettings.exit_pin}
-                          onChange={(v) => updateLocalSetting('exit_pin', v)}
-                          placeholder="4-6 digit PIN"
+                          onChange={(v) => updateLocalSetting('exit_pin', v.slice(0, 4).replace(/\D/g, ''))}
+                          placeholder="4 digit PIN"
                           type="password"
                         />
                       </SettingGroup>
