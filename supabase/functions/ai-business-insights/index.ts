@@ -1,0 +1,391 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "@supabase/supabase-js";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const CACHE_HOURS = 2;
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Verify user
+    const anonClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
+    const { data: { user }, error: authError } = await anonClient.auth.getUser(
+      authHeader.replace("Bearer ", "")
+    );
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { forceRefresh, locationId } = await req.json().catch(() => ({}));
+
+    // Get user's organization
+    const { data: profile } = await supabase
+      .from("employee_profiles")
+      .select("organization_id")
+      .eq("user_id", user.id)
+      .single();
+
+    if (!profile?.organization_id) {
+      return new Response(JSON.stringify({ error: "No organization found" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const orgId = profile.organization_id;
+
+    // Check cache unless force refresh
+    if (!forceRefresh) {
+      let cacheQuery = supabase
+        .from("ai_business_insights")
+        .select("*")
+        .eq("organization_id", orgId)
+        .gt("expires_at", new Date().toISOString())
+        .order("generated_at", { ascending: false })
+        .limit(1);
+
+      if (locationId) {
+        cacheQuery = cacheQuery.eq("location_id", locationId);
+      } else {
+        cacheQuery = cacheQuery.is("location_id", null);
+      }
+
+      const { data: cached } = await cacheQuery;
+      if (cached && cached.length > 0) {
+        return new Response(JSON.stringify(cached[0]), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
+    // Gather data from multiple sources in parallel
+    const today = new Date().toISOString().split("T")[0];
+    const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+    const twoWeeksAgo = new Date(Date.now() - 14 * 86400000).toISOString().split("T")[0];
+    const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
+
+    const [
+      salesRes,
+      appointmentsRes,
+      forecastsRes,
+      anomaliesRes,
+      suggestionsRes,
+      staffRes,
+    ] = await Promise.all([
+      // Recent sales (last 14 days)
+      supabase
+        .from("phorest_daily_sales_summary")
+        .select("summary_date, total_revenue, total_transactions, service_revenue, product_revenue, average_ticket")
+        .gte("summary_date", twoWeeksAgo)
+        .lte("summary_date", today)
+        .order("summary_date", { ascending: false })
+        .limit(100),
+
+      // Recent appointments (last 7 days + next 7 days)
+      supabase
+        .from("appointments")
+        .select("appointment_date, status, staff_user_id, duration_minutes, total_price, rebooked_at_checkout, start_time, end_time")
+        .gte("appointment_date", weekAgo)
+        .lte("appointment_date", nextWeek)
+        .limit(500),
+
+      // Revenue forecasts (next 7 days)
+      supabase
+        .from("revenue_forecasts")
+        .select("forecast_date, predicted_revenue, confidence_level, actual_revenue, forecast_type")
+        .eq("organization_id", orgId)
+        .gte("forecast_date", today)
+        .lte("forecast_date", nextWeek)
+        .limit(14),
+
+      // Active anomalies (unacknowledged)
+      supabase
+        .from("detected_anomalies")
+        .select("anomaly_type, severity, metric_value, expected_value, deviation_percent, detected_at, context")
+        .eq("organization_id", orgId)
+        .eq("is_acknowledged", false)
+        .order("detected_at", { ascending: false })
+        .limit(10),
+
+      // Pending scheduling suggestions
+      supabase
+        .from("scheduling_suggestions")
+        .select("suggestion_type, suggested_date, suggested_time, confidence_score, staff_user_id, context")
+        .eq("organization_id", orgId)
+        .is("was_accepted", null)
+        .gte("suggested_date", today)
+        .limit(10),
+
+      // Active staff count
+      supabase
+        .from("employee_profiles")
+        .select("user_id, display_name, is_active")
+        .eq("organization_id", orgId)
+        .eq("is_active", true)
+        .limit(50),
+    ]);
+
+    // Build data summary for the AI
+    const salesData = salesRes.data || [];
+    const appointments = appointmentsRes.data || [];
+    const forecasts = forecastsRes.data || [];
+    const anomalies = anomaliesRes.data || [];
+    const suggestions = suggestionsRes.data || [];
+    const staff = staffRes.data || [];
+
+    // Pre-compute key metrics
+    const pastAppointments = appointments.filter((a) => a.appointment_date <= today);
+    const futureAppointments = appointments.filter((a) => a.appointment_date > today);
+    const cancelledCount = pastAppointments.filter((a) => a.status === "cancelled").length;
+    const noShowCount = pastAppointments.filter((a) => a.status === "no_show").length;
+    const completedCount = pastAppointments.filter((a) => a.status === "completed").length;
+    const totalPast = pastAppointments.length;
+    const rebookedCount = pastAppointments.filter((a) => a.rebooked_at_checkout).length;
+
+    const thisWeekSales = salesData.filter((s) => s.summary_date >= weekAgo);
+    const lastWeekSales = salesData.filter((s) => s.summary_date < weekAgo);
+    const thisWeekRevenue = thisWeekSales.reduce((sum, s) => sum + (s.total_revenue || 0), 0);
+    const lastWeekRevenue = lastWeekSales.reduce((sum, s) => sum + (s.total_revenue || 0), 0);
+
+    const dataContext = `
+BUSINESS DATA SNAPSHOT (as of ${today}):
+
+REVENUE (Last 14 days):
+- This week total: $${thisWeekRevenue.toFixed(0)}
+- Last week total: $${lastWeekRevenue.toFixed(0)}
+- Week-over-week change: ${lastWeekRevenue > 0 ? ((thisWeekRevenue - lastWeekRevenue) / lastWeekRevenue * 100).toFixed(1) : "N/A"}%
+- Daily sales entries: ${salesData.length}
+${salesData.slice(0, 7).map((s) => `  ${s.summary_date}: $${s.total_revenue || 0} (${s.total_transactions || 0} transactions, avg ticket $${s.average_ticket || 0})`).join("\n")}
+
+APPOINTMENTS (Last 7 + Next 7 days):
+- Total past week: ${totalPast}
+- Completed: ${completedCount}
+- Cancelled: ${cancelledCount} (${totalPast > 0 ? ((cancelledCount / totalPast) * 100).toFixed(1) : 0}%)
+- No-shows: ${noShowCount} (${totalPast > 0 ? ((noShowCount / totalPast) * 100).toFixed(1) : 0}%)
+- Rebooked at checkout: ${rebookedCount} (${completedCount > 0 ? ((rebookedCount / completedCount) * 100).toFixed(1) : 0}%)
+- Upcoming next 7 days: ${futureAppointments.length}
+
+STAFF:
+- Active team members: ${staff.length}
+
+REVENUE FORECASTS (Next 7 days):
+${forecasts.length > 0 ? forecasts.map((f) => `  ${f.forecast_date}: $${f.predicted_revenue} (${f.confidence_level} confidence)${f.actual_revenue ? ` | Actual: $${f.actual_revenue}` : ""}`).join("\n") : "No forecasts available"}
+
+ACTIVE ANOMALIES (Unacknowledged):
+${anomalies.length > 0 ? anomalies.map((a) => `  ${a.anomaly_type} (${a.severity}): value=${a.metric_value}, expected=${a.expected_value}, deviation=${a.deviation_percent}%`).join("\n") : "No active anomalies"}
+
+SCHEDULING SUGGESTIONS (Pending):
+${suggestions.length > 0 ? suggestions.map((s) => `  ${s.suggestion_type}: ${s.suggested_date} at ${s.suggested_time} (confidence: ${s.confidence_score})`).join("\n") : "No pending suggestions"}
+`;
+
+    // Call Lovable AI with tool calling for structured output
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      return new Response(JSON.stringify({ error: "AI not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          {
+            role: "system",
+            content: `You are a salon business intelligence analyst. Analyze the provided business data and generate actionable insights for salon owners. Be specific with numbers and percentages. Focus on what matters most RIGHT NOW. Be concise but insightful. If data is limited or zeros, acknowledge it and suggest what to look for as data accumulates. Do NOT fabricate data that isn't in the snapshot.`,
+          },
+          {
+            role: "user",
+            content: `Analyze this salon business data and provide insights:\n\n${dataContext}`,
+          },
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "deliver_business_insights",
+              description: "Return structured business insights for a salon dashboard.",
+              parameters: {
+                type: "object",
+                properties: {
+                  summaryLine: {
+                    type: "string",
+                    description: "One-sentence executive summary of overall business health.",
+                  },
+                  overallSentiment: {
+                    type: "string",
+                    enum: ["positive", "neutral", "concerning"],
+                    description: "Overall business health sentiment.",
+                  },
+                  insights: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        category: {
+                          type: "string",
+                          enum: [
+                            "revenue_pulse",
+                            "cash_flow",
+                            "capacity",
+                            "staffing",
+                            "client_health",
+                            "anomaly",
+                          ],
+                        },
+                        title: { type: "string", description: "Short title (5-8 words)" },
+                        description: {
+                          type: "string",
+                          description: "Insight details (1-2 sentences, include specific numbers)",
+                        },
+                        severity: {
+                          type: "string",
+                          enum: ["info", "warning", "critical"],
+                        },
+                      },
+                      required: ["category", "title", "description", "severity"],
+                      additionalProperties: false,
+                    },
+                  },
+                  actionItems: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        action: {
+                          type: "string",
+                          description: "Specific action the owner can take today",
+                        },
+                        priority: {
+                          type: "string",
+                          enum: ["high", "medium", "low"],
+                        },
+                      },
+                      required: ["action", "priority"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["summaryLine", "overallSentiment", "insights", "actionItems"],
+                additionalProperties: false,
+              },
+            },
+          },
+        ],
+        tool_choice: {
+          type: "function",
+          function: { name: "deliver_business_insights" },
+        },
+      }),
+    });
+
+    if (!aiResponse.ok) {
+      const status = aiResponse.status;
+      const errorText = await aiResponse.text();
+      console.error("AI gateway error:", status, errorText);
+
+      if (status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (status === 402) {
+        return new Response(
+          JSON.stringify({ error: "AI credits exhausted. Please add funds." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({ error: "Failed to generate insights" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const aiData = await aiResponse.json();
+    let insights;
+
+    try {
+      const toolCall = aiData.choices?.[0]?.message?.tool_calls?.[0];
+      if (toolCall?.function?.arguments) {
+        insights = JSON.parse(toolCall.function.arguments);
+      } else {
+        throw new Error("No tool call in response");
+      }
+    } catch (parseErr) {
+      console.error("Failed to parse AI response:", parseErr, JSON.stringify(aiData));
+      return new Response(
+        JSON.stringify({ error: "Failed to parse AI insights" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Cache the result (upsert)
+    const expiresAt = new Date(Date.now() + CACHE_HOURS * 3600000).toISOString();
+    const now = new Date().toISOString();
+
+    // Delete old entry then insert (simpler than complex upsert with coalesce index)
+    await supabase
+      .from("ai_business_insights")
+      .delete()
+      .eq("organization_id", orgId)
+      .is("location_id", locationId || null);
+
+    const { data: saved, error: saveError } = await supabase
+      .from("ai_business_insights")
+      .insert({
+        organization_id: orgId,
+        location_id: locationId || null,
+        insights,
+        generated_at: now,
+        expires_at: expiresAt,
+      })
+      .select()
+      .single();
+
+    if (saveError) {
+      console.error("Failed to cache insights:", saveError);
+    }
+
+    return new Response(
+      JSON.stringify(saved || { insights, generated_at: now, expires_at: expiresAt }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (err) {
+    console.error("ai-business-insights error:", err);
+    return new Response(
+      JSON.stringify({ error: err instanceof Error ? err.message : "Unknown error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});

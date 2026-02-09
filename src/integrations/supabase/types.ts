@@ -239,6 +239,44 @@ export type Database = {
           },
         ]
       }
+      ai_business_insights: {
+        Row: {
+          created_at: string
+          expires_at: string
+          generated_at: string
+          id: string
+          insights: Json
+          location_id: string | null
+          organization_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          generated_at?: string
+          id?: string
+          insights?: Json
+          location_id?: string | null
+          organization_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          generated_at?: string
+          id?: string
+          insights?: Json
+          location_id?: string | null
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_business_insights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcement_reads: {
         Row: {
           announcement_id: string
