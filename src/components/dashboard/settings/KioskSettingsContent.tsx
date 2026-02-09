@@ -20,6 +20,7 @@ import {
   useLocationKioskOverrides,
   usePushDefaultsToAllLocations,
   useResetLocationToDefaults,
+  usePushLocationSettingsToAll,
   DEFAULT_KIOSK_SETTINGS 
 } from '@/hooks/useKioskSettings';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
@@ -162,6 +163,7 @@ export function KioskSettingsContent() {
   const { data: locationOverrides = [] } = useLocationKioskOverrides(orgId || undefined);
   const pushToAll = usePushDefaultsToAllLocations();
   const resetToDefaults = useResetLocationToDefaults();
+  const pushLocationToAll = usePushLocationSettingsToAll();
 
   // Check if current location has custom override
   const hasCustomOverride = locationId ? locationOverrides.includes(locationId) : false;
@@ -380,6 +382,15 @@ export function KioskSettingsContent() {
   const handleResetToDefaults = () => {
     if (!orgId || !locationId) return;
     resetToDefaults.mutate({ organizationId: orgId, locationId });
+  };
+
+  const handlePushLocationToAll = () => {
+    if (!orgId || !locationId) return;
+    pushLocationToAll.mutate({ 
+      organizationId: orgId, 
+      sourceLocationId: locationId,
+      settings: localSettings 
+    });
   };
 
   return (
@@ -1094,6 +1105,41 @@ export function KioskSettingsContent() {
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                       <AlertDialogAction onClick={handlePushToAll}>
+                        Yes, Push to All
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+
+              {/* Push Location Settings to All - only show when editing a specific location */}
+              {locationId && locations.length > 1 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      disabled={pushLocationToAll.isPending}
+                    >
+                      {pushLocationToAll.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <Upload className="w-4 h-4 mr-2" />
+                      )}
+                      Push to All Locations
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Push to All Locations?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will copy "{selectedLocationData?.name}" settings to all other {locations.length - 1} location{locations.length > 2 ? 's' : ''}.
+                        Existing settings at other locations will be overwritten.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handlePushLocationToAll}>
                         Yes, Push to All
                       </AlertDialogAction>
                     </AlertDialogFooter>
