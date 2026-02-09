@@ -1,103 +1,107 @@
 
-# Fix Kiosk Settings Dialog to Use Configured Theme Colors
+
+# Fix Kiosk Settings Save Button and Add Success Toast
 
 ## Problem
 
-The Kiosk Settings Dialog uses hardcoded purple (`bg-purple-500`, `bg-purple-600`, `text-purple-400`) colors throughout its UI instead of the configured accent color from the kiosk settings. This contradicts the expected behavior where the kiosk should use the colors defined in the dashboard's appearance settings.
+The "Save Changes" button in the Kiosk Settings dialog is not working properly. When clicked:
+1. Nothing appears to happen (no feedback)
+2. No "Changes saved successfully" toast notification appears
+3. The dialog doesn't close after saving
 
-## Root Cause
+## Root Cause Analysis
 
-The `KioskSettingsDialog.tsx` component has ~12 instances of hardcoded Tailwind purple color classes instead of dynamically applying the `accent_color` from kiosk settings.
+Looking at the current `handleSave` function:
+
+```typescript
+const handleSave = async () => {
+  if (!organizationId) return;  // Silent failure if no organizationId
+  
+  await updateSettings.mutateAsync({
+    organizationId,
+    locationId: locationId || null,
+    settings: localSettings,
+  });
+  // Missing: close dialog after success
+  // Missing: explicit error handling
+};
+```
+
+Issues identified:
+1. **Silent early return**: If `organizationId` is null, the function returns silently with no user feedback
+2. **No dialog close**: After successful save, the dialog stays open
+3. **No error handling**: If the mutation fails, there's no explicit error feedback (though the hook's `onError` handler should show a toast)
+4. **Toast exists but may not be prominent**: The hook already calls `toast.success('Kiosk settings saved')` but user wants "Changes saved successfully"
 
 ## Solution
 
-Replace all hardcoded purple color references with dynamic inline styles using the kiosk's `accent_color` setting. Since the component already has access to settings via `useKiosk()`, we can derive the accent color and apply it dynamically.
+Update the `handleSave` function to:
+1. Show an error toast if `organizationId` is missing
+2. Close the dialog after successful save
+3. Add try/catch for explicit error handling
+4. Update the toast message to "Changes saved successfully"
 
 ### Technical Changes
 
 **File: `src/components/kiosk/KioskSettingsDialog.tsx`**
 
-1. **Extract accent color from settings** at the top of the component:
+Update the `handleSave` function:
 
 ```typescript
-const { settings, organizationId, locationId } = useKiosk();
-const accentColor = settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color;
+const handleSave = async () => {
+  if (!organizationId) {
+    toast.error('Unable to save: Organization not found');
+    return;
+  }
+  
+  try {
+    await updateSettings.mutateAsync({
+      organizationId,
+      locationId: locationId || null,
+      settings: localSettings,
+    });
+    // Close dialog on success (toast shown by hook)
+    handleClose();
+  } catch (error) {
+    // Error toast already shown by hook's onError
+    console.error('Failed to save kiosk settings:', error);
+  }
+};
 ```
 
-2. **Replace hardcoded purple colors with inline styles** using the accent color:
-
-| Location | Before | After |
-|----------|--------|-------|
-| Line 311 (Settings icon bg) | `bg-purple-500/20` | `style={{ backgroundColor: \`${accentColor}20\` }}` |
-| Line 312 (Settings icon) | `text-purple-400` | `style={{ color: accentColor }}` |
-| Line 336 (Lock icon bg) | `bg-purple-500/20` | `style={{ backgroundColor: \`${accentColor}20\` }}` |
-| Line 341 (Lock icon) | `text-purple-400` | `style={{ color: accentColor }}` |
-| Line 366 (PIN dots) | `bg-purple-500` | Dynamic style with `accentColor` |
-| Line 430 (Unlock button) | `bg-purple-600` | `style={{ backgroundColor: accentColor }}` |
-| Line 452 (Active tab) | `bg-purple-600` | `style={{ backgroundColor: accentColor }}` |
-| Line 570 (Save button) | `bg-purple-600` | `style={{ backgroundColor: accentColor }}` |
-| Lines 622, 651, 679 (Input focus) | `focus:border-purple-500` | Use `onFocus/onBlur` with accent color or CSS variable |
-| Line 708 (Toggle on) | `bg-purple-600` | `style={{ backgroundColor: value ? accentColor : undefined }}` |
-
-3. **For focus states on inputs**, create a helper for border color or use a CSS variable approach:
+Add the toast import at the top of the file:
 
 ```typescript
-// Option A: Use onFocus/onBlur handlers
-<input
-  style={{ 
-    borderColor: isFocused ? accentColor : undefined,
-  }}
-  onFocus={() => setIsFocused(true)}
-  onBlur={() => setIsFocused(false)}
-/>
-
-// Option B: Set CSS variable and use it
-// At component level:
-<div style={{ '--accent': accentColor } as React.CSSProperties}>
-  <input className="focus:border-[var(--accent)]" />
-</div>
+import { toast } from 'sonner';
 ```
 
-4. **Pass accent color to child setting components**:
+**File: `src/hooks/useKioskSettings.ts`**
+
+Update the success toast message in `onSuccess`:
 
 ```typescript
-<TextSetting
-  label="Check-In Prompt"
-  value={localSettings.check_in_prompt}
-  onChange={(v) => updateLocalSetting('check_in_prompt', v)}
-  accentColor={accentColor}
-/>
+onSuccess: (_, variables) => {
+  // ... existing cache invalidation code ...
+  
+  toast.success('Changes saved successfully');  // Updated message
+},
 ```
 
-Then update the sub-components (`TextSetting`, `ColorSetting`, `NumberSetting`, `ToggleSetting`) to accept and use `accentColor` for their interactive states.
+## Summary
 
-## Implementation Summary
-
-```text
-KioskSettingsDialog.tsx changes:
-├── Extract accentColor from settings (line ~18)
-├── Header icon (lines 311-312) → use accentColor
-├── PIN entry lock icon (lines 336, 341) → use accentColor  
-├── PIN dots (line 366) → use accentColor
-├── Unlock button (line 430) → use accentColor
-├── Tab buttons (line 452) → use accentColor
-├── Save button (line 570) → use accentColor
-└── Sub-components:
-    ├── TextSetting → add accentColor prop for focus
-    ├── ColorSetting → add accentColor prop for focus
-    ├── NumberSetting → add accentColor prop for focus
-    └── ToggleSetting → add accentColor prop for toggle
-```
+| Change | Location | Purpose |
+|--------|----------|---------|
+| Add `toast` import | KioskSettingsDialog.tsx (imports) | Enable showing error toasts |
+| Add error handling for null organizationId | handleSave function | User feedback when org is missing |
+| Add try/catch | handleSave function | Explicit error handling |
+| Call handleClose() on success | handleSave function | Close dialog after save |
+| Update toast message | useKioskSettings.ts onSuccess | "Changes saved successfully" |
 
 ## Expected Outcome
 
-After this change:
-- The Kiosk Settings Dialog will use the gold/bronze accent color (#9A7B4F) shown in the settings instead of purple
-- All interactive elements (buttons, tabs, toggles, focus rings) will match the configured theme
-- The kiosk maintains visual consistency with its configured appearance
+After these changes:
+- Clicking "Save Changes" will save the settings and close the dialog
+- A "Changes saved successfully" toast notification will appear
+- If organization is not found, an error toast will explain why save failed
+- If the database operation fails, an error toast will appear
 
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/components/kiosk/KioskSettingsDialog.tsx` | Replace ~12 hardcoded purple color references with dynamic accent color from settings |
