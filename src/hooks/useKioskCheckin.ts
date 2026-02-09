@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export type KioskState = 'idle' | 'lookup' | 'confirm' | 'signing' | 'success' | 'walk_in' | 'error';
+export type KioskState = 'idle' | 'lookup' | 'confirm' | 'wrong_location' | 'signing' | 'success' | 'walk_in' | 'error';
 
 export interface KioskAppointment {
   id: string;
@@ -15,9 +15,14 @@ export interface KioskAppointment {
   stylist_user_id: string | null;
   stylist_name?: string;
   stylist_photo?: string;
+  stylist_phone?: string;
+  stylist_email?: string;
   client_name?: string;
   client_id?: string;
   phorest_client_id?: string;
+  location_id?: string;
+  location_name?: string;
+  is_wrong_location?: boolean;
 }
 
 export interface KioskClient {
@@ -36,6 +41,7 @@ export interface KioskSession {
   lookupMethod?: 'phone' | 'name' | 'qr' | 'code';
   client?: KioskClient;
   appointments?: KioskAppointment[];
+  wrongLocationAppointments?: KioskAppointment[];
   selectedAppointment?: KioskAppointment;
   isWalkIn?: boolean;
 }
@@ -115,15 +121,36 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
           stylist_user_id,
           phorest_client_id,
           client_name,
+          location_id,
           stylist:employee_profiles!phorest_appointments_stylist_user_id_fkey(
             display_name,
-            photo_url
+            photo_url,
+            phone,
+            email
           )
         `)
         .in('phorest_client_id', clientIds)
         .eq('appointment_date', today)
         .in('status', ['booked', 'confirmed', 'pending'])
         .order('start_time');
+
+      // Fetch location names for appointments at different locations
+      const appointmentLocationIds = [...new Set((appointments || [])
+        .map(a => a.location_id)
+        .filter(Boolean)
+      )];
+      
+      let locationMap: Record<string, string> = {};
+      if (appointmentLocationIds.length > 0) {
+        const { data: locations } = await supabase
+          .from('locations')
+          .select('id, name')
+          .in('id', appointmentLocationIds);
+        
+        if (locations) {
+          locationMap = Object.fromEntries(locations.map(l => [l.id, l.name]));
+        }
+      }
 
       return {
         clients: clients.map(c => ({
@@ -144,25 +171,48 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
           stylist_user_id: a.stylist_user_id,
           stylist_name: (a.stylist as any)?.display_name,
           stylist_photo: (a.stylist as any)?.photo_url,
+          stylist_phone: (a.stylist as any)?.phone,
+          stylist_email: (a.stylist as any)?.email,
           phorest_client_id: a.phorest_client_id || undefined,
           client_name: a.client_name || undefined,
+          location_id: a.location_id || undefined,
+          location_name: a.location_id ? locationMap[a.location_id] : undefined,
+          is_wrong_location: a.location_id ? a.location_id !== locationId : false,
         })),
+        kioskLocationId: locationId,
       };
     },
     onSuccess: (data) => {
       if (data.appointments.length > 0) {
-        // Found appointments
+        // Separate appointments by location
+        const correctLocationAppts = data.appointments.filter(a => !a.is_wrong_location);
+        const wrongLocationAppts = data.appointments.filter(a => a.is_wrong_location);
+        
         const client = data.clients.find(c => 
           data.appointments.some(a => a.phorest_client_id === c.phorest_client_id)
         );
         
-        setSession(prev => prev ? {
-          ...prev,
-          lookupMethod: 'phone',
-          client: client,
-          appointments: data.appointments,
-        } : null);
-        setState('confirm');
+        if (correctLocationAppts.length > 0) {
+          // Has appointments at this location - normal flow
+          setSession(prev => prev ? {
+            ...prev,
+            lookupMethod: 'phone',
+            client: client,
+            appointments: correctLocationAppts,
+            wrongLocationAppointments: wrongLocationAppts,
+          } : null);
+          setState('confirm');
+        } else if (wrongLocationAppts.length > 0) {
+          // Only has appointments at OTHER locations - show wrong location screen
+          setSession(prev => prev ? {
+            ...prev,
+            lookupMethod: 'phone',
+            client: client,
+            appointments: [],
+            wrongLocationAppointments: wrongLocationAppts,
+          } : null);
+          setState('wrong_location');
+        }
       } else if (data.clients.length > 0) {
         // Found client but no appointments - offer walk-in
         setSession(prev => prev ? {

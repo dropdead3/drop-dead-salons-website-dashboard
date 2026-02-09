@@ -6,6 +6,7 @@ import { KioskLookupScreen } from '@/components/kiosk/KioskLookupScreen';
 import { KioskConfirmScreen } from '@/components/kiosk/KioskConfirmScreen';
 import { KioskSuccessScreen } from '@/components/kiosk/KioskSuccessScreen';
 import { KioskErrorScreen } from '@/components/kiosk/KioskErrorScreen';
+import { KioskWrongLocationScreen } from '@/components/kiosk/KioskWrongLocationScreen';
 import { Loader2 } from 'lucide-react';
 
 function KioskContent() {
@@ -24,6 +25,7 @@ function KioskContent() {
       {state === 'idle' && <KioskIdleScreen key="idle" />}
       {state === 'lookup' && <KioskLookupScreen key="lookup" />}
       {state === 'confirm' && <KioskConfirmScreen key="confirm" />}
+      {state === 'wrong_location' && <KioskWrongLocationScreen key="wrong_location" />}
       {state === 'success' && <KioskSuccessScreen key="success" />}
       {state === 'error' && <KioskErrorScreen key="error" />}
       {/* TODO: Add KioskWalkInScreen for walk_in state */}
