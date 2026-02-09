@@ -1214,10 +1214,7 @@ export default function Settings() {
                       </div>
                     </div>
                   </CardContent>
-                </Card>
-
-                {/* Notifications */}
-                <NotificationsCard />
+              </Card>
 
                 {/* Security */}
                 <Card>
