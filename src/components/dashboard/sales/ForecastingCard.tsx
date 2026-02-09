@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
-import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { BlurredAmount, useHideNumbers } from '@/contexts/HideNumbersContext';
 import { useForecastRevenue, ForecastPeriod, DayForecast, WeekForecast } from '@/hooks/useForecastRevenue';
 import { useYearlyGoalProgress } from '@/hooks/useYearlyGoalProgress';
 import { LocationSelect } from '@/components/ui/location-select';
@@ -146,6 +146,7 @@ function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart 
 function AboveBarLabel({ x, y, width, value, ...rest }: any) {
   if (value === undefined || value === null || value === 0) return null;
   const isPeak = rest?.isPeak ?? rest?.payload?.isPeak;
+  const isBlurred = rest?.isBlurred;
   
   return (
     <g style={{ pointerEvents: 'none' }}>
@@ -157,7 +158,7 @@ function AboveBarLabel({ x, y, width, value, ...rest }: any) {
         y={y - 8}
         textAnchor="middle"
         className={cn("text-xs tabular-nums", isPeak ? "fill-chart-2" : "fill-foreground")}
-        style={{ fontWeight: isPeak ? 700 : 500 }}
+        style={{ fontWeight: isPeak ? 700 : 500, filter: isBlurred ? 'blur(8px)' : 'none' }}
       >
         ${value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toLocaleString()}
       </text>
@@ -359,6 +360,7 @@ export function ForecastingCard() {
   const [selectedDay, setSelectedDay] = useState<DayForecast | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { data, isLoading, error } = useForecastRevenue(period, selectedLocation);
+  const { hideNumbers } = useHideNumbers();
   
   const chartRef = useRef<HTMLDivElement>(null);
   const isChartInView = useInView(chartRef, { once: true, amount: 0.3 });
@@ -650,7 +652,7 @@ export function ForecastingCard() {
                   >
                     <LabelList 
                       dataKey="totalRevenue"
-                      content={AboveBarLabel}
+                      content={(props: any) => <AboveBarLabel {...props} isBlurred={hideNumbers} />}
                     />
                     {chartData.map((entry, index) => {
                       const isToday = 'isToday' in entry && entry.isToday;
@@ -707,7 +709,7 @@ export function ForecastingCard() {
                             }}
                             x={chartLeft + padX}
                             y={yPos + fontSize / 2 - 2}
-                            style={{ fontSize, fontWeight: 600 }}
+                            style={{ fontSize, fontWeight: 600, filter: hideNumbers ? 'blur(8px)' : 'none' }}
                             fill="hsl(25, 100%, 55%)"
                           >
                             {avgText}
@@ -768,7 +770,7 @@ export function ForecastingCard() {
                             }}
                             x={chartLeft + padX}
                             y={yPos + fontSize / 2 - 2}
-                            style={{ fontSize, fontWeight: 600 }}
+                            style={{ fontSize, fontWeight: 600, filter: hideNumbers ? 'blur(8px)' : 'none' }}
                             fill="hsl(25, 100%, 55%)"
                           >
                             {avgText}
