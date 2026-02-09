@@ -15,6 +15,7 @@ import {
   Key,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { ModulesTab } from '@/components/access-hub/ModulesTab';
 import { UserRolesTab } from '@/components/access-hub/UserRolesTab';
 import { RoleAccessTab } from '@/components/access-hub/RoleAccessTab';
@@ -29,8 +30,9 @@ type TabValue = 'modules' | 'user-roles' | 'role-access' | 'permissions' | 'role
 export default function AccessHub() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { roles, isPlatformUser } = useAuth();
+  const { data: isPrimaryOwner } = useIsPrimaryOwner();
   const isSuperAdmin = roles.includes('super_admin');
-  const canManage = isSuperAdmin || isPlatformUser;
+  const canManage = isSuperAdmin || isPlatformUser || isPrimaryOwner;
   
   const tabParam = searchParams.get('tab') as TabValue | null;
   const [activeTab, setActiveTab] = useState<TabValue>(tabParam || 'modules');
