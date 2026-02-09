@@ -88,10 +88,6 @@ export default function Payroll() {
           ) : (
             <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
               <TabsList>
-                <TabsTrigger value="hire" className="flex items-center gap-1.5">
-                  <UserPlus className="h-4 w-4" />
-                  Hire
-                </TabsTrigger>
                 <TabsTrigger value="overview" className="flex items-center gap-1.5">
                   <LayoutDashboard className="h-4 w-4" />
                   Overview
@@ -115,6 +111,10 @@ export default function Payroll() {
                 <TabsTrigger value="settings" className="flex items-center gap-1.5">
                   <Settings className="h-4 w-4" />
                   Settings
+                </TabsTrigger>
+                <TabsTrigger value="hire" className="flex items-center gap-1.5">
+                  <UserPlus className="h-4 w-4" />
+                  Hire
                 </TabsTrigger>
               </TabsList>
 
