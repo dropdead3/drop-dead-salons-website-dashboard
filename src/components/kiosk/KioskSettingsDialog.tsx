@@ -30,14 +30,27 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Refs to track latest state values (avoids stale closures)
+  const isOpenRef = useRef(isOpen);
+  const isAuthenticatedRef = useRef(isAuthenticated);
+  
+  // Keep refs in sync with state
+  useEffect(() => {
+    isOpenRef.current = isOpen;
+  }, [isOpen]);
+  
+  useEffect(() => {
+    isAuthenticatedRef.current = isAuthenticated;
+  }, [isAuthenticated]);
+  
   // Reset the inactivity timeout
   const resetTimeout = useCallback(() => {
     // Clear existing timers
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (countdownRef.current) clearInterval(countdownRef.current);
     
-    // Only run timeout when dialog is open and not authenticated
-    if (!isOpen || isAuthenticated) return;
+    // Use refs for current values (avoids stale closures)
+    if (!isOpenRef.current || isAuthenticatedRef.current) return;
     
     // Reset countdown
     setTimeRemaining(PIN_TIMEOUT_SECONDS);
@@ -56,19 +69,26 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
     // Set timeout to close dialog
     timeoutRef.current = setTimeout(() => {
       if (countdownRef.current) clearInterval(countdownRef.current);
-      // Clear state and close
-      setIsAuthenticated(false);
-      setPinInput('');
-      setPinError(false);
-      setTimeRemaining(PIN_TIMEOUT_SECONDS);
-      onClose();
+      
+      // Check refs before closing (ensures we're still in valid state)
+      if (isOpenRef.current && !isAuthenticatedRef.current) {
+        setIsAuthenticated(false);
+        setPinInput('');
+        setPinError(false);
+        setTimeRemaining(PIN_TIMEOUT_SECONDS);
+        onClose();
+      }
     }, PIN_TIMEOUT_SECONDS * 1000);
-  }, [isOpen, isAuthenticated, onClose]);
+  }, [onClose]); // Reduced dependencies - refs handle the rest
   
   // Initialize and clean up timeout
   useEffect(() => {
     if (isOpen && !isAuthenticated) {
-      resetTimeout();
+      // Small delay to ensure clean state after previous close
+      const initTimer = setTimeout(() => {
+        resetTimeout();
+      }, 50);
+      return () => clearTimeout(initTimer);
     } else {
       // Clear timers when authenticated or closed
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
