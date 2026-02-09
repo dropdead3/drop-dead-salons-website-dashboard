@@ -1,15 +1,127 @@
-// Service Worker for Push Notifications
+// Service Worker for Push Notifications and Offline Caching
+
+const CACHE_NAME = 'dd75-cache-v1';
+const OFFLINE_URL = '/offline.html';
+
+// Assets to cache immediately on install
+const PRECACHE_ASSETS = [
+  '/',
+  '/dashboard',
+  '/offline.html',
+  '/favicon.ico',
+];
+
+// API routes to cache for offline access
+const API_CACHE_PATTERNS = [
+  /\/rest\/v1\/phorest_appointments/,
+  /\/rest\/v1\/employee_profiles/,
+  /\/rest\/v1\/locations/,
+];
 
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker...');
-  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('[SW] Precaching app shell');
+        return cache.addAll(PRECACHE_ASSETS);
+      })
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (event) => {
   console.log('[SW] Service worker activated');
-  event.waitUntil(clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((name) => name !== CACHE_NAME)
+          .map((name) => {
+            console.log('[SW] Deleting old cache:', name);
+            return caches.delete(name);
+          })
+      );
+    }).then(() => clients.claim())
+  );
 });
 
+// Network-first strategy for API calls, with cache fallback
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // Skip non-GET requests
+  if (request.method !== 'GET') {
+    return;
+  }
+
+  // Handle API requests with network-first strategy
+  const isAPIRequest = API_CACHE_PATTERNS.some(pattern => pattern.test(url.pathname));
+  
+  if (isAPIRequest) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          // Clone and cache successful responses
+          if (response.ok) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Return cached version if network fails
+          return caches.match(request).then((cachedResponse) => {
+            if (cachedResponse) {
+              console.log('[SW] Serving cached API response:', url.pathname);
+              return cachedResponse;
+            }
+            // Return empty JSON if no cache
+            return new Response(JSON.stringify({ data: [], error: 'Offline' }), {
+              headers: { 'Content-Type': 'application/json' },
+            });
+          });
+        })
+    );
+    return;
+  }
+
+  // Handle navigation requests
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).catch(() => {
+        return caches.match(OFFLINE_URL);
+      })
+    );
+    return;
+  }
+
+  // Cache-first strategy for static assets
+  if (url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff2?)$/)) {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        return fetch(request).then((response) => {
+          if (response.ok) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        });
+      })
+    );
+    return;
+  }
+});
+
+// Push notification handling
 self.addEventListener('push', (event) => {
   console.log('[SW] Push message received');
   
@@ -85,3 +197,18 @@ self.addEventListener('pushsubscriptionchange', (event) => {
   // The subscription has changed (e.g., expired)
   // The app should re-subscribe when the user next opens it
 });
+
+// Background sync for offline actions
+self.addEventListener('sync', (event) => {
+  console.log('[SW] Background sync:', event.tag);
+  
+  if (event.tag === 'sync-offline-actions') {
+    event.waitUntil(syncOfflineActions());
+  }
+});
+
+async function syncOfflineActions() {
+  // Get pending actions from IndexedDB and sync them
+  console.log('[SW] Syncing offline actions...');
+  // Implementation will be handled by useOfflineSync hook
+}

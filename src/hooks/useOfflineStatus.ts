@@ -1,0 +1,173 @@
+import { useState, useEffect, useCallback } from 'react';
+
+interface OfflineStatusState {
+  isOnline: boolean;
+  isOffline: boolean;
+  wasOffline: boolean;
+  lastOnline: Date | null;
+}
+
+export function useOfflineStatus(): OfflineStatusState {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [wasOffline, setWasOffline] = useState(false);
+  const [lastOnline, setLastOnline] = useState<Date | null>(
+    navigator.onLine ? new Date() : null
+  );
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      setLastOnline(new Date());
+      
+      // If we were offline, mark it
+      if (!navigator.onLine) {
+        setWasOffline(true);
+      }
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  return {
+    isOnline,
+    isOffline: !isOnline,
+    wasOffline,
+    lastOnline,
+  };
+}
+
+// Hook for offline action queue
+interface OfflineAction {
+  id: string;
+  type: string;
+  payload: any;
+  timestamp: number;
+  retries: number;
+}
+
+const STORAGE_KEY = 'dd75-offline-actions';
+
+export function useOfflineSync() {
+  const { isOnline } = useOfflineStatus();
+  const [pendingActions, setPendingActions] = useState<OfflineAction[]>([]);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  // Load pending actions from localStorage on mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setPendingActions(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('[OfflineSync] Error loading pending actions:', error);
+    }
+  }, []);
+
+  // Save pending actions to localStorage when they change
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(pendingActions));
+    } catch (error) {
+      console.error('[OfflineSync] Error saving pending actions:', error);
+    }
+  }, [pendingActions]);
+
+  // Queue an action for later sync
+  const queueAction = useCallback((type: string, payload: any): string => {
+    const action: OfflineAction = {
+      id: crypto.randomUUID(),
+      type,
+      payload,
+      timestamp: Date.now(),
+      retries: 0,
+    };
+
+    setPendingActions(prev => [...prev, action]);
+    console.log('[OfflineSync] Action queued:', action.id);
+    
+    return action.id;
+  }, []);
+
+  // Remove a specific action
+  const removeAction = useCallback((id: string) => {
+    setPendingActions(prev => prev.filter(a => a.id !== id));
+  }, []);
+
+  // Clear all pending actions
+  const clearActions = useCallback(() => {
+    setPendingActions([]);
+  }, []);
+
+  // Sync all pending actions when online
+  const syncActions = useCallback(async (
+    processor: (action: OfflineAction) => Promise<boolean>
+  ) => {
+    if (!isOnline || pendingActions.length === 0 || isSyncing) {
+      return;
+    }
+
+    setIsSyncing(true);
+    console.log('[OfflineSync] Starting sync of', pendingActions.length, 'actions');
+
+    const results: { id: string; success: boolean }[] = [];
+
+    for (const action of pendingActions) {
+      try {
+        const success = await processor(action);
+        results.push({ id: action.id, success });
+        
+        if (success) {
+          console.log('[OfflineSync] Action synced:', action.id);
+        } else {
+          console.warn('[OfflineSync] Action failed:', action.id);
+        }
+      } catch (error) {
+        console.error('[OfflineSync] Error processing action:', action.id, error);
+        results.push({ id: action.id, success: false });
+      }
+    }
+
+    // Remove successful actions
+    const successIds = results.filter(r => r.success).map(r => r.id);
+    setPendingActions(prev => prev.filter(a => !successIds.includes(a.id)));
+
+    setIsSyncing(false);
+    console.log('[OfflineSync] Sync complete:', successIds.length, 'succeeded');
+  }, [isOnline, pendingActions, isSyncing]);
+
+  // Auto-sync when coming back online
+  useEffect(() => {
+    if (isOnline && pendingActions.length > 0) {
+      // Request background sync if available
+      if ('serviceWorker' in navigator && 'SyncManager' in window) {
+        navigator.serviceWorker.ready.then((registration) => {
+          if ('sync' in registration) {
+            (registration as any).sync.register('sync-offline-actions');
+          }
+        }).catch(console.error);
+      }
+    }
+  }, [isOnline, pendingActions.length]);
+
+  return {
+    pendingActions,
+    hasPendingActions: pendingActions.length > 0,
+    pendingCount: pendingActions.length,
+    isSyncing,
+    queueAction,
+    removeAction,
+    clearActions,
+    syncActions,
+  };
+}

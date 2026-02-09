@@ -1,0 +1,98 @@
+{
+  "name": "Drop Dead 75 Dashboard",
+  "short_name": "DD75",
+  "description": "Salon management dashboard for Drop Dead 75",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#0f0f0f",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Ring the Bell",
+      "short_name": "Bell",
+      "url": "/dashboard/ring-the-bell",
+      "description": "Celebrate a win by ringing the bell",
+      "icons": [{ "src": "/icons/bell.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Today's Schedule",
+      "short_name": "Schedule",
+      "url": "/dashboard/schedule",
+      "description": "View today's appointments",
+      "icons": [{ "src": "/icons/calendar.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "My Stats",
+      "short_name": "Stats",
+      "url": "/dashboard/stats",
+      "description": "View your performance metrics",
+      "icons": [{ "src": "/icons/chart.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Team Chat",
+      "short_name": "Chat",
+      "url": "/dashboard/team-chat",
+      "description": "Chat with your team",
+      "icons": [{ "src": "/icons/chat.png", "sizes": "96x96" }]
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

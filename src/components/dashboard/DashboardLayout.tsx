@@ -36,6 +36,7 @@ import { ImpersonationHistoryPanel } from '@/components/dashboard/ImpersonationH
 import { CustomLandingPageBanner } from '@/components/dashboard/CustomLandingPageBanner';
 import { HelpFAB } from '@/components/dashboard/HelpFAB';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
+import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
 import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
 import { PlatformContextBanner } from '@/components/platform/PlatformContextBanner';
 import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
@@ -1108,6 +1109,9 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       
       {/* Help FAB */}
       <HelpFAB />
+      
+      {/* Keyboard Shortcuts Dialog */}
+      <KeyboardShortcutsDialog />
       </div>
     </div>
   );
