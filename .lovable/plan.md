@@ -1,31 +1,18 @@
 
-# Add Left Margin for Daily Average Labels
+# Fix: Render Daily Average Line On Top of Bars
 
 ## Problem
-The bar charts span the full width with `YAxis hide` and only 5px left margin, so the "Daily Avg: $X,XXX" label on the orange reference line gets cramped/clipped against the left edge.
+The orange dashed "Daily Avg" reference line renders behind the bars because in Recharts, SVG elements are painted in order — elements declared first appear behind later ones. Currently the `ReferenceLine` is placed before the `Bar` components.
 
 ## Solution
-Increase the left margin of the `BarChart` components and show a minimal YAxis with currency formatting. This creates natural space on the left for the reference line label to display clearly.
+Move the `ReferenceLine` components to appear **after** the `Bar` components in both chart files. This ensures the orange line renders on top of all bars.
 
 ## Changes
 
-### 1. `src/components/dashboard/sales/ForecastingCard.tsx`
-- Change `BarChart` margin from `left: 5` to `left: 45`
-- Un-hide the `YAxis`: replace `<YAxis hide domain={[0, 'auto']} />` with a visible YAxis showing abbreviated dollar amounts (e.g. "$1k", "$2k") in small font, no axis line or tick lines
+### 1. `src/components/dashboard/sales/WeekAheadForecast.tsx`
+- Move the `ReferenceLine` block (lines 229-244) to after the last `</Bar>` (after line 293), just before `</BarChart>`
 
-### 2. `src/components/dashboard/sales/WeekAheadForecast.tsx`
-- Same changes: increase left margin to 45 and show a minimal YAxis with dollar formatting
+### 2. `src/components/dashboard/sales/ForecastingCard.tsx`
+- Move the daily average `ReferenceLine` block (lines 571-587) and the weekly average `ReferenceLine` block (lines 589-605) to after the last `</Bar>` (after line 654), just before `</BarChart>`
 
-### YAxis Style
-```tsx
-<YAxis 
-  domain={[0, 'auto']}
-  tickFormatter={(v) => `$${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`}
-  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-  tickLine={false}
-  axisLine={false}
-  width={40}
-/>
-```
-
-This gives the chart breathing room on the left so the orange daily average label and amount are clearly visible without overlapping bars.
+No styling or margin changes needed — just reordering the JSX elements within each `BarChart`.
