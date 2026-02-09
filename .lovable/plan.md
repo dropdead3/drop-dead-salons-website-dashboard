@@ -1,511 +1,527 @@
 
-# Implementation Progress
+# Category 3-7: Remaining Enhancement Categories - Full Implementation Plan
 
-## ✅ Category 1: AI & Automation Enhancements (COMPLETE)
-- AI Scheduling Copilot
-- Smart Revenue Forecasting  
-- Automated Client Follow-ups
-- Anomaly Detection Alerts
+## Status Summary
 
-## ✅ Category 2: Analytics & Reporting Enhancements (COMPLETE)
-- Custom Report Builder (Custom Builder sub-tab in Reports)
-- Scheduled Reports (Scheduled sub-tab in Reports)
-- Visual Comparisons (WaterfallChart in Compare sub-tab)
-- Benchmarks & Context Indicators
-- Cross-Metric Correlations (Correlations sub-tab in Sales)
-
----
-
-# Category 2: Analytics & Reporting Enhancements - Full Implementation Plan
-
-## Executive Summary
-
-This plan enhances the existing analytics infrastructure with **Comparative Analytics**, a **Custom Report Builder**, **Scheduled Reports**, **Data Visualization Upgrades**, and **Cross-Metric Dashboards**. The implementation builds on the existing `useComparisonData` hook, `report_history` table, and Recharts-based visualization components.
+| Category | Status | Priority |
+|----------|--------|----------|
+| 1. AI & Automation | ✅ Complete | - |
+| 2. Analytics & Reporting | ✅ Complete | - |
+| 3. Mobile & UX | 🔄 To Implement | High |
+| 4. Team Collaboration | 🔄 To Implement | High |
+| 5. Platform Admin | 🔄 To Implement | Medium |
+| 6. Quick Wins | 🔄 To Implement | High |
+| 7. Technical Debt | 🔄 To Implement | Medium |
 
 ---
 
-## Current State Analysis
+## Category 3: Mobile & UX Improvements
 
-### Existing Infrastructure (All Implemented ✅)
+### Current State
+- Basic `useIsMobile` hook exists (`src/hooks/use-mobile.tsx`)
+- No dedicated mobile components or layouts
+- No PWA manifest or service worker
+- No offline capabilities
+- Dashboard is responsive but not mobile-optimized
 
-| Component | Status | Location |
-|-----------|--------|----------|
-| Period Comparison | ✅ Implemented | `useComparisonData.ts`, `CompareTabContent.tsx` |
-| Report Generation | ✅ Basic PDF/CSV | `SalesReportGenerator.tsx`, `StaffKPIReport.tsx` |
-| Report History | ✅ Tracking only | `report_history` table, `RecentReports.tsx` |
-| Sparklines | ✅ Basic | `TrendSparkline.tsx` |
-| YoY Comparison | ✅ Implemented | `YearOverYearComparison.tsx` |
-| Location Comparison | ✅ Implemented | `LocationComparison.tsx` |
-| Analytics Hub | ✅ Tabs structure | `AnalyticsHub.tsx` with 6 main tabs |
-| Custom Report Builder | ✅ Implemented | `ReportBuilderPage.tsx` |
-| Scheduled Reports | ✅ Implemented | `ScheduledReportsSubTab.tsx` |
-| WaterfallChart | ✅ Implemented | `WaterfallChart.tsx` |
-| Correlation Matrix | ✅ Implemented | `CorrelationMatrix.tsx`, `CorrelationsContent.tsx` |
-| Benchmarks | ✅ Implemented | `BenchmarkBar.tsx`, `useBenchmarks.ts` |
+### Feature 3.1: Mobile-First Schedule View
 
-### Identified Gaps (All Resolved ✅)
+**Purpose**: Provide a dedicated mobile interface for viewing and managing today's schedule.
 
-1. ~~**No Custom Report Builder**~~ → ✅ Implemented
-2. ~~**No Scheduled Reports**~~ → ✅ Implemented  
-3. ~~**No Visual Diff Mode**~~ → ✅ WaterfallChart added
-4. ~~**No Saved Report Templates**~~ → ✅ Template library implemented
-5. ~~**Limited Benchmark Data**~~ → ✅ Benchmark indicators added
-6. ~~**No Cross-Metric Correlation**~~ → ✅ Correlation analysis added
-
----
-
-## Implementation Plan
-
-### Feature 1: Custom Report Builder
-
-#### Purpose
-Allow users to build custom reports by selecting metrics, dimensions, filters, and visualizations - then save as templates for reuse.
-
-#### Database Changes
-
-```sql
--- Custom report configurations
-CREATE TABLE custom_report_templates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  description TEXT,
-  created_by UUID REFERENCES auth.users(id),
-  is_shared BOOLEAN DEFAULT false,
-  config JSONB NOT NULL, -- { metrics: [], dimensions: [], filters: [], visualization: 'table'|'chart' }
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Track template usage for popularity sorting
-CREATE TABLE report_template_usage (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  template_id UUID REFERENCES custom_report_templates(id) ON DELETE CASCADE,
-  used_by UUID REFERENCES auth.users(id),
-  used_at TIMESTAMPTZ DEFAULT now()
-);
-
-ALTER TABLE custom_report_templates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE report_template_usage ENABLE ROW LEVEL SECURITY;
-
--- RLS: Users see org templates + their own
-CREATE POLICY "View org templates" ON custom_report_templates
-  FOR SELECT USING (
-    organization_id = public.get_user_organization(auth.uid())
-    OR created_by = auth.uid()
-  );
-
-CREATE POLICY "Manage own templates" ON custom_report_templates
-  FOR ALL USING (created_by = auth.uid());
-```
-
-#### Config Schema (JSONB)
-
-```typescript
-interface ReportConfig {
-  metrics: {
-    id: string;           // 'total_revenue', 'service_count', etc.
-    aggregation: 'sum' | 'avg' | 'count' | 'min' | 'max';
-    label?: string;       // Custom display name
-  }[];
-  dimensions: {
-    id: string;           // 'date', 'location', 'stylist', 'service_category'
-    groupBy?: 'day' | 'week' | 'month';
-  }[];
-  filters: {
-    field: string;
-    operator: 'eq' | 'neq' | 'gt' | 'lt' | 'between' | 'in';
-    value: any;
-  }[];
-  visualization: 'table' | 'bar_chart' | 'line_chart' | 'pie_chart' | 'area_chart';
-  dateRange: 'inherit' | 'custom';
-  customDateRange?: { from: string; to: string };
-}
-```
-
-#### Frontend Components
+**New Components**:
 
 | Component | Description |
 |-----------|-------------|
-| `ReportBuilderPage.tsx` | Full-page builder with drag-and-drop sections |
-| `MetricSelector.tsx` | Multi-select for available metrics |
-| `DimensionPicker.tsx` | Choose how to slice data (by date, location, staff) |
-| `FilterBuilder.tsx` | Visual filter construction UI |
-| `VisualizationPreview.tsx` | Real-time preview of report output |
-| `SaveTemplateDialog.tsx` | Save/share template modal |
-| `TemplateLibrary.tsx` | Browse and load saved templates |
-| `useCustomReport.ts` | Hook to execute custom report configs |
+| `MobileScheduleView.tsx` | Optimized schedule view for mobile devices |
+| `MobileAgendaCard.tsx` | Touch-friendly appointment cards |
+| `SwipeableAppointment.tsx` | Swipe actions for check-in/complete/cancel |
+| `MobileQuickBook.tsx` | Simplified mobile booking flow |
+| `MobileClientLookup.tsx` | Quick client search with recent history |
 
-#### Available Metrics Library
-
-```typescript
-const AVAILABLE_METRICS = [
-  // Revenue Metrics
-  { id: 'total_revenue', label: 'Total Revenue', category: 'Revenue', source: 'phorest_daily_sales_summary' },
-  { id: 'service_revenue', label: 'Service Revenue', category: 'Revenue', source: 'phorest_daily_sales_summary' },
-  { id: 'product_revenue', label: 'Product Revenue', category: 'Revenue', source: 'phorest_daily_sales_summary' },
-  { id: 'avg_ticket', label: 'Average Ticket', category: 'Revenue', calculated: true },
-  
-  // Operations Metrics
-  { id: 'appointment_count', label: 'Appointments', category: 'Operations', source: 'phorest_appointments' },
-  { id: 'no_show_count', label: 'No-Shows', category: 'Operations', source: 'phorest_appointments' },
-  { id: 'cancellation_count', label: 'Cancellations', category: 'Operations', source: 'phorest_appointments' },
-  { id: 'utilization_rate', label: 'Utilization %', category: 'Operations', calculated: true },
-  
-  // Client Metrics
-  { id: 'new_clients', label: 'New Clients', category: 'Clients', source: 'phorest_appointments' },
-  { id: 'returning_clients', label: 'Returning Clients', category: 'Clients', source: 'phorest_appointments' },
-  { id: 'retention_rate', label: 'Retention Rate', category: 'Clients', calculated: true },
-  
-  // Staff Metrics
-  { id: 'staff_revenue', label: 'Revenue per Staff', category: 'Staff', calculated: true },
-  { id: 'rebooking_rate', label: 'Rebooking Rate', category: 'Staff', calculated: true },
-];
+**Technical Implementation**:
+```text
+src/components/mobile/
+├── schedule/
+│   ├── MobileScheduleView.tsx
+│   ├── MobileAgendaCard.tsx
+│   ├── SwipeableAppointment.tsx
+│   └── MobileQuickBook.tsx
+├── clients/
+│   ├── MobileClientLookup.tsx
+│   └── MobileClientCard.tsx
+└── layout/
+    ├── MobileBottomNav.tsx
+    ├── MobileHeader.tsx
+    └── MobilePullToRefresh.tsx
 ```
+
+### Feature 3.2: PWA Quick Actions Widget
+
+**Purpose**: Allow staff to quickly log metrics, ring the bell, or view schedule from home screen.
+
+**Database Changes**:
+```sql
+-- Store PWA installation preferences
+CREATE TABLE pwa_installations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  device_token TEXT,
+  device_type TEXT, -- 'ios', 'android', 'desktop'
+  installed_at TIMESTAMPTZ DEFAULT now(),
+  last_active_at TIMESTAMPTZ DEFAULT now(),
+  push_enabled BOOLEAN DEFAULT false
+);
+
+ALTER TABLE pwa_installations ENABLE ROW LEVEL SECURITY;
+```
+
+**New Files**:
+
+| File | Description |
+|------|-------------|
+| `public/manifest.json` | PWA manifest with shortcuts |
+| `public/sw.js` | Service worker for offline caching |
+| `src/hooks/usePWAInstall.ts` | Hook for install prompt and status |
+| `src/components/PWAInstallPrompt.tsx` | Smart install banner |
+
+**Manifest Configuration**:
+```json
+{
+  "name": "Salon Dashboard",
+  "short_name": "Dashboard",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "shortcuts": [
+    {
+      "name": "Ring the Bell",
+      "url": "/dashboard/ring-the-bell",
+      "icons": [{ "src": "/icons/bell.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Today's Schedule",
+      "url": "/dashboard/schedule",
+      "icons": [{ "src": "/icons/calendar.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Log Metrics",
+      "url": "/dashboard/stats",
+      "icons": [{ "src": "/icons/chart.png", "sizes": "96x96" }]
+    }
+  ]
+}
+```
+
+### Feature 3.3: Offline Mode for Today's Queue
+
+**Purpose**: Cache today's appointments and client notes for offline access.
+
+**Technical Implementation**:
+- Use service worker to cache critical API responses
+- IndexedDB storage for appointment and client data
+- Sync queue for offline actions (check-in, notes)
+- Visual indicator for offline status
+
+**New Hooks**:
+
+| Hook | Description |
+|------|-------------|
+| `useOfflineStatus.ts` | Detect and expose online/offline state |
+| `useOfflineCache.ts` | Manage IndexedDB cache for appointments |
+| `useOfflineSync.ts` | Queue and sync offline actions |
 
 ---
 
-### Feature 2: Scheduled Reports
+## Category 4: Team Collaboration Enhancements
 
-#### Purpose
-Allow users to schedule reports for automatic generation and email delivery on a recurring basis.
+### Current State
+- Full team chat system exists (`src/components/team-chat/`)
+- @mention functionality implemented (`MentionInput.tsx`, `MentionAutocomplete.tsx`)
+- `account_note_mentions` table exists in database
+- Notification preferences system in place
+- No shared team calendar for availability
 
-#### Database Changes
+### Feature 4.1: @Mention Notifications Enhancement
 
+**Purpose**: Extend existing mentions to trigger push/email notifications and create a unified mentions inbox.
+
+**Database Changes**:
 ```sql
--- Scheduled report configurations
-CREATE TABLE scheduled_reports (
+-- Unified mentions table for all mention types
+CREATE TABLE user_mentions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-  template_id UUID REFERENCES custom_report_templates(id) ON DELETE SET NULL,
-  report_type TEXT, -- For built-in reports without template
-  name TEXT NOT NULL,
-  schedule_type TEXT NOT NULL, -- 'daily', 'weekly', 'monthly', 'first_of_month', 'last_of_month'
-  schedule_config JSONB, -- { dayOfWeek: 1, timeUtc: '09:00', timezone: 'America/Phoenix' }
-  recipients JSONB NOT NULL, -- [{ email: '', userId: '' }]
-  format TEXT DEFAULT 'pdf', -- 'pdf', 'csv', 'excel'
-  filters JSONB, -- Location, date range overrides
-  is_active BOOLEAN DEFAULT true,
-  last_run_at TIMESTAMPTZ,
-  next_run_at TIMESTAMPTZ,
-  created_by UUID REFERENCES auth.users(id),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  mentioned_by UUID REFERENCES auth.users(id),
+  source_type TEXT NOT NULL, -- 'chat', 'note', 'task', 'announcement'
+  source_id UUID NOT NULL,
+  source_context TEXT, -- preview of the message
+  read_at TIMESTAMPTZ,
+  notified_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Execution log
-CREATE TABLE scheduled_report_runs (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  scheduled_report_id UUID REFERENCES scheduled_reports(id) ON DELETE CASCADE,
-  status TEXT NOT NULL, -- 'pending', 'running', 'completed', 'failed'
-  started_at TIMESTAMPTZ DEFAULT now(),
-  completed_at TIMESTAMPTZ,
-  file_url TEXT,
-  recipient_count INTEGER,
-  error_message TEXT
-);
+CREATE INDEX idx_user_mentions_user ON user_mentions(user_id, read_at);
 
-ALTER TABLE scheduled_reports ENABLE ROW LEVEL SECURITY;
-ALTER TABLE scheduled_report_runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_mentions ENABLE ROW LEVEL SECURITY;
 ```
 
-#### Edge Function: `process-scheduled-reports`
-
+**Edge Function**: `process-mention-notifications`
 ```text
-supabase/functions/process-scheduled-reports/index.ts
+Purpose: Send push/email notifications for new mentions
 
-Purpose: Cron job to process due scheduled reports
-
-Schedule: Every hour via pg_cron
+Triggers: 
+- INSERT on team_chat_messages with mentions
+- INSERT on account_notes with mentions
+- INSERT on announcement_comments with mentions
 
 Logic:
-1. Query scheduled_reports where next_run_at <= now() AND is_active = true
-2. For each due report:
-   a. Create run record with status = 'running'
-   b. Execute report query based on template or report_type
-   c. Generate PDF/CSV file
-   d. Upload to storage bucket
-   e. Send email to recipients via existing email infrastructure
-   f. Update run record with status = 'completed'
-   g. Calculate and update next_run_at based on schedule_type
-3. Handle failures gracefully with retry logic
+1. Parse mention format: @[Name](userId)
+2. Check user notification preferences
+3. Queue push notification if enabled
+4. Queue email if email_notifications_enabled
+5. Insert into user_mentions table
 ```
 
-#### Frontend Components
+**Frontend Components**:
 
 | Component | Description |
 |-----------|-------------|
-| `ScheduleReportDialog.tsx` | Modal to configure schedule |
-| `ScheduledReportsManager.tsx` | List/manage all scheduled reports |
-| `ScheduleFrequencyPicker.tsx` | Visual schedule configuration |
-| `RecipientSelector.tsx` | Select team members or enter emails |
-| `ScheduleRunHistory.tsx` | View past runs and download files |
-| `useScheduledReports.ts` | CRUD for scheduled reports |
+| `MentionsInbox.tsx` | Unified view of all mentions |
+| `MentionNotificationBadge.tsx` | Badge showing unread mention count |
+| `MentionContextCard.tsx` | Preview card with source link |
+| `useMentions.ts` | Hook for fetching/marking mentions |
 
----
+### Feature 4.2: Shared Team Calendar
 
-### Feature 3: Visual Comparison Dashboard
+**Purpose**: Show team availability, time-off, and important dates in a shared view.
 
-#### Purpose
-Provide visual overlays and diff views for period-over-period comparisons beyond simple percentage changes.
-
-#### New Visualizations
-
-**3.1 Waterfall Chart for Revenue Changes**
-
-```text
-Shows exactly where revenue increased/decreased between periods:
-
-                    $50,000 (This Month)
-                       ↑
-    [Services +$3,200] ─┤
-    [Products +$800]   ─┤
-    [New Clients +$1,500] ─┤
-    [Cancellations -$500] ─┤
-                       ↓
-                    $45,000 (Last Month)
-```
-
-**3.2 Synchronized Dual-Axis Chart**
-
-```text
-Overlay two periods on the same chart with different colored lines:
-- Period A (solid line)
-- Period B (dashed line)
-- Shaded area shows the gap between them
-```
-
-**3.3 Delta Heatmap**
-
-```text
-Grid showing change intensity by day/hour:
-- Green cells: Above average
-- Red cells: Below average
-- Intensity shows magnitude
-```
-
-#### New Components
-
-| Component | Description |
-|-----------|-------------|
-| `WaterfallChart.tsx` | Vertical waterfall for revenue breakdown |
-| `DualPeriodOverlay.tsx` | Two periods on same chart with gap shading |
-| `DeltaHeatmap.tsx` | Grid showing change magnitude by dimension |
-| `ComparisonDashboard.tsx` | Full comparison dashboard layout |
-| `MetricDeltaCard.tsx` | Single metric with visual before/after |
-| `TrendComparisonBand.tsx` | Range band showing confidence intervals |
-
-#### Enhanced useComparisonData Hook
-
-```typescript
-// Add new return values
-interface EnhancedComparisonResult extends ComparisonResult {
-  // Waterfall data
-  waterfall: {
-    category: string;
-    delta: number;
-    isIncrease: boolean;
-  }[];
-  
-  // Daily overlay data
-  dailyOverlay: {
-    date: string;
-    periodA: number;
-    periodB: number;
-    delta: number;
-  }[];
-  
-  // Heatmap data
-  heatmapData: {
-    dimension: string;
-    subdimension: string;
-    periodA: number;
-    periodB: number;
-    changePercent: number;
-  }[];
-}
-```
-
----
-
-### Feature 4: Benchmark & Context Indicators
-
-#### Purpose
-Provide context for metrics by showing industry benchmarks, historical averages, and goal progress alongside actual values.
-
-#### Database Changes
-
+**Database Changes**:
 ```sql
--- Store benchmark data (can be org-specific or industry-wide)
-CREATE TABLE metric_benchmarks (
+-- Team calendar events (different from appointments)
+CREATE TABLE team_calendar_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id), -- NULL for industry benchmarks
-  metric_key TEXT NOT NULL,
-  benchmark_type TEXT NOT NULL, -- 'industry', 'historical_avg', 'goal', 'peer_group'
-  value NUMERIC NOT NULL,
-  context TEXT, -- 'salon_industry_2025', 'org_90day_avg', etc.
-  valid_from DATE,
-  valid_to DATE,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  location_id TEXT,
+  title TEXT NOT NULL,
+  description TEXT,
+  event_type TEXT NOT NULL, -- 'meeting', 'training', 'time_off', 'holiday', 'special'
+  start_date DATE NOT NULL,
+  end_date DATE,
+  start_time TIME,
+  end_time TIME,
+  all_day BOOLEAN DEFAULT false,
+  recurring_pattern JSONB, -- { frequency: 'weekly', days: [1,3,5] }
+  visibility TEXT DEFAULT 'team', -- 'team', 'leadership', 'private'
+  created_by UUID REFERENCES auth.users(id),
+  attendees JSONB, -- [{ userId, status: 'confirmed'|'tentative'|'declined' }]
+  color TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- RLS for org-specific benchmarks
-ALTER TABLE metric_benchmarks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE team_calendar_events ENABLE ROW LEVEL SECURITY;
 ```
 
-#### Benchmark Display Patterns
-
-```typescript
-interface BenchmarkContext {
-  metricKey: string;
-  currentValue: number;
-  benchmarks: {
-    type: 'industry' | 'historical' | 'goal' | 'peer';
-    value: number;
-    label: string;
-    percentDiff: number;
-  }[];
-}
-```
-
-#### UI Enhancements
-
-**Inline Benchmark Indicators:**
-
-```text
-Average Ticket: $85
-┌──────────────────────────────────────┐
-│ ████████████████████░░░░░ 85%        │
-│ ▲ Industry Avg: $78 (+9%)            │
-│ ○ Your 90-day Avg: $82 (+4%)         │
-│ ◎ Goal: $100 (15% to go)             │
-└──────────────────────────────────────┘
-```
-
-#### Components
+**Frontend Components**:
 
 | Component | Description |
 |-----------|-------------|
-| `BenchmarkBar.tsx` | Horizontal bar with benchmark markers |
-| `BenchmarkTooltip.tsx` | Hover tooltip with benchmark details |
-| `ContextualMetricCard.tsx` | Metric card with built-in benchmarks |
-| `GoalProgressIndicator.tsx` | Visual progress toward goals |
-| `useBenchmarks.ts` | Fetch benchmarks for given metrics |
+| `TeamCalendarPage.tsx` | Full calendar view with filters |
+| `TeamCalendarMini.tsx` | Widget for dashboard |
+| `CalendarEventCard.tsx` | Event detail popover |
+| `CreateEventDialog.tsx` | Add new team events |
+| `useTeamCalendar.ts` | CRUD for calendar events |
+
+### Feature 4.3: Daily Huddle Automation
+
+**Purpose**: Auto-generate pre-shift team huddle agendas from analytics data.
+
+**Edge Function**: `generate-daily-huddle`
+```text
+Purpose: Create daily meeting agenda from analytics
+
+Schedule: 6 AM daily via pg_cron
+
+Generated Content:
+1. Yesterday's Highlights
+   - Revenue vs goal
+   - Top performer
+   - Notable achievements (bells rung)
+   
+2. Today's Focus
+   - Expected revenue
+   - Key appointments
+   - Birthday clients
+   
+3. Attention Items
+   - No-shows/cancellations yesterday
+   - Active anomalies
+   - Low inventory alerts
+   
+4. Celebrations
+   - Team birthdays today
+   - Work anniversaries
+   - Recent graduations
+```
+
+**Frontend Integration**:
+- Add to existing `/dashboard/admin/daily-huddle` page
+- Auto-populated sections with "AI Generated" badge
+- Manual edit capability before publishing
 
 ---
 
-### Feature 5: Cross-Metric Correlation Dashboard
+## Category 5: Platform Admin Enhancements
 
-#### Purpose
-Show how different metrics relate to each other to help identify drivers of business success.
+### Current State
+- Platform admin pages exist (`src/pages/dashboard/platform/`)
+- Organization stats hook exists (`useOrganizationStats`)
+- No organization health score
+- No cross-organization benchmarking
+- No tenant engagement tracking
 
-#### Correlation Analysis
+### Feature 5.1: Organization Health Score Dashboard
 
-**Key Questions Answered:**
-- "When service revenue goes up, does product revenue follow?"
-- "Do more new clients correlate with higher utilization?"
-- "Is there a relationship between rebooking rate and average ticket?"
+**Purpose**: Calculate and display a health score for each tenant based on engagement, adoption, and performance metrics.
 
-#### Components
+**Database Changes**:
+```sql
+-- Store computed health scores
+CREATE TABLE organization_health_scores (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  score NUMERIC(5,2) NOT NULL, -- 0-100
+  score_breakdown JSONB NOT NULL,
+  -- Breakdown: { adoption: 85, engagement: 72, performance: 91, data_quality: 88 }
+  risk_level TEXT, -- 'healthy', 'at_risk', 'critical'
+  trends JSONB, -- { score_30d_ago: 78, score_7d_ago: 82 }
+  recommendations JSONB, -- AI-generated improvement suggestions
+  calculated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(organization_id, calculated_at::DATE)
+);
+
+ALTER TABLE organization_health_scores ENABLE ROW LEVEL SECURITY;
+```
+
+**Score Calculation Factors**:
+
+| Factor | Weight | Metrics |
+|--------|--------|---------|
+| Adoption | 25% | Active users, feature utilization, login frequency |
+| Engagement | 25% | Chat activity, announcements read, tasks completed |
+| Performance | 30% | Revenue vs goals, KPI trends, bookings |
+| Data Quality | 20% | Sync success rate, data completeness, error rate |
+
+**Edge Function**: `calculate-health-scores`
+```text
+Purpose: Daily calculation of org health scores
+
+Schedule: 5 AM daily via pg_cron
+
+Logic:
+1. For each active organization:
+   a. Calculate adoption metrics (DAU/MAU, feature usage)
+   b. Calculate engagement metrics (activity levels)
+   c. Calculate performance metrics (business outcomes)
+   d. Calculate data quality (sync health)
+2. Apply weighted average for total score
+3. Determine risk level thresholds
+4. Generate AI recommendations for improvement
+5. Store in organization_health_scores
+```
+
+**Frontend Components**:
 
 | Component | Description |
 |-----------|-------------|
-| `CorrelationMatrix.tsx` | Grid showing correlation coefficients |
-| `ScatterPlotCard.tsx` | Two metrics plotted against each other |
-| `CausationInsights.tsx` | AI-generated insights about relationships |
-| `MetricDriversPanel.tsx` | Show what's driving a selected metric |
-| `useCorrelationAnalysis.ts` | Calculate correlations from historical data |
+| `HealthScoreDashboard.tsx` | Main platform admin view |
+| `HealthScoreCard.tsx` | Individual org health card |
+| `HealthScoreBreakdown.tsx` | Detailed score factors |
+| `HealthTrendChart.tsx` | Score over time visualization |
+| `RiskAlertsList.tsx` | At-risk organizations list |
+| `useOrganizationHealth.ts` | Fetch health scores |
 
-#### Calculation Logic
+### Feature 5.2: Cross-Organization Benchmarking
 
+**Purpose**: Compare organizations against each other to identify best practices and struggling accounts.
+
+**Database Changes**:
+```sql
+-- Benchmark metrics per organization
+CREATE TABLE organization_benchmarks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  metric_key TEXT NOT NULL,
+  value NUMERIC NOT NULL,
+  percentile INTEGER, -- 0-100, where they rank
+  period_start DATE NOT NULL,
+  period_end DATE NOT NULL,
+  comparison_group TEXT, -- 'all', 'same_size', 'same_tier'
+  calculated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(organization_id, metric_key, period_start, comparison_group)
+);
+
+ALTER TABLE organization_benchmarks ENABLE ROW LEVEL SECURITY;
+```
+
+**Benchmarked Metrics**:
+- Revenue per location
+- Appointments per staff
+- Rebooking rate
+- Average ticket
+- Feature adoption rate
+- User engagement score
+
+**Frontend Components**:
+
+| Component | Description |
+|-----------|-------------|
+| `BenchmarkComparison.tsx` | Side-by-side org comparison |
+| `BenchmarkLeaderboard.tsx` | Top performers by metric |
+| `PercentileIndicator.tsx` | Visual percentile ranking |
+
+---
+
+## Category 6: Quick Wins
+
+### 6.1: Extend "Yesterday" View to All Analytics Cards
+
+**Current State**: Only some cards support the "Yesterday" date filter.
+
+**Implementation**:
+- Update all analytics cards to handle `dateRange === 'yesterday'`
+- Ensure queries properly filter by yesterday's date
+- Display "Final" badge to indicate data is complete
+
+**Affected Components**:
+- `NewBookingsCard.tsx`
+- `TodayScheduleCard.tsx`
+- `RevenueOverviewCard.tsx`
+- All pinnable analytics cards
+
+### 6.2: "By Location" Breakdown for All Applicable Cards
+
+**Current State**: Only `NewBookingsCard` has location breakdown pattern.
+
+**Implementation**:
+- Create reusable `LocationBreakdownSection` component
+- Apply to: Revenue cards, Appointments cards, Operations cards
+- Auto-suppress when specific location is filtered
+
+**New Component**:
 ```typescript
-interface CorrelationPair {
-  metricA: string;
-  metricB: string;
-  coefficient: number; // -1 to 1
-  strength: 'strong' | 'moderate' | 'weak' | 'none';
-  direction: 'positive' | 'negative';
-  dataPoints: number;
+interface LocationBreakdownSectionProps {
+  data: { locationId: string; locationName: string; value: number }[];
+  format: 'currency' | 'number' | 'percent';
+  isAllLocations: boolean;
 }
+```
 
-// Calculate using Pearson correlation coefficient
-function calculateCorrelation(dataA: number[], dataB: number[]): number {
-  // Standard Pearson formula
-  // Returns value between -1 (inverse) and 1 (direct correlation)
+### 6.3: Keyboard Shortcuts Extension
+
+**Current State**: `Cmd+K` opens search.
+
+**Additional Shortcuts to Add**:
+
+| Shortcut | Action |
+|----------|--------|
+| `g h` | Go to Home |
+| `g s` | Go to Schedule |
+| `g c` | Go to Chat |
+| `g a` | Go to Analytics |
+| `n` | New (context-sensitive) |
+| `?` | Show keyboard shortcuts help |
+
+**Implementation**:
+- Extend existing keyboard handling
+- Add `KeyboardShortcutsDialog.tsx` for help overlay
+- Persist shortcut preferences in user settings
+
+### 6.4: Per-Card CSV/PDF Export Buttons
+
+**Current State**: Exports are only in Reports tab.
+
+**Implementation**:
+- Add export icon button to all analytics card headers
+- Reuse existing PDF/CSV generation utilities
+- Add to `PinnedAnalyticsCard.tsx` wrapper
+
+**New Component**:
+```typescript
+interface CardExportButtonProps {
+  cardId: string;
+  data: any;
+  title: string;
+  dateRange: string;
 }
 ```
 
 ---
 
-## Integration Points
+## Category 7: Technical Debt Resolution
 
-### Analytics Hub Integration
+### 7.1: Remove Hardcoded Organization IDs
 
-Add new sub-tabs and features to existing structure:
+**Issue**: Some components contain hardcoded org IDs (e.g., `drop-dead-salons`).
 
-```text
-Analytics Hub
-├── Sales Tab
-│   ├── Overview
-│   ├── Goals
-│   ├── Compare ← ENHANCED with visual diff
-│   ├── Staff Performance
-│   ├── Forecasting (AI - from Category 1)
-│   ├── Commission
-│   └── Correlations ← NEW
-├── Operations Tab
-│   └── (existing)
-├── Marketing Tab
-│   └── (existing)
-├── Program Tab
-│   └── (existing)
-├── Reports Tab ← ENHANCED
-│   ├── Sales Reports
-│   ├── Staff Reports
-│   ├── Client Reports
-│   ├── Operations Reports
-│   ├── Financial Reports
-│   ├── Custom Builder ← NEW
-│   └── Scheduled ← NEW
-└── Rent Tab
-    └── (existing)
-```
+**Files to Update**:
+- `TeamChat.tsx` (line 17)
+- Any other files with hardcoded UUIDs
 
-### Command Center Integration
+**Solution**:
+- Replace with `effectiveOrganization` from context
+- Add fallback to first available organization
 
-- Custom reports can be pinned to dashboard
-- Scheduled report status widget
-- Benchmark context on existing pinned cards
+### 7.2: Complete Email Notification TODOs
+
+**Issue**: Several TODO comments for email notifications.
+
+**Implementation**:
+- Connect to existing `send-email` edge function
+- Implement notification queueing
+- Add email templates for missing notification types
+
+### 7.3: Reduce Phorest Table Dependency
+
+**Issue**: Heavy reliance on `phorest_*` tables limits multi-POS support.
+
+**Solution**:
+- Create abstraction layer for POS data
+- Implement adapter pattern for different POS systems
+- Add `pos_appointments` and `pos_sales` views
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Custom Report Builder (Week 1-2)
-1. Create `custom_report_templates` and `report_template_usage` tables
-2. Build `ReportBuilderPage.tsx` with metric/dimension selection
-3. Implement `useCustomReport.ts` for dynamic query execution
-4. Add `TemplateLibrary.tsx` for saved templates
-5. Integrate into Reports tab
+### Phase 1: Quick Wins (Week 1)
+1. Extend Yesterday view to all cards
+2. Add Location Breakdown to applicable cards
+3. Add keyboard shortcuts
+4. Per-card export buttons
 
-### Phase 2: Scheduled Reports (Week 3-4)
-1. Create `scheduled_reports` and `scheduled_report_runs` tables
-2. Build `process-scheduled-reports` edge function
-3. Set up pg_cron trigger for hourly execution
-4. Create `ScheduledReportsManager.tsx` UI
-5. Connect to existing email infrastructure
+### Phase 2: Mobile Foundation (Week 2-3)
+1. Create PWA manifest and service worker
+2. Build mobile-first schedule view
+3. Implement offline caching for today's queue
+4. Add PWA install prompt
 
-### Phase 3: Visual Comparisons (Week 5-6)
-1. Build `WaterfallChart.tsx` and `DualPeriodOverlay.tsx`
-2. Enhance `useComparisonData` with waterfall and overlay data
-3. Create `ComparisonDashboard.tsx` layout
-4. Add visual diff mode to Compare sub-tab
+### Phase 3: Collaboration (Week 4-5)
+1. Enhance @mention notifications with edge function
+2. Build Mentions Inbox
+3. Create team calendar infrastructure
+4. Implement daily huddle automation
 
-### Phase 4: Benchmarks & Correlations (Week 7-8)
-1. Create `metric_benchmarks` table with seed data
-2. Build `BenchmarkBar.tsx` and context indicators
-3. Implement `useCorrelationAnalysis.ts`
-4. Add `CorrelationMatrix.tsx` to Sales tab
-5. Generate AI insights for correlations
+### Phase 4: Platform Admin (Week 6-7)
+1. Build health score calculation edge function
+2. Create Health Score Dashboard
+3. Implement cross-org benchmarking
+4. Add risk alerts and recommendations
+
+### Phase 5: Technical Debt (Week 8)
+1. Remove hardcoded organization IDs
+2. Complete email notification integrations
+3. Create POS abstraction layer
+4. Performance optimizations
 
 ---
 
@@ -513,22 +529,23 @@ Analytics Hub
 
 | Category | New Files | Modified Files |
 |----------|-----------|----------------|
-| Database | 2 migrations | - |
-| Edge Functions | 1 new (`process-scheduled-reports`) | - |
-| Hooks | 5 new | `useComparisonData.ts` |
-| Components | 20+ new | `ReportsTabContent.tsx`, `SalesTabContent.tsx`, `CompareTabContent.tsx` |
-| Pages | 1 new (`ReportBuilder`) | `AnalyticsHub.tsx` |
+| Mobile & UX | 15+ components, 1 manifest, 1 service worker | `DashboardLayout.tsx` |
+| Team Collaboration | 10+ components, 1 edge function | `TeamChatContext.tsx`, `MentionInput.tsx` |
+| Platform Admin | 8+ components, 1 edge function | `PlatformOverview.tsx` |
+| Quick Wins | 5+ components | Multiple analytics cards |
+| Technical Debt | - | 10+ files |
 
 ---
 
-## Technical Notes
+## Database Tables Summary
 
-1. **Custom Reports**: Dynamic query building uses parameterized Supabase queries - never raw SQL injection
-2. **Scheduled Reports**: Leverages existing `send-email` edge function for delivery
-3. **Benchmarks**: Industry benchmarks seeded from research; org benchmarks calculated from rolling 90-day data
-4. **Correlations**: Calculated on the fly from `phorest_daily_sales_summary` (last 90 days)
-5. **Performance**: Heavy calculations cached in React Query with 30-minute stale time
-6. **RLS**: All new tables have organization-scoped policies
+| Table | Purpose |
+|-------|---------|
+| `pwa_installations` | Track PWA installs and device tokens |
+| `user_mentions` | Unified mentions tracking |
+| `team_calendar_events` | Shared team calendar |
+| `organization_health_scores` | Tenant health tracking |
+| `organization_benchmarks` | Cross-org comparison data |
 
 ---
 
@@ -536,81 +553,9 @@ Analytics Hub
 
 | Feature | KPI | Target |
 |---------|-----|--------|
-| Custom Report Builder | Templates created per org | >5 in first month |
-| Scheduled Reports | Reports auto-delivered | 90%+ on schedule |
-| Visual Comparisons | Time spent on Compare tab | +50% engagement |
-| Benchmarks | Benchmark views per session | >3 per user |
-| Correlations | Insight actions taken | Track click-through |
-
----
-
-## UI Mockups
-
-### Custom Report Builder
-
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│ REPORT BUILDER                                        [Save] [Run]  │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  METRICS (drag to add)           CONFIGURATION                      │
-│  ┌─────────────────────┐        ┌────────────────────────────────┐ │
-│  │ □ Total Revenue     │        │ Grouped by: [Location ▼]       │ │
-│  │ □ Service Revenue   │        │ Date Range: [Inherit ▼]        │ │
-│  │ ☑ Product Revenue   │        │ Visualization: [Bar Chart ▼]   │ │
-│  │ ☑ Avg Ticket        │        └────────────────────────────────┘ │
-│  │ □ Appointments      │                                           │
-│  │ □ No-Shows          │        PREVIEW                            │
-│  │ ...                 │        ┌────────────────────────────────┐ │
-│  └─────────────────────┘        │    ████████ Location A $45k   │ │
-│                                 │    ██████   Location B $38k   │ │
-│  FILTERS                        │    ████     Location C $28k   │ │
-│  ┌─────────────────────┐        │                                │ │
-│  │ + Add Filter        │        └────────────────────────────────┘ │
-│  │ Location = Mesa     │                                           │
-│  └─────────────────────┘                                           │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Scheduled Reports Manager
-
-```text
-┌─────────────────────────────────────────────────────────────────────┐
-│ SCHEDULED REPORTS                               [+ Schedule Report] │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │ 📊 Weekly Sales Summary                    ⚡ Active          │   │
-│  │    Every Monday at 8:00 AM                                   │   │
-│  │    Recipients: owner@salon.com, manager@salon.com            │   │
-│  │    Last run: Feb 5, 2026 · Next: Feb 12, 2026               │   │
-│  │    [View History] [Edit] [Pause]                             │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                                                     │
-│  ┌─────────────────────────────────────────────────────────────┐   │
-│  │ 📈 Monthly Revenue Report                  ⏸ Paused          │   │
-│  │    1st of each month at 9:00 AM                              │   │
-│  │    Recipients: accounting@salon.com                          │   │
-│  │    Last run: Jan 1, 2026 · Next: —                          │   │
-│  │    [View History] [Edit] [Resume]                            │   │
-│  └─────────────────────────────────────────────────────────────┘   │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Waterfall Comparison Chart
-
-```text
-Revenue Change: This Month vs Last Month
-
-    Last Month Total   ██████████████████████████████████  $45,000
-                                                       │
-    + Services         ███████  +$3,200               ─┤
-    + Products         ███  +$800                     ─┤
-    + New Clients      █████  +$1,500                 ─┤
-    − Cancellations    ██  -$500                      ─┤
-                                                       │
-    This Month Total   ██████████████████████████████████████  $50,000
-                                                       ↑
-                                                   +11.1%
-```
+| Mobile Schedule | Mobile session duration | +30% |
+| PWA Install | Installation rate | >20% of mobile users |
+| Offline Mode | Offline actions synced | 99%+ success |
+| @Mentions | Mention response time | <2 hours avg |
+| Health Scores | At-risk identification | 90%+ accuracy |
+| Quick Wins | Feature adoption | +15% engagement |
