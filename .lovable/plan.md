@@ -1,111 +1,139 @@
 
 
-# Fix Kiosk Settings: Organization Defaults & Location Overrides
+# High-End Luxury Kiosk: Glass UI & Background Photo Support
 
-## Problems Identified
+## Overview
 
-### 1. Database Integrity Issue
-There are currently **4 duplicate org-level settings rows** (where `location_id` is `NULL`) for the same organization. This is caused by:
-- **Missing unique constraint** on `(organization_id, location_id)`
-- **Query bug** in `useUpdateKioskSettings`: Using `.eq('location_id', null)` instead of `.is('location_id', null)` when checking for existing settings
+Transform the kiosk screens into a refined, luxury aesthetic by removing glow effects, adding background photo support with adjustable overlay, and implementing glass-morphic buttons with elegant outlines.
 
-### 2. Missing "Push to All Locations" Feature
-When editing organization defaults, there's no way to apply those changes to all locations at once.
+## Current State Analysis
 
-### 3. Missing "Reset Location to Defaults" Feature  
-Individual locations can't clear their custom settings to inherit from org-level defaults.
+### Glow Effects to Remove
 
-### 4. No Visual Feedback
-The UI doesn't indicate which locations have custom overrides vs. using defaults.
+Identified glow effects across all kiosk screens:
+
+| File | Effect Type | Lines |
+|------|-------------|-------|
+| `KioskIdleScreen.tsx` | Radial gradient ambient glow | Line 135 |
+| `KioskIdleScreen.tsx` | Button blur-xl glow | Lines 271-284 |
+| `KioskLookupScreen.tsx` | Radial gradient ambient glow | Lines 75-79 |
+| `KioskLookupScreen.tsx` | Phone icon blur-xl glow | Lines 140-143 |
+| `KioskLookupScreen.tsx` | Spinner glow | Lines 197-201 |
+| `KioskConfirmScreen.tsx` | Radial gradient ambient glow | Lines 63-67 |
+| `KioskSuccessScreen.tsx` | Radial gradient glow | Lines 88-92 |
+| `KioskSuccessScreen.tsx` | Icon container boxShadow glow | Line 146 |
+| `KioskNumberPad.tsx` | Submit button boxShadow | Lines 129, 137 |
+| `KioskPreviewPanel.tsx` | Preview glow effects | Lines 206-218, 501 |
+| All screens | Check-in button gradient boxShadow | Multiple locations |
+
+### Missing Features
+
+1. **Background Photo Upload**: `background_image_url` exists in DB but no UI to set it
+2. **Overlay Opacity Control**: No way to adjust the darken/lighten effect on background images
 
 ---
 
 ## Solution
 
-### Part 1: Fix Database (Migration)
+### Part 1: Database Migration
 
-1. **Clean up duplicate rows** - Keep only the most recent org-level settings row
-2. **Add unique constraint** on `(organization_id, COALESCE(location_id, 'NULL'))` to prevent future duplicates
+Add a new column for background overlay control:
 
 ```sql
--- Delete duplicate org-level rows (keep most recent)
-DELETE FROM organization_kiosk_settings a
-USING organization_kiosk_settings b
-WHERE a.organization_id = b.organization_id
-  AND a.location_id IS NULL
-  AND b.location_id IS NULL
-  AND a.updated_at < b.updated_at;
-
--- Add unique constraint
-CREATE UNIQUE INDEX organization_kiosk_settings_org_loc_unique 
-ON organization_kiosk_settings (organization_id, COALESCE(location_id, '___NULL___'));
+ALTER TABLE organization_kiosk_settings 
+ADD COLUMN background_overlay_opacity numeric(3,2) DEFAULT 0.5;
 ```
 
-### Part 2: Fix Query Bug in Hook
+This allows values from 0.00 (no overlay) to 1.00 (fully opaque), with 0.5 as a balanced default.
 
-Update `useUpdateKioskSettings` to properly handle NULL location_id:
+### Part 2: Update Settings Interface
+
+Add to `useKioskSettings.ts`:
 
 ```typescript
-// When checking for existing settings
-const query = supabase
-  .from('organization_kiosk_settings')
-  .select('id')
-  .eq('organization_id', organizationId);
+interface KioskSettings {
+  // ... existing fields
+  background_overlay_opacity: number; // 0-1, controls darken/lighten
+}
 
-// Use proper NULL handling
-if (locationId) {
-  query.eq('location_id', locationId);
-} else {
-  query.is('location_id', null);
+DEFAULT_KIOSK_SETTINGS = {
+  // ... existing
+  background_overlay_opacity: 0.5,
 }
 ```
 
-### Part 3: Add "Push to All Locations" Feature
+### Part 3: Settings UI Enhancements
 
-When viewing **Organization Defaults**, add a button:
+Add new controls to the Appearance tab in `KioskSettingsContent.tsx`:
 
 ```text
-+----------------------------------------------------------+
-|  💾 Save Kiosk Settings                                  |
-+----------------------------------------------------------+
-|  📤 Push Defaults to All Locations                       |
-|  This will overwrite all location-specific settings      |
-+----------------------------------------------------------+
++--------------------------------------------------+
+| 🖼️ Background Image                              |
++--------------------------------------------------+
+| [ Upload background photo... ]                   |
+| URL: https://...                                 |
+|                                                  |
+| Overlay Opacity                                  |
+| [==========|==========] 50%                      |
+| Darken ←---------------→ Lighten                 |
+|                                                  |
+| [ ] Invert overlay (lighten instead of darken)  |
++--------------------------------------------------+
 ```
 
-**Logic:**
-1. Delete all location-specific settings for this org
-2. Each location will then automatically inherit from org defaults
+### Part 4: Glass Button Styling
 
-### Part 4: Add "Reset to Defaults" Feature
+Replace solid/gradient buttons with glass morphism:
 
-When viewing a **specific location**, add an option:
-
-```text
-+----------------------------------------------------------+
-|  💾 Save Location Settings                               |
-+----------------------------------------------------------+
-|  🔄 Reset to Organization Defaults                       |
-|  Remove custom settings and inherit from defaults        |
-+----------------------------------------------------------+
+**Before (glow + gradient):**
+```typescript
+style={{
+  background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}CC 100%)`,
+  boxShadow: `0 8px 32px ${accentColor}40`,
+}}
 ```
 
-**Logic:**
-1. Delete the location-specific settings row
-2. Location will then fall back to org defaults
+**After (glass + border):**
+```typescript
+style={{
+  backgroundColor: `${accentColor}15`,
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+  border: `1.5px solid ${accentColor}40`,
+  boxShadow: 'none',
+}}
+```
 
-### Part 5: Visual Indicators
+Glass button characteristics:
+- **Translucent fill**: 10-20% opacity of accent color
+- **Backdrop blur**: 12px for frosted glass effect
+- **Crisp border**: 1-2px solid with 30-50% opacity
+- **No glow/shadow**: Clean, minimal aesthetic
+- **Subtle hover**: Increase fill opacity to 25%
 
-In the location selector dropdown, show which locations have custom overrides:
+### Part 5: Kiosk Screen Updates
 
-```text
-+------------------------------------+
-| 🏢 Organization Defaults           |
-+------------------------------------+
-| 📍 North Mesa      ✏️ Customized   |
-| 📍 Val Vista Lakes ✏️ Customized   |
-| 📍 South Chandler  (uses defaults) |
-+------------------------------------+
+Each screen will be updated with:
+
+1. **Remove ambient radial gradients** - Delete the overlay divs with `radial-gradient`
+2. **Remove blur-xl glow effects** - Delete glow indicator divs
+3. **Remove boxShadow on buttons** - Set to 'none' or subtle 'inset' only
+4. **Apply glass styling to all interactive elements**
+5. **Handle background overlay properly** - Use configurable opacity
+
+**Background overlay implementation:**
+```typescript
+// In each screen component
+{backgroundImageUrl && (
+  <div 
+    className="absolute inset-0" 
+    style={{ 
+      backgroundColor: isDarkOverlay 
+        ? `rgba(0, 0, 0, ${overlayOpacity})` 
+        : `rgba(255, 255, 255, ${overlayOpacity})`,
+    }}
+  />
+)}
 ```
 
 ---
@@ -114,144 +142,92 @@ In the location selector dropdown, show which locations have custom overrides:
 
 | File | Changes |
 |------|---------|
-| `supabase/migrations/` | New migration: cleanup duplicates, add unique constraint |
-| `src/hooks/useKioskSettings.ts` | Fix NULL handling, add `usePushDefaultsToAllLocations` and `useResetLocationToDefaults` hooks, add `useLocationKioskOverrides` query hook |
-| `src/components/dashboard/settings/KioskSettingsContent.tsx` | Add "Push to All" button when editing defaults, add "Reset to Defaults" button when editing location, enhance location selector with override indicators |
+| `supabase/migrations/` | Add `background_overlay_opacity` column |
+| `src/hooks/useKioskSettings.ts` | Add new field to interface and defaults |
+| `src/components/dashboard/settings/KioskSettingsContent.tsx` | Add Background Image section with URL input & opacity slider |
+| `src/components/kiosk/KioskIdleScreen.tsx` | Remove glows, add glass buttons, handle overlay |
+| `src/components/kiosk/KioskLookupScreen.tsx` | Remove glows, glass buttons, overlay |
+| `src/components/kiosk/KioskConfirmScreen.tsx` | Remove glows, glass buttons, overlay |
+| `src/components/kiosk/KioskSuccessScreen.tsx` | Remove glows, glass buttons, overlay |
+| `src/components/kiosk/KioskErrorScreen.tsx` | Remove glows, glass buttons |
+| `src/components/kiosk/KioskNumberPad.tsx` | Glass styling for number pad buttons |
+| `src/components/dashboard/settings/KioskPreviewPanel.tsx` | Mirror glass styling in preview |
+
+---
+
+## Visual Comparison
+
+```text
+BEFORE (Current)                    AFTER (Luxury Glass)
++---------------------------+       +---------------------------+
+|                           |       |                           |
+|    ✨ Glowing Logo ✨      |       |       Clean Logo          |
+|                           |       |                           |
+|    [  Radial Glow BG  ]   |       |    [ Photo + Overlay ]    |
+|                           |       |                           |
+|  +---------------------+  |       |  +---------------------+  |
+|  |   GRADIENT BUTTON   |  |       |  |  ░░ Glass Button ░░ |  |
+|  |   WITH GLOW SHADOW  |  |       |  |  subtle border only |  |
+|  +---------------------+  |       |  +---------------------+  |
+|                           |       |                           |
+|     ● ● ● (pulsing)       |       |     ● ● ● (subtle)        |
++---------------------------+       +---------------------------+
+```
 
 ---
 
 ## Implementation Details
 
-### New Hook: Push Defaults to All Locations
+### Glass Button Component Style
 
 ```typescript
-export function usePushDefaultsToAllLocations() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (organizationId: string) => {
-      // Delete all location-specific settings
-      const { error } = await supabase
-        .from('organization_kiosk_settings')
-        .delete()
-        .eq('organization_id', organizationId)
-        .not('location_id', 'is', null);
-      
-      if (error) throw error;
-    },
-    onSuccess: (_, orgId) => {
-      queryClient.invalidateQueries({ queryKey: ['kiosk-settings'] });
-      queryClient.invalidateQueries({ queryKey: ['kiosk-settings-location'] });
-      queryClient.invalidateQueries({ queryKey: ['kiosk-location-overrides'] });
-      toast.success('Defaults pushed to all locations');
-    },
-  });
-}
+const glassButtonStyle = {
+  backgroundColor: `${accentColor}15`,
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+  border: `1.5px solid ${accentColor}40`,
+  color: textColor,
+};
+
+const glassButtonHover = {
+  backgroundColor: `${accentColor}25`,
+  scale: 1.01,
+};
 ```
 
-### New Hook: Reset Location to Defaults
+### Background Overlay Slider
 
-```typescript
-export function useResetLocationToDefaults() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ organizationId, locationId }: { organizationId: string; locationId: string }) => {
-      const { error } = await supabase
-        .from('organization_kiosk_settings')
-        .delete()
-        .eq('organization_id', organizationId)
-        .eq('location_id', locationId);
-      
-      if (error) throw error;
-    },
-    onSuccess: (_, vars) => {
-      queryClient.invalidateQueries({ queryKey: ['kiosk-settings'] });
-      queryClient.invalidateQueries({ queryKey: ['kiosk-settings-location', vars.locationId] });
-      queryClient.invalidateQueries({ queryKey: ['kiosk-location-overrides'] });
-      toast.success('Location reset to organization defaults');
-    },
-  });
-}
-```
-
-### New Query: Get Locations with Custom Overrides
-
-```typescript
-export function useLocationKioskOverrides(organizationId?: string) {
-  return useQuery({
-    queryKey: ['kiosk-location-overrides', organizationId],
-    queryFn: async () => {
-      if (!organizationId) return [];
-      
-      const { data, error } = await supabase
-        .from('organization_kiosk_settings')
-        .select('location_id')
-        .eq('organization_id', organizationId)
-        .not('location_id', 'is', null);
-      
-      if (error) throw error;
-      return data.map(row => row.location_id);
-    },
-    enabled: !!organizationId,
-  });
-}
-```
-
-### UI Updates
-
-**Organization Defaults View:**
 ```tsx
-{selectedLocation === 'all' && (
-  <div className="pt-4 border-t">
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="outline" className="w-full">
-          <Upload className="w-4 h-4 mr-2" />
-          Push Defaults to All Locations
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Push to All Locations?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This will remove all location-specific customizations. 
-            All {locations.length} locations will use the organization defaults.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handlePushToAll}>
-            Yes, Push to All
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+<div className="space-y-2">
+  <Label>Background Overlay</Label>
+  <div className="flex items-center gap-4">
+    <span className="text-xs text-muted-foreground">Light</span>
+    <Slider
+      min={0}
+      max={100}
+      step={5}
+      value={[overlayOpacity * 100]}
+      onValueChange={([v]) => updateField('background_overlay_opacity', v / 100)}
+    />
+    <span className="text-xs text-muted-foreground">Dark</span>
   </div>
-)}
-```
-
-**Location-Specific View:**
-```tsx
-{locationId && hasCustomOverride && (
-  <Button 
-    variant="ghost" 
-    size="sm"
-    onClick={handleResetToDefaults}
-  >
-    <RotateCcw className="w-4 h-4 mr-2" />
-    Reset to Defaults
-  </Button>
-)}
+  <p className="text-xs text-muted-foreground">
+    {overlayOpacity < 0.3 ? 'Minimal darkening' : 
+     overlayOpacity < 0.6 ? 'Balanced contrast' : 
+     'Strong darkening for readability'}
+  </p>
+</div>
 ```
 
 ---
 
-## Expected Outcome
+## Summary
 
-1. **No more duplicate settings** - Unique constraint prevents future issues
-2. **Org defaults work correctly** - Fixed NULL handling in queries
-3. **Push to All Locations** - One click to apply defaults everywhere
-4. **Reset individual locations** - Clear customizations to use defaults
-5. **Visual clarity** - See which locations have custom settings at a glance
+This update transforms the kiosk from a "tech-forward" glowing aesthetic to a sophisticated luxury feel:
+
+- **Clean backgrounds**: Photo support with adjustable overlay
+- **Glass morphism**: Translucent buttons with crisp borders
+- **No glow effects**: Removed all blur-xl and boxShadow glows
+- **Refined animations**: Keep subtle scale/opacity but remove pulsing glows
+- **High-end feel**: Minimal, elegant, premium appearance
 
