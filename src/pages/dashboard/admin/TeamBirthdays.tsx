@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { Award, Cake, Calendar, ChevronLeft, ChevronRight, Info, PartyPopper, Star, Users } from 'lucide-react';
+import { ArrowLeft, Award, Cake, Calendar, ChevronLeft, ChevronRight, Info, PartyPopper, Star, Users } from 'lucide-react';
 import { useMonthlyBirthdays, useUpcomingBirthdays, useTodaysBirthdays } from '@/hooks/useBirthdays';
 import { useTodaysAnniversaries, useUpcomingAnniversaries, MILESTONE_YEARS } from '@/hooks/useAnniversaries';
 import { useBusinessName } from '@/hooks/useBusinessSettings';
@@ -87,14 +88,21 @@ export default function TeamBirthdays() {
       <div className="p-6 lg:p-8 space-y-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-2 flex items-center gap-3">
-              <Cake className="w-8 h-8" />
-              Team Birthdays & Anniversaries
-            </h1>
-            <p className="text-muted-foreground font-sans">
-              Celebrate your team members' special days and milestones
-            </p>
+          <div className="flex items-start gap-4">
+            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+              <Link to="/dashboard/admin/management">
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+            </Button>
+            <div>
+              <h1 className="font-display text-3xl lg:text-4xl mb-2 flex items-center gap-3">
+                <Cake className="w-8 h-8" />
+                Team Birthdays & Anniversaries
+              </h1>
+              <p className="text-muted-foreground font-sans">
+                Celebrate your team members' special days and milestones
+              </p>
+            </div>
           </div>
           <BirthdayExportButton birthdays={upcomingBirthdays || []} />
         </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ import {
   Search,
   Filter,
   Send,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   useAllAssistantProgress,
@@ -496,14 +498,21 @@ export default function GraduationTracker() {
     <DashboardLayout>
       <div className="p-6 space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-medium flex items-center gap-3">
-              <GraduationCap className="h-8 w-8 text-primary" />
-              Graduation Tracker
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Track and manage stylist assistant graduation progress
-            </p>
+          <div className="flex items-start gap-4">
+            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+              <Link to="/dashboard/admin/management">
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-3xl font-medium flex items-center gap-3">
+                <GraduationCap className="h-8 w-8 text-primary" />
+                Graduation Tracker
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Track and manage stylist assistant graduation progress
+              </p>
+            </div>
           </div>
         </div>
 

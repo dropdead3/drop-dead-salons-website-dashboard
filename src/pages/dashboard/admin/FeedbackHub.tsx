@@ -1,8 +1,9 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { MessageSquareText, BarChart3, Users, Send, Star, Settings } from 'lucide-react';
+import { MessageSquareText, BarChart3, Users, Send, Star, Settings, ArrowLeft } from 'lucide-react';
 import { NPSScoreCard } from '@/components/feedback/NPSScoreCard';
 import { FeedbackResponseList } from '@/components/feedback/FeedbackResponseList';
 import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
@@ -27,14 +28,21 @@ export default function FeedbackHub() {
       <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="font-display text-2xl font-medium flex items-center gap-2">
-              <MessageSquareText className="h-6 w-6 text-primary" />
-              Client Feedback
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Track NPS scores, reviews, and client satisfaction
-            </p>
+          <div className="flex items-start gap-4">
+            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+              <Link to="/dashboard/admin/management">
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+            </Button>
+            <div>
+              <h1 className="font-display text-2xl font-medium flex items-center gap-2">
+                <MessageSquareText className="h-6 w-6 text-primary" />
+                Client Feedback
+              </h1>
+              <p className="text-muted-foreground text-sm mt-1">
+                Track NPS scores, reviews, and client satisfaction
+              </p>
+            </div>
           </div>
         </div>
 

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ import {
   BarChart3,
   Users,
   Link2,
+  ArrowLeft,
 } from 'lucide-react';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { useSalesMetrics, useSalesTrend, useSalesByStylist, useSalesByLocation, useSalesByPhorestStaff } from '@/hooks/useSalesData';
@@ -271,18 +273,25 @@ export default function SalesDashboard() {
       <div className="p-4 md:p-6 lg:p-8 space-y-6">
         {/* Header - Mobile optimized */}
         <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-foreground text-background flex items-center justify-center rounded-lg shrink-0">
-              <DollarSign className="w-5 h-5" />
+          <div className="flex items-start gap-4">
+            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+              <Link to="/dashboard/admin/management">
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+            </Button>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-foreground text-background flex items-center justify-center rounded-lg shrink-0">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-xl md:text-2xl font-display truncate">SALES DASHBOARD</h1>
+                <p className="text-muted-foreground text-sm hidden sm:block">Revenue and transaction analytics</p>
+              </div>
+              <CommandCenterVisibilityToggle 
+                elementKey="week_ahead_forecast" 
+                elementName="Forecasting" 
+              />
             </div>
-            <div className="min-w-0">
-              <h1 className="text-xl md:text-2xl font-display truncate">SALES DASHBOARD</h1>
-              <p className="text-muted-foreground text-sm hidden sm:block">Revenue and transaction analytics</p>
-            </div>
-            <CommandCenterVisibilityToggle 
-              elementKey="week_ahead_forecast" 
-              elementName="Forecasting" 
-            />
           </div>
           
           {/* Controls - Scrollable on mobile */}

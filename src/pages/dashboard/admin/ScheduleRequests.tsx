@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CalendarClock, Check, X, Loader2, ArrowRight, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { CalendarClock, Check, X, Loader2, ArrowRight, ArrowLeft, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { usePendingScheduleChangeRequests, useReviewScheduleChangeRequest } from '@/hooks/useLocationSchedules';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useLocations } from '@/hooks/useLocations';
@@ -212,14 +213,21 @@ export default function ScheduleRequests() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-display font-medium flex items-center gap-2">
-            <CalendarClock className="w-6 h-6" />
-            Schedule Change Requests
-          </h1>
-          <p className="text-muted-foreground">
-            Review and manage employee schedule change requests
-          </p>
+        <div className="flex items-start gap-4">
+          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+            <Link to="/dashboard/admin/management">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="text-2xl font-display font-medium flex items-center gap-2">
+              <CalendarClock className="w-6 h-6" />
+              Schedule Change Requests
+            </h1>
+            <p className="text-muted-foreground">
+              Review and manage employee schedule change requests
+            </p>
+          </div>
         </div>
 
         {/* Stats */}

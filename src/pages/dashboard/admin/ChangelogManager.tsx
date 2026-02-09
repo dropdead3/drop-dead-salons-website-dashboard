@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import {
   Plus, Search, Calendar as CalendarIcon, Clock, Edit, Trash2, Send, Archive,
-  Eye, Star, ChevronUp, MessageSquare, Link2, Filter, Rocket, Bug, Sparkles, Lightbulb
+  Eye, Star, ChevronUp, MessageSquare, Link2, Filter, Rocket, Bug, Sparkles, Lightbulb, ArrowLeft
 } from 'lucide-react';
 import {
   useAdminChangelog, useCreateChangelog, useUpdateChangelog, usePublishChangelog, useDeleteChangelog,
@@ -367,9 +368,16 @@ export default function ChangelogManager() {
       <div className="p-6 lg:p-8 max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-display tracking-wide">CHANGELOG & ROADMAP</h1>
-            <p className="text-muted-foreground">Manage updates, features, and user feedback</p>
+          <div className="flex items-start gap-4">
+            <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+              <Link to="/dashboard/admin/management">
+                <ArrowLeft className="w-5 h-5" />
+              </Link>
+            </Button>
+            <div>
+              <h1 className="text-2xl font-display tracking-wide">CHANGELOG & ROADMAP</h1>
+              <p className="text-muted-foreground">Manage updates, features, and user feedback</p>
+            </div>
           </div>
           <Button onClick={() => { resetForm(); setShowEntryDialog(true); }}>
             <Plus className="h-4 w-4 mr-2" />

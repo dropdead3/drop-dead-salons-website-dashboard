@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -38,6 +39,7 @@ import {
   XCircle,
   Printer,
   Eye,
+  ArrowLeft,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -214,11 +216,18 @@ export default function BusinessCardRequests() {
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="font-display text-3xl lg:text-4xl mb-2">BUSINESS CARD REQUESTS</h1>
-          <p className="text-muted-foreground font-sans">
-            Manage and process business card requests from team members.
-          </p>
+        <div className="mb-8 flex items-start gap-4">
+          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
+            <Link to="/dashboard/admin/management">
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+          </Button>
+          <div>
+            <h1 className="font-display text-3xl lg:text-4xl mb-2">BUSINESS CARD REQUESTS</h1>
+            <p className="text-muted-foreground font-sans">
+              Manage and process business card requests from team members.
+            </p>
+          </div>
         </div>
 
         {/* Stats Cards */}
