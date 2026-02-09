@@ -17,6 +17,9 @@ type SettingsTab = 'appearance' | 'content' | 'behavior';
 export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProps) {
   const { settings, organizationId, locationId } = useKiosk();
   const updateSettings = useUpdateKioskSettings();
+  
+  // Use configured accent color from kiosk settings
+  const accentColor = settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color;
   const validatePin = useValidatePin();
   
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -308,8 +311,11 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                <Settings className="w-5 h-5 text-purple-400" />
+              <div 
+                className="w-10 h-10 rounded-xl flex items-center justify-center"
+                style={{ backgroundColor: `${accentColor}20` }}
+              >
+                <Settings className="w-5 h-5" style={{ color: accentColor }} />
               </div>
               <div>
                 <h2 className="text-xl font-medium text-white">Kiosk Settings</h2>
@@ -333,12 +339,13 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
               /* PIN Entry */
               <div className="flex flex-col items-center py-8">
                 <motion.div
-                  className="w-20 h-20 rounded-full bg-purple-500/20 flex items-center justify-center mb-6"
+                  className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+                  style={{ backgroundColor: `${accentColor}20` }}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 200, damping: 15 }}
                 >
-                  <Lock className="w-10 h-10 text-purple-400" />
+                  <Lock className="w-10 h-10" style={{ color: accentColor }} />
                 </motion.div>
                 
                 <h3 className="text-xl font-medium text-white mb-2">Enter Admin PIN</h3>
@@ -361,11 +368,12 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                     {[0, 1, 2, 3].map((i) => (
                       <div
                         key={i}
-                        className={`w-4 h-4 rounded-full transition-all ${
-                          i < pinInput.length 
-                            ? pinError ? 'bg-red-500' : 'bg-purple-500' 
-                            : 'bg-white/20'
-                        }`}
+                        className="w-4 h-4 rounded-full transition-all"
+                        style={{ 
+                          backgroundColor: i < pinInput.length 
+                            ? (pinError ? '#ef4444' : accentColor)
+                            : 'rgba(255,255,255,0.2)'
+                        }}
                       />
                     ))}
                   </div>
@@ -427,7 +435,8 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                 </div>
 
                 <motion.button
-                  className="mt-6 px-8 py-3 rounded-xl text-lg font-medium bg-purple-600 text-white hover:bg-purple-500 transition-colors disabled:opacity-50"
+                  className="mt-6 px-8 py-3 rounded-xl text-lg font-medium text-white transition-colors disabled:opacity-50"
+                  style={{ backgroundColor: accentColor }}
                   onClick={handlePinSubmit}
                   disabled={pinInput.length < 4 || isValidating}
                   whileTap={{ scale: 0.98 }}
@@ -449,9 +458,10 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                       key={tab.id}
                       className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                         activeTab === tab.id
-                          ? 'bg-purple-600 text-white'
+                          ? 'text-white'
                           : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
                       }`}
+                      style={activeTab === tab.id ? { backgroundColor: accentColor } : undefined}
                       onClick={() => setActiveTab(tab.id as SettingsTab)}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -470,16 +480,19 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                           label="Background Color"
                           value={localSettings.background_color}
                           onChange={(v) => updateLocalSetting('background_color', v)}
+                          accentColor={accentColor}
                         />
                         <ColorSetting
                           label="Accent Color"
                           value={localSettings.accent_color}
                           onChange={(v) => updateLocalSetting('accent_color', v)}
+                          accentColor={accentColor}
                         />
                         <ColorSetting
                           label="Text Color"
                           value={localSettings.text_color}
                           onChange={(v) => updateLocalSetting('text_color', v)}
+                          accentColor={accentColor}
                         />
                       </SettingGroup>
                     </>
@@ -492,12 +505,14 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                           label="Welcome Title"
                           value={localSettings.welcome_title}
                           onChange={(v) => updateLocalSetting('welcome_title', v)}
+                          accentColor={accentColor}
                         />
                         <TextSetting
                           label="Welcome Subtitle"
                           value={localSettings.welcome_subtitle}
                           onChange={(v) => updateLocalSetting('welcome_subtitle', v)}
                           placeholder="Optional subtitle"
+                          accentColor={accentColor}
                         />
                       </SettingGroup>
                       <SettingGroup title="Check-In Flow">
@@ -505,11 +520,13 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                           label="Check-In Prompt"
                           value={localSettings.check_in_prompt}
                           onChange={(v) => updateLocalSetting('check_in_prompt', v)}
+                          accentColor={accentColor}
                         />
                         <TextSetting
                           label="Success Message"
                           value={localSettings.success_message}
                           onChange={(v) => updateLocalSetting('success_message', v)}
+                          accentColor={accentColor}
                         />
                       </SettingGroup>
                     </>
@@ -524,6 +541,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                           onChange={(v) => updateLocalSetting('idle_timeout_seconds', v)}
                           min={30}
                           max={300}
+                          accentColor={accentColor}
                         />
                       </SettingGroup>
                       <SettingGroup title="Features">
@@ -532,18 +550,21 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                           description="Allow clients without appointments to check in"
                           value={localSettings.enable_walk_ins}
                           onChange={(v) => updateLocalSetting('enable_walk_ins', v)}
+                          accentColor={accentColor}
                         />
                         <ToggleSetting
                           label="Show Stylist Photo"
                           description="Display stylist photos on appointment cards"
                           value={localSettings.show_stylist_photo}
                           onChange={(v) => updateLocalSetting('show_stylist_photo', v)}
+                          accentColor={accentColor}
                         />
                         <ToggleSetting
                           label="Show Wait Time Estimate"
                           description="Display estimated wait time after check-in"
                           value={localSettings.show_wait_time_estimate}
                           onChange={(v) => updateLocalSetting('show_wait_time_estimate', v)}
+                          accentColor={accentColor}
                         />
                       </SettingGroup>
                       <SettingGroup title="Security">
@@ -567,7 +588,8 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                     Cancel
                   </motion.button>
                   <motion.button
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-purple-600 text-white font-medium hover:bg-purple-500 transition-colors disabled:opacity-50"
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl text-white font-medium transition-colors disabled:opacity-50"
+                    style={{ backgroundColor: accentColor }}
                     onClick={handleSave}
                     disabled={updateSettings.isPending}
                     whileTap={{ scale: 0.98 }}
@@ -607,22 +629,29 @@ function TextSetting({
   onChange, 
   placeholder,
   type = 'text',
+  accentColor,
 }: { 
   label: string; 
   value: string; 
   onChange: (v: string) => void;
   placeholder?: string;
   type?: string;
+  accentColor?: string;
 }) {
+  const [isFocused, setIsFocused] = useState(false);
+  
   return (
     <div className="flex flex-col gap-2">
       <label className="text-sm text-white/80">{label}</label>
       <input
         type={type}
-        className="px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder:text-white/30 focus:border-purple-500 focus:outline-none transition-colors"
+        className="px-4 py-3 rounded-xl bg-white/5 border text-white placeholder:text-white/30 focus:outline-none transition-colors"
+        style={{ borderColor: isFocused && accentColor ? accentColor : 'rgba(255,255,255,0.1)' }}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
       />
     </div>
   );
@@ -632,11 +661,15 @@ function ColorSetting({
   label, 
   value, 
   onChange,
+  accentColor,
 }: { 
   label: string; 
   value: string; 
   onChange: (v: string) => void;
+  accentColor?: string;
 }) {
+  const [isFocused, setIsFocused] = useState(false);
+  
   return (
     <div className="flex items-center justify-between">
       <label className="text-sm text-white/80">{label}</label>
@@ -649,9 +682,12 @@ function ColorSetting({
         />
         <input
           type="text"
-          className="w-24 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm font-mono focus:border-purple-500 focus:outline-none"
+          className="w-24 px-3 py-2 rounded-lg bg-white/5 border text-white text-sm font-mono focus:outline-none"
+          style={{ borderColor: isFocused && accentColor ? accentColor : 'rgba(255,255,255,0.1)' }}
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
         />
       </div>
     </div>
@@ -664,23 +700,30 @@ function NumberSetting({
   onChange,
   min,
   max,
+  accentColor,
 }: { 
   label: string; 
   value: number; 
   onChange: (v: number) => void;
   min?: number;
   max?: number;
+  accentColor?: string;
 }) {
+  const [isFocused, setIsFocused] = useState(false);
+  
   return (
     <div className="flex items-center justify-between">
       <label className="text-sm text-white/80">{label}</label>
       <input
         type="number"
-        className="w-24 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-center focus:border-purple-500 focus:outline-none"
+        className="w-24 px-3 py-2 rounded-lg bg-white/5 border text-white text-center focus:outline-none"
+        style={{ borderColor: isFocused && accentColor ? accentColor : 'rgba(255,255,255,0.1)' }}
         value={value}
         onChange={(e) => onChange(parseInt(e.target.value) || 0)}
         min={min}
         max={max}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
       />
     </div>
   );
@@ -691,11 +734,13 @@ function ToggleSetting({
   description,
   value, 
   onChange,
+  accentColor,
 }: { 
   label: string; 
   description?: string;
   value: boolean; 
   onChange: (v: boolean) => void;
+  accentColor?: string;
 }) {
   return (
     <div className="flex items-center justify-between py-2">
@@ -704,9 +749,8 @@ function ToggleSetting({
         {description && <div className="text-xs text-white/40 mt-0.5">{description}</div>}
       </div>
       <motion.button
-        className={`w-12 h-7 rounded-full p-1 transition-colors ${
-          value ? 'bg-purple-600' : 'bg-white/10'
-        }`}
+        className="w-12 h-7 rounded-full p-1 transition-colors"
+        style={{ backgroundColor: value && accentColor ? accentColor : 'rgba(255,255,255,0.1)' }}
         onClick={() => onChange(!value)}
         whileTap={{ scale: 0.95 }}
       >
