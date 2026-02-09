@@ -640,14 +640,16 @@ export function ForecastingCard() {
                       const chartLeft = xAxisMap[0].x;
                       const chartRight = chartLeft + xAxisMap[0].width;
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      const badgeWidth = 140;
+                      const badgeFOWidth = 160;
+                      const avgText = `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`;
+                      const estimatedBadgeWidth = avgText.length * 6.5 + 14;
                       return (
                         <g style={{ pointerEvents: 'none' }}>
                           <style>{`
                             @keyframes drawLine { to { stroke-dashoffset: 0; } }
                             @keyframes fadeInBadge { from { opacity: 0; } to { opacity: 1; } }
                           `}</style>
-                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
+                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeFOWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
                             <div style={{ 
                               fontSize: 11, fontWeight: 600, 
                               color: 'hsl(25, 100%, 55%)',
@@ -658,25 +660,20 @@ export function ForecastingCard() {
                               borderRadius: 4,
                               padding: '1px 6px',
                               whiteSpace: 'nowrap',
-                              width: 'fit-content',
+                              display: 'inline-block',
                             }}>
-                              Daily Avg: ${Math.round(averageDaily).toLocaleString()}
+                              {avgText}
                             </div>
                           </foreignObject>
-                          {(() => {
-                            const lineStart = chartLeft + badgeWidth;
-                            return (
-                              <line
-                                x1={lineStart}
-                                y1={yPos}
-                                x2={chartRight}
-                                y2={yPos}
-                                stroke="hsl(25, 100%, 55%)"
-                                strokeDasharray="4 4"
-                                strokeWidth={1.5}
-                              />
-                            );
-                          })()}
+                          <line
+                            x1={chartLeft + estimatedBadgeWidth}
+                            y1={yPos}
+                            x2={chartRight}
+                            y2={yPos}
+                            stroke="hsl(25, 100%, 55%)"
+                            strokeDasharray="4 4"
+                            strokeWidth={1.5}
+                          />
                         </g>
                       );
                     }} />
@@ -690,10 +687,12 @@ export function ForecastingCard() {
                       const chartLeft = xAxisMap[0].x;
                       const chartRight = chartLeft + xAxisMap[0].width;
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      const badgeWidth = 155;
+                      const badgeFOWidth = 180;
+                      const avgText = `Weekly Avg: $${Math.round(averageWeekly).toLocaleString()}`;
+                      const estimatedBadgeWidth = avgText.length * 6.5 + 14;
                       return (
                         <g style={{ pointerEvents: 'none' }}>
-                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
+                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeFOWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
                             <div style={{ 
                               fontSize: 11, fontWeight: 600, 
                               color: 'hsl(25, 100%, 55%)',
@@ -704,25 +703,20 @@ export function ForecastingCard() {
                               borderRadius: 4,
                               padding: '1px 6px',
                               whiteSpace: 'nowrap',
-                              width: 'fit-content',
+                              display: 'inline-block',
                             }}>
-                              Weekly Avg: ${Math.round(averageWeekly).toLocaleString()}
+                              {avgText}
                             </div>
                           </foreignObject>
-                          {(() => {
-                            const lineStart = chartLeft + badgeWidth;
-                            return (
-                              <line
-                                x1={lineStart}
-                                y1={yPos}
-                                x2={chartRight}
-                                y2={yPos}
-                                stroke="hsl(25, 100%, 55%)"
-                                strokeDasharray="4 4"
-                                strokeWidth={1.5}
-                              />
-                            );
-                          })()}
+                          <line
+                            x1={chartLeft + estimatedBadgeWidth}
+                            y1={yPos}
+                            x2={chartRight}
+                            y2={yPos}
+                            stroke="hsl(25, 100%, 55%)"
+                            strokeDasharray="4 4"
+                            strokeWidth={1.5}
+                          />
                         </g>
                       );
                     }} />
