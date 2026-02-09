@@ -1,110 +1,96 @@
 
 
-# Secondary Roles (Responsibilities) System
+# Clock-In / Clock-Out Time Tracking System
 
-## Concept
+## Overview
 
-Introduce a **Responsibilities** layer that sits on top of primary roles. These are configurable leadership or specialty designations -- like "Culture Leader", "Education Leader", or "Onboarding Trainer" -- that can be assigned to any team member regardless of their primary role. Each responsibility can include:
-
-- A name, icon, and color (just like roles)
-- A description of what it entails
-- Optional helper assets (checklists, resource links, training materials)
-- Assignment to one or more team members
-
-This keeps the core role system (Stylist, Admin, etc.) clean for access control, while responsibilities handle organizational structure and leadership duties.
+Add a time clock system that lets employees clock in and out of their shifts. The clock-in prompt appears automatically on login and when unlocking the dashboard (if the user isn't already clocked in). A persistent Clock In / Clock Out button is added to the sidebar footer, above "Lock Dashboard." All time entries are stored in a new `time_entries` table and wired to the active payroll provider for hour tracking.
 
 ## Database Changes
 
-### New table: `responsibilities`
-Stores the configurable responsibility definitions.
+### New table: `time_entries`
 
 | Column | Type | Notes |
 |--------|------|-------|
-| id | uuid | PK |
-| organization_id | uuid | FK to organizations |
-| name | text | e.g. "culture_leader" |
-| display_name | text | e.g. "Culture Leader" |
-| description | text | What this responsibility involves |
-| icon | text | Icon name (reuse role icon picker) |
-| color | text | Color key (reuse role color picker) |
-| sort_order | integer | For ordering |
-| is_active | boolean | Soft delete |
-| created_at / updated_at | timestamptz | Auto-managed |
+| id | uuid | PK, default gen_random_uuid() |
+| organization_id | uuid | FK to organizations, NOT NULL |
+| user_id | uuid | FK to auth.users, NOT NULL |
+| clock_in | timestamptz | NOT NULL |
+| clock_out | timestamptz | Nullable (null = currently clocked in) |
+| duration_minutes | numeric | Computed on clock-out |
+| break_minutes | numeric | Default 0 |
+| location_id | text | Optional, which location |
+| notes | text | Optional |
+| source | text | Default 'manual' -- could be 'kiosk', 'lock_screen', 'sidebar' |
+| payroll_synced | boolean | Default false -- marks if sent to provider |
+| created_at | timestamptz | Default now() |
+| updated_at | timestamptz | Default now() |
 
-### New table: `responsibility_assets`
-Helper resources attached to a responsibility.
-
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid | PK |
-| responsibility_id | uuid | FK |
-| title | text | e.g. "Culture Leader Checklist" |
-| type | text | "checklist", "link", "document", "training" |
-| content | jsonb | Flexible payload (checklist items, URL, file path, training video ID) |
-| sort_order | integer | |
-| created_at | timestamptz | |
-
-### New table: `user_responsibilities`
-Junction table assigning responsibilities to users.
-
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid | PK |
-| user_id | uuid | FK to auth.users |
-| responsibility_id | uuid | FK |
-| assigned_by | uuid | Who assigned it |
-| assigned_at | timestamptz | |
-| unique(user_id, responsibility_id) | | Prevent duplicates |
-
-All three tables will have RLS enabled with policies allowing Super Admins, Admins, and Managers to manage them, and authenticated users to read their own assignments.
+- RLS: Users can read/insert/update their own entries. Admins/managers can read all entries in their org.
+- Trigger: auto-calculate `duration_minutes` on clock-out update.
+- Enable realtime so clock status updates instantly across tabs.
 
 ## Frontend Changes
 
-### 1. Role Config tab -- new "Responsibilities" sub-tab
-Add a fourth sub-tab alongside Roles, Templates, and Defaults in the Role Config section of the Roles and Controls Hub. This sub-tab will have:
-- A list of defined responsibilities with drag-and-drop reordering
-- Create/edit/archive/delete actions (mirroring the Role Editor UX)
-- An expandable section per responsibility showing its helper assets
+### 1. New hook: `useTimeClock`
 
-### 2. Responsibility Assets editor
-Within each responsibility card, an expandable panel to manage helper assets:
-- Add checklists (with checkable items)
-- Add external links
-- Link to training hub videos
-- Attach documents
+File: `src/hooks/useTimeClock.ts`
 
-### 3. User Roles tab -- show responsibilities
-On the User Roles tab, show assigned responsibilities as secondary badges next to each user's primary role(s). Allow assigning/removing responsibilities from the same interface.
+- Fetches the user's active (open) time entry where `clock_out IS NULL`
+- Provides `clockIn()` and `clockOut()` mutations
+- `clockIn` inserts a new row; `clockOut` updates it with timestamp and calculates duration
+- Exposes `isClockedIn`, `activeEntry`, `todayTotalHours`
+- Uses `usePayrollConnection` to know which provider to reference
 
-### 4. Team profile display
-Show responsibility badges on team directory cards and individual profiles so the whole team knows who leads what.
+### 2. Sidebar Clock Button
 
-### 5. New hooks
-- `useResponsibilities()` -- fetch all active responsibilities ordered by sort_order
-- `useUserResponsibilities(userId)` -- fetch a user's assigned responsibilities
-- `useAssignResponsibility()` / `useRemoveResponsibility()` -- mutations
-- `useResponsibilityAssets(responsibilityId)` -- fetch helper assets
+File: `src/components/dashboard/SidebarClockButton.tsx`
 
-### 6. Default seed responsibilities
-Pre-populate common salon leadership responsibilities that can be customized:
-- Culture Leader
-- Education Leader
-- Social Media Leader
-- Onboarding Trainer
-- Stylist Assistants Leader
-- Coach
+- Placed above `SidebarLockButton` in `SidebarNavContent.tsx`
+- Shows a clock icon with "Clock In" or "Clock Out" text
+- Green accent when clocked in, neutral when clocked out
+- Collapsed mode shows just the icon with a tooltip
+- Clicking toggles clock state with a confirmation toast
 
-## Technical Details
+### 3. Clock-In Prompt Dialog
 
-**Files to create:**
-- `src/hooks/useResponsibilities.ts` -- all data hooks
-- `src/components/access-hub/ResponsibilitiesSubTab.tsx` -- management UI
-- `src/components/access-hub/ResponsibilityCard.tsx` -- individual card with assets
-- `src/components/access-hub/ResponsibilityAssetsEditor.tsx` -- helper assets CRUD
-- `src/components/access-hub/AssignResponsibilityDialog.tsx` -- assign to users
+File: `src/components/dashboard/ClockInPromptDialog.tsx`
 
-**Files to modify:**
-- `src/components/access-hub/RoleConfigTab.tsx` -- add Responsibilities sub-tab
-- `src/components/access-hub/UserRolesTab.tsx` -- show responsibility badges, allow assignment
-- `src/components/dashboard/team/` -- display responsibility badges on profiles
+- A modal dialog that appears after login or after unlocking the dashboard
+- Only shows if the user is NOT already clocked in
+- Shows: "Start your shift?" with Clock In and "Not Now" buttons
+- Optionally shows the location selector if multi-location org
+- Remembers dismissal for the session (so it doesn't nag on every page nav)
+
+### 4. Integration Points
+
+**DashboardLayout.tsx:**
+- After auth state resolves (user is logged in and loaded), check if clocked in
+- If not, show `ClockInPromptDialog`
+
+**DashboardLockScreen.tsx:**
+- After successful PIN unlock (in the 1.5s animation window), queue the clock-in prompt
+- Pass a flag via `onUnlock` or route state so `DashboardLayout` knows to show the prompt
+
+**SidebarNavContent.tsx:**
+- Add `SidebarClockButton` above `SidebarLockButton` in the footer section
+
+### 5. Payroll Integration Awareness
+
+The `useTimeClock` hook reads from `usePayrollConnection` to:
+- Tag entries with the active provider in metadata
+- Surface a "not synced" indicator if entries haven't been pushed to the payroll provider
+- Future: when syncing payroll runs, pull from `time_entries` for hourly calculations
+
+## File Summary
+
+**New files:**
+- `src/hooks/useTimeClock.ts` -- core clock-in/out logic
+- `src/components/dashboard/SidebarClockButton.tsx` -- sidebar button
+- `src/components/dashboard/ClockInPromptDialog.tsx` -- auto-prompt dialog
+
+**Modified files:**
+- `src/components/dashboard/SidebarNavContent.tsx` -- add clock button to footer
+- `src/components/dashboard/DashboardLayout.tsx` -- trigger clock-in prompt on login
+- `src/components/dashboard/DashboardLockScreen.tsx` -- flag clock-in prompt after unlock
 
