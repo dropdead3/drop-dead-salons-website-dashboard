@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { isColorDark } from '@/lib/colorUtils';
-import { ChevronLeft, ChevronRight, Phone, Check, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Phone, Check, AlertCircle, MapPin, Film } from 'lucide-react';
 
 interface BusinessSettings {
   logo_light_url?: string | null;
@@ -27,12 +27,19 @@ interface KioskPreviewSettings {
   check_in_prompt?: string;
   success_message?: string;
   enable_glow_effects?: boolean;
+  background_image_url?: string | null;
+  idle_video_url?: string | null;
+  background_overlay_opacity?: number;
+  show_location_badge?: boolean;
+  location_badge_position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  location_badge_style?: 'glass' | 'solid' | 'outline';
 }
 
 interface KioskPreviewPanelProps {
   settings: KioskPreviewSettings;
   businessSettings?: BusinessSettings | null;
   className?: string;
+  locationName?: string;
 }
 
 type PreviewScreen = 'idle' | 'lookup' | 'confirm' | 'success';
@@ -44,7 +51,7 @@ const SCREENS: { key: PreviewScreen; label: string }[] = [
   { key: 'success', label: 'Success' },
 ];
 
-export function KioskPreviewPanel({ settings, businessSettings, className }: KioskPreviewPanelProps) {
+export function KioskPreviewPanel({ settings, businessSettings, className, locationName }: KioskPreviewPanelProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeScreen, setActiveScreen] = useState<PreviewScreen>('idle');
   const [screenIndex, setScreenIndex] = useState(0);
@@ -167,76 +174,171 @@ export function KioskPreviewPanel({ settings, businessSettings, className }: Kio
     return null;
   };
 
-  const renderIdleScreen = () => (
-    <div className="relative z-10 flex flex-col items-center justify-center h-full p-4 text-center -mt-4">
-      {renderLogo()}
-      
-      {/* Time display */}
-      <motion.div 
-        className="text-2xl font-extralight tracking-tight mb-1"
-        style={{ color: settings.text_color }}
+  // Badge position classes
+  const badgePositionClasses = {
+    'top-left': 'top-2 left-2',
+    'top-right': 'top-2 right-2',
+    'bottom-left': 'bottom-2 left-2',
+    'bottom-right': 'bottom-2 right-2',
+  };
+
+  // Badge styles
+  const getBadgeStyle = (style: 'glass' | 'solid' | 'outline') => {
+    switch (style) {
+      case 'solid':
+        return {
+          backgroundColor: settings.accent_color,
+          color: settings.text_color,
+        };
+      case 'outline':
+        return {
+          backgroundColor: 'transparent',
+          border: `1px solid ${settings.text_color}30`,
+          color: settings.text_color,
+        };
+      case 'glass':
+      default:
+        return {
+          backgroundColor: `${settings.text_color}10`,
+          backdropFilter: 'blur(8px)',
+          border: `1px solid ${settings.text_color}15`,
+          color: settings.text_color,
+        };
+    }
+  };
+
+  // Render location badge for preview
+  const renderLocationBadge = () => {
+    if (!settings.show_location_badge) return null;
+    const position = settings.location_badge_position || 'bottom-left';
+    const style = settings.location_badge_style || 'glass';
+    const displayName = locationName || 'Location Name';
+    
+    return (
+      <div
+        className={cn(
+          "absolute z-10 px-2 py-1 rounded-lg flex items-center gap-1",
+          badgePositionClasses[position]
+        )}
+        style={getBadgeStyle(style)}
       >
-        {formatTime(currentTime)}
-      </motion.div>
-      <motion.div 
-        className="text-[10px] font-light tracking-wide mb-6"
-        style={{ color: `${settings.text_color}90` }}
-      >
-        {formatDate(currentTime)}
-      </motion.div>
-      
-      {/* Welcome text */}
-      <h1 
-        style={{ color: settings.text_color }} 
-        className="text-base font-medium mb-1 tracking-tight"
-      >
-        {settings.welcome_title || 'Welcome'}
-      </h1>
-      
-      {settings.welcome_subtitle && (
-        <p 
-          style={{ color: settings.text_color }} 
-          className="text-[10px] opacity-70 mb-6 font-light"
-        >
-          {settings.welcome_subtitle}
-        </p>
-      )}
-      
-      {/* Tap to check in - with optional glow */}
-      <div className="relative mt-2">
-        {settings.enable_glow_effects && (
-          <motion.div
-            className="absolute inset-0 rounded-full blur-md"
-            style={{ backgroundColor: settings.accent_color }}
-            animate={{
-              opacity: [0.2, 0.4, 0.2],
-              scale: [1, 1.03, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: 'easeInOut',
+        <MapPin className="w-2.5 h-2.5" />
+        <span className="text-[8px] font-medium">{displayName}</span>
+      </div>
+    );
+  };
+
+  // Render background media
+  const renderBackgroundMedia = () => {
+    const hasVideo = settings.idle_video_url;
+    const hasImage = settings.background_image_url;
+    const overlayOpacity = settings.background_overlay_opacity ?? 0.5;
+
+    if (!hasVideo && !hasImage) return null;
+
+    return (
+      <>
+        {hasVideo ? (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+            <Film className="w-6 h-6 text-white/50" />
+          </div>
+        ) : hasImage ? (
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url(${hasImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
             }}
           />
-        )}
-        <div 
-          className={cn("relative px-4 py-2 backdrop-blur-md", buttonRadiusClass)}
-          style={{ 
-            backgroundColor: `${settings.accent_color}15`,
-            border: `1.5px solid ${settings.accent_color}40`,
-          }}
+        ) : null}
+        <div
+          className="absolute inset-0"
+          style={{ backgroundColor: `rgba(0, 0, 0, ${overlayOpacity})` }}
+        />
+      </>
+    );
+  };
+
+  const renderIdleScreen = () => (
+    <div className="relative z-10 flex flex-col items-center justify-center h-full p-4 text-center -mt-4">
+      {/* Background media */}
+      {renderBackgroundMedia()}
+      
+      {/* Location badge */}
+      {renderLocationBadge()}
+      
+      {/* Content wrapper */}
+      <div className="relative z-10 flex flex-col items-center">
+        {renderLogo()}
+        
+        {/* Time display */}
+        <motion.div 
+          className="text-2xl font-extralight tracking-tight mb-1"
+          style={{ color: settings.text_color }}
         >
-          <span 
-            className="text-[10px] font-medium" 
-            style={{ color: settings.text_color }}
+          {formatTime(currentTime)}
+        </motion.div>
+        <motion.div 
+          className="text-[10px] font-light tracking-wide mb-6"
+          style={{ color: `${settings.text_color}90` }}
+        >
+          {formatDate(currentTime)}
+        </motion.div>
+        
+        {/* Welcome text */}
+        <h1 
+          style={{ color: settings.text_color }} 
+          className="text-base font-medium mb-1 tracking-tight"
+        >
+          {settings.welcome_title || 'Welcome'}
+        </h1>
+        
+        {settings.welcome_subtitle && (
+          <p 
+            style={{ color: settings.text_color }} 
+            className="text-[10px] opacity-70 mb-6 font-light"
           >
-            Tap to check in
-          </span>
+            {settings.welcome_subtitle}
+          </p>
+        )}
+        
+        {/* Tap to check in - with optional glow */}
+        <div className="relative mt-2">
+          {settings.enable_glow_effects && (
+            <motion.div
+              className="absolute inset-0 rounded-full blur-md"
+              style={{ backgroundColor: settings.accent_color }}
+              animate={{
+                opacity: [0.2, 0.4, 0.2],
+                scale: [1, 1.03, 1],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+            />
+          )}
+          <div 
+            className={cn("relative px-4 py-2 backdrop-blur-md", buttonRadiusClass)}
+            style={{ 
+              backgroundColor: `${settings.accent_color}15`,
+              border: `1.5px solid ${settings.accent_color}40`,
+            }}
+          >
+            <span 
+              className="text-[10px] font-medium" 
+              style={{ color: settings.text_color }}
+            >
+              Tap to check in
+            </span>
+          </div>
         </div>
       </div>
       
       {/* Bottom indicators - with optional glow */}
-      <div className="absolute bottom-4 flex gap-1.5">
+      <div className="absolute bottom-4 flex gap-1.5 z-10">
         {[0, 1, 2].map((i) => (
           settings.enable_glow_effects ? (
             <motion.div

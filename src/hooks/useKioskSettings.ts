@@ -43,6 +43,11 @@ export interface KioskSettings {
   idle_slideshow_images: string[];
   idle_video_url: string | null;
   
+  // Location Badge
+  show_location_badge: boolean;
+  location_badge_position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  location_badge_style: 'glass' | 'solid' | 'outline';
+  
   // Security
   exit_pin: string;
   
@@ -82,6 +87,9 @@ export const DEFAULT_KIOSK_SETTINGS: Omit<KioskSettings, 'id' | 'organization_id
   require_form_signing: true,
   idle_slideshow_images: [],
   idle_video_url: null,
+  show_location_badge: false,
+  location_badge_position: 'bottom-left',
+  location_badge_style: 'glass',
   exit_pin: '1234',
 };
 

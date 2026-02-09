@@ -1,15 +1,54 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Settings } from 'lucide-react';
+import { Settings, MapPin } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { KioskSettingsDialog } from './KioskSettingsDialog';
+import { cn } from '@/lib/utils';
+
+// Badge position classes
+const badgePositionClasses = {
+  'top-left': 'top-6 left-6',
+  'top-right': 'top-6 right-6',
+  'bottom-left': 'bottom-6 left-6',
+  'bottom-right': 'bottom-6 right-6',
+};
+
+// Badge styles
+function getBadgeStyle(
+  style: 'glass' | 'solid' | 'outline',
+  textColor: string,
+  accentColor: string
+) {
+  switch (style) {
+    case 'solid':
+      return {
+        backgroundColor: accentColor,
+        color: textColor,
+      };
+    case 'outline':
+      return {
+        backgroundColor: 'transparent',
+        border: `1.5px solid ${textColor}40`,
+        color: textColor,
+      };
+    case 'glass':
+    default:
+      return {
+        backgroundColor: `${textColor}10`,
+        backdropFilter: 'blur(12px)',
+        border: `1px solid ${textColor}20`,
+        color: textColor,
+      };
+  }
+}
 
 export function KioskIdleScreen() {
-  const { settings, businessSettings, startSession } = useKiosk();
+  const { settings, businessSettings, startSession, locationName } = useKiosk();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSettings, setShowSettings] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const welcomeTitle = settings?.welcome_title || DEFAULT_KIOSK_SETTINGS.welcome_title;
   const welcomeSubtitle = settings?.welcome_subtitle;
@@ -18,8 +57,14 @@ export function KioskIdleScreen() {
   const textColor = settings?.text_color || DEFAULT_KIOSK_SETTINGS.text_color;
   const accentColor = settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color;
   const backgroundImageUrl = settings?.background_image_url;
+  const backgroundVideoUrl = settings?.idle_video_url;
   const backgroundOverlayOpacity = settings?.background_overlay_opacity ?? DEFAULT_KIOSK_SETTINGS.background_overlay_opacity;
   const enableGlowEffects = settings?.enable_glow_effects ?? DEFAULT_KIOSK_SETTINGS.enable_glow_effects;
+
+  // Location badge settings
+  const showLocationBadge = settings?.show_location_badge ?? DEFAULT_KIOSK_SETTINGS.show_location_badge;
+  const badgePosition = settings?.location_badge_position ?? DEFAULT_KIOSK_SETTINGS.location_badge_position;
+  const badgeStyle = settings?.location_badge_style ?? DEFAULT_KIOSK_SETTINGS.location_badge_style;
 
   // Theme-aware logo fallback: kiosk logo → business logo (theme-aware) → business name
   const themeMode = settings?.theme_mode || DEFAULT_KIOSK_SETTINGS.theme_mode;
@@ -120,8 +165,36 @@ export function KioskIdleScreen() {
         onClose={() => setShowSettings(false)} 
       />
 
-      {/* Background image overlay */}
-      {backgroundImageUrl && (
+      {/* Video background */}
+      {backgroundVideoUrl && (
+        <video
+          ref={videoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover"
+          poster={backgroundImageUrl || undefined}
+        >
+          <source src={backgroundVideoUrl} type="video/mp4" />
+          <source src={backgroundVideoUrl} type="video/webm" />
+        </video>
+      )}
+
+      {/* Background image (if no video) */}
+      {!backgroundVideoUrl && backgroundImageUrl && (
+        <div 
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url(${backgroundImageUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
+        />
+      )}
+
+      {/* Background overlay (applies to both video and image) */}
+      {(backgroundVideoUrl || backgroundImageUrl) && (
         <div 
           className="absolute inset-0"
           style={{ 
@@ -131,7 +204,7 @@ export function KioskIdleScreen() {
       )}
 
       {/* Slideshow */}
-      {slideshowImages.length > 0 && !backgroundImageUrl && (
+      {slideshowImages.length > 0 && !backgroundImageUrl && !backgroundVideoUrl && (
         <div className="absolute inset-0">
           <AnimatePresence mode="wait">
             <motion.img
@@ -146,6 +219,25 @@ export function KioskIdleScreen() {
             />
           </AnimatePresence>
         </div>
+      )}
+
+      {/* Location Badge */}
+      {showLocationBadge && locationName && (
+        <motion.div
+          className={cn(
+            "absolute z-20 px-4 py-2 rounded-xl",
+            badgePositionClasses[badgePosition]
+          )}
+          style={getBadgeStyle(badgeStyle, textColor, accentColor)}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4" />
+            <span className="text-sm font-medium">{locationName}</span>
+          </div>
+        </motion.div>
       )}
 
       {/* Content */}
