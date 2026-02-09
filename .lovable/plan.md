@@ -1,41 +1,42 @@
 
-# Add Subtle Outline to Announcement Cards
+# Add Green Dot Legend to Busiest Day Callout
 
 ## Overview
 
-Add a subtle border outline around each announcement card in the sidebar widget to visually separate them from each other.
+Add a small green dot next to the "Busiest day:" label to create a visual legend that clearly connects the label to the green-highlighted bar in the chart.
 
-## Current Styling (Line 154-157)
+## Visual Change
+
+| Before | After |
+|--------|-------|
+| `Busiest day: Thursday` | `● Busiest day: Thursday` |
+
+The dot will use the same green color (`chart-2`) as the highlighted bar, making the connection intuitive.
+
+## Files to Modify
+
+### 1. `src/components/dashboard/sales/WeekAheadForecast.tsx`
+
+**Lines 276-278** - Add green dot before the label:
 
 ```typescript
-className={cn(
-  "p-3 bg-muted/50 border-l-2 rounded-r-md text-xs",
-  priorityColors[announcement.priority]
-)}
+<span className="text-muted-foreground flex items-center gap-2">
+  <span className="w-2 h-2 rounded-full bg-chart-2" />
+  Busiest day: <span className="font-medium text-foreground">{format(parseISO(peakDay.date), 'EEEE')}</span>
+</span>
 ```
 
-- Only left border for priority color
-- Only right corners rounded
-- No full outline
+### 2. `src/components/dashboard/sales/ForecastingCard.tsx`
 
-## Updated Styling
+**Lines 666-667** - Add the same green dot:
 
 ```typescript
-className={cn(
-  "p-3 bg-muted/50 border border-border/50 border-l-2 rounded-md text-xs",
-  priorityColors[announcement.priority]
-)}
+<span className="text-muted-foreground flex items-center gap-2">
+  <span className="w-2 h-2 rounded-full bg-chart-2" />
+  Busiest day: <span className="font-medium text-foreground">{format(parseISO(peakDay.date), 'EEEE')}</span>
+</span>
 ```
-
-**Changes:**
-- `border border-border/50` - Adds a subtle outline using the theme's border color at 50% opacity
-- `rounded-r-md` → `rounded-md` - Full rounded corners on all sides to match the complete border
-- Keeps the left border override for priority color via `border-l-2` and the priority color class
-
-## File to Modify
-
-**`src/components/dashboard/SidebarAnnouncementsWidget.tsx`** - Line 155
 
 ## Result
 
-Each announcement card will have a subtle, semi-transparent border around it, making cards visually distinct from one another while maintaining the priority-colored left accent.
+The small green dot next to the "Busiest day:" text creates an immediate visual connection to the green bar in the chart, serving as an intuitive legend that explains the color coding without needing additional text.
