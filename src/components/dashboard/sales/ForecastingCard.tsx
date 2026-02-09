@@ -562,7 +562,6 @@ export function ForecastingCard() {
           {/* Bar Chart - only show if not tomorrow */}
           {showChart && chartData.length > 0 && (
             <div className={cn("h-[200px]", showWeeklyChart && "h-[220px]")} ref={chartRef}>
-              {isChartInView ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: showWeeklyChart ? 40 : 35, left: 10 }}>
                   <XAxis 
@@ -758,9 +757,6 @@ export function ForecastingCard() {
                   )}
                 </BarChart>
               </ResponsiveContainer>
-              ) : (
-                <div className="w-full h-full" />
-              )}
             </div>
           )}
 
