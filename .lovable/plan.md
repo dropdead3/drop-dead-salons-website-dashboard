@@ -1,191 +1,299 @@
 
+# Wire Kiosk Settings Icon to Match Dashboard Settings
 
-# Fix Kiosk Organization Context for Unauthenticated Users
+## Overview
 
-## Problem
+The settings icon on the kiosk screen currently opens a limited settings dialog that is missing several options available in the organization dashboard. This plan will update the `KioskSettingsDialog` to include all the same settings as `KioskSettingsContent`, ensuring consistency between the two interfaces.
 
-The Kiosk Settings Dialog shows "Unable to save: Organization not found" because:
+## Current Gap Analysis
 
-1. The kiosk runs without a logged-in Supabase user (it's a public-facing check-in terminal)
-2. The `useValidatePin` hook uses `useOrganizationContext()` which requires an authenticated user to determine the organization
-3. The `updateSettings` mutation is blocked by RLS policies that require `is_org_admin(auth.uid(), organization_id)`
-
-## Root Cause Analysis
-
-The data flow shows a disconnect:
-
-```text
-KioskProvider
-├── useKioskSettingsByLocation(locationId)
-│   └── Queries locations table (public read) ✓
-│   └── Returns organizationId from location ✓
-│   └── This works because locations has "Anyone can view active locations" RLS
-│
-KioskSettingsDialog
-├── Uses useKiosk().organizationId ✓ (available from location lookup)
-├── Uses useValidatePin() ✗
-│   └── Uses useOrganizationContext()
-│   └── Requires auth.uid() to get organization
-│   └── Returns null when not logged in
-├── Uses updateSettings.mutateAsync() ✗
-    └── RLS: "Org admins can manage kiosk settings"
-    └── Requires is_org_admin(auth.uid(), organization_id)
-    └── Fails because auth.uid() is null
-```
+| Setting | Dashboard | Kiosk Dialog |
+|---------|-----------|--------------|
+| Theme Presets | Yes | No |
+| Background Color | Yes | Yes |
+| Accent Color | Yes | Yes |
+| Text Color | Yes | Yes |
+| Button Style | Yes | No |
+| Logo URL | Yes | No |
+| Welcome Title | Yes | Yes |
+| Welcome Subtitle | Yes | Yes |
+| Check-in Prompt | Yes | Yes |
+| Success Message | Yes | Yes |
+| Idle Timeout | Yes | Yes |
+| Enable Walk-Ins | Yes | Yes |
+| Require Confirmation Tap | Yes | No |
+| Show Wait Time Estimate | Yes | Yes |
+| Show Stylist Photo | Yes | Yes |
+| Enable Feedback Prompt | Yes | No |
+| Require Form Signing | Yes | No |
+| Exit PIN | Yes | No |
 
 ## Solution
 
-### Part 1: Create Kiosk-Specific PIN Validation
+Update the `KioskSettingsDialog` to include all missing settings, maintaining the same dark-themed UI style while adding feature parity with the dashboard.
 
-Create a new hook that validates PINs using the organization ID from the location lookup (already available in KioskProvider) instead of the auth context.
+---
 
-**New hook: `useKioskValidatePin`**
+## Technical Implementation
 
-```typescript
-// In KioskSettingsDialog or a new hooks file
-export function useKioskValidatePin(organizationId: string | null) {
-  return useMutation({
-    mutationFn: async (pin: string) => {
-      if (!organizationId) throw new Error('No organization context');
+### File: `src/components/kiosk/KioskSettingsDialog.tsx`
 
-      const { data, error } = await supabase
-        .rpc('validate_user_pin', {
-          _organization_id: organizationId,
-          _pin: pin,
-        });
+#### 1. Update LocalSettings State
 
-      if (error) throw error;
-      return data && data.length > 0 ? data[0] : null;
-    },
-  });
-}
-```
-
-### Part 2: Add Public SELECT Policy for Kiosk Settings
-
-The kiosk screen needs to read settings without auth. Add an RLS policy that allows reading kiosk settings via location lookup.
-
-**Database Migration:**
-
-```sql
--- Allow kiosk screens to read settings for their location
-CREATE POLICY "Kiosk can read settings by location" 
-ON organization_kiosk_settings
-FOR SELECT
-USING (
-  -- Allow if the location_id matches a valid active location
-  -- OR if it's org-level settings (location_id IS NULL) for a valid org
-  EXISTS (
-    SELECT 1 FROM locations l
-    WHERE l.organization_id = organization_kiosk_settings.organization_id
-    AND l.is_active = true
-  )
-);
-```
-
-### Part 3: Create Edge Function for Authenticated Kiosk Operations
-
-Since kiosk users authenticate via PIN (not Supabase auth), we need an edge function that:
-1. Validates the admin PIN
-2. Performs the settings update using service role
-3. Logs the action
-
-**New Edge Function: `kiosk-settings`**
+Add the missing fields to the `localSettings` state:
 
 ```typescript
-// supabase/functions/kiosk-settings/index.ts
-import { createClient } from "npm:@supabase/supabase-js@2";
-
-Deno.serve(async (req) => {
-  const { organization_id, location_id, settings, admin_pin } = await req.json();
-
-  // Validate admin PIN
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-  );
-
-  const { data: pinResult, error: pinError } = await supabase
-    .rpc('validate_user_pin', {
-      _organization_id: organization_id,
-      _pin: admin_pin,
-    });
-
-  if (pinError || !pinResult?.length) {
-    return new Response(JSON.stringify({ error: 'Invalid PIN' }), { status: 401 });
-  }
-
-  const admin = pinResult[0];
-  if (!admin.is_super_admin && !admin.is_primary_owner) {
-    return new Response(JSON.stringify({ error: 'Admin access required' }), { status: 403 });
-  }
-
-  // Upsert settings using service role
-  const { data: existing } = await supabase
-    .from('organization_kiosk_settings')
-    .select('id')
-    .eq('organization_id', organization_id)
-    .eq('location_id', location_id ?? null)
-    .maybeSingle();
-
-  let result;
-  if (existing) {
-    result = await supabase
-      .from('organization_kiosk_settings')
-      .update(settings)
-      .eq('id', existing.id)
-      .select()
-      .single();
-  } else {
-    result = await supabase
-      .from('organization_kiosk_settings')
-      .insert({
-        organization_id,
-        location_id: location_id ?? null,
-        ...settings,
-      })
-      .select()
-      .single();
-  }
-
-  if (result.error) {
-    return new Response(JSON.stringify({ error: result.error.message }), { status: 500 });
-  }
-
-  return new Response(JSON.stringify({ success: true, data: result.data }), { status: 200 });
+const [localSettings, setLocalSettings] = useState({
+  // Existing fields...
+  welcome_title: settings?.welcome_title || DEFAULT_KIOSK_SETTINGS.welcome_title,
+  welcome_subtitle: settings?.welcome_subtitle || '',
+  check_in_prompt: settings?.check_in_prompt || DEFAULT_KIOSK_SETTINGS.check_in_prompt,
+  success_message: settings?.success_message || DEFAULT_KIOSK_SETTINGS.success_message,
+  background_color: settings?.background_color || DEFAULT_KIOSK_SETTINGS.background_color,
+  accent_color: settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color,
+  text_color: settings?.text_color || DEFAULT_KIOSK_SETTINGS.text_color,
+  idle_timeout_seconds: settings?.idle_timeout_seconds || DEFAULT_KIOSK_SETTINGS.idle_timeout_seconds,
+  enable_walk_ins: settings?.enable_walk_ins ?? DEFAULT_KIOSK_SETTINGS.enable_walk_ins,
+  show_stylist_photo: settings?.show_stylist_photo ?? DEFAULT_KIOSK_SETTINGS.show_stylist_photo,
+  show_wait_time_estimate: settings?.show_wait_time_estimate ?? DEFAULT_KIOSK_SETTINGS.show_wait_time_estimate,
+  
+  // NEW fields to add:
+  button_style: settings?.button_style || DEFAULT_KIOSK_SETTINGS.button_style,
+  logo_url: settings?.logo_url || DEFAULT_KIOSK_SETTINGS.logo_url,
+  require_confirmation_tap: settings?.require_confirmation_tap ?? DEFAULT_KIOSK_SETTINGS.require_confirmation_tap,
+  enable_feedback_prompt: settings?.enable_feedback_prompt ?? DEFAULT_KIOSK_SETTINGS.enable_feedback_prompt,
+  require_form_signing: settings?.require_form_signing ?? DEFAULT_KIOSK_SETTINGS.require_form_signing,
+  exit_pin: settings?.exit_pin || DEFAULT_KIOSK_SETTINGS.exit_pin,
 });
 ```
 
-### Part 4: Update KioskSettingsDialog to Use New Pattern
+#### 2. Add Theme Preset State and Logic
 
-1. Replace `useValidatePin()` with kiosk-specific PIN validation using `organizationId` from `useKiosk()`
-2. Call the edge function for saving instead of direct Supabase mutation
+Import the theme presets and add detection/application logic:
 
-## Implementation Summary
+```typescript
+import { KIOSK_THEME_PRESETS, KioskThemePreset } from '@/hooks/useKioskSettings';
 
-| File | Changes |
-|------|---------|
-| `src/components/kiosk/KioskSettingsDialog.tsx` | Use organizationId from useKiosk() for PIN validation; Call edge function for save |
-| `src/hooks/useKioskSettings.ts` | Add `useKioskSaveSettings` hook that calls edge function |
-| `supabase/functions/kiosk-settings/index.ts` | New edge function for PIN-authenticated settings updates |
-| Database migration | Add SELECT policy for kiosk screens to read settings |
+// Add state for theme preset
+const [themePreset, setThemePreset] = useState<KioskThemePreset | 'custom'>('cream');
 
-## Alternative Simpler Approach
+// Detect current preset function
+const detectPreset = (bg: string, text: string, accent: string): KioskThemePreset | 'custom' => {
+  for (const [key, preset] of Object.entries(KIOSK_THEME_PRESETS)) {
+    if (
+      preset.background_color.toLowerCase() === bg.toLowerCase() &&
+      preset.text_color.toLowerCase() === text.toLowerCase() &&
+      preset.accent_color.toLowerCase() === accent.toLowerCase()
+    ) {
+      return key as KioskThemePreset;
+    }
+  }
+  return 'custom';
+};
 
-If you prefer a simpler solution without edge functions, we can:
+// Apply preset function
+const applyPreset = (preset: KioskThemePreset | 'custom') => {
+  setThemePreset(preset);
+  if (preset !== 'custom' && KIOSK_THEME_PRESETS[preset]) {
+    const { background_color, text_color, accent_color } = KIOSK_THEME_PRESETS[preset];
+    setLocalSettings(prev => ({
+      ...prev,
+      background_color,
+      text_color,
+      accent_color,
+    }));
+  }
+};
+```
 
-1. **Keep the current authenticated admin workflow**: Require that the kiosk settings be configured from the dashboard (where users are logged in), not from the kiosk itself
-2. **Add public SELECT policy for kiosk settings**: Allow kiosk screens to read settings without auth
-3. **Remove settings editing from kiosk mode**: The settings gear icon would be dashboard-only
+#### 3. Update Appearance Tab UI
 
-This is actually a common pattern - kiosk configuration is typically done from the admin dashboard, not from the kiosk terminal itself.
+Add theme preset selector and button style dropdown:
 
-## Recommended Solution
+```typescript
+{activeTab === 'appearance' && (
+  <>
+    {/* Theme Preset Selector */}
+    <SettingGroup title="Theme Preset">
+      <div className="grid grid-cols-2 gap-2">
+        {Object.entries(KIOSK_THEME_PRESETS).map(([key, preset]) => (
+          <motion.button
+            key={key}
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
+              themePreset === key 
+                ? 'border-2' 
+                : 'border-white/10 hover:border-white/20'
+            }`}
+            style={themePreset === key ? { borderColor: accentColor } : undefined}
+            onClick={() => applyPreset(key as KioskThemePreset)}
+          >
+            <div className="flex gap-1">
+              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: preset.background_color }} />
+              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: preset.accent_color }} />
+            </div>
+            <span className="text-sm text-white/80">{preset.name}</span>
+          </motion.button>
+        ))}
+        <motion.button
+          className={`px-4 py-3 rounded-xl border transition-colors ${
+            themePreset === 'custom' 
+              ? 'border-2' 
+              : 'border-white/10 hover:border-white/20'
+          }`}
+          style={themePreset === 'custom' ? { borderColor: accentColor } : undefined}
+          onClick={() => setThemePreset('custom')}
+        >
+          <span className="text-sm text-white/80">Custom</span>
+        </motion.button>
+      </div>
+    </SettingGroup>
 
-I recommend the **simpler approach** for now:
-1. Add RLS policy for public SELECT on kiosk settings (tied to valid locations)
-2. Keep the kiosk settings dialog for emergency access but note it requires dashboard login
-3. Primary kiosk configuration happens in the dashboard
+    {/* Existing color settings... */}
+    
+    {/* Button Style - NEW */}
+    <SettingGroup title="Button Style">
+      <div className="flex gap-2">
+        {['rounded', 'pill', 'square'].map((style) => (
+          <motion.button
+            key={style}
+            className={`flex-1 px-4 py-3 rounded-xl border transition-colors capitalize ${
+              localSettings.button_style === style 
+                ? 'border-2' 
+                : 'border-white/10 hover:border-white/20'
+            }`}
+            style={localSettings.button_style === style ? { borderColor: accentColor } : undefined}
+            onClick={() => updateLocalSetting('button_style', style as 'rounded' | 'pill' | 'square')}
+          >
+            <span className="text-sm text-white/80">{style}</span>
+          </motion.button>
+        ))}
+      </div>
+    </SettingGroup>
 
-This maintains security while ensuring the kiosk displays correctly with configured settings.
+    {/* Logo URL - NEW */}
+    <SettingGroup title="Logo">
+      <TextSetting
+        label="Logo URL"
+        value={localSettings.logo_url || ''}
+        onChange={(v) => updateLocalSetting('logo_url', v || null)}
+        placeholder="https://..."
+        accentColor={accentColor}
+      />
+    </SettingGroup>
+  </>
+)}
+```
 
+#### 4. Update Behavior Tab UI
+
+Add the missing toggle settings:
+
+```typescript
+{activeTab === 'behavior' && (
+  <>
+    {/* Existing Timeouts group... */}
+    
+    <SettingGroup title="Features">
+      <ToggleSetting
+        label="Enable Walk-Ins"
+        description="Allow clients without appointments"
+        value={localSettings.enable_walk_ins}
+        onChange={(v) => updateLocalSetting('enable_walk_ins', v)}
+        accentColor={accentColor}
+      />
+      <ToggleSetting
+        label="Require Confirmation Tap"
+        description="Ask client to confirm before check-in"
+        value={localSettings.require_confirmation_tap}
+        onChange={(v) => updateLocalSetting('require_confirmation_tap', v)}
+        accentColor={accentColor}
+      />
+      <ToggleSetting
+        label="Show Stylist Photo"
+        description="Display stylist photos on appointment cards"
+        value={localSettings.show_stylist_photo}
+        onChange={(v) => updateLocalSetting('show_stylist_photo', v)}
+        accentColor={accentColor}
+      />
+      <ToggleSetting
+        label="Show Wait Time Estimate"
+        description="Display estimated wait time after check-in"
+        value={localSettings.show_wait_time_estimate}
+        onChange={(v) => updateLocalSetting('show_wait_time_estimate', v)}
+        accentColor={accentColor}
+      />
+      <ToggleSetting
+        label="Require Form Signing"
+        description="Prompt new clients to sign intake forms"
+        value={localSettings.require_form_signing}
+        onChange={(v) => updateLocalSetting('require_form_signing', v)}
+        accentColor={accentColor}
+      />
+      <ToggleSetting
+        label="Enable Feedback Prompt"
+        description="Ask for feedback after check-in"
+        value={localSettings.enable_feedback_prompt}
+        onChange={(v) => updateLocalSetting('enable_feedback_prompt', v)}
+        accentColor={accentColor}
+      />
+    </SettingGroup>
+
+    {/* Security - NEW */}
+    <SettingGroup title="Security">
+      <div className="flex items-center justify-between py-2">
+        <div>
+          <div className="text-sm text-white/80">Exit PIN</div>
+          <div className="text-xs text-white/40 mt-0.5">4-digit PIN to exit kiosk mode</div>
+        </div>
+        <input
+          type="text"
+          inputMode="numeric"
+          maxLength={4}
+          className="w-20 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white text-center font-mono focus:outline-none focus:border-[color]"
+          style={{ '--focus-color': accentColor } as any}
+          value={localSettings.exit_pin}
+          onChange={(e) => {
+            const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+            updateLocalSetting('exit_pin', val);
+          }}
+        />
+      </div>
+    </SettingGroup>
+  </>
+)}
+```
+
+#### 5. Sync Theme Preset on Settings Load
+
+Add a `useEffect` to detect the current theme preset when settings load:
+
+```typescript
+useEffect(() => {
+  if (settings) {
+    setThemePreset(detectPreset(
+      settings.background_color,
+      settings.text_color,
+      settings.accent_color
+    ));
+  }
+}, [settings]);
+```
+
+---
+
+## Summary
+
+| Change | Purpose |
+|--------|---------|
+| Add 6 missing fields to localSettings | Feature parity with dashboard |
+| Add theme preset selector | Allow quick theme switching like dashboard |
+| Add button style selector | Match dashboard appearance options |
+| Add logo URL field | Allow logo customization |
+| Add require_confirmation_tap toggle | Match dashboard behavior option |
+| Add require_form_signing toggle | Match dashboard behavior option |
+| Add enable_feedback_prompt toggle | Match dashboard behavior option |
+| Add exit_pin field | Allow changing the exit PIN from kiosk |
+
+## Expected Outcome
+
+After these changes, the settings dialog accessible via the gear icon on the kiosk screen will contain all the same configuration options as the organization dashboard's kiosk settings page. Both interfaces will update the same database records, ensuring changes made from either location are reflected immediately.
