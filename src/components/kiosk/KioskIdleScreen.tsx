@@ -96,8 +96,8 @@ export function KioskIdleScreen() {
       <motion.button
         className="absolute top-4 right-4 z-20 w-12 h-12 rounded-xl flex items-center justify-center transition-all"
         style={{ 
-          backgroundColor: settingsTapCount > 0 ? `${textColor}15` : 'transparent',
-          opacity: settingsTapCount > 0 ? 1 : 0.1,
+          backgroundColor: settingsTapCount > 0 ? `${textColor}15` : `${textColor}08`,
+          opacity: settingsTapCount > 0 ? 1 : 0.3,
         }}
         onClick={handleSettingsTap}
         whileTap={{ scale: 0.95 }}
