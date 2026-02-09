@@ -21,7 +21,7 @@ import {
   ResponsiveContainer, 
   Cell,
   LabelList,
-  ReferenceLine 
+  Customized 
 } from 'recharts';
 
 // Label positioned above each bar for revenue
@@ -269,19 +269,44 @@ export function WeekAheadForecast() {
                   ))}
                 </Bar>
                 {averageDaily > 0 && (
-                  <ReferenceLine 
-                    y={averageDaily} 
-                    stroke="hsl(25, 100%, 55%)" 
-                    strokeDasharray="6 3"
-                    strokeWidth={2}
-                    label={{
-                      value: `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`,
-                      position: 'insideTopLeft',
-                      fill: 'hsl(25, 100%, 55%)',
-                      fontSize: 11,
-                      fontWeight: 600,
-                    }}
-                  />
+                  <Customized component={(props: any) => {
+                    const { yAxisMap, xAxisMap } = props;
+                    if (!yAxisMap?.[0]?.scale || !xAxisMap?.[0]) return null;
+                    const yPos = yAxisMap[0].scale(averageDaily);
+                    const chartLeft = xAxisMap[0].x;
+                    const chartRight = chartLeft + xAxisMap[0].width;
+                    if (typeof yPos !== 'number' || isNaN(yPos)) return null;
+                    const badgeWidth = 140;
+                    return (
+                      <g>
+                        <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24}>
+                          <div style={{ 
+                            fontSize: 11, fontWeight: 600, 
+                            color: 'hsl(25, 100%, 55%)',
+                            backdropFilter: 'blur(6px)',
+                            WebkitBackdropFilter: 'blur(6px)',
+                            background: 'hsl(var(--background) / 0.7)',
+                            border: '1px solid hsl(var(--border) / 0.3)',
+                            borderRadius: 4,
+                            padding: '1px 6px',
+                            whiteSpace: 'nowrap',
+                            width: 'fit-content',
+                          }}>
+                            Daily Avg: ${Math.round(averageDaily).toLocaleString()}
+                          </div>
+                        </foreignObject>
+                        <line
+                          x1={chartLeft + badgeWidth + 4}
+                          y1={yPos}
+                          x2={chartRight}
+                          y2={yPos}
+                          stroke="hsl(25, 100%, 55%)"
+                          strokeDasharray="6 3"
+                          strokeWidth={2}
+                        />
+                      </g>
+                    );
+                  }} />
                 )}
               </BarChart>
             </ResponsiveContainer>
