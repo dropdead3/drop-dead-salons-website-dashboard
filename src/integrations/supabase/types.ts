@@ -2890,6 +2890,50 @@ export type Database = {
           },
         ]
       }
+      custom_report_templates: {
+        Row: {
+          config: Json
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          id: string
+          is_shared: boolean | null
+          name: string
+          organization_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          config?: Json
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_shared?: boolean | null
+          name: string
+          organization_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          config?: Json
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          is_shared?: boolean | null
+          name?: string
+          organization_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_report_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       daily_completions: {
         Row: {
           all_tasks_done: boolean
@@ -5772,6 +5816,50 @@ export type Database = {
             columns: ["linked_meeting_id"]
             isOneToOne: false
             referencedRelation: "one_on_one_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      metric_benchmarks: {
+        Row: {
+          benchmark_type: string
+          context: string | null
+          created_at: string | null
+          id: string
+          metric_key: string
+          organization_id: string | null
+          valid_from: string | null
+          valid_to: string | null
+          value: number
+        }
+        Insert: {
+          benchmark_type: string
+          context?: string | null
+          created_at?: string | null
+          id?: string
+          metric_key: string
+          organization_id?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+          value: number
+        }
+        Update: {
+          benchmark_type?: string
+          context?: string | null
+          created_at?: string | null
+          id?: string
+          metric_key?: string
+          organization_id?: string | null
+          valid_from?: string | null
+          valid_to?: string | null
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "metric_benchmarks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -9882,6 +9970,35 @@ export type Database = {
           },
         ]
       }
+      report_template_usage: {
+        Row: {
+          id: string
+          template_id: string | null
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          id?: string
+          template_id?: string | null
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          id?: string
+          template_id?: string | null
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_template_usage_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "custom_report_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revenue_forecasts: {
         Row: {
           accuracy_score: number | null
@@ -10471,6 +10588,116 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "booth_rental_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_report_runs: {
+        Row: {
+          completed_at: string | null
+          error_message: string | null
+          file_url: string | null
+          id: string
+          recipient_count: number | null
+          scheduled_report_id: string | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          error_message?: string | null
+          file_url?: string | null
+          id?: string
+          recipient_count?: number | null
+          scheduled_report_id?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          error_message?: string | null
+          file_url?: string | null
+          id?: string
+          recipient_count?: number | null
+          scheduled_report_id?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_report_runs_scheduled_report_id_fkey"
+            columns: ["scheduled_report_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_reports: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          filters: Json | null
+          format: string | null
+          id: string
+          is_active: boolean | null
+          last_run_at: string | null
+          name: string
+          next_run_at: string | null
+          organization_id: string | null
+          recipients: Json
+          report_type: string | null
+          schedule_config: Json | null
+          schedule_type: string
+          template_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          filters?: Json | null
+          format?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          name: string
+          next_run_at?: string | null
+          organization_id?: string | null
+          recipients?: Json
+          report_type?: string | null
+          schedule_config?: Json | null
+          schedule_type: string
+          template_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          filters?: Json | null
+          format?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          name?: string
+          next_run_at?: string | null
+          organization_id?: string | null
+          recipients?: Json
+          report_type?: string | null
+          schedule_config?: Json | null
+          schedule_type?: string
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_reports_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "custom_report_templates"
             referencedColumns: ["id"]
           },
         ]
