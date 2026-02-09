@@ -3,7 +3,8 @@ import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/
 import { RoleEditor } from '@/components/dashboard/RoleEditor';
 import { RoleTemplatesManager } from '@/components/dashboard/RoleTemplatesManager';
 import { SystemDefaultsConfigurator } from '@/components/dashboard/settings/SystemDefaultsConfigurator';
-import { Settings2, Files, RotateCcw } from 'lucide-react';
+import { ResponsibilitiesSubTab } from './ResponsibilitiesSubTab';
+import { Settings2, Files, RotateCcw, Award } from 'lucide-react';
 
 interface RoleConfigTabProps {
   canManage: boolean;
@@ -20,6 +21,10 @@ export function RoleConfigTab({ canManage }: RoleConfigTabProps) {
             <Settings2 className="h-4 w-4" />
             Roles
           </SubTabsTrigger>
+          <SubTabsTrigger value="responsibilities" className="gap-2">
+            <Award className="h-4 w-4" />
+            Responsibilities
+          </SubTabsTrigger>
           <SubTabsTrigger value="templates" className="gap-2">
             <Files className="h-4 w-4" />
             Templates
@@ -32,6 +37,10 @@ export function RoleConfigTab({ canManage }: RoleConfigTabProps) {
 
         <TabsContent value="roles" className="mt-6">
           <RoleEditor />
+        </TabsContent>
+
+        <TabsContent value="responsibilities" className="mt-6">
+          <ResponsibilitiesSubTab canManage={canManage} />
         </TabsContent>
 
         <TabsContent value="templates" className="mt-6">
