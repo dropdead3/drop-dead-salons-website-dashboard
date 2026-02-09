@@ -107,6 +107,7 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
   adminOnly: [
     '/dashboard/admin/accounts',
     '/dashboard/admin/access-hub',
+    '/dashboard/admin/settings',
   ],
   platform: [
     '/dashboard/platform/overview',
