@@ -1,131 +1,121 @@
 
-# Add Top/Bottom Center Badge Positions
+# Responsive Layout for Center Badge Positions
 
-## Overview
+## Problem
 
-Add `top-center` and `bottom-center` options to the location badge position selector, with a responsive 3-column layout for the position buttons.
+When the location badge is positioned at `top-center` or `bottom-center`, it overlaps with or crowds other UI elements:
+- **Bottom-center badge**: Sits too close to the pulsing dot indicator at the bottom
+- **Top-center badge**: Could overlap with the logo/header area
 
----
-
-## Current State
-
-| Component | Current Implementation |
-|-----------|----------------------|
-| Database | CHECK constraint: `top-left`, `top-right`, `bottom-left`, `bottom-right` |
-| TypeScript | Union type with 4 positions |
-| Settings UI | 2x2 grid of position buttons |
-| Preview Panel | Position classes for 4 corners |
-| Kiosk Screen | Position classes for 4 corners |
+The layout needs to shift content dynamically based on badge position.
 
 ---
 
-## Changes Required
+## Current Layout Analysis
 
-### Part 1: Database Migration
+| Element | Current Position | Conflict |
+|---------|-----------------|----------|
+| Location badge (bottom-center) | `bottom-6` (1.5rem) | Too close to pulse dots |
+| Pulse indicator dots | `bottom-12` (3rem) | No adjustment for badge |
+| Location badge (top-center) | `top-6` (1.5rem) | Could overlap settings icon |
+| Logo/Content | `-mt-12` offset | No adjustment for badge |
 
-Update the CHECK constraint to include center positions:
+**Preview Panel:**
+| Element | Current Position | Issue |
+|---------|-----------------|-------|
+| Badge (bottom-center) | `bottom-3` | Overlaps with bottom indicators at `bottom-4` |
+| Bottom indicators | `bottom-4` | No badge awareness |
 
-```sql
-ALTER TABLE organization_kiosk_settings 
-DROP CONSTRAINT IF EXISTS organization_kiosk_settings_location_badge_position_check;
+---
 
-ALTER TABLE organization_kiosk_settings 
-ADD CONSTRAINT organization_kiosk_settings_location_badge_position_check 
-CHECK (location_badge_position IN (
-  'top-left', 'top-center', 'top-right', 
-  'bottom-left', 'bottom-center', 'bottom-right'
-));
-```
+## Solution
 
-### Part 2: Update TypeScript Types
+Add conditional spacing based on badge position:
 
-**File: `src/hooks/useKioskSettings.ts`**
+### 1. KioskIdleScreen.tsx
 
-Update the type union:
-```typescript
-location_badge_position: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
-```
+**Bottom-center badge active:**
+- Move pulse indicator higher: `bottom-12` → `bottom-20` (extra 2rem clearance)
+- Adjust badge position: `bottom-6` → `bottom-8` for better visual balance
 
-**File: `src/components/dashboard/settings/KioskSettingsContent.tsx`**
-
-Update the LocalSettings interface:
-```typescript
-location_badge_position: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
-```
-
-**File: `src/components/dashboard/settings/KioskPreviewPanel.tsx`**
-
-Update the KioskPreviewSettings interface:
-```typescript
-location_badge_position?: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
-```
-
-### Part 3: Update Position Classes
-
-Add center positioning with horizontal centering:
-
-**Files: `KioskIdleScreen.tsx` and `KioskPreviewPanel.tsx`**
+**Top-center badge active:**
+- Add top padding to main content wrapper to push content down
+- Keep settings icon in top-right (away from center badge)
 
 ```typescript
+// Determine if center badges are active
+const hasTopCenterBadge = showLocationBadge && badgePosition === 'top-center';
+const hasBottomCenterBadge = showLocationBadge && badgePosition === 'bottom-center';
+
+// Dynamic badge positions with better spacing
 const badgePositionClasses = {
   'top-left': 'top-6 left-6',
-  'top-center': 'top-6 left-1/2 -translate-x-1/2',
+  'top-center': 'top-8 left-1/2 -translate-x-1/2', // Slightly lower for clearance
   'top-right': 'top-6 right-6',
   'bottom-left': 'bottom-6 left-6',
-  'bottom-center': 'bottom-6 left-1/2 -translate-x-1/2',
+  'bottom-center': 'bottom-20 left-1/2 -translate-x-1/2', // Above pulse dots
   'bottom-right': 'bottom-6 right-6',
 };
+
+// Conditional pulse indicator position
+<motion.div
+  className={cn(
+    "absolute left-1/2 -translate-x-1/2 flex gap-2",
+    hasBottomCenterBadge ? "bottom-8" : "bottom-12" // Move down when badge is above
+  )}
+>
 ```
 
-For preview panel (smaller offsets):
+### 2. KioskPreviewPanel.tsx
+
+Apply same responsive logic at preview scale:
+
 ```typescript
+const hasBottomCenterBadge = settings.show_location_badge && 
+  settings.location_badge_position === 'bottom-center';
+
+// Badge positions (preview scale)
 const badgePositionClasses = {
   'top-left': 'top-3 left-3',
-  'top-center': 'top-3 left-1/2 -translate-x-1/2',
+  'top-center': 'top-4 left-1/2 -translate-x-1/2',
   'top-right': 'top-3 right-3',
   'bottom-left': 'bottom-3 left-3',
-  'bottom-center': 'bottom-3 left-1/2 -translate-x-1/2',
+  'bottom-center': 'bottom-8 left-1/2 -translate-x-1/2', // Above indicators
   'bottom-right': 'bottom-3 right-3',
 };
+
+// Conditional bottom indicator position
+<div className={cn(
+  "absolute flex gap-1.5 z-10",
+  hasBottomCenterBadge ? "bottom-2" : "bottom-4"
+)}>
 ```
 
-### Part 4: Update Settings UI Layout
+---
 
-Transform from 2x2 grid to a 3-column responsive layout:
+## Visual Layout
 
-**File: `src/components/dashboard/settings/KioskSettingsContent.tsx`**
-
-```tsx
-{/* Position selector - 3 column grid for 6 positions */}
-<div className="space-y-2">
-  <Label className="text-sm">Position</Label>
-  <div className="grid grid-cols-3 gap-2">
-    {(['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'] as const).map((pos) => (
-      <button
-        key={pos}
-        type="button"
-        className={cn(
-          "px-2 py-2 rounded-lg border text-xs font-medium transition-colors text-center",
-          localSettings.location_badge_position === pos
-            ? "border-primary bg-primary/10 text-foreground"
-            : "border-border hover:border-primary/50"
-        )}
-        onClick={() => updateField('location_badge_position', pos)}
-      >
-        {pos.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
-      </button>
-    ))}
-  </div>
-</div>
-```
-
-**Visual Layout:**
+**Before (overlapping):**
 ```text
-+-------------+-------------+-------------+
-| Top Left    | Top Center  | Top Right   |
-+-------------+-------------+-------------+
-| Bottom Left |Bottom Center| Bottom Right|
-+-------------+-------------+-------------+
+┌────────────────────────────┐
+│                            │
+│         [Content]          │
+│                            │
+│   [📍 Location Name]       │  ← bottom-6
+│        ● ● ●               │  ← bottom-12 (too close)
+└────────────────────────────┘
+```
+
+**After (properly spaced):**
+```text
+┌────────────────────────────┐
+│                            │
+│         [Content]          │
+│                            │
+│   [📍 Location Name]       │  ← bottom-20 (raised higher)
+│                            │
+│        ● ● ●               │  ← bottom-8 (adjusted down)
+└────────────────────────────┘
 ```
 
 ---
@@ -134,18 +124,23 @@ Transform from 2x2 grid to a 3-column responsive layout:
 
 | File | Changes |
 |------|---------|
-| `supabase/migrations/` | Add migration to update CHECK constraint |
-| `src/hooks/useKioskSettings.ts` | Add center positions to type union (line 48) |
-| `src/components/dashboard/settings/KioskSettingsContent.tsx` | Update type (line 75), update grid to 3 columns (lines 864-880) |
-| `src/components/dashboard/settings/KioskPreviewPanel.tsx` | Update type (line 34), add center position classes (lines 178-183) |
-| `src/components/kiosk/KioskIdleScreen.tsx` | Add center position classes (lines 10-15) |
+| `src/components/kiosk/KioskIdleScreen.tsx` | Add conditional classes for bottom pulse indicator and adjust center badge positions |
+| `src/components/dashboard/settings/KioskPreviewPanel.tsx` | Mirror same responsive logic for preview |
 
 ---
 
-## Summary
+## Implementation Details
 
-This enhancement:
-1. Adds `top-center` and `bottom-center` badge positions
-2. Uses `left-1/2 -translate-x-1/2` for perfect horizontal centering
-3. Reorganizes the position selector into a 3x2 grid that mirrors actual screen positions
-4. Updates database constraints to allow new values
+### KioskIdleScreen.tsx Changes
+
+1. Calculate badge position awareness at component level
+2. Update `badgePositionClasses` with better center spacing
+3. Make bottom pulse indicator position conditional
+
+### KioskPreviewPanel.tsx Changes
+
+1. Add position awareness calculations
+2. Update badge position classes for center positions
+3. Make bottom indicators position conditional
+
+This ensures elements never overlap and maintain proper visual hierarchy regardless of badge placement.
