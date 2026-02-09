@@ -157,7 +157,7 @@ export function KioskIdleScreen() {
       )}
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-8">
+      <div className="relative z-10 flex flex-col items-center text-center px-8 -mt-12">
         {/* Logo with floating animation */}
         {logoUrl && (
           <motion.img
@@ -178,19 +178,19 @@ export function KioskIdleScreen() {
 
         {/* Time - Enhanced typography */}
         <motion.div
-          className="mb-10"
+          className="mb-16"
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
           <motion.div 
-            className="text-7xl md:text-9xl font-extralight tracking-tight"
+            className="text-5xl md:text-7xl font-extralight tracking-tight"
             style={{ color: textColor }}
           >
             {formatTime(currentTime)}
           </motion.div>
           <motion.div 
-            className="text-xl md:text-2xl mt-3 font-light tracking-wide"
+            className="text-lg md:text-xl mt-2 font-light tracking-wide"
             style={{ color: `${textColor}90` }}
           >
             {formatDate(currentTime)}
@@ -199,13 +199,13 @@ export function KioskIdleScreen() {
 
         {/* Welcome message */}
         <motion.div
-          className="mb-14"
+          className="mb-20"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
           <h1 
-            className="text-4xl md:text-6xl font-medium mb-4 tracking-tight"
+            className="text-3xl md:text-5xl font-medium mb-4 tracking-tight"
             style={{ color: textColor }}
           >
             {welcomeTitle}
