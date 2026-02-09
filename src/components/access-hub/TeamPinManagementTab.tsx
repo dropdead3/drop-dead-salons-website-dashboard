@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Lock, Search, Eye, EyeOff, Crown, Shield, RotateCcw, History, User, ExternalLink } from 'lucide-react';
+import { Lock, Search, Eye, EyeOff, Crown, Shield, History, User, ExternalLink, Plus, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -24,6 +24,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useTeamPinStatus, useAdminSetUserPin, usePinChangelog } from '@/hooks/useUserPin';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
@@ -46,15 +52,17 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
   const [newPin, setNewPin] = useState('');
   const [showPin, setShowPin] = useState(false);
   const [reason, setReason] = useState('');
+  const [actionMode, setActionMode] = useState<'set' | 'clear'>('set');
 
   const filteredMembers = teamMembers.filter(member =>
     member.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleOpenResetDialog = (member: typeof teamMembers[0]) => {
+  const handleOpenResetDialog = (member: typeof teamMembers[0], mode: 'set' | 'clear' = 'set') => {
     setSelectedMember(member);
     setNewPin('');
     setReason('');
+    setActionMode(mode);
     setResetDialogOpen(true);
   };
 
@@ -201,13 +209,41 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                           {member.has_pin ? 'Active' : 'None'}
                         </Badge>
                         {canReset && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleOpenResetDialog(member)}
-                          >
-                            <RotateCcw className="w-4 h-4" />
-                          </Button>
+                          <>
+                            {!member.has_pin ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenResetDialog(member, 'set')}
+                                className="gap-1.5"
+                              >
+                                <Plus className="w-3.5 h-3.5" />
+                                Set PIN
+                              </Button>
+                            ) : (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="outline" size="sm" className="gap-1.5">
+                                    Manage
+                                    <MoreHorizontal className="w-3.5 h-3.5" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => handleOpenResetDialog(member, 'set')}>
+                                    <Pencil className="w-4 h-4 mr-2" />
+                                    Change PIN
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleOpenResetDialog(member, 'clear')}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Clear PIN
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
@@ -265,42 +301,70 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <RotateCcw className="w-5 h-5" />
-              Reset PIN for {selectedMember?.name}
+              {actionMode === 'clear' ? (
+                <>
+                  <Trash2 className="w-5 h-5" />
+                  Clear PIN for {selectedMember?.name}
+                </>
+              ) : selectedMember?.has_pin ? (
+                <>
+                  <Pencil className="w-5 h-5" />
+                  Change PIN for {selectedMember?.name}
+                </>
+              ) : (
+                <>
+                  <Plus className="w-5 h-5" />
+                  Set PIN for {selectedMember?.name}
+                </>
+              )}
             </DialogTitle>
             <DialogDescription>
-              Set a new PIN or clear the existing one. Leave empty to remove the PIN.
+              {actionMode === 'clear' 
+                ? 'This will remove the PIN and disable quick login for this user.'
+                : selectedMember?.has_pin 
+                  ? 'Enter a new 4-digit PIN to replace the existing one.'
+                  : 'Create a 4-digit PIN to enable quick login for this user.'}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="reset-pin">New PIN (leave empty to clear)</Label>
-              <div className="relative">
-                <Input
-                  id="reset-pin"
-                  type={showPin ? 'text' : 'password'}
-                  inputMode="numeric"
-                  pattern="[0-9]*"
-                  maxLength={4}
-                  value={newPin}
-                  onChange={(e) => handlePinChange(e.target.value)}
-                  placeholder="4 digits or empty"
-                  className="pr-10 font-mono text-center text-lg tracking-widest"
-                  autoCapitalize="off"
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowPin(!showPin)}
-                >
-                  {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+            {actionMode !== 'clear' && (
+              <div className="space-y-2">
+                <Label htmlFor="reset-pin">New PIN</Label>
+                <div className="relative">
+                  <Input
+                    id="reset-pin"
+                    type={showPin ? 'text' : 'password'}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={4}
+                    value={newPin}
+                    onChange={(e) => handlePinChange(e.target.value)}
+                    placeholder="Enter 4 digits"
+                    className="pr-10 font-mono text-center text-lg tracking-widest"
+                    autoCapitalize="off"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowPin(!showPin)}
+                  >
+                    {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {newPin.length > 0 && newPin.length < 4 && (
+                  <p className="text-xs text-muted-foreground">PIN must be exactly 4 digits</p>
+                )}
               </div>
-              {newPin.length > 0 && newPin.length < 4 && (
-                <p className="text-xs text-muted-foreground">PIN must be exactly 4 digits</p>
-              )}
-            </div>
+            )}
+
+            {actionMode === 'clear' && (
+              <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20">
+                <p className="text-sm text-destructive">
+                  This user will no longer be able to use quick PIN login until a new PIN is set.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="reason">Reason (optional)</Label>
@@ -319,9 +383,16 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
             </Button>
             <Button 
               onClick={handleResetPin}
-              disabled={(newPin.length > 0 && newPin.length < 4) || adminSetPin.isPending}
+              disabled={(actionMode !== 'clear' && newPin.length > 0 && newPin.length < 4) || adminSetPin.isPending}
+              variant={actionMode === 'clear' ? 'destructive' : 'default'}
             >
-              {adminSetPin.isPending ? 'Saving...' : newPin ? 'Set New PIN' : 'Clear PIN'}
+              {adminSetPin.isPending 
+                ? 'Saving...' 
+                : actionMode === 'clear' 
+                  ? 'Clear PIN' 
+                  : selectedMember?.has_pin 
+                    ? 'Update PIN' 
+                    : 'Set PIN'}
             </Button>
           </DialogFooter>
         </DialogContent>
