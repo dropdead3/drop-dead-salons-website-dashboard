@@ -83,7 +83,7 @@ function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart 
     const week = weeks?.find((w: WeekForecast) => w.weekLabel === label);
     displayLabel = week ? week.weekLabel : label;
   } else {
-    const day = days?.find((d: DayForecast) => d.dayName === label);
+    const day = days?.find((d: DayForecast) => d.date === label);
     displayLabel = day ? format(parseISO(day.date), 'EEEE, MMM d') : label;
   }
   
@@ -168,7 +168,7 @@ function AboveBarLabel({ x, y, width, value, ...rest }: any) {
 // Custom X-axis tick for daily view
 function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isEomPeriod, is7DaysPeriod }: any) {
   const [isHovered, setIsHovered] = useState(false);
-  const day = days.find((d: DayForecast) => d.dayName === payload.value);
+  const day = days.find((d: DayForecast) => d.date === payload.value);
   if (!day) return null;
   
   const now = new Date();
@@ -410,7 +410,7 @@ export function ForecastingCard() {
 
   // Chart data for daily view
   const dailyChartData = days.map((day, index) => ({
-    name: day.dayName,
+    name: day.date,
     confirmedRevenue: day.confirmedRevenue,
     unconfirmedRevenue: day.unconfirmedRevenue,
     totalRevenue: day.revenue,
