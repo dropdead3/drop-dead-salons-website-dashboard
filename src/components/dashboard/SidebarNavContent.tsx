@@ -11,6 +11,7 @@ import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
 import { SidebarSyncStatusWidget } from './SidebarSyncStatusWidget';
 import { SidebarLockButton } from './SidebarLockButton';
+import { SidebarClockButton } from './SidebarClockButton';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, MANAGEMENT_SUB_GROUPS, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
 import { CollapsibleNavGroup, type NavSubGroup } from './CollapsibleNavGroup';
@@ -631,6 +632,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               />
             ))}
             
+            {/* Clock In/Out Button */}
+            <SidebarClockButton isCollapsed={isCollapsed} />
             {/* Lock Button */}
             <SidebarLockButton isCollapsed={isCollapsed} />
           </div>
