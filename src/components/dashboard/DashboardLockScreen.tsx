@@ -216,18 +216,18 @@ export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
         <img 
           src={getLogo()} 
           alt={businessSettings?.business_name || 'Logo'} 
-          className="h-8 w-auto" 
+          className="h-6 w-auto" 
         />
       </motion.div>
 
       {/* Lock Icon */}
       <motion.div
-        className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6"
+        className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
       >
-        <Lock className="w-10 h-10 text-primary" />
+        <Lock className="w-8 h-8 text-primary" />
       </motion.div>
 
       {/* Title */}
