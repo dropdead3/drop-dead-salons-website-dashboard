@@ -2,8 +2,8 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Settings, Lock, Eye, EyeOff, Check, Palette, Type, Clock, Users, Image, Loader2 } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
-import { DEFAULT_KIOSK_SETTINGS, useUpdateKioskSettings } from '@/hooks/useKioskSettings';
-import { useValidatePin } from '@/hooks/useUserPin';
+import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
+import { useKioskValidatePin, useKioskSaveSettings } from '@/hooks/useKioskPinValidation';
 import { toast } from 'sonner';
 
 interface KioskSettingsDialogProps {
@@ -17,13 +17,14 @@ type SettingsTab = 'appearance' | 'content' | 'behavior';
 
 export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProps) {
   const { settings, organizationId, locationId } = useKiosk();
-  const updateSettings = useUpdateKioskSettings();
+  const saveSettings = useKioskSaveSettings();
   
   // Use configured accent color from kiosk settings
   const accentColor = settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color;
-  const validatePin = useValidatePin();
+  const validatePin = useKioskValidatePin(organizationId);
   
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authenticatedPin, setAuthenticatedPin] = useState<string>(''); // Store PIN for later save
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState(false);
   const [pinErrorMessage, setPinErrorMessage] = useState('');
@@ -188,6 +189,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
       
       if (result && (result.is_super_admin || result.is_primary_owner)) {
         setIsAuthenticated(true);
+        setAuthenticatedPin(pinInput); // Store PIN for later save
         setPinError(false);
         setPinInput('');
       } else if (result) {
@@ -229,6 +231,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
           
           if (result && (result.is_super_admin || result.is_primary_owner)) {
             setIsAuthenticated(true);
+            setAuthenticatedPin(newPin); // Store PIN for later save
             setPinError(false);
             setPinInput('');
           } else if (result) {
@@ -267,15 +270,24 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
       return;
     }
     
+    if (!authenticatedPin) {
+      toast.error('Session expired. Please re-enter your PIN.');
+      setIsAuthenticated(false);
+      return;
+    }
+    
     try {
-      await updateSettings.mutateAsync({
+      await saveSettings.mutateAsync({
         organizationId,
         locationId: locationId || null,
         settings: localSettings,
+        adminPin: authenticatedPin,
       });
+      toast.success('Changes saved successfully');
       handleClose();
     } catch (error) {
       console.error('Failed to save kiosk settings:', error);
+      toast.error('Failed to save settings');
     }
   };
 
@@ -285,6 +297,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
     if (countdownRef.current) clearInterval(countdownRef.current);
     
     setIsAuthenticated(false);
+    setAuthenticatedPin(''); // Clear stored PIN
     setPinInput('');
     setPinError(false);
     setTimeRemaining(PIN_TIMEOUT_SECONDS);
@@ -600,10 +613,10 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                     className="flex items-center gap-2 px-6 py-3 rounded-xl text-white font-medium transition-colors disabled:opacity-50"
                     style={{ backgroundColor: accentColor }}
                     onClick={handleSave}
-                    disabled={updateSettings.isPending}
+                    disabled={saveSettings.isPending}
                     whileTap={{ scale: 0.98 }}
                   >
-                    {updateSettings.isPending ? (
+                    {saveSettings.isPending ? (
                       'Saving...'
                     ) : (
                       <>
