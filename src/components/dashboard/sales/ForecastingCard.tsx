@@ -670,7 +670,7 @@ export function ForecastingCard() {
                             y1={yPos}
                             x2={chartRight}
                             y2={yPos}
-                            stroke="hsl(25, 100%, 55%)"
+                            stroke="hsl(25, 100%, 55% / 0.5)"
                             strokeDasharray="4 4"
                             strokeWidth={1.5}
                           />
@@ -713,7 +713,7 @@ export function ForecastingCard() {
                             y1={yPos}
                             x2={chartRight}
                             y2={yPos}
-                            stroke="hsl(25, 100%, 55%)"
+                            stroke="hsl(25, 100%, 55% / 0.5)"
                             strokeDasharray="4 4"
                             strokeWidth={1.5}
                           />
