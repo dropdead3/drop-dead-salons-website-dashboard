@@ -24,6 +24,7 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   'access-hub': '#8B5CF6', // Purple (Shield theme)
   leaderboard: '#EAB308', // Gold/Trophy color
   'team-rewards': '#F59E0B', // Amber/Gold (Staff Rewards)
+  kiosk: '#8B5CF6',      // Purple (Check-In Kiosk)
 };
 
 // Section groups for organized layout
@@ -31,7 +32,7 @@ export const SECTION_GROUPS = [
   {
     id: 'operations',
     label: 'Business Operations',
-    categories: ['business', 'locations', 'schedule', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'handbooks', 'loyalty', 'team-rewards', 'feedback'],
+    categories: ['business', 'locations', 'schedule', 'kiosk', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'handbooks', 'loyalty', 'team-rewards', 'feedback'],
   },
   {
     id: 'team',
