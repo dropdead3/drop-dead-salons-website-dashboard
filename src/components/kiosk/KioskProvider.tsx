@@ -1,6 +1,7 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useKioskSettingsByLocation, KioskSettings, DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { useKioskCheckin, KioskState, KioskSession } from '@/hooks/useKioskCheckin';
+import { useBusinessSettings, BusinessSettings } from '@/hooks/useBusinessSettings';
 
 interface KioskContextType {
   // Settings
@@ -8,6 +9,9 @@ interface KioskContextType {
   isLoadingSettings: boolean;
   organizationId: string | null;
   locationId: string;
+  
+  // Business settings for logo fallback
+  businessSettings: BusinessSettings | null;
   
   // State machine
   state: KioskState;
@@ -37,6 +41,7 @@ interface KioskProviderProps {
 
 export function KioskProvider({ children, locationId }: KioskProviderProps) {
   const { data: settingsData, isLoading: isLoadingSettings } = useKioskSettingsByLocation(locationId);
+  const { data: businessSettings } = useBusinessSettings();
   const organizationId = settingsData?.organizationId || null;
   
   const checkin = useKioskCheckin(locationId, organizationId || '');
@@ -102,6 +107,7 @@ export function KioskProvider({ children, locationId }: KioskProviderProps) {
         isLoadingSettings,
         organizationId,
         locationId,
+        businessSettings: businessSettings || null,
         state: checkin.state,
         session: checkin.session,
         error: checkin.error,

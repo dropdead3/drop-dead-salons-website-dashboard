@@ -6,7 +6,7 @@ import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { KioskSettingsDialog } from './KioskSettingsDialog';
 
 export function KioskIdleScreen() {
-  const { settings, startSession } = useKiosk();
+  const { settings, businessSettings, startSession } = useKiosk();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSettings, setShowSettings] = useState(false);
@@ -16,11 +16,21 @@ export function KioskIdleScreen() {
   const welcomeTitle = settings?.welcome_title || DEFAULT_KIOSK_SETTINGS.welcome_title;
   const welcomeSubtitle = settings?.welcome_subtitle;
   const slideshowImages = settings?.idle_slideshow_images || [];
-  const logoUrl = settings?.logo_url;
   const backgroundColor = settings?.background_color || DEFAULT_KIOSK_SETTINGS.background_color;
   const textColor = settings?.text_color || DEFAULT_KIOSK_SETTINGS.text_color;
   const accentColor = settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color;
   const backgroundImageUrl = settings?.background_image_url;
+
+  // Theme-aware logo fallback: kiosk logo → business logo (theme-aware) → business name
+  const themeMode = settings?.theme_mode || 'dark';
+  const isDarkTheme = themeMode === 'dark' || 
+    (themeMode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  
+  const logoUrl = settings?.logo_url 
+    || (isDarkTheme ? businessSettings?.logo_light_url : businessSettings?.logo_dark_url)
+    || null;
+  
+  const businessName = businessSettings?.business_name;
 
   // Update time every second
   useEffect(() => {
@@ -158,12 +168,12 @@ export function KioskIdleScreen() {
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center text-center px-8 -mt-12">
-        {/* Logo with floating animation */}
-        {logoUrl && (
+        {/* Logo with floating animation - or business name text fallback */}
+        {logoUrl ? (
           <motion.img
             src={logoUrl}
-            alt="Logo"
-            className="h-24 md:h-32 mb-10 object-contain"
+            alt={businessName || 'Logo'}
+            className="h-20 md:h-28 mb-12 object-contain"
             initial={{ y: -30, opacity: 0 }}
             animate={{ 
               y: [0, -8, 0],
@@ -174,7 +184,17 @@ export function KioskIdleScreen() {
               opacity: { duration: 0.5 },
             }}
           />
-        )}
+        ) : businessName ? (
+          <motion.h2
+            className="text-3xl md:text-4xl font-light tracking-widest uppercase mb-12"
+            style={{ color: textColor }}
+            initial={{ y: -30, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            {businessName}
+          </motion.h2>
+        ) : null}
 
         {/* Time - Enhanced typography */}
         <motion.div
