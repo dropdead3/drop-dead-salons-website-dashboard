@@ -14,6 +14,7 @@ export function KioskSuccessScreen() {
   const textColor = settings?.text_color || DEFAULT_KIOSK_SETTINGS.text_color;
   const accentColor = settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color;
   const backgroundImageUrl = settings?.background_image_url;
+  const backgroundOverlayOpacity = settings?.background_overlay_opacity ?? DEFAULT_KIOSK_SETTINGS.background_overlay_opacity;
   const logoUrl = settings?.logo_url;
   const showWaitTime = settings?.show_wait_time_estimate ?? DEFAULT_KIOSK_SETTINGS.show_wait_time_estimate;
 
@@ -51,9 +52,12 @@ export function KioskSuccessScreen() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Overlay */}
+      {/* Background overlay */}
       {backgroundImageUrl && (
-        <div className="absolute inset-0 bg-black/60" />
+        <div 
+          className="absolute inset-0"
+          style={{ backgroundColor: `rgba(0, 0, 0, ${backgroundOverlayOpacity})` }}
+        />
       )}
 
       {/* Celebration particles */}
@@ -83,14 +87,6 @@ export function KioskSuccessScreen() {
         ))}
       </div>
 
-      {/* Radial glow */}
-      <div 
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `radial-gradient(ellipse at center, ${accentColor}25 0%, transparent 50%)`,
-        }}
-      />
-
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center text-center px-8">
         {/* Logo */}
@@ -104,7 +100,7 @@ export function KioskSuccessScreen() {
           />
         )}
 
-        {/* Success animation - Enhanced */}
+        {/* Success animation - glass style */}
         <motion.div
           className="relative mb-10"
           initial={{ scale: 0 }}
@@ -116,34 +112,12 @@ export function KioskSuccessScreen() {
             delay: 0.2,
           }}
         >
-          {/* Multiple pulsing rings */}
-          {[1, 2, 3].map((ring) => (
-            <motion.div
-              key={ring}
-              className="absolute inset-0 rounded-full"
-              style={{ 
-                border: `2px solid ${accentColor}`,
-              }}
-              animate={{
-                scale: [1, 1.5 + ring * 0.2],
-                opacity: [0.6 - ring * 0.15, 0],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                delay: ring * 0.3,
-                ease: 'easeOut',
-              }}
-            />
-          ))}
-
-          {/* Icon container with gradient */}
+          {/* Icon container with glass effect */}
           <motion.div
-            className="relative w-36 h-36 rounded-full flex items-center justify-center"
+            className="relative w-36 h-36 rounded-full flex items-center justify-center backdrop-blur-md"
             style={{ 
-              background: `linear-gradient(135deg, ${accentColor}30 0%, ${accentColor}10 100%)`,
-              border: `3px solid ${accentColor}50`,
-              boxShadow: `0 0 60px ${accentColor}40`,
+              backgroundColor: `${accentColor}15`,
+              border: `2px solid ${accentColor}40`,
             }}
           >
             <motion.div
@@ -196,14 +170,13 @@ export function KioskSuccessScreen() {
           {successMessage}
         </motion.p>
 
-        {/* Appointment details - Enhanced card */}
+        {/* Appointment details - glass card */}
         {appointment && (
           <motion.div
             className="p-8 rounded-3xl max-w-md w-full backdrop-blur-md"
             style={{ 
               backgroundColor: `${textColor}08`,
-              border: `2px solid ${textColor}15`,
-              boxShadow: `0 8px 32px ${backgroundColor}60`,
+              border: `1.5px solid ${textColor}20`,
             }}
             initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -223,8 +196,11 @@ export function KioskSuccessScreen() {
                   style={{ color: `${textColor}90` }}
                 >
                   <div 
-                    className="w-10 h-10 rounded-full flex items-center justify-center"
-                    style={{ backgroundColor: `${accentColor}20` }}
+                    className="w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md"
+                    style={{ 
+                      backgroundColor: `${accentColor}15`,
+                      border: `1px solid ${accentColor}30`,
+                    }}
                   >
                     <Clock className="w-5 h-5" style={{ color: accentColor }} />
                   </div>
@@ -237,8 +213,11 @@ export function KioskSuccessScreen() {
                     style={{ color: `${textColor}90` }}
                   >
                     <div 
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ backgroundColor: `${accentColor}20` }}
+                      className="w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md"
+                      style={{ 
+                        backgroundColor: `${accentColor}15`,
+                        border: `1px solid ${accentColor}30`,
+                      }}
                     >
                       <User className="w-5 h-5" style={{ color: accentColor }} />
                     </div>
@@ -280,7 +259,7 @@ export function KioskSuccessScreen() {
                 key={i}
                 className="w-1.5 h-1.5 rounded-full"
                 style={{ backgroundColor: textColor }}
-                animate={{ opacity: [0.3, 0.8, 0.3] }}
+                animate={{ opacity: [0.3, 0.7, 0.3] }}
                 transition={{
                   duration: 1,
                   repeat: Infinity,

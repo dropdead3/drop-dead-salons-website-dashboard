@@ -18,6 +18,7 @@ export function KioskConfirmScreen() {
   const textColor = settings?.text_color || DEFAULT_KIOSK_SETTINGS.text_color;
   const accentColor = settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color;
   const backgroundImageUrl = settings?.background_image_url;
+  const backgroundOverlayOpacity = settings?.background_overlay_opacity ?? DEFAULT_KIOSK_SETTINGS.background_overlay_opacity;
   const logoUrl = settings?.logo_url;
   const showStylistPhoto = settings?.show_stylist_photo ?? DEFAULT_KIOSK_SETTINGS.show_stylist_photo;
   const enableWalkIns = settings?.enable_walk_ins ?? DEFAULT_KIOSK_SETTINGS.enable_walk_ins;
@@ -53,30 +54,25 @@ export function KioskConfirmScreen() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Overlay */}
+      {/* Background overlay */}
       {backgroundImageUrl && (
-        <div className="absolute inset-0 bg-black/60" />
+        <div 
+          className="absolute inset-0"
+          style={{ backgroundColor: `rgba(0, 0, 0, ${backgroundOverlayOpacity})` }}
+        />
       )}
-
-      {/* Ambient glow effect */}
-      <div 
-        className="absolute inset-0 opacity-30 pointer-events-none"
-        style={{
-          background: `radial-gradient(ellipse at center top, ${accentColor}20 0%, transparent 50%)`,
-        }}
-      />
 
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between p-6">
         <motion.button
           className="flex items-center gap-2 px-5 py-3 rounded-2xl backdrop-blur-md transition-all"
           style={{ 
-            backgroundColor: `${textColor}08`,
-            border: `1px solid ${textColor}15`,
+            backgroundColor: `${textColor}10`,
+            border: `1.5px solid ${textColor}20`,
             color: textColor,
           }}
           onClick={resetToIdle}
-          whileHover={{ backgroundColor: `${textColor}15` }}
+          whileHover={{ backgroundColor: `${textColor}18` }}
           whileTap={{ scale: 0.95 }}
         >
           <ArrowLeft className="w-5 h-5" />
@@ -97,8 +93,8 @@ export function KioskConfirmScreen() {
           <motion.div 
             className="px-4 py-2 rounded-xl text-sm font-medium backdrop-blur-md"
             style={{ 
-              backgroundColor: `${accentColor}20`,
-              border: `1px solid ${accentColor}30`,
+              backgroundColor: `${accentColor}15`,
+              border: `1.5px solid ${accentColor}30`,
               color: accentColor,
             }}
             initial={{ opacity: 0 }}
@@ -151,8 +147,7 @@ export function KioskConfirmScreen() {
                   className="w-full p-6 rounded-3xl text-left backdrop-blur-md transition-all"
                   style={{
                     backgroundColor: `${textColor}08`,
-                    border: `2px solid ${textColor}15`,
-                    boxShadow: `0 8px 32px ${backgroundColor}40`,
+                    border: `1.5px solid ${textColor}20`,
                   }}
                   initial={{ x: -30, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
@@ -160,7 +155,7 @@ export function KioskConfirmScreen() {
                   whileHover={{ 
                     scale: 1.01,
                     borderColor: `${accentColor}50`,
-                    boxShadow: `0 12px 40px ${accentColor}20`,
+                    backgroundColor: `${textColor}12`,
                   }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleSelectAppointment(appointment)}
@@ -169,10 +164,10 @@ export function KioskConfirmScreen() {
                     {/* Stylist photo */}
                     {showStylistPhoto && (
                       <div 
-                        className="relative w-20 h-20 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0"
+                        className="relative w-20 h-20 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 backdrop-blur-md"
                         style={{ 
-                          backgroundColor: `${accentColor}20`,
-                          border: `2px solid ${accentColor}30`,
+                          backgroundColor: `${accentColor}15`,
+                          border: `1.5px solid ${accentColor}30`,
                         }}
                       >
                         {appointment.stylist_photo ? (
@@ -184,14 +179,6 @@ export function KioskConfirmScreen() {
                         ) : (
                           <User className="w-10 h-10" style={{ color: accentColor }} />
                         )}
-                        {/* Status ring */}
-                        <div 
-                          className="absolute inset-0 rounded-full"
-                          style={{ 
-                            border: `2px solid ${accentColor}40`,
-                            animation: 'pulse 2s ease-in-out infinite',
-                          }}
-                        />
                       </div>
                     )}
 
@@ -225,15 +212,18 @@ export function KioskConfirmScreen() {
                       </div>
                     </div>
 
-                    {/* Check-in button */}
+                    {/* Check-in button - glass style */}
                     <motion.div 
-                      className="px-6 py-4 rounded-2xl font-medium text-lg shadow-lg"
+                      className="px-6 py-4 rounded-2xl font-medium text-lg backdrop-blur-md"
                       style={{
-                        background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}CC 100%)`,
-                        color: '#FFFFFF',
-                        boxShadow: `0 8px 24px ${accentColor}40`,
+                        backgroundColor: `${accentColor}15`,
+                        border: `1.5px solid ${accentColor}40`,
+                        color: textColor,
                       }}
-                      whileHover={{ scale: 1.05 }}
+                      whileHover={{ 
+                        scale: 1.05,
+                        backgroundColor: `${accentColor}25`,
+                      }}
                       whileTap={{ scale: 0.95 }}
                     >
                       Check In
@@ -244,55 +234,25 @@ export function KioskConfirmScreen() {
             </div>
           </>
         ) : (
-          /* No appointments found - Enhanced UI */
+          /* No appointments found */
           <motion.div
             className="text-center max-w-lg"
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 20 }}
           >
-            {/* Animated icon with pulsing rings */}
+            {/* Icon container - glass style */}
             <motion.div
               className="relative mb-10 mx-auto w-32 h-32"
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
             >
-              {/* Outer pulsing ring */}
-              <motion.div
-                className="absolute inset-0 rounded-full"
-                style={{ border: `2px solid ${accentColor}` }}
-                animate={{
-                  scale: [1, 1.3, 1.3],
-                  opacity: [0.6, 0, 0],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: 'easeOut',
-                }}
-              />
-              {/* Inner pulsing ring */}
-              <motion.div
-                className="absolute inset-0 rounded-full"
-                style={{ border: `2px solid ${accentColor}` }}
-                animate={{
-                  scale: [1, 1.2, 1.2],
-                  opacity: [0.4, 0, 0],
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: 'easeOut',
-                  delay: 0.3,
-                }}
-              />
-              {/* Icon container */}
               <div 
-                className="absolute inset-0 rounded-full flex items-center justify-center backdrop-blur-sm"
+                className="absolute inset-0 rounded-full flex items-center justify-center backdrop-blur-md"
                 style={{ 
                   backgroundColor: `${accentColor}15`,
-                  border: `2px solid ${accentColor}30`,
+                  border: `1.5px solid ${accentColor}30`,
                 }}
               >
                 <AlertCircle 
@@ -322,7 +282,7 @@ export function KioskConfirmScreen() {
               We couldn't find an appointment for today with that phone number.
             </motion.p>
 
-            {/* Action buttons */}
+            {/* Action buttons - glass style */}
             <motion.div 
               className="flex flex-col gap-4 items-center"
               initial={{ opacity: 0, y: 20 }}
@@ -331,17 +291,17 @@ export function KioskConfirmScreen() {
             >
               {enableWalkIns && (
                 <motion.button
-                  className="flex items-center justify-center gap-3 px-10 py-5 rounded-2xl text-xl font-medium min-w-[280px] shadow-xl transition-shadow"
+                  className="flex items-center justify-center gap-3 px-10 py-5 rounded-2xl text-xl font-medium min-w-[280px] backdrop-blur-md transition-all"
                   style={{
-                    background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}CC 100%)`,
-                    color: '#FFFFFF',
-                    boxShadow: `0 8px 32px ${accentColor}40`,
+                    backgroundColor: `${accentColor}15`,
+                    border: `1.5px solid ${accentColor}40`,
+                    color: textColor,
                   }}
                   onClick={startWalkIn}
                   whileHover={{ 
                     scale: 1.02, 
                     y: -2,
-                    boxShadow: `0 12px 40px ${accentColor}50`,
+                    backgroundColor: `${accentColor}25`,
                   }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -353,13 +313,13 @@ export function KioskConfirmScreen() {
               <motion.button
                 className="px-10 py-5 rounded-2xl text-xl font-medium min-w-[280px] backdrop-blur-md transition-all"
                 style={{ 
-                  backgroundColor: `${textColor}08`,
-                  border: `1px solid ${textColor}15`,
+                  backgroundColor: `${textColor}10`,
+                  border: `1.5px solid ${textColor}20`,
                   color: textColor,
                 }}
                 onClick={resetToIdle}
                 whileHover={{ 
-                  backgroundColor: `${textColor}15`,
+                  backgroundColor: `${textColor}18`,
                   scale: 1.02,
                 }}
                 whileTap={{ scale: 0.98 }}

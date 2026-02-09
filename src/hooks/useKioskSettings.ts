@@ -11,6 +11,7 @@ export interface KioskSettings {
   logo_url: string | null;
   logo_color: string | null;
   background_image_url: string | null;
+  background_overlay_opacity: number; // 0-1, controls darken/lighten overlay
   background_color: string;
   accent_color: string;
   text_color: string;
@@ -56,6 +57,7 @@ export const DEFAULT_KIOSK_SETTINGS: Omit<KioskSettings, 'id' | 'organization_id
   logo_url: null,
   logo_color: null,
   background_image_url: null,
+  background_overlay_opacity: 0.5, // 50% overlay by default
   // Updated to cream/oat brand palette
   background_color: '#F5F0E8',    // Warm cream
   accent_color: '#9A7B4F',        // Gold

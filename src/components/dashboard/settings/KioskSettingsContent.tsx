@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save, Palette, Sun, Moon, Monitor, Image, Smartphone, Tablet, Upload, RotateCcw, Pencil } from 'lucide-react';
+import { Loader2, Save, Palette, Sun, Moon, Monitor, Image, Smartphone, Tablet, Upload, RotateCcw, Pencil, ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Slider } from '@/components/ui/slider';
 import { KioskPreviewPanel } from './KioskPreviewPanel';
 import { KioskDeployCard } from './KioskDeployCard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,6 +47,8 @@ interface LocalSettings {
   background_color: string;
   accent_color: string;
   text_color: string;
+  background_image_url: string | null;
+  background_overlay_opacity: number;
   welcome_title: string;
   welcome_subtitle: string | null;
   check_in_prompt: string;
@@ -174,6 +177,8 @@ export function KioskSettingsContent() {
     background_color: DEFAULT_KIOSK_SETTINGS.background_color,
     accent_color: DEFAULT_KIOSK_SETTINGS.accent_color,
     text_color: DEFAULT_KIOSK_SETTINGS.text_color,
+    background_image_url: DEFAULT_KIOSK_SETTINGS.background_image_url,
+    background_overlay_opacity: DEFAULT_KIOSK_SETTINGS.background_overlay_opacity,
     welcome_title: DEFAULT_KIOSK_SETTINGS.welcome_title,
     welcome_subtitle: DEFAULT_KIOSK_SETTINGS.welcome_subtitle,
     check_in_prompt: DEFAULT_KIOSK_SETTINGS.check_in_prompt,
@@ -229,6 +234,8 @@ export function KioskSettingsContent() {
         background_color: kioskSettings.background_color,
         accent_color: kioskSettings.accent_color,
         text_color: kioskSettings.text_color,
+        background_image_url: kioskSettings.background_image_url,
+        background_overlay_opacity: kioskSettings.background_overlay_opacity ?? DEFAULT_KIOSK_SETTINGS.background_overlay_opacity,
         welcome_title: kioskSettings.welcome_title,
         welcome_subtitle: kioskSettings.welcome_subtitle,
         check_in_prompt: kioskSettings.check_in_prompt,
@@ -266,6 +273,8 @@ export function KioskSettingsContent() {
         background_color: DEFAULT_KIOSK_SETTINGS.background_color,
         accent_color: DEFAULT_KIOSK_SETTINGS.accent_color,
         text_color: DEFAULT_KIOSK_SETTINGS.text_color,
+        background_image_url: DEFAULT_KIOSK_SETTINGS.background_image_url,
+        background_overlay_opacity: DEFAULT_KIOSK_SETTINGS.background_overlay_opacity,
         welcome_title: DEFAULT_KIOSK_SETTINGS.welcome_title,
         welcome_subtitle: DEFAULT_KIOSK_SETTINGS.welcome_subtitle,
         check_in_prompt: DEFAULT_KIOSK_SETTINGS.check_in_prompt,
@@ -756,6 +765,66 @@ export function KioskSettingsContent() {
                       Apply a color tint over the logo (works best with SVG or transparent PNG logos)
                     </p>
                   </div>
+                </div>
+
+                {/* Background Image Section */}
+                <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4 text-muted-foreground" />
+                    <Label className="text-sm font-medium">Background Image</Label>
+                  </div>
+                  <Input
+                    value={localSettings.background_image_url || ''}
+                    onChange={(e) => updateField('background_image_url', e.target.value || null)}
+                    placeholder="https://example.com/background.jpg"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Optional background photo for the kiosk screens
+                  </p>
+
+                  {/* Overlay opacity slider */}
+                  {localSettings.background_image_url && (
+                    <div className="space-y-2 pt-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm">Overlay Darkness</Label>
+                        <span className="text-xs text-muted-foreground">
+                          {Math.round(localSettings.background_overlay_opacity * 100)}%
+                        </span>
+                      </div>
+                      <Slider
+                        min={0}
+                        max={100}
+                        step={5}
+                        value={[localSettings.background_overlay_opacity * 100]}
+                        onValueChange={([v]) => updateField('background_overlay_opacity', v / 100)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        {localSettings.background_overlay_opacity < 0.3 ? 'Minimal darkening - ensure text is readable' : 
+                         localSettings.background_overlay_opacity < 0.6 ? 'Balanced contrast' : 
+                         'Strong darkening for readability'}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Background preview */}
+                  {localSettings.background_image_url && (
+                    <div 
+                      className="relative h-24 rounded-xl overflow-hidden border"
+                      style={{ 
+                        backgroundImage: `url(${localSettings.background_image_url})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }}
+                    >
+                      <div 
+                        className="absolute inset-0"
+                        style={{ backgroundColor: `rgba(0, 0, 0, ${localSettings.background_overlay_opacity})` }}
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-white text-sm font-medium">Preview with overlay</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 

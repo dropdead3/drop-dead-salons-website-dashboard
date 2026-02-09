@@ -494,13 +494,9 @@ export function KioskPreviewPanel({ settings, businessSettings, className }: Kio
               )}
               style={{ backgroundColor: settings.background_color }}
             >
-              {/* Ambient gradient overlay */}
-              <div 
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                  background: `radial-gradient(ellipse at center, ${settings.accent_color}15 0%, transparent 60%)`,
-                }}
-              />
+              
+              {/* Screen content */}
+              {renderScreen()}
               
               {/* Screen content */}
               {renderScreen()}
