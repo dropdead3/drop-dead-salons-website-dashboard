@@ -1,55 +1,43 @@
 
-# Remove Synthetic Bolding from Kiosk Components
+# Fix Settings Icon Visibility on Dark Themes
 
-## Issue
+## Problem
 
-The project's design standards prohibit synthetic bolding, with `font-medium` (500) being the absolute maximum weight. Currently, the kiosk components use `font-semibold` in multiple places.
+The settings icon in the kiosk screens is too dark/invisible against dark backgrounds. The current implementation uses:
+- `opacity: 0.1` when not actively being tapped
+- `textColor` which may blend into dark backgrounds
 
-## Files to Update
+## Solution
 
-| File | Instances | Elements Affected |
-|------|-----------|-------------------|
-| `KioskIdleScreen.tsx` | 1 | Welcome title (line 208) |
-| `KioskLookupScreen.tsx` | 1 | Prompt heading (line 182) |
-| `KioskConfirmScreen.tsx` | 5 | Headings, appointment card, buttons |
-| `KioskSuccessScreen.tsx` | 2 | Success heading, stylist name |
-| `KioskErrorScreen.tsx` | 2 | Error heading, retry button |
-| `KioskNumberPad.tsx` | 1 | Check-in button |
-| `KioskSettingsDialog.tsx` | 1 | Settings dialog title |
+Adjust the settings icon styling to maintain subtle visibility while still being discoverable:
 
-## Changes
+1. Increase the base opacity from `0.1` to `0.25`
+2. Add a subtle background to improve contrast on any theme
+3. Ensure the icon remains intentionally hidden but still findable by admins
 
-Replace all instances of `font-semibold` with `font-medium` across all kiosk components to comply with the design system.
+## Files to Modify
 
-### Specific Replacements
+| File | Change |
+|------|--------|
+| `src/components/kiosk/KioskIdleScreen.tsx` | Update settings button opacity and styling |
+| `src/components/kiosk/KioskLookupScreen.tsx` | Same changes for consistency |
 
-**KioskIdleScreen.tsx**
-- Line 208: `font-semibold` → `font-medium`
+## Technical Changes
 
-**KioskLookupScreen.tsx**
-- Line 182: `font-semibold` → `font-medium`
+### Before
+```tsx
+style={{ 
+  backgroundColor: settingsTapCount > 0 ? `${textColor}15` : 'transparent',
+  opacity: settingsTapCount > 0 ? 1 : 0.1,
+}}
+```
 
-**KioskConfirmScreen.tsx**
-- Line 124: `font-semibold` → `font-medium`
-- Line 201: `font-semibold` → `font-medium`
-- Line 230: `font-semibold` → `font-medium`
-- Line 307: `font-semibold` → `font-medium`
-- Line 334: `font-semibold` → `font-medium`
+### After
+```tsx
+style={{ 
+  backgroundColor: settingsTapCount > 0 ? `${textColor}15` : `${textColor}08`,
+  opacity: settingsTapCount > 0 ? 1 : 0.3,
+}}
+```
 
-**KioskSuccessScreen.tsx**
-- Line 180: `font-semibold` → `font-medium`
-- Line 214: `font-semibold` → `font-medium`
-
-**KioskErrorScreen.tsx**
-- Line 97: `font-semibold` → `font-medium`
-- Line 124: `font-semibold` → `font-medium`
-
-**KioskNumberPad.tsx**
-- Line 123: `font-semibold` → `font-medium`
-
-**KioskSettingsDialog.tsx**
-- Line 123: `font-semibold` → `font-medium`
-
-## Visual Impact
-
-The text will appear slightly lighter in weight, maintaining readability while conforming to the premium, understated aesthetic of the Drop Dead design system. The `font-medium` weight still provides sufficient visual hierarchy without synthetic bolding.
+This increases the base opacity from 0.1 to 0.3 and adds a subtle background tint (`08` = 8% opacity) so the icon has some contrast even when "hidden". The icon remains subtle enough to not distract regular users but visible enough for admins to locate.
