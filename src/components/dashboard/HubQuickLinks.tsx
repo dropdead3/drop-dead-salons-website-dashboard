@@ -40,7 +40,7 @@ export const hubLinks: HubLinkProps[] = [
   { 
     href: '/dashboard/admin/payroll', 
     icon: DollarSign, 
-    label: 'Hiring & Payroll', 
+    label: 'Hiring & Payroll Hub', 
     colorClass: 'bg-green-500/10 text-green-600 dark:text-green-400 hover:bg-green-500/20',
     permission: 'manage_payroll',
   },
