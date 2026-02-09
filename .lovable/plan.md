@@ -1,63 +1,78 @@
 
 
-# Add Quick Login PIN Card to Settings Page
+# Enable Account Owner to Manage All Team PINs
 
-## The Problem
+## Overview
 
-The `UserPinSettings` component was created but never integrated into the Settings page. It needs to be added so users can set their personal PIN for quick dashboard login.
+Ensure the Primary Owner (Account Owner) can view all team members and update their PINs, even if they don't have the `super_admin` role. Currently, the `canManage` access check only looks for `super_admin` role.
 
-## Solution
+## Current Issue
 
-Add the `UserPinSettings` component to the **System** category in Settings, right after the existing Security card.
-
-## File to Modify
-
-### `src/pages/dashboard/admin/Settings.tsx`
-
-**Change 1: Add import (around line 86)**
+In `AccessHub.tsx`:
 ```typescript
-import { UserPinSettings } from '@/components/dashboard/settings/UserPinSettings';
+const isSuperAdmin = roles.includes('super_admin');
+const canManage = isSuperAdmin || isPlatformUser;  // Missing Primary Owner check
 ```
 
-**Change 2: Add component to system settings (after line 1246, the closing `</Card>` of Security)**
+The Primary Owner should always have access to PIN management as a core Account Owner capability.
+
+## Files to Modify
+
+### 1. `src/pages/dashboard/admin/AccessHub.tsx`
+
+**Change**: Add Primary Owner check to the `canManage` logic.
+
 ```typescript
-{/* Quick Login PIN */}
-<UserPinSettings />
+import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
+
+// Inside component:
+const { data: isPrimaryOwner } = useIsPrimaryOwner();
+const isSuperAdmin = roles.includes('super_admin');
+const canManage = isSuperAdmin || isPlatformUser || isPrimaryOwner;
 ```
 
-## Result
+### 2. `src/components/access-hub/TeamPinManagementTab.tsx`
 
-After this change, when you navigate to **Settings > System**, you'll see:
-1. Appearance card
-2. Notifications card  
-3. Security card
-4. **Quick Login PIN card** ← New!
+**Change**: Also add Primary Owner context so they can manage PINs. Update the access check message to reflect that Account Owners can also manage.
 
-The PIN card will allow you to set your 4-digit PIN (3746) which can then be used with the lock button in the sidebar.
+```typescript
+import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 
-## Visual Location
+// In component:
+const { data: isPrimaryOwner } = useIsPrimaryOwner();
 
-```text
-Settings > System tab
-┌─────────────────────────────┐
-│ APPEARANCE                  │
-│ Color themes, dark mode...  │
-└─────────────────────────────┘
-
-┌─────────────────────────────┐
-│ NOTIFICATIONS               │
-│ Staffing alerts, reminders  │
-└─────────────────────────────┘
-
-┌─────────────────────────────┐
-│ SECURITY                    │
-│ Email verification...       │
-└─────────────────────────────┘
-
-┌─────────────────────────────┐  ← THIS WILL BE ADDED
-│ 🔒 QUICK LOGIN PIN          │
-│ Status: Not Set             │
-│ [Set PIN]                   │
-└─────────────────────────────┘
+// Update the restricted message:
+if (!canManage && !isPrimaryOwner) {
+  return (
+    <Card>
+      <CardContent className="py-12 text-center">
+        <Lock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-medium mb-2">Access Restricted</h3>
+        <p className="text-muted-foreground">
+          Only Super Admins and the Account Owner can manage team PINs.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
 ```
+
+## Technical Details
+
+### Who Can Manage Team PINs
+| User Type | Can View All Users | Can Reset PINs |
+|-----------|-------------------|----------------|
+| Primary Owner | Yes | Yes (all users including self) |
+| Super Admin | Yes | Yes (except Primary Owner) |
+| Platform User | Yes | Yes (except Primary Owner) |
+| Others | No | No |
+
+### Who's PIN Cannot Be Reset by Others
+- The Primary Owner's PIN can only be changed by themselves (enforced by database trigger `protect_primary_owner_pin`)
+
+## Implementation Order
+
+1. Update `AccessHub.tsx` to include Primary Owner in `canManage` check
+2. Update `TeamPinManagementTab.tsx` to recognize Primary Owner access
+3. Test the flow with the Account Owner account
 
