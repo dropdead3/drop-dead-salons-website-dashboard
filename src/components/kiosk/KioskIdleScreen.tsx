@@ -32,6 +32,7 @@ export function KioskIdleScreen() {
   
   const businessName = businessSettings?.business_name;
   const logoSize = settings?.logo_size || DEFAULT_KIOSK_SETTINGS.logo_size;
+  const logoColor = settings?.logo_color || null;
   
   // Logo size classes
   const logoSizeClasses = {
@@ -174,14 +175,35 @@ export function KioskIdleScreen() {
               alt={businessName || 'Logo'}
               className={`${logoSizeClasses[logoSize]} w-auto h-auto object-contain`}
               style={{
-                // Add drop shadow for dark logos on dark backgrounds
-                filter: isDarkTheme ? 'drop-shadow(0 2px 8px rgba(255,255,255,0.1))' : 'drop-shadow(0 2px 8px rgba(0,0,0,0.1))',
+                // Apply color overlay filter if logo_color is set
+                filter: logoColor 
+                  ? `drop-shadow(0 2px 8px ${isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'})`
+                  : isDarkTheme 
+                    ? 'drop-shadow(0 2px 8px rgba(255,255,255,0.1))' 
+                    : 'drop-shadow(0 2px 8px rgba(0,0,0,0.1))',
               }}
               onError={(e) => {
                 // Hide broken images
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
+            {/* Color overlay for logo */}
+            {logoColor && (
+              <div 
+                className="absolute inset-0 mix-blend-multiply pointer-events-none"
+                style={{ 
+                  backgroundColor: logoColor,
+                  maskImage: `url(${logoUrl})`,
+                  WebkitMaskImage: `url(${logoUrl})`,
+                  maskSize: 'contain',
+                  WebkitMaskSize: 'contain',
+                  maskRepeat: 'no-repeat',
+                  WebkitMaskRepeat: 'no-repeat',
+                  maskPosition: 'center',
+                  WebkitMaskPosition: 'center',
+                }}
+              />
+            )}
           </motion.div>
         ) : businessName ? (
           <motion.h2

@@ -6790,6 +6790,7 @@ export type Database = {
           idle_timeout_seconds: number | null
           idle_video_url: string | null
           location_id: string | null
+          logo_color: string | null
           logo_size: string
           logo_url: string | null
           organization_id: string | null
@@ -6821,6 +6822,7 @@ export type Database = {
           idle_timeout_seconds?: number | null
           idle_video_url?: string | null
           location_id?: string | null
+          logo_color?: string | null
           logo_size?: string
           logo_url?: string | null
           organization_id?: string | null
@@ -6852,6 +6854,7 @@ export type Database = {
           idle_timeout_seconds?: number | null
           idle_video_url?: string | null
           location_id?: string | null
+          logo_color?: string | null
           logo_size?: string
           logo_url?: string | null
           organization_id?: string | null
@@ -13894,6 +13897,7 @@ export type Database = {
           idle_timeout_seconds: number | null
           idle_video_url: string | null
           location_id: string | null
+          logo_color: string | null
           logo_size: string
           logo_url: string | null
           organization_id: string | null
