@@ -241,17 +241,21 @@ export function usePinChangelog(profileId?: string) {
  * Get all team members with their PIN status (for admin management)
  */
 export function useTeamPinStatus() {
-  const { effectiveOrganization } = useOrganizationContext();
+  const { effectiveOrganization, currentOrganization } = useOrganizationContext();
+
+  // Use effectiveOrganization first, fall back to currentOrganization
+  // This handles platform users who haven't selected an org
+  const orgId = effectiveOrganization?.id || currentOrganization?.id;
 
   return useQuery({
-    queryKey: ['team-pin-status', effectiveOrganization?.id],
+    queryKey: ['team-pin-status', orgId],
     queryFn: async () => {
-      if (!effectiveOrganization?.id) return [];
+      if (!orgId) return [];
 
       const { data, error } = await supabase
         .from('employee_profiles')
         .select('id, user_id, full_name, display_name, photo_url, is_super_admin, is_primary_owner, login_pin')
-        .eq('organization_id', effectiveOrganization.id)
+        .eq('organization_id', orgId)
         .eq('is_active', true)
         .eq('is_approved', true)
         .order('full_name');
@@ -268,6 +272,6 @@ export function useTeamPinStatus() {
         has_pin: !!profile.login_pin,
       }));
     },
-    enabled: !!effectiveOrganization?.id,
+    enabled: !!orgId,
   });
 }
