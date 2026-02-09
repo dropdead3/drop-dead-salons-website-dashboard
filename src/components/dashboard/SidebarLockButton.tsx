@@ -23,7 +23,7 @@ export function SidebarLockButton({ isCollapsed = false, inFooter = true }: Side
     <button
       onClick={handleLock}
       className={cn(
-        "flex items-center gap-3 text-sm font-sans cursor-pointer",
+        "flex items-center gap-3 text-sm font-sans cursor-pointer w-full",
         "transition-all duration-200 ease-out rounded-lg",
         isCollapsed 
           ? cn("px-2 py-2.5 justify-center", inFooter ? "mx-0" : "mx-2")
