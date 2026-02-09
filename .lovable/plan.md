@@ -1,67 +1,119 @@
 
-# Fix Preview Button Not Opening Kiosk
+# Restrict Center Badge Positions to Portrait Mode Only
 
 ## Problem
 
-The Preview button in the Deploy to Device card doesn't work. Clicking it does nothing - no new tab opens.
+Currently, all 6 badge positions (top-left, top-center, top-right, bottom-left, bottom-center, bottom-right) are available regardless of display orientation. The center positions (top-center, bottom-center) should only be available when Portrait orientation is selected, not for Landscape mode.
 
-## Root Cause
+---
 
-The `window.open(kioskUrl, '_blank')` call is being blocked by the browser's popup blocker. Even though it's in an onClick handler, some browsers are stricter about this when:
-- The code runs inside an iframe (Lovable's preview)
-- There's any indirection between user action and the open call
+## Current State
+
+| Orientation | Available Positions |
+|-------------|-------------------|
+| Portrait | All 6 positions |
+| Landscape | All 6 positions |
+
+**Should be:**
+
+| Orientation | Available Positions |
+|-------------|-------------------|
+| Portrait | All 6 positions (top-left, top-center, top-right, bottom-left, bottom-center, bottom-right) |
+| Landscape | 4 corner positions only (top-left, top-right, bottom-left, bottom-right) |
+
+---
 
 ## Solution
 
-Replace `window.open()` with a native `<a>` tag using the Button's `asChild` prop. Browsers inherently trust anchor tags with `target="_blank"` for opening new tabs.
+1. Filter the available positions based on the current `display_orientation` setting
+2. Auto-fallback: If user switches from Portrait → Landscape while a center position is selected, automatically change to a valid corner position (e.g., `bottom-center` → `bottom-left`)
 
-### Current Code (not working)
-```tsx
-<Button 
-  variant="outline" 
-  size="sm"
-  onClick={handleOpenKiosk}
-  className="gap-2"
->
-  <ExternalLink className="w-4 h-4" />
-  Preview
-</Button>
+---
+
+## Implementation Details
+
+### File: `src/components/dashboard/settings/KioskSettingsContent.tsx`
+
+**Changes to make:**
+
+1. Create a derived list of available positions based on orientation:
+```typescript
+const availableBadgePositions = localSettings.display_orientation === 'landscape'
+  ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const
+  : ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'] as const;
 ```
 
-### Fixed Code
-```tsx
-<Button 
-  variant="outline" 
-  size="sm"
-  asChild
-  className="gap-2"
->
-  <a 
-    href={kioskUrl} 
-    target="_blank" 
-    rel="noopener noreferrer"
-  >
-    <ExternalLink className="w-4 h-4" />
-    Preview
-  </a>
-</Button>
+2. Add auto-fallback logic when orientation changes (in the `updateField` function or via useEffect):
+```typescript
+// When switching to landscape, if a center position is selected, fallback to corner
+if (localSettings.display_orientation === 'landscape') {
+  if (localSettings.location_badge_position === 'top-center') {
+    updateField('location_badge_position', 'top-left');
+  } else if (localSettings.location_badge_position === 'bottom-center') {
+    updateField('location_badge_position', 'bottom-left');
+  }
+}
 ```
 
-## Changes
+3. Update the position grid to use dynamic available positions:
+```typescript
+<div className="grid grid-cols-3 gap-2">
+  {availableBadgePositions.map((pos) => (
+    <button
+      key={pos}
+      // ... rest of button props
+    >
+      {pos.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+    </button>
+  ))}
+</div>
+```
 
-**File: `src/components/dashboard/settings/KioskDeployCard.tsx`**
+4. Adjust grid layout based on orientation:
+   - Portrait: 3 columns (6 positions in 2 rows)
+   - Landscape: 2 columns (4 positions in 2 rows)
 
-1. Remove the `handleOpenKiosk` function (lines 33-37)
-2. Replace Button with anchor tag using `asChild` pattern (lines 88-96)
+```typescript
+<div className={cn(
+  "grid gap-2",
+  localSettings.display_orientation === 'landscape' ? "grid-cols-2" : "grid-cols-3"
+)}>
+```
 
-## Why This Works
+---
 
-- Native `<a>` tags with `target="_blank"` are trusted by browsers
-- The `asChild` prop from Radix Slot renders the Button styles onto the anchor
-- `rel="noopener noreferrer"` ensures proper security
+## Visual Layout
 
-## File to Modify
+**Portrait Mode (6 positions, 3 columns):**
+```text
+┌──────────────────────────────────────┐
+│ Top Left  │ Top Center  │ Top Right  │
+│───────────│─────────────│────────────│
+│Bottom Left│Bottom Center│Bottom Right│
+└──────────────────────────────────────┘
+```
 
-| File | Change |
-|------|--------|
-| `src/components/dashboard/settings/KioskDeployCard.tsx` | Replace Button onClick with anchor tag |
+**Landscape Mode (4 positions, 2 columns):**
+```text
+┌─────────────────────────┐
+│  Top Left  │  Top Right │
+│────────────│────────────│
+│Bottom Left │Bottom Right│
+└─────────────────────────┘
+```
+
+---
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/components/dashboard/settings/KioskSettingsContent.tsx` | Filter badge positions based on orientation, add auto-fallback logic, adjust grid layout |
+
+---
+
+## Edge Cases Handled
+
+1. **Switching Portrait → Landscape with center position selected**: Auto-fallback to nearest corner position
+2. **Switching Landscape → Portrait**: All positions become available (no action needed)
+3. **Loading settings with mismatched orientation/position**: Fallback applied on initial render
