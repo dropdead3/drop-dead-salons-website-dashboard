@@ -5768,6 +5768,7 @@ export type Database = {
           appointment_padding_minutes: number | null
           assistant_ratio: number | null
           booking_url: string | null
+          booth_assignment_enabled: boolean
           break_minutes_per_day: number | null
           city: string
           country: string | null
@@ -5789,6 +5790,7 @@ export type Database = {
           organization_id: string | null
           phone: string
           phorest_branch_id: string | null
+          rental_model: string
           show_on_website: boolean
           state_province: string | null
           store_number: string | null
@@ -5804,6 +5806,7 @@ export type Database = {
           appointment_padding_minutes?: number | null
           assistant_ratio?: number | null
           booking_url?: string | null
+          booth_assignment_enabled?: boolean
           break_minutes_per_day?: number | null
           city: string
           country?: string | null
@@ -5825,6 +5828,7 @@ export type Database = {
           organization_id?: string | null
           phone: string
           phorest_branch_id?: string | null
+          rental_model?: string
           show_on_website?: boolean
           state_province?: string | null
           store_number?: string | null
@@ -5840,6 +5844,7 @@ export type Database = {
           appointment_padding_minutes?: number | null
           assistant_ratio?: number | null
           booking_url?: string | null
+          booth_assignment_enabled?: boolean
           break_minutes_per_day?: number | null
           city?: string
           country?: string | null
@@ -5861,6 +5866,7 @@ export type Database = {
           organization_id?: string | null
           phone?: string
           phorest_branch_id?: string | null
+          rental_model?: string
           show_on_website?: boolean
           state_province?: string | null
           store_number?: string | null
@@ -10257,6 +10263,7 @@ export type Database = {
         Row: {
           amenities: string[] | null
           created_at: string | null
+          daily_rate: number | null
           id: string
           is_available: boolean | null
           location_id: string
@@ -10272,6 +10279,7 @@ export type Database = {
         Insert: {
           amenities?: string[] | null
           created_at?: string | null
+          daily_rate?: number | null
           id?: string
           is_available?: boolean | null
           location_id: string
@@ -10287,6 +10295,7 @@ export type Database = {
         Update: {
           amenities?: string[] | null
           created_at?: string | null
+          daily_rate?: number | null
           id?: string
           is_available?: boolean | null
           location_id?: string
