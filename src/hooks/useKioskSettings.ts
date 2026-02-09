@@ -45,14 +45,39 @@ export interface KioskSettings {
   updated_at: string;
 }
 
+// Theme presets for kiosk branding
+export const KIOSK_THEME_PRESETS = {
+  cream: {
+    name: 'Cream (Light)',
+    background_color: '#F5F0E8',  // Warm cream
+    text_color: '#141414',        // Charcoal
+    accent_color: '#9A7B4F',      // Gold
+  },
+  'dark-luxury': {
+    name: 'Dark Luxury',
+    background_color: '#0A0A0A',  // Near black
+    text_color: '#F5F0E8',        // Cream
+    accent_color: '#C9A962',      // Bright gold
+  },
+  'oat-minimal': {
+    name: 'Oat Minimal',
+    background_color: '#E8E0D5',  // Warm oat
+    text_color: '#2D2D2D',        // Dark gray
+    accent_color: '#8B7355',      // Muted bronze
+  },
+} as const;
+
+export type KioskThemePreset = keyof typeof KIOSK_THEME_PRESETS;
+
 export const DEFAULT_KIOSK_SETTINGS: Omit<KioskSettings, 'id' | 'organization_id' | 'created_at' | 'updated_at'> = {
   location_id: null,
   logo_url: null,
   background_image_url: null,
-  background_color: '#000000',
-  accent_color: '#8B5CF6',
-  text_color: '#FFFFFF',
-  theme_mode: 'dark',
+  // Updated to cream/oat brand palette
+  background_color: '#F5F0E8',    // Warm cream
+  accent_color: '#9A7B4F',        // Gold
+  text_color: '#141414',          // Charcoal
+  theme_mode: 'light',            // Light mode for cream aesthetic
   font_family: 'system',
   button_style: 'rounded',
   welcome_title: 'Welcome',
