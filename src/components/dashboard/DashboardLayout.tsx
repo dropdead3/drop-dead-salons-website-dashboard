@@ -196,12 +196,11 @@ const managerNavItems: NavItem[] = [
 // Access & Permissions section
 const adminOnlyNavItems: NavItem[] = [
   { href: '/dashboard/admin/access-hub', label: 'Access & Permissions Hub', icon: Shield, permission: 'manage_settings' },
-];
-
-// Footer items - always pinned to bottom of sidebar
-const footerNavItems: NavItem[] = [
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
 ];
+
+// Footer items - always pinned to bottom of sidebar (Clock In + Lock only)
+const footerNavItems: NavItem[] = [];
 
 // Website items merged into managerNavItems (Operations group)
 const websiteNavItems: NavItem[] = [];

@@ -623,15 +623,6 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           <div className={cn(
             isCollapsed ? "space-y-1" : "space-y-0.5"
           )}>
-            {/* Settings and other footer items */}
-            {filterNavItems(footerNavItems).map((item) => (
-              <NavLink 
-                key={item.href} 
-                {...item}
-                inFooter
-              />
-            ))}
-            
             {/* Clock In/Out Button */}
             <SidebarClockButton isCollapsed={isCollapsed} />
             {/* Lock Button */}
