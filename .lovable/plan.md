@@ -1,411 +1,489 @@
 
-# AI & Automation Enhancements - Implementation Plan
+# Category 2: Analytics & Reporting Enhancements - Full Implementation Plan
 
-## ✅ COMPLETED - Phase 1 Implementation
+## Executive Summary
 
-### Database Tables Created
-- `scheduling_suggestions` - Store AI scheduling recommendations  
-- `booking_patterns` - Track historical booking patterns for ML
-- `revenue_forecasts` - Store AI revenue predictions
-- `client_automation_rules` - Define automated client communication rules
-- `client_automation_log` - Track automation execution
-- `detected_anomalies` - Store detected anomalies for alerting
-
-### Edge Functions Deployed
-1. **ai-scheduling-copilot** - Analyzes schedules and suggests optimal appointment slots
-2. **revenue-forecasting** - Generates AI-powered revenue predictions
-3. **process-client-automations** - Processes rebooking reminders, thank-yous, win-back campaigns
-4. **detect-anomalies** - Detects revenue drops, cancellation spikes, no-show surges
-
-### Frontend Hooks Created
-- `useSchedulingSuggestions` - Fetch AI scheduling suggestions
-- `useRevenueForecast` - Fetch revenue predictions
-- `useAnomalies` - Fetch and manage detected anomalies
-- `useClientAutomations` - CRUD for automation rules
-
-### Components Created
-- `SlotSuggestionCard` - Display AI-recommended appointment slots
-- `SchedulingCopilotPanel` - Sidebar panel showing scheduling suggestions
-- `RevenueForecastCard` - Hero card showing predicted revenue with trends
-- `AnomalyAlertBanner` - Top-of-dashboard alert for active anomalies
+This plan enhances the existing analytics infrastructure with **Comparative Analytics**, a **Custom Report Builder**, **Scheduled Reports**, **Data Visualization Upgrades**, and **Cross-Metric Dashboards**. The implementation builds on the existing `useComparisonData` hook, `report_history` table, and Recharts-based visualization components.
 
 ---
 
-## Next Steps (Manual Integration)
-To use these components in the dashboard:
+## Current State Analysis
 
-1. **Add SchedulingCopilotPanel** to the booking flow/calendar sidebar
-2. **Add RevenueForecastCard** to Sales Analytics tab
-3. **Add AnomalyAlertBanner** to Command Center dashboard
-4. **Create AutomationRulesManager UI** in Marketing Hub
+### Existing Infrastructure
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| Period Comparison | ✅ Implemented | `useComparisonData.ts`, `CompareTabContent.tsx` |
+| Report Generation | ✅ Basic PDF/CSV | `SalesReportGenerator.tsx`, `StaffKPIReport.tsx` |
+| Report History | ✅ Tracking only | `report_history` table, `RecentReports.tsx` |
+| Sparklines | ✅ Basic | `TrendSparkline.tsx` |
+| YoY Comparison | ✅ Implemented | `YearOverYearComparison.tsx` |
+| Location Comparison | ✅ Implemented | `LocationComparison.tsx` |
+| Analytics Hub | ✅ Tabs structure | `AnalyticsHub.tsx` with 6 main tabs |
+
+### Identified Gaps
+
+1. **No Custom Report Builder** - Users cannot configure their own reports with selected metrics
+2. **No Scheduled Reports** - Reports must be generated manually each time
+3. **No Visual Diff Mode** - Comparisons show numbers but lack visual overlays
+4. **No Saved Report Templates** - Users recreate the same reports repeatedly
+5. **Limited Benchmark Data** - No industry or historical benchmarks for context
+6. **No Cross-Metric Correlation** - Can't see how metrics relate to each other
 
 ---
 
+## Implementation Plan
 
+### Feature 1: Custom Report Builder
 
-## Overview
+#### Purpose
+Allow users to build custom reports by selecting metrics, dimensions, filters, and visualizations - then save as templates for reuse.
 
-This plan implements four AI-powered automation features to enhance scheduling efficiency, revenue prediction, client engagement, and anomaly detection. These features leverage the existing Lovable AI gateway, Supabase infrastructure, and edge functions.
-
----
-
-## Feature 1: AI Scheduling Copilot
-
-### Purpose
-Provide intelligent appointment slot recommendations that optimize staff utilization, minimize gaps, and prevent double-bookings.
-
-### Database Changes
+#### Database Changes
 
 ```sql
--- Store AI scheduling suggestions for analytics
-CREATE TABLE scheduling_suggestions (
+-- Custom report configurations
+CREATE TABLE custom_report_templates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  staff_user_id UUID REFERENCES auth.users(id),
-  suggested_date DATE NOT NULL,
-  suggested_time TIME NOT NULL,
-  suggestion_type TEXT NOT NULL, -- 'optimal_slot', 'fill_gap', 'avoid_conflict'
-  confidence_score NUMERIC(3,2), -- 0.00 to 1.00
-  context JSONB, -- surrounding appointments, reason
-  was_accepted BOOLEAN,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  created_by UUID REFERENCES auth.users(id),
+  is_shared BOOLEAN DEFAULT false,
+  config JSONB NOT NULL, -- { metrics: [], dimensions: [], filters: [], visualization: 'table'|'chart' }
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Track template usage for popularity sorting
+CREATE TABLE report_template_usage (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  template_id UUID REFERENCES custom_report_templates(id) ON DELETE CASCADE,
+  used_by UUID REFERENCES auth.users(id),
+  used_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE custom_report_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE report_template_usage ENABLE ROW LEVEL SECURITY;
+
+-- RLS: Users see org templates + their own
+CREATE POLICY "View org templates" ON custom_report_templates
+  FOR SELECT USING (
+    organization_id = public.get_user_organization(auth.uid())
+    OR created_by = auth.uid()
+  );
+
+CREATE POLICY "Manage own templates" ON custom_report_templates
+  FOR ALL USING (created_by = auth.uid());
+```
+
+#### Config Schema (JSONB)
+
+```typescript
+interface ReportConfig {
+  metrics: {
+    id: string;           // 'total_revenue', 'service_count', etc.
+    aggregation: 'sum' | 'avg' | 'count' | 'min' | 'max';
+    label?: string;       // Custom display name
+  }[];
+  dimensions: {
+    id: string;           // 'date', 'location', 'stylist', 'service_category'
+    groupBy?: 'day' | 'week' | 'month';
+  }[];
+  filters: {
+    field: string;
+    operator: 'eq' | 'neq' | 'gt' | 'lt' | 'between' | 'in';
+    value: any;
+  }[];
+  visualization: 'table' | 'bar_chart' | 'line_chart' | 'pie_chart' | 'area_chart';
+  dateRange: 'inherit' | 'custom';
+  customDateRange?: { from: string; to: string };
+}
+```
+
+#### Frontend Components
+
+| Component | Description |
+|-----------|-------------|
+| `ReportBuilderPage.tsx` | Full-page builder with drag-and-drop sections |
+| `MetricSelector.tsx` | Multi-select for available metrics |
+| `DimensionPicker.tsx` | Choose how to slice data (by date, location, staff) |
+| `FilterBuilder.tsx` | Visual filter construction UI |
+| `VisualizationPreview.tsx` | Real-time preview of report output |
+| `SaveTemplateDialog.tsx` | Save/share template modal |
+| `TemplateLibrary.tsx` | Browse and load saved templates |
+| `useCustomReport.ts` | Hook to execute custom report configs |
+
+#### Available Metrics Library
+
+```typescript
+const AVAILABLE_METRICS = [
+  // Revenue Metrics
+  { id: 'total_revenue', label: 'Total Revenue', category: 'Revenue', source: 'phorest_daily_sales_summary' },
+  { id: 'service_revenue', label: 'Service Revenue', category: 'Revenue', source: 'phorest_daily_sales_summary' },
+  { id: 'product_revenue', label: 'Product Revenue', category: 'Revenue', source: 'phorest_daily_sales_summary' },
+  { id: 'avg_ticket', label: 'Average Ticket', category: 'Revenue', calculated: true },
+  
+  // Operations Metrics
+  { id: 'appointment_count', label: 'Appointments', category: 'Operations', source: 'phorest_appointments' },
+  { id: 'no_show_count', label: 'No-Shows', category: 'Operations', source: 'phorest_appointments' },
+  { id: 'cancellation_count', label: 'Cancellations', category: 'Operations', source: 'phorest_appointments' },
+  { id: 'utilization_rate', label: 'Utilization %', category: 'Operations', calculated: true },
+  
+  // Client Metrics
+  { id: 'new_clients', label: 'New Clients', category: 'Clients', source: 'phorest_appointments' },
+  { id: 'returning_clients', label: 'Returning Clients', category: 'Clients', source: 'phorest_appointments' },
+  { id: 'retention_rate', label: 'Retention Rate', category: 'Clients', calculated: true },
+  
+  // Staff Metrics
+  { id: 'staff_revenue', label: 'Revenue per Staff', category: 'Staff', calculated: true },
+  { id: 'rebooking_rate', label: 'Rebooking Rate', category: 'Staff', calculated: true },
+];
+```
+
+---
+
+### Feature 2: Scheduled Reports
+
+#### Purpose
+Allow users to schedule reports for automatic generation and email delivery on a recurring basis.
+
+#### Database Changes
+
+```sql
+-- Scheduled report configurations
+CREATE TABLE scheduled_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  template_id UUID REFERENCES custom_report_templates(id) ON DELETE SET NULL,
+  report_type TEXT, -- For built-in reports without template
+  name TEXT NOT NULL,
+  schedule_type TEXT NOT NULL, -- 'daily', 'weekly', 'monthly', 'first_of_month', 'last_of_month'
+  schedule_config JSONB, -- { dayOfWeek: 1, timeUtc: '09:00', timezone: 'America/Phoenix' }
+  recipients JSONB NOT NULL, -- [{ email: '', userId: '' }]
+  format TEXT DEFAULT 'pdf', -- 'pdf', 'csv', 'excel'
+  filters JSONB, -- Location, date range overrides
+  is_active BOOLEAN DEFAULT true,
+  last_run_at TIMESTAMPTZ,
+  next_run_at TIMESTAMPTZ,
+  created_by UUID REFERENCES auth.users(id),
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Track booking patterns for ML training
-CREATE TABLE booking_patterns (
+-- Execution log
+CREATE TABLE scheduled_report_runs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  location_id TEXT,
-  day_of_week INTEGER, -- 0-6
-  hour_of_day INTEGER, -- 0-23
-  avg_bookings NUMERIC,
-  peak_score NUMERIC(3,2),
-  analyzed_at TIMESTAMPTZ DEFAULT now()
+  scheduled_report_id UUID REFERENCES scheduled_reports(id) ON DELETE CASCADE,
+  status TEXT NOT NULL, -- 'pending', 'running', 'completed', 'failed'
+  started_at TIMESTAMPTZ DEFAULT now(),
+  completed_at TIMESTAMPTZ,
+  file_url TEXT,
+  recipient_count INTEGER,
+  error_message TEXT
 );
 
-ALTER TABLE scheduling_suggestions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE booking_patterns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE scheduled_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE scheduled_report_runs ENABLE ROW LEVEL SECURITY;
 ```
 
-### New Edge Function: `ai-scheduling-copilot`
+#### Edge Function: `process-scheduled-reports`
 
 ```text
-supabase/functions/ai-scheduling-copilot/index.ts
+supabase/functions/process-scheduled-reports/index.ts
 
-Purpose: Analyze staff schedules and suggest optimal appointment times
+Purpose: Cron job to process due scheduled reports
 
-Inputs:
-- staff_user_id (optional) - specific stylist or all available
-- date - target date for suggestions
-- service_duration_minutes - how long the service takes
-- location_id - salon location
+Schedule: Every hour via pg_cron
 
 Logic:
-1. Fetch existing appointments for the date
-2. Identify gaps in schedule (30+ min unused slots)
-3. Check historical booking patterns for peak times
-4. Score each available slot by:
-   - Gap filling potential (reduces fragmentation)
-   - Peak hour alignment (maximize revenue)
-   - Buffer time (avoid back-to-back stress)
-5. Return top 3-5 suggestions with confidence scores
-
-Output:
-{
-  suggestions: [
-    {
-      time: "10:30",
-      staff_name: "Sarah",
-      score: 0.92,
-      reason: "Fills 45-min gap before lunch rush",
-      conflicts: []
-    }
-  ]
-}
+1. Query scheduled_reports where next_run_at <= now() AND is_active = true
+2. For each due report:
+   a. Create run record with status = 'running'
+   b. Execute report query based on template or report_type
+   c. Generate PDF/CSV file
+   d. Upload to storage bucket
+   e. Send email to recipients via existing email infrastructure
+   f. Update run record with status = 'completed'
+   g. Calculate and update next_run_at based on schedule_type
+3. Handle failures gracefully with retry logic
 ```
 
-### Frontend Components
+#### Frontend Components
 
-| Component | Location | Description |
-|-----------|----------|-------------|
-| `SlotSuggestionCard` | `src/components/scheduling/SlotSuggestionCard.tsx` | Displays AI-recommended slot with accept/dismiss |
-| `SchedulingCopilotPanel` | `src/components/scheduling/SchedulingCopilotPanel.tsx` | Sidebar panel in booking flow showing suggestions |
-| `useSchedulingSuggestions` | `src/hooks/useSchedulingSuggestions.ts` | Hook to fetch and manage AI suggestions |
-
-### Integration Points
-
-- Integrate into existing `create-booking` flow
-- Add "AI Suggestions" tab to scheduling calendar
-- Display in AI Agent Chat when user asks "When should I book X?"
+| Component | Description |
+|-----------|-------------|
+| `ScheduleReportDialog.tsx` | Modal to configure schedule |
+| `ScheduledReportsManager.tsx` | List/manage all scheduled reports |
+| `ScheduleFrequencyPicker.tsx` | Visual schedule configuration |
+| `RecipientSelector.tsx` | Select team members or enter emails |
+| `ScheduleRunHistory.tsx` | View past runs and download files |
+| `useScheduledReports.ts` | CRUD for scheduled reports |
 
 ---
 
-## Feature 2: Smart Revenue Forecasting
+### Feature 3: Visual Comparison Dashboard
 
-### Purpose
-Predict daily/weekly/monthly revenue using historical trends, seasonality, and booking patterns.
+#### Purpose
+Provide visual overlays and diff views for period-over-period comparisons beyond simple percentage changes.
 
-### Database Changes
+#### New Visualizations
 
-```sql
--- Store revenue forecasts
-CREATE TABLE revenue_forecasts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  location_id TEXT,
-  forecast_date DATE NOT NULL,
-  forecast_type TEXT NOT NULL, -- 'daily', 'weekly', 'monthly'
-  predicted_revenue NUMERIC NOT NULL,
-  predicted_services NUMERIC,
-  predicted_products NUMERIC,
-  confidence_level TEXT, -- 'high', 'medium', 'low'
-  factors JSONB, -- what influenced the prediction
-  actual_revenue NUMERIC, -- filled after the date passes
-  accuracy_score NUMERIC(5,2), -- calculated after actual is known
-  created_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(organization_id, location_id, forecast_date, forecast_type)
-);
-
-ALTER TABLE revenue_forecasts ENABLE ROW LEVEL SECURITY;
-```
-
-### New Edge Function: `revenue-forecasting`
+**3.1 Waterfall Chart for Revenue Changes**
 
 ```text
-supabase/functions/revenue-forecasting/index.ts
+Shows exactly where revenue increased/decreased between periods:
 
-Purpose: Generate AI-powered revenue predictions
+                    $50,000 (This Month)
+                       ↑
+    [Services +$3,200] ─┤
+    [Products +$800]   ─┤
+    [New Clients +$1,500] ─┤
+    [Cancellations -$500] ─┤
+                       ↓
+                    $45,000 (Last Month)
+```
 
-Logic:
-1. Analyze last 90 days of phorest_daily_sales_summary
-2. Identify patterns:
-   - Day-of-week trends (Saturdays = peak)
-   - Monthly seasonality (holiday spikes)
-   - Staff availability correlation
-3. Factor in upcoming appointments (booked revenue)
-4. Apply growth/decline trends
-5. Generate confidence bands (optimistic/pessimistic)
+**3.2 Synchronized Dual-Axis Chart**
 
-AI Prompt Strategy:
-- Feed historical data + booking data to Gemini
-- Ask for structured JSON predictions
-- Include reasoning for transparency
+```text
+Overlay two periods on the same chart with different colored lines:
+- Period A (solid line)
+- Period B (dashed line)
+- Shaded area shows the gap between them
+```
 
-Output:
-{
-  forecasts: [
-    {
-      date: "2026-02-15",
-      predicted_revenue: 8500,
-      confidence: "high",
-      factors: ["Saturday peak", "Valentine's weekend", "3 stylists booked heavy"]
-    }
-  ],
-  weekly_total: 42000,
-  vs_last_week: "+8.5%"
+**3.3 Delta Heatmap**
+
+```text
+Grid showing change intensity by day/hour:
+- Green cells: Above average
+- Red cells: Below average
+- Intensity shows magnitude
+```
+
+#### New Components
+
+| Component | Description |
+|-----------|-------------|
+| `WaterfallChart.tsx` | Vertical waterfall for revenue breakdown |
+| `DualPeriodOverlay.tsx` | Two periods on same chart with gap shading |
+| `DeltaHeatmap.tsx` | Grid showing change magnitude by dimension |
+| `ComparisonDashboard.tsx` | Full comparison dashboard layout |
+| `MetricDeltaCard.tsx` | Single metric with visual before/after |
+| `TrendComparisonBand.tsx` | Range band showing confidence intervals |
+
+#### Enhanced useComparisonData Hook
+
+```typescript
+// Add new return values
+interface EnhancedComparisonResult extends ComparisonResult {
+  // Waterfall data
+  waterfall: {
+    category: string;
+    delta: number;
+    isIncrease: boolean;
+  }[];
+  
+  // Daily overlay data
+  dailyOverlay: {
+    date: string;
+    periodA: number;
+    periodB: number;
+    delta: number;
+  }[];
+  
+  // Heatmap data
+  heatmapData: {
+    dimension: string;
+    subdimension: string;
+    periodA: number;
+    periodB: number;
+    changePercent: number;
+  }[];
 }
 ```
 
-### Frontend Components
+---
 
-| Component | Location | Description |
-|-----------|----------|-------------|
-| `RevenueForecastCard` | `src/components/dashboard/analytics/RevenueForecastCard.tsx` | Hero card showing predicted revenue with trend |
-| `ForecastAccuracyChart` | `src/components/dashboard/analytics/ForecastAccuracyChart.tsx` | Shows how accurate past predictions were |
-| `useRevenueForecast` | `src/hooks/useRevenueForecast.ts` | Fetch and display forecasts |
+### Feature 4: Benchmark & Context Indicators
+
+#### Purpose
+Provide context for metrics by showing industry benchmarks, historical averages, and goal progress alongside actual values.
+
+#### Database Changes
+
+```sql
+-- Store benchmark data (can be org-specific or industry-wide)
+CREATE TABLE metric_benchmarks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID REFERENCES organizations(id), -- NULL for industry benchmarks
+  metric_key TEXT NOT NULL,
+  benchmark_type TEXT NOT NULL, -- 'industry', 'historical_avg', 'goal', 'peer_group'
+  value NUMERIC NOT NULL,
+  context TEXT, -- 'salon_industry_2025', 'org_90day_avg', etc.
+  valid_from DATE,
+  valid_to DATE,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS for org-specific benchmarks
+ALTER TABLE metric_benchmarks ENABLE ROW LEVEL SECURITY;
+```
+
+#### Benchmark Display Patterns
+
+```typescript
+interface BenchmarkContext {
+  metricKey: string;
+  currentValue: number;
+  benchmarks: {
+    type: 'industry' | 'historical' | 'goal' | 'peer';
+    value: number;
+    label: string;
+    percentDiff: number;
+  }[];
+}
+```
+
+#### UI Enhancements
+
+**Inline Benchmark Indicators:**
+
+```text
+Average Ticket: $85
+┌──────────────────────────────────────┐
+│ ████████████████████░░░░░ 85%        │
+│ ▲ Industry Avg: $78 (+9%)            │
+│ ○ Your 90-day Avg: $82 (+4%)         │
+│ ◎ Goal: $100 (15% to go)             │
+└──────────────────────────────────────┘
+```
+
+#### Components
+
+| Component | Description |
+|-----------|-------------|
+| `BenchmarkBar.tsx` | Horizontal bar with benchmark markers |
+| `BenchmarkTooltip.tsx` | Hover tooltip with benchmark details |
+| `ContextualMetricCard.tsx` | Metric card with built-in benchmarks |
+| `GoalProgressIndicator.tsx` | Visual progress toward goals |
+| `useBenchmarks.ts` | Fetch benchmarks for given metrics |
+
+---
+
+### Feature 5: Cross-Metric Correlation Dashboard
+
+#### Purpose
+Show how different metrics relate to each other to help identify drivers of business success.
+
+#### Correlation Analysis
+
+**Key Questions Answered:**
+- "When service revenue goes up, does product revenue follow?"
+- "Do more new clients correlate with higher utilization?"
+- "Is there a relationship between rebooking rate and average ticket?"
+
+#### Components
+
+| Component | Description |
+|-----------|-------------|
+| `CorrelationMatrix.tsx` | Grid showing correlation coefficients |
+| `ScatterPlotCard.tsx` | Two metrics plotted against each other |
+| `CausationInsights.tsx` | AI-generated insights about relationships |
+| `MetricDriversPanel.tsx` | Show what's driving a selected metric |
+| `useCorrelationAnalysis.ts` | Calculate correlations from historical data |
+
+#### Calculation Logic
+
+```typescript
+interface CorrelationPair {
+  metricA: string;
+  metricB: string;
+  coefficient: number; // -1 to 1
+  strength: 'strong' | 'moderate' | 'weak' | 'none';
+  direction: 'positive' | 'negative';
+  dataPoints: number;
+}
+
+// Calculate using Pearson correlation coefficient
+function calculateCorrelation(dataA: number[], dataB: number[]): number {
+  // Standard Pearson formula
+  // Returns value between -1 (inverse) and 1 (direct correlation)
+}
+```
+
+---
+
+## Integration Points
 
 ### Analytics Hub Integration
 
-- Add to Sales Analytics tab
-- Include in Command Center if pinned
-- Show accuracy score after actuals are known
-
----
-
-## Feature 3: Automated Client Follow-ups
-
-### Purpose
-Trigger intelligent post-appointment communications: thank-you messages, rebooking reminders, and at-risk client outreach.
-
-### Database Changes
-
-```sql
--- Client communication automation rules
-CREATE TABLE client_automation_rules (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  rule_type TEXT NOT NULL, -- 'post_visit_thanks', 'rebooking_reminder', 'win_back'
-  trigger_days INTEGER NOT NULL, -- days after last visit
-  template_id UUID REFERENCES email_templates(id),
-  sms_template_id UUID REFERENCES sms_templates(id),
-  is_active BOOLEAN DEFAULT true,
-  conditions JSONB, -- {"min_visits": 2, "service_category": "color"}
-  created_at TIMESTAMPTZ DEFAULT now()
-);
-
--- Track automation execution
-CREATE TABLE client_automation_log (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  rule_id UUID REFERENCES client_automation_rules(id),
-  client_id UUID,
-  sent_at TIMESTAMPTZ DEFAULT now(),
-  channel TEXT, -- 'email', 'sms'
-  status TEXT, -- 'sent', 'failed', 'opened', 'clicked'
-  metadata JSONB
-);
-
-ALTER TABLE client_automation_rules ENABLE ROW LEVEL SECURITY;
-ALTER TABLE client_automation_log ENABLE ROW LEVEL SECURITY;
-```
-
-### New Edge Function: `process-client-automations`
+Add new sub-tabs and features to existing structure:
 
 ```text
-supabase/functions/process-client-automations/index.ts
-
-Purpose: Scheduled job to process automation rules
-
-Logic:
-1. Fetch active rules per organization
-2. For each rule type:
-   
-   POST_VISIT_THANKS (trigger_days = 1):
-   - Find appointments completed yesterday
-   - Send personalized thank-you with feedback link
-   
-   REBOOKING_REMINDER (trigger_days = 21-42):
-   - Find clients whose last visit was X days ago
-   - Check if they have upcoming appointments (skip if yes)
-   - Send "Time to rebook?" message
-   
-   WIN_BACK (trigger_days = 90+):
-   - Find inactive clients
-   - Send special offer or "We miss you" message
-
-3. Log all sends to client_automation_log
-4. Respect unsubscribe preferences
+Analytics Hub
+├── Sales Tab
+│   ├── Overview
+│   ├── Goals
+│   ├── Compare ← ENHANCED with visual diff
+│   ├── Staff Performance
+│   ├── Forecasting (AI - from Category 1)
+│   ├── Commission
+│   └── Correlations ← NEW
+├── Operations Tab
+│   └── (existing)
+├── Marketing Tab
+│   └── (existing)
+├── Program Tab
+│   └── (existing)
+├── Reports Tab ← ENHANCED
+│   ├── Sales Reports
+│   ├── Staff Reports
+│   ├── Client Reports
+│   ├── Operations Reports
+│   ├── Financial Reports
+│   ├── Custom Builder ← NEW
+│   └── Scheduled ← NEW
+└── Rent Tab
+    └── (existing)
 ```
 
-### Frontend Components
+### Command Center Integration
 
-| Component | Location | Description |
-|-----------|----------|-------------|
-| `AutomationRulesManager` | `src/components/dashboard/marketing/AutomationRulesManager.tsx` | Configure automation rules |
-| `AutomationLogViewer` | `src/components/dashboard/marketing/AutomationLogViewer.tsx` | View sent automations |
-| `useClientAutomations` | `src/hooks/useClientAutomations.ts` | CRUD for automation rules |
-
-### Integration Points
-
-- Add to Marketing Hub under "Automations" tab
-- Connect to existing email_templates infrastructure
-- Add metrics to Client Engine dashboard
-
----
-
-## Feature 4: Anomaly Detection Alerts
-
-### Purpose
-Detect unusual patterns (sudden cancellation spikes, revenue drops, no-show increases) and alert managers in real-time.
-
-### Database Changes
-
-```sql
--- Anomaly detection results
-CREATE TABLE detected_anomalies (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id),
-  location_id TEXT,
-  anomaly_type TEXT NOT NULL, -- 'revenue_drop', 'cancellation_spike', 'no_show_surge', 'booking_drop'
-  severity TEXT NOT NULL, -- 'info', 'warning', 'critical'
-  detected_at TIMESTAMPTZ DEFAULT now(),
-  metric_value NUMERIC,
-  expected_value NUMERIC,
-  deviation_percent NUMERIC,
-  context JSONB,
-  is_acknowledged BOOLEAN DEFAULT false,
-  acknowledged_by UUID REFERENCES auth.users(id),
-  acknowledged_at TIMESTAMPTZ
-);
-
-ALTER TABLE detected_anomalies ENABLE ROW LEVEL SECURITY;
-```
-
-### New Edge Function: `detect-anomalies`
-
-```text
-supabase/functions/detect-anomalies/index.ts
-
-Purpose: Scheduled hourly/daily job to detect anomalies
-
-Anomaly Types:
-
-1. REVENUE_DROP
-   - Compare today's revenue to same day last week
-   - Alert if >20% below expected
-   
-2. CANCELLATION_SPIKE
-   - Track cancellation rate (cancellations / total bookings)
-   - Alert if rate exceeds 2x normal average
-   
-3. NO_SHOW_SURGE
-   - Monitor no-show rate for the day
-   - Alert if >3 no-shows in a single day
-   
-4. BOOKING_DROP
-   - Compare new bookings to trailing average
-   - Alert if 30%+ below normal
-
-Thresholds stored in organization_settings for customization
-
-Output:
-- Insert into detected_anomalies table
-- Trigger push notification to managers
-- Log to platform_notifications if critical
-```
-
-### Frontend Components
-
-| Component | Location | Description |
-|-----------|----------|-------------|
-| `AnomalyAlertBanner` | `src/components/dashboard/AnomalyAlertBanner.tsx` | Top-of-dashboard alert for active anomalies |
-| `AnomalyHistoryPanel` | `src/components/dashboard/analytics/AnomalyHistoryPanel.tsx` | View past anomalies and resolutions |
-| `AnomalyThresholdSettings` | `src/components/dashboard/settings/AnomalyThresholdSettings.tsx` | Configure sensitivity |
-| `useAnomalies` | `src/hooks/useAnomalies.ts` | Fetch and acknowledge anomalies |
-
-### Integration Points
-
-- Add to Operations Hub
-- Show in Command Center for managers
-- Integrate with existing push notification system (`send-push-notification`)
+- Custom reports can be pinned to dashboard
+- Scheduled report status widget
+- Benchmark context on existing pinned cards
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Foundation (Week 1-2)
-1. Create database tables with RLS policies
-2. Implement `ai-scheduling-copilot` edge function
-3. Build `useSchedulingSuggestions` hook
-4. Add basic `SlotSuggestionCard` UI
+### Phase 1: Custom Report Builder (Week 1-2)
+1. Create `custom_report_templates` and `report_template_usage` tables
+2. Build `ReportBuilderPage.tsx` with metric/dimension selection
+3. Implement `useCustomReport.ts` for dynamic query execution
+4. Add `TemplateLibrary.tsx` for saved templates
+5. Integrate into Reports tab
 
-### Phase 2: Revenue Intelligence (Week 3-4)
-1. Implement `revenue-forecasting` edge function
-2. Create `RevenueForecastCard` component
-3. Add forecast accuracy tracking
-4. Integrate into Sales Analytics
+### Phase 2: Scheduled Reports (Week 3-4)
+1. Create `scheduled_reports` and `scheduled_report_runs` tables
+2. Build `process-scheduled-reports` edge function
+3. Set up pg_cron trigger for hourly execution
+4. Create `ScheduledReportsManager.tsx` UI
+5. Connect to existing email infrastructure
 
-### Phase 3: Client Automation (Week 5-6)
-1. Implement `process-client-automations` edge function
-2. Build `AutomationRulesManager` UI
-3. Connect to existing email/SMS templates
-4. Add automation metrics
+### Phase 3: Visual Comparisons (Week 5-6)
+1. Build `WaterfallChart.tsx` and `DualPeriodOverlay.tsx`
+2. Enhance `useComparisonData` with waterfall and overlay data
+3. Create `ComparisonDashboard.tsx` layout
+4. Add visual diff mode to Compare sub-tab
 
-### Phase 4: Anomaly Detection (Week 7-8)
-1. Implement `detect-anomalies` edge function
-2. Create `AnomalyAlertBanner` component
-3. Add acknowledgment workflow
-4. Configure threshold settings
+### Phase 4: Benchmarks & Correlations (Week 7-8)
+1. Create `metric_benchmarks` table with seed data
+2. Build `BenchmarkBar.tsx` and context indicators
+3. Implement `useCorrelationAnalysis.ts`
+4. Add `CorrelationMatrix.tsx` to Sales tab
+5. Generate AI insights for correlations
 
 ---
 
@@ -413,21 +491,22 @@ Output:
 
 | Category | New Files | Modified Files |
 |----------|-----------|----------------|
-| Edge Functions | 4 new functions | - |
-| Hooks | 4 new hooks | - |
-| Components | 10+ new components | `CommandCenterAnalytics.tsx`, `ScheduleCalendar.tsx` |
-| Database | 5 new tables | - |
+| Database | 2 migrations | - |
+| Edge Functions | 1 new (`process-scheduled-reports`) | - |
+| Hooks | 5 new | `useComparisonData.ts` |
+| Components | 20+ new | `ReportsTabContent.tsx`, `SalesTabContent.tsx`, `CompareTabContent.tsx` |
+| Pages | 1 new (`ReportBuilder`) | `AnalyticsHub.tsx` |
 
 ---
 
 ## Technical Notes
 
-1. **AI Gateway**: All AI calls use Lovable AI gateway (`https://ai.gateway.lovable.dev`) with `google/gemini-3-flash-preview` model
-2. **Scheduling**: Builds on existing `check-availability` and `create-booking` functions
-3. **Forecasting**: Extends existing `usePayrollForecasting` pattern
-4. **Notifications**: Reuses existing `send-push-notification` infrastructure
-5. **Email/SMS**: Leverages existing `email_templates` and `sms_templates` tables
-6. **RLS**: All new tables have organization-scoped RLS policies
+1. **Custom Reports**: Dynamic query building uses parameterized Supabase queries - never raw SQL injection
+2. **Scheduled Reports**: Leverages existing `send-email` edge function for delivery
+3. **Benchmarks**: Industry benchmarks seeded from research; org benchmarks calculated from rolling 90-day data
+4. **Correlations**: Calculated on the fly from `phorest_daily_sales_summary` (last 90 days)
+5. **Performance**: Heavy calculations cached in React Query with 30-minute stale time
+6. **RLS**: All new tables have organization-scoped policies
 
 ---
 
@@ -435,7 +514,81 @@ Output:
 
 | Feature | KPI | Target |
 |---------|-----|--------|
-| Scheduling Copilot | Suggestion acceptance rate | >40% |
-| Revenue Forecast | Prediction accuracy (within 10%) | >75% of days |
-| Client Automations | Rebooking rate from reminders | >15% |
-| Anomaly Detection | False positive rate | <20% |
+| Custom Report Builder | Templates created per org | >5 in first month |
+| Scheduled Reports | Reports auto-delivered | 90%+ on schedule |
+| Visual Comparisons | Time spent on Compare tab | +50% engagement |
+| Benchmarks | Benchmark views per session | >3 per user |
+| Correlations | Insight actions taken | Track click-through |
+
+---
+
+## UI Mockups
+
+### Custom Report Builder
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│ REPORT BUILDER                                        [Save] [Run]  │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  METRICS (drag to add)           CONFIGURATION                      │
+│  ┌─────────────────────┐        ┌────────────────────────────────┐ │
+│  │ □ Total Revenue     │        │ Grouped by: [Location ▼]       │ │
+│  │ □ Service Revenue   │        │ Date Range: [Inherit ▼]        │ │
+│  │ ☑ Product Revenue   │        │ Visualization: [Bar Chart ▼]   │ │
+│  │ ☑ Avg Ticket        │        └────────────────────────────────┘ │
+│  │ □ Appointments      │                                           │
+│  │ □ No-Shows          │        PREVIEW                            │
+│  │ ...                 │        ┌────────────────────────────────┐ │
+│  └─────────────────────┘        │    ████████ Location A $45k   │ │
+│                                 │    ██████   Location B $38k   │ │
+│  FILTERS                        │    ████     Location C $28k   │ │
+│  ┌─────────────────────┐        │                                │ │
+│  │ + Add Filter        │        └────────────────────────────────┘ │
+│  │ Location = Mesa     │                                           │
+│  └─────────────────────┘                                           │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Scheduled Reports Manager
+
+```text
+┌─────────────────────────────────────────────────────────────────────┐
+│ SCHEDULED REPORTS                               [+ Schedule Report] │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ 📊 Weekly Sales Summary                    ⚡ Active          │   │
+│  │    Every Monday at 8:00 AM                                   │   │
+│  │    Recipients: owner@salon.com, manager@salon.com            │   │
+│  │    Last run: Feb 5, 2026 · Next: Feb 12, 2026               │   │
+│  │    [View History] [Edit] [Pause]                             │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │ 📈 Monthly Revenue Report                  ⏸ Paused          │   │
+│  │    1st of each month at 9:00 AM                              │   │
+│  │    Recipients: accounting@salon.com                          │   │
+│  │    Last run: Jan 1, 2026 · Next: —                          │   │
+│  │    [View History] [Edit] [Resume]                            │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Waterfall Comparison Chart
+
+```text
+Revenue Change: This Month vs Last Month
+
+    Last Month Total   ██████████████████████████████████  $45,000
+                                                       │
+    + Services         ███████  +$3,200               ─┤
+    + Products         ███  +$800                     ─┤
+    + New Clients      █████  +$1,500                 ─┤
+    − Cancellations    ██  -$500                      ─┤
+                                                       │
+    This Month Total   ██████████████████████████████████████  $50,000
+                                                       ↑
+                                                   +11.1%
+```
