@@ -1,78 +1,90 @@
 
 
-# Make the Hiring Bridge Flow Provider-Agnostic (Gusto + QuickBooks)
+# Renter Onboard Wizard -- Consolidation Plan
 
-## Problem
+## The Problem
 
-The New Hire Wizard currently hardcodes "Gusto" throughout the UI and edge function. Organizations using QuickBooks for payroll and HR see a "Gusto: Not Connected" toggle that is irrelevant to them. There is no way to trigger QuickBooks onboarding from the hiring flow.
+Booth renters are independent 1099 contractors, not employees. Right now:
 
-## Solution
+- The New Hire Wizard incorrectly lists "Booth Rent" as a pay type, mixing employee and contractor concepts
+- Adding a renter requires clicking "Add Renter" in the Renter Hub, which opens a basic dialog that only creates a profile
+- After that, you must separately: issue a contract, set up insurance, assign a station, and track onboarding tasks -- all through different buttons and dialogs
+- There is no single guided flow that walks an admin through the full renter onboarding
 
-Generalize the wizard's "Legal and Docs" step to detect whichever payroll provider is connected (Gusto, QuickBooks, or none) and adapt the labels, descriptions, and backend triggers accordingly. The architecture already supports this -- `usePayrollConnection` returns `connection.provider` and `isConnected`.
+## The Solution
 
----
+1. **Remove "Booth Rent" from the New Hire Wizard** -- it does not belong there
+2. **Replace the AddRenterDialog with a full-page Renter Onboard Wizard** that consolidates the scattered steps into one guided flow
+3. **Keep all existing components** (IssueContractDialog, InsuranceCard, StationAssignmentManager, onboarding tasks) working as standalone tools in the Renter Hub for day-to-day management -- the wizard simply calls into the same hooks
 
-## Changes
+## Renter Onboard Wizard Steps
 
-### 1. New Hire Wizard UI (`src/pages/dashboard/admin/NewHireWizard.tsx`)
+**Step 1: Renter Identity**
+- Option A: Select an existing person in the system (like today's AddRenterDialog)
+- Option B: Create a brand new account (name, email) -- this creates an auth user + employee profile + booth_renter role, similar to how the hire wizard works but framed as a contractor setup
+- Collect: business name, EIN, start date
 
-**Current behavior**: Hardcoded "Gusto Payroll" toggle with Gusto-specific copy.
+**Step 2: Licensing & Insurance**
+- License number, license state, expiration date
+- Insurance provider, policy number, expiration date
+- These fields already exist on `booth_renter_profiles` and insurance tables
 
-**New behavior**:
-- Read `provider` and `isConnected` from `usePayrollConnection()` (already imported)
-- Replace the Gusto-specific section with a generic "Payroll Provider" section that dynamically shows the connected provider name
-- Display provider-specific descriptions:
-  - **Gusto**: "Offer letter, W-4, I-9, and direct deposit will be handled via Gusto"
-  - **QuickBooks**: "Employee setup, tax forms, and direct deposit will be handled via QuickBooks Payroll"
-  - **None connected**: "Connect a payroll provider in the Payroll Hub to automate tax documents and onboarding"
-- Rename form field `triggerGusto` to `triggerPayrollProvider` for clarity
-- PandaDoc toggle logic stays the same: disabled when payroll provider handles offer letters (Gusto does; QuickBooks does not, so PandaDoc remains available when QuickBooks is connected)
-- Success dialog: replace "gustoStatus" / "gustoMessage" with generic "payrollStatus" / "payrollMessage"
+**Step 3: Rental Terms**
+- Inline version of the IssueContractDialog fields: rent amount, frequency, due day, security deposit, included amenities (utilities, WiFi, products), retail commission settings
+- This creates the first `booth_rental_contracts` record
 
-### 2. Edge Function (`supabase/functions/hire-employee/index.ts`)
+**Step 4: Station Assignment**
+- Show available stations/chairs for the organization
+- Let admin pick one (or skip if none are set up yet)
 
-**Current behavior**: Accepts `triggerGusto` boolean and returns Gusto-specific status.
+**Step 5: Onboarding Checklist & Docs**
+- Show the organization's renter onboarding tasks (from `renter_onboarding_tasks`)
+- Toggle PandaDoc for the rental agreement (uses same integration as hire wizard)
+- Summary of what will be created
 
-**New behavior**:
-- Accept `triggerPayrollProvider` (boolean) and `payrollProvider` (string: 'gusto' | 'quickbooks' | null)
-- When triggered, return provider-specific status messages:
-  - Gusto connected: "Employee will be onboarded via Gusto for tax documents, offer letter, and direct deposit"
-  - QuickBooks connected: "Employee will be added to QuickBooks Payroll for tax forms and direct deposit"
-  - Not connected: "Payroll provider is not yet configured. Tax documents will need to be handled manually."
-- Response fields renamed from `gustoStatus`/`gustoMessage` to `payrollStatus`/`payrollMessage`
-- Backward-compatible: still accepts `triggerGusto` as a fallback alias
+On submit, the wizard creates everything in one backend call, then shows a success screen with the renter's login credentials (if a new account was created) or a confirmation (if existing person).
 
-### 3. Hook (`src/hooks/useHireEmployee.ts`)
+## What Changes
 
-- Update the `HireData` interface: add `triggerPayrollProvider` and `payrollProvider` fields
-- Keep `triggerGusto` as optional for backward compatibility
-- Update `HireResult` interface: rename `gustoStatus`/`gustoMessage` to `payrollStatus`/`payrollMessage`
+### Remove from New Hire Wizard
+- Remove the "Booth Rent" option from the pay type dropdown in `NewHireWizard.tsx`
 
----
+### New Files
+- **`src/pages/dashboard/admin/RenterOnboardWizard.tsx`** -- full-page multi-step wizard (follows the same pattern as NewHireWizard)
+- **`supabase/functions/onboard-renter/index.ts`** -- edge function that handles account creation (optional), booth_renter_profiles, booth_rental_contracts, station assignment, insurance record, and onboarding task seeding in one transaction
 
-## Provider-Specific Behavior Matrix
+### Modified Files
+- **`src/App.tsx`** -- add route `/dashboard/admin/onboard-renter`
+- **`src/pages/dashboard/admin/ManagementHub.tsx`** -- add "Renter Onboard Wizard" card in the appropriate section
+- **`src/pages/dashboard/admin/BoothRenters.tsx`** or **`RentersTabContent.tsx`** -- change "Add Renter" button to navigate to the wizard instead of opening AddRenterDialog
+- **`src/hooks/useHireEmployee.ts`** -- no changes needed (separate concern)
 
-```text
-Provider     | Offer Letter      | Tax Docs (W-4, I-9) | Direct Deposit
--------------|--------------------|-----------------------|---------------
-Gusto        | Via Gusto          | Via Gusto             | Via Gusto
-QuickBooks   | Via PandaDoc/Manual| Via QuickBooks        | Via QuickBooks
-None         | Via PandaDoc/Manual| Manual (Doc Tracker)  | Manual
-```
+### Unchanged (No Redundancy)
+- `AddRenterDialog.tsx` -- can be deprecated or kept as a quick-add shortcut; the wizard replaces its primary use case
+- `IssueContractDialog.tsx` -- stays for issuing additional contracts to existing renters
+- `InsuranceCard.tsx` -- stays for updating insurance after onboarding
+- `StationAssignmentManager.tsx` -- stays for reassigning stations
+- `useRenterOnboarding.ts` -- stays for tracking ongoing task completion
+- `useBoothRenters.ts` -- stays as the data layer
 
-Key difference: QuickBooks Payroll does not generate offer letters, so PandaDoc remains enabled when QuickBooks is the active provider. Gusto handles offer letters natively, so PandaDoc is disabled when Gusto is toggled on.
+## Technical Details
 
----
+### Edge Function: `onboard-renter`
+Accepts:
+- `createNewAccount` (boolean) -- if true, creates auth user
+- `email`, `fullName` -- for new account creation
+- `userId` -- for existing person selection (mutually exclusive with createNewAccount)
+- `organizationId`
+- Business fields: `businessName`, `ein`, `licenseNumber`, `licenseState`, `licenseExpiry`
+- Insurance fields: `insuranceProvider`, `insurancePolicyNumber`, `insuranceExpiryDate`
+- Contract fields: `rentAmount`, `rentFrequency`, `dueDay`, `securityDeposit`, `startDate`, `endDate`, amenity toggles, retail commission settings
+- `stationId` (optional) -- station to assign
+- `generateRentalAgreement` (boolean) -- PandaDoc trigger
 
-## Files to Modify
+Returns:
+- `success`, `boothRenterId`, credentials (if new account), `contractId`, `stationAssigned`
 
-1. **`src/pages/dashboard/admin/NewHireWizard.tsx`** -- Generalize Legal and Docs step UI
-2. **`supabase/functions/hire-employee/index.ts`** -- Accept provider-agnostic parameters
-3. **`src/hooks/useHireEmployee.ts`** -- Update interfaces for generic payroll provider fields
-
-## Files Unchanged
-
-- `src/hooks/usePayrollConnection.ts` -- Already returns `provider` and `isConnected` for any provider
-- `src/components/dashboard/payroll/providers/providerConfig.ts` -- No changes needed
-- Routing and Management Hub -- No changes needed
+### Routing
+- `/dashboard/admin/onboard-renter` -- new wizard page
+- Can be reached from Management Hub card and from "Add Renter" button in Renter Hub
 
