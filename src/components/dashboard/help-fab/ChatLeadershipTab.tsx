@@ -101,8 +101,8 @@ export function ChatLeadershipTab() {
   // Auto-select org for platform users (mirrors TeamChat.tsx logic)
   useEffect(() => {
     if (isPlatformUser && !effectiveOrganization && organizations?.length > 0) {
-      const defaultOrg = organizations.find(o => o.slug === 'drop-dead-salons') || organizations[0];
-      setSelectedOrganization(defaultOrg);
+      // Use first available organization instead of hardcoded default
+      setSelectedOrganization(organizations[0]);
     }
   }, [isPlatformUser, effectiveOrganization, organizations, setSelectedOrganization]);
   

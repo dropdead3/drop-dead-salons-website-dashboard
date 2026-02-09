@@ -102,7 +102,55 @@ serve(async (req) => {
             },
           });
 
-          // TODO: Send email reminder to renter
+          // Send email reminder to renter
+          if (renterEmail) {
+            const resendApiKey = Deno.env.get("RESEND_API_KEY");
+            if (resendApiKey) {
+              try {
+                const expiryDateFormatted = new Date(renter.insurance_expiry_date).toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                });
+                const urgencyNote = daysAhead <= 7 
+                  ? '<p style="color: #c53030; font-weight: bold;">URGENT: Your insurance expires in less than a week!</p>'
+                  : '';
+
+                await fetch("https://api.resend.com/emails", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${resendApiKey}`,
+                  },
+                  body: JSON.stringify({
+                    from: "Drop Dead Gorgeous <noreply@dropdeadsalons.com>",
+                    to: [renterEmail],
+                    subject: `Insurance Expiring in ${daysAhead} Days`,
+                    html: `
+                      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #333;">Insurance Renewal Reminder</h2>
+                        <p>Hi ${renterName},</p>
+                        <p>Your liability insurance is set to expire on <strong>${expiryDateFormatted}</strong>.</p>
+                        ${urgencyNote}
+                        <p>Please renew your insurance and upload proof of coverage to maintain your active renter status.</p>
+                        <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                          <p style="margin: 0;"><strong>Insurance Provider:</strong> ${renter.insurance_provider || 'On file'}</p>
+                          <p style="margin: 10px 0 0 0;"><strong>Expiry Date:</strong> ${expiryDateFormatted}</p>
+                        </div>
+                        <p>Log in to your renter portal to upload your updated insurance documentation.</p>
+                        <p style="color: #666; font-size: 12px; margin-top: 30px;">
+                          This is an automated reminder from your salon management system.
+                        </p>
+                      </div>
+                    `,
+                  }),
+                });
+                console.log(`Insurance expiry reminder sent to ${renterEmail}`);
+              } catch (emailError) {
+                console.error(`Failed to send insurance reminder to ${renterEmail}:`, emailError);
+              }
+            }
+          }
         }
       }
     }

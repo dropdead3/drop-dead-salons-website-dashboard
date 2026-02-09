@@ -1,19 +1,20 @@
 import { useRentRevenueAnalytics } from '@/hooks/useRentRevenueAnalytics';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Store, DollarSign, TrendingUp, AlertTriangle, Users } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
-
-// TODO: Get from organization context when available
-const DEFAULT_ORG_ID = 'drop-dead-salons';
+import { DollarSign, TrendingUp, AlertTriangle, Users } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const statusColors: Record<string, string> = {
   current: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
   overdue: 'bg-red-500/20 text-red-400 border-red-500/30',
 };
 
-export function RentRevenueAnalytics() {
-  const { data: metrics, isLoading } = useRentRevenueAnalytics(DEFAULT_ORG_ID);
+interface RentRevenueAnalyticsProps {
+  organizationId: string;
+}
+
+export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsProps) {
+  const { data: metrics, isLoading } = useRentRevenueAnalytics(organizationId);
 
   if (isLoading) {
     return (
@@ -59,7 +60,7 @@ export function RentRevenueAnalytics() {
         <Card className="bg-card/50">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
-              <Store className="h-4 w-4" />
+              <TrendingUp className="h-4 w-4" />
               <span className="text-xs uppercase tracking-wider">Collection Rate</span>
             </div>
             <p className={`text-2xl font-bold ${metrics.collectionRate >= 95 ? 'text-emerald-400' : metrics.collectionRate >= 80 ? 'text-amber-400' : 'text-red-400'}`}>

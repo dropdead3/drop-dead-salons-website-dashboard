@@ -48,7 +48,34 @@ export function RentIncreaseDialog({
       notes,
     });
     
-    // TODO: Send notification email if enabled
+    // Send notification email if enabled
+    if (sendNotification) {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/notify-rent-change`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+            },
+            body: JSON.stringify({
+              contract_id: contractId,
+              current_rent: currentRent,
+              new_rent: newRent,
+              effective_date: format(effectiveDate, 'yyyy-MM-dd'),
+              reason,
+            }),
+          }
+        );
+        
+        if (!response.ok) {
+          console.error('Failed to send rent change notification');
+        }
+      } catch (error) {
+        console.error('Error sending rent change notification:', error);
+      }
+    }
     
     onOpenChange(false);
     
