@@ -10860,6 +10860,94 @@ export type Database = {
           },
         ]
       }
+      responsibilities: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          display_name: string
+          icon: string
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          display_name: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          display_name?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "responsibilities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      responsibility_assets: {
+        Row: {
+          content: Json
+          created_at: string
+          id: string
+          responsibility_id: string
+          sort_order: number
+          title: string
+          type: string
+        }
+        Insert: {
+          content?: Json
+          created_at?: string
+          id?: string
+          responsibility_id: string
+          sort_order?: number
+          title: string
+          type?: string
+        }
+        Update: {
+          content?: Json
+          created_at?: string
+          id?: string
+          responsibility_id?: string
+          sort_order?: number
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "responsibility_assets_responsibility_id_fkey"
+            columns: ["responsibility_id"]
+            isOneToOne: false
+            referencedRelation: "responsibilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       revenue_forecasts: {
         Row: {
           accuracy_score: number | null
@@ -13759,6 +13847,38 @@ export type Database = {
             columns: ["enrollment_id"]
             isOneToOne: false
             referencedRelation: "stylist_program_enrollment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_responsibilities: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          id: string
+          responsibility_id: string
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          responsibility_id: string
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          id?: string
+          responsibility_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_responsibilities_responsibility_id_fkey"
+            columns: ["responsibility_id"]
+            isOneToOne: false
+            referencedRelation: "responsibilities"
             referencedColumns: ["id"]
           },
         ]
