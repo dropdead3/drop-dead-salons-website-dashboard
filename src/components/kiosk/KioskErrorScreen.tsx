@@ -94,7 +94,7 @@ export function KioskErrorScreen() {
 
         {/* Error message */}
         <motion.h1
-          className="text-4xl md:text-5xl font-semibold mb-4 tracking-tight"
+          className="text-4xl md:text-5xl font-medium mb-4 tracking-tight"
           style={{ color: textColor }}
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -121,8 +121,8 @@ export function KioskErrorScreen() {
           transition={{ delay: 0.4 }}
         >
           <motion.button
-            className="flex items-center justify-center gap-3 px-10 py-5 rounded-2xl text-xl font-semibold shadow-xl transition-all"
-            style={{ 
+            className="flex items-center justify-center gap-3 px-10 py-5 rounded-2xl text-xl font-medium shadow-xl transition-all"
+            style={{
               background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}CC 100%)`,
               color: '#FFFFFF',
               boxShadow: `0 8px 32px ${accentColor}40`,

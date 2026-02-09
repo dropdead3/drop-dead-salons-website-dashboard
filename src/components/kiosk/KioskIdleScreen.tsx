@@ -205,7 +205,7 @@ export function KioskIdleScreen() {
           transition={{ delay: 0.3 }}
         >
           <h1 
-            className="text-4xl md:text-6xl font-semibold mb-4 tracking-tight"
+            className="text-4xl md:text-6xl font-medium mb-4 tracking-tight"
             style={{ color: textColor }}
           >
             {welcomeTitle}

@@ -177,7 +177,7 @@ export function KioskSuccessScreen() {
 
         {/* Welcome message */}
         <motion.h1
-          className="text-5xl md:text-6xl font-semibold mb-4 tracking-tight"
+          className="text-5xl md:text-6xl font-medium mb-4 tracking-tight"
           style={{ color: textColor }}
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -211,7 +211,7 @@ export function KioskSuccessScreen() {
           >
             <div className="space-y-4">
               <div 
-                className="text-2xl md:text-3xl font-semibold"
+                className="text-2xl md:text-3xl font-medium"
                 style={{ color: textColor }}
               >
                 {appointment.service_name}

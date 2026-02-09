@@ -120,7 +120,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                 <Settings className="w-5 h-5 text-purple-400" />
               </div>
               <div>
-                <h2 className="text-xl font-semibold text-white">Kiosk Settings</h2>
+                <h2 className="text-xl font-medium text-white">Kiosk Settings</h2>
                 <p className="text-sm text-white/60">
                   {isAuthenticated ? 'Configure your kiosk' : 'Enter PIN to access'}
                 </p>

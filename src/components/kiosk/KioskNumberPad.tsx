@@ -120,7 +120,7 @@ export function KioskNumberPad({
 
       {/* Submit button - Enhanced */}
       <motion.button
-        className="flex items-center justify-center gap-4 w-full max-w-xs py-6 px-10 rounded-2xl text-xl font-semibold transition-all shadow-xl"
+        className="flex items-center justify-center gap-4 w-full max-w-xs py-6 px-10 rounded-2xl text-xl font-medium transition-all shadow-xl"
         style={{
           background: isReady 
             ? `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}CC 100%)`

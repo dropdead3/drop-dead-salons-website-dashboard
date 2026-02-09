@@ -179,7 +179,7 @@ export function KioskLookupScreen() {
           </motion.div>
           
           <h1 
-            className="text-3xl md:text-4xl font-semibold tracking-tight"
+            className="text-3xl md:text-4xl font-medium tracking-tight"
             style={{ color: textColor }}
           >
             {checkInPrompt}
