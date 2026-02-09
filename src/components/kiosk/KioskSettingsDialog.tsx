@@ -39,16 +39,6 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
   isOpenRef.current = isOpen;
   isAuthenticatedRef.current = isAuthenticated;
   
-  // Session key to force fresh timer initialization on each open
-  const [sessionKey, setSessionKey] = useState(0);
-  
-  // Increment session key when dialog opens to force fresh timers
-  useEffect(() => {
-    if (isOpen) {
-      setSessionKey(prev => prev + 1);
-    }
-  }, [isOpen]);
-  
   // Reset the inactivity timeout on user interaction
   const resetTimeout = useCallback(() => {
     if (!isOpenRef.current || isAuthenticatedRef.current) return;
@@ -66,7 +56,12 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
     setTimeRemaining(PIN_TIMEOUT_SECONDS);
     
     countdownRef.current = setInterval(() => {
-      setTimeRemaining(prev => prev <= 1 ? 0 : prev - 1);
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
     
     timeoutRef.current = setTimeout(() => {
@@ -84,10 +79,11 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
     }, PIN_TIMEOUT_SECONDS * 1000);
   }, [onClose]);
   
-  // Initialize timers when dialog opens - depends on sessionKey for fresh start
+  // Initialize timers when dialog opens in unauthenticated state
   useEffect(() => {
-    if (isOpen && !isAuthenticated) {
-      // Clear any existing timers first
+    // Only run when dialog is open AND not authenticated
+    if (!isOpen || isAuthenticated) {
+      // Clean up if dialog closes or user authenticates
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -96,41 +92,60 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
         clearInterval(countdownRef.current);
         countdownRef.current = null;
       }
+      return;
+    }
+    
+    // Clear any existing timers first
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+    
+    // Reset state
+    setTimeRemaining(PIN_TIMEOUT_SECONDS);
+    
+    // Use a small delay to ensure refs are synced and component is mounted
+    const initTimer = setTimeout(() => {
+      // Double-check we should still run
+      if (!isOpenRef.current || isAuthenticatedRef.current) return;
       
-      // Reset state
-      setTimeRemaining(PIN_TIMEOUT_SECONDS);
-      
-      // Start fresh countdown
+      // Start countdown interval
       countdownRef.current = setInterval(() => {
         setTimeRemaining(prev => {
-          if (prev <= 1) {
+          const newVal = prev - 1;
+          if (newVal <= 0) {
+            // Time's up - close the dialog
             if (countdownRef.current) {
               clearInterval(countdownRef.current);
               countdownRef.current = null;
             }
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+              timeoutRef.current = null;
+            }
+            // Schedule close for next tick to avoid state update during render
+            setTimeout(() => {
+              if (isOpenRef.current && !isAuthenticatedRef.current) {
+                setIsAuthenticated(false);
+                setPinInput('');
+                setPinError(false);
+                setTimeRemaining(PIN_TIMEOUT_SECONDS);
+                onClose();
+              }
+            }, 0);
             return 0;
           }
-          return prev - 1;
+          return newVal;
         });
       }, 1000);
-      
-      // Start fresh timeout
-      timeoutRef.current = setTimeout(() => {
-        if (countdownRef.current) {
-          clearInterval(countdownRef.current);
-          countdownRef.current = null;
-        }
-        if (isOpenRef.current && !isAuthenticatedRef.current) {
-          setIsAuthenticated(false);
-          setPinInput('');
-          setPinError(false);
-          setTimeRemaining(PIN_TIMEOUT_SECONDS);
-          onClose();
-        }
-      }, PIN_TIMEOUT_SECONDS * 1000);
-    }
+    }, 50);
     
     return () => {
+      clearTimeout(initTimer);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
@@ -140,7 +155,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
         countdownRef.current = null;
       }
     };
-  }, [sessionKey, isOpen, isAuthenticated, onClose]);
+  }, [isOpen, isAuthenticated, onClose]);
   
   // Local settings state
   const [localSettings, setLocalSettings] = useState({
