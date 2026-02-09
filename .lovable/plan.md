@@ -1,42 +1,119 @@
 
-# Add Green Dot Legend to Busiest Day Callout
+
+# Add Daily Average Reference Line to Forecasting Chart
 
 ## Overview
 
-Add a small green dot next to the "Busiest day:" label to create a visual legend that clearly connects the label to the green-highlighted bar in the chart.
+Add a horizontal dashed reference line across the bar chart indicating the daily average revenue. This line will be labeled on the left side with "Daily Avg" and the dollar amount, creating a visual benchmark that helps users quickly compare each day's performance against the average.
 
-## Visual Change
+## Visual Design
 
-| Before | After |
-|--------|-------|
-| `Busiest day: Thursday` | `● Busiest day: Thursday` |
-
-The dot will use the same green color (`chart-2`) as the highlighted bar, making the connection intuitive.
-
-## Files to Modify
-
-### 1. `src/components/dashboard/sales/WeekAheadForecast.tsx`
-
-**Lines 276-278** - Add green dot before the label:
-
-```typescript
-<span className="text-muted-foreground flex items-center gap-2">
-  <span className="w-2 h-2 rounded-full bg-chart-2" />
-  Busiest day: <span className="font-medium text-foreground">{format(parseISO(peakDay.date), 'EEEE')}</span>
-</span>
+```text
+                                                    
+         $1.9k           $1.6k    $2.0k    $1.6k    $1.0k
+           ▓▓▓▓           ▓▓▓▓     ████     ▓▓▓▓     ▓▓▓▓
+           ▓▓▓▓           ▓▓▓▓     ████     ▓▓▓▓     ▓▓▓▓
+  ─ ─ ─ ─ ─▓▓▓▓─ ─ ─ ─ ─ ─▓▓▓▓─ ─ ─████─ ─ ─▓▓▓▓─ ─ ─ ─ ─ ─   ← Daily Avg: $1,146
+           ▓▓▓▓           ▓▓▓▓     ████     ▓▓▓▓     ▓▓▓▓
+           ▓▓▓▓           ▓▓▓▓     ████     ▓▓▓▓     
+           Tue            Wed      Thu      Fri      Sat
 ```
 
-### 2. `src/components/dashboard/sales/ForecastingCard.tsx`
+**Key features:**
+- Dashed horizontal line at the average value
+- Positioned behind bars but clearly visible
+- Subtle muted color that doesn't distract from bar data
+- Left-side label showing "Daily Avg" with the dollar amount
 
-**Lines 666-667** - Add the same green dot:
+## Technical Changes
+
+### File: `src/components/dashboard/sales/ForecastingCard.tsx`
+
+**1. Update Recharts import (Line 22-31)**
+
+Add `ReferenceLine` to the existing import:
 
 ```typescript
-<span className="text-muted-foreground flex items-center gap-2">
-  <span className="w-2 h-2 rounded-full bg-chart-2" />
-  Busiest day: <span className="font-medium text-foreground">{format(parseISO(peakDay.date), 'EEEE')}</span>
-</span>
+import { 
+  BarChart, 
+  Bar, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  ResponsiveContainer, 
+  Cell,
+  LabelList,
+  ReferenceLine  // Add this
+} from 'recharts';
 ```
+
+**2. Add ReferenceLine to the BarChart (Lines 549-610)**
+
+Insert the ReferenceLine component right after the YAxis element and before the Bars, only showing for daily view periods (7 Days, EOM):
+
+```typescript
+<BarChart data={chartData} margin={{ top: 25, right: 5, bottom: showWeeklyChart ? 40 : 35, left: 5 }}>
+  <XAxis ... />
+  <YAxis hide domain={[0, 'auto']} />
+  
+  {/* Daily average reference line - only for daily views */}
+  {!showWeeklyChart && averageDaily > 0 && (
+    <ReferenceLine 
+      y={averageDaily} 
+      stroke="hsl(var(--muted-foreground))" 
+      strokeDasharray="4 4"
+      strokeWidth={1.5}
+      label={{
+        value: `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`,
+        position: 'insideBottomLeft',
+        fill: 'hsl(var(--muted-foreground))',
+        fontSize: 11,
+        fontWeight: 500,
+        offset: 4,
+      }}
+    />
+  )}
+
+  <Tooltip ... />
+  <Bar dataKey="unconfirmedRevenue" ... />
+  <Bar dataKey="confirmedRevenue" ... />
+</BarChart>
+```
+
+**3. Weekly average line for 30/60 day views**
+
+For weekly chart views, add a similar line showing "Weekly Avg":
+
+```typescript
+{showWeeklyChart && averageWeekly > 0 && (
+  <ReferenceLine 
+    y={averageWeekly} 
+    stroke="hsl(var(--muted-foreground))" 
+    strokeDasharray="4 4"
+    strokeWidth={1.5}
+    label={{
+      value: `Weekly Avg: $${Math.round(averageWeekly).toLocaleString()}`,
+      position: 'insideBottomLeft',
+      fill: 'hsl(var(--muted-foreground))',
+      fontSize: 11,
+      fontWeight: 500,
+      offset: 4,
+    }}
+  />
+)}
+```
+
+## Design Details
+
+| Property | Value | Reason |
+|----------|-------|--------|
+| Line style | Dashed (`4 4`) | Distinguishes from bar edges, looks elegant |
+| Color | `muted-foreground` | Subtle, doesn't compete with bars |
+| Stroke width | `1.5px` | Visible but not heavy |
+| Label position | `insideBottomLeft` | Positioned on chart area, left-aligned |
+| Font size | `11px` | Readable but compact |
 
 ## Result
 
-The small green dot next to the "Busiest day:" text creates an immediate visual connection to the green bar in the chart, serving as an intuitive legend that explains the color coding without needing additional text.
+The horizontal reference line will provide immediate visual context for comparing daily/weekly performance against the average. Users can instantly see which days exceed or fall below average, reinforcing the data already shown in the "Daily Avg" stat card while adding spatial context within the chart itself.
+
