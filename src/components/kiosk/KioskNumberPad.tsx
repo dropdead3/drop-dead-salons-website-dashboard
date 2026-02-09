@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Delete, ArrowRight } from 'lucide-react';
+import { Delete, MoveRight } from 'lucide-react';
 
 interface KioskNumberPadProps {
   value: string;
@@ -144,7 +144,7 @@ export function KioskNumberPad({
           animate={isReady ? { x: [0, 4, 0] } : {}}
           transition={{ duration: 1.5, repeat: Infinity }}
         >
-          <ArrowRight className="w-6 h-6" />
+          <MoveRight className="w-6 h-6" />
         </motion.div>
       </motion.button>
     </div>
