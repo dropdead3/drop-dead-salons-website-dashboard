@@ -1,137 +1,157 @@
 
-# Add Organization Logo to Kiosk Check-In Screen
 
-## Overview
+# Connect Kiosk Theme to Dashboard Brand Colors
 
-Display the organization's logo on the kiosk idle screen, positioned above the time/date. The logo will use the kiosk-specific logo if configured, otherwise fall back to the organization's business logo with theme-aware selection.
+## Problem
 
-## Current State
+The kiosk currently uses hardcoded default colors that don't match your elegant cream/oat dashboard theme:
 
-| Element | Current Behavior |
-|---------|-----------------|
-| Logo display | Already supported at lines 162-177 |
-| Logo source | Uses `settings?.logo_url` from kiosk settings only |
-| Fallback | No fallback if kiosk logo not configured |
-| Theme awareness | Not currently considered |
+| Element | Current Default | Desired (Cream Theme) |
+|---------|----------------|----------------------|
+| Background | `#000000` (black) | Warm cream (`hsl(40, 30%, 96%)`) |
+| Text | `#FFFFFF` (white) | Charcoal (`hsl(0, 0%, 8%)`) |
+| Accent | `#8B5CF6` (violet) | Gold/Oat (`hsl(38, 70%, 38%)` or `hsl(35, 35%, 82%)`) |
 
-## Proposed Solution
+## Solution
 
-Implement a smart logo fallback hierarchy:
+Add a "Sync with Brand Theme" option that automatically pulls colors from your dashboard's active theme (cream), while still allowing manual overrides.
+
+## Proposed Changes
+
+### 1. Update Default Kiosk Settings
+
+**File: `src/hooks/useKioskSettings.ts`**
+
+Update `DEFAULT_KIOSK_SETTINGS` to use the elegant cream palette by default:
+
+```typescript
+export const DEFAULT_KIOSK_SETTINGS = {
+  // ... other fields
+  background_color: '#F5F0E8',   // Warm cream (hsl 40, 30%, 96% → hex)
+  accent_color: '#9A7B4F',       // Gold (hsl 38, 70%, 38% → hex)
+  text_color: '#141414',         // Charcoal (hsl 0, 0%, 8% → hex)
+  theme_mode: 'light',           // Light mode to match cream aesthetic
+  // ...
+};
+```
+
+### 2. Add Theme Sync Toggle to Kiosk Settings UI
+
+**File: `src/components/dashboard/settings/KioskSettingsContent.tsx`**
+
+Add a "Use Brand Theme" toggle at the top of the Appearance tab:
+
+```typescript
+// Add state for sync mode
+const [useBrandTheme, setUseBrandTheme] = useState(true);
+
+// Brand theme preset colors (cream palette)
+const BRAND_THEME = {
+  background_color: '#F5F0E8',  // Cream background
+  text_color: '#141414',        // Charcoal text
+  accent_color: '#9A7B4F',      // Gold accent
+};
+
+// When toggle is enabled, apply brand colors
+const handleBrandThemeToggle = (enabled: boolean) => {
+  setUseBrandTheme(enabled);
+  if (enabled) {
+    setLocalSettings(prev => ({
+      ...prev,
+      ...BRAND_THEME,
+    }));
+  }
+};
+```
+
+Add toggle UI above the color pickers:
+
+```tsx
+<div className="bg-muted/50 rounded-lg p-4 mb-4">
+  <div className="flex items-center justify-between">
+    <div>
+      <p className="text-sm font-medium">Use Brand Theme</p>
+      <p className="text-xs text-muted-foreground">
+        Sync kiosk colors with your organization's cream & oat palette
+      </p>
+    </div>
+    <Switch
+      checked={useBrandTheme}
+      onCheckedChange={handleBrandThemeToggle}
+    />
+  </div>
+</div>
+
+{/* Color pickers become disabled/dimmed when brand theme is active */}
+<div className={cn(
+  "grid grid-cols-2 gap-4",
+  useBrandTheme && "opacity-50 pointer-events-none"
+)}>
+  {/* existing color picker inputs */}
+</div>
+```
+
+### 3. Add Theme Presets Dropdown
+
+Provide quick preset options for different looks:
+
+| Preset | Background | Text | Accent | Best For |
+|--------|-----------|------|--------|----------|
+| Cream (Default) | `#F5F0E8` | `#141414` | `#9A7B4F` | Light, elegant daytime |
+| Dark Luxury | `#0A0A0A` | `#F5F0E8` | `#C9A962` | Evening/night mode |
+| Oat Minimal | `#E8E0D5` | `#2D2D2D` | `#8B7355` | Soft, subtle warmth |
+
+```tsx
+<Select 
+  value={themePreset} 
+  onValueChange={applyPreset}
+>
+  <SelectTrigger>
+    <SelectValue placeholder="Choose a theme preset" />
+  </SelectTrigger>
+  <SelectContent>
+    <SelectItem value="cream">Cream (Light)</SelectItem>
+    <SelectItem value="dark-luxury">Dark Luxury</SelectItem>
+    <SelectItem value="oat-minimal">Oat Minimal</SelectItem>
+    <SelectItem value="custom">Custom Colors</SelectItem>
+  </SelectContent>
+</Select>
+```
+
+## Visual Result
+
+The kiosk will transform from the current dark/violet look to:
 
 ```text
-Priority 1: Kiosk-specific logo (organization_kiosk_settings.logo_url)
-    ↓ (if null)
-Priority 2: Business logo based on theme
-    - Dark theme → business_settings.logo_light_url (light logo for dark bg)
-    - Light theme → business_settings.logo_dark_url (dark logo for light bg)
-    ↓ (if null)
-Priority 3: Business name as text fallback
-```
-
-## Technical Implementation
-
-### 1. Update KioskProvider to Include Business Settings
-
-**File: `src/components/kiosk/KioskProvider.tsx`**
-
-Add business settings fetch:
-
-```typescript
-import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-
-// Inside KioskProvider function:
-const { data: businessSettings } = useBusinessSettings();
-
-// Add to context type and provider value:
-businessSettings: BusinessSettings | null;
-```
-
-### 2. Update KioskIdleScreen for Logo Fallback
-
-**File: `src/components/kiosk/KioskIdleScreen.tsx`**
-
-Add logic to determine the best logo:
-
-```typescript
-const { settings, businessSettings } = useKiosk();
-
-// Determine which logo to display with fallback chain
-const themeMode = settings?.theme_mode || 'dark';
-const isDarkTheme = themeMode === 'dark' || 
-  (themeMode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-// Smart logo selection:
-// 1. Kiosk-specific logo (if configured)
-// 2. Business logo (theme-aware: light logo for dark bg, dark logo for light bg)
-const logoUrl = settings?.logo_url 
-  || (isDarkTheme ? businessSettings?.logo_light_url : businessSettings?.logo_dark_url)
-  || null;
-
-const businessName = businessSettings?.business_name;
-```
-
-### 3. Enhanced Logo Display with Text Fallback
-
-If no logo is available, show the business name as a styled text logo:
-
-```typescript
-{/* Logo with floating animation */}
-{logoUrl ? (
-  <motion.img
-    src={logoUrl}
-    alt={businessName || 'Logo'}
-    className="h-20 md:h-28 mb-12 object-contain"
-    initial={{ y: -30, opacity: 0 }}
-    animate={{ 
-      y: [0, -8, 0],
-      opacity: 1,
-    }}
-    transition={{ 
-      y: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
-      opacity: { duration: 0.5 },
-    }}
-  />
-) : businessName ? (
-  <motion.h2
-    className="text-3xl md:text-4xl font-light tracking-widest uppercase mb-12"
-    style={{ color: textColor }}
-    initial={{ y: -30, opacity: 0 }}
-    animate={{ y: 0, opacity: 1 }}
-    transition={{ duration: 0.5 }}
-  >
-    {businessName}
-  </motion.h2>
-) : null}
+┌──────────────────────────────────────────┐
+│                                          │
+│           [LOGO]                         │  ← Logo on cream bg
+│                                          │
+│           10:28 PM                       │  ← Charcoal text
+│       Sunday, February 8                 │
+│                                          │
+│           Welcome                        │  ← Warm, inviting
+│                                          │
+│   ┌─────────────────────────────────┐    │
+│   │    Tap anywhere to check in     │    │  ← Gold accent glow
+│   └─────────────────────────────────┘    │
+│                                          │
+│              • • •                       │  ← Gold pulse dots
+│                                          │
+└──────────────────────────────────────────┘
+     Warm Cream Background (#F5F0E8)
 ```
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/kiosk/KioskProvider.tsx` | Add `useBusinessSettings` hook and expose via context |
-| `src/components/kiosk/KioskIdleScreen.tsx` | Add theme-aware logo fallback logic and text fallback |
+| `src/hooks/useKioskSettings.ts` | Update default colors to cream/oat palette |
+| `src/components/dashboard/settings/KioskSettingsContent.tsx` | Add "Use Brand Theme" toggle and preset selector |
 
-## Visual Result
+## Technical Notes
 
-```text
-┌──────────────────────────────────┐
-│                                  │
-│       [ORGANIZATION LOGO]        │  ← Logo with subtle float animation
-│                                  │
-│          10:28 PM                │
-│      Sunday, February 8          │
-│                                  │
-│          Welcome                 │
-│                                  │
-│    [Tap anywhere to check in]    │
-│                                  │
-│            • • •                 │
-└──────────────────────────────────┘
-```
+- The cream palette hex values are derived from the CSS HSL variables in `index.css`
+- Manual color overrides remain available when "Use Brand Theme" is off
+- The kiosk will immediately reflect changes in the preview panel
 
-## Benefits
-
-1. Shows organization branding without requiring separate kiosk logo upload
-2. Theme-aware logo selection (light logo on dark background, vice versa)
-3. Graceful text fallback if no logos are configured
-4. Maintains existing kiosk-specific logo override capability
