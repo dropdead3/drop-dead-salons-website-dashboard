@@ -31,6 +31,13 @@ import {
   Customized 
 } from 'recharts';
 
+function toLocalDateStr(d: Date): string {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 const PERIOD_LABELS: Record<ForecastPeriod, string> = {
   'tomorrow': 'Tomorrow',
   'todayToEom': 'Today to EOM',
@@ -164,12 +171,12 @@ function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isEomPeriod
   const day = days.find((d: DayForecast) => d.dayName === payload.value);
   if (!day) return null;
   
-  const dayIndex = days.findIndex((d: DayForecast) => d.dayName === payload.value);
-  
-  // For EOM: index 0 = Today, index 1 = Tomorrow
-  // For 7 Days: index 0 = Tomorrow (starts from tomorrow)
-  const isTodayHighlight = isEomPeriod && dayIndex === 0;
-  const isTomorrowHighlight = (isEomPeriod && dayIndex === 1) || (is7DaysPeriod && dayIndex === 0);
+  const now = new Date();
+  const todayStr = toLocalDateStr(now);
+  const tomorrowStr = toLocalDateStr(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+
+  const isTodayHighlight = day.date === todayStr;
+  const isTomorrowHighlight = day.date === tomorrowStr;
   
   // Determine the label to display
   const getDisplayLabel = () => {
@@ -409,7 +416,7 @@ export function ForecastingCard() {
     totalRevenue: day.revenue,
     appointments: day.appointmentCount,
     isPeak: peakDay?.date === day.date,
-    isToday: isEomPeriod && index === 0,
+    isToday: day.date === toLocalDateStr(new Date()),
   }));
 
   // Chart data for weekly view
