@@ -1,138 +1,138 @@
 
-# Enhance Kiosk Idle Screen UI
+# Fix Kiosk Admin PIN Validation
 
-## Overview
+## Problem
 
-Refine the kiosk idle screen layout based on the screenshot reference to create a more balanced, elegant design with better visual hierarchy and spacing.
+The kiosk settings dialog is checking the PIN against the wrong source:
 
-## Current Issues
+| Current Behavior | Expected Behavior |
+|-----------------|-------------------|
+| Compares PIN to `organization_kiosk_settings.exit_pin` (static, defaults to `1234`) | Validates PIN against `employee_profiles.login_pin` via `validate_user_pin` RPC |
+| Any matching PIN grants access | Only Primary Owners or Super Admins can access |
 
-Looking at the current implementation (`KioskIdleScreen.tsx`):
+Your personal PIN is stored in `employee_profiles.login_pin`, but the kiosk is looking at the static `exit_pin` field in the kiosk settings table.
 
-| Element | Current | Issue |
-|---------|---------|-------|
-| Time | `text-7xl md:text-9xl` | Too dominant, overpowers other content |
-| Time position | Centered vertically | Could be positioned higher for better balance |
-| Time margin | `mb-10` | Transitions directly into welcome text |
-| Date | `mt-3` | Good spacing from time |
-| Welcome title | `text-4xl md:text-6xl` | Slightly large relative to refined time |
-| Element gaps | Various `mb-*` | Could use more consistent, generous padding |
+## Solution
 
-## Proposed Changes
+Update `KioskSettingsDialog.tsx` to use the unified PIN validation system (`useValidatePin`) with admin role checking.
 
-### 1. Time Display - Smaller and Repositioned Higher
+## Technical Changes
 
-```text
-Current Layout:          Proposed Layout:
-                         ┌────────────────────┐
-                         │                    │
-┌────────────────────┐   │    10:28 PM        │  ← Smaller, higher position
-│                    │   │    Sunday, Feb 8   │
-│                    │   │                    │
-│    10:28 PM        │   │                    │
-│    Sunday, Feb 8   │   │    WELCOME         │  ← More breathing room
-│                    │   │                    │
-│    WELCOME         │   │                    │
-│                    │   │  [Tap to check in] │
-│  [Tap to check in] │   │                    │
-│                    │   │                    │
-└────────────────────┘   └────────────────────┘
-```
+### File: `src/components/kiosk/KioskSettingsDialog.tsx`
 
-### 2. Specific CSS Changes
+**1. Add imports**
 
-**File: `src/components/kiosk/KioskIdleScreen.tsx`**
-
-**A. Content container - Shift content upward**
 ```typescript
-// Line ~160: Change container flex positioning
-<div className="relative z-10 flex flex-col items-center text-center px-8 -mt-12">
+import { useValidatePin } from '@/hooks/useUserPin';
 ```
 
-**B. Time display - Reduce size**
+**2. Add validation hook in component**
+
 ```typescript
-// Line ~187: Reduce from text-7xl/9xl to text-5xl/7xl
-<motion.div 
-  className="text-5xl md:text-7xl font-extralight tracking-tight"
-  style={{ color: textColor }}
->
-  {formatTime(currentTime)}
-</motion.div>
+const validatePin = useValidatePin();
+const [isValidating, setIsValidating] = useState(false);
 ```
 
-**C. Date display - Reduce size slightly**
+**3. Replace PIN validation logic**
+
+Update `handlePinDigit` to use `validatePin.mutateAsync()` instead of comparing to `storedPin`:
+
 ```typescript
-// Line ~193: Reduce from text-xl/2xl to text-lg/xl
-<motion.div 
-  className="text-lg md:text-xl mt-2 font-light tracking-wide"
-  style={{ color: `${textColor}90` }}
->
-  {formatDate(currentTime)}
-</motion.div>
+const handlePinDigit = async (digit: string) => {
+  if (pinInput.length < 4) {
+    const newPin = pinInput + digit;
+    setPinInput(newPin);
+    setPinError(false);
+    
+    // Auto-submit when 4 digits entered
+    if (newPin.length === 4 && !isValidating) {
+      setIsValidating(true);
+      
+      try {
+        const result = await validatePin.mutateAsync(newPin);
+        
+        if (result && (result.is_super_admin || result.is_primary_owner)) {
+          // Valid admin PIN
+          setIsAuthenticated(true);
+          setPinError(false);
+          setPinInput('');
+        } else if (result) {
+          // Valid PIN but not an admin
+          setPinError(true);
+          setPinInput('');
+          // Optionally show: "This account doesn't have admin access"
+        } else {
+          // No matching PIN
+          setPinError(true);
+          setPinInput('');
+        }
+      } catch (error) {
+        setPinError(true);
+        setPinInput('');
+      } finally {
+        setIsValidating(false);
+      }
+    }
+  }
+};
 ```
 
-**D. Time container - Increase bottom margin**
+**4. Update "Unlock Settings" button handler**
+
+Same pattern as above for the manual submit button:
+
 ```typescript
-// Line ~180: Increase mb-10 to mb-16
-<motion.div
-  className="mb-16"  // Was mb-10
-  initial={{ scale: 0.9, opacity: 0 }}
-  animate={{ scale: 1, opacity: 1 }}
-  transition={{ delay: 0.2 }}
->
+const handlePinSubmit = async () => {
+  if (pinInput.length < 4 || isValidating) return;
+  
+  setIsValidating(true);
+  
+  try {
+    const result = await validatePin.mutateAsync(pinInput);
+    
+    if (result && (result.is_super_admin || result.is_primary_owner)) {
+      setIsAuthenticated(true);
+      setPinError(false);
+      setPinInput('');
+    } else {
+      setPinError(true);
+      setPinInput('');
+    }
+  } catch (error) {
+    setPinError(true);
+    setPinInput('');
+  } finally {
+    setIsValidating(false);
+  }
+};
 ```
 
-**E. Welcome message - Adjust margins**
+**5. Disable numpad during validation**
+
+Add `disabled` state to buttons while validating:
+
 ```typescript
-// Line ~201: Increase mb-14 to mb-20 for more breathing room before CTA
-<motion.div
-  className="mb-20"  // Was mb-14
-  initial={{ y: 20, opacity: 0 }}
-  animate={{ y: 0, opacity: 1 }}
-  transition={{ delay: 0.3 }}
->
+disabled={key === '' || isValidating}
 ```
 
-**F. Welcome title - Slightly smaller**
-```typescript
-// Line ~208: Reduce from text-4xl/6xl to text-3xl/5xl
-<h1 
-  className="text-3xl md:text-5xl font-medium mb-4 tracking-tight"
-  style={{ color: textColor }}
->
+**6. Optional: Remove `exit_pin` field from settings**
+
+Since the PIN is now validated against personal PINs, the `exit_pin` field in kiosk settings is no longer needed for access control. It can be removed from the local settings state and the Behavior tab (or repurposed for something else like a simple "exit to close" PIN).
+
+## Data Verification
+
+Before testing, confirm your PIN is set in your employee profile:
+
+```sql
+SELECT user_id, display_name, login_pin, is_super_admin, is_primary_owner 
+FROM employee_profiles 
+WHERE login_pin IS NOT NULL;
 ```
 
-### 3. Theme Alignment
+## Summary
 
-The kiosk already uses `settings?.accent_color` from `organization_kiosk_settings` for the "Tap to check in" button and glow effects. This is the correct approach since:
-
-- The kiosk has its own dedicated settings table (`organization_kiosk_settings`)
-- Admins can configure colors per-location or org-wide via the new Settings Hub configurator
-- The accent color is applied to: button background, glow effects, ambient gradient
-
-No code changes needed for theme alignment - it already respects the configured kiosk settings.
-
-## Summary of Changes
-
-| Element | Before | After |
-|---------|--------|-------|
-| Time size | `text-7xl md:text-9xl` | `text-5xl md:text-7xl` |
-| Date size | `text-xl md:text-2xl` | `text-lg md:text-xl` |
-| Date margin | `mt-3` | `mt-2` |
-| Time container margin | `mb-10` | `mb-16` |
-| Welcome title size | `text-4xl md:text-6xl` | `text-3xl md:text-5xl` |
-| Welcome container margin | `mb-14` | `mb-20` |
-| Content container | centered | `-mt-12` (shifted up) |
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `src/components/kiosk/KioskIdleScreen.tsx` | Adjust typography sizes and spacing |
-
-## Result
-
-- Time display is smaller and more elegant (not dominating the screen)
-- Content positioned slightly higher for better visual balance
-- More generous padding between clock, welcome message, and CTA button
-- Theme already matches organization via kiosk settings - no changes needed
+| Before | After |
+|--------|-------|
+| Static `exit_pin` from kiosk settings (defaults to `1234`) | Personal PIN from `employee_profiles.login_pin` |
+| Any matching PIN works | Only Super Admins or Primary Owners can access |
+| No validation feedback | Uses RPC with proper error handling |
