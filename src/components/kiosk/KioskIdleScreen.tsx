@@ -261,7 +261,7 @@ export function KioskIdleScreen() {
         >
           {/* Glow effect */}
           <motion.div
-            className="absolute inset-0 rounded-3xl blur-xl"
+            className="absolute inset-0 rounded-full blur-xl"
             style={{ backgroundColor: accentColor }}
             animate={{
               opacity: [0.3, 0.5, 0.3],
@@ -275,7 +275,7 @@ export function KioskIdleScreen() {
           />
           
           <motion.div
-            className="relative px-14 py-7 rounded-3xl backdrop-blur-md"
+            className="relative px-14 py-7 rounded-full backdrop-blur-md"
             style={{ 
               backgroundColor: `${accentColor}20`,
               border: `2px solid ${accentColor}60`,
