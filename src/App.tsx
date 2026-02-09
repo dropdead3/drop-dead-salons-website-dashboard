@@ -96,6 +96,7 @@ import MetricsGlossary from "./pages/dashboard/MetricsGlossary";
 import PublicBooking from "./pages/PublicBooking";
 import DayRateBooking from "./pages/DayRateBooking";
 import ProductDemo from "./pages/ProductDemo";
+import Kiosk from "./pages/Kiosk";
 import DayRateSettings from "./pages/dashboard/admin/DayRateSettings";
 import DayRateCalendar from "./pages/dashboard/admin/DayRateCalendar";
 import DataImport from "./pages/dashboard/admin/DataImport";
@@ -190,6 +191,7 @@ const App = () => (
                       <Route path="/demo" element={<ProductDemo />} />
                       <Route path="/feedback" element={<ClientFeedbackPage />} />
                       <Route path="/rewards" element={<ClientPortalPage />} />
+                      <Route path="/kiosk/:locationId" element={<Kiosk />} />
 
                       {/* Protected dashboard routes */}
                       <Route path="/dashboard" element={<ProtectedRoute requiredPermission="view_command_center"><DashboardHome /></ProtectedRoute>} />

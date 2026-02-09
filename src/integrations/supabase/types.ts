@@ -327,6 +327,98 @@ export type Database = {
           },
         ]
       }
+      appointment_check_ins: {
+        Row: {
+          appointment_id: string | null
+          check_in_method: string
+          checked_in_at: string
+          client_id: string | null
+          created_at: string | null
+          forms_completed: boolean | null
+          forms_completed_at: string | null
+          forms_required: boolean | null
+          id: string
+          kiosk_device_id: string | null
+          kiosk_session_id: string | null
+          location_id: string | null
+          notification_status: string | null
+          organization_id: string | null
+          phorest_appointment_id: string | null
+          phorest_client_id: string | null
+          stylist_notified_at: string | null
+          stylist_user_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          check_in_method: string
+          checked_in_at?: string
+          client_id?: string | null
+          created_at?: string | null
+          forms_completed?: boolean | null
+          forms_completed_at?: string | null
+          forms_required?: boolean | null
+          id?: string
+          kiosk_device_id?: string | null
+          kiosk_session_id?: string | null
+          location_id?: string | null
+          notification_status?: string | null
+          organization_id?: string | null
+          phorest_appointment_id?: string | null
+          phorest_client_id?: string | null
+          stylist_notified_at?: string | null
+          stylist_user_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          check_in_method?: string
+          checked_in_at?: string
+          client_id?: string | null
+          created_at?: string | null
+          forms_completed?: boolean | null
+          forms_completed_at?: string | null
+          forms_required?: boolean | null
+          id?: string
+          kiosk_device_id?: string | null
+          kiosk_session_id?: string | null
+          location_id?: string | null
+          notification_status?: string | null
+          organization_id?: string | null
+          phorest_appointment_id?: string | null
+          phorest_client_id?: string | null
+          stylist_notified_at?: string | null
+          stylist_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_check_ins_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_check_ins_kiosk_device_id_fkey"
+            columns: ["kiosk_device_id"]
+            isOneToOne: false
+            referencedRelation: "kiosk_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_check_ins_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_check_ins_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_notes: {
         Row: {
           author_id: string
@@ -5245,6 +5337,151 @@ export type Database = {
         }
         Relationships: []
       }
+      kiosk_analytics: {
+        Row: {
+          abandoned_at_step: string | null
+          appointment_id: string | null
+          check_in_method: string | null
+          client_id: string | null
+          confirmation_duration_seconds: number | null
+          created_at: string | null
+          error_occurred: boolean | null
+          error_type: string | null
+          form_signing_duration_seconds: number | null
+          id: string
+          is_walk_in: boolean | null
+          kiosk_device_id: string | null
+          location_id: string | null
+          lookup_attempts: number | null
+          lookup_duration_seconds: number | null
+          organization_id: string | null
+          session_completed: boolean | null
+          session_ended_at: string | null
+          session_id: string
+          session_started_at: string
+          total_duration_seconds: number | null
+        }
+        Insert: {
+          abandoned_at_step?: string | null
+          appointment_id?: string | null
+          check_in_method?: string | null
+          client_id?: string | null
+          confirmation_duration_seconds?: number | null
+          created_at?: string | null
+          error_occurred?: boolean | null
+          error_type?: string | null
+          form_signing_duration_seconds?: number | null
+          id?: string
+          is_walk_in?: boolean | null
+          kiosk_device_id?: string | null
+          location_id?: string | null
+          lookup_attempts?: number | null
+          lookup_duration_seconds?: number | null
+          organization_id?: string | null
+          session_completed?: boolean | null
+          session_ended_at?: string | null
+          session_id: string
+          session_started_at: string
+          total_duration_seconds?: number | null
+        }
+        Update: {
+          abandoned_at_step?: string | null
+          appointment_id?: string | null
+          check_in_method?: string | null
+          client_id?: string | null
+          confirmation_duration_seconds?: number | null
+          created_at?: string | null
+          error_occurred?: boolean | null
+          error_type?: string | null
+          form_signing_duration_seconds?: number | null
+          id?: string
+          is_walk_in?: boolean | null
+          kiosk_device_id?: string | null
+          location_id?: string | null
+          lookup_attempts?: number | null
+          lookup_duration_seconds?: number | null
+          organization_id?: string | null
+          session_completed?: boolean | null
+          session_ended_at?: string | null
+          session_id?: string
+          session_started_at?: string
+          total_duration_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kiosk_analytics_kiosk_device_id_fkey"
+            columns: ["kiosk_device_id"]
+            isOneToOne: false
+            referencedRelation: "kiosk_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kiosk_analytics_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kiosk_analytics_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kiosk_devices: {
+        Row: {
+          created_at: string | null
+          device_name: string
+          device_token: string
+          id: string
+          is_active: boolean | null
+          last_heartbeat_at: string | null
+          location_id: string | null
+          organization_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          device_name: string
+          device_token?: string
+          id?: string
+          is_active?: boolean | null
+          last_heartbeat_at?: string | null
+          location_id?: string | null
+          organization_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          device_name?: string
+          device_token?: string
+          id?: string
+          is_active?: boolean | null
+          last_heartbeat_at?: string | null
+          location_id?: string | null
+          organization_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kiosk_devices_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kiosk_devices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leaderboard_achievements: {
         Row: {
           badge_color: string
@@ -6493,6 +6730,111 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "organization_health_scores_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_kiosk_settings: {
+        Row: {
+          accent_color: string | null
+          background_color: string | null
+          background_image_url: string | null
+          button_style: string | null
+          check_in_prompt: string | null
+          created_at: string | null
+          enable_feedback_prompt: boolean | null
+          enable_walk_ins: boolean | null
+          exit_pin: string | null
+          font_family: string | null
+          id: string
+          idle_slideshow_images: string[] | null
+          idle_timeout_seconds: number | null
+          idle_video_url: string | null
+          location_id: string | null
+          logo_url: string | null
+          organization_id: string | null
+          require_confirmation_tap: boolean | null
+          require_form_signing: boolean | null
+          show_stylist_photo: boolean | null
+          show_wait_time_estimate: boolean | null
+          success_message: string | null
+          text_color: string | null
+          theme_mode: string | null
+          updated_at: string | null
+          welcome_subtitle: string | null
+          welcome_title: string | null
+        }
+        Insert: {
+          accent_color?: string | null
+          background_color?: string | null
+          background_image_url?: string | null
+          button_style?: string | null
+          check_in_prompt?: string | null
+          created_at?: string | null
+          enable_feedback_prompt?: boolean | null
+          enable_walk_ins?: boolean | null
+          exit_pin?: string | null
+          font_family?: string | null
+          id?: string
+          idle_slideshow_images?: string[] | null
+          idle_timeout_seconds?: number | null
+          idle_video_url?: string | null
+          location_id?: string | null
+          logo_url?: string | null
+          organization_id?: string | null
+          require_confirmation_tap?: boolean | null
+          require_form_signing?: boolean | null
+          show_stylist_photo?: boolean | null
+          show_wait_time_estimate?: boolean | null
+          success_message?: string | null
+          text_color?: string | null
+          theme_mode?: string | null
+          updated_at?: string | null
+          welcome_subtitle?: string | null
+          welcome_title?: string | null
+        }
+        Update: {
+          accent_color?: string | null
+          background_color?: string | null
+          background_image_url?: string | null
+          button_style?: string | null
+          check_in_prompt?: string | null
+          created_at?: string | null
+          enable_feedback_prompt?: boolean | null
+          enable_walk_ins?: boolean | null
+          exit_pin?: string | null
+          font_family?: string | null
+          id?: string
+          idle_slideshow_images?: string[] | null
+          idle_timeout_seconds?: number | null
+          idle_video_url?: string | null
+          location_id?: string | null
+          logo_url?: string | null
+          organization_id?: string | null
+          require_confirmation_tap?: boolean | null
+          require_form_signing?: boolean | null
+          show_stylist_photo?: boolean | null
+          show_wait_time_estimate?: boolean | null
+          success_message?: string | null
+          text_color?: string | null
+          theme_mode?: string | null
+          updated_at?: string | null
+          welcome_subtitle?: string | null
+          welcome_title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_kiosk_settings_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "organization_kiosk_settings_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -13102,6 +13444,87 @@ export type Database = {
           },
         ]
       }
+      walk_in_queue: {
+        Row: {
+          assigned_at: string | null
+          assigned_stylist_id: string | null
+          checked_in_at: string
+          client_email: string | null
+          client_name: string
+          client_phone: string | null
+          completed_at: string | null
+          created_at: string | null
+          estimated_wait_minutes: number | null
+          id: string
+          location_id: string | null
+          organization_id: string
+          phorest_client_id: string | null
+          queue_position: number | null
+          service_category: string | null
+          service_notes: string | null
+          service_started_at: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_at?: string | null
+          assigned_stylist_id?: string | null
+          checked_in_at?: string
+          client_email?: string | null
+          client_name: string
+          client_phone?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          estimated_wait_minutes?: number | null
+          id?: string
+          location_id?: string | null
+          organization_id: string
+          phorest_client_id?: string | null
+          queue_position?: number | null
+          service_category?: string | null
+          service_notes?: string | null
+          service_started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_at?: string | null
+          assigned_stylist_id?: string | null
+          checked_in_at?: string
+          client_email?: string | null
+          client_name?: string
+          client_phone?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          estimated_wait_minutes?: number | null
+          id?: string
+          location_id?: string | null
+          organization_id?: string
+          phorest_client_id?: string | null
+          queue_position?: number | null
+          service_category?: string | null
+          service_notes?: string | null
+          service_started_at?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "walk_in_queue_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "walk_in_queue_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       website_analytics_cache: {
         Row: {
           avg_session_duration: number | null
@@ -13406,6 +13829,44 @@ export type Database = {
       get_booth_renter_profile_id: {
         Args: { _user_id: string }
         Returns: string
+      }
+      get_kiosk_settings: {
+        Args: { p_location_id?: string; p_organization_id: string }
+        Returns: {
+          accent_color: string | null
+          background_color: string | null
+          background_image_url: string | null
+          button_style: string | null
+          check_in_prompt: string | null
+          created_at: string | null
+          enable_feedback_prompt: boolean | null
+          enable_walk_ins: boolean | null
+          exit_pin: string | null
+          font_family: string | null
+          id: string
+          idle_slideshow_images: string[] | null
+          idle_timeout_seconds: number | null
+          idle_video_url: string | null
+          location_id: string | null
+          logo_url: string | null
+          organization_id: string | null
+          require_confirmation_tap: boolean | null
+          require_form_signing: boolean | null
+          show_stylist_photo: boolean | null
+          show_wait_time_estimate: boolean | null
+          success_message: string | null
+          text_color: string | null
+          theme_mode: string | null
+          updated_at: string | null
+          welcome_subtitle: string | null
+          welcome_title: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "organization_kiosk_settings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       get_or_create_client_balance: {
         Args: { p_client_id: string; p_organization_id: string }
