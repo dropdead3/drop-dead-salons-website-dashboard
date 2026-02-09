@@ -612,9 +612,6 @@ export function KioskPreviewPanel({ settings, businessSettings, className, locat
               
               {/* Screen content */}
               {renderScreen()}
-              
-              {/* Screen content */}
-              {renderScreen()}
             </div>
           </div>
 
