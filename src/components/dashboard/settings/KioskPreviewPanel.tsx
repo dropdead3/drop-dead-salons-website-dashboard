@@ -174,12 +174,12 @@ export function KioskPreviewPanel({ settings, businessSettings, className, locat
     return null;
   };
 
-  // Badge position classes
+  // Badge position classes - use larger offsets for rounded corner clearance
   const badgePositionClasses = {
-    'top-left': 'top-2 left-2',
-    'top-right': 'top-2 right-2',
-    'bottom-left': 'bottom-2 left-2',
-    'bottom-right': 'bottom-2 right-2',
+    'top-left': 'top-3 left-3',
+    'top-right': 'top-3 right-3',
+    'bottom-left': 'bottom-3 left-3',
+    'bottom-right': 'bottom-3 right-3',
   };
 
   // Badge styles
@@ -264,9 +264,6 @@ export function KioskPreviewPanel({ settings, businessSettings, className, locat
     <div className="relative z-10 flex flex-col items-center justify-center h-full p-4 text-center -mt-4">
       {/* Background media */}
       {renderBackgroundMedia()}
-      
-      {/* Location badge */}
-      {renderLocationBadge()}
       
       {/* Content wrapper */}
       <div className="relative z-10 flex flex-col items-center">
@@ -609,9 +606,11 @@ export function KioskPreviewPanel({ settings, businessSettings, className, locat
               )}
               style={{ backgroundColor: settings.background_color }}
             >
-              
               {/* Screen content */}
               {renderScreen()}
+              
+              {/* Location badge - rendered at container level for proper positioning */}
+              {renderLocationBadge()}
             </div>
           </div>
 
