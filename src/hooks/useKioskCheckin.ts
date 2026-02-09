@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export type KioskState = 'idle' | 'lookup' | 'confirm' | 'wrong_location' | 'signing' | 'success' | 'walk_in' | 'error';
+export type KioskState = 'idle' | 'lookup' | 'confirm' | 'browse' | 'wrong_location' | 'signing' | 'success' | 'walk_in' | 'error';
 
 export interface KioskAppointment {
   id: string;
@@ -38,7 +38,7 @@ export interface KioskSession {
   startedAt: Date;
   locationId: string;
   organizationId: string;
-  lookupMethod?: 'phone' | 'name' | 'qr' | 'code';
+  lookupMethod?: 'phone' | 'name' | 'qr' | 'code' | 'browse';
   client?: KioskClient;
   appointments?: KioskAppointment[];
   wrongLocationAppointments?: KioskAppointment[];
@@ -329,6 +329,81 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
     setState('walk_in');
   }, []);
 
+  // Fetch upcoming appointments for browse mode
+  const fetchUpcomingAppointments = useMutation({
+    mutationFn: async () => {
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      
+      // Calculate time window: -30min to +60min from now
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      const windowStart = Math.max(0, currentMinutes - 30);
+      const windowEnd = currentMinutes + 60;
+      
+      const startTimeStr = `${Math.floor(windowStart/60).toString().padStart(2,'0')}:${(windowStart%60).toString().padStart(2,'0')}:00`;
+      const endTimeStr = `${Math.floor(windowEnd/60).toString().padStart(2,'0')}:${(windowEnd%60).toString().padStart(2,'0')}:00`;
+
+      const { data: appointments, error } = await supabase
+        .from('phorest_appointments')
+        .select(`
+          id,
+          phorest_id,
+          appointment_date,
+          start_time,
+          end_time,
+          service_name,
+          status,
+          stylist_user_id,
+          client_name,
+          location_id,
+          stylist:employee_profiles!phorest_appointments_stylist_user_id_fkey(
+            display_name,
+            photo_url
+          )
+        `)
+        .eq('appointment_date', today)
+        .eq('location_id', locationId)
+        .gte('start_time', startTimeStr)
+        .lte('start_time', endTimeStr)
+        .in('status', ['booked', 'confirmed', 'pending'])
+        .order('start_time');
+
+      if (error) throw error;
+      return appointments || [];
+    },
+    onSuccess: (appointments) => {
+      setSession(prev => prev ? {
+        ...prev,
+        lookupMethod: 'browse',
+        appointments: appointments.map(a => ({
+          id: a.id,
+          phorest_id: a.phorest_id || undefined,
+          appointment_date: a.appointment_date,
+          start_time: a.start_time,
+          end_time: a.end_time,
+          service_name: a.service_name,
+          status: a.status,
+          stylist_user_id: a.stylist_user_id,
+          stylist_name: (a.stylist as any)?.display_name,
+          stylist_photo: (a.stylist as any)?.photo_url,
+          client_name: a.client_name || undefined,
+          location_id: a.location_id || undefined,
+        })),
+      } : null);
+      setState('browse');
+    },
+    onError: (err) => {
+      console.error('Failed to fetch appointments:', err);
+      setError('Unable to load appointments. Please see the front desk for assistance.');
+      setState('error');
+    },
+  });
+
+  // Start browse flow
+  const startBrowse = useCallback(() => {
+    fetchUpcomingAppointments.mutate();
+  }, [fetchUpcomingAppointments]);
+
   return {
     state,
     session,
@@ -341,5 +416,7 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
     completeCheckin: completeCheckin.mutate,
     isCheckingIn: completeCheckin.isPending,
     startWalkIn,
+    startBrowse,
+    isBrowsing: fetchUpcomingAppointments.isPending,
   };
 }

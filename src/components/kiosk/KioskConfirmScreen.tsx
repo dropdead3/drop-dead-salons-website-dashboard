@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ArrowLeft, Clock, User, AlertCircle, Sparkles } from 'lucide-react';
+import { ArrowLeft, Clock, User, AlertCircle, Sparkles, Calendar } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { format, parse } from 'date-fns';
@@ -11,6 +11,8 @@ export function KioskConfirmScreen() {
     resetToIdle, 
     selectAppointment,
     startWalkIn,
+    startBrowse,
+    isBrowsing,
     idleTimeRemaining,
   } = useKiosk();
 
@@ -325,6 +327,25 @@ export function KioskConfirmScreen() {
                 whileTap={{ scale: 0.98 }}
               >
                 Try Different Number
+              </motion.button>
+
+              <motion.button
+                className="flex items-center justify-center gap-3 px-10 py-5 rounded-2xl text-xl font-medium min-w-[280px] backdrop-blur-md transition-all"
+                style={{
+                  backgroundColor: `${textColor}10`,
+                  border: `1.5px solid ${textColor}20`,
+                  color: textColor,
+                }}
+                onClick={startBrowse}
+                disabled={isBrowsing}
+                whileHover={{ 
+                  scale: 1.02, 
+                  backgroundColor: `${textColor}18`,
+                }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Calendar className="w-6 h-6" />
+                {isBrowsing ? 'Loading...' : 'Browse Upcoming Appointments'}
               </motion.button>
             </motion.div>
           </motion.div>
