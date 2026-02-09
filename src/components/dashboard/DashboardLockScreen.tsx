@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, Delete, LogOut, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,10 +13,11 @@ import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 
 interface DashboardLockScreenProps {
-  onUnlock: () => void;
+  onUnlock: (user?: { user_id: string; display_name: string }) => void;
 }
 
 export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
+  const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { effectiveOrganization } = useOrganizationContext();
   const { resolvedTheme } = useDashboardTheme();
@@ -71,9 +73,16 @@ export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
               photo_url: result.photo_url,
             });
             
-            // Small delay to show the user before unlocking
+            // Small delay to show the user before unlocking and navigating
             setTimeout(() => {
-              onUnlock();
+              onUnlock({ user_id: result.user_id, display_name: result.display_name });
+              // Navigate to schedule with quick login state
+              navigate('/dashboard/schedule', { 
+                state: { 
+                  quickLoginUserId: result.user_id,
+                  quickLoginUserName: result.display_name 
+                } 
+              });
             }, 500);
           } else {
             setError(true);
@@ -88,7 +97,7 @@ export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
           setIsValidating(false);
         });
     }
-  }, [pin, isValidating, validatePin, onUnlock]);
+  }, [pin, isValidating, validatePin, onUnlock, navigate]);
 
   const handleSignOut = async () => {
     await signOut();
