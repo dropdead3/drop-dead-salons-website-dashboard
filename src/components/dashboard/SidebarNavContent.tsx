@@ -620,9 +620,6 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           <div className={cn(
             isCollapsed ? "space-y-1" : "space-y-0.5"
           )}>
-            {/* Lock Button */}
-            <SidebarLockButton isCollapsed={isCollapsed} />
-            
             {/* Settings and other footer items */}
             {filterNavItems(footerNavItems).map((item) => (
               <NavLink 
@@ -630,6 +627,9 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 {...item}
               />
             ))}
+            
+            {/* Lock Button */}
+            <SidebarLockButton isCollapsed={isCollapsed} />
           </div>
         </div>
         <div className="h-2" /> {/* Bottom spacing */}
