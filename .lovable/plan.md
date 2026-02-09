@@ -1,17 +1,19 @@
 
-# Move "Hire" Tab to the Right Side of the Tab Bar
 
-## Change
-Reorder the tabs in `src/pages/dashboard/admin/Payroll.tsx` so that **Hire** appears at the far right of the tab list instead of the far left. The current order is:
+# Rename "Access & Controls Hub" to "Roles & Controls Hub"
 
-`Hire | Overview | Run Payroll | History | Team | Commissions | Settings`
+## Changes
 
-The new order will be:
+Update all references to "Access & Controls Hub" across the codebase to "Roles & Controls Hub".
 
-`Overview | Run Payroll | History | Team | Commissions | Settings | Hire`
+### File: `src/pages/dashboard/admin/AccessHub.tsx`
+- Line 63: Change the `<h1>` text from `"Access & Controls Hub"` to `"Roles & Controls Hub"`
 
-## Technical Detail
+### File: `src/components/dashboard/HubQuickLinks.tsx`
+- Line 68: Change the `label` from `'Access Hub'` to `'Roles Hub'` (keeping the short form consistent)
 
-**File: `src/pages/dashboard/admin/Payroll.tsx` (lines 90-118)**
+### File: Sidebar navigation (if label exists there)
+- Update any sidebar link text that says "Access Hub" or "Access & Controls Hub" to match the new name.
 
-Move the `<TabsTrigger value="hire">` block (lines 91-94) to after the Settings trigger (after line 118), making it the last tab in the list.
+All other internal references (route paths, component names, file names) remain unchanged to avoid unnecessary refactoring.
+
