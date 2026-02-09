@@ -65,6 +65,7 @@ interface LocalSettings {
   show_wait_time_estimate: boolean;
   show_stylist_photo: boolean;
   enable_feedback_prompt: boolean;
+  enable_glow_effects: boolean;
   require_form_signing: boolean;
   exit_pin: string;
 }
@@ -195,6 +196,7 @@ export function KioskSettingsContent() {
     show_wait_time_estimate: DEFAULT_KIOSK_SETTINGS.show_wait_time_estimate,
     show_stylist_photo: DEFAULT_KIOSK_SETTINGS.show_stylist_photo,
     enable_feedback_prompt: DEFAULT_KIOSK_SETTINGS.enable_feedback_prompt,
+    enable_glow_effects: DEFAULT_KIOSK_SETTINGS.enable_glow_effects,
     require_form_signing: DEFAULT_KIOSK_SETTINGS.require_form_signing,
     exit_pin: DEFAULT_KIOSK_SETTINGS.exit_pin,
   });
@@ -252,6 +254,7 @@ export function KioskSettingsContent() {
         show_wait_time_estimate: kioskSettings.show_wait_time_estimate,
         show_stylist_photo: kioskSettings.show_stylist_photo,
         enable_feedback_prompt: kioskSettings.enable_feedback_prompt,
+        enable_glow_effects: kioskSettings.enable_glow_effects ?? DEFAULT_KIOSK_SETTINGS.enable_glow_effects,
         require_form_signing: kioskSettings.require_form_signing,
         exit_pin: kioskSettings.exit_pin,
       });
@@ -291,6 +294,7 @@ export function KioskSettingsContent() {
         show_wait_time_estimate: DEFAULT_KIOSK_SETTINGS.show_wait_time_estimate,
         show_stylist_photo: DEFAULT_KIOSK_SETTINGS.show_stylist_photo,
         enable_feedback_prompt: DEFAULT_KIOSK_SETTINGS.enable_feedback_prompt,
+        enable_glow_effects: DEFAULT_KIOSK_SETTINGS.enable_glow_effects,
         require_form_signing: DEFAULT_KIOSK_SETTINGS.require_form_signing,
         exit_pin: DEFAULT_KIOSK_SETTINGS.exit_pin,
       });
@@ -626,6 +630,21 @@ export function KioskSettingsContent() {
                         <SelectItem value="square">Square</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Glow Effects Toggle */}
+                  <div className="flex items-center justify-between py-2">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="enable-glow">Glow Effects</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Add ambient glow to buttons and indicators
+                      </p>
+                    </div>
+                    <Switch
+                      id="enable-glow"
+                      checked={localSettings.enable_glow_effects}
+                      onCheckedChange={(v) => updateField('enable_glow_effects', v)}
+                    />
                   </div>
                 </div>
 

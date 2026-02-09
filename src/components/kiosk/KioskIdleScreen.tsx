@@ -19,6 +19,7 @@ export function KioskIdleScreen() {
   const accentColor = settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color;
   const backgroundImageUrl = settings?.background_image_url;
   const backgroundOverlayOpacity = settings?.background_overlay_opacity ?? DEFAULT_KIOSK_SETTINGS.background_overlay_opacity;
+  const enableGlowEffects = settings?.enable_glow_effects ?? DEFAULT_KIOSK_SETTINGS.enable_glow_effects;
 
   // Theme-aware logo fallback: kiosk logo → business logo (theme-aware) → business name
   const themeMode = settings?.theme_mode || DEFAULT_KIOSK_SETTINGS.theme_mode;
@@ -245,13 +246,28 @@ export function KioskIdleScreen() {
           )}
         </motion.div>
 
-        {/* Tap to check in - Glass button */}
+        {/* Tap to check in - Glass button with optional glow */}
         <motion.div
           className="relative"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
+          {enableGlowEffects && (
+            <motion.div
+              className="absolute inset-0 rounded-full blur-xl"
+              style={{ backgroundColor: accentColor }}
+              animate={{
+                opacity: [0.2, 0.4, 0.2],
+                scale: [1, 1.05, 1],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+            />
+          )}
           <motion.div
             className="relative px-14 py-7 rounded-full backdrop-blur-md"
             style={{ 
@@ -274,25 +290,37 @@ export function KioskIdleScreen() {
         </motion.div>
       </div>
 
-      {/* Bottom pulse indicator */}
+      {/* Bottom pulse indicator with optional glow */}
       <motion.div
         className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-2"
       >
         {[0, 1, 2].map((i) => (
-          <motion.div
-            key={i}
-            className="w-2 h-2 rounded-full"
-            style={{ backgroundColor: accentColor }}
-            animate={{
-              opacity: [0.4, 0.7, 0.4],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: i * 0.2,
-            }}
-          />
+          enableGlowEffects ? (
+            <motion.div
+              key={i}
+              className="w-2 h-2 rounded-full"
+              style={{ backgroundColor: accentColor }}
+              animate={{
+                opacity: [0.3, 0.8, 0.3],
+                scale: [1, 1.2, 1],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: i * 0.2,
+              }}
+            />
+          ) : (
+            <div
+              key={i}
+              className="w-2 h-2 rounded-full"
+              style={{ 
+                backgroundColor: accentColor,
+                opacity: 0.5,
+              }}
+            />
+          )
         ))}
       </motion.div>
     </motion.div>

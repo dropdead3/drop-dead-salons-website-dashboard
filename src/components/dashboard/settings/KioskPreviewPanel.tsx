@@ -26,6 +26,7 @@ interface KioskPreviewSettings {
   logo_size: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   check_in_prompt?: string;
   success_message?: string;
+  enable_glow_effects?: boolean;
 }
 
 interface KioskPreviewPanelProps {
@@ -201,8 +202,23 @@ export function KioskPreviewPanel({ settings, businessSettings, className }: Kio
         </p>
       )}
       
-      {/* Tap to check in - glass style */}
+      {/* Tap to check in - with optional glow */}
       <div className="relative mt-2">
+        {settings.enable_glow_effects && (
+          <motion.div
+            className="absolute inset-0 rounded-full blur-md"
+            style={{ backgroundColor: settings.accent_color }}
+            animate={{
+              opacity: [0.2, 0.4, 0.2],
+              scale: [1, 1.03, 1],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
+        )}
         <div 
           className={cn("relative px-4 py-2 backdrop-blur-md", buttonRadiusClass)}
           style={{ 
@@ -219,17 +235,35 @@ export function KioskPreviewPanel({ settings, businessSettings, className }: Kio
         </div>
       </div>
       
-      {/* Bottom indicators - subtle, no glow */}
+      {/* Bottom indicators - with optional glow */}
       <div className="absolute bottom-4 flex gap-1.5">
         {[0, 1, 2].map((i) => (
-          <div
-            key={i}
-            className="w-1 h-1 rounded-full"
-            style={{ 
-              backgroundColor: settings.accent_color,
-              opacity: 0.5,
-            }}
-          />
+          settings.enable_glow_effects ? (
+            <motion.div
+              key={i}
+              className="w-1 h-1 rounded-full"
+              style={{ backgroundColor: settings.accent_color }}
+              animate={{
+                opacity: [0.3, 0.8, 0.3],
+                scale: [1, 1.2, 1],
+              }}
+              transition={{
+                duration: 1.5,
+                repeat: Infinity,
+                ease: 'easeInOut',
+                delay: i * 0.2,
+              }}
+            />
+          ) : (
+            <div
+              key={i}
+              className="w-1 h-1 rounded-full"
+              style={{ 
+                backgroundColor: settings.accent_color,
+                opacity: 0.5,
+              }}
+            />
+          )
         ))}
       </div>
     </div>
