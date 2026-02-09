@@ -14,6 +14,9 @@ export interface HireEmployeeData {
   title?: string;
   assignOnboardingTasks?: boolean;
   generateOfferLetter?: boolean;
+  triggerPayrollProvider?: boolean;
+  payrollProvider?: string | null;
+  /** @deprecated Use triggerPayrollProvider instead */
   triggerGusto?: boolean;
   applicantId?: string;
 }
@@ -28,8 +31,8 @@ export interface HireResult {
   organizationId: string;
   assignedTaskCount: number;
   message: string;
-  gustoStatus?: string;
-  gustoMessage?: string;
+  payrollStatus?: string;
+  payrollMessage?: string;
   offerLetterStatus?: string;
   offerLetterMessage?: string;
 }

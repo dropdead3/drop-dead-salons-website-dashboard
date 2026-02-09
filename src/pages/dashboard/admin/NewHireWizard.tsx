@@ -32,7 +32,7 @@ export default function NewHireWizard() {
   const { effectiveOrganization: organization } = useOrganizationContext();
   const hireEmployee = useHireEmployee();
   const { data: roles } = useRoles();
-  const { isConnected: gustoConnected } = usePayrollConnection();
+  const { isConnected: payrollConnected, provider: connectedProvider } = usePayrollConnection();
 
   const [step, setStep] = useState(0);
   const [showResult, setShowResult] = useState(false);
@@ -58,7 +58,7 @@ export default function NewHireWizard() {
     assignOnboardingTasks: true,
     // Legal
     generateOfferLetter: false,
-    triggerGusto: false,
+    triggerPayrollProvider: false,
   });
 
   const { data: locations } = useQuery({
@@ -101,7 +101,8 @@ export default function NewHireWizard() {
       title: form.title || undefined,
       assignOnboardingTasks: form.assignOnboardingTasks,
       generateOfferLetter: form.generateOfferLetter,
-      triggerGusto: form.triggerGusto,
+      triggerPayrollProvider: form.triggerPayrollProvider,
+      payrollProvider: form.triggerPayrollProvider ? connectedProvider : null,
       applicantId: applicantId || undefined,
     });
     setHireResult(result);
@@ -277,71 +278,81 @@ export default function NewHireWizard() {
                   <CardDescription>Configure offer letter and tax document handling</CardDescription>
                 </div>
                 <div className="space-y-4">
-                  {/* Gusto Integration */}
+                  {/* Payroll Provider Integration */}
                   <div className={cn(
                     "p-4 rounded-lg border",
-                    gustoConnected ? "border-emerald-500/30 bg-emerald-500/5" : "border-amber-500/30 bg-amber-500/5"
+                    payrollConnected ? "border-emerald-500/30 bg-emerald-500/5" : "border-amber-500/30 bg-amber-500/5"
                   )}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <Sparkles className={cn("w-5 h-5", gustoConnected ? "text-emerald-500" : "text-amber-500")} />
+                        <Sparkles className={cn("w-5 h-5", payrollConnected ? "text-emerald-500" : "text-amber-500")} />
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="font-medium text-sm">Gusto Payroll</p>
-                            <Badge variant={gustoConnected ? "default" : "secondary"} className="text-[10px]">
-                              {gustoConnected ? 'Connected' : 'Not Connected'}
+                            <p className="font-medium text-sm">
+                              {payrollConnected
+                                ? `${connectedProvider === 'gusto' ? 'Gusto' : connectedProvider === 'quickbooks' ? 'QuickBooks' : connectedProvider} Payroll`
+                                : 'Payroll Provider'}
+                            </p>
+                            <Badge variant={payrollConnected ? "default" : "secondary"} className="text-[10px]">
+                              {payrollConnected ? 'Connected' : 'Not Connected'}
                             </Badge>
                           </div>
                           <p className="text-xs text-muted-foreground">
-                            {gustoConnected 
+                            {payrollConnected && connectedProvider === 'gusto'
                               ? 'Offer letter, W-4, I-9, and direct deposit will be handled via Gusto'
-                              : 'Connect Gusto in Payroll Hub to automate tax documents and offer letters'
-                            }
+                              : payrollConnected && connectedProvider === 'quickbooks'
+                              ? 'Employee setup, tax forms, and direct deposit will be handled via QuickBooks Payroll'
+                              : 'Connect a payroll provider in the Payroll Hub to automate tax documents and onboarding'}
                           </p>
                         </div>
                       </div>
                       <Switch 
-                        checked={form.triggerGusto} 
-                        onCheckedChange={v => updateField('triggerGusto', v)}
-                        disabled={!gustoConnected}
+                        checked={form.triggerPayrollProvider} 
+                        onCheckedChange={v => updateField('triggerPayrollProvider', v)}
+                        disabled={!payrollConnected}
                       />
                     </div>
                   </div>
 
                   {/* PandaDoc Offer Letter */}
-                  <div className="p-4 rounded-lg border">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <FileSignature className="w-5 h-5 text-primary" />
-                        <div>
-                          <p className="font-medium text-sm">PandaDoc Offer Letter</p>
-                          <p className="text-xs text-muted-foreground">
-                            Generate and send an offer letter for e-signature via PandaDoc
-                          </p>
+                  {(() => {
+                    const gustoHandlesOfferLetter = form.triggerPayrollProvider && connectedProvider === 'gusto';
+                    return (
+                      <div className="p-4 rounded-lg border">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <FileSignature className="w-5 h-5 text-primary" />
+                            <div>
+                              <p className="font-medium text-sm">PandaDoc Offer Letter</p>
+                              <p className="text-xs text-muted-foreground">
+                                Generate and send an offer letter for e-signature via PandaDoc
+                              </p>
+                            </div>
+                          </div>
+                          <Switch 
+                            checked={form.generateOfferLetter} 
+                            onCheckedChange={v => updateField('generateOfferLetter', v)}
+                            disabled={gustoHandlesOfferLetter}
+                          />
                         </div>
+                        {gustoHandlesOfferLetter && (
+                          <p className="text-xs text-muted-foreground mt-2 ml-8">
+                            Offer letter will be handled by Gusto instead
+                          </p>
+                        )}
                       </div>
-                      <Switch 
-                        checked={form.generateOfferLetter} 
-                        onCheckedChange={v => updateField('generateOfferLetter', v)}
-                        disabled={form.triggerGusto}
-                      />
-                    </div>
-                    {form.triggerGusto && (
-                      <p className="text-xs text-muted-foreground mt-2 ml-8">
-                        Offer letter will be handled by Gusto instead
-                      </p>
-                    )}
-                  </div>
+                    );
+                  })()}
 
                   {/* Manual Notice */}
-                  {!gustoConnected && !form.generateOfferLetter && (
+                  {!payrollConnected && !form.generateOfferLetter && (
                     <div className="p-4 rounded-lg bg-muted/50 border border-dashed">
                       <div className="flex items-start gap-3">
                         <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                         <div>
                           <p className="font-medium text-sm">Manual Process Required</p>
                           <p className="text-xs text-muted-foreground mt-1">
-                            Without Gusto or PandaDoc, you'll need to handle offer letters and tax documents (W-4, I-9) manually. 
+                            Without a payroll provider or PandaDoc, you'll need to handle offer letters and tax documents (W-4, I-9) manually. 
                             Use the Document Tracker to track completion.
                           </p>
                         </div>
@@ -424,10 +435,10 @@ export default function NewHireWizard() {
                   <CheckCircle className="w-4 h-4 text-emerald-500" />
                   <span>{hireResult.assignedTaskCount} onboarding tasks assigned</span>
                 </div>
-                {hireResult.gustoStatus && (
+                {hireResult.payrollStatus && (
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-amber-500" />
-                    <span>{hireResult.gustoMessage}</span>
+                    <span>{hireResult.payrollMessage}</span>
                   </div>
                 )}
                 {hireResult.offerLetterStatus && (
@@ -447,7 +458,7 @@ export default function NewHireWizard() {
                   setStep(0);
                   setForm({
                     fullName: '', email: '', role: 'team_member', locationId: '', startDate: new Date().toISOString().split('T')[0],
-                    title: '', payType: 'hourly', payRate: '', assignOnboardingTasks: true, generateOfferLetter: false, triggerGusto: false,
+                    title: '', payType: 'hourly', payRate: '', assignOnboardingTasks: true, generateOfferLetter: false, triggerPayrollProvider: false,
                   });
                 }}>
                   Hire Another
