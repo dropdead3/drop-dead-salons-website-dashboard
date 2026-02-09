@@ -84,6 +84,7 @@ import { FormsTemplatesContent } from '@/components/dashboard/settings/FormsTemp
 import { MetricsGlossaryContent } from '@/components/dashboard/settings/MetricsGlossaryContent';
 import { LoyaltySettingsContent } from '@/components/dashboard/settings/LoyaltySettingsContent';
 import { TeamRewardsConfigurator } from '@/components/dashboard/settings/TeamRewardsConfigurator';
+import { UserPinSettings } from '@/components/dashboard/settings/UserPinSettings';
 import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
 import { MessageSquareHeart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -1244,6 +1245,9 @@ export default function Settings() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Quick Login PIN */}
+                <UserPinSettings />
               </TabsContent>
 
               <TabsContent value="metrics" className="mt-0">
