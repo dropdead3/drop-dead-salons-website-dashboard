@@ -1,116 +1,84 @@
 
 
-# Move Location and Date Range Filters to Right Side
+# Match Hover Background Highlight on Sidebar Footer Items
 
-## Overview
+## Problem
 
-Relocate the location filter and date range filter from the left side to the right side of the page header on both the Command Center and Analytics Hub pages. This creates a cleaner layout where the page title/description is on the left and the filters are on the right.
+The "Settings" link and "Lock Dashboard" button have mismatched hover backgrounds. Looking at the screenshots, the Settings hover highlight extends wider and has different visual properties than the Lock Dashboard hover highlight.
 
-## Current State
+## Root Cause
 
-Both pages currently have filters aligned to the left:
-- **Analytics Hub**: Filters are in a flex container with `flex-wrap items-center gap-3` below the header
-- **Command Center**: Uses `AnalyticsFilterBar` component with left-aligned filters
+The two components use different styling:
 
-## Files to Modify
+| Property | NavLink (Settings) | SidebarLockButton (Lock) |
+|----------|-------------------|-------------------------|
+| Border radius | `rounded-lg` | `rounded-md` |
+| Padding | `px-3 py-2.5` | `px-2.5 py-2` |
+| Margin | `mx-3` | none |
+| Hover | `hover:bg-muted/60` | `hover:bg-muted/60` |
 
-### 1. `src/components/dashboard/AnalyticsFilterBar.tsx`
+While the hover color is the same, the padding, margin, and border-radius differences cause the hover backgrounds to appear different sizes.
 
-Update the container to align filters to the right using `justify-end`:
+## Solution
 
+Update `SidebarLockButton` to match the exact styling used by `NavLink` in the sidebar.
+
+## File to Modify
+
+### `src/components/dashboard/SidebarLockButton.tsx`
+
+Update the button styling to match NavLink:
+
+**Lines 24-31 - Change from:**
 ```typescript
-// Line 68 - Change from:
-<div className="flex flex-wrap items-center gap-3 mb-6">
-
-// To:
-<div className="flex flex-wrap items-center justify-end gap-3 mb-6">
+className={cn(
+  "flex items-center gap-3 text-sm font-sans cursor-pointer w-full",
+  "transition-all duration-200 ease-out rounded-md group",
+  isCollapsed 
+    ? "px-2 py-2 justify-center" 
+    : "px-2.5 py-2",
+  "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+)}
 ```
 
-### 2. `src/pages/dashboard/admin/AnalyticsHub.tsx`
-
-Restructure the header section to place filters on the right side of the same row as the title:
-
-**Change the header layout (lines 199-303):**
-
+**To:**
 ```typescript
-{/* Header with filters on the right */}
-<div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-  <div>
-    <h1 className="text-xl md:text-2xl font-display">ANALYTICS & REPORTS</h1>
-    <p className="text-muted-foreground text-sm">Business intelligence and data exports</p>
-  </div>
-  
-  {/* Filters - now on the right */}
-  <div className="flex flex-wrap items-center gap-3">
-    {/* Location Filter */}
-    {showLocationSelector && (
-      <Select value={locationId} onValueChange={setLocationId}>
-        <SelectTrigger className="w-[200px]">
-          <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
-          <SelectValue placeholder="Select Location" />
-        </SelectTrigger>
-        <SelectContent>
-          {canViewAggregate && (
-            <SelectItem value="all">All Locations</SelectItem>
-          )}
-          {accessibleLocations.map(loc => (
-            <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    )}
-    
-    {/* Single location badge */}
-    {!showLocationSelector && accessibleLocations.length === 1 && (
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md text-sm h-9">
-        <MapPin className="w-4 h-4 text-muted-foreground" />
-        <span>{accessibleLocations[0].name}</span>
-      </div>
-    )}
+className={cn(
+  "flex items-center gap-3 text-sm font-sans cursor-pointer",
+  "transition-all duration-200 ease-out rounded-lg",
+  isCollapsed 
+    ? "px-2 py-2.5 justify-center mx-2" 
+    : "px-3 py-2.5 mx-3",
+  "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+)}
+```
 
-    {/* Date Range Select */}
-    <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeType)}>
-      {/* ... existing content ... */}
-    </Select>
+**Key changes:**
+- `rounded-md` to `rounded-lg` (match NavLink)
+- `px-2.5 py-2` to `px-3 py-2.5` (match NavLink padding)
+- Add `mx-3` margin (match NavLink margin)
+- Add `mx-2` for collapsed state (match NavLink collapsed margin)
+- Remove `w-full` (NavLink doesn't use it)
 
-    {/* Custom Date Picker */}
-    {dateRange === 'custom' && (
-      <Popover>
-        {/* ... existing content ... */}
-      </Popover>
-    )}
-  </div>
+**Lines 33-37 - Remove the icon background container:**
+
+The NavLink uses a simple icon without background. The SidebarLockButton has an extra `div` wrapper with `bg-muted/50` that creates visual inconsistency. This should be simplified:
+
+**Change from:**
+```typescript
+<div className={cn(
+  "flex items-center justify-center rounded-md transition-colors",
+  "bg-muted/50 group-hover:bg-primary/10",
+  "p-1.5"
+)}>
+  <Lock className="w-3.5 h-3.5 shrink-0" />
 </div>
 ```
 
-## Visual Result
-
-**Before:**
-```
-┌─────────────────────────────────────────────────────┐
-│ ANALYTICS & REPORTS                                 │
-│ Business intelligence and data exports              │
-│                                                     │
-│ [📍 All Locations ▼] [📅 Today ▼]                  │
-│                                                     │
-│ [Sales] [Operations] [Marketing] [Program] [Reports]│
-└─────────────────────────────────────────────────────┘
+**To:**
+```typescript
+<Lock className="w-4 h-4 shrink-0" />
 ```
 
-**After:**
-```
-┌─────────────────────────────────────────────────────┐
-│ ANALYTICS & REPORTS          [📍 All Locations ▼]  │
-│ Business intelligence...     [📅 Today ▼]          │
-│                                                     │
-│ [Sales] [Operations] [Marketing] [Program] [Reports]│
-└─────────────────────────────────────────────────────┘
-```
-
-## Benefits
-
-1. **Better visual hierarchy** - Title and description stand out on the left, actionable filters are grouped on the right
-2. **Follows common dashboard patterns** - Most analytics dashboards place filters on the right side of the header
-3. **Responsive behavior** - On mobile, filters will stack below the title naturally
-4. **Consistent across pages** - Both Command Center and Analytics Hub will have the same filter positioning
+This makes the Lock icon match the Settings icon styling exactly.
 
