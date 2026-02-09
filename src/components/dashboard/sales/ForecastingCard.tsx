@@ -62,6 +62,78 @@ const PERIOD_DESCRIPTIONS: Record<ForecastPeriod, string> = {
   '60days': 'Projected revenue from scheduled appointments over the next 60 days',
 };
 
+// Custom tooltip for forecast chart
+function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart }: any) {
+  if (!active || !payload?.length) return null;
+  
+  const data = payload[0]?.payload;
+  if (!data) return null;
+
+  // Get the display label (date or week)
+  let displayLabel = label;
+  if (showWeeklyChart) {
+    const week = weeks?.find((w: WeekForecast) => w.weekLabel === label);
+    displayLabel = week ? week.weekLabel : label;
+  } else {
+    const day = days?.find((d: DayForecast) => d.dayName === label);
+    displayLabel = day ? format(parseISO(day.date), 'EEEE, MMM d') : label;
+  }
+  
+  const confirmedRevenue = data.confirmedRevenue || 0;
+  const unconfirmedRevenue = data.unconfirmedRevenue || 0;
+  const totalRevenue = data.totalRevenue || 0;
+  const appointments = data.appointments || 0;
+
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-lg min-w-[180px]">
+      <p className="font-medium text-sm mb-2">{displayLabel}</p>
+      
+      <div className="space-y-1.5">
+        {/* Confirmed Revenue */}
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-primary" />
+            <span className="text-muted-foreground">Confirmed</span>
+          </div>
+          <span className="font-medium tabular-nums">
+            ${confirmedRevenue.toLocaleString()}
+          </span>
+        </div>
+        
+        {/* Unconfirmed Revenue - only show if > 0 */}
+        {unconfirmedRevenue > 0 && (
+          <div className="flex items-center justify-between gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-primary/40" />
+              <span className="text-muted-foreground">Unconfirmed</span>
+            </div>
+            <span className="font-medium tabular-nums text-muted-foreground">
+              ${unconfirmedRevenue.toLocaleString()}
+            </span>
+          </div>
+        )}
+        
+        {/* Divider */}
+        <div className="border-t border-border/50 my-1.5" />
+        
+        {/* Total */}
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <span className="text-muted-foreground">Total</span>
+          <span className="font-semibold tabular-nums text-primary">
+            ${totalRevenue.toLocaleString()}
+          </span>
+        </div>
+        
+        {/* Appointments */}
+        <div className="flex items-center justify-between gap-4 text-xs">
+          <span className="text-muted-foreground">Appointments</span>
+          <span className="font-medium tabular-nums">{appointments}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Label positioned above each bar for revenue
 function AboveBarLabel({ x, y, width, value }: any) {
   if (value === undefined || value === null || value === 0) return null;
@@ -488,25 +560,14 @@ export function ForecastingCard() {
                   />
                   <YAxis hide domain={[0, 'auto']} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                    }}
-                    formatter={(value: number, name: string) => {
-                      if (name === 'confirmedRevenue') return [`$${value.toLocaleString()}`, 'Confirmed'];
-                      if (name === 'unconfirmedRevenue') return [`$${value.toLocaleString()}`, 'Unconfirmed'];
-                      return [value, name];
-                    }}
-                    labelFormatter={(label) => {
-                      if (showWeeklyChart) {
-                        const week = weeks.find(w => w.weekLabel === label);
-                        return week ? `${week.weekLabel} (${week.appointmentCount} appts)` : label;
-                      }
-                      const day = days.find(d => d.dayName === label);
-                      return day ? format(parseISO(day.date), 'EEEE, MMM d') : label;
-                    }}
+                    content={
+                      <ForecastTooltip 
+                        days={days} 
+                        weeks={weeks} 
+                        showWeeklyChart={showWeeklyChart} 
+                      />
+                    }
+                    cursor={{ fill: 'hsl(var(--muted))', fillOpacity: 0.3 }}
                   />
                   {/* Unconfirmed revenue - bottom of stack */}
                   <Bar 
