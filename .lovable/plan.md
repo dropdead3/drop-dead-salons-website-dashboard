@@ -1,24 +1,28 @@
 
-# Move Settings from Sticky Footer to Regular Nav
 
-## What Changes
+# Rename "Access & Permissions" to "Roles & Controls" Everywhere
 
-The "Settings" link currently lives in the special sticky footer section (the rounded card at the bottom with Clock In and Lock Dashboard). It will be moved out of that special section and into the regular navigation — specifically added to the **Access & Permissions** section, since Settings is an admin-level page gated by the same `manage_settings` permission.
+## Problem
 
-The sticky footer card will then only contain **Clock In** and **Lock Dashboard**.
+The page title was updated to "Roles & Controls Hub" but the sidebar nav link and section header still say "Access & Permissions Hub" / "ACCESS & PERMISSIONS."
 
-## Technical Details
+## Changes
 
-**File: `src/components/dashboard/DashboardLayout.tsx`**
-- Remove Settings from `footerNavItems` array (make it empty or remove entirely)
-- Add the Settings nav item to `adminOnlyNavItems` so it appears alongside "Access & Permissions Hub"
+Four files need a simple text rename:
 
-**File: `src/components/dashboard/SidebarNavContent.tsx`**
-- Clean up: if `footerNavItems` becomes empty, skip rendering the footer nav links loop (the Clock In and Lock Dashboard buttons remain)
-- No structural changes needed — the existing section rendering handles adminOnly items automatically
+### 1. `src/components/dashboard/DashboardLayout.tsx`
+- Line 196 comment: "Access & Permissions section" -> "Roles & Controls section"
+- Line 198 label: "Access & Permissions Hub" -> "Roles & Controls Hub"
 
-## Result
+### 2. `src/hooks/useSidebarLayout.ts`
+- Line 22: section label "Access & Permissions" -> "Roles & Controls"
 
-- Settings appears as a regular nav link under "Access & Permissions" in the scrollable sidebar
-- The sticky footer card is simplified to just Clock In + Lock Dashboard
-- Settings still respects the `manage_settings` permission filter
+### 3. `src/components/dashboard/settings/SidebarPreview.tsx`
+- Line 39 label: "Access & Permissions Hub" -> "Roles & Controls Hub"
+
+### 4. `src/components/dashboard/settings/SidebarLayoutEditor.tsx`
+- Line 145 comment: "Access & Permissions" -> "Roles & Controls"
+- Line 146 label: "Access & Permissions Hub" -> "Roles & Controls Hub"
+
+No structural or logic changes -- purely label/comment renames across these four files.
+
