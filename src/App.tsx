@@ -121,6 +121,7 @@ import DocumentTracker from "./pages/dashboard/admin/DocumentTracker";
 import PerformanceReviews from "./pages/dashboard/admin/PerformanceReviews";
 import PTOManager from "./pages/dashboard/admin/PTOManager";
 import IncidentReports from "./pages/dashboard/admin/IncidentReports";
+import NewHireWizard from "./pages/dashboard/admin/NewHireWizard";
 
 // Phase 3: Points, Huddles, Training Enhancements
 import RewardShop from "./pages/dashboard/RewardShop";
@@ -304,6 +305,7 @@ const App = () => (
                       <Route path="/dashboard/admin/performance-reviews" element={<ProtectedRoute requiredPermission="view_team_overview"><PerformanceReviews /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/pto" element={<ProtectedRoute requiredPermission="view_team_overview"><PTOManager /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/incidents" element={<ProtectedRoute requiredPermission="view_team_overview"><IncidentReports /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/new-hire" element={<ProtectedRoute requiredPermission="view_team_overview"><NewHireWizard /></ProtectedRoute>} />
                       
                       {/* Phase 3: Points Economy, Daily Huddle routes */}
                       <Route path="/dashboard/rewards" element={<ProtectedRoute><RewardShop /></ProtectedRoute>} />

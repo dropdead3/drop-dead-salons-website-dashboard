@@ -328,6 +328,13 @@ export default function ManagementHub() {
             description="Manage hiring funnel and interview stages"
             colorClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
           />
+          <ManagementCard
+            href="/dashboard/admin/new-hire"
+            icon={UserCheck}
+            title="New Hire Wizard"
+            description="Onboard a new team member with account creation and docs"
+            colorClass="bg-violet-500/10 text-violet-600 dark:text-violet-400"
+          />
         </CategorySection>
 
         {/* Team Operations */}
