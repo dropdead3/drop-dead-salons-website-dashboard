@@ -27,6 +27,8 @@ interface KioskContextType {
   completeCheckin: () => void;
   isCheckingIn: boolean;
   startWalkIn: () => void;
+  startBrowse: () => void;
+  isBrowsing: boolean;
   
   // Idle timer
   idleTimeRemaining: number;
@@ -119,6 +121,8 @@ export function KioskProvider({ children, locationId }: KioskProviderProps) {
         completeCheckin: checkin.completeCheckin,
         isCheckingIn: checkin.isCheckingIn,
         startWalkIn: checkin.startWalkIn,
+        startBrowse: checkin.startBrowse,
+        isBrowsing: checkin.isBrowsing,
         idleTimeRemaining,
       }}
     >

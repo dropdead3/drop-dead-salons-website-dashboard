@@ -4,6 +4,7 @@ import { KioskProvider, useKiosk } from '@/components/kiosk/KioskProvider';
 import { KioskIdleScreen } from '@/components/kiosk/KioskIdleScreen';
 import { KioskLookupScreen } from '@/components/kiosk/KioskLookupScreen';
 import { KioskConfirmScreen } from '@/components/kiosk/KioskConfirmScreen';
+import { KioskBrowseScreen } from '@/components/kiosk/KioskBrowseScreen';
 import { KioskSuccessScreen } from '@/components/kiosk/KioskSuccessScreen';
 import { KioskErrorScreen } from '@/components/kiosk/KioskErrorScreen';
 import { KioskWrongLocationScreen } from '@/components/kiosk/KioskWrongLocationScreen';
@@ -25,6 +26,7 @@ function KioskContent() {
       {state === 'idle' && <KioskIdleScreen key="idle" />}
       {state === 'lookup' && <KioskLookupScreen key="lookup" />}
       {state === 'confirm' && <KioskConfirmScreen key="confirm" />}
+      {state === 'browse' && <KioskBrowseScreen key="browse" />}
       {state === 'wrong_location' && <KioskWrongLocationScreen key="wrong_location" />}
       {state === 'success' && <KioskSuccessScreen key="success" />}
       {state === 'error' && <KioskErrorScreen key="error" />}
