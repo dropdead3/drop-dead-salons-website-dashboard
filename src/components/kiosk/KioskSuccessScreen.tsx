@@ -17,6 +17,7 @@ export function KioskSuccessScreen() {
   const backgroundOverlayOpacity = settings?.background_overlay_opacity ?? DEFAULT_KIOSK_SETTINGS.background_overlay_opacity;
   const logoUrl = settings?.logo_url;
   const showWaitTime = settings?.show_wait_time_estimate ?? DEFAULT_KIOSK_SETTINGS.show_wait_time_estimate;
+  const enableGlowEffects = settings?.enable_glow_effects ?? DEFAULT_KIOSK_SETTINGS.enable_glow_effects;
 
   const appointment = session?.selectedAppointment;
   const client = session?.client;
@@ -255,17 +256,25 @@ export function KioskSuccessScreen() {
         >
           <div className="flex gap-1">
             {[0, 1, 2].map((i) => (
-              <motion.div
-                key={i}
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: textColor }}
-                animate={{ opacity: [0.3, 0.7, 0.3] }}
-                transition={{
-                  duration: 1,
-                  repeat: Infinity,
-                  delay: i * 0.2,
-                }}
-              />
+              enableGlowEffects ? (
+                <motion.div
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: textColor }}
+                  animate={{ opacity: [0.3, 0.7, 0.3] }}
+                  transition={{
+                    duration: 1,
+                    repeat: Infinity,
+                    delay: i * 0.2,
+                  }}
+                />
+              ) : (
+                <div
+                  key={i}
+                  className="w-1.5 h-1.5 rounded-full"
+                  style={{ backgroundColor: textColor, opacity: 0.4 }}
+                />
+              )
             ))}
           </div>
           <span className="text-sm">This screen will reset automatically</span>

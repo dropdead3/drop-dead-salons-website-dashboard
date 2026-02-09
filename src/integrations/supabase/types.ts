@@ -6783,6 +6783,7 @@ export type Database = {
           created_at: string | null
           display_orientation: string
           enable_feedback_prompt: boolean | null
+          enable_glow_effects: boolean | null
           enable_walk_ins: boolean | null
           exit_pin: string | null
           font_family: string | null
@@ -6816,6 +6817,7 @@ export type Database = {
           created_at?: string | null
           display_orientation?: string
           enable_feedback_prompt?: boolean | null
+          enable_glow_effects?: boolean | null
           enable_walk_ins?: boolean | null
           exit_pin?: string | null
           font_family?: string | null
@@ -6849,6 +6851,7 @@ export type Database = {
           created_at?: string | null
           display_orientation?: string
           enable_feedback_prompt?: boolean | null
+          enable_glow_effects?: boolean | null
           enable_walk_ins?: boolean | null
           exit_pin?: string | null
           font_family?: string | null
@@ -13893,6 +13896,7 @@ export type Database = {
           created_at: string | null
           display_orientation: string
           enable_feedback_prompt: boolean | null
+          enable_glow_effects: boolean | null
           enable_walk_ins: boolean | null
           exit_pin: string | null
           font_family: string | null

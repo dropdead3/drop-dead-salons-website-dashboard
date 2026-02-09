@@ -36,6 +36,7 @@ export interface KioskSettings {
   show_wait_time_estimate: boolean;
   show_stylist_photo: boolean;
   enable_feedback_prompt: boolean;
+  enable_glow_effects: boolean;
   require_form_signing: boolean;
   
   // Media
@@ -77,6 +78,7 @@ export const DEFAULT_KIOSK_SETTINGS: Omit<KioskSettings, 'id' | 'organization_id
   show_wait_time_estimate: true,
   show_stylist_photo: true,
   enable_feedback_prompt: false,
+  enable_glow_effects: false,
   require_form_signing: true,
   idle_slideshow_images: [],
   idle_video_url: null,
