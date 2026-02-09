@@ -1,157 +1,122 @@
 
-
-# Connect Kiosk Theme to Dashboard Brand Colors
+# Fix Kiosk Settings Dialog Timeout for Subsequent Attempts
 
 ## Problem
 
-The kiosk currently uses hardcoded default colors that don't match your elegant cream/oat dashboard theme:
+The 10-second inactivity timeout works on the first attempt but fails on subsequent attempts. This is a **stale closure issue** where the timeout callback captures old values of state variables.
 
-| Element | Current Default | Desired (Cream Theme) |
-|---------|----------------|----------------------|
-| Background | `#000000` (black) | Warm cream (`hsl(40, 30%, 96%)`) |
-| Text | `#FFFFFF` (white) | Charcoal (`hsl(0, 0%, 8%)`) |
-| Accent | `#8B5CF6` (violet) | Gold/Oat (`hsl(38, 70%, 38%)` or `hsl(35, 35%, 82%)`) |
+## Root Cause
+
+When the dialog closes and reopens:
+1. The `resetTimeout` callback is memoized with `useCallback` and dependencies `[isOpen, isAuthenticated, onClose]`
+2. Inside the timeout callback, `onClose()` is called which changes `isOpen` to `false`
+3. On subsequent opens, the refs and closures don't properly reinitialize because React's reconciliation sees it as the same component
 
 ## Solution
 
-Add a "Sync with Brand Theme" option that automatically pulls colors from your dashboard's active theme (cream), while still allowing manual overrides.
+Use `refs` to track the latest values instead of relying on closures. This ensures the timeout callback always accesses current state.
 
-## Proposed Changes
+### Technical Changes
 
-### 1. Update Default Kiosk Settings
+**File: `src/components/kiosk/KioskSettingsDialog.tsx`**
 
-**File: `src/hooks/useKioskSettings.ts`**
-
-Update `DEFAULT_KIOSK_SETTINGS` to use the elegant cream palette by default:
+1. Add refs to track latest `isOpen` and `isAuthenticated` values:
 
 ```typescript
-export const DEFAULT_KIOSK_SETTINGS = {
-  // ... other fields
-  background_color: '#F5F0E8',   // Warm cream (hsl 40, 30%, 96% → hex)
-  accent_color: '#9A7B4F',       // Gold (hsl 38, 70%, 38% → hex)
-  text_color: '#141414',         // Charcoal (hsl 0, 0%, 8% → hex)
-  theme_mode: 'light',           // Light mode to match cream aesthetic
-  // ...
-};
+const isOpenRef = useRef(isOpen);
+const isAuthenticatedRef = useRef(isAuthenticated);
+
+// Keep refs in sync
+useEffect(() => {
+  isOpenRef.current = isOpen;
+}, [isOpen]);
+
+useEffect(() => {
+  isAuthenticatedRef.current = isAuthenticated;
+}, [isAuthenticated]);
 ```
 
-### 2. Add Theme Sync Toggle to Kiosk Settings UI
-
-**File: `src/components/dashboard/settings/KioskSettingsContent.tsx`**
-
-Add a "Use Brand Theme" toggle at the top of the Appearance tab:
+2. Update `resetTimeout` to use refs instead of closure values:
 
 ```typescript
-// Add state for sync mode
-const [useBrandTheme, setUseBrandTheme] = useState(true);
+const resetTimeout = useCallback(() => {
+  // Clear existing timers
+  if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  if (countdownRef.current) clearInterval(countdownRef.current);
+  
+  // Use refs for current values (avoids stale closures)
+  if (!isOpenRef.current || isAuthenticatedRef.current) return;
+  
+  // Reset countdown
+  setTimeRemaining(PIN_TIMEOUT_SECONDS);
+  
+  // Start countdown interval
+  countdownRef.current = setInterval(() => {
+    setTimeRemaining(prev => {
+      if (prev <= 1) {
+        if (countdownRef.current) clearInterval(countdownRef.current);
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+  
+  // Set timeout to close dialog
+  timeoutRef.current = setTimeout(() => {
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    
+    // Check refs before closing (ensures we're still in valid state)
+    if (isOpenRef.current && !isAuthenticatedRef.current) {
+      setIsAuthenticated(false);
+      setPinInput('');
+      setPinError(false);
+      setTimeRemaining(PIN_TIMEOUT_SECONDS);
+      onClose();
+    }
+  }, PIN_TIMEOUT_SECONDS * 1000);
+}, [onClose]); // Reduced dependencies - refs handle the rest
+```
 
-// Brand theme preset colors (cream palette)
-const BRAND_THEME = {
-  background_color: '#F5F0E8',  // Cream background
-  text_color: '#141414',        // Charcoal text
-  accent_color: '#9A7B4F',      // Gold accent
-};
+3. Ensure proper cleanup and reinitialization on open:
 
-// When toggle is enabled, apply brand colors
-const handleBrandThemeToggle = (enabled: boolean) => {
-  setUseBrandTheme(enabled);
-  if (enabled) {
-    setLocalSettings(prev => ({
-      ...prev,
-      ...BRAND_THEME,
-    }));
+```typescript
+useEffect(() => {
+  if (isOpen && !isAuthenticated) {
+    // Small delay to ensure clean state after previous close
+    const initTimer = setTimeout(() => {
+      resetTimeout();
+    }, 50);
+    return () => clearTimeout(initTimer);
+  } else {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (countdownRef.current) clearInterval(countdownRef.current);
   }
-};
+  
+  return () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+  };
+}, [isOpen, isAuthenticated, resetTimeout]);
 ```
 
-Add toggle UI above the color pickers:
+## Why This Works
 
-```tsx
-<div className="bg-muted/50 rounded-lg p-4 mb-4">
-  <div className="flex items-center justify-between">
-    <div>
-      <p className="text-sm font-medium">Use Brand Theme</p>
-      <p className="text-xs text-muted-foreground">
-        Sync kiosk colors with your organization's cream & oat palette
-      </p>
-    </div>
-    <Switch
-      checked={useBrandTheme}
-      onCheckedChange={handleBrandThemeToggle}
-    />
-  </div>
-</div>
-
-{/* Color pickers become disabled/dimmed when brand theme is active */}
-<div className={cn(
-  "grid grid-cols-2 gap-4",
-  useBrandTheme && "opacity-50 pointer-events-none"
-)}>
-  {/* existing color picker inputs */}
-</div>
-```
-
-### 3. Add Theme Presets Dropdown
-
-Provide quick preset options for different looks:
-
-| Preset | Background | Text | Accent | Best For |
-|--------|-----------|------|--------|----------|
-| Cream (Default) | `#F5F0E8` | `#141414` | `#9A7B4F` | Light, elegant daytime |
-| Dark Luxury | `#0A0A0A` | `#F5F0E8` | `#C9A962` | Evening/night mode |
-| Oat Minimal | `#E8E0D5` | `#2D2D2D` | `#8B7355` | Soft, subtle warmth |
-
-```tsx
-<Select 
-  value={themePreset} 
-  onValueChange={applyPreset}
->
-  <SelectTrigger>
-    <SelectValue placeholder="Choose a theme preset" />
-  </SelectTrigger>
-  <SelectContent>
-    <SelectItem value="cream">Cream (Light)</SelectItem>
-    <SelectItem value="dark-luxury">Dark Luxury</SelectItem>
-    <SelectItem value="oat-minimal">Oat Minimal</SelectItem>
-    <SelectItem value="custom">Custom Colors</SelectItem>
-  </SelectContent>
-</Select>
-```
-
-## Visual Result
-
-The kiosk will transform from the current dark/violet look to:
-
-```text
-┌──────────────────────────────────────────┐
-│                                          │
-│           [LOGO]                         │  ← Logo on cream bg
-│                                          │
-│           10:28 PM                       │  ← Charcoal text
-│       Sunday, February 8                 │
-│                                          │
-│           Welcome                        │  ← Warm, inviting
-│                                          │
-│   ┌─────────────────────────────────┐    │
-│   │    Tap anywhere to check in     │    │  ← Gold accent glow
-│   └─────────────────────────────────┘    │
-│                                          │
-│              • • •                       │  ← Gold pulse dots
-│                                          │
-└──────────────────────────────────────────┘
-     Warm Cream Background (#F5F0E8)
-```
+| Before (Stale Closure) | After (Refs) |
+|------------------------|--------------|
+| `isOpen` captured at callback creation time | `isOpenRef.current` always has latest value |
+| Subsequent opens reuse old callback | Callback reads fresh values from refs |
+| Timer fires with outdated state | Timer checks current state before acting |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useKioskSettings.ts` | Update default colors to cream/oat palette |
-| `src/components/dashboard/settings/KioskSettingsContent.tsx` | Add "Use Brand Theme" toggle and preset selector |
+| `src/components/kiosk/KioskSettingsDialog.tsx` | Add refs for tracking state, update `resetTimeout` to use refs |
 
-## Technical Notes
+## Visual Behavior
 
-- The cream palette hex values are derived from the CSS HSL variables in `index.css`
-- Manual color overrides remain available when "Use Brand Theme" is off
-- The kiosk will immediately reflect changes in the preview panel
-
+```text
+First open:   Dialog → 10s countdown → Auto-close ✓
+Second open:  Dialog → 10s countdown → Auto-close ✓ (now works!)
+Third open:   Dialog → 10s countdown → Auto-close ✓ (continues working)
+```
