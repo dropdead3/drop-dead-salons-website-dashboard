@@ -132,7 +132,54 @@ serve(async (req) => {
         amount: rentAmount,
       });
 
-      // TODO: Send email notification to renter
+      // Send email notification to renter
+      const renterProfile = contract.booth_renter_profiles;
+      const renterEmail = renterProfile?.billing_email;
+
+      if (renterEmail) {
+        const resendApiKey = Deno.env.get("RESEND_API_KEY");
+        if (resendApiKey) {
+          try {
+            const periodStartDate = periodStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const periodEndDate = periodEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const dueDateFormatted = dueDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            const monthName = periodStart.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            await fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${resendApiKey}`,
+              },
+              body: JSON.stringify({
+                from: "Drop Dead Gorgeous <noreply@dropdeadsalons.com>",
+                to: [renterEmail],
+                subject: `New Rent Invoice: ${monthName}`,
+                html: `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #333;">Rent Invoice Created</h2>
+                    <p>A new rent invoice has been created for your booth rental:</p>
+                    <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                      <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li style="padding: 8px 0;"><strong>Amount:</strong> $${rentAmount.toFixed(2)}</li>
+                        <li style="padding: 8px 0;"><strong>Period:</strong> ${periodStartDate} - ${periodEndDate}</li>
+                        <li style="padding: 8px 0;"><strong>Due Date:</strong> ${dueDateFormatted}</li>
+                      </ul>
+                    </div>
+                    <p>Please log in to your dashboard to view and pay this invoice.</p>
+                    <p style="color: #666; font-size: 12px; margin-top: 30px;">
+                      This is an automated notification from your salon management system.
+                    </p>
+                  </div>
+                `,
+              }),
+            });
+            console.log(`Rent invoice email sent to ${renterEmail}`);
+          } catch (emailError) {
+            console.error(`Failed to send invoice email to ${renterEmail}:`, emailError);
+          }
+        }
+      }
     }
 
     return new Response(

@@ -14,8 +14,8 @@ export default function TeamChat() {
   // Auto-select first organization for platform users if none selected
   useEffect(() => {
     if (isPlatformUser && !effectiveOrganization && organizations?.length > 0) {
-      const defaultOrg = organizations.find(o => o.slug === 'drop-dead-salons') || organizations[0];
-      setSelectedOrganization(defaultOrg);
+      // Use first available organization instead of hardcoded default
+      setSelectedOrganization(organizations[0]);
     }
   }, [isPlatformUser, effectiveOrganization, organizations, setSelectedOrganization]);
 
