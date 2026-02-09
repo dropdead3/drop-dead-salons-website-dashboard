@@ -6791,6 +6791,8 @@ export type Database = {
           idle_slideshow_images: string[] | null
           idle_timeout_seconds: number | null
           idle_video_url: string | null
+          location_badge_position: string | null
+          location_badge_style: string | null
           location_id: string | null
           logo_color: string | null
           logo_size: string
@@ -6798,6 +6800,7 @@ export type Database = {
           organization_id: string | null
           require_confirmation_tap: boolean | null
           require_form_signing: boolean | null
+          show_location_badge: boolean | null
           show_stylist_photo: boolean | null
           show_wait_time_estimate: boolean | null
           success_message: string | null
@@ -6825,6 +6828,8 @@ export type Database = {
           idle_slideshow_images?: string[] | null
           idle_timeout_seconds?: number | null
           idle_video_url?: string | null
+          location_badge_position?: string | null
+          location_badge_style?: string | null
           location_id?: string | null
           logo_color?: string | null
           logo_size?: string
@@ -6832,6 +6837,7 @@ export type Database = {
           organization_id?: string | null
           require_confirmation_tap?: boolean | null
           require_form_signing?: boolean | null
+          show_location_badge?: boolean | null
           show_stylist_photo?: boolean | null
           show_wait_time_estimate?: boolean | null
           success_message?: string | null
@@ -6859,6 +6865,8 @@ export type Database = {
           idle_slideshow_images?: string[] | null
           idle_timeout_seconds?: number | null
           idle_video_url?: string | null
+          location_badge_position?: string | null
+          location_badge_style?: string | null
           location_id?: string | null
           logo_color?: string | null
           logo_size?: string
@@ -6866,6 +6874,7 @@ export type Database = {
           organization_id?: string | null
           require_confirmation_tap?: boolean | null
           require_form_signing?: boolean | null
+          show_location_badge?: boolean | null
           show_stylist_photo?: boolean | null
           show_wait_time_estimate?: boolean | null
           success_message?: string | null
@@ -13904,6 +13913,8 @@ export type Database = {
           idle_slideshow_images: string[] | null
           idle_timeout_seconds: number | null
           idle_video_url: string | null
+          location_badge_position: string | null
+          location_badge_style: string | null
           location_id: string | null
           logo_color: string | null
           logo_size: string
@@ -13911,6 +13922,7 @@ export type Database = {
           organization_id: string | null
           require_confirmation_tap: boolean | null
           require_form_signing: boolean | null
+          show_location_badge: boolean | null
           show_stylist_photo: boolean | null
           show_wait_time_estimate: boolean | null
           success_message: string | null

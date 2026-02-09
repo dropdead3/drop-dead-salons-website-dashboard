@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save, Palette, Sun, Moon, Monitor, Image, Smartphone, Tablet, Upload, RotateCcw, Pencil, ImageIcon } from 'lucide-react';
+import { Loader2, Save, Palette, Sun, Moon, Monitor, Image, Smartphone, Tablet, Upload, RotateCcw, Pencil, ImageIcon, MapPin as MapPinIcon } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,8 +8,10 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { KioskPreviewPanel } from './KioskPreviewPanel';
 import { KioskDeployCard } from './KioskDeployCard';
+import { KioskMediaUploader } from './KioskMediaUploader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/useLocations';
 import { 
@@ -68,6 +70,10 @@ interface LocalSettings {
   enable_glow_effects: boolean;
   require_form_signing: boolean;
   exit_pin: string;
+  idle_video_url: string | null;
+  show_location_badge: boolean;
+  location_badge_position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  location_badge_style: 'glass' | 'solid' | 'outline';
 }
 
 // Convert global theme to kiosk colors
@@ -199,6 +205,10 @@ export function KioskSettingsContent() {
     enable_glow_effects: DEFAULT_KIOSK_SETTINGS.enable_glow_effects,
     require_form_signing: DEFAULT_KIOSK_SETTINGS.require_form_signing,
     exit_pin: DEFAULT_KIOSK_SETTINGS.exit_pin,
+    idle_video_url: DEFAULT_KIOSK_SETTINGS.idle_video_url,
+    show_location_badge: DEFAULT_KIOSK_SETTINGS.show_location_badge,
+    location_badge_position: DEFAULT_KIOSK_SETTINGS.location_badge_position,
+    location_badge_style: DEFAULT_KIOSK_SETTINGS.location_badge_style,
   });
 
   // Detect logo source from logo_url
@@ -257,6 +267,10 @@ export function KioskSettingsContent() {
         enable_glow_effects: kioskSettings.enable_glow_effects ?? DEFAULT_KIOSK_SETTINGS.enable_glow_effects,
         require_form_signing: kioskSettings.require_form_signing,
         exit_pin: kioskSettings.exit_pin,
+        idle_video_url: kioskSettings.idle_video_url ?? null,
+        show_location_badge: kioskSettings.show_location_badge ?? DEFAULT_KIOSK_SETTINGS.show_location_badge,
+        location_badge_position: kioskSettings.location_badge_position ?? DEFAULT_KIOSK_SETTINGS.location_badge_position,
+        location_badge_style: kioskSettings.location_badge_style ?? DEFAULT_KIOSK_SETTINGS.location_badge_style,
       });
       // Detect which preset matches
       setThemePreset(detectGlobalTheme(
@@ -297,6 +311,10 @@ export function KioskSettingsContent() {
         enable_glow_effects: DEFAULT_KIOSK_SETTINGS.enable_glow_effects,
         require_form_signing: DEFAULT_KIOSK_SETTINGS.require_form_signing,
         exit_pin: DEFAULT_KIOSK_SETTINGS.exit_pin,
+        idle_video_url: DEFAULT_KIOSK_SETTINGS.idle_video_url,
+        show_location_badge: DEFAULT_KIOSK_SETTINGS.show_location_badge,
+        location_badge_position: DEFAULT_KIOSK_SETTINGS.location_badge_position,
+        location_badge_style: DEFAULT_KIOSK_SETTINGS.location_badge_style,
       });
       setThemePreset('cream');
       setLogoSource('auto');
@@ -786,23 +804,19 @@ export function KioskSettingsContent() {
                   </div>
                 </div>
 
-                {/* Background Image Section */}
+                {/* Background Media Section */}
                 <div className="bg-muted/50 rounded-xl p-4 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <ImageIcon className="w-4 h-4 text-muted-foreground" />
-                    <Label className="text-sm font-medium">Background Image</Label>
-                  </div>
-                  <Input
-                    value={localSettings.background_image_url || ''}
-                    onChange={(e) => updateField('background_image_url', e.target.value || null)}
-                    placeholder="https://example.com/background.jpg"
+                  <KioskMediaUploader
+                    imageUrl={localSettings.background_image_url}
+                    videoUrl={localSettings.idle_video_url}
+                    overlayOpacity={localSettings.background_overlay_opacity}
+                    onImageChange={(url) => updateField('background_image_url', url)}
+                    onVideoChange={(url) => updateField('idle_video_url', url)}
+                    organizationId={orgId || undefined}
                   />
-                  <p className="text-xs text-muted-foreground">
-                    Optional background photo for the kiosk screens
-                  </p>
 
                   {/* Overlay opacity slider */}
-                  {localSettings.background_image_url && (
+                  {(localSettings.background_image_url || localSettings.idle_video_url) && (
                     <div className="space-y-2 pt-2">
                       <div className="flex items-center justify-between">
                         <Label className="text-sm">Overlay Darkness</Label>
@@ -824,25 +838,66 @@ export function KioskSettingsContent() {
                       </p>
                     </div>
                   )}
+                </div>
 
-                  {/* Background preview */}
-                  {localSettings.background_image_url && (
-                    <div 
-                      className="relative h-24 rounded-xl overflow-hidden border"
-                      style={{ 
-                        backgroundImage: `url(${localSettings.background_image_url})`,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center',
-                      }}
-                    >
-                      <div 
-                        className="absolute inset-0"
-                        style={{ backgroundColor: `rgba(0, 0, 0, ${localSettings.background_overlay_opacity})` }}
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-white text-sm font-medium">Preview with overlay</span>
-                      </div>
+                {/* Location Badge Section */}
+                <div className="bg-muted/50 rounded-xl p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <MapPinIcon className="w-4 h-4 text-muted-foreground" />
+                      <Label className="text-sm font-medium">Location Badge</Label>
                     </div>
+                    <Switch
+                      checked={localSettings.show_location_badge}
+                      onCheckedChange={(v) => updateField('show_location_badge', v)}
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Display the location name on the kiosk screen
+                  </p>
+
+                  {localSettings.show_location_badge && (
+                    <>
+                      {/* Position selector */}
+                      <div className="space-y-2">
+                        <Label className="text-sm">Position</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).map((pos) => (
+                            <button
+                              key={pos}
+                              type="button"
+                              className={cn(
+                                "px-3 py-2 rounded-lg border text-xs font-medium transition-colors",
+                                localSettings.location_badge_position === pos
+                                  ? "border-primary bg-primary/10 text-foreground"
+                                  : "border-border hover:border-primary/50"
+                              )}
+                              onClick={() => updateField('location_badge_position', pos)}
+                            >
+                              {pos.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Style selector */}
+                      <div className="space-y-2">
+                        <Label className="text-sm">Style</Label>
+                        <Select 
+                          value={localSettings.location_badge_style} 
+                          onValueChange={(v) => updateField('location_badge_style', v as 'glass' | 'solid' | 'outline')}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="glass">Glass (blur effect)</SelectItem>
+                            <SelectItem value="solid">Solid (accent color)</SelectItem>
+                            <SelectItem value="outline">Outline (transparent)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
                   )}
                 </div>
               </TabsContent>

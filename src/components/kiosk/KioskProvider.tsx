@@ -2,6 +2,8 @@ import { createContext, useContext, ReactNode, useState, useEffect } from 'react
 import { useKioskSettingsByLocation, KioskSettings, DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { useKioskCheckin, KioskState, KioskSession } from '@/hooks/useKioskCheckin';
 import { useBusinessSettings, BusinessSettings } from '@/hooks/useBusinessSettings';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 interface KioskContextType {
   // Settings
@@ -12,6 +14,9 @@ interface KioskContextType {
   
   // Business settings for logo fallback
   businessSettings: BusinessSettings | null;
+  
+  // Location info for badge
+  locationName: string | null;
   
   // State machine
   state: KioskState;
@@ -45,6 +50,20 @@ export function KioskProvider({ children, locationId }: KioskProviderProps) {
   const { data: settingsData, isLoading: isLoadingSettings } = useKioskSettingsByLocation(locationId);
   const { data: businessSettings } = useBusinessSettings();
   const organizationId = settingsData?.organizationId || null;
+  
+  // Fetch location name for badge
+  const { data: locationData } = useQuery({
+    queryKey: ['location-details', locationId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('locations')
+        .select('name')
+        .eq('id', locationId)
+        .single();
+      return data;
+    },
+    enabled: !!locationId,
+  });
   
   const checkin = useKioskCheckin(locationId, organizationId || '');
   
@@ -110,6 +129,7 @@ export function KioskProvider({ children, locationId }: KioskProviderProps) {
         organizationId,
         locationId,
         businessSettings: businessSettings || null,
+        locationName: locationData?.name || null,
         state: checkin.state,
         session: checkin.session,
         error: checkin.error,
