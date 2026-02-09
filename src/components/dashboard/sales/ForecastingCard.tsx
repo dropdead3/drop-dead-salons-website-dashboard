@@ -463,7 +463,7 @@ export function ForecastingCard() {
                   onValueChange={setSelectedLocation}
                   includeAll={true}
                   allLabel="All Locations"
-                  triggerClassName="h-8 w-[180px] text-xs"
+                  triggerClassName="h-8 w-[220px] text-xs"
                 />
                 <Badge variant="outline" className="text-xs whitespace-nowrap">
                   {totalAppointments} bookings
