@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Settings, Lock, Eye, EyeOff, Check, Palette, Type, Clock, Users, Image, Loader2 } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
@@ -9,6 +9,8 @@ interface KioskSettingsDialogProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const PIN_TIMEOUT_SECONDS = 10;
 
 type SettingsTab = 'appearance' | 'content' | 'behavior';
 
@@ -24,6 +26,60 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
   const [showPin, setShowPin] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [activeTab, setActiveTab] = useState<SettingsTab>('appearance');
+  const [timeRemaining, setTimeRemaining] = useState(PIN_TIMEOUT_SECONDS);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Reset the inactivity timeout
+  const resetTimeout = useCallback(() => {
+    // Clear existing timers
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    
+    // Only run timeout when dialog is open and not authenticated
+    if (!isOpen || isAuthenticated) return;
+    
+    // Reset countdown
+    setTimeRemaining(PIN_TIMEOUT_SECONDS);
+    
+    // Start countdown interval
+    countdownRef.current = setInterval(() => {
+      setTimeRemaining(prev => {
+        if (prev <= 1) {
+          if (countdownRef.current) clearInterval(countdownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    
+    // Set timeout to close dialog
+    timeoutRef.current = setTimeout(() => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+      // Clear state and close
+      setIsAuthenticated(false);
+      setPinInput('');
+      setPinError(false);
+      setTimeRemaining(PIN_TIMEOUT_SECONDS);
+      onClose();
+    }, PIN_TIMEOUT_SECONDS * 1000);
+  }, [isOpen, isAuthenticated, onClose]);
+  
+  // Initialize and clean up timeout
+  useEffect(() => {
+    if (isOpen && !isAuthenticated) {
+      resetTimeout();
+    } else {
+      // Clear timers when authenticated or closed
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    }
+    
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, [isOpen, isAuthenticated, resetTimeout]);
   
   // Local settings state
   const [localSettings, setLocalSettings] = useState({
@@ -75,6 +131,9 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
   };
 
   const handlePinDigit = async (digit: string) => {
+    // Reset timeout on any interaction
+    resetTimeout();
+    
     if (pinInput.length < 4 && !isValidating) {
       const newPin = pinInput + digit;
       setPinInput(newPin);
@@ -115,6 +174,9 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
   };
 
   const handlePinDelete = () => {
+    // Reset timeout on any interaction
+    resetTimeout();
+    
     setPinInput(pinInput.slice(0, -1));
     setPinError(false);
   };
@@ -130,9 +192,14 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
   };
 
   const handleClose = () => {
+    // Clear timers
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (countdownRef.current) clearInterval(countdownRef.current);
+    
     setIsAuthenticated(false);
     setPinInput('');
     setPinError(false);
+    setTimeRemaining(PIN_TIMEOUT_SECONDS);
     onClose();
   };
 
@@ -199,9 +266,15 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                 </motion.div>
                 
                 <h3 className="text-xl font-medium text-white mb-2">Enter Admin PIN</h3>
-                <p className="text-white/60 mb-8 text-center">
+                <p className="text-white/60 mb-2 text-center">
                   Enter your 4 digit PIN to access settings
                 </p>
+                
+                {/* Countdown timer */}
+                <div className="flex items-center gap-2 mb-6 text-sm text-white/40">
+                  <Clock className="w-4 h-4" />
+                  <span>Closing in {timeRemaining}s</span>
+                </div>
 
                 {/* PIN display */}
                 <div className="flex items-center gap-2 mb-6">
