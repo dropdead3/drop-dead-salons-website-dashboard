@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Palette } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,9 +12,10 @@ import { KioskPreviewPanel } from './KioskPreviewPanel';
 import { KioskDeployCard } from './KioskDeployCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/useLocations';
-import { useKioskSettings, useUpdateKioskSettings, DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
+import { useKioskSettings, useUpdateKioskSettings, DEFAULT_KIOSK_SETTINGS, KIOSK_THEME_PRESETS, KioskThemePreset } from '@/hooks/useKioskSettings';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
 
 interface LocalSettings {
   background_color: string;
@@ -39,6 +40,7 @@ interface LocalSettings {
 export function KioskSettingsContent() {
   const { user } = useAuth();
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
+  const [themePreset, setThemePreset] = useState<KioskThemePreset | 'custom'>('cream');
   const { data: locations = [] } = useLocations();
 
   // Get organization ID
@@ -61,6 +63,34 @@ export function KioskSettingsContent() {
 
   const { data: kioskSettings, isLoading } = useKioskSettings(orgId || undefined, locationId || undefined);
   const updateSettings = useUpdateKioskSettings();
+
+  // Detect current preset based on colors
+  const detectPreset = (bg: string, text: string, accent: string): KioskThemePreset | 'custom' => {
+    for (const [key, preset] of Object.entries(KIOSK_THEME_PRESETS)) {
+      if (
+        preset.background_color.toLowerCase() === bg.toLowerCase() &&
+        preset.text_color.toLowerCase() === text.toLowerCase() &&
+        preset.accent_color.toLowerCase() === accent.toLowerCase()
+      ) {
+        return key as KioskThemePreset;
+      }
+    }
+    return 'custom';
+  };
+
+  // Apply a theme preset
+  const applyPreset = (preset: KioskThemePreset | 'custom') => {
+    setThemePreset(preset);
+    if (preset !== 'custom' && KIOSK_THEME_PRESETS[preset]) {
+      const { background_color, text_color, accent_color } = KIOSK_THEME_PRESETS[preset];
+      setLocalSettings(prev => ({
+        ...prev,
+        background_color,
+        text_color,
+        accent_color,
+      }));
+    }
+  };
 
   const [localSettings, setLocalSettings] = useState<LocalSettings>({
     background_color: DEFAULT_KIOSK_SETTINGS.background_color,
@@ -104,6 +134,12 @@ export function KioskSettingsContent() {
         require_form_signing: kioskSettings.require_form_signing,
         exit_pin: kioskSettings.exit_pin,
       });
+      // Detect which preset matches
+      setThemePreset(detectPreset(
+        kioskSettings.background_color,
+        kioskSettings.text_color,
+        kioskSettings.accent_color
+      ));
     } else {
       // Reset to defaults when no settings found
       setLocalSettings({
@@ -125,6 +161,7 @@ export function KioskSettingsContent() {
         require_form_signing: DEFAULT_KIOSK_SETTINGS.require_form_signing,
         exit_pin: DEFAULT_KIOSK_SETTINGS.exit_pin,
       });
+      setThemePreset('cream');
     }
   }, [kioskSettings]);
 
@@ -199,7 +236,60 @@ export function KioskSettingsContent() {
 
               {/* Appearance Tab */}
               <TabsContent value="appearance" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                {/* Theme Preset Selector */}
+                <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Palette className="w-4 h-4 text-muted-foreground" />
+                    <Label className="text-sm font-medium">Theme Preset</Label>
+                  </div>
+                  <Select 
+                    value={themePreset} 
+                    onValueChange={(v) => applyPreset(v as KioskThemePreset | 'custom')}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a theme preset" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="cream">
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-0.5">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#F5F0E8' }} />
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#9A7B4F' }} />
+                          </div>
+                          Cream (Light)
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="dark-luxury">
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-0.5">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#0A0A0A' }} />
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#C9A962' }} />
+                          </div>
+                          Dark Luxury
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="oat-minimal">
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-0.5">
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#E8E0D5' }} />
+                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#8B7355' }} />
+                          </div>
+                          Oat Minimal
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="custom">Custom Colors</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Select a brand-aligned preset or choose custom to define your own colors
+                  </p>
+                </div>
+
+                {/* Color Pickers - dimmed when using preset */}
+                <div className={cn(
+                  "grid grid-cols-2 gap-4 transition-opacity",
+                  themePreset !== 'custom' && "opacity-50"
+                )}>
                   <div className="space-y-2">
                     <Label htmlFor="bg-color">Background Color</Label>
                     <div className="flex items-center gap-2">
@@ -207,12 +297,18 @@ export function KioskSettingsContent() {
                         type="color"
                         id="bg-color"
                         value={localSettings.background_color}
-                        onChange={(e) => updateField('background_color', e.target.value)}
+                        onChange={(e) => {
+                          updateField('background_color', e.target.value);
+                          setThemePreset('custom');
+                        }}
                         className="w-10 h-10 rounded-lg border cursor-pointer"
                       />
                       <Input
                         value={localSettings.background_color}
-                        onChange={(e) => updateField('background_color', e.target.value)}
+                        onChange={(e) => {
+                          updateField('background_color', e.target.value);
+                          setThemePreset('custom');
+                        }}
                         className="font-mono text-sm"
                       />
                     </div>
@@ -225,12 +321,18 @@ export function KioskSettingsContent() {
                         type="color"
                         id="accent-color"
                         value={localSettings.accent_color}
-                        onChange={(e) => updateField('accent_color', e.target.value)}
+                        onChange={(e) => {
+                          updateField('accent_color', e.target.value);
+                          setThemePreset('custom');
+                        }}
                         className="w-10 h-10 rounded-lg border cursor-pointer"
                       />
                       <Input
                         value={localSettings.accent_color}
-                        onChange={(e) => updateField('accent_color', e.target.value)}
+                        onChange={(e) => {
+                          updateField('accent_color', e.target.value);
+                          setThemePreset('custom');
+                        }}
                         className="font-mono text-sm"
                       />
                     </div>
@@ -243,12 +345,18 @@ export function KioskSettingsContent() {
                         type="color"
                         id="text-color"
                         value={localSettings.text_color}
-                        onChange={(e) => updateField('text_color', e.target.value)}
+                        onChange={(e) => {
+                          updateField('text_color', e.target.value);
+                          setThemePreset('custom');
+                        }}
                         className="w-10 h-10 rounded-lg border cursor-pointer"
                       />
                       <Input
                         value={localSettings.text_color}
-                        onChange={(e) => updateField('text_color', e.target.value)}
+                        onChange={(e) => {
+                          updateField('text_color', e.target.value);
+                          setThemePreset('custom');
+                        }}
                         className="font-mono text-sm"
                       />
                     </div>
