@@ -13343,6 +13343,62 @@ export type Database = {
           },
         ]
       }
+      time_entries: {
+        Row: {
+          break_minutes: number | null
+          clock_in: string
+          clock_out: string | null
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          location_id: string | null
+          notes: string | null
+          organization_id: string
+          payroll_synced: boolean | null
+          source: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          break_minutes?: number | null
+          clock_in?: string
+          clock_out?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          organization_id: string
+          payroll_synced?: boolean | null
+          source?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          break_minutes?: number | null
+          clock_in?: string
+          clock_out?: string | null
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          location_id?: string | null
+          notes?: string | null
+          organization_id?: string
+          payroll_synced?: boolean | null
+          source?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       time_off_requests: {
         Row: {
           calendar_event_id: string | null

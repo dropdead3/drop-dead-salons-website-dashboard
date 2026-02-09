@@ -38,6 +38,7 @@ import { CustomLandingPageBanner } from '@/components/dashboard/CustomLandingPag
 import { IncidentBanner } from '@/components/dashboard/IncidentBanner';
 import { HelpFAB } from '@/components/dashboard/HelpFAB';
 import { DashboardLockScreen } from '@/components/dashboard/DashboardLockScreen';
+import { ClockInPromptDialog } from '@/components/dashboard/ClockInPromptDialog';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
 import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
 import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
@@ -1127,12 +1128,20 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
 // Wrapper that adds lock screen functionality
 function DashboardLayoutWithLock(props: DashboardLayoutProps) {
   const { isLocked, unlock } = useDashboardLock();
+  const [clockInTrigger, setClockInTrigger] = useState(false);
+
+  const handleUnlock = (user?: { user_id: string; display_name: string }) => {
+    unlock(user);
+    // Trigger clock-in prompt after unlock
+    setClockInTrigger(prev => !prev);
+  };
 
   return (
     <>
       <DashboardLayoutInner {...props} />
+      <ClockInPromptDialog trigger={clockInTrigger} />
       <AnimatePresence>
-        {isLocked && <DashboardLockScreen onUnlock={unlock} />}
+        {isLocked && <DashboardLockScreen onUnlock={handleUnlock} />}
       </AnimatePresence>
     </>
   );
