@@ -675,27 +675,29 @@ export function ForecastingCard() {
                       const chartLeft = xAxisMap[0].x;
                       const chartRight = chartLeft + xAxisMap[0].width;
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      const badgeFOWidth = 160;
+                      const badgeFOWidth = 180;
                       const avgText = `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`;
-                      const estimatedBadgeWidth = avgText.length * 7.5 + 16;
+                      const badgeHeight = 28;
+                      const estimatedBadgeWidth = avgText.length * 8 + 20;
                       return (
                         <g style={{ pointerEvents: 'none' }}>
                           <style>{`
                             @keyframes drawLine { to { stroke-dashoffset: 0; } }
                             @keyframes fadeInBadge { from { opacity: 0; } to { opacity: 1; } }
                           `}</style>
-                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeFOWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
+                          <foreignObject x={chartLeft} y={yPos - badgeHeight / 2} width={badgeFOWidth} height={badgeHeight} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
                             <div style={{ 
-                              fontSize: 11, fontWeight: 600, 
+                              fontSize: 12, fontWeight: 600, 
                               color: 'hsl(25, 100%, 55%)',
                               backdropFilter: 'blur(6px)',
                               WebkitBackdropFilter: 'blur(6px)',
                               background: 'hsl(var(--background) / 0.7)',
                               border: '1px solid hsl(var(--border) / 0.3)',
-                              borderRadius: 4,
-                              padding: '1px 6px',
+                              borderRadius: 5,
+                              padding: '3px 8px',
                               whiteSpace: 'nowrap',
                               display: 'inline-block',
+                              lineHeight: '1',
                             }}>
                               {avgText}
                             </div>
