@@ -120,8 +120,8 @@ export function KioskConfirmScreen() {
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
               >
-                <motion.h1 
-                  className="text-4xl md:text-5xl font-semibold mb-3 tracking-tight"
+              <motion.h1 
+                  className="text-4xl md:text-5xl font-medium mb-3 tracking-tight"
                   style={{ color: textColor }}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -198,7 +198,7 @@ export function KioskConfirmScreen() {
                     {/* Details */}
                     <div className="flex-1 min-w-0">
                       <div 
-                        className="text-2xl font-semibold mb-2 truncate"
+                        className="text-2xl font-medium mb-2 truncate"
                         style={{ color: textColor }}
                       >
                         {appointment.service_name || 'Appointment'}
@@ -227,8 +227,8 @@ export function KioskConfirmScreen() {
 
                     {/* Check-in button */}
                     <motion.div 
-                      className="px-6 py-4 rounded-2xl font-semibold text-lg shadow-lg"
-                      style={{ 
+                      className="px-6 py-4 rounded-2xl font-medium text-lg shadow-lg"
+                      style={{
                         background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}CC 100%)`,
                         color: '#FFFFFF',
                         boxShadow: `0 8px 24px ${accentColor}40`,
@@ -304,7 +304,7 @@ export function KioskConfirmScreen() {
 
             {/* Message */}
             <motion.h1 
-              className="text-4xl md:text-5xl font-semibold mb-4 tracking-tight"
+              className="text-4xl md:text-5xl font-medium mb-4 tracking-tight"
               style={{ color: textColor }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -331,8 +331,8 @@ export function KioskConfirmScreen() {
             >
               {enableWalkIns && (
                 <motion.button
-                  className="flex items-center justify-center gap-3 px-10 py-5 rounded-2xl text-xl font-semibold min-w-[280px] shadow-xl transition-shadow"
-                  style={{ 
+                  className="flex items-center justify-center gap-3 px-10 py-5 rounded-2xl text-xl font-medium min-w-[280px] shadow-xl transition-shadow"
+                  style={{
                     background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}CC 100%)`,
                     color: '#FFFFFF',
                     boxShadow: `0 8px 32px ${accentColor}40`,

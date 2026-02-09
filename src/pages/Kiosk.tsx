@@ -39,7 +39,7 @@ export default function Kiosk() {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black text-white">
         <div className="text-center">
-          <h1 className="text-2xl font-semibold mb-2">Invalid Kiosk URL</h1>
+          <h1 className="text-2xl font-medium mb-2">Invalid Kiosk URL</h1>
           <p className="opacity-80">A location ID is required.</p>
         </div>
       </div>
