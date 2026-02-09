@@ -161,3 +161,6 @@ verify_jwt = false
 
 [functions.onboard-renter]
 verify_jwt = false
+
+[functions.ai-business-insights]
+verify_jwt = false

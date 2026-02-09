@@ -48,8 +48,8 @@ export const PINNABLE_CARD_IDS = [
 ];
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  sections: ['hub_quicklinks', 'quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
-  sectionOrder: ['hub_quicklinks', 'quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sections: ['ai_insights', 'hub_quicklinks', 'quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sectionOrder: ['ai_insights', 'hub_quicklinks', 'quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
   pinnedCards: [],
   widgets: ['changelog', 'birthdays', 'anniversaries', 'schedule'],
   hasCompletedSetup: false,
@@ -89,6 +89,15 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
       ...migrated,
       sections: ['hub_quicklinks', ...(migrated.sections || [])],
       sectionOrder: ['hub_quicklinks', ...(migrated.sectionOrder || [])],
+    };
+  }
+  
+  // Ensure ai_insights is added for existing layouts (migration for existing users)
+  if (!migrated.sections?.includes('ai_insights')) {
+    migrated = {
+      ...migrated,
+      sections: ['ai_insights', ...(migrated.sections || [])],
+      sectionOrder: ['ai_insights', ...(migrated.sectionOrder || [])],
     };
   }
   
