@@ -170,10 +170,8 @@ export function KioskIdleScreen() {
       <div className="relative z-10 flex flex-col items-center text-center px-8 -mt-12">
         {/* Logo with floating animation - or business name text fallback */}
         {logoUrl ? (
-          <motion.img
-            src={logoUrl}
-            alt={businessName || 'Logo'}
-            className="h-20 md:h-28 mb-12 object-contain"
+          <motion.div
+            className="mb-12 flex items-center justify-center"
             initial={{ y: -30, opacity: 0 }}
             animate={{ 
               y: [0, -8, 0],
@@ -183,7 +181,21 @@ export function KioskIdleScreen() {
               y: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
               opacity: { duration: 0.5 },
             }}
-          />
+          >
+            <img
+              src={logoUrl}
+              alt={businessName || 'Logo'}
+              className="max-h-20 md:max-h-28 max-w-[280px] md:max-w-[400px] w-auto h-auto object-contain"
+              style={{
+                // Add drop shadow for dark logos on dark backgrounds
+                filter: isDarkTheme ? 'drop-shadow(0 2px 8px rgba(255,255,255,0.1))' : 'drop-shadow(0 2px 8px rgba(0,0,0,0.1))',
+              }}
+              onError={(e) => {
+                // Hide broken images
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+          </motion.div>
         ) : businessName ? (
           <motion.h2
             className="text-3xl md:text-4xl font-light tracking-widest uppercase mb-12"
