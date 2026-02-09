@@ -566,31 +566,31 @@ export function ForecastingCard() {
                 <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: showWeeklyChart ? 40 : 35, left: 10 }}>
                   <defs>
                     <linearGradient id="glassPrimary" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.95} />
-                      <stop offset="40%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
-                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.55} />
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
+                      <stop offset="40%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
                     </linearGradient>
                     <linearGradient id="glassPeak" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.95} />
-                      <stop offset="40%" stopColor="hsl(var(--chart-2))" stopOpacity={0.75} />
-                      <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.6} />
+                      <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.7} />
+                      <stop offset="40%" stopColor="hsl(var(--chart-2))" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.35} />
                     </linearGradient>
                     <linearGradient id="glassToday" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.95} />
-                      <stop offset="40%" stopColor="hsl(var(--chart-3))" stopOpacity={0.75} />
-                      <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.6} />
+                      <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.7} />
+                      <stop offset="40%" stopColor="hsl(var(--chart-3))" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.35} />
                     </linearGradient>
                     <linearGradient id="glassPrimaryLight" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
-                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
                     </linearGradient>
                     <linearGradient id="glassPeakLight" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.55} />
-                      <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3} />
+                      <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.15} />
                     </linearGradient>
                     <linearGradient id="glassTodayLight" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.6} />
-                      <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.3} />
+                      <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.35} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.15} />
                     </linearGradient>
                   </defs>
                   <XAxis
@@ -600,7 +600,7 @@ export function ForecastingCard() {
                       : <DailyXAxisTick days={days} peakDate={peakDay?.date} onDayClick={handleDayClick} isEomPeriod={isEomPeriod} is7DaysPeriod={is7DaysPeriod} />
                     }
                     tickLine={false}
-                    axisLine={false}
+                    axisLine={{ stroke: 'hsl(var(--foreground) / 0.15)', strokeWidth: 1 }}
                     interval={0}
                     height={showWeeklyChart ? 45 : 40}
                   />
@@ -633,7 +633,7 @@ export function ForecastingCard() {
                           fill={entry.isPeak ? 'url(#glassPeakLight)' : (isToday ? 'url(#glassTodayLight)' : 'url(#glassPrimaryLight)')}
                           fillOpacity={1}
                           stroke={entry.isPeak ? 'hsl(var(--chart-2))' : (isToday ? 'hsl(var(--chart-3))' : 'hsl(var(--primary))')}
-                          strokeOpacity={0.3}
+                          strokeOpacity={0.4}
                           strokeWidth={1}
                         />
                       );
@@ -660,7 +660,7 @@ export function ForecastingCard() {
                           fill={entry.isPeak ? 'url(#glassPeak)' : (isToday ? 'url(#glassToday)' : 'url(#glassPrimary)')}
                           fillOpacity={1}
                           stroke={entry.isPeak ? 'hsl(var(--chart-2))' : (isToday ? 'hsl(var(--chart-3))' : 'hsl(var(--primary))')}
-                          strokeOpacity={0.4}
+                          strokeOpacity={0.5}
                           strokeWidth={1}
                         />
                       );
