@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Settings, Lock, Eye, EyeOff, Check, Palette, Type, Clock, Users, Image } from 'lucide-react';
+import { X, Settings, Lock, Eye, EyeOff, Check, Palette, Type, Clock, Users, Image, Loader2 } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS, useUpdateKioskSettings } from '@/hooks/useKioskSettings';
+import { useValidatePin } from '@/hooks/useUserPin';
 
 interface KioskSettingsDialogProps {
   isOpen: boolean;
@@ -14,11 +15,14 @@ type SettingsTab = 'appearance' | 'content' | 'behavior';
 export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProps) {
   const { settings, organizationId, locationId } = useKiosk();
   const updateSettings = useUpdateKioskSettings();
+  const validatePin = useValidatePin();
   
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState(false);
+  const [pinErrorMessage, setPinErrorMessage] = useState('');
   const [showPin, setShowPin] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
   const [activeTab, setActiveTab] = useState<SettingsTab>('appearance');
   
   // Local settings state
@@ -34,37 +38,77 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
     enable_walk_ins: settings?.enable_walk_ins ?? DEFAULT_KIOSK_SETTINGS.enable_walk_ins,
     show_stylist_photo: settings?.show_stylist_photo ?? DEFAULT_KIOSK_SETTINGS.show_stylist_photo,
     show_wait_time_estimate: settings?.show_wait_time_estimate ?? DEFAULT_KIOSK_SETTINGS.show_wait_time_estimate,
-    exit_pin: settings?.exit_pin || DEFAULT_KIOSK_SETTINGS.exit_pin,
   });
 
-  const storedPin = settings?.exit_pin || DEFAULT_KIOSK_SETTINGS.exit_pin;
-
-  const handlePinSubmit = () => {
-    if (pinInput === storedPin) {
-      setIsAuthenticated(true);
-      setPinError(false);
-      setPinInput('');
-    } else {
+  const handlePinSubmit = async () => {
+    if (pinInput.length < 4 || isValidating) return;
+    
+    setIsValidating(true);
+    setPinError(false);
+    setPinErrorMessage('');
+    
+    try {
+      const result = await validatePin.mutateAsync(pinInput);
+      
+      if (result && (result.is_super_admin || result.is_primary_owner)) {
+        setIsAuthenticated(true);
+        setPinError(false);
+        setPinInput('');
+      } else if (result) {
+        // Valid PIN but not an admin
+        setPinError(true);
+        setPinErrorMessage('Admin access required');
+        setPinInput('');
+      } else {
+        // No matching PIN
+        setPinError(true);
+        setPinErrorMessage('Incorrect PIN');
+        setPinInput('');
+      }
+    } catch (error) {
       setPinError(true);
+      setPinErrorMessage('Incorrect PIN');
       setPinInput('');
+    } finally {
+      setIsValidating(false);
     }
   };
 
-  const handlePinDigit = (digit: string) => {
-    if (pinInput.length < 4) {
+  const handlePinDigit = async (digit: string) => {
+    if (pinInput.length < 4 && !isValidating) {
       const newPin = pinInput + digit;
       setPinInput(newPin);
       setPinError(false);
+      setPinErrorMessage('');
       
       // Auto-submit when 4 digits entered
       if (newPin.length === 4) {
-        if (newPin === storedPin) {
-          setIsAuthenticated(true);
-          setPinError(false);
-          setPinInput('');
-        } else {
+        setIsValidating(true);
+        
+        try {
+          const result = await validatePin.mutateAsync(newPin);
+          
+          if (result && (result.is_super_admin || result.is_primary_owner)) {
+            setIsAuthenticated(true);
+            setPinError(false);
+            setPinInput('');
+          } else if (result) {
+            // Valid PIN but not an admin
+            setPinError(true);
+            setPinErrorMessage('Admin access required');
+            setPinInput('');
+          } else {
+            // No matching PIN
+            setPinError(true);
+            setPinErrorMessage('Incorrect PIN');
+            setPinInput('');
+          }
+        } catch (error) {
           setPinError(true);
+          setPinErrorMessage('Incorrect PIN');
           setPinInput('');
+        } finally {
+          setIsValidating(false);
         }
       }
     }
@@ -194,8 +238,19 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    Incorrect PIN. Please try again.
+                    {pinErrorMessage || 'Incorrect PIN'}. Please try again.
                   </motion.p>
+                )}
+
+                {isValidating && (
+                  <motion.div 
+                    className="flex items-center gap-2 text-white/60 mb-4"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Validating...</span>
+                  </motion.div>
                 )}
 
                 {/* Number pad */}
@@ -209,13 +264,13 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                           : key === 'del'
                           ? 'bg-white/5 text-white/60 hover:bg-white/10'
                           : 'bg-white/10 text-white hover:bg-white/15'
-                      }`}
+                      } ${isValidating ? 'opacity-50 cursor-not-allowed' : ''}`}
                       onClick={() => {
                         if (key === 'del') handlePinDelete();
                         else if (key) handlePinDigit(key);
                       }}
                       whileTap={{ scale: 0.95 }}
-                      disabled={key === ''}
+                      disabled={key === '' || isValidating}
                     >
                       {key === 'del' ? '←' : key}
                     </motion.button>
@@ -225,10 +280,10 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                 <motion.button
                   className="mt-6 px-8 py-3 rounded-xl text-lg font-medium bg-purple-600 text-white hover:bg-purple-500 transition-colors disabled:opacity-50"
                   onClick={handlePinSubmit}
-                  disabled={pinInput.length < 4}
+                  disabled={pinInput.length < 4 || isValidating}
                   whileTap={{ scale: 0.98 }}
                 >
-                  Unlock Settings
+                  {isValidating ? 'Validating...' : 'Unlock Settings'}
                 </motion.button>
               </div>
             ) : (
@@ -343,13 +398,11 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                         />
                       </SettingGroup>
                       <SettingGroup title="Security">
-                        <TextSetting
-                          label="Admin PIN"
-                          value={localSettings.exit_pin}
-                          onChange={(v) => updateLocalSetting('exit_pin', v.slice(0, 4).replace(/\D/g, ''))}
-                          placeholder="4 digit PIN"
-                          type="password"
-                        />
+                        <div className="px-4 py-3 rounded-xl bg-white/5 border border-white/10">
+                          <p className="text-sm text-white/60">
+                            Admin access uses your personal Quick Login PIN. Only Primary Owners and Super Admins can access these settings.
+                          </p>
+                        </div>
                       </SettingGroup>
                     </>
                   )}
