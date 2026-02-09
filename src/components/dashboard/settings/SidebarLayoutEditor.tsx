@@ -136,7 +136,7 @@ const LINK_CONFIG: Record<string, { label: string; icon: React.ComponentType<{ c
   '/dashboard/admin/analytics': { label: 'Analytics Hub', icon: TrendingUp },
   '/dashboard/directory': { label: 'Team Directory', icon: Contact },
   '/dashboard/clients': { label: 'Client Directory', icon: Users },
-  '/dashboard/admin/payroll': { label: 'Payroll Hub', icon: DollarSign },
+  '/dashboard/admin/payroll': { label: 'Hiring & Payroll', icon: DollarSign },
   '/dashboard/admin/booth-renters': { label: 'Renter Hub', icon: Store },
   
   // Website

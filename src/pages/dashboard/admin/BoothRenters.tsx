@@ -1,7 +1,8 @@
 import { useSearchParams } from 'react-router-dom';
-import { Store, Users, Receipt, Building2 } from 'lucide-react';
+import { Store, Users, Receipt, Building2, ClipboardList } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { RentersTabContent, PaymentsTabContent } from '@/components/dashboard/booth-renters';
+import { RenterOnboardContent } from '@/components/dashboard/booth-renters/RenterOnboardContent';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -78,6 +79,10 @@ export default function BoothRenters() {
               <Receipt className="h-4 w-4" />
               Payments
             </TabsTrigger>
+            <TabsTrigger value="onboarding" className="gap-2">
+              <ClipboardList className="h-4 w-4" />
+              Onboarding
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="renters">
@@ -86,6 +91,10 @@ export default function BoothRenters() {
 
           <TabsContent value="payments">
             <PaymentsTabContent organizationId={organizationId} />
+          </TabsContent>
+
+          <TabsContent value="onboarding">
+            <RenterOnboardContent organizationId={organizationId} />
           </TabsContent>
         </Tabs>
       </PlatformPageContainer>
