@@ -620,16 +620,16 @@ export function ForecastingCard() {
                   {!showWeeklyChart && averageDaily > 0 && (
                     <ReferenceLine 
                       y={averageDaily} 
-                      stroke="hsl(30, 100%, 50%)" 
-                      strokeDasharray="4 4"
-                      strokeWidth={1.5}
+                      stroke="hsl(25, 100%, 55%)" 
+                      strokeDasharray="6 3"
+                      strokeWidth={2}
                       label={{
                         value: `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`,
-                        position: 'insideBottomLeft',
-                        fill: 'hsl(30, 100%, 50%)',
-                        fontSize: 11,
-                        fontWeight: 500,
-                        offset: 4,
+                        position: 'left',
+                        fill: 'hsl(25, 100%, 55%)',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        offset: 8,
                       }}
                     />
                   )}
@@ -637,16 +637,16 @@ export function ForecastingCard() {
                   {showWeeklyChart && averageWeekly > 0 && (
                     <ReferenceLine 
                       y={averageWeekly} 
-                      stroke="hsl(30, 100%, 50%)" 
-                      strokeDasharray="4 4"
-                      strokeWidth={1.5}
+                      stroke="hsl(25, 100%, 55%)" 
+                      strokeDasharray="6 3"
+                      strokeWidth={2}
                       label={{
                         value: `Weekly Avg: $${Math.round(averageWeekly).toLocaleString()}`,
-                        position: 'insideBottomLeft',
-                        fill: 'hsl(30, 100%, 50%)',
-                        fontSize: 11,
-                        fontWeight: 500,
-                        offset: 4,
+                        position: 'left',
+                        fill: 'hsl(25, 100%, 55%)',
+                        fontSize: 12,
+                        fontWeight: 700,
+                        offset: 8,
                       }}
                     />
                   )}
