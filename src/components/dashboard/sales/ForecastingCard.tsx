@@ -620,8 +620,12 @@ export function ForecastingCard() {
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
                       const badgeWidth = 140;
                       return (
-                        <g>
-                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24}>
+                        <g style={{ pointerEvents: 'none' }}>
+                          <style>{`
+                            @keyframes drawLine { to { stroke-dashoffset: 0; } }
+                            @keyframes fadeInBadge { from { opacity: 0; } to { opacity: 1; } }
+                          `}</style>
+                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out forwards', opacity: 0 }}>
                             <div style={{ 
                               fontSize: 11, fontWeight: 600, 
                               color: 'hsl(25, 100%, 55%)',
@@ -637,15 +641,22 @@ export function ForecastingCard() {
                               Daily Avg: ${Math.round(averageDaily).toLocaleString()}
                             </div>
                           </foreignObject>
-                          <line
-                            x1={chartLeft + badgeWidth + 4}
-                            y1={yPos}
-                            x2={chartRight}
-                            y2={yPos}
-                            stroke="hsl(25, 100%, 55%)"
-                            strokeDasharray="6 3"
-                            strokeWidth={2}
-                          />
+                          {(() => {
+                            const lineLength = chartRight - (chartLeft + badgeWidth + 4);
+                            return (
+                              <line
+                                x1={chartLeft + badgeWidth + 4}
+                                y1={yPos}
+                                x2={chartRight}
+                                y2={yPos}
+                                stroke="hsl(25, 100%, 55%)"
+                                strokeDasharray={lineLength}
+                                strokeDashoffset={lineLength}
+                                strokeWidth={1.5}
+                                style={{ animation: 'drawLine 1s ease-out 0.3s forwards' }}
+                              />
+                            );
+                          })()}
                         </g>
                       );
                     }} />
@@ -661,8 +672,8 @@ export function ForecastingCard() {
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
                       const badgeWidth = 155;
                       return (
-                        <g>
-                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24}>
+                        <g style={{ pointerEvents: 'none' }}>
+                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out forwards', opacity: 0 }}>
                             <div style={{ 
                               fontSize: 11, fontWeight: 600, 
                               color: 'hsl(25, 100%, 55%)',
@@ -678,15 +689,22 @@ export function ForecastingCard() {
                               Weekly Avg: ${Math.round(averageWeekly).toLocaleString()}
                             </div>
                           </foreignObject>
-                          <line
-                            x1={chartLeft + badgeWidth + 4}
-                            y1={yPos}
-                            x2={chartRight}
-                            y2={yPos}
-                            stroke="hsl(25, 100%, 55%)"
-                            strokeDasharray="6 3"
-                            strokeWidth={2}
-                          />
+                          {(() => {
+                            const lineLength = chartRight - (chartLeft + badgeWidth + 4);
+                            return (
+                              <line
+                                x1={chartLeft + badgeWidth + 4}
+                                y1={yPos}
+                                x2={chartRight}
+                                y2={yPos}
+                                stroke="hsl(25, 100%, 55%)"
+                                strokeDasharray={lineLength}
+                                strokeDashoffset={lineLength}
+                                strokeWidth={1.5}
+                                style={{ animation: 'drawLine 1s ease-out 0.3s forwards' }}
+                              />
+                            );
+                          })()}
                         </g>
                       );
                     }} />
