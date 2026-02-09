@@ -1131,6 +1131,8 @@ function DashboardLayoutWithLock(props: DashboardLayoutProps) {
 
   const handleUnlock = (user?: { user_id: string; display_name: string }) => {
     unlock(user);
+    // Clear any previous dismissal so prompt shows again (only if not clocked in)
+    sessionStorage.removeItem('clock-in-prompt-dismissed');
     // Trigger clock-in prompt after unlock
     setClockInTrigger(prev => !prev);
   };
