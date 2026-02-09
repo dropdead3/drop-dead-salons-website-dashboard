@@ -34,6 +34,10 @@ import {
   MessageSquarePlus,
   UserCheck,
   ClipboardCheck,
+  FileText,
+  Star,
+  ShieldAlert,
+  CalendarDays,
 } from 'lucide-react';
 
 interface ManagementCardProps {
@@ -232,6 +236,17 @@ export default function ManagementHub() {
             colorClass="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
           />
           <ManagementCard
+            href="/dashboard/admin/shift-swaps"
+            icon={ArrowLeftRight}
+            title="Shift Swap Approvals"
+            description="Review and approve shift swap requests"
+            colorClass="bg-teal-500/10 text-teal-600 dark:text-teal-400"
+          />
+        </CategorySection>
+
+        {/* Performance & Compliance */}
+        <CategorySection title="Performance & Compliance">
+          <ManagementCard
             href="/dashboard/admin/strikes"
             icon={AlertTriangle}
             title="Staff Strikes"
@@ -241,11 +256,43 @@ export default function ManagementHub() {
             colorClass="bg-red-500/10 text-red-600 dark:text-red-400"
           />
           <ManagementCard
-            href="/dashboard/admin/shift-swaps"
-            icon={ArrowLeftRight}
-            title="Shift Swap Approvals"
-            description="Review and approve shift swap requests"
-            colorClass="bg-teal-500/10 text-teal-600 dark:text-teal-400"
+            href="/dashboard/admin/performance-reviews"
+            icon={Star}
+            title="Performance Reviews"
+            description="Structured reviews with ratings and goals"
+            colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/documents"
+            icon={FileText}
+            title="Document Tracker"
+            description="Licenses, certifications, and compliance docs"
+            colorClass="bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/incidents"
+            icon={ShieldAlert}
+            title="Incident Reports"
+            description="Workplace safety and incident documentation"
+            colorClass="bg-orange-500/10 text-orange-600 dark:text-orange-400"
+          />
+        </CategorySection>
+
+        {/* PTO & Leave */}
+        <CategorySection title="PTO & Leave">
+          <ManagementCard
+            href="/dashboard/admin/pto"
+            icon={CalendarDays}
+            title="PTO Balances"
+            description="Manage PTO policies and employee balances"
+            colorClass="bg-green-500/10 text-green-600 dark:text-green-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/schedule-requests"
+            icon={CalendarClock}
+            title="Time-Off Requests"
+            description="View and approve time-off requests"
+            colorClass="bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
           />
         </CategorySection>
 

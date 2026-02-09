@@ -116,6 +116,12 @@ import ChallengeDetail from "./pages/dashboard/admin/ChallengeDetail";
 import ShiftSwapMarketplace from "./pages/dashboard/ShiftSwapMarketplace";
 import ShiftSwapApprovals from "./pages/dashboard/admin/ShiftSwapApprovals";
 
+// HR Tools Suite
+import DocumentTracker from "./pages/dashboard/admin/DocumentTracker";
+import PerformanceReviews from "./pages/dashboard/admin/PerformanceReviews";
+import PTOManager from "./pages/dashboard/admin/PTOManager";
+import IncidentReports from "./pages/dashboard/admin/IncidentReports";
+
 // Phase 3: Points, Huddles, Training Enhancements
 import RewardShop from "./pages/dashboard/RewardShop";
 import PointsConfig from "./pages/dashboard/admin/PointsConfig";
@@ -292,6 +298,12 @@ const App = () => (
                       {/* Shift Swap routes */}
                       <Route path="/dashboard/shift-swaps" element={<ProtectedRoute><ShiftSwapMarketplace /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/shift-swaps" element={<ProtectedRoute requiredPermission="manage_schedule_requests"><ShiftSwapApprovals /></ProtectedRoute>} />
+                      
+                      {/* HR Tools Suite */}
+                      <Route path="/dashboard/admin/documents" element={<ProtectedRoute requiredPermission="view_team_overview"><DocumentTracker /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/performance-reviews" element={<ProtectedRoute requiredPermission="view_team_overview"><PerformanceReviews /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/pto" element={<ProtectedRoute requiredPermission="view_team_overview"><PTOManager /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/incidents" element={<ProtectedRoute requiredPermission="view_team_overview"><IncidentReports /></ProtectedRoute>} />
                       
                       {/* Phase 3: Points Economy, Daily Huddle routes */}
                       <Route path="/dashboard/rewards" element={<ProtectedRoute><RewardShop /></ProtectedRoute>} />
