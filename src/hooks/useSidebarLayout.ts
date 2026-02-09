@@ -37,6 +37,7 @@ export const MANAGEMENT_SUB_GROUPS = {
       '/dashboard/rewards',
       '/dashboard/assistant-schedule',
       '/dashboard/schedule-meeting',
+      '/dashboard/admin/team',
     ],
   },
   analytics: {
@@ -54,7 +55,6 @@ export const MANAGEMENT_SUB_GROUPS = {
     links: [
       '/dashboard/directory',
       '/dashboard/clients',
-      '/dashboard/admin/team',
     ],
   },
   operations: {
