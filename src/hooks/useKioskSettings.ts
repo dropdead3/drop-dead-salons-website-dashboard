@@ -337,3 +337,80 @@ export function useResetLocationToDefaults() {
     },
   });
 }
+
+// Hook to push a specific location's settings to all other locations
+export function usePushLocationSettingsToAll() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      organizationId, 
+      sourceLocationId,
+      settings 
+    }: { 
+      organizationId: string; 
+      sourceLocationId: string;
+      settings: Partial<Omit<KioskSettings, 'id' | 'organization_id' | 'location_id' | 'created_at' | 'updated_at'>>;
+    }) => {
+      // Get all locations for this org
+      const { data: locations, error: locError } = await supabase
+        .from('locations')
+        .select('id')
+        .eq('organization_id', organizationId)
+        .eq('is_active', true);
+      
+      if (locError) throw locError;
+      
+      // Filter out the source location
+      const targetLocations = locations?.filter(loc => loc.id !== sourceLocationId) || [];
+      
+      if (targetLocations.length === 0) {
+        throw new Error('No other locations to push to');
+      }
+      
+      // For each target location, upsert the settings
+      for (const loc of targetLocations) {
+        // Check if settings exist for this location
+        const { data: existing } = await supabase
+          .from('organization_kiosk_settings')
+          .select('id')
+          .eq('organization_id', organizationId)
+          .eq('location_id', loc.id)
+          .maybeSingle();
+        
+        if (existing) {
+          // Update existing
+          const { error } = await supabase
+            .from('organization_kiosk_settings')
+            .update(settings)
+            .eq('id', existing.id);
+          
+          if (error) throw error;
+        } else {
+          // Insert new
+          const { error } = await supabase
+            .from('organization_kiosk_settings')
+            .insert({
+              organization_id: organizationId,
+              location_id: loc.id,
+              ...settings,
+            });
+          
+          if (error) throw error;
+        }
+      }
+      
+      return targetLocations.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['kiosk-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['kiosk-settings-location'] });
+      queryClient.invalidateQueries({ queryKey: ['kiosk-location-overrides'] });
+      toast.success(`Settings pushed to ${count} location${count > 1 ? 's' : ''}`);
+    },
+    onError: (error) => {
+      console.error('Failed to push settings:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to push settings to locations');
+    },
+  });
+}
