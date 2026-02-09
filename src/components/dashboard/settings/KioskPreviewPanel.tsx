@@ -201,27 +201,13 @@ export function KioskPreviewPanel({ settings, businessSettings, className }: Kio
         </p>
       )}
       
-      {/* Tap to check in - with glow */}
+      {/* Tap to check in - glass style */}
       <div className="relative mt-2">
-        <motion.div
-          className="absolute inset-0 rounded-full blur-md"
-          style={{ backgroundColor: settings.accent_color }}
-          animate={{
-            opacity: [0.2, 0.4, 0.2],
-            scale: [1, 1.03, 1],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-        
         <div 
-          className={cn("relative px-4 py-2 backdrop-blur-sm", buttonRadiusClass)}
+          className={cn("relative px-4 py-2 backdrop-blur-md", buttonRadiusClass)}
           style={{ 
-            backgroundColor: `${settings.accent_color}20`,
-            border: `1px solid ${settings.accent_color}60`,
+            backgroundColor: `${settings.accent_color}15`,
+            border: `1.5px solid ${settings.accent_color}40`,
           }}
         >
           <span 
@@ -233,22 +219,15 @@ export function KioskPreviewPanel({ settings, businessSettings, className }: Kio
         </div>
       </div>
       
-      {/* Bottom pulse indicators */}
-      <div className="absolute bottom-4 flex gap-1">
+      {/* Bottom indicators - subtle, no glow */}
+      <div className="absolute bottom-4 flex gap-1.5">
         {[0, 1, 2].map((i) => (
-          <motion.div
+          <div
             key={i}
             className="w-1 h-1 rounded-full"
-            style={{ backgroundColor: settings.accent_color }}
-            animate={{
-              opacity: [0.3, 0.8, 0.3],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: i * 0.2,
+            style={{ 
+              backgroundColor: settings.accent_color,
+              opacity: 0.5,
             }}
           />
         ))}
