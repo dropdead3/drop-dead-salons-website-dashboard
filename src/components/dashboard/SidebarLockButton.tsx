@@ -6,9 +6,10 @@ import { cn } from '@/lib/utils';
 
 interface SidebarLockButtonProps {
   isCollapsed?: boolean;
+  inFooter?: boolean;
 }
 
-export function SidebarLockButton({ isCollapsed = false }: SidebarLockButtonProps) {
+export function SidebarLockButton({ isCollapsed = false, inFooter = true }: SidebarLockButtonProps) {
   const { lock } = useDashboardLock();
   const { data: pinStatus } = useUserPinStatus();
 
@@ -25,8 +26,8 @@ export function SidebarLockButton({ isCollapsed = false }: SidebarLockButtonProp
         "flex items-center gap-3 text-sm font-sans cursor-pointer",
         "transition-all duration-200 ease-out rounded-lg",
         isCollapsed 
-          ? "px-2 py-2.5 justify-center mx-2" 
-          : "px-3 py-2.5 mx-3",
+          ? cn("px-2 py-2.5 justify-center", inFooter ? "mx-0" : "mx-2")
+          : cn("px-3 py-2.5", inFooter ? "mx-0" : "mx-3"),
         "text-muted-foreground hover:text-foreground hover:bg-muted/60"
       )}
     >

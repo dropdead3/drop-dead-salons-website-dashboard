@@ -231,12 +231,14 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     href, 
     label, 
     icon: Icon, 
-    badgeCount 
+    badgeCount,
+    inFooter = false
   }: { 
     href: string; 
     label: string; 
     icon: React.ComponentType<{ className?: string }>; 
     badgeCount?: number;
+    inFooter?: boolean;
   }) => {
     const isActive = location.pathname === href;
     // Apply dynamic label logic
@@ -257,8 +259,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           "flex items-center gap-3 text-sm font-sans cursor-pointer",
           "transition-all duration-200 ease-out rounded-lg",
           isCollapsed 
-            ? "px-2 py-2.5 justify-center mx-2" 
-            : "px-3 py-2.5 mx-3",
+            ? cn("px-2 py-2.5 justify-center", inFooter ? "mx-0" : "mx-2")
+            : cn("px-3 py-2.5", inFooter ? "mx-0" : "mx-3"),
           isActive 
             ? "bg-foreground text-background shadow-sm" 
             : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -625,6 +627,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               <NavLink 
                 key={item.href} 
                 {...item}
+                inFooter
               />
             ))}
             
