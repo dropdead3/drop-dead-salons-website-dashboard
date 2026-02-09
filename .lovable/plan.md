@@ -1,53 +1,60 @@
 
 
-# Bring Reference Line Above Bars, Thinner, with Animated Reveal
+# Visual Connection: Peak Bar to Busiest Day Callout
 
-## Problem
-The dashed orange reference line renders behind the bars (SVG paint order issue within the `<Customized>` component), it's too thick at `strokeWidth={2}`, and appears statically without any visual flair.
+## Current State
+- The peak bar is already colored green (`chart-2`) while other bars are primary/blue
+- The "Busiest day" callout below has a green dot and green text
+- But there's no explicit visual link between the two -- users have to mentally connect them
 
-## Changes
+## Approach
 
-### Both `WeekAheadForecast.tsx` and `ForecastingCard.tsx`
+Add a small star/sparkle icon and "Busiest" micro-label directly above the peak bar (replacing or augmenting the plain dollar label), rendered in the same `chart-2` green color. This creates an unmistakable visual thread: green annotation above bar -> green bar -> green dot + green text in callout below.
 
-1. **Render line on top of bars** -- The `<Customized>` component already appears after the `<Bar>` elements, but Recharts may still layer it underneath. We'll add a CSS/SVG `style={{ pointerEvents: 'none' }}` and set `z-index` behavior by using `<Customized>` with a higher rendering priority. Specifically, we'll keep the `<Customized>` after the bars (already done) but also ensure proper SVG stacking.
+### Changes
 
-2. **Reduce line boldness** -- Change `strokeWidth` from `2` to `1.5` and adjust `strokeDasharray` from `"6 3"` to `"5 3"` for a subtler, more refined look.
+**Both `WeekAheadForecast.tsx` and `ForecastingCard.tsx`:**
 
-3. **Add animated reveal effect** -- Apply an SVG `stroke-dashoffset` animation using a CSS `<style>` block or inline `style` with `@keyframes`. The line will "draw in" from left to right on mount:
-   - Set `strokeDasharray` to the full line length
-   - Animate `strokeDashoffset` from the full length to `0` over ~1 second
-   - This creates a clean "drawing" effect
-   - The badge will fade in with an opacity animation (0 to 1 over 0.5s)
+1. **Modify the `AboveBarLabel` component** to accept an `isPeak` flag. When the bar is the peak:
+   - Render a small star/sparkle SVG icon above the dollar amount
+   - Color the dollar label in `chart-2` green instead of the default foreground
+   - This makes the peak bar's label visually distinct and color-matched to the callout
+
+2. **Pass `isPeak` data to the label** via the `LabelList` by using a custom content renderer that checks the entry's `isPeak` property from `chartData`.
+
+3. **Add a subtle downward-pointing triangle** below the peak bar's label (small CSS triangle or SVG polygon in `chart-2` color) to create a "pointing" effect toward the callout section. This acts as a visual arrow saying "this bar is the one referenced below."
 
 ### Technical Detail
 
-For the animated line, we'll calculate the line length (`chartRight - chartLeft - badgeWidth - 4`) and use it as both the `strokeDasharray` and initial `strokeDashoffset`, then animate to `0`:
+The `AboveBarLabel` custom content renderer already receives the full entry payload. We'll check `payload.isPeak` and conditionally render the enhanced label:
 
 ```tsx
-const lineLength = chartRight - (chartLeft + badgeWidth + 4);
-<line
-  x1={chartLeft + badgeWidth + 4}
-  y1={yPos}
-  x2={chartRight}
-  y2={yPos}
-  stroke="hsl(25, 100%, 55%)"
-  strokeDasharray={lineLength}
-  strokeDashoffset={lineLength}
-  strokeWidth={1.5}
-  style={{
-    animation: 'drawLine 1s ease-out forwards',
-  }}
-/>
+function AboveBarLabel({ x, y, width, value, ...rest }: any) {
+  if (!value) return null;
+  const isPeak = rest?.isPeak ?? rest?.payload?.isPeak;
+  const fillColor = isPeak ? 'hsl(var(--chart-2))' : undefined;
+  
+  return (
+    <g>
+      {isPeak && (
+        <circle cx={x + width / 2} cy={y - 20} r={3} fill="hsl(var(--chart-2))" />
+      )}
+      <text
+        x={x + width / 2} y={y - 8}
+        textAnchor="middle"
+        className={cn("text-xs font-medium tabular-nums", isPeak ? "fill-chart-2" : "fill-foreground")}
+        style={{ fontWeight: isPeak ? 700 : 500 }}
+      >
+        ${value.toLocaleString()}
+      </text>
+    </g>
+  );
+}
 ```
 
-A `<style>` element will be injected inside the `<g>` with:
-```css
-@keyframes drawLine { to { stroke-dashoffset: 0; } }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-```
-
-The badge `<foreignObject>` will get `style={{ animation: 'fadeIn 0.5s ease-out forwards' }}`.
+The green dot above the peak label + green bar + green dot in the callout row creates a clear color-coded visual chain. No extra wiring needed between the SVG chart and the HTML callout -- the shared color does the work.
 
 ### Files to edit
-- `src/components/dashboard/sales/WeekAheadForecast.tsx` -- daily avg customized block
-- `src/components/dashboard/sales/ForecastingCard.tsx` -- daily avg and weekly avg customized blocks
+- `src/components/dashboard/sales/WeekAheadForecast.tsx` -- AboveBarLabel + peak callout
+- `src/components/dashboard/sales/ForecastingCard.tsx` -- AboveBarLabel + peak callout
+
