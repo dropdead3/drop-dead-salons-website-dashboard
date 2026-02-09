@@ -642,7 +642,7 @@ export function ForecastingCard() {
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
                       const badgeFOWidth = 160;
                       const avgText = `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`;
-                      const estimatedBadgeWidth = avgText.length * 6.5 + 14;
+                      const estimatedBadgeWidth = avgText.length * 7.5 + 16;
                       return (
                         <g style={{ pointerEvents: 'none' }}>
                           <style>{`
@@ -690,7 +690,7 @@ export function ForecastingCard() {
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
                       const badgeFOWidth = 180;
                       const avgText = `Weekly Avg: $${Math.round(averageWeekly).toLocaleString()}`;
-                      const estimatedBadgeWidth = avgText.length * 6.5 + 14;
+                      const estimatedBadgeWidth = avgText.length * 7.5 + 16;
                       return (
                         <g style={{ pointerEvents: 'none' }}>
                           <foreignObject x={chartLeft} y={yPos - 14} width={badgeFOWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
