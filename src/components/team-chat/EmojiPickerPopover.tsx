@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
-import { useTheme } from 'next-themes';
+import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import {
   Popover,
   PopoverContent,
@@ -20,7 +20,7 @@ export function EmojiPickerPopover({
   side = 'top',
   align = 'end'
 }: EmojiPickerPopoverProps) {
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme } = useDashboardTheme();
   const [open, setOpen] = useState(false);
 
   const handleEmojiClick = (emojiData: EmojiClickData) => {

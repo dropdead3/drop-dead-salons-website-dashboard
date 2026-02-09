@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useRef, useImperativeHandle, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useTheme } from 'next-themes';
+import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -82,7 +82,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   }, ref) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme } = useDashboardTheme();
   const internalRef = useRef<HTMLElement>(null);
   const { data: businessSettings } = useBusinessSettings();
   const { data: sidebarLayout } = useSidebarLayout();
