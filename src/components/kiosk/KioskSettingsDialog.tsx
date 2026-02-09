@@ -30,47 +30,50 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Refs to track latest state values (avoids stale closures)
+  // Refs to track latest state values - updated SYNCHRONOUSLY during render
   const isOpenRef = useRef(isOpen);
   const isAuthenticatedRef = useRef(isAuthenticated);
   
-  // Keep refs in sync with state
+  // CRITICAL: Sync refs synchronously on every render (not in useEffect)
+  // This ensures refs have current values before any effects run
+  isOpenRef.current = isOpen;
+  isAuthenticatedRef.current = isAuthenticated;
+  
+  // Session key to force fresh timer initialization on each open
+  const [sessionKey, setSessionKey] = useState(0);
+  
+  // Increment session key when dialog opens to force fresh timers
   useEffect(() => {
-    isOpenRef.current = isOpen;
+    if (isOpen) {
+      setSessionKey(prev => prev + 1);
+    }
   }, [isOpen]);
   
-  useEffect(() => {
-    isAuthenticatedRef.current = isAuthenticated;
-  }, [isAuthenticated]);
-  
-  // Reset the inactivity timeout
+  // Reset the inactivity timeout on user interaction
   const resetTimeout = useCallback(() => {
-    // Clear existing timers
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (countdownRef.current) clearInterval(countdownRef.current);
-    
-    // Use refs for current values (avoids stale closures)
     if (!isOpenRef.current || isAuthenticatedRef.current) return;
     
-    // Reset countdown
+    // Clear and restart timers
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+    
     setTimeRemaining(PIN_TIMEOUT_SECONDS);
     
-    // Start countdown interval
     countdownRef.current = setInterval(() => {
-      setTimeRemaining(prev => {
-        if (prev <= 1) {
-          if (countdownRef.current) clearInterval(countdownRef.current);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setTimeRemaining(prev => prev <= 1 ? 0 : prev - 1);
     }, 1000);
     
-    // Set timeout to close dialog
     timeoutRef.current = setTimeout(() => {
-      if (countdownRef.current) clearInterval(countdownRef.current);
-      
-      // Check refs before closing (ensures we're still in valid state)
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
       if (isOpenRef.current && !isAuthenticatedRef.current) {
         setIsAuthenticated(false);
         setPinInput('');
@@ -79,27 +82,65 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
         onClose();
       }
     }, PIN_TIMEOUT_SECONDS * 1000);
-  }, [onClose]); // Reduced dependencies - refs handle the rest
+  }, [onClose]);
   
-  // Initialize and clean up timeout
+  // Initialize timers when dialog opens - depends on sessionKey for fresh start
   useEffect(() => {
     if (isOpen && !isAuthenticated) {
-      // Small delay to ensure clean state after previous close
-      const initTimer = setTimeout(() => {
-        resetTimeout();
-      }, 50);
-      return () => clearTimeout(initTimer);
-    } else {
-      // Clear timers when authenticated or closed
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (countdownRef.current) clearInterval(countdownRef.current);
+      // Clear any existing timers first
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
+      
+      // Reset state
+      setTimeRemaining(PIN_TIMEOUT_SECONDS);
+      
+      // Start fresh countdown
+      countdownRef.current = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev <= 1) {
+            if (countdownRef.current) {
+              clearInterval(countdownRef.current);
+              countdownRef.current = null;
+            }
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      
+      // Start fresh timeout
+      timeoutRef.current = setTimeout(() => {
+        if (countdownRef.current) {
+          clearInterval(countdownRef.current);
+          countdownRef.current = null;
+        }
+        if (isOpenRef.current && !isAuthenticatedRef.current) {
+          setIsAuthenticated(false);
+          setPinInput('');
+          setPinError(false);
+          setTimeRemaining(PIN_TIMEOUT_SECONDS);
+          onClose();
+        }
+      }, PIN_TIMEOUT_SECONDS * 1000);
     }
     
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (countdownRef.current) clearInterval(countdownRef.current);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current);
+        countdownRef.current = null;
+      }
     };
-  }, [isOpen, isAuthenticated, resetTimeout]);
+  }, [sessionKey, isOpen, isAuthenticated, onClose]);
   
   // Local settings state
   const [localSettings, setLocalSettings] = useState({
