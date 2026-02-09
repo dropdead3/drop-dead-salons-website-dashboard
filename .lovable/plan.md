@@ -1,78 +1,61 @@
 
 
-# Enable Account Owner to Manage All Team PINs
+# Remove Notifications from System Settings
 
-## Overview
+## The Issue
 
-Ensure the Primary Owner (Account Owner) can view all team members and update their PINs, even if they don't have the `super_admin` role. Currently, the `canManage` access check only looks for `super_admin` role.
+The Notifications card in **Settings > System** is misplaced. "System" should be focused on personal/technical settings (Appearance, Security, Quick Login PIN), while the notification settings shown are **organization-wide business settings** like:
+- Staffing Capacity Alerts
+- Daily Check-in Reminders
+- Weekly Wins Reminders
+- Birthday Reminders
 
-## Current Issue
+## Recommendation
 
-In `AccessHub.tsx`:
-```typescript
-const isSuperAdmin = roles.includes('super_admin');
-const canManage = isSuperAdmin || isPlatformUser;  // Missing Primary Owner check
-```
+**Option A: Remove from System only** (simpler)
+- Remove the `<NotificationsCard />` from the System tab
+- These settings can be added as a dedicated "Notifications" category later if needed
 
-The Primary Owner should always have access to PIN management as a core Account Owner capability.
+**Option B: Create a dedicated Notifications category** (more complete)
+- Add a new settings category called "Notifications" to the main settings grid
+- Move the `NotificationsCard` content there
+- Remove from System tab
 
-## Files to Modify
+## Proposed Solution (Option A)
 
-### 1. `src/pages/dashboard/admin/AccessHub.tsx`
+For now, simply remove the Notifications card from System settings. This cleans up the System category to focus on what it should: Appearance, Security, and Quick Login PIN.
 
-**Change**: Add Primary Owner check to the `canManage` logic.
+## File to Modify
 
-```typescript
-import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
+### `src/pages/dashboard/admin/Settings.tsx`
 
-// Inside component:
-const { data: isPrimaryOwner } = useIsPrimaryOwner();
-const isSuperAdmin = roles.includes('super_admin');
-const canManage = isSuperAdmin || isPlatformUser || isPrimaryOwner;
-```
-
-### 2. `src/components/access-hub/TeamPinManagementTab.tsx`
-
-**Change**: Also add Primary Owner context so they can manage PINs. Update the access check message to reflect that Account Owners can also manage.
+**Change**: Remove line 1220 (`<NotificationsCard />`) from the System tab content.
 
 ```typescript
-import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
+// Before (lines 1217-1221):
+</Card>
 
-// In component:
-const { data: isPrimaryOwner } = useIsPrimaryOwner();
+{/* Notifications */}
+<NotificationsCard />
 
-// Update the restricted message:
-if (!canManage && !isPrimaryOwner) {
-  return (
-    <Card>
-      <CardContent className="py-12 text-center">
-        <Lock className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-        <h3 className="text-lg font-medium mb-2">Access Restricted</h3>
-        <p className="text-muted-foreground">
-          Only Super Admins and the Account Owner can manage team PINs.
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
+{/* Security */}
+
+// After:
+</Card>
+
+{/* Security */}
 ```
 
-## Technical Details
+**Optional cleanup**: The `NotificationsCard` function (lines 241-380) can also be removed if no longer used anywhere else, along with the related imports.
 
-### Who Can Manage Team PINs
-| User Type | Can View All Users | Can Reset PINs |
-|-----------|-------------------|----------------|
-| Primary Owner | Yes | Yes (all users including self) |
-| Super Admin | Yes | Yes (except Primary Owner) |
-| Platform User | Yes | Yes (except Primary Owner) |
-| Others | No | No |
+## After This Change
 
-### Who's PIN Cannot Be Reset by Others
-- The Primary Owner's PIN can only be changed by themselves (enforced by database trigger `protect_primary_owner_pin`)
+The **System** tab will show:
+1. **Appearance** - Color themes, dark mode
+2. **Security** - Email verification, signup restrictions  
+3. **Quick Login PIN** - Personal PIN for quick dashboard access
 
-## Implementation Order
+## Future Consideration
 
-1. Update `AccessHub.tsx` to include Primary Owner in `canManage` check
-2. Update `TeamPinManagementTab.tsx` to recognize Primary Owner access
-3. Test the flow with the Account Owner account
+If organization-wide notification settings are needed, create a dedicated "Notifications" category in the main settings grid with a Bell icon.
 
