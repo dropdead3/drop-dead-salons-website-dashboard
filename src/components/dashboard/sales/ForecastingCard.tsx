@@ -564,7 +564,36 @@ export function ForecastingCard() {
             <div className={cn("h-[200px]", showWeeklyChart && "h-[220px]")} ref={chartRef}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: showWeeklyChart ? 40 : 35, left: 10 }}>
-                  <XAxis 
+                  <defs>
+                    <linearGradient id="glassPrimary" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.95} />
+                      <stop offset="40%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.55} />
+                    </linearGradient>
+                    <linearGradient id="glassPeak" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.95} />
+                      <stop offset="40%" stopColor="hsl(var(--chart-2))" stopOpacity={0.75} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.6} />
+                    </linearGradient>
+                    <linearGradient id="glassToday" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.95} />
+                      <stop offset="40%" stopColor="hsl(var(--chart-3))" stopOpacity={0.75} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.6} />
+                    </linearGradient>
+                    <linearGradient id="glassPrimaryLight" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.25} />
+                    </linearGradient>
+                    <linearGradient id="glassPeakLight" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.55} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.3} />
+                    </linearGradient>
+                    <linearGradient id="glassTodayLight" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.6} />
+                      <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.3} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis
                     dataKey="name" 
                     tick={showWeeklyChart 
                       ? <WeeklyXAxisTick weeks={weeks} peakWeekStart={peakWeek?.weekStart} />
@@ -601,8 +630,11 @@ export function ForecastingCard() {
                       return (
                         <Cell 
                           key={`unconfirmed-${index}`}
-                          fill={entry.isPeak ? 'hsl(var(--chart-2))' : (isToday ? 'hsl(var(--chart-3))' : 'hsl(var(--primary))')}
-                          fillOpacity={entry.isPeak ? 0.6 : (isToday ? 0.7 : 0.5)}
+                          fill={entry.isPeak ? 'url(#glassPeakLight)' : (isToday ? 'url(#glassTodayLight)' : 'url(#glassPrimaryLight)')}
+                          fillOpacity={1}
+                          stroke={entry.isPeak ? 'hsl(var(--chart-2))' : (isToday ? 'hsl(var(--chart-3))' : 'hsl(var(--primary))')}
+                          strokeOpacity={0.3}
+                          strokeWidth={1}
                         />
                       );
                     })}
@@ -625,8 +657,11 @@ export function ForecastingCard() {
                       return (
                         <Cell 
                           key={`confirmed-${index}`}
-                          fill={entry.isPeak ? 'hsl(var(--chart-2))' : (isToday ? 'hsl(var(--chart-3))' : 'hsl(var(--primary))')}
-                          fillOpacity={entry.isPeak ? 1 : (isToday ? 1 : 0.9)}
+                          fill={entry.isPeak ? 'url(#glassPeak)' : (isToday ? 'url(#glassToday)' : 'url(#glassPrimary)')}
+                          fillOpacity={1}
+                          stroke={entry.isPeak ? 'hsl(var(--chart-2))' : (isToday ? 'hsl(var(--chart-3))' : 'hsl(var(--primary))')}
+                          strokeOpacity={0.4}
+                          strokeWidth={1}
                         />
                       );
                     })}
