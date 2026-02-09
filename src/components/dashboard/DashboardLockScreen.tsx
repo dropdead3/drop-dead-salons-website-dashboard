@@ -158,12 +158,39 @@ export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
               </Avatar>
               {/* Checkmark overlay */}
               <motion.div
-                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.3, type: 'spring', stiffness: 300, damping: 15 }}
+                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center shadow-lg ring-2 ring-emerald-200/50 dark:ring-emerald-700/30"
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ 
+                  scale: [0, 1.2, 1],
+                  rotate: [-180, 10, 0]
+                }}
+                transition={{ 
+                  delay: 0.3, 
+                  duration: 0.6,
+                  times: [0, 0.6, 1],
+                  ease: [0.34, 1.56, 0.64, 1]
+                }}
               >
-                <Check className="w-5 h-5 text-white" />
+                {/* Subtle glow pulse */}
+                <motion.div
+                  className="absolute inset-0 rounded-full bg-emerald-400/30 dark:bg-emerald-500/20"
+                  animate={{ 
+                    scale: [1, 1.4, 1],
+                    opacity: [0.5, 0, 0.5]
+                  }}
+                  transition={{ 
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: 'easeInOut'
+                  }}
+                />
+                <motion.div
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.5, duration: 0.3, ease: 'easeOut' }}
+                >
+                  <Check className="w-5 h-5 text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
+                </motion.div>
               </motion.div>
             </motion.div>
             
