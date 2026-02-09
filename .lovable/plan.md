@@ -1,550 +1,433 @@
 
-# Category 3-7: Remaining Enhancement Categories - Full Implementation Plan
 
-## Status Summary
+# Category 4: Team Collaboration Enhancements - Implementation Plan
 
-| Category | Status | Priority |
-|----------|--------|----------|
-| 1. AI & Automation | ✅ Complete | - |
-| 2. Analytics & Reporting | ✅ Complete | - |
-| 3. Mobile & UX | ✅ Complete | High |
-| 4. Team Collaboration | 🔄 To Implement | High |
-| 5. Platform Admin | 🔄 To Implement | Medium |
-| 6. Quick Wins | ✅ Complete | High |
-| 7. Technical Debt | 🔄 To Implement | Medium |
+## Executive Summary
 
-## Quick Wins Completed
-
-| Feature | Status | Files |
-|---------|--------|-------|
-| Keyboard Shortcuts | ✅ | `useKeyboardShortcuts.ts`, `KeyboardShortcutsDialog.tsx` |
-| Location Breakdown Component | ✅ | `LocationBreakdownSection.tsx` |
-| Per-Card Export | ✅ | `CardExportButton.tsx` |
-
-## Mobile & UX Completed
-
-| Feature | Status | Files |
-|---------|--------|-------|
-| PWA Manifest | ✅ | `public/manifest.json` |
-| Enhanced Service Worker | ✅ | `public/sw.js` with offline caching |
-| Offline Page | ✅ | `public/offline.html` |
-| PWA Install Hook | ✅ | `usePWAInstall.ts` |
-| Offline Status Hooks | ✅ | `useOfflineStatus.ts` |
-| PWA Install Prompt | ✅ | `PWAInstallPrompt.tsx` |
-| Offline Indicator | ✅ | `OfflineIndicator.tsx` |
-| Mobile Schedule View | ✅ | `MobileScheduleView.tsx` |
-| Mobile Agenda Card | ✅ | `MobileAgendaCard.tsx` |
-| Mobile Bottom Nav | ✅ | `MobileBottomNav.tsx` |
+This plan implements three major collaboration features: **Unified @Mention Notifications**, a **Shared Team Calendar**, and **AI-Powered Daily Huddle Automation**. These features build on the existing robust infrastructure including the team chat system, notification preferences, push notification edge function, and huddle management system.
 
 ---
 
-## Category 3: Mobile & UX Improvements
+## Current State Analysis
 
-### Current State
-- Basic `useIsMobile` hook exists (`src/hooks/use-mobile.tsx`)
-- No dedicated mobile components or layouts
-- No PWA manifest or service worker
-- No offline capabilities
-- Dashboard is responsive but not mobile-optimized
+### Existing Infrastructure
 
-### Feature 3.1: Mobile-First Schedule View
+| Component | Status | Details |
+|-----------|--------|---------|
+| Team Chat | ✅ Full System | `MentionInput.tsx`, `MentionAutocomplete.tsx`, realtime messaging |
+| @Mentions in Chat | ✅ Working | Format: `@[Name](userId)`, rendered with chips |
+| Account Note Mentions | ✅ Working | `account_note_mentions` table, `useAccountNotes.ts` |
+| Push Notifications | ✅ Working | `send-push-notification` edge function with VAPID |
+| Notification Preferences | ✅ Working | `notification_preferences` table, per-type toggles |
+| Daily Huddles | ✅ Working | `daily_huddles` table, `HuddleEditor.tsx`, templates |
+| Smart Actions | ✅ Working | AI detection via `detect-chat-action` edge function |
 
-**Purpose**: Provide a dedicated mobile interface for viewing and managing today's schedule.
+### Key Gaps to Address
 
-**New Components**:
-
-| Component | Description |
-|-----------|-------------|
-| `MobileScheduleView.tsx` | Optimized schedule view for mobile devices |
-| `MobileAgendaCard.tsx` | Touch-friendly appointment cards |
-| `SwipeableAppointment.tsx` | Swipe actions for check-in/complete/cancel |
-| `MobileQuickBook.tsx` | Simplified mobile booking flow |
-| `MobileClientLookup.tsx` | Quick client search with recent history |
-
-**Technical Implementation**:
-```text
-src/components/mobile/
-├── schedule/
-│   ├── MobileScheduleView.tsx
-│   ├── MobileAgendaCard.tsx
-│   ├── SwipeableAppointment.tsx
-│   └── MobileQuickBook.tsx
-├── clients/
-│   ├── MobileClientLookup.tsx
-│   └── MobileClientCard.tsx
-└── layout/
-    ├── MobileBottomNav.tsx
-    ├── MobileHeader.tsx
-    └── MobilePullToRefresh.tsx
-```
-
-### Feature 3.2: PWA Quick Actions Widget
-
-**Purpose**: Allow staff to quickly log metrics, ring the bell, or view schedule from home screen.
-
-**Database Changes**:
-```sql
--- Store PWA installation preferences
-CREATE TABLE pwa_installations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  device_token TEXT,
-  device_type TEXT, -- 'ios', 'android', 'desktop'
-  installed_at TIMESTAMPTZ DEFAULT now(),
-  last_active_at TIMESTAMPTZ DEFAULT now(),
-  push_enabled BOOLEAN DEFAULT false
-);
-
-ALTER TABLE pwa_installations ENABLE ROW LEVEL SECURITY;
-```
-
-**New Files**:
-
-| File | Description |
-|------|-------------|
-| `public/manifest.json` | PWA manifest with shortcuts |
-| `public/sw.js` | Service worker for offline caching |
-| `src/hooks/usePWAInstall.ts` | Hook for install prompt and status |
-| `src/components/PWAInstallPrompt.tsx` | Smart install banner |
-
-**Manifest Configuration**:
-```json
-{
-  "name": "Salon Dashboard",
-  "short_name": "Dashboard",
-  "start_url": "/dashboard",
-  "display": "standalone",
-  "shortcuts": [
-    {
-      "name": "Ring the Bell",
-      "url": "/dashboard/ring-the-bell",
-      "icons": [{ "src": "/icons/bell.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "Today's Schedule",
-      "url": "/dashboard/schedule",
-      "icons": [{ "src": "/icons/calendar.png", "sizes": "96x96" }]
-    },
-    {
-      "name": "Log Metrics",
-      "url": "/dashboard/stats",
-      "icons": [{ "src": "/icons/chart.png", "sizes": "96x96" }]
-    }
-  ]
-}
-```
-
-### Feature 3.3: Offline Mode for Today's Queue
-
-**Purpose**: Cache today's appointments and client notes for offline access.
-
-**Technical Implementation**:
-- Use service worker to cache critical API responses
-- IndexedDB storage for appointment and client data
-- Sync queue for offline actions (check-in, notes)
-- Visual indicator for offline status
-
-**New Hooks**:
-
-| Hook | Description |
-|------|-------------|
-| `useOfflineStatus.ts` | Detect and expose online/offline state |
-| `useOfflineCache.ts` | Manage IndexedDB cache for appointments |
-| `useOfflineSync.ts` | Queue and sync offline actions |
+1. **Fragmented Mentions** - Chat mentions and account note mentions are separate systems
+2. **No Push for Chat Mentions** - Mentions don't trigger push/email notifications
+3. **No Mentions Inbox** - Users can't see all mentions in one place
+4. **No Team Calendar** - No shared visibility into team events, time-off, or availability
+5. **Manual Huddles Only** - No AI-assisted content generation for daily huddles
 
 ---
 
-## Category 4: Team Collaboration Enhancements
+## Feature 1: Unified @Mention Notifications System
 
-### Current State
-- Full team chat system exists (`src/components/team-chat/`)
-- @mention functionality implemented (`MentionInput.tsx`, `MentionAutocomplete.tsx`)
-- `account_note_mentions` table exists in database
-- Notification preferences system in place
-- No shared team calendar for availability
+### Purpose
+Create a centralized mentions system that tracks mentions across all sources (chat, notes, tasks, announcements) and triggers push/email notifications based on user preferences.
 
-### Feature 4.1: @Mention Notifications Enhancement
+### Database Changes
 
-**Purpose**: Extend existing mentions to trigger push/email notifications and create a unified mentions inbox.
-
-**Database Changes**:
 ```sql
--- Unified mentions table for all mention types
+-- Unified mentions tracking table
 CREATE TABLE user_mentions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   mentioned_by UUID REFERENCES auth.users(id),
-  source_type TEXT NOT NULL, -- 'chat', 'note', 'task', 'announcement'
+  source_type TEXT NOT NULL, -- 'chat', 'account_note', 'task', 'announcement'
   source_id UUID NOT NULL,
-  source_context TEXT, -- preview of the message
+  channel_id UUID, -- For chat mentions
+  source_context TEXT, -- Preview of the message (first 150 chars)
   read_at TIMESTAMPTZ,
   notified_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_user_mentions_user ON user_mentions(user_id, read_at);
+CREATE INDEX idx_user_mentions_user_unread ON user_mentions(user_id, read_at) WHERE read_at IS NULL;
+CREATE INDEX idx_user_mentions_source ON user_mentions(source_type, source_id);
 
 ALTER TABLE user_mentions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users see own mentions" ON user_mentions
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY "Users mark own mentions read" ON user_mentions
+  FOR UPDATE USING (user_id = auth.uid());
+
+-- Add mention notification preference
+ALTER TABLE notification_preferences 
+  ADD COLUMN IF NOT EXISTS mention_enabled BOOLEAN DEFAULT true;
 ```
 
-**Edge Function**: `process-mention-notifications`
-```text
-Purpose: Send push/email notifications for new mentions
+### Edge Function: `process-mention-notifications`
 
-Triggers: 
-- INSERT on team_chat_messages with mentions
-- INSERT on account_notes with mentions
-- INSERT on announcement_comments with mentions
+```text
+supabase/functions/process-mention-notifications/index.ts
+
+Purpose: Process new mentions and send notifications
+
+Invocation: Called by database trigger on chat_messages INSERT or 
+            by mutation hooks for other mention sources
+
+Input:
+{
+  sourceType: 'chat' | 'account_note' | 'task' | 'announcement',
+  sourceId: string,
+  content: string,
+  authorId: string,
+  organizationId: string,
+  channelId?: string
+}
 
 Logic:
 1. Parse mention format: @[Name](userId)
-2. Check user notification preferences
-3. Queue push notification if enabled
-4. Queue email if email_notifications_enabled
-5. Insert into user_mentions table
+2. Extract all mentioned user IDs
+3. For each mentioned user:
+   a. Check if self-mention (skip)
+   b. Fetch notification preferences
+   c. Insert into user_mentions table
+   d. If mention_enabled:
+      - Send push notification via send-push-notification
+      - If email_notifications_enabled: queue email
+4. Return count of notifications sent
+
+Integration:
+- Modify useChatMessages sendMessage to call this after insert
+- Modify useAccountNotes to call this after note creation
 ```
 
-**Frontend Components**:
+### Frontend Components
 
-| Component | Description |
-|-----------|-------------|
-| `MentionsInbox.tsx` | Unified view of all mentions |
-| `MentionNotificationBadge.tsx` | Badge showing unread mention count |
-| `MentionContextCard.tsx` | Preview card with source link |
-| `useMentions.ts` | Hook for fetching/marking mentions |
+| Component | Location | Description |
+|-----------|----------|-------------|
+| `MentionsInbox.tsx` | `src/components/mentions/MentionsInbox.tsx` | Unified view of all mentions with tabs by source |
+| `MentionNotificationBadge.tsx` | `src/components/mentions/MentionNotificationBadge.tsx` | Bell icon with unread count |
+| `MentionContextCard.tsx` | `src/components/mentions/MentionContextCard.tsx` | Expandable preview with link to source |
+| `useMentions.ts` | `src/hooks/useMentions.ts` | CRUD operations + realtime subscription |
 
-### Feature 4.2: Shared Team Calendar
+### Hook Implementation
 
-**Purpose**: Show team availability, time-off, and important dates in a shared view.
+```typescript
+// src/hooks/useMentions.ts
+interface Mention {
+  id: string;
+  source_type: 'chat' | 'account_note' | 'task' | 'announcement';
+  source_id: string;
+  channel_id?: string;
+  source_context: string;
+  mentioned_by: string;
+  read_at: string | null;
+  created_at: string;
+  author?: { full_name: string; photo_url: string };
+}
 
-**Database Changes**:
+export function useMentions(): {
+  mentions: Mention[];
+  unreadCount: number;
+  markAsRead: (mentionId: string) => void;
+  markAllAsRead: () => void;
+  isLoading: boolean;
+}
+
+export function useUnreadMentionCount(): number
+```
+
+### UI Integration Points
+
+1. **Header Badge**: Add `MentionNotificationBadge` to dashboard header near notifications
+2. **Popover Inbox**: Click badge opens mentions popover with recent mentions
+3. **Full Page**: Link to `/dashboard/mentions` for complete history
+4. **Deep Links**: Each mention card links to the source message/note/task
+
+---
+
+## Feature 2: Shared Team Calendar
+
+### Purpose
+Provide a unified view of team events, time-off requests, training sessions, and important dates that all team members can see and managers can manage.
+
+### Database Changes
+
 ```sql
--- Team calendar events (different from appointments)
+-- Team calendar events (different from client appointments)
 CREATE TABLE team_calendar_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-  location_id TEXT,
+  location_id TEXT, -- Optional: limit to specific location
   title TEXT NOT NULL,
   description TEXT,
-  event_type TEXT NOT NULL, -- 'meeting', 'training', 'time_off', 'holiday', 'special'
+  event_type TEXT NOT NULL, -- 'meeting', 'training', 'time_off', 'holiday', 'special', 'reminder'
   start_date DATE NOT NULL,
-  end_date DATE,
-  start_time TIME,
+  end_date DATE, -- For multi-day events
+  start_time TIME, -- Null for all-day events
   end_time TIME,
   all_day BOOLEAN DEFAULT false,
-  recurring_pattern JSONB, -- { frequency: 'weekly', days: [1,3,5] }
   visibility TEXT DEFAULT 'team', -- 'team', 'leadership', 'private'
+  color TEXT, -- Hex color for display
   created_by UUID REFERENCES auth.users(id),
-  attendees JSONB, -- [{ userId, status: 'confirmed'|'tentative'|'declined' }]
-  color TEXT,
+  attendees JSONB DEFAULT '[]', -- [{ userId, status: 'confirmed'|'tentative'|'declined' }]
+  recurring_pattern JSONB, -- { frequency: 'weekly', interval: 1, days: [1,3,5], until: '2026-12-31' }
+  metadata JSONB DEFAULT '{}', -- Extra data like time-off type, training module ID
+  is_cancelled BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE INDEX idx_team_calendar_date ON team_calendar_events(organization_id, start_date, end_date);
+CREATE INDEX idx_team_calendar_type ON team_calendar_events(organization_id, event_type);
+
+ALTER TABLE team_calendar_events ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Team members view calendar" ON team_calendar_events
+  FOR SELECT USING (
+    organization_id = public.get_user_organization(auth.uid())
+    AND (
+      visibility = 'team'
+      OR visibility = 'leadership' AND public.is_coach_or_admin(auth.uid())
+      OR created_by = auth.uid()
+    )
+  );
+
+CREATE POLICY "Managers manage calendar" ON team_calendar_events
+  FOR ALL USING (
+    organization_id = public.get_user_organization(auth.uid())
+    AND public.is_coach_or_admin(auth.uid())
+  );
+
+-- Time-off requests integration
+CREATE TABLE time_off_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  calendar_event_id UUID REFERENCES team_calendar_events(id) ON DELETE SET NULL,
+  request_type TEXT NOT NULL, -- 'vacation', 'sick', 'personal', 'other'
+  start_date DATE NOT NULL,
+  end_date DATE NOT NULL,
+  notes TEXT,
+  status TEXT DEFAULT 'pending', -- 'pending', 'approved', 'denied'
+  reviewed_by UUID REFERENCES auth.users(id),
+  reviewed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-ALTER TABLE team_calendar_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE time_off_requests ENABLE ROW LEVEL SECURITY;
 ```
 
-**Frontend Components**:
+### Frontend Components
 
-| Component | Description |
-|-----------|-------------|
-| `TeamCalendarPage.tsx` | Full calendar view with filters |
-| `TeamCalendarMini.tsx` | Widget for dashboard |
-| `CalendarEventCard.tsx` | Event detail popover |
-| `CreateEventDialog.tsx` | Add new team events |
-| `useTeamCalendar.ts` | CRUD for calendar events |
+| Component | Location | Description |
+|-----------|----------|-------------|
+| `TeamCalendarPage.tsx` | `src/pages/dashboard/TeamCalendar.tsx` | Full-page calendar with month/week/day views |
+| `TeamCalendarMini.tsx` | `src/components/calendar/TeamCalendarMini.tsx` | Compact widget for dashboard |
+| `CalendarEventCard.tsx` | `src/components/calendar/CalendarEventCard.tsx` | Popover with event details |
+| `CreateEventDialog.tsx` | `src/components/calendar/CreateEventDialog.tsx` | Modal for adding events |
+| `TimeOffRequestDialog.tsx` | `src/components/calendar/TimeOffRequestDialog.tsx` | Request time off form |
+| `EventTypeFilter.tsx` | `src/components/calendar/EventTypeFilter.tsx` | Filter by event types |
+| `useTeamCalendar.ts` | `src/hooks/useTeamCalendar.ts` | CRUD operations |
+| `useTimeOffRequests.ts` | `src/hooks/useTimeOffRequests.ts` | Time-off management |
 
-### Feature 4.3: Daily Huddle Automation
+### Calendar Views
 
-**Purpose**: Auto-generate pre-shift team huddle agendas from analytics data.
-
-**Edge Function**: `generate-daily-huddle`
 ```text
-Purpose: Create daily meeting agenda from analytics
+TEAM CALENDAR - February 2026
+┌──────────────────────────────────────────────────────────┐
+│ [Month] [Week] [Day]     < February 2026 >    [+ Event] │
+├──────────────────────────────────────────────────────────┤
+│ Su   Mo   Tu   We   Th   Fr   Sa                         │
+│                              1                            │
+│ 2    3    4    5    6    7    8                          │
+│      ■    ■                   ●                          │
+│ 9    10   11   12   13   14   15                         │
+│           ■■■■■■■■■■■■■■■                                │
+│           Sarah PTO                                       │
+│ 16   17   18   19   20   21   22                         │
+│      ▲                                                    │
+│      Team Training                                        │
+└──────────────────────────────────────────────────────────┘
 
-Schedule: 6 AM daily via pg_cron
+Legend:
+■ Meeting  ▲ Training  ● Holiday  ░ Time Off
+```
 
-Generated Content:
-1. Yesterday's Highlights
-   - Revenue vs goal
-   - Top performer
-   - Notable achievements (bells rung)
+### Integration Points
+
+1. **Dashboard Widget**: Add mini calendar to Command Center
+2. **Sidebar**: Add "Team Calendar" link to navigation
+3. **Time-Off in Profile**: Link to request time-off from profile page
+4. **Huddle Integration**: Show today's calendar events in daily huddle
+
+---
+
+## Feature 3: AI-Powered Daily Huddle Automation
+
+### Purpose
+Auto-generate pre-shift team huddle content using AI analysis of yesterday's performance, today's schedule, and relevant team information.
+
+### Edge Function: `generate-daily-huddle`
+
+```text
+supabase/functions/generate-daily-huddle/index.ts
+
+Purpose: Generate AI-assisted huddle content from analytics data
+
+Schedule: 6:00 AM daily via pg_cron (or on-demand)
+
+Input:
+{
+  organizationId: string,
+  locationId?: string,
+  huddleDate: string // YYYY-MM-DD
+}
+
+Data Gathering:
+1. Yesterday's Sales Summary (from phorest_daily_sales_summary)
+   - Total revenue vs goal
+   - Service vs product breakdown
+   - Comparison to same day last week
    
-2. Today's Focus
+2. Yesterday's Operations (from phorest_appointments)
+   - Total appointments
+   - No-shows and cancellations
+   - New vs returning clients
+   
+3. Top Performers (from sales data)
+   - Highest revenue stylist
+   - Most rebookings
+   
+4. Today's Schedule (from appointments)
+   - Total appointments booked
    - Expected revenue
-   - Key appointments
-   - Birthday clients
+   - VIP clients visiting
    
-3. Attention Items
-   - No-shows/cancellations yesterday
-   - Active anomalies
-   - Low inventory alerts
-   
-4. Celebrations
-   - Team birthdays today
+5. Today's Celebrations (from employee_profiles)
+   - Team birthdays
    - Work anniversaries
-   - Recent graduations
+   
+6. Active Alerts (from detected_anomalies)
+   - Unacknowledged anomalies
+   - Recent issues
+
+AI Generation:
+- Use Lovable AI (google/gemini-3-flash-preview)
+- Prompt: Create engaging, motivational huddle content
+- Structure output into predefined sections
+
+Output (stored in JSONB):
+{
+  wins_from_yesterday: string,
+  focus_of_the_day: string,
+  announcements: string,
+  birthdays_celebrations: string,
+  training_reminders: string,
+  sales_goals: { retail: number, service: number },
+  ai_generated: true,
+  generated_at: timestamp
+}
 ```
 
-**Frontend Integration**:
-- Add to existing `/dashboard/admin/daily-huddle` page
-- Auto-populated sections with "AI Generated" badge
-- Manual edit capability before publishing
+### Database Changes
 
----
-
-## Category 5: Platform Admin Enhancements
-
-### Current State
-- Platform admin pages exist (`src/pages/dashboard/platform/`)
-- Organization stats hook exists (`useOrganizationStats`)
-- No organization health score
-- No cross-organization benchmarking
-- No tenant engagement tracking
-
-### Feature 5.1: Organization Health Score Dashboard
-
-**Purpose**: Calculate and display a health score for each tenant based on engagement, adoption, and performance metrics.
-
-**Database Changes**:
 ```sql
--- Store computed health scores
-CREATE TABLE organization_health_scores (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-  score NUMERIC(5,2) NOT NULL, -- 0-100
-  score_breakdown JSONB NOT NULL,
-  -- Breakdown: { adoption: 85, engagement: 72, performance: 91, data_quality: 88 }
-  risk_level TEXT, -- 'healthy', 'at_risk', 'critical'
-  trends JSONB, -- { score_30d_ago: 78, score_7d_ago: 82 }
-  recommendations JSONB, -- AI-generated improvement suggestions
-  calculated_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(organization_id, calculated_at::DATE)
-);
-
-ALTER TABLE organization_health_scores ENABLE ROW LEVEL SECURITY;
+-- Add AI generation tracking to huddles
+ALTER TABLE daily_huddles
+  ADD COLUMN IF NOT EXISTS ai_generated BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS ai_sections JSONB DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS generation_source TEXT; -- 'manual', 'ai_full', 'ai_assisted'
 ```
 
-**Score Calculation Factors**:
+### Frontend Enhancements
 
-| Factor | Weight | Metrics |
-|--------|--------|---------|
-| Adoption | 25% | Active users, feature utilization, login frequency |
-| Engagement | 25% | Chat activity, announcements read, tasks completed |
-| Performance | 30% | Revenue vs goals, KPI trends, bookings |
-| Data Quality | 20% | Sync success rate, data completeness, error rate |
+| Component | Changes |
+|-----------|---------|
+| `HuddleEditor.tsx` | Add "Generate with AI" button, show AI badge |
+| `AIHuddleGenerator.tsx` | Modal showing AI generation progress |
+| `HuddleSection.tsx` | Indicate which sections are AI-generated |
+| `useAIHuddle.ts` | Hook to trigger and manage AI generation |
 
-**Edge Function**: `calculate-health-scores`
+### UI Flow
+
 ```text
-Purpose: Daily calculation of org health scores
-
-Schedule: 5 AM daily via pg_cron
-
-Logic:
-1. For each active organization:
-   a. Calculate adoption metrics (DAU/MAU, feature usage)
-   b. Calculate engagement metrics (activity levels)
-   c. Calculate performance metrics (business outcomes)
-   d. Calculate data quality (sync health)
-2. Apply weighted average for total score
-3. Determine risk level thresholds
-4. Generate AI recommendations for improvement
-5. Store in organization_health_scores
+Daily Huddle Page
+┌─────────────────────────────────────────────────────────────┐
+│ DAILY HUDDLE - Feb 9, 2026                                  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  [✨ Generate with AI]  [📝 Start Fresh]                    │
+│                                                             │
+│  ┌───────────────────────────────────────────────────────┐ │
+│  │ 🎯 Focus of the Day                    [AI Generated] │ │
+│  │ ─────────────────────────────────────────────────────│ │
+│  │ Push retail bundles - we're 15% behind weekly goal!   │ │
+│  │                                           [Edit] [✓]  │ │
+│  └───────────────────────────────────────────────────────┘ │
+│                                                             │
+│  ┌───────────────────────────────────────────────────────┐ │
+│  │ 🏆 Yesterday's Wins                    [AI Generated] │ │
+│  │ ─────────────────────────────────────────────────────│ │
+│  │ • Total revenue: $4,850 (+12% vs last Saturday)       │ │
+│  │ • Sarah hit $1,200 - highest single-day!              │ │
+│  │ • 3 new client rebookings                             │ │
+│  │                                           [Edit] [✓]  │ │
+│  └───────────────────────────────────────────────────────┘ │
+│                                                             │
+│  ┌───────────────────────────────────────────────────────┐ │
+│  │ 🎂 Celebrations                        [AI Generated] │ │
+│  │ ─────────────────────────────────────────────────────│ │
+│  │ • Happy Birthday to Maria! 🎉                         │ │
+│  │                                           [Edit] [✓]  │ │
+│  └───────────────────────────────────────────────────────┘ │
+│                                                             │
+│  [Save Draft]  [Save & Publish]                             │
+└─────────────────────────────────────────────────────────────┘
 ```
-
-**Frontend Components**:
-
-| Component | Description |
-|-----------|-------------|
-| `HealthScoreDashboard.tsx` | Main platform admin view |
-| `HealthScoreCard.tsx` | Individual org health card |
-| `HealthScoreBreakdown.tsx` | Detailed score factors |
-| `HealthTrendChart.tsx` | Score over time visualization |
-| `RiskAlertsList.tsx` | At-risk organizations list |
-| `useOrganizationHealth.ts` | Fetch health scores |
-
-### Feature 5.2: Cross-Organization Benchmarking
-
-**Purpose**: Compare organizations against each other to identify best practices and struggling accounts.
-
-**Database Changes**:
-```sql
--- Benchmark metrics per organization
-CREATE TABLE organization_benchmarks (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-  metric_key TEXT NOT NULL,
-  value NUMERIC NOT NULL,
-  percentile INTEGER, -- 0-100, where they rank
-  period_start DATE NOT NULL,
-  period_end DATE NOT NULL,
-  comparison_group TEXT, -- 'all', 'same_size', 'same_tier'
-  calculated_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(organization_id, metric_key, period_start, comparison_group)
-);
-
-ALTER TABLE organization_benchmarks ENABLE ROW LEVEL SECURITY;
-```
-
-**Benchmarked Metrics**:
-- Revenue per location
-- Appointments per staff
-- Rebooking rate
-- Average ticket
-- Feature adoption rate
-- User engagement score
-
-**Frontend Components**:
-
-| Component | Description |
-|-----------|-------------|
-| `BenchmarkComparison.tsx` | Side-by-side org comparison |
-| `BenchmarkLeaderboard.tsx` | Top performers by metric |
-| `PercentileIndicator.tsx` | Visual percentile ranking |
-
----
-
-## Category 6: Quick Wins
-
-### 6.1: Extend "Yesterday" View to All Analytics Cards
-
-**Current State**: Only some cards support the "Yesterday" date filter.
-
-**Implementation**:
-- Update all analytics cards to handle `dateRange === 'yesterday'`
-- Ensure queries properly filter by yesterday's date
-- Display "Final" badge to indicate data is complete
-
-**Affected Components**:
-- `NewBookingsCard.tsx`
-- `TodayScheduleCard.tsx`
-- `RevenueOverviewCard.tsx`
-- All pinnable analytics cards
-
-### 6.2: "By Location" Breakdown for All Applicable Cards
-
-**Current State**: Only `NewBookingsCard` has location breakdown pattern.
-
-**Implementation**:
-- Create reusable `LocationBreakdownSection` component
-- Apply to: Revenue cards, Appointments cards, Operations cards
-- Auto-suppress when specific location is filtered
-
-**New Component**:
-```typescript
-interface LocationBreakdownSectionProps {
-  data: { locationId: string; locationName: string; value: number }[];
-  format: 'currency' | 'number' | 'percent';
-  isAllLocations: boolean;
-}
-```
-
-### 6.3: Keyboard Shortcuts Extension
-
-**Current State**: `Cmd+K` opens search.
-
-**Additional Shortcuts to Add**:
-
-| Shortcut | Action |
-|----------|--------|
-| `g h` | Go to Home |
-| `g s` | Go to Schedule |
-| `g c` | Go to Chat |
-| `g a` | Go to Analytics |
-| `n` | New (context-sensitive) |
-| `?` | Show keyboard shortcuts help |
-
-**Implementation**:
-- Extend existing keyboard handling
-- Add `KeyboardShortcutsDialog.tsx` for help overlay
-- Persist shortcut preferences in user settings
-
-### 6.4: Per-Card CSV/PDF Export Buttons
-
-**Current State**: Exports are only in Reports tab.
-
-**Implementation**:
-- Add export icon button to all analytics card headers
-- Reuse existing PDF/CSV generation utilities
-- Add to `PinnedAnalyticsCard.tsx` wrapper
-
-**New Component**:
-```typescript
-interface CardExportButtonProps {
-  cardId: string;
-  data: any;
-  title: string;
-  dateRange: string;
-}
-```
-
----
-
-## Category 7: Technical Debt Resolution
-
-### 7.1: Remove Hardcoded Organization IDs
-
-**Issue**: Some components contain hardcoded org IDs (e.g., `drop-dead-salons`).
-
-**Files to Update**:
-- `TeamChat.tsx` (line 17)
-- Any other files with hardcoded UUIDs
-
-**Solution**:
-- Replace with `effectiveOrganization` from context
-- Add fallback to first available organization
-
-### 7.2: Complete Email Notification TODOs
-
-**Issue**: Several TODO comments for email notifications.
-
-**Implementation**:
-- Connect to existing `send-email` edge function
-- Implement notification queueing
-- Add email templates for missing notification types
-
-### 7.3: Reduce Phorest Table Dependency
-
-**Issue**: Heavy reliance on `phorest_*` tables limits multi-POS support.
-
-**Solution**:
-- Create abstraction layer for POS data
-- Implement adapter pattern for different POS systems
-- Add `pos_appointments` and `pos_sales` views
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Quick Wins (Week 1)
-1. Extend Yesterday view to all cards
-2. Add Location Breakdown to applicable cards
-3. Add keyboard shortcuts
-4. Per-card export buttons
+### Phase 1: Unified Mentions System (Week 1)
+1. Create `user_mentions` table with RLS policies
+2. Build `process-mention-notifications` edge function
+3. Modify `useChatMessages` to call notification function on send
+4. Create `useMentions` hook with realtime subscription
+5. Build `MentionNotificationBadge` and popover inbox
+6. Add mention preference to notification settings
 
-### Phase 2: Mobile Foundation (Week 2-3)
-1. Create PWA manifest and service worker
-2. Build mobile-first schedule view
-3. Implement offline caching for today's queue
-4. Add PWA install prompt
+### Phase 2: Team Calendar Foundation (Week 2)
+1. Create `team_calendar_events` table with RLS
+2. Create `time_off_requests` table
+3. Build `useTeamCalendar` and `useTimeOffRequests` hooks
+4. Create `TeamCalendarPage` with month view
+5. Build `CreateEventDialog` with event type selection
+6. Add calendar route and navigation link
 
-### Phase 3: Collaboration (Week 4-5)
-1. Enhance @mention notifications with edge function
-2. Build Mentions Inbox
-3. Create team calendar infrastructure
-4. Implement daily huddle automation
+### Phase 3: Calendar Features (Week 3)
+1. Add week/day views to calendar
+2. Build `TimeOffRequestDialog` and approval workflow
+3. Create `TeamCalendarMini` widget for dashboard
+4. Implement recurring events logic
+5. Add calendar events to daily huddle display
+6. Build `EventTypeFilter` with legend
 
-### Phase 4: Platform Admin (Week 6-7)
-1. Build health score calculation edge function
-2. Create Health Score Dashboard
-3. Implement cross-org benchmarking
-4. Add risk alerts and recommendations
-
-### Phase 5: Technical Debt (Week 8)
-1. Remove hardcoded organization IDs
-2. Complete email notification integrations
-3. Create POS abstraction layer
-4. Performance optimizations
+### Phase 4: AI Huddle Generation (Week 4)
+1. Build `generate-daily-huddle` edge function
+2. Create `useAIHuddle` hook
+3. Add "Generate with AI" button to `HuddleEditor`
+4. Build `AIHuddleGenerator` modal with progress
+5. Add AI section badges and edit capability
+6. Optional: Set up pg_cron for automatic daily generation
 
 ---
 
@@ -552,23 +435,55 @@ interface CardExportButtonProps {
 
 | Category | New Files | Modified Files |
 |----------|-----------|----------------|
-| Mobile & UX | 15+ components, 1 manifest, 1 service worker | `DashboardLayout.tsx` |
-| Team Collaboration | 10+ components, 1 edge function | `TeamChatContext.tsx`, `MentionInput.tsx` |
-| Platform Admin | 8+ components, 1 edge function | `PlatformOverview.tsx` |
-| Quick Wins | 5+ components | Multiple analytics cards |
-| Technical Debt | - | 10+ files |
+| Database | 1 migration | - |
+| Edge Functions | 2 new | - |
+| Hooks | 4 new | `useChatMessages.ts`, `useAccountNotes.ts` |
+| Components | 12+ new | `HuddleEditor.tsx`, `DashboardLayout.tsx` |
+| Pages | 2 new | `App.tsx` (routes) |
+
+### New Files to Create
+
+```text
+supabase/functions/
+├── process-mention-notifications/index.ts
+└── generate-daily-huddle/index.ts
+
+src/hooks/
+├── useMentions.ts
+├── useTeamCalendar.ts
+├── useTimeOffRequests.ts
+└── useAIHuddle.ts
+
+src/components/mentions/
+├── MentionsInbox.tsx
+├── MentionNotificationBadge.tsx
+└── MentionContextCard.tsx
+
+src/components/calendar/
+├── TeamCalendarMini.tsx
+├── CalendarEventCard.tsx
+├── CreateEventDialog.tsx
+├── TimeOffRequestDialog.tsx
+└── EventTypeFilter.tsx
+
+src/components/huddle/
+└── AIHuddleGenerator.tsx
+
+src/pages/dashboard/
+├── MentionsPage.tsx
+└── TeamCalendar.tsx
+```
 
 ---
 
-## Database Tables Summary
+## Technical Notes
 
-| Table | Purpose |
-|-------|---------|
-| `pwa_installations` | Track PWA installs and device tokens |
-| `user_mentions` | Unified mentions tracking |
-| `team_calendar_events` | Shared team calendar |
-| `organization_health_scores` | Tenant health tracking |
-| `organization_benchmarks` | Cross-org comparison data |
+1. **Mention Parsing**: Reuse existing `@[Name](userId)` format from chat
+2. **Push Notifications**: Leverage existing `send-push-notification` with proper VAPID
+3. **Realtime**: Subscribe to `user_mentions` for live badge updates
+4. **Calendar Library**: Use existing date-fns + custom grid (no new deps)
+5. **AI Gateway**: Use `google/gemini-3-flash-preview` via Lovable AI for huddle generation
+6. **RLS**: All tables have organization-scoped policies with role checks
 
 ---
 
@@ -576,9 +491,10 @@ interface CardExportButtonProps {
 
 | Feature | KPI | Target |
 |---------|-----|--------|
-| Mobile Schedule | Mobile session duration | +30% |
-| PWA Install | Installation rate | >20% of mobile users |
-| Offline Mode | Offline actions synced | 99%+ success |
-| @Mentions | Mention response time | <2 hours avg |
-| Health Scores | At-risk identification | 90%+ accuracy |
-| Quick Wins | Feature adoption | +15% engagement |
+| Mentions | Response time to mentions | <2 hours avg |
+| Mentions | Push notification delivery | >95% |
+| Calendar | Events created per week | >5 per org |
+| Calendar | Time-off requests submitted | >90% via system |
+| AI Huddle | AI generation usage | >50% of huddles |
+| AI Huddle | Edit rate after AI generation | <30% (quality indicator) |
+
