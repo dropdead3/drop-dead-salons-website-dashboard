@@ -222,13 +222,13 @@ export function WeekAheadForecast() {
                 {averageDaily > 0 && (
                   <ReferenceLine 
                     y={averageDaily} 
-                    stroke="hsl(var(--foreground) / 0.35)" 
+                    stroke="hsl(30, 100%, 50%)" 
                     strokeDasharray="4 4"
                     strokeWidth={1.5}
                     label={{
                       value: `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`,
                       position: 'insideBottomLeft',
-                      fill: 'hsl(var(--foreground) / 0.6)',
+                      fill: 'hsl(30, 100%, 50%)',
                       fontSize: 11,
                       fontWeight: 500,
                       offset: 4,
