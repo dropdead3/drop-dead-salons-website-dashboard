@@ -1,0 +1,277 @@
+import { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Lock, Delete, LogOut, Eye, EyeOff } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useValidatePin } from '@/hooks/useUserPin';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import Logo from '@/assets/drop-dead-logo.svg';
+import LogoWhite from '@/assets/drop-dead-logo-white.svg';
+
+interface DashboardLockScreenProps {
+  onUnlock: () => void;
+}
+
+export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
+  const { signOut, user } = useAuth();
+  const { effectiveOrganization } = useOrganizationContext();
+  const { resolvedTheme } = useDashboardTheme();
+  const { data: businessSettings } = useBusinessSettings();
+  const validatePin = useValidatePin();
+
+  const [pin, setPin] = useState('');
+  const [error, setError] = useState(false);
+  const [showPin, setShowPin] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const [validatedUser, setValidatedUser] = useState<{
+    display_name: string;
+    photo_url: string | null;
+  } | null>(null);
+
+  const getLogo = () => {
+    const isDark = resolvedTheme === 'dark';
+    const customLogo = isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
+    return customLogo || (isDark ? LogoWhite : Logo);
+  };
+
+  const handlePinDigit = useCallback((digit: string) => {
+    if (pin.length < 4) {
+      const newPin = pin + digit;
+      setPin(newPin);
+      setError(false);
+      setValidatedUser(null);
+    }
+  }, [pin]);
+
+  const handleDelete = useCallback(() => {
+    setPin(prev => prev.slice(0, -1));
+    setError(false);
+    setValidatedUser(null);
+  }, []);
+
+  const handleClear = useCallback(() => {
+    setPin('');
+    setError(false);
+    setValidatedUser(null);
+  }, []);
+
+  // Auto-validate when 4 digits entered
+  useEffect(() => {
+    if (pin.length === 4 && !isValidating) {
+      setIsValidating(true);
+      
+      validatePin.mutateAsync(pin)
+        .then((result) => {
+          if (result) {
+            setValidatedUser({
+              display_name: result.display_name,
+              photo_url: result.photo_url,
+            });
+            
+            // Small delay to show the user before unlocking
+            setTimeout(() => {
+              onUnlock();
+            }, 500);
+          } else {
+            setError(true);
+            setPin('');
+          }
+        })
+        .catch(() => {
+          setError(true);
+          setPin('');
+        })
+        .finally(() => {
+          setIsValidating(false);
+        });
+    }
+  }, [pin, isValidating, validatePin, onUnlock]);
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  // Keyboard support
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key >= '0' && e.key <= '9') {
+        handlePinDigit(e.key);
+      } else if (e.key === 'Backspace') {
+        handleDelete();
+      } else if (e.key === 'Escape') {
+        handleClear();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handlePinDigit, handleDelete, handleClear]);
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      {/* Logo */}
+      <motion.div
+        className="mb-8"
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.1 }}
+      >
+        <img 
+          src={getLogo()} 
+          alt={businessSettings?.business_name || 'Logo'} 
+          className="h-8 w-auto" 
+        />
+      </motion.div>
+
+      {/* Lock Icon */}
+      <motion.div
+        className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-6"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.2 }}
+      >
+        <Lock className="w-10 h-10 text-primary" />
+      </motion.div>
+
+      {/* Title */}
+      <motion.div
+        className="text-center mb-8"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.3 }}
+      >
+        <h1 className="text-2xl font-display font-medium mb-2">Enter PIN to unlock</h1>
+        <p className="text-muted-foreground text-sm">
+          Enter your 4-digit PIN to continue
+        </p>
+      </motion.div>
+
+      {/* Validated User Preview */}
+      <AnimatePresence>
+        {validatedUser && (
+          <motion.div
+            className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-primary/10"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+          >
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={validatedUser.photo_url || undefined} />
+              <AvatarFallback className="bg-primary text-primary-foreground">
+                {validatedUser.display_name?.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <span className="font-medium">{validatedUser.display_name}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* PIN Display */}
+      <motion.div
+        className="flex items-center gap-2 mb-6"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        <div className="flex gap-3 px-6 py-4 rounded-2xl bg-muted/50">
+          {[0, 1, 2, 3].map((i) => (
+            <motion.div
+              key={i}
+              className={`w-4 h-4 rounded-full transition-all ${
+                i < pin.length 
+                  ? error ? 'bg-destructive' : 'bg-primary' 
+                  : 'bg-muted-foreground/30'
+              }`}
+              animate={error && i < pin.length ? { x: [0, -4, 4, -4, 4, 0] } : {}}
+              transition={{ duration: 0.4 }}
+            />
+          ))}
+        </div>
+        <button
+          className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+          onClick={() => setShowPin(!showPin)}
+        >
+          {showPin ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+        </button>
+      </motion.div>
+
+      {showPin && pin && (
+        <motion.p 
+          className="text-muted-foreground mb-4 font-mono text-lg tracking-widest"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          {pin}
+        </motion.p>
+      )}
+
+      {/* Error Message */}
+      <AnimatePresence>
+        {error && (
+          <motion.p
+            className="text-destructive mb-4 text-sm"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            Incorrect PIN. Please try again.
+          </motion.p>
+        )}
+      </AnimatePresence>
+
+      {/* Number Pad */}
+      <motion.div
+        className="grid grid-cols-3 gap-3 mb-8"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5 }}
+      >
+        {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map((key) => (
+          <motion.button
+            key={key || 'empty'}
+            className={`w-16 h-16 rounded-xl text-xl font-medium transition-colors ${
+              key === '' 
+                ? 'invisible' 
+                : key === 'del'
+                ? 'bg-muted text-muted-foreground hover:bg-muted/80'
+                : 'bg-muted hover:bg-muted/80 text-foreground'
+            }`}
+            onClick={() => {
+              if (key === 'del') handleDelete();
+              else if (key) handlePinDigit(key);
+            }}
+            whileTap={{ scale: 0.95 }}
+            disabled={key === '' || isValidating}
+          >
+            {key === 'del' ? <Delete className="w-5 h-5 mx-auto" /> : key}
+          </motion.button>
+        ))}
+      </motion.div>
+
+      {/* Sign Out Link */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.6 }}
+      >
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground gap-2"
+          onClick={handleSignOut}
+        >
+          <LogOut className="w-4 h-4" />
+          Sign out completely
+        </Button>
+      </motion.div>
+    </motion.div>
+  );
+}

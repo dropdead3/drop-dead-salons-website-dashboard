@@ -6,6 +6,7 @@ import { useViewAs } from '@/contexts/ViewAsContext';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { DashboardLockProvider, useDashboardLock } from '@/contexts/DashboardLockContext';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -35,6 +36,7 @@ import { PhorestSyncPopout } from '@/components/dashboard/PhorestSyncPopout';
 import { ImpersonationHistoryPanel } from '@/components/dashboard/ImpersonationHistoryPanel';
 import { CustomLandingPageBanner } from '@/components/dashboard/CustomLandingPageBanner';
 import { HelpFAB } from '@/components/dashboard/HelpFAB';
+import { DashboardLockScreen } from '@/components/dashboard/DashboardLockScreen';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
 import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
 import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
@@ -1119,6 +1121,20 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
   );
 }
 
+// Wrapper that adds lock screen functionality
+function DashboardLayoutWithLock(props: DashboardLayoutProps) {
+  const { isLocked, unlock } = useDashboardLock();
+
+  return (
+    <>
+      <DashboardLayoutInner {...props} />
+      <AnimatePresence>
+        {isLocked && <DashboardLockScreen onUnlock={unlock} />}
+      </AnimatePresence>
+    </>
+  );
+}
+
 // Export wrapper component that applies scoped dark mode
 export function DashboardLayout(props: DashboardLayoutProps) {
   const { resolvedTheme } = useDashboardTheme();
@@ -1156,13 +1172,15 @@ export function DashboardLayout(props: DashboardLayoutProps) {
   }, [resolvedTheme, colorTheme]);
   
   return (
-    <div className={cn(
-      resolvedTheme === 'dark' && 'dark',
-      `theme-${colorTheme}`,
-      'bg-background text-foreground', // Explicit color application for proper inheritance
-      isPlatformRoute && 'platform-theme platform-gradient-radial min-h-screen'
-    )}>
-      <DashboardLayoutInner {...props} />
-    </div>
+    <DashboardLockProvider>
+      <div className={cn(
+        resolvedTheme === 'dark' && 'dark',
+        `theme-${colorTheme}`,
+        'bg-background text-foreground', // Explicit color application for proper inheritance
+        isPlatformRoute && 'platform-theme platform-gradient-radial min-h-screen'
+      )}>
+        <DashboardLayoutWithLock {...props} />
+      </div>
+    </DashboardLockProvider>
   );
 }

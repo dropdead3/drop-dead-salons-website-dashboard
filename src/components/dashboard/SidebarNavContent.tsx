@@ -10,6 +10,7 @@ import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
 import { SidebarSyncStatusWidget } from './SidebarSyncStatusWidget';
+import { SidebarLockButton } from './SidebarLockButton';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, MANAGEMENT_SUB_GROUPS, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
 import { CollapsibleNavGroup, type NavSubGroup } from './CollapsibleNavGroup';
@@ -611,18 +612,20 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       </nav>
 
       {/* Fixed Footer Navigation - always at bottom */}
-      {filterNavItems(footerNavItems).length > 0 && (
-        <div className="border-t border-border py-2 mt-auto">
-          <div className="space-y-1">
-            {filterNavItems(footerNavItems).map((item) => (
-              <NavLink 
-                key={item.href} 
-                {...item}
-              />
-            ))}
-          </div>
+      <div className="border-t border-border py-2 mt-auto">
+        <div className="space-y-1">
+          {/* Lock Button - show if user has PIN set */}
+          <SidebarLockButton isCollapsed={isCollapsed} />
+          
+          {/* Settings and other footer items */}
+          {filterNavItems(footerNavItems).map((item) => (
+            <NavLink 
+              key={item.href} 
+              {...item}
+            />
+          ))}
         </div>
-      )}
+      </div>
     </div>
   );
 });
