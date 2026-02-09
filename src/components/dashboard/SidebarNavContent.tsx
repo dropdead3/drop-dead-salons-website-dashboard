@@ -612,19 +612,27 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       </nav>
 
       {/* Fixed Footer Navigation - always at bottom */}
-      <div className="border-t border-border py-2 mt-auto">
-        <div className="space-y-1">
-          {/* Lock Button - show if user has PIN set */}
-          <SidebarLockButton isCollapsed={isCollapsed} />
-          
-          {/* Settings and other footer items */}
-          {filterNavItems(footerNavItems).map((item) => (
-            <NavLink 
-              key={item.href} 
-              {...item}
-            />
-          ))}
+      <div className="mt-auto">
+        <div className={cn(
+          "mx-3 rounded-lg bg-muted/30 border border-border/50",
+          isCollapsed ? "mx-2 p-1" : "p-1.5"
+        )}>
+          <div className={cn(
+            isCollapsed ? "space-y-1" : "space-y-0.5"
+          )}>
+            {/* Lock Button */}
+            <SidebarLockButton isCollapsed={isCollapsed} />
+            
+            {/* Settings and other footer items */}
+            {filterNavItems(footerNavItems).map((item) => (
+              <NavLink 
+                key={item.href} 
+                {...item}
+              />
+            ))}
+          </div>
         </div>
+        <div className="h-2" /> {/* Bottom spacing */}
       </div>
     </div>
   );

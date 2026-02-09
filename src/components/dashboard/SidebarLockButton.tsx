@@ -22,16 +22,22 @@ export function SidebarLockButton({ isCollapsed = false }: SidebarLockButtonProp
     <button
       onClick={handleLock}
       className={cn(
-        "flex items-center gap-3 text-sm font-sans cursor-pointer",
-        "transition-all duration-200 ease-out rounded-lg",
-        "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+        "flex items-center gap-3 text-sm font-sans cursor-pointer w-full",
+        "transition-all duration-200 ease-out rounded-md group",
         isCollapsed 
-          ? "px-2 py-2.5 justify-center mx-2" 
-          : "px-3 py-2.5 mx-3"
+          ? "px-2 py-2 justify-center" 
+          : "px-2.5 py-2",
+        "text-muted-foreground hover:text-foreground hover:bg-background/80"
       )}
     >
-      <Lock className="w-4 h-4 shrink-0" />
-      {!isCollapsed && <span className="flex-1">Lock Dashboard</span>}
+      <div className={cn(
+        "flex items-center justify-center rounded-md transition-colors",
+        "bg-muted/50 group-hover:bg-primary/10",
+        "p-1.5"
+      )}>
+        <Lock className="w-3.5 h-3.5 shrink-0" />
+      </div>
+      {!isCollapsed && <span className="flex-1 text-left">Lock Dashboard</span>}
     </button>
   );
 
