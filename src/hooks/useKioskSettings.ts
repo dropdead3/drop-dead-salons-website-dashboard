@@ -245,7 +245,7 @@ export function useUpdateKioskSettings() {
         exact: false,
       });
       
-      toast.success('Kiosk settings saved');
+      toast.success('Changes saved successfully');
     },
     onError: (error) => {
       console.error('Failed to save kiosk settings:', error);
