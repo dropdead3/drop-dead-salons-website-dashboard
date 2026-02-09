@@ -58,6 +58,7 @@ import {
   Plus,
   Gift,
   Trophy,
+  TabletSmartphone,
 } from 'lucide-react';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
@@ -86,6 +87,7 @@ import { LoyaltySettingsContent } from '@/components/dashboard/settings/LoyaltyS
 import { TeamRewardsConfigurator } from '@/components/dashboard/settings/TeamRewardsConfigurator';
 import { UserPinSettings } from '@/components/dashboard/settings/UserPinSettings';
 import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
+import { KioskSettingsContent } from '@/components/dashboard/settings/KioskSettingsContent';
 import { MessageSquareHeart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
@@ -121,7 +123,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'access-hub' | 'schedule' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | null;
+type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'access-hub' | 'schedule' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -796,6 +798,12 @@ export default function Settings() {
       description: 'Staff points economy & reward catalog',
       icon: Gift,
     },
+    kiosk: {
+      id: 'kiosk',
+      label: 'Check-In Kiosk',
+      description: 'Device appearance, branding & behavior',
+      icon: TabletSmartphone,
+    },
   };
 
   const orderedCategories = useMemo(() => {
@@ -1292,6 +1300,8 @@ export default function Settings() {
               </CardContent>
             </Card>
           )}
+
+          {activeCategory === 'kiosk' && <KioskSettingsContent />}
         </div>
       </DashboardLayout>
     );
