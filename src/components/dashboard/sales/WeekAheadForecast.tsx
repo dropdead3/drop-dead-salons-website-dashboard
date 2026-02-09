@@ -274,7 +274,8 @@ export function WeekAheadForecast() {
           {/* Peak Day Callout */}
           {peakDay && peakDay.revenue > 0 && (
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-chart-2" />
                 Busiest day: <span className="font-medium text-foreground">{format(parseISO(peakDay.date), 'EEEE')}</span>
               </span>
               <span className="font-display text-chart-2">
