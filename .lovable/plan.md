@@ -1,161 +1,78 @@
 
 
-# Build HR Tools Suite for Salon Teams
+# Make the Hiring Bridge Flow Provider-Agnostic (Gusto + QuickBooks)
 
-## Overview
+## Problem
 
-Build a comprehensive set of HR management tools that integrate with the existing Management Hub, grouping Staff Strikes under a new "Performance and Compliance" category alongside new features. The build will add 4 new feature areas while reorganizing existing tools.
+The New Hire Wizard currently hardcodes "Gusto" throughout the UI and edge function. Organizations using QuickBooks for payroll and HR see a "Gusto: Not Connected" toggle that is irrelevant to them. There is no way to trigger QuickBooks onboarding from the hiring flow.
 
----
+## Solution
 
-## What Already Exists
-
-| Tool | Status |
-|------|--------|
-| Staff Strikes (write-ups, warnings, complaints) | Built |
-| Time-Off Requests (PTO with approval workflow) | Built |
-| Schedule Change Requests | Built |
-| Shift Swap Marketplace | Built |
-| Payroll Hub (with commission tiers) | Built |
-| Onboarding Tracker | Built |
-| Training Hub | Built |
-| Team Challenges | Built |
+Generalize the wizard's "Legal and Docs" step to detect whichever payroll provider is connected (Gusto, QuickBooks, or none) and adapt the labels, descriptions, and backend triggers accordingly. The architecture already supports this -- `usePayrollConnection` returns `connection.provider` and `isConnected`.
 
 ---
 
-## What We Will Build
+## Changes
 
-### 1. Document and License Tracker
-Track cosmetology licenses, certifications, and compliance documents with expiration alerts.
+### 1. New Hire Wizard UI (`src/pages/dashboard/admin/NewHireWizard.tsx`)
 
-- Table: `staff_documents` (user_id, organization_id, document_type, document_name, license_number, issued_date, expiration_date, status, file_url, notes, reminded_at)
-- Document types: cosmetology_license, continuing_education, health_certificate, insurance, other
-- Auto-calculated status: valid, expiring_soon (within 30 days), expired
-- Manager dashboard view showing all team documents with expiration timeline
-- Individual staff can upload/view their own documents
+**Current behavior**: Hardcoded "Gusto Payroll" toggle with Gusto-specific copy.
 
-### 2. Performance Reviews
-Structured review system with rating criteria, goal tracking, and review history.
+**New behavior**:
+- Read `provider` and `isConnected` from `usePayrollConnection()` (already imported)
+- Replace the Gusto-specific section with a generic "Payroll Provider" section that dynamically shows the connected provider name
+- Display provider-specific descriptions:
+  - **Gusto**: "Offer letter, W-4, I-9, and direct deposit will be handled via Gusto"
+  - **QuickBooks**: "Employee setup, tax forms, and direct deposit will be handled via QuickBooks Payroll"
+  - **None connected**: "Connect a payroll provider in the Payroll Hub to automate tax documents and onboarding"
+- Rename form field `triggerGusto` to `triggerPayrollProvider` for clarity
+- PandaDoc toggle logic stays the same: disabled when payroll provider handles offer letters (Gusto does; QuickBooks does not, so PandaDoc remains available when QuickBooks is connected)
+- Success dialog: replace "gustoStatus" / "gustoMessage" with generic "payrollStatus" / "payrollMessage"
 
-- Table: `performance_reviews` (user_id, organization_id, reviewer_id, review_period_start, review_period_end, review_type, status, overall_rating, strengths, areas_for_improvement, goals, reviewer_notes, employee_notes, acknowledged_at, completed_at)
-- Table: `review_goals` (review_id, goal_text, target_date, status, progress_notes)
-- Review types: annual, semi_annual, quarterly, probationary, improvement_plan
-- Ratings: 1-5 scale
-- Workflow: draft -> submitted -> acknowledged
-- Employees can view and acknowledge their reviews
+### 2. Edge Function (`supabase/functions/hire-employee/index.ts`)
 
-### 3. PTO Accrual and Balance Tracking
-Extend the existing `time_off_requests` with balance tracking and accrual rules.
+**Current behavior**: Accepts `triggerGusto` boolean and returns Gusto-specific status.
 
-- Table: `pto_policies` (organization_id, name, accrual_rate, accrual_period, max_balance, carry_over_limit, is_default)
-- Table: `employee_pto_balances` (user_id, organization_id, policy_id, current_balance, accrued_ytd, used_ytd, carried_over)
-- Accrual periods: per_pay_period, monthly, annually
-- Manager view: team PTO calendar showing who is out when
-- Blackout date management tied to organization calendar
+**New behavior**:
+- Accept `triggerPayrollProvider` (boolean) and `payrollProvider` (string: 'gusto' | 'quickbooks' | null)
+- When triggered, return provider-specific status messages:
+  - Gusto connected: "Employee will be onboarded via Gusto for tax documents, offer letter, and direct deposit"
+  - QuickBooks connected: "Employee will be added to QuickBooks Payroll for tax forms and direct deposit"
+  - Not connected: "Payroll provider is not yet configured. Tax documents will need to be handled manually."
+- Response fields renamed from `gustoStatus`/`gustoMessage` to `payrollStatus`/`payrollMessage`
+- Backward-compatible: still accepts `triggerGusto` as a fallback alias
 
-### 4. Incident and Safety Log
-General workplace incident documentation (separate from disciplinary strikes).
+### 3. Hook (`src/hooks/useHireEmployee.ts`)
 
-- Table: `incident_reports` (organization_id, reported_by, involved_user_id, incident_type, incident_date, location_id, description, severity, witnesses, corrective_action, status, resolved_at)
-- Incident types: workplace_injury, equipment_damage, client_complaint, safety_hazard, chemical_exposure, slip_fall, other
-- Tracks witnesses, corrective actions taken
-- Required for OSHA-style compliance documentation
+- Update the `HireData` interface: add `triggerPayrollProvider` and `payrollProvider` fields
+- Keep `triggerGusto` as optional for backward compatibility
+- Update `HireResult` interface: rename `gustoStatus`/`gustoMessage` to `payrollStatus`/`payrollMessage`
 
 ---
 
-## Management Hub Reorganization
+## Provider-Specific Behavior Matrix
 
-The Management Hub page categories will be updated to:
+```text
+Provider     | Offer Letter      | Tax Docs (W-4, I-9) | Direct Deposit
+-------------|--------------------|-----------------------|---------------
+Gusto        | Via Gusto          | Via Gusto             | Via Gusto
+QuickBooks   | Via PandaDoc/Manual| Via QuickBooks        | Via QuickBooks
+None         | Via PandaDoc/Manual| Manual (Doc Tracker)  | Manual
+```
 
-| Category | Tools |
-|----------|-------|
-| Team Development | Onboarding Hub, Graduation Tracker, Client Engine Tracker, Training Hub, Team Challenges |
-| Scheduling and Requests | Assistant Requests, Schedule Requests, Shift Swap Approvals |
-| **Performance and Compliance** (new) | **Staff Strikes** (moved here), **Performance Reviews** (new), **Document Tracker** (new), **Incident Reports** (new) |
-| Team Invitations | Invite, Manage Invitations |
-| Recruiting and Hiring | Lead Management, Recruiting Pipeline |
-| PTO and Leave | **PTO Balances** (new), Time-Off Requests (link to existing) |
-| Team Operations | Birthdays, Business Cards, Headshots |
-| Communications | Announcements, Changelog, Daily Huddle |
-| Points and Rewards | Points and Rewards Config |
-| Client Experience | Feedback Hub, Re-engagement |
+Key difference: QuickBooks Payroll does not generate offer letters, so PandaDoc remains enabled when QuickBooks is the active provider. Gusto handles offer letters natively, so PandaDoc is disabled when Gusto is toggled on.
 
 ---
 
-## New Pages and Routes
+## Files to Modify
 
-| Route | Page | Permission |
-|-------|------|------------|
-| `/dashboard/admin/documents` | Document and License Tracker | `view_team_overview` |
-| `/dashboard/admin/performance-reviews` | Performance Reviews | `view_team_overview` |
-| `/dashboard/admin/pto` | PTO Balances and Policies | `view_team_overview` |
-| `/dashboard/admin/incidents` | Incident Reports | `view_team_overview` |
+1. **`src/pages/dashboard/admin/NewHireWizard.tsx`** -- Generalize Legal and Docs step UI
+2. **`supabase/functions/hire-employee/index.ts`** -- Accept provider-agnostic parameters
+3. **`src/hooks/useHireEmployee.ts`** -- Update interfaces for generic payroll provider fields
 
----
+## Files Unchanged
 
-## Technical Implementation
-
-### Database (4 new tables + 2 supporting tables)
-
-**staff_documents**
-- Columns: id, organization_id, user_id, document_type (enum), document_name, license_number, issued_date, expiration_date, status (valid/expiring_soon/expired), file_url, notes, reminded_at, created_at, updated_at
-- RLS: org members can view their own; managers/admins can view all in org
-
-**performance_reviews**
-- Columns: id, organization_id, user_id, reviewer_id, review_type (enum), review_period_start, review_period_end, status (draft/submitted/acknowledged), overall_rating (1-5), strengths, areas_for_improvement, goals_summary, reviewer_notes, employee_notes, acknowledged_at, completed_at, created_at, updated_at
-- RLS: reviewer can CRUD their drafts; employee can view and acknowledge their own reviews; admins see all
-
-**review_goals**
-- Columns: id, review_id (FK), goal_text, target_date, status (pending/in_progress/completed/missed), progress_notes, created_at, updated_at
-- RLS: inherits from parent review access
-
-**pto_policies**
-- Columns: id, organization_id, name, accrual_rate (numeric), accrual_period (enum), max_balance, carry_over_limit, is_default, is_active, created_at, updated_at
-- RLS: org admins can manage; members can view
-
-**employee_pto_balances**
-- Columns: id, organization_id, user_id, policy_id (FK), current_balance, accrued_ytd, used_ytd, carried_over, last_accrual_date, created_at, updated_at
-- RLS: employees see their own; managers see all in org
-
-**incident_reports**
-- Columns: id, organization_id, reported_by, involved_user_id (nullable), incident_type (enum), incident_date, location_id, description, severity (low/medium/high/critical), witnesses (text), corrective_action, status (open/investigating/resolved/closed), resolved_at, resolved_by, created_at, updated_at
-- RLS: reporter can create and view their own; managers/admins see all in org
-
-### Frontend Components (per feature)
-
-Each feature follows the established pattern of:
-- A page component in `src/pages/dashboard/admin/`
-- Hook(s) in `src/hooks/` for data fetching/mutations
-- Supporting dialog/card components in `src/components/dashboard/`
-- Registration in `src/App.tsx` routes with `ProtectedRoute`
-
-### Files to Create
-
-1. **Database migration** - All 6 tables with RLS policies
-2. `src/hooks/useStaffDocuments.ts` - CRUD hooks for document tracker
-3. `src/hooks/usePerformanceReviews.ts` - CRUD hooks for reviews and goals
-4. `src/hooks/usePTOBalances.ts` - Hooks for PTO policies and balances
-5. `src/hooks/useIncidentReports.ts` - CRUD hooks for incident reports
-6. `src/pages/dashboard/admin/DocumentTracker.tsx` - Document and license tracking page
-7. `src/pages/dashboard/admin/PerformanceReviews.tsx` - Performance reviews page
-8. `src/pages/dashboard/admin/PTOManager.tsx` - PTO balances and policy page
-9. `src/pages/dashboard/admin/IncidentReports.tsx` - Incident reporting page
-
-### Files to Modify
-
-1. `src/App.tsx` - Add 4 new routes
-2. `src/pages/dashboard/admin/ManagementHub.tsx` - Reorganize categories, add new cards, move Staff Strikes to Performance and Compliance
-3. `src/hooks/useSidebarLayout.ts` - No sidebar changes needed (these tools are accessed via Management Hub)
-
----
-
-## Build Order
-
-1. Database migration (all tables at once)
-2. Document and License Tracker (hooks + page)
-3. Performance Reviews (hooks + page)
-4. PTO Manager (hooks + page)
-5. Incident Reports (hooks + page)
-6. Management Hub reorganization (move Staff Strikes, add new cards)
-7. Route registration in App.tsx
+- `src/hooks/usePayrollConnection.ts` -- Already returns `provider` and `isConnected` for any provider
+- `src/components/dashboard/payroll/providers/providerConfig.ts` -- No changes needed
+- Routing and Management Hub -- No changes needed
 
