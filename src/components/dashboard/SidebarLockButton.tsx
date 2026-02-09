@@ -12,10 +12,7 @@ export function SidebarLockButton({ isCollapsed = false }: SidebarLockButtonProp
   const { lock } = useDashboardLock();
   const { data: pinStatus } = useUserPinStatus();
 
-  // Only show lock button if user has a PIN set
-  if (!pinStatus?.hasPin) {
-    return null;
-  }
+  // Always show lock button - anyone can lock for shared device security
 
   const handleLock = () => {
     lock();

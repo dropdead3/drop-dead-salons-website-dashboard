@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'react-router-dom';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -23,14 +24,21 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { CalendarFilterState } from '@/components/dashboard/schedule/CalendarFiltersPopover';
 
+interface QuickLoginState {
+  quickLoginUserId?: string;
+  quickLoginUserName?: string;
+}
+
 
 export default function Schedule() {
   const isMobile = useIsMobile();
+  const location = useLocation();
   const { preferences } = useCalendarPreferences();
   const effectiveUserId = useEffectiveUserId();
   const { roles } = useAuth();
   const { data: locations = [] } = useActiveLocations();
   const { data: businessSettings } = useBusinessSettings();
+  const quickLoginHandled = useRef(false);
   
   // Check if user is stylist or stylist_assistant (they get full calendar view access)
   const isStylistRole = roles.includes('stylist') || roles.includes('stylist_assistant');
@@ -72,6 +80,18 @@ export default function Schedule() {
       setSelectedLocation(locations[0].id);
     }
   }, [locations, selectedLocation]);
+
+  // Handle quick login navigation state
+  useEffect(() => {
+    const quickLoginState = location.state as QuickLoginState | undefined;
+    if (quickLoginState?.quickLoginUserId && !quickLoginHandled.current) {
+      quickLoginHandled.current = true;
+      setSelectedStaffIds([quickLoginState.quickLoginUserId]);
+      toast.success(`Welcome back, ${quickLoginState.quickLoginUserName}!`);
+      // Clear the state to prevent re-triggering on navigation
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Handle multi-select staff change
   const handleStaffToggle = (staffId: string) => {
