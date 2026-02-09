@@ -1,273 +1,138 @@
 
-
-# Add Check-In Kiosk Configurator to Settings Hub
+# Enhance Kiosk Idle Screen UI
 
 ## Overview
 
-Add a new "Check-In Kiosk" category tile to the Settings Hub that provides centralized management of kiosk configurations for each location. This addresses the current gap where admins must access the physical kiosk device and enter a PIN just to change settings.
+Refine the kiosk idle screen layout based on the screenshot reference to create a more balanced, elegant design with better visual hierarchy and spacing.
 
-## Current State
+## Current Issues
 
-| Aspect | Current Behavior |
-|--------|-----------------|
-| Settings access | Only via PIN-protected dialog on the actual kiosk (`/kiosk/:locationId`) |
-| Location support | Settings can be per-location or org-wide defaults |
-| Settings scope | Appearance (colors), Content (text prompts), Behavior (timeouts, features), Security (PIN) |
-| Configuration file | `src/components/kiosk/KioskSettingsDialog.tsx` (519 lines) |
+Looking at the current implementation (`KioskIdleScreen.tsx`):
 
-## Proposed Solution
+| Element | Current | Issue |
+|---------|---------|-------|
+| Time | `text-7xl md:text-9xl` | Too dominant, overpowers other content |
+| Time position | Centered vertically | Could be positioned higher for better balance |
+| Time margin | `mb-10` | Transitions directly into welcome text |
+| Date | `mt-3` | Good spacing from time |
+| Welcome title | `text-4xl md:text-6xl` | Slightly large relative to refined time |
+| Element gaps | Various `mb-*` | Could use more consistent, generous padding |
 
-Add a new settings category tile that opens a dedicated kiosk configuration page with:
+## Proposed Changes
 
-1. **Location selector** - Choose which location to configure (or set org-wide defaults)
-2. **Live preview panel** - Visual mockup showing how changes will look
-3. **All current settings** - Appearance, Content, Behavior tabs
-4. **QR code generator** - For easily deploying kiosk URL to devices
-
-## Visual Design
+### 1. Time Display - Smaller and Repositioned Higher
 
 ```text
-+------------------------------------------+
-|  ← Back to Settings                      |
-|                                          |
-|  CHECK-IN KIOSK                          |
-|  Configure kiosk appearance and behavior |
-|                                          |
-+------------------+-----------------------+
-|  Location:       | [All Locations ▾]     |
-+------------------+-----------------------+
-|                                          |
-|  +------------+  +---------------------+ |
-|  |            |  | APPEARANCE          | |
-|  |  [PHONE    |  | ○ Background Color  | |
-|  |   MOCKUP   |  | ○ Accent Color      | |
-|  |   WITH     |  | ○ Text Color        | |
-|  |   LIVE     |  |                     | |
-|  |  PREVIEW]  |  | CONTENT             | |
-|  |            |  | ○ Welcome Title     | |
-|  |            |  | ○ Welcome Subtitle  | |
-|  |            |  | ...                 | |
-|  +------------+  +---------------------+ |
-|                                          |
-|  +-------------------------------------+ |
-|  | Deploy QR Code                      | |
-|  | Scan to open kiosk on a device      | |
-|  +-------------------------------------+ |
-+------------------------------------------+
+Current Layout:          Proposed Layout:
+                         ┌────────────────────┐
+                         │                    │
+┌────────────────────┐   │    10:28 PM        │  ← Smaller, higher position
+│                    │   │    Sunday, Feb 8   │
+│                    │   │                    │
+│    10:28 PM        │   │                    │
+│    Sunday, Feb 8   │   │    WELCOME         │  ← More breathing room
+│                    │   │                    │
+│    WELCOME         │   │                    │
+│                    │   │  [Tap to check in] │
+│  [Tap to check in] │   │                    │
+│                    │   │                    │
+└────────────────────┘   └────────────────────┘
 ```
 
----
+### 2. Specific CSS Changes
 
-## Technical Implementation
+**File: `src/components/kiosk/KioskIdleScreen.tsx`**
 
-### 1. Register New Settings Category
-
-**File: `src/hooks/useSettingsLayout.ts`**
-
-Add `kiosk` to the icon colors and section groups:
-
+**A. Content container - Shift content upward**
 ```typescript
-// Add to DEFAULT_ICON_COLORS
-kiosk: '#8B5CF6',  // Purple to match kiosk accent
-
-// Add to SECTION_GROUPS under 'operations'
-categories: ['business', 'locations', 'schedule', 'kiosk', ...],
+// Line ~160: Change container flex positioning
+<div className="relative z-10 flex flex-col items-center text-center px-8 -mt-12">
 ```
 
-### 2. Add Category to Settings Page
-
-**File: `src/pages/dashboard/admin/Settings.tsx`**
-
-Add kiosk to the `SettingsCategory` type and `categoriesMap`:
-
+**B. Time display - Reduce size**
 ```typescript
-// Update type (line ~124)
-type SettingsCategory = '...' | 'kiosk' | null;
-
-// Add to categoriesMap (around line ~799)
-kiosk: {
-  id: 'kiosk',
-  label: 'Check-In Kiosk',
-  description: 'Device appearance, branding & behavior',
-  icon: TabletSmartphone, // from lucide-react
-},
+// Line ~187: Reduce from text-7xl/9xl to text-5xl/7xl
+<motion.div 
+  className="text-5xl md:text-7xl font-extralight tracking-tight"
+  style={{ color: textColor }}
+>
+  {formatTime(currentTime)}
+</motion.div>
 ```
 
-Add the content view when `activeCategory === 'kiosk'`:
-
+**C. Date display - Reduce size slightly**
 ```typescript
-{activeCategory === 'kiosk' && (
-  <KioskSettingsContent />
-)}
+// Line ~193: Reduce from text-xl/2xl to text-lg/xl
+<motion.div 
+  className="text-lg md:text-xl mt-2 font-light tracking-wide"
+  style={{ color: `${textColor}90` }}
+>
+  {formatDate(currentTime)}
+</motion.div>
 ```
 
-### 3. Create Kiosk Settings Content Component
-
-**New file: `src/components/dashboard/settings/KioskSettingsContent.tsx`**
-
-Key features:
-- Location selector dropdown (using existing `LocationSelect` component)
-- Settings form with three tabs: Appearance, Content, Behavior
-- Live preview panel showing a phone/tablet mockup
-- QR code generation for deploying the kiosk URL to devices
-
+**D. Time container - Increase bottom margin**
 ```typescript
-export function KioskSettingsContent() {
-  const [selectedLocation, setSelectedLocation] = useState<string>('all');
-  const { data: locations } = useLocations();
-  
-  // For org-wide, pass locationId as null; for specific, pass the ID
-  const organizationId = useOrganizationId();
-  const locationId = selectedLocation === 'all' ? null : selectedLocation;
-  
-  const { data: settings } = useKioskSettings(organizationId, locationId);
-  const updateSettings = useUpdateKioskSettings();
-  
-  // Local state for form
-  const [localSettings, setLocalSettings] = useState({...});
-  
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Left: Live Preview */}
-      <KioskPreviewPanel settings={localSettings} />
-      
-      {/* Right: Settings Form */}
-      <Card>
-        <CardHeader>
-          <LocationSelect 
-            value={selectedLocation} 
-            onValueChange={setSelectedLocation}
-            allLabel="Organization Defaults"
-          />
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="appearance">
-            <TabsList>
-              <TabsTrigger value="appearance">Appearance</TabsTrigger>
-              <TabsTrigger value="content">Content</TabsTrigger>
-              <TabsTrigger value="behavior">Behavior</TabsTrigger>
-            </TabsList>
-            {/* Tab contents with form fields */}
-          </Tabs>
-        </CardContent>
-      </Card>
-      
-      {/* QR Code Deploy Section */}
-      <KioskDeployCard locationId={locationId} />
-    </div>
-  );
-}
+// Line ~180: Increase mb-10 to mb-16
+<motion.div
+  className="mb-16"  // Was mb-10
+  initial={{ scale: 0.9, opacity: 0 }}
+  animate={{ scale: 1, opacity: 1 }}
+  transition={{ delay: 0.2 }}
+>
 ```
 
-### 4. Create Live Preview Component
-
-**New file: `src/components/dashboard/settings/KioskPreviewPanel.tsx`**
-
-A visual phone/tablet mockup that updates in real-time as settings change:
-
+**E. Welcome message - Adjust margins**
 ```typescript
-export function KioskPreviewPanel({ settings }: { settings: LocalKioskSettings }) {
-  return (
-    <Card className="sticky top-6">
-      <CardHeader>
-        <CardTitle>Live Preview</CardTitle>
-        <CardDescription>See how your kiosk will appear</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div 
-          className="aspect-[3/4] rounded-2xl border-8 border-slate-800 overflow-hidden"
-          style={{ backgroundColor: settings.background_color }}
-        >
-          {/* Simulated kiosk welcome screen */}
-          <div className="h-full flex flex-col items-center justify-center p-6 text-center">
-            <h1 style={{ color: settings.text_color }} className="text-2xl font-medium">
-              {settings.welcome_title}
-            </h1>
-            {settings.welcome_subtitle && (
-              <p style={{ color: settings.text_color }} className="opacity-70 mt-2">
-                {settings.welcome_subtitle}
-              </p>
-            )}
-            <button 
-              className="mt-8 px-6 py-3 rounded-xl text-white font-medium"
-              style={{ backgroundColor: settings.accent_color }}
-            >
-              Check In
-            </button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+// Line ~201: Increase mb-14 to mb-20 for more breathing room before CTA
+<motion.div
+  className="mb-20"  // Was mb-14
+  initial={{ y: 20, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  transition={{ delay: 0.3 }}
+>
 ```
 
-### 5. Create QR Code Deploy Component
-
-**New file: `src/components/dashboard/settings/KioskDeployCard.tsx`**
-
-Generate and display a QR code for the kiosk URL:
-
+**F. Welcome title - Slightly smaller**
 ```typescript
-import { QRCodeSVG } from 'qrcode.react';
-
-export function KioskDeployCard({ locationId }: { locationId: string | null }) {
-  const kioskUrl = locationId 
-    ? `${window.location.origin}/kiosk/${locationId}`
-    : null;
-    
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Deploy to Device</CardTitle>
-        <CardDescription>
-          Scan this QR code on a tablet to launch the kiosk
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {kioskUrl ? (
-          <div className="flex flex-col items-center gap-4">
-            <QRCodeSVG value={kioskUrl} size={160} />
-            <code className="text-sm text-muted-foreground">{kioskUrl}</code>
-            <Button variant="outline" onClick={() => navigator.clipboard.writeText(kioskUrl)}>
-              Copy URL
-            </Button>
-          </div>
-        ) : (
-          <p className="text-muted-foreground text-center py-4">
-            Select a specific location to generate a deployment QR code
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
+// Line ~208: Reduce from text-4xl/6xl to text-3xl/5xl
+<h1 
+  className="text-3xl md:text-5xl font-medium mb-4 tracking-tight"
+  style={{ color: textColor }}
+>
 ```
 
----
+### 3. Theme Alignment
 
-## Files to Create
+The kiosk already uses `settings?.accent_color` from `organization_kiosk_settings` for the "Tap to check in" button and glow effects. This is the correct approach since:
 
-| File | Purpose |
-|------|---------|
-| `src/components/dashboard/settings/KioskSettingsContent.tsx` | Main settings page content |
-| `src/components/dashboard/settings/KioskPreviewPanel.tsx` | Live preview mockup |
-| `src/components/dashboard/settings/KioskDeployCard.tsx` | QR code deployment |
+- The kiosk has its own dedicated settings table (`organization_kiosk_settings`)
+- Admins can configure colors per-location or org-wide via the new Settings Hub configurator
+- The accent color is applied to: button background, glow effects, ambient gradient
+
+No code changes needed for theme alignment - it already respects the configured kiosk settings.
+
+## Summary of Changes
+
+| Element | Before | After |
+|---------|--------|-------|
+| Time size | `text-7xl md:text-9xl` | `text-5xl md:text-7xl` |
+| Date size | `text-xl md:text-2xl` | `text-lg md:text-xl` |
+| Date margin | `mt-3` | `mt-2` |
+| Time container margin | `mb-10` | `mb-16` |
+| Welcome title size | `text-4xl md:text-6xl` | `text-3xl md:text-5xl` |
+| Welcome container margin | `mb-14` | `mb-20` |
+| Content container | centered | `-mt-12` (shifted up) |
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useSettingsLayout.ts` | Add `kiosk` to DEFAULT_ICON_COLORS and SECTION_GROUPS |
-| `src/pages/dashboard/admin/Settings.tsx` | Add `kiosk` to category type, categoriesMap, and render content |
+| `src/components/kiosk/KioskIdleScreen.tsx` | Adjust typography sizes and spacing |
 
----
+## Result
 
-## Benefits
-
-1. **Remote management** - Configure kiosks without physical device access
-2. **Live preview** - See changes before saving
-3. **Multi-location support** - Set org-wide defaults or location-specific overrides
-4. **Easy deployment** - QR code makes device setup seamless
-5. **Consistent UX** - Follows existing Settings Hub patterns
-
+- Time display is smaller and more elegant (not dominating the screen)
+- Content positioned slightly higher for better visual balance
+- More generous padding between clock, welcome message, and CTA button
+- Theme already matches organization via kiosk settings - no changes needed
