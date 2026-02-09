@@ -664,31 +664,17 @@ export function ForecastingCard() {
                             </div>
                           </foreignObject>
                           {(() => {
-                            const lineStart = chartLeft + badgeWidth + 4;
-                            const lineLength = chartRight - lineStart;
+                            const lineStart = chartLeft + badgeWidth;
                             return (
-                              <>
-                                <line
-                                  x1={lineStart}
-                                  y1={yPos}
-                                  x2={chartRight}
-                                  y2={yPos}
-                                  stroke="hsl(var(--background))"
-                                  strokeWidth={5}
-                                  strokeOpacity={0.85}
-                                />
-                                <line
-                                  x1={lineStart}
-                                  y1={yPos}
-                                  x2={chartRight}
-                                  y2={yPos}
-                                  stroke="hsl(25, 100%, 55%)"
-                                  strokeDasharray={lineLength}
-                                  strokeDashoffset={lineLength}
-                                  strokeWidth={1.5}
-                                  style={{ animation: 'drawLine 1s ease-out 0.8s forwards' }}
-                                />
-                              </>
+                              <line
+                                x1={lineStart}
+                                y1={yPos}
+                                x2={chartRight}
+                                y2={yPos}
+                                stroke="hsl(var(--foreground) / 0.35)"
+                                strokeDasharray="4 4"
+                                strokeWidth={1.5}
+                              />
                             );
                           })()}
                         </g>
@@ -724,31 +710,17 @@ export function ForecastingCard() {
                             </div>
                           </foreignObject>
                           {(() => {
-                            const lineStart = chartLeft + badgeWidth + 4;
-                            const lineLength = chartRight - lineStart;
+                            const lineStart = chartLeft + badgeWidth;
                             return (
-                              <>
-                                <line
-                                  x1={lineStart}
-                                  y1={yPos}
-                                  x2={chartRight}
-                                  y2={yPos}
-                                  stroke="hsl(var(--background))"
-                                  strokeWidth={5}
-                                  strokeOpacity={0.85}
-                                />
-                                <line
-                                  x1={lineStart}
-                                  y1={yPos}
-                                  x2={chartRight}
-                                  y2={yPos}
-                                  stroke="hsl(25, 100%, 55%)"
-                                  strokeDasharray={lineLength}
-                                  strokeDashoffset={lineLength}
-                                  strokeWidth={1.5}
-                                  style={{ animation: 'drawLine 1s ease-out 0.8s forwards' }}
-                                />
-                              </>
+                              <line
+                                x1={lineStart}
+                                y1={yPos}
+                                x2={chartRight}
+                                y2={yPos}
+                                stroke="hsl(var(--foreground) / 0.35)"
+                                strokeDasharray="4 4"
+                                strokeWidth={1.5}
+                              />
                             );
                           })()}
                         </g>
