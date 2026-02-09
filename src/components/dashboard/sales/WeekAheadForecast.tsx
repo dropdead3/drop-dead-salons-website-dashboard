@@ -226,22 +226,6 @@ export function WeekAheadForecast() {
                   axisLine={false}
                   width={40}
                 />
-                {averageDaily > 0 && (
-                  <ReferenceLine 
-                    y={averageDaily} 
-                    stroke="hsl(30, 100%, 50%)" 
-                    strokeDasharray="4 4"
-                    strokeWidth={1.5}
-                    label={{
-                      value: `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`,
-                      position: 'insideBottomLeft',
-                      fill: 'hsl(30, 100%, 50%)',
-                      fontSize: 11,
-                      fontWeight: 500,
-                      offset: 4,
-                    }}
-                  />
-                )}
                 <Tooltip
                   contentStyle={{
                     backgroundColor: 'hsl(var(--background))',
@@ -291,6 +275,22 @@ export function WeekAheadForecast() {
                     />
                   ))}
                 </Bar>
+                {averageDaily > 0 && (
+                  <ReferenceLine 
+                    y={averageDaily} 
+                    stroke="hsl(30, 100%, 50%)" 
+                    strokeDasharray="4 4"
+                    strokeWidth={1.5}
+                    label={{
+                      value: `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`,
+                      position: 'insideBottomLeft',
+                      fill: 'hsl(30, 100%, 50%)',
+                      fontSize: 11,
+                      fontWeight: 500,
+                      offset: 4,
+                    }}
+                  />
+                )}
               </BarChart>
             </ResponsiveContainer>
           </div>

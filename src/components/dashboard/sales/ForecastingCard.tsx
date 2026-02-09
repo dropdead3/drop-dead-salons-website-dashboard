@@ -568,42 +568,6 @@ export function ForecastingCard() {
                     width={40}
                   />
                   
-                  {/* Daily average reference line - only for daily views */}
-                  {!showWeeklyChart && averageDaily > 0 && (
-                  <ReferenceLine 
-                      y={averageDaily} 
-                      stroke="hsl(30, 100%, 50%)" 
-                      strokeDasharray="4 4"
-                      strokeWidth={1.5}
-                      label={{
-                        value: `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`,
-                        position: 'insideBottomLeft',
-                        fill: 'hsl(30, 100%, 50%)',
-                        fontSize: 11,
-                        fontWeight: 500,
-                        offset: 4,
-                      }}
-                    />
-                  )}
-                  
-                  {/* Weekly average reference line - only for weekly views */}
-                  {showWeeklyChart && averageWeekly > 0 && (
-                  <ReferenceLine 
-                      y={averageWeekly} 
-                      stroke="hsl(30, 100%, 50%)" 
-                      strokeDasharray="4 4"
-                      strokeWidth={1.5}
-                      label={{
-                        value: `Weekly Avg: $${Math.round(averageWeekly).toLocaleString()}`,
-                        position: 'insideBottomLeft',
-                        fill: 'hsl(30, 100%, 50%)',
-                        fontSize: 11,
-                        fontWeight: 500,
-                        offset: 4,
-                      }}
-                    />
-                  )}
-                  
                   <Tooltip
                     content={
                       <ForecastTooltip 
@@ -652,6 +616,40 @@ export function ForecastingCard() {
                       );
                     })}
                   </Bar>
+                  {/* Daily average reference line - only for daily views */}
+                  {!showWeeklyChart && averageDaily > 0 && (
+                    <ReferenceLine 
+                      y={averageDaily} 
+                      stroke="hsl(30, 100%, 50%)" 
+                      strokeDasharray="4 4"
+                      strokeWidth={1.5}
+                      label={{
+                        value: `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`,
+                        position: 'insideBottomLeft',
+                        fill: 'hsl(30, 100%, 50%)',
+                        fontSize: 11,
+                        fontWeight: 500,
+                        offset: 4,
+                      }}
+                    />
+                  )}
+                  {/* Weekly average reference line - only for weekly views */}
+                  {showWeeklyChart && averageWeekly > 0 && (
+                    <ReferenceLine 
+                      y={averageWeekly} 
+                      stroke="hsl(30, 100%, 50%)" 
+                      strokeDasharray="4 4"
+                      strokeWidth={1.5}
+                      label={{
+                        value: `Weekly Avg: $${Math.round(averageWeekly).toLocaleString()}`,
+                        position: 'insideBottomLeft',
+                        fill: 'hsl(30, 100%, 50%)',
+                        fontSize: 11,
+                        fontWeight: 500,
+                        offset: 4,
+                      }}
+                    />
+                  )}
                 </BarChart>
               </ResponsiveContainer>
             </div>
