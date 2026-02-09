@@ -147,9 +147,14 @@ function AboveBarLabel({ x, y, width, value, ...rest }: any) {
   if (value === undefined || value === null || value === 0) return null;
   const isPeak = rest?.isPeak ?? rest?.payload?.isPeak;
   const isBlurred = rest?.isBlurred;
+  const onReveal = rest?.onReveal;
   
   return (
-    <g style={{ pointerEvents: 'none' }}>
+    <g 
+      style={{ pointerEvents: isBlurred ? 'auto' : 'none', cursor: isBlurred ? 'pointer' : 'default' }}
+      onClick={isBlurred ? onReveal : undefined}
+    >
+      {isBlurred && <title>Click to reveal</title>}
       {isPeak && (
         <circle cx={x + width / 2} cy={y - 22} r={3} fill="hsl(var(--chart-2))" />
       )}
@@ -360,7 +365,7 @@ export function ForecastingCard() {
   const [selectedDay, setSelectedDay] = useState<DayForecast | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { data, isLoading, error } = useForecastRevenue(period, selectedLocation);
-  const { hideNumbers } = useHideNumbers();
+  const { hideNumbers, requestUnhide } = useHideNumbers();
   
   const chartRef = useRef<HTMLDivElement>(null);
   const isChartInView = useInView(chartRef, { once: true, amount: 0.3 });
@@ -652,7 +657,7 @@ export function ForecastingCard() {
                   >
                     <LabelList 
                       dataKey="totalRevenue"
-                      content={(props: any) => <AboveBarLabel {...props} isBlurred={hideNumbers} />}
+                      content={(props: any) => <AboveBarLabel {...props} isBlurred={hideNumbers} onReveal={requestUnhide} />}
                     />
                     {chartData.map((entry, index) => {
                       const isToday = 'isToday' in entry && entry.isToday;
@@ -683,7 +688,8 @@ export function ForecastingCard() {
                       const fontSize = 12;
                       const gap = 4;
                       return (
-                        <g style={{ pointerEvents: 'none' }}>
+                        <g style={{ pointerEvents: hideNumbers ? 'auto' : 'none', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
+                          {hideNumbers && <title>Click to reveal</title>}
                           <rect
                             className="avg-badge-rect"
                             x={chartLeft}
@@ -744,7 +750,8 @@ export function ForecastingCard() {
                       const fontSize = 11;
                       const gap = 4;
                       return (
-                        <g style={{ pointerEvents: 'none' }}>
+                        <g style={{ pointerEvents: hideNumbers ? 'auto' : 'none', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
+                          {hideNumbers && <title>Click to reveal</title>}
                           <rect
                             className="avg-badge-rect-weekly"
                             x={chartLeft}
