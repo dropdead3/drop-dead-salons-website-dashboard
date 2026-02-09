@@ -85,7 +85,7 @@ export function KioskPreviewPanel({ settings, businessSettings, className }: Kio
   }[settings.logo_size];
 
   return (
-    <Card className={cn("sticky top-6", className)}>
+    <Card className={cn("h-fit", className)}>
       <CardHeader>
         <CardTitle className="font-display text-lg">LIVE PREVIEW</CardTitle>
         <CardDescription>See how your kiosk will appear on devices</CardDescription>
@@ -94,7 +94,7 @@ export function KioskPreviewPanel({ settings, businessSettings, className }: Kio
         {/* Tablet frame mockup */}
         <div className={cn(
           "relative mx-auto",
-          settings.display_orientation === 'landscape' ? "max-w-[360px]" : "max-w-[280px]"
+          settings.display_orientation === 'landscape' ? "max-w-[400px]" : "max-w-[320px]"
         )}>
           {/* Device frame */}
           <div className="rounded-[2rem] border-[8px] border-slate-800 bg-slate-800 p-1 shadow-xl">

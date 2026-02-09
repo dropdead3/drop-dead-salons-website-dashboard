@@ -323,14 +323,8 @@ export function KioskSettingsContent() {
       </Card>
 
       {/* Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left: Preview */}
-        <KioskPreviewPanel 
-          settings={localSettings} 
-          businessSettings={businessSettings}
-        />
-
-        {/* Right: Settings Form */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* Left: Settings Form */}
         <Card>
           <CardHeader>
             <CardTitle className="font-display text-lg">
@@ -848,6 +842,14 @@ export function KioskSettingsContent() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Right: Preview (sticky) */}
+        <div className="lg:self-start lg:sticky lg:top-6">
+          <KioskPreviewPanel 
+            settings={localSettings} 
+            businessSettings={businessSettings}
+          />
+        </div>
       </div>
 
       {/* QR Code Deploy Section - only for specific locations */}
