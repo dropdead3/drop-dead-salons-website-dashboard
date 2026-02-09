@@ -740,7 +740,7 @@ export default function Settings() {
     },
     'access-hub': {
       id: 'access-hub',
-      label: 'Access & Controls Hub',
+      label: 'Roles & Controls Hub',
       description: 'Modules, role visibility & permissions',
       icon: Shield,
     },
