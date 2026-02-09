@@ -334,6 +334,22 @@ export function KioskSettingsContent() {
     }
   }, [localSettings.theme_mode, themePreset, resolvedTheme]);
 
+  // Auto-fallback: When switching to landscape, center positions are invalid
+  useEffect(() => {
+    if (localSettings.display_orientation === 'landscape') {
+      if (localSettings.location_badge_position === 'top-center') {
+        setLocalSettings(prev => ({ ...prev, location_badge_position: 'top-left' }));
+      } else if (localSettings.location_badge_position === 'bottom-center') {
+        setLocalSettings(prev => ({ ...prev, location_badge_position: 'bottom-left' }));
+      }
+    }
+  }, [localSettings.display_orientation]);
+
+  // Derived: Available badge positions based on orientation
+  const availableBadgePositions = localSettings.display_orientation === 'landscape'
+    ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const
+    : ['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'] as const;
+
   const handleSave = () => {
     if (!orgId) return;
     
@@ -858,11 +874,14 @@ export function KioskSettingsContent() {
 
                   {localSettings.show_location_badge && (
                     <>
-                      {/* Position selector - 3 column grid for 6 positions */}
+                      {/* Position selector - dynamic grid based on orientation */}
                       <div className="space-y-2">
                         <Label className="text-sm">Position</Label>
-                        <div className="grid grid-cols-3 gap-2">
-                          {(['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'] as const).map((pos) => (
+                        <div className={cn(
+                          "grid gap-2",
+                          localSettings.display_orientation === 'landscape' ? "grid-cols-2" : "grid-cols-3"
+                        )}>
+                          {availableBadgePositions.map((pos) => (
                             <button
                               key={pos}
                               type="button"
