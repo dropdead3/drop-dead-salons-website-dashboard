@@ -178,6 +178,7 @@ const managerNavItems: NavItem[] = [
   { href: '/dashboard/rewards', label: 'Rewards', icon: Gift, roles: ['stylist', 'stylist_assistant', 'receptionist'] },
   { href: '/dashboard/assistant-schedule', label: 'Assistant Scheduling', icon: Users, permission: 'view_assistant_schedule' },
   { href: '/dashboard/schedule-meeting', label: 'Meetings & Accountability', icon: CalendarClock, permission: 'schedule_meetings' },
+  { href: '/dashboard/admin/team', label: 'Program Team Overview', icon: Users, permission: 'view_team_overview' },
   // Analytics & Insights group
   { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
   { href: '/dashboard/stats', label: 'Team Stats', icon: BarChart3, permission: 'view_all_stats' },
@@ -185,7 +186,6 @@ const managerNavItems: NavItem[] = [
   // People group
   { href: '/dashboard/directory', label: 'Team Directory', icon: Contact, permission: 'view_team_directory' },
   { href: '/dashboard/clients', label: 'Client Directory', icon: Users, permission: 'view_clients' },
-  { href: '/dashboard/admin/team', label: 'Program Team Overview', icon: Users, permission: 'view_team_overview' },
   // Operations group (includes former Website section)
   { href: '/dashboard/admin/management', label: 'Management Hub', icon: LayoutGrid, permission: 'view_team_overview' },
   { href: '/dashboard/admin/payroll', label: 'Hiring & Payroll Hub', icon: DollarSign, permission: 'manage_payroll' },
