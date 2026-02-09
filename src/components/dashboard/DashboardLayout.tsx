@@ -193,9 +193,9 @@ const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/website-sections', label: 'Website Editor', icon: Globe, permission: 'manage_homepage_stylists' },
 ];
 
-// Access & Permissions section
+// Roles & Controls section
 const adminOnlyNavItems: NavItem[] = [
-  { href: '/dashboard/admin/access-hub', label: 'Access & Permissions Hub', icon: Shield, permission: 'manage_settings' },
+  { href: '/dashboard/admin/access-hub', label: 'Roles & Controls Hub', icon: Shield, permission: 'manage_settings' },
   { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
 ];
 
