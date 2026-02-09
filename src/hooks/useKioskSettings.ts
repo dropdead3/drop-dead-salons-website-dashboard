@@ -227,9 +227,24 @@ export function useUpdateKioskSettings() {
       }
     },
     onSuccess: (_, variables) => {
+      // Invalidate org-level settings queries
       queryClient.invalidateQueries({ 
         queryKey: ['kiosk-settings', variables.organizationId] 
       });
+      
+      // Also invalidate location-specific queries used by kiosk screens
+      if (variables.locationId) {
+        queryClient.invalidateQueries({ 
+          queryKey: ['kiosk-settings-location', variables.locationId] 
+        });
+      }
+      
+      // Invalidate all location-based kiosk settings (for org-level changes)
+      queryClient.invalidateQueries({
+        queryKey: ['kiosk-settings-location'],
+        exact: false,
+      });
+      
       toast.success('Kiosk settings saved');
     },
     onError: (error) => {
