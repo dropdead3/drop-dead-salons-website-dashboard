@@ -545,9 +545,9 @@ export function ForecastingCard() {
 
           {/* Bar Chart - only show if not tomorrow */}
           {showChart && chartData.length > 0 && (
-            <div className={cn("h-[180px]", showWeeklyChart && "h-[200px]")}>
+            <div className={cn("h-[200px]", showWeeklyChart && "h-[220px]")}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: showWeeklyChart ? 40 : 35, left: 45 }}>
+                <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: showWeeklyChart ? 40 : 35, left: 10 }}>
                   <XAxis 
                     dataKey="name" 
                     tick={showWeeklyChart 
@@ -559,14 +559,7 @@ export function ForecastingCard() {
                     interval={0}
                     height={showWeeklyChart ? 45 : 40}
                   />
-                  <YAxis 
-                    domain={[0, 'auto']}
-                    tickFormatter={(v) => `$${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`}
-                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-                    tickLine={false}
-                    axisLine={false}
-                    width={40}
-                  />
+                  <YAxis hide domain={[0, 'auto']} />
                   
                   <Tooltip
                     content={
@@ -625,11 +618,10 @@ export function ForecastingCard() {
                       strokeWidth={2}
                       label={{
                         value: `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`,
-                        position: 'left',
+                        position: 'insideTopLeft',
                         fill: 'hsl(25, 100%, 55%)',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        offset: 8,
+                        fontSize: 11,
+                        fontWeight: 600,
                       }}
                     />
                   )}
@@ -642,11 +634,10 @@ export function ForecastingCard() {
                       strokeWidth={2}
                       label={{
                         value: `Weekly Avg: $${Math.round(averageWeekly).toLocaleString()}`,
-                        position: 'left',
+                        position: 'insideTopLeft',
                         fill: 'hsl(25, 100%, 55%)',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        offset: 8,
+                        fontSize: 11,
+                        fontWeight: 600,
                       }}
                     />
                   )}
