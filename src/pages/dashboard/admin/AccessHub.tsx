@@ -12,6 +12,7 @@ import {
   Settings2,
   UserPlus,
   MessageSquare,
+  Key,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ModulesTab } from '@/components/access-hub/ModulesTab';
@@ -21,8 +22,9 @@ import { PermissionsTab } from '@/components/access-hub/PermissionsTab';
 import { RoleConfigTab } from '@/components/access-hub/RoleConfigTab';
 import { InvitationsTab } from '@/components/access-hub/InvitationsTab';
 import { ChatPermissionsHubTab } from '@/components/access-hub/ChatPermissionsHubTab';
+import { TeamPinManagementTab } from '@/components/access-hub/TeamPinManagementTab';
 
-type TabValue = 'modules' | 'user-roles' | 'role-access' | 'permissions' | 'role-config' | 'invitations' | 'chat';
+type TabValue = 'modules' | 'user-roles' | 'role-access' | 'permissions' | 'role-config' | 'invitations' | 'chat' | 'pins';
 
 export default function AccessHub() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -35,7 +37,7 @@ export default function AccessHub() {
 
   // Sync tab with URL
   useEffect(() => {
-    if (tabParam && ['modules', 'user-roles', 'role-access', 'permissions', 'role-config', 'invitations', 'chat'].includes(tabParam)) {
+    if (tabParam && ['modules', 'user-roles', 'role-access', 'permissions', 'role-config', 'invitations', 'chat', 'pins'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [tabParam]);
@@ -72,7 +74,7 @@ export default function AccessHub() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 lg:w-auto lg:inline-grid">
+          <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:inline-grid">
             <TabsTrigger value="modules" className="gap-2">
               <Blocks className="h-4 w-4" />
               <span className="hidden sm:inline">Modules</span>
@@ -92,6 +94,10 @@ export default function AccessHub() {
             <TabsTrigger value="chat" className="gap-2">
               <MessageSquare className="h-4 w-4" />
               <span className="hidden sm:inline">Chat</span>
+            </TabsTrigger>
+            <TabsTrigger value="pins" className="gap-2">
+              <Key className="h-4 w-4" />
+              <span className="hidden sm:inline">PINs</span>
             </TabsTrigger>
             <TabsTrigger value="role-config" className="gap-2">
               <Settings2 className="h-4 w-4" />
@@ -121,6 +127,10 @@ export default function AccessHub() {
 
           <TabsContent value="chat" className="mt-0">
             <ChatPermissionsHubTab canManage={canManage} />
+          </TabsContent>
+
+          <TabsContent value="pins" className="mt-0">
+            <TeamPinManagementTab canManage={canManage} />
           </TabsContent>
 
           <TabsContent value="role-config" className="mt-0">

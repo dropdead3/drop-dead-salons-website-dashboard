@@ -3833,6 +3833,38 @@ export type Database = {
           },
         ]
       }
+      employee_pin_changelog: {
+        Row: {
+          changed_at: string
+          changed_by: string
+          employee_profile_id: string
+          id: string
+          reason: string | null
+        }
+        Insert: {
+          changed_at?: string
+          changed_by: string
+          employee_profile_id: string
+          id?: string
+          reason?: string | null
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string
+          employee_profile_id?: string
+          id?: string
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_pin_changelog_employee_profile_id_fkey"
+            columns: ["employee_profile_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_profiles: {
         Row: {
           active_organization_id: string | null
@@ -3867,6 +3899,7 @@ export type Database = {
           is_super_admin: boolean | null
           location_id: string | null
           location_ids: string[] | null
+          login_pin: string | null
           organization_id: string | null
           phone: string | null
           photo_url: string | null
@@ -3913,6 +3946,7 @@ export type Database = {
           is_super_admin?: boolean | null
           location_id?: string | null
           location_ids?: string[] | null
+          login_pin?: string | null
           organization_id?: string | null
           phone?: string | null
           photo_url?: string | null
@@ -3959,6 +3993,7 @@ export type Database = {
           is_super_admin?: boolean | null
           location_id?: string | null
           location_ids?: string[] | null
+          login_pin?: string | null
           organization_id?: string | null
           phone?: string | null
           photo_url?: string | null
@@ -13782,6 +13817,10 @@ export type Database = {
         Returns: boolean
       }
       can_approve_admin_role: { Args: { _user_id: string }; Returns: boolean }
+      can_manage_kiosk_settings: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
       can_view_all_clients: { Args: { _user_id: string }; Returns: boolean }
       can_view_leaderboard: { Args: { _user_id: string }; Returns: boolean }
       check_booking_conflicts: {
@@ -13965,6 +14004,16 @@ export type Database = {
       user_belongs_to_org: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean
+      }
+      validate_user_pin: {
+        Args: { _organization_id: string; _pin: string }
+        Returns: {
+          display_name: string
+          is_primary_owner: boolean
+          is_super_admin: boolean
+          photo_url: string
+          user_id: string
+        }[]
       }
     }
     Enums: {
