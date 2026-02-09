@@ -6188,6 +6188,56 @@ export type Database = {
           },
         ]
       }
+      organization_benchmarks: {
+        Row: {
+          calculated_at: string
+          comparison_group: string
+          id: string
+          metadata: Json | null
+          metric_key: string
+          organization_id: string
+          percentile: number | null
+          period_end: string
+          period_start: string
+          period_type: string
+          value: number
+        }
+        Insert: {
+          calculated_at?: string
+          comparison_group?: string
+          id?: string
+          metadata?: Json | null
+          metric_key: string
+          organization_id: string
+          percentile?: number | null
+          period_end: string
+          period_start: string
+          period_type: string
+          value: number
+        }
+        Update: {
+          calculated_at?: string
+          comparison_group?: string
+          id?: string
+          metadata?: Json | null
+          metric_key?: string
+          organization_id?: string
+          percentile?: number | null
+          period_end?: string
+          period_start?: string
+          period_type?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_benchmarks_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organization_billing: {
         Row: {
           additional_locations_purchased: number | null
@@ -6389,6 +6439,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "organization_features_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organization_health_scores: {
+        Row: {
+          calculated_at: string
+          id: string
+          organization_id: string
+          recommendations: Json | null
+          risk_level: string
+          score: number
+          score_breakdown: Json
+          score_date: string
+          trends: Json | null
+        }
+        Insert: {
+          calculated_at?: string
+          id?: string
+          organization_id: string
+          recommendations?: Json | null
+          risk_level: string
+          score: number
+          score_breakdown?: Json
+          score_date?: string
+          trends?: Json | null
+        }
+        Update: {
+          calculated_at?: string
+          id?: string
+          organization_id?: string
+          recommendations?: Json | null
+          risk_level?: string
+          score?: number
+          score_breakdown?: Json
+          score_date?: string
+          trends?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_health_scores_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
