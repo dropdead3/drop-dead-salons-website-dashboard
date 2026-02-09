@@ -1,82 +1,49 @@
 
 
-# Platform Incident Banner
+# Consolidate Wizards into Their Respective Hubs
 
-## Overview
-Build a system-wide incident notification bar -- styled like the amber/orange banner in the reference screenshot -- that appears at the very top of every dashboard page when there's an active platform issue. Platform admins can create, update, and resolve incidents; all organization users see the banner in real-time.
+## What Changes
 
-## How It Works
+### 1. Payroll Hub becomes "Hiring & Payroll Hub"
+- Rename the page title from "Payroll Hub" to "Hiring & Payroll Hub" across all references (page header, sidebar, quick links)
+- Add a new **"Hire"** tab (with a UserPlus icon) to the existing tab bar, positioned first
+- The Hire tab embeds the New Hire Wizard content inline (same multi-step flow, just rendered inside the tab instead of a standalone page)
+- The standalone `/dashboard/admin/new-hire` route redirects to `/dashboard/admin/payroll?tab=hire` for backwards compatibility
 
-**For platform admins**: A new "Incidents" section in Platform Settings (or Platform Overview) lets them create an active incident with a message, severity, and optional status page link. Only one incident can be active at a time.
+### 2. Renter Hub gets an "Onboarding" tab
+- Add an **"Onboarding"** tab (with a ClipboardList icon) to the existing Renters/Payments tab bar
+- The Onboarding tab embeds the Renter Onboard Wizard inline
+- The standalone `/dashboard/admin/onboard-renter` route redirects to `/dashboard/admin/booth-renters?tab=onboarding` for backwards compatibility
 
-**For all dashboard users**: When an active incident exists, an amber banner renders above everything else in the DashboardLayout -- above the mobile header, above the impersonation banner, above all content. It spans full width (edge to edge, ignoring sidebar offset) and shows the message with an optional link. Users can dismiss it for the session, but it reappears if the incident is updated.
+### 3. Navigation & Quick Links Updates
+- **HubQuickLinks.tsx**: Rename "Payroll Hub" label to "Hiring & Payroll Hub"
+- **Sidebar**: Update the Payroll nav label to "Hiring & Payroll"
+- **ManagementHub.tsx**: Remove the standalone "New Hire Wizard" and "Renter Onboard Wizard" cards since they now live inside their respective hubs. Replace with cards that link to the hubs with the correct tab parameter (e.g., `/dashboard/admin/payroll?tab=hire`)
 
-**Automatic incidents**: The existing `check-system-health` edge function already detects service outages and writes to `platform_notifications`. We'll extend it to also create/resolve incident records automatically when services go down or recover.
+## Technical Details
 
-## Database
+### Payroll.tsx modifications
+- Read `tab` from URL search params (like BoothRenters already does)
+- Add `hire` tab value with the wizard content extracted from `NewHireWizard.tsx` (or import the wizard component directly and render it within the tab)
+- Update page title and description
 
-### New table: `platform_incidents`
+### BoothRenters.tsx modifications
+- Add `onboarding` tab value
+- Import and render `RenterOnboardWizard` content inline within the new tab
+- The wizard's navigation (back/cancel) stays within the tab context
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | uuid | PK |
-| status | text | 'active', 'monitoring', 'resolved' |
-| severity | text | 'info', 'warning', 'critical' |
-| title | text | Short headline |
-| message | text | Detailed message shown in the banner |
-| link_text | text | Optional CTA text (e.g., "Open status page") |
-| link_url | text | Optional URL |
-| created_by | uuid | Platform user who created it |
-| resolved_at | timestamptz | When resolved |
-| resolved_by | uuid | Who resolved it |
-| created_at | timestamptz | Default now() |
-| updated_at | timestamptz | Default now() |
+### Routing (App.tsx)
+- Keep the old routes but add redirects to the new tab-based URLs so any existing links or bookmarks still work
+- `/dashboard/admin/new-hire` redirects to `/dashboard/admin/payroll?tab=hire`
+- `/dashboard/admin/onboard-renter` redirects to `/dashboard/admin/booth-renters?tab=onboarding`
 
-- RLS: All authenticated users can SELECT (they need to see the banner). Only platform admins can INSERT/UPDATE.
-- Realtime enabled so the banner appears/disappears instantly across all sessions.
+### Files to modify
+- `src/pages/dashboard/admin/Payroll.tsx` -- add Hire tab, rename title
+- `src/pages/dashboard/admin/BoothRenters.tsx` -- add Onboarding tab
+- `src/pages/dashboard/admin/NewHireWizard.tsx` -- extract wizard body into a reusable component, keep redirect wrapper
+- `src/pages/dashboard/admin/RenterOnboardWizard.tsx` -- extract wizard body into a reusable component, keep redirect wrapper
+- `src/App.tsx` -- update routes to redirect old paths
+- `src/components/dashboard/HubQuickLinks.tsx` -- rename Payroll Hub label
+- `src/pages/dashboard/admin/ManagementHub.tsx` -- update wizard cards to point to hub tabs
+- Sidebar navigation file -- rename Payroll label
 
-## Frontend Components
-
-### 1. `src/components/dashboard/IncidentBanner.tsx`
-- Queries `platform_incidents` for rows where `status` IN ('active', 'monitoring')
-- Subscribes to realtime changes on the table
-- Renders a full-width top bar with:
-  - Warning icon (triangle)
-  - Message text
-  - Optional link/CTA
-  - Dismiss button (stores dismissed incident ID + updated_at in sessionStorage so it reappears if updated)
-- Severity-based colors:
-  - **critical**: Red/orange gradient background (like the reference screenshot)
-  - **warning**: Amber background
-  - **info**: Blue background
-
-### 2. Placement in `DashboardLayout.tsx`
-- Rendered at the very top of the content wrapper, before the mobile header and before the impersonation banner
-- Full-width (no sidebar padding offset) so it truly spans edge-to-edge like the reference
-- Sticky at top with highest z-index
-
-### 3. Platform Admin: Incident Management UI
-- Add an "Active Incident" card to the Platform Overview page (`/dashboard/platform/overview`)
-- Quick actions: "Create Incident", "Update Message", "Mark Resolved"
-- Simple form: severity dropdown, title, message, optional link
-- Shows history of past resolved incidents
-
-## Edge Function Update
-
-### `check-system-health/index.ts`
-- After detecting a service is down: check if there's already an active incident. If not, auto-create one in `platform_incidents` with severity 'critical' and a message like "We're experiencing issues with [service]. Our team is investigating."
-- After all services recover: if there's an auto-created active incident, update its status to 'resolved'
-- Manual incidents (created by admins) are never auto-resolved
-
-## Files to Create
-1. **`src/components/dashboard/IncidentBanner.tsx`** -- The banner component with realtime subscription
-2. **`src/hooks/useActiveIncident.ts`** -- Hook to query and subscribe to active incidents
-
-## Files to Modify
-1. **`src/components/dashboard/DashboardLayout.tsx`** -- Add IncidentBanner at the top of the layout, full-width before everything
-2. **`supabase/functions/check-system-health/index.ts`** -- Auto-create/resolve incidents on service status changes
-3. **Platform Overview page** -- Add incident management card for platform admins
-
-## Database Migration
-- Create `platform_incidents` table with RLS policies
-- Enable realtime on the table
