@@ -33,7 +33,7 @@ const NAV_ITEMS: SearchResult[] = [
   { type: 'navigation', title: 'Client Directory', path: '/dashboard/clients', icon: <Navigation className="w-4 h-4" /> },
   { type: 'navigation', title: 'Analytics Hub', path: '/dashboard/admin/analytics', icon: <Navigation className="w-4 h-4" /> },
   { type: 'navigation', title: 'Management Hub', path: '/dashboard/admin/management', icon: <Navigation className="w-4 h-4" /> },
-  { type: 'navigation', title: 'Payroll Hub', path: '/dashboard/admin/payroll', icon: <Navigation className="w-4 h-4" /> },
+  { type: 'navigation', title: 'Hiring & Payroll Hub', path: '/dashboard/admin/payroll', icon: <Navigation className="w-4 h-4" /> },
   { type: 'navigation', title: 'Renter Hub', path: '/dashboard/admin/booth-renters', icon: <Navigation className="w-4 h-4" /> },
   { type: 'navigation', title: 'Profile', path: '/dashboard/profile', icon: <Navigation className="w-4 h-4" /> },
   // Relocated from Housekeeping section

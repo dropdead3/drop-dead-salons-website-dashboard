@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
@@ -10,7 +11,8 @@ import {
   Settings,
   Play,
   Plus,
-  TrendingUp
+  TrendingUp,
+  UserPlus,
 } from 'lucide-react';
 import { usePayrollConnection } from '@/hooks/usePayrollConnection';
 import { PayrollProviderHub } from '@/components/dashboard/payroll/providers/PayrollProviderHub';
@@ -21,6 +23,7 @@ import { PayScheduleCard } from '@/components/dashboard/payroll/PayScheduleCard'
 import { RunPayrollWizard } from '@/components/dashboard/payroll/RunPayrollWizard';
 import { PayrollOverview } from '@/components/dashboard/payroll/PayrollOverview';
 import { CommissionInsights } from '@/components/dashboard/payroll/CommissionInsights';
+import { NewHireWizardContent } from '@/components/dashboard/payroll/NewHireWizardContent';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -29,7 +32,13 @@ import { Info } from 'lucide-react';
 
 export default function Payroll() {
   const { connection, isLoading, isConnected } = usePayrollConnection();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'overview';
   const [showWizard, setShowWizard] = useState(false);
+
+  const handleTabChange = (value: string) => {
+    setSearchParams({ tab: value });
+  };
 
   if (isLoading) {
     return (
@@ -49,10 +58,10 @@ export default function Payroll() {
       <PlatformPageContainer>
         <div className="space-y-6">
           <PlatformPageHeader
-            title="Payroll Hub"
-            description="Analytics, forecasting, and compensation management for your team."
+            title="Hiring & Payroll Hub"
+            description="Hiring, analytics, forecasting, and compensation management for your team."
             actions={
-              !showWizard && (
+              !showWizard && activeTab !== 'hire' && (
                 <Button onClick={() => setShowWizard(true)}>
                   <Plus className="h-4 w-4 mr-2" />
                   Run Payroll
@@ -61,7 +70,7 @@ export default function Payroll() {
             }
           />
 
-          {!isConnected && (
+          {!isConnected && activeTab !== 'hire' && (
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
@@ -77,8 +86,12 @@ export default function Payroll() {
               onCancel={() => setShowWizard(false)} 
             />
           ) : (
-            <Tabs defaultValue="overview" className="space-y-6">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
               <TabsList>
+                <TabsTrigger value="hire" className="flex items-center gap-1.5">
+                  <UserPlus className="h-4 w-4" />
+                  Hire
+                </TabsTrigger>
                 <TabsTrigger value="overview" className="flex items-center gap-1.5">
                   <LayoutDashboard className="h-4 w-4" />
                   Overview
@@ -104,6 +117,10 @@ export default function Payroll() {
                   Settings
                 </TabsTrigger>
               </TabsList>
+
+              <TabsContent value="hire">
+                <NewHireWizardContent />
+              </TabsContent>
 
               <TabsContent value="overview">
                 <PayrollOverview />
@@ -163,7 +180,6 @@ export default function Payroll() {
 
               <TabsContent value="settings">
                 <div className="space-y-8">
-                  {/* Provider Connection Status */}
                   {isConnected && (
                     <div className="grid gap-6 md:grid-cols-2">
                       <PayrollConnectionCard />
@@ -171,12 +187,10 @@ export default function Payroll() {
                     </div>
                   )}
                   
-                  {/* Provider Selection Hub */}
                   {!isConnected && (
                     <PayrollProviderHub />
                   )}
                   
-                  {/* Additional Settings */}
                   {isConnected && (
                     <Card>
                       <CardHeader>

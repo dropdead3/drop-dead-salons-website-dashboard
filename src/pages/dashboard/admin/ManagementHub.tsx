@@ -330,14 +330,14 @@ export default function ManagementHub() {
             colorClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
           />
           <ManagementCard
-            href="/dashboard/admin/new-hire"
+            href="/dashboard/admin/payroll?tab=hire"
             icon={UserCheck}
             title="New Hire Wizard"
             description="Onboard a new team member with account creation and docs"
             colorClass="bg-violet-500/10 text-violet-600 dark:text-violet-400"
           />
           <ManagementCard
-            href="/dashboard/admin/onboard-renter"
+            href="/dashboard/admin/booth-renters?tab=onboarding"
             icon={Store}
             title="Renter Onboard Wizard"
             description="Set up a new booth renter with contract, station, and docs"
