@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Lock, Search, Eye, EyeOff, Crown, Shield, RotateCcw, History, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Lock, Search, Eye, EyeOff, Crown, Shield, RotateCcw, History, User, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +26,7 @@ import {
 } from '@/components/ui/table';
 import { useTeamPinStatus, useAdminSetUserPin, usePinChangelog } from '@/hooks/useUserPin';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
 import { format } from 'date-fns';
 
 interface TeamPinManagementTabProps {
@@ -35,6 +37,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
   const { user } = useAuth();
   const { data: teamMembers = [], isLoading } = useTeamPinStatus();
   const { data: changelog = [] } = usePinChangelog();
+  const { data: isPrimaryOwner } = useIsPrimaryOwner();
   const adminSetPin = useAdminSetUserPin();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -118,13 +121,32 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
             />
           </div>
 
-      {/* Info Banner */}
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
-        <Crown className="w-4 h-4 text-warning shrink-0 mt-0.5" />
-        <p className="text-xs text-muted-foreground">
-          <strong>Note:</strong> You cannot reset the Account Owner's PIN. Only they can change their own PIN.
-        </p>
+          {/* Info Banner */}
+          <div className="flex items-start gap-2 p-3 rounded-lg bg-warning/10 border border-warning/20">
+            <Crown className="w-4 h-4 text-warning shrink-0 mt-0.5" />
+            <p className="text-xs text-muted-foreground">
+              <strong>Note:</strong> You cannot reset the Account Owner's PIN. Only they can change their own PIN.
+            </p>
           </div>
+
+          {/* Primary Owner Self-Edit Hint */}
+          {isPrimaryOwner && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <Lock className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-xs text-muted-foreground">
+                  <strong>Your PIN:</strong> As the Account Owner, you can manage your own PIN in your personal settings.
+                </p>
+                <Link 
+                  to="/dashboard/admin/settings?category=system"
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+                >
+                  Go to PIN Settings
+                  <ExternalLink className="w-3 h-3" />
+                </Link>
+              </div>
+            </div>
+          )}
 
           {/* Team List */}
           <ScrollArea className="h-[400px]">
