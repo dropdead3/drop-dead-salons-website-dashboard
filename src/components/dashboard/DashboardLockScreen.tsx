@@ -216,7 +216,7 @@ export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
         <img 
           src={getLogo()} 
           alt={businessSettings?.business_name || 'Logo'} 
-          className="max-h-[100px] max-w-[100px] w-auto h-auto object-contain" 
+          className="h-8 w-auto" 
         />
       </motion.div>
 
