@@ -53,6 +53,8 @@ interface NavItem {
 const platformNavItems: NavItem[] = [
   { href: '/dashboard/platform/overview', label: 'Overview', icon: Terminal },
   { href: '/dashboard/platform/accounts', label: 'Accounts', icon: Building2 },
+  { href: '/dashboard/platform/health-scores', label: 'Health Scores', icon: Activity, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
+  { href: '/dashboard/platform/benchmarks', label: 'Benchmarks', icon: BarChart3, platformRoles: ['platform_owner', 'platform_admin'] },
   { href: '/dashboard/platform/onboarding', label: 'Onboarding', icon: Rocket, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
   { href: '/dashboard/platform/import', label: 'Migrations', icon: Upload },
   { href: '/dashboard/platform/audit-log', label: 'Audit Log', icon: FileText, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
