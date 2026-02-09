@@ -174,13 +174,17 @@ export function KioskPreviewPanel({ settings, businessSettings, className, locat
     return null;
   };
 
-  // Badge position classes - use larger offsets for rounded corner clearance
+  // Determine if bottom-center badge is active for responsive spacing
+  const hasBottomCenterBadge = settings.show_location_badge && 
+    settings.location_badge_position === 'bottom-center';
+
+  // Badge position classes - center positions have extra clearance
   const badgePositionClasses = {
     'top-left': 'top-3 left-3',
-    'top-center': 'top-3 left-1/2 -translate-x-1/2',
+    'top-center': 'top-4 left-1/2 -translate-x-1/2',
     'top-right': 'top-3 right-3',
     'bottom-left': 'bottom-3 left-3',
-    'bottom-center': 'bottom-3 left-1/2 -translate-x-1/2',
+    'bottom-center': 'bottom-10 left-1/2 -translate-x-1/2', // Above indicators
     'bottom-right': 'bottom-3 right-3',
   };
 
@@ -336,8 +340,11 @@ export function KioskPreviewPanel({ settings, businessSettings, className, locat
         </div>
       </div>
       
-      {/* Bottom indicators - with optional glow */}
-      <div className="absolute bottom-4 flex gap-1.5 z-10">
+      {/* Bottom indicators - shifts down when bottom-center badge is active */}
+      <div className={cn(
+        "absolute flex gap-1.5 z-10",
+        hasBottomCenterBadge ? "bottom-2" : "bottom-4"
+      )}>
         {[0, 1, 2].map((i) => (
           settings.enable_glow_effects ? (
             <motion.div
