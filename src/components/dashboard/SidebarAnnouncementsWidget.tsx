@@ -152,7 +152,7 @@ export function SidebarAnnouncementsWidget({ onNavClick }: SidebarAnnouncementsW
             <div
               key={announcement.id}
               className={cn(
-                "p-3 bg-muted/50 border-l-2 rounded-r-md text-xs",
+                "p-3 bg-muted/50 border border-border/50 border-l-2 rounded-md text-xs",
                 priorityColors[announcement.priority]
               )}
             >
