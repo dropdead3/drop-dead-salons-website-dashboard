@@ -171,15 +171,19 @@ export function useAdminSetUserPin() {
  * Validate a PIN against all organization members
  */
 export function useValidatePin() {
-  const { effectiveOrganization } = useOrganizationContext();
+  const { effectiveOrganization, currentOrganization } = useOrganizationContext();
 
   return useMutation({
     mutationFn: async (pin: string): Promise<PinValidationResult | null> => {
-      if (!effectiveOrganization?.id) throw new Error('No organization context');
+      // Use effectiveOrganization first, fall back to currentOrganization
+      // This handles platform users who haven't selected an org
+      const orgId = effectiveOrganization?.id || currentOrganization?.id;
+      
+      if (!orgId) throw new Error('No organization context');
 
       const { data, error } = await supabase
         .rpc('validate_user_pin', {
-          _organization_id: effectiveOrganization.id,
+          _organization_id: orgId,
           _pin: pin,
         });
 
