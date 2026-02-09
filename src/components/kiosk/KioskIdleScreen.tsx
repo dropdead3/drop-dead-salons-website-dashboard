@@ -10,8 +10,6 @@ export function KioskIdleScreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [showSettings, setShowSettings] = useState(false);
-  const [settingsTapCount, setSettingsTapCount] = useState(0);
-  const settingsTapTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const welcomeTitle = settings?.welcome_title || DEFAULT_KIOSK_SETTINGS.welcome_title;
   const welcomeSubtitle = settings?.welcome_subtitle;
@@ -67,25 +65,10 @@ export function KioskIdleScreen() {
     });
   };
 
-  // Handle settings icon tap (requires 5 taps within 3 seconds)
+  // Handle settings icon tap - single tap opens settings
   const handleSettingsTap = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (settingsTapTimeout.current) {
-      clearTimeout(settingsTapTimeout.current);
-    }
-    
-    const newCount = settingsTapCount + 1;
-    setSettingsTapCount(newCount);
-    
-    if (newCount >= 5) {
-      setShowSettings(true);
-      setSettingsTapCount(0);
-    } else {
-      settingsTapTimeout.current = setTimeout(() => {
-        setSettingsTapCount(0);
-      }, 3000);
-    }
+    setShowSettings(true);
   };
 
   return (
@@ -102,12 +85,12 @@ export function KioskIdleScreen() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Settings icon - hidden in corner, requires 5 taps */}
+      {/* Settings icon - hidden in corner */}
       <motion.button
         className="absolute top-4 right-4 z-20 w-12 h-12 rounded-xl flex items-center justify-center transition-all"
         style={{ 
-          backgroundColor: settingsTapCount > 0 ? `${textColor}15` : `${textColor}08`,
-          opacity: settingsTapCount > 0 ? 1 : 0.3,
+          backgroundColor: `${textColor}08`,
+          opacity: 0.3,
         }}
         onClick={handleSettingsTap}
         whileTap={{ scale: 0.95 }}
@@ -116,14 +99,6 @@ export function KioskIdleScreen() {
           className="w-5 h-5" 
           style={{ color: textColor }}
         />
-        {settingsTapCount > 0 && (
-          <span 
-            className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full text-xs flex items-center justify-center font-medium"
-            style={{ backgroundColor: accentColor, color: '#fff' }}
-          >
-            {5 - settingsTapCount}
-          </span>
-        )}
       </motion.button>
 
       {/* Settings Dialog */}
