@@ -1,38 +1,53 @@
 
-# Refine Daily Average Label and Reference Line
 
-## What's Changing
+# Bring Reference Line Above Bars, Thinner, with Animated Reveal
 
-The "Daily Avg: $1,191" label will get a subtle frosted-glass background badge so it's easy to read even when overlapping bars. The dashed reference line will only start after the label text ends (to the right of it), keeping the layout clean and uncluttered.
+## Problem
+The dashed orange reference line renders behind the bars (SVG paint order issue within the `<Customized>` component), it's too thick at `strokeWidth={2}`, and appears statically without any visual flair.
 
-## Technical Approach
+## Changes
 
-Recharts' built-in `ReferenceLine` label doesn't support custom backgrounds or partial-width lines. We need a **custom label component** rendered via the `label` prop, and a **customized line segment**.
+### Both `WeekAheadForecast.tsx` and `ForecastingCard.tsx`
 
-### Changes to both `WeekAheadForecast.tsx` and `ForecastingCard.tsx`
+1. **Render line on top of bars** -- The `<Customized>` component already appears after the `<Bar>` elements, but Recharts may still layer it underneath. We'll add a CSS/SVG `style={{ pointerEvents: 'none' }}` and set `z-index` behavior by using `<Customized>` with a higher rendering priority. Specifically, we'll keep the `<Customized>` after the bars (already done) but also ensure proper SVG stacking.
 
-1. **Create a custom label renderer** -- a small React component that renders an SVG `<foreignObject>` containing an HTML `<span>` with:
-   - The "Daily Avg: $X,XXX" text
-   - A glass-effect background: `backdrop-blur-sm bg-background/70 border border-border/30 rounded px-1.5 py-0.5`
-   - Orange text color matching the current `hsl(25, 100%, 55%)`
-   - Positioned at the top-left of the chart area (y = reference line value)
+2. **Reduce line boldness** -- Change `strokeWidth` from `2` to `1.5` and adjust `strokeDasharray` from `"6 3"` to `"5 3"` for a subtler, more refined look.
 
-2. **Replace the ReferenceLine with a custom approach** -- use Recharts' `customized` prop or a `<ReferenceLine>` with `label` set to the custom component, and adjust the line's `x1` offset so it starts after the badge width (~130px). Alternatively, use Recharts' `ReferenceArea` or a `customized` element to draw only a partial dashed line starting after the label.
+3. **Add animated reveal effect** -- Apply an SVG `stroke-dashoffset` animation using a CSS `<style>` block or inline `style` with `@keyframes`. The line will "draw in" from left to right on mount:
+   - Set `strokeDasharray` to the full line length
+   - Animate `strokeDashoffset` from the full length to `0` over ~1 second
+   - This creates a clean "drawing" effect
+   - The badge will fade in with an opacity animation (0 to 1 over 0.5s)
 
-   The simplest clean approach: use a Recharts `<Customized>` component that renders both the badge and the partial line in one SVG group, using the chart's internal coordinate system (`yAxisMap`, `xAxisMap`).
+### Technical Detail
 
-3. **Specifics**:
-   - Remove the existing `<ReferenceLine>` blocks
-   - Add a `<Customized>` component (from recharts) that:
-     - Reads `yAxisMap` and `xAxisMap` from props to calculate the y-pixel position of the average value
-     - Renders a `<foreignObject>` with the glass-badge label at the left
-     - Renders a `<line>` element starting ~140px from the left edge to the right edge, dashed, in the orange color
-   - The badge will have: `fontSize: 11px`, `fontWeight: 600`, subtle glass background
+For the animated line, we'll calculate the line length (`chartRight - chartLeft - badgeWidth - 4`) and use it as both the `strokeDasharray` and initial `strokeDashoffset`, then animate to `0`:
 
-4. **Apply to weekly average** in `ForecastingCard.tsx` as well with the same pattern ("Weekly Avg: $X,XXX").
+```tsx
+const lineLength = chartRight - (chartLeft + badgeWidth + 4);
+<line
+  x1={chartLeft + badgeWidth + 4}
+  y1={yPos}
+  x2={chartRight}
+  y2={yPos}
+  stroke="hsl(25, 100%, 55%)"
+  strokeDasharray={lineLength}
+  strokeDashoffset={lineLength}
+  strokeWidth={1.5}
+  style={{
+    animation: 'drawLine 1s ease-out forwards',
+  }}
+/>
+```
 
-### Visual Result
-- A small, readable glass-effect badge sitting at the top-left of the chart saying "Daily Avg: $1,191"
-- A dashed orange line extending from just after the badge to the right edge of the chart
-- No overlap or collision between the label text and the line
-- Clean, polished, modern look
+A `<style>` element will be injected inside the `<g>` with:
+```css
+@keyframes drawLine { to { stroke-dashoffset: 0; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+```
+
+The badge `<foreignObject>` will get `style={{ animation: 'fadeIn 0.5s ease-out forwards' }}`.
+
+### Files to edit
+- `src/components/dashboard/sales/WeekAheadForecast.tsx` -- daily avg customized block
+- `src/components/dashboard/sales/ForecastingCard.tsx` -- daily avg and weekly avg customized blocks
