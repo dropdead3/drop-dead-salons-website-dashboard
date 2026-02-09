@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Check, Copy, Palette, Type, Sparkles, MousePointer, Square, CircleDot, Layers, Sun, Moon, Search, X, Play, Code } from "lucide-react";
 import React, { useState, useMemo, useEffect } from "react";
-import { useTheme } from "next-themes";
+import { useDashboardTheme } from "@/contexts/DashboardThemeContext";
 import { SPECIAL_GRADIENTS } from "@/utils/categoryColors";
 import { getRoleColorClasses, ROLE_COLORS } from "@/components/dashboard/RoleColorPicker";
 import { ThemeEditor } from "@/components/dashboard/ThemeEditor";
@@ -48,7 +48,7 @@ CopyButton.displayName = "CopyButton";
 
 const DesignSystem = () => {
   const { toast } = useToast();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useDashboardTheme();
   const [copiedItem, setCopiedItem] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [openSections, setOpenSections] = useState<string[]>(["playground", "colors", "gradients", "typography"]);
