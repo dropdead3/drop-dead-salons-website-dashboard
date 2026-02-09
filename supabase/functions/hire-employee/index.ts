@@ -83,7 +83,10 @@ Deno.serve(async (req) => {
       assignOnboardingTasks = true,
       // PandaDoc config
       generateOfferLetter = false,
-      // Gusto config
+      // Payroll provider config
+      triggerPayrollProvider = false,
+      payrollProvider = null,
+      // Legacy fallback
       triggerGusto = false,
       // Source applicant
       applicantId,
@@ -236,10 +239,20 @@ Deno.serve(async (req) => {
       message: `${fullName} has been hired and their account is ready.`,
     };
 
-    // Gusto integration status (stubbed)
-    if (triggerGusto) {
-      result.gustoStatus = 'not_connected';
-      result.gustoMessage = 'Gusto integration is not yet configured. Tax documents and offer letter will need to be handled manually.';
+    // Payroll provider integration status
+    const shouldTriggerPayroll = triggerPayrollProvider || triggerGusto;
+    if (shouldTriggerPayroll) {
+      const effectiveProvider = payrollProvider || (triggerGusto ? 'gusto' : null);
+      if (effectiveProvider === 'gusto') {
+        result.payrollStatus = 'not_connected';
+        result.payrollMessage = 'Employee will be onboarded via Gusto for tax documents, offer letter, and direct deposit.';
+      } else if (effectiveProvider === 'quickbooks') {
+        result.payrollStatus = 'not_connected';
+        result.payrollMessage = 'Employee will be added to QuickBooks Payroll for tax forms and direct deposit.';
+      } else {
+        result.payrollStatus = 'not_configured';
+        result.payrollMessage = 'Payroll provider is not yet configured. Tax documents will need to be handled manually.';
+      }
     }
 
     // PandaDoc offer letter status
