@@ -230,8 +230,9 @@ export function RevenueForecast({ dailyData, monthlyTarget, isLoading, filterCon
               />
               <ReferenceLine 
                 y={forecast.dailyAverage} 
-                stroke="hsl(var(--muted-foreground))" 
+                stroke="hsl(var(--foreground) / 0.35)" 
                 strokeDasharray="3 3"
+                strokeWidth={1.5}
               />
             </LineChart>
           </ResponsiveContainer>

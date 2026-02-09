@@ -20,7 +20,8 @@ import {
   Tooltip, 
   ResponsiveContainer, 
   Cell,
-  LabelList 
+  LabelList,
+  ReferenceLine 
 } from 'recharts';
 
 // Label positioned above each bar for revenue
@@ -218,6 +219,22 @@ export function WeekAheadForecast() {
                   height={40}
                 />
                 <YAxis hide domain={[0, 'auto']} />
+                {averageDaily > 0 && (
+                  <ReferenceLine 
+                    y={averageDaily} 
+                    stroke="hsl(var(--foreground) / 0.35)" 
+                    strokeDasharray="4 4"
+                    strokeWidth={1.5}
+                    label={{
+                      value: `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`,
+                      position: 'insideBottomLeft',
+                      fill: 'hsl(var(--foreground) / 0.6)',
+                      fontSize: 11,
+                      fontWeight: 500,
+                      offset: 4,
+                    }}
+                  />
+                )}
                 <Tooltip
                   contentStyle={{
                     backgroundColor: 'hsl(var(--background))',
