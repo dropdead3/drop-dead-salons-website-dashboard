@@ -64,7 +64,6 @@ const SERVICES = [
       }
 
       try {
-        // Just check the domains endpoint to verify API key works
         const response = await fetch('https://api.resend.com/domains', {
           headers: {
             'Authorization': `Bearer ${apiKey}`,
@@ -72,7 +71,7 @@ const SERVICES = [
         });
         const responseTime = Date.now() - start;
         return {
-          healthy: response.ok || response.status === 401, // 401 means API key format is valid
+          healthy: response.ok || response.status === 401,
           responseTime,
           error: response.ok ? undefined : `HTTP ${response.status}`,
         };
@@ -84,7 +83,6 @@ const SERVICES = [
 ];
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -102,10 +100,8 @@ Deno.serve(async (req) => {
       error_message: string | null;
     }> = [];
 
-    // Check all services
     for (const service of SERVICES) {
       console.log(`Checking ${service.name}...`);
-      
       const result = await service.check(supabaseUrl, supabaseServiceKey);
       
       let status: 'healthy' | 'degraded' | 'down';
@@ -140,7 +136,6 @@ Deno.serve(async (req) => {
         });
     }
 
-    // Determine overall status
     const hasDown = results.some(r => r.status === 'down');
     const hasDegraded = results.some(r => r.status === 'degraded');
     const overallStatus = hasDown ? 'down' : hasDegraded ? 'degraded' : 'healthy';
@@ -155,6 +150,40 @@ Deno.serve(async (req) => {
         message: `The following services are down: ${downServices.map(s => s.service_name).join(', ')}`,
         metadata: { services: downServices },
       });
+    }
+
+    // --- Auto-create / auto-resolve platform incidents ---
+    // Check for existing active auto-created incident
+    const { data: activeAutoIncident } = await adminClient
+      .from('platform_incidents')
+      .select('id, status')
+      .eq('is_auto_created', true)
+      .in('status', ['active', 'monitoring'])
+      .limit(1)
+      .maybeSingle();
+
+    if (hasDown && !activeAutoIncident) {
+      // Auto-create a new incident
+      const downServices = results.filter(r => r.status === 'down');
+      const serviceNames = downServices.map(s => s.service_name).join(', ');
+      await adminClient.from('platform_incidents').insert({
+        status: 'active',
+        severity: 'critical',
+        title: 'Service Outage Detected',
+        message: `We're experiencing issues with ${serviceNames}. Our team is investigating.`,
+        is_auto_created: true,
+      });
+      console.log('Auto-created platform incident for down services:', serviceNames);
+    } else if (!hasDown && activeAutoIncident) {
+      // All services recovered — auto-resolve the incident
+      await adminClient
+        .from('platform_incidents')
+        .update({
+          status: 'resolved',
+          resolved_at: new Date().toISOString(),
+        })
+        .eq('id', activeAutoIncident.id);
+      console.log('Auto-resolved platform incident:', activeAutoIncident.id);
     }
 
     return new Response(

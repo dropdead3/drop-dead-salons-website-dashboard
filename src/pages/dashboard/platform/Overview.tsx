@@ -16,6 +16,7 @@ import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformActivityFeed } from '@/components/platform/overview/PlatformActivityFeed';
 import { PlatformLiveAnalytics } from '@/components/platform/overview/PlatformLiveAnalytics';
+import { IncidentManagementCard } from '@/components/platform/overview/IncidentManagementCard';
 
 export default function PlatformOverview() {
   const navigate = useNavigate();
@@ -79,40 +80,43 @@ export default function PlatformOverview() {
         />
       </div>
 
-      {/* Analytics & Quick Actions Row */}
+      {/* Incident Banner + Analytics Row */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Live Analytics */}
         <div className="lg:col-span-2">
           <PlatformLiveAnalytics />
         </div>
 
-        {/* Quick Actions */}
+        {/* Incident Management */}
         <div className="lg:col-span-1">
-          <div className="rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 h-full">
-            <div className="flex items-center gap-2 mb-5">
-              <div className="p-2 rounded-xl bg-violet-500/20">
-                <Sparkles className="h-4 w-4 text-violet-400" />
-              </div>
-              <h2 className="text-lg font-semibold text-white">Quick Actions</h2>
-            </div>
-            <div className="space-y-3">
-              <QuickActionButton 
-                icon={Building2}
-                label="View All Accounts"
-                onClick={() => navigate('/dashboard/platform/accounts')}
-              />
-              <QuickActionButton 
-                icon={Upload}
-                label="Start Migration"
-                onClick={() => navigate('/dashboard/platform/import')}
-              />
-              <QuickActionButton 
-                icon={Settings}
-                label="Platform Settings"
-                onClick={() => navigate('/dashboard/platform/settings')}
-              />
-            </div>
+          <IncidentManagementCard />
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6">
+        <div className="flex items-center gap-2 mb-5">
+          <div className="p-2 rounded-xl bg-violet-500/20">
+            <Sparkles className="h-4 w-4 text-violet-400" />
           </div>
+          <h2 className="text-lg font-semibold text-white">Quick Actions</h2>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <QuickActionButton 
+            icon={Building2}
+            label="View All Accounts"
+            onClick={() => navigate('/dashboard/platform/accounts')}
+          />
+          <QuickActionButton 
+            icon={Upload}
+            label="Start Migration"
+            onClick={() => navigate('/dashboard/platform/import')}
+          />
+          <QuickActionButton 
+            icon={Settings}
+            label="Platform Settings"
+            onClick={() => navigate('/dashboard/platform/settings')}
+          />
         </div>
       </div>
 

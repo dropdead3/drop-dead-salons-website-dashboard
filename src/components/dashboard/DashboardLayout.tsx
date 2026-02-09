@@ -35,6 +35,7 @@ import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
 import { PhorestSyncPopout } from '@/components/dashboard/PhorestSyncPopout';
 import { ImpersonationHistoryPanel } from '@/components/dashboard/ImpersonationHistoryPanel';
 import { CustomLandingPageBanner } from '@/components/dashboard/CustomLandingPageBanner';
+import { IncidentBanner } from '@/components/dashboard/IncidentBanner';
 import { HelpFAB } from '@/components/dashboard/HelpFAB';
 import { DashboardLockScreen } from '@/components/dashboard/DashboardLockScreen';
 import SidebarNavContent from '@/components/dashboard/SidebarNavContent';
@@ -811,6 +812,8 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
         sidebarCollapsed ? "lg:pl-16" : "lg:pl-72",
         hideFooter && "h-screen flex flex-col"
       )}>
+      {/* Platform Incident Banner - above everything */}
+      <IncidentBanner />
       {/* Mobile Header */}
       <header className={cn(
         "lg:hidden sticky top-0 z-40 flex items-center justify-between h-16 px-4 border-b border-border bg-background",
