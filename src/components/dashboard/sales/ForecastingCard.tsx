@@ -563,15 +563,15 @@ export function ForecastingCard() {
                   
                   {/* Daily average reference line - only for daily views */}
                   {!showWeeklyChart && averageDaily > 0 && (
-                    <ReferenceLine 
+                  <ReferenceLine 
                       y={averageDaily} 
-                      stroke="hsl(var(--muted-foreground))" 
+                      stroke="hsl(var(--foreground) / 0.35)" 
                       strokeDasharray="4 4"
                       strokeWidth={1.5}
                       label={{
                         value: `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`,
                         position: 'insideBottomLeft',
-                        fill: 'hsl(var(--muted-foreground))',
+                        fill: 'hsl(var(--foreground) / 0.6)',
                         fontSize: 11,
                         fontWeight: 500,
                         offset: 4,
@@ -581,15 +581,15 @@ export function ForecastingCard() {
                   
                   {/* Weekly average reference line - only for weekly views */}
                   {showWeeklyChart && averageWeekly > 0 && (
-                    <ReferenceLine 
+                  <ReferenceLine 
                       y={averageWeekly} 
-                      stroke="hsl(var(--muted-foreground))" 
+                      stroke="hsl(var(--foreground) / 0.35)" 
                       strokeDasharray="4 4"
                       strokeWidth={1.5}
                       label={{
                         value: `Weekly Avg: $${Math.round(averageWeekly).toLocaleString()}`,
                         position: 'insideBottomLeft',
-                        fill: 'hsl(var(--muted-foreground))',
+                        fill: 'hsl(var(--foreground) / 0.6)',
                         fontSize: 11,
                         fontWeight: 500,
                         offset: 4,
