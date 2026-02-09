@@ -75,6 +75,8 @@ Deno.serve(async (req) => {
       fullName,
       userId,
       organizationId,
+      locationId,
+      rentalModel = 'monthly',
       // Business fields
       businessName,
       ein,
@@ -86,7 +88,7 @@ Deno.serve(async (req) => {
       insuranceProvider,
       insurancePolicyNumber,
       insuranceExpiryDate,
-      // Contract fields
+      // Contract fields (not used for daily model)
       rentAmount,
       rentFrequency = 'monthly',
       dueDay,
@@ -98,7 +100,7 @@ Deno.serve(async (req) => {
       includesProducts = false,
       retailCommissionEnabled = false,
       retailCommissionRate,
-      // Station
+      // Station (not used for daily model or when booth assignment disabled)
       stationId,
       // PandaDoc
       generateRentalAgreement = false,
@@ -221,8 +223,8 @@ Deno.serve(async (req) => {
     const boothRenterId = boothRenterProfile.id;
     let contractId: string | null = null;
 
-    // Step 4: Create booth_rental_contracts record (if rent details provided)
-    if (rentAmount) {
+    // Step 4: Create booth_rental_contracts record (skip for daily renters)
+    if (rentAmount && rentalModel !== 'daily') {
       const contractData: Record<string, unknown> = {
         booth_renter_id: boothRenterId,
         organization_id: orgId,

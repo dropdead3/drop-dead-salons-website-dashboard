@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,18 +22,37 @@ import { toast } from 'sonner';
 import {
   ArrowLeft, ArrowRight, Check, User, Building2, Shield, DollarSign,
   MapPin, ClipboardList, Loader2, Copy, CheckCircle, ChevronsUpDown,
-  FileSignature, AlertTriangle, Store,
+  FileSignature, AlertTriangle, Store, Calendar, Info,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
-const STEPS = [
+type RentalModel = 'monthly' | 'weekly' | 'daily';
+
+interface StepDef {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+}
+
+const ALL_STEPS: StepDef[] = [
   { id: 'identity', label: 'Renter Identity', icon: User },
   { id: 'license', label: 'License & Insurance', icon: Shield },
   { id: 'terms', label: 'Rental Terms', icon: DollarSign },
   { id: 'station', label: 'Station', icon: MapPin },
   { id: 'checklist', label: 'Checklist & Docs', icon: ClipboardList },
 ];
+
+function getVisibleSteps(rentalModel: RentalModel, boothAssignmentEnabled: boolean): StepDef[] {
+  return ALL_STEPS.filter(step => {
+    // Daily renters: skip rental terms (they pay per day) and station (flexible)
+    if (rentalModel === 'daily' && step.id === 'terms') return false;
+    if (rentalModel === 'daily' && step.id === 'station') return false;
+    // Non-assigned booths: skip station step
+    if (!boothAssignmentEnabled && step.id === 'station') return false;
+    return true;
+  });
+}
 
 interface OnboardResult {
   success: boolean;
@@ -64,6 +83,8 @@ export default function RenterOnboardWizard() {
   const [userSearch, setUserSearch] = useState('');
 
   const [form, setForm] = useState({
+    // Location
+    locationId: '',
     // Identity
     userId: '',
     fullName: '',
@@ -98,6 +119,42 @@ export default function RenterOnboardWizard() {
     setForm(f => ({ ...f, [field]: value }));
   };
 
+  // Fetch locations for this org
+  const { data: locations = [] } = useQuery({
+    queryKey: ['org-locations', organization?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('locations')
+        .select('id, name, rental_model, booth_assignment_enabled')
+        .eq('organization_id', organization!.id)
+        .eq('is_active', true)
+        .order('display_order');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!organization?.id,
+  });
+
+  const selectedLocation = locations.find(l => l.id === form.locationId);
+  const rentalModel: RentalModel = (selectedLocation?.rental_model as RentalModel) || 'monthly';
+  const boothAssignmentEnabled = selectedLocation?.booth_assignment_enabled ?? true;
+
+  // Compute visible steps based on location config
+  const visibleSteps = useMemo(
+    () => getVisibleSteps(rentalModel, boothAssignmentEnabled),
+    [rentalModel, boothAssignmentEnabled]
+  );
+
+  // Auto-set rent frequency when rental model changes
+  const effectiveRentFrequency = rentalModel === 'daily' ? 'daily' : form.rentFrequency;
+
+  // If only one location, auto-select it
+  useMemo(() => {
+    if (locations.length === 1 && !form.locationId) {
+      updateField('locationId', locations[0].id);
+    }
+  }, [locations]);
+
   // Fetch available employees (not already booth renters)
   const { data: availableEmployees = [] } = useQuery({
     queryKey: ['available-booth-renter-employees', organization?.id, userSearch],
@@ -127,9 +184,9 @@ export default function RenterOnboardWizard() {
 
   const selectedEmployee = availableEmployees.find(e => e.user_id === form.userId);
 
-  // Fetch available stations
+  // Fetch available stations for selected location
   const { data: stations } = useRentalStations(organization?.id);
-  const availableStations = stations?.filter(s => s.is_available) || [];
+  const availableStations = (stations?.filter(s => s.is_available && (!form.locationId || s.location_id === form.locationId)) || []);
 
   // Fetch onboarding tasks
   const { data: onboardingTasks } = useRenterOnboardingTasks(organization?.id);
@@ -139,6 +196,8 @@ export default function RenterOnboardWizard() {
     mutationFn: async () => {
       const payload: Record<string, unknown> = {
         organizationId: organization?.id,
+        locationId: form.locationId || undefined,
+        rentalModel,
         createNewAccount: identityMode === 'new',
         businessName: form.businessName || undefined,
         ein: form.ein || undefined,
@@ -159,8 +218,8 @@ export default function RenterOnboardWizard() {
         payload.userId = form.userId;
       }
 
-      // Contract fields
-      if (form.rentAmount) {
+      // Contract fields (only for non-daily models)
+      if (rentalModel !== 'daily' && form.rentAmount) {
         payload.rentAmount = parseFloat(form.rentAmount);
         payload.rentFrequency = form.rentFrequency;
         payload.dueDay = form.dueDay ? parseInt(form.dueDay) : undefined;
@@ -193,7 +252,9 @@ export default function RenterOnboardWizard() {
   });
 
   const canProceed = () => {
-    if (step === 0) {
+    const currentStepId = visibleSteps[step]?.id;
+    if (currentStepId === 'identity') {
+      if (!form.locationId) return false;
       if (identityMode === 'existing') return !!form.userId;
       return !!form.fullName && !!form.email;
     }
@@ -205,6 +266,25 @@ export default function RenterOnboardWizard() {
     navigator.clipboard.writeText(`Email: ${result.email}\nPassword: ${result.password}`);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const currentStepId = visibleSteps[step]?.id;
+
+  const resetForm = () => {
+    setShowResult(false);
+    setStep(0);
+    setForm({
+      locationId: locations.length === 1 ? locations[0].id : '',
+      userId: '', fullName: '', email: '', businessName: '', ein: '',
+      startDate: new Date().toISOString().split('T')[0],
+      licenseNumber: '', licenseState: '', insuranceProvider: '',
+      insurancePolicyNumber: '', insuranceExpiryDate: '',
+      rentAmount: '', rentFrequency: 'monthly', dueDay: '', securityDeposit: '',
+      contractEndDate: '', includesUtilities: false, includesWifi: false,
+      includesProducts: false, retailCommissionEnabled: false, retailCommissionRate: '',
+      stationId: '', generateRentalAgreement: false,
+    });
+    setIdentityMode('existing');
   };
 
   return (
@@ -223,7 +303,7 @@ export default function RenterOnboardWizard() {
 
         {/* Step Indicator */}
         <div className="flex items-center gap-1">
-          {STEPS.map((s, i) => {
+          {visibleSteps.map((s, i) => {
             const Icon = s.icon;
             const isActive = i === step;
             const isDone = i < step;
@@ -241,7 +321,7 @@ export default function RenterOnboardWizard() {
                   {isDone ? <Check className="w-3.5 h-3.5" /> : <Icon className="w-3.5 h-3.5" />}
                   <span className="hidden lg:inline truncate">{s.label}</span>
                 </button>
-                {i < STEPS.length - 1 && <div className="w-3 h-px bg-border hidden sm:block shrink-0" />}
+                {i < visibleSteps.length - 1 && <div className="w-3 h-px bg-border hidden sm:block shrink-0" />}
               </div>
             );
           })}
@@ -250,13 +330,75 @@ export default function RenterOnboardWizard() {
         {/* Step Content */}
         <Card>
           <CardContent className="pt-6 space-y-6">
-            {/* Step 0: Renter Identity */}
-            {step === 0 && (
+            {/* Step: Renter Identity */}
+            {currentStepId === 'identity' && (
               <div className="space-y-4">
                 <div>
                   <CardTitle className="text-lg mb-1">Renter Identity</CardTitle>
-                  <CardDescription>Select an existing person or create a new contractor account</CardDescription>
+                  <CardDescription>Select a location and identify the renter</CardDescription>
                 </div>
+
+                {/* Location Selector */}
+                <div className="space-y-2">
+                  <Label>Location *</Label>
+                  {locations.length <= 1 ? (
+                    <div className="flex items-center gap-2 p-3 rounded-lg border bg-muted/30">
+                      <Store className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm font-medium">{locations[0]?.name || 'No locations'}</span>
+                      <Badge variant="outline" className="ml-auto text-[10px] capitalize">{rentalModel} rental</Badge>
+                    </div>
+                  ) : (
+                    <Select value={form.locationId} onValueChange={v => updateField('locationId', v)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a location" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.map(loc => (
+                          <SelectItem key={loc.id} value={loc.id}>
+                            <div className="flex items-center gap-2">
+                              <span>{loc.name}</span>
+                              <Badge variant="outline" className="text-[10px] capitalize">{loc.rental_model}</Badge>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+
+                {/* Rental model info banner */}
+                {form.locationId && (
+                  <div className={cn(
+                    "flex items-start gap-3 p-3 rounded-lg text-sm",
+                    rentalModel === 'daily'
+                      ? "bg-accent/50 border border-accent"
+                      : "bg-muted/30 border"
+                  )}>
+                    <Info className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+                    <div>
+                      {rentalModel === 'daily' && (
+                        <>
+                          <p className="font-medium">Daily Rental Model</p>
+                          <p className="text-muted-foreground text-xs">This renter will book individual days through the portal or admin. No fixed contract or booth assignment needed.</p>
+                        </>
+                      )}
+                      {rentalModel === 'weekly' && (
+                        <>
+                          <p className="font-medium">Weekly Rental Model</p>
+                          <p className="text-muted-foreground text-xs">This renter pays a weekly rate. {boothAssignmentEnabled ? 'A booth/station will be assigned.' : 'No fixed booth assignment — flexible seating.'}</p>
+                        </>
+                      )}
+                      {rentalModel === 'monthly' && (
+                        <>
+                          <p className="font-medium">Monthly Rental Model</p>
+                          <p className="text-muted-foreground text-xs">This renter pays a monthly rate. {boothAssignmentEnabled ? 'A booth/station will be assigned.' : 'No fixed booth assignment — flexible seating.'}</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                <Separator />
 
                 <RadioGroup
                   value={identityMode}
@@ -371,8 +513,8 @@ export default function RenterOnboardWizard() {
               </div>
             )}
 
-            {/* Step 1: License & Insurance */}
-            {step === 1 && (
+            {/* Step: License & Insurance */}
+            {currentStepId === 'license' && (
               <div className="space-y-4">
                 <div>
                   <CardTitle className="text-lg mb-1">Licensing & Insurance</CardTitle>
@@ -407,12 +549,12 @@ export default function RenterOnboardWizard() {
               </div>
             )}
 
-            {/* Step 2: Rental Terms */}
-            {step === 2 && (
+            {/* Step: Rental Terms (monthly/weekly only) */}
+            {currentStepId === 'terms' && (
               <div className="space-y-4">
                 <div>
                   <CardTitle className="text-lg mb-1">Rental Terms</CardTitle>
-                  <CardDescription>Set up the first rental contract</CardDescription>
+                  <CardDescription>Set up the first rental contract ({rentalModel} billing)</CardDescription>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div>
@@ -496,8 +638,8 @@ export default function RenterOnboardWizard() {
               </div>
             )}
 
-            {/* Step 3: Station Assignment */}
-            {step === 3 && (
+            {/* Step: Station Assignment (only when booth assignment enabled) */}
+            {currentStepId === 'station' && (
               <div className="space-y-4">
                 <div>
                   <CardTitle className="text-lg mb-1">Station Assignment</CardTitle>
@@ -506,7 +648,7 @@ export default function RenterOnboardWizard() {
                 {availableStations.length === 0 ? (
                   <div className="p-6 rounded-lg bg-muted/50 border border-dashed text-center">
                     <MapPin className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">No available stations. You can assign one later from the Renter Hub.</p>
+                    <p className="text-sm text-muted-foreground">No available stations{form.locationId ? ' at this location' : ''}. You can assign one later from the Renter Hub.</p>
                   </div>
                 ) : (
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -539,8 +681,8 @@ export default function RenterOnboardWizard() {
               </div>
             )}
 
-            {/* Step 4: Checklist & Docs */}
-            {step === 4 && (
+            {/* Step: Checklist & Docs */}
+            {currentStepId === 'checklist' && (
               <div className="space-y-4">
                 <div>
                   <CardTitle className="text-lg mb-1">Onboarding Checklist & Documents</CardTitle>
@@ -581,6 +723,16 @@ export default function RenterOnboardWizard() {
                 <Separator />
                 <h4 className="text-sm font-medium text-muted-foreground">Summary</h4>
                 <div className="space-y-2 text-sm">
+                  {selectedLocation && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Location</span>
+                      <span className="font-medium">{selectedLocation.name}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Rental Model</span>
+                    <Badge variant="outline" className="capitalize">{rentalModel}</Badge>
+                  </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Account</span>
                     <span className="font-medium">
@@ -593,10 +745,16 @@ export default function RenterOnboardWizard() {
                       <span>{form.businessName}</span>
                     </div>
                   )}
-                  {form.rentAmount && (
+                  {rentalModel !== 'daily' && form.rentAmount && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Rent</span>
                       <span>${form.rentAmount}/{form.rentFrequency === 'monthly' ? 'mo' : 'wk'}</span>
+                    </div>
+                  )}
+                  {rentalModel === 'daily' && (
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Billing</span>
+                      <span className="text-xs">Pay-per-day (renter books days via portal)</span>
                     </div>
                   )}
                   {form.stationId && (
@@ -620,7 +778,7 @@ export default function RenterOnboardWizard() {
             <Button variant="outline" onClick={() => setStep(s => s - 1)} disabled={step === 0}>
               <ArrowLeft className="w-4 h-4 mr-2" />Back
             </Button>
-            {step < STEPS.length - 1 ? (
+            {step < visibleSteps.length - 1 ? (
               <Button onClick={() => setStep(s => s + 1)} disabled={!canProceed()}>
                 Next<ArrowRight className="w-4 h-4 ml-2" />
               </Button>
@@ -649,6 +807,17 @@ export default function RenterOnboardWizard() {
           {result && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">{result.message}</p>
+
+              {/* Daily renter next steps */}
+              {rentalModel === 'daily' && (
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-accent/50 border border-accent text-sm">
+                  <Calendar className="w-4 h-4 mt-0.5 shrink-0 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium">Daily Renter — Next Steps</p>
+                    <p className="text-muted-foreground text-xs">This renter can now book individual days through their portal, or you can assign days from the Day Rate Calendar.</p>
+                  </div>
+                </div>
+              )}
 
               {/* Credentials (new account only) */}
               {result.createdNewAccount && result.email && result.password && (
@@ -693,21 +862,7 @@ export default function RenterOnboardWizard() {
                 <Button onClick={() => navigate('/dashboard/admin/booth-renters')} className="flex-1">
                   Back to Renter Hub
                 </Button>
-                <Button variant="outline" onClick={() => {
-                  setShowResult(false);
-                  setStep(0);
-                  setForm({
-                    userId: '', fullName: '', email: '', businessName: '', ein: '',
-                    startDate: new Date().toISOString().split('T')[0],
-                    licenseNumber: '', licenseState: '', insuranceProvider: '',
-                    insurancePolicyNumber: '', insuranceExpiryDate: '',
-                    rentAmount: '', rentFrequency: 'monthly', dueDay: '', securityDeposit: '',
-                    contractEndDate: '', includesUtilities: false, includesWifi: false,
-                    includesProducts: false, retailCommissionEnabled: false, retailCommissionRate: '',
-                    stationId: '', generateRentalAgreement: false,
-                  });
-                  setIdentityMode('existing');
-                }}>
+                <Button variant="outline" onClick={resetForm}>
                   Onboard Another
                 </Button>
               </div>
