@@ -31,7 +31,7 @@ interface KioskPreviewSettings {
   idle_video_url?: string | null;
   background_overlay_opacity?: number;
   show_location_badge?: boolean;
-  location_badge_position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  location_badge_position?: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
   location_badge_style?: 'glass' | 'solid' | 'outline';
 }
 
@@ -177,8 +177,10 @@ export function KioskPreviewPanel({ settings, businessSettings, className, locat
   // Badge position classes - use larger offsets for rounded corner clearance
   const badgePositionClasses = {
     'top-left': 'top-3 left-3',
+    'top-center': 'top-3 left-1/2 -translate-x-1/2',
     'top-right': 'top-3 right-3',
     'bottom-left': 'bottom-3 left-3',
+    'bottom-center': 'bottom-3 left-1/2 -translate-x-1/2',
     'bottom-right': 'bottom-3 right-3',
   };
 

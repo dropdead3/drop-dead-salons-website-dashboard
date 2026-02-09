@@ -9,8 +9,10 @@ import { cn } from '@/lib/utils';
 // Badge position classes
 const badgePositionClasses = {
   'top-left': 'top-6 left-6',
+  'top-center': 'top-6 left-1/2 -translate-x-1/2',
   'top-right': 'top-6 right-6',
   'bottom-left': 'bottom-6 left-6',
+  'bottom-center': 'bottom-6 left-1/2 -translate-x-1/2',
   'bottom-right': 'bottom-6 right-6',
 };
 

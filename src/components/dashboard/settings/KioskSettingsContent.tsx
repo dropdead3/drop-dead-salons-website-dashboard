@@ -72,7 +72,7 @@ interface LocalSettings {
   exit_pin: string;
   idle_video_url: string | null;
   show_location_badge: boolean;
-  location_badge_position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  location_badge_position: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
   location_badge_style: 'glass' | 'solid' | 'outline';
 }
 
@@ -858,23 +858,23 @@ export function KioskSettingsContent() {
 
                   {localSettings.show_location_badge && (
                     <>
-                      {/* Position selector */}
+                      {/* Position selector - 3 column grid for 6 positions */}
                       <div className="space-y-2">
                         <Label className="text-sm">Position</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                          {(['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const).map((pos) => (
+                        <div className="grid grid-cols-3 gap-2">
+                          {(['top-left', 'top-center', 'top-right', 'bottom-left', 'bottom-center', 'bottom-right'] as const).map((pos) => (
                             <button
                               key={pos}
                               type="button"
                               className={cn(
-                                "px-3 py-2 rounded-lg border text-xs font-medium transition-colors",
+                                "px-2 py-2 rounded-lg border text-xs font-medium transition-colors text-center",
                                 localSettings.location_badge_position === pos
                                   ? "border-primary bg-primary/10 text-foreground"
                                   : "border-border hover:border-primary/50"
                               )}
                               onClick={() => updateField('location_badge_position', pos)}
                             >
-                              {pos.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                              {pos.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                             </button>
                           ))}
                         </div>
