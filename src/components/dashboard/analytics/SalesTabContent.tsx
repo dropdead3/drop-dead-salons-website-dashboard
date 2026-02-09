@@ -55,6 +55,7 @@ import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYearComparison';
 import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';
 import { CompareTabContent } from '@/components/dashboard/sales/compare/CompareTabContent';
+import { CorrelationsContent } from '@/components/dashboard/analytics/CorrelationsContent';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface SalesTabContentProps {
@@ -212,6 +213,9 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             </VisibilityGate>
             <VisibilityGate elementKey="sales_commission_subtab" elementName="Commission" elementCategory="Page Tabs">
               <SubTabsTrigger value="commission">Commission</SubTabsTrigger>
+            </VisibilityGate>
+            <VisibilityGate elementKey="sales_correlations_subtab" elementName="Correlations" elementCategory="Page Tabs">
+              <SubTabsTrigger value="correlations">Correlations</SubTabsTrigger>
             </VisibilityGate>
           </SubTabsList>
 
@@ -414,6 +418,13 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
               <CommissionTiersEditor />
             </PinnableCard>
           </div>
+        </TabsContent>
+
+        <TabsContent value="correlations" className="mt-6">
+          <CorrelationsContent 
+            locationId={locationFilter}
+            filterContext={filterContext}
+          />
         </TabsContent>
         </Tabs>
       </div>
