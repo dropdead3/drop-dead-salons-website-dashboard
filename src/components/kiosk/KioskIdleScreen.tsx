@@ -20,10 +20,12 @@ export function KioskIdleScreen() {
   const backgroundImageUrl = settings?.background_image_url;
 
   // Theme-aware logo fallback: kiosk logo → business logo (theme-aware) → business name
-  const themeMode = settings?.theme_mode || 'dark';
+  // Use the default theme_mode from kiosk settings (light for cream aesthetic)
+  const themeMode = settings?.theme_mode || DEFAULT_KIOSK_SETTINGS.theme_mode;
   const isDarkTheme = themeMode === 'dark' || 
     (themeMode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   
+  // On dark backgrounds, use light logo; on light backgrounds, use dark logo
   const logoUrl = settings?.logo_url 
     || (isDarkTheme ? businessSettings?.logo_light_url : businessSettings?.logo_dark_url)
     || null;
