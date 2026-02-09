@@ -2,9 +2,11 @@ import { motion } from 'framer-motion';
 import { AlertTriangle, RefreshCw, HelpCircle } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
+import { KioskLocationBadge, isBadgeAtTop, isBadgeAtBottom } from './KioskLocationBadge';
+import { cn } from '@/lib/utils';
 
 export function KioskErrorScreen() {
-  const { settings, error, resetToIdle } = useKiosk();
+  const { settings, error, resetToIdle, locationName } = useKiosk();
 
   const backgroundColor = settings?.background_color || DEFAULT_KIOSK_SETTINGS.background_color;
   const textColor = settings?.text_color || DEFAULT_KIOSK_SETTINGS.text_color;
@@ -13,11 +15,21 @@ export function KioskErrorScreen() {
   const backgroundOverlayOpacity = settings?.background_overlay_opacity ?? DEFAULT_KIOSK_SETTINGS.background_overlay_opacity;
   const logoUrl = settings?.logo_url;
 
+  // Location badge settings
+  const showLocationBadge = settings?.show_location_badge ?? DEFAULT_KIOSK_SETTINGS.show_location_badge;
+  const badgePosition = settings?.location_badge_position ?? DEFAULT_KIOSK_SETTINGS.location_badge_position;
+  const badgeStyle = settings?.location_badge_style ?? DEFAULT_KIOSK_SETTINGS.location_badge_style;
+
+  // Determine badge position for layout adjustments
+  const hasBadge = showLocationBadge && !!locationName;
+  const badgeAtTop = hasBadge && isBadgeAtTop(badgePosition);
+  const badgeAtBottom = hasBadge && isBadgeAtBottom(badgePosition);
+
   const errorColor = '#EF4444';
 
   return (
     <motion.div
-      className="fixed inset-0 flex flex-col items-center justify-center select-none"
+      className="fixed inset-0 flex flex-col select-none"
       style={{
         backgroundColor,
         backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : undefined,
@@ -36,8 +48,24 @@ export function KioskErrorScreen() {
         />
       )}
 
+      {/* Top Badge Zone */}
+      {badgeAtTop && (
+        <div className="relative z-20 pt-8">
+          <KioskLocationBadge
+            locationName={locationName!}
+            position={badgePosition}
+            style={badgeStyle}
+            textColor={textColor}
+            accentColor={accentColor}
+          />
+        </div>
+      )}
+
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center text-center px-8 max-w-lg">
+      <div className={cn(
+        "relative z-10 flex-1 flex flex-col items-center justify-center text-center px-8 max-w-lg mx-auto",
+        badgeAtBottom && "pb-20"
+      )}>
         {/* Logo */}
         {logoUrl && (
           <motion.img
@@ -138,6 +166,19 @@ export function KioskErrorScreen() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Bottom Badge Zone */}
+      {badgeAtBottom && (
+        <div className="relative z-20 pb-8">
+          <KioskLocationBadge
+            locationName={locationName!}
+            position={badgePosition}
+            style={badgeStyle}
+            textColor={textColor}
+            accentColor={accentColor}
+          />
+        </div>
+      )}
     </motion.div>
   );
 }

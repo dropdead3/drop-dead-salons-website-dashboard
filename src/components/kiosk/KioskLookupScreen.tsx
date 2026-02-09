@@ -1,13 +1,15 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Loader2, Phone, Settings } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { KioskNumberPad } from './KioskNumberPad';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { KioskSettingsDialog } from './KioskSettingsDialog';
+import { KioskLocationBadge, isBadgeAtTop, isBadgeAtBottom } from './KioskLocationBadge';
+import { cn } from '@/lib/utils';
 
 export function KioskLookupScreen() {
-  const { settings, resetToIdle, lookupByPhone, isLookingUp, idleTimeRemaining } = useKiosk();
+  const { settings, resetToIdle, lookupByPhone, isLookingUp, idleTimeRemaining, locationName } = useKiosk();
   const [phoneNumber, setPhoneNumber] = useState('');
   const [showSettings, setShowSettings] = useState(false);
 
@@ -18,6 +20,16 @@ export function KioskLookupScreen() {
   const backgroundImageUrl = settings?.background_image_url;
   const backgroundOverlayOpacity = settings?.background_overlay_opacity ?? DEFAULT_KIOSK_SETTINGS.background_overlay_opacity;
   const logoUrl = settings?.logo_url;
+
+  // Location badge settings
+  const showLocationBadge = settings?.show_location_badge ?? DEFAULT_KIOSK_SETTINGS.show_location_badge;
+  const badgePosition = settings?.location_badge_position ?? DEFAULT_KIOSK_SETTINGS.location_badge_position;
+  const badgeStyle = settings?.location_badge_style ?? DEFAULT_KIOSK_SETTINGS.location_badge_style;
+
+  // Determine badge position for layout adjustments
+  const hasBadge = showLocationBadge && !!locationName;
+  const badgeAtTop = hasBadge && isBadgeAtTop(badgePosition);
+  const badgeAtBottom = hasBadge && isBadgeAtBottom(badgePosition);
 
   const handleSettingsTap = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -52,7 +64,7 @@ export function KioskLookupScreen() {
     >
       {/* Settings icon - hidden in corner */}
       <motion.button
-        className="absolute top-4 right-4 z-20 w-12 h-12 rounded-xl flex items-center justify-center transition-all"
+        className="absolute top-4 right-4 z-30 w-12 h-12 rounded-xl flex items-center justify-center transition-all"
         style={{ 
           backgroundColor: `${textColor}08`,
           opacity: 0.3,
@@ -73,8 +85,24 @@ export function KioskLookupScreen() {
         />
       )}
 
+      {/* Top Badge Zone */}
+      {badgeAtTop && (
+        <div className="relative z-20 pt-6">
+          <KioskLocationBadge
+            locationName={locationName!}
+            position={badgePosition}
+            style={badgeStyle}
+            textColor={textColor}
+            accentColor={accentColor}
+          />
+        </div>
+      )}
+
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between p-6">
+      <div className={cn(
+        "relative z-10 flex items-center justify-between p-6",
+        badgeAtTop && "pt-4"
+      )}>
         <motion.button
           className="flex items-center gap-2 px-5 py-3 rounded-2xl backdrop-blur-md transition-all"
           style={{ 
@@ -118,7 +146,10 @@ export function KioskLookupScreen() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 pb-8">
+      <div className={cn(
+        "relative z-10 flex-1 flex flex-col items-center justify-center px-8",
+        badgeAtBottom && "pb-20"
+      )}>
         {/* Prompt with icon */}
         <motion.div
           className="text-center mb-10"
@@ -211,6 +242,19 @@ export function KioskLookupScreen() {
           </motion.div>
         )}
       </div>
+
+      {/* Bottom Badge Zone */}
+      {badgeAtBottom && (
+        <div className="relative z-20 pb-8">
+          <KioskLocationBadge
+            locationName={locationName!}
+            position={badgePosition}
+            style={badgeStyle}
+            textColor={textColor}
+            accentColor={accentColor}
+          />
+        </div>
+      )}
     </motion.div>
   );
 }

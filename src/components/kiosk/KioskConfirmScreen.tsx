@@ -2,7 +2,9 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, User, AlertCircle, Sparkles, Calendar } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
+import { KioskLocationBadge, isBadgeAtTop, isBadgeAtBottom } from './KioskLocationBadge';
 import { format, parse } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export function KioskConfirmScreen() {
   const { 
@@ -14,6 +16,7 @@ export function KioskConfirmScreen() {
     startBrowse,
     isBrowsing,
     idleTimeRemaining,
+    locationName,
   } = useKiosk();
 
   const backgroundColor = settings?.background_color || DEFAULT_KIOSK_SETTINGS.background_color;
@@ -24,6 +27,16 @@ export function KioskConfirmScreen() {
   const logoUrl = settings?.logo_url;
   const showStylistPhoto = settings?.show_stylist_photo ?? DEFAULT_KIOSK_SETTINGS.show_stylist_photo;
   const enableWalkIns = settings?.enable_walk_ins ?? DEFAULT_KIOSK_SETTINGS.enable_walk_ins;
+
+  // Location badge settings
+  const showLocationBadge = settings?.show_location_badge ?? DEFAULT_KIOSK_SETTINGS.show_location_badge;
+  const badgePosition = settings?.location_badge_position ?? DEFAULT_KIOSK_SETTINGS.location_badge_position;
+  const badgeStyle = settings?.location_badge_style ?? DEFAULT_KIOSK_SETTINGS.location_badge_style;
+
+  // Determine badge position for layout adjustments
+  const hasBadge = showLocationBadge && !!locationName;
+  const badgeAtTop = hasBadge && isBadgeAtTop(badgePosition);
+  const badgeAtBottom = hasBadge && isBadgeAtBottom(badgePosition);
 
   const appointments = session?.appointments || [];
   const client = session?.client;
@@ -64,8 +77,24 @@ export function KioskConfirmScreen() {
         />
       )}
 
+      {/* Top Badge Zone */}
+      {badgeAtTop && (
+        <div className="relative z-20 pt-6">
+          <KioskLocationBadge
+            locationName={locationName!}
+            position={badgePosition}
+            style={badgeStyle}
+            textColor={textColor}
+            accentColor={accentColor}
+          />
+        </div>
+      )}
+
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between p-6">
+      <div className={cn(
+        "relative z-10 flex items-center justify-between p-6",
+        badgeAtTop && "pt-4"
+      )}>
         <motion.button
           className="flex items-center gap-2 px-5 py-3 rounded-2xl backdrop-blur-md transition-all"
           style={{ 
@@ -108,7 +137,10 @@ export function KioskConfirmScreen() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 pb-8 overflow-auto">
+      <div className={cn(
+        "relative z-10 flex-1 flex flex-col items-center justify-center px-8 overflow-auto",
+        badgeAtBottom && "pb-20"
+      )}>
         {appointments.length > 0 ? (
           <>
             {/* Welcome message */}
@@ -351,6 +383,19 @@ export function KioskConfirmScreen() {
           </motion.div>
         )}
       </div>
+
+      {/* Bottom Badge Zone */}
+      {badgeAtBottom && (
+        <div className="relative z-20 pb-8">
+          <KioskLocationBadge
+            locationName={locationName!}
+            position={badgePosition}
+            style={badgeStyle}
+            textColor={textColor}
+            accentColor={accentColor}
+          />
+        </div>
+      )}
     </motion.div>
   );
 }

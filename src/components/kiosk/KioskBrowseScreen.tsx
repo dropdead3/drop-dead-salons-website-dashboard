@@ -2,7 +2,9 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Clock, User, Calendar, Phone } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
+import { KioskLocationBadge, isBadgeAtTop, isBadgeAtBottom } from './KioskLocationBadge';
 import { format, parse } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 // Privacy-safe name formatting: "John S."
 const formatPrivacyName = (fullName: string | null | undefined): string => {
@@ -40,7 +42,7 @@ export function KioskBrowseScreen() {
     resetToIdle,
     selectAppointment,
     idleTimeRemaining,
-    state,
+    locationName,
   } = useKiosk();
 
   const backgroundColor = settings?.background_color || DEFAULT_KIOSK_SETTINGS.background_color;
@@ -50,6 +52,16 @@ export function KioskBrowseScreen() {
   const backgroundOverlayOpacity = settings?.background_overlay_opacity ?? DEFAULT_KIOSK_SETTINGS.background_overlay_opacity;
   const logoUrl = settings?.logo_url;
   const showStylistPhoto = settings?.show_stylist_photo ?? DEFAULT_KIOSK_SETTINGS.show_stylist_photo;
+
+  // Location badge settings
+  const showLocationBadge = settings?.show_location_badge ?? DEFAULT_KIOSK_SETTINGS.show_location_badge;
+  const badgePosition = settings?.location_badge_position ?? DEFAULT_KIOSK_SETTINGS.location_badge_position;
+  const badgeStyle = settings?.location_badge_style ?? DEFAULT_KIOSK_SETTINGS.location_badge_style;
+
+  // Determine badge position for layout adjustments
+  const hasBadge = showLocationBadge && !!locationName;
+  const badgeAtTop = hasBadge && isBadgeAtTop(badgePosition);
+  const badgeAtBottom = hasBadge && isBadgeAtBottom(badgePosition);
 
   const appointments = session?.appointments || [];
   const groupedAppointments = groupByTimeSlot(appointments);
@@ -102,8 +114,24 @@ export function KioskBrowseScreen() {
         />
       )}
 
+      {/* Top Badge Zone */}
+      {badgeAtTop && (
+        <div className="relative z-20 pt-6">
+          <KioskLocationBadge
+            locationName={locationName!}
+            position={badgePosition}
+            style={badgeStyle}
+            textColor={textColor}
+            accentColor={accentColor}
+          />
+        </div>
+      )}
+
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between p-6">
+      <div className={cn(
+        "relative z-10 flex items-center justify-between p-6",
+        badgeAtTop && "pt-4"
+      )}>
         <motion.button
           className="flex items-center gap-2 px-5 py-3 rounded-2xl backdrop-blur-md transition-all"
           style={{ 
@@ -146,7 +174,10 @@ export function KioskBrowseScreen() {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 flex-1 flex flex-col items-center px-8 pb-8 overflow-auto">
+      <div className={cn(
+        "relative z-10 flex-1 flex flex-col items-center px-8 overflow-auto",
+        badgeAtBottom && "pb-20"
+      )}>
         {/* Header */}
         <motion.div
           className="text-center mb-8"
@@ -185,7 +216,7 @@ export function KioskBrowseScreen() {
         </motion.div>
 
         {appointments.length > 0 ? (
-          <div className="w-full max-w-2xl space-y-6">
+          <div className="w-full max-w-2xl space-y-6 pb-8">
             {groupedAppointments.map(([slotKey, slotAppointments], groupIndex) => (
               <motion.div
                 key={slotKey}
@@ -301,7 +332,7 @@ export function KioskBrowseScreen() {
 
         {/* Bottom action */}
         <motion.div 
-          className="mt-8"
+          className="mt-8 pb-8"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
@@ -325,6 +356,19 @@ export function KioskBrowseScreen() {
           </motion.button>
         </motion.div>
       </div>
+
+      {/* Bottom Badge Zone */}
+      {badgeAtBottom && (
+        <div className="relative z-20 pb-8">
+          <KioskLocationBadge
+            locationName={locationName!}
+            position={badgePosition}
+            style={badgeStyle}
+            textColor={textColor}
+            accentColor={accentColor}
+          />
+        </div>
+      )}
     </motion.div>
   );
 }
