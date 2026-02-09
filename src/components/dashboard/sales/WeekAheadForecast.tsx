@@ -25,19 +25,25 @@ import {
 } from 'recharts';
 
 // Label positioned above each bar for revenue
-function AboveBarLabel({ x, y, width, value }: any) {
+function AboveBarLabel({ x, y, width, value, ...rest }: any) {
   if (value === undefined || value === null || value === 0) return null;
+  const isPeak = rest?.isPeak ?? rest?.payload?.isPeak;
   
   return (
-    <text
-      x={x + width / 2}
-      y={y - 8}
-      textAnchor="middle"
-      className="fill-foreground text-xs font-medium tabular-nums"
-      style={{ pointerEvents: 'none' }}
-    >
-      ${value.toLocaleString()}
-    </text>
+    <g style={{ pointerEvents: 'none' }}>
+      {isPeak && (
+        <circle cx={x + width / 2} cy={y - 22} r={3} fill="hsl(var(--chart-2))" />
+      )}
+      <text
+        x={x + width / 2}
+        y={y - 8}
+        textAnchor="middle"
+        className={cn("text-xs tabular-nums", isPeak ? "fill-chart-2" : "fill-foreground")}
+        style={{ fontWeight: isPeak ? 700 : 500 }}
+      >
+        ${value.toLocaleString()}
+      </text>
+    </g>
   );
 }
 
