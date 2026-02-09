@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { 
   useJobApplications, 
@@ -50,6 +51,7 @@ import { cn } from "@/lib/utils";
 import { ApplicantDetailSheet } from "@/components/dashboard/ApplicantDetailSheet";
 
 export default function RecruitingPipeline() {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStage, setSelectedStage] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
@@ -372,6 +374,13 @@ export default function RecruitingPipeline() {
                           </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => navigate(`/dashboard/admin/new-hire?name=${encodeURIComponent(app.name)}&email=${encodeURIComponent(app.email)}&applicantId=${app.id}`)}
+                          className="text-emerald-600"
+                        >
+                          <UserCheck className="h-4 w-4 mr-2" />
+                          Hire & Onboard
+                        </DropdownMenuItem>
                         <DropdownMenuItem 
                           onClick={() => handleArchive(app.id)}
                           className="text-destructive"
