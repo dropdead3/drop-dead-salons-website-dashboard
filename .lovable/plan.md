@@ -1,180 +1,76 @@
 
-
-# Fix Kiosk Settings Dialog Timeout - Robust Solution
+# Fix Kiosk Settings Not Applying After Save
 
 ## Problem
 
-The 10-second inactivity timeout works on the first attempt but fails on subsequent attempts. The current ref-based fix still has timing issues because:
-
-1. The `KioskSettingsDialog` component stays mounted (it's always rendered, just hidden when `isOpen=false`)
-2. When reopening, the `useRef(isOpen)` initialization already happened on first mount
-3. The `useEffect` that syncs refs runs asynchronously after render
-4. Even with a 50ms delay, there's a race condition between ref updates and `resetTimeout` execution
+When you save kiosk settings (background color, accent color, text color) in the Kiosk Settings dialog, the changes don't appear on the actual kiosk screens. The kiosk continues showing either default colors or the previously loaded values.
 
 ## Root Cause
 
-The current flow on subsequent opens:
+There's a **query cache invalidation mismatch** in how React Query is being used:
 
-```text
-1. isOpen changes: false → true
-2. Component re-renders
-3. useEffect for ref sync SCHEDULED (not yet run)
-4. useEffect for timeout SCHEDULED (not yet run)
-5. Effects run in order:
-   a. isOpenRef.current = true
-   b. setTimeout(resetTimeout, 50)
-6. After 50ms, resetTimeout checks isOpenRef.current
-```
+| Component | Query Hook | Query Key |
+|-----------|------------|-----------|
+| Kiosk screens | `useKioskSettingsByLocation(locationId)` | `['kiosk-settings-location', locationId]` |
+| Settings mutation | `invalidateQueries()` | `['kiosk-settings', organizationId]` |
 
-The issue: The 50ms delay should work, but the interval/timeout from the previous session might not be fully cleared, or the refs are in an inconsistent state during the transition.
+When settings are saved, the mutation only invalidates `['kiosk-settings', ...]` but the kiosk page is listening to `['kiosk-settings-location', ...]`. Since these keys don't match, React Query doesn't know to refetch the data.
 
 ## Solution
 
-Make the initialization more robust by:
-
-1. **Update refs synchronously during render** (not just in useEffect)
-2. **Use a mount key pattern** to force fresh state on each open
-3. **Clear all timers comprehensively** when closing
+Update the `useUpdateKioskSettings` mutation to also invalidate the location-based query key that the kiosk screens use.
 
 ### Technical Changes
 
-**File: `src/components/kiosk/KioskSettingsDialog.tsx`**
+**File: `src/hooks/useKioskSettings.ts`**
 
-1. Update refs synchronously during render (before effects run):
-
-```typescript
-// Refs to track latest state values
-const isOpenRef = useRef(isOpen);
-const isAuthenticatedRef = useRef(isAuthenticated);
-
-// Sync refs SYNCHRONOUSLY on every render (not just in useEffect)
-isOpenRef.current = isOpen;
-isAuthenticatedRef.current = isAuthenticated;
-```
-
-2. Remove the redundant useEffect syncs for refs (lines 38-44)
-
-3. Add a session key to force timer reset on each open:
+Update the `onSuccess` callback in `useUpdateKioskSettings` to invalidate both query keys:
 
 ```typescript
-const [sessionKey, setSessionKey] = useState(0);
-
-// When dialog opens, increment session key to force fresh timers
-useEffect(() => {
-  if (isOpen) {
-    setSessionKey(prev => prev + 1);
-  }
-}, [isOpen]);
-```
-
-4. Update the timeout initialization effect to depend on sessionKey:
-
-```typescript
-useEffect(() => {
-  if (isOpen && !isAuthenticated) {
-    // Clear any existing timers first
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    if (countdownRef.current) {
-      clearInterval(countdownRef.current);
-      countdownRef.current = null;
-    }
-    
-    // Reset state
-    setTimeRemaining(PIN_TIMEOUT_SECONDS);
-    
-    // Start fresh countdown
-    countdownRef.current = setInterval(() => {
-      setTimeRemaining(prev => {
-        if (prev <= 1) {
-          if (countdownRef.current) clearInterval(countdownRef.current);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    
-    // Start fresh timeout
-    timeoutRef.current = setTimeout(() => {
-      if (countdownRef.current) clearInterval(countdownRef.current);
-      if (isOpenRef.current && !isAuthenticatedRef.current) {
-        setIsAuthenticated(false);
-        setPinInput('');
-        setPinError(false);
-        setTimeRemaining(PIN_TIMEOUT_SECONDS);
-        onClose();
-      }
-    }, PIN_TIMEOUT_SECONDS * 1000);
+onSuccess: (_, variables) => {
+  // Invalidate org-level settings queries
+  queryClient.invalidateQueries({ 
+    queryKey: ['kiosk-settings', variables.organizationId] 
+  });
+  
+  // Also invalidate location-specific queries used by kiosk screens
+  if (variables.locationId) {
+    queryClient.invalidateQueries({ 
+      queryKey: ['kiosk-settings-location', variables.locationId] 
+    });
   }
   
-  return () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
-    }
-    if (countdownRef.current) {
-      clearInterval(countdownRef.current);
-      countdownRef.current = null;
-    }
-  };
-}, [sessionKey, isOpen, isAuthenticated, onClose]);
-```
-
-5. Simplify `resetTimeout` to just restart timers on user interaction:
-
-```typescript
-const resetTimeout = useCallback(() => {
-  if (!isOpenRef.current || isAuthenticatedRef.current) return;
+  // Invalidate all location-based kiosk settings (for org-level changes)
+  queryClient.invalidateQueries({
+    queryKey: ['kiosk-settings-location'],
+    exact: false, // Match any location ID
+  });
   
-  // Clear and restart timers
-  if (timeoutRef.current) clearTimeout(timeoutRef.current);
-  if (countdownRef.current) clearInterval(countdownRef.current);
-  
-  setTimeRemaining(PIN_TIMEOUT_SECONDS);
-  
-  countdownRef.current = setInterval(() => {
-    setTimeRemaining(prev => prev <= 1 ? 0 : prev - 1);
-  }, 1000);
-  
-  timeoutRef.current = setTimeout(() => {
-    if (countdownRef.current) clearInterval(countdownRef.current);
-    if (isOpenRef.current && !isAuthenticatedRef.current) {
-      setIsAuthenticated(false);
-      setPinInput('');
-      setPinError(false);
-      setTimeRemaining(PIN_TIMEOUT_SECONDS);
-      onClose();
-    }
-  }, PIN_TIMEOUT_SECONDS * 1000);
-}, [onClose]);
+  toast.success('Kiosk settings saved');
+},
 ```
 
 ## Why This Works
 
-| Issue | Solution |
-|-------|----------|
-| Refs synced async via useEffect | Sync refs directly on render |
-| Stale timers from previous session | Session key forces fresh initialization |
-| Race condition on reopen | Explicit cleanup before starting new timers |
-| Timer refs not nulled after clear | Set refs to null after clearing |
-
-## Execution Order After Fix
+After this fix:
 
 ```text
-1. isOpen changes: false → true
-2. Component re-renders
-3. isOpenRef.current = true (SYNCHRONOUS, during render)
-4. useEffect cleanup runs (clears old timers)
-5. sessionKey increments
-6. New effect runs with fresh timers
-7. All subsequent checks use current ref values ✓
+1. User saves kiosk settings
+2. Mutation succeeds
+3. onSuccess invalidates BOTH:
+   - ['kiosk-settings', organizationId]
+   - ['kiosk-settings-location', locationId]
+4. Kiosk screens detect stale data
+5. React Query automatically refetches
+6. Kiosk updates with new colors ✓
 ```
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/kiosk/KioskSettingsDialog.tsx` | Sync refs on render, add session key, improve timer management |
+| `src/hooks/useKioskSettings.ts` | Add location-based query invalidation in `onSuccess` callback |
 
+## Expected Outcome
+
+After saving settings in the Kiosk Settings dialog, the kiosk screens will immediately update to reflect the new background color, accent color, and text color.
