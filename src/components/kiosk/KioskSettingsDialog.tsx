@@ -4,6 +4,7 @@ import { X, Settings, Lock, Eye, EyeOff, Check, Palette, Type, Clock, Users, Ima
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS, useUpdateKioskSettings } from '@/hooks/useKioskSettings';
 import { useValidatePin } from '@/hooks/useUserPin';
+import { toast } from 'sonner';
 
 interface KioskSettingsDialogProps {
   isOpen: boolean;
@@ -261,13 +262,21 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
   };
 
   const handleSave = async () => {
-    if (!organizationId) return;
+    if (!organizationId) {
+      toast.error('Unable to save: Organization not found');
+      return;
+    }
     
-    await updateSettings.mutateAsync({
-      organizationId,
-      locationId: locationId || null,
-      settings: localSettings,
-    });
+    try {
+      await updateSettings.mutateAsync({
+        organizationId,
+        locationId: locationId || null,
+        settings: localSettings,
+      });
+      handleClose();
+    } catch (error) {
+      console.error('Failed to save kiosk settings:', error);
+    }
   };
 
   const handleClose = () => {
