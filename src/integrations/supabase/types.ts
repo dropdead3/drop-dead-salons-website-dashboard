@@ -6777,6 +6777,7 @@ export type Database = {
           accent_color: string | null
           background_color: string | null
           background_image_url: string | null
+          background_overlay_opacity: number | null
           button_style: string | null
           check_in_prompt: string | null
           created_at: string | null
@@ -6809,6 +6810,7 @@ export type Database = {
           accent_color?: string | null
           background_color?: string | null
           background_image_url?: string | null
+          background_overlay_opacity?: number | null
           button_style?: string | null
           check_in_prompt?: string | null
           created_at?: string | null
@@ -6841,6 +6843,7 @@ export type Database = {
           accent_color?: string | null
           background_color?: string | null
           background_image_url?: string | null
+          background_overlay_opacity?: number | null
           button_style?: string | null
           check_in_prompt?: string | null
           created_at?: string | null
@@ -13884,6 +13887,7 @@ export type Database = {
           accent_color: string | null
           background_color: string | null
           background_image_url: string | null
+          background_overlay_opacity: number | null
           button_style: string | null
           check_in_prompt: string | null
           created_at: string | null

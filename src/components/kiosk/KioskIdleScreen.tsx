@@ -18,14 +18,13 @@ export function KioskIdleScreen() {
   const textColor = settings?.text_color || DEFAULT_KIOSK_SETTINGS.text_color;
   const accentColor = settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color;
   const backgroundImageUrl = settings?.background_image_url;
+  const backgroundOverlayOpacity = settings?.background_overlay_opacity ?? DEFAULT_KIOSK_SETTINGS.background_overlay_opacity;
 
   // Theme-aware logo fallback: kiosk logo → business logo (theme-aware) → business name
-  // Use the default theme_mode from kiosk settings (light for cream aesthetic)
   const themeMode = settings?.theme_mode || DEFAULT_KIOSK_SETTINGS.theme_mode;
   const isDarkTheme = themeMode === 'dark' || 
     (themeMode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   
-  // On dark backgrounds, use light logo; on light backgrounds, use dark logo
   const logoUrl = settings?.logo_url 
     || (isDarkTheme ? businessSettings?.logo_light_url : businessSettings?.logo_dark_url)
     || null;
@@ -78,7 +77,7 @@ export function KioskIdleScreen() {
     });
   };
 
-  // Handle settings icon tap - single tap opens settings
+  // Handle settings icon tap
   const handleSettingsTap = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowSettings(true);
@@ -120,21 +119,15 @@ export function KioskIdleScreen() {
         onClose={() => setShowSettings(false)} 
       />
 
-      {/* Overlay for background image */}
+      {/* Background image overlay */}
       {backgroundImageUrl && (
         <div 
-          className="absolute inset-0 bg-black/50"
-          style={{ backdropFilter: 'blur(2px)' }}
+          className="absolute inset-0"
+          style={{ 
+            backgroundColor: `rgba(0, 0, 0, ${backgroundOverlayOpacity})`,
+          }}
         />
       )}
-
-      {/* Ambient gradient overlay */}
-      <div 
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `radial-gradient(ellipse at center, ${accentColor}15 0%, transparent 60%)`,
-        }}
-      />
 
       {/* Slideshow */}
       {slideshowImages.length > 0 && !backgroundImageUrl && (
@@ -174,16 +167,7 @@ export function KioskIdleScreen() {
               src={logoUrl}
               alt={businessName || 'Logo'}
               className={`${logoSizeClasses[logoSize]} w-auto h-auto object-contain`}
-              style={{
-                // Apply color overlay filter if logo_color is set
-                filter: logoColor 
-                  ? `drop-shadow(0 2px 8px ${isDarkTheme ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'})`
-                  : isDarkTheme 
-                    ? 'drop-shadow(0 2px 8px rgba(255,255,255,0.1))' 
-                    : 'drop-shadow(0 2px 8px rgba(0,0,0,0.1))',
-              }}
               onError={(e) => {
-                // Hide broken images
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
@@ -217,7 +201,7 @@ export function KioskIdleScreen() {
           </motion.h2>
         ) : null}
 
-        {/* Time - Enhanced typography */}
+        {/* Time */}
         <motion.div
           className="mb-16"
           initial={{ scale: 0.9, opacity: 0 }}
@@ -261,33 +245,22 @@ export function KioskIdleScreen() {
           )}
         </motion.div>
 
-        {/* Tap to check in - Enhanced with glow */}
+        {/* Tap to check in - Glass button */}
         <motion.div
           className="relative"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4 }}
         >
-          {/* Glow effect */}
-          <motion.div
-            className="absolute inset-0 rounded-full blur-xl"
-            style={{ backgroundColor: accentColor }}
-            animate={{
-              opacity: [0.3, 0.5, 0.3],
-              scale: [1, 1.05, 1],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-          />
-          
           <motion.div
             className="relative px-14 py-7 rounded-full backdrop-blur-md"
             style={{ 
-              backgroundColor: `${accentColor}20`,
-              border: `2px solid ${accentColor}60`,
+              backgroundColor: `${accentColor}15`,
+              border: `1.5px solid ${accentColor}40`,
+            }}
+            whileHover={{ 
+              backgroundColor: `${accentColor}25`,
+              scale: 1.01,
             }}
             whileTap={{ scale: 0.98 }}
           >
@@ -301,7 +274,7 @@ export function KioskIdleScreen() {
         </motion.div>
       </div>
 
-      {/* Bottom pulse indicator - Enhanced */}
+      {/* Bottom pulse indicator */}
       <motion.div
         className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-2"
       >
@@ -311,8 +284,7 @@ export function KioskIdleScreen() {
             className="w-2 h-2 rounded-full"
             style={{ backgroundColor: accentColor }}
             animate={{
-              opacity: [0.3, 0.8, 0.3],
-              scale: [1, 1.2, 1],
+              opacity: [0.4, 0.7, 0.4],
             }}
             transition={{
               duration: 1.5,

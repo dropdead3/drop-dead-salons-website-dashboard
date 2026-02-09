@@ -16,9 +16,9 @@ export function KioskLookupScreen() {
   const textColor = settings?.text_color || DEFAULT_KIOSK_SETTINGS.text_color;
   const accentColor = settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color;
   const backgroundImageUrl = settings?.background_image_url;
+  const backgroundOverlayOpacity = settings?.background_overlay_opacity ?? DEFAULT_KIOSK_SETTINGS.background_overlay_opacity;
   const logoUrl = settings?.logo_url;
 
-  // Handle settings icon tap - single tap opens settings
   const handleSettingsTap = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowSettings(true);
@@ -65,30 +65,25 @@ export function KioskLookupScreen() {
 
       <KioskSettingsDialog isOpen={showSettings} onClose={() => setShowSettings(false)} />
 
-      {/* Overlay */}
+      {/* Background overlay */}
       {backgroundImageUrl && (
-        <div className="absolute inset-0 bg-black/60" />
+        <div 
+          className="absolute inset-0"
+          style={{ backgroundColor: `rgba(0, 0, 0, ${backgroundOverlayOpacity})` }}
+        />
       )}
-
-      {/* Ambient glow */}
-      <div 
-        className="absolute inset-0 opacity-20 pointer-events-none"
-        style={{
-          background: `radial-gradient(ellipse at center, ${accentColor}30 0%, transparent 60%)`,
-        }}
-      />
 
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between p-6">
         <motion.button
           className="flex items-center gap-2 px-5 py-3 rounded-2xl backdrop-blur-md transition-all"
           style={{ 
-            backgroundColor: `${textColor}08`,
-            border: `1px solid ${textColor}15`,
+            backgroundColor: `${textColor}10`,
+            border: `1.5px solid ${textColor}20`,
             color: textColor,
           }}
           onClick={resetToIdle}
-          whileHover={{ backgroundColor: `${textColor}15` }}
+          whileHover={{ backgroundColor: `${textColor}18` }}
           whileTap={{ scale: 0.95 }}
         >
           <ArrowLeft className="w-5 h-5" />
@@ -110,8 +105,8 @@ export function KioskLookupScreen() {
           <motion.div 
             className="px-4 py-2 rounded-xl text-sm font-medium backdrop-blur-md"
             style={{ 
-              backgroundColor: `${accentColor}20`,
-              border: `1px solid ${accentColor}30`,
+              backgroundColor: `${accentColor}15`,
+              border: `1.5px solid ${accentColor}30`,
               color: accentColor,
             }}
             initial={{ opacity: 0 }}
@@ -124,7 +119,7 @@ export function KioskLookupScreen() {
 
       {/* Content */}
       <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-8 pb-8">
-        {/* Prompt with animated icon */}
+        {/* Prompt with icon */}
         <motion.div
           className="text-center mb-10"
           initial={{ y: -20, opacity: 0 }}
@@ -136,17 +131,12 @@ export function KioskLookupScreen() {
             animate={{ scale: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
           >
-            {/* Glow effect */}
+            {/* Icon container - glass style */}
             <div 
-              className="absolute inset-0 rounded-full blur-xl opacity-50"
-              style={{ backgroundColor: accentColor }}
-            />
-            {/* Icon container */}
-            <div 
-              className="relative w-full h-full rounded-full flex items-center justify-center"
+              className="relative w-full h-full rounded-full flex items-center justify-center backdrop-blur-md"
               style={{ 
-                backgroundColor: `${accentColor}20`,
-                border: `2px solid ${accentColor}40`,
+                backgroundColor: `${accentColor}15`,
+                border: `1.5px solid ${accentColor}40`,
               }}
             >
               <Phone className="w-10 h-10" style={{ color: accentColor }} />
@@ -161,13 +151,12 @@ export function KioskLookupScreen() {
           </h1>
         </motion.div>
 
-        {/* Phone display - Enhanced */}
+        {/* Phone display - glass style */}
         <motion.div
           className="mb-10 px-10 py-6 rounded-3xl min-w-[340px] text-center backdrop-blur-md"
           style={{ 
             backgroundColor: `${textColor}05`,
-            border: `2px solid ${phoneNumber ? accentColor : `${textColor}15`}`,
-            boxShadow: phoneNumber ? `0 0 40px ${accentColor}20` : 'none',
+            border: `1.5px solid ${phoneNumber ? accentColor : `${textColor}20`}`,
             transition: 'all 0.3s ease',
           }}
           initial={{ scale: 0.95, opacity: 0 }}
@@ -194,11 +183,6 @@ export function KioskLookupScreen() {
               animate={{ rotate: 360 }}
               transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
             >
-              {/* Spinner glow */}
-              <div 
-                className="absolute inset-0 rounded-full blur-xl opacity-40"
-                style={{ backgroundColor: accentColor }}
-              />
               <Loader2 
                 className="w-24 h-24"
                 style={{ color: accentColor }}

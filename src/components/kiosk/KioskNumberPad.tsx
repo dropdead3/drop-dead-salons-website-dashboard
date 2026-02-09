@@ -41,10 +41,10 @@ export function KioskNumberPad({
         {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit, index) => (
           <motion.button
             key={digit}
-            className="flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-2xl text-3xl md:text-4xl font-medium backdrop-blur-sm transition-all"
+            className="flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-2xl text-3xl md:text-4xl font-medium backdrop-blur-md transition-all"
             style={{
               backgroundColor: `${textColor}08`,
-              border: `1px solid ${textColor}10`,
+              border: `1px solid ${textColor}15`,
               color: textColor,
             }}
             onClick={() => handleDigit(digit)}
@@ -57,7 +57,7 @@ export function KioskNumberPad({
             }}
             whileTap={{ 
               scale: 0.95,
-              backgroundColor: `${accentColor}30`,
+              backgroundColor: `${accentColor}20`,
             }}
             type="button"
           >
@@ -67,10 +67,10 @@ export function KioskNumberPad({
 
         {/* Bottom row: Clear, 0, Delete */}
         <motion.button
-          className="flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-2xl text-lg font-medium backdrop-blur-sm transition-all"
+          className="flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-2xl text-lg font-medium backdrop-blur-md transition-all"
           style={{
             backgroundColor: `${textColor}05`,
-            border: `1px solid ${textColor}08`,
+            border: `1px solid ${textColor}10`,
             color: `${textColor}80`,
           }}
           onClick={handleClear}
@@ -82,10 +82,10 @@ export function KioskNumberPad({
         </motion.button>
 
         <motion.button
-          className="flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-2xl text-3xl md:text-4xl font-medium backdrop-blur-sm transition-all"
+          className="flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-2xl text-3xl md:text-4xl font-medium backdrop-blur-md transition-all"
           style={{
             backgroundColor: `${textColor}08`,
-            border: `1px solid ${textColor}10`,
+            border: `1px solid ${textColor}15`,
             color: textColor,
           }}
           onClick={() => handleDigit('0')}
@@ -95,7 +95,7 @@ export function KioskNumberPad({
           }}
           whileTap={{ 
             scale: 0.95,
-            backgroundColor: `${accentColor}30`,
+            backgroundColor: `${accentColor}20`,
           }}
           type="button"
         >
@@ -103,10 +103,10 @@ export function KioskNumberPad({
         </motion.button>
 
         <motion.button
-          className="flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-2xl backdrop-blur-sm transition-all"
+          className="flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-2xl backdrop-blur-md transition-all"
           style={{
             backgroundColor: `${textColor}05`,
-            border: `1px solid ${textColor}08`,
+            border: `1px solid ${textColor}10`,
             color: `${textColor}80`,
           }}
           onClick={handleDelete}
@@ -118,15 +118,13 @@ export function KioskNumberPad({
         </motion.button>
       </div>
 
-      {/* Submit button - Enhanced */}
+      {/* Submit button - Glass style */}
       <motion.button
-        className="flex items-center justify-center gap-4 w-full max-w-xs py-6 px-10 rounded-2xl text-xl font-medium transition-all shadow-xl"
+        className="flex items-center justify-center gap-4 w-full max-w-xs py-6 px-10 rounded-2xl text-xl font-medium transition-all backdrop-blur-md"
         style={{
-          background: isReady 
-            ? `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}CC 100%)`
-            : `${textColor}10`,
-          color: isReady ? '#FFFFFF' : `${textColor}40`,
-          boxShadow: isReady ? `0 8px 32px ${accentColor}40` : 'none',
+          backgroundColor: isReady ? `${accentColor}15` : `${textColor}08`,
+          border: isReady ? `1.5px solid ${accentColor}40` : `1px solid ${textColor}15`,
+          color: isReady ? textColor : `${textColor}40`,
           cursor: isReady ? 'pointer' : 'not-allowed',
         }}
         onClick={onSubmit}
@@ -134,7 +132,7 @@ export function KioskNumberPad({
         whileHover={isReady ? { 
           scale: 1.02, 
           y: -2,
-          boxShadow: `0 12px 40px ${accentColor}50`,
+          backgroundColor: `${accentColor}25`,
         } : {}}
         whileTap={isReady ? { scale: 0.98 } : {}}
         type="button"

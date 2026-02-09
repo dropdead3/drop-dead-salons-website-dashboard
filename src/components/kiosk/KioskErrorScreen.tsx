@@ -10,6 +10,7 @@ export function KioskErrorScreen() {
   const textColor = settings?.text_color || DEFAULT_KIOSK_SETTINGS.text_color;
   const accentColor = settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color;
   const backgroundImageUrl = settings?.background_image_url;
+  const backgroundOverlayOpacity = settings?.background_overlay_opacity ?? DEFAULT_KIOSK_SETTINGS.background_overlay_opacity;
   const logoUrl = settings?.logo_url;
 
   const errorColor = '#EF4444';
@@ -27,18 +28,13 @@ export function KioskErrorScreen() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      {/* Overlay */}
+      {/* Background overlay */}
       {backgroundImageUrl && (
-        <div className="absolute inset-0 bg-black/60" />
+        <div 
+          className="absolute inset-0"
+          style={{ backgroundColor: `rgba(0, 0, 0, ${backgroundOverlayOpacity})` }}
+        />
       )}
-
-      {/* Error ambient glow */}
-      <div 
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `radial-gradient(ellipse at center, ${errorColor}15 0%, transparent 50%)`,
-        }}
-      />
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center text-center px-8 max-w-lg">
@@ -53,34 +49,19 @@ export function KioskErrorScreen() {
           />
         )}
 
-        {/* Error icon - Enhanced with pulsing rings */}
+        {/* Error icon - glass style */}
         <motion.div
           className="relative w-28 h-28 mb-10"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 15 }}
         >
-          {/* Pulsing ring */}
-          <motion.div
-            className="absolute inset-0 rounded-full"
-            style={{ border: `2px solid ${errorColor}` }}
-            animate={{
-              scale: [1, 1.3],
-              opacity: [0.5, 0],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: Infinity,
-              ease: 'easeOut',
-            }}
-          />
-          
           {/* Icon container */}
           <div 
-            className="absolute inset-0 rounded-full flex items-center justify-center backdrop-blur-sm"
+            className="absolute inset-0 rounded-full flex items-center justify-center backdrop-blur-md"
             style={{ 
               backgroundColor: `${errorColor}15`,
-              border: `2px solid ${errorColor}30`,
+              border: `1.5px solid ${errorColor}30`,
             }}
           >
             <motion.div
@@ -113,7 +94,7 @@ export function KioskErrorScreen() {
           {error || 'We encountered an issue. Please try again or ask for assistance.'}
         </motion.p>
 
-        {/* Actions */}
+        {/* Actions - glass style */}
         <motion.div
           className="flex flex-col gap-4 w-full"
           initial={{ y: 20, opacity: 0 }}
@@ -121,17 +102,17 @@ export function KioskErrorScreen() {
           transition={{ delay: 0.4 }}
         >
           <motion.button
-            className="flex items-center justify-center gap-3 px-10 py-5 rounded-2xl text-xl font-medium shadow-xl transition-all"
+            className="flex items-center justify-center gap-3 px-10 py-5 rounded-2xl text-xl font-medium backdrop-blur-md transition-all"
             style={{
-              background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}CC 100%)`,
-              color: '#FFFFFF',
-              boxShadow: `0 8px 32px ${accentColor}40`,
+              backgroundColor: `${accentColor}15`,
+              border: `1.5px solid ${accentColor}40`,
+              color: textColor,
             }}
             onClick={resetToIdle}
             whileHover={{ 
               scale: 1.02, 
               y: -2,
-              boxShadow: `0 12px 40px ${accentColor}50`,
+              backgroundColor: `${accentColor}25`,
             }}
             whileTap={{ scale: 0.98 }}
           >
