@@ -27,7 +27,8 @@ import {
   Tooltip, 
   ResponsiveContainer, 
   Cell,
-  LabelList 
+  LabelList,
+  ReferenceLine 
 } from 'recharts';
 
 const PERIOD_LABELS: Record<ForecastPeriod, string> = {
@@ -559,6 +560,43 @@ export function ForecastingCard() {
                     height={showWeeklyChart ? 45 : 40}
                   />
                   <YAxis hide domain={[0, 'auto']} />
+                  
+                  {/* Daily average reference line - only for daily views */}
+                  {!showWeeklyChart && averageDaily > 0 && (
+                    <ReferenceLine 
+                      y={averageDaily} 
+                      stroke="hsl(var(--muted-foreground))" 
+                      strokeDasharray="4 4"
+                      strokeWidth={1.5}
+                      label={{
+                        value: `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`,
+                        position: 'insideBottomLeft',
+                        fill: 'hsl(var(--muted-foreground))',
+                        fontSize: 11,
+                        fontWeight: 500,
+                        offset: 4,
+                      }}
+                    />
+                  )}
+                  
+                  {/* Weekly average reference line - only for weekly views */}
+                  {showWeeklyChart && averageWeekly > 0 && (
+                    <ReferenceLine 
+                      y={averageWeekly} 
+                      stroke="hsl(var(--muted-foreground))" 
+                      strokeDasharray="4 4"
+                      strokeWidth={1.5}
+                      label={{
+                        value: `Weekly Avg: $${Math.round(averageWeekly).toLocaleString()}`,
+                        position: 'insideBottomLeft',
+                        fill: 'hsl(var(--muted-foreground))',
+                        fontSize: 11,
+                        fontWeight: 500,
+                        offset: 4,
+                      }}
+                    />
+                  )}
+                  
                   <Tooltip
                     content={
                       <ForecastTooltip 
