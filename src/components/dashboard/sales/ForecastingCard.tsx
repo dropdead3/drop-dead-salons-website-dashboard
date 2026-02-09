@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +18,7 @@ import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/componen
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
-import { motion } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import { 
   BarChart, 
   Bar, 
@@ -352,6 +352,9 @@ export function ForecastingCard() {
   const [selectedDay, setSelectedDay] = useState<DayForecast | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { data, isLoading, error } = useForecastRevenue(period, selectedLocation);
+  
+  const chartRef = useRef<HTMLDivElement>(null);
+  const isChartInView = useInView(chartRef, { once: true, amount: 0.3 });
 
   const handleDayClick = (day: DayForecast) => {
     setSelectedDay(day);
@@ -551,7 +554,8 @@ export function ForecastingCard() {
 
           {/* Bar Chart - only show if not tomorrow */}
           {showChart && chartData.length > 0 && (
-            <div className={cn("h-[200px]", showWeeklyChart && "h-[220px]")}>
+            <div className={cn("h-[200px]", showWeeklyChart && "h-[220px]")} ref={chartRef}>
+              {isChartInView ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: showWeeklyChart ? 40 : 35, left: 10 }}>
                   <XAxis 
@@ -582,6 +586,9 @@ export function ForecastingCard() {
                     dataKey="unconfirmedRevenue" 
                     stackId="revenue"
                     radius={[0, 0, 0, 0]}
+                    isAnimationActive={true}
+                    animationDuration={800}
+                    animationEasing="ease-out"
                   >
                     {chartData.map((entry, index) => {
                       const isToday = 'isToday' in entry && entry.isToday;
@@ -599,6 +606,9 @@ export function ForecastingCard() {
                     dataKey="confirmedRevenue" 
                     stackId="revenue"
                     radius={[4, 4, 0, 0]}
+                    isAnimationActive={true}
+                    animationDuration={800}
+                    animationEasing="ease-out"
                   >
                     <LabelList 
                       dataKey="totalRevenue"
@@ -631,7 +641,7 @@ export function ForecastingCard() {
                             @keyframes drawLine { to { stroke-dashoffset: 0; } }
                             @keyframes fadeInBadge { from { opacity: 0; } to { opacity: 1; } }
                           `}</style>
-                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out forwards', opacity: 0 }}>
+                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
                             <div style={{ 
                               fontSize: 11, fontWeight: 600, 
                               color: 'hsl(25, 100%, 55%)',
@@ -648,19 +658,31 @@ export function ForecastingCard() {
                             </div>
                           </foreignObject>
                           {(() => {
-                            const lineLength = chartRight - (chartLeft + badgeWidth + 4);
+                            const lineStart = chartLeft + badgeWidth + 4;
+                            const lineLength = chartRight - lineStart;
                             return (
-                              <line
-                                x1={chartLeft + badgeWidth + 4}
-                                y1={yPos}
-                                x2={chartRight}
-                                y2={yPos}
-                                stroke="hsl(25, 100%, 55%)"
-                                strokeDasharray={lineLength}
-                                strokeDashoffset={lineLength}
-                                strokeWidth={1.5}
-                                style={{ animation: 'drawLine 1s ease-out 0.3s forwards' }}
-                              />
+                              <>
+                                <line
+                                  x1={lineStart}
+                                  y1={yPos}
+                                  x2={chartRight}
+                                  y2={yPos}
+                                  stroke="hsl(var(--background))"
+                                  strokeWidth={5}
+                                  strokeOpacity={0.85}
+                                />
+                                <line
+                                  x1={lineStart}
+                                  y1={yPos}
+                                  x2={chartRight}
+                                  y2={yPos}
+                                  stroke="hsl(25, 100%, 55%)"
+                                  strokeDasharray={lineLength}
+                                  strokeDashoffset={lineLength}
+                                  strokeWidth={1.5}
+                                  style={{ animation: 'drawLine 1s ease-out 0.8s forwards' }}
+                                />
+                              </>
                             );
                           })()}
                         </g>
@@ -679,7 +701,7 @@ export function ForecastingCard() {
                       const badgeWidth = 155;
                       return (
                         <g style={{ pointerEvents: 'none' }}>
-                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out forwards', opacity: 0 }}>
+                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
                             <div style={{ 
                               fontSize: 11, fontWeight: 600, 
                               color: 'hsl(25, 100%, 55%)',
@@ -696,19 +718,31 @@ export function ForecastingCard() {
                             </div>
                           </foreignObject>
                           {(() => {
-                            const lineLength = chartRight - (chartLeft + badgeWidth + 4);
+                            const lineStart = chartLeft + badgeWidth + 4;
+                            const lineLength = chartRight - lineStart;
                             return (
-                              <line
-                                x1={chartLeft + badgeWidth + 4}
-                                y1={yPos}
-                                x2={chartRight}
-                                y2={yPos}
-                                stroke="hsl(25, 100%, 55%)"
-                                strokeDasharray={lineLength}
-                                strokeDashoffset={lineLength}
-                                strokeWidth={1.5}
-                                style={{ animation: 'drawLine 1s ease-out 0.3s forwards' }}
-                              />
+                              <>
+                                <line
+                                  x1={lineStart}
+                                  y1={yPos}
+                                  x2={chartRight}
+                                  y2={yPos}
+                                  stroke="hsl(var(--background))"
+                                  strokeWidth={5}
+                                  strokeOpacity={0.85}
+                                />
+                                <line
+                                  x1={lineStart}
+                                  y1={yPos}
+                                  x2={chartRight}
+                                  y2={yPos}
+                                  stroke="hsl(25, 100%, 55%)"
+                                  strokeDasharray={lineLength}
+                                  strokeDashoffset={lineLength}
+                                  strokeWidth={1.5}
+                                  style={{ animation: 'drawLine 1s ease-out 0.8s forwards' }}
+                                />
+                              </>
                             );
                           })()}
                         </g>
@@ -717,6 +751,9 @@ export function ForecastingCard() {
                   )}
                 </BarChart>
               </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-full" />
+              )}
             </div>
           )}
 
