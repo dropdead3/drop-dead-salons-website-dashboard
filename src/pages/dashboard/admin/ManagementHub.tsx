@@ -38,6 +38,7 @@ import {
   Star,
   ShieldAlert,
   CalendarDays,
+  Store,
 } from 'lucide-react';
 
 interface ManagementCardProps {
@@ -334,6 +335,13 @@ export default function ManagementHub() {
             title="New Hire Wizard"
             description="Onboard a new team member with account creation and docs"
             colorClass="bg-violet-500/10 text-violet-600 dark:text-violet-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/onboard-renter"
+            icon={Store}
+            title="Renter Onboard Wizard"
+            description="Set up a new booth renter with contract, station, and docs"
+            colorClass="bg-teal-500/10 text-teal-600 dark:text-teal-400"
           />
         </CategorySection>
 
