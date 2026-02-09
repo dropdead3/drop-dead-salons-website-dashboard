@@ -195,19 +195,19 @@ export default function AnalyticsHub() {
   return (
     <DashboardLayout>
       <div className="p-4 md:p-6 lg:p-8 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col gap-4">
+        {/* Header with filters on the right */}
+        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
             <h1 className="text-xl md:text-2xl font-display">ANALYTICS & REPORTS</h1>
             <p className="text-muted-foreground text-sm">Business intelligence and data exports</p>
           </div>
           
-          {/* Shared Filter Bar */}
+          {/* Filters - now on the right */}
           <div className="flex flex-wrap items-center gap-3">
             {/* Location Filter - conditionally rendered based on access */}
             {showLocationSelector && (
               <Select value={locationId} onValueChange={setLocationId}>
-              <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-[200px]">
                   <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
                   <SelectValue placeholder="Select Location" />
                 </SelectTrigger>
@@ -260,7 +260,7 @@ export default function AnalyticsHub() {
                     {format(customDateRange.from, 'MMM d')} - {format(customDateRange.to, 'MMM d, yyyy')}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0" align="end">
                   <div className="p-3 space-y-3">
                     <div className="flex gap-2">
                       <Button

@@ -65,7 +65,7 @@ export function AnalyticsFilterBar({
   const showLocationSelector = canViewAggregate || (locations?.length ?? 0) > 1;
   
   return (
-    <div className="flex flex-wrap items-center gap-3 mb-6">
+    <div className="flex flex-wrap items-center justify-end gap-3">
       {/* Location Select - conditionally rendered based on access */}
       {showLocationSelector && (
         <Select value={locationId} onValueChange={onLocationChange}>
