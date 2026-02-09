@@ -1,146 +1,67 @@
 
-# Responsive Layout for Center Badge Positions
+# Fix Preview Button Not Opening Kiosk
 
 ## Problem
 
-When the location badge is positioned at `top-center` or `bottom-center`, it overlaps with or crowds other UI elements:
-- **Bottom-center badge**: Sits too close to the pulsing dot indicator at the bottom
-- **Top-center badge**: Could overlap with the logo/header area
+The Preview button in the Deploy to Device card doesn't work. Clicking it does nothing - no new tab opens.
 
-The layout needs to shift content dynamically based on badge position.
+## Root Cause
 
----
-
-## Current Layout Analysis
-
-| Element | Current Position | Conflict |
-|---------|-----------------|----------|
-| Location badge (bottom-center) | `bottom-6` (1.5rem) | Too close to pulse dots |
-| Pulse indicator dots | `bottom-12` (3rem) | No adjustment for badge |
-| Location badge (top-center) | `top-6` (1.5rem) | Could overlap settings icon |
-| Logo/Content | `-mt-12` offset | No adjustment for badge |
-
-**Preview Panel:**
-| Element | Current Position | Issue |
-|---------|-----------------|-------|
-| Badge (bottom-center) | `bottom-3` | Overlaps with bottom indicators at `bottom-4` |
-| Bottom indicators | `bottom-4` | No badge awareness |
-
----
+The `window.open(kioskUrl, '_blank')` call is being blocked by the browser's popup blocker. Even though it's in an onClick handler, some browsers are stricter about this when:
+- The code runs inside an iframe (Lovable's preview)
+- There's any indirection between user action and the open call
 
 ## Solution
 
-Add conditional spacing based on badge position:
+Replace `window.open()` with a native `<a>` tag using the Button's `asChild` prop. Browsers inherently trust anchor tags with `target="_blank"` for opening new tabs.
 
-### 1. KioskIdleScreen.tsx
-
-**Bottom-center badge active:**
-- Move pulse indicator higher: `bottom-12` → `bottom-20` (extra 2rem clearance)
-- Adjust badge position: `bottom-6` → `bottom-8` for better visual balance
-
-**Top-center badge active:**
-- Add top padding to main content wrapper to push content down
-- Keep settings icon in top-right (away from center badge)
-
-```typescript
-// Determine if center badges are active
-const hasTopCenterBadge = showLocationBadge && badgePosition === 'top-center';
-const hasBottomCenterBadge = showLocationBadge && badgePosition === 'bottom-center';
-
-// Dynamic badge positions with better spacing
-const badgePositionClasses = {
-  'top-left': 'top-6 left-6',
-  'top-center': 'top-8 left-1/2 -translate-x-1/2', // Slightly lower for clearance
-  'top-right': 'top-6 right-6',
-  'bottom-left': 'bottom-6 left-6',
-  'bottom-center': 'bottom-20 left-1/2 -translate-x-1/2', // Above pulse dots
-  'bottom-right': 'bottom-6 right-6',
-};
-
-// Conditional pulse indicator position
-<motion.div
-  className={cn(
-    "absolute left-1/2 -translate-x-1/2 flex gap-2",
-    hasBottomCenterBadge ? "bottom-8" : "bottom-12" // Move down when badge is above
-  )}
+### Current Code (not working)
+```tsx
+<Button 
+  variant="outline" 
+  size="sm"
+  onClick={handleOpenKiosk}
+  className="gap-2"
 >
+  <ExternalLink className="w-4 h-4" />
+  Preview
+</Button>
 ```
 
-### 2. KioskPreviewPanel.tsx
-
-Apply same responsive logic at preview scale:
-
-```typescript
-const hasBottomCenterBadge = settings.show_location_badge && 
-  settings.location_badge_position === 'bottom-center';
-
-// Badge positions (preview scale)
-const badgePositionClasses = {
-  'top-left': 'top-3 left-3',
-  'top-center': 'top-4 left-1/2 -translate-x-1/2',
-  'top-right': 'top-3 right-3',
-  'bottom-left': 'bottom-3 left-3',
-  'bottom-center': 'bottom-8 left-1/2 -translate-x-1/2', // Above indicators
-  'bottom-right': 'bottom-3 right-3',
-};
-
-// Conditional bottom indicator position
-<div className={cn(
-  "absolute flex gap-1.5 z-10",
-  hasBottomCenterBadge ? "bottom-2" : "bottom-4"
-)}>
+### Fixed Code
+```tsx
+<Button 
+  variant="outline" 
+  size="sm"
+  asChild
+  className="gap-2"
+>
+  <a 
+    href={kioskUrl} 
+    target="_blank" 
+    rel="noopener noreferrer"
+  >
+    <ExternalLink className="w-4 h-4" />
+    Preview
+  </a>
+</Button>
 ```
 
----
+## Changes
 
-## Visual Layout
+**File: `src/components/dashboard/settings/KioskDeployCard.tsx`**
 
-**Before (overlapping):**
-```text
-┌────────────────────────────┐
-│                            │
-│         [Content]          │
-│                            │
-│   [📍 Location Name]       │  ← bottom-6
-│        ● ● ●               │  ← bottom-12 (too close)
-└────────────────────────────┘
-```
+1. Remove the `handleOpenKiosk` function (lines 33-37)
+2. Replace Button with anchor tag using `asChild` pattern (lines 88-96)
 
-**After (properly spaced):**
-```text
-┌────────────────────────────┐
-│                            │
-│         [Content]          │
-│                            │
-│   [📍 Location Name]       │  ← bottom-20 (raised higher)
-│                            │
-│        ● ● ●               │  ← bottom-8 (adjusted down)
-└────────────────────────────┘
-```
+## Why This Works
 
----
+- Native `<a>` tags with `target="_blank"` are trusted by browsers
+- The `asChild` prop from Radix Slot renders the Button styles onto the anchor
+- `rel="noopener noreferrer"` ensures proper security
 
-## Files to Modify
+## File to Modify
 
-| File | Changes |
-|------|---------|
-| `src/components/kiosk/KioskIdleScreen.tsx` | Add conditional classes for bottom pulse indicator and adjust center badge positions |
-| `src/components/dashboard/settings/KioskPreviewPanel.tsx` | Mirror same responsive logic for preview |
-
----
-
-## Implementation Details
-
-### KioskIdleScreen.tsx Changes
-
-1. Calculate badge position awareness at component level
-2. Update `badgePositionClasses` with better center spacing
-3. Make bottom pulse indicator position conditional
-
-### KioskPreviewPanel.tsx Changes
-
-1. Add position awareness calculations
-2. Update badge position classes for center positions
-3. Make bottom indicators position conditional
-
-This ensures elements never overlap and maintain proper visual hierarchy regardless of badge placement.
+| File | Change |
+|------|--------|
+| `src/components/dashboard/settings/KioskDeployCard.tsx` | Replace Button onClick with anchor tag |
