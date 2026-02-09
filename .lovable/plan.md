@@ -1,261 +1,304 @@
 
-# Category 5: Platform Admin Enhancements - Implementation Plan
+# Category 7: Technical Debt Resolution - Implementation Plan
 
 ## Executive Summary
 
-This plan implements **Organization Health Score Dashboard** and **Cross-Organization Benchmarking** to give platform administrators visibility into tenant health, identify at-risk accounts, and compare performance across organizations.
+This plan addresses three key technical debt areas discovered in the codebase:
+1. **Hardcoded Organization IDs** - Replace `drop-dead-salons` references with dynamic organization context
+2. **Incomplete Email Notifications** - Implement missing email notifications using existing Resend infrastructure
+3. **Phorest Coupling Concerns** - Create abstraction layer for future multi-POS support
 
 ---
 
 ## Current State Analysis
 
-### Existing Infrastructure
+### Issue 1: Hardcoded Organization IDs
 
-| Component | Status | Location |
-|-----------|--------|----------|
-| Platform Overview | ✅ Complete | `Overview.tsx` with stats, growth chart, activity feed |
-| Organization Stats | ✅ Basic counts | `useOrganizationStats.ts` - total orgs, locations, users |
-| Account Management | ✅ Complete | `Accounts.tsx`, `AccountDetail.tsx` with tabs |
-| System Health | ✅ Service monitoring | `SystemHealth.tsx` - external services, sync status |
-| Stripe Health | ✅ Payment monitoring | `StripeHealth.tsx` - at-risk orgs, revenue at risk |
-| Audit Log | ✅ Activity tracking | `AuditLog.tsx` - platform_audit_log table |
-| Sync Tracking | ✅ Complete | `phorest_sync_log` table with status, timing |
-| Anomaly Detection | ✅ Complete | `detected_anomalies` table, edge function |
+| File | Line | Issue |
+|------|------|-------|
+| `src/pages/dashboard/admin/BoothRenters.tsx` | 10 | `const DEFAULT_ORG_ID = 'drop-dead-salons'` |
+| `src/components/dashboard/analytics/RentRevenueAnalytics.tsx` | 8 | `const DEFAULT_ORG_ID = 'drop-dead-salons'` |
+| `src/pages/dashboard/TeamChat.tsx` | 17 | Fallback to `drop-dead-salons` org for platform users |
+| `src/components/dashboard/help-fab/ChatLeadershipTab.tsx` | 104 | Same pattern as TeamChat |
 
-### Key Data Sources Available
+**Root Cause**: These components need organization context but were built before the `OrganizationContext` was fully implemented.
 
-| Source | Data Available |
-|--------|---------------|
-| `organizations` | Status, onboarding stage, created_at, activated_at |
-| `employee_profiles` | Active users per org |
-| `team_chat_messages` | Chat activity per org |
-| `announcements` | Content engagement |
-| `phorest_daily_sales_summary` | Revenue, bookings, transactions |
-| `phorest_sync_log` | Sync success rate, timing |
-| `import_jobs` | Data import status |
-| `detected_anomalies` | Unresolved issues count |
-| `platform_audit_log` | Admin activity tracking |
+### Issue 2: Incomplete Email Notifications
+
+| Edge Function | TODO Location | Purpose |
+|---------------|---------------|---------|
+| `generate-rent-invoices` | Line 135 | Notify renters of new invoices |
+| `check-insurance-expiry` | Line 105 | Remind renters of expiring insurance |
+| `process-scheduled-reports` | Line 137 | Email report results to recipients |
+| `RentIncreaseDialog.tsx` | Line 51 | Notify renters of rent changes |
+
+**Existing Infrastructure**: 27 edge functions already use Resend for emails. Email templates exist in `email_templates` table with template keys for various notification types.
+
+### Issue 3: Phorest Coupling
+
+The codebase has 113 files with direct references to `phorest_*` tables. Key concerns:
+- No abstraction layer for POS data
+- Hard to add alternative POS systems (Square, Boulevard, Zenoti, etc.)
+- Tightly coupled queries throughout the codebase
+
+**Assessment**: Creating a full abstraction layer is a major undertaking. This plan focuses on establishing the foundation for future multi-POS support without breaking existing functionality.
 
 ---
 
-## Feature 1: Organization Health Score Dashboard
+## Feature 1: Remove Hardcoded Organization IDs
 
-### Purpose
-Calculate and display a composite health score (0-100) for each organization based on adoption, engagement, performance, and data quality metrics. Enable platform admins to quickly identify at-risk accounts and prioritize support efforts.
+### Solution Approach
 
-### Database Changes
+Replace static org IDs with dynamic resolution using:
+1. `useOrganizationContext()` for authenticated users
+2. Proper fallback logic when organization is not available
 
-```sql
--- Store computed health scores with daily history
-CREATE TABLE organization_health_scores (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-  score NUMERIC(5,2) NOT NULL, -- 0.00 to 100.00
-  risk_level TEXT NOT NULL, -- 'healthy', 'at_risk', 'critical'
-  score_breakdown JSONB NOT NULL,
-  -- { 
-  --   adoption: { score: 85, factors: { active_users: 8, login_frequency: 4.2, features_used: 12 } },
-  --   engagement: { score: 72, factors: { chat_messages_7d: 45, announcements_read: 0.85, tasks_completed: 23 } },
-  --   performance: { score: 91, factors: { revenue_trend: 1.12, booking_volume: 156, avg_ticket: 95 } },
-  --   data_quality: { score: 88, factors: { sync_success_rate: 0.98, last_sync_hours: 2, anomalies_unresolved: 1 } }
-  -- }
-  trends JSONB, -- { score_7d_ago: 82, score_30d_ago: 78, trend: 'improving'|'stable'|'declining' }
-  recommendations JSONB, -- AI-generated improvement suggestions
-  calculated_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(organization_id, calculated_at::DATE) -- One score per org per day
-);
+### File Changes
 
-CREATE INDEX idx_health_scores_org ON organization_health_scores(organization_id, calculated_at DESC);
-CREATE INDEX idx_health_scores_risk ON organization_health_scores(risk_level) WHERE calculated_at > now() - interval '1 day';
+**1. BoothRenters.tsx**
+```typescript
+// Before
+const DEFAULT_ORG_ID = 'drop-dead-salons';
+// After
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 
-ALTER TABLE organization_health_scores ENABLE ROW LEVEL SECURITY;
+export default function BoothRenters() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const organizationId = effectiveOrganization?.id;
 
--- Only platform admins can view health scores
-CREATE POLICY "Platform admins view health scores" ON organization_health_scores
-  FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM platform_roles 
-      WHERE user_id = auth.uid() 
-      AND role IN ('platform_owner', 'platform_admin', 'platform_support')
-    )
+  // Show loading/error if no org
+  if (!organizationId) {
+    return <NoOrganizationMessage />;
+  }
+
+  // Pass dynamic ID to child components
+  return (
+    <RentersTabContent organizationId={organizationId} />
   );
+}
 ```
 
-### Score Calculation Algorithm
+**2. RentRevenueAnalytics.tsx**
+```typescript
+// Before
+const DEFAULT_ORG_ID = 'drop-dead-salons';
+// After
+interface RentRevenueAnalyticsProps {
+  organizationId: string;
+}
 
-```text
-HEALTH SCORE = Weighted Average of 4 Components
-
-┌─────────────────────────────────────────────────────────────────┐
-│ COMPONENT        │ WEIGHT │ FACTORS                            │
-├─────────────────────────────────────────────────────────────────┤
-│ Adoption (25%)   │  25%   │ • Active users / Total users       │
-│                  │        │ • Avg logins per user (7d)         │
-│                  │        │ • Unique features accessed (7d)    │
-├─────────────────────────────────────────────────────────────────┤
-│ Engagement (25%) │  25%   │ • Chat messages sent (7d)          │
-│                  │        │ • Announcements viewed %           │
-│                  │        │ • Tasks/checklist completion       │
-├─────────────────────────────────────────────────────────────────┤
-│ Performance (30%)│  30%   │ • Revenue trend (vs prior month)   │
-│                  │        │ • Booking volume trend             │
-│                  │        │ • Average ticket value             │
-├─────────────────────────────────────────────────────────────────┤
-│ Data Quality(20%)│  20%   │ • Sync success rate (7d)           │
-│                  │        │ • Hours since last sync            │
-│                  │        │ • Unresolved anomalies count       │
-└─────────────────────────────────────────────────────────────────┘
-
-RISK LEVELS:
-• Healthy: Score >= 70
-• At Risk: Score 50-69
-• Critical: Score < 50
+export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsProps) {
+  const { data: metrics } = useRentRevenueAnalytics(organizationId);
+  // ... rest of component
+}
 ```
 
-### Edge Function: `calculate-health-scores`
-
-```text
-supabase/functions/calculate-health-scores/index.ts
-
-Purpose: Daily calculation of organization health scores
-
-Schedule: 5:00 AM UTC daily via pg_cron (or on-demand)
-
-Logic:
-1. Fetch all active organizations
-2. For each organization:
-   a. Calculate adoption score:
-      - Count active users (logged in within 7 days)
-      - Calculate login frequency from platform_audit_log
-      - Count distinct features used (from audit actions)
-   
-   b. Calculate engagement score:
-      - Count team_chat_messages in last 7 days
-      - Calculate announcement view rate
-      - Count completed tasks/checklists
-   
-   c. Calculate performance score:
-      - Get revenue from phorest_daily_sales_summary (7d vs prior 7d)
-      - Get booking counts from phorest_appointments
-      - Calculate average ticket value
-   
-   d. Calculate data quality score:
-      - Query phorest_sync_log for success rate
-      - Check hours since last successful sync
-      - Count unacknowledged detected_anomalies
-   
-3. Compute weighted average for total score
-4. Determine risk_level based on thresholds
-5. Fetch historical scores for trends
-6. Generate AI recommendations for low-scoring components
-7. Insert into organization_health_scores
-
-AI Recommendations (via Lovable AI):
-- For adoption < 60: "Consider scheduling training sessions..."
-- For engagement < 60: "Encourage daily check-ins..."
-- For performance < 60: "Review booking trends..."
-- For data_quality < 60: "Investigate sync failures..."
+**3. TeamChat.tsx & ChatLeadershipTab.tsx**
+```typescript
+// Before
+const defaultOrg = organizations.find(o => o.slug === 'drop-dead-salons') || organizations[0];
+// After
+const defaultOrg = organizations[0]; // Simply use first available org
 ```
 
-### Frontend Components
+### Components to Update
 
-| Component | Location | Description |
-|-----------|----------|-------------|
-| `HealthScoreDashboard.tsx` | `src/pages/dashboard/platform/HealthScores.tsx` | Main dashboard page |
-| `HealthScoreCard.tsx` | `src/components/platform/health/HealthScoreCard.tsx` | Individual org health card |
-| `HealthScoreGauge.tsx` | `src/components/platform/health/HealthScoreGauge.tsx` | Circular gauge visualization |
-| `HealthBreakdownChart.tsx` | `src/components/platform/health/HealthBreakdownChart.tsx` | Radar chart of 4 components |
-| `HealthTrendLine.tsx` | `src/components/platform/health/HealthTrendLine.tsx` | Score over time mini-chart |
-| `RiskAlertsList.tsx` | `src/components/platform/health/RiskAlertsList.tsx` | At-risk/critical orgs list |
-| `HealthRecommendations.tsx` | `src/components/platform/health/HealthRecommendations.tsx` | AI suggestions panel |
-| `useOrganizationHealth.ts` | `src/hooks/useOrganizationHealth.ts` | Fetch health data hook |
+| Component | Change Required |
+|-----------|-----------------|
+| `BoothRenters.tsx` | Use OrganizationContext, remove hardcoded ID |
+| `RentRevenueAnalytics.tsx` | Accept organizationId as prop |
+| `TeamChat.tsx` | Remove drop-dead-salons reference |
+| `ChatLeadershipTab.tsx` | Remove drop-dead-salons reference |
+| `RentersTabContent.tsx` | Verify it accepts dynamic organizationId |
+| `PaymentsTabContent.tsx` | Verify it accepts dynamic organizationId |
 
-### Dashboard Layout
+---
 
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│ ORGANIZATION HEALTH                                      [Refresh] [?] │
-│ Monitor account health and identify at-risk tenants                    │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │
-│  │ HEALTHY     │  │ AT RISK     │  │ CRITICAL    │  │ AVG SCORE   │   │
-│  │    12       │  │     3       │  │     1       │  │    78.4     │   │
-│  │   orgs      │  │   orgs      │  │    org      │  │   (+2.1)    │   │
-│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘   │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────────┐
-│  │ AT-RISK ORGANIZATIONS                               [View All →]  │
-│  ├─────────────────────────────────────────────────────────────────────┤
-│  │ ⚠️ Salon ABC           Score: 52  ↓8   [Adoption: 45] [Engagement:38]│
-│  │    "Low login frequency. Consider training refresh."               │
-│  │                                                                     │
-│  │ ⚠️ Beauty Plus         Score: 61  ↓3   [Data Quality: 48]          │
-│  │    "Sync failures detected. Check Phorest credentials."            │
-│  │                                                                     │
-│  │ 🔴 Hair Studio XYZ     Score: 38  ↓15  [Performance: 32]           │
-│  │    "Revenue declined 28%. Schedule check-in call."                 │
-│  └─────────────────────────────────────────────────────────────────────┘
-│                                                                         │
-│  ┌──────────────────────────────┐  ┌──────────────────────────────────┐
-│  │ HEALTH DISTRIBUTION         │  │ SCORE TRENDS (30 DAYS)           │
-│  │                             │  │                                   │
-│  │   ████████████████░░░░ 75%  │  │   ▁▂▃▄▅▆▇██████████████▇▆        │
-│  │   Healthy (12)              │  │   Platform average trending up    │
-│  │                             │  │                                   │
-│  │   ████░░░░░░░░░░░░░░░ 19%   │  │                                   │
-│  │   At Risk (3)               │  │                                   │
-│  │                             │  │                                   │
-│  │   █░░░░░░░░░░░░░░░░░░░ 6%   │  │                                   │
-│  │   Critical (1)              │  │                                   │
-│  └──────────────────────────────┘  └──────────────────────────────────┘
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────────┐
-│  │ ALL ORGANIZATIONS                        [Search] [Filter: All ▼]  │
-│  ├─────────────────────────────────────────────────────────────────────┤
-│  │ Organization      Score  Trend  Adoption  Engage  Perform  Quality │
-│  │ ───────────────────────────────────────────────────────────────────│
-│  │ Drop Dead Salons   92    ↑3     95        88      94       91      │
-│  │ Glamour Studio     85    →0     82        78      90       89      │
-│  │ Beauty Bar         78    ↑5     75        72      82       83      │
-│  │ ...                                                                 │
-│  └─────────────────────────────────────────────────────────────────────┘
-└─────────────────────────────────────────────────────────────────────────┘
+## Feature 2: Complete Email Notifications
+
+### Solution: Create Reusable Email Utility
+
+Since 27 edge functions already use Resend directly, create a shared utility for consistent email sending.
+
+### New Shared Utility
+
+```typescript
+// supabase/functions/_shared/email-sender.ts
+
+export interface EmailPayload {
+  to: string[];
+  subject: string;
+  html: string;
+  templateKey?: string;
+  templateVariables?: Record<string, string>;
+  from?: string;
+}
+
+export async function sendEmail(payload: EmailPayload): Promise<boolean> {
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  if (!resendApiKey) {
+    console.log("RESEND_API_KEY not configured - email skipped");
+    return false;
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${resendApiKey}`,
+    },
+    body: JSON.stringify({
+      from: payload.from || "Drop Dead Gorgeous <noreply@dropdeadsalons.com>",
+      to: payload.to,
+      subject: payload.subject,
+      html: payload.html,
+    }),
+  });
+
+  if (!response.ok) {
+    console.error("Email send failed:", await response.text());
+    return false;
+  }
+
+  return true;
+}
+```
+
+### Email Template Creation
+
+| Template Key | Subject | Purpose |
+|--------------|---------|---------|
+| `rent_invoice_created` | New Rent Invoice: {{month}} | Notify renter of new invoice |
+| `insurance_expiry_reminder` | Insurance Expiring: {{days_until}} days | Remind renter to renew |
+| `rent_increase_notice` | Upcoming Rent Change on {{effective_date}} | Notify of scheduled increase |
+| `scheduled_report_ready` | Your Report is Ready: {{report_name}} | Deliver scheduled report |
+
+### Edge Function Updates
+
+**1. generate-rent-invoices/index.ts**
+```typescript
+// Add after line 133:
+const renterProfile = contract.booth_renter_profiles;
+const renterEmail = renterProfile?.billing_email;
+
+if (renterEmail) {
+  await sendEmail({
+    to: [renterEmail],
+    subject: `New Rent Invoice: ${format(periodStart, 'MMMM yyyy')}`,
+    html: `
+      <h2>Rent Invoice Created</h2>
+      <p>A new rent invoice has been created for your booth rental:</p>
+      <ul>
+        <li><strong>Amount:</strong> $${rentAmount.toFixed(2)}</li>
+        <li><strong>Period:</strong> ${format(periodStart, 'MMM d')} - ${format(periodEnd, 'MMM d, yyyy')}</li>
+        <li><strong>Due Date:</strong> ${format(dueDate, 'MMMM d, yyyy')}</li>
+      </ul>
+      <p>Please log in to your dashboard to view and pay this invoice.</p>
+    `,
+  });
+}
+```
+
+**2. check-insurance-expiry/index.ts**
+```typescript
+// Replace TODO at line 105:
+if (renterEmail) {
+  const expiryDate = new Date(renter.insurance_expiry_date);
+  await sendEmail({
+    to: [renterEmail],
+    subject: `Insurance Expiring in ${daysAhead} Days`,
+    html: `
+      <h2>Insurance Renewal Reminder</h2>
+      <p>Hi ${renterName},</p>
+      <p>Your liability insurance is set to expire on <strong>${format(expiryDate, 'MMMM d, yyyy')}</strong>.</p>
+      <p>Please renew your insurance and upload proof of coverage to maintain your active renter status.</p>
+      ${daysAhead <= 7 ? '<p style="color: red;"><strong>URGENT:</strong> Your insurance expires in less than a week!</p>' : ''}
+    `,
+  });
+}
+```
+
+**3. process-scheduled-reports/index.ts**
+```typescript
+// Replace TODO at line 137:
+if (report.recipients && report.recipients.length > 0) {
+  const recipientEmails = report.recipients.map((r: any) => r.email).filter(Boolean);
+  if (recipientEmails.length > 0) {
+    await sendEmail({
+      to: recipientEmails,
+      subject: `Report Ready: ${report.name}`,
+      html: `
+        <h2>Your Scheduled Report is Ready</h2>
+        <p>The following report has been generated:</p>
+        <ul>
+          <li><strong>Report:</strong> ${report.name}</li>
+          <li><strong>Generated:</strong> ${new Date().toLocaleDateString()}</li>
+        </ul>
+        <p>Log in to your dashboard to view the full report.</p>
+      `,
+    });
+  }
+}
+```
+
+**4. RentIncreaseDialog.tsx (Frontend)**
+```typescript
+// Call edge function for email instead of inline
+const handleSubmit = async () => {
+  await createRentChange.mutateAsync({
+    contract_id: contractId,
+    current_rent_amount: currentRent,
+    new_rent_amount: newRent,
+    effective_date: format(effectiveDate, 'yyyy-MM-dd'),
+    reason,
+    notes,
+    send_notification: sendNotification, // Pass to backend
+  });
+  
+  onOpenChange(false);
+};
+```
+
+Create new edge function to handle rent change notifications:
+
+```typescript
+// supabase/functions/notify-rent-change/index.ts
+// Called by the rent change mutation when send_notification is true
 ```
 
 ---
 
-## Feature 2: Cross-Organization Benchmarking
+## Feature 3: POS Abstraction Foundation
 
-### Purpose
-Compare organizations against each other on key metrics to identify top performers, establish benchmarks, and help struggling accounts learn from successful ones.
+### Strategy: Adapter Pattern Preparation
+
+Rather than a full rewrite, create the foundation for multi-POS support:
+
+1. **Define POS Interface Types** - Standard interfaces for appointments, clients, sales
+2. **Create Phorest Adapter** - Wrap existing Phorest queries as the first adapter
+3. **Add POS Config Table** - Track which POS each organization uses
+4. **Update Organization Context** - Include active POS type
 
 ### Database Changes
 
 ```sql
--- Store benchmark metrics per organization
-CREATE TABLE organization_benchmarks (
+-- Track POS system per organization
+CREATE TABLE organization_pos_config (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-  metric_key TEXT NOT NULL, -- 'revenue_per_location', 'appointments_per_staff', etc.
-  value NUMERIC NOT NULL,
-  percentile INTEGER, -- 0-100, where they rank among peers
-  period_type TEXT NOT NULL, -- 'daily', 'weekly', 'monthly'
-  period_start DATE NOT NULL,
-  period_end DATE NOT NULL,
-  comparison_group TEXT DEFAULT 'all', -- 'all', 'same_tier', 'same_size'
-  metadata JSONB DEFAULT '{}', -- Additional context
-  calculated_at TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(organization_id, metric_key, period_start, comparison_group)
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE UNIQUE,
+  pos_type TEXT NOT NULL DEFAULT 'phorest', -- 'phorest', 'square', 'boulevard', 'zenoti', 'manual'
+  credentials_encrypted TEXT, -- Encrypted connection credentials
+  sync_enabled BOOLEAN DEFAULT true,
+  last_sync_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE INDEX idx_benchmarks_org ON organization_benchmarks(organization_id, metric_key, period_start DESC);
-CREATE INDEX idx_benchmarks_metric ON organization_benchmarks(metric_key, period_start DESC);
+ALTER TABLE organization_pos_config ENABLE ROW LEVEL SECURITY;
 
-ALTER TABLE organization_benchmarks ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Platform admins view benchmarks" ON organization_benchmarks
-  FOR SELECT USING (
+-- Platform admins can manage POS config
+CREATE POLICY "Platform admins manage POS config" ON organization_pos_config
+  FOR ALL USING (
     EXISTS (
       SELECT 1 FROM platform_roles 
       WHERE user_id = auth.uid() 
@@ -264,264 +307,247 @@ CREATE POLICY "Platform admins view benchmarks" ON organization_benchmarks
   );
 ```
 
-### Benchmarked Metrics
+### Interface Definitions
 
-| Metric Key | Description | Calculation |
-|------------|-------------|-------------|
-| `revenue_per_location` | Average monthly revenue per location | Total revenue / Location count |
-| `appointments_per_staff` | Avg appointments per staff member | Appointments / Active staff |
-| `rebooking_rate` | % of clients who rebook | Rebookings / Total appointments |
-| `average_ticket` | Average transaction value | Revenue / Transactions |
-| `new_client_rate` | % of appointments from new clients | New clients / Total clients |
-| `no_show_rate` | % of no-shows | No-shows / Scheduled appointments |
-| `product_attachment_rate` | % of visits with retail sales | Product sales / Service appointments |
-| `login_frequency` | Avg staff logins per week | Logins / Staff / Weeks |
-| `chat_activity` | Messages per active user per week | Messages / Active users / Weeks |
+```typescript
+// src/types/pos.ts
 
-### Edge Function: `calculate-org-benchmarks`
+export type POSType = 'phorest' | 'square' | 'boulevard' | 'zenoti' | 'manual';
 
-```text
-supabase/functions/calculate-org-benchmarks/index.ts
+export interface POSAppointment {
+  id: string;
+  externalId: string;
+  clientName: string;
+  clientPhone?: string;
+  clientEmail?: string;
+  stylistUserId?: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  serviceName: string;
+  serviceCategory?: string;
+  status: AppointmentStatus;
+  totalPrice?: number;
+  notes?: string;
+}
 
-Purpose: Weekly calculation of organization benchmarks
+export interface POSClient {
+  id: string;
+  externalId: string;
+  name: string;
+  email?: string;
+  phone?: string;
+  preferredStylistId?: string;
+  isNew: boolean;
+  lastVisit?: string;
+}
 
-Schedule: Sunday 6:00 AM UTC via pg_cron
+export interface POSSalesSummary {
+  date: string;
+  totalRevenue: number;
+  serviceRevenue: number;
+  productRevenue: number;
+  transactionCount: number;
+  appointmentCount: number;
+}
 
-Logic:
-1. For each metric:
-   a. Query data from relevant tables (sales, appointments, etc.)
-   b. Calculate value for each organization
-   c. Rank organizations and compute percentiles
-   d. Store in organization_benchmarks
-   
-2. Support comparison groups:
-   - 'all': Compare against all orgs
-   - 'same_tier': Compare within subscription tier
-   - 'same_size': Compare by staff count brackets
-
-3. Generate weekly benchmark report for platform admins
+export interface POSAdapter {
+  type: POSType;
+  getAppointments(dateFrom: string, dateTo: string): Promise<POSAppointment[]>;
+  getClients(search?: string): Promise<POSClient[]>;
+  getSalesSummary(dateFrom: string, dateTo: string): Promise<POSSalesSummary[]>;
+  syncData(syncType: string): Promise<{ success: boolean; count: number }>;
+}
 ```
 
-### Frontend Components
+### Phorest Adapter
 
-| Component | Location | Description |
-|-----------|----------|-------------|
-| `BenchmarkDashboard.tsx` | `src/pages/dashboard/platform/Benchmarks.tsx` | Main benchmarks page |
-| `BenchmarkLeaderboard.tsx` | `src/components/platform/benchmarks/BenchmarkLeaderboard.tsx` | Top performers table |
-| `PercentileIndicator.tsx` | `src/components/platform/benchmarks/PercentileIndicator.tsx` | Visual percentile bar |
-| `BenchmarkComparison.tsx` | `src/components/platform/benchmarks/BenchmarkComparison.tsx` | Side-by-side org compare |
-| `MetricRankingCard.tsx` | `src/components/platform/benchmarks/MetricRankingCard.tsx` | Single metric ranking |
-| `useBenchmarkData.ts` | `src/hooks/useBenchmarkData.ts` | Fetch benchmark data |
+```typescript
+// src/adapters/phorest-adapter.ts
 
-### Benchmark Dashboard Layout
+import { supabase } from '@/integrations/supabase/client';
+import type { POSAdapter, POSAppointment, POSClient, POSSalesSummary } from '@/types/pos';
 
-```text
-┌─────────────────────────────────────────────────────────────────────────┐
-│ ORGANIZATION BENCHMARKS                                    [This Week] │
-│ Compare performance across all accounts                                │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  METRIC LEADERBOARDS                                                    │
-│  ┌─────────────────────────┐  ┌─────────────────────────┐              │
-│  │ REVENUE PER LOCATION    │  │ REBOOKING RATE          │              │
-│  │                         │  │                         │              │
-│  │ 1. Drop Dead    $45,200 │  │ 1. Beauty Plus    72%   │              │
-│  │ 2. Glamour      $38,100 │  │ 2. Drop Dead      68%   │              │
-│  │ 3. Beauty Bar   $35,400 │  │ 3. Hair Studio    65%   │              │
-│  │ ───────────────────────│  │ ───────────────────────│              │
-│  │ Platform Avg:   $32,150 │  │ Platform Avg:     58%   │              │
-│  └─────────────────────────┘  └─────────────────────────┘              │
-│                                                                         │
-│  ┌─────────────────────────┐  ┌─────────────────────────┐              │
-│  │ AVERAGE TICKET          │  │ NO-SHOW RATE            │              │
-│  │                         │  │                         │              │
-│  │ 1. Luxe Spa      $125   │  │ 1. Hair Studio    2.1%  │ (best)      │
-│  │ 2. Drop Dead      $98   │  │ 2. Glamour        3.2%  │              │
-│  │ 3. Beauty Bar     $85   │  │ 3. Drop Dead      3.8%  │              │
-│  │ ───────────────────────│  │ ───────────────────────│              │
-│  │ Platform Avg:      $78  │  │ Platform Avg:     5.2%  │              │
-│  └─────────────────────────┘  └─────────────────────────┘              │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────────┐
-│  │ ORGANIZATION COMPARISON                                             │
-│  │                                                                     │
-│  │ Select orgs: [Drop Dead Salons ▼] vs [Glamour Studio ▼]            │
-│  │                                                                     │
-│  │              Drop Dead        Glamour       Difference              │
-│  │ Revenue/Loc    $45,200        $38,100       +$7,100 (+19%)         │
-│  │ Avg Ticket       $98           $82          +$16 (+20%)            │
-│  │ Rebooking        68%           62%          +6%                     │
-│  │ No-Show          3.8%          4.5%         -0.7% (better)         │
-│  │ Staff Logins     4.2/wk        2.8/wk       +1.4/wk                │
-│  └─────────────────────────────────────────────────────────────────────┘
-└─────────────────────────────────────────────────────────────────────────┘
+export const phorestAdapter: POSAdapter = {
+  type: 'phorest',
+  
+  async getAppointments(dateFrom, dateTo) {
+    const { data, error } = await supabase
+      .from('phorest_appointments')
+      .select('*')
+      .gte('appointment_date', dateFrom)
+      .lte('appointment_date', dateTo);
+    
+    if (error) throw error;
+    
+    // Transform to standard format
+    return data.map(apt => ({
+      id: apt.id,
+      externalId: apt.phorest_id,
+      clientName: apt.client_name,
+      clientPhone: apt.client_phone,
+      stylistUserId: apt.stylist_user_id,
+      date: apt.appointment_date,
+      startTime: apt.start_time,
+      endTime: apt.end_time,
+      serviceName: apt.service_name,
+      serviceCategory: apt.service_category,
+      status: apt.status,
+      totalPrice: apt.total_price,
+      notes: apt.notes,
+    }));
+  },
+  
+  async getClients(search) {
+    let query = supabase.from('phorest_clients').select('*');
+    if (search) {
+      query = query.ilike('name', `%${search}%`);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    
+    return data.map(client => ({
+      id: client.id,
+      externalId: client.phorest_client_id,
+      name: client.name,
+      email: client.email,
+      phone: client.phone,
+      preferredStylistId: client.preferred_stylist_id,
+      isNew: client.is_new,
+      lastVisit: client.last_visit_date,
+    }));
+  },
+  
+  async getSalesSummary(dateFrom, dateTo) {
+    const { data, error } = await supabase
+      .from('phorest_daily_sales_summary')
+      .select('*')
+      .gte('summary_date', dateFrom)
+      .lte('summary_date', dateTo);
+    
+    if (error) throw error;
+    
+    return data.map(summary => ({
+      date: summary.summary_date,
+      totalRevenue: summary.total_revenue,
+      serviceRevenue: summary.service_revenue,
+      productRevenue: summary.product_revenue,
+      transactionCount: summary.total_transactions,
+      appointmentCount: summary.total_services,
+    }));
+  },
+  
+  async syncData(syncType) {
+    const { data, error } = await supabase.functions.invoke('sync-phorest-data', {
+      body: { sync_type: syncType },
+    });
+    if (error) throw error;
+    return { success: true, count: data?.synced || 0 };
+  },
+};
 ```
 
----
+### Hook for POS Access
 
-## Integration: Account Detail Health Tab
+```typescript
+// src/hooks/usePOSData.ts
 
-Add a new "Health" tab to the existing Account Detail page showing:
-- Current health score with gauge
-- Component breakdown radar chart
-- Historical score trend (30 days)
-- Benchmark rankings for this org
-- AI recommendations
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { phorestAdapter } from '@/adapters/phorest-adapter';
+import type { POSAdapter, POSType } from '@/types/pos';
 
-```text
-AccountDetail.tsx - New Health Tab
-┌─────────────────────────────────────────────────────────────────────────┐
-│ [Overview] [Locations] [Users] [Migration] [Billing] [Health] [Notes]  │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                         │
-│  ┌──────────────────────┐  ┌────────────────────────────────────────┐  │
-│  │                      │  │ COMPONENT BREAKDOWN                     │  │
-│  │    HEALTH SCORE      │  │                                        │  │
-│  │        ┌───┐         │  │         Adoption                       │  │
-│  │       /     \        │  │            ●                           │  │
-│  │      │  78   │       │  │           /│\                          │  │
-│  │       \     /        │  │ Data     / │ \ Engagement              │  │
-│  │        └───┘         │  │ Quality ●──┼──●                        │  │
-│  │                      │  │           \ │ /                        │  │
-│  │   ✓ Healthy          │  │            \│/                         │  │
-│  │                      │  │            ●                           │  │
-│  └──────────────────────┘  │       Performance                      │  │
-│                            └────────────────────────────────────────┘  │
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────────┐
-│  │ BENCHMARK RANKINGS (vs all organizations)                          │
-│  │                                                                     │
-│  │ Revenue/Location:  Top 15%  ████████████████░░░░░                  │
-│  │ Rebooking Rate:    Top 25%  █████████████░░░░░░░░                  │
-│  │ Average Ticket:    Top 20%  ███████████████░░░░░░                  │
-│  │ No-Show Rate:      Top 40%  ████████░░░░░░░░░░░░░                  │
-│  └─────────────────────────────────────────────────────────────────────┘
-│                                                                         │
-│  ┌─────────────────────────────────────────────────────────────────────┐
-│  │ AI RECOMMENDATIONS                                                  │
-│  │                                                                     │
-│  │ 💡 Engagement could improve with more team announcements.          │
-│  │    This org posts 1.2 announcements/week vs platform avg of 3.5.   │
-│  │                                                                     │
-│  │ 💡 No-show rate is above average. Consider enabling SMS reminders. │
-│  └─────────────────────────────────────────────────────────────────────┘
-└─────────────────────────────────────────────────────────────────────────┘
+const adapters: Record<POSType, POSAdapter> = {
+  phorest: phorestAdapter,
+  square: phorestAdapter, // Fallback until implemented
+  boulevard: phorestAdapter,
+  zenoti: phorestAdapter,
+  manual: phorestAdapter,
+};
+
+export function usePOSAdapter(): POSAdapter {
+  const { effectiveOrganization } = useOrganizationContext();
+  // TODO: Fetch actual POS type from organization_pos_config
+  const posType: POSType = 'phorest';
+  
+  return adapters[posType];
+}
 ```
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Health Score Foundation (Week 1)
-1. Create `organization_health_scores` table with migration
-2. Build `calculate-health-scores` edge function
-3. Create `useOrganizationHealth` hook
-4. Build `HealthScoreGauge` and `HealthBreakdownChart` components
-5. Create basic `HealthScoreDashboard` page
+### Phase 1: Remove Hardcoded IDs (Day 1)
+1. Update `BoothRenters.tsx` to use OrganizationContext
+2. Update `RentRevenueAnalytics.tsx` to accept dynamic prop
+3. Remove `drop-dead-salons` fallback from TeamChat components
+4. Test all affected pages
 
-### Phase 2: Health Dashboard Complete (Week 2)
-1. Add risk alerts list with filtering
-2. Implement AI recommendations generation
-3. Add historical trends visualization
-4. Create health distribution chart
-5. Add "Health" tab to AccountDetail page
+### Phase 2: Email Notifications (Days 2-3)
+1. Create shared email-sender utility
+2. Add email templates to database
+3. Update `generate-rent-invoices` edge function
+4. Update `check-insurance-expiry` edge function
+5. Update `process-scheduled-reports` edge function
+6. Create `notify-rent-change` edge function
+7. Update `RentIncreaseDialog.tsx` to use notification
 
-### Phase 3: Benchmarking Foundation (Week 3)
-1. Create `organization_benchmarks` table
-2. Build `calculate-org-benchmarks` edge function
-3. Create `useBenchmarkData` hook
-4. Build `BenchmarkLeaderboard` component
-5. Create `PercentileIndicator` component
-
-### Phase 4: Benchmarking Complete (Week 4)
-1. Build full `BenchmarkDashboard` page
-2. Add side-by-side organization comparison
-3. Integrate benchmark rankings into Account Health tab
-4. Add benchmark filters (tier, size)
-5. Add navigation links to Platform sidebar
+### Phase 3: POS Foundation (Days 4-5)
+1. Create `organization_pos_config` table
+2. Define POS interface types
+3. Create Phorest adapter
+4. Create `usePOSAdapter` hook
+5. Document architecture for future adapters
+6. No changes to existing Phorest queries (backward compatible)
 
 ---
 
-## File Changes Summary
+## Files Summary
 
 | Category | New Files | Modified Files |
 |----------|-----------|----------------|
-| Database | 1 migration | - |
-| Edge Functions | 2 new | - |
-| Hooks | 2 new | - |
-| Components | 12+ new | `AccountDetail.tsx` |
-| Pages | 2 new | `PlatformSidebar.tsx`, `App.tsx` |
+| Hardcoded IDs | - | 4 frontend files |
+| Email Notifications | 2 new (utility, edge function) | 4 edge functions |
+| POS Foundation | 3 new (types, adapter, hook), 1 migration | - |
 
-### New Files to Create
+### New Files
 
 ```text
-supabase/migrations/
-└── 2026XXXX_organization_health_and_benchmarks.sql
-
-supabase/functions/
-├── calculate-health-scores/index.ts
-└── calculate-org-benchmarks/index.ts
-
-src/hooks/
-├── useOrganizationHealth.ts
-└── useBenchmarkData.ts
-
-src/components/platform/health/
-├── HealthScoreGauge.tsx
-├── HealthBreakdownChart.tsx
-├── HealthTrendLine.tsx
-├── HealthScoreCard.tsx
-├── RiskAlertsList.tsx
-└── HealthRecommendations.tsx
-
-src/components/platform/benchmarks/
-├── BenchmarkLeaderboard.tsx
-├── PercentileIndicator.tsx
-├── BenchmarkComparison.tsx
-└── MetricRankingCard.tsx
-
-src/pages/dashboard/platform/
-├── HealthScores.tsx
-└── Benchmarks.tsx
+supabase/functions/_shared/email-sender.ts
+supabase/functions/notify-rent-change/index.ts
+supabase/migrations/XXXX_organization_pos_config.sql
+src/types/pos.ts
+src/adapters/phorest-adapter.ts
+src/hooks/usePOSData.ts
 ```
 
----
+### Modified Files
 
-## Technical Notes
-
-1. **Score Calculation**: Edge function aggregates data from multiple tables efficiently using CTEs
-2. **Caching**: Health scores calculated once daily; real-time updates not needed
-3. **AI Recommendations**: Use `google/gemini-3-flash-preview` via Lovable AI for low-latency suggestions
-4. **Percentiles**: Calculated using SQL `PERCENT_RANK()` window function
-5. **RLS Security**: Only platform roles with Level 3+ access can view health/benchmark data
-6. **Performance**: Indexes on organization_id, metric_key, and period columns for fast queries
+```text
+src/pages/dashboard/admin/BoothRenters.tsx
+src/components/dashboard/analytics/RentRevenueAnalytics.tsx
+src/pages/dashboard/TeamChat.tsx
+src/components/dashboard/help-fab/ChatLeadershipTab.tsx
+src/components/dashboard/booth-renters/RentIncreaseDialog.tsx
+supabase/functions/generate-rent-invoices/index.ts
+supabase/functions/check-insurance-expiry/index.ts
+supabase/functions/process-scheduled-reports/index.ts
+```
 
 ---
 
 ## Success Metrics
 
-| Feature | KPI | Target |
-|---------|-----|--------|
-| Health Dashboard | At-risk identification accuracy | >90% |
-| Health Dashboard | Time to identify churning accounts | <7 days |
-| Benchmarks | Platform admin usage | Weekly access by >80% |
-| Benchmarks | Support call effectiveness | +20% resolution |
+| Issue | Before | After |
+|-------|--------|-------|
+| Hardcoded org IDs | 4 files with hardcoded values | 0 hardcoded values |
+| TODO comments for email | 4 incomplete TODOs | 0 TODOs, all emails functional |
+| POS flexibility | Single Phorest integration | Adapter pattern ready for multi-POS |
 
 ---
 
-## Navigation Integration
+## Risk Mitigation
 
-Add to Platform Sidebar (`PlatformSidebar.tsx`):
-
-```text
-Platform Admin
-├── Overview
-├── Accounts
-├── Health Scores ← NEW
-├── Benchmarks ← NEW
-├── Revenue
-├── Migrations
-├── Permissions
-├── System Health
-└── Settings
-```
+1. **Hardcoded ID Removal**: Test each page thoroughly after changes to ensure organization resolution works
+2. **Email Notifications**: Use existing Resend patterns; test with sandbox emails first
+3. **POS Abstraction**: Keep backward compatible - existing Phorest queries continue working unchanged
