@@ -1,76 +1,103 @@
 
-# Fix Kiosk Settings Not Applying After Save
+# Fix Kiosk Settings Dialog to Use Configured Theme Colors
 
 ## Problem
 
-When you save kiosk settings (background color, accent color, text color) in the Kiosk Settings dialog, the changes don't appear on the actual kiosk screens. The kiosk continues showing either default colors or the previously loaded values.
+The Kiosk Settings Dialog uses hardcoded purple (`bg-purple-500`, `bg-purple-600`, `text-purple-400`) colors throughout its UI instead of the configured accent color from the kiosk settings. This contradicts the expected behavior where the kiosk should use the colors defined in the dashboard's appearance settings.
 
 ## Root Cause
 
-There's a **query cache invalidation mismatch** in how React Query is being used:
-
-| Component | Query Hook | Query Key |
-|-----------|------------|-----------|
-| Kiosk screens | `useKioskSettingsByLocation(locationId)` | `['kiosk-settings-location', locationId]` |
-| Settings mutation | `invalidateQueries()` | `['kiosk-settings', organizationId]` |
-
-When settings are saved, the mutation only invalidates `['kiosk-settings', ...]` but the kiosk page is listening to `['kiosk-settings-location', ...]`. Since these keys don't match, React Query doesn't know to refetch the data.
+The `KioskSettingsDialog.tsx` component has ~12 instances of hardcoded Tailwind purple color classes instead of dynamically applying the `accent_color` from kiosk settings.
 
 ## Solution
 
-Update the `useUpdateKioskSettings` mutation to also invalidate the location-based query key that the kiosk screens use.
+Replace all hardcoded purple color references with dynamic inline styles using the kiosk's `accent_color` setting. Since the component already has access to settings via `useKiosk()`, we can derive the accent color and apply it dynamically.
 
 ### Technical Changes
 
-**File: `src/hooks/useKioskSettings.ts`**
+**File: `src/components/kiosk/KioskSettingsDialog.tsx`**
 
-Update the `onSuccess` callback in `useUpdateKioskSettings` to invalidate both query keys:
+1. **Extract accent color from settings** at the top of the component:
 
 ```typescript
-onSuccess: (_, variables) => {
-  // Invalidate org-level settings queries
-  queryClient.invalidateQueries({ 
-    queryKey: ['kiosk-settings', variables.organizationId] 
-  });
-  
-  // Also invalidate location-specific queries used by kiosk screens
-  if (variables.locationId) {
-    queryClient.invalidateQueries({ 
-      queryKey: ['kiosk-settings-location', variables.locationId] 
-    });
-  }
-  
-  // Invalidate all location-based kiosk settings (for org-level changes)
-  queryClient.invalidateQueries({
-    queryKey: ['kiosk-settings-location'],
-    exact: false, // Match any location ID
-  });
-  
-  toast.success('Kiosk settings saved');
-},
+const { settings, organizationId, locationId } = useKiosk();
+const accentColor = settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color;
 ```
 
-## Why This Works
+2. **Replace hardcoded purple colors with inline styles** using the accent color:
 
-After this fix:
+| Location | Before | After |
+|----------|--------|-------|
+| Line 311 (Settings icon bg) | `bg-purple-500/20` | `style={{ backgroundColor: \`${accentColor}20\` }}` |
+| Line 312 (Settings icon) | `text-purple-400` | `style={{ color: accentColor }}` |
+| Line 336 (Lock icon bg) | `bg-purple-500/20` | `style={{ backgroundColor: \`${accentColor}20\` }}` |
+| Line 341 (Lock icon) | `text-purple-400` | `style={{ color: accentColor }}` |
+| Line 366 (PIN dots) | `bg-purple-500` | Dynamic style with `accentColor` |
+| Line 430 (Unlock button) | `bg-purple-600` | `style={{ backgroundColor: accentColor }}` |
+| Line 452 (Active tab) | `bg-purple-600` | `style={{ backgroundColor: accentColor }}` |
+| Line 570 (Save button) | `bg-purple-600` | `style={{ backgroundColor: accentColor }}` |
+| Lines 622, 651, 679 (Input focus) | `focus:border-purple-500` | Use `onFocus/onBlur` with accent color or CSS variable |
+| Line 708 (Toggle on) | `bg-purple-600` | `style={{ backgroundColor: value ? accentColor : undefined }}` |
+
+3. **For focus states on inputs**, create a helper for border color or use a CSS variable approach:
+
+```typescript
+// Option A: Use onFocus/onBlur handlers
+<input
+  style={{ 
+    borderColor: isFocused ? accentColor : undefined,
+  }}
+  onFocus={() => setIsFocused(true)}
+  onBlur={() => setIsFocused(false)}
+/>
+
+// Option B: Set CSS variable and use it
+// At component level:
+<div style={{ '--accent': accentColor } as React.CSSProperties}>
+  <input className="focus:border-[var(--accent)]" />
+</div>
+```
+
+4. **Pass accent color to child setting components**:
+
+```typescript
+<TextSetting
+  label="Check-In Prompt"
+  value={localSettings.check_in_prompt}
+  onChange={(v) => updateLocalSetting('check_in_prompt', v)}
+  accentColor={accentColor}
+/>
+```
+
+Then update the sub-components (`TextSetting`, `ColorSetting`, `NumberSetting`, `ToggleSetting`) to accept and use `accentColor` for their interactive states.
+
+## Implementation Summary
 
 ```text
-1. User saves kiosk settings
-2. Mutation succeeds
-3. onSuccess invalidates BOTH:
-   - ['kiosk-settings', organizationId]
-   - ['kiosk-settings-location', locationId]
-4. Kiosk screens detect stale data
-5. React Query automatically refetches
-6. Kiosk updates with new colors ✓
+KioskSettingsDialog.tsx changes:
+├── Extract accentColor from settings (line ~18)
+├── Header icon (lines 311-312) → use accentColor
+├── PIN entry lock icon (lines 336, 341) → use accentColor  
+├── PIN dots (line 366) → use accentColor
+├── Unlock button (line 430) → use accentColor
+├── Tab buttons (line 452) → use accentColor
+├── Save button (line 570) → use accentColor
+└── Sub-components:
+    ├── TextSetting → add accentColor prop for focus
+    ├── ColorSetting → add accentColor prop for focus
+    ├── NumberSetting → add accentColor prop for focus
+    └── ToggleSetting → add accentColor prop for toggle
 ```
+
+## Expected Outcome
+
+After this change:
+- The Kiosk Settings Dialog will use the gold/bronze accent color (#9A7B4F) shown in the settings instead of purple
+- All interactive elements (buttons, tabs, toggles, focus rings) will match the configured theme
+- The kiosk maintains visual consistency with its configured appearance
 
 ## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/hooks/useKioskSettings.ts` | Add location-based query invalidation in `onSuccess` callback |
-
-## Expected Outcome
-
-After saving settings in the Kiosk Settings dialog, the kiosk screens will immediately update to reflect the new background color, accent color, and text color.
+| `src/components/kiosk/KioskSettingsDialog.tsx` | Replace ~12 hardcoded purple color references with dynamic accent color from settings |
