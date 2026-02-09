@@ -6790,6 +6790,7 @@ export type Database = {
           idle_timeout_seconds: number | null
           idle_video_url: string | null
           location_id: string | null
+          logo_size: string
           logo_url: string | null
           organization_id: string | null
           require_confirmation_tap: boolean | null
@@ -6820,6 +6821,7 @@ export type Database = {
           idle_timeout_seconds?: number | null
           idle_video_url?: string | null
           location_id?: string | null
+          logo_size?: string
           logo_url?: string | null
           organization_id?: string | null
           require_confirmation_tap?: boolean | null
@@ -6850,6 +6852,7 @@ export type Database = {
           idle_timeout_seconds?: number | null
           idle_video_url?: string | null
           location_id?: string | null
+          logo_size?: string
           logo_url?: string | null
           organization_id?: string | null
           require_confirmation_tap?: boolean | null
@@ -13891,6 +13894,7 @@ export type Database = {
           idle_timeout_seconds: number | null
           idle_video_url: string | null
           location_id: string | null
+          logo_size: string
           logo_url: string | null
           organization_id: string | null
           require_confirmation_tap: boolean | null

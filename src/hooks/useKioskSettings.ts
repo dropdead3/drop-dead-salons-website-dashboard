@@ -28,6 +28,7 @@ export interface KioskSettings {
   // Behavior
   idle_timeout_seconds: number;
   display_orientation: 'portrait' | 'landscape';
+  logo_size: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   enable_walk_ins: boolean;
   require_confirmation_tap: boolean;
   show_wait_time_estimate: boolean;
@@ -66,6 +67,7 @@ export const DEFAULT_KIOSK_SETTINGS: Omit<KioskSettings, 'id' | 'organization_id
   success_message: 'You are checked in! Your stylist has been notified.',
   idle_timeout_seconds: 60,
   display_orientation: 'portrait',
+  logo_size: 'md',
   enable_walk_ins: true,
   require_confirmation_tap: true,
   show_wait_time_estimate: true,
