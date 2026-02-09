@@ -45,7 +45,7 @@ export interface KioskSettings {
   
   // Location Badge
   show_location_badge: boolean;
-  location_badge_position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+  location_badge_position: 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
   location_badge_style: 'glass' | 'solid' | 'outline';
   
   // Security
