@@ -15,6 +15,7 @@ interface KioskPreviewSettings {
   accent_color: string;
   text_color: string;
   welcome_title: string;
+  display_orientation: 'portrait' | 'landscape';
   welcome_subtitle: string | null;
   button_style: 'rounded' | 'pill' | 'square';
   logo_url: string | null;
@@ -80,12 +81,18 @@ export function KioskPreviewPanel({ settings, businessSettings, className }: Kio
       </CardHeader>
       <CardContent>
         {/* Tablet frame mockup */}
-        <div className="relative mx-auto max-w-[280px]">
+        <div className={cn(
+          "relative mx-auto",
+          settings.display_orientation === 'landscape' ? "max-w-[360px]" : "max-w-[280px]"
+        )}>
           {/* Device frame */}
           <div className="rounded-[2rem] border-[8px] border-slate-800 bg-slate-800 p-1 shadow-xl">
             {/* Screen - matching actual kiosk structure */}
             <div 
-              className="aspect-[3/4] rounded-[1.5rem] overflow-hidden relative"
+              className={cn(
+                "rounded-[1.5rem] overflow-hidden relative",
+                settings.display_orientation === 'landscape' ? "aspect-[4/3]" : "aspect-[3/4]"
+              )}
               style={{ backgroundColor: settings.background_color }}
             >
               {/* Ambient gradient overlay */}
