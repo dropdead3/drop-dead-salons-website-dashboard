@@ -240,6 +240,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
     // New fields for feature parity with dashboard
     button_style: settings?.button_style || DEFAULT_KIOSK_SETTINGS.button_style,
     logo_url: settings?.logo_url || DEFAULT_KIOSK_SETTINGS.logo_url,
+    logo_color: settings?.logo_color || DEFAULT_KIOSK_SETTINGS.logo_color,
     logo_size: settings?.logo_size || DEFAULT_KIOSK_SETTINGS.logo_size,
     require_confirmation_tap: settings?.require_confirmation_tap ?? DEFAULT_KIOSK_SETTINGS.require_confirmation_tap,
     enable_feedback_prompt: settings?.enable_feedback_prompt ?? DEFAULT_KIOSK_SETTINGS.enable_feedback_prompt,
@@ -925,6 +926,39 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                                localSettings.logo_size === 'sm' ? 'Small' : 
                                localSettings.logo_size === 'md' ? 'Medium (default)' : 
                                localSettings.logo_size === 'lg' ? 'Large' : 'Extra large'}
+                            </p>
+                          </div>
+
+                          {/* Logo Color Overlay */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <label className="text-sm text-white/80">Logo Color Overlay</label>
+                              {localSettings.logo_color && (
+                                <button
+                                  onClick={() => updateLocalSetting('logo_color', null)}
+                                  className="text-xs text-white/40 hover:text-white/60 transition-colors"
+                                >
+                                  Clear
+                                </button>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="color"
+                                value={localSettings.logo_color || '#000000'}
+                                onChange={(e) => updateLocalSetting('logo_color', e.target.value)}
+                                className="w-10 h-10 rounded-lg border border-white/20 cursor-pointer bg-transparent"
+                              />
+                              <input
+                                type="text"
+                                value={localSettings.logo_color || ''}
+                                onChange={(e) => updateLocalSetting('logo_color', e.target.value || null)}
+                                placeholder="No color overlay"
+                                className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-mono"
+                              />
+                            </div>
+                            <p className="text-xs text-white/40">
+                              Apply a color tint over the logo (works best with SVG or transparent PNG logos)
                             </p>
                           </div>
                         </div>

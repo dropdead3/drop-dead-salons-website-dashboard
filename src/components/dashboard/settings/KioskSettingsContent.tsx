@@ -34,6 +34,7 @@ interface LocalSettings {
   success_message: string;
   button_style: 'rounded' | 'pill' | 'square';
   logo_url: string | null;
+  logo_color: string | null;
   logo_size: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   theme_mode: 'dark' | 'light' | 'auto';
   display_orientation: 'portrait' | 'landscape';
@@ -155,6 +156,7 @@ export function KioskSettingsContent() {
     success_message: DEFAULT_KIOSK_SETTINGS.success_message,
     button_style: DEFAULT_KIOSK_SETTINGS.button_style,
     logo_url: DEFAULT_KIOSK_SETTINGS.logo_url,
+    logo_color: DEFAULT_KIOSK_SETTINGS.logo_color,
     logo_size: DEFAULT_KIOSK_SETTINGS.logo_size,
     theme_mode: DEFAULT_KIOSK_SETTINGS.theme_mode,
     display_orientation: DEFAULT_KIOSK_SETTINGS.display_orientation,
@@ -209,6 +211,7 @@ export function KioskSettingsContent() {
         success_message: kioskSettings.success_message,
         button_style: kioskSettings.button_style,
         logo_url: kioskSettings.logo_url,
+        logo_color: kioskSettings.logo_color,
         logo_size: kioskSettings.logo_size,
         theme_mode: kioskSettings.theme_mode,
         display_orientation: kioskSettings.display_orientation,
@@ -245,6 +248,7 @@ export function KioskSettingsContent() {
         success_message: DEFAULT_KIOSK_SETTINGS.success_message,
         button_style: DEFAULT_KIOSK_SETTINGS.button_style,
         logo_url: DEFAULT_KIOSK_SETTINGS.logo_url,
+        logo_color: DEFAULT_KIOSK_SETTINGS.logo_color,
         logo_size: DEFAULT_KIOSK_SETTINGS.logo_size,
         theme_mode: DEFAULT_KIOSK_SETTINGS.theme_mode,
         display_orientation: DEFAULT_KIOSK_SETTINGS.display_orientation,
@@ -659,6 +663,39 @@ export function KioskSettingsContent() {
                        localSettings.logo_size === 'sm' ? 'Small' : 
                        localSettings.logo_size === 'md' ? 'Medium (default)' : 
                        localSettings.logo_size === 'lg' ? 'Large' : 'Extra large'}
+                    </p>
+                  </div>
+
+                  {/* Logo Color Overlay */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm">Logo Color Overlay</Label>
+                      {localSettings.logo_color && (
+                        <button
+                          type="button"
+                          onClick={() => updateField('logo_color', null)}
+                          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        value={localSettings.logo_color || '#000000'}
+                        onChange={(e) => updateField('logo_color', e.target.value)}
+                        className="w-10 h-10 rounded-lg border cursor-pointer"
+                      />
+                      <Input
+                        value={localSettings.logo_color || ''}
+                        onChange={(e) => updateField('logo_color', e.target.value || null)}
+                        placeholder="No color overlay"
+                        className="font-mono text-sm"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Apply a color tint over the logo (works best with SVG or transparent PNG logos)
                     </p>
                   </div>
                 </div>

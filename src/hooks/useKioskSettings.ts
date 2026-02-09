@@ -9,6 +9,7 @@ export interface KioskSettings {
   
   // Branding
   logo_url: string | null;
+  logo_color: string | null;
   background_image_url: string | null;
   background_color: string;
   accent_color: string;
@@ -53,6 +54,7 @@ export interface KioskSettings {
 export const DEFAULT_KIOSK_SETTINGS: Omit<KioskSettings, 'id' | 'organization_id' | 'created_at' | 'updated_at'> = {
   location_id: null,
   logo_url: null,
+  logo_color: null,
   background_image_url: null,
   // Updated to cream/oat brand palette
   background_color: '#F5F0E8',    // Warm cream

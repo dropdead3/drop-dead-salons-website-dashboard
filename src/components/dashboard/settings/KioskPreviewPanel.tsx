@@ -19,6 +19,7 @@ interface KioskPreviewSettings {
   welcome_subtitle: string | null;
   button_style: 'rounded' | 'pill' | 'square';
   logo_url: string | null;
+  logo_color: string | null;
   theme_mode: 'dark' | 'light' | 'auto';
   logo_size: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
@@ -117,21 +118,42 @@ export function KioskPreviewPanel({ settings, businessSettings, className }: Kio
               <div className="relative z-10 flex flex-col items-center justify-center h-full p-4 text-center -mt-4">
                 {/* Logo with float animation or business name fallback */}
                 {logoUrl ? (
-                  <motion.img 
-                    src={logoUrl} 
-                    alt={businessName || 'Logo'} 
-                    className={`${logoSizeClass} w-auto mb-4 object-contain`}
-                    style={{
-                      filter: isDarkMode 
-                        ? 'drop-shadow(0 1px 4px rgba(255,255,255,0.1))' 
-                        : 'drop-shadow(0 1px 4px rgba(0,0,0,0.1))',
-                    }}
-                    animate={{ y: [0, -2, 0] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                    onError={(e) => { 
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
+                  <div className="relative mb-4">
+                    <motion.img 
+                      src={logoUrl} 
+                      alt={businessName || 'Logo'} 
+                      className={`${logoSizeClass} w-auto object-contain`}
+                      style={{
+                        filter: isDarkMode 
+                          ? 'drop-shadow(0 1px 4px rgba(255,255,255,0.1))' 
+                          : 'drop-shadow(0 1px 4px rgba(0,0,0,0.1))',
+                      }}
+                      animate={{ y: [0, -2, 0] }}
+                      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                      onError={(e) => { 
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                    {/* Color overlay for logo */}
+                    {settings.logo_color && (
+                      <motion.div 
+                        className="absolute inset-0 mix-blend-multiply pointer-events-none"
+                        style={{ 
+                          backgroundColor: settings.logo_color,
+                          maskImage: `url(${logoUrl})`,
+                          WebkitMaskImage: `url(${logoUrl})`,
+                          maskSize: 'contain',
+                          WebkitMaskSize: 'contain',
+                          maskRepeat: 'no-repeat',
+                          WebkitMaskRepeat: 'no-repeat',
+                          maskPosition: 'center',
+                          WebkitMaskPosition: 'center',
+                        }}
+                        animate={{ y: [0, -2, 0] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                      />
+                    )}
+                  </div>
                 ) : businessName ? (
                   <motion.p
                     className="text-xs font-light tracking-widest uppercase mb-4"
