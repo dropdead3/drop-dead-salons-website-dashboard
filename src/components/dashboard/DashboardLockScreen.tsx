@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lock, Delete, LogOut, Eye, EyeOff } from 'lucide-react';
+import { Lock, Delete, LogOut, Eye, EyeOff, Check } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useValidatePin } from '@/hooks/useUserPin';
@@ -32,6 +32,7 @@ export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
     display_name: string;
     photo_url: string | null;
   } | null>(null);
+  const [isUnlocking, setIsUnlocking] = useState(false);
 
   const getLogo = () => {
     const isDark = resolvedTheme === 'dark';
@@ -72,18 +73,18 @@ export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
               display_name: result.display_name,
               photo_url: result.photo_url,
             });
+            setIsUnlocking(true);
             
-            // Small delay to show the user before unlocking and navigating
+            // Intentional delay for premium feel (1.5 seconds)
             setTimeout(() => {
               onUnlock({ user_id: result.user_id, display_name: result.display_name });
-              // Navigate to schedule with quick login state
               navigate('/dashboard/schedule', { 
                 state: { 
                   quickLoginUserId: result.user_id,
                   quickLoginUserName: result.display_name 
                 } 
               });
-            }, 500);
+            }, 1500);
           } else {
             setError(true);
             setPin('');
@@ -126,6 +127,85 @@ export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
+      {/* Unlocking Overlay */}
+      <AnimatePresence>
+        {isUnlocking && (
+          <motion.div
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Success avatar with glow */}
+            <motion.div
+              className="relative mb-8"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+            >
+              {/* Animated glow */}
+              <motion.div
+                className="absolute -inset-4 rounded-full bg-primary/20 blur-2xl"
+                animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              <Avatar className="h-24 w-24 ring-4 ring-primary/30 ring-offset-4 ring-offset-background">
+                <AvatarImage src={validatedUser?.photo_url || undefined} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                  {validatedUser?.display_name?.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              {/* Checkmark overlay */}
+              <motion.div
+                className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-lg"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3, type: 'spring', stiffness: 300, damping: 15 }}
+              >
+                <Check className="w-5 h-5 text-white" />
+              </motion.div>
+            </motion.div>
+            
+            {/* Welcome text */}
+            <motion.div
+              className="text-center"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <h2 className="text-2xl font-display font-medium mb-2">
+                Welcome back
+              </h2>
+              <p className="text-lg text-primary font-medium">
+                {validatedUser?.display_name}
+              </p>
+            </motion.div>
+            
+            {/* Loading dots */}
+            <motion.div
+              className="flex gap-1.5 mt-8"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              {[0, 1, 2].map((i) => (
+                <motion.div
+                  key={i}
+                  className="w-2 h-2 rounded-full bg-primary"
+                  animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
+                  transition={{ 
+                    duration: 0.8, 
+                    repeat: Infinity, 
+                    delay: i * 0.15,
+                    ease: 'easeInOut'
+                  }}
+                />
+              ))}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Logo */}
       <motion.div
         className="mb-8"
@@ -163,22 +243,32 @@ export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
         </p>
       </motion.div>
 
-      {/* Validated User Preview */}
+      {/* Validated User Preview - Enhanced */}
       <AnimatePresence>
-        {validatedUser && (
+        {validatedUser && !isUnlocking && (
           <motion.div
-            className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-primary/10"
-            initial={{ opacity: 0, scale: 0.9 }}
+            className="flex flex-col items-center gap-3 mb-6"
+            initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 20 }}
           >
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={validatedUser.photo_url || undefined} />
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {validatedUser.display_name?.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="font-medium">{validatedUser.display_name}</span>
+            {/* Avatar with glow ring */}
+            <div className="relative">
+              {/* Animated glow ring */}
+              <motion.div
+                className="absolute -inset-2 rounded-full bg-primary/30 blur-lg"
+                animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
+                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+              />
+              <Avatar className="h-16 w-16 ring-2 ring-primary/50 ring-offset-2 ring-offset-background">
+                <AvatarImage src={validatedUser.photo_url || undefined} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                  {validatedUser.display_name?.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+            <span className="font-medium text-lg">{validatedUser.display_name}</span>
           </motion.div>
         )}
       </AnimatePresence>
