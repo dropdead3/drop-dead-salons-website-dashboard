@@ -1,90 +1,82 @@
 
 
-# Renter Onboard Wizard -- Consolidation Plan
+# Platform Incident Banner
 
-## The Problem
+## Overview
+Build a system-wide incident notification bar -- styled like the amber/orange banner in the reference screenshot -- that appears at the very top of every dashboard page when there's an active platform issue. Platform admins can create, update, and resolve incidents; all organization users see the banner in real-time.
 
-Booth renters are independent 1099 contractors, not employees. Right now:
+## How It Works
 
-- The New Hire Wizard incorrectly lists "Booth Rent" as a pay type, mixing employee and contractor concepts
-- Adding a renter requires clicking "Add Renter" in the Renter Hub, which opens a basic dialog that only creates a profile
-- After that, you must separately: issue a contract, set up insurance, assign a station, and track onboarding tasks -- all through different buttons and dialogs
-- There is no single guided flow that walks an admin through the full renter onboarding
+**For platform admins**: A new "Incidents" section in Platform Settings (or Platform Overview) lets them create an active incident with a message, severity, and optional status page link. Only one incident can be active at a time.
 
-## The Solution
+**For all dashboard users**: When an active incident exists, an amber banner renders above everything else in the DashboardLayout -- above the mobile header, above the impersonation banner, above all content. It spans full width (edge to edge, ignoring sidebar offset) and shows the message with an optional link. Users can dismiss it for the session, but it reappears if the incident is updated.
 
-1. **Remove "Booth Rent" from the New Hire Wizard** -- it does not belong there
-2. **Replace the AddRenterDialog with a full-page Renter Onboard Wizard** that consolidates the scattered steps into one guided flow
-3. **Keep all existing components** (IssueContractDialog, InsuranceCard, StationAssignmentManager, onboarding tasks) working as standalone tools in the Renter Hub for day-to-day management -- the wizard simply calls into the same hooks
+**Automatic incidents**: The existing `check-system-health` edge function already detects service outages and writes to `platform_notifications`. We'll extend it to also create/resolve incident records automatically when services go down or recover.
 
-## Renter Onboard Wizard Steps
+## Database
 
-**Step 1: Renter Identity**
-- Option A: Select an existing person in the system (like today's AddRenterDialog)
-- Option B: Create a brand new account (name, email) -- this creates an auth user + employee profile + booth_renter role, similar to how the hire wizard works but framed as a contractor setup
-- Collect: business name, EIN, start date
+### New table: `platform_incidents`
 
-**Step 2: Licensing & Insurance**
-- License number, license state, expiration date
-- Insurance provider, policy number, expiration date
-- These fields already exist on `booth_renter_profiles` and insurance tables
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid | PK |
+| status | text | 'active', 'monitoring', 'resolved' |
+| severity | text | 'info', 'warning', 'critical' |
+| title | text | Short headline |
+| message | text | Detailed message shown in the banner |
+| link_text | text | Optional CTA text (e.g., "Open status page") |
+| link_url | text | Optional URL |
+| created_by | uuid | Platform user who created it |
+| resolved_at | timestamptz | When resolved |
+| resolved_by | uuid | Who resolved it |
+| created_at | timestamptz | Default now() |
+| updated_at | timestamptz | Default now() |
 
-**Step 3: Rental Terms**
-- Inline version of the IssueContractDialog fields: rent amount, frequency, due day, security deposit, included amenities (utilities, WiFi, products), retail commission settings
-- This creates the first `booth_rental_contracts` record
+- RLS: All authenticated users can SELECT (they need to see the banner). Only platform admins can INSERT/UPDATE.
+- Realtime enabled so the banner appears/disappears instantly across all sessions.
 
-**Step 4: Station Assignment**
-- Show available stations/chairs for the organization
-- Let admin pick one (or skip if none are set up yet)
+## Frontend Components
 
-**Step 5: Onboarding Checklist & Docs**
-- Show the organization's renter onboarding tasks (from `renter_onboarding_tasks`)
-- Toggle PandaDoc for the rental agreement (uses same integration as hire wizard)
-- Summary of what will be created
+### 1. `src/components/dashboard/IncidentBanner.tsx`
+- Queries `platform_incidents` for rows where `status` IN ('active', 'monitoring')
+- Subscribes to realtime changes on the table
+- Renders a full-width top bar with:
+  - Warning icon (triangle)
+  - Message text
+  - Optional link/CTA
+  - Dismiss button (stores dismissed incident ID + updated_at in sessionStorage so it reappears if updated)
+- Severity-based colors:
+  - **critical**: Red/orange gradient background (like the reference screenshot)
+  - **warning**: Amber background
+  - **info**: Blue background
 
-On submit, the wizard creates everything in one backend call, then shows a success screen with the renter's login credentials (if a new account was created) or a confirmation (if existing person).
+### 2. Placement in `DashboardLayout.tsx`
+- Rendered at the very top of the content wrapper, before the mobile header and before the impersonation banner
+- Full-width (no sidebar padding offset) so it truly spans edge-to-edge like the reference
+- Sticky at top with highest z-index
 
-## What Changes
+### 3. Platform Admin: Incident Management UI
+- Add an "Active Incident" card to the Platform Overview page (`/dashboard/platform/overview`)
+- Quick actions: "Create Incident", "Update Message", "Mark Resolved"
+- Simple form: severity dropdown, title, message, optional link
+- Shows history of past resolved incidents
 
-### Remove from New Hire Wizard
-- Remove the "Booth Rent" option from the pay type dropdown in `NewHireWizard.tsx`
+## Edge Function Update
 
-### New Files
-- **`src/pages/dashboard/admin/RenterOnboardWizard.tsx`** -- full-page multi-step wizard (follows the same pattern as NewHireWizard)
-- **`supabase/functions/onboard-renter/index.ts`** -- edge function that handles account creation (optional), booth_renter_profiles, booth_rental_contracts, station assignment, insurance record, and onboarding task seeding in one transaction
+### `check-system-health/index.ts`
+- After detecting a service is down: check if there's already an active incident. If not, auto-create one in `platform_incidents` with severity 'critical' and a message like "We're experiencing issues with [service]. Our team is investigating."
+- After all services recover: if there's an auto-created active incident, update its status to 'resolved'
+- Manual incidents (created by admins) are never auto-resolved
 
-### Modified Files
-- **`src/App.tsx`** -- add route `/dashboard/admin/onboard-renter`
-- **`src/pages/dashboard/admin/ManagementHub.tsx`** -- add "Renter Onboard Wizard" card in the appropriate section
-- **`src/pages/dashboard/admin/BoothRenters.tsx`** or **`RentersTabContent.tsx`** -- change "Add Renter" button to navigate to the wizard instead of opening AddRenterDialog
-- **`src/hooks/useHireEmployee.ts`** -- no changes needed (separate concern)
+## Files to Create
+1. **`src/components/dashboard/IncidentBanner.tsx`** -- The banner component with realtime subscription
+2. **`src/hooks/useActiveIncident.ts`** -- Hook to query and subscribe to active incidents
 
-### Unchanged (No Redundancy)
-- `AddRenterDialog.tsx` -- can be deprecated or kept as a quick-add shortcut; the wizard replaces its primary use case
-- `IssueContractDialog.tsx` -- stays for issuing additional contracts to existing renters
-- `InsuranceCard.tsx` -- stays for updating insurance after onboarding
-- `StationAssignmentManager.tsx` -- stays for reassigning stations
-- `useRenterOnboarding.ts` -- stays for tracking ongoing task completion
-- `useBoothRenters.ts` -- stays as the data layer
+## Files to Modify
+1. **`src/components/dashboard/DashboardLayout.tsx`** -- Add IncidentBanner at the top of the layout, full-width before everything
+2. **`supabase/functions/check-system-health/index.ts`** -- Auto-create/resolve incidents on service status changes
+3. **Platform Overview page** -- Add incident management card for platform admins
 
-## Technical Details
-
-### Edge Function: `onboard-renter`
-Accepts:
-- `createNewAccount` (boolean) -- if true, creates auth user
-- `email`, `fullName` -- for new account creation
-- `userId` -- for existing person selection (mutually exclusive with createNewAccount)
-- `organizationId`
-- Business fields: `businessName`, `ein`, `licenseNumber`, `licenseState`, `licenseExpiry`
-- Insurance fields: `insuranceProvider`, `insurancePolicyNumber`, `insuranceExpiryDate`
-- Contract fields: `rentAmount`, `rentFrequency`, `dueDay`, `securityDeposit`, `startDate`, `endDate`, amenity toggles, retail commission settings
-- `stationId` (optional) -- station to assign
-- `generateRentalAgreement` (boolean) -- PandaDoc trigger
-
-Returns:
-- `success`, `boothRenterId`, credentials (if new account), `contractId`, `stationAssigned`
-
-### Routing
-- `/dashboard/admin/onboard-renter` -- new wizard page
-- Can be reached from Management Hub card and from "Add Renter" button in Renter Hub
-
+## Database Migration
+- Create `platform_incidents` table with RLS policies
+- Enable realtime on the table
