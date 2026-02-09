@@ -240,6 +240,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
     // New fields for feature parity with dashboard
     button_style: settings?.button_style || DEFAULT_KIOSK_SETTINGS.button_style,
     logo_url: settings?.logo_url || DEFAULT_KIOSK_SETTINGS.logo_url,
+    logo_size: settings?.logo_size || DEFAULT_KIOSK_SETTINGS.logo_size,
     require_confirmation_tap: settings?.require_confirmation_tap ?? DEFAULT_KIOSK_SETTINGS.require_confirmation_tap,
     enable_feedback_prompt: settings?.enable_feedback_prompt ?? DEFAULT_KIOSK_SETTINGS.enable_feedback_prompt,
     require_form_signing: settings?.require_form_signing ?? DEFAULT_KIOSK_SETTINGS.require_form_signing,
@@ -896,6 +897,36 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                               />
                             </div>
                           )}
+
+                          {/* Logo Size */}
+                          <div className="space-y-2">
+                            <label className="text-sm text-white/80">Logo Size</label>
+                            <div className="grid grid-cols-5 gap-2">
+                              {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
+                                <motion.button
+                                  key={size}
+                                  className={`flex items-center justify-center px-2 py-2 rounded-lg border transition-colors text-xs font-medium uppercase ${
+                                    localSettings.logo_size === size 
+                                      ? 'border-2' 
+                                      : 'border-white/10 hover:border-white/20'
+                                  }`}
+                                  style={localSettings.logo_size === size ? { borderColor: accentColor } : undefined}
+                                  onClick={() => updateLocalSetting('logo_size', size)}
+                                  whileTap={{ scale: 0.98 }}
+                                >
+                                  <span className="text-white/80">
+                                    {size === 'xs' ? 'XS' : size === 'sm' ? 'S' : size === 'md' ? 'M' : size === 'lg' ? 'L' : 'XL'}
+                                  </span>
+                                </motion.button>
+                              ))}
+                            </div>
+                            <p className="text-xs text-white/40">
+                              {localSettings.logo_size === 'xs' ? 'Extra small' : 
+                               localSettings.logo_size === 'sm' ? 'Small' : 
+                               localSettings.logo_size === 'md' ? 'Medium (default)' : 
+                               localSettings.logo_size === 'lg' ? 'Large' : 'Extra large'}
+                            </p>
+                          </div>
                         </div>
                       </SettingGroup>
                     </>

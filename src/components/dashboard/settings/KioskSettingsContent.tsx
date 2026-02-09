@@ -34,6 +34,7 @@ interface LocalSettings {
   success_message: string;
   button_style: 'rounded' | 'pill' | 'square';
   logo_url: string | null;
+  logo_size: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   theme_mode: 'dark' | 'light' | 'auto';
   display_orientation: 'portrait' | 'landscape';
   idle_timeout_seconds: number;
@@ -154,6 +155,7 @@ export function KioskSettingsContent() {
     success_message: DEFAULT_KIOSK_SETTINGS.success_message,
     button_style: DEFAULT_KIOSK_SETTINGS.button_style,
     logo_url: DEFAULT_KIOSK_SETTINGS.logo_url,
+    logo_size: DEFAULT_KIOSK_SETTINGS.logo_size,
     theme_mode: DEFAULT_KIOSK_SETTINGS.theme_mode,
     display_orientation: DEFAULT_KIOSK_SETTINGS.display_orientation,
     idle_timeout_seconds: DEFAULT_KIOSK_SETTINGS.idle_timeout_seconds,
@@ -207,6 +209,7 @@ export function KioskSettingsContent() {
         success_message: kioskSettings.success_message,
         button_style: kioskSettings.button_style,
         logo_url: kioskSettings.logo_url,
+        logo_size: kioskSettings.logo_size,
         theme_mode: kioskSettings.theme_mode,
         display_orientation: kioskSettings.display_orientation,
         idle_timeout_seconds: kioskSettings.idle_timeout_seconds,
@@ -242,6 +245,7 @@ export function KioskSettingsContent() {
         success_message: DEFAULT_KIOSK_SETTINGS.success_message,
         button_style: DEFAULT_KIOSK_SETTINGS.button_style,
         logo_url: DEFAULT_KIOSK_SETTINGS.logo_url,
+        logo_size: DEFAULT_KIOSK_SETTINGS.logo_size,
         theme_mode: DEFAULT_KIOSK_SETTINGS.theme_mode,
         display_orientation: DEFAULT_KIOSK_SETTINGS.display_orientation,
         idle_timeout_seconds: DEFAULT_KIOSK_SETTINGS.idle_timeout_seconds,
@@ -629,6 +633,34 @@ export function KioskSettingsContent() {
                       />
                     </div>
                   )}
+
+                  {/* Logo Size */}
+                  <div className="space-y-2">
+                    <Label className="text-sm">Logo Size</Label>
+                    <div className="grid grid-cols-5 gap-2">
+                      {(['xs', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
+                        <button
+                          key={size}
+                          type="button"
+                          className={cn(
+                            "flex items-center justify-center px-2 py-2 rounded-lg border transition-colors text-xs font-medium uppercase",
+                            localSettings.logo_size === size 
+                              ? "border-primary bg-primary/10 text-foreground" 
+                              : "border-border hover:border-primary/50"
+                          )}
+                          onClick={() => updateField('logo_size', size)}
+                        >
+                          {size === 'xs' ? 'XS' : size === 'sm' ? 'S' : size === 'md' ? 'M' : size === 'lg' ? 'L' : 'XL'}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      {localSettings.logo_size === 'xs' ? 'Extra small' : 
+                       localSettings.logo_size === 'sm' ? 'Small' : 
+                       localSettings.logo_size === 'md' ? 'Medium (default)' : 
+                       localSettings.logo_size === 'lg' ? 'Large' : 'Extra large'}
+                    </p>
+                  </div>
                 </div>
               </TabsContent>
 

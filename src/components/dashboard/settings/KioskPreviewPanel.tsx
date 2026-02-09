@@ -20,6 +20,7 @@ interface KioskPreviewSettings {
   button_style: 'rounded' | 'pill' | 'square';
   logo_url: string | null;
   theme_mode: 'dark' | 'light' | 'auto';
+  logo_size: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
 }
 
 interface KioskPreviewPanelProps {
@@ -73,6 +74,15 @@ export function KioskPreviewPanel({ settings, businessSettings, className }: Kio
     square: 'rounded-md',
   }[settings.button_style];
 
+  // Logo size classes for preview (scaled down from actual)
+  const logoSizeClass = {
+    xs: 'h-5 max-w-[80px]',
+    sm: 'h-6 max-w-[100px]',
+    md: 'h-8 max-w-[120px]',
+    lg: 'h-10 max-w-[140px]',
+    xl: 'h-12 max-w-[160px]',
+  }[settings.logo_size];
+
   return (
     <Card className={cn("sticky top-6", className)}>
       <CardHeader>
@@ -110,7 +120,7 @@ export function KioskPreviewPanel({ settings, businessSettings, className }: Kio
                   <motion.img 
                     src={logoUrl} 
                     alt={businessName || 'Logo'} 
-                    className="h-8 w-auto max-w-[120px] mb-4 object-contain"
+                    className={`${logoSizeClass} w-auto mb-4 object-contain`}
                     style={{
                       filter: isDarkMode 
                         ? 'drop-shadow(0 1px 4px rgba(255,255,255,0.1))' 

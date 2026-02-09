@@ -31,6 +31,16 @@ export function KioskIdleScreen() {
     || null;
   
   const businessName = businessSettings?.business_name;
+  const logoSize = settings?.logo_size || DEFAULT_KIOSK_SETTINGS.logo_size;
+  
+  // Logo size classes
+  const logoSizeClasses = {
+    xs: 'max-h-12 md:max-h-16 max-w-[180px] md:max-w-[240px]',
+    sm: 'max-h-16 md:max-h-20 max-w-[220px] md:max-w-[300px]',
+    md: 'max-h-20 md:max-h-28 max-w-[280px] md:max-w-[400px]',
+    lg: 'max-h-28 md:max-h-36 max-w-[340px] md:max-w-[480px]',
+    xl: 'max-h-36 md:max-h-44 max-w-[400px] md:max-w-[560px]',
+  };
 
   // Update time every second
   useEffect(() => {
@@ -162,7 +172,7 @@ export function KioskIdleScreen() {
             <img
               src={logoUrl}
               alt={businessName || 'Logo'}
-              className="max-h-20 md:max-h-28 max-w-[280px] md:max-w-[400px] w-auto h-auto object-contain"
+              className={`${logoSizeClasses[logoSize]} w-auto h-auto object-contain`}
               style={{
                 // Add drop shadow for dark logos on dark backgrounds
                 filter: isDarkTheme ? 'drop-shadow(0 2px 8px rgba(255,255,255,0.1))' : 'drop-shadow(0 2px 8px rgba(0,0,0,0.1))',
