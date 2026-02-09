@@ -68,7 +68,7 @@ export const hubLinks: HubLinkProps[] = [
   { 
     href: '/dashboard/admin/access-hub', 
     icon: Shield, 
-    label: 'Access Hub', 
+    label: 'Roles Hub', 
     colorClass: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20',
     permission: 'manage_settings',
   },
