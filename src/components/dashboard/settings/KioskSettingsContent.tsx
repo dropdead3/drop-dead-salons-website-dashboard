@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save, Palette } from 'lucide-react';
+import { Loader2, Save, Palette, Sun, Moon, Monitor, Image } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,10 +12,17 @@ import { KioskPreviewPanel } from './KioskPreviewPanel';
 import { KioskDeployCard } from './KioskDeployCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/useLocations';
-import { useKioskSettings, useUpdateKioskSettings, DEFAULT_KIOSK_SETTINGS, KIOSK_THEME_PRESETS, KioskThemePreset } from '@/hooks/useKioskSettings';
+import { useKioskSettings, useUpdateKioskSettings, DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
+import { colorThemes, ColorTheme } from '@/hooks/useColorTheme';
+import { hslToHex } from '@/lib/colorUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+
+// Logo source options
+type LogoSource = 'auto' | 'org-light' | 'org-dark' | 'custom';
 
 interface LocalSettings {
   background_color: string;
@@ -27,6 +34,7 @@ interface LocalSettings {
   success_message: string;
   button_style: 'rounded' | 'pill' | 'square';
   logo_url: string | null;
+  theme_mode: 'dark' | 'light' | 'auto';
   idle_timeout_seconds: number;
   enable_walk_ins: boolean;
   require_confirmation_tap: boolean;
@@ -37,11 +45,68 @@ interface LocalSettings {
   exit_pin: string;
 }
 
+// Convert global theme to kiosk colors
+function convertGlobalThemeToKioskColors(
+  theme: ColorTheme, 
+  isDark: boolean
+): { background_color: string; text_color: string; accent_color: string } {
+  const themeData = colorThemes.find(t => t.id === theme);
+  const preview = isDark ? themeData?.darkPreview : themeData?.lightPreview;
+  
+  return {
+    background_color: hslToHex(preview?.bg || '40 30% 96%'),
+    text_color: hslToHex(preview?.primary || '0 0% 8%'),
+    accent_color: hslToHex(preview?.accent || '35 35% 82%'),
+  };
+}
+
+// Detect which global theme matches the current colors
+function detectGlobalTheme(
+  bg: string, 
+  text: string, 
+  accent: string
+): ColorTheme | 'custom' {
+  for (const theme of colorThemes) {
+    // Check light preview
+    const lightColors = {
+      background_color: hslToHex(theme.lightPreview.bg),
+      text_color: hslToHex(theme.lightPreview.primary),
+      accent_color: hslToHex(theme.lightPreview.accent),
+    };
+    if (
+      lightColors.background_color.toLowerCase() === bg.toLowerCase() &&
+      lightColors.text_color.toLowerCase() === text.toLowerCase() &&
+      lightColors.accent_color.toLowerCase() === accent.toLowerCase()
+    ) {
+      return theme.id;
+    }
+    
+    // Check dark preview
+    const darkColors = {
+      background_color: hslToHex(theme.darkPreview.bg),
+      text_color: hslToHex(theme.darkPreview.primary),
+      accent_color: hslToHex(theme.darkPreview.accent),
+    };
+    if (
+      darkColors.background_color.toLowerCase() === bg.toLowerCase() &&
+      darkColors.text_color.toLowerCase() === text.toLowerCase() &&
+      darkColors.accent_color.toLowerCase() === accent.toLowerCase()
+    ) {
+      return theme.id;
+    }
+  }
+  return 'custom';
+}
+
 export function KioskSettingsContent() {
   const { user } = useAuth();
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
-  const [themePreset, setThemePreset] = useState<KioskThemePreset | 'custom'>('cream');
+  const [themePreset, setThemePreset] = useState<ColorTheme | 'custom'>('cream');
+  const [logoSource, setLogoSource] = useState<LogoSource>('auto');
+  const [customLogoUrl, setCustomLogoUrl] = useState<string>('');
   const { data: locations = [] } = useLocations();
+  const { data: businessSettings } = useBusinessSettings();
+  const { resolvedTheme } = useDashboardTheme();
 
   // Get organization ID
   const { data: orgId } = useQuery({
@@ -64,30 +129,16 @@ export function KioskSettingsContent() {
   const { data: kioskSettings, isLoading } = useKioskSettings(orgId || undefined, locationId || undefined);
   const updateSettings = useUpdateKioskSettings();
 
-  // Detect current preset based on colors
-  const detectPreset = (bg: string, text: string, accent: string): KioskThemePreset | 'custom' => {
-    for (const [key, preset] of Object.entries(KIOSK_THEME_PRESETS)) {
-      if (
-        preset.background_color.toLowerCase() === bg.toLowerCase() &&
-        preset.text_color.toLowerCase() === text.toLowerCase() &&
-        preset.accent_color.toLowerCase() === accent.toLowerCase()
-      ) {
-        return key as KioskThemePreset;
-      }
-    }
-    return 'custom';
-  };
-
   // Apply a theme preset
-  const applyPreset = (preset: KioskThemePreset | 'custom') => {
+  const applyPreset = (preset: ColorTheme | 'custom') => {
     setThemePreset(preset);
-    if (preset !== 'custom' && KIOSK_THEME_PRESETS[preset]) {
-      const { background_color, text_color, accent_color } = KIOSK_THEME_PRESETS[preset];
+    if (preset !== 'custom') {
+      const isDark = localSettings.theme_mode === 'dark' || 
+        (localSettings.theme_mode === 'auto' && resolvedTheme === 'dark');
+      const colors = convertGlobalThemeToKioskColors(preset, isDark);
       setLocalSettings(prev => ({
         ...prev,
-        background_color,
-        text_color,
-        accent_color,
+        ...colors,
       }));
     }
   };
@@ -102,6 +153,7 @@ export function KioskSettingsContent() {
     success_message: DEFAULT_KIOSK_SETTINGS.success_message,
     button_style: DEFAULT_KIOSK_SETTINGS.button_style,
     logo_url: DEFAULT_KIOSK_SETTINGS.logo_url,
+    theme_mode: DEFAULT_KIOSK_SETTINGS.theme_mode,
     idle_timeout_seconds: DEFAULT_KIOSK_SETTINGS.idle_timeout_seconds,
     enable_walk_ins: DEFAULT_KIOSK_SETTINGS.enable_walk_ins,
     require_confirmation_tap: DEFAULT_KIOSK_SETTINGS.require_confirmation_tap,
@@ -111,6 +163,34 @@ export function KioskSettingsContent() {
     require_form_signing: DEFAULT_KIOSK_SETTINGS.require_form_signing,
     exit_pin: DEFAULT_KIOSK_SETTINGS.exit_pin,
   });
+
+  // Detect logo source from logo_url
+  const detectLogoSource = (logoUrl: string | null): LogoSource => {
+    if (!logoUrl) return 'auto';
+    if (businessSettings?.logo_light_url && logoUrl === businessSettings.logo_light_url) return 'org-light';
+    if (businessSettings?.logo_dark_url && logoUrl === businessSettings.logo_dark_url) return 'org-dark';
+    if (logoUrl) return 'custom';
+    return 'auto';
+  };
+
+  // Handle logo source change
+  const handleLogoSourceChange = (source: LogoSource) => {
+    setLogoSource(source);
+    switch (source) {
+      case 'auto':
+        setLocalSettings(prev => ({ ...prev, logo_url: null }));
+        break;
+      case 'org-light':
+        setLocalSettings(prev => ({ ...prev, logo_url: businessSettings?.logo_light_url || null }));
+        break;
+      case 'org-dark':
+        setLocalSettings(prev => ({ ...prev, logo_url: businessSettings?.logo_dark_url || null }));
+        break;
+      case 'custom':
+        setLocalSettings(prev => ({ ...prev, logo_url: customLogoUrl || null }));
+        break;
+    }
+  };
 
   // Sync local state with fetched settings
   useEffect(() => {
@@ -125,6 +205,7 @@ export function KioskSettingsContent() {
         success_message: kioskSettings.success_message,
         button_style: kioskSettings.button_style,
         logo_url: kioskSettings.logo_url,
+        theme_mode: kioskSettings.theme_mode,
         idle_timeout_seconds: kioskSettings.idle_timeout_seconds,
         enable_walk_ins: kioskSettings.enable_walk_ins,
         require_confirmation_tap: kioskSettings.require_confirmation_tap,
@@ -135,11 +216,17 @@ export function KioskSettingsContent() {
         exit_pin: kioskSettings.exit_pin,
       });
       // Detect which preset matches
-      setThemePreset(detectPreset(
+      setThemePreset(detectGlobalTheme(
         kioskSettings.background_color,
         kioskSettings.text_color,
         kioskSettings.accent_color
       ));
+      // Detect logo source
+      const source = detectLogoSource(kioskSettings.logo_url);
+      setLogoSource(source);
+      if (source === 'custom' && kioskSettings.logo_url) {
+        setCustomLogoUrl(kioskSettings.logo_url);
+      }
     } else {
       // Reset to defaults when no settings found
       setLocalSettings({
@@ -152,6 +239,7 @@ export function KioskSettingsContent() {
         success_message: DEFAULT_KIOSK_SETTINGS.success_message,
         button_style: DEFAULT_KIOSK_SETTINGS.button_style,
         logo_url: DEFAULT_KIOSK_SETTINGS.logo_url,
+        theme_mode: DEFAULT_KIOSK_SETTINGS.theme_mode,
         idle_timeout_seconds: DEFAULT_KIOSK_SETTINGS.idle_timeout_seconds,
         enable_walk_ins: DEFAULT_KIOSK_SETTINGS.enable_walk_ins,
         require_confirmation_tap: DEFAULT_KIOSK_SETTINGS.require_confirmation_tap,
@@ -162,8 +250,22 @@ export function KioskSettingsContent() {
         exit_pin: DEFAULT_KIOSK_SETTINGS.exit_pin,
       });
       setThemePreset('cream');
+      setLogoSource('auto');
     }
-  }, [kioskSettings]);
+  }, [kioskSettings, businessSettings]);
+
+  // Update colors when theme_mode changes and using a preset
+  useEffect(() => {
+    if (themePreset !== 'custom') {
+      const isDark = localSettings.theme_mode === 'dark' || 
+        (localSettings.theme_mode === 'auto' && resolvedTheme === 'dark');
+      const colors = convertGlobalThemeToKioskColors(themePreset, isDark);
+      setLocalSettings(prev => ({
+        ...prev,
+        ...colors,
+      }));
+    }
+  }, [localSettings.theme_mode, themePreset, resolvedTheme]);
 
   const handleSave = () => {
     if (!orgId) return;
@@ -211,7 +313,10 @@ export function KioskSettingsContent() {
       {/* Main content grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Preview */}
-        <KioskPreviewPanel settings={localSettings} />
+        <KioskPreviewPanel 
+          settings={localSettings} 
+          businessSettings={businessSettings}
+        />
 
         {/* Right: Settings Form */}
         <Card>
@@ -236,52 +341,82 @@ export function KioskSettingsContent() {
 
               {/* Appearance Tab */}
               <TabsContent value="appearance" className="space-y-4">
+                {/* Mode Selector */}
+                <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Sun className="w-4 h-4 text-muted-foreground" />
+                    <Label className="text-sm font-medium">Display Mode</Label>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(['light', 'dark', 'auto'] as const).map((mode) => (
+                      <button
+                        key={mode}
+                        type="button"
+                        className={cn(
+                          "flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-colors",
+                          localSettings.theme_mode === mode 
+                            ? "border-primary bg-primary/10 text-foreground" 
+                            : "border-border hover:border-primary/50"
+                        )}
+                        onClick={() => updateField('theme_mode', mode)}
+                      >
+                        {mode === 'light' && <Sun className="w-4 h-4" />}
+                        {mode === 'dark' && <Moon className="w-4 h-4" />}
+                        {mode === 'auto' && <Monitor className="w-4 h-4" />}
+                        <span className="text-sm capitalize">{mode}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {localSettings.theme_mode === 'auto' 
+                      ? 'Follows the device system preference' 
+                      : localSettings.theme_mode === 'dark'
+                      ? 'Always display in dark mode'
+                      : 'Always display in light mode'}
+                  </p>
+                </div>
+
                 {/* Theme Preset Selector */}
                 <div className="bg-muted/50 rounded-xl p-4 space-y-3">
                   <div className="flex items-center gap-2">
                     <Palette className="w-4 h-4 text-muted-foreground" />
-                    <Label className="text-sm font-medium">Theme Preset</Label>
+                    <Label className="text-sm font-medium">Color Theme</Label>
                   </div>
                   <Select 
                     value={themePreset} 
-                    onValueChange={(v) => applyPreset(v as KioskThemePreset | 'custom')}
+                    onValueChange={(v) => applyPreset(v as ColorTheme | 'custom')}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Choose a theme preset" />
+                      <SelectValue placeholder="Choose a color theme" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="cream">
-                        <div className="flex items-center gap-2">
-                          <div className="flex gap-0.5">
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#F5F0E8' }} />
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#9A7B4F' }} />
-                          </div>
-                          Cream (Light)
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="dark-luxury">
-                        <div className="flex items-center gap-2">
-                          <div className="flex gap-0.5">
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#0A0A0A' }} />
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#C9A962' }} />
-                          </div>
-                          Dark Luxury
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="oat-minimal">
-                        <div className="flex items-center gap-2">
-                          <div className="flex gap-0.5">
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#E8E0D5' }} />
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#8B7355' }} />
-                          </div>
-                          Oat Minimal
-                        </div>
-                      </SelectItem>
+                      {colorThemes.map((theme) => {
+                        const isDark = localSettings.theme_mode === 'dark' || 
+                          (localSettings.theme_mode === 'auto' && resolvedTheme === 'dark');
+                        const preview = isDark ? theme.darkPreview : theme.lightPreview;
+                        return (
+                          <SelectItem key={theme.id} value={theme.id}>
+                            <div className="flex items-center gap-2">
+                              <div className="flex gap-0.5">
+                                <div 
+                                  className="w-3 h-3 rounded-full border border-border/50" 
+                                  style={{ backgroundColor: `hsl(${preview.bg})` }} 
+                                />
+                                <div 
+                                  className="w-3 h-3 rounded-full border border-border/50" 
+                                  style={{ backgroundColor: `hsl(${preview.accent})` }} 
+                                />
+                              </div>
+                              {theme.name}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                       <SelectItem value="custom">Custom Colors</SelectItem>
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
-                    Select a brand-aligned preset or choose custom to define your own colors
+                    Uses the same themes as your dashboard
                   </p>
                 </div>
 
@@ -380,14 +515,81 @@ export function KioskSettingsContent() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="logo-url">Logo URL</Label>
-                  <Input
-                    id="logo-url"
-                    value={localSettings.logo_url || ''}
-                    onChange={(e) => updateField('logo_url', e.target.value || null)}
-                    placeholder="https://..."
-                  />
+                {/* Logo Selector */}
+                <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Image className="w-4 h-4 text-muted-foreground" />
+                    <Label className="text-sm font-medium">Logo</Label>
+                  </div>
+                  <Select 
+                    value={logoSource} 
+                    onValueChange={(v) => handleLogoSourceChange(v as LogoSource)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose logo source" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">
+                        <div className="flex flex-col">
+                          <span>Auto (based on mode)</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem 
+                        value="org-light" 
+                        disabled={!businessSettings?.logo_light_url}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>Organization Logo (Light)</span>
+                          {!businessSettings?.logo_light_url && (
+                            <span className="text-xs text-muted-foreground">(not uploaded)</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                      <SelectItem 
+                        value="org-dark" 
+                        disabled={!businessSettings?.logo_dark_url}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span>Organization Logo (Dark)</span>
+                          {!businessSettings?.logo_dark_url && (
+                            <span className="text-xs text-muted-foreground">(not uploaded)</span>
+                          )}
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="custom">Custom URL</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  
+                  {logoSource === 'auto' && (
+                    <p className="text-xs text-muted-foreground">
+                      Uses light logo for dark mode, dark logo for light mode
+                    </p>
+                  )}
+
+                  {logoSource === 'custom' && (
+                    <Input
+                      value={customLogoUrl}
+                      onChange={(e) => {
+                        setCustomLogoUrl(e.target.value);
+                        setLocalSettings(prev => ({ ...prev, logo_url: e.target.value || null }));
+                      }}
+                      placeholder="https://..."
+                    />
+                  )}
+
+                  {/* Logo preview */}
+                  {localSettings.logo_url && (
+                    <div className="flex justify-center p-4 rounded-xl bg-background border">
+                      <img 
+                        src={localSettings.logo_url} 
+                        alt="Logo preview" 
+                        className="h-12 w-auto object-contain"
+                        onError={(e) => { 
+                          (e.target as HTMLImageElement).style.display = 'none'; 
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 

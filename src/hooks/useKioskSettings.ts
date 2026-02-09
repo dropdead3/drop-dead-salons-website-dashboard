@@ -45,29 +45,8 @@ export interface KioskSettings {
   updated_at: string;
 }
 
-// Theme presets for kiosk branding
-export const KIOSK_THEME_PRESETS = {
-  cream: {
-    name: 'Cream (Light)',
-    background_color: '#F5F0E8',  // Warm cream
-    text_color: '#141414',        // Charcoal
-    accent_color: '#9A7B4F',      // Gold
-  },
-  'dark-luxury': {
-    name: 'Dark Luxury',
-    background_color: '#0A0A0A',  // Near black
-    text_color: '#F5F0E8',        // Cream
-    accent_color: '#C9A962',      // Bright gold
-  },
-  'oat-minimal': {
-    name: 'Oat Minimal',
-    background_color: '#E8E0D5',  // Warm oat
-    text_color: '#2D2D2D',        // Dark gray
-    accent_color: '#8B7355',      // Muted bronze
-  },
-} as const;
-
-export type KioskThemePreset = keyof typeof KIOSK_THEME_PRESETS;
+// Note: Kiosk theming now uses global colorThemes from useColorTheme.ts
+// The old KIOSK_THEME_PRESETS have been deprecated in favor of the unified theme system
 
 export const DEFAULT_KIOSK_SETTINGS: Omit<KioskSettings, 'id' | 'organization_id' | 'created_at' | 'updated_at'> = {
   location_id: null,

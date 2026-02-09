@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Settings, Lock, Eye, EyeOff, Check, Palette, Type, Clock, Users, Image, Loader2, Shield } from 'lucide-react';
+import { X, Settings, Lock, Eye, EyeOff, Check, Palette, Type, Clock, Image, Loader2, Shield, Sun, Moon, Monitor } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
-import { DEFAULT_KIOSK_SETTINGS, KIOSK_THEME_PRESETS, KioskThemePreset } from '@/hooks/useKioskSettings';
+import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { useKioskValidatePin, useKioskSaveSettings } from '@/hooks/useKioskPinValidation';
+import { colorThemes, ColorTheme } from '@/hooks/useColorTheme';
+import { hslToHex } from '@/lib/colorUtils';
 import { toast } from 'sonner';
 
 interface KioskSettingsDialogProps {
@@ -14,9 +16,63 @@ interface KioskSettingsDialogProps {
 const PIN_TIMEOUT_SECONDS = 10;
 
 type SettingsTab = 'appearance' | 'content' | 'behavior';
+type LogoSource = 'auto' | 'org-light' | 'org-dark' | 'custom';
+
+// Convert global theme to kiosk colors
+function convertGlobalThemeToKioskColors(
+  theme: ColorTheme, 
+  isDark: boolean
+): { background_color: string; text_color: string; accent_color: string } {
+  const themeData = colorThemes.find(t => t.id === theme);
+  const preview = isDark ? themeData?.darkPreview : themeData?.lightPreview;
+  
+  return {
+    background_color: hslToHex(preview?.bg || '40 30% 96%'),
+    text_color: hslToHex(preview?.primary || '0 0% 8%'),
+    accent_color: hslToHex(preview?.accent || '35 35% 82%'),
+  };
+}
+
+// Detect which global theme matches the current colors
+function detectGlobalTheme(
+  bg: string, 
+  text: string, 
+  accent: string
+): ColorTheme | 'custom' {
+  for (const theme of colorThemes) {
+    // Check light preview
+    const lightColors = {
+      background_color: hslToHex(theme.lightPreview.bg),
+      text_color: hslToHex(theme.lightPreview.primary),
+      accent_color: hslToHex(theme.lightPreview.accent),
+    };
+    if (
+      lightColors.background_color.toLowerCase() === bg.toLowerCase() &&
+      lightColors.text_color.toLowerCase() === text.toLowerCase() &&
+      lightColors.accent_color.toLowerCase() === accent.toLowerCase()
+    ) {
+      return theme.id;
+    }
+    
+    // Check dark preview
+    const darkColors = {
+      background_color: hslToHex(theme.darkPreview.bg),
+      text_color: hslToHex(theme.darkPreview.primary),
+      accent_color: hslToHex(theme.darkPreview.accent),
+    };
+    if (
+      darkColors.background_color.toLowerCase() === bg.toLowerCase() &&
+      darkColors.text_color.toLowerCase() === text.toLowerCase() &&
+      darkColors.accent_color.toLowerCase() === accent.toLowerCase()
+    ) {
+      return theme.id;
+    }
+  }
+  return 'custom';
+}
 
 export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProps) {
-  const { settings, organizationId, locationId } = useKiosk();
+  const { settings, businessSettings, organizationId, locationId } = useKiosk();
   const saveSettings = useKioskSaveSettings();
   
   // Use configured accent color from kiosk settings
@@ -34,6 +90,10 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
   const [timeRemaining, setTimeRemaining] = useState(PIN_TIMEOUT_SECONDS);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Logo source state
+  const [logoSource, setLogoSource] = useState<LogoSource>('auto');
+  const [customLogoUrl, setCustomLogoUrl] = useState<string>('');
   
   // Refs to track latest state values - updated SYNCHRONOUSLY during render
   const isOpenRef = useRef(isOpen);
@@ -171,6 +231,7 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
     background_color: settings?.background_color || DEFAULT_KIOSK_SETTINGS.background_color,
     accent_color: settings?.accent_color || DEFAULT_KIOSK_SETTINGS.accent_color,
     text_color: settings?.text_color || DEFAULT_KIOSK_SETTINGS.text_color,
+    theme_mode: settings?.theme_mode || DEFAULT_KIOSK_SETTINGS.theme_mode,
     idle_timeout_seconds: settings?.idle_timeout_seconds || DEFAULT_KIOSK_SETTINGS.idle_timeout_seconds,
     enable_walk_ins: settings?.enable_walk_ins ?? DEFAULT_KIOSK_SETTINGS.enable_walk_ins,
     show_stylist_photo: settings?.show_stylist_photo ?? DEFAULT_KIOSK_SETTINGS.show_stylist_photo,
@@ -184,47 +245,80 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
     exit_pin: settings?.exit_pin || DEFAULT_KIOSK_SETTINGS.exit_pin,
   });
 
-  // Theme preset state
-  const [themePreset, setThemePreset] = useState<KioskThemePreset | 'custom'>('cream');
-
-  // Detect current preset from colors
-  const detectPreset = useCallback((bg: string, text: string, accent: string): KioskThemePreset | 'custom' => {
-    for (const [key, preset] of Object.entries(KIOSK_THEME_PRESETS)) {
-      if (
-        preset.background_color.toLowerCase() === bg.toLowerCase() &&
-        preset.text_color.toLowerCase() === text.toLowerCase() &&
-        preset.accent_color.toLowerCase() === accent.toLowerCase()
-      ) {
-        return key as KioskThemePreset;
-      }
-    }
-    return 'custom';
-  }, []);
+  // Theme preset state - now uses global themes
+  const [themePreset, setThemePreset] = useState<ColorTheme | 'custom'>('cream');
 
   // Apply preset colors
-  const applyPreset = (preset: KioskThemePreset | 'custom') => {
+  const applyPreset = (preset: ColorTheme | 'custom') => {
     setThemePreset(preset);
-    if (preset !== 'custom' && KIOSK_THEME_PRESETS[preset]) {
-      const { background_color, text_color, accent_color } = KIOSK_THEME_PRESETS[preset];
+    if (preset !== 'custom') {
+      const isDark = localSettings.theme_mode === 'dark' || 
+        (localSettings.theme_mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      const colors = convertGlobalThemeToKioskColors(preset, isDark);
       setLocalSettings(prev => ({
         ...prev,
-        background_color,
-        text_color,
-        accent_color,
+        ...colors,
       }));
+    }
+  };
+
+  // Detect logo source from logo_url
+  const detectLogoSource = useCallback((logoUrl: string | null): LogoSource => {
+    if (!logoUrl) return 'auto';
+    if (businessSettings?.logo_light_url && logoUrl === businessSettings.logo_light_url) return 'org-light';
+    if (businessSettings?.logo_dark_url && logoUrl === businessSettings.logo_dark_url) return 'org-dark';
+    if (logoUrl) return 'custom';
+    return 'auto';
+  }, [businessSettings]);
+
+  // Handle logo source change
+  const handleLogoSourceChange = (source: LogoSource) => {
+    setLogoSource(source);
+    switch (source) {
+      case 'auto':
+        setLocalSettings(prev => ({ ...prev, logo_url: null }));
+        break;
+      case 'org-light':
+        setLocalSettings(prev => ({ ...prev, logo_url: businessSettings?.logo_light_url || null }));
+        break;
+      case 'org-dark':
+        setLocalSettings(prev => ({ ...prev, logo_url: businessSettings?.logo_dark_url || null }));
+        break;
+      case 'custom':
+        setLocalSettings(prev => ({ ...prev, logo_url: customLogoUrl || null }));
+        break;
     }
   };
 
   // Sync theme preset when settings load
   useEffect(() => {
     if (settings) {
-      setThemePreset(detectPreset(
+      setThemePreset(detectGlobalTheme(
         settings.background_color,
         settings.text_color,
         settings.accent_color
       ));
+      // Detect logo source
+      const source = detectLogoSource(settings.logo_url);
+      setLogoSource(source);
+      if (source === 'custom' && settings.logo_url) {
+        setCustomLogoUrl(settings.logo_url);
+      }
     }
-  }, [settings, detectPreset]);
+  }, [settings, detectLogoSource]);
+
+  // Update colors when theme_mode changes and using a preset
+  useEffect(() => {
+    if (themePreset !== 'custom') {
+      const isDark = localSettings.theme_mode === 'dark' || 
+        (localSettings.theme_mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      const colors = convertGlobalThemeToKioskColors(themePreset, isDark);
+      setLocalSettings(prev => ({
+        ...prev,
+        ...colors,
+      }));
+    }
+  }, [localSettings.theme_mode, themePreset]);
 
   const handlePinSubmit = async () => {
     if (pinInput.length < 4 || isValidating) return;
@@ -546,28 +640,70 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                 <div className="space-y-6">
                   {activeTab === 'appearance' && (
                     <>
-                      {/* Theme Preset Selector */}
-                      <SettingGroup title="Theme Preset">
-                        <div className="grid grid-cols-2 gap-2">
-                          {Object.entries(KIOSK_THEME_PRESETS).map(([key, preset]) => (
+                      {/* Mode Selector */}
+                      <SettingGroup title="Display Mode">
+                        <div className="grid grid-cols-3 gap-2">
+                          {(['light', 'dark', 'auto'] as const).map((mode) => (
                             <motion.button
-                              key={key}
-                              className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
-                                themePreset === key 
+                              key={mode}
+                              className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
+                                localSettings.theme_mode === mode 
                                   ? 'border-2' 
                                   : 'border-white/10 hover:border-white/20'
                               }`}
-                              style={themePreset === key ? { borderColor: accentColor } : undefined}
-                              onClick={() => applyPreset(key as KioskThemePreset)}
+                              style={localSettings.theme_mode === mode ? { borderColor: accentColor } : undefined}
+                              onClick={() => updateLocalSetting('theme_mode', mode)}
                               whileTap={{ scale: 0.98 }}
                             >
-                              <div className="flex gap-1">
-                                <div className="w-4 h-4 rounded-full border border-white/20" style={{ backgroundColor: preset.background_color }} />
-                                <div className="w-4 h-4 rounded-full border border-white/20" style={{ backgroundColor: preset.accent_color }} />
-                              </div>
-                              <span className="text-sm text-white/80">{preset.name}</span>
+                              {mode === 'light' && <Sun className="w-4 h-4 text-white/80" />}
+                              {mode === 'dark' && <Moon className="w-4 h-4 text-white/80" />}
+                              {mode === 'auto' && <Monitor className="w-4 h-4 text-white/80" />}
+                              <span className="text-sm text-white/80 capitalize">{mode}</span>
                             </motion.button>
                           ))}
+                        </div>
+                        <p className="text-xs text-white/40 mt-2">
+                          {localSettings.theme_mode === 'auto' 
+                            ? 'Follows device system preference' 
+                            : localSettings.theme_mode === 'dark'
+                            ? 'Always display in dark mode'
+                            : 'Always display in light mode'}
+                        </p>
+                      </SettingGroup>
+
+                      {/* Theme Preset Selector - now uses global themes */}
+                      <SettingGroup title="Color Theme">
+                        <div className="grid grid-cols-2 gap-2">
+                          {colorThemes.map((theme) => {
+                            const isDark = localSettings.theme_mode === 'dark' || 
+                              (localSettings.theme_mode === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                            const preview = isDark ? theme.darkPreview : theme.lightPreview;
+                            return (
+                              <motion.button
+                                key={theme.id}
+                                className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
+                                  themePreset === theme.id 
+                                    ? 'border-2' 
+                                    : 'border-white/10 hover:border-white/20'
+                                }`}
+                                style={themePreset === theme.id ? { borderColor: accentColor } : undefined}
+                                onClick={() => applyPreset(theme.id)}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <div className="flex gap-1">
+                                  <div 
+                                    className="w-4 h-4 rounded-full border border-white/20" 
+                                    style={{ backgroundColor: `hsl(${preview.bg})` }} 
+                                  />
+                                  <div 
+                                    className="w-4 h-4 rounded-full border border-white/20" 
+                                    style={{ backgroundColor: `hsl(${preview.accent})` }} 
+                                  />
+                                </div>
+                                <span className="text-sm text-white/80">{theme.name}</span>
+                              </motion.button>
+                            );
+                          })}
                           <motion.button
                             className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
                               themePreset === 'custom' 
@@ -582,6 +718,9 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                             <span className="text-sm text-white/80">Custom</span>
                           </motion.button>
                         </div>
+                        <p className="text-xs text-white/40 mt-2">
+                          Uses the same themes as your dashboard
+                        </p>
                       </SettingGroup>
 
                       <SettingGroup title="Colors">
@@ -635,25 +774,97 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                         </div>
                       </SettingGroup>
 
-                      {/* Logo URL */}
+                      {/* Logo Selector */}
                       <SettingGroup title="Logo">
-                        <TextSetting
-                          label="Logo URL"
-                          value={localSettings.logo_url || ''}
-                          onChange={(v) => updateLocalSetting('logo_url', v || null)}
-                          placeholder="https://..."
-                          accentColor={accentColor}
-                        />
-                        {localSettings.logo_url && (
-                          <div className="flex justify-center mt-3 p-4 rounded-xl bg-white/5">
-                            <img 
-                              src={localSettings.logo_url} 
-                              alt="Logo preview" 
-                              className="h-12 w-auto object-contain"
-                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                            />
+                        <div className="space-y-3">
+                          <div className="grid grid-cols-2 gap-2">
+                            <motion.button
+                              className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
+                                logoSource === 'auto' 
+                                  ? 'border-2' 
+                                  : 'border-white/10 hover:border-white/20'
+                              }`}
+                              style={logoSource === 'auto' ? { borderColor: accentColor } : undefined}
+                              onClick={() => handleLogoSourceChange('auto')}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <Image className="w-4 h-4 text-white/60" />
+                              <span className="text-sm text-white/80">Auto</span>
+                            </motion.button>
+                            <motion.button
+                              className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
+                                logoSource === 'org-light' 
+                                  ? 'border-2' 
+                                  : 'border-white/10 hover:border-white/20'
+                              } ${!businessSettings?.logo_light_url ? 'opacity-50' : ''}`}
+                              style={logoSource === 'org-light' ? { borderColor: accentColor } : undefined}
+                              onClick={() => handleLogoSourceChange('org-light')}
+                              whileTap={{ scale: 0.98 }}
+                              disabled={!businessSettings?.logo_light_url}
+                            >
+                              <Sun className="w-4 h-4 text-white/60" />
+                              <span className="text-sm text-white/80">Light Logo</span>
+                            </motion.button>
+                            <motion.button
+                              className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
+                                logoSource === 'org-dark' 
+                                  ? 'border-2' 
+                                  : 'border-white/10 hover:border-white/20'
+                              } ${!businessSettings?.logo_dark_url ? 'opacity-50' : ''}`}
+                              style={logoSource === 'org-dark' ? { borderColor: accentColor } : undefined}
+                              onClick={() => handleLogoSourceChange('org-dark')}
+                              whileTap={{ scale: 0.98 }}
+                              disabled={!businessSettings?.logo_dark_url}
+                            >
+                              <Moon className="w-4 h-4 text-white/60" />
+                              <span className="text-sm text-white/80">Dark Logo</span>
+                            </motion.button>
+                            <motion.button
+                              className={`flex items-center gap-2 px-4 py-3 rounded-xl border transition-colors ${
+                                logoSource === 'custom' 
+                                  ? 'border-2' 
+                                  : 'border-white/10 hover:border-white/20'
+                              }`}
+                              style={logoSource === 'custom' ? { borderColor: accentColor } : undefined}
+                              onClick={() => handleLogoSourceChange('custom')}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <Palette className="w-4 h-4 text-white/60" />
+                              <span className="text-sm text-white/80">Custom URL</span>
+                            </motion.button>
                           </div>
-                        )}
+
+                          {logoSource === 'auto' && (
+                            <p className="text-xs text-white/40">
+                              Uses light logo for dark mode, dark logo for light mode
+                            </p>
+                          )}
+
+                          {logoSource === 'custom' && (
+                            <TextSetting
+                              label="Custom Logo URL"
+                              value={customLogoUrl}
+                              onChange={(v) => {
+                                setCustomLogoUrl(v);
+                                setLocalSettings(prev => ({ ...prev, logo_url: v || null }));
+                              }}
+                              placeholder="https://..."
+                              accentColor={accentColor}
+                            />
+                          )}
+
+                          {/* Logo preview */}
+                          {localSettings.logo_url && (
+                            <div className="flex justify-center p-4 rounded-xl bg-white/5">
+                              <img 
+                                src={localSettings.logo_url} 
+                                alt="Logo preview" 
+                                className="h-12 w-auto object-contain"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </SettingGroup>
                     </>
                   )}
