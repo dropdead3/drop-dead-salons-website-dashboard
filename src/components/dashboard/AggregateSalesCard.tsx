@@ -558,7 +558,7 @@ export function AggregateSalesCard({
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/50">
-                    <TableHead className="font-display text-xs">
+                    <TableHead className="font-sans text-xs">
                       <button 
                         onClick={() => handleLocationSort('name')}
                         className="flex items-center gap-1 hover:text-foreground transition-colors"
@@ -566,7 +566,7 @@ export function AggregateSalesCard({
                         Location {getLocationSortIcon('name')}
                       </button>
                     </TableHead>
-                    <TableHead className="font-display text-xs text-center">
+                    <TableHead className="font-sans text-xs text-center">
                       <button 
                         onClick={() => handleLocationSort('totalRevenue')}
                         className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
@@ -574,8 +574,8 @@ export function AggregateSalesCard({
                         Revenue {getLocationSortIcon('totalRevenue')}
                       </button>
                     </TableHead>
-                    <TableHead className="font-display text-xs text-center hidden md:table-cell w-[120px]">Trend</TableHead>
-                    <TableHead className="font-display text-xs text-center hidden sm:table-cell">
+                    <TableHead className="font-sans text-xs text-center hidden md:table-cell w-[120px]">Trend</TableHead>
+                    <TableHead className="font-sans text-xs text-center hidden sm:table-cell">
                       <button 
                         onClick={() => handleLocationSort('serviceRevenue')}
                         className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
@@ -583,7 +583,7 @@ export function AggregateSalesCard({
                         Services {getLocationSortIcon('serviceRevenue')}
                       </button>
                     </TableHead>
-                    <TableHead className="font-display text-xs text-center hidden sm:table-cell">
+                    <TableHead className="font-sans text-xs text-center hidden sm:table-cell">
                       <button 
                         onClick={() => handleLocationSort('productRevenue')}
                         className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
@@ -591,7 +591,7 @@ export function AggregateSalesCard({
                         Products {getLocationSortIcon('productRevenue')}
                       </button>
                     </TableHead>
-                    <TableHead className="font-display text-xs text-center hidden md:table-cell">
+                    <TableHead className="font-sans text-xs text-center hidden md:table-cell">
                       <button 
                         onClick={() => handleLocationSort('totalTransactions')}
                         className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
@@ -599,7 +599,7 @@ export function AggregateSalesCard({
                         Transactions {getLocationSortIcon('totalTransactions')}
                       </button>
                     </TableHead>
-                    <TableHead className="font-display text-xs text-center">
+                    <TableHead className="font-sans text-xs text-center">
                       <button 
                         onClick={() => handleLocationSort('avgTicket')}
                         className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
@@ -627,7 +627,7 @@ export function AggregateSalesCard({
                             <span className="truncate">{location.name}</span>
                           </div>
                         </TableCell>
-                        <TableCell className="text-center font-display">
+                        <TableCell className="text-center tabular-nums">
                           <BlurredAmount>${location.totalRevenue.toLocaleString()}</BlurredAmount>
                         </TableCell>
                         <TableCell className="text-center hidden md:table-cell">
@@ -648,7 +648,7 @@ export function AggregateSalesCard({
                         <TableCell className="text-center hidden md:table-cell">
                           <BlurredAmount>{location.totalTransactions}</BlurredAmount>
                         </TableCell>
-                        <TableCell className="text-center font-display">
+                        <TableCell className="text-center tabular-nums">
                           <BlurredAmount>${isFinite(avgTicket) ? Math.round(avgTicket) : 0}</BlurredAmount>
                         </TableCell>
                         <TableCell>
