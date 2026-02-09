@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save, Palette, Sun, Moon, Monitor, Image, Smartphone, Tablet } from 'lucide-react';
+import { Loader2, Save, Palette, Sun, Moon, Monitor, Image, Smartphone, Tablet, Upload, RotateCcw, Pencil } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,12 +7,18 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LocationSelect } from '@/components/ui/location-select';
 import { KioskPreviewPanel } from './KioskPreviewPanel';
 import { KioskDeployCard } from './KioskDeployCard';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/useLocations';
-import { useKioskSettings, useUpdateKioskSettings, DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
+import { 
+  useKioskSettings, 
+  useUpdateKioskSettings, 
+  useLocationKioskOverrides,
+  usePushDefaultsToAllLocations,
+  useResetLocationToDefaults,
+  DEFAULT_KIOSK_SETTINGS 
+} from '@/hooks/useKioskSettings';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { colorThemes, ColorTheme } from '@/hooks/useColorTheme';
@@ -20,6 +26,18 @@ import { hslToHex } from '@/lib/colorUtils';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
+import { MapPin } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 // Logo source options
 type LogoSource = 'auto' | 'org-light' | 'org-dark' | 'custom';
@@ -131,6 +149,12 @@ export function KioskSettingsContent() {
 
   const { data: kioskSettings, isLoading } = useKioskSettings(orgId || undefined, locationId || undefined);
   const updateSettings = useUpdateKioskSettings();
+  const { data: locationOverrides = [] } = useLocationKioskOverrides(orgId || undefined);
+  const pushToAll = usePushDefaultsToAllLocations();
+  const resetToDefaults = useResetLocationToDefaults();
+
+  // Check if current location has custom override
+  const hasCustomOverride = locationId ? locationOverrides.includes(locationId) : false;
 
   // Apply a theme preset
   const applyPreset = (preset: ColorTheme | 'custom') => {
@@ -301,6 +325,16 @@ export function KioskSettingsContent() {
     );
   }
 
+  const handlePushToAll = () => {
+    if (!orgId) return;
+    pushToAll.mutate(orgId);
+  };
+
+  const handleResetToDefaults = () => {
+    if (!orgId || !locationId) return;
+    resetToDefaults.mutate({ organizationId: orgId, locationId });
+  };
+
   return (
     <div className="space-y-6">
       {/* Location Selector */}
@@ -312,13 +346,43 @@ export function KioskSettingsContent() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <LocationSelect
-            value={selectedLocation}
-            onValueChange={setSelectedLocation}
-            includeAll
-            allLabel="Organization Defaults"
-            triggerClassName="max-w-sm"
-          />
+          {/* Custom location selector with override indicators */}
+          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+            <SelectTrigger className="max-w-sm">
+              <MapPin className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="Select location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                <span className="flex items-center gap-2">
+                  <span>Organization Defaults</span>
+                </span>
+              </SelectItem>
+              {locations.map(loc => {
+                const hasOverride = locationOverrides.includes(loc.id);
+                return (
+                  <SelectItem key={loc.id} value={loc.id}>
+                    <span className="flex items-center gap-2">
+                      <span>{loc.name}</span>
+                      {hasOverride && (
+                        <span className="inline-flex items-center gap-1 text-xs text-warning">
+                          <Pencil className="w-3 h-3" />
+                          Customized
+                        </span>
+                      )}
+                    </span>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          
+          {/* Show override count info */}
+          {locationOverrides.length > 0 && (
+            <p className="text-xs text-muted-foreground mt-2">
+              {locationOverrides.length} location{locationOverrides.length > 1 ? 's have' : ' has'} custom settings
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -826,7 +890,7 @@ export function KioskSettingsContent() {
             </Tabs>
 
             {/* Save button */}
-            <div className="pt-6 border-t mt-6">
+            <div className="pt-6 border-t mt-6 space-y-3">
               <Button 
                 onClick={handleSave} 
                 disabled={updateSettings.isPending}
@@ -837,8 +901,78 @@ export function KioskSettingsContent() {
                 ) : (
                   <Save className="w-4 h-4 mr-2" />
                 )}
-                Save Kiosk Settings
+                Save {selectedLocation === 'all' ? 'Organization Defaults' : 'Location Settings'}
               </Button>
+
+              {/* Push to All Locations - only show when editing org defaults */}
+              {selectedLocation === 'all' && locationOverrides.length > 0 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      disabled={pushToAll.isPending}
+                    >
+                      {pushToAll.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <Upload className="w-4 h-4 mr-2" />
+                      )}
+                      Push Defaults to All Locations
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Push to All Locations?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will remove all {locationOverrides.length} location-specific customization{locationOverrides.length > 1 ? 's' : ''}. 
+                        All locations will inherit from the organization defaults.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handlePushToAll}>
+                        Yes, Push to All
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+
+              {/* Reset to Defaults - only show when editing a specific location with overrides */}
+              {locationId && hasCustomOverride && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full"
+                      disabled={resetToDefaults.isPending}
+                    >
+                      {resetToDefaults.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <RotateCcw className="w-4 h-4 mr-2" />
+                      )}
+                      Reset to Organization Defaults
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Reset to Defaults?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will remove custom settings for "{selectedLocationData?.name}". 
+                        This location will inherit from the organization defaults.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleResetToDefaults}>
+                        Yes, Reset to Defaults
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
             </div>
           </CardContent>
         </Card>

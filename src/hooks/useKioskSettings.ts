@@ -176,13 +176,20 @@ export function useUpdateKioskSettings() {
       locationId?: string | null;
       settings: Partial<Omit<KioskSettings, 'id' | 'organization_id' | 'created_at' | 'updated_at'>>;
     }) => {
-      // Check if settings exist
-      const { data: existing } = await supabase
+      // Check if settings exist - use proper NULL handling
+      let query = supabase
         .from('organization_kiosk_settings')
         .select('id')
-        .eq('organization_id', organizationId)
-        .eq('location_id', locationId ?? null)
-        .maybeSingle();
+        .eq('organization_id', organizationId);
+      
+      // Use .is() for NULL, .eq() for actual values
+      if (locationId) {
+        query = query.eq('location_id', locationId);
+      } else {
+        query = query.is('location_id', null);
+      }
+
+      const { data: existing } = await query.maybeSingle();
 
       if (existing) {
         // Update
@@ -230,11 +237,91 @@ export function useUpdateKioskSettings() {
         exact: false,
       });
       
+      // Invalidate overrides query
+      queryClient.invalidateQueries({
+        queryKey: ['kiosk-location-overrides'],
+      });
+      
       toast.success('Changes saved successfully');
     },
     onError: (error) => {
       console.error('Failed to save kiosk settings:', error);
       toast.error('Failed to save kiosk settings');
+    },
+  });
+}
+
+// Hook to get which locations have custom overrides
+export function useLocationKioskOverrides(organizationId?: string) {
+  return useQuery({
+    queryKey: ['kiosk-location-overrides', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return [];
+      
+      const { data, error } = await supabase
+        .from('organization_kiosk_settings')
+        .select('location_id')
+        .eq('organization_id', organizationId)
+        .not('location_id', 'is', null);
+      
+      if (error) throw error;
+      return data.map(row => row.location_id).filter(Boolean) as string[];
+    },
+    enabled: !!organizationId,
+  });
+}
+
+// Hook to push organization defaults to all locations (removes all overrides)
+export function usePushDefaultsToAllLocations() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (organizationId: string) => {
+      // Delete all location-specific settings
+      const { error } = await supabase
+        .from('organization_kiosk_settings')
+        .delete()
+        .eq('organization_id', organizationId)
+        .not('location_id', 'is', null);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['kiosk-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['kiosk-settings-location'] });
+      queryClient.invalidateQueries({ queryKey: ['kiosk-location-overrides'] });
+      toast.success('Defaults pushed to all locations');
+    },
+    onError: (error) => {
+      console.error('Failed to push defaults:', error);
+      toast.error('Failed to push defaults to locations');
+    },
+  });
+}
+
+// Hook to reset a single location to organization defaults
+export function useResetLocationToDefaults() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ organizationId, locationId }: { organizationId: string; locationId: string }) => {
+      const { error } = await supabase
+        .from('organization_kiosk_settings')
+        .delete()
+        .eq('organization_id', organizationId)
+        .eq('location_id', locationId);
+      
+      if (error) throw error;
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['kiosk-settings'] });
+      queryClient.invalidateQueries({ queryKey: ['kiosk-settings-location', vars.locationId] });
+      queryClient.invalidateQueries({ queryKey: ['kiosk-location-overrides'] });
+      toast.success('Location reset to organization defaults');
+    },
+    onError: (error) => {
+      console.error('Failed to reset location:', error);
+      toast.error('Failed to reset location to defaults');
     },
   });
 }
