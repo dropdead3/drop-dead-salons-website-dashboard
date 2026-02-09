@@ -20,6 +20,7 @@ import { cn, formatFullDisplayName } from '@/lib/utils';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useStrikeCounts } from '@/hooks/useStaffStrikes';
+import { ResponsibilityBadges } from '@/components/access-hub/ResponsibilityBadges';
 
 const roleLabels: Record<string, string> = {
   super_admin: 'Super Admin',
@@ -896,6 +897,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                     {primaryRole.label}
                   </Badge>
                 )}
+                <ResponsibilityBadges userId={member.user_id} size="sm" />
                 {hasSchedules && (
                   <HoverCard openDelay={100} closeDelay={50}>
                     <HoverCardTrigger asChild>

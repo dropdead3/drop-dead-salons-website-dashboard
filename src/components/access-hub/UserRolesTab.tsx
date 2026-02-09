@@ -17,7 +17,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, Search, User, Crown, AlertTriangle, Lock, Users } from 'lucide-react';
+import { Loader2, Search, User, Crown, AlertTriangle, Lock, Users, Award } from 'lucide-react';
+import { ResponsibilityBadges } from './ResponsibilityBadges';
+import { AssignResponsibilityDialog } from './AssignResponsibilityDialog';
 import { useAllUsersWithRoles, useToggleUserRole } from '@/hooks/useUserRoles';
 import { useRoles } from '@/hooks/useRoles';
 import { getRoleColorClasses } from '@/components/dashboard/RoleColorPicker';
@@ -71,7 +73,10 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
     userName: string;
     isSuperAdmin: boolean;
   } | null>(null);
-  
+  const [responsibilityDialog, setResponsibilityDialog] = useState<{
+    userId: string;
+    userName: string;
+  } | null>(null);
   const { data: users = [], isLoading } = useAllUsersWithRoles();
   const { data: accounts } = useAccountApprovals();
   const { data: canApproveAdmin } = useCanApproveAdmin();
@@ -336,7 +341,21 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                                 </Badge>
                               );
                             })}
+                          <ResponsibilityBadges userId={user.user_id} />
                         </div>
+                      )}
+                      
+                      {/* Assign Responsibilities Button */}
+                      {canManage && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs gap-1 mt-1"
+                          onClick={() => setResponsibilityDialog({ userId: user.user_id, userName: user.display_name || user.full_name })}
+                        >
+                          <Award className="h-3 w-3" />
+                          Responsibilities
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -490,6 +509,16 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Assign Responsibility Dialog */}
+      {responsibilityDialog && (
+        <AssignResponsibilityDialog
+          open={!!responsibilityDialog}
+          onOpenChange={(open) => !open && setResponsibilityDialog(null)}
+          userId={responsibilityDialog.userId}
+          userName={responsibilityDialog.userName}
+        />
+      )}
     </div>
   );
 }
