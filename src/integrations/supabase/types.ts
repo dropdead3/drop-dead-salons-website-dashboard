@@ -4024,6 +4024,63 @@ export type Database = {
           },
         ]
       }
+      employee_pto_balances: {
+        Row: {
+          accrued_ytd: number
+          carried_over: number
+          created_at: string
+          current_balance: number
+          id: string
+          last_accrual_date: string | null
+          organization_id: string
+          policy_id: string
+          updated_at: string
+          used_ytd: number
+          user_id: string
+        }
+        Insert: {
+          accrued_ytd?: number
+          carried_over?: number
+          created_at?: string
+          current_balance?: number
+          id?: string
+          last_accrual_date?: string | null
+          organization_id: string
+          policy_id: string
+          updated_at?: string
+          used_ytd?: number
+          user_id: string
+        }
+        Update: {
+          accrued_ytd?: number
+          carried_over?: number
+          created_at?: string
+          current_balance?: number
+          id?: string
+          last_accrual_date?: string | null
+          organization_id?: string
+          policy_id?: string
+          updated_at?: string
+          used_ytd?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_pto_balances_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_pto_balances_policy_id_fkey"
+            columns: ["policy_id"]
+            isOneToOne: false
+            referencedRelation: "pto_policies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feature_catalog: {
         Row: {
           category: string
@@ -5082,6 +5139,71 @@ export type Database = {
           },
           {
             foreignKeyName: "imported_staff_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incident_reports: {
+        Row: {
+          corrective_action: string | null
+          created_at: string
+          description: string
+          id: string
+          incident_date: string
+          incident_type: string
+          involved_user_id: string | null
+          location_id: string | null
+          organization_id: string
+          reported_by: string
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+          updated_at: string
+          witnesses: string | null
+        }
+        Insert: {
+          corrective_action?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          incident_date?: string
+          incident_type?: string
+          involved_user_id?: string | null
+          location_id?: string | null
+          organization_id: string
+          reported_by: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+          witnesses?: string | null
+        }
+        Update: {
+          corrective_action?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          incident_date?: string
+          incident_type?: string
+          involved_user_id?: string | null
+          location_id?: string | null
+          organization_id?: string
+          reported_by?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+          witnesses?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_reports_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -7517,6 +7639,77 @@ export type Database = {
           },
         ]
       }
+      performance_reviews: {
+        Row: {
+          acknowledged_at: string | null
+          areas_for_improvement: string | null
+          completed_at: string | null
+          created_at: string
+          employee_notes: string | null
+          goals_summary: string | null
+          id: string
+          organization_id: string
+          overall_rating: number | null
+          review_period_end: string | null
+          review_period_start: string | null
+          review_type: string
+          reviewer_id: string
+          reviewer_notes: string | null
+          status: string
+          strengths: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          areas_for_improvement?: string | null
+          completed_at?: string | null
+          created_at?: string
+          employee_notes?: string | null
+          goals_summary?: string | null
+          id?: string
+          organization_id: string
+          overall_rating?: number | null
+          review_period_end?: string | null
+          review_period_start?: string | null
+          review_type?: string
+          reviewer_id: string
+          reviewer_notes?: string | null
+          status?: string
+          strengths?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          areas_for_improvement?: string | null
+          completed_at?: string | null
+          created_at?: string
+          employee_notes?: string | null
+          goals_summary?: string | null
+          id?: string
+          organization_id?: string
+          overall_rating?: number | null
+          review_period_end?: string | null
+          review_period_start?: string | null
+          review_type?: string
+          reviewer_id?: string
+          reviewer_notes?: string | null
+          status?: string
+          strengths?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_reviews_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       permissions: {
         Row: {
           category: string
@@ -9471,6 +9664,56 @@ export type Database = {
           },
         ]
       }
+      pto_policies: {
+        Row: {
+          accrual_period: string
+          accrual_rate: number
+          carry_over_limit: number | null
+          created_at: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          max_balance: number | null
+          name: string
+          organization_id: string
+          updated_at: string
+        }
+        Insert: {
+          accrual_period?: string
+          accrual_rate?: number
+          carry_over_limit?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          max_balance?: number | null
+          name: string
+          organization_id: string
+          updated_at?: string
+        }
+        Update: {
+          accrual_period?: string
+          accrual_rate?: number
+          carry_over_limit?: number | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          max_balance?: number | null
+          name?: string
+          organization_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pto_policies_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       push_subscriptions: {
         Row: {
           auth_key: string
@@ -10612,6 +10855,47 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      review_goals: {
+        Row: {
+          created_at: string
+          goal_text: string
+          id: string
+          progress_notes: string | null
+          review_id: string
+          status: string
+          target_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          goal_text: string
+          id?: string
+          progress_notes?: string | null
+          review_id: string
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          goal_text?: string
+          id?: string
+          progress_notes?: string | null
+          review_id?: string
+          status?: string
+          target_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_goals_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "performance_reviews"
             referencedColumns: ["id"]
           },
         ]
@@ -11772,6 +12056,65 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      staff_documents: {
+        Row: {
+          created_at: string
+          document_name: string
+          document_type: string
+          expiration_date: string | null
+          file_url: string | null
+          id: string
+          issued_date: string | null
+          license_number: string | null
+          notes: string | null
+          organization_id: string
+          reminded_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_name: string
+          document_type?: string
+          expiration_date?: string | null
+          file_url?: string | null
+          id?: string
+          issued_date?: string | null
+          license_number?: string | null
+          notes?: string | null
+          organization_id: string
+          reminded_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          document_name?: string
+          document_type?: string
+          expiration_date?: string | null
+          file_url?: string | null
+          id?: string
+          issued_date?: string | null
+          license_number?: string | null
+          notes?: string | null
+          organization_id?: string
+          reminded_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_documents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       staff_invitations: {
         Row: {
