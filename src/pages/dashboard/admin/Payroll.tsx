@@ -61,11 +61,22 @@ export default function Payroll() {
             title="Hiring & Payroll Hub"
             description="Hiring, analytics, forecasting, and compensation management for your team."
             actions={
-              !showWizard && activeTab !== 'hire' && (
-                <Button onClick={() => setShowWizard(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Run Payroll
-                </Button>
+              !showWizard && (
+                <div className="flex items-center gap-2">
+                  {activeTab !== 'hire' && (
+                    <Button onClick={() => setShowWizard(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Run Payroll
+                    </Button>
+                  )}
+                  <Button 
+                    variant={activeTab === 'hire' ? 'default' : 'outline'}
+                    onClick={() => handleTabChange('hire')}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    New Hire
+                  </Button>
+                </div>
               )
             }
           />
