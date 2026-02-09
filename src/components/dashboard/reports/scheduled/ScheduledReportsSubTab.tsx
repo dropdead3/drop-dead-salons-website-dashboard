@@ -1,0 +1,287 @@
+import { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { 
+  Calendar, 
+  Clock, 
+  Mail, 
+  Pause, 
+  Play, 
+  Trash2, 
+  Plus,
+  History,
+  FileText,
+  AlertCircle,
+  CheckCircle2
+} from 'lucide-react';
+import { format, formatDistanceToNow } from 'date-fns';
+import { 
+  useScheduledReports, 
+  useScheduledReportRuns,
+  useUpdateScheduledReport,
+  useDeleteScheduledReport,
+  type ScheduledReport 
+} from '@/hooks/useScheduledReports';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+
+function ScheduleTypeLabel({ type }: { type: string }) {
+  const labels: Record<string, string> = {
+    daily: 'Daily',
+    weekly: 'Weekly',
+    monthly: 'Monthly',
+    first_of_month: '1st of Month',
+    last_of_month: 'End of Month',
+  };
+  return <span>{labels[type] || type}</span>;
+}
+
+function StatusBadge({ isActive }: { isActive: boolean | null }) {
+  if (isActive) {
+    return (
+      <Badge variant="default" className="bg-chart-2/20 text-chart-2 border-chart-2/30">
+        <Play className="w-3 h-3 mr-1" />
+        Active
+      </Badge>
+    );
+  }
+  return (
+    <Badge variant="secondary">
+      <Pause className="w-3 h-3 mr-1" />
+      Paused
+    </Badge>
+  );
+}
+
+export function ScheduledReportsSubTab() {
+  const { data: reports, isLoading } = useScheduledReports();
+  const updateReport = useUpdateScheduledReport();
+  const deleteReport = useDeleteScheduledReport();
+  
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [historyReportId, setHistoryReportId] = useState<string | null>(null);
+  const { data: runHistory } = useScheduledReportRuns(historyReportId || undefined);
+
+  const handleToggleActive = (report: ScheduledReport) => {
+    updateReport.mutate({
+      id: report.id,
+      is_active: !report.is_active,
+    });
+  };
+
+  const handleDelete = () => {
+    if (deleteId) {
+      deleteReport.mutate(deleteId);
+      setDeleteId(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map(i => (
+          <Skeleton key={i} className="h-32 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  if (!reports || reports.length === 0) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center">
+          <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="font-medium text-lg mb-2">No Scheduled Reports</h3>
+          <p className="text-muted-foreground mb-4">
+            Create a scheduled report to automatically receive reports via email.
+          </p>
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Schedule a Report
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="text-lg font-medium">Scheduled Reports</h3>
+          <p className="text-sm text-muted-foreground">
+            {reports.length} report{reports.length !== 1 ? 's' : ''} configured
+          </p>
+        </div>
+        <Button>
+          <Plus className="w-4 h-4 mr-2" />
+          New Schedule
+        </Button>
+      </div>
+
+      <div className="space-y-4">
+        {reports.map((report) => (
+          <Card key={report.id} className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className="p-4 flex items-start gap-4">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <FileText className="w-5 h-5 text-primary" />
+                </div>
+                
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-medium truncate">{report.name}</h4>
+                    <StatusBadge isActive={report.is_active} />
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" />
+                      <ScheduleTypeLabel type={report.schedule_type} />
+                      {report.schedule_config?.timeUtc && ` at ${report.schedule_config.timeUtc} UTC`}
+                    </span>
+                    
+                    <span className="flex items-center gap-1">
+                      <Mail className="w-3.5 h-3.5" />
+                      {report.recipients?.length || 0} recipient{(report.recipients?.length || 0) !== 1 ? 's' : ''}
+                    </span>
+                    
+                    {report.format && (
+                      <Badge variant="outline" className="text-xs">
+                        {report.format.toUpperCase()}
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                    {report.last_run_at && (
+                      <span>
+                        Last run: {formatDistanceToNow(new Date(report.last_run_at), { addSuffix: true })}
+                      </span>
+                    )}
+                    {report.next_run_at && report.is_active && (
+                      <span>
+                        Next: {format(new Date(report.next_run_at), 'MMM d, yyyy h:mm a')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setHistoryReportId(report.id)}
+                  >
+                    <History className="w-4 h-4" />
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => handleToggleActive(report)}
+                    disabled={updateReport.isPending}
+                  >
+                    {report.is_active ? (
+                      <Pause className="w-4 h-4" />
+                    ) : (
+                      <Play className="w-4 h-4" />
+                    )}
+                  </Button>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setDeleteId(report.id)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Scheduled Report</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this scheduled report. Any pending deliveries will be cancelled.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Run History Sheet */}
+      <Sheet open={!!historyReportId} onOpenChange={() => setHistoryReportId(null)}>
+        <SheetContent className="sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Run History</SheetTitle>
+          </SheetHeader>
+          <div className="mt-6 space-y-3">
+            {runHistory?.length === 0 ? (
+              <p className="text-muted-foreground text-center py-8">
+                No runs yet
+              </p>
+            ) : (
+              runHistory?.map((run) => (
+                <div 
+                  key={run.id}
+                  className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30"
+                >
+                  {run.status === 'completed' ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  ) : run.status === 'failed' ? (
+                    <AlertCircle className="w-5 h-5 text-destructive" />
+                  ) : (
+                    <Clock className="w-5 h-5 text-muted-foreground" />
+                  )}
+                  <div className="flex-1">
+                    <p className="text-sm font-medium capitalize">{run.status}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {run.started_at && format(new Date(run.started_at), 'MMM d, yyyy h:mm a')}
+                    </p>
+                    {run.error_message && (
+                      <p className="text-xs text-destructive mt-1">{run.error_message}</p>
+                    )}
+                  </div>
+                  {run.recipient_count && (
+                    <Badge variant="outline" className="text-xs">
+                      {run.recipient_count} sent
+                    </Badge>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
+  );
+}

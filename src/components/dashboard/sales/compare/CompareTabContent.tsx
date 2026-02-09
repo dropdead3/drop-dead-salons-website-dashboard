@@ -13,6 +13,7 @@ import { ComparisonChart } from './ComparisonChart';
 import { ComparisonBreakdownTable } from './ComparisonBreakdownTable';
 import { LocationComparisonView } from './LocationComparisonView';
 import { CategoryComparisonTable } from './CategoryComparisonTable';
+import { WaterfallChart } from '@/components/dashboard/analytics/charts/WaterfallChart';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface CompareTabContentProps {
@@ -156,6 +157,19 @@ export function CompareTabContent({ filters, filterContext }: CompareTabContentP
         <>
           {/* Standard Results Grid */}
           <ComparisonResultsGrid data={data} isLoading={isLoading} />
+
+          {/* Waterfall Chart - shows revenue breakdown */}
+          {data?.waterfall && data.waterfall.length > 0 && (
+            <WaterfallChart
+              data={data.waterfall}
+              startValue={data.periodB.totalRevenue}
+              endValue={data.periodA.totalRevenue}
+              periodALabel={periodBLabel}
+              periodBLabel={periodALabel}
+              isLoading={isLoading}
+              title="Revenue Change Breakdown"
+            />
+          )}
 
           {/* Chart and Table */}
           <div className="grid lg:grid-cols-2 gap-6">

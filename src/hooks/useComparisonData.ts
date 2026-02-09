@@ -38,6 +38,19 @@ export interface CategoryBreakdown {
   changePercent: number;
 }
 
+export interface WaterfallItem {
+  category: string;
+  delta: number;
+  isIncrease: boolean;
+}
+
+export interface DailyOverlayPoint {
+  date: string;
+  periodA: number;
+  periodB: number;
+  delta: number;
+}
+
 export interface ComparisonResult {
   periodA: PeriodData;
   periodB: PeriodData;
@@ -51,6 +64,8 @@ export interface ComparisonResult {
   };
   locationBreakdown?: LocationBreakdown[];
   categoryBreakdown?: CategoryBreakdown[];
+  waterfall?: WaterfallItem[];
+  dailyOverlay?: DailyOverlayPoint[];
 }
 
 interface ComparisonParams {
@@ -137,6 +152,19 @@ export function useComparisonData(params: ComparisonParams) {
           transactions: aggregatedA.totalTransactions - aggregatedB.totalTransactions,
           avgTicket: avgTicketA - avgTicketB,
         },
+        // Add waterfall data
+        waterfall: [
+          { 
+            category: 'Services', 
+            delta: aggregatedA.serviceRevenue - aggregatedB.serviceRevenue, 
+            isIncrease: aggregatedA.serviceRevenue >= aggregatedB.serviceRevenue 
+          },
+          { 
+            category: 'Products', 
+            delta: aggregatedA.productRevenue - aggregatedB.productRevenue, 
+            isIncrease: aggregatedA.productRevenue >= aggregatedB.productRevenue 
+          },
+        ],
       };
 
       // Location breakdown for location mode

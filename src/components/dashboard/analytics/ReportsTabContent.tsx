@@ -11,7 +11,9 @@ import {
   BarChart3,
   UserCheck,
   Building2,
-  CalendarDays
+  CalendarDays,
+  Wand2,
+  Calendar
 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
 import { ReportCard } from '@/components/dashboard/reports/ReportCard';
@@ -21,6 +23,8 @@ import { StaffKPIReport } from '@/components/dashboard/reports/StaffKPIReport';
 import { ClientRetentionReport } from '@/components/dashboard/reports/ClientRetentionReport';
 import { NoShowReport } from '@/components/dashboard/reports/NoShowReport';
 import { CapacityReport } from '@/components/dashboard/reports/CapacityReport';
+import { ReportBuilderPage } from '@/components/dashboard/reports/builder/ReportBuilderPage';
+import { ScheduledReportsSubTab } from '@/components/dashboard/reports/scheduled/ScheduledReportsSubTab';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 const reportCategories = [
@@ -29,6 +33,8 @@ const reportCategories = [
   { id: 'clients', label: 'Clients', icon: UserCheck },
   { id: 'operations', label: 'Operations', icon: Clock },
   { id: 'financial', label: 'Financial', icon: TrendingUp },
+  { id: 'custom', label: 'Custom Builder', icon: Wand2 },
+  { id: 'scheduled', label: 'Scheduled', icon: Calendar },
 ];
 
 const salesReports = [
@@ -269,6 +275,16 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
             {renderReportCards(financialReports)}
           </TabsContent>
         )}
+
+        {/* Custom Report Builder */}
+        <TabsContent value="custom" className="mt-6">
+          <ReportBuilderPage />
+        </TabsContent>
+
+        {/* Scheduled Reports */}
+        <TabsContent value="scheduled" className="mt-6">
+          <ScheduledReportsSubTab />
+        </TabsContent>
         </Tabs>
       </div>
 

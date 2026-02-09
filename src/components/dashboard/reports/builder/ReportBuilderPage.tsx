@@ -20,7 +20,7 @@ import { useCreateReportTemplate } from '@/hooks/useCustomReportTemplates';
 import { ReportPreview } from './ReportPreview';
 
 interface ReportBuilderPageProps {
-  onClose: () => void;
+  onClose?: () => void;
   initialConfig?: ReportConfig;
   templateId?: string;
 }
@@ -90,7 +90,7 @@ export function ReportBuilderPage({ onClose, initialConfig, templateId }: Report
       config,
       is_shared: false,
     }, {
-      onSuccess: () => onClose(),
+      onSuccess: () => onClose?.(),
     });
   };
 
@@ -99,10 +99,12 @@ export function ReportBuilderPage({ onClose, initialConfig, templateId }: Report
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
+          {onClose && (
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+          )}
           <div>
             <h1 className="text-xl font-semibold">Report Builder</h1>
             <p className="text-sm text-muted-foreground">Create custom reports with your selected metrics</p>
