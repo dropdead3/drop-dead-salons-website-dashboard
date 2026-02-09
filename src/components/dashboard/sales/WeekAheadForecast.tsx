@@ -209,7 +209,7 @@ export function WeekAheadForecast() {
           {/* Bar Chart with stacked confirmed/unconfirmed and labels above */}
           <div className="h-[180px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: 35, left: 5 }}>
+              <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: 35, left: 45 }}>
                 <XAxis 
                   dataKey="name" 
                   tick={<CustomXAxisTick days={days} peakDate={peakDay?.date} onDayClick={handleDayClick} />}
@@ -218,7 +218,14 @@ export function WeekAheadForecast() {
                   interval={0}
                   height={40}
                 />
-                <YAxis hide domain={[0, 'auto']} />
+                <YAxis 
+                  domain={[0, 'auto']}
+                  tickFormatter={(v) => `$${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`}
+                  tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                  tickLine={false}
+                  axisLine={false}
+                  width={40}
+                />
                 {averageDaily > 0 && (
                   <ReferenceLine 
                     y={averageDaily} 

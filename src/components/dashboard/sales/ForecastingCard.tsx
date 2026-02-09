@@ -547,7 +547,7 @@ export function ForecastingCard() {
           {showChart && chartData.length > 0 && (
             <div className={cn("h-[180px]", showWeeklyChart && "h-[200px]")}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: showWeeklyChart ? 40 : 35, left: 5 }}>
+                <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: showWeeklyChart ? 40 : 35, left: 45 }}>
                   <XAxis 
                     dataKey="name" 
                     tick={showWeeklyChart 
@@ -559,7 +559,14 @@ export function ForecastingCard() {
                     interval={0}
                     height={showWeeklyChart ? 45 : 40}
                   />
-                  <YAxis hide domain={[0, 'auto']} />
+                  <YAxis 
+                    domain={[0, 'auto']}
+                    tickFormatter={(v) => `$${v >= 1000 ? `${(v/1000).toFixed(0)}k` : v}`}
+                    tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={40}
+                  />
                   
                   {/* Daily average reference line - only for daily views */}
                   {!showWeeklyChart && averageDaily > 0 && (
