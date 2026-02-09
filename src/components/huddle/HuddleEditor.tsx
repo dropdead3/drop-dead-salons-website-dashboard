@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Save, Send, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Save, Send, Trash2, Sparkles } from 'lucide-react';
 import {
   useCreateHuddle,
   useUpdateHuddle,
@@ -23,6 +24,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { AIHuddleGenerator } from './AIHuddleGenerator';
+import type { GeneratedHuddleContent } from '@/hooks/useAIHuddle';
 
 interface HuddleEditorProps {
   existingHuddle?: DailyHuddle | null;
@@ -50,6 +53,20 @@ export function HuddleEditor({
     sales_goals: { retail: 0, service: 0 },
     is_published: false,
   });
+  const [aiSections, setAiSections] = useState<Set<string>>(new Set());
+
+  const handleAIContentGenerated = (content: GeneratedHuddleContent) => {
+    setFormData(prev => ({
+      ...prev,
+      focus_of_the_day: content.focus_of_the_day,
+      wins_from_yesterday: content.wins_from_yesterday,
+      announcements: content.announcements,
+      birthdays_celebrations: content.birthdays_celebrations,
+      training_reminders: content.training_reminders,
+      sales_goals: content.sales_goals,
+    }));
+    setAiSections(new Set(['focus', 'wins', 'announcements', 'birthdays', 'training', 'goals']));
+  };
 
   useEffect(() => {
     if (existingHuddle) {
@@ -97,16 +114,38 @@ export function HuddleEditor({
   return (
     <Card className="p-6">
       <div className="space-y-6">
+        {/* AI Generator */}
+        <div className="flex items-center justify-between pb-4 border-b">
+          <div>
+            <h3 className="font-semibold">Huddle Content</h3>
+            <p className="text-sm text-muted-foreground">Fill in manually or generate with AI</p>
+          </div>
+          <AIHuddleGenerator
+            huddleDate={date || new Date().toISOString().split('T')[0]}
+            locationId={locationId}
+            onContentGenerated={handleAIContentGenerated}
+          />
+        </div>
+
         {/* Focus of the day */}
         <div className="space-y-2">
-          <Label htmlFor="focus">Focus of the Day</Label>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="focus">Focus of the Day</Label>
+            {aiSections.has('focus') && (
+              <Badge variant="secondary" className="text-xs">
+                <Sparkles className="h-3 w-3 mr-1" />
+                AI
+              </Badge>
+            )}
+          </div>
           <Input
             id="focus"
             placeholder="What should the team focus on today?"
             value={formData.focus_of_the_day}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, focus_of_the_day: e.target.value }))
-            }
+            onChange={(e) => {
+              setFormData((prev) => ({ ...prev, focus_of_the_day: e.target.value }));
+              setAiSections(prev => { prev.delete('focus'); return new Set(prev); });
+            }}
           />
         </div>
 

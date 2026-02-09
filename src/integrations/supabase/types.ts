@@ -2992,11 +2992,14 @@ export type Database = {
       }
       daily_huddles: {
         Row: {
+          ai_generated: boolean | null
+          ai_sections: Json | null
           announcements: string | null
           birthdays_celebrations: string | null
           created_at: string | null
           created_by: string
           focus_of_the_day: string | null
+          generation_source: string | null
           huddle_date: string
           id: string
           is_published: boolean | null
@@ -3007,11 +3010,14 @@ export type Database = {
           wins_from_yesterday: string | null
         }
         Insert: {
+          ai_generated?: boolean | null
+          ai_sections?: Json | null
           announcements?: string | null
           birthdays_celebrations?: string | null
           created_at?: string | null
           created_by: string
           focus_of_the_day?: string | null
+          generation_source?: string | null
           huddle_date?: string
           id?: string
           is_published?: boolean | null
@@ -3022,11 +3028,14 @@ export type Database = {
           wins_from_yesterday?: string | null
         }
         Update: {
+          ai_generated?: boolean | null
+          ai_sections?: Json | null
           announcements?: string | null
           birthdays_celebrations?: string | null
           created_at?: string | null
           created_by?: string
           focus_of_the_day?: string | null
+          generation_source?: string | null
           huddle_date?: string
           id?: string
           is_published?: boolean | null
@@ -5875,6 +5884,7 @@ export type Database = {
           high_five_enabled: boolean
           id: string
           meeting_reminder_enabled: boolean
+          mention_enabled: boolean | null
           program_reminder_enabled: boolean
           push_notifications_enabled: boolean | null
           streak_warning_enabled: boolean
@@ -5892,6 +5902,7 @@ export type Database = {
           high_five_enabled?: boolean
           id?: string
           meeting_reminder_enabled?: boolean
+          mention_enabled?: boolean | null
           program_reminder_enabled?: boolean
           push_notifications_enabled?: boolean | null
           streak_warning_enabled?: boolean
@@ -5909,6 +5920,7 @@ export type Database = {
           high_five_enabled?: boolean
           id?: string
           meeting_reminder_enabled?: boolean
+          mention_enabled?: boolean | null
           program_reminder_enabled?: boolean
           push_notifications_enabled?: boolean | null
           streak_warning_enabled?: boolean
@@ -11834,6 +11846,83 @@ export type Database = {
         }
         Relationships: []
       }
+      team_calendar_events: {
+        Row: {
+          all_day: boolean | null
+          attendees: Json | null
+          color: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          end_date: string | null
+          end_time: string | null
+          event_type: string
+          id: string
+          is_cancelled: boolean | null
+          location_id: string | null
+          metadata: Json | null
+          organization_id: string
+          recurring_pattern: Json | null
+          start_date: string
+          start_time: string | null
+          title: string
+          updated_at: string | null
+          visibility: string | null
+        }
+        Insert: {
+          all_day?: boolean | null
+          attendees?: Json | null
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          event_type: string
+          id?: string
+          is_cancelled?: boolean | null
+          location_id?: string | null
+          metadata?: Json | null
+          organization_id: string
+          recurring_pattern?: Json | null
+          start_date: string
+          start_time?: string | null
+          title: string
+          updated_at?: string | null
+          visibility?: string | null
+        }
+        Update: {
+          all_day?: boolean | null
+          attendees?: Json | null
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          event_type?: string
+          id?: string
+          is_cancelled?: boolean | null
+          location_id?: string | null
+          metadata?: Json | null
+          organization_id?: string
+          recurring_pattern?: Json | null
+          start_date?: string
+          start_time?: string | null
+          title?: string
+          updated_at?: string | null
+          visibility?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_calendar_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_challenges: {
         Row: {
           challenge_type: string
@@ -12217,6 +12306,66 @@ export type Database = {
           },
         ]
       }
+      time_off_requests: {
+        Row: {
+          calendar_event_id: string | null
+          created_at: string | null
+          end_date: string
+          id: string
+          notes: string | null
+          organization_id: string
+          request_type: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          start_date: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          calendar_event_id?: string | null
+          created_at?: string | null
+          end_date: string
+          id?: string
+          notes?: string | null
+          organization_id: string
+          request_type: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          start_date: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          calendar_event_id?: string | null
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          request_type?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          start_date?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_off_requests_calendar_event_id_fkey"
+            columns: ["calendar_event_id"]
+            isOneToOne: false
+            referencedRelation: "team_calendar_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_off_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_assignments: {
         Row: {
           assigned_by: string
@@ -12533,6 +12682,56 @@ export type Database = {
             columns: ["achievement_id"]
             isOneToOne: false
             referencedRelation: "leaderboard_achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_mentions: {
+        Row: {
+          channel_id: string | null
+          created_at: string | null
+          id: string
+          mentioned_by: string | null
+          notified_at: string | null
+          organization_id: string | null
+          read_at: string | null
+          source_context: string | null
+          source_id: string
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          channel_id?: string | null
+          created_at?: string | null
+          id?: string
+          mentioned_by?: string | null
+          notified_at?: string | null
+          organization_id?: string | null
+          read_at?: string | null
+          source_context?: string | null
+          source_id: string
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          channel_id?: string | null
+          created_at?: string | null
+          id?: string
+          mentioned_by?: string | null
+          notified_at?: string | null
+          organization_id?: string | null
+          read_at?: string | null
+          source_context?: string | null
+          source_id?: string
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_mentions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
