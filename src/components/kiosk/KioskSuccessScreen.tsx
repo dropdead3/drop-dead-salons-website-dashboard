@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Clock, User } from 'lucide-react';
+import { CheckCircle2, Clock, User, Sparkles } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { format, parse } from 'date-fns';
@@ -40,7 +40,7 @@ export function KioskSuccessScreen() {
 
   return (
     <motion.div
-      className="fixed inset-0 flex flex-col items-center justify-center select-none"
+      className="fixed inset-0 flex flex-col items-center justify-center select-none overflow-hidden"
       style={{
         backgroundColor,
         backgroundImage: backgroundImageUrl ? `url(${backgroundImageUrl})` : undefined,
@@ -56,6 +56,41 @@ export function KioskSuccessScreen() {
         <div className="absolute inset-0 bg-black/60" />
       )}
 
+      {/* Celebration particles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-3 h-3 rounded-full"
+            style={{ 
+              backgroundColor: accentColor,
+              left: `${10 + (i * 7)}%`,
+              top: '-5%',
+            }}
+            initial={{ y: 0, opacity: 0 }}
+            animate={{ 
+              y: ['0vh', '110vh'],
+              opacity: [0, 1, 1, 0],
+              rotate: [0, 360],
+            }}
+            transition={{
+              duration: 3 + Math.random() * 2,
+              repeat: Infinity,
+              delay: i * 0.3,
+              ease: 'linear',
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Radial glow */}
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse at center, ${accentColor}25 0%, transparent 50%)`,
+        }}
+      />
+
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center text-center px-8">
         {/* Logo */}
@@ -63,14 +98,15 @@ export function KioskSuccessScreen() {
           <motion.img
             src={logoUrl}
             alt="Logo"
-            className="h-16 mb-8 object-contain"
+            className="h-16 mb-10 object-contain"
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
           />
         )}
 
-        {/* Success animation */}
+        {/* Success animation - Enhanced */}
         <motion.div
+          className="relative mb-10"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ 
@@ -80,116 +116,181 @@ export function KioskSuccessScreen() {
             delay: 0.2,
           }}
         >
+          {/* Multiple pulsing rings */}
+          {[1, 2, 3].map((ring) => (
+            <motion.div
+              key={ring}
+              className="absolute inset-0 rounded-full"
+              style={{ 
+                border: `2px solid ${accentColor}`,
+              }}
+              animate={{
+                scale: [1, 1.5 + ring * 0.2],
+                opacity: [0.6 - ring * 0.15, 0],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                delay: ring * 0.3,
+                ease: 'easeOut',
+              }}
+            />
+          ))}
+
+          {/* Icon container with gradient */}
           <motion.div
-            className="w-32 h-32 rounded-full flex items-center justify-center mb-8"
-            style={{ backgroundColor: `${accentColor}20` }}
-            animate={{
-              boxShadow: [
-                `0 0 0 0 ${accentColor}40`,
-                `0 0 0 30px ${accentColor}00`,
-              ],
-            }}
-            transition={{
-              duration: 1.5,
-              repeat: 2,
-              ease: 'easeOut',
+            className="relative w-36 h-36 rounded-full flex items-center justify-center"
+            style={{ 
+              background: `linear-gradient(135deg, ${accentColor}30 0%, ${accentColor}10 100%)`,
+              border: `3px solid ${accentColor}50`,
+              boxShadow: `0 0 60px ${accentColor}40`,
             }}
           >
-            <CheckCircle2 
-              className="w-20 h-20"
-              style={{ color: accentColor }}
-            />
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ 
+                type: 'spring',
+                stiffness: 200,
+                damping: 12,
+                delay: 0.4,
+              }}
+            >
+              <CheckCircle2 
+                className="w-20 h-20"
+                style={{ color: accentColor }}
+                strokeWidth={1.5}
+              />
+            </motion.div>
+          </motion.div>
+
+          {/* Sparkles */}
+          <motion.div
+            className="absolute -top-2 -right-2"
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.6, type: 'spring' }}
+          >
+            <Sparkles className="w-8 h-8" style={{ color: accentColor }} />
           </motion.div>
         </motion.div>
 
         {/* Welcome message */}
         <motion.h1
-          className="text-4xl md:text-5xl font-semibold mb-4"
-          style={{ color: textColor }}
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-        >
-          {clientFirstName ? `Thanks, ${clientFirstName}!` : 'Check-In Complete!'}
-        </motion.h1>
-
-        <motion.p
-          className="text-xl md:text-2xl opacity-80 mb-8 max-w-lg"
+          className="text-5xl md:text-6xl font-semibold mb-4 tracking-tight"
           style={{ color: textColor }}
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5 }}
         >
+          {clientFirstName ? `Thanks, ${clientFirstName}!` : 'Check-In Complete!'}
+        </motion.h1>
+
+        <motion.p
+          className="text-xl md:text-2xl mb-10 max-w-lg font-light"
+          style={{ color: `${textColor}90` }}
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6 }}
+        >
           {successMessage}
         </motion.p>
 
-        {/* Appointment details */}
+        {/* Appointment details - Enhanced card */}
         {appointment && (
           <motion.div
-            className="p-6 rounded-2xl max-w-md w-full"
+            className="p-8 rounded-3xl max-w-md w-full backdrop-blur-md"
             style={{ 
-              backgroundColor: `${textColor}10`,
-              borderColor: `${textColor}20`,
-              borderWidth: 1,
+              backgroundColor: `${textColor}08`,
+              border: `2px solid ${textColor}15`,
+              boxShadow: `0 8px 32px ${backgroundColor}60`,
             }}
-            initial={{ y: 20, opacity: 0 }}
+            initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.6 }}
+            transition={{ delay: 0.7, type: 'spring', stiffness: 150 }}
           >
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div 
-                className="text-2xl font-semibold"
+                className="text-2xl md:text-3xl font-semibold"
                 style={{ color: textColor }}
               >
                 {appointment.service_name}
               </div>
               
-              <div className="flex items-center justify-center gap-6">
+              <div className="flex items-center justify-center gap-8">
                 <div 
-                  className="flex items-center gap-2"
-                  style={{ color: `${textColor}B0` }}
+                  className="flex items-center gap-3"
+                  style={{ color: `${textColor}90` }}
                 >
-                  <Clock className="w-5 h-5" />
-                  <span className="text-lg">{formatTime(appointment.start_time)}</span>
+                  <div 
+                    className="w-10 h-10 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: `${accentColor}20` }}
+                  >
+                    <Clock className="w-5 h-5" style={{ color: accentColor }} />
+                  </div>
+                  <span className="text-xl font-medium">{formatTime(appointment.start_time)}</span>
                 </div>
                 
                 {appointment.stylist_name && (
                   <div 
-                    className="flex items-center gap-2"
-                    style={{ color: `${textColor}B0` }}
+                    className="flex items-center gap-3"
+                    style={{ color: `${textColor}90` }}
                   >
-                    <User className="w-5 h-5" />
-                    <span className="text-lg">{appointment.stylist_name}</span>
+                    <div 
+                      className="w-10 h-10 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: `${accentColor}20` }}
+                    >
+                      <User className="w-5 h-5" style={{ color: accentColor }} />
+                    </div>
+                    <span className="text-xl">{appointment.stylist_name}</span>
                   </div>
                 )}
               </div>
 
               {showWaitTime && (
-                <div 
-                  className="text-lg mt-4 pt-4"
+                <motion.div 
+                  className="text-lg mt-6 pt-6 font-medium"
                   style={{ 
                     color: accentColor,
-                    borderTopColor: `${textColor}20`,
+                    borderTopColor: `${textColor}15`,
                     borderTopWidth: 1,
                   }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1 }}
                 >
                   Please have a seat. Your stylist will be with you shortly.
-                </div>
+                </motion.div>
               )}
             </div>
           </motion.div>
         )}
 
         {/* Auto-return indicator */}
-        <motion.p
-          className="mt-8 text-sm opacity-60"
-          style={{ color: textColor }}
+        <motion.div
+          className="mt-10 flex items-center gap-2"
+          style={{ color: `${textColor}60` }}
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.6 }}
-          transition={{ delay: 1 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2 }}
         >
-          This screen will reset automatically
-        </motion.p>
+          <div className="flex gap-1">
+            {[0, 1, 2].map((i) => (
+              <motion.div
+                key={i}
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ backgroundColor: textColor }}
+                animate={{ opacity: [0.3, 0.8, 0.3] }}
+                transition={{
+                  duration: 1,
+                  repeat: Infinity,
+                  delay: i * 0.2,
+                }}
+              />
+            ))}
+          </div>
+          <span className="text-sm">This screen will reset automatically</span>
+        </motion.div>
       </div>
     </motion.div>
   );
