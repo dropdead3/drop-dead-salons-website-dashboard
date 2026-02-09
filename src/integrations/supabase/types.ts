@@ -8478,6 +8478,54 @@ export type Database = {
           },
         ]
       }
+      platform_incidents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_auto_created: boolean
+          link_text: string | null
+          link_url: string | null
+          message: string
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_auto_created?: boolean
+          link_text?: string | null
+          link_url?: string | null
+          message: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_auto_created?: boolean
+          link_text?: string | null
+          link_url?: string | null
+          message?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       platform_invitations: {
         Row: {
           accepted_at: string | null
