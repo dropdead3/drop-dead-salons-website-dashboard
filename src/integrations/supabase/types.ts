@@ -3743,6 +3743,7 @@ export type Database = {
       }
       employee_profiles: {
         Row: {
+          active_organization_id: string | null
           admin_approved_at: string | null
           admin_approved_by: string | null
           approved_at: string | null
@@ -3788,6 +3789,7 @@ export type Database = {
           work_days: string[] | null
         }
         Insert: {
+          active_organization_id?: string | null
           admin_approved_at?: string | null
           admin_approved_by?: string | null
           approved_at?: string | null
@@ -3833,6 +3835,7 @@ export type Database = {
           work_days?: string[] | null
         }
         Update: {
+          active_organization_id?: string | null
           admin_approved_at?: string | null
           admin_approved_by?: string | null
           approved_at?: string | null
@@ -3878,6 +3881,13 @@ export type Database = {
           work_days?: string[] | null
         }
         Relationships: [
+          {
+            foreignKeyName: "employee_profiles_active_organization_id_fkey"
+            columns: ["active_organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "employee_profiles_organization_id_fkey"
             columns: ["organization_id"]
@@ -13414,6 +13424,10 @@ export type Database = {
           slot_start: string
         }[]
       }
+      get_user_accessible_organizations: {
+        Args: { _user_id: string }
+        Returns: string[]
+      }
       get_user_organization: { Args: { _user_id: string }; Returns: string }
       get_user_points_balance: { Args: { _user_id: string }; Returns: number }
       has_chat_permission: {
@@ -13441,6 +13455,7 @@ export type Database = {
         Returns: boolean
       }
       is_coach_or_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_multi_org_user: { Args: { _user_id: string }; Returns: boolean }
       is_org_admin: {
         Args: { _org_id: string; _user_id: string }
         Returns: boolean

@@ -13,6 +13,7 @@ import { SidebarSyncStatusWidget } from './SidebarSyncStatusWidget';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, MANAGEMENT_SUB_GROUPS, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
 import { CollapsibleNavGroup, type NavSubGroup } from './CollapsibleNavGroup';
+import { AccountOwnerOrgSwitcher } from './AccountOwnerOrgSwitcher';
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
 
 interface NavItem {
@@ -41,6 +42,7 @@ interface SidebarNavContentProps {
   platformNavItems?: NavItem[];
   footerNavItems?: NavItem[];
   isPlatformUser?: boolean;
+  isMultiOrgOwner?: boolean;
   unreadCount: number;
   roles: string[];
   effectiveIsCoach: boolean;
@@ -66,6 +68,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     platformNavItems = [],
     footerNavItems = [],
     isPlatformUser = false,
+    isMultiOrgOwner = false,
     unreadCount,
     roles,
     effectiveIsCoach,
@@ -334,6 +337,13 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           </p>
         )}
       </div>
+
+      {/* Multi-Org Owner Switcher - shows when user has access to multiple orgs */}
+      {isMultiOrgOwner && (
+        <div className={cn("border-b border-border", isCollapsed ? "p-2" : "px-4 py-3")}>
+          <AccountOwnerOrgSwitcher isCollapsed={isCollapsed} />
+        </div>
+      )}
 
       {/* Announcements Widget - at the very top (hide when collapsed) */}
       {!isCollapsed && <SidebarAnnouncementsWidget onNavClick={onNavClick} />}

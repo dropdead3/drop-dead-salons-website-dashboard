@@ -7,13 +7,17 @@ import type { Organization } from '@/hooks/useOrganizations';
 interface OrganizationContextValue {
   /** The user's own organization (detected from employee_profile) */
   currentOrganization: Organization | null;
-  /** Platform user's manual override selection */
+  /** Platform user's manual override selection OR multi-org owner's selection */
   selectedOrganization: Organization | null;
   /** The organization to use for queries (selected > current) */
   effectiveOrganization: Organization | null;
   /** Whether a platform user is viewing as a different org */
   isImpersonating: boolean;
-  /** Set the organization override (for platform users) */
+  /** Whether the user has access to multiple organizations */
+  isMultiOrgOwner: boolean;
+  /** List of organizations the user has access to (for multi-org owners) */
+  userOrganizations: Organization[];
+  /** Set the organization override (for platform users or multi-org owners) */
   setSelectedOrganization: (org: Organization | null) => void;
   /** Clear any org override */
   clearSelection: () => void;
@@ -36,7 +40,7 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
       // First get the user's org ID from their profile
       const { data: profile, error: profileError } = await supabase
         .from('employee_profiles')
-        .select('organization_id')
+        .select('organization_id, active_organization_id')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -64,6 +68,81 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
     enabled: !!user?.id && !isPlatformUser,
   });
 
+  // Fetch all organizations the user has access to (for multi-org owners)
+  const { data: userOrganizations = [], isLoading: isLoadingUserOrgs } = useQuery({
+    queryKey: ['user-accessible-organizations', user?.id],
+    queryFn: async (): Promise<Organization[]> => {
+      if (!user?.id) return [];
+
+      const allOrgs = new Map<string, Organization>();
+
+      // Get primary org from employee profile
+      const { data: profile } = await supabase
+        .from('employee_profiles')
+        .select(`
+          organization_id,
+          active_organization_id,
+          organizations:organization_id (*)
+        `)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (profile?.organizations && profile.organization_id) {
+        const org = profile.organizations as unknown as Organization;
+        allOrgs.set(profile.organization_id, org);
+      }
+
+      // Get additional orgs from organization_admins
+      const { data: adminOrgs } = await supabase
+        .from('organization_admins')
+        .select(`
+          organization_id,
+          role,
+          organizations:organization_id (*)
+        `)
+        .eq('user_id', user.id);
+
+      adminOrgs?.forEach(ao => {
+        if (ao.organizations && ao.organization_id) {
+          const org = ao.organizations as unknown as Organization;
+          if (!allOrgs.has(ao.organization_id)) {
+            allOrgs.set(ao.organization_id, org);
+          }
+        }
+      });
+
+      return Array.from(allOrgs.values());
+    },
+    enabled: !!user?.id && !isPlatformUser,
+  });
+
+  // Check if user is a multi-org owner
+  const isMultiOrgOwner = useMemo(() => {
+    return userOrganizations.length > 1;
+  }, [userOrganizations]);
+
+  // Load persisted active org preference for multi-org owners
+  useEffect(() => {
+    if (!isMultiOrgOwner || isPlatformUser || selectedOrganization) return;
+
+    const loadPersistedOrg = async () => {
+      const { data: profile } = await supabase
+        .from('employee_profiles')
+        .select('active_organization_id')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (profile?.active_organization_id) {
+        const persistedOrg = userOrganizations.find(o => o.id === profile.active_organization_id);
+        if (persistedOrg) {
+          setSelectedOrganization(persistedOrg);
+        }
+      }
+    };
+
+    loadPersistedOrg();
+  }, [isMultiOrgOwner, isPlatformUser, user?.id, userOrganizations, selectedOrganization]);
+
   // Clear selection when logging out
   useEffect(() => {
     if (!user) {
@@ -81,9 +160,13 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
     if (isPlatformUser) {
       return selectedOrganization;
     }
+    // Multi-org owners: use selection if set, otherwise their primary org
+    if (isMultiOrgOwner && selectedOrganization) {
+      return selectedOrganization;
+    }
     // Regular users: always use their own organization
     return currentOrganization || null;
-  }, [isPlatformUser, selectedOrganization, currentOrganization]);
+  }, [isPlatformUser, isMultiOrgOwner, selectedOrganization, currentOrganization]);
 
   // Check if platform user is "impersonating" an org
   const isImpersonating = useMemo(() => {
@@ -95,16 +178,21 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
     selectedOrganization,
     effectiveOrganization,
     isImpersonating,
+    isMultiOrgOwner,
+    userOrganizations,
     setSelectedOrganization,
     clearSelection,
-    isLoading: isLoadingCurrent,
+    isLoading: isLoadingCurrent || isLoadingUserOrgs,
   }), [
     currentOrganization,
     selectedOrganization,
     effectiveOrganization,
     isImpersonating,
+    isMultiOrgOwner,
+    userOrganizations,
     clearSelection,
     isLoadingCurrent,
+    isLoadingUserOrgs,
   ]);
 
   return (
