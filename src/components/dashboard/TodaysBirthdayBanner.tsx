@@ -35,18 +35,22 @@ export function TodaysBirthdayBanner() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className="relative rounded-xl p-[2px] mb-6 bg-gradient-to-r from-pink-400 via-purple-400 to-pink-400 shadow-[0_0_15px_rgba(168,85,247,0.4)]"
+        className="relative rounded-2xl mb-6"
+        style={{
+          padding: '1.5px',
+          background: 'linear-gradient(135deg, rgba(236,72,153,0.7), rgba(168,85,247,0.5), rgba(236,72,153,0.4))',
+          boxShadow: '0 0 20px rgba(168,85,247,0.25), inset 0 0.5px 0 rgba(255,255,255,0.15)',
+        }}
       >
-        {/* Sheen overlay */}
-        <div
-          className="absolute inset-0 rounded-xl pointer-events-none z-10"
-          style={{
-            background: 'linear-gradient(135deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0.1) 30%, transparent 60%)',
-            mixBlendMode: 'overlay',
-          }}
-        />
-        <div className="relative bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white rounded-[10px] p-4">
-          <div className="flex items-center flex-wrap gap-4">
+        <div className="relative bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white rounded-[calc(1rem-1.5px)] p-4 overflow-hidden">
+          {/* Subtle top sheen */}
+          <div
+            className="absolute inset-x-0 top-0 h-[40%] pointer-events-none"
+            style={{
+              background: 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%)',
+            }}
+          />
+          <div className="relative flex items-center flex-wrap gap-4">
             <div className="flex items-center gap-2 shrink-0">
               <PartyPopper className="w-5 h-5" />
               <span className="font-display text-sm tracking-wide">
