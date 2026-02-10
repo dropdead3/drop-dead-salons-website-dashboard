@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid, Briefcase } from 'lucide-react';
+import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid, Briefcase, ArrowLeft, Shield } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
@@ -347,6 +347,36 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           </>
         )}
       </div>
+
+      {/* Platform User: Back to Platform Hub */}
+      {isPlatformUser && (
+        <div className={cn("border-b border-border/50", isCollapsed ? "p-2" : "px-3 py-2.5")}>
+          {isCollapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  to="/dashboard/platform/overview"
+                  onClick={onNavClick}
+                  className="flex items-center justify-center p-2 rounded-lg text-violet-400 hover:bg-violet-500/10 hover:text-violet-300 transition-all duration-200"
+                >
+                  <Shield className="w-4 h-4" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">Back to Platform Hub</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Link
+              to="/dashboard/platform/overview"
+              onClick={onNavClick}
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium text-violet-400 hover:bg-violet-500/10 hover:text-violet-300 transition-all duration-200 group"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
+              <Shield className="w-3.5 h-3.5" />
+              <span className="font-sans">Platform Hub</span>
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Multi-Org Owner Switcher - shows when user has access to multiple orgs */}
       {isMultiOrgOwner && (
