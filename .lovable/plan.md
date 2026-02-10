@@ -1,51 +1,79 @@
 
 
-# Smart Hyperlinks in Zura AI Guidance
+# Smart Navigation Memory for Zura Guidance Links
 
-## Overview
-Make Zura's guidance responses interactive by embedding hyperlinks that navigate directly to relevant pages within the platform. When Zura mentions analytics, reports, payroll, or other features, those references become clickable links that take the user straight there.
+## The Problem
+When Zura's guidance contains links like "check your [Sales Analytics](/dashboard/admin/analytics?tab=sales)", clicking them navigates the entire page away. The user loses the Zura card's state (which insight they were viewing, the guidance text) and has no easy way back.
 
-## How It Works
+## Solution: "Return to Zura" Navigation Memory
 
-The approach has two parts:
+### How It Works
 
-**1. Teach Zura to include links** -- Update the AI system prompt so Zura embeds markdown links using a predefined route map. For example, instead of saying "check your Daily Revenue tab," Zura will output `check your [Daily Revenue](/dashboard/admin/analytics?tab=sales)` -- a clickable link right in the guidance text.
+1. When a user clicks an internal link inside Zura's guidance, the current guidance state (active insight, guidance text, scroll position) is saved to a lightweight context/store before navigating.
+2. A small floating "Return to Zura" pill appears at the bottom of the screen on the destination page.
+3. Clicking it navigates back to the dashboard and automatically restores the Zura card to the exact guidance panel they were reading.
+4. The pill auto-dismisses after 5 minutes or if the user manually closes it.
 
-**2. Make those links work inside the app** -- Update the guidance panel's markdown renderer to detect internal links (starting with `/dashboard/`) and navigate within the app instead of doing a full page reload. External links still open normally in a new tab.
+### User Flow
 
-## What Gets Linked
+```text
++----------------------------+       +--------------------------+       +----------------------------+
+| Zura Guidance Panel        |       | Sales Analytics Page     |       | Zura Guidance Panel        |
+|                            |       |                          |       |                            |
+| "Check your Sales          |       |  [charts, tables, data]  |       | (restored to exact state)  |
+|  Analytics for details"    | ----> |                          | ----> |                            |
+|  [Sales Analytics] (link)  |       |  [Return to Zura] pill   |       | Same insight, same text    |
++----------------------------+       +--------------------------+       +----------------------------+
+   Click saves state                    Click restores state
+```
 
-Zura will know about all major platform routes and link to them contextually:
-
-- **Analytics Hub** -- Sales, Operations, Marketing, Reports tabs
-- **Leaderboard** -- Team performance comparisons
-- **Payroll Hub** -- Commission insights, team breakdown
-- **Client Directory** -- Client health and retention
-- **Team Overview** -- Staff performance and utilization  
-- **Schedule** -- Booking calendar and availability
-- **Inventory** -- Product and retail management
-- **Settings pages** -- Phorest connection, integrations, day rates
-- **My Stats / My Pay** -- Individual performance views
+### Bonus: Link Interaction Options
+Each internal link will show a small tooltip or hover state indicating it navigates away, with an option to open in a new tab instead (middle-click or Ctrl+click already works, but we'll add a subtle icon to signal it).
 
 ## Technical Details
 
-### Changes to `supabase/functions/ai-insight-guidance/index.ts`
-Add a route reference map to the system prompt so the AI model knows which internal routes to link to. The prompt will instruct Zura to embed markdown-style links like `[Sales Analytics](/dashboard/admin/analytics?tab=sales)` naturally within guidance text. The route map will cover ~20 key destinations.
+### 1. Create `src/contexts/ZuraNavigationContext.tsx`
+A lightweight React context that holds:
+- `savedGuidance`: The active guidance request object (type, title, description, category, priority)
+- `savedGuidanceText`: The AI-generated guidance markdown
+- `savedSuggestedTasks`: Any suggested tasks from the guidance
+- `saveAndNavigate(href, guidanceState)`: Saves state then navigates
+- `restore()`: Returns the saved state and clears it
+- `dismiss()`: Clears saved state without restoring
+- Auto-expiry after 5 minutes using a timeout
 
-### Changes to `src/components/dashboard/GuidancePanel.tsx`
-Update the ReactMarkdown `a` (anchor) component renderer to:
-- Detect internal links (paths starting with `/dashboard/`)
-- Use React Router's `useNavigate` to handle clicks without full page reloads
-- Style internal links distinctly (primary color, underline) so they're clearly clickable
-- Keep external links opening in new tabs as normal
+State is stored in a React ref + state (not localStorage) so it only persists within the current session.
 
-### Changes to `supabase/functions/ai-business-insights/index.ts`
-Update the main insights system prompt to also include route references, so that insight descriptions and action items can reference linkable areas when rendered in the guidance panel.
+### 2. Create `src/components/dashboard/ZuraReturnPill.tsx`
+A small floating pill component:
+- Renders at `fixed bottom-6 left-1/2 -translate-x-1/2` (centered bottom)
+- Shows the Zura avatar + "Return to Zura" text
+- Animate in with framer-motion (slide up + fade)
+- Has a dismiss (X) button
+- Clicking navigates to `/dashboard` and triggers state restoration
+- Only renders when `savedGuidance` exists in context
+
+### 3. Update `src/components/dashboard/GuidancePanel.tsx`
+- Import the Zura navigation context
+- Update the internal link handler: instead of calling `navigate(href)` directly, call `saveAndNavigate(href, { guidance state })` which saves the current guidance before navigating
+- Add a small external-link icon next to internal links to signal navigation
+
+### 4. Update `src/components/dashboard/AIInsightsCard.tsx` and `AIInsightsDrawer.tsx`
+- On mount, check the Zura navigation context for saved state
+- If saved state exists, auto-restore: set `activeGuidance` and `guidanceText` from the saved state
+- This makes the card slide directly into the guidance panel the user was reading
+
+### 5. Mount the context and pill
+- Wrap the Zura navigation context provider in the dashboard layout (or app-level)
+- Render `ZuraReturnPill` inside the dashboard layout so it appears on all dashboard sub-pages
+
+### Files Created
+- `src/contexts/ZuraNavigationContext.tsx` -- Navigation memory context
+- `src/components/dashboard/ZuraReturnPill.tsx` -- Floating return pill
 
 ### Files Modified
-- `supabase/functions/ai-insight-guidance/index.ts` -- Add route map to system prompt
-- `supabase/functions/ai-business-insights/index.ts` -- Add route references to system prompt
-- `src/components/dashboard/GuidancePanel.tsx` -- Add smart link rendering with React Router navigation
+- `src/components/dashboard/GuidancePanel.tsx` -- Use saveAndNavigate instead of navigate
+- `src/components/dashboard/AIInsightsCard.tsx` -- Restore saved guidance on mount
+- `src/components/dashboard/AIInsightsDrawer.tsx` -- Restore saved guidance on mount
+- Dashboard layout file -- Add context provider and render return pill
 
-### No new dependencies needed
-Uses existing `react-router-dom` (useNavigate) and `react-markdown` already in the project.
