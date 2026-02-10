@@ -1,107 +1,65 @@
 
-# Zura AI Insights Button on Analytics Cards
 
-## Overview
-Add a small Zura AI icon button to every analytics card (via the `PinnableCard` wrapper) that opens a popover/drawer with contextual AI analysis of that specific card's data -- explaining what the metric is, surfacing trends, historical comparisons, and actionable insights.
+# Clean Up Zura Icon Placement on Analytics Cards
 
-## How It Works
+## Problem
+The Zura "Z" icon and Pin icon float as an absolute-positioned overlay (`absolute top-2 right-2`) on top of card content. This causes them to collide with each card's own header controls (sync buttons, download icons, filter badges), creating a crowded, misaligned appearance -- especially visible on the Sales Overview card.
 
-1. **User sees a small "Z" icon** on each analytics card (next to the existing gear/pin icon)
-2. **User clicks the icon** and a slide-over panel or popover opens with Zura's analysis
-3. **Zura explains**: what the metric means, current trends, how it compares to previous periods, and what action to take
-4. **Data is contextual**: each card passes its own metric name, current value, and any comparison data to the AI
+## Root Cause
+`PinnableCard` uses `position: absolute` to overlay its action buttons, but the cards it wraps already have their own header layouts with right-aligned controls. The floating icons land on top of those controls instead of integrating into the card's header flow.
 
-## Changes
+## Solution: Integrate Icons Into Card Headers
 
-### 1. New Edge Function: `ai-card-analysis`
-A new backend function that accepts a card's context (metric name, current values, date range, trends) and returns a focused AI analysis.
+Instead of floating the Zura and Pin icons as an absolute overlay, integrate them cleanly into each card's existing header row. Two approaches depending on card type:
 
-**File:** `supabase/functions/ai-card-analysis/index.ts`
-- Accepts: `{ cardName, metricData, dateRange, locationName }`
-- Uses the Lovable AI gateway (Gemini 3 Flash Preview) with a system prompt specialized for explaining salon analytics cards
-- Returns a concise markdown response covering:
-  - What this metric means in plain language
-  - Current performance assessment
-  - Trend direction and historical comparison
-  - One or two actionable recommendations
-- Includes the verified route map so links work correctly
+### Approach A: Cards with custom headers (e.g., AggregateSalesCard)
+These cards already render their own `CommandCenterVisibilityToggle` inline. For these, add the `ZuraCardInsight` button directly next to the existing pin icon inside the card's header -- not via `PinnableCard`.
 
-### 2. New Hook: `useCardInsight`
-A React hook to call the edge function and manage loading/caching state.
+**Changes to `AggregateSalesCard.tsx`:**
+- Import and render `ZuraCardInsight` next to the existing `CommandCenterVisibilityToggle` (around line 332)
+- Pass metric data context so the AI analysis is meaningful
+- Both icons sit inline in the header row, perfectly aligned with other controls
 
-**File:** `src/hooks/useCardInsight.ts`
-- Accepts `cardId`, `cardName`, `metricData` (key-value pairs of the card's displayed numbers)
-- Calls the `ai-card-analysis` edge function
-- Caches results per card ID + date range so repeat clicks don't re-fetch
-- Returns `{ insight, isLoading, fetchInsight }`
+### Approach B: Cards without custom headers (standard Card wrapped in PinnableCard)
+For simpler cards (Revenue Trend, Location Comparison, etc.), change `PinnableCard` from absolute positioning to a different strategy:
 
-### 3. New Component: `ZuraCardInsight`
-A small button + popover that displays the AI analysis.
+**Changes to `PinnableCard.tsx`:**
+- Move the action buttons from `absolute top-2 right-2` to a subtler inline position
+- Place the Zura + Pin icons as a small row that appears on hover, aligned to the top-right corner but *inside the card's padding* rather than overlapping content
+- Use `absolute top-3 right-3` with a semi-transparent backdrop pill (`bg-card/80 backdrop-blur-sm rounded-full px-1 py-0.5`) so the icons sit cleanly over the card border area without clashing with card content
+- Increase `z-10` to ensure they stay above card content but below popovers
 
-**File:** `src/components/dashboard/ZuraCardInsight.tsx`
-- Renders a small Zura "Z" avatar button (uses existing `ZuraAvatar` component)
-- On click, calls `fetchInsight()` and shows a popover/sheet with:
-  - Loading skeleton while fetching
-  - Rendered markdown response (using `react-markdown`)
-  - "Powered by Zura AI" footer
-- Styled consistently with the existing Zura design language (violet accents, `font-display` headers)
+### Visual Result
+```text
+Before (crowded):
+[Card Title]        [sync] [dl] [Z] [pin]  <-- icons overlap/stack awkwardly
 
-### 4. Update `PinnableCard` to Include Zura Button
-Add the `ZuraCardInsight` button alongside the existing pin/gear icon.
-
-**File:** `src/components/dashboard/PinnableCard.tsx`
-- Accept optional `metricData` prop (Record of string to number/string for current card values)
-- Render `<ZuraCardInsight>` next to the existing `CommandCenterVisibilityToggle`
-- The button appears on hover, same as the gear icon
-
-### 5. Pass Metric Data from Analytics Cards
-Update key analytics cards to pass their displayed metrics through to `PinnableCard`.
-
-**Files affected** (examples):
-- `src/components/dashboard/analytics/SalesTabContent.tsx` -- pass revenue, transaction count, avg ticket
-- `src/components/dashboard/analytics/AppointmentsContent.tsx` -- pass booking count, utilization %
-- `src/components/dashboard/analytics/OperationsTabContent.tsx` -- pass operational metrics
-- Other cards that use `PinnableCard`
-
-Each card passes a simple object like:
-```
-metricData={{
-  "Total Revenue": "$12,450",
-  "Transactions": "87",
-  "Avg Ticket": "$143"
-}}
+After (clean):
+[Card Title]  [Z] [pin]   [filter badge]  [sync] [dl] [info]
+              ^-- small, inline, hover-reveal
 ```
 
-## Technical Details
+## Files Changed
 
-### Edge Function System Prompt
-The AI will be instructed to:
-- Explain the metric in plain, non-technical language (suitable for all salon personas)
-- Keep responses concise (150-250 words max)
-- Highlight whether performance is strong, average, or needs attention
-- Compare to industry benchmarks where applicable (salon industry averages)
-- Provide 1-2 specific, actionable next steps
-- Use the verified route map for any internal links
+1. **`src/components/dashboard/PinnableCard.tsx`**
+   - Change absolute positioning from `top-2 right-2` to `top-3 right-3`
+   - Add backdrop pill styling: `bg-card/80 backdrop-blur-sm rounded-full px-1.5 py-1`
+   - Ensure clean spacing with `gap-0.5` between icons
+   - Reduce icon button sizes slightly for a more refined feel
 
-### Caching Strategy
-- Results cached in React Query with a 10-minute stale time per card + date range combination
-- No database persistence needed -- these are ephemeral, on-demand analyses
+2. **`src/components/dashboard/ZuraCardInsight.tsx`**
+   - Reduce trigger button padding for tighter fit
+   - Ensure the avatar renders at a consistent small size that aligns with the pin icon
 
-### UI Placement
-The Zura icon sits in the top-right corner of each card, alongside the existing gear icon:
-```
-[Card Title]                    [Z] [gear]
-[Card Content...]
-```
+3. **`src/components/dashboard/AggregateSalesCard.tsx`**
+   - Add `ZuraCardInsight` next to the existing inline `CommandCenterVisibilityToggle` in the header
+   - Pass metric data (`totalRevenue`, `serviceRevenue`, `productRevenue`, `averageTicket`) for contextual AI analysis
 
-### Files Created
-- `supabase/functions/ai-card-analysis/index.ts` -- new edge function
-- `src/hooks/useCardInsight.ts` -- new hook
-- `src/components/dashboard/ZuraCardInsight.tsx` -- new component
+4. **`src/components/dashboard/sales/TopPerformersCard.tsx`**
+   - No changes needed -- this card is wrapped by `PinnableCard` and will benefit from the positioning fix automatically
 
-### Files Modified
-- `src/components/dashboard/PinnableCard.tsx` -- add Zura button
-- `src/components/dashboard/analytics/SalesTabContent.tsx` -- pass metric data
-- `src/components/dashboard/analytics/AppointmentsContent.tsx` -- pass metric data
-- `src/components/dashboard/analytics/OperationsTabContent.tsx` -- pass metric data
-- `supabase/config.toml` -- register new edge function
+## Design Principles
+- Icons appear on hover only (existing behavior, kept)
+- Backdrop pill prevents icons from visually clashing with card content beneath them
+- Consistent sizing: both Zura and Pin icons use the same `h-7 w-7` button dimensions
+- Cards that manage their own header (like AggregateSalesCard) get the Zura icon inline; all others get it via the improved PinnableCard overlay
