@@ -207,6 +207,14 @@ export function AnnouncementsDrawer({ isLeadership }: AnnouncementsWidgetProps) 
                   <span className="font-display text-xs tracking-[0.15em]">ANNOUNCEMENTS</span>
                 </div>
                 <div className="flex items-center gap-1">
+                  {/* Compact location filter */}
+                  <LocationSelect
+                    value={locationFilter}
+                    onValueChange={setLocationFilter}
+                    includeAll
+                    allLabel="All Locations"
+                    triggerClassName="h-7 text-xs bg-muted/30 border-border/40 w-auto min-w-0 max-w-[160px] px-2"
+                  />
                   {isLeadership && (
                     <>
                       <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
@@ -226,15 +234,6 @@ export function AnnouncementsDrawer({ isLeadership }: AnnouncementsWidgetProps) 
                   </Button>
                 </div>
               </div>
-
-              {/* Location filter */}
-              <LocationSelect
-                value={locationFilter}
-                onValueChange={setLocationFilter}
-                includeAll
-                allLabel="All Locations"
-                triggerClassName="h-8 text-xs bg-muted/30 border-border/40"
-              />
             </div>
 
             {/* Content with stagger animation */}
