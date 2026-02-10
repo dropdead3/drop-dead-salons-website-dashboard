@@ -1,27 +1,29 @@
 
-# Add "Send DM" Link to Birthday Banner
+# Liquid Glass Stroke on Birthday Banner
 
-## What This Does
-Each person's name pill in the birthday announcement banner becomes clickable. Clicking it creates (or opens) a DM channel with that person and navigates to Team Chat, making it easy to send a birthday wish directly.
+## What Changes
+Add a reflective, liquid-glass border effect to the birthday banner that picks up the pink-purple gradient colors, creating a glossy, translucent stroke with a sheen highlight.
 
-## User Experience
-- Each birthday person's pill gets a subtle message icon and a hover effect indicating it's clickable
-- Clicking navigates to `/dashboard/team-chat` with the DM channel auto-selected
-- If it's the current user's own birthday (in View As mode), the DM link is not shown
-- The "Wish them a happy birthday!" text on the right stays as-is
+## How It Works
+The effect is achieved using a wrapper `div` with a matching gradient background acting as the visible "stroke," and the inner banner content sitting on top with a slight inset (via padding on the wrapper). A secondary pseudo-element overlay adds a diagonal white sheen/reflection across the top for the liquid glass look.
 
-## Technical Changes
+## Technical Details
 
 ### File: `src/components/dashboard/TodaysBirthdayBanner.tsx`
-1. Import `useNavigate` from `react-router-dom`, `MessageCircle` from `lucide-react`, and `useDMChannels` hook
-2. Add `useNavigate` and `useDMChannels` hooks inside the component
-3. Add an `onClick` handler to each person's pill `div` that:
-   - Calls `createDM(person.user_id)` to get or create the DM channel
-   - Navigates to `/dashboard/team-chat?channel={channelId}`
-4. Add `cursor-pointer hover:bg-background/30` classes to the pill for hover feedback
-5. Add a small `MessageCircle` icon next to the person's name (visible on hover or always)
-6. Skip making the pill clickable if `person.isCurrentUser` (can't DM yourself)
 
-### No other files need changes
-- `useDMChannels` already handles finding existing DMs or creating new ones
-- Team Chat page already supports `?channel=` query param for deep-linking (to verify during implementation)
+1. **Wrap the banner** in a container `div` that provides the gradient stroke:
+   - Background: a pink-to-purple gradient matching the banner but slightly lighter/more saturated
+   - `rounded-xl` with `p-[2px]` to create a thin gradient border effect
+   - Add a subtle outer glow via `shadow-[0_0_15px_rgba(168,85,247,0.4)]`
+
+2. **Add a sheen overlay** using an `::after` pseudo-element (via inline style or an absolutely-positioned child div):
+   - A diagonal `linear-gradient` from `white/30%` to `transparent` positioned across the top-left
+   - `pointer-events-none` so it doesn't block clicks
+   - `mix-blend-mode: overlay` for that reflective glass look
+
+3. **Adjust the inner banner div**:
+   - Keep its existing gradient background
+   - Add `rounded-[10px]` (slightly less than wrapper) so the stroke peeks through evenly
+   - The `backdrop-blur` on the inner content enhances the glass feel
+
+No new dependencies or files needed -- pure CSS layering with an extra wrapper div.
