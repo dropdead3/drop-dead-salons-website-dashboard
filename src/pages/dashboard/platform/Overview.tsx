@@ -16,6 +16,7 @@ import {
   Settings
 } from 'lucide-react';
 import { useOrganizationStats } from '@/hooks/useOrganizationStats';
+import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformActivityFeed } from '@/components/platform/overview/PlatformActivityFeed';
@@ -39,10 +40,23 @@ function getGreeting() {
   return 'Good evening';
 }
 
+function getContextualMessage() {
+  const hour = new Date().getHours();
+  if (hour < 9) return 'Early start — here\'s your platform at a glance.';
+  if (hour < 12) return 'Manage accounts, migrations, and platform health.';
+  if (hour < 14) return 'Midday check-in — everything running smoothly.';
+  if (hour < 18) return 'Afternoon overview — stay on top of your platform.';
+  return 'Evening recap — review today\'s platform activity.';
+}
+
 export default function PlatformOverview() {
   const navigate = useNavigate();
   const { data: stats, isLoading } = useOrganizationStats();
+  const { data: profile } = useEmployeeProfile();
   const greeting = useMemo(() => getGreeting(), []);
+  const contextualMessage = useMemo(() => getContextualMessage(), []);
+  
+  const firstName = profile?.display_name || profile?.full_name?.split(' ')[0] || '';
 
   if (isLoading) {
     return (
@@ -95,10 +109,10 @@ export default function PlatformOverview() {
         <motion.div variants={fadeUp} className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-display bg-gradient-to-r from-white via-white to-violet-300 bg-clip-text text-transparent tracking-tight">
-              {greeting}
+              {greeting}{firstName ? `, ${firstName}` : ''}
             </h1>
             <p className="text-slate-400/80 mt-1.5 text-sm">
-              Manage accounts, migrations, and platform health
+              {contextualMessage}
             </p>
           </div>
           <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')} className="gap-2">
