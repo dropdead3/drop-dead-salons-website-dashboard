@@ -7,8 +7,10 @@ import { VisibilityGate } from '@/components/visibility';
 import { PinnableCard } from './PinnableCard';
 import { useAIInsights, type InsightItem, type ActionItem, type FeatureSuggestion } from '@/hooks/useAIInsights';
 import { useDismissedSuggestions } from '@/hooks/useDismissedSuggestions';
+import { useTasks } from '@/hooks/useTasks';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { GuidancePanel } from './GuidancePanel';
+import { SuggestedTasksSection } from './SuggestedTasksSection';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
@@ -199,6 +201,7 @@ function LoadingSkeleton() {
 export function AIInsightsCard() {
   const { data, generatedAt, isLoading, isRefreshing, isStale, refresh, cooldownRemaining } = useAIInsights();
   const { dismissedKeys, dismiss } = useDismissedSuggestions();
+  const { createTask } = useTasks();
   const [cooldown, setCooldown] = useState(0);
   const [activeGuidance, setActiveGuidance] = useState<GuidanceRequest | null>(null);
   const [guidanceText, setGuidanceText] = useState<string | null>(null);
@@ -329,6 +332,12 @@ export function AIInsightsCard() {
                               ))}
                             </div>
                           </div>
+                        )}
+                        {data.suggestedTasks && data.suggestedTasks.length > 0 && (
+                          <SuggestedTasksSection
+                            tasks={data.suggestedTasks}
+                            onAddTask={(task) => createTask.mutate(task)}
+                          />
                         )}
                         {(() => {
                           const visibleSuggestions = (data.featureSuggestions || []).filter(

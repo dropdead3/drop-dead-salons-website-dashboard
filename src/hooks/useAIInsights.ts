@@ -25,12 +25,19 @@ export interface FeatureSuggestion {
   priority: 'high' | 'medium' | 'low';
 }
 
+export interface SuggestedTask {
+  title: string;
+  priority: 'high' | 'medium' | 'low';
+  dueInDays: number | null;
+}
+
 export interface AIInsightsData {
   summaryLine: string;
   overallSentiment: 'positive' | 'neutral' | 'concerning';
   insights: InsightItem[];
   actionItems: ActionItem[];
   featureSuggestions?: FeatureSuggestion[];
+  suggestedTasks?: SuggestedTask[];
 }
 
 export interface AIInsightsRow {

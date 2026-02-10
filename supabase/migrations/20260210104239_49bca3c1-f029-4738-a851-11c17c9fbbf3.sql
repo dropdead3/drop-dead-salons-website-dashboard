@@ -1,0 +1,1 @@
+ALTER TABLE public.tasks ADD COLUMN source text NOT NULL DEFAULT 'manual';
