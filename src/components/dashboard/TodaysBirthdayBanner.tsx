@@ -37,33 +37,28 @@ export function TodaysBirthdayBanner() {
         exit={{ opacity: 0, y: -10 }}
         className="relative rounded-xl mb-6 overflow-hidden"
         style={{
-          boxShadow: '0 0 24px rgba(168,85,247,0.3), 0 0 0 1px rgba(255,255,255,0.08)',
+          padding: '1.5px',
+          background: 'linear-gradient(90deg, rgba(236,72,153,0.5), rgba(168,85,247,0.5), rgba(236,72,153,0.5))',
+          boxShadow: '0 0 20px rgba(168,85,247,0.25)',
         }}
       >
-        <div className="relative bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white rounded-xl p-4 ring-1 ring-white/20 overflow-hidden">
-          {/* Animated sheen sweep */}
-          <motion.div
-            className="absolute inset-0 pointer-events-none"
-            initial={{ x: '-100%' }}
-            animate={{ x: '200%' }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              repeatDelay: 4,
-              ease: 'easeInOut',
-            }}
-            style={{
-              width: '40%',
-              background: 'linear-gradient(105deg, transparent 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.15) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.15) 55%, rgba(255,255,255,0) 70%, transparent 100%)',
-            }}
-          />
-          {/* Top highlight line */}
-          <div
-            className="absolute inset-x-0 top-0 h-px pointer-events-none"
-            style={{
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-            }}
-          />
+        {/* Animated sheen on the stroke only */}
+        <motion.div
+          className="absolute inset-0 pointer-events-none z-10"
+          initial={{ x: '-100%' }}
+          animate={{ x: '200%' }}
+          transition={{
+            duration: 2.5,
+            repeat: Infinity,
+            repeatDelay: 5,
+            ease: 'easeInOut',
+          }}
+          style={{
+            width: '35%',
+            background: 'linear-gradient(105deg, transparent 0%, rgba(255,255,255,0) 25%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.5) 55%, rgba(255,255,255,0) 75%, transparent 100%)',
+          }}
+        />
+        <div className="relative bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white rounded-[calc(0.75rem-1.5px)] p-4 overflow-hidden">
           <div className="relative flex items-center flex-wrap gap-4">
             <div className="flex items-center gap-2 shrink-0">
               <PartyPopper className="w-5 h-5" />
