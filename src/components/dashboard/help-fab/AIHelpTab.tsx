@@ -75,9 +75,9 @@ export function AIHelpTab() {
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                 <Sparkles className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">AI Help Assistant</h3>
+              <h3 className="font-semibold text-lg mb-2">Zura</h3>
               <p className="text-sm text-muted-foreground mb-6 max-w-[280px]">
-                Ask me anything about using the platform. I can help you navigate features and answer questions.
+                I'm Zura, your AI assistant. Ask me anything about using the platform.
               </p>
               <div className="flex flex-wrap gap-2 justify-center">
                 {EXAMPLE_PROMPTS.map((prompt) => (
