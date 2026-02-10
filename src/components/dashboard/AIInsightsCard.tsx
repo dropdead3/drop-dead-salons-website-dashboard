@@ -312,7 +312,7 @@ export function AIInsightsCard() {
                         </Button>
                       </div>
                     ) : (
-                      <div className="space-y-4">
+                      <div className="space-y-5">
                         {data.insights.length > 0 && (
                           <div className="space-y-2">
                             {data.insights.map((insight, i) => (

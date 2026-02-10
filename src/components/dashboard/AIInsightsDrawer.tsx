@@ -317,7 +317,7 @@ export function AIInsightsDrawer() {
                               </Button>
                             </div>
                           ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-5">
                               {data.insights.length > 0 && (
                                 <div className="space-y-2">
                                   {data.insights.map((insight, i) => (
@@ -325,7 +325,6 @@ export function AIInsightsDrawer() {
                                   ))}
                                 </div>
                               )}
-                              <div className="space-y-4">
                                 {data.actionItems.length > 0 && (
                                   <div>
                                     <div className="flex items-center gap-1.5 mb-2">
@@ -402,7 +401,6 @@ export function AIInsightsDrawer() {
                                     </div>
                                   );
                                 })()}
-                              </div>
                             </div>
                           )}
                         </div>
