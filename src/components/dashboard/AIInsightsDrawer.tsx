@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { VisibilityGate } from '@/components/visibility';
 import { useAIInsights, type InsightItem, type ActionItem } from '@/hooks/useAIInsights';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import {
   Brain,
   RefreshCw,
@@ -19,6 +20,8 @@ import {
   CheckCircle2,
   Sparkles,
   Clock,
+  X,
+  ChevronDown,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -110,34 +113,9 @@ function ActionItemCard({ item, index }: { item: ActionItem; index: number }) {
   );
 }
 
-/** Trigger button to open the AI Insights drawer */
-export function AIInsightsTrigger({ onClick }: { onClick: () => void }) {
-  const { data } = useAIInsights();
-  const sentiment = data?.overallSentiment ? sentimentConfig[data.overallSentiment] : null;
-  const SentimentIcon = sentiment?.icon;
-
-  return (
-    <Button
-      variant="outline"
-      onClick={onClick}
-      className="gap-2 h-9"
-    >
-      <div className="w-5 h-5 rounded-md bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center">
-        <Brain className="w-3 h-3 text-violet-600 dark:text-violet-400" />
-      </div>
-      <span className="text-sm font-display tracking-wide">AI Insights</span>
-      {SentimentIcon && (
-        <div className={cn('w-4 h-4 rounded-full flex items-center justify-center', sentiment?.bg)}>
-          <SentimentIcon className={cn('w-2.5 h-2.5', sentiment?.color)} />
-        </div>
-      )}
-    </Button>
-  );
-}
-
-/** Self-contained drawer with trigger — wraps Sheet + content + trigger */
+/** Self-contained expandable card widget for AI Business Insights */
 export function AIInsightsDrawer() {
-  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const { data, generatedAt, isLoading, isRefreshing, isStale, refresh, cooldownRemaining } = useAIInsights();
   const [cooldown, setCooldown] = useState(0);
 
@@ -159,115 +137,178 @@ export function AIInsightsDrawer() {
       elementName="AI Business Insights"
       elementCategory="Dashboard Home"
     >
-      <AIInsightsTrigger onClick={() => setOpen(true)} />
-
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="sm:max-w-md overflow-y-auto">
-          <SheetHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center">
-                  <Brain className="w-4 h-4 text-violet-600 dark:text-violet-400" />
-                </div>
-                <SheetTitle className="text-base font-display tracking-wide">
-                  AI BUSINESS INSIGHTS
-                </SheetTitle>
+      <LayoutGroup>
+        <AnimatePresence mode="wait">
+          {!expanded ? (
+            /* ── Collapsed: Inline button ── */
+            <motion.button
+              key="collapsed"
+              layoutId="ai-insights-widget"
+              onClick={() => setExpanded(true)}
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-display tracking-wide hover:bg-muted/50 transition-colors cursor-pointer"
+              style={{ borderRadius: 6 }}
+            >
+              <div className="w-5 h-5 rounded-md bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center">
+                <Brain className="w-3 h-3 text-violet-600 dark:text-violet-400" />
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => refresh(true)}
-                disabled={isRefreshing || cooldown > 0}
-                className="gap-1.5 text-xs h-8"
-              >
-                <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
-                {cooldown > 0 ? `${cooldown}s` : isRefreshing ? 'Analyzing...' : 'Refresh'}
-              </Button>
-            </div>
-            <SheetDescription className="sr-only">AI-generated business insights and action items</SheetDescription>
-
-            {data && (
-              <div className="flex items-start gap-2 mt-2">
-                <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
-                  <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-muted-foreground leading-snug">
-                    {blurFinancialValues(data.summaryLine)}
-                  </p>
-                  {generatedAt && (
-                    <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
-                      <Clock className="w-2.5 h-2.5" />
-                      Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
-                      {isStale && ' · Stale'}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-          </SheetHeader>
-
-          {isLoading ? (
-            <div className="space-y-3 pt-2">
-              {[1, 2, 3].map(i => (
-                <div key={i} className="space-y-1.5">
-                  <Skeleton className="w-20 h-3 rounded" />
-                  <Skeleton className="w-full h-4 rounded" />
-                  <Skeleton className="w-3/4 h-3 rounded" />
-                </div>
-              ))}
-            </div>
-          ) : !data ? (
-            <div className="text-center py-12">
-              <Sparkles className="w-8 h-8 mx-auto mb-3 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground mb-3">No insights generated yet</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => refresh(true)}
-                disabled={isRefreshing}
-                className="gap-1.5"
-              >
-                <Brain className="w-3.5 h-3.5" />
-                Generate Insights
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4 pt-2">
-              {data.insights.length > 0 && (
-                <div className="space-y-2">
-                  {data.insights.map((insight, i) => (
-                    <InsightCard key={i} insight={insight} />
-                  ))}
+              <span>AI Insights</span>
+              {sentiment && SentimentIcon && (
+                <div className={cn('w-4 h-4 rounded-full flex items-center justify-center', sentiment.bg)}>
+                  <SentimentIcon className={cn('w-2.5 h-2.5', sentiment.color)} />
                 </div>
               )}
+              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
+            </motion.button>
+          ) : (
+            /* ── Expanded: Full card ── */
+            <motion.div
+              key="expanded"
+              layoutId="ai-insights-widget"
+              className="w-full rounded-2xl shadow-lg border border-border/40 bg-card overflow-hidden"
+              style={{ borderRadius: 16 }}
+            >
+              {/* Top gradient accent */}
+              <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
 
-              {data.actionItems.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">
-                      ACTION ITEMS
+              {/* Header */}
+              <div className="p-4 pb-3">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-oat" />
+                    <span className="font-display text-xs tracking-[0.15em]">AI BUSINESS INSIGHTS</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={() => refresh(true)}
+                      disabled={isRefreshing || cooldown > 0}
+                    >
+                      <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(false)}>
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Sentiment summary */}
+                {data && (
+                  <div className="flex items-start gap-2">
+                    <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
+                      <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm text-muted-foreground leading-snug">
+                        {blurFinancialValues(data.summaryLine)}
+                      </p>
+                      {generatedAt && (
+                        <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
+                          <Clock className="w-2.5 h-2.5" />
+                          Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
+                          {isStale && ' · Stale'}
+                          {cooldown > 0 && ` · ${cooldown}s cooldown`}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Content */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.15, duration: 0.25 }}
+              >
+                <ScrollArea className="max-h-[500px]">
+                  <div className="px-4 pb-3">
+                    {isLoading ? (
+                      <div className="space-y-3">
+                        {[1, 2, 3].map(i => (
+                          <div key={i} className="space-y-1.5">
+                            <Skeleton className="w-20 h-3 rounded" />
+                            <Skeleton className="w-full h-4 rounded" />
+                            <Skeleton className="w-3/4 h-3 rounded" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : !data ? (
+                      <div className="text-center py-14">
+                        <Sparkles className="w-7 h-7 mx-auto mb-3 opacity-20" />
+                        <p className="text-sm font-display text-muted-foreground">No insights generated yet</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => refresh(true)}
+                          disabled={isRefreshing}
+                          className="gap-1.5 mt-3"
+                        >
+                          <Brain className="w-3.5 h-3.5" />
+                          Generate Insights
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Insights column */}
+                        {data.insights.length > 0 && (
+                          <div className="space-y-2">
+                            {data.insights.map((insight, i) => (
+                              <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 8 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 + i * 0.05, duration: 0.25 }}
+                              >
+                                <InsightCard insight={insight} />
+                              </motion.div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Action items column */}
+                        {data.actionItems.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-2">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">
+                                ACTION ITEMS
+                              </span>
+                            </div>
+                            <div className="space-y-0.5">
+                              {data.actionItems.map((item, i) => (
+                                <motion.div
+                                  key={i}
+                                  initial={{ opacity: 0, y: 8 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.25 + i * 0.05, duration: 0.25 }}
+                                >
+                                  <ActionItemCard item={item} index={i} />
+                                </motion.div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+
+                {/* Footer */}
+                <div className="px-4 pb-4 pt-1">
+                  <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
+                    <Sparkles className="w-3 h-3 text-muted-foreground/40" />
+                    <span className="text-[10px] text-muted-foreground/50">
+                      Powered by AI · Based on your data
                     </span>
                   </div>
-                  <div className="space-y-0.5">
-                    {data.actionItems.map((item, i) => (
-                      <ActionItemCard key={i} item={item} index={i} />
-                    ))}
-                  </div>
                 </div>
-              )}
-
-              <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
-                <Sparkles className="w-3 h-3 text-muted-foreground/40" />
-                <span className="text-[10px] text-muted-foreground/50">
-                  Powered by AI · Based on your data
-                </span>
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           )}
-        </SheetContent>
-      </Sheet>
+        </AnimatePresence>
+      </LayoutGroup>
     </VisibilityGate>
   );
 }
