@@ -44,7 +44,7 @@ export function TodaysBirthdayBanner() {
       >
         {/* Animated sheen on the stroke only */}
         <motion.div
-          className="absolute inset-0 pointer-events-none z-10"
+          className="absolute inset-0 pointer-events-none"
           initial={{ x: '-100%' }}
           animate={{ x: '200%' }}
           transition={{
@@ -58,7 +58,7 @@ export function TodaysBirthdayBanner() {
             background: 'linear-gradient(105deg, transparent 0%, rgba(255,255,255,0) 25%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.5) 55%, rgba(255,255,255,0) 75%, transparent 100%)',
           }}
         />
-        <div className="relative bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white rounded-[calc(0.75rem-1.5px)] p-4 overflow-hidden">
+        <div className="relative z-[1] bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white rounded-[calc(0.75rem-1.5px)] p-4 overflow-hidden">
           <div className="relative flex items-center flex-wrap gap-4">
             <div className="flex items-center gap-2 shrink-0">
               <PartyPopper className="w-5 h-5" />
