@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import { ArrowLeft, Lightbulb, Sparkles } from 'lucide-react';
 import { SuggestedTasksSection } from './SuggestedTasksSection';
 import type { SuggestedTask } from '@/hooks/useAIInsights';
+import { useNavigate } from 'react-router-dom';
 
 interface GuidancePanelProps {
   title: string;
@@ -18,6 +19,8 @@ interface GuidancePanelProps {
 }
 
 export function GuidancePanel({ title, type, guidance, isLoading, onBack, suggestedTasks, onAddTask }: GuidancePanelProps) {
+  const navigate = useNavigate();
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 pt-3 pb-2 border-b border-border/40 flex-shrink-0">
@@ -64,6 +67,28 @@ export function GuidancePanel({ title, type, guidance, isLoading, onBack, sugges
                     ul: ({ children }) => <ul className="mb-4 pl-5 space-y-1.5 list-disc marker:text-muted-foreground/50">{children}</ul>,
                     ol: ({ children }) => <ol className="mb-4 pl-5 space-y-1.5 list-decimal marker:text-muted-foreground/50">{children}</ol>,
                     li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                    a: ({ href, children }) => {
+                      const isInternal = href?.startsWith('/dashboard');
+                      if (isInternal && href) {
+                        return (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate(href);
+                            }}
+                            className="text-primary underline decoration-primary/40 hover:decoration-primary underline-offset-2 transition-colors font-medium"
+                          >
+                            {children}
+                          </button>
+                        );
+                      }
+                      return (
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2">
+                          {children}
+                        </a>
+                      );
+                    },
                   }}
                 >
                   {guidance || ''}
