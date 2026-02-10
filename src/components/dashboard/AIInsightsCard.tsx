@@ -30,7 +30,7 @@ import {
   Sparkles,
   Clock,
   ChevronRight,
-  ArrowRight,
+  CheckCheck,
   Lightbulb,
   Zap,
   X,
@@ -107,7 +107,7 @@ function blurFinancialValues(text: string) {
 }
 
 function GuidanceTrigger({ label, onClick, icon: IconOverride }: { label: string; onClick: () => void; icon?: React.ComponentType<{ className?: string }> }) {
-  const Icon = IconOverride || ArrowRight;
+  const Icon = IconOverride || CheckCheck;
   return (
     <button
       onClick={onClick}
