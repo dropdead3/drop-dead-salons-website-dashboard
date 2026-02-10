@@ -35,12 +35,12 @@ export function TodaysBirthdayBanner() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className="relative rounded-2xl mb-6 overflow-hidden"
+        className="relative rounded-xl mb-6 overflow-hidden"
         style={{
           boxShadow: '0 0 24px rgba(168,85,247,0.3), 0 0 0 1px rgba(255,255,255,0.08)',
         }}
       >
-        <div className="relative bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white rounded-2xl p-4 ring-1 ring-white/20 overflow-hidden">
+        <div className="relative bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white rounded-xl p-4 ring-1 ring-white/20 overflow-hidden">
           {/* Animated sheen sweep */}
           <motion.div
             className="absolute inset-0 pointer-events-none"
