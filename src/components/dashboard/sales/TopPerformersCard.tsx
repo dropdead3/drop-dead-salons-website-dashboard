@@ -64,7 +64,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
 
   if (isLoading) {
     return (
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden border-border/40">
         <CardHeader className="px-4 py-3 pb-2">{headerContent}</CardHeader>
         <CardContent className="px-4 pb-3 pt-0">
           <div className="space-y-2">
@@ -85,7 +85,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
 
   if (!performers.length) {
     return (
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden border-border/40">
         <CardHeader className="px-4 py-3 pb-2">{headerContent}</CardHeader>
         <CardContent className="px-4 pb-3 pt-0">
           <div className="text-center py-3 text-muted-foreground text-xs">
@@ -99,7 +99,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   const topThree = performers.slice(0, 3);
 
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden border-border/40">
       <CardHeader className="px-4 py-3 pb-2">{headerContent}</CardHeader>
       <CardContent className="px-4 pb-3 pt-0">
         <div className="space-y-2">
