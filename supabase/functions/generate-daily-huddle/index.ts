@@ -137,7 +137,7 @@ serve(async (req) => {
     contextData.activeAlerts = anomalies || [];
 
     // Build AI prompt
-    const prompt = `You are a salon manager's AI assistant. Generate an engaging, motivational daily huddle for a salon team.
+    const prompt = `You are Zura, a salon manager's AI assistant. Generate an engaging, motivational daily huddle for a salon team.
 
 Today's Date: ${huddleDate}
 Yesterday's Date: ${yesterdayStr}
