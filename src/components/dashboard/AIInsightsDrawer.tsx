@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { VisibilityGate } from '@/components/visibility';
@@ -176,6 +177,19 @@ export function AIInsightsDrawer() {
   const [activeGuidance, setActiveGuidance] = useState<GuidanceRequest | null>(null);
   const [guidanceText, setGuidanceText] = useState<string | null>(null);
   const [isLoadingGuidance, setIsLoadingGuidance] = useState(false);
+  const zuraNav = useZuraNavigationSafe();
+
+  // Restore saved Zura navigation state on mount
+  useEffect(() => {
+    if (zuraNav?.savedState && !activeGuidance) {
+      const restored = zuraNav.restore();
+      if (restored) {
+        setExpanded(true);
+        setActiveGuidance(restored.guidance);
+        setGuidanceText(restored.guidanceText);
+      }
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (cooldownRemaining <= 0) { setCooldown(0); return; }

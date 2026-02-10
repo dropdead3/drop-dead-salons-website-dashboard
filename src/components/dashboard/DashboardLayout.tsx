@@ -7,6 +7,8 @@ import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { DashboardLockProvider, useDashboardLock } from '@/contexts/DashboardLockContext';
+import { ZuraNavigationProvider } from '@/contexts/ZuraNavigationContext';
+import { ZuraReturnPill } from '@/components/dashboard/ZuraReturnPill';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -1181,14 +1183,17 @@ export function DashboardLayout(props: DashboardLayoutProps) {
   
   return (
     <DashboardLockProvider>
-      <div className={cn(
-        resolvedTheme === 'dark' && 'dark',
-        `theme-${colorTheme}`,
-        'bg-background text-foreground', // Explicit color application for proper inheritance
-        isPlatformRoute && 'platform-theme platform-gradient-radial min-h-screen'
-      )}>
-        <DashboardLayoutWithLock {...props} />
-      </div>
+      <ZuraNavigationProvider>
+        <div className={cn(
+          resolvedTheme === 'dark' && 'dark',
+          `theme-${colorTheme}`,
+          'bg-background text-foreground',
+          isPlatformRoute && 'platform-theme platform-gradient-radial min-h-screen'
+        )}>
+          <DashboardLayoutWithLock {...props} />
+          <ZuraReturnPill />
+        </div>
+      </ZuraNavigationProvider>
     </DashboardLockProvider>
   );
 }
