@@ -96,8 +96,8 @@ export function PlatformActivityFeed({
       
       {logs && logs.length > 0 ? (
         <div className="space-y-2">
-          {logs.map((log) => (
-            <ActivityLogItem key={log.id} log={log} />
+          {logs.map((log, index) => (
+            <ActivityLogItem key={log.id} log={log} isLatest={index === 0} />
           ))}
         </div>
       ) : (
@@ -115,9 +115,10 @@ export function PlatformActivityFeed({
 
 interface ActivityLogItemProps {
   log: AuditLogEntry;
+  isLatest?: boolean;
 }
 
-function ActivityLogItem({ log }: ActivityLogItemProps) {
+function ActivityLogItem({ log, isLatest = false }: ActivityLogItemProps) {
   const config = getAuditActionConfig(log.action);
   const Icon = actionIcons[log.action] || Building2;
   const colors = colorClasses[config.color];
@@ -177,10 +178,18 @@ function ActivityLogItem({ log }: ActivityLogItemProps) {
         </p>
       </div>
 
-      {/* Timestamp */}
-      <span className="text-xs text-slate-500 whitespace-nowrap">
-        {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
-      </span>
+      {/* Timestamp + live dot */}
+      <div className="flex items-center gap-2 shrink-0">
+        {isLatest && (
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+        )}
+        <span className="text-xs text-slate-500 whitespace-nowrap">
+          {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
+        </span>
+      </div>
     </Link>
   );
 }

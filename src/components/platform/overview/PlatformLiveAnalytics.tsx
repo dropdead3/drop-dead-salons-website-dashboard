@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -33,7 +34,6 @@ function usePlatformGrowthData() {
   return useQuery({
     queryKey: ['platform-growth-analytics'],
     queryFn: async () => {
-      // Get account creation data for last 6 months
       const months: MonthlyData[] = [];
       
       for (let i = 5; i >= 0; i--) {
@@ -58,7 +58,6 @@ function usePlatformGrowthData() {
         });
       }
       
-      // Calculate growth rates
       const currentMonth = months[months.length - 1];
       const previousMonth = months[months.length - 2];
       
@@ -78,7 +77,7 @@ function usePlatformGrowthData() {
         locationGrowth,
       };
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 }
 
@@ -98,7 +97,7 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
           </div>
           <h2 className="text-lg font-medium text-white">Platform Growth</h2>
         </div>
-        <Skeleton className="h-[200px] w-full rounded-xl bg-slate-700/50" />
+        <Skeleton className="h-[220px] w-full rounded-xl bg-slate-700/50" />
         <div className="grid grid-cols-2 gap-4 mt-4">
           <Skeleton className="h-20 rounded-xl bg-slate-700/50" />
           <Skeleton className="h-20 rounded-xl bg-slate-700/50" />
@@ -108,97 +107,101 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
   }
 
   return (
-    <div className={cn("rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6", className)}>
-      <div className="flex items-center justify-between mb-5">
-        <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-violet-500/20">
-            <Activity className="h-4 w-4 text-violet-400" />
+    <div className={cn("relative group", className)}>
+      {/* Animated gradient border wrapper */}
+      <div className="absolute -inset-[1px] rounded-2xl bg-[conic-gradient(from_var(--spin-angle,0deg),transparent_40%,rgba(139,92,246,0.3)_50%,transparent_60%)] opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-[spin-slow_8s_linear_infinite]" />
+      
+      <div className="relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-xl bg-violet-500/20">
+              <Activity className="h-4 w-4 text-violet-400" />
+            </div>
+            <h2 className="text-lg font-medium text-white">Platform Growth</h2>
           </div>
-          <h2 className="text-lg font-medium text-white">Platform Growth</h2>
+          <span className="text-xs text-slate-500">Last 6 months</span>
         </div>
-        <span className="text-xs text-slate-500">Last 6 months</span>
-      </div>
 
-      {/* Chart */}
-      <div className="relative h-[220px] -mx-2">
-        {/* Radial gradient background for depth */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(139,92,246,0.06)_0%,_transparent_70%)] pointer-events-none" />
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data?.months} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="colorAccounts" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="colorLocations" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-            <XAxis 
-              dataKey="month" 
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#64748b', fontSize: 11 }}
-            />
-            <YAxis 
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: '#64748b', fontSize: 11 }}
-            />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: 'rgba(15, 23, 42, 0.9)', 
-                backdropFilter: 'blur(12px)',
-                border: '1px solid rgba(100, 116, 139, 0.3)',
-                borderRadius: '12px',
-                boxShadow: '0 20px 50px -12px rgba(0,0,0,0.6)',
-                padding: '10px 14px',
-              }}
-              labelStyle={{ color: '#e2e8f0', marginBottom: '6px', fontWeight: 500, fontSize: '13px' }}
-              itemStyle={{ fontSize: '12px', padding: '2px 0' }}
-            />
-            <Area
-              type="monotone"
-              dataKey="accounts"
-              name="Accounts"
-              stroke="#8b5cf6"
-              strokeWidth={2}
-              fillOpacity={1}
-              fill="url(#colorAccounts)"
-              activeDot={{ r: 5, fill: '#8b5cf6', stroke: '#1e1b4b', strokeWidth: 2 }}
-            />
-            <Area
-              type="monotone"
-              dataKey="locations"
-              name="Locations"
-              stroke="#10b981"
-              strokeWidth={2}
-              fillOpacity={1}
-              fill="url(#colorLocations)"
-              activeDot={{ r: 5, fill: '#10b981', stroke: '#064e3b', strokeWidth: 2 }}
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
+        {/* Chart */}
+        <div className="relative h-[220px] -mx-2">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(139,92,246,0.06)_0%,_transparent_70%)] pointer-events-none" />
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data?.months} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorAccounts" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="colorLocations" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+              <XAxis 
+                dataKey="month" 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#64748b', fontSize: 11 }}
+              />
+              <YAxis 
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: '#64748b', fontSize: 11 }}
+              />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'rgba(15, 23, 42, 0.9)', 
+                  backdropFilter: 'blur(12px)',
+                  border: '1px solid rgba(100, 116, 139, 0.3)',
+                  borderRadius: '12px',
+                  boxShadow: '0 20px 50px -12px rgba(0,0,0,0.6)',
+                  padding: '10px 14px',
+                }}
+                labelStyle={{ color: '#e2e8f0', marginBottom: '6px', fontWeight: 500, fontSize: '13px' }}
+                itemStyle={{ fontSize: '12px', padding: '2px 0' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="accounts"
+                name="Accounts"
+                stroke="#8b5cf6"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#colorAccounts)"
+                activeDot={{ r: 5, fill: '#8b5cf6', stroke: '#1e1b4b', strokeWidth: 2 }}
+              />
+              <Area
+                type="monotone"
+                dataKey="locations"
+                name="Locations"
+                stroke="#10b981"
+                strokeWidth={2}
+                fillOpacity={1}
+                fill="url(#colorLocations)"
+                activeDot={{ r: 5, fill: '#10b981', stroke: '#064e3b', strokeWidth: 2 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3 mt-4">
-        <MetricCard
-          label="Total Accounts"
-          value={data?.currentAccounts || 0}
-          change={data?.accountGrowth || 0}
-          icon={Building2}
-          color="violet"
-        />
-        <MetricCard
-          label="Total Locations"
-          value={data?.currentLocations || 0}
-          change={data?.locationGrowth || 0}
-          icon={Users}
-          color="emerald"
-        />
+        {/* Stats Grid */}
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <MetricCard
+            label="Total Accounts"
+            value={data?.currentAccounts || 0}
+            change={data?.accountGrowth || 0}
+            icon={Building2}
+            color="violet"
+          />
+          <MetricCard
+            label="Total Locations"
+            value={data?.currentLocations || 0}
+            change={data?.locationGrowth || 0}
+            icon={Users}
+            color="emerald"
+          />
+        </div>
       </div>
     </div>
   );
@@ -237,7 +240,9 @@ function MetricCard({ label, value, change, icon: Icon, color }: MetricCardProps
           </div>
         )}
       </div>
-      <div className="text-2xl font-medium text-white tabular-nums">{value}</div>
+      <div className="text-2xl font-medium text-white tabular-nums">
+        <AnimatedNumber value={value} duration={1200} />
+      </div>
       <div className="text-xs text-slate-500">{label}</div>
     </div>
   );
