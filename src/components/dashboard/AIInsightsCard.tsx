@@ -294,8 +294,11 @@ export function AIInsightsCard() {
             </CardHeader>
           )}
 
-          <CardContent className={cn("pt-0", activeGuidance && "p-0")} style={{ overflow: 'hidden' }}>
-            <div style={{ overflowY: 'auto', maxHeight: '480px' }}>
+          <CardContent 
+            className={cn("pt-0 flex-1 min-h-0", activeGuidance && "p-0")} 
+            style={{ overflowY: 'auto' }}
+            onWheel={(e) => e.stopPropagation()}
+          >
               <AnimatePresence mode="wait">
                 {!activeGuidance ? (
                   <motion.div
@@ -427,7 +430,6 @@ export function AIInsightsCard() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
           </CardContent>
         </Card>
       </PinnableCard>
