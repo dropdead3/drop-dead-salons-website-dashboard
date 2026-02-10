@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -292,7 +293,7 @@ export function AIInsightsCard() {
           )}
 
           <CardContent className={cn("pt-0", activeGuidance && "p-0")}>
-            <div className="relative" style={{ maxHeight: '450px', overflowY: 'auto' }}>
+            <ScrollArea className="h-[450px]">
               <AnimatePresence initial={false} mode="wait">
                 {!activeGuidance ? (
                   <motion.div
@@ -424,7 +425,7 @@ export function AIInsightsCard() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </div>
+            </ScrollArea>
           </CardContent>
         </Card>
       </PinnableCard>
