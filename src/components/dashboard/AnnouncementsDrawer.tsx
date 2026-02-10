@@ -213,7 +213,7 @@ export function AnnouncementsDrawer({ isLeadership }: AnnouncementsWidgetProps) 
                     onValueChange={setLocationFilter}
                     includeAll
                     allLabel="All Locations"
-                    triggerClassName="h-7 text-xs bg-muted/30 border-border/40 w-auto min-w-0 max-w-[160px] px-2"
+                    triggerClassName="h-7 text-xs bg-muted/30 border-border/40 w-auto min-w-0 max-w-[240px] px-2 whitespace-nowrap"
                   />
                   {isLeadership && (
                     <>
