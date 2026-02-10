@@ -1,26 +1,18 @@
 
-
-# Fix Sidebar Cards: Overflow & Sizing
+# Rebalance Grid Columns for Bento Layout
 
 ## Problem
-The "Top Performers" and "Revenue Breakdown" cards in the sidebar are oversized because:
-1. `CardTitle` defaults to `text-2xl` -- way too large for a narrow sidebar column
-2. `CardHeader` defaults to `p-6` padding -- excessive for compact cards
-3. The cards have no `overflow-hidden`, so content can spill out visually
+The current grid is `lg:grid-cols-4` with the left column spanning 3 of 4 (75%), leaving only 25% for the sidebar cards. This makes the right-side cards too narrow and cramped while the left column has excessive whitespace.
 
-## Changes
+## Solution
+Change the grid from a 4-column to a 3-column layout:
+- Left column: `lg:col-span-2` (66%) -- narrower, tighter
+- Right sidebar: 1 column (33%) -- wider, cards fit naturally
 
-### 1. `src/components/dashboard/sales/TopPerformersCard.tsx`
-- Change `CardTitle` from `text-base` to `text-sm` for a tighter header
-- Add `p-4` to `CardHeader` and `CardContent` to reduce internal padding
-- Add `overflow-hidden` to the root `Card`
+## Technical Details
 
-### 2. `src/components/dashboard/sales/RevenueDonutChart.tsx`
-- Same treatment: `text-sm` title, `p-4` padding on header/content
-- Add `overflow-hidden` to the root `Card`
+### File: `src/components/dashboard/AggregateSalesCard.tsx`
+- **Line 391**: Change `grid lg:grid-cols-4` to `grid lg:grid-cols-3`
+- **Line 393**: Change `lg:col-span-3` to `lg:col-span-2`
 
-### 3. `src/components/dashboard/AggregateSalesCard.tsx`
-- Add `overflow-hidden` to the sidebar card wrappers
-- Ensure the sidebar column itself has `min-w-0` to prevent grid blowout
-
-These are purely CSS class changes -- no logic modifications needed.
+Two class changes, no logic modifications.
