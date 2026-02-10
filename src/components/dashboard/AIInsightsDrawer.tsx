@@ -100,7 +100,7 @@ function GuidanceTrigger({ label, onClick }: { label: string; onClick: () => voi
     >
       <Lightbulb className="w-3 h-3" />
       {label}
-      <ChevronRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+      <ChevronRight className="w-3 h-3 relative top-px opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
     </button>
   );
 }
