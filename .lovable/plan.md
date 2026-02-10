@@ -1,76 +1,73 @@
 
 
-# Sticky Zura Guidance Panel (Follow-Along Mode)
+# Edge Case Hardening for Zura Sticky Guidance Navigation
 
-## Overview
-Replace the simple "Return to Zura" pill with a rich, sticky guidance panel that stays at the bottom of the page when you navigate away from the insights card. This lets you read Zura's suggestions **while acting on them** -- like a follow-along guide.
+## Problem Statement
+The sticky guidance panel needs to handle a chain of navigations gracefully. Right now, the "happy path" works (click link in guidance -> panel stays on destination page). But several edge cases can break the experience or cause confusion.
 
-## User Experience
+## Edge Cases Identified and Solutions
 
-The panel has two states:
+### 1. User clicks a second internal link from the sticky panel on a destination page
+**Current behavior**: Already handled -- `handleInternalLink` in `ZuraStickyGuidance.tsx` re-saves the same state and navigates. The panel persists.
+**Status**: Working. No change needed.
 
-**Collapsed (default on arrival)**: A slim bar at the bottom showing the Zura avatar, the insight title, and expand/dismiss buttons. Stays out of the way but always accessible.
+### 2. User presses browser Back button from a destination page
+**Current behavior**: The browser navigates back, but `savedState` stays in memory. If they go back to a non-dashboard page, the panel still shows. If they go back to `/dashboard`, the panel hides (the `isVisible` check excludes `/dashboard`), but `savedState` still lingers in memory with no way to restore it visually.
+**Fix**: Add a `useEffect` in `ZuraStickyGuidance` that listens to `location.pathname` changes. When the user returns to `/dashboard`, auto-dismiss the saved state so it doesn't leak. The AIInsightsCard/Drawer restoration logic (already implemented) will handle reopening the guidance panel on the dashboard if appropriate.
 
-**Expanded**: Slides up to reveal the full guidance markdown content in a scrollable area (max ~40% viewport height). You can read each step while looking at the analytics page, payroll hub, or whatever Zura linked you to.
+### 3. User navigates via sidebar to a completely unrelated page (not from a Zura link)
+**Current behavior**: The sticky panel stays visible because `savedState` is still set and the path is not `/dashboard`.
+**Desired behavior**: This is actually fine -- the panel should persist so the user can still reference it. No change needed. The dismiss (X) button handles cleanup.
+
+### 4. User clicks "Return to Zura" (ArrowLeft) from the sticky panel, then immediately clicks another insight
+**Current behavior**: `navigate('/dashboard')` fires, panel hides. The `restore()` function in AIInsightsCard picks up the state. If the user then clicks a different insight, the old restored state gets replaced.
+**Status**: Working correctly. No change needed.
+
+### 5. User opens a link from guidance, then navigates to another internal link from the *page content* itself (not the sticky panel)
+**Current behavior**: The sticky panel stays visible with the original guidance. The page changes underneath.
+**Desired behavior**: This is correct -- the panel should keep showing the original guidance. No change needed.
+
+### 6. Rapid double-click on an internal link in the sticky panel
+**Current behavior**: Could fire `saveAndNavigate` twice, causing a double navigation.
+**Fix**: Add a simple debounce guard (a ref flag that blocks re-entry for 300ms) to `handleInternalLink` in `ZuraStickyGuidance`.
+
+### 7. The 5-minute auto-dismiss timer resets on every link click within the sticky panel
+**Current behavior**: `saveAndNavigate` clears the old timer and sets a new one, so yes, it resets. This is the desired behavior -- active usage keeps the panel alive.
+**Status**: Working correctly.
+
+### 8. User has the panel expanded, clicks a link within it, navigates to a new page -- panel should stay expanded
+**Current behavior**: `expanded` state is local to the component. Since `ZuraStickyGuidance` doesn't unmount during navigation (it's in the layout), the `expanded` state persists across navigations within the dashboard.
+**Status**: Working correctly because the component is mounted in `DashboardLayout`.
+
+## Summary of Changes
+
+Only two small fixes are needed:
+
+### File: `src/components/dashboard/ZuraStickyGuidance.tsx`
+1. **Auto-dismiss on dashboard return**: Add a `useEffect` that calls `ctx.dismiss()` when `location.pathname === '/dashboard'` and `savedState` exists. This prevents stale state after browser Back navigation.
+2. **Debounce internal link clicks**: Add a ref-based guard to `handleInternalLink` to prevent rapid double-clicks from triggering duplicate navigations.
+
+### Technical Detail
 
 ```text
-+--------------------------------------------------+
-|  [destination page content -- e.g. Analytics]     |
-|                                                   |
-|                                                   |
-|                                                   |
-+==================================================+
-| [Z] Revenue Pulse: How to Improve    [^] [X]     |  <-- collapsed bar
-+==================================================+
+// Pseudo-code for the two fixes:
 
-      click expand arrow [^] ...
+// Fix 1: Auto-dismiss when returning to dashboard
+useEffect(() => {
+  if (location.pathname === '/dashboard' && ctx?.savedState) {
+    ctx.dismiss();
+  }
+}, [location.pathname]);
 
-+--------------------------------------------------+
-|  [destination page content]                       |
-|                                                   |
-+==================================================+
-| [Z] Revenue Pulse: How to Improve    [v] [X]     |
-|--------------------------------------------------|
-| ### Step 1: Review your Daily Revenue tab         |
-| Check for patterns in your peak hours...          |
-|                                                   |
-| ### Step 2: Adjust your pricing strategy          |
-| Consider increasing rates for high-demand...      |
-|                                                   |
-| [Powered by Zura AI]                              |
-+==================================================+
+// Fix 2: Debounce guard
+const navigatingRef = useRef(false);
+const handleInternalLink = (href) => (e) => {
+  e.preventDefault();
+  if (navigatingRef.current) return;
+  navigatingRef.current = true;
+  setTimeout(() => { navigatingRef.current = false; }, 300);
+  ctx.saveAndNavigate(href, ctx.savedState);
+};
 ```
 
-Clicking "Return to Zura" in the collapsed bar still navigates back and restores the full insights card. The X dismisses the panel entirely.
-
-## Technical Details
-
-### 1. Replace `src/components/dashboard/ZuraReturnPill.tsx` with `ZuraStickyGuidance.tsx`
-Transform the simple pill into a collapsible panel:
-- **Collapsed state**: Slim bar (h-12) with Zura avatar, truncated title, expand chevron, return button, and dismiss X
-- **Expanded state**: Adds a ScrollArea below the bar showing the full guidance markdown (max-h-[40vh])
-- Uses `framer-motion` for smooth slide-up animation on mount and expand/collapse transitions
-- Renders the same `ReactMarkdown` setup from `GuidancePanel.tsx` for consistent link handling
-- Internal links within the sticky panel also work (navigate + keep the panel open)
-- Glassmorphism styling: `bg-card/95 backdrop-blur-xl` with a subtle top border gradient
-
-### 2. Update `src/contexts/ZuraNavigationContext.tsx`
-No structural changes needed -- the existing `savedState` already carries `guidanceText` and `suggestedTasks`. The new sticky component just reads from the same context.
-
-### 3. Update `src/components/dashboard/DashboardLayout.tsx`
-- Replace `<ZuraReturnPill />` with `<ZuraStickyGuidance />`
-- Import updated component
-
-### 4. Update `src/components/dashboard/GuidancePanel.tsx`
-- No changes needed -- the `saveAndNavigate` logic already saves the full guidance text
-
-### Files Created
-- `src/components/dashboard/ZuraStickyGuidance.tsx` -- New sticky panel component
-
-### Files Modified
-- `src/components/dashboard/DashboardLayout.tsx` -- Swap pill for sticky panel
-- `src/components/dashboard/ZuraReturnPill.tsx` -- Will be replaced/removed
-
-### No new dependencies
-Uses existing `framer-motion`, `react-markdown`, `@radix-ui/react-scroll-area`, and `react-router-dom`.
-
+No new files, no new dependencies, no backend changes.
