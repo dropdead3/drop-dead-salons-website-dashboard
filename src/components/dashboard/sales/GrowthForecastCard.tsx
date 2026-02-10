@@ -4,15 +4,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { useGrowthForecast, Scenario, GrowthDataPoint } from '@/hooks/useGrowthForecast';
+import { useGrowthForecast, Scenario, GrowthDataPoint, AccuracyDataPoint } from '@/hooks/useGrowthForecast';
 import { LocationSelect } from '@/components/ui/location-select';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
-import { TrendingUp, TrendingDown, Minus, BarChart3, Sparkles, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, BarChart3, Sparkles, ArrowUpRight, ArrowDownRight, Activity, Target, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, useInView } from 'framer-motion';
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   LineChart,
   Line,
   XAxis,
@@ -21,6 +23,7 @@ import {
   ResponsiveContainer,
   CartesianGrid,
   ReferenceLine,
+  Cell,
 } from 'recharts';
 import { useState } from 'react';
 
@@ -283,6 +286,143 @@ function GrowthInsightsPanel({ insights }: { insights: string[] }) {
   );
 }
 
+// Forecast Accuracy Tracker
+function ForecastAccuracyTracker({ history, average }: { history: AccuracyDataPoint[]; average: number | null }) {
+  if (!history || history.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.4 }}
+        className="space-y-3 p-4 rounded-lg bg-muted/20 border border-border/50"
+      >
+        <div className="flex items-center gap-2">
+          <Target className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium">Forecast Accuracy</span>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Accuracy tracking will appear once projected quarters have actual results to compare against.
+        </p>
+      </motion.div>
+    );
+  }
+
+  const getAccuracyColor = (acc: number) => {
+    if (acc >= 90) return 'text-chart-2';
+    if (acc >= 75) return 'text-amber-500';
+    return 'text-destructive';
+  };
+
+  const getBarColor = (acc: number) => {
+    if (acc >= 90) return 'hsl(var(--chart-2))';
+    if (acc >= 75) return 'hsl(45 93% 47%)';
+    return 'hsl(var(--destructive))';
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.4, duration: 0.4 }}
+      className="space-y-3 p-4 rounded-lg bg-muted/20 border border-border/50"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Target className="w-4 h-4 text-primary" />
+          <span className="text-sm font-medium">Forecast Accuracy</span>
+        </div>
+        {average !== null && (
+          <div className="flex items-center gap-1.5">
+            <CheckCircle2 className={cn('w-3.5 h-3.5', getAccuracyColor(average))} />
+            <span className={cn('text-sm font-semibold tabular-nums', getAccuracyColor(average))}>
+              {average.toFixed(1)}% avg
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Accuracy bar chart */}
+      <div className="h-[120px] w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={history} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+            <XAxis
+              dataKey="period"
+              tick={{ fontSize: 10 }}
+              tickLine={false}
+              axisLine={false}
+              className="fill-muted-foreground"
+            />
+            <YAxis
+              domain={[0, 100]}
+              tick={{ fontSize: 10 }}
+              tickLine={false}
+              axisLine={false}
+              tickFormatter={(v) => `${v}%`}
+              className="fill-muted-foreground"
+            />
+            <Tooltip
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const d = payload[0]?.payload as AccuracyDataPoint;
+                return (
+                  <div className="rounded-lg border bg-background/95 backdrop-blur-sm p-3 shadow-lg text-sm">
+                    <p className="font-medium mb-1">{d.period}</p>
+                    <div className="space-y-0.5 text-xs">
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">Projected</span>
+                        <span className="tabular-nums font-medium">${Math.round(d.projected).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between gap-4">
+                        <span className="text-muted-foreground">Actual</span>
+                        <span className="tabular-nums font-medium">${Math.round(d.actual).toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between gap-4 pt-1 border-t border-border/50">
+                        <span className="text-muted-foreground">Accuracy</span>
+                        <span className={cn('tabular-nums font-semibold', getAccuracyColor(d.accuracy))}>
+                          {d.accuracy.toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }}
+            />
+            <Bar dataKey="accuracy" radius={[4, 4, 0, 0]} maxBarSize={40}>
+              {history.map((entry, i) => (
+                <Cell key={i} fill={getBarColor(entry.accuracy)} fillOpacity={0.8} />
+              ))}
+            </Bar>
+            <ReferenceLine y={90} stroke="hsl(var(--chart-2))" strokeDasharray="3 3" strokeOpacity={0.4} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* Per-quarter comparison rows */}
+      <div className="space-y-1.5">
+        {history.slice(-4).map((h, i) => {
+          const diff = h.actual - h.projected;
+          const isOver = diff >= 0;
+          return (
+            <div key={i} className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">{h.period}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-muted-foreground tabular-nums">
+                  <BlurredAmount>${Math.round(h.projected).toLocaleString()}</BlurredAmount>
+                  {' → '}
+                  <BlurredAmount>${Math.round(h.actual).toLocaleString()}</BlurredAmount>
+                </span>
+                <span className={cn('font-medium tabular-nums', isOver ? 'text-chart-2' : 'text-destructive')}>
+                  {isOver ? '+' : ''}{((diff / h.projected) * 100).toFixed(1)}%
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </motion.div>
+  );
+}
+
 // Main component
 export function GrowthForecastCard() {
   const [selectedLocation, setSelectedLocation] = useState('all');
@@ -417,6 +557,12 @@ export function GrowthForecastCard() {
 
           {/* AI Insights */}
           <GrowthInsightsPanel insights={data.insights || []} />
+
+          {/* Forecast Accuracy Tracker */}
+          <ForecastAccuracyTracker
+            history={data.accuracy?.history || []}
+            average={data.accuracy?.average ?? null}
+          />
         </CardContent>
       </Card>
     </motion.div>

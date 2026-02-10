@@ -171,6 +171,7 @@ serve(async (req) => {
           scenarios: {},
           actuals: [],
           insights: ["Not enough historical data to generate growth forecasts. Revenue data will be analyzed once available."],
+          accuracy: { history: [], average: null },
           summary: {
             momentum: "steady",
             dataPoints: 0,
@@ -395,12 +396,68 @@ Trend R²: ${regression.r2.toFixed(3)}`;
       insights: p.scenario === "baseline" ? insights : null,
     }));
 
-    // Delete old forecasts and insert new ones
+    // Backfill accuracy on past forecasts where actuals are now available
+    try {
+      const { data: pastForecasts } = await supabase
+        .from("growth_forecasts")
+        .select("id, period_start, period_end, projected_revenue, scenario, actuals_revenue")
+        .eq("organization_id", organizationId)
+        .is("actuals_revenue", null)
+        .lt("period_end", new Date().toISOString().split("T")[0]);
+
+      if (pastForecasts && pastForecasts.length > 0) {
+        for (const pf of pastForecasts) {
+          // Sum actuals for that period
+          const { data: periodActuals } = await supabase
+            .from("phorest_daily_sales_summary")
+            .select("total_revenue")
+            .gte("summary_date", pf.period_start)
+            .lte("summary_date", pf.period_end);
+
+          if (periodActuals && periodActuals.length > 0) {
+            const actualTotal = periodActuals.reduce((s: number, r: any) => s + (Number(r.total_revenue) || 0), 0);
+            const projected = Number(pf.projected_revenue) || 1;
+            const errorPct = Math.abs(actualTotal - projected) / projected * 100;
+            const accuracy = Math.max(0, 100 - errorPct);
+
+            await supabase
+              .from("growth_forecasts")
+              .update({ actuals_revenue: actualTotal, accuracy_pct: Math.round(accuracy * 100) / 100 })
+              .eq("id", pf.id);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Accuracy backfill error:", e);
+    }
+
+    // Build accuracy summary from all scored forecasts
+    const { data: scoredForecasts } = await supabase
+      .from("growth_forecasts")
+      .select("period_label, scenario, projected_revenue, actuals_revenue, accuracy_pct")
+      .eq("organization_id", organizationId)
+      .eq("scenario", "baseline")
+      .not("actuals_revenue", "is", null)
+      .order("period_start", { ascending: true });
+
+    const accuracyHistory = (scoredForecasts || []).map((f: any) => ({
+      period: f.period_label,
+      projected: Number(f.projected_revenue),
+      actual: Number(f.actuals_revenue),
+      accuracy: Number(f.accuracy_pct),
+    }));
+
+    const avgAccuracy = accuracyHistory.length > 0
+      ? accuracyHistory.reduce((s: number, h: any) => s + h.accuracy, 0) / accuracyHistory.length
+      : null;
+
+    // Delete old expired forecasts and insert new ones
     await supabase
       .from("growth_forecasts")
       .delete()
       .eq("organization_id", organizationId)
-      .lt("expires_at", new Date().toISOString());
+      .lt("expires_at", new Date().toISOString())
+      .is("actuals_revenue", null);
 
     if (projectionsWithInsights.length > 0) {
       const { error: insertError } = await supabase
@@ -442,6 +499,10 @@ Trend R²: ${regression.r2.toFixed(3)}`;
         actuals,
         scenarios,
         insights,
+        accuracy: {
+          history: accuracyHistory,
+          average: avgAccuracy,
+        },
         summary: {
           momentum,
           lastQoQGrowth: growthRates.length > 0 ? growthRates[growthRates.length - 1] : null,
