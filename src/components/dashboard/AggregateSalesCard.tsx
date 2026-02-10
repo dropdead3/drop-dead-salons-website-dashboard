@@ -523,21 +523,17 @@ export function AggregateSalesCard({
         </div>
 
         {/* Sidebar - Top Performers & Donut */}
-        <div className="flex flex-col gap-4 min-w-0">
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <TopPerformersCard 
-              performers={stylistData || []} 
-              isLoading={stylistLoading}
-              showInfoTooltip
-            />
-          </div>
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <RevenueDonutChart 
-              serviceRevenue={displayMetrics.serviceRevenue} 
-              productRevenue={displayMetrics.productRevenue}
-              size={70}
-            />
-          </div>
+        <div className="space-y-3 min-w-0">
+          <TopPerformersCard 
+            performers={stylistData || []} 
+            isLoading={stylistLoading}
+            showInfoTooltip
+          />
+          <RevenueDonutChart 
+            serviceRevenue={displayMetrics.serviceRevenue} 
+            productRevenue={displayMetrics.productRevenue}
+            size={64}
+          />
         </div>
       </div>
 
