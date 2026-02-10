@@ -256,7 +256,7 @@ export function AIInsightsCard() {
         elementName="AI Business Insights"
         category="Dashboard Home"
       >
-        <Card className="rounded-2xl shadow-2xl overflow-hidden">
+        <Card className="rounded-2xl shadow-2xl max-h-[600px] flex flex-col">
           {!activeGuidance && (
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
@@ -291,8 +291,8 @@ export function AIInsightsCard() {
             </CardHeader>
           )}
 
-          <CardContent className={cn("pt-0", activeGuidance && "p-0")}>
-            <div className="relative max-h-[500px] overflow-y-auto">
+          <CardContent className={cn("pt-0 flex-1 min-h-0 overflow-y-auto", activeGuidance && "p-0")}>
+            <div className="relative">
               <AnimatePresence initial={false} mode="wait">
                 {!activeGuidance ? (
                   <motion.div
