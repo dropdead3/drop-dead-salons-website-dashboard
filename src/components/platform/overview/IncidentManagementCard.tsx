@@ -265,9 +265,12 @@ export function IncidentManagementCard() {
 
       {/* No active incident */}
       {!activeIncident && !showForm && (
-        <div className="text-center py-4">
-          <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
-          <p className="text-sm text-slate-400">All systems operational — no active incidents</p>
+        <div className="text-center py-6">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/10 mb-3">
+            <CheckCircle2 className="h-6 w-6 text-emerald-400 animate-[pulse_3s_ease-in-out_infinite]" />
+          </div>
+          <p className="text-sm font-medium text-slate-300">All systems operational</p>
+          <p className="text-xs text-slate-500 mt-0.5">No active incidents</p>
         </div>
       )}
 
