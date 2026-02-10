@@ -29,7 +29,7 @@ import {
   X,
   ChevronDown,
   ChevronRight,
-  Lightbulb,
+  ArrowRight,
   Zap,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -99,7 +99,7 @@ function GuidanceTrigger({ label, onClick }: { label: string; onClick: () => voi
       onClick={onClick}
       className="group inline-flex items-center gap-1 h-6 px-2 mt-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors duration-200"
     >
-      <Lightbulb className="w-3 h-3" />
+      <ArrowRight className="w-3 h-3" />
       {label}
       <ChevronRight className="w-3 h-3 relative top-px opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
     </button>
