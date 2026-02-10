@@ -86,12 +86,13 @@ export function SuggestedTasksSection({ tasks, onAddTask }: SuggestedTasksSectio
               </span>
               {!isAdded && (
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 flex-shrink-0"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-3 text-[11px] font-medium flex-shrink-0 gap-1"
                   onClick={() => handleAdd(task)}
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-3 h-3" />
+                  Add to My Tasks
                 </Button>
               )}
             </div>
