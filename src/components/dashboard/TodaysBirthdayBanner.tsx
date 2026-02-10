@@ -35,22 +35,36 @@ export function TodaysBirthdayBanner() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className="relative rounded-xl mb-6 overflow-hidden"
+        className="relative rounded-xl mb-6"
         style={{
-          padding: '1.5px',
-          background: 'linear-gradient(90deg, rgba(236,72,153,0.5), rgba(168,85,247,0.5), rgba(236,72,153,0.5))',
           boxShadow: '0 0 20px rgba(168,85,247,0.25)',
         }}
       >
-        {/* Animated sheen on the stroke only */}
+        {/* Gradient stroke border - uses inset box-shadow to perfectly follow border-radius */}
         <div
-          className="absolute inset-0 pointer-events-none animate-[sheen-sweep_6s_linear_infinite]"
+          className="absolute inset-0 rounded-xl pointer-events-none"
           style={{
-            width: '30%',
-            background: 'linear-gradient(105deg, transparent 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.45) 48%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.45) 52%, rgba(255,255,255,0) 70%, transparent 100%)',
+            background: 'linear-gradient(90deg, rgba(236,72,153,0.5), rgba(168,85,247,0.5), rgba(236,72,153,0.5))',
+            mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+            maskComposite: 'exclude',
+            WebkitMaskComposite: 'xor',
+            padding: '1.5px',
+            borderRadius: 'inherit',
           }}
         />
-        <div className="relative z-[1] bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white rounded-[calc(0.75rem-1.5px)] p-4 overflow-hidden">
+        {/* Animated sheen on the stroke only */}
+        <div
+          className="absolute inset-0 rounded-xl pointer-events-none overflow-hidden animate-[sheen-sweep_6s_linear_infinite]"
+          style={{
+            background: 'linear-gradient(105deg, transparent 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.45) 48%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.45) 52%, rgba(255,255,255,0) 70%, transparent 100%)',
+            mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+            maskComposite: 'exclude',
+            WebkitMaskComposite: 'xor',
+            padding: '1.5px',
+            borderRadius: 'inherit',
+          }}
+        />
+        <div className="relative z-[1] bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white rounded-xl p-4 overflow-hidden">
           <div className="relative flex items-center flex-wrap gap-4">
             <div className="flex items-center gap-2 shrink-0">
               <PartyPopper className="w-5 h-5" />
