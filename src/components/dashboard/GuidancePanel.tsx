@@ -1,8 +1,11 @@
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import ReactMarkdown from 'react-markdown';
 import { ArrowLeft, Lightbulb, Sparkles } from 'lucide-react';
+import { SuggestedTasksSection } from './SuggestedTasksSection';
+import type { SuggestedTask } from '@/hooks/useAIInsights';
 
 interface GuidancePanelProps {
   title: string;
@@ -10,9 +13,11 @@ interface GuidancePanelProps {
   guidance: string | null;
   isLoading: boolean;
   onBack: () => void;
+  suggestedTasks?: SuggestedTask[];
+  onAddTask?: (task: { title: string; priority: 'low' | 'normal' | 'high'; due_date?: string; source: string }) => void;
 }
 
-export function GuidancePanel({ title, type, guidance, isLoading, onBack }: GuidancePanelProps) {
+export function GuidancePanel({ title, type, guidance, isLoading, onBack, suggestedTasks, onAddTask }: GuidancePanelProps) {
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 pt-3 pb-2 border-b border-border/40 flex-shrink-0">
@@ -48,21 +53,29 @@ export function GuidancePanel({ title, type, guidance, isLoading, onBack }: Guid
               ))}
             </div>
           ) : (
-            <div className="max-w-none text-sm text-foreground/90">
-              <ReactMarkdown
-                components={{
-                  p: ({ children }) => <p className="mb-4 leading-relaxed">{children}</p>,
-                  strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
-                  h3: ({ children }) => <h3 className="mt-5 mb-2 text-sm font-medium text-foreground">{children}</h3>,
-                  h4: ({ children }) => <h4 className="mt-4 mb-1.5 text-sm font-medium text-foreground">{children}</h4>,
-                  ul: ({ children }) => <ul className="mb-4 pl-5 space-y-1.5 list-disc marker:text-muted-foreground/50">{children}</ul>,
-                  ol: ({ children }) => <ol className="mb-4 pl-5 space-y-1.5 list-decimal marker:text-muted-foreground/50">{children}</ol>,
-                  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-                }}
-              >
-                {guidance || ''}
-              </ReactMarkdown>
-            </div>
+            <>
+              <div className="max-w-none text-sm text-foreground/90">
+                <ReactMarkdown
+                  components={{
+                    p: ({ children }) => <p className="mb-4 leading-relaxed">{children}</p>,
+                    strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                    h3: ({ children }) => <h3 className="mt-5 mb-2 text-sm font-medium text-foreground">{children}</h3>,
+                    h4: ({ children }) => <h4 className="mt-4 mb-1.5 text-sm font-medium text-foreground">{children}</h4>,
+                    ul: ({ children }) => <ul className="mb-4 pl-5 space-y-1.5 list-disc marker:text-muted-foreground/50">{children}</ul>,
+                    ol: ({ children }) => <ol className="mb-4 pl-5 space-y-1.5 list-decimal marker:text-muted-foreground/50">{children}</ol>,
+                    li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                  }}
+                >
+                  {guidance || ''}
+                </ReactMarkdown>
+              </div>
+              {suggestedTasks && suggestedTasks.length > 0 && onAddTask && (
+                <>
+                  <Separator className="my-4" />
+                  <SuggestedTasksSection tasks={suggestedTasks} onAddTask={onAddTask} />
+                </>
+              )}
+            </>
           )}
         </div>
       </ScrollArea>

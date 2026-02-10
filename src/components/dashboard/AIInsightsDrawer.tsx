@@ -9,7 +9,7 @@ import { useDismissedSuggestions } from '@/hooks/useDismissedSuggestions';
 import { useTasks } from '@/hooks/useTasks';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { GuidancePanel } from './GuidancePanel';
-import { SuggestedTasksSection } from './SuggestedTasksSection';
+
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
@@ -339,12 +339,6 @@ export function AIInsightsDrawer() {
                                     </div>
                                   </div>
                                 )}
-                                {data.suggestedTasks && data.suggestedTasks.length > 0 && (
-                                  <SuggestedTasksSection
-                                    tasks={data.suggestedTasks}
-                                    onAddTask={(task) => createTask.mutate(task)}
-                                  />
-                                )}
                                 {(() => {
                                   const visibleSuggestions = (data.featureSuggestions || []).filter(
                                     (s) => !dismissedKeys.has(s.suggestionKey)
@@ -435,6 +429,8 @@ export function AIInsightsDrawer() {
                         guidance={guidanceText}
                         isLoading={isLoadingGuidance}
                         onBack={handleBack}
+                        suggestedTasks={data?.suggestedTasks}
+                        onAddTask={(task) => createTask.mutate(task)}
                       />
                     </motion.div>
                   )}
