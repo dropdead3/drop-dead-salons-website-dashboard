@@ -392,7 +392,7 @@ export function AggregateSalesCard({
         {/* KPIs with Trends */}
         <div className="lg:col-span-3">
           {/* Hero: Total Revenue with Breakdown */}
-          <div className="bg-muted/30 dark:bg-card rounded-lg p-4 sm:p-6">
+          <div className="bg-muted/30 dark:bg-card rounded-xl p-4 sm:p-6 border border-border/40">
             {/* Total Revenue - Hero */}
             <div className="text-center mb-4 sm:mb-6">
               <AnimatedBlurredAmount
