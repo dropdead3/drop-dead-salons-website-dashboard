@@ -1,52 +1,51 @@
 
 
-# Add Zura Avatar to Replace Generic Icons
+# Smart Hyperlinks in Zura AI Guidance
 
 ## Overview
-Create a dedicated Zura avatar component and use it across all AI panels to give Zura a consistent, branded visual identity -- replacing the generic Sparkles and Bot icons.
+Make Zura's guidance responses interactive by embedding hyperlinks that navigate directly to relevant pages within the platform. When Zura mentions analytics, reports, payroll, or other features, those references become clickable links that take the user straight there.
 
-## Design
-The Zura avatar will be a small circular badge with a "Z" letter mark in the primary brand color, styled consistently across all placements. This keeps things lightweight (no external image dependency) while giving Zura a distinct personality.
+## How It Works
 
-## Changes
+The approach has two parts:
 
-### 1. Create `src/components/ui/ZuraAvatar.tsx`
-A reusable component that renders a circular avatar with a stylized "Z" letter:
-- Accepts `size` prop ("sm" | "md" | "lg") for different contexts
-- Uses primary brand color with a soft background glow
-- Clean, modern look with rounded-full styling
+**1. Teach Zura to include links** -- Update the AI system prompt so Zura embeds markdown links using a predefined route map. For example, instead of saying "check your Daily Revenue tab," Zura will output `check your [Daily Revenue](/dashboard/admin/analytics?tab=sales)` -- a clickable link right in the guidance text.
 
-### 2. Update `src/components/dashboard/help-fab/AIHelpTab.tsx`
-- Replace the `Sparkles` icon in the empty state with the new `ZuraAvatar` (medium size)
+**2. Make those links work inside the app** -- Update the guidance panel's markdown renderer to detect internal links (starting with `/dashboard/`) and navigate within the app instead of doing a full page reload. External links still open normally in a new tab.
 
-### 3. Update `src/components/team-chat/AIChatPanel.tsx`
-- Replace the `Bot` icon in the sheet header with `ZuraAvatar` (small size)
-- Replace the `Sparkles` icon in the empty state with `ZuraAvatar` (medium size)
+## What Gets Linked
 
-### 4. Update `src/components/dashboard/AIInsightsCard.tsx`
-- Replace the "Powered by Zura AI" `Sparkles` icon with `ZuraAvatar` (small size)
-- Replace the "No insights yet" `Sparkles` icon with `ZuraAvatar` (medium size)
+Zura will know about all major platform routes and link to them contextually:
 
-### 5. Update `src/components/dashboard/AIInsightsDrawer.tsx`
-- Same replacements as the Card variant above
+- **Analytics Hub** -- Sales, Operations, Marketing, Reports tabs
+- **Leaderboard** -- Team performance comparisons
+- **Payroll Hub** -- Commission insights, team breakdown
+- **Client Directory** -- Client health and retention
+- **Team Overview** -- Staff performance and utilization  
+- **Schedule** -- Booking calendar and availability
+- **Inventory** -- Product and retail management
+- **Settings pages** -- Phorest connection, integrations, day rates
+- **My Stats / My Pay** -- Individual performance views
 
 ## Technical Details
 
-The `ZuraAvatar` component structure:
-```tsx
-// Sizes: sm (h-6 w-6), md (h-10 w-10), lg (h-12 w-12)
-<div className="rounded-full bg-primary/10 flex items-center justify-center">
-  <span className="font-bold text-primary">Z</span>
-</div>
-```
+### Changes to `supabase/functions/ai-insight-guidance/index.ts`
+Add a route reference map to the system prompt so the AI model knows which internal routes to link to. The prompt will instruct Zura to embed markdown-style links like `[Sales Analytics](/dashboard/admin/analytics?tab=sales)` naturally within guidance text. The route map will cover ~20 key destinations.
 
-No new dependencies required. The FAB button icon (MessageCircleQuestion) stays as-is since it serves a different UX purpose (general help trigger, not Zura-specific).
+### Changes to `src/components/dashboard/GuidancePanel.tsx`
+Update the ReactMarkdown `a` (anchor) component renderer to:
+- Detect internal links (paths starting with `/dashboard/`)
+- Use React Router's `useNavigate` to handle clicks without full page reloads
+- Style internal links distinctly (primary color, underline) so they're clearly clickable
+- Keep external links opening in new tabs as normal
 
-### Files Created
-- `src/components/ui/ZuraAvatar.tsx`
+### Changes to `supabase/functions/ai-business-insights/index.ts`
+Update the main insights system prompt to also include route references, so that insight descriptions and action items can reference linkable areas when rendered in the guidance panel.
 
 ### Files Modified
-- `src/components/dashboard/help-fab/AIHelpTab.tsx`
-- `src/components/team-chat/AIChatPanel.tsx`
-- `src/components/dashboard/AIInsightsCard.tsx`
-- `src/components/dashboard/AIInsightsDrawer.tsx`
+- `supabase/functions/ai-insight-guidance/index.ts` -- Add route map to system prompt
+- `supabase/functions/ai-business-insights/index.ts` -- Add route references to system prompt
+- `src/components/dashboard/GuidancePanel.tsx` -- Add smart link rendering with React Router navigation
+
+### No new dependencies needed
+Uses existing `react-router-dom` (useNavigate) and `react-markdown` already in the project.
