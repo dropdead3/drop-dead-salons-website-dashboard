@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Megaphone, X, Pin, ExternalLink, Settings, Plus, ChevronRight } from 'lucide-react';
+import { Megaphone, X, Pin, ExternalLink, Settings, Plus, ChevronRight, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
@@ -183,6 +183,7 @@ export function AnnouncementsDrawer({ isLeadership }: AnnouncementsWidgetProps) 
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
+            <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
           </motion.button>
         ) : (
           /* ── Expanded: Full card ── */

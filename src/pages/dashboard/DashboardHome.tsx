@@ -328,9 +328,11 @@ function DashboardSections({
   // Build section components map (excludes pinned cards - those are rendered separately)
   const sectionComponents = useMemo(() => ({
     ai_insights: (
-      <div className="flex items-center gap-2">
-        {isLeadership && <AIInsightsDrawer />}
-        <AnnouncementsDrawer isLeadership={isLeadership} />
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {isLeadership && <AIInsightsDrawer />}
+          <AnnouncementsDrawer isLeadership={isLeadership} />
+        </div>
       </div>
     ),
     
