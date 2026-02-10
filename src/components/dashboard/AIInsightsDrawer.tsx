@@ -25,6 +25,7 @@ import {
   Clock,
   X,
   ChevronDown,
+  ChevronRight,
   Lightbulb,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -90,15 +91,14 @@ function blurFinancialValues(text: string) {
 
 function GuidanceTrigger({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <Button
-      variant="ghost"
-      size="sm"
+    <button
       onClick={onClick}
-      className="h-6 px-2 mt-1.5 text-[11px] gap-1 text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300"
+      className="group inline-flex items-center gap-1 h-6 px-2 mt-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors duration-200"
     >
       <Lightbulb className="w-3 h-3" />
       {label}
-    </Button>
+      <ChevronRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+    </button>
   );
 }
 
