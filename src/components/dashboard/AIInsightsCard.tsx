@@ -301,6 +301,7 @@ export function AIInsightsCard() {
                     animate={slideVariants.center}
                     exit={slideVariants.exitToLeft}
                     transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                    className="max-h-[500px] overflow-y-auto"
                   >
                     {!data ? (
                       <div className="text-center py-8">
