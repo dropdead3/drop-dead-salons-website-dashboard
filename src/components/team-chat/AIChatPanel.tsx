@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bot, Send, X, Trash2, Sparkles } from 'lucide-react';
+import { Send, Trash2 } from 'lucide-react';
+import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -71,9 +72,7 @@ export function AIChatPanel({ open, onOpenChange }: AIChatPanelProps) {
         <SheetHeader className="px-4 py-3 border-b shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Bot className="h-5 w-5 text-primary" />
-              </div>
+              <ZuraAvatar size="sm" />
               <div>
                 <SheetTitle className="text-base">Zura</SheetTitle>
                 <p className="text-xs text-muted-foreground">
@@ -102,9 +101,7 @@ export function AIChatPanel({ open, onOpenChange }: AIChatPanelProps) {
           {messages.length === 0 ? (
             <div className="py-8 space-y-6">
               <div className="text-center space-y-2">
-                <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Sparkles className="h-6 w-6 text-primary" />
-                </div>
+                <ZuraAvatar size="lg" className="mx-auto" />
                 <h3 className="font-medium">Hi, I'm Zura!</h3>
                 <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
                   I can search clients, check schedules, and manage appointments for you.
