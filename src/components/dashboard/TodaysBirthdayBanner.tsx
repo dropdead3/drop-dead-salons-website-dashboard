@@ -45,17 +45,17 @@ export function TodaysBirthdayBanner() {
         {/* Animated sheen on the stroke only */}
         <motion.div
           className="absolute inset-0 pointer-events-none"
-          initial={{ x: '-100%' }}
-          animate={{ x: '200%' }}
+          initial={false}
+          animate={{ x: ['-40%', '140%'] }}
           transition={{
-            duration: 2.5,
+            duration: 2,
             repeat: Infinity,
-            repeatDelay: 5,
-            ease: 'easeInOut',
+            repeatDelay: 4,
+            ease: 'linear',
           }}
           style={{
-            width: '35%',
-            background: 'linear-gradient(105deg, transparent 0%, rgba(255,255,255,0) 25%, rgba(255,255,255,0.5) 45%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.5) 55%, rgba(255,255,255,0) 75%, transparent 100%)',
+            width: '30%',
+            background: 'linear-gradient(105deg, transparent 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.45) 48%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.45) 52%, rgba(255,255,255,0) 70%, transparent 100%)',
           }}
         />
         <div className="relative z-[1] bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white rounded-[calc(0.75rem-1.5px)] p-4 overflow-hidden">
