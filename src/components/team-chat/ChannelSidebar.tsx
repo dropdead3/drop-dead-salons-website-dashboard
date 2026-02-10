@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Hash, MapPin, Lock, Plus, ChevronDown, ChevronRight, Users, Settings, Sparkles, Folder } from 'lucide-react';
 import { DndContext, DragEndEvent, closestCenter, PointerSensor, useSensor, useSensors, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
@@ -92,6 +93,7 @@ interface SectionConfig {
 }
 
 export function ChannelSidebar() {
+  const location = useLocation();
   const { channels, isLoading, joinChannel } = useChatChannels();
   const { activeChannel, setActiveChannel } = useTeamChatContext();
   const { effectiveOrganization } = useOrganizationContext();
@@ -162,6 +164,18 @@ export function ChannelSidebar() {
       setActiveChannel(generalChannel || channels[0]);
     }
   }, [channels, activeChannel, setActiveChannel]);
+
+  // Deep-link: auto-select channel from navigation state (e.g., birthday DM)
+  useEffect(() => {
+    const openChannelId = location.state?.openChannelId;
+    if (openChannelId && channels.length > 0) {
+      const target = channels.find((c) => c.id === openChannelId);
+      if (target) {
+        setActiveChannel(target);
+        window.history.replaceState({}, '');
+      }
+    }
+  }, [location.state, channels, setActiveChannel]);
 
   // Build all section configs with user ordering
   const allSectionConfigs = useMemo((): SectionConfig[] => {
