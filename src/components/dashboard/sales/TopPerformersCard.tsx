@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Trophy, Medal } from 'lucide-react';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface Performer {
@@ -53,10 +52,6 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
       <div className="flex items-center gap-2">
         <Trophy className="w-4 h-4 text-chart-4" />
         <CardTitle className="font-display text-xs tracking-wide uppercase">Top Performers</CardTitle>
-        <CommandCenterVisibilityToggle 
-          elementKey="top_performers" 
-          elementName="Top Performers" 
-        />
       </div>
       {filterContext && (
         <AnalyticsFilterBadge 

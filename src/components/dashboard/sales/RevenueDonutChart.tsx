@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChartIcon } from 'lucide-react';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface RevenueDonutChartProps {
@@ -39,10 +38,6 @@ export function RevenueDonutChart({
       <div className="flex items-center gap-2">
         <PieChartIcon className="w-4 h-4 text-chart-2" />
         <CardTitle className="font-display text-xs tracking-wide uppercase">Revenue Breakdown</CardTitle>
-        <CommandCenterVisibilityToggle 
-          elementKey="revenue_breakdown" 
-          elementName="Revenue Breakdown" 
-        />
       </div>
       {filterContext && (
         <AnalyticsFilterBadge 
