@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -259,7 +259,7 @@ export function AIInsightsCard() {
         elementName="AI Business Insights"
         category="Dashboard Home"
       >
-        <Card className="rounded-2xl shadow-2xl">
+        <Card className="rounded-2xl shadow-2xl max-h-[600px] flex flex-col overflow-hidden">
           {!activeGuidance && (
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
@@ -294,13 +294,13 @@ export function AIInsightsCard() {
             </CardHeader>
           )}
 
-          <CardContent className={cn("pt-0", activeGuidance && "p-0")}>
-            <ScrollArea className="h-[450px]">
-              <AnimatePresence initial={false} mode="wait">
+          <CardContent className={cn("pt-0 flex-1 min-h-0", activeGuidance && "p-0")}>
+            <div style={{ overflowY: 'auto', maxHeight: '100%' }}>
+              <AnimatePresence mode="wait">
                 {!activeGuidance ? (
                   <motion.div
                     key="insights"
-                    initial={false}
+                    initial={{ opacity: 0 }}
                     animate={slideVariants.center}
                     exit={slideVariants.exitToLeft}
                     transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
@@ -427,7 +427,7 @@ export function AIInsightsCard() {
                   </motion.div>
                 )}
               </AnimatePresence>
-            </ScrollArea>
+            </div>
           </CardContent>
         </Card>
       </PinnableCard>
