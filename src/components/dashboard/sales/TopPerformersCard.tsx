@@ -65,8 +65,8 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   if (isLoading) {
     return (
       <Card className="h-full flex flex-col overflow-hidden border-border/40">
-        <CardHeader className="px-4 py-3 pb-2">{headerContent}</CardHeader>
-        <CardContent className="px-4 pb-3 pt-0 flex-1">
+        <CardHeader className="px-4 py-2 pb-1">{headerContent}</CardHeader>
+        <CardContent className="px-4 pb-2 pt-0 flex-1">
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30 dark:bg-card animate-pulse">
@@ -86,8 +86,8 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   if (!performers.length) {
     return (
       <Card className="h-full flex flex-col overflow-hidden border-border/40">
-        <CardHeader className="px-4 py-3 pb-2">{headerContent}</CardHeader>
-        <CardContent className="px-4 pb-3 pt-0 flex-1 flex items-center justify-center">
+        <CardHeader className="px-4 py-2 pb-1">{headerContent}</CardHeader>
+        <CardContent className="px-4 pb-2 pt-0 flex-1 flex items-center justify-center">
           <div className="text-center py-3 text-muted-foreground text-xs">
             No sales data available
           </div>
@@ -100,8 +100,8 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
 
   return (
     <Card className="h-full flex flex-col overflow-hidden border-border/40">
-      <CardHeader className="px-4 py-3 pb-2">{headerContent}</CardHeader>
-      <CardContent className="px-4 pb-3 pt-0 flex-1">
+      <CardHeader className="px-4 py-2 pb-1">{headerContent}</CardHeader>
+      <CardContent className="px-4 pb-2 pt-0 flex-1">
         <div className="space-y-2">
           {topThree.map((performer, idx) => {
             const rank = idx + 1;

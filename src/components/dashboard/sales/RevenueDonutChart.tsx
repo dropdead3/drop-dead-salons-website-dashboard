@@ -51,8 +51,8 @@ export function RevenueDonutChart({
   if (!data.length) {
     return (
       <Card className="overflow-hidden border-border/40">
-        <CardHeader className="px-4 py-3 pb-2">{headerContent}</CardHeader>
-        <CardContent className="px-4 pb-3 pt-0">
+        <CardHeader className="px-4 py-2 pb-1">{headerContent}</CardHeader>
+        <CardContent className="px-4 pb-2 pt-0">
           <div 
             className="flex items-center justify-center text-muted-foreground text-xs"
             style={{ width: size, height: size }}
@@ -66,8 +66,8 @@ export function RevenueDonutChart({
 
   return (
     <Card className="overflow-hidden border-border/40">
-      <CardHeader className="px-4 py-3 pb-2">{headerContent}</CardHeader>
-      <CardContent className="px-4 pb-3 pt-0">
+      <CardHeader className="px-4 py-2 pb-1">{headerContent}</CardHeader>
+      <CardContent className="px-4 pb-2 pt-0">
         <div className="flex items-center gap-3">
           <div style={{ width: size, height: size }}>
             <ResponsiveContainer width="100%" height="100%">
