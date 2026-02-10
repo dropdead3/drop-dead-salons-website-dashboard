@@ -1,13 +1,29 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PartyPopper, Cake, Eye } from 'lucide-react';
+import { PartyPopper, Cake, Eye, MessageCircle } from 'lucide-react';
 import { useTodaysBirthdays } from '@/hooks/useBirthdays';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useViewAs } from '@/contexts/ViewAsContext';
+import { useNavigate } from 'react-router-dom';
+import { useDMChannels } from '@/hooks/team-chat/useDMChannels';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 export function TodaysBirthdayBanner() {
   const { data: todaysBirthdays, isLoading } = useTodaysBirthdays();
   const { isViewingAsUser } = useViewAs();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { createDM, isCreating } = useDMChannels();
+
+  const handleSendDM = async (userId: string) => {
+    if (isCreating) return;
+    try {
+      const channel = await createDM(userId);
+      navigate('/dashboard/team-chat', { state: { openChannelId: channel.id } });
+    } catch {
+      // error handled by useDMChannels toast
+    }
+  };
 
   if (isLoading || !todaysBirthdays || todaysBirthdays.length === 0) {
     return null;
@@ -30,14 +46,19 @@ export function TodaysBirthdayBanner() {
           </div>
           
           <div className="flex items-center flex-wrap gap-3">
-            {todaysBirthdays.map((person, index) => (
+            {todaysBirthdays.map((person, index) => {
+              const isOwnBirthday = person.user_id === user?.id;
+              const canDM = !isOwnBirthday && person.user_id;
+              return (
               <div 
                 key={person.id} 
+                onClick={canDM ? () => handleSendDM(person.user_id) : undefined}
                 className={cn(
-                  "flex items-center gap-2 backdrop-blur-sm rounded-full pl-1 pr-3 py-1",
+                  "flex items-center gap-2 backdrop-blur-sm rounded-full pl-1 pr-3 py-1 transition-colors group",
                   isViewingAsUser && person.isCurrentUser 
                     ? "bg-background/40 ring-2 ring-background shadow-lg" 
-                    : "bg-background/20"
+                    : "bg-background/20",
+                  canDM && "cursor-pointer hover:bg-background/35"
                 )}
               >
                 <Avatar className={cn(
@@ -57,9 +78,13 @@ export function TodaysBirthdayBanner() {
                     <Eye className="w-3 h-3" />
                   )}
                 </span>
+                {canDM && (
+                  <MessageCircle className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
+                )}
                 {index === 0 && <Cake className="w-4 h-4 ml-1" />}
               </div>
-            ))}
+            );
+            })}
           </div>
           
           <span className="text-sm opacity-80 ml-auto hidden sm:block">
