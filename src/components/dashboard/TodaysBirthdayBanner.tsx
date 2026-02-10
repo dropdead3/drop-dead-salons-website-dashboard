@@ -35,19 +35,17 @@ export function TodaysBirthdayBanner() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className="relative rounded-2xl mb-6"
+        className="relative rounded-2xl mb-6 overflow-hidden"
         style={{
-          padding: '1.5px',
-          background: 'linear-gradient(135deg, rgba(236,72,153,0.7), rgba(168,85,247,0.5), rgba(236,72,153,0.4))',
-          boxShadow: '0 0 20px rgba(168,85,247,0.25), inset 0 0.5px 0 rgba(255,255,255,0.15)',
+          boxShadow: '0 0 24px rgba(168,85,247,0.3), 0 0 0 1px rgba(255,255,255,0.08)',
         }}
       >
-        <div className="relative bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white rounded-[calc(1rem-1.5px)] p-4 overflow-hidden">
-          {/* Subtle top sheen */}
+        <div className="relative bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white rounded-2xl p-4 ring-1 ring-white/20 overflow-hidden">
+          {/* Top highlight line */}
           <div
-            className="absolute inset-x-0 top-0 h-[40%] pointer-events-none"
+            className="absolute inset-x-0 top-0 h-px pointer-events-none"
             style={{
-              background: 'linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%)',
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
             }}
           />
           <div className="relative flex items-center flex-wrap gap-4">
