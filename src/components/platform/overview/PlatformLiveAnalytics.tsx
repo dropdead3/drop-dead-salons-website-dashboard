@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { 
@@ -6,9 +5,7 @@ import {
   TrendingDown, 
   Users, 
   Building2, 
-  DollarSign,
   Activity,
-  ArrowUpRight
 } from 'lucide-react';
 import { 
   AreaChart, 
@@ -38,7 +35,6 @@ function usePlatformGrowthData() {
       
       for (let i = 5; i >= 0; i--) {
         const date = subMonths(new Date(), i);
-        const monthStart = startOfMonth(date);
         const monthEnd = endOfMonth(date);
         
         const { count: accountCount } = await supabase
@@ -90,7 +86,10 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
 
   if (isLoading) {
     return (
-      <div className={cn("rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6", className)}>
+      <div className={cn(
+        "relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 overflow-hidden",
+        className
+      )}>
         <div className="flex items-center gap-2 mb-5">
           <div className="p-2 rounded-xl bg-violet-500/20">
             <Activity className="h-4 w-4 text-violet-400" />
@@ -107,96 +106,102 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
   }
 
   return (
-    <div className={cn("rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6", className)}>
-        <div className="flex items-center justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-violet-500/20">
-              <Activity className="h-4 w-4 text-violet-400" />
-            </div>
-            <h2 className="text-lg font-medium text-white">Platform Growth</h2>
+    <div className={cn(
+      "relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 overflow-hidden",
+      className
+    )}>
+      {/* Top edge highlight */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-xl bg-violet-500/20 ring-1 ring-violet-500/10">
+            <Activity className="h-4 w-4 text-violet-400" />
           </div>
-          <span className="text-xs text-slate-500">Last 6 months</span>
+          <h2 className="text-lg font-medium text-white tracking-tight">Platform Growth</h2>
         </div>
+        <span className="text-xs text-slate-500 font-medium tracking-wide">Last 6 months</span>
+      </div>
 
-        {/* Chart */}
-        <div className="relative h-[220px] -mx-2">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(139,92,246,0.06)_0%,_transparent_70%)] pointer-events-none" />
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data?.months} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorAccounts" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="colorLocations" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-              <XAxis 
-                dataKey="month" 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#64748b', fontSize: 11 }}
-              />
-              <YAxis 
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: '#64748b', fontSize: 11 }}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'rgba(15, 23, 42, 0.9)', 
-                  backdropFilter: 'blur(12px)',
-                  border: '1px solid rgba(100, 116, 139, 0.3)',
-                  borderRadius: '12px',
-                  boxShadow: '0 20px 50px -12px rgba(0,0,0,0.6)',
-                  padding: '10px 14px',
-                }}
-                labelStyle={{ color: '#e2e8f0', marginBottom: '6px', fontWeight: 500, fontSize: '13px' }}
-                itemStyle={{ fontSize: '12px', padding: '2px 0' }}
-              />
-              <Area
-                type="monotone"
-                dataKey="accounts"
-                name="Accounts"
-                stroke="#8b5cf6"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#colorAccounts)"
-                activeDot={{ r: 5, fill: '#8b5cf6', stroke: '#1e1b4b', strokeWidth: 2 }}
-              />
-              <Area
-                type="monotone"
-                dataKey="locations"
-                name="Locations"
-                stroke="#10b981"
-                strokeWidth={2}
-                fillOpacity={1}
-                fill="url(#colorLocations)"
-                activeDot={{ r: 5, fill: '#10b981', stroke: '#064e3b', strokeWidth: 2 }}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+      {/* Chart */}
+      <div className="relative h-[220px] -mx-2">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(139,92,246,0.06)_0%,_transparent_70%)] pointer-events-none" />
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data?.months} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorAccounts" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+              </linearGradient>
+              <linearGradient id="colorLocations" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
+            <XAxis 
+              dataKey="month" 
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#64748b', fontSize: 11 }}
+            />
+            <YAxis 
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#64748b', fontSize: 11 }}
+            />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: 'rgba(15, 23, 42, 0.95)', 
+                backdropFilter: 'blur(16px)',
+                border: '1px solid rgba(100, 116, 139, 0.3)',
+                borderRadius: '12px',
+                boxShadow: '0 20px 50px -12px rgba(0,0,0,0.6)',
+                padding: '10px 14px',
+              }}
+              labelStyle={{ color: '#e2e8f0', marginBottom: '6px', fontWeight: 500, fontSize: '13px' }}
+              itemStyle={{ fontSize: '12px', padding: '2px 0' }}
+            />
+            <Area
+              type="monotone"
+              dataKey="accounts"
+              name="Accounts"
+              stroke="#8b5cf6"
+              strokeWidth={2}
+              fillOpacity={1}
+              fill="url(#colorAccounts)"
+              activeDot={{ r: 5, fill: '#8b5cf6', stroke: '#1e1b4b', strokeWidth: 2 }}
+            />
+            <Area
+              type="monotone"
+              dataKey="locations"
+              name="Locations"
+              stroke="#10b981"
+              strokeWidth={2}
+              fillOpacity={1}
+              fill="url(#colorLocations)"
+              activeDot={{ r: 5, fill: '#10b981', stroke: '#064e3b', strokeWidth: 2 }}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 mt-4">
-          <MetricCard
-            label="Total Accounts"
-            value={data?.currentAccounts || 0}
-            change={data?.accountGrowth || 0}
-            icon={Building2}
-            color="violet"
-          />
-          <MetricCard
-            label="Total Locations"
-            value={data?.currentLocations || 0}
-            change={data?.locationGrowth || 0}
-            icon={Users}
-            color="emerald"
-          />
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-3 mt-4">
+        <MetricCard
+          label="Total Accounts"
+          value={data?.currentAccounts || 0}
+          change={data?.accountGrowth || 0}
+          icon={Building2}
+          color="violet"
+        />
+        <MetricCard
+          label="Total Locations"
+          value={data?.currentLocations || 0}
+          change={data?.locationGrowth || 0}
+          icon={Users}
+          color="emerald"
+        />
       </div>
     </div>
   );
@@ -220,9 +225,9 @@ function MetricCard({ label, value, change, icon: Icon, color }: MetricCardProps
   };
 
   return (
-    <div className="rounded-xl bg-slate-700/30 border border-slate-600/20 p-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)]">
+    <div className="group/metric rounded-xl bg-slate-700/30 border border-slate-600/20 p-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)] hover:bg-slate-700/40 transition-colors duration-300">
       <div className="flex items-center justify-between mb-2">
-        <div className={cn("p-1.5 rounded-lg", colorStyles[color])}>
+        <div className={cn("p-1.5 rounded-lg transition-transform duration-300 group-hover/metric:scale-105", colorStyles[color])}>
           <Icon className="h-3.5 w-3.5" />
         </div>
         {change !== 0 && (
@@ -235,7 +240,7 @@ function MetricCard({ label, value, change, icon: Icon, color }: MetricCardProps
           </div>
         )}
       </div>
-      <div className="text-2xl font-medium text-white tabular-nums">
+      <div className="text-2xl font-medium text-white tabular-nums tracking-tight">
         <AnimatedNumber value={value} duration={1200} />
       </div>
       <div className="text-xs text-slate-500">{label}</div>

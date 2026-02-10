@@ -58,7 +58,6 @@ export function IncidentManagementCard() {
     link_url: '',
   });
 
-  // Fetch active + recent resolved incidents
   const { data: incidents = [] } = useQuery({
     queryKey: ['platform-incidents-admin'],
     queryFn: async () => {
@@ -115,18 +114,21 @@ export function IncidentManagementCard() {
   });
 
   return (
-    <div className="rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6">
+    <div className="relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 overflow-hidden">
+      {/* Top edge highlight */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-amber-500/20">
+          <div className="p-2 rounded-xl bg-amber-500/20 ring-1 ring-amber-500/10">
             <AlertTriangle className="h-4 w-4 text-amber-400" />
           </div>
-          <h2 className="text-lg font-semibold text-white">Active Incident</h2>
+          <h2 className="text-lg font-medium text-white tracking-tight">Active Incident</h2>
         </div>
         {!activeIncident && !showForm && (
           <PlatformButton size="sm" onClick={() => setShowForm(true)} className="gap-1.5">
             <Plus className="h-3.5 w-3.5" />
-            Create Incident
+            Create
           </PlatformButton>
         )}
       </div>
@@ -145,7 +147,7 @@ export function IncidentManagementCard() {
                 );
               })()}
               <div>
-                <p className="text-sm font-semibold text-white">{activeIncident.title}</p>
+                <p className="text-sm font-medium text-white">{activeIncident.title}</p>
                 <p className="text-sm text-slate-300 mt-1">{activeIncident.message}</p>
                 <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
                   <span className="flex items-center gap-1">
@@ -153,7 +155,7 @@ export function IncidentManagementCard() {
                     {format(new Date(activeIncident.created_at), 'MMM d, h:mm a')}
                   </span>
                   {activeIncident.is_auto_created && (
-                    <span className="px-1.5 py-0.5 rounded bg-slate-700 text-slate-400 text-[10px]">AUTO</span>
+                    <span className="px-1.5 py-0.5 rounded bg-slate-700 text-slate-400 text-[10px] font-medium tracking-wide">AUTO</span>
                   )}
                 </div>
               </div>
@@ -177,12 +179,11 @@ export function IncidentManagementCard() {
         <div className="rounded-xl border border-slate-600/50 bg-slate-700/30 p-4 mb-4 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-white">New Incident</span>
-            <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-white">
+            <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-white transition-colors">
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Severity */}
           <div className="space-y-1.5">
             <PlatformLabel>Severity</PlatformLabel>
             <div className="flex gap-2">
@@ -193,7 +194,7 @@ export function IncidentManagementCard() {
                     key={sev}
                     onClick={() => setFormData(f => ({ ...f, severity: sev }))}
                     className={cn(
-                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all',
+                      'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all duration-200',
                       formData.severity === sev
                         ? cn(severityColors[sev], 'border-current')
                         : 'border-slate-600/50 text-slate-400 hover:text-white'
@@ -207,18 +208,16 @@ export function IncidentManagementCard() {
             </div>
           </div>
 
-          {/* Title */}
           <div className="space-y-1.5">
             <PlatformLabel>Title</PlatformLabel>
             <input
               value={formData.title}
               onChange={e => setFormData(f => ({ ...f, title: e.target.value }))}
               placeholder="e.g. Scheduled Maintenance"
-              className="w-full bg-slate-800/60 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
+              className="w-full bg-slate-800/60 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50 transition-colors"
             />
           </div>
 
-          {/* Message */}
           <div className="space-y-1.5">
             <PlatformLabel>Message</PlatformLabel>
             <textarea
@@ -226,11 +225,10 @@ export function IncidentManagementCard() {
               onChange={e => setFormData(f => ({ ...f, message: e.target.value }))}
               placeholder="Describe the issue or maintenance window..."
               rows={2}
-              className="w-full bg-slate-800/60 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50 resize-none"
+              className="w-full bg-slate-800/60 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50 resize-none transition-colors"
             />
           </div>
 
-          {/* Optional link */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <PlatformLabel>Link Text (optional)</PlatformLabel>
@@ -238,7 +236,7 @@ export function IncidentManagementCard() {
                 value={formData.link_text}
                 onChange={e => setFormData(f => ({ ...f, link_text: e.target.value }))}
                 placeholder="e.g. Status Page"
-                className="w-full bg-slate-800/60 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
+                className="w-full bg-slate-800/60 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50 transition-colors"
               />
             </div>
             <div className="space-y-1.5">
@@ -247,7 +245,7 @@ export function IncidentManagementCard() {
                 value={formData.link_url}
                 onChange={e => setFormData(f => ({ ...f, link_url: e.target.value }))}
                 placeholder="https://..."
-                className="w-full bg-slate-800/60 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50"
+                className="w-full bg-slate-800/60 border border-slate-600/50 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-violet-500/50 transition-colors"
               />
             </div>
           </div>
@@ -265,8 +263,8 @@ export function IncidentManagementCard() {
 
       {/* No active incident */}
       {!activeIncident && !showForm && (
-        <div className="text-center py-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/10 mb-3">
+        <div className="text-center py-8">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/10 mb-3">
             <CheckCircle2 className="h-6 w-6 text-emerald-400 animate-[pulse_3s_ease-in-out_infinite]" />
           </div>
           <p className="text-sm font-medium text-slate-300">All systems operational</p>
@@ -276,13 +274,13 @@ export function IncidentManagementCard() {
 
       {/* Past incidents */}
       {pastIncidents.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-slate-700/50">
-          <p className="text-xs font-medium text-slate-500 mb-2">Recent Resolved</p>
+        <div className="mt-4 pt-4 border-t border-slate-700/40">
+          <p className="text-[10px] font-medium text-slate-500 uppercase tracking-[0.15em] mb-2">Recent Resolved</p>
           <div className="space-y-2">
             {pastIncidents.map(inc => (
-              <div key={inc.id} className="flex items-center justify-between text-xs text-slate-500">
+              <div key={inc.id} className="flex items-center justify-between text-xs text-slate-500 hover:text-slate-400 transition-colors duration-200">
                 <span className="truncate mr-2">{inc.title}</span>
-                <span className="shrink-0">
+                <span className="shrink-0 tabular-nums">
                   {inc.resolved_at ? format(new Date(inc.resolved_at), 'MMM d') : '—'}
                 </span>
               </div>
