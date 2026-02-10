@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, ArrowLeft, ChevronUp, ChevronDown, Sparkles, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
+import { normalizeGuidanceRoute } from '@/utils/guidanceRoutes';
 
 const SIDEBAR_COLLAPSED_KEY = 'dashboard-sidebar-collapsed';
 
@@ -59,7 +60,7 @@ export function ZuraStickyGuidance() {
     if (ctx && ctx.savedState) {
       navigatingRef.current = true;
       setTimeout(() => { navigatingRef.current = false; }, 300);
-      ctx.saveAndNavigate(href, ctx.savedState);
+      ctx.saveAndNavigate(normalizeGuidanceRoute(href), ctx.savedState);
     }
   };
 

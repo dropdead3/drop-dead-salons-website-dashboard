@@ -7,6 +7,7 @@ import { ArrowLeft, ExternalLink, Lightbulb, Sparkles } from 'lucide-react';
 import { SuggestedTasksSection } from './SuggestedTasksSection';
 import type { SuggestedTask } from '@/hooks/useAIInsights';
 import { useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
+import { normalizeGuidanceRoute } from '@/utils/guidanceRoutes';
 
 interface GuidancePanelProps {
   title: string;
@@ -74,7 +75,8 @@ export function GuidancePanel({ title, type, guidance, isLoading, onBack, sugges
                         const handleClick = (e: React.MouseEvent) => {
                           e.preventDefault();
                           if (zuraNav && guidance) {
-                            zuraNav.saveAndNavigate(href, {
+                            const normalizedHref = normalizeGuidanceRoute(href);
+                            zuraNav.saveAndNavigate(normalizedHref, {
                               guidance: { type, title, description: title },
                               guidanceText: guidance,
                               suggestedTasks,
