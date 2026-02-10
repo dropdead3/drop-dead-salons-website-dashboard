@@ -32,6 +32,7 @@ import {
   CheckCheck,
   Lightbulb,
   Zap,
+  ThumbsUp,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -63,7 +64,7 @@ const priorityBadge: Record<ActionItem['priority'], string> = {
 };
 
 const sentimentConfig = {
-  positive: { icon: TrendingUp, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
+  positive: { icon: ThumbsUp, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
   neutral: { icon: Activity, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10' },
   concerning: { icon: AlertTriangle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-500/10' },
 };
