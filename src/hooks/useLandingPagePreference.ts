@@ -16,22 +16,6 @@ export interface LandingPageOption {
 export const LANDING_PAGE_OPTIONS: LandingPageOption[] = [
   { path: '/dashboard', label: 'Command Center', permission: 'view_command_center' },
   { path: '/dashboard/schedule', label: 'Schedule', permission: 'view_booking_calendar' },
-  { path: '/dashboard/directory', label: 'Team Directory', permission: 'view_team_directory' },
-{ path: '/dashboard/stats', label: 'My Stats', permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant'] },
-  { path: '/dashboard/leaderboard', label: 'Team Leaderboard', permission: 'view_leaderboard' },
-  { path: '/dashboard/my-clients', label: 'My Clients', permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant'] },
-  { path: '/dashboard/my-pay', label: 'My Pay', permission: 'view_my_pay' },
-  { path: '/dashboard/training', label: 'Training', permission: 'view_training' },
-  { path: '/dashboard/program', label: 'New-Client Engine Program', permission: 'access_client_engine' },
-  { path: '/dashboard/ring-the-bell', label: 'Ring the Bell', permission: 'ring_the_bell' },
-  { path: '/dashboard/onboarding', label: 'Onboarding', permission: 'view_onboarding' },
-  { path: '/dashboard/handbooks', label: 'Handbooks', permission: 'view_handbooks' },
-  { path: '/dashboard/changelog', label: "What's New" },
-  { path: '/dashboard/help', label: 'Help Center' },
-  { path: '/dashboard/assistant-schedule', label: 'Assistant Schedule', permission: 'view_assistant_schedule' },
-  { path: '/dashboard/admin/analytics', label: 'Analytics Hub', permission: 'view_team_overview' },
-  { path: '/dashboard/admin/leads', label: 'Lead Management', permission: 'view_team_overview' },
-  { path: '/dashboard/admin/settings', label: 'Settings', permission: 'manage_settings' },
 ];
 
 export function useLandingPagePreference() {
