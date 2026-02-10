@@ -7,7 +7,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Settings2, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Pin, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useDashboardVisibility, useToggleDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import type { Database } from '@/integrations/supabase/types';
@@ -63,7 +63,7 @@ export function CommandCenterVisibilityToggle({
           size="icon" 
           className="h-8 w-8 text-muted-foreground hover:text-foreground"
         >
-          <Settings2 className="h-4 w-4" />
+          <Pin className="h-4 w-4" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72" align="end">
