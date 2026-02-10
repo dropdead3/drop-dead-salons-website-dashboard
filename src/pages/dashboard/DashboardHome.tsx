@@ -36,6 +36,7 @@ import { WidgetsSection } from '@/components/dashboard/WidgetsSection';
 import { useBirthdayNotifications } from '@/hooks/useBirthdayNotifications';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
+import { AnnouncementsDrawer } from '@/components/dashboard/AnnouncementsDrawer';
 import { DashboardSetupWizard } from '@/components/dashboard/DashboardSetupWizard';
 import { DashboardCustomizeMenu } from '@/components/dashboard/DashboardCustomizeMenu';
 import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId } from '@/hooks/useDashboardLayout';
@@ -164,42 +165,7 @@ export default function DashboardHome() {
     },
   });
 
-  // Mark announcements as read when they're displayed
-  useEffect(() => {
-    const markAsRead = async () => {
-      if (!user?.id || !announcements || announcements.length === 0) return;
-
-      // Get already read announcements
-      const { data: existingReads } = await supabase
-        .from('announcement_reads')
-        .select('announcement_id')
-        .eq('user_id', user.id);
-
-      const readIds = new Set(existingReads?.map(r => r.announcement_id) || []);
-      
-      // Filter to only unread announcements
-      const unreadAnnouncements = announcements.filter(a => !readIds.has(a.id));
-      
-      if (unreadAnnouncements.length === 0) return;
-
-      // Mark all displayed announcements as read
-      const { error } = await supabase
-        .from('announcement_reads')
-        .insert(
-          unreadAnnouncements.map(a => ({
-            announcement_id: a.id,
-            user_id: user.id,
-          }))
-        );
-
-      if (!error) {
-        // Invalidate the unread count query to update badges
-        queryClient.invalidateQueries({ queryKey: ['unread-announcements-count'] });
-      }
-    };
-
-    markAsRead();
-  }, [announcements, user?.id, queryClient]);
+  // Mark-as-read logic moved into AnnouncementsDrawer
   
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there';
 
@@ -290,6 +256,9 @@ export default function DashboardHome() {
           canViewAggregate={canViewAggregate}
         />
       </motion.div>
+      
+      {/* Floating Announcements Drawer */}
+      <AnnouncementsDrawer isLeadership={isLeadership} />
     </DashboardLayout>
   );
 }
@@ -564,14 +533,7 @@ function DashboardSections({
       </div>
     ),
     
-    announcements: (
-      <VisibilityGate elementKey="announcements">
-        <AnnouncementsBento 
-          announcements={announcements} 
-          isLeadership={isLeadership} 
-        />
-      </VisibilityGate>
-    ),
+    // announcements moved to floating AnnouncementsDrawer
     
     client_engine: hasStylistRole && (
       <VisibilityGate elementKey="client_engine">
