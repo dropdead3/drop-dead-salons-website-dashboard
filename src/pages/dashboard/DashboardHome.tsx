@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -218,7 +219,12 @@ export default function DashboardHome() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 space-y-8">
+      <motion.div 
+        className="p-6 lg:p-8 space-y-10"
+        initial="hidden"
+        animate="visible"
+        variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } }}
+      >
         {/* Pending Approval Banner */}
         {approvalStatus?.is_approved === false && (
           <Alert className="border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 dark:border-amber-700">
@@ -241,9 +247,9 @@ export default function DashboardHome() {
 
 
         {/* Header with Customize Button */}
-        <div className="flex items-start justify-between">
+        <motion.div className="flex items-start justify-between" variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}>
           <div>
-            <h1 className="font-display text-3xl lg:text-4xl mb-2">
+            <h1 className="font-display text-3xl lg:text-4xl mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
               Welcome back, {firstName}
             </h1>
             <p className="text-muted-foreground font-sans">
@@ -259,7 +265,7 @@ export default function DashboardHome() {
               isReceptionist,
             }}
           />
-        </div>
+        </motion.div>
 
         {/* Dynamic sections based on layout order */}
         <DashboardSections 
@@ -283,7 +289,7 @@ export default function DashboardHome() {
           accessibleLocations={accessibleLocations}
           canViewAggregate={canViewAggregate}
         />
-      </div>
+      </motion.div>
     </DashboardLayout>
   );
 }
@@ -370,39 +376,39 @@ function DashboardSections({
           <h2 className="font-display text-sm tracking-wide mb-4">QUICK ACTIONS</h2>
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <VisibilityGate elementKey="ring_the_bell_action">
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+              <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border-0 hover:shadow-md hover:scale-[1.02] transition-all duration-200" asChild>
                 <Link to="/dashboard/ring-the-bell">
-                  <Bell className="w-5 h-5" />
+                  <Bell className="w-5 h-5 text-primary" />
                   <span className="text-xs">Ring the Bell</span>
                 </Link>
               </Button>
             </VisibilityGate>
             <VisibilityGate elementKey="log_metrics_action">
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+              <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border-0 hover:shadow-md hover:scale-[1.02] transition-all duration-200" asChild>
                 <Link to="/dashboard/stats">
-                  <TrendingUp className="w-5 h-5" />
+                  <TrendingUp className="w-5 h-5 text-primary" />
                   <span className="text-xs">Log Metrics</span>
                 </Link>
               </Button>
             </VisibilityGate>
-            <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+            <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border-0 hover:shadow-md hover:scale-[1.02] transition-all duration-200" asChild>
               <Link to="/dashboard/my-clients">
-                <Users className="w-5 h-5" />
+                <Users className="w-5 h-5 text-primary" />
                 <span className="text-xs">My Clients</span>
               </Link>
             </Button>
             {roles.includes('stylist') && (
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+              <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border-0 hover:shadow-md hover:scale-[1.02] transition-all duration-200" asChild>
                 <Link to="/dashboard/assistant-schedule">
-                  <HandHelping className="w-5 h-5" />
+                  <HandHelping className="w-5 h-5 text-primary" />
                   <span className="text-xs">Request Assistant</span>
                 </Link>
               </Button>
             )}
             <VisibilityGate elementKey="training_action">
-              <Button variant="outline" className="h-auto py-4 flex-col gap-2" asChild>
+              <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border-0 hover:shadow-md hover:scale-[1.02] transition-all duration-200" asChild>
                 <Link to="/dashboard/training">
-                  <Target className="w-5 h-5" />
+                  <Target className="w-5 h-5 text-primary" />
                   <span className="text-xs">Training</span>
                 </Link>
               </Button>
@@ -427,46 +433,46 @@ function DashboardSections({
     quick_stats: hasStylistRole && (
       <VisibilityGate elementKey="quick_stats">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-4">
+          <Card className="p-4 rounded-2xl shadow-lg backdrop-blur-sm hover:shadow-xl transition-shadow duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-500/10 flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-blue-600" />
+              <div className="w-12 h-12 bg-blue-500/10 flex items-center justify-center rounded-xl">
+                <Calendar className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-display">0</p>
+                <p className="text-2xl font-display tabular-nums">0</p>
                 <p className="text-xs text-muted-foreground font-sans">Today's Clients</p>
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-4 rounded-2xl shadow-lg backdrop-blur-sm hover:shadow-xl transition-shadow duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-green-500/10 flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-green-600" />
+              <div className="w-12 h-12 bg-green-500/10 flex items-center justify-center rounded-xl">
+                <DollarSign className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-display">$0</p>
+                <p className="text-2xl font-display tabular-nums">$0</p>
                 <p className="text-xs text-muted-foreground font-sans">This Week</p>
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-4 rounded-2xl shadow-lg backdrop-blur-sm hover:shadow-xl transition-shadow duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-purple-500/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-purple-600" />
+              <div className="w-12 h-12 bg-purple-500/10 flex items-center justify-center rounded-xl">
+                <Users className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-display">0</p>
+                <p className="text-2xl font-display tabular-nums">0</p>
                 <p className="text-xs text-muted-foreground font-sans">New Clients</p>
               </div>
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-4 rounded-2xl shadow-lg backdrop-blur-sm hover:shadow-xl transition-shadow duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-orange-500/10 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-orange-600" />
+              <div className="w-12 h-12 bg-orange-500/10 flex items-center justify-center rounded-xl">
+                <TrendingUp className="w-6 h-6 text-orange-600" />
               </div>
               <div>
-                <p className="text-2xl font-display">0%</p>
+                <p className="text-2xl font-display tabular-nums">0%</p>
                 <p className="text-xs text-muted-foreground font-sans">Rebooking Rate</p>
               </div>
             </div>
@@ -478,24 +484,24 @@ function DashboardSections({
     schedule_tasks: (
       <div className="grid gap-6 lg:grid-cols-2">
         <VisibilityGate elementKey="todays_schedule">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
+          <Card className="p-6 rounded-2xl shadow-lg backdrop-blur-sm hover:shadow-xl transition-shadow duration-300">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
               <h2 className="font-display text-sm tracking-wide">TODAY'S SCHEDULE</h2>
               <Clock className="w-4 h-4 text-muted-foreground" />
             </div>
             <div className="space-y-3">
-              <div className="text-center py-8 text-muted-foreground">
-                <Calendar className="w-8 h-8 mx-auto mb-2 opacity-50" />
+              <div className="text-center py-10 text-muted-foreground">
+                <Calendar className="w-8 h-8 mx-auto mb-3 opacity-30" />
                 <p className="text-sm font-sans">No appointments today</p>
-                <p className="text-xs mt-1">Enjoy your day off!</p>
+                <p className="text-xs mt-1 text-muted-foreground/60">Enjoy your day off!</p>
               </div>
             </div>
           </Card>
         </VisibilityGate>
 
         <VisibilityGate elementKey="my_tasks">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
+          <Card className="p-6 rounded-2xl shadow-lg backdrop-blur-sm hover:shadow-xl transition-shadow duration-300">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
               <div className="flex items-center gap-2">
                 <h2 className="font-display text-sm tracking-wide">MY TASKS</h2>
                 {isImpersonating && (
@@ -522,10 +528,10 @@ function DashboardSections({
                   />
                 ))
               ) : (
-                <div className="text-center py-4 text-muted-foreground">
-                  <CheckSquare className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                <div className="text-center py-8 text-muted-foreground">
+                  <CheckSquare className="w-7 h-7 mx-auto mb-3 opacity-30" />
                   <p className="text-sm font-sans">No tasks yet</p>
-                  <p className="text-xs mt-1">{isImpersonating ? 'This user has no tasks' : 'Add your first task above'}</p>
+                  <p className="text-xs mt-1 text-muted-foreground/60">{isImpersonating ? 'This user has no tasks' : 'Add your first task above'}</p>
                 </div>
               )}
             </div>

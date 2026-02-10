@@ -264,9 +264,12 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             : cn("px-3 py-2.5", inFooter ? "mx-0" : "mx-3"),
           isActive 
             ? "bg-foreground text-background shadow-sm" 
-            : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+            : "text-muted-foreground hover:text-foreground hover:bg-muted/60 hover:translate-x-0.5"
         )}
       >
+        {isActive && !isCollapsed && (
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-full bg-foreground/60" />
+        )}
         <Icon className="w-4 h-4 shrink-0" />
         {!isCollapsed && <span className="flex-1">{displayLabel}</span>}
         {!isCollapsed && badgeCount !== undefined && badgeCount > 0 && (
@@ -302,7 +305,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   return (
     <div className="flex flex-col h-full">
       {/* Logo & Collapse Toggle */}
-      <div className={cn("border-b border-border", isCollapsed ? "p-3" : "p-6")}>
+      <div className={cn("border-b border-border/50 shadow-[0_1px_2px_rgba(0,0,0,0.03)]", isCollapsed ? "p-3" : "p-6")}>
         <div className={cn("flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
           <Link to="/dashboard" className="block">
             {isCollapsed ? (
@@ -575,7 +578,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               {/* Show divider for all sections except the first one */}
               {index > 0 && (
                 <div className={cn("my-4", isCollapsed ? "px-2" : "px-4")}>
-                  <div className="h-px bg-border" />
+                  <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
                 </div>
               )}
               
