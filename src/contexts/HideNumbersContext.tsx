@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
 import { AlertTriangle } from 'lucide-react';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -194,26 +195,38 @@ export function BlurredAmount({
   
   if (!hideNumbers) {
     return (
-      <Component 
-        className={cn(className, 'cursor-pointer')} 
-        onDoubleClick={handleDoubleClick}
-        title="Double-click to hide"
-      >
-        {children}
-      </Component>
+      <TooltipProvider delayDuration={100}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Component 
+              className={cn(className, 'cursor-pointer')} 
+              onDoubleClick={handleDoubleClick}
+            >
+              {children}
+            </Component>
+          </TooltipTrigger>
+          <TooltipContent>Double-click to hide</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
   
   return (
-    <Component 
-      className={cn(className, 'blur-md select-none cursor-pointer transition-all duration-200')} 
-      tabIndex={0}
-      onClick={requestUnhide}
-      onKeyDown={(e) => e.key === 'Enter' && requestUnhide()}
-      title="Click to reveal"
-    >
-      {children}
-    </Component>
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Component 
+            className={cn(className, 'blur-md select-none cursor-pointer transition-all duration-200')} 
+            tabIndex={0}
+            onClick={requestUnhide}
+            onKeyDown={(e) => e.key === 'Enter' && requestUnhide()}
+          >
+            {children}
+          </Component>
+        </TooltipTrigger>
+        <TooltipContent>Click to reveal</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
