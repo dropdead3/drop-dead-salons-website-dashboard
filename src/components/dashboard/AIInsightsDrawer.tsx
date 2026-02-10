@@ -24,7 +24,7 @@ import {
   Activity,
   HeartPulse,
   CheckCircle2,
-  Sparkles,
+  
   Clock,
   X,
   ChevronDown,
@@ -35,6 +35,7 @@ import {
   ThumbsUp,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 
 const categoryConfig: Record<InsightItem['category'], { icon: typeof TrendingUp; label: string }> = {
   revenue_pulse: { icon: DollarSign, label: 'Revenue Pulse' },
@@ -315,7 +316,7 @@ export function AIInsightsDrawer() {
                             </div>
                           ) : !data ? (
                             <div className="text-center py-14">
-                              <Sparkles className="w-7 h-7 mx-auto mb-3 opacity-20" />
+                              <ZuraAvatar size="md" className="mx-auto mb-3 opacity-20" />
                               <p className="text-sm font-display text-muted-foreground">No insights generated yet</p>
                               <Button variant="outline" size="sm" onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
                                 <Brain className="w-3.5 h-3.5" />
@@ -431,7 +432,7 @@ export function AIInsightsDrawer() {
                       </div>
                       <div className="px-4 pb-4 pt-1">
                         <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
-                          <Sparkles className="w-3 h-3 text-muted-foreground/40" />
+                          <ZuraAvatar size="sm" className="w-3 h-3 opacity-40" />
                           <span className="text-[10px] text-muted-foreground/50">Powered by Zura AI · Based on your data</span>
                         </div>
                       </div>

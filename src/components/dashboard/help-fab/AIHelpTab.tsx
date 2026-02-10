@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, Loader2 } from 'lucide-react';
+import { Send, Loader2 } from 'lucide-react';
+import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -72,9 +73,7 @@ export function AIHelpTab() {
         <div className="py-4 space-y-4">
           {isEmpty ? (
             <div className="flex flex-col items-center justify-center h-[280px] text-center">
-              <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                <Sparkles className="h-6 w-6 text-primary" />
-              </div>
+              <ZuraAvatar size="lg" className="mb-4" />
               <h3 className="font-semibold text-lg mb-2">Zura</h3>
               <p className="text-sm text-muted-foreground mb-6 max-w-[280px]">
                 I'm Zura, your AI assistant. Ask me anything about using the platform.
