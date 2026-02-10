@@ -305,14 +305,14 @@ export function AIInsightsCard() {
             style={{ overflowY: 'auto' }}
             onWheel={(e) => e.stopPropagation()}
           >
-              <AnimatePresence mode="wait">
+              <AnimatePresence mode="wait" initial={false}>
                 {!activeGuidance ? (
                   <motion.div
                     key="insights"
                     initial={{ opacity: 0 }}
-                    animate={slideVariants.center}
-                    exit={slideVariants.exitToLeft}
-                    transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
                   >
                     {!data ? (
                       <div className="text-center py-8">

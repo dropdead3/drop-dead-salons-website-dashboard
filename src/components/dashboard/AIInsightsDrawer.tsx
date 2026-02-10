@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { VisibilityGate } from '@/components/visibility';
 import { useAIInsights, type InsightItem, type ActionItem, type FeatureSuggestion } from '@/hooks/useAIInsights';
@@ -285,17 +284,20 @@ export function AIInsightsDrawer() {
                 </div>
               )}
 
-              <div className="relative overflow-hidden">
+              <div className="relative">
                 <AnimatePresence initial={false} mode="wait">
                   {!activeGuidance ? (
                     <motion.div
                       key="insights"
-                      initial={false}
-                      animate={slideVariants.center}
-                      exit={slideVariants.exitToLeft}
-                      transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
                     >
-                      <ScrollArea className="max-h-[500px]">
+                      <div 
+                        style={{ maxHeight: '500px', overflowY: 'auto' }}
+                        onWheel={(e) => e.stopPropagation()}
+                      >
                         <div className="px-4 pb-3">
                           {isLoading ? (
                             <div className="space-y-3">
@@ -404,7 +406,7 @@ export function AIInsightsDrawer() {
                             </div>
                           )}
                         </div>
-                      </ScrollArea>
+                      </div>
                       <div className="px-4 pb-4 pt-1">
                         <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
                           <Sparkles className="w-3 h-3 text-muted-foreground/40" />
