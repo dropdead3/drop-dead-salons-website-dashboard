@@ -1,79 +1,76 @@
 
 
-# Smart Navigation Memory for Zura Guidance Links
+# Sticky Zura Guidance Panel (Follow-Along Mode)
 
-## The Problem
-When Zura's guidance contains links like "check your [Sales Analytics](/dashboard/admin/analytics?tab=sales)", clicking them navigates the entire page away. The user loses the Zura card's state (which insight they were viewing, the guidance text) and has no easy way back.
+## Overview
+Replace the simple "Return to Zura" pill with a rich, sticky guidance panel that stays at the bottom of the page when you navigate away from the insights card. This lets you read Zura's suggestions **while acting on them** -- like a follow-along guide.
 
-## Solution: "Return to Zura" Navigation Memory
+## User Experience
 
-### How It Works
+The panel has two states:
 
-1. When a user clicks an internal link inside Zura's guidance, the current guidance state (active insight, guidance text, scroll position) is saved to a lightweight context/store before navigating.
-2. A small floating "Return to Zura" pill appears at the bottom of the screen on the destination page.
-3. Clicking it navigates back to the dashboard and automatically restores the Zura card to the exact guidance panel they were reading.
-4. The pill auto-dismisses after 5 minutes or if the user manually closes it.
+**Collapsed (default on arrival)**: A slim bar at the bottom showing the Zura avatar, the insight title, and expand/dismiss buttons. Stays out of the way but always accessible.
 
-### User Flow
+**Expanded**: Slides up to reveal the full guidance markdown content in a scrollable area (max ~40% viewport height). You can read each step while looking at the analytics page, payroll hub, or whatever Zura linked you to.
 
 ```text
-+----------------------------+       +--------------------------+       +----------------------------+
-| Zura Guidance Panel        |       | Sales Analytics Page     |       | Zura Guidance Panel        |
-|                            |       |                          |       |                            |
-| "Check your Sales          |       |  [charts, tables, data]  |       | (restored to exact state)  |
-|  Analytics for details"    | ----> |                          | ----> |                            |
-|  [Sales Analytics] (link)  |       |  [Return to Zura] pill   |       | Same insight, same text    |
-+----------------------------+       +--------------------------+       +----------------------------+
-   Click saves state                    Click restores state
++--------------------------------------------------+
+|  [destination page content -- e.g. Analytics]     |
+|                                                   |
+|                                                   |
+|                                                   |
++==================================================+
+| [Z] Revenue Pulse: How to Improve    [^] [X]     |  <-- collapsed bar
++==================================================+
+
+      click expand arrow [^] ...
+
++--------------------------------------------------+
+|  [destination page content]                       |
+|                                                   |
++==================================================+
+| [Z] Revenue Pulse: How to Improve    [v] [X]     |
+|--------------------------------------------------|
+| ### Step 1: Review your Daily Revenue tab         |
+| Check for patterns in your peak hours...          |
+|                                                   |
+| ### Step 2: Adjust your pricing strategy          |
+| Consider increasing rates for high-demand...      |
+|                                                   |
+| [Powered by Zura AI]                              |
++==================================================+
 ```
 
-### Bonus: Link Interaction Options
-Each internal link will show a small tooltip or hover state indicating it navigates away, with an option to open in a new tab instead (middle-click or Ctrl+click already works, but we'll add a subtle icon to signal it).
+Clicking "Return to Zura" in the collapsed bar still navigates back and restores the full insights card. The X dismisses the panel entirely.
 
 ## Technical Details
 
-### 1. Create `src/contexts/ZuraNavigationContext.tsx`
-A lightweight React context that holds:
-- `savedGuidance`: The active guidance request object (type, title, description, category, priority)
-- `savedGuidanceText`: The AI-generated guidance markdown
-- `savedSuggestedTasks`: Any suggested tasks from the guidance
-- `saveAndNavigate(href, guidanceState)`: Saves state then navigates
-- `restore()`: Returns the saved state and clears it
-- `dismiss()`: Clears saved state without restoring
-- Auto-expiry after 5 minutes using a timeout
+### 1. Replace `src/components/dashboard/ZuraReturnPill.tsx` with `ZuraStickyGuidance.tsx`
+Transform the simple pill into a collapsible panel:
+- **Collapsed state**: Slim bar (h-12) with Zura avatar, truncated title, expand chevron, return button, and dismiss X
+- **Expanded state**: Adds a ScrollArea below the bar showing the full guidance markdown (max-h-[40vh])
+- Uses `framer-motion` for smooth slide-up animation on mount and expand/collapse transitions
+- Renders the same `ReactMarkdown` setup from `GuidancePanel.tsx` for consistent link handling
+- Internal links within the sticky panel also work (navigate + keep the panel open)
+- Glassmorphism styling: `bg-card/95 backdrop-blur-xl` with a subtle top border gradient
 
-State is stored in a React ref + state (not localStorage) so it only persists within the current session.
+### 2. Update `src/contexts/ZuraNavigationContext.tsx`
+No structural changes needed -- the existing `savedState` already carries `guidanceText` and `suggestedTasks`. The new sticky component just reads from the same context.
 
-### 2. Create `src/components/dashboard/ZuraReturnPill.tsx`
-A small floating pill component:
-- Renders at `fixed bottom-6 left-1/2 -translate-x-1/2` (centered bottom)
-- Shows the Zura avatar + "Return to Zura" text
-- Animate in with framer-motion (slide up + fade)
-- Has a dismiss (X) button
-- Clicking navigates to `/dashboard` and triggers state restoration
-- Only renders when `savedGuidance` exists in context
+### 3. Update `src/components/dashboard/DashboardLayout.tsx`
+- Replace `<ZuraReturnPill />` with `<ZuraStickyGuidance />`
+- Import updated component
 
-### 3. Update `src/components/dashboard/GuidancePanel.tsx`
-- Import the Zura navigation context
-- Update the internal link handler: instead of calling `navigate(href)` directly, call `saveAndNavigate(href, { guidance state })` which saves the current guidance before navigating
-- Add a small external-link icon next to internal links to signal navigation
-
-### 4. Update `src/components/dashboard/AIInsightsCard.tsx` and `AIInsightsDrawer.tsx`
-- On mount, check the Zura navigation context for saved state
-- If saved state exists, auto-restore: set `activeGuidance` and `guidanceText` from the saved state
-- This makes the card slide directly into the guidance panel the user was reading
-
-### 5. Mount the context and pill
-- Wrap the Zura navigation context provider in the dashboard layout (or app-level)
-- Render `ZuraReturnPill` inside the dashboard layout so it appears on all dashboard sub-pages
+### 4. Update `src/components/dashboard/GuidancePanel.tsx`
+- No changes needed -- the `saveAndNavigate` logic already saves the full guidance text
 
 ### Files Created
-- `src/contexts/ZuraNavigationContext.tsx` -- Navigation memory context
-- `src/components/dashboard/ZuraReturnPill.tsx` -- Floating return pill
+- `src/components/dashboard/ZuraStickyGuidance.tsx` -- New sticky panel component
 
 ### Files Modified
-- `src/components/dashboard/GuidancePanel.tsx` -- Use saveAndNavigate instead of navigate
-- `src/components/dashboard/AIInsightsCard.tsx` -- Restore saved guidance on mount
-- `src/components/dashboard/AIInsightsDrawer.tsx` -- Restore saved guidance on mount
-- Dashboard layout file -- Add context provider and render return pill
+- `src/components/dashboard/DashboardLayout.tsx` -- Swap pill for sticky panel
+- `src/components/dashboard/ZuraReturnPill.tsx` -- Will be replaced/removed
+
+### No new dependencies
+Uses existing `framer-motion`, `react-markdown`, `@radix-ui/react-scroll-area`, and `react-router-dom`.
 
