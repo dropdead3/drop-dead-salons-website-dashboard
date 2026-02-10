@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, ReactNode } from 'react';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 
 interface AnimatedBlurredAmountProps {
   value: number;
@@ -111,19 +112,25 @@ export function AnimatedBlurredAmount({
   };
 
   return (
-    <span
-      ref={elementRef}
-      className={cn(
-        className,
-        hideNumbers ? 'blur-md select-none cursor-pointer transition-all duration-200' : 'cursor-pointer'
-      )}
-      title={hideNumbers ? 'Click to reveal' : 'Double-click to hide'}
-      onClick={handleClick}
-      onDoubleClick={handleDoubleClick}
-      onKeyDown={handleKeyDown}
-      tabIndex={hideNumbers ? 0 : undefined}
-    >
-      {prefix}{formattedValue}{suffix}
-    </span>
+    <TooltipProvider delayDuration={100}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span
+            ref={elementRef}
+            className={cn(
+              className,
+              hideNumbers ? 'blur-md select-none cursor-pointer transition-all duration-200' : 'cursor-pointer'
+            )}
+            onClick={handleClick}
+            onDoubleClick={handleDoubleClick}
+            onKeyDown={handleKeyDown}
+            tabIndex={hideNumbers ? 0 : undefined}
+          >
+            {prefix}{formattedValue}{suffix}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{hideNumbers ? 'Click to reveal' : 'Double-click to hide'}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
