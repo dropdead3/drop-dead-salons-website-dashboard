@@ -7,6 +7,9 @@ import { useAIInsights, type InsightItem, type ActionItem } from '@/hooks/useAII
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   Brain,
   RefreshCw,
@@ -22,6 +25,8 @@ import {
   Clock,
   X,
   ChevronDown,
+  Lightbulb,
+  Loader2,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -71,6 +76,31 @@ function blurFinancialValues(text: string) {
 function InsightCard({ insight }: { insight: InsightItem }) {
   const config = categoryConfig[insight.category];
   const Icon = config?.icon || Activity;
+  const [showGuidance, setShowGuidance] = useState(false);
+  const [guidance, setGuidance] = useState<string | null>(null);
+  const [isLoadingGuidance, setIsLoadingGuidance] = useState(false);
+
+  const fetchGuidance = async () => {
+    if (guidance) {
+      setShowGuidance(!showGuidance);
+      return;
+    }
+    setShowGuidance(true);
+    setIsLoadingGuidance(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-insight-guidance', {
+        body: { type: 'insight', title: insight.title, description: insight.description, category: insight.category },
+      });
+      if (error) throw error;
+      setGuidance(data.guidance);
+    } catch (err) {
+      console.error('Failed to fetch guidance:', err);
+      toast.error('Failed to get guidance. Please try again.');
+      setShowGuidance(false);
+    } finally {
+      setIsLoadingGuidance(false);
+    }
+  };
 
   return (
     <div className={cn('border-l-2 rounded-lg p-3 transition-colors', severityStyles[insight.severity])}>
@@ -88,6 +118,41 @@ function InsightCard({ insight }: { insight: InsightItem }) {
           <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
             {blurFinancialValues(insight.description)}
           </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={fetchGuidance}
+            disabled={isLoadingGuidance}
+            className="h-6 px-2 mt-1.5 text-[11px] gap-1 text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300"
+          >
+            {isLoadingGuidance ? <Loader2 className="w-3 h-3 animate-spin" /> : <Lightbulb className="w-3 h-3" />}
+            {showGuidance && guidance ? 'Hide guidance' : 'How to improve'}
+          </Button>
+          <AnimatePresence>
+            {showGuidance && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-2 p-2.5 rounded-md bg-background/60 border border-border/40">
+                  {isLoadingGuidance ? (
+                    <div className="space-y-1.5">
+                      <Skeleton className="w-full h-3 rounded" />
+                      <Skeleton className="w-4/5 h-3 rounded" />
+                      <Skeleton className="w-3/5 h-3 rounded" />
+                    </div>
+                  ) : (
+                    <div className="prose prose-xs dark:prose-invert max-w-none text-xs leading-relaxed">
+                      <ReactMarkdown>{guidance || ''}</ReactMarkdown>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
@@ -95,20 +160,85 @@ function InsightCard({ insight }: { insight: InsightItem }) {
 }
 
 function ActionItemCard({ item, index }: { item: ActionItem; index: number }) {
+  const [showGuidance, setShowGuidance] = useState(false);
+  const [guidance, setGuidance] = useState<string | null>(null);
+  const [isLoadingGuidance, setIsLoadingGuidance] = useState(false);
+
+  const fetchGuidance = async () => {
+    if (guidance) {
+      setShowGuidance(!showGuidance);
+      return;
+    }
+    setShowGuidance(true);
+    setIsLoadingGuidance(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-insight-guidance', {
+        body: { type: 'action', title: item.action, description: item.action, priority: item.priority },
+      });
+      if (error) throw error;
+      setGuidance(data.guidance);
+    } catch (err) {
+      console.error('Failed to fetch guidance:', err);
+      toast.error('Failed to get guidance. Please try again.');
+      setShowGuidance(false);
+    } finally {
+      setIsLoadingGuidance(false);
+    }
+  };
+
   return (
-    <div className="flex items-start gap-2.5 py-1.5">
-      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-foreground/5 flex items-center justify-center mt-0.5">
-        <span className="text-[10px] font-display">{index + 1}</span>
+    <div className="py-1.5">
+      <div className="flex items-start gap-2.5">
+        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-foreground/5 flex items-center justify-center mt-0.5">
+          <span className="text-[10px] font-display">{index + 1}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm leading-snug">{blurFinancialValues(item.action)}</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={fetchGuidance}
+            disabled={isLoadingGuidance}
+            className="h-6 px-2 mt-1 text-[11px] gap-1 text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300"
+          >
+            {isLoadingGuidance ? <Loader2 className="w-3 h-3 animate-spin" /> : <Lightbulb className="w-3 h-3" />}
+            {showGuidance && guidance ? 'Hide guidance' : 'What you should do'}
+          </Button>
+          <AnimatePresence>
+            {showGuidance && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-2 p-2.5 rounded-md bg-background/60 border border-border/40">
+                  {isLoadingGuidance ? (
+                    <div className="space-y-1.5">
+                      <Skeleton className="w-full h-3 rounded" />
+                      <Skeleton className="w-4/5 h-3 rounded" />
+                      <Skeleton className="w-3/5 h-3 rounded" />
+                    </div>
+                  ) : (
+                    <div className="prose prose-xs dark:prose-invert max-w-none text-xs leading-relaxed">
+                      <ReactMarkdown>{guidance || ''}</ReactMarkdown>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        <span
+          className={cn(
+            'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display flex-shrink-0',
+            priorityBadge[item.priority],
+          )}
+        >
+          {item.priority}
+        </span>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm leading-snug">{blurFinancialValues(item.action)}</p>
-      </div>
-      <span className={cn(
-        'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display flex-shrink-0',
-        priorityBadge[item.priority],
-      )}>
-        {item.priority}
-      </span>
     </div>
   );
 }
@@ -139,7 +269,6 @@ export function AIInsightsDrawer() {
     >
       <AnimatePresence mode="wait">
           {!expanded ? (
-            /* ── Collapsed: Inline button ── */
             <motion.button
               key="collapsed"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -161,7 +290,6 @@ export function AIInsightsDrawer() {
               <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
             </motion.button>
           ) : (
-            /* ── Expanded: Full card ── */
             <motion.div
               key="expanded"
               initial={{ opacity: 0, scale: 0.98, y: -4 }}
@@ -170,10 +298,7 @@ export function AIInsightsDrawer() {
               transition={{ duration: 0.25, ease: "easeOut" }}
               className="w-full rounded-2xl shadow-lg border border-border/40 bg-card overflow-hidden"
             >
-              {/* Top gradient accent */}
               <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
-
-              {/* Header */}
               <div className="p-4 pb-3">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
@@ -181,13 +306,7 @@ export function AIInsightsDrawer() {
                     <span className="font-display text-xs tracking-[0.15em]">AI BUSINESS INSIGHTS</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => refresh(true)}
-                      disabled={isRefreshing || cooldown > 0}
-                    >
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0}>
                       <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
                     </Button>
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setExpanded(false)}>
@@ -195,17 +314,13 @@ export function AIInsightsDrawer() {
                     </Button>
                   </div>
                 </div>
-
-                {/* Sentiment summary */}
                 {data && (
                   <div className="flex items-start gap-2">
                     <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
                       <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm text-muted-foreground leading-snug">
-                        {blurFinancialValues(data.summaryLine)}
-                      </p>
+                      <p className="text-sm text-muted-foreground leading-snug">{blurFinancialValues(data.summaryLine)}</p>
                       {generatedAt && (
                         <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
                           <Clock className="w-2.5 h-2.5" />
@@ -219,12 +334,7 @@ export function AIInsightsDrawer() {
                 )}
               </div>
 
-              {/* Content */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.15, duration: 0.25 }}
-              >
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15, duration: 0.25 }}>
                 <ScrollArea className="max-h-[500px]">
                   <div className="px-4 pb-3">
                     {isLoading ? (
@@ -241,52 +351,31 @@ export function AIInsightsDrawer() {
                       <div className="text-center py-14">
                         <Sparkles className="w-7 h-7 mx-auto mb-3 opacity-20" />
                         <p className="text-sm font-display text-muted-foreground">No insights generated yet</p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => refresh(true)}
-                          disabled={isRefreshing}
-                          className="gap-1.5 mt-3"
-                        >
+                        <Button variant="outline" size="sm" onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
                           <Brain className="w-3.5 h-3.5" />
                           Generate Insights
                         </Button>
                       </div>
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* Insights column */}
                         {data.insights.length > 0 && (
                           <div className="space-y-2">
                             {data.insights.map((insight, i) => (
-                              <motion.div
-                                key={i}
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 + i * 0.05, duration: 0.25 }}
-                              >
+                              <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + i * 0.05, duration: 0.25 }}>
                                 <InsightCard insight={insight} />
                               </motion.div>
                             ))}
                           </div>
                         )}
-
-                        {/* Action items column */}
                         {data.actionItems.length > 0 && (
                           <div>
                             <div className="flex items-center gap-1.5 mb-2">
                               <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
-                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">
-                                ACTION ITEMS
-                              </span>
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">ACTION ITEMS</span>
                             </div>
                             <div className="space-y-0.5">
                               {data.actionItems.map((item, i) => (
-                                <motion.div
-                                  key={i}
-                                  initial={{ opacity: 0, y: 8 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: 0.25 + i * 0.05, duration: 0.25 }}
-                                >
+                                <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 + i * 0.05, duration: 0.25 }}>
                                   <ActionItemCard item={item} index={i} />
                                 </motion.div>
                               ))}
@@ -297,14 +386,10 @@ export function AIInsightsDrawer() {
                     )}
                   </div>
                 </ScrollArea>
-
-                {/* Footer */}
                 <div className="px-4 pb-4 pt-1">
                   <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
                     <Sparkles className="w-3 h-3 text-muted-foreground/40" />
-                    <span className="text-[10px] text-muted-foreground/50">
-                      Powered by AI · Based on your data
-                    </span>
+                    <span className="text-[10px] text-muted-foreground/50">Powered by AI · Based on your data</span>
                   </div>
                 </div>
               </motion.div>

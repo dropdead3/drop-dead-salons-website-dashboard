@@ -7,6 +7,10 @@ import { PinnableCard } from './PinnableCard';
 import { useAIInsights, type InsightItem, type ActionItem } from '@/hooks/useAIInsights';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   Brain,
   RefreshCw,
@@ -21,6 +25,8 @@ import {
   ArrowRight,
   Sparkles,
   Clock,
+  Lightbulb,
+  Loader2,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -57,7 +63,6 @@ const sentimentConfig = {
   concerning: { icon: AlertTriangle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-500/10' },
 };
 
-// Regex to find dollar amounts in text for blurring
 function blurDollarAmounts(text: string) {
   const parts = text.split(/(\$[\d,]+\.?\d*)/g);
   return parts.map((part, i) => {
@@ -68,7 +73,6 @@ function blurDollarAmounts(text: string) {
   });
 }
 
-// Also blur percentages that are financial-context
 function blurFinancialValues(text: string) {
   const parts = text.split(/(\$[\d,]+\.?\d*k?)/g);
   return parts.map((part, i) => {
@@ -82,12 +86,34 @@ function blurFinancialValues(text: string) {
 function InsightCard({ insight }: { insight: InsightItem }) {
   const config = categoryConfig[insight.category];
   const Icon = config?.icon || Activity;
+  const [showGuidance, setShowGuidance] = useState(false);
+  const [guidance, setGuidance] = useState<string | null>(null);
+  const [isLoadingGuidance, setIsLoadingGuidance] = useState(false);
+
+  const fetchGuidance = async () => {
+    if (guidance) {
+      setShowGuidance(!showGuidance);
+      return;
+    }
+    setShowGuidance(true);
+    setIsLoadingGuidance(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-insight-guidance', {
+        body: { type: 'insight', title: insight.title, description: insight.description, category: insight.category },
+      });
+      if (error) throw error;
+      setGuidance(data.guidance);
+    } catch (err) {
+      console.error('Failed to fetch guidance:', err);
+      toast.error('Failed to get guidance. Please try again.');
+      setShowGuidance(false);
+    } finally {
+      setIsLoadingGuidance(false);
+    }
+  };
 
   return (
-    <div className={cn(
-      'border-l-2 rounded-lg p-3 transition-colors',
-      severityStyles[insight.severity],
-    )}>
+    <div className={cn('border-l-2 rounded-lg p-3 transition-colors', severityStyles[insight.severity])}>
       <div className="flex items-start gap-2.5">
         <div className={cn('mt-0.5 flex-shrink-0', severityIconColor[insight.severity])}>
           <Icon className="w-4 h-4" />
@@ -102,6 +128,41 @@ function InsightCard({ insight }: { insight: InsightItem }) {
           <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
             {blurFinancialValues(insight.description)}
           </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={fetchGuidance}
+            disabled={isLoadingGuidance}
+            className="h-6 px-2 mt-1.5 text-[11px] gap-1 text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300"
+          >
+            {isLoadingGuidance ? <Loader2 className="w-3 h-3 animate-spin" /> : <Lightbulb className="w-3 h-3" />}
+            {showGuidance && guidance ? 'Hide guidance' : 'How to improve'}
+          </Button>
+          <AnimatePresence>
+            {showGuidance && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-2 p-2.5 rounded-md bg-background/60 border border-border/40">
+                  {isLoadingGuidance ? (
+                    <div className="space-y-1.5">
+                      <Skeleton className="w-full h-3 rounded" />
+                      <Skeleton className="w-4/5 h-3 rounded" />
+                      <Skeleton className="w-3/5 h-3 rounded" />
+                    </div>
+                  ) : (
+                    <div className="prose prose-xs dark:prose-invert max-w-none text-xs leading-relaxed">
+                      <ReactMarkdown>{guidance || ''}</ReactMarkdown>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
@@ -109,20 +170,83 @@ function InsightCard({ insight }: { insight: InsightItem }) {
 }
 
 function ActionItemCard({ item, index }: { item: ActionItem; index: number }) {
+  const [showGuidance, setShowGuidance] = useState(false);
+  const [guidance, setGuidance] = useState<string | null>(null);
+  const [isLoadingGuidance, setIsLoadingGuidance] = useState(false);
+
+  const fetchGuidance = async () => {
+    if (guidance) {
+      setShowGuidance(!showGuidance);
+      return;
+    }
+    setShowGuidance(true);
+    setIsLoadingGuidance(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-insight-guidance', {
+        body: { type: 'action', title: item.action, description: item.action, priority: item.priority },
+      });
+      if (error) throw error;
+      setGuidance(data.guidance);
+    } catch (err) {
+      console.error('Failed to fetch guidance:', err);
+      toast.error('Failed to get guidance. Please try again.');
+      setShowGuidance(false);
+    } finally {
+      setIsLoadingGuidance(false);
+    }
+  };
+
   return (
-    <div className="flex items-start gap-2.5 py-1.5">
-      <div className="flex-shrink-0 w-5 h-5 rounded-full bg-foreground/5 flex items-center justify-center mt-0.5">
-        <span className="text-[10px] font-display">{index + 1}</span>
+    <div className="py-1.5">
+      <div className="flex items-start gap-2.5">
+        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-foreground/5 flex items-center justify-center mt-0.5">
+          <span className="text-[10px] font-display">{index + 1}</span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm leading-snug">{blurFinancialValues(item.action)}</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={fetchGuidance}
+            disabled={isLoadingGuidance}
+            className="h-6 px-2 mt-1 text-[11px] gap-1 text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300"
+          >
+            {isLoadingGuidance ? <Loader2 className="w-3 h-3 animate-spin" /> : <Lightbulb className="w-3 h-3" />}
+            {showGuidance && guidance ? 'Hide guidance' : 'What you should do'}
+          </Button>
+          <AnimatePresence>
+            {showGuidance && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
+              >
+                <div className="mt-2 p-2.5 rounded-md bg-background/60 border border-border/40">
+                  {isLoadingGuidance ? (
+                    <div className="space-y-1.5">
+                      <Skeleton className="w-full h-3 rounded" />
+                      <Skeleton className="w-4/5 h-3 rounded" />
+                      <Skeleton className="w-3/5 h-3 rounded" />
+                    </div>
+                  ) : (
+                    <div className="prose prose-xs dark:prose-invert max-w-none text-xs leading-relaxed">
+                      <ReactMarkdown>{guidance || ''}</ReactMarkdown>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+        <span className={cn(
+          'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display flex-shrink-0',
+          priorityBadge[item.priority],
+        )}>
+          {item.priority}
+        </span>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm leading-snug">{blurFinancialValues(item.action)}</p>
-      </div>
-      <span className={cn(
-        'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display flex-shrink-0',
-        priorityBadge[item.priority],
-      )}>
-        {item.priority}
-      </span>
     </div>
   );
 }
@@ -157,21 +281,11 @@ export function AIInsightsCard() {
   const { data, generatedAt, isLoading, isRefreshing, isStale, refresh, cooldownRemaining } = useAIInsights();
   const [cooldown, setCooldown] = useState(0);
 
-  // Update cooldown display
   useEffect(() => {
-    if (cooldownRemaining <= 0) {
-      setCooldown(0);
-      return;
-    }
+    if (cooldownRemaining <= 0) { setCooldown(0); return; }
     setCooldown(Math.ceil(cooldownRemaining / 1000));
     const interval = setInterval(() => {
-      setCooldown(prev => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
+      setCooldown(prev => { if (prev <= 1) { clearInterval(interval); return 0; } return prev - 1; });
     }, 1000);
     return () => clearInterval(interval);
   }, [cooldownRemaining]);
@@ -193,39 +307,26 @@ export function AIInsightsCard() {
         category="Dashboard Home"
       >
         <Card className="rounded-2xl shadow-2xl overflow-hidden">
-          {/* Header */}
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center">
                   <Brain className="w-4 h-4 text-violet-600 dark:text-violet-400" />
                 </div>
-                <CardTitle className="text-base font-display tracking-wide">
-                  AI BUSINESS INSIGHTS
-                </CardTitle>
+                <CardTitle className="text-base font-display tracking-wide">AI BUSINESS INSIGHTS</CardTitle>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => refresh(true)}
-                disabled={isRefreshing || cooldown > 0}
-                className="gap-1.5 text-xs h-8"
-              >
+              <Button variant="ghost" size="sm" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="gap-1.5 text-xs h-8">
                 <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
                 {cooldown > 0 ? `${cooldown}s` : isRefreshing ? 'Analyzing...' : 'Refresh'}
               </Button>
             </div>
-
-            {/* Summary line + timestamp */}
             {data && (
               <div className="flex items-start gap-2 mt-2">
                 <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
                   <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-muted-foreground leading-snug">
-                    {blurFinancialValues(data.summaryLine)}
-                  </p>
+                  <p className="text-sm text-muted-foreground leading-snug">{blurFinancialValues(data.summaryLine)}</p>
                   {generatedAt && (
                     <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
                       <Clock className="w-2.5 h-2.5" />
@@ -242,23 +343,14 @@ export function AIInsightsCard() {
             {!data ? (
               <div className="text-center py-8">
                 <Sparkles className="w-8 h-8 mx-auto mb-3 text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground mb-3">
-                  No insights generated yet
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => refresh(true)}
-                  disabled={isRefreshing}
-                  className="gap-1.5"
-                >
+                <p className="text-sm text-muted-foreground mb-3">No insights generated yet</p>
+                <Button variant="outline" size="sm" onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5">
                   <Brain className="w-3.5 h-3.5" />
                   Generate Insights
                 </Button>
               </div>
             ) : (
               <div className="space-y-4">
-                {/* Insight cards */}
                 {data.insights.length > 0 && (
                   <div className="space-y-2">
                     {data.insights.map((insight, i) => (
@@ -266,15 +358,11 @@ export function AIInsightsCard() {
                     ))}
                   </div>
                 )}
-
-                {/* Action items */}
                 {data.actionItems.length > 0 && (
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
                       <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">
-                        ACTION ITEMS
-                      </span>
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">ACTION ITEMS</span>
                     </div>
                     <div className="space-y-0.5">
                       {data.actionItems.map((item, i) => (
@@ -283,13 +371,9 @@ export function AIInsightsCard() {
                     </div>
                   </div>
                 )}
-
-                {/* Footer */}
                 <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
                   <Sparkles className="w-3 h-3 text-muted-foreground/40" />
-                  <span className="text-[10px] text-muted-foreground/50">
-                    Powered by AI · Based on your data
-                  </span>
+                  <span className="text-[10px] text-muted-foreground/50">Powered by AI · Based on your data</span>
                 </div>
               </div>
             )}

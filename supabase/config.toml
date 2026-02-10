@@ -167,3 +167,6 @@ verify_jwt = false
 
 [functions.growth-forecasting]
 verify_jwt = false
+
+[functions.ai-insight-guidance]
+verify_jwt = false
