@@ -120,7 +120,9 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
       </div>
 
       {/* Chart */}
-      <div className="h-[180px] -mx-2">
+      <div className="relative h-[220px] -mx-2">
+        {/* Radial gradient background for depth */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(139,92,246,0.06)_0%,_transparent_70%)] pointer-events-none" />
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data?.months} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
@@ -147,12 +149,15 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
             />
             <Tooltip 
               contentStyle={{ 
-                backgroundColor: '#1e293b', 
-                border: '1px solid #334155',
+                backgroundColor: 'rgba(15, 23, 42, 0.9)', 
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(100, 116, 139, 0.3)',
                 borderRadius: '12px',
-                boxShadow: '0 10px 40px -10px rgba(0,0,0,0.5)',
+                boxShadow: '0 20px 50px -12px rgba(0,0,0,0.6)',
+                padding: '10px 14px',
               }}
-              labelStyle={{ color: '#e2e8f0', marginBottom: '4px' }}
+              labelStyle={{ color: '#e2e8f0', marginBottom: '6px', fontWeight: 500, fontSize: '13px' }}
+              itemStyle={{ fontSize: '12px', padding: '2px 0' }}
             />
             <Area
               type="monotone"
@@ -162,6 +167,7 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
               strokeWidth={2}
               fillOpacity={1}
               fill="url(#colorAccounts)"
+              activeDot={{ r: 5, fill: '#8b5cf6', stroke: '#1e1b4b', strokeWidth: 2 }}
             />
             <Area
               type="monotone"
@@ -171,6 +177,7 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
               strokeWidth={2}
               fillOpacity={1}
               fill="url(#colorLocations)"
+              activeDot={{ r: 5, fill: '#10b981', stroke: '#064e3b', strokeWidth: 2 }}
             />
           </AreaChart>
         </ResponsiveContainer>
@@ -215,7 +222,7 @@ function MetricCard({ label, value, change, icon: Icon, color }: MetricCardProps
   };
 
   return (
-    <div className="rounded-xl bg-slate-700/30 border border-slate-600/20 p-3">
+    <div className="rounded-xl bg-slate-700/30 border border-slate-600/20 p-3 shadow-[inset_0_1px_1px_rgba(255,255,255,0.03)]">
       <div className="flex items-center justify-between mb-2">
         <div className={cn("p-1.5 rounded-lg", colorStyles[color])}>
           <Icon className="h-3.5 w-3.5" />
@@ -230,7 +237,7 @@ function MetricCard({ label, value, change, icon: Icon, color }: MetricCardProps
           </div>
         )}
       </div>
-      <div className="text-2xl font-medium text-white">{value}</div>
+      <div className="text-2xl font-medium text-white tabular-nums">{value}</div>
       <div className="text-xs text-slate-500">{label}</div>
     </div>
   );

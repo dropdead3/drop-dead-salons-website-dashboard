@@ -127,6 +127,15 @@ function ActivityLogItem({ log }: ActivityLogItemProps) {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
+  const borderColors: Record<string, string> = {
+    violet: 'border-l-violet-500/60',
+    emerald: 'border-l-emerald-500/60',
+    amber: 'border-l-amber-500/60',
+    rose: 'border-l-rose-500/60',
+    blue: 'border-l-blue-500/60',
+    slate: 'border-l-slate-500/40',
+  };
+
   const linkPath = log.organization_id 
     ? `/dashboard/platform/accounts/${log.organization_id}`
     : '#';
@@ -134,10 +143,14 @@ function ActivityLogItem({ log }: ActivityLogItemProps) {
   return (
     <Link 
       to={linkPath}
-      className="flex items-center gap-3 p-3 rounded-xl bg-slate-700/20 border border-slate-600/20 hover:bg-slate-700/40 hover:border-slate-600/40 transition-all duration-200 cursor-pointer group"
+      className={cn(
+        "flex items-center gap-3 p-3 rounded-xl bg-slate-700/20 border border-slate-600/20 border-l-2 cursor-pointer group",
+        "hover:bg-slate-700/40 hover:border-slate-600/40 hover:translate-x-0.5 transition-all duration-300",
+        borderColors[config.color] || 'border-l-slate-500/40'
+      )}
     >
       {/* User Avatar */}
-      <Avatar className="h-8 w-8 border border-slate-600/50">
+      <Avatar className="h-8 w-8 ring-2 ring-slate-600/30 ring-offset-1 ring-offset-slate-800">
         <AvatarImage src={log.user_photo || undefined} alt={log.user_name} />
         <AvatarFallback className="bg-slate-700 text-slate-300 text-xs">
           {getInitials(log.user_name)}
