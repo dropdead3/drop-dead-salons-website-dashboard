@@ -1,54 +1,26 @@
 
-# Enhance AI with High-Ticket & Retail Sales Intelligence
 
-## Overview
-Update the AI Business Insights edge function to feed the AI concrete data about high-ticket appointments, retail/product sales ratios, and extension services. This gives the AI the context it needs to proactively recommend strategies for increasing average ticket spend -- especially through extensions, color corrections, and retail attachment.
+# Fix AI Insights Card Scrolling
 
-## What Changes
+## Root Cause
+The `Card` wrapper (line 259) has `overflow-hidden` which clips the scrollbar of the inner scrollable container. The Card itself has no height constraint, so it grows to fit all content and then clips it — preventing any child `overflow-y-auto` from working.
 
-### 1. Add new data queries (`ai-business-insights/index.ts`)
+## Fix (1 file)
 
-Add two new parallel queries to the existing `Promise.all` block:
+### `src/components/dashboard/AIInsightsCard.tsx`
 
-**A. High-ticket appointments** (from `appointments` table, last 30 days):
-- Count appointments with `total_price >= 500`
-- Count total completed appointments
-- Compute the high-ticket percentage
+1. **Remove `overflow-hidden` from the Card** (line 259) — change `"rounded-2xl shadow-2xl overflow-hidden"` to `"rounded-2xl shadow-2xl"`
 
-**B. Transaction item breakdown** (from `phorest_transaction_items`, last 30 days):
-- Total product (retail) revenue vs service revenue
-- Product attachment rate (% of transactions that include a product)
-- Identify extension-related services (pattern match on item_name for "extension", "install", "tape-in", "hand-tied", "weft", etc.)
-- Identify color correction services (pattern match for "color correction", "corrective color")
-- Count and revenue for each of these high-value categories
+2. **Add a flex column layout with a constrained height to the Card** so the CardContent area becomes scrollable:
+   - Add `max-h-[600px] flex flex-col` to the Card
+   - Add `flex-1 min-h-0 overflow-y-auto` to the `CardContent` wrapper (line 294)
+   - Remove `max-h-[500px] overflow-y-auto` from the inner `div` (line 295) since the scroll now lives on CardContent
 
-### 2. Compute metrics and add to data context
+This approach keeps the header (title, summary, refresh button) always visible and pinned at the top, while the content area beneath it scrolls naturally.
 
-Add a new section to the `dataContext` string:
+### Why this works
+- `flex flex-col` on the Card makes the header take its natural height
+- `flex-1 min-h-0` on CardContent lets it fill remaining space while allowing shrinking below content size
+- `overflow-y-auto` on CardContent enables the scrollbar at the correct level
+- `min-h-0` is the critical piece — without it, flex children won't shrink below their content size in CSS
 
-```
-HIGH-TICKET & RETAIL ANALYSIS (Last 30 days):
-- Total completed appointments: X
-- High-ticket appointments ($500+): X (Y%)
-- Extension services: X appointments, $Y revenue
-- Color correction services: X appointments, $Y revenue
-- Product/retail revenue: $X (Y% of total revenue)
-- Product attachment rate: X% of service transactions included retail
-- Average ticket: $X
-```
-
-### 3. Enhance the system prompt
-
-Add a dedicated paragraph to the system prompt giving the AI salon-industry expertise about:
-- The critical importance of increasing average ticket through retail sales and high-ticket services
-- Extensions (installation, maintenance, hair retail/packages) as the top revenue driver per appointment
-- Color correction as a premium, high-margin service category
-- When extension revenue is absent or low, the AI should flag this as a major growth opportunity
-- When product attachment rate is below 30%, recommend retail sales strategies
-- When high-ticket appointments ($500+) are under 15% of total, suggest service menu and pricing strategies
-
-## Files to Modify
-- `supabase/functions/ai-business-insights/index.ts` -- add queries, compute metrics, enhance prompt
-
-## No Database or Frontend Changes Needed
-The AI already outputs insights, action items, and suggested tasks. This change just gives it better data and domain knowledge to generate more relevant recommendations about revenue growth through high-ticket services and retail.
