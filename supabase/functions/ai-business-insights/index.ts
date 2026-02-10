@@ -85,6 +85,7 @@ serve(async (req) => {
     const today = new Date().toISOString().split("T")[0];
     const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
     const twoWeeksAgo = new Date(Date.now() - 14 * 86400000).toISOString().split("T")[0];
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
     const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
 
     const [
@@ -98,6 +99,8 @@ serve(async (req) => {
       orgFeaturesRes,
       payrollRes,
       phorestLocationsRes,
+      highTicketRes,
+      transactionItemsRes,
     ] = await Promise.all([
       // Recent sales (last 14 days)
       supabase
@@ -176,6 +179,23 @@ serve(async (req) => {
         .select("id, phorest_branch_id")
         .eq("organization_id", orgId)
         .not("phorest_branch_id", "is", null),
+
+      // High-ticket appointments (last 30 days)
+      supabase
+        .from("appointments")
+        .select("total_price, status")
+        .gte("appointment_date", thirtyDaysAgo)
+        .lte("appointment_date", today)
+        .in("status", ["completed", "checked_in", "in_progress"])
+        .limit(1000),
+
+      // Transaction items breakdown (last 30 days)
+      supabase
+        .from("phorest_transaction_items")
+        .select("item_name, item_type, total_amount, transaction_id, quantity")
+        .gte("transaction_date", thirtyDaysAgo)
+        .lte("transaction_date", today)
+        .limit(2000),
     ]);
 
     // Build data summary for the AI
@@ -189,6 +209,8 @@ serve(async (req) => {
     const orgFeatures = orgFeaturesRes.data || [];
     const payrollConnection = payrollRes.data;
     const phorestLocations = phorestLocationsRes.data || [];
+    const highTicketAppts = highTicketRes.data || [];
+    const transactionItems = (transactionItemsRes.data || []) as any[];
 
     // Build adoption gaps
     const orgFeatureMap = new Map((orgFeatures as any[]).map((f: any) => [f.feature_key, f.is_enabled]));
@@ -227,6 +249,59 @@ ${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrat
     const thisWeekRevenue = thisWeekSales.reduce((sum, s) => sum + (s.total_revenue || 0), 0);
     const lastWeekRevenue = lastWeekSales.reduce((sum, s) => sum + (s.total_revenue || 0), 0);
 
+    // High-ticket & retail metrics (last 30 days)
+    const totalCompleted30d = highTicketAppts.length;
+    const highTicketCount = highTicketAppts.filter((a: any) => (a.total_price || 0) >= 500).length;
+    const highTicketPct = totalCompleted30d > 0 ? ((highTicketCount / totalCompleted30d) * 100).toFixed(1) : "0";
+    const totalApptRevenue30d = highTicketAppts.reduce((sum: number, a: any) => sum + (a.total_price || 0), 0);
+    const avgTicket30d = totalCompleted30d > 0 ? (totalApptRevenue30d / totalCompleted30d).toFixed(0) : "0";
+
+    // Extension & color correction detection
+    const extensionPatterns = /\b(extension|install|tape.?in|hand.?tied|weft|sew.?in|i.?tip|k.?tip|fusion|nbr|great\s?lengths|bellami|hair\s?dreams)\b/i;
+    const colorCorrectionPatterns = /\b(color\s?correct|corrective\s?color|colour\s?correct)\b/i;
+
+    let productRevenue30d = 0;
+    let serviceRevenue30d = 0;
+    let extensionCount = 0;
+    let extensionRevenue = 0;
+    let colorCorrectionCount = 0;
+    let colorCorrectionRevenue = 0;
+    const serviceTransactionIds = new Set<string>();
+    const productTransactionIds = new Set<string>();
+
+    for (const item of transactionItems) {
+      const amount = Number(item.total_amount) || 0;
+      if (item.item_type === 'product') {
+        productRevenue30d += amount;
+        if (item.transaction_id) productTransactionIds.add(item.transaction_id);
+      } else {
+        serviceRevenue30d += amount;
+        if (item.transaction_id) serviceTransactionIds.add(item.transaction_id);
+        // Check for extension services
+        if (extensionPatterns.test(item.item_name || '')) {
+          extensionCount++;
+          extensionRevenue += amount;
+        }
+        // Check for color correction services
+        if (colorCorrectionPatterns.test(item.item_name || '')) {
+          colorCorrectionCount++;
+          colorCorrectionRevenue += amount;
+        }
+      }
+    }
+
+    // Product attachment rate: % of service transactions that also include a product
+    let attachmentRate = 0;
+    if (serviceTransactionIds.size > 0) {
+      let withProduct = 0;
+      for (const txId of serviceTransactionIds) {
+        if (productTransactionIds.has(txId)) withProduct++;
+      }
+      attachmentRate = (withProduct / serviceTransactionIds.size) * 100;
+    }
+    const totalItemRevenue = productRevenue30d + serviceRevenue30d;
+    const productPct = totalItemRevenue > 0 ? ((productRevenue30d / totalItemRevenue) * 100).toFixed(1) : "0";
+
     const dataContext = `
 BUSINESS DATA SNAPSHOT (as of ${today}):
 
@@ -256,6 +331,16 @@ ${anomalies.length > 0 ? anomalies.map((a) => `  ${a.anomaly_type} (${a.severity
 
 SCHEDULING SUGGESTIONS (Pending):
 ${suggestions.length > 0 ? suggestions.map((s) => `  ${s.suggestion_type}: ${s.suggested_date} at ${s.suggested_time} (confidence: ${s.confidence_score})`).join("\n") : "No pending suggestions"}
+
+HIGH-TICKET & RETAIL ANALYSIS (Last 30 days):
+- Total completed appointments: ${totalCompleted30d}
+- High-ticket appointments ($500+): ${highTicketCount} (${highTicketPct}%)
+- Extension services: ${extensionCount} appointments, $${extensionRevenue.toFixed(0)} revenue
+- Color correction services: ${colorCorrectionCount} appointments, $${colorCorrectionRevenue.toFixed(0)} revenue
+- Product/retail revenue: $${productRevenue30d.toFixed(0)} (${productPct}% of total transaction item revenue)
+- Service revenue (from transaction items): $${serviceRevenue30d.toFixed(0)}
+- Product attachment rate: ${attachmentRate.toFixed(1)}% of service transactions included retail
+- Average ticket (from appointments): $${avgTicket30d}
 `;
 
     // Call Lovable AI with tool calling for structured output
@@ -278,7 +363,18 @@ ${suggestions.length > 0 ? suggestions.map((s) => `  ${s.suggestion_type}: ${s.s
         messages: [
           {
             role: "system",
-            content: `You are a salon business intelligence analyst. Analyze the provided business data and generate actionable insights for salon owners. Be specific with numbers and percentages. Focus on what matters most RIGHT NOW. Be concise but insightful. If data is limited or zeros, acknowledge it and suggest what to look for as data accumulates. Do NOT fabricate data that isn't in the snapshot.
+            content: `You are a salon business intelligence analyst with deep expertise in salon revenue optimization. Analyze the provided business data and generate actionable insights for salon owners. Be specific with numbers and percentages. Focus on what matters most RIGHT NOW. Be concise but insightful. If data is limited or zeros, acknowledge it and suggest what to look for as data accumulates. Do NOT fabricate data that isn't in the snapshot.
+
+CRITICAL REVENUE GROWTH EXPERTISE:
+You understand that the #1 lever for salon profitability is increasing average ticket spend. The three pillars are:
+1. **Extensions & High-Value Hair Services**: Extension installations (tape-in, hand-tied, weft, sew-in, i-tip, k-tip, fusion, NBR), extension maintenance, and hair retail/extension packages are the single highest revenue-per-appointment services in the salon industry. A single extension appointment typically generates $500-$2,000+. If extension revenue is absent or very low, this is THE major growth opportunity to flag — recommend the salon consider adding or expanding extension services, training staff, or partnering with extension brands.
+2. **Color Correction**: Color correction is a premium, high-margin service category ($300-$800+ per appointment). Low volume here may indicate an opportunity to market corrective services or upskill stylists.
+3. **Retail/Product Sales**: Industry benchmark for retail attachment rate is 30%+. If the product attachment rate is below 30%, this is a significant missed revenue opportunity. Recommend specific retail sales strategies (prescriptive selling, checkout prompts, product education).
+
+THRESHOLDS TO FLAG:
+- If high-ticket appointments ($500+) are under 15% of total completed appointments, recommend service menu expansion, pricing strategies, or extension/color correction service additions.
+- If product attachment rate is below 30%, flag this as a priority and suggest retail training, checkout product recommendations, or incentive programs.
+- If extension services show zero or minimal revenue, proactively recommend this as the single biggest growth opportunity available.
 
 Additionally, review the UNUSED FEATURES & INTEGRATIONS section. Based on the business data patterns, identify 2-4 of the most impactful unused features or integrations that would benefit this business. For each, explain WHY it would help based on the specific data you see, and HOW to get started. Use the suggestionKey format "feature:<key>" for features and "integration:<name>" for integrations.
 
