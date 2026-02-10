@@ -993,7 +993,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
         "hidden lg:block sticky top-0 z-30",
         hideFooter && "shrink-0"
       )}>
-        <div className="flex items-center justify-between h-12 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
+        <div className="flex items-center justify-between h-14 px-6 border-b border-border bg-card/80 backdrop-blur-sm">
           {/* Left side - Sidebar toggle */}
           <div className="flex items-center">
             <Tooltip>
