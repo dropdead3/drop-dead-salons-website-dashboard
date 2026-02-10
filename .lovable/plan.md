@@ -1,73 +1,42 @@
 
+# Sticky Guidance: Auto-Expand and Improved Readability
 
-# Edge Case Hardening for Zura Sticky Guidance Navigation
+## The Problem
+When you click a link inside Zura's guidance to navigate to another dashboard page, the sticky panel appears at the bottom but starts **collapsed** -- showing only a tiny title bar. You lose sight of the actual instructions and have to manually click to expand. That defeats the purpose of keeping the guidance visible while you work.
 
-## Problem Statement
-The sticky guidance panel needs to handle a chain of navigations gracefully. Right now, the "happy path" works (click link in guidance -> panel stays on destination page). But several edge cases can break the experience or cause confusion.
+## The Solution
+Make the sticky guidance panel **start expanded** when you navigate from a guidance link, so the full advice text is immediately visible. Also improve the expanded view to be more readable and useful as a reference while working.
 
-## Edge Cases Identified and Solutions
+## Changes
 
-### 1. User clicks a second internal link from the sticky panel on a destination page
-**Current behavior**: Already handled -- `handleInternalLink` in `ZuraStickyGuidance.tsx` re-saves the same state and navigates. The panel persists.
-**Status**: Working. No change needed.
+### 1. Auto-expand on initial appearance
+When the sticky panel first appears (user clicked a guidance link), it should default to **expanded** so the guidance text is immediately readable. The user can collapse it if they want more screen space.
 
-### 2. User presses browser Back button from a destination page
-**Current behavior**: The browser navigates back, but `savedState` stays in memory. If they go back to a non-dashboard page, the panel still shows. If they go back to `/dashboard`, the panel hides (the `isVisible` check excludes `/dashboard`), but `savedState` still lingers in memory with no way to restore it visually.
-**Fix**: Add a `useEffect` in `ZuraStickyGuidance` that listens to `location.pathname` changes. When the user returns to `/dashboard`, auto-dismiss the saved state so it doesn't leak. The AIInsightsCard/Drawer restoration logic (already implemented) will handle reopening the guidance panel on the dashboard if appropriate.
+**File:** `src/components/dashboard/ZuraStickyGuidance.tsx`
+- Change the initial `expanded` state from `false` to `true`
+- This single change means the panel opens showing the full guidance text instead of just the title bar
 
-### 3. User navigates via sidebar to a completely unrelated page (not from a Zura link)
-**Current behavior**: The sticky panel stays visible because `savedState` is still set and the path is not `/dashboard`.
-**Desired behavior**: This is actually fine -- the panel should persist so the user can still reference it. No change needed. The dismiss (X) button handles cleanup.
+### 2. Respect sidebar offset
+The sticky bar currently spans `left-0 right-0`, which means it sits under the sidebar. It should respect the sidebar width so it only covers the main content area.
 
-### 4. User clicks "Return to Zura" (ArrowLeft) from the sticky panel, then immediately clicks another insight
-**Current behavior**: `navigate('/dashboard')` fires, panel hides. The `restore()` function in AIInsightsCard picks up the state. If the user then clicks a different insight, the old restored state gets replaced.
-**Status**: Working correctly. No change needed.
+**File:** `src/components/dashboard/ZuraStickyGuidance.tsx`
+- Add a left offset matching the sidebar width (`left-72` or dynamic based on collapsed state) so the panel doesn't hide behind the sidebar
 
-### 5. User opens a link from guidance, then navigates to another internal link from the *page content* itself (not the sticky panel)
-**Current behavior**: The sticky panel stays visible with the original guidance. The page changes underneath.
-**Desired behavior**: This is correct -- the panel should keep showing the original guidance. No change needed.
+### 3. Add bottom padding to main content
+When the sticky panel is expanded, it covers the bottom of the page content. Add padding to the main content area so nothing gets hidden behind it.
 
-### 6. Rapid double-click on an internal link in the sticky panel
-**Current behavior**: Could fire `saveAndNavigate` twice, causing a double navigation.
-**Fix**: Add a simple debounce guard (a ref flag that blocks re-entry for 300ms) to `handleInternalLink` in `ZuraStickyGuidance`.
+**File:** `src/components/dashboard/DashboardLayout.tsx`
+- When `ZuraStickyGuidance` is visible and expanded, add bottom padding to the main content wrapper to prevent content from being obscured
 
-### 7. The 5-minute auto-dismiss timer resets on every link click within the sticky panel
-**Current behavior**: `saveAndNavigate` clears the old timer and sets a new one, so yes, it resets. This is the desired behavior -- active usage keeps the panel alive.
-**Status**: Working correctly.
+## Technical Details
 
-### 8. User has the panel expanded, clicks a link within it, navigates to a new page -- panel should stay expanded
-**Current behavior**: `expanded` state is local to the component. Since `ZuraStickyGuidance` doesn't unmount during navigation (it's in the layout), the `expanded` state persists across navigations within the dashboard.
-**Status**: Working correctly because the component is mounted in `DashboardLayout`.
+### ZuraStickyGuidance.tsx changes:
+- `useState(false)` becomes `useState(true)` for the `expanded` state
+- Add sidebar-aware left positioning (read the collapsed state from localStorage, same pattern used in `DashboardLayout`)
+- Optionally reduce the max-height from `40vh` to `35vh` to keep a good balance between guidance visibility and page content
 
-## Summary of Changes
+### DashboardLayout.tsx changes:
+- Pass the sticky guidance visibility state down or use the existing `ZuraNavigationContext` to detect when the panel is showing
+- Add a bottom padding spacer (`pb-48` or similar) to the main content area when the panel is expanded
 
-Only two small fixes are needed:
-
-### File: `src/components/dashboard/ZuraStickyGuidance.tsx`
-1. **Auto-dismiss on dashboard return**: Add a `useEffect` that calls `ctx.dismiss()` when `location.pathname === '/dashboard'` and `savedState` exists. This prevents stale state after browser Back navigation.
-2. **Debounce internal link clicks**: Add a ref-based guard to `handleInternalLink` to prevent rapid double-clicks from triggering duplicate navigations.
-
-### Technical Detail
-
-```text
-// Pseudo-code for the two fixes:
-
-// Fix 1: Auto-dismiss when returning to dashboard
-useEffect(() => {
-  if (location.pathname === '/dashboard' && ctx?.savedState) {
-    ctx.dismiss();
-  }
-}, [location.pathname]);
-
-// Fix 2: Debounce guard
-const navigatingRef = useRef(false);
-const handleInternalLink = (href) => (e) => {
-  e.preventDefault();
-  if (navigatingRef.current) return;
-  navigatingRef.current = true;
-  setTimeout(() => { navigatingRef.current = false; }, 300);
-  ctx.saveAndNavigate(href, ctx.savedState);
-};
-```
-
-No new files, no new dependencies, no backend changes.
+These are small, targeted changes -- no new files, no new dependencies, no backend work.
