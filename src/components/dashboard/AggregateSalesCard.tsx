@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+import { ZuraCardInsight } from '@/components/dashboard/ZuraCardInsight';
 import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useSalesTrend } from '@/hooks/useSalesData';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
@@ -314,6 +315,14 @@ export function AggregateSalesCard({
 
   const hasNoData = !metrics || displayMetrics.totalRevenue === 0;
 
+  const metricData = {
+    'Total Revenue': `$${displayMetrics.totalRevenue.toLocaleString()}`,
+    'Service Revenue': `$${displayMetrics.serviceRevenue.toLocaleString()}`,
+    'Product Revenue': `$${displayMetrics.productRevenue.toLocaleString()}`,
+    'Transactions': displayMetrics.totalTransactions,
+    'Average Ticket': `$${Math.round(displayMetrics.averageTicket)}`,
+  };
+
   return (
     <Card className="p-6">
       {/* Header */}
@@ -329,6 +338,12 @@ export function AggregateSalesCard({
                 {isAllLocations ? 'All locations combined' : selectedLocationName || 'Loading...'}
               </p>
             </div>
+            <ZuraCardInsight
+              cardName="Sales Overview"
+              metricData={metricData}
+              dateRange={dateRange}
+              locationName={selectedLocationName || 'All Locations'}
+            />
             <CommandCenterVisibilityToggle 
               elementKey="sales_overview" 
               elementName="Sales Overview" 

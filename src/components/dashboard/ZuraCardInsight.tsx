@@ -33,7 +33,7 @@ export function ZuraCardInsight({ cardName, metricData, dateRange, locationName 
     <Popover open={open} onOpenChange={handleOpen}>
       <PopoverTrigger asChild>
         <button
-          className="p-1 rounded-full hover:bg-primary/10 transition-colors cursor-pointer"
+          className="p-0.5 rounded-full hover:bg-primary/10 transition-colors cursor-pointer h-7 w-7 flex items-center justify-center"
           title="Zura AI Analysis"
           aria-label={`Get Zura AI analysis for ${cardName}`}
         >
