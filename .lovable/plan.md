@@ -1,19 +1,30 @@
 
-# Equalize Spacing Between Sidebar Cards
+# Unify All Bento Grid Spacing to gap-6
 
 ## Problem
-The main grid uses `gap-6` (24px) between columns, but the sidebar's internal gap between the Top Performers card and Revenue Breakdown card is only `gap-2` (8px). This creates an inconsistent, unbalanced look.
+Within the Sales Overview bento layout, the main grid columns use `gap-6` (24px), and the sidebar now also uses `gap-6`. However, the internal spacing within the left column still uses smaller, inconsistent values:
+- Services/Products sub-cards: `gap-3 sm:gap-4`
+- Secondary KPIs row: `gap-3 sm:gap-4` with `mt-4`
+- Goal Progress section: `mt-4`
+
+This creates uneven spacing between elements inside the bento grid.
 
 ## Solution
-Change the sidebar's vertical gap from `gap-2` to `gap-6` so it matches the grid's column gap, making all spacing in the bento layout uniform.
+Standardize all internal gaps and margins within the bento layout to `gap-6` so every section breathes equally.
 
 ## Technical Details
 
 ### File: `src/components/dashboard/AggregateSalesCard.tsx`
-- **Line 526**: Change `gap-2` to `gap-6`
 
-Single class change:
-```
-Before: <div className="flex flex-col gap-2 min-w-0">
-After:  <div className="flex flex-col gap-6 min-w-0">
-```
+Four changes, all within the left column of the main content grid:
+
+1. **Line 434** - Services and Products sub-cards grid:
+   - Change `gap-3 sm:gap-4` to `gap-6`
+
+2. **Line 466** - Secondary KPIs row (Transactions, Avg Ticket, Rev/Hour):
+   - Change `gap-3 sm:gap-4 mt-4` to `gap-6 mt-6`
+
+3. **Line 516** - Goal Progress wrapper:
+   - Change `mt-4` to `mt-6`
+
+These three changes ensure every visible gap between bento elements -- horizontally and vertically -- is a uniform 24px.
