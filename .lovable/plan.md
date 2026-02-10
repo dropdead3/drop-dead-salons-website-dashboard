@@ -1,35 +1,58 @@
 
 
-# Fix AI Insights Card Scrolling (For Real This Time)
+# Fix AI Insights Card Internal Scrolling -- For Real
 
 ## Problem
-The `ScrollArea` component on line 298 is not working because:
-1. The `Card` on line 262 has no height constraint -- it grows to fit all content, so `ScrollArea` never detects overflow
-2. `AnimatePresence` with `motion.div` wrappers can interfere with how Radix ScrollArea measures content vs viewport
+The scrollable `div` with `maxHeight: 480px` and `overflowY: auto` is not working because:
+1. The `motion.div` inside `AnimatePresence` has no height constraint itself -- it renders at full content height, and the browser may not be clipping it properly due to how framer-motion handles layout
+2. Even if the scroll appeared, there is no `onWheel` event trapping -- the page scroll would still steal wheel events
 
-## Solution
+## Solution -- Two changes in `src/components/dashboard/AIInsightsCard.tsx`
 
-### `src/components/dashboard/AIInsightsCard.tsx`
+### 1. Add an `onWheel` handler to trap scroll inside the card
+Add an `onWheel` event handler on the scrollable div that calls `e.stopPropagation()` so when the mouse is inside the card, the dashboard page scroll is frozen and only the card content scrolls.
 
-1. **Add a fixed max-height and overflow constraint to the Card itself** (line 262):
-   - Change `"rounded-2xl shadow-2xl"` to `"rounded-2xl shadow-2xl max-h-[600px] flex flex-col overflow-hidden"`
+### 2. Move the height constraint INSIDE the motion.div, not outside it
+The current structure is:
+```
+<div style={{ overflowY: 'auto', maxHeight: '480px' }}>   <-- scroll container
+  <AnimatePresence>
+    <motion.div>   <-- this has no constraint, renders full height
+      ...content...
+    </motion.div>
+  </AnimatePresence>
+</div>
+```
 
-2. **Make CardContent fill remaining space** (line 297):
-   - Add `flex-1 min-h-0` so it shrinks within the Card's max-height
+The problem: `AnimatePresence` and `motion.div` can interfere with the parent's ability to measure overflow. The fix is to remove the scroll wrapper entirely and instead put the scroll directly on the `CardContent` using a `ref` and inline styles, plus ensure the Card's `max-h-[600px]` and `flex flex-col overflow-hidden` are kept.
 
-3. **Replace `ScrollArea` with native CSS scroll** (lines 298, 430):
-   - Remove `<ScrollArea className="h-[450px]">` and its closing tag
-   - Instead, wrap the `AnimatePresence` block in a plain `div` with `style={{ overflowY: 'auto', maxHeight: '100%' }}` using inline styles (to avoid Tailwind specificity issues that have failed in prior attempts)
-   - This bypasses the Radix ScrollArea viewport measurement issue with animated children
+### Concrete changes (line numbers from current file):
 
-4. **Remove `initial={false}` from the insights `motion.div`** (line 303) to keep layout stable
+**Line 262** -- Keep `max-h-[600px] flex flex-col overflow-hidden` on Card (already there).
 
-### Why previous attempts failed
-- Tailwind `overflow-y-auto` on a flex child inside a Card with no height cap does nothing -- there's no overflow to scroll
-- `ScrollArea` requires its viewport to be shorter than its content, but `AnimatePresence`/`motion.div` don't report stable heights during animation, so the viewport thinks content fits
-- The Card was always expanding to fit content rather than constraining it
+**Line 297** -- Change CardContent to be the scroll container itself:
+```tsx
+<CardContent 
+  className={cn("pt-0 flex-1 min-h-0", activeGuidance && "p-0")} 
+  style={{ overflowY: 'auto' }}
+  onWheel={(e) => e.stopPropagation()}
+>
+```
+- `flex-1 min-h-0` makes it shrink within the Card's max-height (the key missing piece that was removed in the last edit)
+- `overflowY: 'auto'` directly on CardContent means it IS the scroll container
+- `onWheel stopPropagation` prevents dashboard from scrolling when mouse is inside
+
+**Line 298** -- Remove the wrapper `<div style={{ overflowY: 'auto', maxHeight: '480px' }}>` entirely. Just render `<AnimatePresence>` directly inside CardContent.
+
+**Line 430** -- Remove the closing `</div>` for the removed wrapper.
 
 ### Why this will work
-- `max-h-[600px]` on the Card caps its height so content overflows
-- `flex flex-col` + `flex-1 min-h-0` on CardContent forces it to shrink
-- Native `overflow-y: auto` with inline styles is the most reliable scrolling approach and isn't affected by animation wrapper quirks
+- `Card` has `max-h-[600px]` capping total height
+- `CardContent` with `flex-1 min-h-0` fills remaining space but SHRINKS when content exceeds the cap -- this is the standard CSS trick for flex children that need to scroll
+- `overflowY: auto` directly on `CardContent` (no intermediary wrappers) means the browser handles overflow natively
+- `onWheel stopPropagation` traps scroll events inside the card so the dashboard doesn't scroll when the user scrolls within the insights card
+
+### Why previous attempts failed
+- Putting `overflowY` on a wrapper div between CardContent and AnimatePresence didn't work because `maxHeight: 100%` resolves to nothing (no explicit parent height), and `maxHeight: 480px` didn't clip because the motion.div animation layout interfered
+- Removing `flex-1 min-h-0` from CardContent in the last edit broke the flex shrinking, so the card just grew to fit content again
+
