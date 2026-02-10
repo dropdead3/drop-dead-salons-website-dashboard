@@ -75,9 +75,9 @@ export function AIChatPanel({ open, onOpenChange }: AIChatPanelProps) {
                 <Bot className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <SheetTitle className="text-base">AI Assistant</SheetTitle>
+                <SheetTitle className="text-base">Zura</SheetTitle>
                 <p className="text-xs text-muted-foreground">
-                  Ask me to manage appointments
+                  Your AI-powered salon assistant
                 </p>
               </div>
             </div>
@@ -105,7 +105,7 @@ export function AIChatPanel({ open, onOpenChange }: AIChatPanelProps) {
                 <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                   <Sparkles className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="font-medium">How can I help?</h3>
+                <h3 className="font-medium">Hi, I'm Zura!</h3>
                 <p className="text-sm text-muted-foreground max-w-[280px] mx-auto">
                   I can search clients, check schedules, and manage appointments for you.
                 </p>

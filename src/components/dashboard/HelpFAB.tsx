@@ -68,7 +68,7 @@ export function HelpFAB() {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
           <div className="border-b bg-muted/30 px-4 pt-3 pb-2">
             <TabsList className="w-full">
-              <TabsTrigger value="ai-help" className="flex-1">AI Help</TabsTrigger>
+              <TabsTrigger value="ai-help" className="flex-1">Zura</TabsTrigger>
               <TabsTrigger value="support" className="flex-1">Chat</TabsTrigger>
             </TabsList>
           </div>
