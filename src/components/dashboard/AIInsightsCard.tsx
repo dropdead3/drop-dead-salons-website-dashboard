@@ -124,8 +124,8 @@ function InsightCard({ insight, onRequestGuidance }: { insight: InsightItem; onR
 
   return (
     <div className={cn('border-l-2 rounded-lg p-3 transition-colors', severityStyles[insight.severity])}>
-      <div className="flex items-start gap-2.5">
-        <div className={cn('mt-0.5 flex-shrink-0', severityIconColor[insight.severity])}>
+      <div className="flex items-center gap-2.5">
+        <div className={cn('flex-shrink-0', severityIconColor[insight.severity])}>
           <Icon className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
@@ -138,6 +138,8 @@ function InsightCard({ insight, onRequestGuidance }: { insight: InsightItem; onR
           <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
             {blurFinancialValues(insight.description)}
           </p>
+        </div>
+        <div className="flex-shrink-0">
           <GuidanceTrigger
             label="How to improve"
             onClick={() => onRequestGuidance({ type: 'insight', title: insight.title, description: insight.description, category: insight.category })}
