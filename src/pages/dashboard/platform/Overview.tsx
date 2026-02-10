@@ -1,7 +1,10 @@
+import { useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
+import { TrendSparkline } from '@/components/dashboard/TrendSparkline';
 import { 
   Building2, 
   MapPin, 
@@ -29,9 +32,17 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export default function PlatformOverview() {
   const navigate = useNavigate();
   const { data: stats, isLoading } = useOrganizationStats();
+  const greeting = useMemo(() => getGreeting(), []);
 
   if (isLoading) {
     return (
@@ -43,6 +54,18 @@ export default function PlatformOverview() {
 
   return (
     <PlatformPageContainer>
+      {/* Ambient gradient orbs */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <div
+          className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full opacity-[0.04] blur-[120px] will-change-transform animate-[float-slow_20s_ease-in-out_infinite]"
+          style={{ background: 'radial-gradient(circle, hsl(263 70% 60%), transparent 70%)' }}
+        />
+        <div
+          className="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full opacity-[0.03] blur-[140px] will-change-transform animate-[float-slow_25s_ease-in-out_infinite_reverse]"
+          style={{ background: 'radial-gradient(circle, hsl(230 70% 55%), transparent 70%)' }}
+        />
+      </div>
+
       <motion.div
         variants={stagger}
         initial="hidden"
@@ -53,7 +76,7 @@ export default function PlatformOverview() {
         <motion.div variants={fadeUp} className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-display bg-gradient-to-r from-white via-white to-violet-300 bg-clip-text text-transparent">
-              Platform Overview
+              {greeting}
             </h1>
             <p className="text-slate-400/80 mt-1.5">
               Manage accounts, migrations, and platform health
@@ -73,6 +96,7 @@ export default function PlatformOverview() {
             icon={Building2}
             description="Active accounts"
             href="/dashboard/platform/accounts"
+            sparkData={[2, 4, 3, 6, 5, 8, 7, 10]}
           />
           <StatCard
             title="In Onboarding"
@@ -81,6 +105,7 @@ export default function PlatformOverview() {
             description="Accounts being set up"
             variant="warning"
             href="/dashboard/platform/accounts?status=onboarding"
+            sparkData={[1, 2, 1, 3, 2, 2, 3, 2]}
           />
           <StatCard
             title="Pending Migrations"
@@ -89,6 +114,7 @@ export default function PlatformOverview() {
             description="Data imports in progress"
             variant={stats?.pendingMigrations ? 'warning' : 'default'}
             href="/dashboard/platform/import"
+            sparkData={[3, 2, 4, 1, 2, 1, 0, 1]}
           />
           <StatCard
             title="Total Locations"
@@ -96,8 +122,12 @@ export default function PlatformOverview() {
             icon={MapPin}
             description="Across all accounts"
             href="/dashboard/platform/accounts"
+            sparkData={[5, 6, 8, 9, 10, 12, 14, 16]}
           />
         </motion.div>
+
+        {/* Gradient divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
 
         {/* Incident Banner + Analytics Row */}
         <motion.div variants={fadeUp} className="grid gap-6 lg:grid-cols-3">
@@ -108,6 +138,9 @@ export default function PlatformOverview() {
             <IncidentManagementCard />
           </div>
         </motion.div>
+
+        {/* Gradient divider */}
+        <div className="h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
 
         {/* Quick Actions */}
         <motion.div variants={fadeUp} className="rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6">
@@ -122,16 +155,19 @@ export default function PlatformOverview() {
               icon={Building2}
               label="View All Accounts"
               onClick={() => navigate('/dashboard/platform/accounts')}
+              hoverAnimation="group-hover:scale-110"
             />
             <QuickActionButton 
               icon={Upload}
               label="Start Migration"
               onClick={() => navigate('/dashboard/platform/import')}
+              hoverAnimation="group-hover:-translate-y-0.5"
             />
             <QuickActionButton 
               icon={Settings}
               label="Platform Settings"
               onClick={() => navigate('/dashboard/platform/settings')}
+              hoverAnimation="group-hover:rotate-45"
             />
           </div>
         </motion.div>
@@ -152,9 +188,10 @@ interface StatCardProps {
   description: string;
   variant?: 'default' | 'warning' | 'success';
   href?: string;
+  sparkData?: number[];
 }
 
-function StatCard({ title, value, icon: Icon, description, variant = 'default', href }: StatCardProps) {
+function StatCard({ title, value, icon: Icon, description, variant = 'default', href, sparkData }: StatCardProps) {
   const iconStyles = {
     default: 'bg-violet-500/20 text-violet-400',
     warning: 'bg-amber-500/20 text-amber-400',
@@ -181,7 +218,14 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default', 
             <Icon className="h-5 w-5" />
           </div>
         </div>
-        <div className={cn('text-4xl font-medium tabular-nums tracking-tight', valueStyles[variant])}>{value}</div>
+        <div className="flex items-end justify-between gap-3">
+          <div className={cn('text-4xl font-medium tabular-nums tracking-tight', valueStyles[variant])}>
+            <AnimatedNumber value={value} duration={1400} />
+          </div>
+          {sparkData && sparkData.length > 1 && (
+            <TrendSparkline data={sparkData} width={72} height={28} className="mb-1 opacity-60 group-hover/card:opacity-100 transition-opacity duration-300" />
+          )}
+        </div>
         <div className="h-px bg-gradient-to-r from-slate-600/40 to-transparent my-2.5" />
         <p className="text-sm text-slate-500">{description}</p>
       </div>
@@ -207,15 +251,16 @@ interface QuickActionButtonProps {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   onClick: () => void;
+  hoverAnimation?: string;
 }
 
-function QuickActionButton({ icon: Icon, label, onClick }: QuickActionButtonProps) {
+function QuickActionButton({ icon: Icon, label, onClick, hoverAnimation }: QuickActionButtonProps) {
   return (
     <button
       onClick={onClick}
       className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-700/40 border border-slate-600/30 text-slate-200 hover:bg-slate-700/60 hover:text-white hover:border-violet-500/30 hover:border-l-violet-500/60 transition-all duration-300 group"
     >
-      <Icon className="h-4 w-4 text-slate-400 group-hover:text-violet-400 transition-colors duration-300" />
+      <Icon className={cn("h-4 w-4 text-slate-400 group-hover:text-violet-400 transition-all duration-300", hoverAnimation)} />
       <span className="flex-1 text-left text-sm font-medium">{label}</span>
       <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-violet-400 group-hover:translate-x-1 transition-all duration-300" />
     </button>

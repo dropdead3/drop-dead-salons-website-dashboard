@@ -1316,6 +1316,26 @@
   animation: platform-float 6s ease-in-out infinite;
 }
 
+/* Ambient floating orbs */
+@keyframes float-slow {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -20px) scale(1.02); }
+  50% { transform: translate(-10px, 20px) scale(0.98); }
+  75% { transform: translate(20px, 10px) scale(1.01); }
+}
+
+/* Rotating conic gradient border */
+@keyframes spin-slow {
+  from { --spin-angle: 0deg; }
+  to { --spin-angle: 360deg; }
+}
+
+@property --spin-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
 @keyframes sheen-sweep {
   0%, 60% {
     transform: translateX(-50%) translateZ(0);
