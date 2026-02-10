@@ -407,7 +407,7 @@ export function AIInsightsCard() {
                     animate={slideVariants.center}
                     exit={slideVariants.exitToRight}
                     transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                    className="min-h-[300px] max-h-[500px] flex flex-col"
+                    className="h-[500px] flex flex-col"
                   >
                     <GuidancePanel
                       title={activeGuidance.title}
