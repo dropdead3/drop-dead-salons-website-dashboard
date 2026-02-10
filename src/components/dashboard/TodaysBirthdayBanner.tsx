@@ -35,7 +35,7 @@ export function TodaysBirthdayBanner() {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className="relative rounded-xl mb-6"
+        className="relative rounded-xl mb-6 overflow-hidden"
         style={{
           boxShadow: '0 0 20px rgba(168,85,247,0.25)',
         }}
