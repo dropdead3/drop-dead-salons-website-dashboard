@@ -292,7 +292,7 @@ export function AIInsightsCard() {
           )}
 
           <CardContent className={cn("pt-0", activeGuidance && "p-0")}>
-            <div className="relative overflow-hidden">
+            <div className="relative max-h-[500px] overflow-y-auto">
               <AnimatePresence initial={false} mode="wait">
                 {!activeGuidance ? (
                   <motion.div
@@ -301,7 +301,6 @@ export function AIInsightsCard() {
                     animate={slideVariants.center}
                     exit={slideVariants.exitToLeft}
                     transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                    className="max-h-[500px] overflow-y-auto"
                   >
                     {!data ? (
                       <div className="text-center py-8">
