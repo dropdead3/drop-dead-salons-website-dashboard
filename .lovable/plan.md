@@ -1,27 +1,52 @@
 
-# Brand the AI Assistant as "Zura"
+
+# Add Zura Avatar to Replace Generic Icons
 
 ## Overview
-Rename all generic "AI Help Assistant" / "AI Assistant" references to "Zura" across the Help FAB and Team Chat AI panel, giving the assistant a consistent, branded identity.
+Create a dedicated Zura avatar component and use it across all AI panels to give Zura a consistent, branded visual identity -- replacing the generic Sparkles and Bot icons.
+
+## Design
+The Zura avatar will be a small circular badge with a "Z" letter mark in the primary brand color, styled consistently across all placements. This keeps things lightweight (no external image dependency) while giving Zura a distinct personality.
 
 ## Changes
 
-### 1. Help FAB Tab Label (`src/components/dashboard/HelpFAB.tsx`)
-- Change tab trigger text from "AI Help" to "Zura"
+### 1. Create `src/components/ui/ZuraAvatar.tsx`
+A reusable component that renders a circular avatar with a stylized "Z" letter:
+- Accepts `size` prop ("sm" | "md" | "lg") for different contexts
+- Uses primary brand color with a soft background glow
+- Clean, modern look with rounded-full styling
 
-### 2. Help FAB Empty State (`src/components/dashboard/help-fab/AIHelpTab.tsx`)
-- Change heading from "AI Help Assistant" to "Zura"
-- Update subtitle to introduce Zura by name, e.g., "I'm Zura, your AI assistant. Ask me anything about using the platform."
+### 2. Update `src/components/dashboard/help-fab/AIHelpTab.tsx`
+- Replace the `Sparkles` icon in the empty state with the new `ZuraAvatar` (medium size)
 
-### 3. Team Chat AI Panel Header (`src/components/team-chat/AIChatPanel.tsx`)
-- Change SheetTitle from "AI Assistant" to "Zura"
-- Update subtitle to something like "Your AI-powered salon assistant"
-- Change empty state heading from "How can I help?" to "Hi, I'm Zura!" with updated description
+### 3. Update `src/components/team-chat/AIChatPanel.tsx`
+- Replace the `Bot` icon in the sheet header with `ZuraAvatar` (small size)
+- Replace the `Sparkles` icon in the empty state with `ZuraAvatar` (medium size)
+
+### 4. Update `src/components/dashboard/AIInsightsCard.tsx`
+- Replace the "Powered by Zura AI" `Sparkles` icon with `ZuraAvatar` (small size)
+- Replace the "No insights yet" `Sparkles` icon with `ZuraAvatar` (medium size)
+
+### 5. Update `src/components/dashboard/AIInsightsDrawer.tsx`
+- Same replacements as the Card variant above
+
+## Technical Details
+
+The `ZuraAvatar` component structure:
+```tsx
+// Sizes: sm (h-6 w-6), md (h-10 w-10), lg (h-12 w-12)
+<div className="rounded-full bg-primary/10 flex items-center justify-center">
+  <span className="font-bold text-primary">Z</span>
+</div>
+```
+
+No new dependencies required. The FAB button icon (MessageCircleQuestion) stays as-is since it serves a different UX purpose (general help trigger, not Zura-specific).
+
+### Files Created
+- `src/components/ui/ZuraAvatar.tsx`
 
 ### Files Modified
-- `src/components/dashboard/HelpFAB.tsx`
 - `src/components/dashboard/help-fab/AIHelpTab.tsx`
 - `src/components/team-chat/AIChatPanel.tsx`
-
-### Technical Details
-All changes are string-only updates to JSX text content. No logic, imports, or structural changes required.
+- `src/components/dashboard/AIInsightsCard.tsx`
+- `src/components/dashboard/AIInsightsDrawer.tsx`
