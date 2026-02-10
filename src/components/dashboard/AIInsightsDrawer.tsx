@@ -5,11 +5,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { VisibilityGate } from '@/components/visibility';
 import { useAIInsights, type InsightItem, type ActionItem } from '@/hooks/useAIInsights';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { GuidanceButton } from './GuidanceDialog';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import ReactMarkdown from 'react-markdown';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import {
   Brain,
   RefreshCw,
@@ -25,8 +23,6 @@ import {
   Clock,
   X,
   ChevronDown,
-  Lightbulb,
-  Loader2,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -76,31 +72,6 @@ function blurFinancialValues(text: string) {
 function InsightCard({ insight }: { insight: InsightItem }) {
   const config = categoryConfig[insight.category];
   const Icon = config?.icon || Activity;
-  const [showGuidance, setShowGuidance] = useState(false);
-  const [guidance, setGuidance] = useState<string | null>(null);
-  const [isLoadingGuidance, setIsLoadingGuidance] = useState(false);
-
-  const fetchGuidance = async () => {
-    if (guidance) {
-      setShowGuidance(!showGuidance);
-      return;
-    }
-    setShowGuidance(true);
-    setIsLoadingGuidance(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('ai-insight-guidance', {
-        body: { type: 'insight', title: insight.title, description: insight.description, category: insight.category },
-      });
-      if (error) throw error;
-      setGuidance(data.guidance);
-    } catch (err) {
-      console.error('Failed to fetch guidance:', err);
-      toast.error('Failed to get guidance. Please try again.');
-      setShowGuidance(false);
-    } finally {
-      setIsLoadingGuidance(false);
-    }
-  };
 
   return (
     <div className={cn('border-l-2 rounded-lg p-3 transition-colors', severityStyles[insight.severity])}>
@@ -118,41 +89,12 @@ function InsightCard({ insight }: { insight: InsightItem }) {
           <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
             {blurFinancialValues(insight.description)}
           </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={fetchGuidance}
-            disabled={isLoadingGuidance}
-            className="h-6 px-2 mt-1.5 text-[11px] gap-1 text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300"
-          >
-            {isLoadingGuidance ? <Loader2 className="w-3 h-3 animate-spin" /> : <Lightbulb className="w-3 h-3" />}
-            {showGuidance && guidance ? 'Hide guidance' : 'How to improve'}
-          </Button>
-          <AnimatePresence>
-            {showGuidance && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="mt-2 p-2.5 rounded-md bg-background/60 border border-border/40">
-                  {isLoadingGuidance ? (
-                    <div className="space-y-1.5">
-                      <Skeleton className="w-full h-3 rounded" />
-                      <Skeleton className="w-4/5 h-3 rounded" />
-                      <Skeleton className="w-3/5 h-3 rounded" />
-                    </div>
-                  ) : (
-                    <div className="prose prose-xs dark:prose-invert max-w-none text-xs leading-relaxed">
-                      <ReactMarkdown>{guidance || ''}</ReactMarkdown>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <GuidanceButton
+            type="insight"
+            title={insight.title}
+            description={insight.description}
+            category={insight.category}
+          />
         </div>
       </div>
     </div>
@@ -160,32 +102,6 @@ function InsightCard({ insight }: { insight: InsightItem }) {
 }
 
 function ActionItemCard({ item, index }: { item: ActionItem; index: number }) {
-  const [showGuidance, setShowGuidance] = useState(false);
-  const [guidance, setGuidance] = useState<string | null>(null);
-  const [isLoadingGuidance, setIsLoadingGuidance] = useState(false);
-
-  const fetchGuidance = async () => {
-    if (guidance) {
-      setShowGuidance(!showGuidance);
-      return;
-    }
-    setShowGuidance(true);
-    setIsLoadingGuidance(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('ai-insight-guidance', {
-        body: { type: 'action', title: item.action, description: item.action, priority: item.priority },
-      });
-      if (error) throw error;
-      setGuidance(data.guidance);
-    } catch (err) {
-      console.error('Failed to fetch guidance:', err);
-      toast.error('Failed to get guidance. Please try again.');
-      setShowGuidance(false);
-    } finally {
-      setIsLoadingGuidance(false);
-    }
-  };
-
   return (
     <div className="py-1.5">
       <div className="flex items-start gap-2.5">
@@ -194,48 +110,17 @@ function ActionItemCard({ item, index }: { item: ActionItem; index: number }) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm leading-snug">{blurFinancialValues(item.action)}</p>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={fetchGuidance}
-            disabled={isLoadingGuidance}
-            className="h-6 px-2 mt-1 text-[11px] gap-1 text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300"
-          >
-            {isLoadingGuidance ? <Loader2 className="w-3 h-3 animate-spin" /> : <Lightbulb className="w-3 h-3" />}
-            {showGuidance && guidance ? 'Hide guidance' : 'What you should do'}
-          </Button>
-          <AnimatePresence>
-            {showGuidance && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="mt-2 p-2.5 rounded-md bg-background/60 border border-border/40">
-                  {isLoadingGuidance ? (
-                    <div className="space-y-1.5">
-                      <Skeleton className="w-full h-3 rounded" />
-                      <Skeleton className="w-4/5 h-3 rounded" />
-                      <Skeleton className="w-3/5 h-3 rounded" />
-                    </div>
-                  ) : (
-                    <div className="prose prose-xs dark:prose-invert max-w-none text-xs leading-relaxed">
-                      <ReactMarkdown>{guidance || ''}</ReactMarkdown>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <GuidanceButton
+            type="action"
+            title={item.action}
+            description={item.action}
+            priority={item.priority}
+          />
         </div>
-        <span
-          className={cn(
-            'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display flex-shrink-0',
-            priorityBadge[item.priority],
-          )}
-        >
+        <span className={cn(
+          'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display flex-shrink-0',
+          priorityBadge[item.priority],
+        )}>
           {item.priority}
         </span>
       </div>
