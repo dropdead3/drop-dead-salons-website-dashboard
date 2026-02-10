@@ -7,7 +7,7 @@ import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { DashboardLockProvider, useDashboardLock } from '@/contexts/DashboardLockContext';
-import { ZuraNavigationProvider } from '@/contexts/ZuraNavigationContext';
+import { ZuraNavigationProvider, useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
 import { ZuraStickyGuidance } from '@/components/dashboard/ZuraStickyGuidance';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -228,7 +228,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
     return false;
   });
   const [userSearch, setUserSearch] = useState('');
-  
+  const zuraCtx = useZuraNavigationSafe();
   // Persist sidebar collapsed state
   useEffect(() => {
     localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(sidebarCollapsed));
@@ -239,6 +239,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
   const { isImpersonating, isMultiOrgOwner } = useOrganizationContext();
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const location = useLocation();
+  const hasZuraGuidance = !!(zuraCtx?.savedState && location.pathname !== '/dashboard');
   const navigate = useNavigate();
   const { resolvedTheme } = useDashboardTheme();
   const { data: businessSettings } = useBusinessSettings();
@@ -1094,7 +1095,8 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       )}>
         <div className={cn(
           hideFooter ? "h-full" : "min-h-screen flex flex-col",
-          isAdmin && "lg:pt-0"
+          isAdmin && "lg:pt-0",
+          hasZuraGuidance && !hideFooter && "pb-64"
         )}>
           <div className={cn("flex-1", hideFooter && "h-full")}>
             {children}

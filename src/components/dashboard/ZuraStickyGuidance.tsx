@@ -5,14 +5,42 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { X, ArrowLeft, ChevronUp, ChevronDown, Sparkles, ExternalLink } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
+
+const SIDEBAR_COLLAPSED_KEY = 'dashboard-sidebar-collapsed';
 
 export function ZuraStickyGuidance() {
   const ctx = useZuraNavigationSafe();
   const navigate = useNavigate();
   const location = useLocation();
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
   const navigatingRef = useRef(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+    }
+    return false;
+  });
+
+  // Listen for sidebar collapse changes
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === SIDEBAR_COLLAPSED_KEY) {
+        setSidebarCollapsed(e.newValue === 'true');
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    // Also poll since same-tab localStorage changes don't fire storage events
+    const interval = setInterval(() => {
+      const val = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+      setSidebarCollapsed(prev => prev !== val ? val : prev);
+    }, 500);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      clearInterval(interval);
+    };
+  }, []);
 
   // Auto-dismiss when returning to dashboard (e.g. browser Back button)
   useEffect(() => {
@@ -43,7 +71,11 @@ export function ZuraStickyGuidance() {
           animate={{ y: 0 }}
           exit={{ y: '100%' }}
           transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-          className="fixed bottom-0 left-0 right-0 z-50"
+          className={cn(
+            "fixed bottom-0 right-0 z-50",
+            sidebarCollapsed ? 'lg:left-20' : 'lg:left-72',
+            'left-0'
+          )}
         >
           {/* Top gradient border */}
           <div className="h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
@@ -91,7 +123,7 @@ export function ZuraStickyGuidance() {
                   className="overflow-hidden"
                 >
                   <div className="border-t border-border/30">
-                    <ScrollArea className="max-h-[40vh]">
+                    <ScrollArea className="max-h-[35vh]">
                       <div className="px-4 lg:px-6 py-4">
                         <div className="max-w-none text-sm text-foreground/90">
                           <ReactMarkdown
