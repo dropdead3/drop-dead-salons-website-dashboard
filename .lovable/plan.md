@@ -1,88 +1,79 @@
 
 
-# Announcements: Expandable Card Instead of Drawer
+# Match AI Insights to Announcements Widget + Improve Layout
 
-Replace the Sheet-based announcements drawer with an inline expandable/collapsible card that lives in the dashboard flow. The button morphs into a full card with a smooth animation, and auto-expands when new announcements arrive.
+## Overview
 
-## How It Works
-
-1. **Collapsed state**: The same outline button sits next to AI Insights (unchanged appearance)
-2. **Expanded state**: The button smoothly transforms into a full-width dashboard card showing the announcements list -- matching the visual style of other dashboard cards (rounded-2xl, shadow, "lit from above" gradient accent)
-3. **Auto-expand**: When new unread announcements are detected, the card auto-expands and stays open until the user manually collapses it
-4. **Collapse**: Clicking an "X" or collapse button shrinks it back to the button
-
-## Animation
-
-Using `framer-motion` `AnimatePresence` + `layout` animation:
-- The button has `layoutId="announcements-widget"` 
-- The expanded card shares the same `layoutId`, so framer-motion automatically interpolates size, position, and border-radius
-- The card content fades in with a slight delay (`opacity` transition after the layout animation settles)
-- Collapse reverses the animation smoothly
+Transform the AI Insights from a Sheet-based side drawer into an inline expandable/collapsible card -- identical in behavior to the Announcements widget. Both buttons get a chevron indicator to signal expand/collapse capability. The expanded card layouts are refined for better readability.
 
 ## Changes
 
-### 1. `src/components/dashboard/AnnouncementsDrawer.tsx` -- Full Rewrite as `AnnouncementsWidget`
+### 1. `src/components/dashboard/AIInsightsDrawer.tsx` -- Rewrite to Expandable Card
 
-- Rename component to `AnnouncementsWidget` (update export name)
-- Remove all `Sheet` usage -- replace with inline `motion.div` card
-- **Collapsed state**: Render a `motion.div` with `layoutId="announcements-widget"` styled as the current outline button (gap-2 h-9, tinted megaphone icon, unread badge)
-- **Expanded state**: Render a `motion.div` with the same `layoutId` styled as a full dashboard card:
-  - `rounded-2xl shadow-lg border border-border/40 bg-card`
-  - Top gradient accent line (matching other primary cards)
-  - Header: luxury dot + "ANNOUNCEMENTS" label + location filter + leadership links + collapse (X) button
-  - Scrollable announcement list (reuse existing card markup)
-  - Footer: "View All Announcements" link
-- **Auto-expand logic**: Track the latest announcement ID in a ref. When the unread count increases or a new ID appears, set expanded to true automatically. Only auto-collapse is NOT done -- user must manually collapse.
-- **Mark as read**: Trigger when card expands (same logic as current drawer)
-- Content items fade in with `staggerChildren` after expansion
+**Remove**: All `Sheet`, `SheetContent`, `SheetHeader`, etc. imports and usage.
 
-### 2. `src/pages/dashboard/DashboardHome.tsx`
+**Add**: `framer-motion` `LayoutGroup`, `AnimatePresence`, and `motion` for the same morph animation pattern as Announcements.
 
-- Update import from `AnnouncementsDrawer` to `AnnouncementsWidget`
-- In the `ai_insights` section, replace `<AnnouncementsDrawer>` with `<AnnouncementsWidget>`
-- The widget will expand inline within the dashboard flow, pushing content below it down (natural document flow)
+**Collapsed state** (matching Announcements button exactly):
+- `motion.button` with `layoutId="ai-insights-widget"`
+- Same `h-9 px-4 rounded-md border` styling
+- Violet/fuchsia tinted icon container (already exists)
+- Add a `ChevronDown` icon (rotates to `ChevronUp` when expanded) as expand/collapse indicator
+- Sentiment indicator stays inline
 
-### 3. Visual Design (Expanded Card)
+**Expanded state**:
+- `motion.div` with same `layoutId="ai-insights-widget"`
+- Full dashboard card: `rounded-2xl shadow-lg border border-border/40 bg-card`
+- Top gradient accent line (same as Announcements)
+- Header: oat dot + "AI BUSINESS INSIGHTS" + refresh button + collapse (X) button
+- Sentiment summary row below header
+- `ScrollArea` with `max-h-[500px]` for insights list and action items
+- Footer: "Powered by AI" tagline
+- Content fades in with stagger (same pattern as Announcements)
 
-- Matches other dashboard cards: `rounded-2xl shadow-lg bg-card`
-- Top accent: `h-px bg-gradient-to-r from-transparent via-border/40 to-transparent`
-- Header row: oat dot + "ANNOUNCEMENTS" in `font-display text-xs tracking-[0.15em]` + location filter + X button
-- Max height with scroll: `max-h-[500px]` with `ScrollArea`
-- Announcement items: same styling as current drawer (priority left border, pin icon, link buttons)
+### 2. `src/components/dashboard/AnnouncementsDrawer.tsx` -- Add Expand/Collapse Indicator
 
-## Technical Details
+- Add a `ChevronDown` icon to the collapsed button (after the unread badge or at the end)
+- The chevron makes it visually obvious the button is expandable
+- Minor layout polish on the expanded card:
+  - Slightly more padding on announcement items
+  - Better spacing between header controls
 
-### Animation Implementation
+### 3. `src/pages/dashboard/DashboardHome.tsx` -- Layout Wrapper Update
 
-```text
-Collapsed:
-  motion.div layoutId="announcements-widget"
-    -> styled as Button (h-9, rounded-md, border, inline-flex)
-    -> contains icon + label + badge
+- Wrap the `ai_insights` section content in a container that allows both widgets to expand full-width
+- Change from horizontal `flex items-center gap-2` to a vertical stack when either widget is expanded:
+  - Collapsed: both buttons sit side-by-side in a row (`flex-wrap gap-2`)
+  - Expanded: each widget takes full width, stacking vertically
 
-Expanded:
-  motion.div layoutId="announcements-widget"  
-    -> styled as Card (rounded-2xl, shadow-lg, w-full, border)
-    -> AnimatePresence for inner content (fade + stagger)
-    -> contains header, list, footer
-```
+### 4. Expanded Card Layout Improvements (Both Widgets)
 
-framer-motion's `layoutId` handles the morph between these two shapes automatically -- interpolating width, height, border-radius, and position.
+- **Two-column grid on wider screens**: When expanded, the card content uses a responsive layout:
+  - On mobile: single column stack
+  - On `md+`: For AI Insights, insights list on the left, action items on the right
+  - For Announcements: remains single column (list items) but with better whitespace
+- **Better header alignment**: Header row uses `justify-between` with controls grouped tightly
+- **Subtle entrance**: Content area uses `initial={{ opacity: 0 }}` with a 150ms delay after the layout animation settles
 
-### Auto-Expand Logic
+## Visual Consistency
 
-- Store `lastSeenAnnouncementId` in a ref
-- Subscribe to realtime changes on the `announcements` table
-- When new announcement detected (new ID at top of list) AND card is collapsed, auto-expand
-- Do NOT auto-collapse -- user controls collapse manually
-- On collapse, update the ref so the same announcement doesn't re-trigger expansion
+Both widgets will share:
+- Identical collapsed button styles (`h-9 px-4 rounded-md border border-border`)
+- Identical expanded card shells (`rounded-2xl shadow-lg border-border/40 bg-card`)
+- Same top gradient accent line
+- Same header pattern (oat dot + uppercase label + action buttons + X)
+- Same `ScrollArea` max-height approach
+- Same stagger animation for content items
+- ChevronDown icon on collapsed state indicating expandability
 
-### Files Modified
-- `src/components/dashboard/AnnouncementsDrawer.tsx` -- rewritten as `AnnouncementsWidget`
-- `src/pages/dashboard/DashboardHome.tsx` -- update import and usage
+## Files Modified
+- `src/components/dashboard/AIInsightsDrawer.tsx` -- rewritten from Sheet to expandable card
+- `src/components/dashboard/AnnouncementsDrawer.tsx` -- add chevron indicator, minor layout polish
+- `src/pages/dashboard/DashboardHome.tsx` -- update wrapper layout for both widgets
 
-### No Breaking Changes
-- All data fetching, mark-as-read, location filtering, and leadership links remain
-- `useUnreadAnnouncementCount` hook unchanged
-- `AnnouncementsBento` component unchanged (still available elsewhere)
-- Dashboard layout ordering unaffected -- widget stays in the `ai_insights` section slot
+## No Breaking Changes
+- `useAIInsights` hook unchanged
+- `VisibilityGate` wrapping preserved
+- All AI Insights data fetching, refresh logic, cooldown timer preserved
+- Announcements data fetching, mark-as-read, realtime subscription preserved
+- Dashboard layout ordering system unaffected
