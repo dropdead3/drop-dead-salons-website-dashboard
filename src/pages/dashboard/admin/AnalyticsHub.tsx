@@ -31,6 +31,7 @@ import { ProgramTabContent } from '@/components/dashboard/analytics/ProgramTabCo
 import { RentRevenueTab } from '@/components/dashboard/analytics/RentRevenueTab';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { ReportsTabContent } from '@/components/dashboard/analytics/ReportsTabContent';
+import { AIInsightsDrawer } from '@/components/dashboard/AIInsightsDrawer';
 
 const baseCategories = [
   { id: 'sales', label: 'Sales', icon: DollarSign },
@@ -200,6 +201,11 @@ export default function AnalyticsHub() {
           <div>
             <h1 className="text-xl md:text-2xl font-display">ANALYTICS & REPORTS</h1>
             <p className="text-muted-foreground text-sm">Business intelligence and data exports</p>
+          </div>
+          
+          {/* AI Insights Drawer trigger */}
+          <div className="flex items-center gap-3 order-first md:order-none">
+            <AIInsightsDrawer />
           </div>
           
           {/* Filters - now on the right */}

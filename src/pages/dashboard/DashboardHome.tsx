@@ -45,7 +45,7 @@ import { AnalyticsFilterBar } from '@/components/dashboard/AnalyticsFilterBar';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import { HubQuickLinks } from '@/components/dashboard/HubQuickLinks';
-import { AIInsightsCard } from '@/components/dashboard/AIInsightsCard';
+import { AIInsightsDrawer } from '@/components/dashboard/AIInsightsDrawer';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -354,7 +354,7 @@ function DashboardSections({
   // Build section components map (excludes pinned cards - those are rendered separately)
   const sectionComponents = useMemo(() => ({
     ai_insights: isLeadership && (
-      <AIInsightsCard />
+      <AIInsightsDrawer />
     ),
     
     hub_quicklinks: isLeadership && (
