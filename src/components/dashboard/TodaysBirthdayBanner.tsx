@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PartyPopper, Cake, Eye, MessageCircle } from 'lucide-react';
+import { PartyPopper, Cake, Eye, Send } from 'lucide-react';
 import { useTodaysBirthdays } from '@/hooks/useBirthdays';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useViewAs } from '@/contexts/ViewAsContext';
@@ -85,7 +85,7 @@ export function TodaysBirthdayBanner() {
                 </span>
                 {!canDM && <Cake className="w-3.5 h-3.5 shrink-0 opacity-80" />}
                 {canDM && (
-                  <MessageCircle className="w-3.5 h-3.5 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity duration-200" />
+                  <Send className="w-3.5 h-3.5 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity duration-200" />
                 )}
               </motion.div>
             );
