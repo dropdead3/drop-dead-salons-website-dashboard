@@ -6,7 +6,7 @@ import { VisibilityGate } from '@/components/visibility';
 import { useAIInsights, type InsightItem, type ActionItem } from '@/hooks/useAIInsights';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain,
   RefreshCw,
@@ -137,16 +137,17 @@ export function AIInsightsDrawer() {
       elementName="AI Business Insights"
       elementCategory="Dashboard Home"
     >
-      <LayoutGroup>
-        <AnimatePresence mode="wait">
+      <AnimatePresence mode="wait">
           {!expanded ? (
             /* ── Collapsed: Inline button ── */
             <motion.button
               key="collapsed"
-              layoutId="ai-insights-widget"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
               onClick={() => setExpanded(true)}
               className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-display tracking-wide hover:bg-muted/50 transition-colors cursor-pointer"
-              style={{ borderRadius: 6 }}
             >
               <div className="w-5 h-5 rounded-md bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center">
                 <Brain className="w-3 h-3 text-violet-600 dark:text-violet-400" />
@@ -163,9 +164,11 @@ export function AIInsightsDrawer() {
             /* ── Expanded: Full card ── */
             <motion.div
               key="expanded"
-              layoutId="ai-insights-widget"
+              initial={{ opacity: 0, scale: 0.98, y: -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, y: -4 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
               className="w-full rounded-2xl shadow-lg border border-border/40 bg-card overflow-hidden"
-              style={{ borderRadius: 16 }}
             >
               {/* Top gradient accent */}
               <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
@@ -308,7 +311,6 @@ export function AIInsightsDrawer() {
             </motion.div>
           )}
         </AnimatePresence>
-      </LayoutGroup>
     </VisibilityGate>
   );
 }
