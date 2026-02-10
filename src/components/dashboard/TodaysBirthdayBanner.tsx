@@ -41,6 +41,22 @@ export function TodaysBirthdayBanner() {
         }}
       >
         <div className="relative bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white rounded-2xl p-4 ring-1 ring-white/20 overflow-hidden">
+          {/* Animated sheen sweep */}
+          <motion.div
+            className="absolute inset-0 pointer-events-none"
+            initial={{ x: '-100%' }}
+            animate={{ x: '200%' }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              repeatDelay: 4,
+              ease: 'easeInOut',
+            }}
+            style={{
+              width: '40%',
+              background: 'linear-gradient(105deg, transparent 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.15) 45%, rgba(255,255,255,0.25) 50%, rgba(255,255,255,0.15) 55%, rgba(255,255,255,0) 70%, transparent 100%)',
+            }}
+          />
           {/* Top highlight line */}
           <div
             className="absolute inset-x-0 top-0 h-px pointer-events-none"
