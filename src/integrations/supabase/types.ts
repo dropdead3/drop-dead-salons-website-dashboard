@@ -6496,6 +6496,10 @@ export type Database = {
           email_notifications_enabled: boolean
           high_five_enabled: boolean
           id: string
+          insights_email_enabled: boolean
+          insights_email_frequency: string
+          insights_email_last_sent: string | null
+          insights_email_next_at: string | null
           meeting_reminder_enabled: boolean
           mention_enabled: boolean | null
           program_reminder_enabled: boolean
@@ -6514,6 +6518,10 @@ export type Database = {
           email_notifications_enabled?: boolean
           high_five_enabled?: boolean
           id?: string
+          insights_email_enabled?: boolean
+          insights_email_frequency?: string
+          insights_email_last_sent?: string | null
+          insights_email_next_at?: string | null
           meeting_reminder_enabled?: boolean
           mention_enabled?: boolean | null
           program_reminder_enabled?: boolean
@@ -6532,6 +6540,10 @@ export type Database = {
           email_notifications_enabled?: boolean
           high_five_enabled?: boolean
           id?: string
+          insights_email_enabled?: boolean
+          insights_email_frequency?: string
+          insights_email_last_sent?: string | null
+          insights_email_next_at?: string | null
           meeting_reminder_enabled?: boolean
           mention_enabled?: boolean | null
           program_reminder_enabled?: boolean

@@ -176,3 +176,9 @@ verify_jwt = false
 
 [functions.ai-personal-insights]
 verify_jwt = false
+
+[functions.send-insights-email]
+verify_jwt = false
+
+[functions.unsubscribe-insights-email]
+verify_jwt = false

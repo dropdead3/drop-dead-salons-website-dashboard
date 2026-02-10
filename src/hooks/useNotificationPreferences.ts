@@ -12,6 +12,10 @@ export interface NotificationPreferences {
   meeting_reminder_enabled: boolean;
   task_reminder_enabled: boolean;
   email_notifications_enabled: boolean;
+  insights_email_enabled: boolean;
+  insights_email_frequency: string;
+  insights_email_last_sent: string | null;
+  insights_email_next_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -23,6 +27,10 @@ const defaultPreferences: Omit<NotificationPreferences, 'id' | 'user_id' | 'crea
   meeting_reminder_enabled: true,
   task_reminder_enabled: true,
   email_notifications_enabled: false,
+  insights_email_enabled: false,
+  insights_email_frequency: 'weekly',
+  insights_email_last_sent: null,
+  insights_email_next_at: null,
 };
 
 export function useNotificationPreferences() {
