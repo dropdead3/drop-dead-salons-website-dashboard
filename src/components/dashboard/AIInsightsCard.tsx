@@ -31,6 +31,7 @@ import {
   Clock,
   ChevronRight,
   ArrowRight,
+  Lightbulb,
   Zap,
   X,
 } from 'lucide-react';
@@ -105,13 +106,14 @@ function blurFinancialValues(text: string) {
   });
 }
 
-function GuidanceTrigger({ label, onClick }: { label: string; onClick: () => void }) {
+function GuidanceTrigger({ label, onClick, icon: IconOverride }: { label: string; onClick: () => void; icon?: React.ComponentType<{ className?: string }> }) {
+  const Icon = IconOverride || ArrowRight;
   return (
     <button
       onClick={onClick}
       className="group inline-flex items-center gap-1 h-6 px-2 mt-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors duration-200"
     >
-      <ArrowRight className="w-3 h-3" />
+      <Icon className="w-3 h-3" />
       {label}
       <ChevronRight className="w-3 h-3 relative top-px opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
     </button>
@@ -146,10 +148,11 @@ function InsightCard({ insight, onRequestGuidance }: { insight: InsightItem; onR
           <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
             {blurFinancialValues(insight.description)}
           </p>
-          <GuidanceTrigger
-            label="How to improve"
-            onClick={() => onRequestGuidance({ type: 'insight', title: insight.title, description: insight.description, category: insight.category })}
-          />
+           <GuidanceTrigger
+              label="How to improve"
+              icon={Lightbulb}
+              onClick={() => onRequestGuidance({ type: 'insight', title: insight.title, description: insight.description, category: insight.category })}
+            />
         </div>
       </div>
     </div>
