@@ -6,10 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Bell, Hand, Megaphone, Cake, Calendar, CheckSquare, Mail, Loader2, Save, Smartphone, BellRing, Send, AlertTriangle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Bell, Hand, Megaphone, Cake, Calendar, CheckSquare, Mail, Loader2, Save, Smartphone, BellRing, Send, AlertTriangle, Sparkles } from 'lucide-react';
 import { useNotificationPreferences, useUpdateNotificationPreferences } from '@/hooks/useNotificationPreferences';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
+import { toast } from 'sonner';
 
 interface PreferenceItem {
   key: string;
@@ -52,8 +56,10 @@ const inAppPreferences: PreferenceItem[] = [
 ];
 
 export default function NotificationPreferences() {
+  const { user } = useAuth();
   const { data: preferences, isLoading } = useNotificationPreferences();
   const updatePreferences = useUpdateNotificationPreferences();
+  const [isSendingTest, setIsSendingTest] = useState(false);
   const {
     isSupported: isPushSupported,
     permission: pushPermission,
@@ -65,24 +71,57 @@ export default function NotificationPreferences() {
     sendTestNotification,
   } = usePushNotifications();
   
-  const [localPrefs, setLocalPrefs] = useState<Record<string, boolean>>({});
+  const [localPrefs, setLocalPrefs] = useState<Record<string, any>>({});
   const [hasChanges, setHasChanges] = useState(false);
 
   // Initialize local state from fetched preferences
   useEffect(() => {
     if (preferences) {
-      const prefs: Record<string, boolean> = {};
+      const prefs: Record<string, any> = {};
       inAppPreferences.forEach(pref => {
         prefs[pref.key] = (preferences as any)[pref.key] ?? true;
       });
       prefs['email_notifications_enabled'] = (preferences as any).email_notifications_enabled ?? false;
+      prefs['insights_email_enabled'] = (preferences as any).insights_email_enabled ?? false;
+      prefs['insights_email_frequency'] = (preferences as any).insights_email_frequency ?? 'weekly';
       setLocalPrefs(prefs);
     }
   }, [preferences]);
 
-  const handleToggle = (key: string, value: boolean) => {
+  const handleToggle = (key: string, value: any) => {
     setLocalPrefs(prev => ({ ...prev, [key]: value }));
     setHasChanges(true);
+  };
+
+  const handleSendTestInsightsEmail = async () => {
+    if (!user?.id) return;
+    setIsSendingTest(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
+      if (!token) throw new Error('Not authenticated');
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-insights-email`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ userId: user.id }),
+        }
+      );
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Failed to send test email');
+      }
+      toast.success('Test insights email sent! Check your inbox.');
+    } catch (err) {
+      console.error('Failed to send test insights email:', err);
+      toast.error(err instanceof Error ? err.message : 'Failed to send test email');
+    } finally {
+      setIsSendingTest(false);
+    }
   };
 
   const handleSave = async () => {
@@ -92,11 +131,13 @@ export default function NotificationPreferences() {
 
   const handleDiscard = () => {
     if (preferences) {
-      const prefs: Record<string, boolean> = {};
+      const prefs: Record<string, any> = {};
       inAppPreferences.forEach(pref => {
         prefs[pref.key] = (preferences as any)[pref.key] ?? true;
       });
       prefs['email_notifications_enabled'] = (preferences as any).email_notifications_enabled ?? false;
+      prefs['insights_email_enabled'] = (preferences as any).insights_email_enabled ?? false;
+      prefs['insights_email_frequency'] = (preferences as any).insights_email_frequency ?? 'weekly';
       setLocalPrefs(prefs);
     }
     setHasChanges(false);
@@ -280,6 +321,87 @@ export default function NotificationPreferences() {
                 onCheckedChange={(checked) => handleToggle('email_notifications_enabled', checked)}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Zura Insights Email */}
+        <Card className="border-primary/20">
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Sparkles className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-display tracking-wide">Zura Insights Email</CardTitle>
+                <CardDescription>Receive your personalized AI insights as a beautiful email report</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <Label htmlFor="insights_email" className="text-sm font-medium cursor-pointer">
+                  Enable Insights Email
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Get a curated digest of your Zura insights delivered to your inbox
+                </p>
+              </div>
+              <Switch
+                id="insights_email"
+                checked={localPrefs['insights_email_enabled'] ?? false}
+                onCheckedChange={(checked) => handleToggle('insights_email_enabled', checked)}
+              />
+            </div>
+
+            {localPrefs['insights_email_enabled'] && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <div>
+                    <Label className="text-sm font-medium">Delivery Frequency</Label>
+                    <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+                      How often would you like to receive your insights?
+                    </p>
+                    <Select
+                      value={localPrefs['insights_email_frequency'] || 'weekly'}
+                      onValueChange={(value) => handleToggle('insights_email_frequency', value)}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="daily">📅 Daily Digest</SelectItem>
+                        <SelectItem value="weekly">📊 Weekly Summary</SelectItem>
+                        <SelectItem value="monday">☕ Monday Briefing</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {(preferences as any)?.insights_email_next_at && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-3">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>Next delivery: {new Date((preferences as any).insights_email_next_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span>
+                    </div>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full"
+                    onClick={handleSendTestInsightsEmail}
+                    disabled={isSendingTest}
+                  >
+                    {isSendingTest ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Send className="w-4 h-4 mr-2" />
+                    )}
+                    Send Test Email
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
