@@ -186,7 +186,7 @@ export default function DashboardHome() {
   return (
     <DashboardLayout>
       <motion.div 
-        className="p-6 lg:p-8 space-y-10"
+        className="p-6 lg:p-8 space-y-10 overflow-x-hidden"
         initial="hidden"
         animate="visible"
         variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } }}
