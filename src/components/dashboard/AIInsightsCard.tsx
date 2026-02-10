@@ -118,28 +118,34 @@ function GuidanceTrigger({ label, onClick }: { label: string; onClick: () => voi
   );
 }
 
+function SectionHeader({ icon: Icon, label, iconColor }: { icon: typeof TrendingUp; label: string; iconColor?: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-3">
+      <Icon className={cn("w-3.5 h-3.5", iconColor || "text-muted-foreground")} />
+      <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">{label}</span>
+      <div className="flex-1 h-px bg-border/40" />
+    </div>
+  );
+}
+
 function InsightCard({ insight, onRequestGuidance }: { insight: InsightItem; onRequestGuidance: (req: GuidanceRequest) => void }) {
   const config = categoryConfig[insight.category];
   const Icon = config?.icon || Activity;
 
   return (
-    <div className={cn('border-l-2 rounded-lg p-3 transition-colors', severityStyles[insight.severity])}>
-      <div className="flex items-center gap-2.5">
-        <div className={cn('flex-shrink-0', severityIconColor[insight.severity])}>
+    <div className={cn('border-l-2 rounded-lg p-3.5 transition-colors', severityStyles[insight.severity])}>
+      <div className="flex items-start gap-3">
+        <div className={cn('flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-background/50 mt-0.5', severityIconColor[insight.severity])}>
           <Icon className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">
-              {config?.label || insight.category}
-            </span>
-          </div>
+          <span className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/70 font-display block mb-1">
+            {config?.label || insight.category}
+          </span>
           <p className="text-sm font-medium leading-snug">{insight.title}</p>
-          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
             {blurFinancialValues(insight.description)}
           </p>
-        </div>
-        <div className="flex-shrink-0">
           <GuidanceTrigger
             label="How to improve"
             onClick={() => onRequestGuidance({ type: 'insight', title: insight.title, description: insight.description, category: insight.category })}
@@ -152,10 +158,10 @@ function InsightCard({ insight, onRequestGuidance }: { insight: InsightItem; onR
 
 function ActionItemCard({ item, index, onRequestGuidance }: { item: ActionItem; index: number; onRequestGuidance: (req: GuidanceRequest) => void }) {
   return (
-    <div className="py-1.5">
-      <div className="flex items-start gap-2.5">
-        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-foreground/5 flex items-center justify-center mt-0.5">
-          <span className="text-[10px] font-display">{index + 1}</span>
+    <div className="py-2 px-3 rounded-lg hover:bg-muted/30 transition-colors">
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-foreground/5 border border-border/50 flex items-center justify-center mt-0.5">
+          <span className="text-[10px] font-display font-medium">{index + 1}</span>
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm leading-snug">{blurFinancialValues(item.action)}</p>
@@ -165,7 +171,7 @@ function ActionItemCard({ item, index, onRequestGuidance }: { item: ActionItem; 
           />
         </div>
         <span className={cn(
-          'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display flex-shrink-0',
+          'text-[10px] uppercase tracking-wider px-2 py-1 rounded-md font-display flex-shrink-0 mt-0.5',
           priorityBadge[item.priority],
         )}>
           {item.priority}
@@ -318,21 +324,21 @@ export function AIInsightsCard() {
                         </Button>
                       </div>
                     ) : (
-                      <div className="space-y-5">
+                      <div className="space-y-6">
                         {data.insights.length > 0 && (
-                          <div className="space-y-2">
-                            {data.insights.map((insight, i) => (
-                              <InsightCard key={i} insight={insight} onRequestGuidance={handleRequestGuidance} />
-                            ))}
+                          <div>
+                            <SectionHeader icon={Brain} label="Key Insights" iconColor="text-violet-500" />
+                            <div className="space-y-2.5">
+                              {data.insights.map((insight, i) => (
+                                <InsightCard key={i} insight={insight} onRequestGuidance={handleRequestGuidance} />
+                              ))}
+                            </div>
                           </div>
                         )}
                         {data.actionItems.length > 0 && (
                           <div>
-                            <div className="flex items-center gap-1.5 mb-2">
-                              <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
-                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">ACTION ITEMS</span>
-                            </div>
-                            <div className="space-y-0.5">
+                            <SectionHeader icon={CheckCircle2} label="Action Items" />
+                            <div className="space-y-1 rounded-lg border border-border/30 bg-muted/10 p-1">
                               {data.actionItems.map((item, i) => (
                                 <ActionItemCard key={i} item={item} index={i} onRequestGuidance={handleRequestGuidance} />
                               ))}
@@ -346,11 +352,8 @@ export function AIInsightsCard() {
                           if (visibleSuggestions.length === 0) return null;
                           return (
                             <div>
-                              <div className="flex items-center gap-1.5 mb-2">
-                                <Zap className="w-3.5 h-3.5 text-amber-500" />
-                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">SUGGESTED FOR YOU</span>
-                              </div>
-                              <div className="space-y-2">
+                              <SectionHeader icon={Zap} label="Suggested For You" iconColor="text-amber-500" />
+                              <div className="space-y-2.5">
                                 <AnimatePresence>
                                   {visibleSuggestions.map((suggestion) => (
                                     <motion.div
