@@ -339,9 +339,12 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           </Link>
         </div>
         {!isCollapsed && (
-          <p className="text-xs text-muted-foreground mt-2 font-sans">
-            Staff Dashboard
-          </p>
+          <>
+            <p className="text-xs text-muted-foreground mt-2 font-sans">
+              Staff Dashboard
+            </p>
+            <div className="w-8 h-[1px] bg-oat/40 mt-3" />
+          </>
         )}
       </div>
 
@@ -413,7 +416,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               </Link>
             )}
             <div className={cn("my-3", isCollapsed ? "px-2" : "px-4")}>
-              <div className="h-px bg-border" />
+              <div className="h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
             </div>
           </div>
         )}

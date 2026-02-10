@@ -778,7 +778,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       {/* Desktop Sidebar */}
       <aside 
         className={cn(
-          "hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:border-r lg:border-border lg:bg-card transition-[width] duration-200 ease-in-out",
+          "hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:border-r lg:border-border lg:bg-card/90 lg:backdrop-blur-xl transition-[width] duration-200 ease-in-out",
           sidebarCollapsed ? "lg:w-16" : "lg:w-72"
         )}
       >
@@ -993,7 +993,8 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
         "hidden lg:block sticky top-0 z-30",
         hideFooter && "shrink-0"
       )}>
-        <div className="flex items-center justify-between h-14 px-6 bg-card/80 backdrop-blur-sm shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+        <div className="relative flex items-center justify-between h-14 px-6 bg-card/70 backdrop-blur-xl">
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/30 to-transparent" />
           {/* Left side - Sidebar toggle */}
           <div className="flex items-center">
             <Tooltip>
@@ -1049,7 +1050,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           {isPlatformUser && <OrganizationSwitcher compact />}
           {/* Hide Numbers Toggle */}
           <HideNumbersToggle />
-          <Badge variant="outline" className={cn("text-xs font-medium gap-1.5", getAccessBadgeColor())}>
+          <Badge variant="outline" className={cn("text-xs font-medium gap-1.5 px-3 rounded-lg", getAccessBadgeColor())}>
             <AccessIcon className="w-3 h-3" />
             {getAccessLabel()}
           </Badge>
@@ -1098,8 +1099,9 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           </div>
           {/* Dashboard Footer - hidden for full-screen pages */}
           {!hideFooter && (
-            <footer className="py-6 text-center border-t border-border mt-auto">
-              <p className="text-xs text-muted-foreground">
+            <footer className="py-8 text-center mt-auto">
+              <div className="mx-auto w-48 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent mb-6" />
+              <p className="font-display text-[10px] tracking-[0.2em] uppercase text-muted-foreground">
                 © {new Date().getFullYear()} Drop Dead · Powered by Drop Dead Salon Software
               </p>
             </footer>
