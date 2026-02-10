@@ -55,15 +55,15 @@ export function TodaysBirthdayBanner() {
                 role={canDM ? "button" : undefined}
                 tabIndex={canDM ? 0 : undefined}
                 onClick={canDM ? () => handleSendDM(person.user_id) : undefined}
-                whileHover={canDM ? { scale: 1.05 } : undefined}
-                whileTap={canDM ? { scale: 0.95 } : undefined}
+                whileHover={canDM ? { scale: 1.04 } : undefined}
+                whileTap={canDM ? { scale: 0.96 } : undefined}
                 transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                 className={cn(
-                  "flex items-center gap-2 backdrop-blur-sm rounded-full pl-1 pr-2 py-1 group relative",
+                  "flex items-center gap-1.5 backdrop-blur-sm rounded-full pl-0.5 pr-2.5 py-0.5 group",
                   isViewingAsUser && person.isCurrentUser 
                     ? "bg-background/40 ring-2 ring-background shadow-lg" 
                     : "bg-background/20",
-                  canDM && "cursor-pointer hover:bg-background/35 hover:shadow-md hover:ring-1 hover:ring-white/30 transition-all duration-200"
+                  canDM && "cursor-pointer hover:bg-background/30 transition-all duration-200"
                 )}
               >
                 <Avatar className={cn(
@@ -77,24 +77,15 @@ export function TodaysBirthdayBanner() {
                     {(person.display_name || person.full_name)?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium flex items-center gap-1 whitespace-nowrap">
+                <span className="text-sm font-medium whitespace-nowrap flex items-center gap-1">
                   {person.display_name || person.full_name}
                   {isViewingAsUser && person.isCurrentUser && (
                     <Eye className="w-3 h-3" />
                   )}
                 </span>
-                {index === 0 && !canDM && <Cake className="w-4 h-4 shrink-0" />}
+                {!canDM && <Cake className="w-3.5 h-3.5 shrink-0 opacity-80" />}
                 {canDM && (
-                  <motion.div 
-                    className="flex items-center overflow-hidden rounded-full bg-white/15 group-hover:bg-white/25 transition-all duration-200 ml-0.5"
-                  >
-                    <div className="flex items-center gap-1 px-1.5 py-0.5">
-                      <MessageCircle className="w-3.5 h-3.5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
-                      <span className="text-xs font-semibold max-w-0 opacity-0 group-hover:max-w-[3rem] group-hover:opacity-100 transition-all duration-300 ease-out whitespace-nowrap overflow-hidden">
-                        DM
-                      </span>
-                    </div>
-                  </motion.div>
+                  <MessageCircle className="w-3.5 h-3.5 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity duration-200" />
                 )}
               </motion.div>
             );
