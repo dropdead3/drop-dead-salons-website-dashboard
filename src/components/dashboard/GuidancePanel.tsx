@@ -3,10 +3,10 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import ReactMarkdown from 'react-markdown';
-import { ArrowLeft, Lightbulb, Sparkles } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Lightbulb, Sparkles } from 'lucide-react';
 import { SuggestedTasksSection } from './SuggestedTasksSection';
 import type { SuggestedTask } from '@/hooks/useAIInsights';
-import { useNavigate } from 'react-router-dom';
+import { useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
 
 interface GuidancePanelProps {
   title: string;
@@ -19,7 +19,7 @@ interface GuidancePanelProps {
 }
 
 export function GuidancePanel({ title, type, guidance, isLoading, onBack, suggestedTasks, onAddTask }: GuidancePanelProps) {
-  const navigate = useNavigate();
+  const zuraNav = useZuraNavigationSafe();
 
   return (
     <div className="flex flex-col h-full">
@@ -70,16 +70,25 @@ export function GuidancePanel({ title, type, guidance, isLoading, onBack, sugges
                     a: ({ href, children }) => {
                       const isInternal = href?.startsWith('/dashboard');
                       if (isInternal && href) {
+                        // If we have the Zura nav context, save state before navigating
+                        const handleClick = (e: React.MouseEvent) => {
+                          e.preventDefault();
+                          if (zuraNav && guidance) {
+                            zuraNav.saveAndNavigate(href, {
+                              guidance: { type, title, description: title },
+                              guidanceText: guidance,
+                              suggestedTasks,
+                            });
+                          }
+                        };
                         return (
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              navigate(href);
-                            }}
-                            className="text-primary underline decoration-primary/40 hover:decoration-primary underline-offset-2 transition-colors font-medium"
+                            onClick={handleClick}
+                            className="inline-flex items-center gap-1 text-primary underline decoration-primary/40 hover:decoration-primary underline-offset-2 transition-colors font-medium"
                           >
                             {children}
+                            <ExternalLink className="w-3 h-3 inline-block opacity-50" />
                           </button>
                         );
                       }
