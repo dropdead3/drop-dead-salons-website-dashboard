@@ -83,7 +83,10 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
           <div className="flex items-center gap-3">
             <CollapsibleTrigger asChild>
               <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <h2 className="font-display text-sm tracking-wide">ANNOUNCEMENTS</h2>
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-oat" />
+                  <h2 className="font-display text-xs tracking-[0.15em]">ANNOUNCEMENTS</h2>
+                </div>
                 <ChevronDown 
                   className={cn(
                     "w-4 h-4 text-muted-foreground transition-transform duration-300 ease-out",
@@ -144,7 +147,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
                 <div 
                   key={announcement.id}
                   className={cn(
-                    "group relative p-4 bg-muted/50 dark:bg-card border-l-4 rounded-r-lg transition-all hover:bg-muted/70 dark:hover:bg-card/80",
+                    "group relative p-4 bg-muted/50 dark:bg-card border-l-4 rounded-r-lg transition-all hover:bg-muted/70 dark:hover:bg-card/80 hover:translate-x-0.5",
                     priorityColors[announcement.priority]
                   )}
                 >
@@ -167,7 +170,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
                   </p>
                   
                   <div className="flex items-center justify-between mt-auto">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground/60">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground/60 tracking-wide">
                       <span>{format(new Date(announcement.created_at), 'MMM d')}</span>
                       <span>·</span>
                       <span className="flex items-center gap-1">
