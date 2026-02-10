@@ -48,8 +48,20 @@ export function GuidancePanel({ title, type, guidance, isLoading, onBack }: Guid
               ))}
             </div>
           ) : (
-            <div className="prose prose-sm dark:prose-invert max-w-none leading-relaxed">
-              <ReactMarkdown>{guidance || ''}</ReactMarkdown>
+            <div className="max-w-none text-sm text-foreground/90">
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="mb-4 leading-relaxed">{children}</p>,
+                  strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                  h3: ({ children }) => <h3 className="mt-5 mb-2 text-sm font-medium text-foreground">{children}</h3>,
+                  h4: ({ children }) => <h4 className="mt-4 mb-1.5 text-sm font-medium text-foreground">{children}</h4>,
+                  ul: ({ children }) => <ul className="mb-4 pl-5 space-y-1.5 list-disc marker:text-muted-foreground/50">{children}</ul>,
+                  ol: ({ children }) => <ol className="mb-4 pl-5 space-y-1.5 list-decimal marker:text-muted-foreground/50">{children}</ol>,
+                  li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+                }}
+              >
+                {guidance || ''}
+              </ReactMarkdown>
             </div>
           )}
         </div>
