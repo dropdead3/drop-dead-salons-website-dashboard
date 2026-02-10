@@ -4734,6 +4734,92 @@ export type Database = {
           },
         ]
       }
+      growth_forecasts: {
+        Row: {
+          accuracy_pct: number | null
+          actuals_revenue: number | null
+          confidence_lower: number | null
+          confidence_upper: number | null
+          created_at: string
+          expires_at: string
+          forecast_type: string
+          generated_at: string
+          growth_rate_qoq: number | null
+          growth_rate_yoy: number | null
+          id: string
+          insights: Json | null
+          location_id: string | null
+          momentum: string | null
+          organization_id: string
+          period_end: string
+          period_label: string
+          period_start: string
+          projected_product_revenue: number | null
+          projected_revenue: number
+          projected_service_revenue: number | null
+          scenario: string
+          seasonality_index: number | null
+        }
+        Insert: {
+          accuracy_pct?: number | null
+          actuals_revenue?: number | null
+          confidence_lower?: number | null
+          confidence_upper?: number | null
+          created_at?: string
+          expires_at?: string
+          forecast_type?: string
+          generated_at?: string
+          growth_rate_qoq?: number | null
+          growth_rate_yoy?: number | null
+          id?: string
+          insights?: Json | null
+          location_id?: string | null
+          momentum?: string | null
+          organization_id: string
+          period_end: string
+          period_label: string
+          period_start: string
+          projected_product_revenue?: number | null
+          projected_revenue?: number
+          projected_service_revenue?: number | null
+          scenario?: string
+          seasonality_index?: number | null
+        }
+        Update: {
+          accuracy_pct?: number | null
+          actuals_revenue?: number | null
+          confidence_lower?: number | null
+          confidence_upper?: number | null
+          created_at?: string
+          expires_at?: string
+          forecast_type?: string
+          generated_at?: string
+          growth_rate_qoq?: number | null
+          growth_rate_yoy?: number | null
+          id?: string
+          insights?: Json | null
+          location_id?: string | null
+          momentum?: string | null
+          organization_id?: string
+          period_end?: string
+          period_label?: string
+          period_start?: string
+          projected_product_revenue?: number | null
+          projected_revenue?: number
+          projected_service_revenue?: number | null
+          scenario?: string
+          seasonality_index?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "growth_forecasts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       handbook_acknowledgments: {
         Row: {
           acknowledged_at: string
