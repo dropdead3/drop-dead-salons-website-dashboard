@@ -5,6 +5,29 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const ROUTE_MAP = `
+INTERNAL ROUTE REFERENCE (use these for markdown links):
+- Sales Analytics: /dashboard/admin/analytics?tab=sales
+- Operations Analytics: /dashboard/admin/analytics?tab=operations
+- Marketing Analytics: /dashboard/admin/analytics?tab=marketing
+- Reports: /dashboard/admin/analytics?tab=reports
+- Leaderboard: /dashboard/admin/leaderboard
+- Payroll Hub: /dashboard/admin/payroll
+- Client Directory: /dashboard/admin/clients
+- Team Overview: /dashboard/admin/team
+- Schedule: /dashboard/schedule
+- Inventory: /dashboard/admin/inventory
+- Management Hub: /dashboard/admin/management
+- Settings: /dashboard/admin/settings
+- Phorest Connection: /dashboard/admin/settings/phorest
+- Integrations: /dashboard/admin/settings/integrations
+- Day Rates: /dashboard/admin/settings/day-rates
+- My Stats: /dashboard/my-stats
+- My Pay: /dashboard/my-pay
+- Command Center: /dashboard
+- Renter Hub: /dashboard/admin/renters
+`;
+
 const SYSTEM_PROMPT = `You are an expert salon business consultant. Given a specific business insight or action item from an AI analytics dashboard, provide practical, step-by-step guidance on how to address it.
 
 Guidelines:
@@ -13,7 +36,11 @@ Guidelines:
 - Reference salon-specific strategies (rebooking rates, retail attachment, stylist utilization, etc.)
 - If it involves numbers/metrics, suggest specific targets or benchmarks
 - Use a warm, encouraging but professional tone
-- Format with markdown (bold key actions, use bullet points for steps)`;
+- Format with markdown (bold key actions, use bullet points for steps)
+- IMPORTANT: When referencing platform features, pages, or reports, embed markdown hyperlinks using the route reference below so users can navigate directly. For example: "Head to your [Sales Analytics](/dashboard/admin/analytics?tab=sales) to review daily trends" or "Check your [Leaderboard](/dashboard/admin/leaderboard) for team rankings."
+- Only link to routes that are contextually relevant — don't force links where they don't fit naturally.
+
+${ROUTE_MAP}`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
