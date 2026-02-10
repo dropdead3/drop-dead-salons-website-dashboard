@@ -73,7 +73,7 @@ export function TodaysBirthdayBanner() {
                   whileTap={canDM ? { scale: 0.96 } : undefined}
                   transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                   className={cn(
-                    "flex items-center gap-1.5 backdrop-blur-sm rounded-full pl-0.5 pr-2.5 py-0.5 group",
+                    "flex items-center gap-1.5 backdrop-blur-sm rounded-full pl-0.5 pr-2.5 py-0.5 group ring-1 ring-white/20",
                     isViewingAsUser && person.isCurrentUser 
                       ? "bg-background/40 ring-2 ring-background shadow-lg" 
                       : "bg-background/20",
