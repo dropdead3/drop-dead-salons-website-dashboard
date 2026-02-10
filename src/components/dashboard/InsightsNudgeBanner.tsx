@@ -11,7 +11,7 @@ interface InsightsNudgeBannerProps {
   isLeadership?: boolean;
 }
 
-const FOURTEEN_DAYS_MS = 0; // Preview mode — revert to: 14 * 24 * 60 * 60 * 1000
+const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 
 export function InsightsNudgeBanner({ userId, isLeadership }: InsightsNudgeBannerProps) {
   const [dismissed, setDismissed] = useState(false);
