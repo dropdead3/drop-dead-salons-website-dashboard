@@ -52,7 +52,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2">
         <Trophy className="w-5 h-5 text-chart-4" />
-        <CardTitle className="font-display text-base">Top Performers</CardTitle>
+        <CardTitle className="font-display text-sm">Top Performers</CardTitle>
         <CommandCenterVisibilityToggle 
           elementKey="top_performers" 
           elementName="Top Performers" 
@@ -69,9 +69,9 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader className="pb-2">{headerContent}</CardHeader>
-        <CardContent>
+      <Card className="overflow-hidden">
+        <CardHeader className="p-4 pb-2">{headerContent}</CardHeader>
+        <CardContent className="p-4 pt-0">
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-muted/30 dark:bg-card animate-pulse">
@@ -90,9 +90,9 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
 
   if (!performers.length) {
     return (
-      <Card>
-        <CardHeader className="pb-2">{headerContent}</CardHeader>
-        <CardContent>
+      <Card className="overflow-hidden">
+        <CardHeader className="p-4 pb-2">{headerContent}</CardHeader>
+        <CardContent className="p-4 pt-0">
           <div className="text-center py-4 text-muted-foreground text-sm">
             No sales data available
           </div>
@@ -104,9 +104,9 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   const topThree = performers.slice(0, 3);
 
   return (
-    <Card>
-      <CardHeader className="pb-2">{headerContent}</CardHeader>
-      <CardContent>
+    <Card className="overflow-hidden">
+      <CardHeader className="p-4 pb-2">{headerContent}</CardHeader>
+      <CardContent className="p-4 pt-0">
         <div className="space-y-2">
           {topThree.map((performer, idx) => {
             const rank = idx + 1;

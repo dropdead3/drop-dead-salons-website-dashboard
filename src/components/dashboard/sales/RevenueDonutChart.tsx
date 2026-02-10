@@ -38,7 +38,7 @@ export function RevenueDonutChart({
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2">
         <PieChartIcon className="w-5 h-5 text-chart-2" />
-        <CardTitle className="font-display text-base">Revenue Breakdown</CardTitle>
+        <CardTitle className="font-display text-sm">Revenue Breakdown</CardTitle>
         <CommandCenterVisibilityToggle 
           elementKey="revenue_breakdown" 
           elementName="Revenue Breakdown" 
@@ -55,9 +55,9 @@ export function RevenueDonutChart({
 
   if (!data.length) {
     return (
-      <Card>
-        <CardHeader className="pb-2">{headerContent}</CardHeader>
-        <CardContent>
+      <Card className="overflow-hidden">
+        <CardHeader className="p-4 pb-2">{headerContent}</CardHeader>
+        <CardContent className="p-4 pt-0">
           <div 
             className="flex items-center justify-center text-muted-foreground text-xs"
             style={{ width: size, height: size }}
@@ -70,9 +70,9 @@ export function RevenueDonutChart({
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-2">{headerContent}</CardHeader>
-      <CardContent>
+    <Card className="overflow-hidden">
+      <CardHeader className="p-4 pb-2">{headerContent}</CardHeader>
+      <CardContent className="p-4 pt-0">
         <div className="flex items-center gap-3">
           <div style={{ width: size, height: size }}>
             <ResponsiveContainer width="100%" height="100%">
