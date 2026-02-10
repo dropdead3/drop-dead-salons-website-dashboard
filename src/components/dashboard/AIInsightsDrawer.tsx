@@ -320,89 +320,106 @@ export function AIInsightsDrawer() {
                             </div>
                           ) : (
                             <div className="space-y-5">
-                              {data.insights.length > 0 && (
-                                <div className="space-y-2">
-                                  {data.insights.map((insight, i) => (
-                                    <InsightCard key={i} insight={insight} onRequestGuidance={handleRequestGuidance} />
-                                  ))}
-                                </div>
-                              )}
-                                {data.actionItems.length > 0 && (
-                                  <div>
-                                    <div className="flex items-center gap-1.5 mb-2">
-                                      <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
-                                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">ACTION ITEMS</span>
-                                    </div>
-                                    <div className="space-y-0.5">
-                                      {data.actionItems.map((item, i) => (
-                                        <ActionItemCard key={i} item={item} index={i} onRequestGuidance={handleRequestGuidance} />
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-                                {(() => {
-                                  const visibleSuggestions = (data.featureSuggestions || []).filter(
-                                    (s) => !dismissedKeys.has(s.suggestionKey)
-                                  );
-                                  if (visibleSuggestions.length === 0) return null;
-                                  return (
+                              {/* 2-column grid: Insights left, Action Items right */}
+                              {(data.insights.length > 0 || data.actionItems.length > 0) && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  {/* Left column: Insights */}
+                                  {data.insights.length > 0 && (
                                     <div>
-                                      <div className="flex items-center gap-1.5 mb-2">
-                                        <Zap className="w-3.5 h-3.5 text-amber-500" />
-                                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">SUGGESTED FOR YOU</span>
+                                      <div className="flex items-center gap-2 mb-3">
+                                        <Brain className="w-3.5 h-3.5 text-violet-500" />
+                                        <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Key Insights</span>
+                                        <div className="flex-1 h-px bg-border/40" />
                                       </div>
                                       <div className="space-y-2">
-                                        <AnimatePresence>
-                                          {visibleSuggestions.map((suggestion) => (
-                                            <motion.div
-                                              key={suggestion.suggestionKey}
-                                              initial={{ opacity: 1, height: 'auto' }}
-                                              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                                              transition={{ duration: 0.3 }}
-                                              className="relative border border-dashed border-amber-500/30 rounded-lg p-3 bg-gradient-to-br from-amber-500/5 to-orange-500/5"
-                                            >
-                                              <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                  <button
-                                                    onClick={() => dismiss(suggestion.suggestionKey)}
-                                                    className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                                                  >
-                                                    <X className="w-3 h-3" />
-                                                  </button>
-                                                </TooltipTrigger>
-                                                <TooltipContent side="left">Dismiss for 30 days</TooltipContent>
-                                              </Tooltip>
-                                              <div className="flex items-start gap-2.5 pr-5">
-                                                <Zap className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                                                <div className="flex-1 min-w-0">
-                                                  <div className="flex items-center gap-2 mb-0.5">
-                                                    <span className="text-sm font-medium">{suggestion.featureName}</span>
-                                                    <span className={cn(
-                                                      'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display',
-                                                      priorityBadge[suggestion.priority],
-                                                    )}>
-                                                      {suggestion.priority}
-                                                    </span>
-                                                  </div>
-                                                  <p className="text-xs text-muted-foreground leading-relaxed">{suggestion.whyItHelps}</p>
-                                                  <p className="text-xs text-muted-foreground/70 mt-1 italic">{suggestion.howToStart}</p>
-                                                  <GuidanceTrigger
-                                                    label="Learn more"
-                                                    onClick={() => handleRequestGuidance({
-                                                      type: 'action',
-                                                      title: `Enable ${suggestion.featureName}`,
-                                                      description: `${suggestion.whyItHelps} ${suggestion.howToStart}`,
-                                                    })}
-                                                  />
-                                                </div>
-                                              </div>
-                                            </motion.div>
-                                          ))}
-                                        </AnimatePresence>
+                                        {data.insights.map((insight, i) => (
+                                          <InsightCard key={i} insight={insight} onRequestGuidance={handleRequestGuidance} />
+                                        ))}
                                       </div>
                                     </div>
-                                  );
-                                })()}
+                                  )}
+                                  {/* Right column: Action Items */}
+                                  {data.actionItems.length > 0 && (
+                                    <div>
+                                      <div className="flex items-center gap-2 mb-3">
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
+                                        <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Action Items</span>
+                                        <div className="flex-1 h-px bg-border/40" />
+                                      </div>
+                                      <div className="space-y-1 rounded-lg border border-border/30 bg-muted/10 p-1">
+                                        {data.actionItems.map((item, i) => (
+                                          <ActionItemCard key={i} item={item} index={i} onRequestGuidance={handleRequestGuidance} />
+                                        ))}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+                              {/* Full-width: Suggested For You */}
+                              {(() => {
+                                const visibleSuggestions = (data.featureSuggestions || []).filter(
+                                  (s) => !dismissedKeys.has(s.suggestionKey)
+                                );
+                                if (visibleSuggestions.length === 0) return null;
+                                return (
+                                  <div>
+                                    <div className="flex items-center gap-2 mb-3">
+                                      <Zap className="w-3.5 h-3.5 text-amber-500" />
+                                      <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Suggested For You</span>
+                                      <div className="flex-1 h-px bg-border/40" />
+                                    </div>
+                                    <div className="space-y-2">
+                                      <AnimatePresence>
+                                        {visibleSuggestions.map((suggestion) => (
+                                          <motion.div
+                                            key={suggestion.suggestionKey}
+                                            initial={{ opacity: 1, height: 'auto' }}
+                                            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                            transition={{ duration: 0.3 }}
+                                            className="relative border border-dashed border-amber-500/30 rounded-lg p-3 bg-gradient-to-br from-amber-500/5 to-orange-500/5"
+                                          >
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <button
+                                                  onClick={() => dismiss(suggestion.suggestionKey)}
+                                                  className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                                                >
+                                                  <X className="w-3 h-3" />
+                                                </button>
+                                              </TooltipTrigger>
+                                              <TooltipContent side="left">Dismiss for 30 days</TooltipContent>
+                                            </Tooltip>
+                                            <div className="flex items-start gap-2.5 pr-5">
+                                              <Zap className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                                              <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-0.5">
+                                                  <span className="text-sm font-medium">{suggestion.featureName}</span>
+                                                  <span className={cn(
+                                                    'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display',
+                                                    priorityBadge[suggestion.priority],
+                                                  )}>
+                                                    {suggestion.priority}
+                                                  </span>
+                                                </div>
+                                                <p className="text-xs text-muted-foreground leading-relaxed">{suggestion.whyItHelps}</p>
+                                                <p className="text-xs text-muted-foreground/70 mt-1 italic">{suggestion.howToStart}</p>
+                                                <GuidanceTrigger
+                                                  label="Learn more"
+                                                  onClick={() => handleRequestGuidance({
+                                                    type: 'action',
+                                                    title: `Enable ${suggestion.featureName}`,
+                                                    description: `${suggestion.whyItHelps} ${suggestion.howToStart}`,
+                                                  })}
+                                                />
+                                              </div>
+                                            </div>
+                                          </motion.div>
+                                        ))}
+                                      </AnimatePresence>
+                                    </div>
+                                  </div>
+                                );
+                              })()}
                             </div>
                           )}
                         </div>
