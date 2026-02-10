@@ -280,7 +280,9 @@ ${suggestions.length > 0 ? suggestions.map((s) => `  ${s.suggestion_type}: ${s.s
             role: "system",
             content: `You are a salon business intelligence analyst. Analyze the provided business data and generate actionable insights for salon owners. Be specific with numbers and percentages. Focus on what matters most RIGHT NOW. Be concise but insightful. If data is limited or zeros, acknowledge it and suggest what to look for as data accumulates. Do NOT fabricate data that isn't in the snapshot.
 
-Additionally, review the UNUSED FEATURES & INTEGRATIONS section. Based on the business data patterns, identify 2-4 of the most impactful unused features or integrations that would benefit this business. For each, explain WHY it would help based on the specific data you see, and HOW to get started. Use the suggestionKey format "feature:<key>" for features and "integration:<name>" for integrations.`,
+Additionally, review the UNUSED FEATURES & INTEGRATIONS section. Based on the business data patterns, identify 2-4 of the most impactful unused features or integrations that would benefit this business. For each, explain WHY it would help based on the specific data you see, and HOW to get started. Use the suggestionKey format "feature:<key>" for features and "integration:<name>" for integrations.
+
+Also generate 3-5 specific, actionable checkbox-style tasks (suggestedTasks) the owner can complete based on the data patterns. These should be concrete and completable (e.g., "Review and reach out to 5 clients who haven't visited in 60+ days") rather than vague recommendations. Assign a priority and optionally a number of days from now when it should be due.`,
           },
           {
             role: "user",
@@ -384,8 +386,31 @@ Additionally, review the UNUSED FEATURES & INTEGRATIONS section. Based on the bu
                       additionalProperties: false,
                     },
                   },
+                  suggestedTasks: {
+                    type: "array",
+                    description: "3-5 specific, actionable checkbox-style tasks the owner can complete based on data patterns.",
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: {
+                          type: "string",
+                          description: "Clear, actionable task title that is concrete and completable",
+                        },
+                        priority: {
+                          type: "string",
+                          enum: ["high", "medium", "low"],
+                        },
+                        dueInDays: {
+                          type: ["number", "null"],
+                          description: "Suggested number of days from now for due date, or null if no specific deadline",
+                        },
+                      },
+                      required: ["title", "priority", "dueInDays"],
+                      additionalProperties: false,
+                    },
+                  },
                 },
-                required: ["summaryLine", "overallSentiment", "insights", "actionItems", "featureSuggestions"],
+                required: ["summaryLine", "overallSentiment", "insights", "actionItems", "featureSuggestions", "suggestedTasks"],
                 additionalProperties: false,
               },
             },

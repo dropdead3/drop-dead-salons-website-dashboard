@@ -44,7 +44,7 @@ export function useTasks() {
 
   // Create task - always uses actual user ID (not impersonated)
   const createTask = useMutation({
-    mutationFn: async (task: { title: string; description?: string; due_date?: string; priority?: 'low' | 'normal' | 'high' }) => {
+    mutationFn: async (task: { title: string; description?: string; due_date?: string; priority?: 'low' | 'normal' | 'high'; source?: string }) => {
       // When impersonating, don't allow task creation
       if (isImpersonating) {
         throw new Error('Cannot create tasks while impersonating');
@@ -58,7 +58,8 @@ export function useTasks() {
           description: task.description || null,
           due_date: task.due_date || null,
           priority: task.priority || 'normal',
-        })
+          source: task.source || 'manual',
+        } as any)
         .select()
         .single();
 
