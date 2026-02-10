@@ -282,24 +282,6 @@ export function AIInsightsDrawer() {
                       </Button>
                     </div>
                   </div>
-                  {data && (
-                    <div className="flex items-start gap-2">
-                      <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
-                        <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-muted-foreground leading-snug">{blurFinancialValues(data.summaryLine)}</p>
-                        {generatedAt && (
-                          <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
-                            <Clock className="w-2.5 h-2.5" />
-                            Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
-                            {isStale && ' · Stale'}
-                            {cooldown > 0 && ` · ${cooldown}s cooldown`}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -317,6 +299,24 @@ export function AIInsightsDrawer() {
                         style={{ maxHeight: '500px', overflowY: 'auto' }}
                         onWheel={(e) => e.stopPropagation()}
                       >
+                        {data && (
+                          <div className="flex items-start gap-2 px-4 pb-3">
+                            <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
+                              <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm text-muted-foreground leading-snug">{blurFinancialValues(data.summaryLine)}</p>
+                              {generatedAt && (
+                                <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
+                                  <Clock className="w-2.5 h-2.5" />
+                                  Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
+                                  {isStale && ' · Stale'}
+                                  {cooldown > 0 && ` · ${cooldown}s cooldown`}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
                         <div className="px-4 pb-3">
                           {isLoading ? (
                             <div className="space-y-3">
