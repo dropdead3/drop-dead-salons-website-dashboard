@@ -431,7 +431,7 @@ export function AggregateSalesCard({
             </div>
             
             {/* Services & Products Sub-cards */}
-            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+            <div className="grid grid-cols-2 gap-6">
               {/* Services */}
               <div className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/30">
                 <div className="flex items-center justify-center gap-1.5 mb-2">
@@ -463,7 +463,7 @@ export function AggregateSalesCard({
           </div>
           
           {/* Secondary KPIs Row */}
-          <div className="grid grid-cols-3 gap-3 sm:gap-4 mt-4">
+          <div className="grid grid-cols-3 gap-6 mt-6">
             {/* Transactions */}
             <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
               <div className="flex justify-center mb-2">
@@ -513,7 +513,7 @@ export function AggregateSalesCard({
           </div>
 
           {/* Goal Progress */}
-          <div className="mt-4">
+          <div className="mt-6">
             <SalesGoalProgress 
               current={displayMetrics.totalRevenue} 
               target={currentGoal}
