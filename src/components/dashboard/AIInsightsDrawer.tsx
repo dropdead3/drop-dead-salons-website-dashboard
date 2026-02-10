@@ -94,14 +94,14 @@ function blurFinancialValues(text: string) {
   });
 }
 
-function GuidanceTrigger({ label, onClick, icon: IconOverride }: { label: string; onClick: () => void; icon?: React.ComponentType<{ className?: string }> }) {
+function GuidanceTrigger({ label, onClick, icon: IconOverride, hideIcon }: { label: string; onClick: () => void; icon?: React.ComponentType<{ className?: string }>; hideIcon?: boolean }) {
   const Icon = IconOverride || CheckCheck;
   return (
     <button
       onClick={onClick}
       className="group inline-flex items-center gap-1 h-6 px-2 mt-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors duration-200"
     >
-      <Icon className="w-3 h-3" />
+      {!hideIcon && <Icon className="w-3 h-3" />}
       {label}
       <ChevronRight className="w-3 h-3 relative top-px opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
     </button>
@@ -408,6 +408,7 @@ export function AIInsightsDrawer() {
                                                 <p className="text-xs text-muted-foreground/70 mt-1 italic">{suggestion.howToStart}</p>
                                                 <GuidanceTrigger
                                                   label="Learn more"
+                                                  hideIcon
                                                   onClick={() => handleRequestGuidance({
                                                     type: 'action',
                                                     title: `Enable ${suggestion.featureName}`,
