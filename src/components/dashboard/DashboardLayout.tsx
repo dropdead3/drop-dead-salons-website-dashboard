@@ -982,15 +982,8 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
         )}
       </AnimatePresence>
 
-      {/* Platform Organization Context Banner - hide in full-screen mode */}
-      {!hideFooter && (
-        <div className={cn(
-          "transition-[padding-left] duration-200 ease-in-out",
-          sidebarCollapsed ? "lg:pl-16" : "lg:pl-72"
-        )}>
-          <PlatformContextBanner />
-        </div>
-      )}
+      {/* Platform Organization Context Banner - spans full width above everything */}
+      {!hideFooter && <PlatformContextBanner />}
 
       {/* Custom Landing Page Banner - hide in full-screen mode */}
       {!hideFooter && <CustomLandingPageBanner sidebarCollapsed={sidebarCollapsed} />}
