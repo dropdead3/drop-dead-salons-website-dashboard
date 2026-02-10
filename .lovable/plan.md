@@ -1,149 +1,108 @@
 
 
-# Role-Gated Personal AI Insights for All Users
+# Zura Insights Email Reports
 
-## Overview
+## What You Get
 
-Every team member gets valuable, contextualized AI insights from Zura based only on data they have permission to see. The system dynamically adapts to role and permission changes -- no stale or unauthorized data.
+A beautiful, branded email digest that delivers your personalized Zura insights straight to your inbox. Users can choose their frequency (daily, weekly, or Monday morning), and the email content is role-gated -- the exact same security rules from the personal/business insights system apply, so stylists only see their own data and leadership sees the org-level view.
 
-## How Role Reactivity Works
+## Email Design
 
-- The edge function checks the user's **current roles** from the `user_roles` table on every request -- not a cached copy
-- Data queries are filtered by role tier at execution time, so a promotion from Stylist to Manager immediately unlocks leadership-tier insights on the next refresh
-- Cached insights expire after a configurable TTL (e.g., 6 hours)
-- When a role changes (via `useToggleUserRole`), the user's cached personal insights are invalidated so they get fresh, role-appropriate data on their next visit
+The email will use a polished, mobile-responsive HTML template with:
+- Drop Dead Gorgeous branding (gradient header, logo)
+- Sentiment indicator (positive/neutral/concerning) with color coding
+- Clean card-style insight blocks with category icons rendered as Unicode/emoji
+- Numbered action items with priority badges
+- A "View in App" button linking to the dashboard
+- Footer with unsubscribe link and "Powered by Zura AI" branding
+- Dark-on-light color scheme (emails don't support dark mode well)
 
-## Data Access by Role Tier
+## How It Works
 
-| Data Category | Leadership (Owner/Admin/Manager) | Stylist / Assistant | Booth Renter | Front Desk |
-|---|---|---|---|---|
-| Org revenue and financials | Yes | No | No | No |
-| All staff performance | Yes | No | No | No |
-| Own appointments and rebook rate | Yes | Yes | Yes | Limited |
-| Own retail/product sales | Yes | Yes | Yes | No |
-| Client retention (own book) | Yes | Yes | Yes | No |
-| Schedule gaps and utilization (own) | Yes | Yes | Yes | No |
-| Org-wide anomalies | Yes | No | No | No |
-| Today's appointment queue | Yes | No | No | Yes |
-| No-show/cancellation (own) | Yes | Yes | Yes | Yes |
-
-## Insight Categories by Role
-
-**Stylist / Stylist Assistant:**
-- Personal rebooking rate vs. target
-- Retail attachment rate for their clients
-- Client retention trends (own book)
-- Schedule utilization and gaps
-- Personal growth tips (average ticket, service mix)
-
-**Booth Renter:**
-- Appointment volume trends
-- Client retention for their book
-- Schedule optimization
-- Revenue trends (own only)
-
-**Front Desk / Receptionist:**
-- Daily appointment flow and gaps
-- No-show and cancellation patterns
-- Rebooking rate at checkout
+1. User goes to Notification Preferences and enables "Zura Insights Email" with a frequency selector (daily / weekly / Monday briefing)
+2. A scheduled edge function runs on a cron, finds users whose next delivery is due, generates fresh insights (reuses existing `ai-personal-insights` and `ai-business-insights` logic), renders them into the HTML email template, and sends via Resend
+3. Each delivery is logged so we can track success/failure and avoid duplicate sends
 
 ## Technical Implementation
 
-### 1. Database Migration: `ai_personal_insights` Table
+### 1. Database Migration
 
-New table to cache per-user insights with strict RLS:
+Add columns to the existing `notification_preferences` table:
 
 ```text
-ai_personal_insights
-  id          uuid (PK, default gen_random_uuid())
-  user_id     uuid (not null)
-  organization_id uuid
-  insights    jsonb (same AIInsightsData structure)
-  role_tier   text (the role tier used to generate -- for cache invalidation)
-  generated_at timestamptz
-  expires_at  timestamptz
-  created_at  timestamptz (default now())
+insights_email_enabled    boolean  default false
+insights_email_frequency  text     default 'weekly'   -- 'daily', 'weekly', 'monday'
+insights_email_last_sent  timestamptz  nullable
+insights_email_next_at    timestamptz  nullable
 ```
 
-RLS policy: `SELECT/INSERT/UPDATE/DELETE WHERE user_id = auth.uid()` -- users can only ever access their own cached insights.
+This avoids creating a new table -- it naturally extends the existing notification preferences.
 
-### 2. New Edge Function: `ai-personal-insights`
+### 2. Update Notification Preferences UI
 
-Separate from `ai-business-insights` to maintain clean separation of concerns:
+Add a new "Zura Insights Email" card to `src/pages/dashboard/NotificationPreferences.tsx`:
+- Toggle to enable/disable
+- Frequency selector (Daily digest, Weekly summary, Monday briefing)
+- Shows next delivery time when enabled
+- Preview button that triggers an immediate test send
 
-- Authenticates user via JWT
-- Queries `user_roles` for the user's current roles (real-time, not cached)
-- Determines role tier: leadership vs. stylist vs. booth_renter vs. front_desk
-- Fetches ONLY data owned by the user (`staff_user_id = user.id` on all queries)
-- System prompt explicitly instructs Zura: "You are a personal performance coach. Never reference organizational revenue, other staff members' performance, or financial data you were not given."
-- Returns structured insights via tool calling with personal categories
-- Caches in `ai_personal_insights` keyed by user_id
+### 3. Update the Hook
 
-### 3. New Hook: `usePersonalInsights`
+Add the new fields to `useNotificationPreferences` and `useUpdateNotificationPreferences` in `src/hooks/useNotificationPreferences.ts`.
 
-Mirrors the existing `useAIInsights` pattern:
-- Checks for cached insights in `ai_personal_insights` (where `user_id = current user` and not expired)
-- If stale or missing, calls `ai-personal-insights` edge function
-- Returns the same `AIInsightsData` shape so UI components stay consistent
-- Exposes `isLoading`, `data`, `refresh` states
+### 4. New Edge Function: `send-insights-email`
 
-### 4. New Component: `PersonalInsightsDrawer`
+This function handles both scheduled (cron) and on-demand (test/preview) sends:
 
-A simplified version of `AIInsightsDrawer` branded as "Zura Personal Insights":
-- Categories: "My Performance", "My Clients", "My Schedule", "Growth Tips"
-- No revenue pulse, no cash flow, no staff comparisons
-- Same visual style (sentiment icon, expandable items, guidance links)
-- Guidance links filtered to only routes the role can access (My Stats, Schedule, Client Directory, Leaderboard -- never admin pages)
+- **Scheduled mode**: Query `notification_preferences` for users where `insights_email_enabled = true` and `insights_email_next_at <= now()`
+- **On-demand mode**: Accept a `userId` parameter for immediate test sends
+- For each user:
+  - Determine role tier (leadership vs. personal)
+  - Fetch the latest cached insights from `ai_business_insights` or `ai_personal_insights`
+  - If no cached insights exist or they're stale, call the appropriate insights function internally
+  - Render the HTML email template with the insight data
+  - Send via the existing `sendEmail` utility from `_shared/email-sender.ts`
+  - Update `insights_email_last_sent` and calculate `insights_email_next_at`
 
-### 5. Dashboard Integration (`DashboardHome.tsx`)
+### 5. HTML Email Template
 
-Conditional rendering based on role:
-- Leadership roles (super_admin, admin, manager): existing `AIInsightsDrawer` with org-wide data (unchanged)
-- All other roles: new `PersonalInsightsDrawer` with personal data only
-- Both use the same visual placement and interaction patterns
+Built directly in the edge function as a template literal (emails need inline styles, not external CSS). The template includes:
 
-### 6. Cache Invalidation on Role Change
+- Responsive layout (max-width 600px, mobile-friendly)
+- Gradient header bar with "Zura Insights" branding
+- Summary line with sentiment color
+- Insight cards with category labels, titles, and descriptions
+- Action items as a numbered list with priority indicators
+- "Open Dashboard" CTA button
+- Unsubscribe link that calls an API to disable the email preference
 
-Update `useToggleUserRole` in `src/hooks/useUserRoles.ts`:
-- After a successful role toggle, delete the affected user's rows from `ai_personal_insights`
-- This forces a fresh generation on their next dashboard visit with their new role's data tier
-- Implemented as an additional `.delete()` call in the mutation's `onSuccess`
+### 6. Cron Job
 
-### 7. Personal Guidance Route Map
+Set up a `pg_cron` job that runs every hour, calling the `send-insights-email` function. The function itself checks which users are due for delivery based on their `insights_email_next_at` timestamp, so the cron frequency just determines the maximum delay.
 
-The edge function's route map for personal insights only includes non-admin routes:
-- My Stats: `/dashboard/stats`
-- Schedule: `/dashboard/schedule`
-- Clients: `/dashboard/clients`
-- Leaderboard: `/dashboard/leaderboard`
-- My Pay: `/dashboard/my-pay`
-- Training: `/dashboard/training`
-- Profile: `/dashboard/profile`
+### 7. Unsubscribe Edge Function
 
-No admin, analytics, payroll, or settings routes are included.
+A simple `unsubscribe-insights-email` function that accepts a signed token in the URL, verifies it, and sets `insights_email_enabled = false`. This ensures one-click unsubscribe from the email itself without requiring login.
 
 ## Files to Create
 
-1. `supabase/functions/ai-personal-insights/index.ts` -- role-aware edge function
-2. `src/hooks/usePersonalInsights.ts` -- client hook
-3. `src/components/dashboard/PersonalInsightsDrawer.tsx` -- UI for non-leadership users
+1. `supabase/functions/send-insights-email/index.ts` -- main email generation and sending
+2. `supabase/functions/unsubscribe-insights-email/index.ts` -- one-click unsubscribe handler
 
 ## Files to Modify
 
-4. `src/pages/dashboard/DashboardHome.tsx` -- conditional rendering by role
-5. `src/hooks/useUserRoles.ts` -- cache invalidation on role change
+3. `src/pages/dashboard/NotificationPreferences.tsx` -- add Zura Insights Email card with frequency selector
+4. `src/hooks/useNotificationPreferences.ts` -- add new preference fields
+5. `supabase/config.toml` -- register new edge functions
 
 ## Database Changes
 
-6. Migration: create `ai_personal_insights` table with RLS policies
+6. Migration: add 4 columns to `notification_preferences` table
 
-## Security Guarantees
+## Security
 
-- Edge function uses `staff_user_id = user.id` on ALL data queries
-- No org-wide revenue, payroll, or staff comparison data is fetched for non-leadership roles
-- System prompt explicitly prohibits referencing organizational financials
-- RLS on cache table: users only see their own insights
-- Role determination happens at request time from `user_roles` table (not cached client-side)
-- Cache is invalidated when roles change, preventing stale cross-role data leakage
-- Guidance links are restricted to routes the role can access
+- Unsubscribe tokens are signed with a server-side secret so they can't be forged
+- Email content respects the same role-tier data access rules as the in-app insights
+- No organizational financials leak to non-leadership users in emails
+- Users can only trigger test sends for their own email address
 
