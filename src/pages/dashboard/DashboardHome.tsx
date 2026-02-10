@@ -215,7 +215,7 @@ export default function DashboardHome() {
         {/* Header with Customize Button */}
         <motion.div className="flex items-start justify-between" variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}>
           <div>
-            <h1 className="font-display text-4xl lg:text-5xl mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+            <h1 className="font-display text-2xl lg:text-3xl mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
               Welcome back, {firstName}
             </h1>
             <p className="text-muted-foreground font-sans">
