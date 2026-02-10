@@ -50,19 +50,21 @@ export function TodaysBirthdayBanner() {
               const isOwnBirthday = person.user_id === user?.id;
               const canDM = !isOwnBirthday && person.user_id;
               return (
-              <div 
+              <motion.div 
                 key={person.id} 
                 onClick={canDM ? () => handleSendDM(person.user_id) : undefined}
+                whileHover={canDM ? { scale: 1.03 } : undefined}
+                whileTap={canDM ? { scale: 0.97 } : undefined}
                 className={cn(
-                  "flex items-center gap-2 backdrop-blur-sm rounded-full pl-1 pr-3 py-1 transition-colors group",
+                  "flex items-center gap-2 backdrop-blur-sm rounded-full pl-1 py-1 transition-colors group",
                   isViewingAsUser && person.isCurrentUser 
-                    ? "bg-background/40 ring-2 ring-background shadow-lg" 
-                    : "bg-background/20",
-                  canDM && "cursor-pointer hover:bg-background/35"
+                    ? "bg-background/40 ring-2 ring-background shadow-lg pr-3" 
+                    : "bg-background/20 pr-3",
+                  canDM && "cursor-pointer hover:bg-background/35 hover:shadow-md"
                 )}
               >
                 <Avatar className={cn(
-                  "w-6 h-6 border-2",
+                  "w-6 h-6 border-2 shrink-0",
                   isViewingAsUser && person.isCurrentUser 
                     ? "border-background" 
                     : "border-background/30"
@@ -72,17 +74,28 @@ export function TodaysBirthdayBanner() {
                     {(person.display_name || person.full_name)?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
-                <span className="text-sm font-medium flex items-center gap-1">
+                <span className="text-sm font-medium flex items-center gap-1 whitespace-nowrap">
                   {person.display_name || person.full_name}
                   {isViewingAsUser && person.isCurrentUser && (
                     <Eye className="w-3 h-3" />
                   )}
                 </span>
+                {index === 0 && <Cake className="w-4 h-4 shrink-0" />}
                 {canDM && (
-                  <MessageCircle className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <motion.span 
+                    className="inline-flex items-center gap-1 overflow-hidden rounded-full bg-background/20 group-hover:bg-background/40 transition-colors ml-1 shrink-0"
+                    initial={false}
+                    whileHover={{ }}
+                  >
+                    <span className="flex items-center gap-1 px-1.5 py-0.5">
+                      <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                      <span className="text-xs font-medium max-w-0 overflow-hidden group-hover:max-w-[4rem] transition-all duration-300 ease-out whitespace-nowrap">
+                        DM
+                      </span>
+                    </span>
+                  </motion.span>
                 )}
-                {index === 0 && <Cake className="w-4 h-4 ml-1" />}
-              </div>
+              </motion.div>
             );
             })}
           </div>
