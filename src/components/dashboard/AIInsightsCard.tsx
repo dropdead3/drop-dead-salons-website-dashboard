@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -6,8 +6,11 @@ import { VisibilityGate } from '@/components/visibility';
 import { PinnableCard } from './PinnableCard';
 import { useAIInsights, type InsightItem, type ActionItem } from '@/hooks/useAIInsights';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
-import { GuidanceButton } from './GuidanceDialog';
+import { GuidancePanel } from './GuidancePanel';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   Brain,
   RefreshCw,
@@ -19,9 +22,9 @@ import {
   Activity,
   HeartPulse,
   CheckCircle2,
-  ArrowRight,
   Sparkles,
   Clock,
+  Lightbulb,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -58,6 +61,22 @@ const sentimentConfig = {
   concerning: { icon: AlertTriangle, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-500/10' },
 };
 
+interface GuidanceRequest {
+  type: 'insight' | 'action';
+  title: string;
+  description: string;
+  category?: string;
+  priority?: string;
+}
+
+const slideVariants = {
+  enterFromRight: { x: '100%', opacity: 0 },
+  enterFromLeft: { x: '-100%', opacity: 0 },
+  center: { x: 0, opacity: 1 },
+  exitToLeft: { x: '-100%', opacity: 0 },
+  exitToRight: { x: '100%', opacity: 0 },
+};
+
 function blurDollarAmounts(text: string) {
   const parts = text.split(/(\$[\d,]+\.?\d*)/g);
   return parts.map((part, i) => {
@@ -78,7 +97,21 @@ function blurFinancialValues(text: string) {
   });
 }
 
-function InsightCard({ insight }: { insight: InsightItem }) {
+function GuidanceTrigger({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={onClick}
+      className="h-6 px-2 mt-1.5 text-[11px] gap-1 text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300"
+    >
+      <Lightbulb className="w-3 h-3" />
+      {label}
+    </Button>
+  );
+}
+
+function InsightCard({ insight, onRequestGuidance }: { insight: InsightItem; onRequestGuidance: (req: GuidanceRequest) => void }) {
   const config = categoryConfig[insight.category];
   const Icon = config?.icon || Activity;
 
@@ -98,11 +131,9 @@ function InsightCard({ insight }: { insight: InsightItem }) {
           <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
             {blurFinancialValues(insight.description)}
           </p>
-          <GuidanceButton
-            type="insight"
-            title={insight.title}
-            description={insight.description}
-            category={insight.category}
+          <GuidanceTrigger
+            label="How to improve"
+            onClick={() => onRequestGuidance({ type: 'insight', title: insight.title, description: insight.description, category: insight.category })}
           />
         </div>
       </div>
@@ -110,7 +141,7 @@ function InsightCard({ insight }: { insight: InsightItem }) {
   );
 }
 
-function ActionItemCard({ item, index }: { item: ActionItem; index: number }) {
+function ActionItemCard({ item, index, onRequestGuidance }: { item: ActionItem; index: number; onRequestGuidance: (req: GuidanceRequest) => void }) {
   return (
     <div className="py-1.5">
       <div className="flex items-start gap-2.5">
@@ -119,11 +150,9 @@ function ActionItemCard({ item, index }: { item: ActionItem; index: number }) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm leading-snug">{blurFinancialValues(item.action)}</p>
-          <GuidanceButton
-            type="action"
-            title={item.action}
-            description={item.action}
-            priority={item.priority}
+          <GuidanceTrigger
+            label="What you should do"
+            onClick={() => onRequestGuidance({ type: 'action', title: item.action, description: item.action, priority: item.priority })}
           />
         </div>
         <span className={cn(
@@ -166,6 +195,9 @@ function LoadingSkeleton() {
 export function AIInsightsCard() {
   const { data, generatedAt, isLoading, isRefreshing, isStale, refresh, cooldownRemaining } = useAIInsights();
   const [cooldown, setCooldown] = useState(0);
+  const [activeGuidance, setActiveGuidance] = useState<GuidanceRequest | null>(null);
+  const [guidanceText, setGuidanceText] = useState<string | null>(null);
+  const [isLoadingGuidance, setIsLoadingGuidance] = useState(false);
 
   useEffect(() => {
     if (cooldownRemaining <= 0) { setCooldown(0); return; }
@@ -175,6 +207,30 @@ export function AIInsightsCard() {
     }, 1000);
     return () => clearInterval(interval);
   }, [cooldownRemaining]);
+
+  const handleRequestGuidance = useCallback(async (req: GuidanceRequest) => {
+    setActiveGuidance(req);
+    setGuidanceText(null);
+    setIsLoadingGuidance(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('ai-insight-guidance', {
+        body: { type: req.type, title: req.title, description: req.description, category: req.category, priority: req.priority },
+      });
+      if (error) throw error;
+      setGuidanceText(data.guidance);
+    } catch (err) {
+      console.error('Failed to fetch guidance:', err);
+      toast.error('Failed to get guidance. Please try again.');
+      setActiveGuidance(null);
+    } finally {
+      setIsLoadingGuidance(false);
+    }
+  }, []);
+
+  const handleBack = useCallback(() => {
+    setActiveGuidance(null);
+    setGuidanceText(null);
+  }, []);
 
   if (isLoading) return <LoadingSkeleton />;
 
@@ -193,76 +249,109 @@ export function AIInsightsCard() {
         category="Dashboard Home"
       >
         <Card className="rounded-2xl shadow-2xl overflow-hidden">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center">
-                  <Brain className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+          {!activeGuidance && (
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center">
+                    <Brain className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <CardTitle className="text-base font-display tracking-wide">AI BUSINESS INSIGHTS</CardTitle>
                 </div>
-                <CardTitle className="text-base font-display tracking-wide">AI BUSINESS INSIGHTS</CardTitle>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="gap-1.5 text-xs h-8">
-                <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
-                {cooldown > 0 ? `${cooldown}s` : isRefreshing ? 'Analyzing...' : 'Refresh'}
-              </Button>
-            </div>
-            {data && (
-              <div className="flex items-start gap-2 mt-2">
-                <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
-                  <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm text-muted-foreground leading-snug">{blurFinancialValues(data.summaryLine)}</p>
-                  {generatedAt && (
-                    <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
-                      <Clock className="w-2.5 h-2.5" />
-                      Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
-                      {isStale && ' · Stale'}
-                    </p>
-                  )}
-                </div>
-              </div>
-            )}
-          </CardHeader>
-
-          <CardContent className="pt-0">
-            {!data ? (
-              <div className="text-center py-8">
-                <Sparkles className="w-8 h-8 mx-auto mb-3 text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground mb-3">No insights generated yet</p>
-                <Button variant="outline" size="sm" onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5">
-                  <Brain className="w-3.5 h-3.5" />
-                  Generate Insights
+                <Button variant="ghost" size="sm" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="gap-1.5 text-xs h-8">
+                  <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
+                  {cooldown > 0 ? `${cooldown}s` : isRefreshing ? 'Analyzing...' : 'Refresh'}
                 </Button>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {data.insights.length > 0 && (
-                  <div className="space-y-2">
-                    {data.insights.map((insight, i) => (
-                      <InsightCard key={i} insight={insight} />
-                    ))}
+              {data && (
+                <div className="flex items-start gap-2 mt-2">
+                  <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
+                    <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
                   </div>
-                )}
-                {data.actionItems.length > 0 && (
-                  <div>
-                    <div className="flex items-center gap-1.5 mb-2">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">ACTION ITEMS</span>
-                    </div>
-                    <div className="space-y-0.5">
-                      {data.actionItems.map((item, i) => (
-                        <ActionItemCard key={i} item={item} index={i} />
-                      ))}
-                    </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground leading-snug">{blurFinancialValues(data.summaryLine)}</p>
+                    {generatedAt && (
+                      <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
+                        <Clock className="w-2.5 h-2.5" />
+                        Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
+                        {isStale && ' · Stale'}
+                      </p>
+                    )}
                   </div>
-                )}
-                <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
-                  <Sparkles className="w-3 h-3 text-muted-foreground/40" />
-                  <span className="text-[10px] text-muted-foreground/50">Powered by AI · Based on your data</span>
                 </div>
-              </div>
-            )}
+              )}
+            </CardHeader>
+          )}
+
+          <CardContent className={cn("pt-0", activeGuidance && "p-0")}>
+            <div className="relative overflow-hidden">
+              <AnimatePresence initial={false} mode="wait">
+                {!activeGuidance ? (
+                  <motion.div
+                    key="insights"
+                    initial={false}
+                    animate={slideVariants.center}
+                    exit={slideVariants.exitToLeft}
+                    transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                  >
+                    {!data ? (
+                      <div className="text-center py-8">
+                        <Sparkles className="w-8 h-8 mx-auto mb-3 text-muted-foreground/40" />
+                        <p className="text-sm text-muted-foreground mb-3">No insights generated yet</p>
+                        <Button variant="outline" size="sm" onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5">
+                          <Brain className="w-3.5 h-3.5" />
+                          Generate Insights
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {data.insights.length > 0 && (
+                          <div className="space-y-2">
+                            {data.insights.map((insight, i) => (
+                              <InsightCard key={i} insight={insight} onRequestGuidance={handleRequestGuidance} />
+                            ))}
+                          </div>
+                        )}
+                        {data.actionItems.length > 0 && (
+                          <div>
+                            <div className="flex items-center gap-1.5 mb-2">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
+                              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">ACTION ITEMS</span>
+                            </div>
+                            <div className="space-y-0.5">
+                              {data.actionItems.map((item, i) => (
+                                <ActionItemCard key={i} item={item} index={i} onRequestGuidance={handleRequestGuidance} />
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
+                          <Sparkles className="w-3 h-3 text-muted-foreground/40" />
+                          <span className="text-[10px] text-muted-foreground/50">Powered by AI · Based on your data</span>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="guidance"
+                    initial={slideVariants.enterFromRight}
+                    animate={slideVariants.center}
+                    exit={slideVariants.exitToRight}
+                    transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                    className="min-h-[300px] max-h-[500px] flex flex-col"
+                  >
+                    <GuidancePanel
+                      title={activeGuidance.title}
+                      type={activeGuidance.type}
+                      guidance={guidanceText}
+                      isLoading={isLoadingGuidance}
+                      onBack={handleBack}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </CardContent>
         </Card>
       </PinnableCard>
