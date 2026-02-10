@@ -22,7 +22,43 @@ const ROUTE_CORRECTIONS: Record<string, string> = {
   '/dashboard/admin/schedule-meeting': '/dashboard/schedule-meeting',
   '/dashboard/settings': '/dashboard/admin/settings',
   '/dashboard/integrations': '/dashboard/admin/settings',
+  '/dashboard/admin/settings/phorest': '/dashboard/admin/phorest',
+  '/dashboard/admin/settings/integrations': '/dashboard/admin/settings',
+  '/dashboard/admin/settings/day-rates': '/dashboard/admin/day-rate-settings',
 };
+
+/**
+ * Set of all known valid route prefixes. Used to reject AI-hallucinated routes.
+ */
+export const VALID_ROUTE_PREFIXES: ReadonlySet<string> = new Set([
+  '/dashboard',
+  '/dashboard/admin/analytics',
+  '/dashboard/admin/payroll',
+  '/dashboard/admin/team',
+  '/dashboard/admin/management',
+  '/dashboard/admin/settings',
+  '/dashboard/admin/booth-renters',
+  '/dashboard/admin/phorest',
+  '/dashboard/admin/day-rate-settings',
+  '/dashboard/leaderboard',
+  '/dashboard/clients',
+  '/dashboard/schedule',
+  '/dashboard/inventory',
+  '/dashboard/stats',
+  '/dashboard/my-pay',
+  '/dashboard/team-chat',
+  '/dashboard/training',
+  '/dashboard/help',
+  '/dashboard/profile',
+  '/dashboard/ring-the-bell',
+  '/dashboard/program',
+  '/dashboard/onboarding',
+  '/dashboard/directory',
+  '/dashboard/shift-swaps',
+  '/dashboard/rewards',
+  '/dashboard/assistant-schedule',
+  '/dashboard/schedule-meeting',
+]);
 
 /**
  * Normalize a route from AI-generated guidance to an actual app route.
@@ -41,4 +77,12 @@ export function normalizeGuidanceRoute(href: string): string {
   }
   
   return href;
+}
+
+/**
+ * Check whether a normalized route matches any known valid route prefix.
+ */
+export function isValidGuidanceRoute(href: string): boolean {
+  const pathOnly = href.split('?')[0].split('#')[0];
+  return Array.from(VALID_ROUTE_PREFIXES).some(prefix => pathOnly === prefix || pathOnly.startsWith(prefix + '/'));
 }

@@ -20,9 +20,8 @@ INTERNAL ROUTE REFERENCE — ONLY use these exact routes for markdown links. NEV
 - Inventory: /dashboard/inventory
 - Management Hub: /dashboard/admin/management
 - Settings: /dashboard/admin/settings
-- Phorest Connection: /dashboard/admin/settings/phorest
-- Integrations: /dashboard/admin/settings/integrations
-- Day Rates: /dashboard/admin/settings/day-rates
+- Phorest Connection: /dashboard/admin/phorest
+- Day Rates: /dashboard/admin/day-rate-settings
 - My Stats: /dashboard/stats
 - My Pay: /dashboard/my-pay
 - Command Center: /dashboard

@@ -7,7 +7,7 @@ import { ArrowLeft, ExternalLink, Lightbulb, Sparkles } from 'lucide-react';
 import { SuggestedTasksSection } from './SuggestedTasksSection';
 import type { SuggestedTask } from '@/hooks/useAIInsights';
 import { useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
-import { normalizeGuidanceRoute } from '@/utils/guidanceRoutes';
+import { normalizeGuidanceRoute, isValidGuidanceRoute } from '@/utils/guidanceRoutes';
 
 interface GuidancePanelProps {
   title: string;
@@ -71,11 +71,14 @@ export function GuidancePanel({ title, type, guidance, isLoading, onBack, sugges
                     a: ({ href, children }) => {
                       const isInternal = href?.startsWith('/dashboard');
                       if (isInternal && href) {
-                        // If we have the Zura nav context, save state before navigating
+                        const normalizedHref = normalizeGuidanceRoute(href);
+                        // If the route isn't in our whitelist, render as plain text
+                        if (!isValidGuidanceRoute(normalizedHref)) {
+                          return <span className="font-medium">{children}</span>;
+                        }
                         const handleClick = (e: React.MouseEvent) => {
                           e.preventDefault();
                           if (zuraNav && guidance) {
-                            const normalizedHref = normalizeGuidanceRoute(href);
                             zuraNav.saveAndNavigate(normalizedHref, {
                               guidance: { type, title, description: title },
                               guidanceText: guidance,
