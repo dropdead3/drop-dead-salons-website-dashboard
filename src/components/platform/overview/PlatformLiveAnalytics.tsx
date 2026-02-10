@@ -107,11 +107,7 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
   }
 
   return (
-    <div className={cn("relative group", className)}>
-      {/* Animated gradient border wrapper */}
-      <div className="absolute -inset-[1px] rounded-2xl bg-[conic-gradient(from_var(--spin-angle,0deg),transparent_40%,rgba(139,92,246,0.3)_50%,transparent_60%)] opacity-0 group-hover:opacity-100 transition-opacity duration-700 animate-[spin-slow_8s_linear_infinite]" />
-      
-      <div className="relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6">
+    <div className={cn("rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6", className)}>
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <div className="p-2 rounded-xl bg-violet-500/20">
@@ -201,7 +197,6 @@ export function PlatformLiveAnalytics({ className }: PlatformLiveAnalyticsProps)
             icon={Users}
             color="emerald"
           />
-        </div>
       </div>
     </div>
   );
