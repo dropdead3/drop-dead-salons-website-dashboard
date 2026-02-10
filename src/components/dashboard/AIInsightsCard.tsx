@@ -283,7 +283,7 @@ export function AIInsightsCard() {
         elementName="AI Business Insights"
         category="Dashboard Home"
       >
-        <Card className="rounded-2xl shadow-2xl max-h-[600px] flex flex-col overflow-hidden">
+        <Card className="rounded-2xl shadow-2xl max-h-[600px] overflow-y-auto" onWheel={(e) => e.stopPropagation()}>
           {!activeGuidance && (
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
@@ -302,9 +302,7 @@ export function AIInsightsCard() {
           )}
 
           <CardContent 
-            className={cn("pt-0 flex-1 min-h-0", activeGuidance && "p-0")} 
-            style={{ overflowY: 'auto' }}
-            onWheel={(e) => e.stopPropagation()}
+            className={cn("pt-0", activeGuidance && "p-0")} 
           >
               <AnimatePresence mode="wait" initial={false}>
                 {!activeGuidance ? (
