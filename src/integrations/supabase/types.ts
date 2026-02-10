@@ -277,6 +277,47 @@ export type Database = {
           },
         ]
       }
+      ai_personal_insights: {
+        Row: {
+          created_at: string
+          expires_at: string
+          generated_at: string
+          id: string
+          insights: Json
+          organization_id: string | null
+          role_tier: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          generated_at?: string
+          id?: string
+          insights?: Json
+          organization_id?: string | null
+          role_tier?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          generated_at?: string
+          id?: string
+          insights?: Json
+          organization_id?: string | null
+          role_tier?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_personal_insights_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       announcement_reads: {
         Row: {
           announcement_id: string

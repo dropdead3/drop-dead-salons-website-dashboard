@@ -142,11 +142,23 @@ export function useToggleUserRole() {
         });
       }
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['all-users-with-roles'] });
       queryClient.invalidateQueries({ queryKey: ['team-directory'] });
       queryClient.invalidateQueries({ queryKey: ['account-approvals'] });
       queryClient.invalidateQueries({ queryKey: ['role-change-history'] });
+      
+      // Invalidate personal AI insights cache for this user so they get fresh role-appropriate data
+      try {
+        await supabase
+          .from('ai_personal_insights' as any)
+          .delete()
+          .eq('user_id', variables.userId);
+      } catch (err) {
+        console.error('Failed to invalidate personal insights cache:', err);
+      }
+      queryClient.invalidateQueries({ queryKey: ['ai-personal-insights', variables.userId] });
+      
       toast.success(
         variables.hasRole 
           ? `${ROLE_LABELS[variables.role]} role removed` 
