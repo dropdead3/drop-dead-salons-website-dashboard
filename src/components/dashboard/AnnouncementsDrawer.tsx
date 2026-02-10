@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Megaphone, X, Pin, ExternalLink, Settings, Plus, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
@@ -9,13 +10,6 @@ import { useUnreadAnnouncementCount } from '@/hooks/useUnreadAnnouncementCount';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { LocationSelect } from '@/components/ui/location-select';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from '@/components/ui/sheet';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -44,17 +38,19 @@ const normalizeUrl = (url: string): string => {
   return `https://${url}`;
 };
 
-interface AnnouncementsDrawerProps {
+interface AnnouncementsWidgetProps {
   isLeadership: boolean;
 }
 
-export function AnnouncementsDrawer({ isLeadership }: AnnouncementsDrawerProps) {
-  const [open, setOpen] = useState(false);
+export function AnnouncementsDrawer({ isLeadership }: AnnouncementsWidgetProps) {
+  const [expanded, setExpanded] = useState(false);
   const [locationFilter, setLocationFilter] = useState('all');
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { assignedLocationIds, canViewAllLocations } = useUserLocationAccess();
   const { data: unreadCount = 0 } = useUnreadAnnouncementCount();
+  const lastAnnouncementIdRef = useRef<string | null>(null);
+  const hasInitializedRef = useRef(false);
 
   const { data: announcements } = useQuery({
     queryKey: ['announcements-drawer', assignedLocationIds, canViewAllLocations],
@@ -87,9 +83,41 @@ export function AnnouncementsDrawer({ isLeadership }: AnnouncementsDrawerProps) 
     );
   }, [announcements, locationFilter]);
 
-  // Mark as read when drawer opens
+  // Auto-expand when new announcement detected
   useEffect(() => {
-    if (!open || !user?.id || !announcements || announcements.length === 0) return;
+    if (!announcements || announcements.length === 0) return;
+    const latestId = announcements[0].id;
+
+    if (!hasInitializedRef.current) {
+      // First load — just record the ID, don't auto-expand
+      lastAnnouncementIdRef.current = latestId;
+      hasInitializedRef.current = true;
+      return;
+    }
+
+    if (lastAnnouncementIdRef.current && lastAnnouncementIdRef.current !== latestId) {
+      setExpanded(true);
+    }
+    lastAnnouncementIdRef.current = latestId;
+  }, [announcements]);
+
+  // Realtime subscription for new announcements
+  useEffect(() => {
+    if (!user?.id) return;
+    const channel = supabase
+      .channel('announcements-widget-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['announcements-drawer'] });
+        queryClient.invalidateQueries({ queryKey: ['unread-announcement-count'] });
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, queryClient]);
+
+  // Mark as read when card expands
+  useEffect(() => {
+    if (!expanded || !user?.id || !announcements || announcements.length === 0) return;
 
     const markAsRead = async () => {
       const { data: existingReads } = await supabase
@@ -112,7 +140,7 @@ export function AnnouncementsDrawer({ isLeadership }: AnnouncementsDrawerProps) 
     };
 
     markAsRead();
-  }, [open, announcements, user?.id, queryClient]);
+  }, [expanded, announcements, user?.id, queryClient]);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -126,130 +154,156 @@ export function AnnouncementsDrawer({ isLeadership }: AnnouncementsDrawerProps) 
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
+  const handleCollapse = () => {
+    setExpanded(false);
+    // Update ref so same announcement doesn't re-trigger
+    if (announcements && announcements.length > 0) {
+      lastAnnouncementIdRef.current = announcements[0].id;
+    }
+  };
+
   return (
-    <>
-      {/* Inline trigger button — matches AIInsightsTrigger style */}
-      <Button
-        variant="outline"
-        onClick={() => setOpen(true)}
-        className="gap-2 h-9"
-      >
-        <div className="w-5 h-5 rounded-md bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
-          <Megaphone className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-        </div>
-        <span className="text-sm font-display tracking-wide">Announcements</span>
-        {unreadCount > 0 && (
-          <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center px-1">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </Button>
-
-      {/* Sheet drawer */}
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="sm:max-w-md flex flex-col p-0">
-          <SheetHeader className="p-6 pb-4 border-b border-border/30">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
-                  <Megaphone className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                </div>
-                <SheetTitle className="text-base font-display tracking-wide">
-                  ANNOUNCEMENTS
-                </SheetTitle>
-              </div>
+    <LayoutGroup>
+      <AnimatePresence mode="wait">
+        {!expanded ? (
+          /* ── Collapsed: Inline button ── */
+          <motion.button
+            key="collapsed"
+            layoutId="announcements-widget"
+            onClick={() => setExpanded(true)}
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-display tracking-wide hover:bg-muted/50 transition-colors cursor-pointer"
+            style={{ borderRadius: 6 }}
+          >
+            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
+              <Megaphone className="w-3 h-3 text-amber-600 dark:text-amber-400" />
             </div>
-            <SheetDescription className="sr-only">Company announcements and updates</SheetDescription>
+            <span>Announcements</span>
+            {unreadCount > 0 && (
+              <span className="min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-medium flex items-center justify-center px-1">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </motion.button>
+        ) : (
+          /* ── Expanded: Full card ── */
+          <motion.div
+            key="expanded"
+            layoutId="announcements-widget"
+            className="w-full rounded-2xl shadow-lg border border-border/40 bg-card overflow-hidden"
+            style={{ borderRadius: 16 }}
+          >
+            {/* Top gradient accent */}
+            <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
 
-            {/* Location filter + Leadership actions */}
-            <div className="flex items-center gap-2 mt-3">
-              <div className="flex-1">
-                <LocationSelect
-                  value={locationFilter}
-                  onValueChange={setLocationFilter}
-                  includeAll
-                  allLabel="All Locations"
-                  triggerClassName="h-8 text-xs bg-muted/30 border-border/40"
-                />
-              </div>
-              {isLeadership && (
+            {/* Header */}
+            <div className="p-4 pb-3">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-oat" />
+                  <span className="font-display text-xs tracking-[0.15em]">ANNOUNCEMENTS</span>
+                </div>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                    <Link to="/dashboard/announcements">
-                      <Settings className="w-3.5 h-3.5" />
-                    </Link>
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                    <Link to="/dashboard/announcements/create">
-                      <Plus className="w-3.5 h-3.5" />
-                    </Link>
+                  {isLeadership && (
+                    <>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                        <Link to="/dashboard/announcements">
+                          <Settings className="w-3.5 h-3.5" />
+                        </Link>
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                        <Link to="/dashboard/announcements/create">
+                          <Plus className="w-3.5 h-3.5" />
+                        </Link>
+                      </Button>
+                    </>
+                  )}
+                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleCollapse}>
+                    <X className="w-3.5 h-3.5" />
                   </Button>
                 </div>
-              )}
-            </div>
-          </SheetHeader>
+              </div>
 
-          {/* Announcement list */}
-          <ScrollArea className="flex-1">
-            <div className="p-4 space-y-3">
-              {filteredAnnouncements.length > 0 ? (
-                filteredAnnouncements.map((announcement) => (
-                  <div
-                    key={announcement.id}
-                    className={`group relative p-4 rounded-xl bg-muted/30 border border-border/30 border-l-[3px] ${priorityColors[announcement.priority || 'normal']} hover:bg-muted/50 transition-all duration-200`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          {announcement.is_pinned && (
-                            <Pin className="w-3 h-3 text-oat shrink-0" />
-                          )}
-                          <h3 className="text-sm font-medium truncate">{announcement.title}</h3>
+              {/* Location filter */}
+              <LocationSelect
+                value={locationFilter}
+                onValueChange={setLocationFilter}
+                includeAll
+                allLabel="All Locations"
+                triggerClassName="h-8 text-xs bg-muted/30 border-border/40"
+              />
+            </div>
+
+            {/* Content with stagger animation */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.15, duration: 0.25 }}
+            >
+              <ScrollArea className="max-h-[400px]">
+                <div className="px-4 pb-3 space-y-3">
+                  {filteredAnnouncements.length > 0 ? (
+                    filteredAnnouncements.map((announcement, i) => (
+                      <motion.div
+                        key={announcement.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 + i * 0.05, duration: 0.25 }}
+                        className={`group relative p-4 rounded-xl bg-muted/30 border border-border/30 border-l-[3px] ${priorityColors[announcement.priority || 'normal']} hover:bg-muted/50 transition-all duration-200`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 mb-1">
+                              {announcement.is_pinned && (
+                                <Pin className="w-3 h-3 text-oat shrink-0" />
+                              )}
+                              <h3 className="text-sm font-medium truncate">{announcement.title}</h3>
+                            </div>
+                            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                              {announcement.content}
+                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-[10px] text-muted-foreground/60 tracking-wide">
+                                {formatDate(announcement.created_at)}
+                              </span>
+                              {announcement.link_url && (
+                                <a
+                                  href={normalizeUrl(announcement.link_url)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
+                                >
+                                  {announcement.link_label || 'Learn more'}
+                                  <ExternalLink className="w-2.5 h-2.5" />
+                                </a>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                          {announcement.content}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className="text-[10px] text-muted-foreground/60 tracking-wide">
-                            {formatDate(announcement.created_at)}
-                          </span>
-                          {announcement.link_url && (
-                            <a
-                              href={normalizeUrl(announcement.link_url)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline"
-                            >
-                              {announcement.link_label || 'Learn more'}
-                              <ExternalLink className="w-2.5 h-2.5" />
-                            </a>
-                          )}
-                        </div>
-                      </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="text-center py-14 text-muted-foreground">
+                      <Megaphone className="w-7 h-7 mx-auto mb-3 opacity-20" />
+                      <p className="text-sm font-display">No announcements</p>
+                      <p className="text-xs mt-1 text-muted-foreground/60">You're all caught up</p>
                     </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center py-14 text-muted-foreground">
-                  <Megaphone className="w-7 h-7 mx-auto mb-3 opacity-20" />
-                  <p className="text-sm font-display">No announcements</p>
-                  <p className="text-xs mt-1 text-muted-foreground/60">You're all caught up</p>
+                  )}
                 </div>
-              )}
-            </div>
-          </ScrollArea>
+              </ScrollArea>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-border/30">
-            <Button variant="ghost" className="w-full justify-center text-xs h-9 text-muted-foreground hover:text-foreground" asChild>
-              <Link to="/dashboard/announcements">
-                View All Announcements
-                <ChevronRight className="w-3.5 h-3.5 ml-1" />
-              </Link>
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
-    </>
+              {/* Footer */}
+              <div className="px-4 pb-4 pt-1">
+                <Button variant="ghost" className="w-full justify-center text-xs h-9 text-muted-foreground hover:text-foreground" asChild>
+                  <Link to="/dashboard/announcements">
+                    View All Announcements
+                    <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                  </Link>
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </LayoutGroup>
   );
 }
