@@ -1,55 +1,60 @@
 
 
-# Add "How to Improve" AI Guidance Buttons to Insights and Action Items
+# Slide-Over Guidance View for AI Insights
 
 ## Overview
-Add interactive buttons below each Insight Card and each Action Item that allow users to request deeper, AI-generated guidance on how to address each specific issue. When clicked, the button calls a new edge function that sends the insight/action context to the AI and returns a detailed recommendation, displayed inline below the card.
+Replace the current popup dialog with a smooth slide transition. When a user clicks "How to improve" or "What you should do", the entire insights card content slides left and a new guidance panel slides in from the right -- all within the same card container. A back button returns the user to the insights list.
 
 ## How It Works
-1. Each Insight Card gets a small "How to improve" button at the bottom
-2. Each Action Item gets a "What you should do" button below it
-3. Clicking the button sends that specific insight/action text to a new edge function
-4. The AI returns a focused, actionable explanation (2-3 paragraphs)
-5. The guidance appears inline below the card/item with a smooth animation
-6. Users can collapse the guidance by clicking the button again
+1. User clicks "How to improve" on an insight or "What you should do" on an action item
+2. The current insights list slides out to the left
+3. A new guidance view slides in from the right, filling the same card space
+4. The guidance view includes a back arrow + title at the top, and scrollable AI-generated content below
+5. Clicking the back button reverses the animation -- guidance slides out right, insights slide back in from left
 
 ## Technical Details
 
-### 1. New Edge Function: `ai-insight-guidance`
-**File:** `supabase/functions/ai-insight-guidance/index.ts`
+### 1. Refactor `GuidanceDialog.tsx` into `GuidancePanel.tsx`
+- Remove the Dialog/modal entirely
+- The `GuidanceButton` now just calls a callback (passed as a prop) with the insight/action context instead of opening a dialog
+- Create a new `GuidancePanel` component that renders the guidance content with:
+  - Back button (ArrowLeft icon + "Back to Insights" label) at the top
+  - The insight/action title as a subtitle
+  - ScrollArea wrapping the markdown-rendered guidance
+  - Loading skeleton state
+  - "AI-generated guidance" footer
 
-- Accepts `{ type: 'insight' | 'action', title, description, category?, priority? }`
-- Uses `google/gemini-3-flash-preview` via Lovable AI gateway
-- System prompt tailored for salon business context: "Given this business insight/action item, provide specific, step-by-step guidance on how to address it. Be practical and actionable."
-- Returns `{ guidance: string }` as plain text (rendered with markdown)
-- Handles 429/402 rate limit errors
-- No caching needed (these are on-demand, per-click requests)
+### 2. Update `AIInsightsDrawer.tsx`
+- Add state: `activeGuidance: { type, title, description, category?, priority? } | null`
+- Add state: `guidanceText: string | null`, `isLoadingGuidance: boolean`
+- Wrap the insights list and the guidance panel in an `overflow-hidden` container
+- Use `framer-motion` `AnimatePresence` with two keyed views:
+  - `key="insights"`: the current insights/actions list -- exits by sliding left
+  - `key="guidance"`: the guidance panel -- enters by sliding in from right
+- When `activeGuidance` is set, fetch the guidance from the edge function and show the guidance view
+- When back is clicked, clear `activeGuidance` and reverse the animation
+- Pass an `onRequestGuidance` callback down to `InsightCard` and `ActionItemCard`
 
-### 2. Update `AIInsightsDrawer.tsx` (primary visible component from screenshot)
+### 3. Update `AIInsightsCard.tsx`
+- Same pattern: lift guidance state to the card level
+- Same slide-left / slide-right animation between the two views
+- Pass `onRequestGuidance` callback to child cards
 
-**InsightCard changes:**
-- Add local state `showGuidance` and `guidance` text
-- Add a "How to improve" ghost button below the description
-- On click: call the edge function with the insight's title + description + category
-- Show loading spinner while fetching
-- Render returned markdown guidance with `react-markdown` below the card content
-- Toggle behavior: clicking again collapses the guidance
+### 4. Remove `GuidanceDialog.tsx`
+- No longer needed since the dialog approach is replaced
 
-**ActionItemCard changes:**
-- Same pattern: "What you should do" button below each action
-- Sends action text + priority to the edge function
-- Displays inline guidance below the action item
-
-### 3. Update `AIInsightsCard.tsx` (pinnable card variant)
-- Apply the same InsightCard and ActionItemCard changes for consistency across both the drawer and card views
-
-### 4. Update `supabase/config.toml`
-- Add `[functions.ai-insight-guidance]` with `verify_jwt = false`
+### Animation Details
+- Insights list exit: `x: 0` to `x: -100%` (slide left)
+- Guidance panel enter: `x: 100%` to `x: 0` (slide in from right)
+- Reverse on back: guidance exits `x: 0` to `x: 100%`, insights enter `x: -100%` to `x: 0`
+- Duration ~0.3s with easeInOut
 
 ### Files to Create
-- `supabase/functions/ai-insight-guidance/index.ts`
+- `src/components/dashboard/GuidancePanel.tsx` -- standalone scrollable guidance view with back button
 
 ### Files to Modify
-- `src/components/dashboard/AIInsightsDrawer.tsx` -- Add guidance buttons and inline expansion to InsightCard and ActionItemCard
-- `src/components/dashboard/AIInsightsCard.tsx` -- Same changes for the card variant
+- `src/components/dashboard/AIInsightsDrawer.tsx` -- lift guidance state, add slide animation wrapper
+- `src/components/dashboard/AIInsightsCard.tsx` -- same changes for the pinnable card variant
 
+### Files to Delete
+- `src/components/dashboard/GuidanceDialog.tsx` -- replaced by the new slide-over pattern
