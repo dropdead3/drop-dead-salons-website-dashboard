@@ -298,8 +298,16 @@ export function AIInsightsCard() {
                   {cooldown > 0 ? `${cooldown}s` : isRefreshing ? 'Analyzing...' : 'Refresh'}
                 </Button>
               </div>
-              {data && (
-                <div className="flex items-start gap-2 mt-2">
+            </CardHeader>
+          )}
+
+          <CardContent 
+            className={cn("pt-0 flex-1 min-h-0", activeGuidance && "p-0")} 
+            style={{ overflowY: 'auto' }}
+            onWheel={(e) => e.stopPropagation()}
+          >
+              {!activeGuidance && data && (
+                <div className="flex items-start gap-2 mb-3 px-0">
                   <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
                     <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
                   </div>
@@ -315,14 +323,6 @@ export function AIInsightsCard() {
                   </div>
                 </div>
               )}
-            </CardHeader>
-          )}
-
-          <CardContent 
-            className={cn("pt-0 flex-1 min-h-0", activeGuidance && "p-0")} 
-            style={{ overflowY: 'auto' }}
-            onWheel={(e) => e.stopPropagation()}
-          >
               <AnimatePresence mode="wait" initial={false}>
                 {!activeGuidance ? (
                   <motion.div
