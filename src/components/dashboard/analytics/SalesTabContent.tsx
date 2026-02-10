@@ -52,6 +52,7 @@ import { CommissionTiersEditor } from '@/components/dashboard/sales/CommissionTi
 import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
 import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
+import { GrowthForecastCard } from '@/components/dashboard/sales/GrowthForecastCard';
 import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYearComparison';
 import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';
 import { CompareTabContent } from '@/components/dashboard/sales/compare/CompareTabContent';
@@ -386,6 +387,12 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
           <PinnableCard elementKey="week_ahead_forecast" elementName="Forecasting" category="Analytics Hub - Sales">
             <ForecastingCard />
           </PinnableCard>
+
+          {/* Growth Forecasting - Long-range trend-based projections */}
+          <PinnableCard elementKey="growth_forecast" elementName="Growth Forecast" category="Analytics Hub - Sales">
+            <GrowthForecastCard />
+          </PinnableCard>
+
           <div className="grid lg:grid-cols-2 gap-6">
             <PinnableCard elementKey="revenue_forecast" elementName="Revenue Forecast" category="Analytics Hub - Sales">
               <RevenueForecast 
