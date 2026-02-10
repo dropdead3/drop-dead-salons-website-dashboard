@@ -3584,6 +3584,44 @@ export type Database = {
           },
         ]
       }
+      dismissed_insight_suggestions: {
+        Row: {
+          created_at: string
+          dismissed_at: string
+          expires_at: string
+          id: string
+          organization_id: string
+          suggestion_key: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dismissed_at?: string
+          expires_at?: string
+          id?: string
+          organization_id: string
+          suggestion_key: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dismissed_at?: string
+          expires_at?: string
+          id?: string
+          organization_id?: string
+          suggestion_key?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dismissed_insight_suggestions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       edge_function_logs: {
         Row: {
           completed_at: string | null

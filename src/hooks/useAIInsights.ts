@@ -17,11 +17,20 @@ export interface ActionItem {
   priority: 'high' | 'medium' | 'low';
 }
 
+export interface FeatureSuggestion {
+  suggestionKey: string;
+  featureName: string;
+  whyItHelps: string;
+  howToStart: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
 export interface AIInsightsData {
   summaryLine: string;
   overallSentiment: 'positive' | 'neutral' | 'concerning';
   insights: InsightItem[];
   actionItems: ActionItem[];
+  featureSuggestions?: FeatureSuggestion[];
 }
 
 export interface AIInsightsRow {

@@ -94,6 +94,10 @@ serve(async (req) => {
       anomaliesRes,
       suggestionsRes,
       staffRes,
+      featureCatalogRes,
+      orgFeaturesRes,
+      payrollRes,
+      phorestLocationsRes,
     ] = await Promise.all([
       // Recent sales (last 14 days)
       supabase
@@ -146,6 +150,32 @@ serve(async (req) => {
         .eq("organization_id", orgId)
         .eq("is_active", true)
         .limit(50),
+
+      // Feature catalog (non-core features)
+      supabase
+        .from("feature_catalog")
+        .select("feature_key, name, description, is_core, default_enabled")
+        .eq("is_core", false),
+
+      // Org feature overrides
+      supabase
+        .from("organization_features")
+        .select("feature_key, is_enabled")
+        .eq("organization_id", orgId),
+
+      // Payroll connections
+      supabase
+        .from("payroll_connections")
+        .select("provider, connection_status")
+        .eq("organization_id", orgId)
+        .maybeSingle(),
+
+      // Phorest-connected locations
+      supabase
+        .from("locations")
+        .select("id, phorest_branch_id")
+        .eq("organization_id", orgId)
+        .not("phorest_branch_id", "is", null),
     ]);
 
     // Build data summary for the AI
@@ -155,6 +185,33 @@ serve(async (req) => {
     const anomalies = anomaliesRes.data || [];
     const suggestions = suggestionsRes.data || [];
     const staff = staffRes.data || [];
+    const featureCatalog = featureCatalogRes.data || [];
+    const orgFeatures = orgFeaturesRes.data || [];
+    const payrollConnection = payrollRes.data;
+    const phorestLocations = phorestLocationsRes.data || [];
+
+    // Build adoption gaps
+    const orgFeatureMap = new Map((orgFeatures as any[]).map((f: any) => [f.feature_key, f.is_enabled]));
+    const unusedFeatures = (featureCatalog as any[]).filter((f: any) => {
+      const override = orgFeatureMap.get(f.feature_key);
+      if (override === false) return true; // explicitly disabled
+      if (override === undefined && !f.default_enabled) return true; // not enabled by default and no override
+      return false;
+    });
+
+    const unusedIntegrations: string[] = [];
+    if (!payrollConnection || payrollConnection.connection_status !== 'connected') {
+      unusedIntegrations.push('Payroll (Gusto or QuickBooks) - Automate payroll, tax filing, and direct deposits');
+    }
+    if (phorestLocations.length === 0) {
+      unusedIntegrations.push('Phorest POS - Sync appointments, clients, and sales data automatically');
+    }
+
+    const adoptionContext = `
+UNUSED FEATURES & INTEGRATIONS:
+${unusedFeatures.length > 0 ? unusedFeatures.map((f: any) => `  - ${f.name} (key: feature:${f.feature_key}): ${f.description}`).join("\n") : "All available features are enabled."}
+${unusedIntegrations.length > 0 ? `\nUnconnected Integrations:\n${unusedIntegrations.map(i => `  - ${i}`).join("\n")}` : "\nAll key integrations are connected."}
+`;
 
     // Pre-compute key metrics
     const pastAppointments = appointments.filter((a) => a.appointment_date <= today);
@@ -221,11 +278,13 @@ ${suggestions.length > 0 ? suggestions.map((s) => `  ${s.suggestion_type}: ${s.s
         messages: [
           {
             role: "system",
-            content: `You are a salon business intelligence analyst. Analyze the provided business data and generate actionable insights for salon owners. Be specific with numbers and percentages. Focus on what matters most RIGHT NOW. Be concise but insightful. If data is limited or zeros, acknowledge it and suggest what to look for as data accumulates. Do NOT fabricate data that isn't in the snapshot.`,
+            content: `You are a salon business intelligence analyst. Analyze the provided business data and generate actionable insights for salon owners. Be specific with numbers and percentages. Focus on what matters most RIGHT NOW. Be concise but insightful. If data is limited or zeros, acknowledge it and suggest what to look for as data accumulates. Do NOT fabricate data that isn't in the snapshot.
+
+Additionally, review the UNUSED FEATURES & INTEGRATIONS section. Based on the business data patterns, identify 2-4 of the most impactful unused features or integrations that would benefit this business. For each, explain WHY it would help based on the specific data you see, and HOW to get started. Use the suggestionKey format "feature:<key>" for features and "integration:<name>" for integrations.`,
           },
           {
             role: "user",
-            content: `Analyze this salon business data and provide insights:\n\n${dataContext}`,
+            content: `Analyze this salon business data and provide insights:\n\n${dataContext}\n\n${adoptionContext}`,
           },
         ],
         tools: [
@@ -294,8 +353,39 @@ ${suggestions.length > 0 ? suggestions.map((s) => `  ${s.suggestion_type}: ${s.s
                       additionalProperties: false,
                     },
                   },
+                  featureSuggestions: {
+                    type: "array",
+                    description: "2-4 suggestions for unused features/integrations that would benefit this business.",
+                    items: {
+                      type: "object",
+                      properties: {
+                        suggestionKey: {
+                          type: "string",
+                          description: "Unique key like 'feature:loyalty_program' or 'integration:payroll'",
+                        },
+                        featureName: {
+                          type: "string",
+                          description: "Display name of the feature or integration",
+                        },
+                        whyItHelps: {
+                          type: "string",
+                          description: "1-2 sentences on business value based on the data patterns",
+                        },
+                        howToStart: {
+                          type: "string",
+                          description: "Brief getting-started guidance",
+                        },
+                        priority: {
+                          type: "string",
+                          enum: ["high", "medium", "low"],
+                        },
+                      },
+                      required: ["suggestionKey", "featureName", "whyItHelps", "howToStart", "priority"],
+                      additionalProperties: false,
+                    },
+                  },
                 },
-                required: ["summaryLine", "overallSentiment", "insights", "actionItems"],
+                required: ["summaryLine", "overallSentiment", "insights", "actionItems", "featureSuggestions"],
                 additionalProperties: false,
               },
             },

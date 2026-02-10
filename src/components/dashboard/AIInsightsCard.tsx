@@ -2,9 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { VisibilityGate } from '@/components/visibility';
 import { PinnableCard } from './PinnableCard';
-import { useAIInsights, type InsightItem, type ActionItem } from '@/hooks/useAIInsights';
+import { useAIInsights, type InsightItem, type ActionItem, type FeatureSuggestion } from '@/hooks/useAIInsights';
+import { useDismissedSuggestions } from '@/hooks/useDismissedSuggestions';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { GuidancePanel } from './GuidancePanel';
 import { cn } from '@/lib/utils';
@@ -26,6 +28,8 @@ import {
   Clock,
   ChevronRight,
   Lightbulb,
+  Zap,
+  X,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -194,6 +198,7 @@ function LoadingSkeleton() {
 
 export function AIInsightsCard() {
   const { data, generatedAt, isLoading, isRefreshing, isStale, refresh, cooldownRemaining } = useAIInsights();
+  const { dismissedKeys, dismiss } = useDismissedSuggestions();
   const [cooldown, setCooldown] = useState(0);
   const [activeGuidance, setActiveGuidance] = useState<GuidanceRequest | null>(null);
   const [guidanceText, setGuidanceText] = useState<string | null>(null);
@@ -325,6 +330,69 @@ export function AIInsightsCard() {
                             </div>
                           </div>
                         )}
+                        {(() => {
+                          const visibleSuggestions = (data.featureSuggestions || []).filter(
+                            (s) => !dismissedKeys.has(s.suggestionKey)
+                          );
+                          if (visibleSuggestions.length === 0) return null;
+                          return (
+                            <div>
+                              <div className="flex items-center gap-1.5 mb-2">
+                                <Zap className="w-3.5 h-3.5 text-amber-500" />
+                                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">SUGGESTED FOR YOU</span>
+                              </div>
+                              <div className="space-y-2">
+                                <AnimatePresence>
+                                  {visibleSuggestions.map((suggestion) => (
+                                    <motion.div
+                                      key={suggestion.suggestionKey}
+                                      initial={{ opacity: 1, height: 'auto' }}
+                                      exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                      transition={{ duration: 0.3 }}
+                                      className="relative border border-dashed border-amber-500/30 rounded-lg p-3 bg-gradient-to-br from-amber-500/5 to-orange-500/5"
+                                    >
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <button
+                                            onClick={() => dismiss(suggestion.suggestionKey)}
+                                            className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                                          >
+                                            <X className="w-3 h-3" />
+                                          </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="left">Dismiss for 30 days</TooltipContent>
+                                      </Tooltip>
+                                      <div className="flex items-start gap-2.5 pr-5">
+                                        <Zap className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                                        <div className="flex-1 min-w-0">
+                                          <div className="flex items-center gap-2 mb-0.5">
+                                            <span className="text-sm font-medium">{suggestion.featureName}</span>
+                                            <span className={cn(
+                                              'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display',
+                                              priorityBadge[suggestion.priority],
+                                            )}>
+                                              {suggestion.priority}
+                                            </span>
+                                          </div>
+                                          <p className="text-xs text-muted-foreground leading-relaxed">{suggestion.whyItHelps}</p>
+                                          <p className="text-xs text-muted-foreground/70 mt-1 italic">{suggestion.howToStart}</p>
+                                          <GuidanceTrigger
+                                            label="Learn more"
+                                            onClick={() => handleRequestGuidance({
+                                              type: 'action',
+                                              title: `Enable ${suggestion.featureName}`,
+                                              description: `${suggestion.whyItHelps} ${suggestion.howToStart}`,
+                                            })}
+                                          />
+                                        </div>
+                                      </div>
+                                    </motion.div>
+                                  ))}
+                                </AnimatePresence>
+                              </div>
+                            </div>
+                          );
+                        })()}
                         <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
                           <Sparkles className="w-3 h-3 text-muted-foreground/40" />
                           <span className="text-[10px] text-muted-foreground/50">Powered by AI · Based on your data</span>
