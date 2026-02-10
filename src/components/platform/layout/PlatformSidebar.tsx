@@ -26,7 +26,6 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
-import { PlatformButton } from '../ui/PlatformButton';
 import { usePlatformBranding } from '@/hooks/usePlatformBranding';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
@@ -34,6 +33,7 @@ import { usePlatformPresenceContext } from '@/contexts/PlatformPresenceContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { OnlineIndicator } from '../ui/OnlineIndicator';
 import { PlatformBadge } from '../ui/PlatformBadge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { PlatformRole } from '@/hooks/usePlatformRoles';
 
 const roleConfig: Record<PlatformRole, { label: string; icon: React.ComponentType<{ className?: string }>; variant: 'warning' | 'info' | 'success' | 'primary' }> = {
@@ -50,24 +50,54 @@ interface NavItem {
   platformRoles?: Array<'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer'>;
 }
 
-const platformNavItems: NavItem[] = [
-  { href: '/dashboard/platform/overview', label: 'Overview', icon: Terminal },
-  { href: '/dashboard/platform/accounts', label: 'Accounts', icon: Building2 },
-  { href: '/dashboard/platform/health-scores', label: 'Health Scores', icon: Activity, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
-  { href: '/dashboard/platform/benchmarks', label: 'Benchmarks', icon: BarChart3, platformRoles: ['platform_owner', 'platform_admin'] },
-  { href: '/dashboard/platform/onboarding', label: 'Onboarding', icon: Rocket, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
-  { href: '/dashboard/platform/import', label: 'Migrations', icon: Upload },
-  { href: '/dashboard/platform/audit-log', label: 'Audit Log', icon: FileText, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
-  { href: '/dashboard/platform/jobs', label: 'Scheduled Jobs', icon: Clock, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
-  { href: '/dashboard/platform/health', label: 'System Health', icon: Activity, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
-  { href: '/dashboard/platform/stripe-health', label: 'Payments Health', icon: CreditCard, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
-  { href: '/dashboard/platform/notifications', label: 'Notifications', icon: Bell, platformRoles: ['platform_owner', 'platform_admin'] },
-  { href: '/dashboard/platform/analytics', label: 'Analytics', icon: BarChart3, platformRoles: ['platform_owner'] },
-  { href: '/dashboard/platform/knowledge-base', label: 'Knowledge Base', icon: BookOpen, platformRoles: ['platform_owner', 'platform_admin'] },
-  { href: '/dashboard/platform/revenue', label: 'Revenue', icon: DollarSign, platformRoles: ['platform_owner', 'platform_admin'] },
-  { href: '/dashboard/platform/permissions', label: 'Permissions', icon: Shield, platformRoles: ['platform_owner', 'platform_admin'] },
-  { href: '/dashboard/platform/feature-flags', label: 'Feature Flags', icon: Flag, platformRoles: ['platform_owner', 'platform_admin'] },
-  { href: '/dashboard/platform/settings', label: 'Settings', icon: Settings, platformRoles: ['platform_owner', 'platform_admin'] },
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: 'Core',
+    items: [
+      { href: '/dashboard/platform/overview', label: 'Overview', icon: Terminal },
+      { href: '/dashboard/platform/accounts', label: 'Accounts', icon: Building2 },
+      { href: '/dashboard/platform/health-scores', label: 'Health Scores', icon: Activity, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
+      { href: '/dashboard/platform/benchmarks', label: 'Benchmarks', icon: BarChart3, platformRoles: ['platform_owner', 'platform_admin'] },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { href: '/dashboard/platform/onboarding', label: 'Onboarding', icon: Rocket, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
+      { href: '/dashboard/platform/import', label: 'Migrations', icon: Upload },
+      { href: '/dashboard/platform/jobs', label: 'Scheduled Jobs', icon: Clock, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
+    ],
+  },
+  {
+    label: 'Monitoring',
+    items: [
+      { href: '/dashboard/platform/audit-log', label: 'Audit Log', icon: FileText, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
+      { href: '/dashboard/platform/health', label: 'System Health', icon: Activity, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
+      { href: '/dashboard/platform/stripe-health', label: 'Payments Health', icon: CreditCard, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
+      { href: '/dashboard/platform/notifications', label: 'Notifications', icon: Bell, platformRoles: ['platform_owner', 'platform_admin'] },
+    ],
+  },
+  {
+    label: 'Intelligence',
+    items: [
+      { href: '/dashboard/platform/analytics', label: 'Analytics', icon: BarChart3, platformRoles: ['platform_owner'] },
+      { href: '/dashboard/platform/knowledge-base', label: 'Knowledge Base', icon: BookOpen, platformRoles: ['platform_owner', 'platform_admin'] },
+      { href: '/dashboard/platform/revenue', label: 'Revenue', icon: DollarSign, platformRoles: ['platform_owner', 'platform_admin'] },
+    ],
+  },
+  {
+    label: 'Admin',
+    items: [
+      { href: '/dashboard/platform/permissions', label: 'Permissions', icon: Shield, platformRoles: ['platform_owner', 'platform_admin'] },
+      { href: '/dashboard/platform/feature-flags', label: 'Feature Flags', icon: Flag, platformRoles: ['platform_owner', 'platform_admin'] },
+      { href: '/dashboard/platform/settings', label: 'Settings', icon: Settings, platformRoles: ['platform_owner', 'platform_admin'] },
+    ],
+  },
 ];
 
 const SIDEBAR_COLLAPSED_KEY = 'platform-sidebar-collapsed';
@@ -81,7 +111,6 @@ export function PlatformSidebar() {
   const { data: profile } = useEmployeeProfile();
   const { isConnected } = usePlatformPresenceContext();
   
-  // Get the highest priority role for display
   const primaryRole = platformRoles[0] as PlatformRole | undefined;
   const roleInfo = primaryRole ? roleConfig[primaryRole] : null;
   
@@ -100,42 +129,41 @@ export function PlatformSidebar() {
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  // Filter nav items based on platform role hierarchy
-  const visibleItems = platformNavItems.filter(item => {
-    if (!item.platformRoles || item.platformRoles.length === 0) return true;
-    return item.platformRoles.some(role => hasPlatformRoleOrHigher(role));
-  });
+  const isDark = resolvedTheme === 'dark';
+
+  // Filter groups to only show items the user has access to
+  const visibleGroups = navGroups
+    .map(group => ({
+      ...group,
+      items: group.items.filter(item => {
+        if (!item.platformRoles || item.platformRoles.length === 0) return true;
+        return item.platformRoles.some(role => hasPlatformRoleOrHigher(role));
+      }),
+    }))
+    .filter(group => group.items.length > 0);
 
   // Choose logo based on theme
-  // Dark mode: use primary_logo_url (light/white logo)
-  // Light mode: use secondary_logo_url (dark logo)
   const currentLogo = resolvedTheme === 'dark' 
     ? branding.primary_logo_url 
     : branding.secondary_logo_url;
   
-  // Choose icon based on theme (for collapsed sidebar)
-  // Dark mode: use icon_dark_url (light/white icon)
-  // Light mode: use icon_light_url (dark icon)
   const currentIcon = resolvedTheme === 'dark'
     ? branding.icon_dark_url
     : branding.icon_light_url;
 
-  const isDark = resolvedTheme === 'dark';
-
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-40 h-screen border-r transition-all duration-300',
+        'fixed left-0 top-0 z-40 h-screen flex flex-col transition-all duration-300',
         collapsed ? 'w-16' : 'w-56',
         isDark 
-          ? 'border-slate-700/50 bg-slate-900/95 backdrop-blur-xl'
-          : 'border-violet-200/50 bg-white/95 backdrop-blur-xl shadow-lg shadow-violet-500/5'
+          ? 'bg-slate-900/95 backdrop-blur-xl'
+          : 'bg-white/95 backdrop-blur-xl shadow-lg shadow-violet-500/5'
       )}
     >
-      {/* Logo / Header */}
+      {/* Logo / Header with collapse toggle */}
       <div className={cn(
-        'flex h-16 items-center justify-between border-b px-4',
-        isDark ? 'border-slate-700/50' : 'border-violet-200/50'
+        'flex h-[60px] items-center justify-between px-4 shrink-0',
       )}>
         {!collapsed && (
           <div className="flex items-center gap-2">
@@ -149,9 +177,7 @@ export function PlatformSidebar() {
               <>
                 <div className={cn(
                   'p-1.5 rounded-lg shadow-lg',
-                  isDark 
-                    ? 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'
-                    : 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/30'
+                  'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'
                 )}>
                   <Sparkles className="h-4 w-4 text-white" />
                 </div>
@@ -174,60 +200,156 @@ export function PlatformSidebar() {
             ) : (
               <div className={cn(
                 'p-1.5 rounded-lg shadow-lg',
-                isDark 
-                  ? 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'
-                  : 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/30'
+                'bg-gradient-to-br from-violet-500 to-purple-600 shadow-violet-500/20'
               )}>
                 <Sparkles className="h-4 w-4 text-white" />
               </div>
             )}
           </div>
         )}
+        {!collapsed && (
+          <button
+            onClick={() => setCollapsed(true)}
+            className={cn(
+              'p-1 rounded-md transition-colors duration-200',
+              isDark 
+                ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/60' 
+                : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
+            )}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+        )}
+        {collapsed && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setCollapsed(false)}
+                className={cn(
+                  'absolute -right-3 top-[18px] z-50 p-1 rounded-full border shadow-sm transition-colors duration-200',
+                  isDark 
+                    ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700' 
+                    : 'bg-white border-violet-200 text-slate-400 hover:text-violet-600 hover:bg-violet-50'
+                )}
+              >
+                <ChevronRight className="h-3 w-3" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Expand</TooltipContent>
+          </Tooltip>
+        )}
       </div>
 
+      {/* Header fade divider */}
+      <div className={cn(
+        'h-px mx-3 shrink-0',
+        isDark 
+          ? 'bg-gradient-to-r from-transparent via-slate-700/60 to-transparent'
+          : 'bg-gradient-to-r from-transparent via-violet-200/60 to-transparent'
+      )} />
+
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2">
-        <ul className="space-y-1">
-          {visibleItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.href;
-            
-            return (
-              <li key={item.href}>
-                <NavLink
-                  to={item.href}
-                  className={cn(
-                    'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200',
-                    collapsed && 'justify-center px-2',
-                    isActive
-                      ? isDark
-                        ? 'bg-violet-500/20 text-violet-300 shadow-sm shadow-violet-500/10'
-                        : 'bg-violet-100 text-violet-700 shadow-sm shadow-violet-500/10'
-                      : isDark
-                        ? 'text-slate-400 hover:bg-slate-800/60 hover:text-white'
-                        : 'text-slate-500 hover:bg-violet-50 hover:text-violet-700'
-                  )}
-                  title={collapsed ? item.label : undefined}
-                >
-                  <Icon className={cn(
-                    'h-5 w-5 shrink-0',
-                    isActive 
-                      ? isDark ? 'text-violet-400' : 'text-violet-600'
-                      : ''
-                  )} />
-                  {!collapsed && <span>{item.label}</span>}
-                </NavLink>
-              </li>
-            );
-          })}
-        </ul>
+      <nav className="flex-1 overflow-y-auto relative">
+        <div className={cn('py-3 space-y-4', collapsed ? 'px-1' : 'px-2')}>
+          {visibleGroups.map((group, groupIndex) => (
+            <div key={group.label}>
+              {/* Section label */}
+              {!collapsed && (
+                <div className={cn(
+                  'px-3 pb-1.5 text-[10px] font-medium uppercase tracking-wider',
+                  isDark ? 'text-slate-500' : 'text-slate-400'
+                )}>
+                  {group.label}
+                </div>
+              )}
+
+              {/* Collapsed: thin separator between groups */}
+              {collapsed && groupIndex > 0 && (
+                <div className={cn(
+                  'h-px mx-2 mb-2',
+                  isDark ? 'bg-slate-700/40' : 'bg-violet-100/60'
+                )} />
+              )}
+
+              <ul className="space-y-0.5">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname === item.href;
+                  
+                  const linkContent = (
+                    <NavLink
+                      to={item.href}
+                      className={cn(
+                        'relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ease-out',
+                        collapsed && 'justify-center px-2',
+                        !collapsed && 'hover:translate-x-0.5',
+                        isActive
+                          ? isDark
+                            ? 'bg-violet-500/15 text-violet-300'
+                            : 'bg-violet-100/80 text-violet-700'
+                          : isDark
+                            ? 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
+                            : 'text-slate-500 hover:bg-violet-50/80 hover:text-violet-700'
+                      )}
+                      title={collapsed ? item.label : undefined}
+                    >
+                      {/* Active accent bar */}
+                      {isActive && (
+                        <div className={cn(
+                          'absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-full',
+                          isDark ? 'bg-violet-400' : 'bg-violet-500'
+                        )} />
+                      )}
+                      <Icon className={cn(
+                        'h-[18px] w-[18px] shrink-0',
+                        isActive 
+                          ? isDark ? 'text-violet-400' : 'text-violet-600'
+                          : ''
+                      )} />
+                      {!collapsed && <span>{item.label}</span>}
+                    </NavLink>
+                  );
+
+                  if (collapsed) {
+                    return (
+                      <li key={item.href}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            {linkContent}
+                          </TooltipTrigger>
+                          <TooltipContent side="right">{item.label}</TooltipContent>
+                        </Tooltip>
+                      </li>
+                    );
+                  }
+
+                  return <li key={item.href}>{linkContent}</li>;
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        {/* Scroll fade hint */}
+        <div className={cn(
+          'sticky bottom-0 left-0 right-0 h-6 pointer-events-none',
+          isDark
+            ? 'bg-gradient-to-t from-slate-900/95 to-transparent'
+            : 'bg-gradient-to-t from-white/95 to-transparent'
+        )} />
       </nav>
 
       {/* User Profile Section */}
       <div className={cn(
-        'border-t p-3',
-        isDark ? 'border-slate-700/50' : 'border-violet-200/50'
+        'shrink-0 p-3',
       )}>
+        {/* Profile divider */}
+        <div className={cn(
+          'h-px mx-1 mb-3',
+          isDark 
+            ? 'bg-gradient-to-r from-transparent via-slate-700/60 to-transparent'
+            : 'bg-gradient-to-r from-transparent via-violet-200/60 to-transparent'
+        )} />
         <button
           onClick={() => navigate('/dashboard/platform/settings')}
           className={cn(
@@ -273,34 +395,6 @@ export function PlatformSidebar() {
             </div>
           )}
         </button>
-      </div>
-
-      {/* Collapse Toggle */}
-      <div className={cn(
-        'border-t p-3',
-        isDark ? 'border-slate-700/50' : 'border-violet-200/50'
-      )}>
-        <PlatformButton
-          variant="ghost"
-          size="sm"
-          onClick={() => setCollapsed(!collapsed)}
-          className={cn(
-            'w-full justify-center',
-            !collapsed && 'justify-start gap-2',
-            isDark 
-              ? 'text-slate-400 hover:text-white' 
-              : 'text-slate-500 hover:text-violet-700 hover:bg-violet-50'
-          )}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <>
-              <ChevronLeft className="h-4 w-4" />
-              <span>Collapse</span>
-            </>
-          )}
-        </PlatformButton>
       </div>
     </aside>
   );
