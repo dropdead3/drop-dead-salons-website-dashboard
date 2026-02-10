@@ -24,12 +24,12 @@ import { IncidentManagementCard } from '@/components/platform/overview/IncidentM
 
 const stagger = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.05 } },
+  show: { transition: { staggerChildren: 0.07 } },
 };
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as const } },
 };
 
 function getGreeting() {
@@ -56,13 +56,32 @@ export default function PlatformOverview() {
     <PlatformPageContainer>
       {/* Ambient gradient orbs */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div
-          className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full opacity-[0.04] blur-[120px] will-change-transform animate-[float-slow_20s_ease-in-out_infinite]"
+        <motion.div
+          animate={{ 
+            x: [0, 30, -20, 0], 
+            y: [0, -25, 15, 0],
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+          className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full opacity-[0.04] blur-[120px] will-change-transform"
           style={{ background: 'radial-gradient(circle, hsl(263 70% 60%), transparent 70%)' }}
         />
-        <div
-          className="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full opacity-[0.03] blur-[140px] will-change-transform animate-[float-slow_25s_ease-in-out_infinite_reverse]"
+        <motion.div
+          animate={{ 
+            x: [0, -25, 20, 0], 
+            y: [0, 20, -30, 0],
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+          className="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full opacity-[0.03] blur-[140px] will-change-transform"
           style={{ background: 'radial-gradient(circle, hsl(230 70% 55%), transparent 70%)' }}
+        />
+        <motion.div
+          animate={{ 
+            x: [0, 15, -10, 0], 
+            y: [0, -15, 25, 0],
+          }}
+          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+          className="absolute top-1/3 right-1/4 w-[400px] h-[400px] rounded-full opacity-[0.02] blur-[100px] will-change-transform"
+          style={{ background: 'radial-gradient(circle, hsl(280 60% 50%), transparent 70%)' }}
         />
       </div>
 
@@ -75,10 +94,10 @@ export default function PlatformOverview() {
         {/* Header */}
         <motion.div variants={fadeUp} className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-display bg-gradient-to-r from-white via-white to-violet-300 bg-clip-text text-transparent">
+            <h1 className="text-3xl font-display bg-gradient-to-r from-white via-white to-violet-300 bg-clip-text text-transparent tracking-tight">
               {greeting}
             </h1>
-            <p className="text-slate-400/80 mt-1.5">
+            <p className="text-slate-400/80 mt-1.5 text-sm">
               Manage accounts, migrations, and platform health
             </p>
           </div>
@@ -97,6 +116,7 @@ export default function PlatformOverview() {
             description="Active accounts"
             href="/dashboard/platform/accounts"
             sparkData={[2, 4, 3, 6, 5, 8, 7, 10]}
+            index={0}
           />
           <StatCard
             title="In Onboarding"
@@ -106,6 +126,7 @@ export default function PlatformOverview() {
             variant="warning"
             href="/dashboard/platform/accounts?status=onboarding"
             sparkData={[1, 2, 1, 3, 2, 2, 3, 2]}
+            index={1}
           />
           <StatCard
             title="Pending Migrations"
@@ -115,6 +136,7 @@ export default function PlatformOverview() {
             variant={stats?.pendingMigrations ? 'warning' : 'default'}
             href="/dashboard/platform/import"
             sparkData={[3, 2, 4, 1, 2, 1, 0, 1]}
+            index={2}
           />
           <StatCard
             title="Total Locations"
@@ -123,11 +145,15 @@ export default function PlatformOverview() {
             description="Across all accounts"
             href="/dashboard/platform/accounts"
             sparkData={[5, 6, 8, 9, 10, 12, 14, 16]}
+            index={3}
           />
         </motion.div>
 
         {/* Gradient divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
+        <motion.div 
+          variants={fadeUp}
+          className="h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" 
+        />
 
         {/* Incident Banner + Analytics Row */}
         <motion.div variants={fadeUp} className="grid gap-6 lg:grid-cols-3">
@@ -140,34 +166,40 @@ export default function PlatformOverview() {
         </motion.div>
 
         {/* Gradient divider */}
-        <div className="h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" />
+        <motion.div 
+          variants={fadeUp}
+          className="h-px bg-gradient-to-r from-transparent via-violet-500/20 to-transparent" 
+        />
 
         {/* Quick Actions */}
-        <motion.div variants={fadeUp} className="rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <div className="p-2 rounded-xl bg-violet-500/20">
+        <motion.div variants={fadeUp} className="group/actions relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 overflow-hidden">
+          {/* Subtle shimmer overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-violet-500/[0.03] to-transparent -translate-x-full group-hover/actions:translate-x-full transition-transform duration-[1.5s] ease-in-out" />
+          
+          <div className="relative flex items-center gap-2 mb-5">
+            <div className="p-2 rounded-xl bg-violet-500/20 ring-1 ring-violet-500/10">
               <Sparkles className="h-4 w-4 text-violet-400" />
             </div>
-            <h2 className="text-lg font-medium text-white">Quick Actions</h2>
+            <h2 className="text-lg font-medium text-white tracking-tight">Quick Actions</h2>
           </div>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="relative grid gap-3 sm:grid-cols-3">
             <QuickActionButton 
               icon={Building2}
               label="View All Accounts"
               onClick={() => navigate('/dashboard/platform/accounts')}
-              hoverAnimation="group-hover:scale-110"
+              hoverAnimation="group-hover/action:scale-110"
             />
             <QuickActionButton 
               icon={Upload}
               label="Start Migration"
               onClick={() => navigate('/dashboard/platform/import')}
-              hoverAnimation="group-hover:-translate-y-0.5"
+              hoverAnimation="group-hover/action:-translate-y-0.5"
             />
             <QuickActionButton 
               icon={Settings}
               label="Platform Settings"
               onClick={() => navigate('/dashboard/platform/settings')}
-              hoverAnimation="group-hover:rotate-45"
+              hoverAnimation="group-hover/action:rotate-45"
             />
           </div>
         </motion.div>
@@ -189,13 +221,14 @@ interface StatCardProps {
   variant?: 'default' | 'warning' | 'success';
   href?: string;
   sparkData?: number[];
+  index?: number;
 }
 
-function StatCard({ title, value, icon: Icon, description, variant = 'default', href, sparkData }: StatCardProps) {
+function StatCard({ title, value, icon: Icon, description, variant = 'default', href, sparkData, index = 0 }: StatCardProps) {
   const iconStyles = {
-    default: 'bg-violet-500/20 text-violet-400',
-    warning: 'bg-amber-500/20 text-amber-400',
-    success: 'bg-emerald-500/20 text-emerald-400',
+    default: 'bg-violet-500/20 text-violet-400 ring-1 ring-violet-500/10',
+    warning: 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/10',
+    success: 'bg-emerald-500/20 text-emerald-400 ring-1 ring-emerald-500/10',
   };
 
   const valueStyles = {
@@ -204,17 +237,42 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default', 
     success: 'text-emerald-300',
   };
 
-  const cardClasses = "group/card relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 transition-all duration-300 hover:border-violet-500/30 hover:shadow-[0_0_30px_-10px_rgba(139,92,246,0.15)]";
+  const glowStyles = {
+    default: 'hover:shadow-[0_0_40px_-12px_rgba(139,92,246,0.2)]',
+    warning: 'hover:shadow-[0_0_40px_-12px_rgba(245,158,11,0.15)]',
+    success: 'hover:shadow-[0_0_40px_-12px_rgba(16,185,129,0.15)]',
+  };
+
+  const borderHoverStyles = {
+    default: 'hover:border-violet-500/40',
+    warning: 'hover:border-amber-500/30',
+    success: 'hover:border-emerald-500/30',
+  };
+
+  const cardClasses = cn(
+    "group/card relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6",
+    "transition-all duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] will-change-transform",
+    "hover:-translate-y-0.5",
+    glowStyles[variant],
+    borderHoverStyles[variant],
+    "overflow-hidden"
+  );
 
   const content = (
     <>
-      {/* Gradient overlay on hover */}
-      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500/[0.07] via-purple-500/[0.04] to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-500" />
+      {/* Gradient shimmer on hover */}
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-500/[0.07] via-purple-500/[0.04] to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-700" />
+      
+      {/* Top edge highlight */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
       
       <div className="relative">
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-medium text-slate-400">{title}</span>
-          <div className={cn('p-2.5 rounded-xl transition-all duration-300 group-hover/card:scale-105', iconStyles[variant])}>
+          <span className="text-xs font-medium text-slate-400 tracking-wide uppercase">{title}</span>
+          <div className={cn(
+            'p-2.5 rounded-xl transition-all duration-500 group-hover/card:scale-110 group-hover/card:rotate-3',
+            iconStyles[variant]
+          )}>
             <Icon className="h-5 w-5" />
           </div>
         </div>
@@ -223,27 +281,44 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default', 
             <AnimatedNumber value={value} duration={1400} />
           </div>
           {sparkData && sparkData.length > 1 && (
-            <TrendSparkline data={sparkData} width={72} height={28} className="mb-1 opacity-60 group-hover/card:opacity-100 transition-opacity duration-300" />
+            <TrendSparkline 
+              data={sparkData} 
+              width={72} 
+              height={28} 
+              className="mb-1 opacity-50 group-hover/card:opacity-100 transition-opacity duration-500" 
+            />
           )}
         </div>
-        <div className="h-px bg-gradient-to-r from-slate-600/40 to-transparent my-2.5" />
-        <p className="text-sm text-slate-500">{description}</p>
+        <div className="h-px bg-gradient-to-r from-slate-600/40 via-slate-600/20 to-transparent my-3" />
+        <p className="text-sm text-slate-500 group-hover/card:text-slate-400 transition-colors duration-300">{description}</p>
       </div>
     </>
   );
 
   if (href) {
     return (
-      <Link to={href} className={cn(cardClasses, "cursor-pointer block")}>
-        {content}
-      </Link>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: index * 0.08, ease: [0.25, 0.1, 0.25, 1] }}
+      >
+        <Link to={href} className={cn(cardClasses, "cursor-pointer block")}>
+          {content}
+        </Link>
+      </motion.div>
     );
   }
 
   return (
-    <div className={cardClasses}>
-      {content}
-    </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.08, ease: [0.25, 0.1, 0.25, 1] }}
+    >
+      <div className={cardClasses}>
+        {content}
+      </div>
+    </motion.div>
   );
 }
 
@@ -258,11 +333,23 @@ function QuickActionButton({ icon: Icon, label, onClick, hoverAnimation }: Quick
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-700/40 border border-slate-600/30 text-slate-200 hover:bg-slate-700/60 hover:text-white hover:border-violet-500/30 hover:border-l-violet-500/60 transition-all duration-300 group"
+      className={cn(
+        "group/action w-full flex items-center gap-3 px-4 py-3.5 rounded-xl",
+        "bg-slate-700/30 border border-slate-600/20",
+        "text-slate-200 hover:text-white",
+        "hover:bg-slate-700/50 hover:border-violet-500/30",
+        "active:scale-[0.98]",
+        "transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)]"
+      )}
     >
-      <Icon className={cn("h-4 w-4 text-slate-400 group-hover:text-violet-400 transition-all duration-300", hoverAnimation)} />
+      <div className="p-1.5 rounded-lg bg-slate-600/30 group-hover/action:bg-violet-500/20 transition-colors duration-300">
+        <Icon className={cn(
+          "h-4 w-4 text-slate-400 group-hover/action:text-violet-400 transition-all duration-300",
+          hoverAnimation
+        )} />
+      </div>
       <span className="flex-1 text-left text-sm font-medium">{label}</span>
-      <ArrowRight className="h-4 w-4 text-slate-500 group-hover:text-violet-400 group-hover:translate-x-1 transition-all duration-300" />
+      <ArrowRight className="h-4 w-4 text-slate-500 group-hover/action:text-violet-400 group-hover/action:translate-x-1 transition-all duration-300" />
     </button>
   );
 }
@@ -290,19 +377,15 @@ function PlatformOverviewSkeleton() {
         ))}
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2 rounded-2xl border border-slate-700/50 bg-slate-800/40 p-6">
+          <Skeleton className="h-6 w-32 mb-5 bg-slate-700/50" />
+          <Skeleton className="h-[220px] w-full rounded-xl bg-slate-700/50" />
+        </div>
         <div className="rounded-2xl border border-slate-700/50 bg-slate-800/40 p-6">
           <Skeleton className="h-6 w-32 mb-5 bg-slate-700/50" />
           <div className="space-y-3">
             {[...Array(3)].map((_, i) => (
               <Skeleton key={i} className="h-12 w-full rounded-xl bg-slate-700/50" />
-            ))}
-          </div>
-        </div>
-        <div className="lg:col-span-2 rounded-2xl border border-slate-700/50 bg-slate-800/40 p-6">
-          <Skeleton className="h-6 w-32 mb-5 bg-slate-700/50" />
-          <div className="space-y-3">
-            {[...Array(3)].map((_, i) => (
-              <Skeleton key={i} className="h-16 w-full rounded-xl bg-slate-700/50" />
             ))}
           </div>
         </div>

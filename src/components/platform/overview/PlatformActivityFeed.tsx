@@ -13,8 +13,6 @@ import {
   Activity
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
-import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePlatformAuditLog, getAuditActionConfig, type AuditLogEntry } from '@/hooks/usePlatformAuditLog';
 
@@ -56,13 +54,16 @@ export function PlatformActivityFeed({
 
   if (isLoading) {
     return (
-      <div className={cn("rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6", className)}>
+      <div className={cn(
+        "rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 overflow-hidden",
+        className
+      )}>
         {showHeader && (
           <div className="flex items-center gap-2 mb-5">
             <div className="p-2 rounded-xl bg-violet-500/20">
               <Activity className="h-4 w-4 text-violet-400" />
             </div>
-            <h2 className="text-lg font-semibold text-white">Activity Feed</h2>
+            <h2 className="text-lg font-medium text-white">Activity Feed</h2>
           </div>
         )}
         <div className="space-y-3">
@@ -75,21 +76,27 @@ export function PlatformActivityFeed({
   }
 
   return (
-    <div className={cn("rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6", className)}>
+    <div className={cn(
+      "relative rounded-2xl border border-slate-700/50 bg-slate-800/40 backdrop-blur-xl p-6 overflow-hidden",
+      className
+    )}>
+      {/* Subtle top-edge highlight */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+
       {showHeader && (
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-xl bg-violet-500/20">
+            <div className="p-2 rounded-xl bg-violet-500/20 ring-1 ring-violet-500/10">
               <Activity className="h-4 w-4 text-violet-400" />
             </div>
-            <h2 className="text-lg font-semibold text-white">Activity Feed</h2>
+            <h2 className="text-lg font-medium text-white tracking-tight">Activity Feed</h2>
           </div>
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="text-xs text-slate-500">Live</span>
+            <span className="text-xs text-slate-500 font-medium tracking-wide">Live</span>
           </div>
         </div>
       )}
@@ -101,9 +108,9 @@ export function PlatformActivityFeed({
           ))}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-700/50 mb-4">
-            <Activity className="h-8 w-8 text-slate-500" />
+        <div className="text-center py-14">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-slate-700/30 mb-4">
+            <Activity className="h-8 w-8 text-slate-500 opacity-30" />
           </div>
           <p className="text-slate-400 font-medium">No activity yet</p>
           <p className="text-sm text-slate-500 mt-1">Actions will appear here as they happen</p>
@@ -145,8 +152,9 @@ function ActivityLogItem({ log, isLatest = false }: ActivityLogItemProps) {
     <Link 
       to={linkPath}
       className={cn(
-        "flex items-center gap-3 p-3 rounded-xl bg-slate-700/20 border border-slate-600/20 border-l-2 cursor-pointer group",
-        "hover:bg-slate-700/40 hover:border-slate-600/40 hover:translate-x-0.5 transition-all duration-300",
+        "flex items-center gap-3 p-3 rounded-xl bg-slate-700/20 border border-slate-600/20 border-l-2 cursor-pointer group/feed",
+        "hover:bg-slate-700/40 hover:border-slate-600/40 hover:translate-x-0.5",
+        "transition-all duration-300 ease-[cubic-bezier(0.25,0.1,0.25,1)] will-change-transform",
         borderColors[config.color] || 'border-l-slate-500/40'
       )}
     >
@@ -159,7 +167,10 @@ function ActivityLogItem({ log, isLatest = false }: ActivityLogItemProps) {
       </Avatar>
 
       {/* Action Icon */}
-      <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", colors.bg)}>
+      <div className={cn(
+        "flex h-8 w-8 items-center justify-center rounded-lg transition-transform duration-300 group-hover/feed:scale-105",
+        colors.bg
+      )}>
         <Icon className={cn("h-4 w-4", colors.text)} />
       </div>
 
@@ -171,7 +182,7 @@ function ActivityLogItem({ log, isLatest = false }: ActivityLogItemProps) {
           <span className="text-slate-400">{config.verb}</span>
           {' '}
           {log.organization_name && (
-            <span className="font-medium text-violet-400 group-hover:text-violet-300 transition-colors">
+            <span className="font-medium text-violet-400 group-hover/feed:text-violet-300 transition-colors duration-200">
               {log.organization_name}
             </span>
           )}
