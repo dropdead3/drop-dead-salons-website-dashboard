@@ -257,8 +257,7 @@ export default function DashboardHome() {
         />
       </motion.div>
       
-      {/* Floating Announcements Drawer */}
-      <AnnouncementsDrawer isLeadership={isLeadership} />
+      {/* Announcements drawer now rendered inline in ai_insights section */}
     </DashboardLayout>
   );
 }
@@ -328,8 +327,11 @@ function DashboardSections({
 
   // Build section components map (excludes pinned cards - those are rendered separately)
   const sectionComponents = useMemo(() => ({
-    ai_insights: isLeadership && (
-      <AIInsightsDrawer />
+    ai_insights: (
+      <div className="flex items-center gap-2">
+        {isLeadership && <AIInsightsDrawer />}
+        <AnnouncementsDrawer isLeadership={isLeadership} />
+      </div>
     ),
     
     hub_quicklinks: isLeadership && (
