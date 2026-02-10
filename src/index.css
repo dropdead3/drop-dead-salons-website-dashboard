@@ -1315,3 +1315,12 @@
 .platform-animate-float {
   animation: platform-float 6s ease-in-out infinite;
 }
+
+@keyframes sheen-sweep {
+  0%, 65% {
+    transform: translateX(-40%) translateZ(0);
+  }
+  100% {
+    transform: translateX(430%) translateZ(0);
+  }
+}

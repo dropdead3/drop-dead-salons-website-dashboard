@@ -43,16 +43,8 @@ export function TodaysBirthdayBanner() {
         }}
       >
         {/* Animated sheen on the stroke only */}
-        <motion.div
-          className="absolute inset-0 pointer-events-none"
-          initial={false}
-          animate={{ x: ['-40%', '140%'] }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            repeatDelay: 4,
-            ease: 'linear',
-          }}
+        <div
+          className="absolute inset-0 pointer-events-none animate-[sheen-sweep_6s_linear_infinite]"
           style={{
             width: '30%',
             background: 'linear-gradient(105deg, transparent 0%, rgba(255,255,255,0) 30%, rgba(255,255,255,0.45) 48%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0.45) 52%, rgba(255,255,255,0) 70%, transparent 100%)',
