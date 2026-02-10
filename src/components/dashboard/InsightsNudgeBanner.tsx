@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Sparkles, X } from 'lucide-react';
+import { Brain, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -86,7 +86,7 @@ export function InsightsNudgeBanner({ userId, isLeadership }: InsightsNudgeBanne
       >
         <div className="flex items-center gap-4 px-5 py-4">
           <div className="flex-shrink-0 p-2.5 rounded-full bg-primary/10">
-            <Sparkles className="w-5 h-5 text-primary" />
+            <Brain className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">
