@@ -47,20 +47,23 @@ export function TodaysBirthdayBanner() {
           
           <div className="flex items-center flex-wrap gap-3">
             {todaysBirthdays.map((person, index) => {
-              const isOwnBirthday = person.user_id === user?.id;
-              const canDM = !isOwnBirthday && person.user_id;
+              const isOwnBirthday = isViewingAsUser ? person.isCurrentUser : person.user_id === user?.id;
+              const canDM = !isOwnBirthday && !!person.user_id;
               return (
               <motion.div 
                 key={person.id} 
+                role={canDM ? "button" : undefined}
+                tabIndex={canDM ? 0 : undefined}
                 onClick={canDM ? () => handleSendDM(person.user_id) : undefined}
-                whileHover={canDM ? { scale: 1.03 } : undefined}
-                whileTap={canDM ? { scale: 0.97 } : undefined}
+                whileHover={canDM ? { scale: 1.05 } : undefined}
+                whileTap={canDM ? { scale: 0.95 } : undefined}
+                transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                 className={cn(
-                  "flex items-center gap-2 backdrop-blur-sm rounded-full pl-1 py-1 transition-colors group",
+                  "flex items-center gap-2 backdrop-blur-sm rounded-full pl-1 pr-2 py-1 group relative",
                   isViewingAsUser && person.isCurrentUser 
-                    ? "bg-background/40 ring-2 ring-background shadow-lg pr-3" 
-                    : "bg-background/20 pr-3",
-                  canDM && "cursor-pointer hover:bg-background/35 hover:shadow-md"
+                    ? "bg-background/40 ring-2 ring-background shadow-lg" 
+                    : "bg-background/20",
+                  canDM && "cursor-pointer hover:bg-background/35 hover:shadow-md hover:ring-1 hover:ring-white/30 transition-all duration-200"
                 )}
               >
                 <Avatar className={cn(
@@ -80,20 +83,18 @@ export function TodaysBirthdayBanner() {
                     <Eye className="w-3 h-3" />
                   )}
                 </span>
-                {index === 0 && <Cake className="w-4 h-4 shrink-0" />}
+                {index === 0 && !canDM && <Cake className="w-4 h-4 shrink-0" />}
                 {canDM && (
-                  <motion.span 
-                    className="inline-flex items-center gap-1 overflow-hidden rounded-full bg-background/20 group-hover:bg-background/40 transition-colors ml-1 shrink-0"
-                    initial={false}
-                    whileHover={{ }}
+                  <motion.div 
+                    className="flex items-center overflow-hidden rounded-full bg-white/15 group-hover:bg-white/25 transition-all duration-200 ml-0.5"
                   >
-                    <span className="flex items-center gap-1 px-1.5 py-0.5">
-                      <MessageCircle className="w-3.5 h-3.5 shrink-0" />
-                      <span className="text-xs font-medium max-w-0 overflow-hidden group-hover:max-w-[4rem] transition-all duration-300 ease-out whitespace-nowrap">
+                    <div className="flex items-center gap-1 px-1.5 py-0.5">
+                      <MessageCircle className="w-3.5 h-3.5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+                      <span className="text-xs font-semibold max-w-0 opacity-0 group-hover:max-w-[3rem] group-hover:opacity-100 transition-all duration-300 ease-out whitespace-nowrap overflow-hidden">
                         DM
                       </span>
-                    </span>
-                  </motion.span>
+                    </div>
+                  </motion.div>
                 )}
               </motion.div>
             );
