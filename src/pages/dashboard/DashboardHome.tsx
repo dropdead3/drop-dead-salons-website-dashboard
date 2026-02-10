@@ -20,6 +20,7 @@ import {
   Flame,
   Hourglass,
   HandHelping,
+  Sparkles,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useDailyCompletion } from '@/hooks/useDailyCompletion';
@@ -49,7 +50,7 @@ import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import { HubQuickLinks } from '@/components/dashboard/HubQuickLinks';
 import { AIInsightsDrawer } from '@/components/dashboard/AIInsightsDrawer';
 import { PersonalInsightsDrawer } from '@/components/dashboard/PersonalInsightsDrawer';
-
+import { InsightsNudgeBanner } from '@/components/dashboard/InsightsNudgeBanner';
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
 interface Announcement {
@@ -212,6 +213,8 @@ export default function DashboardHome() {
         {/* Today's Birthday Banner - visible to all */}
         <TodaysBirthdayBanner />
 
+        {/* Zura Insights Nudge Banner */}
+        <InsightsNudgeBanner userId={user?.id} isLeadership={isLeadership} />
 
         {/* Header with Customize Button */}
         <motion.div className="flex items-start justify-between" variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}>
