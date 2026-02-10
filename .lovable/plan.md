@@ -1,55 +1,27 @@
 
+# Add "Send DM" Link to Birthday Banner
 
-# Convert AI Insights to a Slide-Out Drawer Widget
+## What This Does
+Each person's name pill in the birthday announcement banner becomes clickable. Clicking it creates (or opens) a DM channel with that person and navigates to Team Chat, making it easy to send a birthday wish directly.
 
-## Overview
-Replace the inline AI Business Insights card on the Command Center with a trigger button that opens a right-side Sheet (drawer). The same drawer will also be accessible from the Analytics Hub page.
+## User Experience
+- Each birthday person's pill gets a subtle message icon and a hover effect indicating it's clickable
+- Clicking navigates to `/dashboard/team-chat` with the DM channel auto-selected
+- If it's the current user's own birthday (in View As mode), the DM link is not shown
+- The "Wish them a happy birthday!" text on the right stays as-is
 
-## Changes
+## Technical Changes
 
-### 1. Create `AIInsightsDrawer` component
-**New file: `src/components/dashboard/AIInsightsDrawer.tsx`**
-- A reusable component that wraps the existing insight content in a `Sheet` (right-side slide-out panel)
-- Accepts an `open` / `onOpenChange` prop pair, or includes its own trigger button
-- Reuses all existing insight rendering logic (InsightCard, ActionItemCard, severity styles, blur handling)
-- The trigger button will be a compact button with a Brain icon and "AI Insights" label
-- The sheet content will contain the full insights UI currently in `AIInsightsCard`
+### File: `src/components/dashboard/TodaysBirthdayBanner.tsx`
+1. Import `useNavigate` from `react-router-dom`, `MessageCircle` from `lucide-react`, and `useDMChannels` hook
+2. Add `useNavigate` and `useDMChannels` hooks inside the component
+3. Add an `onClick` handler to each person's pill `div` that:
+   - Calls `createDM(person.user_id)` to get or create the DM channel
+   - Navigates to `/dashboard/team-chat?channel={channelId}`
+4. Add `cursor-pointer hover:bg-background/30` classes to the pill for hover feedback
+5. Add a small `MessageCircle` icon next to the person's name (visible on hover or always)
+6. Skip making the pill clickable if `person.isCurrentUser` (can't DM yourself)
 
-### 2. Create `AIInsightsTrigger` component
-**New file or same file: `src/components/dashboard/AIInsightsTrigger.tsx`**
-- A small, styled button/card that acts as the trigger on the dashboard
-- Shows a Brain icon, "AI Insights" label, and optionally the overall sentiment indicator
-- Clicking it opens the drawer
-- Wrapped in `VisibilityGate` for role-based access (leadership only)
-
-### 3. Update Command Center (`DashboardHome.tsx`)
-- Replace the inline `<AIInsightsCard />` in the `sectionComponents` map with the new `AIInsightsTrigger` that opens the drawer
-- The `ai_insights` section key remains so existing layout preferences are preserved
-- The drawer renders at the page level (outside sections) so it overlays correctly
-
-### 4. Add to Analytics Hub (`AnalyticsHub.tsx`)
-- Import and add the `AIInsightsTrigger` button (or a simple icon button) in the Analytics Hub header area
-- Clicking it opens the same `AIInsightsDrawer`
-- Wrapped in a `VisibilityGate` for consistency
-
-### 5. Refactor `AIInsightsCard.tsx`
-- Extract the inner content (insights list, action items, empty state, loading skeleton) into a reusable `AIInsightsContent` component
-- The trigger and drawer components will import `AIInsightsContent`
-- Keep the original `AIInsightsCard` export for backward compatibility if needed, but the dashboard will use the new drawer pattern
-
-## Technical Details
-
-- Uses the existing `Sheet` component (`src/components/ui/sheet.tsx`) with `side="right"`
-- Sheet width: `sm:max-w-md` (wider than default `sm:max-w-sm` to give insights room)
-- The trigger on the dashboard will be a slim card with an icon and label, fitting naturally among other sections
-- The trigger in the Analytics Hub will be a button in the page header actions area
-- All existing privacy/blur functionality carries over unchanged
-- The `useAIInsights` hook is used identically -- no backend changes needed
-
-## Files to Create
-1. `src/components/dashboard/AIInsightsDrawer.tsx` -- Sheet wrapper + trigger + content
-
-## Files to Modify
-1. `src/components/dashboard/AIInsightsCard.tsx` -- Extract content into reusable sub-component
-2. `src/pages/dashboard/DashboardHome.tsx` -- Replace inline card with drawer trigger
-3. `src/pages/dashboard/admin/AnalyticsHub.tsx` -- Add drawer trigger to header
+### No other files need changes
+- `useDMChannels` already handles finding existing DMs or creating new ones
+- Team Chat page already supports `?channel=` query param for deep-linking (to verify during implementation)
