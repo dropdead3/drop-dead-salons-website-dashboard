@@ -111,9 +111,9 @@ function InsightCard({ insight, onRequestGuidance }: { insight: InsightItem; onR
   const Icon = config?.icon || Activity;
 
   return (
-    <div className={cn('border-l-2 rounded-lg p-3 transition-colors', severityStyles[insight.severity])}>
+    <div className="rounded-lg border border-border/50 p-3 transition-colors">
       <div className="flex items-start gap-2.5">
-        <div className={cn('mt-0.5 flex-shrink-0', severityIconColor[insight.severity])}>
+        <div className="mt-0.5 flex-shrink-0 text-muted-foreground">
           <Icon className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
