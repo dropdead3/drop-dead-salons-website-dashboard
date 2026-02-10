@@ -264,7 +264,7 @@ export function AIInsightsCard() {
                   <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center">
                     <Brain className="w-4 h-4 text-violet-600 dark:text-violet-400" />
                   </div>
-                  <CardTitle className="text-base font-display tracking-wide">AI BUSINESS INSIGHTS</CardTitle>
+                  <CardTitle className="text-base font-display tracking-wide">ZURA BUSINESS INSIGHTS</CardTitle>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="gap-1.5 text-xs h-8">
                   <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
@@ -399,7 +399,7 @@ export function AIInsightsCard() {
                         })()}
                         <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
                           <Sparkles className="w-3 h-3 text-muted-foreground/40" />
-                          <span className="text-[10px] text-muted-foreground/50">Powered by AI · Based on your data</span>
+                          <span className="text-[10px] text-muted-foreground/50">Powered by Zura AI · Based on your data</span>
                         </div>
                       </div>
                     )}

@@ -229,7 +229,7 @@ export function AIInsightsDrawer() {
               <div className="w-5 h-5 rounded-md bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center">
                 <Brain className="w-3 h-3 text-violet-600 dark:text-violet-400" />
               </div>
-              <span>AI Insights</span>
+              <span>Zura Insights</span>
               {sentiment && SentimentIcon && (
                 <div className={cn('w-4 h-4 rounded-full flex items-center justify-center', sentiment.bg)}>
                   <SentimentIcon className={cn('w-2.5 h-2.5', sentiment.color)} />
@@ -253,7 +253,7 @@ export function AIInsightsDrawer() {
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-oat" />
-                      <span className="font-display text-xs tracking-[0.15em]">AI BUSINESS INSIGHTS</span>
+                      <span className="font-display text-xs tracking-[0.15em]">ZURA BUSINESS INSIGHTS</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0}>
@@ -408,7 +408,7 @@ export function AIInsightsDrawer() {
                       <div className="px-4 pb-4 pt-1">
                         <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
                           <Sparkles className="w-3 h-3 text-muted-foreground/40" />
-                          <span className="text-[10px] text-muted-foreground/50">Powered by AI · Based on your data</span>
+                          <span className="text-[10px] text-muted-foreground/50">Powered by Zura AI · Based on your data</span>
                         </div>
                       </div>
                     </motion.div>
