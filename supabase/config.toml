@@ -173,3 +173,6 @@ verify_jwt = false
 
 [functions.ai-card-analysis]
 verify_jwt = false
+
+[functions.ai-personal-insights]
+verify_jwt = false

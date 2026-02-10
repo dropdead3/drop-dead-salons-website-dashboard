@@ -48,6 +48,7 @@ import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import { HubQuickLinks } from '@/components/dashboard/HubQuickLinks';
 import { AIInsightsDrawer } from '@/components/dashboard/AIInsightsDrawer';
+import { PersonalInsightsDrawer } from '@/components/dashboard/PersonalInsightsDrawer';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -330,7 +331,7 @@ function DashboardSections({
     ai_insights: (
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
-          {isLeadership && <AIInsightsDrawer />}
+          {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
           <AnnouncementsDrawer isLeadership={isLeadership} />
         </div>
       </div>
