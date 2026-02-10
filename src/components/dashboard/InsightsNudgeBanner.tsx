@@ -101,7 +101,7 @@ export function InsightsNudgeBanner({ userId, isLeadership }: InsightsNudgeBanne
             </p>
           </div>
           <Link to="/dashboard">
-            <Button size="sm" className="flex-shrink-0">
+            <Button size="sm" variant="outline" className="flex-shrink-0 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary/50">
               View Insights
             </Button>
           </Link>
