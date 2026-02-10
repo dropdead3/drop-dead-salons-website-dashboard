@@ -15,6 +15,18 @@ export interface GrowthDataPoint {
   type: 'actual' | 'projected';
 }
 
+export interface AccuracyDataPoint {
+  period: string;
+  projected: number;
+  actual: number;
+  accuracy: number;
+}
+
+export interface AccuracyData {
+  history: AccuracyDataPoint[];
+  average: number | null;
+}
+
 export interface GrowthSummary {
   momentum: 'accelerating' | 'steady' | 'decelerating';
   lastQoQGrowth: number | null;
@@ -31,6 +43,7 @@ export interface GrowthForecastData {
   actuals: GrowthDataPoint[];
   scenarios: Record<Scenario, GrowthDataPoint[]>;
   insights: string[];
+  accuracy: AccuracyData;
   summary: GrowthSummary;
 }
 
