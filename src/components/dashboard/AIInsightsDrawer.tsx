@@ -365,7 +365,7 @@ export function AIInsightsDrawer() {
                                         <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Action Items</span>
                                         <div className="flex-1 h-px bg-border/40" />
                                       </div>
-                                      <div className="space-y-1 rounded-lg border border-border/30 bg-muted/10 p-1">
+                                      <div className="space-y-1 rounded-lg border border-border/30 bg-muted/10 px-5 py-3">
                                         {data.actionItems.map((item, i) => (
                                           <ActionItemCard key={i} item={item} index={i} onRequestGuidance={handleRequestGuidance} />
                                         ))}
