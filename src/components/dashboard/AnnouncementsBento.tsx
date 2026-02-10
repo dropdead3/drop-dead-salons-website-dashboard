@@ -77,7 +77,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
   const totalCount = filteredAnnouncements.length;
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 rounded-2xl shadow-lg backdrop-blur-sm">
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
@@ -86,7 +86,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
                 <h2 className="font-display text-sm tracking-wide">ANNOUNCEMENTS</h2>
                 <ChevronDown 
                   className={cn(
-                    "w-4 h-4 text-muted-foreground transition-transform duration-200",
+                    "w-4 h-4 text-muted-foreground transition-transform duration-300 ease-out",
                     isExpanded && "rotate-180"
                   )} 
                 />
