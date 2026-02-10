@@ -144,7 +144,7 @@
     --input: 40 15% 90%;
     --ring: 0 0% 8%;
 
-    --radius: 0rem;
+    --radius: 0.75rem;
 
     /* Typography tokens */
     --font-size-xs: 12px;
