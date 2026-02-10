@@ -388,9 +388,9 @@ export function AggregateSalesCard({
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid lg:grid-cols-3 gap-6 mb-6">
         {/* KPIs with Trends */}
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-2">
           {/* Hero: Total Revenue with Breakdown */}
           <div className="bg-muted/30 dark:bg-card rounded-xl p-4 sm:p-6 border border-border/40">
             {/* Total Revenue - Hero */}
