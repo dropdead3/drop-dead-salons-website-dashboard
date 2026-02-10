@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,6 +12,14 @@ export function ZuraStickyGuidance() {
   const navigate = useNavigate();
   const location = useLocation();
   const [expanded, setExpanded] = useState(false);
+  const navigatingRef = useRef(false);
+
+  // Auto-dismiss when returning to dashboard (e.g. browser Back button)
+  useEffect(() => {
+    if (location.pathname === '/dashboard' && ctx?.savedState) {
+      ctx.dismiss();
+    }
+  }, [location.pathname]);
 
   const isVisible = ctx?.savedState && location.pathname !== '/dashboard';
   const title = ctx?.savedState?.guidance.title ?? '';
@@ -19,8 +27,10 @@ export function ZuraStickyGuidance() {
 
   const handleInternalLink = (href: string) => (e: React.MouseEvent) => {
     e.preventDefault();
+    if (navigatingRef.current) return;
     if (ctx && ctx.savedState) {
-      // Re-save state and navigate to the new internal link (panel stays open)
+      navigatingRef.current = true;
+      setTimeout(() => { navigatingRef.current = false; }, 300);
       ctx.saveAndNavigate(href, ctx.savedState);
     }
   };
