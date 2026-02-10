@@ -60,10 +60,11 @@ export function InsightsNudgeBanner({ userId, isLeadership }: InsightsNudgeBanne
         }
       }
 
-      if (!lastDate) return null; // No insights generated yet — don't nag
+      // If no insights ever generated, show a "never checked" nudge
+      if (!lastDate) return -1;
 
       const diffMs = Date.now() - lastDate.getTime();
-      if (diffMs < FOURTEEN_DAYS_MS) return null; // Within 2 weeks — no banner
+      if (diffMs < FOURTEEN_DAYS_MS) return null; // Within threshold — no banner
 
       return Math.floor(diffMs / (24 * 60 * 60 * 1000));
     },
@@ -71,7 +72,9 @@ export function InsightsNudgeBanner({ userId, isLeadership }: InsightsNudgeBanne
     staleTime: 10 * 60 * 1000, // 10 min
   });
 
-  if (!daysSinceLastCheck || dismissed) return null;
+  if (daysSinceLastCheck === null || daysSinceLastCheck === undefined || dismissed) return null;
+
+  const isNeverChecked = daysSinceLastCheck === -1;
 
   return (
     <AnimatePresence>
@@ -87,10 +90,14 @@ export function InsightsNudgeBanner({ userId, isLeadership }: InsightsNudgeBanne
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground">
-              You haven't checked your insights in {daysSinceLastCheck} days
+              {isNeverChecked
+                ? "You haven't explored your Zura Insights yet"
+                : `You haven't checked your insights in ${daysSinceLastCheck} days`}
             </p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Zura has fresh performance data and growth tips waiting for you — let's grow! 🌱
+              {isNeverChecked
+                ? "Zura has personalized performance data and growth tips ready for you — let's grow! 🌱"
+                : "Zura has fresh performance data and growth tips waiting for you — let's grow! 🌱"}
             </p>
           </div>
           <Link to="/dashboard">
