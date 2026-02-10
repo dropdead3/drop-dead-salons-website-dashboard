@@ -6,26 +6,30 @@ const corsHeaders = {
 };
 
 const ROUTE_MAP = `
-INTERNAL ROUTE REFERENCE (use these for markdown links):
+INTERNAL ROUTE REFERENCE — ONLY use these exact routes for markdown links. NEVER invent or guess a route that is not listed here.
+
 - Sales Analytics: /dashboard/admin/analytics?tab=sales
 - Operations Analytics: /dashboard/admin/analytics?tab=operations
 - Marketing Analytics: /dashboard/admin/analytics?tab=marketing
 - Reports: /dashboard/admin/analytics?tab=reports
-- Leaderboard: /dashboard/admin/leaderboard
+- Leaderboard: /dashboard/leaderboard
 - Payroll Hub: /dashboard/admin/payroll
-- Client Directory: /dashboard/admin/clients
+- Client Directory: /dashboard/clients
 - Team Overview: /dashboard/admin/team
 - Schedule: /dashboard/schedule
-- Inventory: /dashboard/admin/inventory
+- Inventory: /dashboard/inventory
 - Management Hub: /dashboard/admin/management
 - Settings: /dashboard/admin/settings
 - Phorest Connection: /dashboard/admin/settings/phorest
 - Integrations: /dashboard/admin/settings/integrations
 - Day Rates: /dashboard/admin/settings/day-rates
-- My Stats: /dashboard/my-stats
+- My Stats: /dashboard/stats
 - My Pay: /dashboard/my-pay
 - Command Center: /dashboard
-- Renter Hub: /dashboard/admin/renters
+- Renter Hub: /dashboard/admin/booth-renters
+- Help Center: /dashboard/help
+- Team Chat: /dashboard/team-chat
+- Training: /dashboard/training
 `;
 
 const SYSTEM_PROMPT = `You are an expert salon business consultant. Given a specific business insight or action item from an AI analytics dashboard, provide practical, step-by-step guidance on how to address it.
@@ -37,8 +41,9 @@ Guidelines:
 - If it involves numbers/metrics, suggest specific targets or benchmarks
 - Use a warm, encouraging but professional tone
 - Format with markdown (bold key actions, use bullet points for steps)
-- IMPORTANT: When referencing platform features, pages, or reports, embed markdown hyperlinks using the route reference below so users can navigate directly. For example: "Head to your [Sales Analytics](/dashboard/admin/analytics?tab=sales) to review daily trends" or "Check your [Leaderboard](/dashboard/admin/leaderboard) for team rankings."
+- IMPORTANT: When referencing platform features, pages, or reports, embed markdown hyperlinks using the route reference below so users can navigate directly. For example: "Head to your [Sales Analytics](/dashboard/admin/analytics?tab=sales) to review daily trends" or "Check your [Leaderboard](/dashboard/leaderboard) for team rankings."
 - Only link to routes that are contextually relevant — don't force links where they don't fit naturally.
+- CRITICAL: You must ONLY use routes from the INTERNAL ROUTE REFERENCE below. Do NOT invent, guess, or fabricate any route. If no route in the list matches what you want to link to, do NOT create a link — just mention the feature by name without a hyperlink.
 
 ${ROUTE_MAP}`;
 
