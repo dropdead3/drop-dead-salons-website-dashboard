@@ -34,6 +34,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { OnlineIndicator } from '../ui/OnlineIndicator';
 import { PlatformBadge } from '../ui/PlatformBadge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { motion } from 'framer-motion';
 import type { PlatformRole } from '@/hooks/usePlatformRoles';
 
 const roleConfig: Record<PlatformRole, { label: string; icon: React.ComponentType<{ className?: string }>; variant: 'warning' | 'info' | 'success' | 'primary' }> = {
@@ -211,7 +212,7 @@ export function PlatformSidebar() {
           <button
             onClick={() => setCollapsed(true)}
             className={cn(
-              'p-1 rounded-md transition-colors duration-200',
+              'p-1 rounded-md active:scale-90 transition-all duration-150',
               isDark 
                 ? 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/60' 
                 : 'text-slate-400 hover:text-violet-600 hover:bg-violet-50'
@@ -226,7 +227,8 @@ export function PlatformSidebar() {
               <button
                 onClick={() => setCollapsed(false)}
                 className={cn(
-                  'absolute -right-3 top-[18px] z-50 p-1 rounded-full border shadow-sm transition-colors duration-200',
+                  'absolute -right-3 top-[18px] z-50 p-1 rounded-full border shadow-sm',
+                  'active:scale-90 transition-all duration-150 hover:shadow-md hover:scale-105',
                   isDark 
                     ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white hover:bg-slate-700' 
                     : 'bg-white border-violet-200 text-slate-400 hover:text-violet-600 hover:bg-violet-50'
@@ -256,7 +258,7 @@ export function PlatformSidebar() {
               {/* Section label */}
               {!collapsed && (
                 <div className={cn(
-                  'px-3 pb-1.5 text-[10px] font-medium uppercase tracking-wider',
+                  'px-3 pb-1.5 text-[10px] font-medium uppercase tracking-[0.15em] transition-colors duration-200',
                   isDark ? 'text-slate-500' : 'text-slate-400'
                 )}>
                   {group.label}
@@ -280,31 +282,46 @@ export function PlatformSidebar() {
                     <NavLink
                       to={item.href}
                       className={cn(
-                        'relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ease-out',
+                        'relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium',
+                        'transition-all duration-200 ease-[cubic-bezier(0.25,0.1,0.25,1)] will-change-transform',
                         collapsed && 'justify-center px-2',
-                        !collapsed && 'hover:translate-x-0.5',
+                        !collapsed && !isActive && 'hover:translate-x-[2px]',
+                        !collapsed && !isActive && !isDark && 'hover:shadow-sm',
                         isActive
                           ? isDark
-                            ? 'bg-violet-500/15 text-violet-300'
-                            : 'bg-violet-100/80 text-violet-700'
+                            ? 'bg-violet-500/10 text-violet-300 ring-1 ring-violet-500/20'
+                            : 'bg-gradient-to-r from-violet-50 to-violet-100/60 text-violet-700'
                           : isDark
                             ? 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200'
                             : 'text-slate-500 hover:bg-violet-50/80 hover:text-violet-700'
                       )}
                       title={collapsed ? item.label : undefined}
                     >
-                      {/* Active accent bar */}
+                      {/* Animated active accent bar */}
                       {isActive && (
+                        <motion.div
+                          layoutId="platform-nav-active"
+                          className={cn(
+                            'absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 rounded-full',
+                            isDark
+                              ? 'bg-violet-400 shadow-[0_0_6px_rgba(139,92,246,0.4)]'
+                              : 'bg-violet-500 shadow-[0_0_4px_rgba(124,58,237,0.3)]'
+                          )}
+                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        />
+                      )}
+                      {/* Hover accent preview for non-active items */}
+                      {!isActive && !collapsed && (
                         <div className={cn(
-                          'absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-full',
-                          isDark ? 'bg-violet-400' : 'bg-violet-500'
+                          'absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200',
+                          isDark ? 'bg-violet-500/40' : 'bg-violet-400/40'
                         )} />
                       )}
                       <Icon className={cn(
-                        'h-[18px] w-[18px] shrink-0',
+                        'h-[18px] w-[18px] shrink-0 transition-transform duration-200',
                         isActive 
-                          ? isDark ? 'text-violet-400' : 'text-violet-600'
-                          : ''
+                          ? cn('scale-110', isDark ? 'text-violet-400' : 'text-violet-600')
+                          : 'group-hover:scale-105'
                       )} />
                       {!collapsed && <span>{item.label}</span>}
                     </NavLink>
@@ -312,7 +329,7 @@ export function PlatformSidebar() {
 
                   if (collapsed) {
                     return (
-                      <li key={item.href}>
+                      <li key={item.href} className="group">
                         <Tooltip>
                           <TooltipTrigger asChild>
                             {linkContent}
@@ -323,7 +340,7 @@ export function PlatformSidebar() {
                     );
                   }
 
-                  return <li key={item.href}>{linkContent}</li>;
+                  return <li key={item.href} className="group">{linkContent}</li>;
                 })}
               </ul>
             </div>
@@ -353,11 +370,11 @@ export function PlatformSidebar() {
         <button
           onClick={() => navigate('/dashboard/platform/settings')}
           className={cn(
-            'w-full flex items-center gap-3 rounded-xl px-2 py-2 transition-all duration-200',
+            'w-full flex items-center gap-3 rounded-xl px-2 py-2 transition-all duration-200 active:scale-[0.98]',
             collapsed && 'justify-center',
             isDark 
-              ? 'hover:bg-slate-800/60' 
-              : 'hover:bg-violet-50'
+              ? 'hover:bg-slate-800/60 hover:ring-1 hover:ring-violet-500/20' 
+              : 'hover:bg-violet-50 hover:ring-1 hover:ring-violet-300/30'
           )}
           title={collapsed ? (profile?.display_name || profile?.full_name || 'Account') : undefined}
         >
@@ -399,3 +416,4 @@ export function PlatformSidebar() {
     </aside>
   );
 }
+
