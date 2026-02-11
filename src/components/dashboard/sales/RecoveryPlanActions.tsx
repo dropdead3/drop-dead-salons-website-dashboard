@@ -1,17 +1,9 @@
 import { useState } from 'react';
-import { Bookmark, Bell, Share2, Check, Copy, MessageSquare, Hash, Loader2, Calendar } from 'lucide-react';
+import { Bookmark, Bell, Rocket, Check, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
 import {
   Popover,
   PopoverContent,
@@ -19,7 +11,7 @@ import {
 } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format, addDays } from 'date-fns';
-import { ShareToDMDialog } from './ShareToDMDialog';
+import { ImplementPlanDialog } from './ImplementPlanDialog';
 
 interface RecoveryPlanActionsProps {
   title: string;
@@ -46,7 +38,7 @@ export function RecoveryPlanActions({
   const [reminderSaving, setReminderSaving] = useState(false);
   const [reminderSet, setReminderSet] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
+  const [implementOpen, setImplementOpen] = useState(false);
 
   const handleSavePlan = async () => {
     if (!user?.id || !content) return;
@@ -114,14 +106,6 @@ export function RecoveryPlanActions({
     }
   };
 
-  const handleCopyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(`${title}\n\n${content}`);
-      toast.success('Plan copied to clipboard');
-    } catch {
-      toast.error('Failed to copy');
-    }
-  };
 
   return (
     <div className="flex items-center gap-2 pt-3 border-t border-border/30">
@@ -189,45 +173,25 @@ export function RecoveryPlanActions({
         </PopoverContent>
       </Popover>
 
-      {/* Share / Pitch */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!content}
-            className="flex-1 gap-1.5 text-xs border-border/50"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            Share
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52">
-          <DropdownMenuLabel className="text-xs">Share recovery plan</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setShareOpen(true)} className="gap-2">
-            <MessageSquare className="w-4 h-4" />
-            <div>
-              <p className="text-sm font-medium">Pitch to Leadership</p>
-              <p className="text-[10px] text-muted-foreground">Send as a DM to team members</p>
-            </div>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleCopyToClipboard} className="gap-2">
-            <Copy className="w-4 h-4" />
-            <div>
-              <p className="text-sm font-medium">Copy to Clipboard</p>
-              <p className="text-[10px] text-muted-foreground">Paste anywhere you need</p>
-            </div>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      {/* Let's Implement */}
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={!content}
+        onClick={() => setImplementOpen(true)}
+        className="flex-1 gap-1.5 text-xs border-border/50"
+      >
+        <Rocket className="w-3.5 h-3.5" />
+        Let's Implement
+      </Button>
 
-      {/* Share to DM Dialog */}
-      <ShareToDMDialog
-        open={shareOpen}
-        onOpenChange={setShareOpen}
+      {/* Implement Plan Dialog */}
+      <ImplementPlanDialog
+        open={implementOpen}
+        onOpenChange={setImplementOpen}
         planTitle={title}
         planContent={content}
+        goalPeriod={goalPeriod}
       />
     </div>
   );
