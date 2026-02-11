@@ -653,6 +653,7 @@ export function AggregateSalesCard({
               current={displayMetrics.totalRevenue} 
               target={currentGoal}
               label={goalLabel}
+              goalPeriod={dateRange === 'thisWeek' || dateRange === '7d' ? 'weekly' : 'monthly'}
             />
           </div>
         </div>
