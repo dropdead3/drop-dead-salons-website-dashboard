@@ -17,9 +17,11 @@ import { AtRiskClientsList } from './AtRiskClientsList';
 interface ClientsContentProps {
   retention?: RetentionMetrics;
   isLoading: boolean;
+  dateRange?: string;
+  locationName?: string;
 }
 
-export function ClientsContent({ retention, isLoading }: ClientsContentProps) {
+export function ClientsContent({ retention, isLoading, dateRange, locationName }: ClientsContentProps) {
   if (isLoading || !retention) {
     return (
       <div className="space-y-6">
@@ -47,6 +49,8 @@ export function ClientsContent({ retention, isLoading }: ClientsContentProps) {
         elementName="Retention Metrics" 
         category="Analytics Hub - Operations"
         className="mb-8"
+        dateRange={dateRange}
+        locationName={locationName}
       >
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <Card className="p-4">
@@ -143,6 +147,8 @@ export function ClientsContent({ retention, isLoading }: ClientsContentProps) {
         elementName="Client Retention Overview" 
         category="Analytics Hub - Operations"
         className="mb-6"
+        dateRange={dateRange}
+        locationName={locationName}
       >
         <Card>
           <CardHeader>
@@ -225,6 +231,8 @@ export function ClientsContent({ retention, isLoading }: ClientsContentProps) {
         elementName="Client Breakdown" 
         category="Analytics Hub - Operations"
         className="mb-6"
+        dateRange={dateRange}
+        locationName={locationName}
       >
         <Card>
           <CardHeader>
@@ -270,6 +278,8 @@ export function ClientsContent({ retention, isLoading }: ClientsContentProps) {
         elementKey="at_risk_clients_list" 
         elementName="At-Risk Clients" 
         category="Analytics Hub - Operations"
+        dateRange={dateRange}
+        locationName={locationName}
       >
         <Card>
           <CardHeader>

@@ -63,6 +63,8 @@ interface AppointmentsContentProps {
   capacityData?: CapacityData | null;
   capacityLoading?: boolean;
   dateRange?: 'tomorrow' | '7days' | '30days' | '90days';
+  analyticsDateRange?: string;
+  locationName?: string;
 }
 
 export function AppointmentsContent({ 
@@ -73,7 +75,9 @@ export function AppointmentsContent({
   isLoading,
   capacityData,
   capacityLoading,
-  dateRange = '30days'
+  dateRange = '30days',
+  analyticsDateRange,
+  locationName
 }: AppointmentsContentProps) {
   // Build heatmap data
   const heatmapData = HOURS.map(hour => {
@@ -91,12 +95,14 @@ export function AppointmentsContent({
 
   return (
     <>
-      {/* Summary Stats - 3x2 grid */}
+      {/* Summary Stats */}
       <PinnableCard 
         elementKey="appointments_summary" 
         elementName="Appointments Summary" 
         category="Analytics Hub - Operations"
         className="mb-6"
+        dateRange={analyticsDateRange}
+        locationName={locationName}
       >
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
           <Card className="p-4">
@@ -203,6 +209,8 @@ export function AppointmentsContent({
         elementName="Capacity Utilization" 
         category="Analytics Hub - Operations"
         className="mb-8"
+        dateRange={analyticsDateRange}
+        locationName={locationName}
       >
         <CapacityUtilizationSection 
           capacityData={capacityData ?? null}
