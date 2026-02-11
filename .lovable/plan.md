@@ -1,35 +1,23 @@
 
 
-# Add Border Definition to Internal Bento Sub-Cards
+# Brighten Internal Bento Sub-Card Backgrounds in Dark Mode
 
 ## Problem
-Internal sub-sections within command center cards (New Clients, Returning Clients, After-Service Rebook, location rows, secondary KPIs like Transactions/Avg Ticket/Tips) use `bg-muted/30` or `bg-muted/20` backgrounds without borders. In dark mode, these blend into the parent card background, making the bento structure invisible.
+Internal sections (New Clients, Returning Clients, After-Service Rebook, location rows, KPI cells, 30-day comparison) have `bg-muted/20` or `bg-muted/30 dark:bg-card` backgrounds that are nearly invisible against the parent card in dark mode. The `--muted` value (15% lightness) at low opacity on a 7% card background produces almost no contrast.
 
 ## Approach
-Add `border border-border/50` to all internal sub-card elements that currently rely only on background color for definition. This matches the pattern already used by the AggregateSalesCard's Services/Products sub-cards (`border border-border/30`).
+Increase the dark-mode `--muted` lightness from 15% to 20% across all four dark themes. This brightens every internal sub-card that uses `bg-muted/*` without touching any component files. It is the single most impactful change because dozens of elements across the dashboard reference `bg-muted/20` and `bg-muted/30`.
 
-## Files to Change
+## File: `src/index.css`
 
-### 1. `src/components/dashboard/NewBookingsCard.tsx`
-- **Lines 85, 104**: New Clients and Returning Clients buttons -- add `border border-border/50`
-- **Line 123**: After-Service Rebook section -- add `border border-border/50`
-- **Line 173**: Location breakdown rows (`bg-muted/20`) -- add `border border-border/30`
+| Dark Theme | CSS Variable | Current Value | New Value |
+|---|---|---|---|
+| Cream | `--muted` | `0 0% 15%` | `0 0% 20%` |
+| Rose | `--muted` | `350 10% 15%` | `350 10% 20%` |
+| Sage | `--muted` | `145 8% 15%` | `145 8% 20%` |
+| Ocean | `--muted` | `210 10% 15%` | `210 10% 20%` |
 
-### 2. `src/components/dashboard/AggregateSalesCard.tsx`
-- **Lines 567, 582, 598, 615, 632**: Secondary KPI cells (Transactions, Avg Ticket, Rev/Hour, Daily Avg, Tips) using `bg-muted/30 dark:bg-card` -- add `border border-border/30`
+This 5% lightness bump means `bg-muted/30` renders at ~20% lightness instead of ~15%, creating a clearly visible fill difference against the 7% card background. All internal sub-cards, location rows, KPI cells, and secondary sections will immediately gain contrast without any per-component edits.
 
-### 3. `src/components/dashboard/sales/TopPerformersCard.tsx`
-- **Line 45**: Default rank background (`bg-muted/30 dark:bg-card`) -- already has border class from `getRankBg`. No change needed.
+Total: 4 CSS variable changes in 1 file.
 
-### 4. `src/components/dashboard/LocationBreakdownSection.tsx`
-- **Line 55**: Location rows (`bg-muted/20`) -- add `border border-border/30`
-
-## Summary
-
-| File | Elements | Border Added |
-|---|---|---|
-| NewBookingsCard.tsx | New/Returning client cards, Rebook section, Location rows | `border border-border/50` and `border-border/30` |
-| AggregateSalesCard.tsx | 5 secondary KPI cells | `border border-border/30` |
-| LocationBreakdownSection.tsx | Location rows | `border border-border/30` |
-
-Total: ~10 className additions across 3 files. No structural or behavioral changes.
