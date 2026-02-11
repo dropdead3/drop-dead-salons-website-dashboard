@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -46,6 +46,11 @@ export function ServiceProductDrilldown({
   // Local filter state — resets when dialog closes
   const [filterRegion, setFilterRegion] = useState('all');
   const [filterLocationId, setFilterLocationId] = useState(parentLocationId || 'all');
+
+  // Sync local filter when parent location changes
+  useEffect(() => {
+    setFilterLocationId(parentLocationId || 'all');
+  }, [parentLocationId]);
 
   // Derive unique regions from locations
   const regions = useMemo(() => {
