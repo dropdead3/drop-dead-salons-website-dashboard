@@ -302,11 +302,11 @@ export function WeekAheadForecast() {
                           <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
                             <div style={{ 
                               fontSize: 11, fontWeight: 600, 
-                              color: 'hsl(25, 100%, 55%)',
+                              color: 'hsl(var(--gold))',
                               backdropFilter: 'blur(6px)',
                               WebkitBackdropFilter: 'blur(6px)',
-                              background: 'hsl(var(--background) / 0.7)',
-                              border: '1px solid hsl(var(--border) / 0.3)',
+                              background: 'hsl(var(--background) / 0.85)',
+                              border: '1px solid hsl(var(--gold) / 0.5)',
                               borderRadius: 4,
                               padding: '1px 6px',
                               whiteSpace: 'nowrap',
@@ -336,7 +336,7 @@ export function WeekAheadForecast() {
                                   y1={yPos}
                                   x2={chartRight}
                                   y2={yPos}
-                                  stroke="hsl(25, 100%, 55%)"
+                                  stroke="hsl(var(--gold))"
                                   strokeDasharray={lineLength}
                                   strokeDashoffset={lineLength}
                                   strokeWidth={1.5}

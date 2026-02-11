@@ -693,8 +693,8 @@ export function ForecastingCard() {
                             width={0}
                             height={fontSize + padY * 2}
                             rx={5}
-                            fill="hsl(var(--background) / 0.7)"
-                            stroke="hsl(var(--border) / 0.3)"
+                            fill="hsl(var(--background) / 0.85)"
+                            stroke="hsl(var(--gold) / 0.5)"
                             strokeWidth={1}
                           />
                           <text
@@ -711,8 +711,8 @@ export function ForecastingCard() {
                             }}
                             x={chartLeft + padX}
                             y={yPos + fontSize / 2 - 2}
-                            style={{ fontSize, fontWeight: 600, filter: hideNumbers ? 'blur(8px)' : 'none' }}
-                            fill="hsl(25, 100%, 55%)"
+                            style={{ fontSize, fontWeight: 500, filter: hideNumbers ? 'blur(8px)' : 'none' }}
+                            fill="hsl(var(--gold))"
                           >
                             {avgText}
                           </text>
@@ -722,8 +722,8 @@ export function ForecastingCard() {
                             y1={yPos}
                             x2={chartRight}
                             y2={yPos}
-                            stroke="hsl(25, 100%, 55%)"
-                            strokeOpacity={0.5}
+                            stroke="hsl(var(--gold))"
+                            strokeOpacity={0.4}
                             strokeDasharray="4 4"
                             strokeWidth={1.5}
                           />
@@ -755,8 +755,8 @@ export function ForecastingCard() {
                             width={0}
                             height={fontSize + padY * 2}
                             rx={4}
-                            fill="hsl(var(--background) / 0.7)"
-                            stroke="hsl(var(--border) / 0.3)"
+                            fill="hsl(var(--background) / 0.85)"
+                            stroke="hsl(var(--gold) / 0.5)"
                             strokeWidth={1}
                           />
                           <text
@@ -773,8 +773,8 @@ export function ForecastingCard() {
                             }}
                             x={chartLeft + padX}
                             y={yPos + fontSize / 2 - 2}
-                            style={{ fontSize, fontWeight: 600, filter: hideNumbers ? 'blur(8px)' : 'none' }}
-                            fill="hsl(25, 100%, 55%)"
+                            style={{ fontSize, fontWeight: 500, filter: hideNumbers ? 'blur(8px)' : 'none' }}
+                            fill="hsl(var(--gold))"
                           >
                             {avgText}
                           </text>
@@ -784,8 +784,8 @@ export function ForecastingCard() {
                             y1={yPos}
                             x2={chartRight}
                             y2={yPos}
-                            stroke="hsl(25, 100%, 55%)"
-                            strokeOpacity={0.5}
+                            stroke="hsl(var(--gold))"
+                            strokeOpacity={0.4}
                             strokeDasharray="4 4"
                             strokeWidth={1.5}
                           />
