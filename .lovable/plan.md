@@ -1,52 +1,76 @@
 
 
-# Fix After-Service Rebook: Missing Client Data in Sync
+# Stylist Drill-Down on New Bookings Card
 
-## Root Cause
+## Concept
 
-The Phorest sync function intentionally drops `phorest_client_id` from appointments when the client does not already exist in the local `phorest_clients` table. Out of 321 total appointments, only 53 (16.5%) have a `phorest_client_id` populated. Yesterday, only 5 of 20 appointments had client IDs linked.
+Clicking the "New Clients" or "Returning Clients" number tiles opens a premium center-screen Dialog (matching the Zura AI insight pattern) that shows which stylists booked those clients, along with their individual new-client booking rate or returning-client rebook rate.
 
-This means 75% of appointments are invisible to any client-based analytics -- including new/returning classification and rebook rate.
+## UX Layout
 
-The code at line 330 of `sync-phorest-data/index.ts`:
 ```text
-phorest_client_id: localClientId  // null if client not in local DB
++---------------------------------------------+
+|  [X]                                         |
+|  NEW CLIENT BOOKINGS         Yesterday       |
+|                                              |
+|  +-----------------------------------------+ |
+|  |  [Avatar] Sarah M.                      | |
+|  |  Level 3 Stylist                        | |
+|  |  4 new clients · 28% of new bookings   | |
+|  |  ============================  (bar)    | |
+|  +-----------------------------------------+ |
+|                                              |
+|  +-----------------------------------------+ |
+|  |  [Avatar] Jamie L.                      | |
+|  |  Level 2 Stylist                        | |
+|  |  2 new clients · 14% of new bookings   | |
+|  |  ================  (bar)               | |
+|  +-----------------------------------------+ |
+|                                              |
+|  ...                                         |
++---------------------------------------------+
 ```
 
-Should instead always store the raw ID from the Phorest API, since it serves as a grouping key for analytics (not a foreign key constraint).
+For the "Returning Clients" variant, the secondary metric changes to the stylist's rebook rate (e.g., "3 of 5 rebooked -- 60%").
 
-## Fix Plan
+## Implementation
 
-### 1. Fix the sync function (`supabase/functions/sync-phorest-data/index.ts`)
+### 1. Extend the data hook (`src/hooks/useNewBookings.ts`)
 
-- **Line 330**: Change from `localClientId` to the raw `phorestClientId` value from the API response. This ensures every appointment with a client in Phorest gets properly tagged, regardless of whether that client has been separately synced to the local table.
-- Keep the existing client lookup logic (lines 311-322) for logging purposes, but do not gate the `phorest_client_id` field on it.
+Add `phorest_staff_id` to the appointments select query. In the return object, add two new fields:
 
-### 2. Backfill existing appointments
+- `newClientsByStaff`: Array of `{ phorestStaffId, count }` -- group new-client appointments by staff
+- `returningClientsByStaff`: Array of `{ phorestStaffId, uniqueClients, rebookedCount, rebookRate }` -- group returning-client appointments by staff, with per-stylist rebook calculation
 
-- Run a one-time data fix after deploying the sync update. Re-trigger a sync (or write a targeted update query) to populate `phorest_client_id` on the 268 appointments currently missing it. The simplest approach: re-run the sync for recent date ranges, which will now correctly upsert the client IDs.
+Staff name resolution will use `phorest_staff_mapping` joined to `employee_profiles` (same pattern as `useStaffKPIReport`).
 
-### 3. No changes needed in `useNewBookings.ts`
+### 2. Create drill-down dialog component
 
-The rebook logic is already correct -- it groups by `phorest_client_id`, checks for prior visits, and looks for future appointments. It will work properly once the data is populated.
+**New file**: `src/components/dashboard/NewBookingsDrilldown.tsx`
 
-## What This Fixes
+- Uses the premium Dialog pattern (backdrop-blur-sm, bg-black/60 overlay, max-w-lg)
+- Two modes: `'new'` and `'returning'`, toggled by which tile was clicked
+- Each stylist row: Avatar (from employee photo or initials fallback), name, level badge, metric, and a subtle progress bar showing their share
+- Sorted by count descending (top contributor first)
+- Scrollable content area (max 70vh)
 
-- "New Clients" and "Returning Clients" counts will reflect all booked clients, not just the 16% with local records.
-- "After-Service Rebook" will correctly identify returning clients who scheduled future appointments.
-- All downstream analytics (rebook rate, client retention, stylist experience scores) that depend on `phorest_client_id` will become accurate.
+### 3. Update `NewBookingsCard.tsx`
 
-## Technical Detail
+- Make the "New Clients" and "Returning Clients" tiles clickable (cursor-pointer, subtle hover lift)
+- Add state for which drill-down is open (`'new' | 'returning' | null`)
+- Render the `NewBookingsDrilldown` dialog conditionally
 
-**File**: `supabase/functions/sync-phorest-data/index.ts`
+### 4. Data flow
 
-Change line 330 from:
-```text
-phorest_client_id: localClientId,
-```
-to:
-```text
-phorest_client_id: phorestClientId,
-```
+The hook already fetches all appointments in the range with client IDs. Adding `phorest_staff_id` to the select is trivial. Staff-level aggregation happens client-side:
 
-This is a one-line fix in the sync function. After deploying, the next sync cycle will backfill the missing client IDs for any appointments it processes. For historical data outside the sync window, a manual re-sync or SQL update may be needed.
+- **New Clients tab**: Group appointments where `phorest_client_id` is in `newClientPhorestIds` by `phorest_staff_id`. Count per stylist. Show each stylist's share of total new-client bookings.
+- **Returning Clients tab**: Group returning-client appointments by `phorest_staff_id`. For each stylist, count unique returning clients and how many of those have a future appointment (rebook rate per stylist). This reuses the existing future-appointment lookup data.
+
+### 5. Styling details
+
+- Follows the "Drop Dead Premium" aesthetic: `font-display` for numbers, `font-medium` max weight, `shadow-2xl rounded-2xl` cards
+- Avatar uses `ZuraAvatar`-style fallback (initials on `bg-primary/10`) when no photo exists
+- Progress bars use the same emerald/amber/red color coding as the main rebook rate bar
+- Empty state: "No [new/returning] clients in this period" with editorial spacing
+
