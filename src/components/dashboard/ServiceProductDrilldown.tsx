@@ -215,10 +215,15 @@ export function ServiceProductDrilldown({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-border/50 bg-muted/30">
-          <p className="text-[10px] text-muted-foreground text-center tracking-wide">
-            Stylist Performance Breakdown
-          </p>
+        <div className="px-6 py-3 border-t border-border/50 bg-muted/30 sticky bottom-0">
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground tracking-wide">
+              {isServices ? 'Total Service Revenue' : 'Total Product Revenue'}
+            </p>
+            <span className="font-display text-lg tabular-nums font-medium">
+              {fmt(isServices ? totalServiceRevenue : totalProductRevenue)}
+            </span>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
