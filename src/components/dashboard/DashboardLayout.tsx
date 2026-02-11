@@ -118,6 +118,7 @@ import {
   Gift,
   MessageSquare,
   MoreHorizontal,
+  RefreshCw,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
@@ -242,6 +243,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
   const { user, isCoach, roles: actualRoles, permissions: actualPermissions, hasPermission: actualHasPermission, signOut, isPlatformUser, hasPlatformRoleOrHigher } = useAuth();
   const { isImpersonating, isMultiOrgOwner } = useOrganizationContext();
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
+  const { hideNumbers, toggleHideNumbers } = useHideNumbers();
   const location = useLocation();
   const hasZuraGuidance = !!(zuraCtx?.savedState && location.pathname !== '/dashboard');
   const navigate = useNavigate();
@@ -1064,25 +1066,37 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <div className="px-2 py-1.5">
-                    <HideNumbersToggle />
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem disabled className="gap-2">
-                    <AccessIcon className="w-3 h-3" />
-                    {getAccessLabel()}
+                  
+                  {/* Show/Hide Numbers */}
+                  <DropdownMenuItem onClick={(e) => { e.preventDefault(); toggleHideNumbers(); }} className="gap-2 cursor-pointer">
+                    {hideNumbers ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {hideNumbers ? 'Show Numbers' : 'Hide Numbers'}
                   </DropdownMenuItem>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  {/* Role badge as informational label */}
+                  <DropdownMenuLabel className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
+                    <AccessIcon className="w-3.5 h-3.5" />
+                    {getAccessLabel()}
+                  </DropdownMenuLabel>
+                  
+                  {/* View As - keep full component for its nested dropdown */}
                   {isAdmin && (
-                    <div className="px-2 py-1.5">
+                    <div className="px-1 py-0.5">
                       <ViewAsToggle />
                     </div>
                   )}
+                  
+                  {/* Phorest Sync - simplified menu item */}
                   {(actualRoles.includes('admin') || actualRoles.includes('super_admin') || actualRoles.includes('manager')) && (
-                    <div className="px-2 py-1.5">
+                    <div className="px-1 py-0.5">
                       <PhorestSyncPopout />
                     </div>
                   )}
+                  
                   <DropdownMenuSeparator />
+                  
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard/help" className="flex items-center gap-2 cursor-pointer">
                       <HelpCircle className="w-4 h-4" />
