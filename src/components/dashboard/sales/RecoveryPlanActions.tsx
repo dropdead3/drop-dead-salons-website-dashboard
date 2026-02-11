@@ -24,7 +24,8 @@ import { ShareToDMDialog } from './ShareToDMDialog';
 interface RecoveryPlanActionsProps {
   title: string;
   content: string;
-  goalPeriod: string;
+  planType?: 'recovery' | 'card_insight' | 'guidance';
+  goalPeriod?: string;
   targetRevenue?: number;
   currentRevenue?: number;
   shortfall?: number;
@@ -33,6 +34,7 @@ interface RecoveryPlanActionsProps {
 export function RecoveryPlanActions({
   title,
   content,
+  planType = 'recovery',
   goalPeriod,
   targetRevenue,
   currentRevenue,
@@ -54,7 +56,8 @@ export function RecoveryPlanActions({
         user_id: user.id,
         title,
         content,
-        goal_period: goalPeriod,
+        plan_type: planType,
+        goal_period: goalPeriod || 'general',
         target_revenue: targetRevenue,
         current_revenue: currentRevenue,
         shortfall,
@@ -93,7 +96,8 @@ export function RecoveryPlanActions({
         user_id: user.id,
         title,
         content,
-        goal_period: goalPeriod,
+        plan_type: planType,
+        goal_period: goalPeriod || 'general',
         target_revenue: targetRevenue,
         current_revenue: currentRevenue,
         shortfall,

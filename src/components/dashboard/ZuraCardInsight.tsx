@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { Plus, Check, ChevronDown, ChevronUp, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { addDays, format } from 'date-fns';
+import { RecoveryPlanActions } from '@/components/dashboard/sales/RecoveryPlanActions';
 
 const priorityBadge: Record<string, string> = {
   high: 'bg-red-500/10 text-red-600 dark:text-red-400',
@@ -126,7 +127,14 @@ export function ZuraCardInsight({ cardName, metricData, dateRange, locationName 
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-border/50 bg-muted/30">
+        <div className="px-6 py-3 border-t border-border/50 bg-muted/30 space-y-3">
+          {insight && (
+            <RecoveryPlanActions
+              title={cardName}
+              content={insight}
+              planType="card_insight"
+            />
+          )}
           <p className="text-[10px] text-muted-foreground text-center tracking-wide">Powered by Zura AI</p>
         </div>
       </DialogContent>
