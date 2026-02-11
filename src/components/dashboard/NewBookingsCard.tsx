@@ -112,6 +112,9 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-muted-foreground">
                   {data.rebookedAtCheckoutToday} of {data.returningServicedToday} rebooked
+                  {(data.returningServicedToday! - data.rebookedAtCheckoutToday!) > 0 && (
+                    <span className="text-red-400"> · {data.returningServicedToday! - data.rebookedAtCheckoutToday!} did not</span>
+                  )}
                 </span>
                 <span className="font-display tabular-nums text-lg">{data.rebookRate}%</span>
               </div>
