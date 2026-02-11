@@ -19,6 +19,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  Check,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -158,7 +159,8 @@ export function AggregateSalesCard({
   const { data: tomorrowData } = useTomorrowRevenue();
   const { goals } = useSalesGoals();
   const { data: locations } = useActiveLocations();
-  const { data: todayActual, isLoading: todayActualLoading } = useTodayActualRevenue(dateRange === 'today');
+  const { data: todayActual, locationActuals, isLoading: todayActualLoading } = useTodayActualRevenue(dateRange === 'today');
+  const isToday = dateRange === 'today';
 
   // Location display logic
   const isAllLocations = !filterContext?.locationId || filterContext.locationId === 'all';
@@ -647,6 +649,9 @@ export function AggregateSalesCard({
                         Avg Ticket {getLocationSortIcon('avgTicket')}
                       </button>
                     </TableHead>
+                    {isToday && (
+                      <TableHead className="font-sans text-xs text-center">Status</TableHead>
+                    )}
                     <TableHead className="w-10"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -691,6 +696,48 @@ export function AggregateSalesCard({
                         <TableCell className="text-center tabular-nums">
                           <BlurredAmount>${isFinite(avgTicket) ? Math.round(avgTicket) : 0}</BlurredAmount>
                         </TableCell>
+                        {isToday && (
+                          <TableCell className="text-center">
+                            {(() => {
+                              const locActual = locationActuals[location.location_id || ''];
+                              const expectedRevenue = location.totalRevenue;
+                              if (!locActual || !locActual.hasActualData) {
+                                return (
+                                  <span className="text-xs text-muted-foreground/70">Pending</span>
+                                );
+                              }
+                              if (locActual.actualRevenue >= expectedRevenue && expectedRevenue > 0) {
+                                return (
+                                  <div className="flex flex-col items-center gap-0.5">
+                                    <Badge variant="outline" className="text-xs font-normal bg-primary/10 text-primary border-primary/30">
+                                      <Check className="w-3 h-3 mr-1" />
+                                      Checked out
+                                    </Badge>
+                                    {locActual.lastEndTime && (
+                                      <span className="text-[10px] text-muted-foreground/60">
+                                        Last appt: {formatEndTime(locActual.lastEndTime)}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              }
+                              return (
+                                <div className="flex flex-col items-center gap-0.5">
+                                  <BlurredAmount>
+                                    <span className="text-xs text-muted-foreground">
+                                      ${locActual.actualRevenue.toLocaleString()} of ${expectedRevenue.toLocaleString()}
+                                    </span>
+                                  </BlurredAmount>
+                                  {locActual.lastEndTime && (
+                                    <span className="text-[10px] text-muted-foreground/60">
+                                      Last appt: {formatEndTime(locActual.lastEndTime)}
+                                    </span>
+                                  )}
+                                </div>
+                              );
+                            })()}
+                          </TableCell>
+                        )}
                         <TableCell>
                           <ChevronRight className="w-4 h-4 text-muted-foreground" />
                         </TableCell>
