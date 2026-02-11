@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format, startOfWeek, startOfMonth, endOfMonth, subMonths, subDays } from 'date-fns';
+import { startOfWeek, startOfMonth, endOfMonth, subMonths, subDays } from 'date-fns';
 import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
 
 export interface LocationBreakdown {
@@ -11,29 +11,31 @@ export interface LocationBreakdown {
 
 function getDateBounds(dateRange: DateRangeType | undefined): { startDate: string; endDate: string } {
   const today = new Date();
-  const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
+  
+  // Returns ISO timestamp bounds (start-of-day and end-of-day) for created_at filtering
+  const toStartOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0).toISOString();
+  const toEndOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999).toISOString();
 
   switch (dateRange) {
     case 'yesterday': {
       const y = subDays(today, 1);
-      return { startDate: fmt(y), endDate: fmt(y) };
+      return { startDate: toStartOfDay(y), endDate: toEndOfDay(y) };
     }
     case '7d':
-      return { startDate: fmt(subDays(today, 6)), endDate: fmt(today) };
+      return { startDate: toStartOfDay(subDays(today, 6)), endDate: toEndOfDay(today) };
     case '30d':
-      return { startDate: fmt(subDays(today, 29)), endDate: fmt(today) };
+      return { startDate: toStartOfDay(subDays(today, 29)), endDate: toEndOfDay(today) };
     case 'thisWeek':
-      return { startDate: fmt(startOfWeek(today, { weekStartsOn: 1 })), endDate: fmt(today) };
+      return { startDate: toStartOfDay(startOfWeek(today, { weekStartsOn: 1 })), endDate: toEndOfDay(today) };
     case 'thisMonth':
-      return { startDate: fmt(startOfMonth(today)), endDate: fmt(today) };
+      return { startDate: toStartOfDay(startOfMonth(today)), endDate: toEndOfDay(today) };
     case 'lastMonth': {
       const lm = subMonths(today, 1);
-      return { startDate: fmt(startOfMonth(lm)), endDate: fmt(endOfMonth(lm)) };
+      return { startDate: toStartOfDay(startOfMonth(lm)), endDate: toEndOfDay(endOfMonth(lm)) };
     }
     case 'todayToEom':
-      return { startDate: fmt(today), endDate: fmt(endOfMonth(today)) };
+      return { startDate: toStartOfDay(today), endDate: toEndOfDay(endOfMonth(today)) };
     case 'todayToPayday': {
-      // Approximate next payday as 15th or last day of month
       const day = today.getDate();
       let payday: Date;
       if (day < 15) {
@@ -41,11 +43,11 @@ function getDateBounds(dateRange: DateRangeType | undefined): { startDate: strin
       } else {
         payday = endOfMonth(today);
       }
-      return { startDate: fmt(today), endDate: fmt(payday) };
+      return { startDate: toStartOfDay(today), endDate: toEndOfDay(payday) };
     }
     case 'today':
     default:
-      return { startDate: fmt(today), endDate: fmt(today) };
+      return { startDate: toStartOfDay(today), endDate: toEndOfDay(today) };
   }
 }
 
@@ -66,7 +68,7 @@ export interface StaffBreakdownReturning {
 
 export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
   const { startDate, endDate } = getDateBounds(dateRange);
-  const todayDate = format(new Date(), 'yyyy-MM-dd');
+  
 
   return useQuery({
     queryKey: ['new-bookings', startDate, endDate, locationId || 'all'],
@@ -114,8 +116,8 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         supabase
           .from('phorest_appointments')
           .select('id, total_price, appointment_date, phorest_client_id, phorest_staff_id, location_id')
-          .gte('appointment_date', startDate)
-          .lte('appointment_date', endDate)
+          .gte('created_at', startDate)
+          .lte('created_at', endDate)
           .not('status', 'eq', 'cancelled')
       );
       if (rangeError) throw rangeError;
@@ -150,25 +152,27 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
       }
 
       // 30-day comparison (always relative to today for long-term context)
-      const thirtyDaysAgoStart = format(subDays(new Date(), 29), 'yyyy-MM-dd');
-      const sixtyDaysAgoStart = format(subDays(new Date(), 59), 'yyyy-MM-dd');
-      const thirtyOneDaysAgoEnd = format(subDays(new Date(), 30), 'yyyy-MM-dd');
+      const now = new Date();
+      const thirtyDaysAgoStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 29, 0, 0, 0).toISOString();
+      const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).toISOString();
+      const sixtyDaysAgoStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 59, 0, 0, 0).toISOString();
+      const thirtyOneDaysAgoEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30, 23, 59, 59, 999).toISOString();
 
       const [last30Res, prev30Res] = await Promise.all([
         applyLocFilter(
           supabase
             .from('phorest_appointments')
             .select('id')
-            .gte('appointment_date', thirtyDaysAgoStart)
-            .lte('appointment_date', todayDate)
+            .gte('created_at', thirtyDaysAgoStart)
+            .lte('created_at', todayEnd)
             .not('status', 'eq', 'cancelled')
         ),
         applyLocFilter(
           supabase
             .from('phorest_appointments')
             .select('id')
-            .gte('appointment_date', sixtyDaysAgoStart)
-            .lte('appointment_date', thirtyOneDaysAgoEnd)
+            .gte('created_at', sixtyDaysAgoStart)
+            .lte('created_at', thirtyOneDaysAgoEnd)
             .not('status', 'eq', 'cancelled')
         ),
       ]);
