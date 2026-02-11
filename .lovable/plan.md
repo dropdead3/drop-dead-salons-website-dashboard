@@ -1,51 +1,89 @@
 
-# Beautify Quick Actions Dropdown -- Consistent Menu Items
 
-## The Problem
-The "View As" and "Phorest Sync" items inside the Quick Actions dropdown are rendering as their standalone button/popover components (with borders, rounded pill shapes, different sizing). They visually clash with the standard `DropdownMenuItem` rows like "Hide Numbers" and "Help Center."
+# Add Interactive Task Items to Zura Card Insight Dialog
 
-## The Fix
+## Overview
+Transform the "ACTIONABLE NEXT STEPS" section in the Zura card insight dialog from static markdown text into interactive task items. Each item will have an "Add to Tasks" button and a "Learn More" button that reveals detailed instructions.
 
-### File: `src/components/dashboard/DashboardLayout.tsx` (lines 1066-1106)
+## Current State
+- The `ZuraCardInsight` dialog calls the `ai-card-analysis` edge function, which returns a single `insight` string (plain markdown)
+- The dialog renders the entire response as markdown via `ReactMarkdown`
+- Action items are embedded in the markdown with no interactivity
+- The `SuggestedTasksSection` component already exists for the business insights drawer but is not used here
 
-Rewrite the dropdown content so every row follows the same visual pattern: **icon (w-4 h-4) + label text + optional right-side accessory**, all using `DropdownMenuItem` or `DropdownMenuLabel` consistently.
+## Changes
 
-### Changes
+### 1. Edge Function: Return Structured Action Items
 
-1. **View As**: Instead of embedding the full `ViewAsToggle` component (which renders its own `Button` + nested `DropdownMenu`), render a `DropdownMenuItem` that, when clicked, opens a separate dialog/sheet or navigates. Since the ViewAs logic is complex (nested dropdown with search, roles, users), the cleanest approach is to make it render as a **menu-item-styled trigger** -- essentially restyling the `ViewAsToggle` button to look like a native dropdown item when rendered inside this overflow menu.
+**File: `supabase/functions/ai-card-analysis/index.ts`**
 
-   Approach: Add a `variant` prop or `asMenuItem` prop to `ViewAsToggle` so when used inside the overflow dropdown, its trigger button renders with `DropdownMenuItem`-matching styles (`w-full justify-start text-sm px-2 py-1.5 rounded-sm hover:bg-accent`) instead of its default outlined pill button.
+Update the AI prompt to request a JSON block of structured action items appended to the response. The system prompt will instruct the model to end its response with a fenced JSON block:
 
-2. **Phorest Sync**: Same approach -- render the `PhorestSyncPopout` trigger as a menu-item-styled row. Add an `asMenuItem` prop so the trigger button matches the dropdown item look: `RefreshCw` icon + "Sync Status" label + health dot on the right.
+```
+After your markdown analysis, output a JSON block with structured action items:
+\`\`\`json:actions
+[
+  { "title": "...", "priority": "high|medium|low", "dueInDays": 7, "details": "Explicit step-by-step instructions..." }
+]
+\`\`\`
+```
 
-3. **Consistent icon sizing**: Ensure all icons are `w-4 h-4` and left-aligned with `gap-2`.
+The edge function will then parse this JSON block out of the response, returning:
+```json
+{
+  "insight": "...markdown without the JSON block...",
+  "actionItems": [
+    { "title": "Boost Retail Sales", "priority": "high", "dueInDays": 7, "details": "1. Check inventory levels at /dashboard/inventory\n2. Identify top 3 products...\n3. Train staff on upsell script..." }
+  ]
+}
+```
 
-4. **Remove wrapper divs**: Remove the `<div className="px-1 py-0.5">` wrappers that add inconsistent padding.
+### 2. Hook: Update Return Type
 
-### Detailed Code Plan
+**File: `src/hooks/useCardInsight.ts`**
 
-**ViewAsToggle** (inner component, ~line 492-523):
-- Accept an optional `asMenuItem?: boolean` prop
-- When `asMenuItem` is true, render the trigger button with these classes: `variant="ghost" className="w-full justify-start gap-2 h-auto px-2 py-1.5 rounded-sm font-normal text-sm"` and hide the chevron/badge decorations, showing just: `EyeOff icon + "View As" text` (or the active state text)
+- Change the state from `string | null` to `{ insight: string; actionItems: CardActionItem[] } | null`
+- Define a `CardActionItem` interface with `title`, `priority`, `dueInDays`, and `details` fields
+- Parse the edge function response to extract both `insight` and `actionItems`
 
-**PhorestSyncPopout** (separate file):
-- Accept an optional `asMenuItem?: boolean` prop
-- When `asMenuItem` is true, render the trigger button as: `variant="ghost" className="w-full justify-start gap-2 h-auto px-2 py-1.5 rounded-sm font-normal text-sm"` showing: `RefreshCw icon + "Sync Status" text + health dot`
+### 3. Dialog: Render Interactive Action Items
 
-**DashboardLayout dropdown** (lines 1084-1096):
-- Remove the wrapper `<div>` elements
-- Pass `asMenuItem` to both components
-- This makes every item in the dropdown visually identical in height, padding, icon size, and hover state
+**File: `src/components/dashboard/ZuraCardInsight.tsx`**
 
-### Result
-Every row in the dropdown will have:
-- Identical left padding and icon alignment
-- Same font size (text-sm) and weight (normal)
-- Same hover background (bg-accent)
-- Same height (~36px)
-- Clean separators between logical groups
+After the markdown content, render the action items as interactive cards:
+
+- Each action item shows: checkbox-style icon + title + priority badge + two buttons
+- **"Add to Tasks"** button: Calls `useTasks().createTask` with `source: 'ai_insights'`, converts to a real task. Shows checkmark once added.
+- **"Learn More"** button: Expands an inline detail section below the item showing the `details` field rendered as markdown with step-by-step instructions
+
+The layout per action item:
+```text
+[1] Boost Retail Sales                    [HIGH]
+    [+ Add to Tasks]  [Learn More v]
+    
+    --- expanded details (when Learn More clicked) ---
+    1. Check inventory levels at /dashboard/inventory
+    2. Identify your top 3 products by margin
+    3. Brief your team on the "recommend one product" script
+    4. Track attachment rate next week
+    ---------------------------------------------------
+```
+
+### 4. Imports and Wiring
+
+- Import `useTasks` in `ZuraCardInsight.tsx`
+- Use local state (`expandedItems`, `addedItems`) to track which items are expanded or added
+- Reuse the existing `SuggestedTasksSection` priority badge styling for consistency
+
+## Technical Details
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/DashboardLayout.tsx` | Add `asMenuItem` prop to ViewAsToggle, remove wrapper divs, pass prop in dropdown |
-| `src/components/dashboard/PhorestSyncPopout.tsx` | Add `asMenuItem` prop to restyle trigger button as menu-item row |
+| `supabase/functions/ai-card-analysis/index.ts` | Update prompt to request structured JSON action items; parse JSON block from response; return `{ insight, actionItems }` |
+| `src/hooks/useCardInsight.ts` | Update state type to include `actionItems` array; parse structured response |
+| `src/components/dashboard/ZuraCardInsight.tsx` | Render action items as interactive cards with "Add to Tasks" and expandable "Learn More" detail sections |
+
+## Edge Cases
+- If the AI does not return a valid JSON block, fall back to empty `actionItems` array (pure markdown still displays)
+- If `useTasks` fails (e.g., impersonation mode), show the existing toast error
+- The "Learn More" details support internal route links (rendered as clickable navigation links)
