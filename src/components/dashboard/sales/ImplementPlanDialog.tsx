@@ -47,66 +47,70 @@ interface ActionStep {
   dueDays: number;
 }
 
+/** Normalize markdown content for easier parsing */
+function normalizeContent(content: string): string {
+  // Strip markdown links [text](url) → text
+  let normalized = content.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+  // Collapse multiple spaces/tabs
+  normalized = normalized.replace(/[ \t]+/g, ' ');
+  return normalized;
+}
+
+/** Deduplicate by title similarity */
+function deduplicateSteps(steps: ActionStep[]): ActionStep[] {
+  const seen = new Set<string>();
+  return steps.filter((step) => {
+    const key = step.title.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 30);
+    if (key.length < 3 || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 /** Extract structured action items from markdown content */
 function extractActions(content: string): ActionStep[] {
-  const steps: ActionStep[] = [];
-  let match;
+  const normalized = normalizeContent(content);
+  let steps: ActionStep[] = [];
+  let match: RegExpExecArray | null;
 
-  // Strategy 1: **Title:** description
-  const boldColonPattern = /\*\*([^*]+?):\*\*\s*([^\n]*)/g;
-  while ((match = boldColonPattern.exec(content)) !== null) {
-    const title = match[1].trim();
-    const description = match[2].trim();
-    if (title.length > 3 && title.length < 120) {
+  // Strategy 1: Any **bold text** as action title, rest of line as description
+  const boldPattern = /\*\*([^*]{4,120})\*\*[:\s]*(.*)/g;
+  while ((match = boldPattern.exec(normalized)) !== null) {
+    const title = match[1].trim().replace(/^[\d.)\-•]+\s*/, '');
+    const description = match[2].trim().replace(/\*+/g, '').slice(0, 200);
+    // Skip generic headers
+    const lower = title.toLowerCase();
+    if (lower.includes('action step') || lower.includes('recovery plan') || lower === 'plan' || title.length < 5) continue;
+    steps.push({ title, description, dueDays: 0 });
+  }
+
+  // Strategy 2: Numbered or bulleted list items (with or without bold)
+  if (steps.length === 0) {
+    const listPattern = /^[\s]*(?:\d+[.)]\s+|[-•]\s+)(.{5,150})/gm;
+    while ((match = listPattern.exec(normalized)) !== null) {
+      const raw = match[1].trim().replace(/\*+/g, '');
+      const colonIdx = raw.indexOf(':');
+      const title = colonIdx > 3 && colonIdx < 80 ? raw.slice(0, colonIdx).trim() : raw.slice(0, 80).trim();
+      const description = colonIdx > 3 ? raw.slice(colonIdx + 1).trim() : '';
       steps.push({ title, description, dueDays: 0 });
     }
   }
 
-  // Strategy 2: **Title** followed by description (no colon)
+  // Strategy 3: Sentence/line-level fallback
   if (steps.length === 0) {
-    const boldPattern = /\*\*([^*]{4,100})\*\*[:\s]*([^\n*]*)/g;
-    while ((match = boldPattern.exec(content)) !== null) {
-      const title = match[1].trim().replace(/^[\d.)\-]+\s*/, '');
-      const description = match[2].trim();
-      if (title.length > 3 && !title.toLowerCase().includes('action') && !title.toLowerCase().includes('plan')) {
-        steps.push({ title, description, dueDays: 0 });
-      }
+    const lines = normalized.split('\n').map((l) => l.trim()).filter(Boolean);
+    for (const line of lines) {
+      const clean = line.replace(/^#+\s*/, '').replace(/\*+/g, '').trim();
+      if (clean.length < 20 || clean.length > 200) continue;
+      // Skip header-like or meta lines
+      const lower = clean.toLowerCase();
+      if (lower.startsWith('here') || lower.startsWith('plan') || lower.startsWith('summary') || lower.startsWith('note')) continue;
+      steps.push({ title: clean.slice(0, 80), description: clean.length > 80 ? clean.slice(80) : '', dueDays: 0 });
     }
   }
 
-  // Strategy 3: Numbered list items (1. Title or 1) Title)
-  if (steps.length === 0) {
-    const numberedPattern = /^\s*\d+[.)]\s+(.+)/gm;
-    while ((match = numberedPattern.exec(content)) !== null) {
-      const raw = match[1].trim().replace(/\*+/g, '').replace(/[:\.]$/, '');
-      if (raw.length > 3 && raw.length < 120) {
-        steps.push({ title: raw, description: '', dueDays: 0 });
-      }
-    }
-  }
-
-  // Strategy 4: Markdown headers ### Title
-  if (steps.length === 0) {
-    const headerPattern = /^#{2,4}\s+(.+)/gm;
-    while ((match = headerPattern.exec(content)) !== null) {
-      const title = match[1].trim().replace(/\*+/g, '');
-      if (title.length > 3 && title.length < 120) {
-        steps.push({ title, description: '', dueDays: 0 });
-      }
-    }
-  }
-
-  // Strategy 5: Bullet list with substantive content
-  if (steps.length === 0) {
-    const bulletPattern = /^[\s]*[-•]\s+(.{5,120})/gm;
-    while ((match = bulletPattern.exec(content)) !== null) {
-      const title = match[1].trim().replace(/\*+/g, '');
-      steps.push({ title, description: '', dueDays: 0 });
-    }
-  }
-
-  // Assign due days based on position
-  const result = steps.slice(0, 8);
+  // Deduplicate and cap
+  const result = deduplicateSteps(steps).slice(0, 8);
   result.forEach((step, i) => {
     step.dueDays = i < 2 ? 2 : i < 4 ? 5 : 7;
   });
