@@ -3,6 +3,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
+export interface CardActionItem {
+  title: string;
+  priority: 'high' | 'medium' | 'low';
+  dueInDays: number;
+  details: string;
+}
+
+interface CardInsightData {
+  insight: string;
+  actionItems: CardActionItem[];
+}
+
 interface UseCardInsightOptions {
   cardName: string;
   metricData?: Record<string, string | number>;
@@ -11,36 +23,38 @@ interface UseCardInsightOptions {
 }
 
 export function useCardInsight({ cardName, metricData, dateRange, locationName }: UseCardInsightOptions) {
-  const [insight, setInsight] = useState<string | null>(null);
+  const [data, setData] = useState<CardInsightData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const queryClient = useQueryClient();
 
   const cacheKey = `card-insight-${cardName}-${dateRange}-${JSON.stringify(metricData)}`;
 
   const fetchInsight = useCallback(async () => {
-    // Check cache first
-    const cached = queryClient.getQueryData<string>([cacheKey]);
+    const cached = queryClient.getQueryData<CardInsightData>([cacheKey]);
     if (cached) {
-      setInsight(cached);
+      setData(cached);
       return;
     }
 
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('ai-card-analysis', {
+      const { data: responseData, error } = await supabase.functions.invoke('ai-card-analysis', {
         body: { cardName, metricData, dateRange, locationName },
       });
 
       if (error) throw error;
 
-      if (data?.error) {
-        toast.error(data.error);
+      if (responseData?.error) {
+        toast.error(responseData.error);
         return;
       }
 
-      const result = data?.insight || 'Unable to generate analysis.';
-      setInsight(result);
-      // Cache for 10 minutes
+      const result: CardInsightData = {
+        insight: responseData?.insight || 'Unable to generate analysis.',
+        actionItems: Array.isArray(responseData?.actionItems) ? responseData.actionItems : [],
+      };
+
+      setData(result);
       queryClient.setQueryData([cacheKey], result, {});
       setTimeout(() => queryClient.removeQueries({ queryKey: [cacheKey] }), 10 * 60 * 1000);
     } catch (err) {
@@ -51,5 +65,11 @@ export function useCardInsight({ cardName, metricData, dateRange, locationName }
     }
   }, [cardName, metricData, dateRange, locationName, cacheKey, queryClient]);
 
-  return { insight, isLoading, fetchInsight, clearInsight: () => setInsight(null) };
+  return {
+    insight: data?.insight || null,
+    actionItems: data?.actionItems || [],
+    isLoading,
+    fetchInsight,
+    clearInsight: () => setData(null),
+  };
 }
