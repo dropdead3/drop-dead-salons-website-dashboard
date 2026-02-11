@@ -111,10 +111,26 @@ export function ImplementPlanDialog({
   const [executed, setExecuted] = useState(false);
   const [results, setResults] = useState<string[]>([]);
 
+  // Step selection
+  const [selectedSteps, setSelectedSteps] = useState<Set<number>>(new Set());
+
+  const toggleStep = (idx: number) => {
+    setSelectedSteps((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
+  const allSelected = steps.length > 0 && selectedSteps.size === steps.length;
+
   // Reset state when dialog opens
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
-      setSteps(extractActions(planContent));
+      const extracted = extractActions(planContent);
+      setSteps(extracted);
+      setSelectedSteps(new Set(extracted.map((_, i) => i)));
       setLeadershipNote('');
       setNoteOpen(false);
       setCreateTasks(true);
@@ -134,12 +150,14 @@ export function ImplementPlanDialog({
     }
   }, [executed]);
 
+  const activeSteps = steps.filter((_, i) => selectedSteps.has(i));
+
   const formatPlanForClipboard = () => {
     let text = `📋 ${planTitle}\n`;
     if (goalPeriod) text += `Period: ${goalPeriod}\n`;
     text += '\n--- Action Steps ---\n\n';
 
-    steps.forEach((step, i) => {
+    activeSteps.forEach((step, i) => {
       text += `${i + 1}. ${step.title}`;
       text += ` (due ${format(addDays(new Date(), step.dueDays), 'MMM d')})`;
       text += '\n';
@@ -155,7 +173,7 @@ export function ImplementPlanDialog({
 
   const formatPlanForDM = () => {
     let md = `**📋 ${planTitle}**\n\n`;
-    steps.forEach((step, i) => {
+    activeSteps.forEach((step, i) => {
       md += `**${i + 1}. ${step.title}**`;
       md += ` (due ${format(addDays(new Date(), step.dueDays), 'MMM d')})`;
       md += '\n';
@@ -174,7 +192,7 @@ export function ImplementPlanDialog({
 
     try {
       if (createTasks) {
-        const tasks = steps
+        const tasks = activeSteps
           .filter((s) => s.title.trim())
           .map((step) => ({
             user_id: user.id,
@@ -216,7 +234,7 @@ export function ImplementPlanDialog({
     }
   };
 
-  const hasValidSteps = steps.some((s) => s.title.trim());
+  const hasValidSteps = activeSteps.some((s) => s.title.trim());
   const hasDistribution = createTasks || shareDM || copyClipboard;
 
   return (
@@ -266,35 +284,63 @@ export function ImplementPlanDialog({
                   </p>
                 </div>
 
-                {/* Read-only action steps */}
+                {/* Selectable action steps */}
                 <div className="space-y-1.5">
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Action Steps
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Action Steps
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSelectedSteps(
+                          allSelected
+                            ? new Set()
+                            : new Set(steps.map((_, i) => i))
+                        )
+                      }
+                      className="text-[11px] text-primary hover:underline"
+                    >
+                      {allSelected ? 'Deselect all' : 'Select all'}
+                    </button>
+                  </div>
                   <div className="space-y-2">
-                    {steps.map((step, i) => (
-                      <div
-                        key={i}
-                        className="flex gap-3 p-2.5 rounded-lg border border-border/30 bg-card/50"
-                      >
-                        <span className="text-xs font-mono text-muted-foreground pt-0.5 w-5 shrink-0 text-right">
-                          {i + 1}.
-                        </span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium leading-snug">
-                            {step.title}
-                          </p>
-                          {step.description && (
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                              {step.description}
-                            </p>
+                    {steps.map((step, i) => {
+                      const selected = selectedSteps.has(i);
+                      return (
+                        <label
+                          key={i}
+                          className={cn(
+                            'flex gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors',
+                            selected
+                              ? 'border-border/30 bg-card/50'
+                              : 'border-border/20 bg-muted/20 opacity-60'
                           )}
-                          <p className="text-[11px] text-muted-foreground/60 mt-1">
-                            Due {format(addDays(new Date(), step.dueDays), 'MMM d')}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                        >
+                          <Checkbox
+                            checked={selected}
+                            onCheckedChange={() => toggleStep(i)}
+                            className="mt-0.5"
+                          />
+                          <span className="text-xs font-mono text-muted-foreground pt-0.5 w-5 shrink-0 text-right">
+                            {i + 1}.
+                          </span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium leading-snug">
+                              {step.title}
+                            </p>
+                            {step.description && (
+                              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                                {step.description}
+                              </p>
+                            )}
+                            <p className="text-[11px] text-muted-foreground/60 mt-1">
+                              Due {format(addDays(new Date(), step.dueDays), 'MMM d')}
+                            </p>
+                          </div>
+                        </label>
+                      );
+                    })}
                   </div>
                 </div>
 
