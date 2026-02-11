@@ -1,84 +1,51 @@
 
-# Clean Up the Quick Actions Overflow Dropdown
+# Beautify Quick Actions Dropdown -- Consistent Menu Items
 
 ## The Problem
-The "Quick Actions" dropdown (triggered by the `...` ellipsis button in the top bar) renders full interactive components -- `HideNumbersToggle` (a Button), `ViewAsToggle` (a full DropdownMenu), and `PhorestSyncPopout` (a Popover with sync status) -- inside raw `<div className="px-2 py-1.5">` wrappers. This creates:
-
-- Inconsistent padding and spacing between items
-- Misaligned icons and text
-- Nested interactive menus that look broken inside a dropdown
-- The role badge rendered as a disabled menu item looks like dead UI
+The "View As" and "Phorest Sync" items inside the Quick Actions dropdown are rendering as their standalone button/popover components (with borders, rounded pill shapes, different sizing). They visually clash with the standard `DropdownMenuItem` rows like "Hide Numbers" and "Help Center."
 
 ## The Fix
 
-Restructure the dropdown content in `DashboardLayout.tsx` (lines 1064-1092) so every item uses proper `DropdownMenuItem` styling with consistent icon + label layout. Instead of embedding the full toggle/popover components, render simplified menu-item versions:
+### File: `src/components/dashboard/DashboardLayout.tsx` (lines 1066-1106)
 
-### File: `src/components/dashboard/DashboardLayout.tsx`
+Rewrite the dropdown content so every row follows the same visual pattern: **icon (w-4 h-4) + label text + optional right-side accessory**, all using `DropdownMenuItem` or `DropdownMenuLabel` consistently.
 
-**Replace lines 1064-1092** with a cleaner structure:
+### Changes
 
-```tsx
-<DropdownMenuContent align="end" className="w-56">
-  <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
-  <DropdownMenuSeparator />
-  
-  {/* Show/Hide $ - as a proper menu item with click handler */}
-  <DropdownMenuItem onClick={toggleHideNumbers} className="gap-2">
-    {hideNumbers ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-    {hideNumbers ? 'Show Numbers' : 'Hide Numbers'}
-  </DropdownMenuItem>
-  
-  <DropdownMenuSeparator />
-  
-  {/* Role badge as a label, not a disabled item */}
-  <DropdownMenuLabel className="gap-2 flex items-center text-xs font-normal text-muted-foreground">
-    <AccessIcon className="w-3.5 h-3.5" />
-    {getAccessLabel()}
-  </DropdownMenuLabel>
-  
-  {/* View As - navigates to trigger the ViewAs panel or inline sub-items */}
-  {isAdmin && (
-    <DropdownMenuItem className="gap-2" asChild>
-      {/* Render as a simple trigger that opens ViewAs from within */}
-    </DropdownMenuItem>
-  )}
-  
-  {/* Phorest Sync - as a menu item with status dot */}
-  {showPhorestSync && (
-    <DropdownMenuItem onClick={handleSyncNow} className="gap-2">
-      <RefreshCw className="w-4 h-4" />
-      Sync Data
-      <span className={cn("ml-auto h-2 w-2 rounded-full", getHealthColor())} />
-    </DropdownMenuItem>
-  )}
-  
-  <DropdownMenuSeparator />
-  
-  <DropdownMenuItem asChild>
-    <Link to="/dashboard/help" className="flex items-center gap-2 cursor-pointer">
-      <HelpCircle className="w-4 h-4" />
-      Help Center
-    </Link>
-  </DropdownMenuItem>
-</DropdownMenuContent>
-```
+1. **View As**: Instead of embedding the full `ViewAsToggle` component (which renders its own `Button` + nested `DropdownMenu`), render a `DropdownMenuItem` that, when clicked, opens a separate dialog/sheet or navigates. Since the ViewAs logic is complex (nested dropdown with search, roles, users), the cleanest approach is to make it render as a **menu-item-styled trigger** -- essentially restyling the `ViewAsToggle` button to look like a native dropdown item when rendered inside this overflow menu.
 
-### Key Decisions
+   Approach: Add a `variant` prop or `asMenuItem` prop to `ViewAsToggle` so when used inside the overflow dropdown, its trigger button renders with `DropdownMenuItem`-matching styles (`w-full justify-start text-sm px-2 py-1.5 rounded-sm hover:bg-accent`) instead of its default outlined pill button.
 
-1. **HideNumbersToggle**: Extract `hideNumbers` and `toggleHideNumbers` from `useHideNumbers()` at the parent level (they're already available since `HideNumbersToggle` uses them). Render as a standard `DropdownMenuItem` with `onClick`.
+2. **Phorest Sync**: Same approach -- render the `PhorestSyncPopout` trigger as a menu-item-styled row. Add an `asMenuItem` prop so the trigger button matches the dropdown item look: `RefreshCw` icon + "Sync Status" label + health dot on the right.
 
-2. **Role Badge**: Change from `disabled DropdownMenuItem` to a `DropdownMenuLabel` -- it's informational, not interactive, so it should look like a label.
+3. **Consistent icon sizing**: Ensure all icons are `w-4 h-4` and left-aligned with `gap-2`.
 
-3. **ViewAsToggle**: This is the trickiest since it's a full nested dropdown. Keep it as the embedded component but wrap it cleanly so it sits within the menu's visual rhythm. The `ViewAsToggle` already renders its own `DropdownMenu`, so it will layer on top naturally.
+4. **Remove wrapper divs**: Remove the `<div className="px-1 py-0.5">` wrappers that add inconsistent padding.
 
-4. **PhorestSyncPopout**: Replace the full popover with a simplified `DropdownMenuItem` showing the sync action + a health status dot. The full sync dashboard is accessible from Settings.
+### Detailed Code Plan
 
-### Technical Notes
+**ViewAsToggle** (inner component, ~line 492-523):
+- Accept an optional `asMenuItem?: boolean` prop
+- When `asMenuItem` is true, render the trigger button with these classes: `variant="ghost" className="w-full justify-start gap-2 h-auto px-2 py-1.5 rounded-sm font-normal text-sm"` and hide the chevron/badge decorations, showing just: `EyeOff icon + "View As" text` (or the active state text)
 
-- The `useHideNumbers` hook is already called inside `HideNumbersToggle`. We need to lift that call to the parent scope so the `DropdownMenuItem`'s `onClick` can access `toggleHideNumbers` directly.
-- The `PhorestSyncPopout` sync handler needs to be accessible. Since it's a separate component, the simplest approach is to keep the full component but style it to render as a menu-item-like row (adding a `variant="menuItem"` prop or simply adjusting its trigger to look like a `DropdownMenuItem`).
-- For `ViewAsToggle`, since it opens its own dropdown, it naturally works as a nested interactive element. Just remove the raw `div` padding wrapper and ensure consistent spacing.
+**PhorestSyncPopout** (separate file):
+- Accept an optional `asMenuItem?: boolean` prop
+- When `asMenuItem` is true, render the trigger button as: `variant="ghost" className="w-full justify-start gap-2 h-auto px-2 py-1.5 rounded-sm font-normal text-sm"` showing: `RefreshCw icon + "Sync Status" text + health dot`
+
+**DashboardLayout dropdown** (lines 1084-1096):
+- Remove the wrapper `<div>` elements
+- Pass `asMenuItem` to both components
+- This makes every item in the dropdown visually identical in height, padding, icon size, and hover state
+
+### Result
+Every row in the dropdown will have:
+- Identical left padding and icon alignment
+- Same font size (text-sm) and weight (normal)
+- Same hover background (bg-accent)
+- Same height (~36px)
+- Clean separators between logical groups
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/DashboardLayout.tsx` | Restructure Quick Actions dropdown items (lines 1064-1092) to use consistent `DropdownMenuItem` patterns, lift `useHideNumbers` to parent scope, style role badge as label |
+| `src/components/dashboard/DashboardLayout.tsx` | Add `asMenuItem` prop to ViewAsToggle, remove wrapper divs, pass prop in dropdown |
+| `src/components/dashboard/PhorestSyncPopout.tsx` | Add `asMenuItem` prop to restyle trigger button as menu-item row |
