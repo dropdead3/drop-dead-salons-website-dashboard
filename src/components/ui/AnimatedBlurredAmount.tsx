@@ -25,34 +25,17 @@ export function AnimatedBlurredAmount({
   const [displayValue, setDisplayValue] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
   const previousValue = useRef(0);
-  const elementRef = useRef<HTMLSpanElement>(null);
   const animationRef = useRef<number>();
 
-  // Trigger animation when element comes into view
+  // Animate on mount
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasAnimated) {
-          setHasAnimated(true);
-          animateValue(0, value);
-        }
-      },
-      { threshold: 0.1 }
-    );
+    setHasAnimated(true);
+    animateValue(0, value);
+    previousValue.current = value;
+    return () => { if (animationRef.current) cancelAnimationFrame(animationRef.current); };
+  }, []);
 
-    if (elementRef.current) {
-      observer.observe(elementRef.current);
-    }
-
-    return () => {
-      observer.disconnect();
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
-    };
-  }, [value]);
-
-  // Animate when value changes after initial animation
+  // Animate on value change
   useEffect(() => {
     if (hasAnimated && value !== previousValue.current) {
       animateValue(previousValue.current, value);
@@ -61,9 +44,7 @@ export function AnimatedBlurredAmount({
   }, [value, hasAnimated]);
 
   const animateValue = (from: number, to: number) => {
-    if (animationRef.current) {
-      cancelAnimationFrame(animationRef.current);
-    }
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
 
     const startTime = performance.now();
     const difference = to - from;
@@ -72,11 +53,10 @@ export function AnimatedBlurredAmount({
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Smooth ease-out curve with a nice deceleration
-      const easeOut = 1 - Math.pow(1 - progress, 4);
+      // Damped spring: overshoot ~5%, oscillate, settle
+      const settle = 1 - Math.exp(-6 * progress) * Math.cos(4 * Math.PI * progress);
       
-      const currentValue = from + (difference * easeOut);
-      setDisplayValue(currentValue);
+      setDisplayValue(from + difference * settle);
 
       if (progress < 1) {
         animationRef.current = requestAnimationFrame(animate);
@@ -93,30 +73,15 @@ export function AnimatedBlurredAmount({
     ? displayValue.toFixed(decimals)
     : Math.round(displayValue).toLocaleString();
 
-  const handleClick = () => {
-    if (hideNumbers) {
-      requestUnhide();
-    }
-  };
-
-  const handleDoubleClick = () => {
-    if (!hideNumbers) {
-      quickHide();
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && hideNumbers) {
-      requestUnhide();
-    }
-  };
+  const handleClick = () => { if (hideNumbers) requestUnhide(); };
+  const handleDoubleClick = () => { if (!hideNumbers) quickHide(); };
+  const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && hideNumbers) requestUnhide(); };
 
   return (
     <TooltipProvider delayDuration={100}>
       <Tooltip>
         <TooltipTrigger asChild>
           <span
-            ref={elementRef}
             className={cn(
               className,
               hideNumbers ? 'blur-md select-none cursor-pointer transition-all duration-200' : 'cursor-pointer'
