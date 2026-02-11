@@ -649,12 +649,21 @@ export function AggregateSalesCard({
 
           {/* Goal Progress */}
           <div className="mt-6">
-            <SalesGoalProgress 
-              current={displayMetrics.totalRevenue} 
-              target={currentGoal}
-              label={goalLabel}
-              goalPeriod={dateRange === 'thisWeek' || dateRange === '7d' ? 'weekly' : 'monthly'}
-            />
+            {(() => {
+              const selectedLoc = !isAllLocations
+                ? locations?.find(loc => loc.id === filterContext?.locationId)
+                : null;
+              return (
+                <SalesGoalProgress 
+                  current={displayMetrics.totalRevenue} 
+                  target={currentGoal}
+                  label={goalLabel}
+                  goalPeriod={dateRange === 'thisWeek' || dateRange === '7d' ? 'weekly' : 'monthly'}
+                  hoursJson={selectedLoc?.hours_json}
+                  holidayClosures={selectedLoc?.holiday_closures}
+                />
+              );
+            })()}
           </div>
         </div>
 

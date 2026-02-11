@@ -365,18 +365,27 @@ export default function SalesDashboard() {
         </div>
 
         {/* Goal Progress */}
-        <SalesGoalProgress 
-          current={metrics?.totalRevenue || 0} 
-          target={currentGoal}
-          label={
-            locationFilter !== 'all' 
-              ? `${locations?.find(l => l.id === locationFilter)?.name} Goal`
-              : dateRange === 'thisMonth' || dateRange === '30d' || dateRange === 'lastMonth'
-                ? 'Monthly Goal'
-                : 'Weekly Goal'
-          }
-          goalPeriod={dateRange === 'thisWeek' || dateRange === '7d' ? 'weekly' : 'monthly'}
-        />
+        {(() => {
+          const selectedLoc = locationFilter !== 'all'
+            ? locations?.find(l => l.id === locationFilter)
+            : null;
+          return (
+            <SalesGoalProgress 
+              current={metrics?.totalRevenue || 0} 
+              target={currentGoal}
+              label={
+                locationFilter !== 'all' 
+                  ? `${selectedLoc?.name} Goal`
+                  : dateRange === 'thisMonth' || dateRange === '30d' || dateRange === 'lastMonth'
+                    ? 'Monthly Goal'
+                    : 'Weekly Goal'
+              }
+              goalPeriod={dateRange === 'thisWeek' || dateRange === '7d' ? 'weekly' : 'monthly'}
+              hoursJson={selectedLoc?.hours_json}
+              holidayClosures={selectedLoc?.holiday_closures}
+            />
+          );
+        })()}
 
         {/* KPI Cards - Swipeable on mobile */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
