@@ -119,6 +119,7 @@ import {
   MessageSquare,
   MoreHorizontal,
   RefreshCw,
+  HeartPulse,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
@@ -195,6 +196,7 @@ const managerNavItems: NavItem[] = [
   { href: '/dashboard/clients', label: 'Client Directory', icon: Users, permission: 'view_clients' },
   // Operations group (includes former Website section)
   { href: '/dashboard/admin/management', label: 'Management Hub', icon: LayoutGrid, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/client-health', label: 'Client Health', icon: HeartPulse, permission: 'view_team_overview' },
   { href: '/dashboard/admin/payroll', label: 'Hiring & Payroll Hub', icon: DollarSign, permission: 'manage_payroll' },
   { href: '/dashboard/admin/booth-renters', label: 'Renter Hub', icon: Store, permission: 'manage_booth_renters' },
   { href: '/dashboard/admin/website-sections', label: 'Website Editor', icon: Globe, permission: 'manage_homepage_stylists' },

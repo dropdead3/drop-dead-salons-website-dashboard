@@ -35,6 +35,7 @@ import { cn } from '@/lib/utils';
 import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
 import { useLocations } from '@/hooks/useLocations';
 import { ClientDetailSheet } from '@/components/dashboard/ClientDetailSheet';
+import { ClientHealthSummaryCard } from '@/components/dashboard/client-health/ClientHealthSummaryCard';
 
 type SortField = 'total_spend' | 'visit_count' | 'last_visit' | 'name';
 type SortDirection = 'asc' | 'desc';
@@ -271,6 +272,13 @@ export default function ClientDirectory() {
             </TabsList>
           </Tabs>
         </div>
+
+        {/* Client Health Summary Widget */}
+        {canViewAllClients && (
+          <div className="mb-6">
+            <ClientHealthSummaryCard />
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">

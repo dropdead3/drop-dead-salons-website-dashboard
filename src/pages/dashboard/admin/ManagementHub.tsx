@@ -427,6 +427,13 @@ export default function ManagementHub() {
         {/* Client Experience */}
         <CategorySection title="Client Experience">
           <ManagementCard
+            href="/dashboard/admin/client-health"
+            icon={Brain}
+            title="Client Health Hub"
+            description="At-risk clients, rebooking, win-back outreach, and more"
+            colorClass="bg-rose-500/10 text-rose-600 dark:text-rose-400"
+          />
+          <ManagementCard
             href="/dashboard/admin/feedback"
             icon={MessageSquarePlus}
             title="Feedback Hub"
