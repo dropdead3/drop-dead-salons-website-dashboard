@@ -212,7 +212,14 @@ function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isEomPeriod
           {getDisplayLabel()}
         </text>
         <text 
-          x={0} y={0} dy={26} 
+          x={0} y={0} dy={25} 
+          textAnchor="middle" 
+          className="text-[10px] fill-muted-foreground"
+        >
+          {format(parseISO(day.date), 'MMM d')}
+        </text>
+        <text 
+          x={0} y={0} dy={38} 
           textAnchor="middle" 
           className="fill-primary text-[11px] cursor-pointer"
           style={{ 
@@ -564,9 +571,9 @@ export function ForecastingCard() {
 
           {/* Bar Chart - only show if not tomorrow */}
           {showChart && chartData.length > 0 && (
-            <div className={cn("h-[200px]", showWeeklyChart && "h-[220px]")} ref={chartRef}>
+            <div className={cn("h-[220px]", showWeeklyChart && "h-[240px]")} ref={chartRef}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: showWeeklyChart ? 40 : 35, left: 10 }}>
+                <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: showWeeklyChart ? 40 : 48, left: 10 }}>
                   <defs>
                     <linearGradient id="glassPrimary" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
