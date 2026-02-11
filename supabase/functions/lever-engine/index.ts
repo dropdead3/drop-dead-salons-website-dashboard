@@ -1,0 +1,450 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "@supabase/supabase-js";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { organization_id } = await req.json();
+    if (!organization_id) {
+      return new Response(JSON.stringify({ error: "organization_id required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // 1. Check for fresh recommendation (< 1 hour old)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { data: existing } = await supabase
+      .from("lever_recommendations")
+      .select("*")
+      .eq("organization_id", organization_id)
+      .eq("is_active", true)
+      .eq("is_primary", true)
+      .gte("created_at", oneHourAgo)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (existing) {
+      return new Response(JSON.stringify({ recommendation: existing, cached: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // 2. Fetch KPI definitions + recent readings
+    const { data: kpiDefs } = await supabase
+      .from("kpi_definitions")
+      .select("*")
+      .eq("organization_id", organization_id)
+      .eq("is_active", true);
+
+    if (!kpiDefs || kpiDefs.length === 0) {
+      return new Response(
+        JSON.stringify({ recommendation: null, reason: "no_kpis_defined" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Get readings from last 90 days
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
+
+    const { data: readings } = await supabase
+      .from("kpi_readings")
+      .select("*")
+      .eq("organization_id", organization_id)
+      .gte("reading_date", ninetyDaysAgo)
+      .order("reading_date", { ascending: false });
+
+    // 3. Calculate deviation scores per lever category
+    const leverCandidates = calculateLeverCandidates(kpiDefs, readings || []);
+
+    // 4. If no candidate exceeds minimum threshold, return silence
+    const MIN_SCORE = 0.3;
+    const topCandidates = leverCandidates
+      .filter((c) => c.score >= MIN_SCORE)
+      .sort((a, b) => b.score - a.score);
+
+    if (topCandidates.length === 0) {
+      // Deactivate old active recommendations
+      await supabase
+        .from("lever_recommendations")
+        .update({ is_active: false })
+        .eq("organization_id", organization_id)
+        .eq("is_active", true);
+
+      return new Response(
+        JSON.stringify({ recommendation: null, reason: "within_thresholds" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 5. Generate natural-language summary via Lovable AI
+    const primary = topCandidates[0];
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+
+    let aiSummary: {
+      title: string;
+      summary: string;
+      what_to_do: string;
+      why_now: string[];
+    } | null = null;
+
+    if (LOVABLE_API_KEY) {
+      aiSummary = await generateAISummary(primary, LOVABLE_API_KEY);
+    }
+
+    // Fallback if AI unavailable
+    if (!aiSummary) {
+      aiSummary = {
+        title: `${primary.lever_type.replace(/_/g, " ")} Opportunity`,
+        summary: `${primary.lever_type.replace(/_/g, " ")} shows a ${(primary.deviation * 100).toFixed(0)}% deviation from target.`,
+        what_to_do: `Review and adjust ${primary.lever_type.replace(/_/g, " ")} parameters to close the gap.`,
+        why_now: primary.drivers.slice(0, 3),
+      };
+    }
+
+    // 6. Determine confidence
+    const confidence =
+      primary.dataCompleteness > 0.7 && primary.score > 0.6
+        ? "high"
+        : primary.dataCompleteness > 0.4 && primary.score > 0.4
+          ? "medium"
+          : "low";
+
+    // 7. Deactivate old active recommendations
+    await supabase
+      .from("lever_recommendations")
+      .update({ is_active: false })
+      .eq("organization_id", organization_id)
+      .eq("is_active", true);
+
+    // 8. Store new recommendation
+    const now = new Date();
+    const periodStart = new Date(now);
+    periodStart.setDate(periodStart.getDate() - periodStart.getDay() + 1); // Monday
+    const periodEnd = new Date(periodStart);
+    periodEnd.setDate(periodEnd.getDate() + 6); // Sunday
+    const expiresAt = new Date(now);
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    const { data: newRec, error: insertError } = await supabase
+      .from("lever_recommendations")
+      .insert({
+        organization_id,
+        lever_type: primary.lever_type,
+        title: aiSummary.title,
+        summary: aiSummary.summary,
+        what_to_do: aiSummary.what_to_do,
+        why_now: aiSummary.why_now,
+        estimated_monthly_impact: primary.estimatedImpact,
+        confidence,
+        is_primary: true,
+        is_active: true,
+        period_start: periodStart.toISOString().split("T")[0],
+        period_end: periodEnd.toISOString().split("T")[0],
+        evidence: primary.evidence,
+        status: "pending",
+        expires_at: expiresAt.toISOString(),
+      })
+      .select()
+      .single();
+
+    if (insertError) throw insertError;
+
+    return new Response(
+      JSON.stringify({ recommendation: newRec, cached: false }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (e) {
+    console.error("lever-engine error:", e);
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
+
+// ── Lever candidate calculation ──
+
+interface KpiDef {
+  id: string;
+  metric_key: string;
+  display_name: string;
+  target_value: number;
+  warning_threshold: number;
+  critical_threshold: number;
+  unit: string;
+  cadence: string;
+}
+
+interface KpiReading {
+  kpi_definition_id: string;
+  value: number;
+  reading_date: string;
+}
+
+interface LeverCandidate {
+  lever_type: string;
+  score: number;
+  deviation: number;
+  dataCompleteness: number;
+  estimatedImpact: number;
+  drivers: string[];
+  evidence: Record<string, unknown>;
+  relatedKpis: { key: string; name: string; current: number; target: number; unit: string }[];
+}
+
+const METRIC_TO_LEVER: Record<string, string> = {
+  revenue_per_chair: "pricing",
+  avg_ticket: "pricing",
+  utilization_rate: "utilization",
+  client_retention: "retention",
+  labor_cost_pct: "commission_alignment",
+  margin_rate: "pricing",
+  rebook_rate: "retention",
+  new_client_conversion: "retention",
+};
+
+function calculateLeverCandidates(
+  defs: KpiDef[],
+  readings: KpiReading[]
+): LeverCandidate[] {
+  // Group readings by definition
+  const readingsByDef = new Map<string, KpiReading[]>();
+  for (const r of readings) {
+    const arr = readingsByDef.get(r.kpi_definition_id) || [];
+    arr.push(r);
+    readingsByDef.set(r.kpi_definition_id, arr);
+  }
+
+  // Calculate per-KPI deviations
+  const kpiDeviations: {
+    def: KpiDef;
+    currentAvg: number;
+    deviation: number;
+    trend: number;
+    dataPoints: number;
+  }[] = [];
+
+  for (const def of defs) {
+    const defReadings = readingsByDef.get(def.id) || [];
+    if (defReadings.length === 0) continue;
+
+    // Recent average (last 2 weeks)
+    const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0];
+    const recentReadings = defReadings.filter((r) => r.reading_date >= twoWeeksAgo);
+    const olderReadings = defReadings.filter((r) => r.reading_date < twoWeeksAgo);
+
+    const recentAvg =
+      recentReadings.length > 0
+        ? recentReadings.reduce((s, r) => s + r.value, 0) / recentReadings.length
+        : defReadings[0].value;
+
+    const olderAvg =
+      olderReadings.length > 0
+        ? olderReadings.reduce((s, r) => s + r.value, 0) / olderReadings.length
+        : recentAvg;
+
+    const deviation =
+      def.target_value !== 0
+        ? (recentAvg - def.target_value) / Math.abs(def.target_value)
+        : 0;
+
+    const trend = olderAvg !== 0 ? (recentAvg - olderAvg) / Math.abs(olderAvg) : 0;
+
+    kpiDeviations.push({
+      def,
+      currentAvg: recentAvg,
+      deviation,
+      trend,
+      dataPoints: defReadings.length,
+    });
+  }
+
+  // Group by lever type
+  const leverGroups = new Map<
+    string,
+    typeof kpiDeviations
+  >();
+
+  for (const kd of kpiDeviations) {
+    const lever = METRIC_TO_LEVER[kd.def.metric_key] || "service_mix";
+    const arr = leverGroups.get(lever) || [];
+    arr.push(kd);
+    leverGroups.set(lever, arr);
+  }
+
+  // Score each lever
+  const candidates: LeverCandidate[] = [];
+
+  for (const [leverType, kpis] of leverGroups) {
+    const avgDeviation =
+      kpis.reduce((s, k) => s + Math.abs(k.deviation), 0) / kpis.length;
+    const avgTrend =
+      kpis.reduce((s, k) => s + k.trend, 0) / kpis.length;
+    const maxDataPoints = Math.max(...kpis.map((k) => k.dataPoints));
+    const dataCompleteness = Math.min(maxDataPoints / 30, 1); // 30 readings = full
+
+    // Weighted score
+    const impactWeight = 0.5;
+    const urgencyWeight = 0.3;
+    const confidenceWeight = 0.2;
+
+    const score =
+      impactWeight * Math.min(avgDeviation * 2, 1) +
+      urgencyWeight * Math.min(Math.abs(avgTrend) * 5, 1) +
+      confidenceWeight * dataCompleteness;
+
+    // Estimate monthly impact (rough heuristic)
+    const estimatedImpact = Math.round(avgDeviation * 5000); // Placeholder
+
+    // Build drivers
+    const drivers: string[] = [];
+    for (const kd of kpis) {
+      const dir = kd.deviation < 0 ? "below" : "above";
+      drivers.push(
+        `${kd.def.display_name} is ${Math.abs(kd.deviation * 100).toFixed(0)}% ${dir} target (${kd.currentAvg.toFixed(1)} vs ${kd.def.target_value}${kd.def.unit === "$" ? "" : kd.def.unit})`
+      );
+    }
+    if (avgTrend < -0.05) {
+      drivers.push(`Trending downward ${(Math.abs(avgTrend) * 100).toFixed(0)}% over last 2 weeks`);
+    }
+
+    candidates.push({
+      lever_type: leverType,
+      score,
+      deviation: avgDeviation,
+      dataCompleteness,
+      estimatedImpact: Math.abs(estimatedImpact),
+      drivers,
+      evidence: {
+        kpi_deviations: kpis.map((k) => ({
+          metric: k.def.metric_key,
+          current: k.currentAvg,
+          target: k.def.target_value,
+          deviation_pct: (k.deviation * 100).toFixed(1),
+          trend_pct: (k.trend * 100).toFixed(1),
+          data_points: k.dataPoints,
+        })),
+      },
+      relatedKpis: kpis.map((k) => ({
+        key: k.def.metric_key,
+        name: k.def.display_name,
+        current: k.currentAvg,
+        target: k.def.target_value,
+        unit: k.def.unit,
+      })),
+    });
+  }
+
+  return candidates;
+}
+
+// ── AI Summary Generation ──
+
+async function generateAISummary(
+  candidate: LeverCandidate,
+  apiKey: string
+): Promise<{
+  title: string;
+  summary: string;
+  what_to_do: string;
+  why_now: string[];
+} | null> {
+  try {
+    const prompt = `You are Zura, an operations intelligence engine for salon and medspa businesses. Generate a concise executive lever recommendation.
+
+Lever type: ${candidate.lever_type}
+Deviation score: ${(candidate.score * 100).toFixed(0)}%
+Related KPIs:
+${candidate.relatedKpis.map((k) => `- ${k.name}: current ${k.current.toFixed(1)}${k.unit}, target ${k.target}${k.unit}`).join("\n")}
+Drivers:
+${candidate.drivers.map((d) => `- ${d}`).join("\n")}
+
+Respond with a JSON object containing:
+- title: A concise lever name (e.g. "Adjust Color Service Pricing")
+- summary: One sentence describing the opportunity
+- what_to_do: One clear, actionable sentence 
+- why_now: Exactly 3 short bullet-point strings explaining urgency
+
+Be specific to salon/medspa operations. Use advisory tone, no shame language.`;
+
+    const response = await fetch(
+      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            { role: "system", content: "You are Zura, a calm and confident operations advisor. Return valid JSON only." },
+            { role: "user", content: prompt },
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: "format_recommendation",
+                description: "Format the lever recommendation",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string" },
+                    summary: { type: "string" },
+                    what_to_do: { type: "string" },
+                    why_now: {
+                      type: "array",
+                      items: { type: "string" },
+                      minItems: 3,
+                      maxItems: 3,
+                    },
+                  },
+                  required: ["title", "summary", "what_to_do", "why_now"],
+                  additionalProperties: false,
+                },
+              },
+            },
+          ],
+          tool_choice: { type: "function", function: { name: "format_recommendation" } },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error("AI gateway error:", response.status, await response.text());
+      return null;
+    }
+
+    const data = await response.json();
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
+    if (toolCall?.function?.arguments) {
+      return JSON.parse(toolCall.function.arguments);
+    }
+
+    return null;
+  } catch (e) {
+    console.error("AI summary generation failed:", e);
+    return null;
+  }
+}
