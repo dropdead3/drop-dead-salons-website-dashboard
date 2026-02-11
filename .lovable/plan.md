@@ -1,64 +1,58 @@
 
 
-# Merge Two Top Bars into One Responsive Bar
+# Add Rubber Band Scroll Effect to Sidebar Navigation
 
-## Problem
-The current dashboard has two stacked horizontal bars for admin/platform users -- a "Platform Context Bar" (h-10) and a "Main Top Bar" (h-14). This feels cluttered and wastes vertical space. The user wants a single unified bar where less-used items collapse into an ellipsis/overflow dropdown on smaller screens.
+## What This Does
+Adds an iOS-style elastic "rubber band" bounce effect when you scroll past the top or bottom of the sidebar navigation. This gives the sidebar a premium, native-app feel instead of abruptly stopping at scroll boundaries.
 
-## New Layout: Single Bar (h-14)
+## Technical Approach
 
-```text
-+----------------------------------------------------------------------+
-| [sidebar toggle] [OrgSwitcher] | [Search...] | [Hide$] [Badge] [ViewAs] [Sync] [?] [bell] [user] [...] |
-+----------------------------------------------------------------------+
-```
+### File: `src/components/dashboard/SidebarNavContent.tsx`
 
-### Responsive Collapse
+The sidebar `<nav>` element (line 358) currently uses plain `overflow-y-auto`. We will:
 
-At narrower widths, secondary items collapse into an ellipsis (MoreHorizontal) dropdown menu:
+1. Add a custom CSS class `rubber-band-scroll` to the nav element
+2. Define that class in the global stylesheet with `-webkit-overflow-scrolling: touch` and a JavaScript-driven elastic effect for non-iOS browsers
 
-**Always visible** (priority items):
-- Sidebar toggle (left)
-- Organization Switcher (left, platform users only)
-- Search bar (center)
-- Notifications bell (right)
-- User avatar menu (right)
+### File: `src/hooks/useRubberBandScroll.ts` (new)
 
-**Collapse into ellipsis dropdown** when space is tight:
-- Show/Hide $ toggle
-- Role badge (Super Admin, etc.)
-- View As toggle
-- Phorest Sync
-- Help Center link
+A small custom hook that:
+- Attaches `touchstart`, `touchmove`, `touchend` (and `wheel`) listeners to the nav ref
+- Detects when the user scrolls past the top or bottom boundary
+- Applies a CSS `transform: translateY(...)` with easing to simulate the rubber band pull
+- On release, animates back to `translateY(0)` with a spring-like transition
+- Uses `requestAnimationFrame` for smooth 60fps animation
+- Caps the maximum overscroll distance (e.g., 80px) with diminishing resistance
 
-The ellipsis button only renders when there are items to show in it. On wide screens (xl+), all items display inline and the ellipsis disappears.
+### File: `src/index.css`
 
-## Technical Details
+Add a utility class for the overscroll container:
+- `overscroll-behavior: none` to prevent the browser's default overscroll on the nav
+- A CSS transition for the snap-back animation: `transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)`
 
-### File: `src/components/dashboard/DashboardLayout.tsx`
-
-1. **Remove Bar 1** (lines ~1002-1023) -- the separate Platform Context Bar div
-2. **Merge its contents into Bar 2** (the main h-14 bar):
-   - Move `OrganizationSwitcher` to the left section, after sidebar toggle
-   - Move `HideNumbersToggle`, role badge, `ViewAsToggle`, `PhorestSyncPopout` to the right section
-3. **Add responsive overflow**: Wrap secondary right-side items in a container that hides them at `< xl` breakpoint, and mirror them inside a new `DropdownMenu` triggered by a `MoreHorizontal` icon that only shows at `< xl`
-4. The bar remains `h-14` with the same sticky/backdrop-blur styling
-
-### Responsive Breakpoint Logic
+### How It Works
 
 ```text
-xl and above:  All items inline, no ellipsis button
-Below xl:      Secondary items hidden, ellipsis dropdown appears
+User scrolls past boundary
+        |
+        v
+Hook detects overscroll distance
+        |
+        v
+Applies translateY with resistance curve (sqrt-based diminishing return)
+        |
+        v
+User releases / stops scrolling
+        |
+        v
+Spring transition snaps content back to translateY(0)
 ```
 
-Using Tailwind classes:
-- Secondary items wrapper: `hidden xl:flex items-center gap-3`
-- Ellipsis dropdown trigger: `xl:hidden`
-
-### Files Changed
+### Changes Summary
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/DashboardLayout.tsx` | Remove Bar 1, merge items into Bar 2, add ellipsis overflow dropdown for responsive collapse |
+| `src/hooks/useRubberBandScroll.ts` | New hook -- elastic overscroll logic with touch + wheel support |
+| `src/components/dashboard/SidebarNavContent.tsx` | Apply the hook to the nav ref element |
+| `src/index.css` | Add `overscroll-behavior: none` and snap-back transition utility |
 
-Single file change -- restructures the top bar section of `DashboardLayout`.
