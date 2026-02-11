@@ -124,12 +124,7 @@ export function WidgetsSection({ defaultEnabledWidgets = ['changelog', 'birthday
         </Dialog>
       </div>
 
-      <div 
-        className="grid gap-4"
-        style={{
-          gridTemplateColumns: `repeat(${Math.min(enabledWidgets.length, 4)}, minmax(0, 1fr))`,
-        }}
-      >
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <VisibilityGate elementKey="widget_changelog" elementName="What's New Widget" elementCategory="Dashboard Widgets">
           {isWidgetEnabled('changelog') && <ChangelogWidget />}
         </VisibilityGate>
