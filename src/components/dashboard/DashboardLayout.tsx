@@ -183,6 +183,9 @@ const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/team', label: 'Program Team Overview', icon: Users, permission: 'view_team_overview' },
   // Analytics & Insights group
   { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
+  { href: '/dashboard/admin/executive-brief', label: 'Executive Brief', icon: TrendingUp, permission: 'manage_settings' },
+  { href: '/dashboard/admin/kpi-builder', label: 'KPI Architecture', icon: Target, permission: 'manage_settings' },
+  { href: '/dashboard/admin/decision-history', label: 'Decision History', icon: BarChart3, permission: 'manage_settings' },
   { href: '/dashboard/stats', label: 'Team Stats', icon: BarChart3, permission: 'view_all_stats' },
   { href: '/dashboard/leaderboard', label: 'Team Leaderboard', icon: Trophy, permission: 'view_leaderboard' },
   // People group

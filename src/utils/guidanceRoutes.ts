@@ -33,6 +33,9 @@ const ROUTE_CORRECTIONS: Record<string, string> = {
 export const VALID_ROUTE_PREFIXES: ReadonlySet<string> = new Set([
   '/dashboard',
   '/dashboard/admin/analytics',
+  '/dashboard/admin/kpi-builder',
+  '/dashboard/admin/executive-brief',
+  '/dashboard/admin/decision-history',
   '/dashboard/admin/payroll',
   '/dashboard/admin/team',
   '/dashboard/admin/management',
