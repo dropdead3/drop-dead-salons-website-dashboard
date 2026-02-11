@@ -338,14 +338,6 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             )}
           </Link>
         </div>
-        {!isCollapsed && (
-          <>
-            <p className="text-xs text-muted-foreground mt-2 font-sans">
-              Staff Dashboard
-            </p>
-            <div className="w-8 h-[1px] bg-oat/40 mt-3" />
-          </>
-        )}
       </div>
 
       {/* Platform Hub link removed - access via platform routes only */}
