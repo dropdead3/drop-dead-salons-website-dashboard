@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { BlurredAmount, useHideNumbers } from '@/contexts/HideNumbersContext';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { 
   DollarSign, 
@@ -38,14 +39,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useState, useMemo } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { useNavigate } from 'react-router-dom';
 
 // Sub-components
@@ -103,6 +96,7 @@ export function AggregateSalesCard({
   // Collapsible locations + region filter
   const [locationsExpanded, setLocationsExpanded] = useState(false);
   const [regionFilter, setRegionFilter] = useState('all');
+  const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null);
 
   // Use external if provided, otherwise internal
   const dateRange = externalDateRange ?? internalDateRange;
@@ -627,181 +621,194 @@ export function AggregateSalesCard({
         </div>
       </div>
 
-      {/* By Location Table - only show when viewing all locations */}
+      {/* By Location - Expandable Rows */}
       {isAllLocations && (
         <div>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <Building2 className="w-4 h-4 text-muted-foreground" />
               <h3 className="font-display text-xs tracking-wide text-muted-foreground">BY LOCATION</h3>
             </div>
-            {availableRegions.length >= 2 && (
-              <Select value={regionFilter} onValueChange={setRegionFilter}>
-                <SelectTrigger className="w-[160px] h-7 text-xs">
-                  <SelectValue placeholder="All Regions" />
+            <div className="flex items-center gap-2">
+              {availableRegions.length >= 2 && (
+                <Select value={regionFilter} onValueChange={setRegionFilter}>
+                  <SelectTrigger className="w-[140px] h-7 text-xs">
+                    <SelectValue placeholder="All Regions" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Regions</SelectItem>
+                    {availableRegions.map(region => (
+                      <SelectItem key={region} value={region}>{region}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              <Select value={locationSortField} onValueChange={(v) => handleLocationSort(v as LocationSortField)}>
+                <SelectTrigger className="w-[130px] h-7 text-xs">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Regions</SelectItem>
-                  {availableRegions.map(region => (
-                    <SelectItem key={region} value={region}>{region}</SelectItem>
-                  ))}
+                  <SelectItem value="totalRevenue">Revenue</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="serviceRevenue">Services</SelectItem>
+                  <SelectItem value="productRevenue">Products</SelectItem>
+                  <SelectItem value="totalTransactions">Transactions</SelectItem>
+                  <SelectItem value="avgTicket">Avg Ticket</SelectItem>
                 </SelectContent>
               </Select>
-            )}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => setLocationSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+              >
+                {locationSortDirection === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
+              </Button>
+            </div>
           </div>
           
           {filteredLocationData && filteredLocationData.length > 0 ? (
             <>
-              <div className="rounded-lg border overflow-hidden">
-                <Table>
-                  <TableHeader>
-                  <TableRow className="bg-muted/50">
-                    <TableHead className="font-sans text-xs">
-                      <button 
-                        onClick={() => handleLocationSort('name')}
-                        className="flex items-center gap-1 hover:text-foreground transition-colors"
+              <div className="rounded-lg border border-border/50 divide-y divide-border/50 overflow-hidden">
+                {visibleLocationData.map((location, idx) => {
+                  const avgTicket = location.totalTransactions > 0 
+                    ? location.totalRevenue / location.totalTransactions 
+                    : 0;
+                  const isExpanded = expandedLocationId === (location.location_id || String(idx));
+                  const locKey = location.location_id || String(idx);
+                  
+                  return (
+                    <div key={locKey}>
+                      {/* Collapsed row */}
+                      <button
+                        className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors text-left"
+                        onClick={() => setExpandedLocationId(isExpanded ? null : locKey)}
                       >
-                        Location {getLocationSortIcon('name')}
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span className="text-sm font-medium truncate">{location.name}</span>
+                        </div>
+                        <div className="flex items-center gap-3 shrink-0">
+                          <span className="text-sm font-display tabular-nums">
+                            <BlurredAmount>${location.totalRevenue.toLocaleString()}</BlurredAmount>
+                          </span>
+                          <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
+                        </div>
                       </button>
-                    </TableHead>
-                    <TableHead className="font-sans text-xs text-center">
-                      <button 
-                        onClick={() => handleLocationSort('totalRevenue')}
-                        className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
-                      >
-                        Revenue {getLocationSortIcon('totalRevenue')}
-                      </button>
-                    </TableHead>
-                    <TableHead className="font-sans text-xs text-center hidden md:table-cell w-[120px]">Trend</TableHead>
-                    <TableHead className="font-sans text-xs text-center hidden sm:table-cell">
-                      <button 
-                        onClick={() => handleLocationSort('serviceRevenue')}
-                        className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
-                      >
-                        Services {getLocationSortIcon('serviceRevenue')}
-                      </button>
-                    </TableHead>
-                    <TableHead className="font-sans text-xs text-center hidden sm:table-cell">
-                      <button 
-                        onClick={() => handleLocationSort('productRevenue')}
-                        className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
-                      >
-                        Products {getLocationSortIcon('productRevenue')}
-                      </button>
-                    </TableHead>
-                    <TableHead className="font-sans text-xs text-center hidden md:table-cell">
-                      <button 
-                        onClick={() => handleLocationSort('totalTransactions')}
-                        className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
-                      >
-                        Transactions {getLocationSortIcon('totalTransactions')}
-                      </button>
-                    </TableHead>
-                    <TableHead className="font-sans text-xs text-center">
-                      <button 
-                        onClick={() => handleLocationSort('avgTicket')}
-                        className="flex items-center gap-1 mx-auto hover:text-foreground transition-colors"
-                      >
-                        Avg Ticket {getLocationSortIcon('avgTicket')}
-                      </button>
-                    </TableHead>
-                    {isToday && (
-                      <TableHead className="font-sans text-xs text-center">Status</TableHead>
-                    )}
-                    <TableHead className="w-10"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {visibleLocationData.map((location, idx) => {
-                    const avgTicket = location.totalTransactions > 0 
-                      ? location.totalRevenue / location.totalTransactions 
-                      : 0;
-                    return (
-                      <TableRow 
-                        key={location.location_id || idx}
-                        className="cursor-pointer hover:bg-muted/50 transition-colors"
-                        onClick={() => handleViewDetails(location.location_id)}
-                      >
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                            <span className="truncate">{location.name}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center tabular-nums">
-                          <BlurredAmount>${location.totalRevenue.toLocaleString()}</BlurredAmount>
-                        </TableCell>
-                        <TableCell className="text-center hidden md:table-cell">
-                          {!hideNumbers && (
-                            <TrendSparkline 
-                              data={getLocationTrend(location.location_id).map(d => d.value)} 
-                              width={100}
-                              height={24}
-                            />
-                          )}
-                        </TableCell>
-                        <TableCell className="text-center hidden sm:table-cell">
-                          <BlurredAmount>${location.serviceRevenue.toLocaleString()}</BlurredAmount>
-                        </TableCell>
-                        <TableCell className="text-center hidden sm:table-cell">
-                          <BlurredAmount>${location.productRevenue.toLocaleString()}</BlurredAmount>
-                        </TableCell>
-                        <TableCell className="text-center hidden md:table-cell">
-                          <BlurredAmount>{location.totalTransactions}</BlurredAmount>
-                        </TableCell>
-                        <TableCell className="text-center tabular-nums">
-                          <BlurredAmount>${isFinite(avgTicket) ? Math.round(avgTicket) : 0}</BlurredAmount>
-                        </TableCell>
-                        {isToday && (
-                          <TableCell className="text-center">
-                            {(() => {
-                              const locActual = locationActuals[location.location_id || ''];
-                              const expectedRevenue = location.totalRevenue;
-                              if (!locActual || !locActual.hasActualData) {
-                                return (
-                                  <span className="text-xs text-muted-foreground/70">Pending</span>
-                                );
-                              }
-                              if (locActual.actualRevenue >= expectedRevenue && expectedRevenue > 0) {
-                                return (
-                                  <div className="flex flex-col items-center gap-0.5">
-                                    <Badge variant="outline" className="text-xs font-normal bg-primary/10 text-primary border-primary/30">
-                                      <Check className="w-3 h-3 mr-1" />
-                                      Checked out
-                                    </Badge>
-                                    {locActual.lastEndTime && (
-                                      <span className="text-[10px] text-muted-foreground/60">
-                                        Last appt: {formatEndTime(locActual.lastEndTime)}
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              }
-                              return (
-                                <div className="flex flex-col items-center gap-0.5">
-                                  <BlurredAmount>
-                                    <span className="text-xs text-muted-foreground">
-                                      ${locActual.actualRevenue.toLocaleString()} of ${expectedRevenue.toLocaleString()}
-                                    </span>
-                                  </BlurredAmount>
-                                  {locActual.lastEndTime && (
-                                    <span className="text-[10px] text-muted-foreground/60">
-                                      Last appt: {formatEndTime(locActual.lastEndTime)}
-                                    </span>
+
+                      {/* Expanded detail */}
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2, ease: 'easeInOut' }}
+                            className="overflow-hidden"
+                          >
+                            <div className="px-4 pb-4 pt-1">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                {/* Services */}
+                                <div className="bg-muted/30 rounded-lg p-3">
+                                  <p className="text-xs text-muted-foreground mb-1">Services</p>
+                                  <p className="text-sm font-display tabular-nums">
+                                    <BlurredAmount>${location.serviceRevenue.toLocaleString()}</BlurredAmount>
+                                  </p>
+                                </div>
+                                {/* Products */}
+                                <div className="bg-muted/30 rounded-lg p-3">
+                                  <p className="text-xs text-muted-foreground mb-1">Products</p>
+                                  <p className="text-sm font-display tabular-nums">
+                                    <BlurredAmount>${location.productRevenue.toLocaleString()}</BlurredAmount>
+                                  </p>
+                                </div>
+                                {/* Transactions */}
+                                <div className="bg-muted/30 rounded-lg p-3">
+                                  <p className="text-xs text-muted-foreground mb-1">Transactions</p>
+                                  <p className="text-sm font-display tabular-nums">
+                                    <BlurredAmount>{location.totalTransactions}</BlurredAmount>
+                                  </p>
+                                </div>
+                                {/* Avg Ticket */}
+                                <div className="bg-muted/30 rounded-lg p-3">
+                                  <p className="text-xs text-muted-foreground mb-1">Avg Ticket</p>
+                                  <p className="text-sm font-display tabular-nums">
+                                    <BlurredAmount>${isFinite(avgTicket) ? Math.round(avgTicket) : 0}</BlurredAmount>
+                                  </p>
+                                </div>
+                                {/* Trend */}
+                                <div className="bg-muted/30 rounded-lg p-3">
+                                  <p className="text-xs text-muted-foreground mb-1">Trend</p>
+                                  {!hideNumbers ? (
+                                    <TrendSparkline 
+                                      data={getLocationTrend(location.location_id).map(d => d.value)} 
+                                      width={80}
+                                      height={24}
+                                    />
+                                  ) : (
+                                    <span className="text-xs text-muted-foreground">—</span>
                                   )}
                                 </div>
-                              );
-                            })()}
-                          </TableCell>
+                                {/* Status (Today only) */}
+                                {isToday && (
+                                  <div className="bg-muted/30 rounded-lg p-3">
+                                    <p className="text-xs text-muted-foreground mb-1">Status</p>
+                                    {(() => {
+                                      const locActual = locationActuals[location.location_id || ''];
+                                      const expectedRevenue = location.totalRevenue;
+                                      if (!locActual || !locActual.hasActualData) {
+                                        return <span className="text-xs text-muted-foreground/70">Pending</span>;
+                                      }
+                                      if (locActual.actualRevenue >= expectedRevenue && expectedRevenue > 0) {
+                                        return (
+                                          <div className="space-y-0.5">
+                                            <Badge variant="outline" className="text-[10px] font-normal bg-primary/10 text-primary border-primary/30">
+                                              <Check className="w-3 h-3 mr-1" />
+                                              Checked out
+                                            </Badge>
+                                            {locActual.lastEndTime && (
+                                              <p className="text-[10px] text-muted-foreground/60">
+                                                Last: {formatEndTime(locActual.lastEndTime)}
+                                              </p>
+                                            )}
+                                          </div>
+                                        );
+                                      }
+                                      return (
+                                        <div className="space-y-0.5">
+                                          <BlurredAmount>
+                                            <span className="text-xs text-muted-foreground">
+                                              ${locActual.actualRevenue.toLocaleString()} / ${expectedRevenue.toLocaleString()}
+                                            </span>
+                                          </BlurredAmount>
+                                          {locActual.lastEndTime && (
+                                            <p className="text-[10px] text-muted-foreground/60">
+                                              Last: {formatEndTime(locActual.lastEndTime)}
+                                            </p>
+                                          )}
+                                        </div>
+                                      );
+                                    })()}
+                                  </div>
+                                )}
+                              </div>
+                              {/* View details link */}
+                              <button
+                                className="mt-3 text-xs text-primary hover:underline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleViewDetails(location.location_id);
+                                }}
+                              >
+                                View full details →
+                              </button>
+                            </div>
+                          </motion.div>
                         )}
-                        <TableCell>
-                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-                </Table>
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
               </div>
               {filteredLocationData.length > COLLAPSED_COUNT && (
                 <div className="flex justify-center mt-3">
