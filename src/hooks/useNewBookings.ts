@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { format, startOfWeek, startOfMonth, endOfMonth, subMonths, subDays } from 'date-fns';
+import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
 
 export interface LocationBreakdown {
   locationId: string;
@@ -8,31 +9,52 @@ export interface LocationBreakdown {
   count: number;
 }
 
-// Helper: create a local Date at a specific day offset, set to start/end of day, return ISO string
-function localDayBoundary(daysOffset: number, end: boolean): string {
-  const d = new Date();
-  d.setDate(d.getDate() + daysOffset);
-  if (end) {
-    d.setHours(23, 59, 59, 999);
-  } else {
-    d.setHours(0, 0, 0, 0);
+function getDateBounds(dateRange: DateRangeType | undefined): { startDate: string; endDate: string } {
+  const today = new Date();
+  const fmt = (d: Date) => format(d, 'yyyy-MM-dd');
+
+  switch (dateRange) {
+    case 'yesterday': {
+      const y = subDays(today, 1);
+      return { startDate: fmt(y), endDate: fmt(y) };
+    }
+    case '7d':
+      return { startDate: fmt(subDays(today, 6)), endDate: fmt(today) };
+    case '30d':
+      return { startDate: fmt(subDays(today, 29)), endDate: fmt(today) };
+    case 'thisWeek':
+      return { startDate: fmt(startOfWeek(today, { weekStartsOn: 1 })), endDate: fmt(today) };
+    case 'thisMonth':
+      return { startDate: fmt(startOfMonth(today)), endDate: fmt(today) };
+    case 'lastMonth': {
+      const lm = subMonths(today, 1);
+      return { startDate: fmt(startOfMonth(lm)), endDate: fmt(endOfMonth(lm)) };
+    }
+    case 'todayToEom':
+      return { startDate: fmt(today), endDate: fmt(endOfMonth(today)) };
+    case 'todayToPayday': {
+      // Approximate next payday as 15th or last day of month
+      const day = today.getDate();
+      let payday: Date;
+      if (day < 15) {
+        payday = new Date(today.getFullYear(), today.getMonth(), 15);
+      } else {
+        payday = endOfMonth(today);
+      }
+      return { startDate: fmt(today), endDate: fmt(payday) };
+    }
+    case 'today':
+    default:
+      return { startDate: fmt(today), endDate: fmt(today) };
   }
-  return d.toISOString();
 }
 
-export function useNewBookings(locationId?: string) {
-  const today = new Date();
-  const todayStart = localDayBoundary(0, false);
-  const todayEnd = localDayBoundary(0, true);
-  const sevenDaysAgoStart = localDayBoundary(-7, false);
-  const thirtyDaysAgoStart = localDayBoundary(-30, false);
-  const sixtyDaysAgoStart = localDayBoundary(-60, false);
-  const thirtyOneDaysAgoEnd = localDayBoundary(-31, true);
-
-  const todayDate = format(today, 'yyyy-MM-dd');
+export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
+  const { startDate, endDate } = getDateBounds(dateRange);
+  const todayDate = format(new Date(), 'yyyy-MM-dd');
 
   return useQuery({
-    queryKey: ['new-bookings', todayDate, locationId || 'all'],
+    queryKey: ['new-bookings', startDate, endDate, locationId || 'all'],
     queryFn: async () => {
       // Fetch locations for name lookup
       const { data: locations } = await supabase
@@ -53,66 +75,59 @@ export function useNewBookings(locationId?: string) {
         return q;
       };
 
-      // Fetch appointments created today
-      const { data: todayBookings, error: todayError } = await applyLocFilter(
+      // Fetch appointments in the selected range (by appointment_date)
+      const { data: rangeBookings, error: rangeError } = await applyLocFilter(
         supabase
           .from('phorest_appointments')
-          .select('id, total_price, created_at, is_new_client, location_id')
-          .gte('created_at', todayStart)
-          .lte('created_at', todayEnd)
+          .select('id, total_price, appointment_date, is_new_client, location_id')
+          .gte('appointment_date', startDate)
+          .lte('appointment_date', endDate)
           .not('status', 'eq', 'cancelled')
       );
-      if (todayError) throw todayError;
+      if (rangeError) throw rangeError;
 
-      // Fetch last 7 days bookings
-      const { data: last7DaysBookings, error: last7Error } = await applyLocFilter(
-        supabase
-          .from('phorest_appointments')
-          .select('id, total_price, created_at')
-          .gte('created_at', sevenDaysAgoStart)
-          .lte('created_at', todayEnd)
-          .not('status', 'eq', 'cancelled')
-      );
-      if (last7Error) throw last7Error;
+      // 30-day comparison (always relative to today for long-term context)
+      const thirtyDaysAgoStart = format(subDays(new Date(), 29), 'yyyy-MM-dd');
+      const sixtyDaysAgoStart = format(subDays(new Date(), 59), 'yyyy-MM-dd');
+      const thirtyOneDaysAgoEnd = format(subDays(new Date(), 30), 'yyyy-MM-dd');
 
-      // Fetch last 30 days bookings
-      const { data: last30DaysBookings, error: last30Error } = await applyLocFilter(
-        supabase
-          .from('phorest_appointments')
-          .select('id, created_at, is_new_client')
-          .gte('created_at', thirtyDaysAgoStart)
-          .lte('created_at', todayEnd)
-          .not('status', 'eq', 'cancelled')
-      );
-      if (last30Error) throw last30Error;
+      const [last30Res, prev30Res] = await Promise.all([
+        applyLocFilter(
+          supabase
+            .from('phorest_appointments')
+            .select('id')
+            .gte('appointment_date', thirtyDaysAgoStart)
+            .lte('appointment_date', todayDate)
+            .not('status', 'eq', 'cancelled')
+        ),
+        applyLocFilter(
+          supabase
+            .from('phorest_appointments')
+            .select('id')
+            .gte('appointment_date', sixtyDaysAgoStart)
+            .lte('appointment_date', thirtyOneDaysAgoEnd)
+            .not('status', 'eq', 'cancelled')
+        ),
+      ]);
+      if (last30Res.error) throw last30Res.error;
+      if (prev30Res.error) throw prev30Res.error;
 
-      // Fetch previous 30 days (31-60 days ago)
-      const { data: prev30DaysBookings, error: prev30Error } = await applyLocFilter(
-        supabase
-          .from('phorest_appointments')
-          .select('id, created_at')
-          .gte('created_at', sixtyDaysAgoStart)
-          .lte('created_at', thirtyOneDaysAgoEnd)
-          .not('status', 'eq', 'cancelled')
-      );
-      if (prev30Error) throw prev30Error;
-
-      // Fetch today's returning-client appointments (by appointment_date)
-      const { data: rebookData, error: rebookError } = await applyLocFilter(
+      // Rebook rate: returning clients within range who have a future appointment
+      const rebookQuery = await applyLocFilter(
         supabase
           .from('phorest_appointments')
           .select('id, phorest_client_id, location_id')
-          .eq('appointment_date', todayDate)
+          .gte('appointment_date', startDate)
+          .lte('appointment_date', endDate)
           .eq('is_new_client', false)
           .not('status', 'eq', 'cancelled')
       );
-      if (rebookError) throw rebookError;
+      if (rebookQuery.error) throw rebookQuery.error;
 
-      const rebookAppointments = rebookData || [];
-      const returningServicedToday = rebookAppointments.length;
+      const rebookAppointments = rebookQuery.data || [];
+      const returningServicedInRange = rebookAppointments.length;
 
-      // Derive rebook status: check which of these clients have a future appointment
-      let rebookedAtCheckoutToday = 0;
+      let rebookedAtCheckoutInRange = 0;
       const clientIds = [...new Set(
         rebookAppointments
           .map(a => a.phorest_client_id)
@@ -124,7 +139,7 @@ export function useNewBookings(locationId?: string) {
           .from('phorest_appointments')
           .select('phorest_client_id')
           .in('phorest_client_id', clientIds as readonly string[])
-          .gt('appointment_date', todayDate)
+          .gt('appointment_date', endDate)
           .not('status', 'eq', 'cancelled');
         if (futureError) throw futureError;
 
@@ -132,32 +147,27 @@ export function useNewBookings(locationId?: string) {
           (futureAppts || []).map(a => a.phorest_client_id as string)
         );
 
-        // Count unique clients serviced today who have a future booking
         const countedClients = new Set<string>();
         for (const apt of rebookAppointments) {
           const cid = apt.phorest_client_id;
           if (cid && clientsWithFuture.has(cid) && !countedClients.has(cid)) {
             countedClients.add(cid);
-            rebookedAtCheckoutToday++;
+            rebookedAtCheckoutInRange++;
           }
         }
       }
 
-      const rebookRate = returningServicedToday > 0
-        ? Math.round((rebookedAtCheckoutToday / returningServicedToday) * 100)
+      const rebookRate = returningServicedInRange > 0
+        ? Math.round((rebookedAtCheckoutInRange / returningServicedInRange) * 100)
         : null;
 
-      const bookedToday = todayBookings || [];
-      const bookedLast7Days = last7DaysBookings || [];
-      const last30Days = last30DaysBookings || [];
-      const prev30Days = prev30DaysBookings || [];
-
-      const newClientToday = bookedToday.filter(apt => apt.is_new_client).length;
-      const returningClientToday = bookedToday.filter(apt => !apt.is_new_client).length;
+      const booked = rangeBookings || [];
+      const newClientCount = booked.filter(apt => apt.is_new_client).length;
+      const returningClientCount = booked.filter(apt => !apt.is_new_client).length;
 
       // Location breakdown
       const byLocation: Record<string, { name: string; count: number }> = {};
-      bookedToday.forEach(apt => {
+      booked.forEach(apt => {
         const locId = apt.location_id || 'unknown';
         if (!byLocation[locId]) {
           byLocation[locId] = { name: locationLookup[locId] || 'Unknown', count: 0 };
@@ -170,25 +180,23 @@ export function useNewBookings(locationId?: string) {
         .sort((a, b) => b.count - a.count);
 
       // 30-day comparison
-      const last30Count = last30Days.length;
-      const prev30Count = prev30Days.length;
+      const last30Count = last30Res.data?.length || 0;
+      const prev30Count = prev30Res.data?.length || 0;
       const percentChange = prev30Count > 0
         ? Math.round(((last30Count - prev30Count) / prev30Count) * 100)
         : 0;
 
       return {
-        bookedToday: bookedToday.length,
-        bookedTodayRevenue: bookedToday.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0),
-        bookedLast7Days: bookedLast7Days.length,
-        bookedLast7DaysRevenue: bookedLast7Days.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0),
-        newClientToday,
-        returningClientToday,
+        bookedInRange: booked.length,
+        bookedInRangeRevenue: booked.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0),
+        newClientCount,
+        returningClientCount,
         last30Days: last30Count,
         prev30Days: prev30Count,
         percentChange,
         locationBreakdown,
-        returningServicedToday,
-        rebookedAtCheckoutToday,
+        returningServicedInRange,
+        rebookedAtCheckoutInRange,
         rebookRate,
       };
     },

@@ -136,7 +136,7 @@ export function AppointmentsContent({
                 {newBookingsLoading ? (
                   <Skeleton className="h-8 w-12" />
                 ) : (
-                  <p className="font-display text-2xl">{newBookings?.bookedToday || 0}</p>
+                  <p className="font-display text-2xl">{newBookings?.bookedInRange || 0}</p>
                 )}
                 <p className="text-xs text-muted-foreground">Booked Today</p>
               </div>
@@ -151,7 +151,7 @@ export function AppointmentsContent({
                 {newBookingsLoading ? (
                   <Skeleton className="h-8 w-12" />
                 ) : (
-                  <p className="font-display text-2xl">{newBookings?.bookedLast7Days || 0}</p>
+                  <p className="font-display text-2xl">{newBookings?.bookedInRange || 0}</p>
                 )}
                 <p className="text-xs text-muted-foreground">Booked in Last 7 Days</p>
               </div>
