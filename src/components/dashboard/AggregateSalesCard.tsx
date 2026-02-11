@@ -772,35 +772,35 @@ export function AggregateSalesCard({
                             <div className="px-4 pb-4 pt-3">
                               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 {/* Services */}
-                                <div className="bg-muted/30 rounded-lg p-3">
+                                <div className="bg-muted/30 rounded-lg border border-border/30 p-3">
                                   <p className="text-xs text-muted-foreground mb-1">Services</p>
                                   <p className="text-sm font-display tabular-nums">
                                     <BlurredAmount>${location.serviceRevenue.toLocaleString()}</BlurredAmount>
                                   </p>
                                 </div>
                                 {/* Products */}
-                                <div className="bg-muted/30 rounded-lg p-3">
+                                <div className="bg-muted/30 rounded-lg border border-border/30 p-3">
                                   <p className="text-xs text-muted-foreground mb-1">Products</p>
                                   <p className="text-sm font-display tabular-nums">
                                     <BlurredAmount>${location.productRevenue.toLocaleString()}</BlurredAmount>
                                   </p>
                                 </div>
                                 {/* Transactions */}
-                                <div className="bg-muted/30 rounded-lg p-3">
+                                <div className="bg-muted/30 rounded-lg border border-border/30 p-3">
                                   <p className="text-xs text-muted-foreground mb-1">Transactions</p>
                                   <p className="text-sm font-display tabular-nums">
                                     <BlurredAmount>{location.totalTransactions}</BlurredAmount>
                                   </p>
                                 </div>
                                 {/* Avg Ticket */}
-                                <div className="bg-muted/30 rounded-lg p-3">
+                                <div className="bg-muted/30 rounded-lg border border-border/30 p-3">
                                   <p className="text-xs text-muted-foreground mb-1">Avg Ticket</p>
                                   <p className="text-sm font-display tabular-nums">
                                     <BlurredAmount>${isFinite(avgTicket) ? Math.round(avgTicket) : 0}</BlurredAmount>
                                   </p>
                                 </div>
                                 {/* Trend */}
-                                <div className="bg-muted/30 rounded-lg p-3">
+                                <div className="bg-muted/30 rounded-lg border border-border/30 p-3">
                                   <p className="text-xs text-muted-foreground mb-1">Trend</p>
                                   {!hideNumbers ? (
                                     <TrendSparkline 
@@ -814,7 +814,7 @@ export function AggregateSalesCard({
                                 </div>
                                 {/* Status (Today only) */}
                                 {isToday && (
-                                  <div className="bg-muted/30 rounded-lg p-3">
+                                  <div className="bg-muted/30 rounded-lg border border-border/30 p-3">
                                     <p className="text-xs text-muted-foreground mb-1">Status</p>
                                     {(() => {
                                       const locActual = locationActuals[location.location_id || ''];
