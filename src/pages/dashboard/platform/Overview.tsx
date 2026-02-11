@@ -22,6 +22,7 @@ import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageCont
 import { PlatformActivityFeed } from '@/components/platform/overview/PlatformActivityFeed';
 import { PlatformLiveAnalytics } from '@/components/platform/overview/PlatformLiveAnalytics';
 import { IncidentManagementCard } from '@/components/platform/overview/IncidentManagementCard';
+import { PlatformOrgQuickSwitch } from '@/components/platform/PlatformOrgQuickSwitch';
 
 const stagger = {
   hidden: {},
@@ -115,10 +116,13 @@ export default function PlatformOverview() {
               {contextualMessage}
             </p>
           </div>
-          <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')} className="gap-2">
-            <Plus className="h-4 w-4" />
-            New Account
-          </PlatformButton>
+          <div className="flex items-center gap-3">
+            <PlatformOrgQuickSwitch />
+            <PlatformButton onClick={() => navigate('/dashboard/platform/accounts')} className="gap-2">
+              <Plus className="h-4 w-4" />
+              New Account
+            </PlatformButton>
+          </div>
         </motion.div>
 
         {/* Stats Grid */}
