@@ -117,6 +117,7 @@ import {
   ArrowLeftRight,
   Gift,
   MessageSquare,
+  MoreHorizontal,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
@@ -994,39 +995,15 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       {/* Custom Landing Page Banner - hide in full-screen mode */}
       {!hideFooter && <CustomLandingPageBanner sidebarCollapsed={sidebarCollapsed} />}
 
-      {/* Desktop Top Bar - Two-row layout */}
+      {/* Desktop Top Bar - Single unified bar */}
       <div className={cn(
         "hidden lg:block sticky top-0 z-30",
         hideFooter && "shrink-0"
       )}>
-        {/* Bar 1: Platform Context Bar - admin/platform users only */}
-        {(isPlatformUser || isAdmin) && (
-          <div className="relative flex items-center justify-between h-10 px-6 bg-card/90 backdrop-blur-xl">
-            <div className="absolute bottom-0 left-0 right-0 h-px bg-border/20" />
-            {/* Left - Org Switcher */}
-            <div className="flex items-center gap-3">
-              {isPlatformUser && <OrganizationSwitcher compact />}
-            </div>
-            {/* Right - Context controls */}
-            <div className="flex items-center gap-3">
-              <HideNumbersToggle />
-              <Badge variant="outline" className={cn("text-xs font-medium gap-1.5 px-3 rounded-lg", getAccessBadgeColor())}>
-                <AccessIcon className="w-3 h-3" />
-                {getAccessLabel()}
-              </Badge>
-              {isAdmin && <ViewAsToggle />}
-              {(actualRoles.includes('admin') || actualRoles.includes('super_admin') || actualRoles.includes('manager')) && (
-                <PhorestSyncPopout />
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Bar 2: Main Top Bar - always visible */}
         <div className="relative flex items-center justify-between h-14 px-6 bg-card/70 backdrop-blur-xl">
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/30 to-transparent" />
-          {/* Left side - Sidebar toggle */}
-          <div className="flex items-center">
+          {/* Left side - Sidebar toggle + Org Switcher */}
+          <div className="flex items-center gap-3">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button 
@@ -1046,6 +1023,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                 {sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               </TooltipContent>
             </Tooltip>
+            {isPlatformUser && <OrganizationSwitcher compact />}
           </div>
 
           {/* Center - Search Bar */}
@@ -1060,24 +1038,79 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           
           {/* Right side - User controls */}
           <div className="flex items-center gap-3">
-          {/* Help Center Quick Access */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                asChild
-              >
-                <Link to="/dashboard/help">
-                  <HelpCircle className="w-4 h-4" />
-                </Link>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Help Center</TooltipContent>
-          </Tooltip>
-          <NotificationsPanel unreadCount={unreadCount} />
-          <DropdownMenu>
+            {/* Secondary items - visible on xl+, hidden below */}
+            {(isPlatformUser || isAdmin) && (
+              <div className="hidden xl:flex items-center gap-3">
+                <HideNumbersToggle />
+                <Badge variant="outline" className={cn("text-xs font-medium gap-1.5 px-3 rounded-lg", getAccessBadgeColor())}>
+                  <AccessIcon className="w-3 h-3" />
+                  {getAccessLabel()}
+                </Badge>
+                {isAdmin && <ViewAsToggle />}
+                {(actualRoles.includes('admin') || actualRoles.includes('super_admin') || actualRoles.includes('manager')) && (
+                  <PhorestSyncPopout />
+                )}
+              </div>
+            )}
+
+            {/* Ellipsis overflow dropdown - visible below xl */}
+            {(isPlatformUser || isAdmin) && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground xl:hidden">
+                    <MoreHorizontal className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <div className="px-2 py-1.5">
+                    <HideNumbersToggle />
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem disabled className="gap-2">
+                    <AccessIcon className="w-3 h-3" />
+                    {getAccessLabel()}
+                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <div className="px-2 py-1.5">
+                      <ViewAsToggle />
+                    </div>
+                  )}
+                  {(actualRoles.includes('admin') || actualRoles.includes('super_admin') || actualRoles.includes('manager')) && (
+                    <div className="px-2 py-1.5">
+                      <PhorestSyncPopout />
+                    </div>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/dashboard/help" className="flex items-center gap-2 cursor-pointer">
+                      <HelpCircle className="w-4 h-4" />
+                      Help Center
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {/* Help Center - visible on xl+ */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className={cn("h-8 w-8 text-muted-foreground hover:text-foreground", (isPlatformUser || isAdmin) && "hidden xl:inline-flex")}
+                  asChild
+                >
+                  <Link to="/dashboard/help">
+                    <HelpCircle className="w-4 h-4" />
+                  </Link>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Help Center</TooltipContent>
+            </Tooltip>
+            <NotificationsPanel unreadCount={unreadCount} />
+            <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <UserCircle className="w-4 h-4" />
