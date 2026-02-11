@@ -686,54 +686,26 @@ export function ForecastingCard() {
                       return (
                         <g style={{ pointerEvents: hideNumbers ? 'auto' : 'none', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
                           {hideNumbers && <title>Click to reveal</title>}
-                          <defs>
-                            <linearGradient id="avgBadgeGrad" x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor="rgb(133 77 14 / 0.5)" />
-                              <stop offset="50%" stopColor="rgb(180 83 9 / 0.3)" />
-                              <stop offset="100%" stopColor="rgb(133 77 14 / 0.5)" />
-                            </linearGradient>
-                          </defs>
-                          <rect
-                            className="avg-badge-rect"
-                            x={chartLeft}
-                            y={yPos - fontSize / 2 - padY}
-                            width={0}
-                            height={fontSize + padY * 2}
-                            rx={9999}
-                            fill="url(#avgBadgeGrad)"
-                            stroke="rgb(202 138 4 / 0.6)"
-                            strokeWidth={1}
-                          />
-                          <text
-                            ref={(el: SVGTextElement | null) => {
-                              if (!el) return;
-                              const textWidth = el.getComputedTextLength();
-                              const badgeWidth = textWidth + padX * 2;
-                              const g = el.parentElement;
-                              if (!g) return;
-                              const rect = g.querySelector('.avg-badge-rect');
-                              const line = g.querySelector('.avg-badge-line');
-                              if (rect) rect.setAttribute('width', String(badgeWidth));
-                              if (line) line.setAttribute('x1', String(chartLeft + badgeWidth + gap));
-                            }}
-                            x={chartLeft + padX}
-                            y={yPos + fontSize / 2 - 2}
-                            style={{ fontSize, fontWeight: 500, filter: hideNumbers ? 'blur(8px)' : 'none' }}
-                            fill="rgb(254 240 138)"
-                          >
-                            {avgText}
-                          </text>
-                          <line
-                            className="avg-badge-line"
-                            x1={chartRight}
-                            y1={yPos}
-                            x2={chartRight}
-                            y2={yPos}
-                            stroke="rgb(202 138 4)"
-                            strokeOpacity={0.5}
-                            strokeDasharray="4 4"
-                            strokeWidth={1}
-                          />
+                          {/* Halo line for visibility over bars */}
+                          <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgba(0,0,0,0.5)" strokeWidth={3} />
+                          <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgb(202 138 4)" strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
+                          <foreignObject x={chartLeft} y={yPos - 12} width={200} height={24} style={{ overflow: 'visible' }}>
+                            <div style={{
+                              fontSize: 12, fontWeight: 500,
+                              color: 'rgb(254 240 138)',
+                              backdropFilter: 'blur(6px)',
+                              WebkitBackdropFilter: 'blur(6px)',
+                              background: 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))',
+                              border: '1px solid rgb(202 138 4 / 0.6)',
+                              borderRadius: 9999,
+                              padding: '2px 8px',
+                              whiteSpace: 'nowrap' as const,
+                              width: 'fit-content',
+                              filter: hideNumbers ? 'blur(8px)' : 'none',
+                            }}>
+                              {avgText}
+                            </div>
+                          </foreignObject>
                         </g>
                       );
                     }} />
@@ -755,54 +727,26 @@ export function ForecastingCard() {
                       return (
                         <g style={{ pointerEvents: hideNumbers ? 'auto' : 'none', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
                           {hideNumbers && <title>Click to reveal</title>}
-                          <defs>
-                            <linearGradient id="avgBadgeGradWeekly" x1="0" y1="0" x2="1" y2="0">
-                              <stop offset="0%" stopColor="rgb(133 77 14 / 0.5)" />
-                              <stop offset="50%" stopColor="rgb(180 83 9 / 0.3)" />
-                              <stop offset="100%" stopColor="rgb(133 77 14 / 0.5)" />
-                            </linearGradient>
-                          </defs>
-                          <rect
-                            className="avg-badge-rect-weekly"
-                            x={chartLeft}
-                            y={yPos - fontSize / 2 - padY}
-                            width={0}
-                            height={fontSize + padY * 2}
-                            rx={9999}
-                            fill="url(#avgBadgeGradWeekly)"
-                            stroke="rgb(202 138 4 / 0.6)"
-                            strokeWidth={1}
-                          />
-                          <text
-                            ref={(el: SVGTextElement | null) => {
-                              if (!el) return;
-                              const textWidth = el.getComputedTextLength();
-                              const badgeWidth = textWidth + padX * 2;
-                              const g = el.parentElement;
-                              if (!g) return;
-                              const rect = g.querySelector('.avg-badge-rect-weekly');
-                              const line = g.querySelector('.avg-badge-line-weekly');
-                              if (rect) rect.setAttribute('width', String(badgeWidth));
-                              if (line) line.setAttribute('x1', String(chartLeft + badgeWidth + gap));
-                            }}
-                            x={chartLeft + padX}
-                            y={yPos + fontSize / 2 - 2}
-                            style={{ fontSize, fontWeight: 500, filter: hideNumbers ? 'blur(8px)' : 'none' }}
-                            fill="rgb(254 240 138)"
-                          >
-                            {avgText}
-                          </text>
-                          <line
-                            className="avg-badge-line-weekly"
-                            x1={chartRight}
-                            y1={yPos}
-                            x2={chartRight}
-                            y2={yPos}
-                            stroke="rgb(202 138 4)"
-                            strokeOpacity={0.5}
-                            strokeDasharray="4 4"
-                            strokeWidth={1}
-                          />
+                          {/* Halo line for visibility over bars */}
+                          <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgba(0,0,0,0.5)" strokeWidth={3} />
+                          <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgb(202 138 4)" strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
+                          <foreignObject x={chartLeft} y={yPos - 11} width={200} height={22} style={{ overflow: 'visible' }}>
+                            <div style={{
+                              fontSize: 11, fontWeight: 500,
+                              color: 'rgb(254 240 138)',
+                              backdropFilter: 'blur(6px)',
+                              WebkitBackdropFilter: 'blur(6px)',
+                              background: 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))',
+                              border: '1px solid rgb(202 138 4 / 0.6)',
+                              borderRadius: 9999,
+                              padding: '2px 8px',
+                              whiteSpace: 'nowrap' as const,
+                              width: 'fit-content',
+                              filter: hideNumbers ? 'blur(8px)' : 'none',
+                            }}>
+                              {avgText}
+                            </div>
+                          </foreignObject>
                         </g>
                       );
                     }} />
