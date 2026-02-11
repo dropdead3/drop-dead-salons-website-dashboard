@@ -39,6 +39,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useState, useMemo } from 'react';
+import { useServiceProductDrilldown } from '@/hooks/useServiceProductDrilldown';
+import { ServiceProductDrilldown } from './ServiceProductDrilldown';
 import { useNavigate } from 'react-router-dom';
 
 // Sub-components
@@ -85,6 +87,7 @@ export function AggregateSalesCard({
 }: AggregateSalesCardProps = {}) {
   const navigate = useNavigate();
   const [internalDateRange, setInternalDateRange] = useState<DateRange>('today');
+  const [drilldownMode, setDrilldownMode] = useState<'services' | 'products' | null>(null);
   const { hideNumbers } = useHideNumbers();
 
   // Location table sorting
@@ -158,6 +161,11 @@ export function AggregateSalesCard({
   const { goals } = useSalesGoals();
   const { data: locations } = useActiveLocations();
   const { data: todayActual, locationActuals, isLoading: todayActualLoading } = useTodayActualRevenue(dateRange === 'today');
+  const { data: drilldownData } = useServiceProductDrilldown({ 
+    dateFrom: dateFilters.dateFrom, 
+    dateTo: dateFilters.dateTo, 
+    locationId: filterContext?.locationId 
+  });
   const isToday = dateRange === 'today';
 
   // Location display logic
@@ -515,7 +523,10 @@ export function AggregateSalesCard({
             {/* Services & Products Sub-cards */}
             <div className="grid grid-cols-2 gap-6">
               {/* Services */}
-              <div className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/30">
+              <div 
+                className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/30 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/60"
+                onClick={() => setDrilldownMode('services')}
+              >
                 <div className="flex items-center justify-center gap-1.5 mb-2">
                   <Scissors className="w-3.5 h-3.5 text-primary" />
                   <span className="text-xs text-muted-foreground">Services</span>
@@ -529,7 +540,10 @@ export function AggregateSalesCard({
               </div>
               
               {/* Products */}
-              <div className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/30">
+              <div 
+                className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/30 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/60"
+                onClick={() => setDrilldownMode('products')}
+              >
                 <div className="flex items-center justify-center gap-1.5 mb-2">
                   <ShoppingBag className="w-3.5 h-3.5 text-primary" />
                   <span className="text-xs text-muted-foreground">Products</span>
@@ -861,6 +875,14 @@ export function AggregateSalesCard({
           )}
         </div>
       )}
+      {/* Service/Product Drilldown Dialog */}
+      <ServiceProductDrilldown
+        mode={drilldownMode}
+        onClose={() => setDrilldownMode(null)}
+        staffData={drilldownData?.staffData || []}
+        totalServiceRevenue={drilldownData?.totalServiceRevenue || 0}
+        totalProductRevenue={drilldownData?.totalProductRevenue || 0}
+      />
     </Card>
   );
 }
