@@ -1,89 +1,18 @@
 
 
-# Add Interactive Task Items to Zura Card Insight Dialog
+# Enhance Dark Mode Border Brightness
 
-## Overview
-Transform the "ACTIONABLE NEXT STEPS" section in the Zura card insight dialog from static markdown text into interactive task items. Each item will have an "Add to Tasks" button and a "Learn More" button that reveals detailed instructions.
+## What Changes
+A small increase in the `--border` and `--sidebar-border` lightness values across all four dark theme variants in `src/index.css`, making card strokes slightly more visible for better definition.
 
-## Current State
-- The `ZuraCardInsight` dialog calls the `ai-card-analysis` edge function, which returns a single `insight` string (plain markdown)
-- The dialog renders the entire response as markdown via `ReactMarkdown`
-- Action items are embedded in the markdown with no interactivity
-- The `SuggestedTasksSection` component already exists for the business insights drawer but is not used here
+## File: `src/index.css`
 
-## Changes
+| Dark Theme | Current `--border` | New `--border` | Current `--sidebar-border` | New `--sidebar-border` |
+|---|---|---|---|---|
+| `.dark.theme-cream` | `0 0% 18%` | `0 0% 22%` | `0 0% 18%` | `0 0% 22%` |
+| `.dark.theme-rose` | `350 10% 20%` | `350 10% 24%` | `350 10% 20%` | `350 10% 24%` |
+| `.dark.theme-sage` | `145 8% 20%` | `145 8% 24%` | `145 8% 20%` | `145 8% 24%` |
+| `.dark.theme-ocean` | `210 10% 20%` | `210 10% 24%` | `210 10% 20%` | `210 10% 24%` |
 
-### 1. Edge Function: Return Structured Action Items
+This is a ~4% lightness bump -- enough to add visible structure without creating the harsh white-stroke issue from before.
 
-**File: `supabase/functions/ai-card-analysis/index.ts`**
-
-Update the AI prompt to request a JSON block of structured action items appended to the response. The system prompt will instruct the model to end its response with a fenced JSON block:
-
-```
-After your markdown analysis, output a JSON block with structured action items:
-\`\`\`json:actions
-[
-  { "title": "...", "priority": "high|medium|low", "dueInDays": 7, "details": "Explicit step-by-step instructions..." }
-]
-\`\`\`
-```
-
-The edge function will then parse this JSON block out of the response, returning:
-```json
-{
-  "insight": "...markdown without the JSON block...",
-  "actionItems": [
-    { "title": "Boost Retail Sales", "priority": "high", "dueInDays": 7, "details": "1. Check inventory levels at /dashboard/inventory\n2. Identify top 3 products...\n3. Train staff on upsell script..." }
-  ]
-}
-```
-
-### 2. Hook: Update Return Type
-
-**File: `src/hooks/useCardInsight.ts`**
-
-- Change the state from `string | null` to `{ insight: string; actionItems: CardActionItem[] } | null`
-- Define a `CardActionItem` interface with `title`, `priority`, `dueInDays`, and `details` fields
-- Parse the edge function response to extract both `insight` and `actionItems`
-
-### 3. Dialog: Render Interactive Action Items
-
-**File: `src/components/dashboard/ZuraCardInsight.tsx`**
-
-After the markdown content, render the action items as interactive cards:
-
-- Each action item shows: checkbox-style icon + title + priority badge + two buttons
-- **"Add to Tasks"** button: Calls `useTasks().createTask` with `source: 'ai_insights'`, converts to a real task. Shows checkmark once added.
-- **"Learn More"** button: Expands an inline detail section below the item showing the `details` field rendered as markdown with step-by-step instructions
-
-The layout per action item:
-```text
-[1] Boost Retail Sales                    [HIGH]
-    [+ Add to Tasks]  [Learn More v]
-    
-    --- expanded details (when Learn More clicked) ---
-    1. Check inventory levels at /dashboard/inventory
-    2. Identify your top 3 products by margin
-    3. Brief your team on the "recommend one product" script
-    4. Track attachment rate next week
-    ---------------------------------------------------
-```
-
-### 4. Imports and Wiring
-
-- Import `useTasks` in `ZuraCardInsight.tsx`
-- Use local state (`expandedItems`, `addedItems`) to track which items are expanded or added
-- Reuse the existing `SuggestedTasksSection` priority badge styling for consistency
-
-## Technical Details
-
-| File | Change |
-|---|---|
-| `supabase/functions/ai-card-analysis/index.ts` | Update prompt to request structured JSON action items; parse JSON block from response; return `{ insight, actionItems }` |
-| `src/hooks/useCardInsight.ts` | Update state type to include `actionItems` array; parse structured response |
-| `src/components/dashboard/ZuraCardInsight.tsx` | Render action items as interactive cards with "Add to Tasks" and expandable "Learn More" detail sections |
-
-## Edge Cases
-- If the AI does not return a valid JSON block, fall back to empty `actionItems` array (pure markdown still displays)
-- If `useTasks` fails (e.g., impersonation mode), show the existing toast error
-- The "Learn More" details support internal route links (rendered as clickable navigation links)
