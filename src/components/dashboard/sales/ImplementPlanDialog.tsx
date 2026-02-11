@@ -50,39 +50,68 @@ interface ActionStep {
 /** Extract structured action items from markdown content */
 function extractActions(content: string): ActionStep[] {
   const steps: ActionStep[] = [];
-  const pattern = /\*\*([^*]+?):\*\*\s*([^\n*]*)/g;
   let match;
-  let idx = 0;
 
-  while ((match = pattern.exec(content)) !== null) {
+  // Strategy 1: **Title:** description
+  const boldColonPattern = /\*\*([^*]+?):\*\*\s*([^\n]*)/g;
+  while ((match = boldColonPattern.exec(content)) !== null) {
     const title = match[1].trim();
     const description = match[2].trim();
-    if (title.length > 5 && title.length < 100) {
-      idx++;
-      steps.push({
-        title,
-        description,
-        dueDays: idx <= 2 ? 2 : idx <= 4 ? 5 : 7,
-      });
+    if (title.length > 3 && title.length < 120) {
+      steps.push({ title, description, dueDays: 0 });
     }
   }
 
+  // Strategy 2: **Title** followed by description (no colon)
   if (steps.length === 0) {
-    const numberedPattern = /^\d+\.\s+\*?\*?([^*\n]+)\*?\*?/gm;
-    while ((match = numberedPattern.exec(content)) !== null) {
-      const title = match[1].trim().replace(/[:\.]$/, '');
-      if (title.length > 5 && title.length < 100) {
-        idx++;
-        steps.push({
-          title,
-          description: '',
-          dueDays: idx <= 2 ? 2 : 5,
-        });
+    const boldPattern = /\*\*([^*]{4,100})\*\*[:\s]*([^\n*]*)/g;
+    while ((match = boldPattern.exec(content)) !== null) {
+      const title = match[1].trim().replace(/^[\d.)\-]+\s*/, '');
+      const description = match[2].trim();
+      if (title.length > 3 && !title.toLowerCase().includes('action') && !title.toLowerCase().includes('plan')) {
+        steps.push({ title, description, dueDays: 0 });
       }
     }
   }
 
-  return steps.slice(0, 8);
+  // Strategy 3: Numbered list items (1. Title or 1) Title)
+  if (steps.length === 0) {
+    const numberedPattern = /^\s*\d+[.)]\s+(.+)/gm;
+    while ((match = numberedPattern.exec(content)) !== null) {
+      const raw = match[1].trim().replace(/\*+/g, '').replace(/[:\.]$/, '');
+      if (raw.length > 3 && raw.length < 120) {
+        steps.push({ title: raw, description: '', dueDays: 0 });
+      }
+    }
+  }
+
+  // Strategy 4: Markdown headers ### Title
+  if (steps.length === 0) {
+    const headerPattern = /^#{2,4}\s+(.+)/gm;
+    while ((match = headerPattern.exec(content)) !== null) {
+      const title = match[1].trim().replace(/\*+/g, '');
+      if (title.length > 3 && title.length < 120) {
+        steps.push({ title, description: '', dueDays: 0 });
+      }
+    }
+  }
+
+  // Strategy 5: Bullet list with substantive content
+  if (steps.length === 0) {
+    const bulletPattern = /^[\s]*[-•]\s+(.{5,120})/gm;
+    while ((match = bulletPattern.exec(content)) !== null) {
+      const title = match[1].trim().replace(/\*+/g, '');
+      steps.push({ title, description: '', dueDays: 0 });
+    }
+  }
+
+  // Assign due days based on position
+  const result = steps.slice(0, 8);
+  result.forEach((step, i) => {
+    step.dueDays = i < 2 ? 2 : i < 4 ? 5 : 7;
+  });
+
+  return result;
 }
 
 export function ImplementPlanDialog({
