@@ -1080,7 +1080,16 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Quick Actions</DropdownMenuLabel>
+                  <DropdownMenuLabel className="flex items-center justify-between">
+                    <span>Quick Actions</span>
+                    <span className={cn(
+                      'inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium tracking-wide rounded-full border',
+                      getAccessBadgeColor()
+                    )}>
+                      <AccessIcon className="w-3 h-3" />
+                      {getAccessLabel()}
+                    </span>
+                  </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   
                   {/* Show/Hide Numbers */}
@@ -1090,12 +1099,6 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                   </DropdownMenuItem>
                   
                   <DropdownMenuSeparator />
-                  
-                  {/* Role badge as informational label */}
-                  <DropdownMenuLabel className="flex items-center gap-2 text-xs font-normal text-muted-foreground">
-                    <AccessIcon className="w-3.5 h-3.5" />
-                    {getAccessLabel()}
-                  </DropdownMenuLabel>
                   
                   {/* View As */}
                   {isAdmin && <ViewAsToggle asMenuItem />}
