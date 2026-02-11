@@ -69,43 +69,57 @@ function deduplicateSteps(steps: ActionStep[]): ActionStep[] {
 
 /** Extract structured action items from markdown content */
 function extractActions(content: string): ActionStep[] {
-  const normalized = normalizeContent(content);
   let steps: ActionStep[] = [];
-  let match: RegExpExecArray | null;
 
-  // Strategy 1: Any **bold text** as action title, rest of line as description
-  const boldPattern = /\*\*([^*]{4,120})\*\*[:\s]*(.*)/g;
-  while ((match = boldPattern.exec(normalized)) !== null) {
-    const title = match[1].trim().replace(/^[\d.)\-•]+\s*/, '');
-    const description = match[2].trim().replace(/\*+/g, '').slice(0, 200);
-    // Skip generic headers
-    const lower = title.toLowerCase();
-    if (lower.includes('action step') || lower.includes('recovery plan') || lower === 'plan' || title.length < 5) continue;
-    steps.push({ title, description, dueDays: 0 });
-  }
-
-  // Strategy 2: Numbered or bulleted list items (with or without bold)
-  if (steps.length === 0) {
-    const listPattern = /^[\s]*(?:\d+[.)]\s+|[-•]\s+)(.{5,150})/gm;
-    while ((match = listPattern.exec(normalized)) !== null) {
-      const raw = match[1].trim().replace(/\*+/g, '');
-      const colonIdx = raw.indexOf(':');
-      const title = colonIdx > 3 && colonIdx < 80 ? raw.slice(0, colonIdx).trim() : raw.slice(0, 80).trim();
-      const description = colonIdx > 3 ? raw.slice(colonIdx + 1).trim() : '';
-      steps.push({ title, description, dueDays: 0 });
+  // Strategy 0 (Primary): Parse ---ACTIONS--- block from AI
+  const actionsBlockMatch = content.match(/---ACTIONS---\s*([\s\S]*?)\s*---END---/);
+  if (actionsBlockMatch) {
+    const lines = actionsBlockMatch[1].split('\n').map((l) => l.trim()).filter(Boolean);
+    for (const line of lines) {
+      const lineMatch = line.match(/^\d+\.\s*(.+?):\s*(.+)$/);
+      if (lineMatch) {
+        steps.push({ title: lineMatch[1].trim(), description: lineMatch[2].trim(), dueDays: 0 });
+      }
     }
   }
 
-  // Strategy 3: Sentence/line-level fallback
+  // Fallback strategies for older content without markers
   if (steps.length === 0) {
-    const lines = normalized.split('\n').map((l) => l.trim()).filter(Boolean);
-    for (const line of lines) {
-      const clean = line.replace(/^#+\s*/, '').replace(/\*+/g, '').trim();
-      if (clean.length < 20 || clean.length > 200) continue;
-      // Skip header-like or meta lines
-      const lower = clean.toLowerCase();
-      if (lower.startsWith('here') || lower.startsWith('plan') || lower.startsWith('summary') || lower.startsWith('note')) continue;
-      steps.push({ title: clean.slice(0, 80), description: clean.length > 80 ? clean.slice(80) : '', dueDays: 0 });
+    const normalized = normalizeContent(content);
+    let match: RegExpExecArray | null;
+
+    // Strategy 1: Any **bold text** as action title, rest of line as description
+    const boldPattern = /\*\*([^*]{4,120})\*\*[:\s]*(.*)/g;
+    while ((match = boldPattern.exec(normalized)) !== null) {
+      const title = match[1].trim().replace(/^[\d.)\-•]+\s*/, '');
+      const description = match[2].trim().replace(/\*+/g, '').slice(0, 200);
+      const lower = title.toLowerCase();
+      if (lower.includes('action step') || lower.includes('recovery plan') || lower === 'plan' || title.length < 5) continue;
+      steps.push({ title, description, dueDays: 0 });
+    }
+
+    // Strategy 2: Numbered or bulleted list items
+    if (steps.length === 0) {
+      const listPattern = /^[\s]*(?:\d+[.)]\s+|[-•]\s+)(.{5,150})/gm;
+      while ((match = listPattern.exec(normalized)) !== null) {
+        const raw = match[1].trim().replace(/\*+/g, '');
+        const colonIdx = raw.indexOf(':');
+        const title = colonIdx > 3 && colonIdx < 80 ? raw.slice(0, colonIdx).trim() : raw.slice(0, 80).trim();
+        const description = colonIdx > 3 ? raw.slice(colonIdx + 1).trim() : '';
+        steps.push({ title, description, dueDays: 0 });
+      }
+    }
+
+    // Strategy 3: Sentence/line-level fallback
+    if (steps.length === 0) {
+      const lines = normalized.split('\n').map((l) => l.trim()).filter(Boolean);
+      for (const line of lines) {
+        const clean = line.replace(/^#+\s*/, '').replace(/\*+/g, '').trim();
+        if (clean.length < 20 || clean.length > 200) continue;
+        const lower = clean.toLowerCase();
+        if (lower.startsWith('here') || lower.startsWith('plan') || lower.startsWith('summary') || lower.startsWith('note')) continue;
+        steps.push({ title: clean.slice(0, 80), description: clean.length > 80 ? clean.slice(80) : '', dueDays: 0 });
+      }
     }
   }
 

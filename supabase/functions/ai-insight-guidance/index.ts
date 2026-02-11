@@ -43,6 +43,13 @@ Guidelines:
 - IMPORTANT: When referencing platform features, pages, or reports, embed markdown hyperlinks using the route reference below so users can navigate directly. For example: "Head to your [Sales Analytics](/dashboard/admin/analytics?tab=sales) to review daily trends" or "Check your [Leaderboard](/dashboard/leaderboard) for team rankings."
 - Only link to routes that are contextually relevant — don't force links where they don't fit naturally.
 - CRITICAL: You must ONLY use routes from the INTERNAL ROUTE REFERENCE below. Do NOT invent, guess, or fabricate any route. If no route in the list matches what you want to link to, do NOT create a link — just mention the feature by name without a hyperlink.
+- CRITICAL: At the very end of your response, you MUST include a structured action block in this EXACT format (3-5 items). This block is machine-parsed — do not deviate from this format:
+
+---ACTIONS---
+1. [Action Title]: [Brief description of what to do]
+2. [Action Title]: [Brief description of what to do]
+3. [Action Title]: [Brief description of what to do]
+---END---
 
 ${ROUTE_MAP}`;
 
