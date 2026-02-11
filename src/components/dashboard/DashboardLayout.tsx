@@ -994,11 +994,35 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       {/* Custom Landing Page Banner - hide in full-screen mode */}
       {!hideFooter && <CustomLandingPageBanner sidebarCollapsed={sidebarCollapsed} />}
 
-      {/* Desktop Top Bar */}
+      {/* Desktop Top Bar - Two-row layout */}
       <div className={cn(
         "hidden lg:block sticky top-0 z-30",
         hideFooter && "shrink-0"
       )}>
+        {/* Bar 1: Platform Context Bar - admin/platform users only */}
+        {(isPlatformUser || isAdmin) && (
+          <div className="relative flex items-center justify-between h-10 px-6 bg-card/90 backdrop-blur-xl">
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-border/20" />
+            {/* Left - Org Switcher */}
+            <div className="flex items-center gap-3">
+              {isPlatformUser && <OrganizationSwitcher compact />}
+            </div>
+            {/* Right - Context controls */}
+            <div className="flex items-center gap-3">
+              <HideNumbersToggle />
+              <Badge variant="outline" className={cn("text-xs font-medium gap-1.5 px-3 rounded-lg", getAccessBadgeColor())}>
+                <AccessIcon className="w-3 h-3" />
+                {getAccessLabel()}
+              </Badge>
+              {isAdmin && <ViewAsToggle />}
+              {(actualRoles.includes('admin') || actualRoles.includes('super_admin') || actualRoles.includes('manager')) && (
+                <PhorestSyncPopout />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Bar 2: Main Top Bar - always visible */}
         <div className="relative flex items-center justify-between h-14 px-6 bg-card/70 backdrop-blur-xl">
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/30 to-transparent" />
           {/* Left side - Sidebar toggle */}
@@ -1052,19 +1076,6 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
             </TooltipTrigger>
             <TooltipContent side="bottom">Help Center</TooltipContent>
           </Tooltip>
-          {/* Organization Switcher - Platform users only */}
-          {isPlatformUser && <OrganizationSwitcher compact />}
-          {/* Hide Numbers Toggle */}
-          <HideNumbersToggle />
-          <Badge variant="outline" className={cn("text-xs font-medium gap-1.5 px-3 rounded-lg", getAccessBadgeColor())}>
-            <AccessIcon className="w-3 h-3" />
-            {getAccessLabel()}
-          </Badge>
-          {isAdmin && <ViewAsToggle />}
-          {/* Phorest Sync Popout - visible to admins/managers */}
-          {(actualRoles.includes('admin') || actualRoles.includes('super_admin') || actualRoles.includes('manager')) && (
-            <PhorestSyncPopout />
-          )}
           <NotificationsPanel unreadCount={unreadCount} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
