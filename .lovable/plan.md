@@ -1,80 +1,48 @@
 
 
-# Make New Bookings Card Date-Range Aware
+# Add Daily Average Sales Metric to Sales Overview
 
-## Problem
+## What Changes
 
-The `useNewBookings` hook ignores the date range filter entirely. It always queries for "today" regardless of whether the filter says "Last 7 days," "Yesterday," etc. The card labels also remain hardcoded to "Booked Today."
+The Sales Overview card currently shows three secondary KPIs: **Transactions**, **Avg Ticket**, and **Rev/Hour**. For any date range other than "today," a fourth metric -- **Daily Avg** -- will be added, showing total revenue divided by the number of days in the selected range.
 
-Additionally, queries use `created_at` (when the record was synced from Phorest) instead of `appointment_date` (when the service is actually scheduled), leading to inaccurate counts.
-
----
-
-## Changes
-
-### 1. Update `useNewBookings.ts` to accept and use `dateRange`
-
-- Add a `dateRange` parameter alongside `locationId`
-- Compute the correct start/end boundaries based on the selected range (today, yesterday, 7d, 30d, thisWeek, thisMonth, lastMonth, todayToEom, todayToPayday)
-- Switch all primary queries from `created_at` to `appointment_date` for accuracy
-- The "hero" metric becomes the count for the selected range (not always "today")
-- New/Returning client breakdown applies to the selected range
-- Rebook rate applies to the selected range
-- Location breakdown applies to the selected range
-- The 30-day comparison footer remains as-is for long-term context
-
-### 2. Update `NewBookingsCard.tsx` to pass `dateRange` and adapt labels
-
-- Pass `filterContext?.dateRange` to `useNewBookings`
-- Change "Booked Today" label dynamically based on date range (e.g., "Booked Last 7 Days," "Booked Yesterday")
-- Tooltip descriptions update accordingly
-- Rebook section label adapts ("...serviced in this period" vs "...serviced today")
+When the range is "today," this metric is hidden (a single day's average is just the total).
 
 ---
 
-## Technical Details
+## Implementation
 
-### `useNewBookings.ts`
+### File: `src/components/dashboard/AggregateSalesCard.tsx`
+
+1. **Calculate days in range**: Derive the number of calendar days between `dateFrom` and `dateTo` using `differenceInCalendarDays` from date-fns (add 1 to include both endpoints).
+
+2. **Compute daily average**: `totalRevenue / daysInRange`.
+
+3. **Add a 4th metric tile** in the secondary KPIs row (lines ~548-595): When `dateRange !== 'today'`, change the grid from `grid-cols-3` to `grid-cols-4` and insert a "Daily Avg" tile with a Calendar icon and the computed value.
+
+4. **Tooltip**: Include a MetricInfoTooltip reading "Total Revenue divided by number of days in the selected range."
+
+### No other files change
+
+The data already exists -- this is purely a UI calculation using the existing `displayMetrics.totalRevenue` and the date filter boundaries.
+
+---
+
+## Technical Detail
 
 ```text
-function getDateRange(dateRange: string):
-  -> { rangeStart: string, rangeEnd: string, todayDate: string }
+import { differenceInCalendarDays } from 'date-fns';
 
-Examples:
-  'today'     -> start of today, end of today
-  'yesterday' -> start of yesterday, end of yesterday  
-  '7d'        -> 7 days ago start, end of today
-  '30d'       -> 30 days ago start, end of today
-  'thisWeek'  -> Monday of this week, end of today
-  'thisMonth' -> 1st of this month, end of today
-  'lastMonth' -> 1st of last month, last day of last month
-  'todayToEom' -> start of today, end of this month
-  'todayToPayday' -> start of today, next pay day
+const daysInRange = differenceInCalendarDays(
+  new Date(dateFilters.dateTo), 
+  new Date(dateFilters.dateFrom)
+) + 1;
+
+const dailyAverage = daysInRange > 0 ? displayMetrics.totalRevenue / daysInRange : 0;
+const showDailyAvg = dateRange !== 'today';
+
+// Grid changes from grid-cols-3 to conditional:
+// showDailyAvg ? 'grid-cols-4' : 'grid-cols-3'
 ```
 
-All primary queries switch from:
-```
-.gte('created_at', start).lte('created_at', end)
-```
-To:
-```
-.gte('appointment_date', startDate).lte('appointment_date', endDate)
-```
-
-Where startDate/endDate are `yyyy-MM-dd` format strings (matching `appointment_date` column type).
-
-The rebook logic extends to the full range: fetch all returning clients within the range, then check which have a future appointment beyond the range end.
-
-### `NewBookingsCard.tsx`
-
-- Pass dateRange: `useNewBookings(filterContext?.locationId, filterContext?.dateRange)`
-- Dynamic label map for the hero section:
-  - `today` -> "Booked Today"
-  - `yesterday` -> "Booked Yesterday"  
-  - `7d` -> "Last 7 Days"
-  - `30d` -> "Last 30 Days"
-  - `thisWeek` -> "This Week"
-  - `thisMonth` -> "This Month"
-  - `lastMonth` -> "Last Month"
-  - etc.
-
+The new tile mirrors the existing style (centered, icon, AnimatedBlurredAmount, label + tooltip).
