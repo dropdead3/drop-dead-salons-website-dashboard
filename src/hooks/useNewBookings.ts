@@ -142,30 +142,18 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
       if (prev30Res.error) throw prev30Res.error;
 
       // Rebook rate: returning clients within range who have a future appointment
-      const rebookQuery = await applyLocFilter(
-        supabase
-          .from('phorest_appointments')
-          .select('id, phorest_client_id, location_id')
-          .gte('appointment_date', startDate)
-          .lte('appointment_date', endDate)
-          .eq('is_new_client', false)
-          .not('status', 'eq', 'cancelled')
+      // For rebook rate: use the already-fetched range bookings, filter to returning clients only
+      const returningRebookAppts = (rangeBookings || []).filter(
+        a => a.phorest_client_id && !newClientPhorestIds.has(a.phorest_client_id)
       );
-      if (rebookQuery.error) throw rebookQuery.error;
-
-      const rebookAppointments = rebookQuery.data || [];
-      // For rebook, "returning" means NOT a new client
-      const returningRebookAppts = rebookAppointments.filter(
-        a => !a.phorest_client_id || !newClientPhorestIds.has(a.phorest_client_id)
+      // Count unique returning clients (not appointments) for accurate rebook denominator
+      const returningClientSet = new Set(
+        returningRebookAppts.map(a => a.phorest_client_id as string)
       );
-      const returningServicedInRange = returningRebookAppts.length;
+      const returningServicedInRange = returningClientSet.size;
 
       let rebookedAtCheckoutInRange = 0;
-      const rebookClientIds = [...new Set(
-        returningRebookAppts
-          .map(a => a.phorest_client_id)
-          .filter((id): id is string => !!id)
-      )];
+      const rebookClientIds = [...returningClientSet];
 
       if (rebookClientIds.length > 0) {
         const { data: futureAppts, error: futureError } = await supabase
@@ -180,14 +168,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
           (futureAppts || []).map(a => a.phorest_client_id as string)
         );
 
-        const countedClients = new Set<string>();
-        for (const apt of returningRebookAppts) {
-          const cid = apt.phorest_client_id;
-          if (cid && clientsWithFuture.has(cid) && !countedClients.has(cid)) {
-            countedClients.add(cid);
-            rebookedAtCheckoutInRange++;
-          }
-        }
+        rebookedAtCheckoutInRange = [...returningClientSet].filter((cid: string) => clientsWithFuture.has(cid)).length;
       }
 
       const rebookRate = returningServicedInRange > 0
