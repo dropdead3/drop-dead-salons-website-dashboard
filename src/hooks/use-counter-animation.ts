@@ -11,32 +11,25 @@ export function useCounterAnimation({
   end,
   duration = 2000,
   decimals = 0,
-  startOnView = true
+  startOnView = false
 }: UseCounterAnimationProps) {
   const [count, setCount] = useState(0);
-  const [hasStarted, setHasStarted] = useState(false);
+  const [hasStarted, setHasStarted] = useState(!startOnView);
   const elementRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    if (!startOnView) {
-      setHasStarted(true);
-      return;
+    if (startOnView) {
+      const observer = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting && !hasStarted) {
+            setHasStarted(true);
+          }
+        },
+        { threshold: 0.1 }
+      );
+      if (elementRef.current) observer.observe(elementRef.current);
+      return () => observer.disconnect();
     }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !hasStarted) {
-          setHasStarted(true);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (elementRef.current) {
-      observer.observe(elementRef.current);
-    }
-
-    return () => observer.disconnect();
   }, [startOnView, hasStarted]);
 
   useEffect(() => {
@@ -48,11 +41,10 @@ export function useCounterAnimation({
       const elapsed = currentTime - startTime;
       const progress = Math.min(elapsed / duration, 1);
       
-      // Custom bezier-like ease for ultra-smooth deceleration
-      // Starts very fast, then gradually slows with a long tail
-      const easeOut = 1 - Math.pow(1 - progress, 7);
+      // Damped spring: overshoot ~5%, oscillate, settle
+      const settle = 1 - Math.exp(-6 * progress) * Math.cos(4 * Math.PI * progress);
       
-      const currentCount = easeOut * end;
+      const currentCount = settle * end;
       setCount(currentCount);
 
       if (progress < 1) {
