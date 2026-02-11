@@ -10,6 +10,7 @@ export interface StaffServiceProduct {
   productCount: number;
   retailToServiceRatio: number;
   sharePercent: number;
+  tipTotal: number;
 }
 
 interface UseServiceProductDrilldownOptions {
@@ -25,7 +26,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       // Query phorest_appointments for service data
       let query = supabase
         .from('phorest_appointments')
-        .select('phorest_staff_id, total_price, service_name')
+        .select('phorest_staff_id, total_price, tip_amount, service_name')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo)
         .not('status', 'in', '("cancelled","no_show","Cancelled","No Show")');
@@ -57,16 +58,17 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       });
 
       // Aggregate by staff
-      const staffMap: Record<string, { serviceRevenue: number; serviceCount: number }> = {};
+      const staffMap: Record<string, { serviceRevenue: number; serviceCount: number; tipTotal: number }> = {};
 
       (appointments || []).forEach(appt => {
         const sid = appt.phorest_staff_id;
         if (!sid) return;
         if (!staffMap[sid]) {
-          staffMap[sid] = { serviceRevenue: 0, serviceCount: 0 };
+          staffMap[sid] = { serviceRevenue: 0, serviceCount: 0, tipTotal: 0 };
         }
         staffMap[sid].serviceRevenue += Number(appt.total_price) || 0;
         staffMap[sid].serviceCount += 1;
+        staffMap[sid].tipTotal += Number(appt.tip_amount) || 0;
       });
 
       let totalServiceRevenue = 0;
@@ -84,6 +86,7 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
           productCount: 0,
           retailToServiceRatio: 0,
           sharePercent: 0,
+          tipTotal: v.tipTotal,
         }));
 
       return {

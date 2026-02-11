@@ -197,6 +197,7 @@ export function ServiceProductDrilldown({
                       <p className="text-sm font-medium truncate">{staff.staffName}</p>
                       <p className="text-xs text-muted-foreground">
                         {staff.primaryCount} service{staff.primaryCount !== 1 ? 's' : ''} · {staff.sharePercent}% of total
+                        {staff.tipTotal > 0 && ` · ${fmt(staff.tipTotal)} tips`}
                       </p>
                     </div>
                     <span className="font-display text-lg tabular-nums">{fmt(staff.primaryRevenue)}</span>

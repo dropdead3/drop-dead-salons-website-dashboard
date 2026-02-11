@@ -213,7 +213,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('id, total_price, service_name, phorest_staff_id, location_id, appointment_date, start_time, end_time')
+        .select('id, total_price, tip_amount, service_name, phorest_staff_id, location_id, appointment_date, start_time, end_time')
         .not('total_price', 'is', null);
 
       if (filters.dateFrom) {
@@ -233,20 +233,22 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         return {
           totalRevenue: 0,
           serviceRevenue: 0,
-          productRevenue: 0, // Not available from appointments
+          productRevenue: 0,
           totalServices: 0,
-          totalProducts: 0, // Not available from appointments
+          totalProducts: 0,
           totalTransactions: 0,
           averageTicket: 0,
           totalDiscounts: 0,
           unmappedStaffRecords: 0,
           totalServiceHours: 0,
           daysWithSales: 0,
+          totalTips: 0,
           dataSource: 'appointments' as const,
         };
       }
 
       const totalRevenue = data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
+      const totalTips = data.reduce((sum, apt) => sum + (Number(apt.tip_amount) || 0), 0);
       const totalServices = data.length;
       const uniqueStaff = new Set(data.map(d => d.phorest_staff_id).filter(Boolean));
       const daysWithSales = new Set(data.map(d => d.appointment_date).filter(Boolean)).size;
@@ -261,8 +263,8 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
 
       return {
         totalRevenue,
-        serviceRevenue: totalRevenue, // All appointment revenue is service revenue
-        productRevenue: 0, // Product sales not available via appointments API
+        serviceRevenue: totalRevenue,
+        productRevenue: 0,
         totalServices,
         totalProducts: 0,
         totalTransactions: totalServices,
@@ -271,6 +273,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         unmappedStaffRecords: 0,
         totalServiceHours,
         daysWithSales,
+        totalTips,
         dataSource: 'appointments' as const,
       };
     },
