@@ -14595,6 +14595,206 @@ export type Database = {
           },
         ]
       }
+      zura_guardrails: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          organization_id: string
+          rule_description: string
+          rule_type: Database["public"]["Enums"]["zura_guardrail_type"]
+          severity: Database["public"]["Enums"]["zura_guardrail_severity"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          rule_description: string
+          rule_type: Database["public"]["Enums"]["zura_guardrail_type"]
+          severity?: Database["public"]["Enums"]["zura_guardrail_severity"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          rule_description?: string
+          rule_type?: Database["public"]["Enums"]["zura_guardrail_type"]
+          severity?: Database["public"]["Enums"]["zura_guardrail_severity"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zura_guardrails_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zura_knowledge_entries: {
+        Row: {
+          applies_to_functions: string[]
+          category: Database["public"]["Enums"]["zura_knowledge_category"]
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          organization_id: string
+          priority: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          applies_to_functions?: string[]
+          category?: Database["public"]["Enums"]["zura_knowledge_category"]
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          priority?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          applies_to_functions?: string[]
+          category?: Database["public"]["Enums"]["zura_knowledge_category"]
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          priority?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zura_knowledge_entries_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zura_personality_config: {
+        Row: {
+          brand_voice_notes: string | null
+          created_at: string
+          custom_greeting: string | null
+          custom_sign_off: string | null
+          display_name: string
+          emoji_usage: boolean
+          encouraged_phrases: string[] | null
+          formality_level: number
+          id: string
+          organization_id: string
+          prohibited_phrases: string[] | null
+          response_length_preference: Database["public"]["Enums"]["zura_response_length"]
+          tone: Database["public"]["Enums"]["zura_tone"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          brand_voice_notes?: string | null
+          created_at?: string
+          custom_greeting?: string | null
+          custom_sign_off?: string | null
+          display_name?: string
+          emoji_usage?: boolean
+          encouraged_phrases?: string[] | null
+          formality_level?: number
+          id?: string
+          organization_id: string
+          prohibited_phrases?: string[] | null
+          response_length_preference?: Database["public"]["Enums"]["zura_response_length"]
+          tone?: Database["public"]["Enums"]["zura_tone"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          brand_voice_notes?: string | null
+          created_at?: string
+          custom_greeting?: string | null
+          custom_sign_off?: string | null
+          display_name?: string
+          emoji_usage?: boolean
+          encouraged_phrases?: string[] | null
+          formality_level?: number
+          id?: string
+          organization_id?: string
+          prohibited_phrases?: string[] | null
+          response_length_preference?: Database["public"]["Enums"]["zura_response_length"]
+          tone?: Database["public"]["Enums"]["zura_tone"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zura_personality_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      zura_role_rules: {
+        Row: {
+          created_at: string
+          custom_instructions: string | null
+          data_boundaries: string | null
+          id: string
+          is_active: boolean
+          organization_id: string
+          suggested_cta_style: string | null
+          target_role: Database["public"]["Enums"]["app_role"]
+          tone_override: Database["public"]["Enums"]["zura_tone"] | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_instructions?: string | null
+          data_boundaries?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          suggested_cta_style?: string | null
+          target_role: Database["public"]["Enums"]["app_role"]
+          tone_override?: Database["public"]["Enums"]["zura_tone"] | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_instructions?: string | null
+          data_boundaries?: string | null
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          suggested_cta_style?: string | null
+          target_role?: Database["public"]["Enums"]["app_role"]
+          tone_override?: Database["public"]["Enums"]["zura_tone"] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "zura_role_rules_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -14919,6 +15119,27 @@ export type Database = {
         | "resolved"
         | "closed"
       touchpoint_type: "call" | "text" | "email" | "social" | "in_person"
+      zura_guardrail_severity: "soft_warn" | "hard_block"
+      zura_guardrail_type:
+        | "topic_block"
+        | "data_boundary"
+        | "behavior_rule"
+        | "compliance"
+      zura_knowledge_category:
+        | "salon_policy"
+        | "product_info"
+        | "pricing"
+        | "brand_guidelines"
+        | "service_info"
+        | "faq"
+        | "custom"
+      zura_response_length: "concise" | "moderate" | "detailed"
+      zura_tone:
+        | "professional"
+        | "friendly"
+        | "motivational"
+        | "luxury"
+        | "casual"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -15130,6 +15351,30 @@ export const Constants = {
         "closed",
       ],
       touchpoint_type: ["call", "text", "email", "social", "in_person"],
+      zura_guardrail_severity: ["soft_warn", "hard_block"],
+      zura_guardrail_type: [
+        "topic_block",
+        "data_boundary",
+        "behavior_rule",
+        "compliance",
+      ],
+      zura_knowledge_category: [
+        "salon_policy",
+        "product_info",
+        "pricing",
+        "brand_guidelines",
+        "service_info",
+        "faq",
+        "custom",
+      ],
+      zura_response_length: ["concise", "moderate", "detailed"],
+      zura_tone: [
+        "professional",
+        "friendly",
+        "motivational",
+        "luxury",
+        "casual",
+      ],
     },
   },
 } as const

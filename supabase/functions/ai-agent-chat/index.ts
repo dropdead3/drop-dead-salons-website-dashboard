@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
+import { loadZuraConfig, buildZuraPromptPrefix } from "../_shared/zura-config-loader.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -440,7 +441,7 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    const { messages, userId, organizationId } = await req.json();
+    const { messages, userId, organizationId, userRole } = await req.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -449,9 +450,27 @@ serve(async (req) => {
       );
     }
 
+    // Load dynamic Zura config
+    let dynamicSystemPrompt = SYSTEM_PROMPT;
+    if (organizationId) {
+      try {
+        const config = await loadZuraConfig(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, organizationId, "ai-agent-chat", userRole || null);
+        const prefix = buildZuraPromptPrefix(config);
+        if (prefix) {
+          dynamicSystemPrompt = prefix + SYSTEM_PROMPT;
+        }
+        if (config.personality?.display_name && config.personality.display_name !== 'Zura') {
+          dynamicSystemPrompt = dynamicSystemPrompt.replace(/You are Zura/g, `You are ${config.personality.display_name}`);
+          dynamicSystemPrompt = dynamicSystemPrompt.replace(/"Zura"/g, `"${config.personality.display_name}"`);
+        }
+      } catch (e) {
+        console.error("Failed to load Zura config:", e);
+      }
+    }
+
     // Build messages with system prompt
     const aiMessages: Message[] = [
-      { role: "system", content: SYSTEM_PROMPT },
+      { role: "system", content: dynamicSystemPrompt },
       ...messages
     ];
 

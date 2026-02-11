@@ -39,6 +39,7 @@ import {
   ShieldAlert,
   CalendarDays,
   Store,
+  Brain,
 } from 'lucide-react';
 
 interface ManagementCardProps {
@@ -398,6 +399,17 @@ export default function ManagementHub() {
             title="Daily Huddle"
             description="Create pre-shift notes and daily goals"
             colorClass="bg-sky-500/10 text-sky-600 dark:text-sky-400"
+          />
+        </CategorySection>
+
+        {/* AI & Automation */}
+        <CategorySection title="AI & Automation">
+          <ManagementCard
+            href="/dashboard/admin/zura-config"
+            icon={Brain}
+            title="Zura Configuration"
+            description="Customize AI personality, knowledge base, and guardrails"
+            colorClass="bg-violet-500/10 text-violet-600 dark:text-violet-400"
           />
         </CategorySection>
 
