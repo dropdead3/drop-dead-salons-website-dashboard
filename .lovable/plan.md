@@ -1,69 +1,77 @@
 
 
-## Collapsible Location Table with Region Filter
+## Expandable Location Rows (Replace Horizontal Scroll)
 
 ### Problem
-Enterprise accounts could have 500+ locations, making the "By Location" table unusably long. Currently all locations render in a flat list with no way to group or collapse them.
+The location table has too many columns (Location, Revenue, Trend, Services, Products, Transactions, Avg Ticket, Status, Arrow) causing a horizontal scroll that hides data. This feels clunky and forces users to scroll sideways to see important metrics.
 
 ### Solution
-1. Make the location table collapsible -- show only the top 5 locations by default, with an "Show all X locations" toggle to expand
-2. Add a region filter dropdown above the table so enterprise users can narrow down by region
-3. Keep the existing sort, Status column, and click-to-drill behavior intact
-
-### What Changes
-
-**1. Region data** -- Check if locations have a region field; if not, group by whatever geographic grouping is available. If no region data exists in the DB, we skip the region filter for now and focus on collapse/expand.
-
-**2. Collapsible behavior** (`AggregateSalesCard.tsx`)
-- Add a `locationsExpanded` state (default: `false`)
-- When collapsed, show only the first 5 sorted locations
-- Below the table, show a button: "Show all 12 locations" or "Show less"
-- Animate the expand/collapse with a smooth transition
-- When there are 5 or fewer locations, hide the toggle entirely (no need)
-
-**3. Region filter** (`AggregateSalesCard.tsx`)
-- Add a region Select dropdown next to the "BY LOCATION" header
-- Derive unique regions from location data
-- When a region is selected, filter `sortedLocationData` to only that region's locations
-- "All Regions" as default option
-- Only render the region filter when there are 2+ distinct regions
+Replace the wide table with a compact card/row layout where each location shows only the essentials (Name + Revenue) by default. Tapping/clicking a row expands it to reveal the remaining data points in a clean, stacked layout below -- no horizontal scroll needed.
 
 ### Visual Design
 
+**Collapsed (default):**
 ```text
-[Building icon] BY LOCATION          [Region: All Regions v]
-+----------------------------------------------------------+
-| Location | Revenue | Trend | Services | Products | ...   |
-|----------|---------|-------|----------|----------|--------|
-| Mesa     | $1,146  |  ~~~  | $800     | $346     | ...   |
-| Val Vista| $875    |  ~~~  | $600     | $275     | ...   |
-| Tempe    | $650    |  ~~~  | $450     | $200     | ...   |
-| Downtown | $520    |  ~~~  | $380     | $140     | ...   |
-| Gilbert  | $410    |  ~~~  | $310     | $100     | ...   |
-+----------------------------------------------------------+
-         [ Show all 12 locations ]
+[pin] North Mesa              $1,146   >
+[pin] Val Vista Lakes           $875   >
 ```
 
-### Files to Change
+**Expanded (after click):**
+```text
+[pin] North Mesa              $1,146   v
+  +-----------------------------------------+
+  |  Services    Products    Transactions    |
+  |  $1,146      $0         6               |
+  |                                         |
+  |  Avg Ticket  Trend       Status         |
+  |  $191        [sparkline] Pending        |
+  +-----------------------------------------+
+[pin] Val Vista Lakes           $875   >
+```
 
-**1. Check location schema** -- verify if `phorest_locations` or similar table has a `region` field
+- Clicking a row toggles it open/closed (chevron rotates from right to down)
+- The expanded detail area uses a 2x3 or 3x2 grid of mini stat blocks
+- Clicking the chevron or row again collapses it
+- Clicking the detail area itself can still navigate to the full location drill-down (or we add a small "View details" link inside the expanded area)
+- The "Today" Status info (checked out / pending / last appt time) renders inside the expanded section too
 
-**2. `src/hooks/useLocations.ts`** -- if region data exists, ensure it's returned in the active locations query
+### What Changes
 
-**3. `src/components/dashboard/AggregateSalesCard.tsx`**
-- Add `locationsExpanded` boolean state (default false)
-- Add `regionFilter` string state (default 'all')
-- Derive `availableRegions` from location data
-- Filter `sortedLocationData` by region when selected
-- Slice to first 5 when collapsed
-- Add expand/collapse button below the table
-- Add region Select dropdown in the "BY LOCATION" header row
-- No new dependencies needed
+**`src/components/dashboard/AggregateSalesCard.tsx`** (location table section, ~lines 630-830):
+
+1. **Replace the `<Table>` with a list of expandable rows**
+   - Add `expandedLocationId` state (string or null) to track which row is open
+   - Each row is a `div` with click handler to toggle expansion
+   - Collapsed row shows: MapPin icon, location name, revenue amount, and a rotating ChevronRight/ChevronDown icon
+   - Expanded section renders below with a grid of the remaining metrics
+
+2. **Expanded detail grid** (inside each row when open):
+   - 3-column grid on desktop, 2-column on mobile
+   - Each cell: label (text-xs muted) + value (text-sm font-display)
+   - Cells: Services, Products, Transactions, Avg Ticket, Trend (sparkline), and Status (if today)
+   - A small "View full details" link at the bottom that navigates to the drill-down page
+
+3. **Keep all existing functionality**:
+   - Sorting still works (applied to the list order)
+   - Sort controls move to a small dropdown or inline toggle above the list (since there are no column headers anymore)
+   - Region filter stays in the header
+   - Collapse/expand (show top 5) still works
+   - CSV export still works
+
+4. **Sort control replacement**:
+   - Since we lose column headers, add a "Sort by: [Revenue v]" dropdown next to the region filter
+   - Options: Revenue, Name, Services, Products, Transactions, Avg Ticket
+   - Direction toggle (asc/desc) as a small button next to it
 
 ### Technical Details
-- The collapse default of 5 is a sensible balance -- enough to see top performers, not overwhelming
-- Region filter uses client-side filtering since all location data is already fetched
-- The expand/collapse uses simple state toggle with conditional slice -- no animation library needed (could add framer-motion later if desired)
-- Sorting still applies before slicing, so collapsed view always shows the top 5 by current sort
-- The "Show all X locations" count reflects the filtered count (after region filter)
+
+- `expandedLocationId` state: `useState<string | null>(null)` -- only one row open at a time for clean UX
+- Chevron rotation: use `transition-transform duration-200` with `rotate-90` when expanded
+- Expanded content uses `framer-motion` AnimatePresence for smooth height animation (already installed)
+- The sort dropdown replaces the clickable column headers -- same `handleLocationSort` logic, just triggered from a Select instead
+- No new files needed -- all changes within `AggregateSalesCard.tsx`
+- Mobile-first: the collapsed row is clean and readable at any width; expanded grid adapts via responsive columns
+
+### Files Modified
+1. `src/components/dashboard/AggregateSalesCard.tsx` -- replace table with expandable row list, add sort dropdown, add expandedLocationId state
 
