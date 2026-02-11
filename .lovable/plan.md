@@ -1,35 +1,22 @@
 
 
-# Pre-select Location Filter and Add Context Label
+# Constrain Dialog Height with Scrollable Content
 
 ## What Changes
 
-Two small updates to `ServiceProductDrilldown.tsx`:
+The dialog currently has no max-height on the container itself, so with many stylists the whole card grows past the viewport. The fix is to:
 
-### 1. Initialize location filter from parent dashboard filter
-
-Currently `filterLocationId` always starts as `'all'`, ignoring the dashboard's active location filter. Fix: initialize the state from `parentLocationId` so when a user has "Downtown Salon" selected on the dashboard and opens the drill-down, it opens pre-filtered to that location.
-
-- Change `useState('all')` to `useState(parentLocationId || 'all')`
-- Also reset to the parent value (not just `'all'`) when the dialog closes
-
-### 2. Add contextual label next to the filter
-
-When the drill-down opens with a pre-selected location (inherited from the dashboard), show a small muted text label:
-
-```
-[Downtown Salon v]  Filtered from Command Center
-```
-
-- Only visible when `parentLocationId` exists and is not `'all'`
-- Uses `text-[10px] text-muted-foreground` styling for subtlety
-- Disappears if the user manually changes the filter to something else
+1. Add `max-h-[85vh] flex flex-col` to the `DialogContent` so the entire dialog never exceeds 85% of the viewport height
+2. Change the content area from a fixed `max-h-[70vh]` div to a `flex-1 min-h-0 overflow-y-auto` div so it fills available space and scrolls internally
+3. The header and sticky footer remain fixed -- only the stylist list scrolls
 
 ## Technical Details
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/ServiceProductDrilldown.tsx` | Initialize `filterLocationId` from `parentLocationId`, add context label text next to the location Select |
+| `src/components/dashboard/ServiceProductDrilldown.tsx` | Line 114: add `max-h-[85vh] flex flex-col` to DialogContent className. Line 171: replace `max-h-[70vh] overflow-y-auto` with `flex-1 min-h-0 overflow-y-auto`. |
 
-Single file, roughly 5 lines changed.
+This ensures:
+- With 5 stylists: dialog sizes to content naturally
+- With 100 stylists: dialog caps at 85vh, list scrolls, footer stays pinned at bottom
 
