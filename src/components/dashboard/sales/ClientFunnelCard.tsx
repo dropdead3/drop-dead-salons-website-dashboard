@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Users, UserPlus, UserCheck, TrendingUp } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { useClientFunnel } from '@/hooks/useSalesAnalytics';
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface ClientFunnelCardProps {

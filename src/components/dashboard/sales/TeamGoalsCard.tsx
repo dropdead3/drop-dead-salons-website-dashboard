@@ -17,7 +17,7 @@ import {
 import { Users, Target, Edit2, Trophy, Gift, Loader2, PartyPopper } from 'lucide-react';
 import { useTeamGoals } from '@/hooks/useTeamGoals';
 import { cn } from '@/lib/utils';
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface TeamGoalsCardProps {
@@ -115,10 +115,6 @@ export function TeamGoalsCard({
               <CardTitle className="font-display text-lg">Team Goal</CardTitle>
               <CardDescription className="capitalize">{period} Target</CardDescription>
             </div>
-            <CommandCenterVisibilityToggle 
-              elementKey="team_goals" 
-              elementName="Team Goals" 
-            />
           </div>
           <div className="flex items-center gap-2">
             {filterContext && (

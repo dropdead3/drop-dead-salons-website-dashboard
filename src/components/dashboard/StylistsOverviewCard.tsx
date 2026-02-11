@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { stylistLevels } from '@/data/servicePricing';
 import { useActiveLocations } from '@/hooks/useLocations';
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+
 
 export function StylistsOverviewCard() {
   // Fetch stylists with their levels to show counts
@@ -37,7 +37,6 @@ export function StylistsOverviewCard() {
   };
 
   return (
-    <div className="relative group">
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -86,12 +85,6 @@ export function StylistsOverviewCard() {
         )}
       </div>
     </Card>
-    <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
-      <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
-        <CommandCenterVisibilityToggle elementKey="stylists_overview" elementName="Stylists by Level" />
-      </div>
-    </div>
-    </div>
   );
 }
 export function StaffOverviewCard() {
@@ -137,7 +130,6 @@ export function StaffOverviewCard() {
   ).length || 0;
 
   return (
-    <div className="relative group">
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
@@ -196,11 +188,5 @@ export function StaffOverviewCard() {
         )}
       </div>
     </Card>
-    <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
-      <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
-        <CommandCenterVisibilityToggle elementKey="team_overview" elementName="Team Overview" />
-      </div>
-    </div>
-    </div>
   );
 }
