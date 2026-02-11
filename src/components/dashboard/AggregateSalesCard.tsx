@@ -100,6 +100,10 @@ export function AggregateSalesCard({
   const [locationSortField, setLocationSortField] = useState<LocationSortField>('totalRevenue');
   const [locationSortDirection, setLocationSortDirection] = useState<SortDirection>('desc');
 
+  // Collapsible locations + region filter
+  const [locationsExpanded, setLocationsExpanded] = useState(false);
+  const [regionFilter, setRegionFilter] = useState('all');
+
   // Use external if provided, otherwise internal
   const dateRange = externalDateRange ?? internalDateRange;
 
@@ -244,6 +248,26 @@ export function AggregateSalesCard({
       : <ArrowDown className="w-3 h-3 text-primary" />;
   };
 
+  // Derive available regions from locations data (use state_province or city)
+  const availableRegions = useMemo(() => {
+    if (!locations) return [];
+    const regions = new Set<string>();
+    locations.forEach(loc => {
+      const region = loc.state_province || loc.city?.split(',')[1]?.trim().split(' ')[0] || '';
+      if (region) regions.add(region);
+    });
+    return Array.from(regions).sort();
+  }, [locations]);
+
+  // Build a map of location_id -> region for filtering
+  const locationRegionMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    locations?.forEach(loc => {
+      map[loc.id] = loc.state_province || loc.city?.split(',')[1]?.trim().split(' ')[0] || '';
+    });
+    return map;
+  }, [locations]);
+
   // Sorted location data
   const sortedLocationData = useMemo(() => {
     if (!locationData) return [];
@@ -263,6 +287,22 @@ export function AggregateSalesCard({
       return locationSortDirection === 'asc' ? aVal - bVal : bVal - aVal;
     });
   }, [locationData, locationSortField, locationSortDirection]);
+
+  // Filtered location data (by region)
+  const filteredLocationData = useMemo(() => {
+    if (regionFilter === 'all') return sortedLocationData;
+    return sortedLocationData.filter(loc => {
+      const region = locationRegionMap[loc.location_id || ''] || '';
+      return region === regionFilter;
+    });
+  }, [sortedLocationData, regionFilter, locationRegionMap]);
+
+  // Visible locations (collapsed = top 5, expanded = all)
+  const COLLAPSED_COUNT = 5;
+  const visibleLocationData = useMemo(() => {
+    if (locationsExpanded || filteredLocationData.length <= COLLAPSED_COUNT) return filteredLocationData;
+    return filteredLocationData.slice(0, COLLAPSED_COUNT);
+  }, [filteredLocationData, locationsExpanded]);
 
   // Export CSV
   const handleExportCSV = () => {
@@ -590,15 +630,31 @@ export function AggregateSalesCard({
       {/* By Location Table - only show when viewing all locations */}
       {isAllLocations && (
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <Building2 className="w-4 h-4 text-muted-foreground" />
-            <h3 className="font-display text-xs tracking-wide text-muted-foreground">BY LOCATION</h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Building2 className="w-4 h-4 text-muted-foreground" />
+              <h3 className="font-display text-xs tracking-wide text-muted-foreground">BY LOCATION</h3>
+            </div>
+            {availableRegions.length >= 2 && (
+              <Select value={regionFilter} onValueChange={setRegionFilter}>
+                <SelectTrigger className="w-[160px] h-7 text-xs">
+                  <SelectValue placeholder="All Regions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Regions</SelectItem>
+                  {availableRegions.map(region => (
+                    <SelectItem key={region} value={region}>{region}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           
-          {sortedLocationData && sortedLocationData.length > 0 ? (
-            <div className="rounded-lg border overflow-hidden">
-              <Table>
-                <TableHeader>
+          {filteredLocationData && filteredLocationData.length > 0 ? (
+            <>
+              <div className="rounded-lg border overflow-hidden">
+                <Table>
+                  <TableHeader>
                   <TableRow className="bg-muted/50">
                     <TableHead className="font-sans text-xs">
                       <button 
@@ -656,7 +712,7 @@ export function AggregateSalesCard({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedLocationData.map((location, idx) => {
+                  {visibleLocationData.map((location, idx) => {
                     const avgTicket = location.totalTransactions > 0 
                       ? location.totalRevenue / location.totalTransactions 
                       : 0;
@@ -745,8 +801,24 @@ export function AggregateSalesCard({
                     );
                   })}
                 </TableBody>
-              </Table>
-            </div>
+                </Table>
+              </div>
+              {filteredLocationData.length > COLLAPSED_COUNT && (
+                <div className="flex justify-center mt-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs text-muted-foreground hover:text-foreground"
+                    onClick={() => setLocationsExpanded(prev => !prev)}
+                  >
+                    {locationsExpanded 
+                      ? 'Show less' 
+                      : `Show all ${filteredLocationData.length} locations`
+                    }
+                  </Button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/20">
               <Building2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
