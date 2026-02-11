@@ -71,15 +71,12 @@ export function ProgramCompletionFunnel({
     <div className="flex items-center gap-2">
       <Filter className="w-5 h-5 text-primary" />
       <CardTitle className="font-display text-base">Program Completion Funnel</CardTitle>
-      <CommandCenterVisibilityToggle 
-        elementKey="program_funnel" 
-        elementName="Program Funnel" 
-      />
     </div>
   );
 
   if (enrollments.length === 0) {
     return (
+      <div className="relative group">
       <Card className={className}>
         <CardHeader className="pb-2">{headerContent}</CardHeader>
         <CardContent>
@@ -88,10 +85,17 @@ export function ProgramCompletionFunnel({
           </div>
         </CardContent>
       </Card>
+      <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
+        <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
+          <CommandCenterVisibilityToggle elementKey="program_funnel" elementName="Program Funnel" />
+        </div>
+      </div>
+      </div>
     );
   }
 
   return (
+    <div className="relative group">
     <Card className={className}>
       <CardHeader className="pb-2">{headerContent}</CardHeader>
       <CardContent>
@@ -167,5 +171,11 @@ export function ProgramCompletionFunnel({
         </div>
       </CardContent>
     </Card>
+    <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
+      <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
+        <CommandCenterVisibilityToggle elementKey="program_funnel" elementName="Program Funnel" />
+      </div>
+    </div>
+    </div>
   );
 }

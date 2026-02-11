@@ -177,16 +177,13 @@ export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
   };
 
   return (
+    <div className="relative group">
     <Card className={cn("premium-card", className)}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
             <UserPlus className="h-5 w-5 text-primary" />
             Hiring Capacity
-            <CommandCenterVisibilityToggle 
-              elementKey="hiring_capacity" 
-              elementName="Hiring Capacity" 
-            />
           </CardTitle>
           <Button 
             variant="ghost" 
@@ -295,5 +292,11 @@ export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
         )}
       </CardContent>
     </Card>
+    <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
+      <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
+        <CommandCenterVisibilityToggle elementKey="hiring_capacity" elementName="Hiring Capacity" />
+      </div>
+    </div>
+    </div>
   );
 }
