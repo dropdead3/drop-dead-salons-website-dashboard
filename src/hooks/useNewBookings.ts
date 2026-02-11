@@ -49,6 +49,21 @@ function getDateBounds(dateRange: DateRangeType | undefined): { startDate: strin
   }
 }
 
+export interface StaffBreakdownNew {
+  phorestStaffId: string;
+  staffName: string;
+  count: number;
+  sharePercent: number;
+}
+
+export interface StaffBreakdownReturning {
+  phorestStaffId: string;
+  staffName: string;
+  uniqueClients: number;
+  rebookedCount: number;
+  rebookRate: number;
+}
+
 export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
   const { startDate, endDate } = getDateBounds(dateRange);
   const todayDate = format(new Date(), 'yyyy-MM-dd');
@@ -67,6 +82,25 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         locationLookup[loc.id] = loc.name;
       });
 
+      // Fetch staff mappings for name resolution
+      const { data: staffMappings } = await supabase
+        .from('phorest_staff_mapping')
+        .select(`
+          phorest_staff_id,
+          user_id,
+          employee_profiles:user_id (
+            full_name,
+            display_name
+          )
+        `)
+        .eq('is_active', true);
+
+      const staffLookup: Record<string, string> = {};
+      staffMappings?.forEach(m => {
+        const profile = m.employee_profiles as any;
+        staffLookup[m.phorest_staff_id] = profile?.display_name || profile?.full_name || 'Unknown';
+      });
+
       // Helper to apply location filter
       const applyLocFilter = (q: any) => {
         if (locationId && locationId !== 'all') {
@@ -79,7 +113,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
       const { data: rangeBookings, error: rangeError } = await applyLocFilter(
         supabase
           .from('phorest_appointments')
-          .select('id, total_price, appointment_date, phorest_client_id, location_id')
+          .select('id, total_price, appointment_date, phorest_client_id, phorest_staff_id, location_id')
           .gte('appointment_date', startDate)
           .lte('appointment_date', endDate)
           .not('status', 'eq', 'cancelled')
@@ -200,6 +234,59 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         ? Math.round(((last30Count - prev30Count) / prev30Count) * 100)
         : 0;
 
+      // Staff-level breakdown: New Clients
+      const newClientAppts = booked.filter(apt => apt.phorest_client_id && newClientPhorestIds.has(apt.phorest_client_id));
+      const newByStaffMap: Record<string, number> = {};
+      newClientAppts.forEach(apt => {
+        const sid = (apt as any).phorest_staff_id;
+        if (sid) newByStaffMap[sid] = (newByStaffMap[sid] || 0) + 1;
+      });
+      const totalNew = newClientAppts.length || 1;
+      const newClientsByStaff: StaffBreakdownNew[] = Object.entries(newByStaffMap)
+        .map(([phorestStaffId, count]) => ({
+          phorestStaffId,
+          staffName: staffLookup[phorestStaffId] || 'Unknown',
+          count,
+          sharePercent: Math.round((count / totalNew) * 100),
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      // Staff-level breakdown: Returning Clients with rebook
+      const returningByStaffMap: Record<string, Set<string>> = {};
+      returningRebookAppts.forEach(apt => {
+        const sid = (apt as any).phorest_staff_id;
+        if (sid && apt.phorest_client_id) {
+          if (!returningByStaffMap[sid]) returningByStaffMap[sid] = new Set();
+          returningByStaffMap[sid].add(apt.phorest_client_id as string);
+        }
+      });
+
+      // For rebook per stylist, check which of their returning clients have future appts
+      let futureClientSet = new Set<string>();
+      if (rebookClientIds.length > 0) {
+        const { data: futureAppts2 } = await supabase
+          .from('phorest_appointments')
+          .select('phorest_client_id')
+          .in('phorest_client_id', rebookClientIds as readonly string[])
+          .gt('appointment_date', endDate)
+          .not('status', 'eq', 'cancelled');
+        futureClientSet = new Set((futureAppts2 || []).map(a => a.phorest_client_id as string));
+      }
+
+      const returningClientsByStaff: StaffBreakdownReturning[] = Object.entries(returningByStaffMap)
+        .map(([phorestStaffId, clientSet]) => {
+          const uniqueClients = clientSet.size;
+          const rebookedCount = [...clientSet].filter(cid => futureClientSet.has(cid)).length;
+          return {
+            phorestStaffId,
+            staffName: staffLookup[phorestStaffId] || 'Unknown',
+            uniqueClients,
+            rebookedCount,
+            rebookRate: uniqueClients > 0 ? Math.round((rebookedCount / uniqueClients) * 100) : 0,
+          };
+        })
+        .sort((a, b) => b.uniqueClients - a.uniqueClients);
+
       return {
         bookedInRange: booked.length,
         bookedInRangeRevenue: booked.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0),
@@ -212,6 +299,8 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         returningServicedInRange,
         rebookedAtCheckoutInRange,
         rebookRate,
+        newClientsByStaff,
+        returningClientsByStaff,
       };
     },
     staleTime: 1000 * 60 * 5,
