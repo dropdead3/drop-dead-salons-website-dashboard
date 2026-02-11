@@ -1,56 +1,102 @@
 
 
-## Inline Hover Footer for Card Controls
+## Remove Internal Pin Icons and Apply Inline Hover Footer Pattern Everywhere
 
 ### Problem
-The current approach places the Zura and pin icons in a floating pill below the card boundary. This makes it ambiguous which card the controls belong to, especially when cards are stacked vertically.
+Many analytics cards still have the `CommandCenterVisibilityToggle` (pin icon) embedded directly in their card headers. This is inconsistent with the new inline hover footer pattern established in `PinnableCard`, and some cards that are already wrapped in `PinnableCard` have **duplicate** pin controls.
 
-### Solution
-Replace the absolutely-positioned overlay with a **collapsible inline footer row** inside the card. On hover, the footer smoothly expands (via max-height transition) to reveal the controls. Since it's in the normal document flow, it never overlaps card content and is clearly "part of" the card.
+### Strategy
+Two types of changes are needed:
 
-```text
-+------------------------------------------+
-| Card Title            Filter  |  $2,021  |
-| Chart / content area                     |
-| Location rows...                         |
-+------------------------------------------+
-|                          [Z] [pin]       |  <-- appears on hover, inside card
-+------------------------------------------+
-```
+**Type A -- Remove duplicate toggles**: Cards already wrapped in `PinnableCard` by their parent have duplicate pin icons. Remove the internal `CommandCenterVisibilityToggle` from these cards.
 
-### Technical Approach
+**Type B -- Add inline hover footer**: Cards NOT wrapped in `PinnableCard` need the internal toggle removed from the header and replaced with the collapsible inline footer pattern (matching `PinnableCard`'s approach).
 
-**File: `src/components/dashboard/PinnableCard.tsx`**
+---
 
-1. Remove absolute positioning from the controls container
-2. Remove `overflow-visible` and `mb-2` from the wrapper (no longer needed)
-3. Add a new inline div after `{children}` that acts as a collapsible footer:
-   - Default state: `max-h-0 opacity-0 overflow-hidden`
-   - Hover state (via `group-hover:`): `max-h-10 opacity-100`
-   - Smooth transition on both max-height and opacity
-   - Controls are right-aligned within the footer
-   - Subtle top border or background tint to visually separate from card content
+### Type A: Remove Duplicate Toggles (3 files)
+
+These cards are already wrapped in `PinnableCard` in their parent component, so the internal toggle is redundant:
+
+1. **`src/components/dashboard/WebsiteAnalyticsWidget.tsx`**
+   - Wrapped in `PinnableCard` in `MarketingTabContent.tsx`
+   - Remove the `CommandCenterVisibilityToggle` from the header
+
+2. **`src/components/dashboard/sales/ClientFunnelCard.tsx`**
+   - Wrapped in `PinnableCard` in `SalesTabContent.tsx`
+   - Remove the `CommandCenterVisibilityToggle` from the header
+
+3. **`src/components/dashboard/sales/ForecastingCard.tsx`**
+   - Wrapped in `PinnableCard` in `SalesTabContent.tsx`
+   - Remove the `CommandCenterVisibilityToggle` from the header
+
+---
+
+### Type B: Add Inline Hover Footer (7 files)
+
+These cards are NOT wrapped in `PinnableCard`. The approach for each:
+- Remove `CommandCenterVisibilityToggle` from the card header
+- Wrap the card's outermost `<Card>` element in a `group` container
+- Add the collapsible footer row after the card (same pattern as `PinnableCard`)
+
+4. **`src/components/dashboard/StylistWorkloadCard.tsx`**
+   - Has 3 render paths (loading, empty, main) -- each has the toggle in the header
+   - Remove all 3 internal toggles
+   - Wrap in group container with inline hover footer
+
+5. **`src/components/dashboard/HiringCapacityCard.tsx`**
+   - Remove toggle from header
+   - Wrap in group container with inline hover footer
+
+6. **`src/components/dashboard/NewBookingsCard.tsx`**
+   - Remove toggle from header
+   - Wrap in group container with inline hover footer
+
+7. **`src/components/dashboard/StaffingTrendChart.tsx`**
+   - Remove toggle from header
+   - Wrap in group container with inline hover footer
+
+8. **`src/components/dashboard/ClientEngineOverview.tsx`**
+   - Remove toggle from header
+   - Wrap in group container with inline hover footer
+
+9. **`src/components/dashboard/StylistsOverviewCard.tsx`**
+   - Two exported components (`StylistsOverviewCard` and `StaffOverviewCard`), each with a toggle
+   - Remove both internal toggles
+   - Wrap each in group container with inline hover footer
+
+10. **`src/components/dashboard/ProgramCompletionFunnel.tsx`**
+    - Remove toggle from header
+    - Wrap in group container with inline hover footer
+
+---
+
+### Inline Hover Footer Pattern (applied to Type B cards)
+
+Each card will get this wrapper structure:
 
 ```tsx
-<div className={cn("relative group", className)}>
-  {children}
+<div className="relative group">
+  <Card> {/* existing card unchanged */} </Card>
   <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
     <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
-      <ZuraCardInsight ... />
-      <CommandCenterVisibilityToggle ... />
+      <CommandCenterVisibilityToggle elementKey="..." elementName="..." />
     </div>
   </div>
 </div>
 ```
 
-### Why This Is Better
-- Controls are clearly inside their parent card -- no ambiguity
-- Zero content overlap -- the footer is in document flow, not absolute
-- Smooth expand/collapse animation feels polished
-- The subtle top border reinforces the visual boundary
-- No extra margins or overflow hacks needed
-- Works universally regardless of card height or content density
+Note: The `ZuraCardInsight` component is only included in `PinnableCard`-wrapped cards (which pass metric data). For these standalone cards, only the pin toggle appears in the footer.
 
-### Files Modified
-1. `src/components/dashboard/PinnableCard.tsx` -- replace absolute overlay with inline collapsible footer
+### Files Modified (10 total)
+1. `src/components/dashboard/WebsiteAnalyticsWidget.tsx` -- remove duplicate toggle
+2. `src/components/dashboard/sales/ClientFunnelCard.tsx` -- remove duplicate toggle
+3. `src/components/dashboard/sales/ForecastingCard.tsx` -- remove duplicate toggle
+4. `src/components/dashboard/StylistWorkloadCard.tsx` -- move toggle to hover footer
+5. `src/components/dashboard/HiringCapacityCard.tsx` -- move toggle to hover footer
+6. `src/components/dashboard/NewBookingsCard.tsx` -- move toggle to hover footer
+7. `src/components/dashboard/StaffingTrendChart.tsx` -- move toggle to hover footer
+8. `src/components/dashboard/ClientEngineOverview.tsx` -- move toggle to hover footer
+9. `src/components/dashboard/StylistsOverviewCard.tsx` -- move toggle to hover footer (both exports)
+10. `src/components/dashboard/ProgramCompletionFunnel.tsx` -- move toggle to hover footer
 
