@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
@@ -478,7 +479,7 @@ function DashboardSections({
     ),
     
     schedule_tasks: (
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className={cn("grid gap-6", hasStylistRole && "lg:grid-cols-2")}>
         {hasStylistRole && (
           <VisibilityGate elementKey="todays_schedule">
             <Card className="relative overflow-hidden p-6 rounded-2xl shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
