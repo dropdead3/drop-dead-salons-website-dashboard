@@ -79,12 +79,41 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
       const { data: rangeBookings, error: rangeError } = await applyLocFilter(
         supabase
           .from('phorest_appointments')
-          .select('id, total_price, appointment_date, is_new_client, location_id')
+          .select('id, total_price, appointment_date, phorest_client_id, location_id')
           .gte('appointment_date', startDate)
           .lte('appointment_date', endDate)
           .not('status', 'eq', 'cancelled')
       );
       if (rangeError) throw rangeError;
+
+      // Determine truly new clients: clients whose first-ever appointment falls within the range
+      const rangeClientIdSet = new Set<string>();
+      (rangeBookings || []).forEach(a => {
+        if (a.phorest_client_id) rangeClientIdSet.add(a.phorest_client_id as string);
+      });
+      const rangeClientIds = Array.from(rangeClientIdSet);
+
+      const newClientPhorestIds = new Set<string>();
+      if (rangeClientIds.length > 0) {
+        // Batch check: for each client, see if they have any appointment before startDate
+        const { data: priorAppts } = await supabase
+          .from('phorest_appointments')
+          .select('phorest_client_id')
+          .in('phorest_client_id', rangeClientIds as readonly string[])
+          .lt('appointment_date', startDate)
+          .not('status', 'eq', 'cancelled')
+          .limit(1000);
+
+        const clientsWithPriorVisit = new Set(
+          (priorAppts || []).map(a => a.phorest_client_id as string)
+        );
+
+        for (const cid of rangeClientIds) {
+          if (!clientsWithPriorVisit.has(cid)) {
+            newClientPhorestIds.add(cid);
+          }
+        }
+      }
 
       // 30-day comparison (always relative to today for long-term context)
       const thirtyDaysAgoStart = format(subDays(new Date(), 29), 'yyyy-MM-dd');
@@ -125,20 +154,24 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
       if (rebookQuery.error) throw rebookQuery.error;
 
       const rebookAppointments = rebookQuery.data || [];
-      const returningServicedInRange = rebookAppointments.length;
+      // For rebook, "returning" means NOT a new client
+      const returningRebookAppts = rebookAppointments.filter(
+        a => !a.phorest_client_id || !newClientPhorestIds.has(a.phorest_client_id)
+      );
+      const returningServicedInRange = returningRebookAppts.length;
 
       let rebookedAtCheckoutInRange = 0;
-      const clientIds = [...new Set(
-        rebookAppointments
+      const rebookClientIds = [...new Set(
+        returningRebookAppts
           .map(a => a.phorest_client_id)
           .filter((id): id is string => !!id)
       )];
 
-      if (clientIds.length > 0) {
+      if (rebookClientIds.length > 0) {
         const { data: futureAppts, error: futureError } = await supabase
           .from('phorest_appointments')
           .select('phorest_client_id')
-          .in('phorest_client_id', clientIds as readonly string[])
+          .in('phorest_client_id', rebookClientIds as readonly string[])
           .gt('appointment_date', endDate)
           .not('status', 'eq', 'cancelled');
         if (futureError) throw futureError;
@@ -148,7 +181,7 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         );
 
         const countedClients = new Set<string>();
-        for (const apt of rebookAppointments) {
+        for (const apt of returningRebookAppts) {
           const cid = apt.phorest_client_id;
           if (cid && clientsWithFuture.has(cid) && !countedClients.has(cid)) {
             countedClients.add(cid);
@@ -162,8 +195,8 @@ export function useNewBookings(locationId?: string, dateRange?: DateRangeType) {
         : null;
 
       const booked = rangeBookings || [];
-      const newClientCount = booked.filter(apt => apt.is_new_client).length;
-      const returningClientCount = booked.filter(apt => !apt.is_new_client).length;
+      const newClientCount = booked.filter(apt => apt.phorest_client_id && newClientPhorestIds.has(apt.phorest_client_id)).length;
+      const returningClientCount = booked.length - newClientCount;
 
       // Location breakdown
       const byLocation: Record<string, { name: string; count: number }> = {};
