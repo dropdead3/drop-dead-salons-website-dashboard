@@ -8,7 +8,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { format, parseISO } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+
 
 interface StaffingTrendChartProps {
   className?: string;
@@ -52,7 +52,6 @@ export function StaffingTrendChart({ className }: StaffingTrendChartProps) {
     : 0;
 
   return (
-    <div className="relative group">
     <Card className={cn("premium-card", className)}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between flex-wrap gap-2">
@@ -175,11 +174,5 @@ export function StaffingTrendChart({ className }: StaffingTrendChartProps) {
         )}
       </CardContent>
     </Card>
-    <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
-      <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
-        <CommandCenterVisibilityToggle elementKey="staffing_trends" elementName="Staffing Trends" />
-      </div>
-    </div>
-    </div>
   );
 }

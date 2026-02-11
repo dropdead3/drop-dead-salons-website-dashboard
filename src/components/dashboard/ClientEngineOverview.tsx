@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNavigate } from 'react-router-dom';
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+
 import type { Database } from '@/integrations/supabase/types';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
@@ -111,7 +111,6 @@ export function ClientEngineOverview() {
   }
 
   return (
-    <div className="relative group">
     <Card className="p-5 space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -228,11 +227,5 @@ export function ClientEngineOverview() {
         </div>
       </div>
     </Card>
-    <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
-      <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
-        <CommandCenterVisibilityToggle elementKey="client_engine_overview" elementName="Client Engine Overview" />
-      </div>
-    </div>
-    </div>
   );
 }

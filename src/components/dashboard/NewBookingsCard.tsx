@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { CalendarPlus, UserPlus, RefreshCw, TrendingUp, TrendingDown, Minus, MapPin } from 'lucide-react';
 import { useNewBookings } from '@/hooks/useNewBookings';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
-import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface NewBookingsCardProps {
@@ -25,7 +25,6 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
     : 'text-muted-foreground';
 
   return (
-    <div className="relative group">
     <Card className="p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
@@ -141,11 +140,5 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
         </div>
       </div>
     </Card>
-    <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
-      <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
-        <CommandCenterVisibilityToggle elementKey="new_bookings" elementName="New Bookings" />
-      </div>
-    </div>
-    </div>
   );
 }
