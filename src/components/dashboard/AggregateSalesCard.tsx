@@ -706,7 +706,7 @@ export function AggregateSalesCard({
                             transition={{ duration: 0.2, ease: 'easeInOut' }}
                             className="overflow-hidden"
                           >
-                            <div className="px-4 pb-4 pt-1">
+                            <div className="px-4 pb-4 pt-3">
                               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 {/* Services */}
                                 <div className="bg-muted/30 rounded-lg p-3">
