@@ -30,7 +30,7 @@ import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
-import { format, subDays, startOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears } from 'date-fns';
+import { format, subDays, startOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears, differenceInCalendarDays } from 'date-fns';
 import {
   Select,
   SelectContent,
@@ -545,54 +545,83 @@ export function AggregateSalesCard({
           </div>
           
           {/* Secondary KPIs Row */}
-          <div className="grid grid-cols-3 gap-6 mt-6">
-            {/* Transactions */}
-            <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
-              <div className="flex justify-center mb-2">
-                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+          {(() => {
+            const showDailyAvg = dateRange !== 'today';
+            const daysInRange = differenceInCalendarDays(
+              new Date(dateFilters.dateTo),
+              new Date(dateFilters.dateFrom)
+            ) + 1;
+            const dailyAverage = daysInRange > 0 ? displayMetrics.totalRevenue / daysInRange : 0;
+
+            return (
+              <div className={`grid ${showDailyAvg ? 'grid-cols-4' : 'grid-cols-3'} gap-6 mt-6`}>
+                {/* Transactions */}
+                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
+                  <div className="flex justify-center mb-2">
+                    <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                  </div>
+                  <AnimatedBlurredAmount 
+                    value={displayMetrics.totalTransactions}
+                    className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
+                  />
+                  <div className="flex items-center gap-1 justify-center mt-1">
+                    <p className="text-xs text-muted-foreground">Transactions</p>
+                    <MetricInfoTooltip description="Total number of completed sales transactions." />
+                  </div>
+                </div>
+                
+                {/* Avg Ticket */}
+                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
+                  <div className="flex justify-center mb-2">
+                    <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                  </div>
+                  <AnimatedBlurredAmount 
+                    value={Math.round(displayMetrics.averageTicket)}
+                    prefix="$"
+                    className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
+                  />
+                  <div className="flex items-center gap-1 justify-center mt-1">
+                    <p className="text-xs text-muted-foreground">Avg Ticket</p>
+                    <MetricInfoTooltip description="Total Revenue ÷ Transactions." />
+                  </div>
+                </div>
+                
+                {/* Rev/Hour */}
+                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
+                  <div className="flex justify-center mb-2">
+                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                  </div>
+                  <AnimatedBlurredAmount 
+                    value={Math.round(revenuePerHour)}
+                    prefix="$"
+                    className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
+                  />
+                  <div className="flex items-center gap-1 justify-center mt-1">
+                    <p className="text-xs text-muted-foreground">Rev/Hour</p>
+                    <MetricInfoTooltip description="Total Revenue ÷ Service Hours." />
+                  </div>
+                </div>
+
+                {/* Daily Avg - only for multi-day ranges */}
+                {showDailyAvg && (
+                  <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
+                    <div className="flex justify-center mb-2">
+                      <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                    </div>
+                    <AnimatedBlurredAmount 
+                      value={Math.round(dailyAverage)}
+                      prefix="$"
+                      className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
+                    />
+                    <div className="flex items-center gap-1 justify-center mt-1">
+                      <p className="text-xs text-muted-foreground">Daily Avg</p>
+                      <MetricInfoTooltip description="Total Revenue divided by number of days in the selected range." />
+                    </div>
+                  </div>
+                )}
               </div>
-              <AnimatedBlurredAmount 
-                value={displayMetrics.totalTransactions}
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
-              />
-              <div className="flex items-center gap-1 justify-center mt-1">
-                <p className="text-xs text-muted-foreground">Transactions</p>
-                <MetricInfoTooltip description="Total number of completed sales transactions." />
-              </div>
-            </div>
-            
-            {/* Avg Ticket */}
-            <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
-              <div className="flex justify-center mb-2">
-                <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-              </div>
-              <AnimatedBlurredAmount 
-                value={Math.round(displayMetrics.averageTicket)}
-                prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
-              />
-              <div className="flex items-center gap-1 justify-center mt-1">
-                <p className="text-xs text-muted-foreground">Avg Ticket</p>
-                <MetricInfoTooltip description="Total Revenue ÷ Transactions." />
-              </div>
-            </div>
-            
-            {/* Rev/Hour */}
-            <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
-              <div className="flex justify-center mb-2">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-              </div>
-              <AnimatedBlurredAmount 
-                value={Math.round(revenuePerHour)}
-                prefix="$"
-                className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
-              />
-              <div className="flex items-center gap-1 justify-center mt-1">
-                <p className="text-xs text-muted-foreground">Rev/Hour</p>
-                <MetricInfoTooltip description="Total Revenue ÷ Service Hours." />
-              </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* Goal Progress */}
           <div className="mt-6">
