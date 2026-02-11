@@ -425,8 +425,8 @@ function DashboardSections({
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="relative overflow-hidden p-4 rounded-2xl shadow-md backdrop-blur-sm hover:shadow-lg transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-500/10 shadow-inner flex items-center justify-center rounded-xl">
-                <Calendar className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-muted shadow-inner flex items-center justify-center rounded-xl">
+                <Calendar className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-display tabular-nums">0</p>
@@ -436,8 +436,8 @@ function DashboardSections({
           </Card>
           <Card className="relative overflow-hidden p-4 rounded-2xl shadow-md backdrop-blur-sm hover:shadow-lg transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-green-500/10 shadow-inner flex items-center justify-center rounded-xl">
-                <DollarSign className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 bg-muted shadow-inner flex items-center justify-center rounded-xl">
+                <DollarSign className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-display tabular-nums">$0</p>
@@ -447,8 +447,8 @@ function DashboardSections({
           </Card>
           <Card className="relative overflow-hidden p-4 rounded-2xl shadow-md backdrop-blur-sm hover:shadow-lg transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-purple-500/10 shadow-inner flex items-center justify-center rounded-xl">
-                <Users className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-muted shadow-inner flex items-center justify-center rounded-xl">
+                <Users className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-display tabular-nums">0</p>
@@ -458,8 +458,8 @@ function DashboardSections({
           </Card>
           <Card className="relative overflow-hidden p-4 rounded-2xl shadow-md backdrop-blur-sm hover:shadow-lg transition-all duration-300">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-orange-500/10 shadow-inner flex items-center justify-center rounded-xl">
-                <TrendingUp className="w-6 h-6 text-orange-600" />
+              <div className="w-12 h-12 bg-muted shadow-inner flex items-center justify-center rounded-xl">
+                <TrendingUp className="w-6 h-6 text-primary" />
               </div>
               <div>
                 <p className="text-2xl font-display tabular-nums">0%</p>
@@ -563,7 +563,7 @@ function DashboardSections({
                       <h2 className="font-display text-lg tracking-wide text-[hsl(35,30%,20%)]">CLIENT ENGINE</h2>
                       {enrollment && (
                         <div className="flex items-center gap-1.5 text-sm">
-                          <Flame className="w-4 h-4 text-orange-500" />
+                          <Flame className="w-4 h-4 text-primary" />
                           <span className="font-display text-[hsl(35,30%,20%)]">{enrollment.streak_count} DAY STREAK</span>
                         </div>
                       )}
