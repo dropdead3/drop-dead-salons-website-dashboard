@@ -5842,6 +5842,113 @@ export type Database = {
           },
         ]
       }
+      kpi_definitions: {
+        Row: {
+          cadence: string
+          created_at: string
+          critical_threshold: number
+          description: string | null
+          display_name: string
+          id: string
+          is_active: boolean
+          location_id: string | null
+          metric_key: string
+          organization_id: string
+          target_value: number
+          unit: string
+          updated_at: string
+          warning_threshold: number
+        }
+        Insert: {
+          cadence?: string
+          created_at?: string
+          critical_threshold: number
+          description?: string | null
+          display_name: string
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          metric_key: string
+          organization_id: string
+          target_value: number
+          unit?: string
+          updated_at?: string
+          warning_threshold: number
+        }
+        Update: {
+          cadence?: string
+          created_at?: string
+          critical_threshold?: number
+          description?: string | null
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          metric_key?: string
+          organization_id?: string
+          target_value?: number
+          unit?: string
+          updated_at?: string
+          warning_threshold?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_definitions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kpi_readings: {
+        Row: {
+          created_at: string
+          id: string
+          kpi_definition_id: string
+          location_id: string | null
+          organization_id: string
+          reading_date: string
+          source: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kpi_definition_id: string
+          location_id?: string | null
+          organization_id: string
+          reading_date: string
+          source?: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kpi_definition_id?: string
+          location_id?: string | null
+          organization_id?: string
+          reading_date?: string
+          source?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kpi_readings_kpi_definition_id_fkey"
+            columns: ["kpi_definition_id"]
+            isOneToOne: false
+            referencedRelation: "kpi_definitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kpi_readings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leaderboard_achievements: {
         Row: {
           badge_color: string
@@ -5964,6 +6071,140 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      lever_outcomes: {
+        Row: {
+          created_at: string
+          delta: number | null
+          id: string
+          measured_at: string | null
+          measurement_window: string
+          metric_key: string
+          organization_id: string
+          recommendation_id: string
+          value_after: number | null
+          value_before: number
+        }
+        Insert: {
+          created_at?: string
+          delta?: number | null
+          id?: string
+          measured_at?: string | null
+          measurement_window?: string
+          metric_key: string
+          organization_id: string
+          recommendation_id: string
+          value_after?: number | null
+          value_before: number
+        }
+        Update: {
+          created_at?: string
+          delta?: number | null
+          id?: string
+          measured_at?: string | null
+          measurement_window?: string
+          metric_key?: string
+          organization_id?: string
+          recommendation_id?: string
+          value_after?: number | null
+          value_before?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lever_outcomes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lever_outcomes_recommendation_id_fkey"
+            columns: ["recommendation_id"]
+            isOneToOne: false
+            referencedRelation: "lever_recommendations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lever_recommendations: {
+        Row: {
+          confidence: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          decision_notes: string | null
+          estimated_monthly_impact: number | null
+          evidence: Json | null
+          expires_at: string
+          id: string
+          is_active: boolean
+          is_primary: boolean
+          lever_type: string
+          modified_action: string | null
+          organization_id: string
+          period_end: string
+          period_start: string
+          status: string
+          summary: string
+          title: string
+          what_to_do: string
+          why_now: Json
+        }
+        Insert: {
+          confidence?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_notes?: string | null
+          estimated_monthly_impact?: number | null
+          evidence?: Json | null
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          lever_type: string
+          modified_action?: string | null
+          organization_id: string
+          period_end: string
+          period_start: string
+          status?: string
+          summary: string
+          title: string
+          what_to_do: string
+          why_now?: Json
+        }
+        Update: {
+          confidence?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_notes?: string | null
+          estimated_monthly_impact?: number | null
+          evidence?: Json | null
+          expires_at?: string
+          id?: string
+          is_active?: boolean
+          is_primary?: boolean
+          lever_type?: string
+          modified_action?: string | null
+          organization_id?: string
+          period_end?: string
+          period_start?: string
+          status?: string
+          summary?: string
+          title?: string
+          what_to_do?: string
+          why_now?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lever_recommendations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       locations: {
         Row: {
