@@ -182,3 +182,6 @@ verify_jwt = false
 
 [functions.unsubscribe-insights-email]
 verify_jwt = false
+
+[functions.lever-engine]
+verify_jwt = false
