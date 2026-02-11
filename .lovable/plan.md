@@ -1,35 +1,66 @@
 
 
-# Fix Services Drill-Down: Query Appointments Instead of Empty Transaction Items
+# Add Location & Region Filters to Service/Product Drill-Down
 
-## Problem
+## Why This Matters
 
-The `useServiceProductDrilldown` hook queries `phorest_transaction_items`, which has **0 rows**. Your actual service data lives in `phorest_appointments` (321 records with service names, staff IDs, and prices from the Phorest scheduling API).
+Multi-location organizations can generate 1,000+ services in a period. Without filtering, the drill-down becomes an overwhelming wall of stylist rows. Adding compact filters inside the dialog lets owners quickly scope to a specific region or location without leaving the view.
 
-## Fix
+## What Changes
 
-### Rewrite `useServiceProductDrilldown.ts`
+### 1. Add filter controls inside `ServiceProductDrilldown.tsx`
 
-Change the data source from `phorest_transaction_items` to `phorest_appointments`:
+A compact filter row between the header and the stylist list:
 
-- Query `phorest_appointments` filtered by date range, location, and excluding cancelled/no-show statuses
-- Group by `phorest_staff_id` to compute: service revenue (`SUM(total_price)`), service count, and each stylist's share of total
-- Resolve staff names via the existing `phorest_staff_mapping` + `employee_profiles` join
-- For the **products** mode: since product sales aren't tracked in appointments (only in the empty transaction items table), the products drill-down will display a clear message: "Product sales data requires transaction sync" until that pipeline is operational
-- The retail-to-service ratio will be omitted for now (requires product data), replaced with a simpler "share of total services" metric
+```text
++-----------------------------------------------+
+|  SERVICES BY STYLIST                    [X]    |
+|  Revenue & retail-to-service ratio             |
++-----------------------------------------------+
+|  [All]  [Region v]  [Location v]               |
++-----------------------------------------------+
+|  [Avatar] Sarah M.                     $620    |
+|  ...                                           |
++-----------------------------------------------+
+```
 
-### Update `ServiceProductDrilldown.tsx`
+- **Three filter states**: "All" (default), filter by region (state/province), filter by specific location
+- Uses the existing `LocationSelect` component pattern and a simple Select for regions
+- Compact: single row of small selects, no wasted space
+- Filters are local to the dialog -- they don't affect the parent dashboard filters
 
-- Adjust the UI to handle the case where product data is unavailable
-- When in services mode: show service revenue, service count, and share of total per stylist (all data available from appointments)
-- When in products mode: show an informative empty state explaining product tracking requires the transaction data sync
+### 2. Update `useServiceProductDrilldown` hook
 
-### No changes to `AggregateSalesCard.tsx`
+- Add `locationId` to the query (already supported) but also accept an array or let the component filter client-side
+- Since the hook already filters by `locationId`, the simplest approach is to let the dialog manage its own `locationId` state and pass it down, re-triggering the query when the filter changes
+- For region filtering: fetch the location list, filter to locations in the selected region, then pass those location IDs to filter appointments
 
-The click handlers and state management are already correct -- only the data source needs to change.
+### 3. Update `ServiceProductDrilldown` props and state
 
-## Why This Is the Right Approach
+- Add internal state: `filterLocationId` (defaults to the parent's `locationId` or `'all'`)
+- Add internal state: `filterRegion` (defaults to `'all'`)
+- The component fetches locations via `useActiveLocations()` to populate the dropdowns
+- When a region is selected, only locations in that region show in the location dropdown
+- The hook re-queries with the selected location filter
 
-The Phorest scheduling API reliably provides service-level data through appointments. The CSV Export Job (which would populate `phorest_transaction_items` with both service and product line items) has not successfully loaded data. Rather than waiting for that pipeline, we use the data that is already available and working.
+### 4. Apply same pattern to `NewBookingsDrilldown`
 
-Once the transaction items sync is operational in the future, the hook can be extended to pull product data from that table to enable the full retail-to-service ratio and product drill-down.
+For consistency, add the same compact filter row to the New Bookings drill-down as well, since that will also scale with multi-location organizations.
+
+## Technical Details
+
+| File | Change |
+|---|---|
+| `src/components/dashboard/ServiceProductDrilldown.tsx` | Add filter row with region + location selects, manage local filter state, call hook with local locationId |
+| `src/hooks/useServiceProductDrilldown.ts` | Minor: accept optional `locationIds` array for region-based filtering (OR keep single locationId and let component manage) |
+| `src/components/dashboard/NewBookingsDrilldown.tsx` | Same filter row pattern for consistency |
+| `src/hooks/useNewBookings.ts` | Ensure locationId param is respected in the staff breakdown queries |
+
+## UX Details
+
+- Filters render as small, inline Select dropdowns (matching existing Zura styling)
+- Region dropdown only appears if the organization has locations in multiple states/regions
+- Changing a filter instantly re-fetches and re-renders the stylist list
+- "All" is always the default, showing the full picture first
+- The filter state resets when the dialog closes
+
