@@ -1,0 +1,1 @@
+ALTER TABLE public.saved_recovery_plans ADD COLUMN plan_type TEXT DEFAULT 'recovery';

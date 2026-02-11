@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import ReactMarkdown from 'react-markdown';
 import { ArrowLeft, ExternalLink, Lightbulb, Sparkles } from 'lucide-react';
 import { SuggestedTasksSection } from './SuggestedTasksSection';
+import { RecoveryPlanActions } from '@/components/dashboard/sales/RecoveryPlanActions';
 import type { SuggestedTask } from '@/hooks/useAIInsights';
 import { useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
 import { normalizeGuidanceRoute, isValidGuidanceRoute } from '@/utils/guidanceRoutes';
@@ -112,6 +113,16 @@ export function GuidancePanel({ title, type, guidance, isLoading, onBack, sugges
                 <>
                   <Separator className="my-4" />
                   <SuggestedTasksSection tasks={suggestedTasks} onAddTask={onAddTask} />
+                </>
+              )}
+              {guidance && (
+                <>
+                  <Separator className="my-4" />
+                  <RecoveryPlanActions
+                    title={title}
+                    content={guidance}
+                    planType="guidance"
+                  />
                 </>
               )}
             </>

@@ -11976,6 +11976,7 @@ export type Database = {
           goal_period: string
           id: string
           is_archived: boolean
+          plan_type: string | null
           reminder_date: string | null
           reminder_sent: boolean
           shortfall: number | null
@@ -11991,6 +11992,7 @@ export type Database = {
           goal_period?: string
           id?: string
           is_archived?: boolean
+          plan_type?: string | null
           reminder_date?: string | null
           reminder_sent?: boolean
           shortfall?: number | null
@@ -12006,6 +12008,7 @@ export type Database = {
           goal_period?: string
           id?: string
           is_archived?: boolean
+          plan_type?: string | null
           reminder_date?: string | null
           reminder_sent?: boolean
           shortfall?: number | null
