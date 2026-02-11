@@ -3,6 +3,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { EmployeeCompensation } from '@/hooks/usePayrollCalculations';
 import { EmployeePayrollSettings } from '@/hooks/useEmployeePayrollSettings';
 import { CurrentPeriod } from '@/hooks/useMyPayData';
+import { LiveCountdown } from '@/components/dashboard/LiveCountdown';
 import { format, parseISO } from 'date-fns';
 import { CalendarDays, TrendingUp } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -43,6 +44,16 @@ export function CurrentPeriodCard({ currentPeriod, estimatedCompensation, settin
         <CardDescription>
           {formatDate(currentPeriod.startDate)} – {formatDate(currentPeriod.endDate)}
         </CardDescription>
+        {currentPeriod.checkDate && (
+          <div className="pt-2">
+            <LiveCountdown
+              expiresAt={parseISO(currentPeriod.checkDate)}
+              displayMode="days"
+              urgentThresholdMs={3 * 24 * 60 * 60 * 1000}
+              className="text-sm"
+            />
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         {comp ? (
