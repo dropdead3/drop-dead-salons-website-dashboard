@@ -1,35 +1,46 @@
 
 
-## Fix Hover Overlay Covering Card Header Content
+## Add Visual Pin State to Command Center Toggle Icon
 
 ### Problem
-The Zura AI icon and pin-to-dashboard icon appear on hover via `PinnableCard` at a fixed position (`absolute top-3 right-3`). This overlaps with card header elements like filter badges and revenue totals (e.g., "$2,021 total" on Location Comparison), making them unreadable and unclickable.
-
-This affects every card wrapped in `PinnableCard` -- not just Location Comparison.
+The pin icon on card hover always looks the same regardless of whether the card is pinned to the Command Center or not. There's no at-a-glance indication of pin state.
 
 ### Solution
-Move the hover overlay from the top-right corner (where it conflicts with header content) to the **bottom-right corner** of the card. This keeps the controls accessible without covering any card content.
+Use the existing `isVisibleToLeadership` state (already computed in the component) to change the pin icon's appearance:
 
-### What Changes
+- **Pinned**: Filled/rotated pin with primary color -- immediately signals "this is active"
+- **Not pinned**: Default outline pin in muted color -- signals "not pinned"
 
-**File:** `src/components/dashboard/PinnableCard.tsx` (line 48)
+### Changes
 
-Change the overlay positioning from:
+**File:** `src/components/dashboard/CommandCenterVisibilityToggle.tsx`
+
+Update the `Pin` icon on the trigger button (lines 60-67) to reflect pinned state:
+
+```tsx
+<Button 
+  variant="ghost" 
+  size="icon" 
+  className={cn(
+    "h-8 w-8",
+    isVisibleToLeadership 
+      ? "text-primary" 
+      : "text-muted-foreground hover:text-foreground"
+  )}
+>
+  <Pin className={cn(
+    "h-4 w-4 transition-transform",
+    isVisibleToLeadership && "fill-current rotate-[-45deg]"
+  )} />
+</Button>
 ```
-absolute top-3 right-3
-```
-to:
-```
-absolute bottom-3 right-3
-```
 
-This is a single class change. The overlay keeps its existing behavior (opacity on hover, backdrop blur pill, z-10) but anchors to the bottom-right instead.
+Key visual cues:
+- **Pinned**: Pin icon is filled (`fill-current`), rotated 45 degrees (like a "stuck" pin), and colored with the primary brand color
+- **Not pinned**: Standard outline pin in muted gray
 
-### Why Bottom-Right
-- Card headers universally contain titles, badges, and filters in the top area
-- Card footers/bottom areas are typically empty or have minimal content
-- Bottom-right is a common pattern for floating action buttons
-- No card currently has interactive elements in the bottom-right corner
+This requires adding a `cn` import (likely already available) and no logic changes -- just styling the existing computed state.
 
 ### Files Modified
-1. `src/components/dashboard/PinnableCard.tsx` -- move overlay from top-right to bottom-right
+1. `src/components/dashboard/CommandCenterVisibilityToggle.tsx` -- conditional icon styling based on pin state
+
