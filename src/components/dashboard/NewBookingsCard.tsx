@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { CalendarPlus, UserPlus, RefreshCw, TrendingUp, TrendingDown, Minus, MapPin, CalendarCheck } from 'lucide-react';
 import { useNewBookings } from '@/hooks/useNewBookings';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { NewBookingsDrilldown } from './NewBookingsDrilldown';
 
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
@@ -27,6 +29,7 @@ interface NewBookingsCardProps {
 export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
   const dateRange = (filterContext?.dateRange ?? 'today') as DateRangeType;
   const { data, isLoading } = useNewBookings(filterContext?.locationId, dateRange);
+  const [drilldown, setDrilldown] = useState<'new' | 'returning' | null>(null);
 
   const showLocationBreakdown = !filterContext?.locationId || filterContext.locationId === 'all';
   const heroLabel = RANGE_LABELS[dateRange] || 'Booked';
@@ -76,7 +79,11 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
 
       {/* Breakdown: New vs Returning */}
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="text-center p-4 bg-muted/30 rounded-lg">
+        <button
+          type="button"
+          onClick={() => setDrilldown('new')}
+          className="text-center p-4 bg-muted/30 rounded-lg cursor-pointer transition-transform hover:-translate-y-0.5"
+        >
           <div className="flex justify-center mb-2">
             <UserPlus className="w-5 h-5 text-emerald-600" />
           </div>
@@ -89,9 +96,13 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
             <p className="text-xs text-muted-foreground">New Clients</p>
             <MetricInfoTooltip description="Bookings from first-time clients in this period." />
           </div>
-        </div>
+        </button>
 
-        <div className="text-center p-4 bg-muted/30 rounded-lg">
+        <button
+          type="button"
+          onClick={() => setDrilldown('returning')}
+          className="text-center p-4 bg-muted/30 rounded-lg cursor-pointer transition-transform hover:-translate-y-0.5"
+        >
           <div className="flex justify-center mb-2">
             <RefreshCw className="w-5 h-5 text-purple-600" />
           </div>
@@ -104,7 +115,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
             <p className="text-xs text-muted-foreground">Returning Clients</p>
             <MetricInfoTooltip description="Bookings from repeat clients in this period." />
           </div>
-        </div>
+        </button>
       </div>
 
       {/* After-Service Rebook Rate */}
@@ -191,6 +202,14 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
           )}
         </div>
       </div>
+
+      {/* Stylist Drill-Down Dialog */}
+      <NewBookingsDrilldown
+        mode={drilldown}
+        onClose={() => setDrilldown(null)}
+        newClientsByStaff={data?.newClientsByStaff || []}
+        returningClientsByStaff={data?.returningClientsByStaff || []}
+      />
     </Card>
   );
 }
