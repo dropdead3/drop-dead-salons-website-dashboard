@@ -158,7 +158,7 @@ export function TopBarSearch() {
   };
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative w-full max-w-2xl">
       {/* Search Trigger */}
       <button
         onClick={() => {
@@ -168,7 +168,7 @@ export function TopBarSearch() {
         className={cn(
           "flex items-center gap-2 px-3 py-1.5 rounded-full border border-border",
           "bg-muted/50 hover:bg-muted transition-colors text-muted-foreground",
-          "text-sm min-w-[320px] lg:min-w-[400px] xl:min-w-[480px] justify-between"
+          "text-sm w-full justify-between"
         )}
       >
         <div className="flex items-center gap-2">
@@ -182,7 +182,7 @@ export function TopBarSearch() {
 
       {/* Search Modal */}
       {isOpen && (
-        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[480px] bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-popover border border-border rounded-lg shadow-lg overflow-hidden z-50">
           {/* Search Input */}
           <div className="flex items-center gap-2 p-3 border-b border-border">
             {aiMode ? (
