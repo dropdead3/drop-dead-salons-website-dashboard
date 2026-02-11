@@ -3,7 +3,8 @@ import { Target, TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
-import { getDaysInMonth, getDaysInYear, getDayOfYear, startOfWeek, differenceInDays } from 'date-fns';
+import { getDaysInMonth, getDaysInYear, getDayOfYear, startOfWeek, endOfWeek, endOfMonth, endOfYear, differenceInDays, addDays, format, getDay } from 'date-fns';
+import type { HoursJson, HolidayClosure } from '@/hooks/useLocations';
 
 interface SalesGoalProgressProps {
   current: number;
@@ -11,6 +12,8 @@ interface SalesGoalProgressProps {
   label?: string;
   className?: string;
   goalPeriod?: 'weekly' | 'monthly' | 'yearly';
+  hoursJson?: HoursJson | null;
+  holidayClosures?: HolidayClosure[] | null;
 }
 
 function getElapsedFraction(period: 'weekly' | 'monthly' | 'yearly'): number {
@@ -34,7 +37,14 @@ function getElapsedFraction(period: 'weekly' | 'monthly' | 'yearly'): number {
   }
 }
 
-function getRemainingDays(period: 'weekly' | 'monthly' | 'yearly'): number {
+const dayIndexMap: Record<string, number> = {
+  sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+  thursday: 4, friday: 5, saturday: 6,
+};
+
+const dayNameByIndex = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+
+function getRemainingCalendarDays(period: 'weekly' | 'monthly' | 'yearly'): number {
   const now = new Date();
   switch (period) {
     case 'weekly': {
@@ -53,12 +63,61 @@ function getRemainingDays(period: 'weekly' | 'monthly' | 'yearly'): number {
   }
 }
 
+function getOpenDaysRemaining(
+  period: 'weekly' | 'monthly' | 'yearly',
+  hoursJson?: HoursJson | null,
+  holidayClosures?: HolidayClosure[] | null
+): { openDays: number; isLocationAware: boolean } {
+  if (!hoursJson) {
+    return { openDays: getRemainingCalendarDays(period), isLocationAware: false };
+  }
+
+  const now = new Date();
+  let periodEnd: Date;
+  switch (period) {
+    case 'weekly':
+      periodEnd = endOfWeek(now, { weekStartsOn: 1 });
+      break;
+    case 'monthly':
+      periodEnd = endOfMonth(now);
+      break;
+    case 'yearly':
+      periodEnd = endOfYear(now);
+      break;
+  }
+
+  const holidaySet = new Set(
+    (holidayClosures || []).map(h => h.date)
+  );
+
+  let openCount = 0;
+  let current = now;
+  while (current <= periodEnd) {
+    const dayOfWeek = getDay(current);
+    const dayName = dayNameByIndex[dayOfWeek];
+    const dayConfig = hoursJson[dayName];
+    const dateStr = format(current, 'yyyy-MM-dd');
+
+    const isClosed = dayConfig?.closed === true;
+    const isHoliday = holidaySet.has(dateStr);
+
+    if (!isClosed && !isHoliday) {
+      openCount++;
+    }
+    current = addDays(current, 1);
+  }
+
+  return { openDays: Math.max(openCount, 1), isLocationAware: true };
+}
+
 export function SalesGoalProgress({ 
   current, 
   target, 
   label = 'Monthly Goal',
   className,
-  goalPeriod = 'monthly'
+  goalPeriod = 'monthly',
+  hoursJson,
+  holidayClosures,
 }: SalesGoalProgressProps) {
   const percentage = target > 0 ? Math.min((current / target) * 100, 100) : 0;
   const isComplete = percentage >= 100;
@@ -71,7 +130,7 @@ export function SalesGoalProgress({
   const diff = actualPercentage - expectedPercentage;
 
   const paceStatus = diff >= 5 ? 'ahead' : diff <= -5 ? 'behind' : 'on-track';
-  const daysLeft = getRemainingDays(goalPeriod);
+  const { openDays: daysLeft, isLocationAware } = getOpenDaysRemaining(goalPeriod, hoursJson, holidayClosures);
   const neededPerDay = remaining / daysLeft;
 
   return (
@@ -136,7 +195,7 @@ export function SalesGoalProgress({
           {paceStatus === 'behind' && (
             <>
               <TrendingDown className="w-3 h-3" />
-              <span>Behind pace · <BlurredAmount>${neededPerDay.toLocaleString(undefined, { maximumFractionDigits: 0 })}/day</BlurredAmount> needed to hit goal</span>
+              <span>Behind pace · <BlurredAmount>${neededPerDay.toLocaleString(undefined, { maximumFractionDigits: 0 })}/day</BlurredAmount> needed{isLocationAware ? ` (${daysLeft} open day${daysLeft !== 1 ? 's' : ''} left)` : ''}</span>
             </>
           )}
         </div>
