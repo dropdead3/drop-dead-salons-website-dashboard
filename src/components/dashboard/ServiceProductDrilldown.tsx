@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
+
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Scissors, ShoppingBag, MapPin, Globe } from 'lucide-react';
 import {
@@ -26,11 +26,8 @@ function getInitials(name: string) {
   return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
-function getShareBarColor(share: number) {
-  if (share >= 25) return 'bg-primary';
-  if (share >= 10) return 'bg-primary/70';
-  return 'bg-primary/40';
-}
+
+
 
 function fmt(n: number) {
   return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
@@ -190,7 +187,7 @@ export function ServiceProductDrilldown({
                   key={staff.phorestStaffId}
                   className="p-4 bg-muted/30 rounded-xl"
                 >
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3">
                     <Avatar className="h-9 w-9">
                       <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
                         {getInitials(staff.staffName)}
@@ -205,11 +202,8 @@ export function ServiceProductDrilldown({
                     <span className="font-display text-lg tabular-nums">{fmt(staff.primaryRevenue)}</span>
                   </div>
 
-                  <Progress
-                    value={staff.sharePercent}
-                    className="h-1.5"
-                    indicatorClassName={getShareBarColor(staff.sharePercent)}
-                  />
+
+
                 </div>
               ))}
             </div>
