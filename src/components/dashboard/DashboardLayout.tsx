@@ -1023,7 +1023,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                 {sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               </TooltipContent>
             </Tooltip>
-            {isPlatformUser && <OrganizationSwitcher compact />}
+            {isPlatformUser && location.pathname.startsWith('/dashboard/platform') && <OrganizationSwitcher compact />}
           </div>
 
           {/* Center - Search Bar */}
