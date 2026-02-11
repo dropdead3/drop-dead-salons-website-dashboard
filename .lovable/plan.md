@@ -1,41 +1,56 @@
 
+# Fix: Show Action Steps in "Let's Implement" Dialog
 
-# Fix: Show Selectable Action Steps in "Let's Implement" Dialog
+## The Real Problem
 
-## Problem
+The extraction keeps failing because we're trying to parse free-form markdown with regex -- and the AI output format varies every time. The AI prompt says "Format with markdown (bold key actions, use bullet points for steps)" but doesn't enforce a consistent structure. No amount of regex gymnastics will reliably parse every variation.
 
-The "Action Steps" section appears empty because the `extractActions` function can't parse the AI-generated content. The AI edge function returns free-form markdown (2-3 paragraphs with bold actions, bullet points, and links) -- not a rigid numbered-list format. The regex strategies are too strict or conflict with each other.
+## Two-Pronged Fix
 
-## Root Cause
+### 1. Tell the AI to output a parseable action block (Edge Function)
 
-The AI prompt says "Format with markdown (bold key actions, use bullet points for steps)" -- so the output mixes inline bold text within paragraphs, markdown links, and bullet sub-points. The extraction patterns miss these because:
-- Bold text often contains colons within links or extra formatting
-- Bullet points may be nested or mixed with paragraph text  
-- Numbered lists may not start at the beginning of lines
+Add an instruction to the system prompt in `ai-insight-guidance` edge function that asks the AI to append a structured block at the end of its response:
 
-## Solution
+```
+At the end of your response, include a structured action block in this exact format:
 
-Overhaul `extractActions` with a more resilient, multi-pass approach:
+---ACTIONS---
+1. [Action Title]: [Brief description of what to do]
+2. [Action Title]: [Brief description of what to do]
+3. [Action Title]: [Brief description of what to do]
+---END---
+```
 
-1. **Normalize content first**: Strip markdown links `[text](url)` down to just `text` before matching, so links inside bold text don't break patterns.
+This gives us a reliable delimiter to parse, while the main body of the response stays human-readable markdown.
 
-2. **Broader bold extraction**: Match any `**bold text**` that looks like an action (longer than 4 chars), then grab the rest of the line or next sentence as description.
+### 2. Update `extractActions` in `ImplementPlanDialog.tsx`
 
-3. **Sentence-level fallback**: If no structured items are found, split content into sentences/lines and pick substantive ones (over 20 chars, not generic headers) as individual action items. This ensures the dialog always has something to show.
+Rewrite the parser with this priority order:
 
-4. **Deduplication**: Since multiple strategies run, deduplicate by title similarity to avoid showing the same action twice.
+1. **Primary**: Look for the `---ACTIONS---` ... `---END---` block. Parse numbered lines between those markers. This will always work for new AI responses.
 
-## Technical Changes
+2. **Fallback**: For older saved plans or edge cases where the block is missing, keep a simplified version of the current bold/list/line parsing as backup.
 
-### `ImplementPlanDialog.tsx` -- `extractActions` function rewrite
+This way the dialog will always show action items -- either from the structured block or from best-effort markdown parsing.
 
-- Add a `normalizeContent` helper that strips markdown links and extra whitespace
-- Rewrite Strategy 1: Match `**any bold text**` followed by remaining line content as description
-- Rewrite Strategy 2: Match bullet/numbered items (with or without bold), capture full line as title
-- Add Strategy 3 (fallback): Split by newlines, filter to substantive lines (length > 20, not just headers), use each as a step
-- Keep the position-based due date assignment at the end
-- Cap at 8 steps
+## Technical Details
 
-### No other file changes needed
+### File: `supabase/functions/ai-insight-guidance/index.ts`
 
-The dialog UI (checkboxes, selection state, routing options) already works correctly -- only the extraction logic needs fixing.
+Add to the `SYSTEM_PROMPT` string (around line 34-47):
+
+- Append instruction requiring the `---ACTIONS---` block at the end of every response
+- Specify the exact numbered format: `1. [Title]: [Description]`
+- Cap at 3-5 action items
+
+### File: `src/components/dashboard/sales/ImplementPlanDialog.tsx`
+
+Rewrite `extractActions` function:
+
+- **Step 1**: Search for content between `---ACTIONS---` and `---END---` markers
+- **Step 2**: Parse each line matching `\d+\.\s*(.+?):\s*(.+)` into title/description
+- **Step 3**: If no markers found, fall back to current bold-pattern + list-pattern strategies
+- **Step 4**: If still nothing, use the sentence-level fallback
+- Keep deduplication, 8-item cap, and due-day assignment logic unchanged
+
+No database changes. No new files. Two file edits total.
