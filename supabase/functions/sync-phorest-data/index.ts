@@ -327,7 +327,7 @@ async function syncAppointments(
         stylist_user_id: stylistUserId,
         phorest_staff_id: apt.staffId || apt.staff?.staffId,
         location_id: locationId,
-        phorest_client_id: localClientId, // Now properly linked if client exists
+        phorest_client_id: phorestClientId, // Always store raw Phorest client ID for analytics grouping
         client_name: apt.clientName || `${apt.client?.firstName || ''} ${apt.client?.lastName || ''}`.trim() || null,
         client_phone: apt.client?.mobile || apt.client?.phone || null,
         appointment_date: appointmentDate,

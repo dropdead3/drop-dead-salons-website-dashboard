@@ -8278,13 +8278,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "phorest_appointments_phorest_client_id_fkey"
-            columns: ["phorest_client_id"]
-            isOneToOne: false
-            referencedRelation: "phorest_clients"
-            referencedColumns: ["phorest_client_id"]
-          },
-          {
             foreignKeyName: "phorest_appointments_stylist_user_id_fkey"
             columns: ["stylist_user_id"]
             isOneToOne: false
