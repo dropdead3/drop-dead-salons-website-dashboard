@@ -686,15 +686,22 @@ export function ForecastingCard() {
                       return (
                         <g style={{ pointerEvents: hideNumbers ? 'auto' : 'none', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
                           {hideNumbers && <title>Click to reveal</title>}
+                          <defs>
+                            <linearGradient id="avgBadgeGrad" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="rgb(133 77 14 / 0.5)" />
+                              <stop offset="50%" stopColor="rgb(180 83 9 / 0.3)" />
+                              <stop offset="100%" stopColor="rgb(133 77 14 / 0.5)" />
+                            </linearGradient>
+                          </defs>
                           <rect
                             className="avg-badge-rect"
                             x={chartLeft}
                             y={yPos - fontSize / 2 - padY}
                             width={0}
                             height={fontSize + padY * 2}
-                            rx={5}
-                            fill="hsl(var(--background) / 0.85)"
-                            stroke="hsl(var(--gold) / 0.5)"
+                            rx={9999}
+                            fill="url(#avgBadgeGrad)"
+                            stroke="rgb(202 138 4 / 0.6)"
                             strokeWidth={1}
                           />
                           <text
@@ -712,7 +719,7 @@ export function ForecastingCard() {
                             x={chartLeft + padX}
                             y={yPos + fontSize / 2 - 2}
                             style={{ fontSize, fontWeight: 500, filter: hideNumbers ? 'blur(8px)' : 'none' }}
-                            fill="hsl(var(--gold))"
+                            fill="rgb(254 240 138)"
                           >
                             {avgText}
                           </text>
@@ -722,8 +729,8 @@ export function ForecastingCard() {
                             y1={yPos}
                             x2={chartRight}
                             y2={yPos}
-                            stroke="hsl(var(--gold))"
-                            strokeOpacity={0.4}
+                            stroke="rgb(202 138 4)"
+                            strokeOpacity={0.5}
                             strokeDasharray="4 4"
                             strokeWidth={1.5}
                           />
@@ -748,15 +755,22 @@ export function ForecastingCard() {
                       return (
                         <g style={{ pointerEvents: hideNumbers ? 'auto' : 'none', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
                           {hideNumbers && <title>Click to reveal</title>}
+                          <defs>
+                            <linearGradient id="avgBadgeGradWeekly" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="rgb(133 77 14 / 0.5)" />
+                              <stop offset="50%" stopColor="rgb(180 83 9 / 0.3)" />
+                              <stop offset="100%" stopColor="rgb(133 77 14 / 0.5)" />
+                            </linearGradient>
+                          </defs>
                           <rect
                             className="avg-badge-rect-weekly"
                             x={chartLeft}
                             y={yPos - fontSize / 2 - padY}
                             width={0}
                             height={fontSize + padY * 2}
-                            rx={4}
-                            fill="hsl(var(--background) / 0.85)"
-                            stroke="hsl(var(--gold) / 0.5)"
+                            rx={9999}
+                            fill="url(#avgBadgeGradWeekly)"
+                            stroke="rgb(202 138 4 / 0.6)"
                             strokeWidth={1}
                           />
                           <text
@@ -774,7 +788,7 @@ export function ForecastingCard() {
                             x={chartLeft + padX}
                             y={yPos + fontSize / 2 - 2}
                             style={{ fontSize, fontWeight: 500, filter: hideNumbers ? 'blur(8px)' : 'none' }}
-                            fill="hsl(var(--gold))"
+                            fill="rgb(254 240 138)"
                           >
                             {avgText}
                           </text>
@@ -784,8 +798,8 @@ export function ForecastingCard() {
                             y1={yPos}
                             x2={chartRight}
                             y2={yPos}
-                            stroke="hsl(var(--gold))"
-                            strokeOpacity={0.4}
+                            stroke="rgb(202 138 4)"
+                            strokeOpacity={0.5}
                             strokeDasharray="4 4"
                             strokeWidth={1.5}
                           />
