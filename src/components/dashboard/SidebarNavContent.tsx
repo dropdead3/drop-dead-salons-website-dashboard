@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useRef, useImperativeHandle, useMemo } from 'react';
+import { useRubberBandScroll } from '@/hooks/useRubberBandScroll';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { Badge } from '@/components/ui/badge';
@@ -85,6 +86,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   const navigate = useNavigate();
   const { resolvedTheme } = useDashboardTheme();
   const internalRef = useRef<HTMLElement>(null);
+  useRubberBandScroll(internalRef);
   const { data: businessSettings } = useBusinessSettings();
   const { data: sidebarLayout } = useSidebarLayout();
   
@@ -355,7 +357,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       {/* Phorest Sync Status Widget moved to header popout */}
 
       {/* Navigation */}
-      <nav ref={internalRef} className="flex-1 py-4 overflow-y-auto">
+      <nav ref={internalRef} className="flex-1 py-4 overflow-y-auto overscroll-none">
         {/* START HERE Priority Section - Only shows when onboarding incomplete (not for super_admin/owners) */}
         {!isOnboardingComplete && !roles.includes('super_admin') && (
           <div className="mb-4">
