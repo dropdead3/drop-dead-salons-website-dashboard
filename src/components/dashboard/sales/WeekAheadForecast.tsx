@@ -339,7 +339,7 @@ export function WeekAheadForecast() {
                                   stroke="rgb(202 138 4)"
                                   strokeDasharray={lineLength}
                                   strokeDashoffset={lineLength}
-                                  strokeWidth={1.5}
+                                  strokeWidth={1}
                                   style={{ animation: 'drawLine 1s ease-out 0.8s forwards' }}
                                 />
                               </>

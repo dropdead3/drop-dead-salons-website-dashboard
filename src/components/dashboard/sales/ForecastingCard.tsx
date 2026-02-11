@@ -732,7 +732,7 @@ export function ForecastingCard() {
                             stroke="rgb(202 138 4)"
                             strokeOpacity={0.5}
                             strokeDasharray="4 4"
-                            strokeWidth={1.5}
+                            strokeWidth={1}
                           />
                         </g>
                       );
@@ -801,7 +801,7 @@ export function ForecastingCard() {
                             stroke="rgb(202 138 4)"
                             strokeOpacity={0.5}
                             strokeDasharray="4 4"
-                            strokeWidth={1.5}
+                            strokeWidth={1}
                           />
                         </g>
                       );
