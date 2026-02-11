@@ -49,6 +49,7 @@ export function useUnreadMessages(channelIds: string[]) {
       return counts;
     },
     enabled: !!user?.id && channelIds.length > 0,
+    staleTime: 15_000,
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
