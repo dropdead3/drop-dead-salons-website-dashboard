@@ -527,7 +527,7 @@ export function ForecastingCard() {
         <CardContent className="space-y-4">
           {/* Summary Stats */}
           <div className={cn("grid gap-3", period === 'tomorrow' ? 'grid-cols-2' : 'grid-cols-3')}>
-            <div className="text-center p-3 bg-muted/30 rounded-lg">
+            <div className="text-center p-3 bg-muted/30 rounded-lg border border-border/30">
               <div className="flex justify-center mb-1">
                 <TrendingUp className="w-4 h-4 text-primary" />
               </div>
@@ -542,7 +542,7 @@ export function ForecastingCard() {
               </div>
             </div>
             {period !== 'tomorrow' && (
-              <div className="text-center p-3 bg-muted/30 rounded-lg">
+              <div className="text-center p-3 bg-muted/30 rounded-lg border border-border/30">
                 <div className="flex justify-center mb-1">
                   <Calendar className="w-4 h-4 text-chart-2" />
                 </div>
@@ -557,7 +557,7 @@ export function ForecastingCard() {
                 </div>
               </div>
             )}
-            <div className="text-center p-3 bg-muted/30 rounded-lg">
+            <div className="text-center p-3 bg-muted/30 rounded-lg border border-border/30">
               <div className="flex justify-center mb-1">
                 <Users className="w-4 h-4 text-chart-3" />
               </div>
