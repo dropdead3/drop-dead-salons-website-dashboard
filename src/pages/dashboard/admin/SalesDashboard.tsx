@@ -375,6 +375,7 @@ export default function SalesDashboard() {
                 ? 'Monthly Goal'
                 : 'Weekly Goal'
           }
+          goalPeriod={dateRange === 'thisWeek' || dateRange === '7d' ? 'weekly' : 'monthly'}
         />
 
         {/* KPI Cards - Swipeable on mobile */}
