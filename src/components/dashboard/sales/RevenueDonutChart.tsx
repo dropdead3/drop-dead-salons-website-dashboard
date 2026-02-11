@@ -36,7 +36,7 @@ export function RevenueDonutChart({
   const headerContent = (
     <div className="flex items-center justify-between w-full">
       <div className="flex items-center gap-2">
-        <PieChartIcon className="w-4 h-4 text-chart-2" />
+        <PieChartIcon className="w-4 h-4 text-primary" />
         <CardTitle className="font-display text-xs tracking-wide uppercase">Revenue Breakdown</CardTitle>
       </div>
       {filterContext && (

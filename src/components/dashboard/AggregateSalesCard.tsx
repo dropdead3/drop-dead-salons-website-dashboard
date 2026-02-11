@@ -444,7 +444,7 @@ export function AggregateSalesCard({
               {/* Products */}
               <div className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/30">
                 <div className="flex items-center justify-center gap-1.5 mb-2">
-                  <ShoppingBag className="w-3.5 h-3.5 text-chart-2" />
+                  <ShoppingBag className="w-3.5 h-3.5 text-primary" />
                   <span className="text-xs text-muted-foreground">Products</span>
                 </div>
                 <AnimatedBlurredAmount 
@@ -462,7 +462,7 @@ export function AggregateSalesCard({
             {/* Transactions */}
             <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
               <div className="flex justify-center mb-2">
-                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-chart-3" />
+                <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
               <AnimatedBlurredAmount 
                 value={displayMetrics.totalTransactions}
@@ -477,7 +477,7 @@ export function AggregateSalesCard({
             {/* Avg Ticket */}
             <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
               <div className="flex justify-center mb-2">
-                <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-chart-4" />
+                <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
               <AnimatedBlurredAmount 
                 value={Math.round(displayMetrics.averageTicket)}
@@ -493,7 +493,7 @@ export function AggregateSalesCard({
             {/* Rev/Hour */}
             <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
               <div className="flex justify-center mb-2">
-                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-chart-1" />
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
               <AnimatedBlurredAmount 
                 value={Math.round(revenuePerHour)}
