@@ -8,8 +8,8 @@ export interface StaffServiceProduct {
   serviceCount: number;
   productRevenue: number;
   productCount: number;
-  retailToServiceRatio: number; // percentage
-  sharePercent: number; // share of total in the active mode
+  retailToServiceRatio: number;
+  sharePercent: number;
 }
 
 interface UseServiceProductDrilldownOptions {
@@ -22,19 +22,19 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
   return useQuery({
     queryKey: ['service-product-drilldown', dateFrom, dateTo, locationId || 'all'],
     queryFn: async () => {
-      // Fetch transaction items in range
+      // Query phorest_appointments for service data
       let query = supabase
-        .from('phorest_transaction_items')
-        .select('phorest_staff_id, item_type, total_amount, quantity')
-        .gte('transaction_date', dateFrom)
-        .lte('transaction_date', dateTo)
-        .in('item_type', ['Service', 'Product']);
+        .from('phorest_appointments')
+        .select('phorest_staff_id, total_price, service_name')
+        .gte('appointment_date', dateFrom)
+        .lte('appointment_date', dateTo)
+        .not('status', 'in', '("cancelled","no_show","Cancelled","No Show")');
 
       if (locationId && locationId !== 'all') {
         query = query.eq('location_id', locationId);
       }
 
-      const { data: items, error } = await query;
+      const { data: appointments, error } = await query;
       if (error) throw error;
 
       // Fetch staff name mappings
@@ -57,53 +57,39 @@ export function useServiceProductDrilldown({ dateFrom, dateTo, locationId }: Use
       });
 
       // Aggregate by staff
-      const staffMap: Record<string, {
-        serviceRevenue: number;
-        serviceCount: number;
-        productRevenue: number;
-        productCount: number;
-      }> = {};
+      const staffMap: Record<string, { serviceRevenue: number; serviceCount: number }> = {};
 
-      (items || []).forEach(item => {
-        const sid = item.phorest_staff_id;
+      (appointments || []).forEach(appt => {
+        const sid = appt.phorest_staff_id;
         if (!sid) return;
         if (!staffMap[sid]) {
-          staffMap[sid] = { serviceRevenue: 0, serviceCount: 0, productRevenue: 0, productCount: 0 };
+          staffMap[sid] = { serviceRevenue: 0, serviceCount: 0 };
         }
-        const amount = Number(item.total_amount) || 0;
-        const qty = Number(item.quantity) || 1;
-        if (item.item_type === 'Service') {
-          staffMap[sid].serviceRevenue += amount;
-          staffMap[sid].serviceCount += qty;
-        } else {
-          staffMap[sid].productRevenue += amount;
-          staffMap[sid].productCount += qty;
-        }
+        staffMap[sid].serviceRevenue += Number(appt.total_price) || 0;
+        staffMap[sid].serviceCount += 1;
       });
 
-      // Compute totals
       let totalServiceRevenue = 0;
-      let totalProductRevenue = 0;
       Object.values(staffMap).forEach(v => {
         totalServiceRevenue += v.serviceRevenue;
-        totalProductRevenue += v.productRevenue;
       });
 
       const staffData: StaffServiceProduct[] = Object.entries(staffMap)
         .map(([phorestStaffId, v]) => ({
           phorestStaffId,
           staffName: staffLookup[phorestStaffId] || 'Unknown',
-          ...v,
-          retailToServiceRatio: v.serviceRevenue > 0
-            ? Math.round((v.productRevenue / v.serviceRevenue) * 100)
-            : 0,
-          sharePercent: 0, // computed per-mode by component
+          serviceRevenue: v.serviceRevenue,
+          serviceCount: v.serviceCount,
+          productRevenue: 0,
+          productCount: 0,
+          retailToServiceRatio: 0,
+          sharePercent: 0,
         }));
 
       return {
         staffData,
         totalServiceRevenue,
-        totalProductRevenue,
+        totalProductRevenue: 0,
       };
     },
     staleTime: 2 * 60 * 1000,
