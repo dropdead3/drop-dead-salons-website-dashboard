@@ -42,6 +42,7 @@ export function ZuraCardInsight({ cardName, metricData, dateRange, locationName 
       </DialogTrigger>
       <DialogContent
         className="max-w-lg p-0 overflow-hidden gap-0"
+        overlayClassName="backdrop-blur-sm bg-black/60"
       >
         {/* Premium Header */}
         <div className="p-6 border-b border-border/50">
