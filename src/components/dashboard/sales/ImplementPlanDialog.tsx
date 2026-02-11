@@ -72,11 +72,12 @@ function extractActions(content: string): ActionStep[] {
   let steps: ActionStep[] = [];
 
   // Strategy 0 (Primary): Parse ---ACTIONS--- block from AI
-  const actionsBlockMatch = content.match(/---ACTIONS---\s*([\s\S]*?)\s*---END---/);
+  const actionsBlockMatch = content.match(/---ACTIONS---\s*([\s\S]*?)(?:---END---|$)/);
   if (actionsBlockMatch) {
-    const lines = actionsBlockMatch[1].split('\n').map((l) => l.trim()).filter(Boolean);
+    const rawBlock = actionsBlockMatch[1].replace(/---END---/g, '');
+    const lines = rawBlock.split('\n').map((l) => l.trim()).filter(Boolean);
     for (const line of lines) {
-      const lineMatch = line.match(/^\d+\.\s*(.+?):\s*(.+)$/);
+      const lineMatch = line.match(/^(?:\d+[.)]\s*)?(.+?):\s+(.+)$/);
       if (lineMatch) {
         steps.push({ title: lineMatch[1].trim(), description: lineMatch[2].trim(), dueDays: 0 });
       }
