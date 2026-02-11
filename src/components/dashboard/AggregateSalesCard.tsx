@@ -26,6 +26,7 @@ import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useSalesTrend }
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
+import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { format, subDays, startOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears } from 'date-fns';
 import {
@@ -55,8 +56,19 @@ import { SalesGoalProgress } from './sales/SalesGoalProgress';
 import { LastSyncIndicator } from './sales/LastSyncIndicator';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { Progress } from '@/components/ui/progress';
 
 export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'todayToEom' | 'ytd' | 'lastYear' | 'last365';
+
+/** Format HH:MM:SS to 12-hour time like "7:45 PM" */
+function formatEndTime(time: string): string {
+  const [hoursStr, minutesStr] = time.split(':');
+  let hours = parseInt(hoursStr, 10);
+  const minutes = minutesStr || '00';
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  return `${hours}:${minutes} ${ampm}`;
+}
 
 interface AggregateSalesCardProps {
   // When provided, use these instead of internal state
@@ -146,6 +158,7 @@ export function AggregateSalesCard({
   const { data: tomorrowData } = useTomorrowRevenue();
   const { goals } = useSalesGoals();
   const { data: locations } = useActiveLocations();
+  const { data: todayActual, isLoading: todayActualLoading } = useTodayActualRevenue(dateRange === 'today');
 
   // Location display logic
   const isAllLocations = !filterContext?.locationId || filterContext.locationId === 'all';
@@ -413,6 +426,44 @@ export function AggregateSalesCard({
                       Based on scheduled appointments. Final revenue may differ as appointments are completed, cancelled, or added.
                     </TooltipContent>
                   </Tooltip>
+                </div>
+              )}
+              {/* Actual vs Expected Revenue - Today only */}
+              {dateRange === 'today' && (
+                <div className="mt-4 mx-auto max-w-sm space-y-3">
+                  {todayActual?.hasActualData ? (
+                    <>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Actual Revenue</span>
+                          <BlurredAmount>
+                            <span className="font-medium">
+                              ${todayActual.actualRevenue.toLocaleString()} of ${displayMetrics.totalRevenue.toLocaleString()} expected
+                            </span>
+                          </BlurredAmount>
+                        </div>
+                        <Progress 
+                          value={displayMetrics.totalRevenue > 0 
+                            ? Math.min((todayActual.actualRevenue / displayMetrics.totalRevenue) * 100, 100) 
+                            : 0
+                          } 
+                          className="h-1.5"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-xs text-muted-foreground/70 text-center">
+                      Actual revenue not available until appointments check out
+                    </p>
+                  )}
+                  {todayActual?.lastAppointmentEndTime && (
+                    <p className="text-xs text-muted-foreground/70 text-center">
+                      Estimated final transaction at{' '}
+                      <span className="font-medium text-foreground/70">
+                        {formatEndTime(todayActual.lastAppointmentEndTime)}
+                      </span>
+                    </p>
+                  )}
                 </div>
               )}
               {showTrendIndicators && (
