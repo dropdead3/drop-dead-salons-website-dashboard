@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
@@ -391,6 +392,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         </TabsContent>
 
         <TabsContent value="forecasting" className="mt-6 space-y-6">
+          <EnforcementGateBanner gateKey="gate_baselines">
           <PinnableCard elementKey="week_ahead_forecast" elementName="Forecasting" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <ForecastingCard />
           </PinnableCard>
@@ -418,6 +420,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
               />
             </PinnableCard>
           </div>
+          </EnforcementGateBanner>
         </TabsContent>
 
         <TabsContent value="commission" className="mt-6 space-y-6">
