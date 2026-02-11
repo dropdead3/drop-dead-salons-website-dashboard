@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { format, startOfMonth, endOfMonth, subDays, startOfWeek } from 'date-fns';
 import { VisibilityGate, useElementVisibility } from '@/components/visibility';
+import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { AggregateSalesCard, DateRange as SalesDateRange } from '@/components/dashboard/AggregateSalesCard';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUtilizationCard';
@@ -166,96 +167,120 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
           elementName="Operations Quick Stats"
           elementCategory="operations"
         >
-          <OperationsQuickStats locationId={locationFilter} filterContext={filterContext} />
+          <PinnableCard elementKey="operations_quick_stats" elementName="Operations Quick Stats" category="Command Center">
+            <OperationsQuickStats locationId={locationFilter} filterContext={filterContext} />
+          </PinnableCard>
         </VisibilityGate>
       );
     case 'sales_overview':
       return (
         <VisibilityGate elementKey="sales_overview">
-          <AggregateSalesCard 
-            externalDateRange={mapToSalesDateRange(filters.dateRange)}
-            externalDateFilters={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
-            hideInternalFilter={true}
-            filterContext={filterContext}
-          />
+          <PinnableCard elementKey="sales_overview" elementName="Sales Overview" category="Command Center">
+            <AggregateSalesCard 
+              externalDateRange={mapToSalesDateRange(filters.dateRange)}
+              externalDateFilters={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
+              hideInternalFilter={true}
+              filterContext={filterContext}
+            />
+          </PinnableCard>
         </VisibilityGate>
       );
     case 'top_performers':
       return (
         <VisibilityGate elementKey="top_performers">
-          <TopPerformersCard 
-            performers={performersForCard} 
-            isLoading={isLoadingPerformers}
-            filterContext={filterContext}
-          />
+          <PinnableCard elementKey="top_performers" elementName="Top Performers" category="Command Center">
+            <TopPerformersCard 
+              performers={performersForCard} 
+              isLoading={isLoadingPerformers}
+              filterContext={filterContext}
+            />
+          </PinnableCard>
         </VisibilityGate>
       );
     case 'revenue_breakdown':
       return (
         <VisibilityGate elementKey="revenue_breakdown">
-          <RevenueDonutChart 
-            serviceRevenue={salesData?.serviceRevenue || 0}
-            productRevenue={salesData?.productRevenue || 0}
-            filterContext={filterContext}
-          />
+          <PinnableCard elementKey="revenue_breakdown" elementName="Revenue Breakdown" category="Command Center">
+            <RevenueDonutChart 
+              serviceRevenue={salesData?.serviceRevenue || 0}
+              productRevenue={salesData?.productRevenue || 0}
+              filterContext={filterContext}
+            />
+          </PinnableCard>
         </VisibilityGate>
       );
     case 'client_funnel':
       return (
         <VisibilityGate elementKey="client_funnel">
-          <ClientFunnelCard 
-            dateFrom={filters.dateFrom} 
-            dateTo={filters.dateTo}
-            filterContext={filterContext}
-          />
+          <PinnableCard elementKey="client_funnel" elementName="Client Funnel" category="Command Center">
+            <ClientFunnelCard 
+              dateFrom={filters.dateFrom} 
+              dateTo={filters.dateTo}
+              filterContext={filterContext}
+            />
+          </PinnableCard>
         </VisibilityGate>
       );
     case 'team_goals':
       return (
         <VisibilityGate elementKey="team_goals">
-          <TeamGoalsCard 
-            currentRevenue={salesData?.totalRevenue || 0}
-            filterContext={filterContext}
-          />
+          <PinnableCard elementKey="team_goals" elementName="Team Goals" category="Command Center">
+            <TeamGoalsCard 
+              currentRevenue={salesData?.totalRevenue || 0}
+              filterContext={filterContext}
+            />
+          </PinnableCard>
         </VisibilityGate>
       );
     case 'new_bookings':
       return (
         <VisibilityGate elementKey="new_bookings">
-          <NewBookingsCard filterContext={filterContext} />
+          <PinnableCard elementKey="new_bookings" elementName="New Bookings" category="Command Center">
+            <NewBookingsCard filterContext={filterContext} />
+          </PinnableCard>
         </VisibilityGate>
       );
     case 'week_ahead_forecast':
       return (
         <VisibilityGate elementKey="week_ahead_forecast">
-          <ForecastingCard />
+          <PinnableCard elementKey="week_ahead_forecast" elementName="Week Ahead Forecast" category="Command Center">
+            <ForecastingCard />
+          </PinnableCard>
         </VisibilityGate>
       );
     case 'capacity_utilization':
       return (
         <VisibilityGate elementKey="capacity_utilization">
-          <CapacityUtilizationCard />
+          <PinnableCard elementKey="capacity_utilization" elementName="Capacity Utilization" category="Command Center">
+            <CapacityUtilizationCard />
+          </PinnableCard>
         </VisibilityGate>
       );
     case 'hiring_capacity':
       return (
         <VisibilityGate elementKey="hiring_capacity">
-          <HiringCapacityCard />
+          <PinnableCard elementKey="hiring_capacity" elementName="Hiring Capacity" category="Command Center">
+            <HiringCapacityCard />
+          </PinnableCard>
         </VisibilityGate>
       );
     case 'staffing_trends':
       return (
         <VisibilityGate elementKey="staffing_trends">
-          <StaffingTrendChart />
+          <PinnableCard elementKey="staffing_trends" elementName="Staffing Trends" category="Command Center">
+            <StaffingTrendChart />
+          </PinnableCard>
         </VisibilityGate>
       );
     case 'stylist_workload':
       return (
         <VisibilityGate elementKey="stylist_workload">
-          <StylistWorkloadCard 
-            workload={workload || []} 
-            isLoading={isLoadingWorkload} 
-          />
+          <PinnableCard elementKey="stylist_workload" elementName="Stylist Workload" category="Command Center">
+            <StylistWorkloadCard 
+              workload={workload || []} 
+              isLoading={isLoadingWorkload} 
+            />
+          </PinnableCard>
         </VisibilityGate>
       );
     default:
