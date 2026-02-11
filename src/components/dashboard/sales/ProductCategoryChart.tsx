@@ -49,12 +49,12 @@ export function ProductCategoryChart({ dateFrom, dateTo, locationId, filterConte
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-chart-2" />
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <ShoppingBag className="w-5 h-5 text-chart-2 shrink-0" />
             <CardTitle className="font-display">Product Categories</CardTitle>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             {filterContext && (
               <AnalyticsFilterBadge 
                 locationId={filterContext.locationId} 
