@@ -8,6 +8,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Pin, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useDashboardVisibility, useToggleDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import type { Database } from '@/integrations/supabase/types';
@@ -61,9 +62,17 @@ export function CommandCenterVisibilityToggle({
         <Button 
           variant="ghost" 
           size="icon" 
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+          className={cn(
+            "h-8 w-8",
+            isVisibleToLeadership 
+              ? "text-primary" 
+              : "text-muted-foreground hover:text-foreground"
+          )}
         >
-          <Pin className="h-4 w-4" />
+          <Pin className={cn(
+            "h-4 w-4 transition-transform",
+            isVisibleToLeadership && "fill-current rotate-[-45deg]"
+          )} />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-72" align="end">
