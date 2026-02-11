@@ -33,7 +33,7 @@ interface SyncStatus {
   completed_at: string | null;
 }
 
-export function PhorestSyncPopout() {
+export function PhorestSyncPopout({ asMenuItem = false }: { asMenuItem?: boolean }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const queryClient = useQueryClient();
 
@@ -156,15 +156,31 @@ export function PhorestSyncPopout() {
       <Tooltip>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative h-8 w-8">
-              <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
-              <span 
-                className={cn(
-                  "absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background",
-                  getHealthColor()
-                )} 
-              />
-            </Button>
+            {asMenuItem ? (
+              <Button 
+                variant="ghost" 
+                className="w-full justify-start gap-2 h-auto px-2 py-1.5 rounded-sm font-normal text-sm"
+              >
+                <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
+                Sync Status
+                <span 
+                  className={cn(
+                    "ml-auto h-2 w-2 rounded-full",
+                    getHealthColor()
+                  )} 
+                />
+              </Button>
+            ) : (
+              <Button variant="ghost" size="icon" className="relative h-8 w-8">
+                <RefreshCw className={cn("w-4 h-4", isSyncing && "animate-spin")} />
+                <span 
+                  className={cn(
+                    "absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background",
+                    getHealthColor()
+                  )} 
+                />
+              </Button>
+            )}
           </PopoverTrigger>
         </TooltipTrigger>
         <TooltipContent side="bottom">

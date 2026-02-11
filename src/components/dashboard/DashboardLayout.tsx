@@ -455,7 +455,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
 
 
   // View As Component for admins - allows viewing dashboard as different roles or specific users
-  const ViewAsToggle = () => {
+  const ViewAsToggle = ({ asMenuItem = false }: { asMenuItem?: boolean }) => {
     if (!isAdmin) return null;
 
     // roleIcons and roleDescriptions now come from useRoleUtils
@@ -492,34 +492,50 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
     return (
       <DropdownMenu onOpenChange={(open) => { if (!open) setUserSearch(''); }}>
         <DropdownMenuTrigger asChild>
-          <Button 
-            variant={isViewingAs ? "default" : "outline"} 
-            size="sm" 
-            className={cn(
-              "gap-2",
-              isViewingAs && "bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
-            )}
-          >
-            {isViewingAs ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            <span className="hidden sm:inline">{getButtonText()}</span>
-            {isViewingAsUser && viewAsUser && (
-              <Avatar className="h-5 w-5 border border-white/50">
-                <AvatarImage src={viewAsUser.photo_url || undefined} />
-                <AvatarFallback className="text-[10px] bg-white/20 text-white">
-                  {viewAsUser.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                </AvatarFallback>
-              </Avatar>
-            )}
-            {viewAsRole && !isViewingAsUser && (
-              <Badge 
-                variant="secondary" 
-                className={cn("text-xs px-1.5 py-0 ml-1", getRoleBadgeClasses(viewAsRole))}
-              >
-                {ROLE_LABELS[viewAsRole]?.charAt(0)}
-              </Badge>
-            )}
-            <ChevronDown className="w-3.5 h-3.5 opacity-60" />
-          </Button>
+          {asMenuItem ? (
+            <Button 
+              variant="ghost" 
+              className={cn(
+                "w-full justify-start gap-2 h-auto px-2 py-1.5 rounded-sm font-normal text-sm",
+                isViewingAs && "text-amber-500"
+              )}
+            >
+              {isViewingAs ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              {getButtonText()}
+              {isViewingAs && (
+                <span className="ml-auto h-2 w-2 rounded-full bg-amber-500" />
+              )}
+            </Button>
+          ) : (
+            <Button 
+              variant={isViewingAs ? "default" : "outline"} 
+              size="sm" 
+              className={cn(
+                "gap-2",
+                isViewingAs && "bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
+              )}
+            >
+              {isViewingAs ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              <span className="hidden sm:inline">{getButtonText()}</span>
+              {isViewingAsUser && viewAsUser && (
+                <Avatar className="h-5 w-5 border border-white/50">
+                  <AvatarImage src={viewAsUser.photo_url || undefined} />
+                  <AvatarFallback className="text-[10px] bg-white/20 text-white">
+                    {viewAsUser.full_name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+              )}
+              {viewAsRole && !isViewingAsUser && (
+                <Badge 
+                  variant="secondary" 
+                  className={cn("text-xs px-1.5 py-0 ml-1", getRoleBadgeClasses(viewAsRole))}
+                >
+                  {ROLE_LABELS[viewAsRole]?.charAt(0)}
+                </Badge>
+              )}
+              <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+            </Button>
+          )}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-80 p-0 bg-card border border-border shadow-lg max-h-[70vh] overflow-hidden flex flex-col">
             {/* Sticky header */}
@@ -1081,18 +1097,12 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                     {getAccessLabel()}
                   </DropdownMenuLabel>
                   
-                  {/* View As - keep full component for its nested dropdown */}
-                  {isAdmin && (
-                    <div className="px-1 py-0.5">
-                      <ViewAsToggle />
-                    </div>
-                  )}
+                  {/* View As */}
+                  {isAdmin && <ViewAsToggle asMenuItem />}
                   
-                  {/* Phorest Sync - simplified menu item */}
+                  {/* Phorest Sync */}
                   {(actualRoles.includes('admin') || actualRoles.includes('super_admin') || actualRoles.includes('manager')) && (
-                    <div className="px-1 py-0.5">
-                      <PhorestSyncPopout />
-                    </div>
+                    <PhorestSyncPopout asMenuItem />
                   )}
                   
                   <DropdownMenuSeparator />
