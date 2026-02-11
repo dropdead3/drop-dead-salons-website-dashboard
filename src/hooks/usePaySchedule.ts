@@ -19,6 +19,8 @@ import { toast } from 'sonner';
 
 export type PayScheduleType = 'semi_monthly' | 'bi_weekly' | 'weekly' | 'monthly';
 
+export type PayrollProcessingMode = 'manual' | 'automatic';
+
 export interface PayScheduleSettings {
   id: string;
   organization_id: string;
@@ -30,6 +32,8 @@ export interface PayScheduleSettings {
   weekly_day_of_week: number;
   monthly_pay_day: number;
   days_until_check: number;
+  processing_mode: PayrollProcessingMode;
+  auto_run_days_before_check: number;
   created_at: string;
   updated_at: string;
 }
@@ -50,6 +54,8 @@ const DEFAULT_SETTINGS: Omit<PayScheduleSettings, 'id' | 'organization_id' | 'cr
   weekly_day_of_week: 5, // Friday
   monthly_pay_day: 1,
   days_until_check: 5,
+  processing_mode: 'manual',
+  auto_run_days_before_check: 2,
 };
 
 /**
