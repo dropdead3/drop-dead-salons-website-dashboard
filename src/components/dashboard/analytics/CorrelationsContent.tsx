@@ -13,6 +13,8 @@ import type { FilterContext } from '@/components/dashboard/AnalyticsFilterBadge'
 interface CorrelationsContentProps {
   locationId?: string;
   filterContext?: FilterContext;
+  dateRange?: string;
+  locationName?: string;
 }
 
 const INSIGHT_TEMPLATES = {
@@ -55,9 +57,13 @@ function getInsight(pair: CorrelationPair): string {
   return INSIGHT_TEMPLATES.weak(labelA, labelB);
 }
 
-export function CorrelationsContent({ locationId, filterContext }: CorrelationsContentProps) {
+export function CorrelationsContent({ locationId, filterContext, dateRange, locationName }: CorrelationsContentProps) {
   const [selectedPair, setSelectedPair] = useState<CorrelationPair | null>(null);
   const { data, isLoading, refetch } = useCorrelationAnalysis(locationId);
+
+  // Resolve dateRange/locationName from filterContext if not provided directly
+  const resolvedDateRange = dateRange || filterContext?.dateRange;
+  const resolvedLocationName = locationName;
 
   // Get top insights (strong correlations)
   const topInsights = data?.pairs
@@ -75,6 +81,8 @@ export function CorrelationsContent({ locationId, filterContext }: CorrelationsC
         elementKey="correlation_insights" 
         elementName="Correlation Insights" 
         category="Analytics Hub - Sales"
+        dateRange={resolvedDateRange}
+        locationName={resolvedLocationName}
       >
         <Card>
           <CardHeader>
@@ -157,6 +165,8 @@ export function CorrelationsContent({ locationId, filterContext }: CorrelationsC
         elementKey="correlation_matrix" 
         elementName="Correlation Matrix" 
         category="Analytics Hub - Sales"
+        dateRange={resolvedDateRange}
+        locationName={resolvedLocationName}
       >
         <CorrelationMatrix locationId={locationId} />
       </PinnableCard>
@@ -167,6 +177,8 @@ export function CorrelationsContent({ locationId, filterContext }: CorrelationsC
           elementKey="correlation_scatter" 
           elementName="Scatter Analysis" 
           category="Analytics Hub - Sales"
+          dateRange={resolvedDateRange}
+          locationName={resolvedLocationName}
         >
           <ScatterPlotCard 
             pair={selectedPair}

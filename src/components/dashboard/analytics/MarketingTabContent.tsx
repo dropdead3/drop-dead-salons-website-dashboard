@@ -12,6 +12,7 @@ import {
   CircleDollarSign
 } from 'lucide-react';
 import { useMarketingAnalytics } from '@/hooks/useMarketingAnalytics';
+import { useLocations } from '@/hooks/useLocations';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { CampaignPerformanceTable } from '@/components/dashboard/marketing/CampaignPerformanceTable';
 import { SourceBreakdownChart } from '@/components/dashboard/marketing/SourceBreakdownChart';
@@ -45,11 +46,16 @@ function mapToMarketingDateRange(dateRange: string): 'week' | 'month' | '3months
 
 export function MarketingTabContent({ filters }: MarketingTabContentProps) {
   const [showBudgetManager, setShowBudgetManager] = useState(false);
+  const { data: locations } = useLocations();
   
   const locationFilter = filters.locationId !== 'all' ? filters.locationId : undefined;
   const marketingDateRange = mapToMarketingDateRange(filters.dateRange);
   
   const { data: analytics, isLoading } = useMarketingAnalytics(marketingDateRange, locationFilter);
+
+  const selectedLocationName = locationFilter
+    ? locations?.find(l => l.id === locationFilter)?.name || 'Unknown'
+    : 'All Locations';
 
   // Check if there's any spend data to show ROI metrics
   const hasSpendData = analytics?.summary.totalSpend ? analytics.summary.totalSpend > 0 : false;
@@ -65,12 +71,12 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
       </div>
 
       {/* Website Analytics Widget */}
-      <PinnableCard elementKey="website_analytics" elementName="Website Analytics" category="Analytics Hub - Marketing">
+      <PinnableCard elementKey="website_analytics" elementName="Website Analytics" category="Analytics Hub - Marketing" dateRange={filters.dateRange} locationName={selectedLocationName}>
         <WebsiteAnalyticsWidget />
       </PinnableCard>
 
       {/* Summary KPI Cards - Row 1: Main Metrics */}
-      <PinnableCard elementKey="marketing_kpis" elementName="Marketing KPIs" category="Analytics Hub - Marketing">
+      <PinnableCard elementKey="marketing_kpis" elementName="Marketing KPIs" category="Analytics Hub - Marketing" dateRange={filters.dateRange} locationName={selectedLocationName}>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           <Card className="premium-card">
             <CardContent className="pt-6">
@@ -136,7 +142,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
 
       {/* Summary KPI Cards - Row 2: ROI Metrics (only show if spend data exists) */}
       {hasSpendData && (
-        <PinnableCard elementKey="marketing_roi_metrics" elementName="ROI Metrics" category="Analytics Hub - Marketing">
+        <PinnableCard elementKey="marketing_roi_metrics" elementName="ROI Metrics" category="Analytics Hub - Marketing" dateRange={filters.dateRange} locationName={selectedLocationName}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <Card className="premium-card">
               <CardContent className="pt-6">
@@ -202,7 +208,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
       )}
 
       {/* Campaign Performance Table */}
-      <PinnableCard elementKey="campaign_performance_table" elementName="Campaign Performance" category="Analytics Hub - Marketing">
+      <PinnableCard elementKey="campaign_performance_table" elementName="Campaign Performance" category="Analytics Hub - Marketing" dateRange={filters.dateRange} locationName={selectedLocationName}>
         <CampaignPerformanceTable 
           campaigns={analytics?.campaigns ?? []} 
           isLoading={isLoading} 
@@ -211,13 +217,13 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
 
       {/* Charts Row */}
       <div className="grid lg:grid-cols-2 gap-6">
-        <PinnableCard elementKey="source_breakdown_chart" elementName="Traffic Sources" category="Analytics Hub - Marketing">
+        <PinnableCard elementKey="source_breakdown_chart" elementName="Traffic Sources" category="Analytics Hub - Marketing" dateRange={filters.dateRange} locationName={selectedLocationName}>
           <SourceBreakdownChart 
             sources={analytics?.sources ?? []} 
             isLoading={isLoading} 
           />
         </PinnableCard>
-        <PinnableCard elementKey="medium_distribution_chart" elementName="Marketing Mediums" category="Analytics Hub - Marketing">
+        <PinnableCard elementKey="medium_distribution_chart" elementName="Marketing Mediums" category="Analytics Hub - Marketing" dateRange={filters.dateRange} locationName={selectedLocationName}>
           <MediumDistributionChart 
             mediums={analytics?.mediums ?? []} 
             isLoading={isLoading} 

@@ -79,6 +79,11 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
     dateRange: filters.dateRange,
   };
 
+  // Resolve location name for Zura AI context
+  const selectedLocationName = locationFilter
+    ? locations?.find(l => l.id === locationFilter)?.name || 'Unknown'
+    : 'All Locations';
+
   const { data: metrics, isLoading: metricsLoading } = useSalesMetrics({
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
@@ -226,6 +231,8 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             elementKey="sales_overview" 
             elementName="Sales Overview" 
             category="Analytics Hub - Sales"
+            dateRange={filters.dateRange}
+            locationName={selectedLocationName}
           >
             <AggregateSalesCard 
               externalDateRange={filters.dateRange as any}
@@ -242,7 +249,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
           </PinnableCard>
 
           {/* Revenue Trend */}
-          <PinnableCard elementKey="revenue_trend_chart" elementName="Revenue Trend" category="Analytics Hub - Sales">
+          <PinnableCard elementKey="revenue_trend_chart" elementName="Revenue Trend" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <Card>
               <CardHeader>
                 <CardTitle className="font-display">Revenue Trend</CardTitle>
@@ -309,7 +316,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
 
           {/* Location Comparison - only show when 2+ locations */}
           {(locationData?.length ?? 0) >= 2 && (
-            <PinnableCard elementKey="location_comparison" elementName="Location Comparison" category="Analytics Hub - Sales">
+            <PinnableCard elementKey="location_comparison" elementName="Location Comparison" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
               <LocationComparison 
                 locations={locationData || []} 
                 isLoading={locationLoading}
@@ -320,23 +327,23 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
 
           {/* Product and Service Charts */}
           <div className="grid lg:grid-cols-2 gap-6">
-            <PinnableCard elementKey="product_category_chart" elementName="Product Categories" category="Analytics Hub - Sales">
+            <PinnableCard elementKey="product_category_chart" elementName="Product Categories" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
               <ProductCategoryChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
             </PinnableCard>
-            <PinnableCard elementKey="service_popularity_chart" elementName="Service Popularity" category="Analytics Hub - Sales">
+            <PinnableCard elementKey="service_popularity_chart" elementName="Service Popularity" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
               <ServicePopularityChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
             </PinnableCard>
           </div>
         </TabsContent>
 
         <TabsContent value="goals" className="mt-6 space-y-6">
-          <PinnableCard elementKey="team_goals" elementName="Team Goals" category="Analytics Hub - Sales">
+          <PinnableCard elementKey="team_goals" elementName="Team Goals" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <TeamGoalsCard currentRevenue={metrics?.totalRevenue || 0} />
           </PinnableCard>
         </TabsContent>
 
         <TabsContent value="compare" className="mt-6">
-          <PinnableCard elementKey="comparison_builder" elementName="Comparison Builder" category="Analytics Hub - Sales">
+          <PinnableCard elementKey="comparison_builder" elementName="Comparison Builder" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <CompareTabContent 
               filters={filters}
               filterContext={filterContext}
@@ -346,7 +353,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
 
         <TabsContent value="staff" className="mt-6 space-y-6">
           {/* Stylist Leaderboard */}
-          <PinnableCard elementKey="staff_leaderboard" elementName="Staff Performance" category="Analytics Hub - Sales">
+          <PinnableCard elementKey="staff_leaderboard" elementName="Staff Performance" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <Card>
               <CardHeader>
                 <CardTitle className="font-display">Staff Performance</CardTitle>
@@ -374,27 +381,27 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
           </PinnableCard>
 
           <div className="grid lg:grid-cols-2 gap-6">
-            <PinnableCard elementKey="peak_hours_heatmap" elementName="Peak Hours Heatmap" category="Analytics Hub - Sales">
+            <PinnableCard elementKey="peak_hours_heatmap" elementName="Peak Hours Heatmap" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
               <PeakHoursHeatmap dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
             </PinnableCard>
-            <PinnableCard elementKey="client_funnel" elementName="Client Funnel" category="Analytics Hub - Sales">
+            <PinnableCard elementKey="client_funnel" elementName="Client Funnel" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
               <ClientFunnelCard dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
             </PinnableCard>
           </div>
         </TabsContent>
 
         <TabsContent value="forecasting" className="mt-6 space-y-6">
-          <PinnableCard elementKey="week_ahead_forecast" elementName="Forecasting" category="Analytics Hub - Sales">
+          <PinnableCard elementKey="week_ahead_forecast" elementName="Forecasting" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <ForecastingCard />
           </PinnableCard>
 
           {/* Growth Forecasting - Long-range trend-based projections */}
-          <PinnableCard elementKey="growth_forecast" elementName="Growth Forecast" category="Analytics Hub - Sales">
+          <PinnableCard elementKey="growth_forecast" elementName="Growth Forecast" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <GrowthForecastCard />
           </PinnableCard>
 
           <div className="grid lg:grid-cols-2 gap-6">
-            <PinnableCard elementKey="revenue_forecast" elementName="Revenue Forecast" category="Analytics Hub - Sales">
+            <PinnableCard elementKey="revenue_forecast" elementName="Revenue Forecast" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
               <RevenueForecast 
                 dailyData={chartData.map(d => ({ date: d.dateLabel, revenue: d.totalRevenue || 0 }))} 
                 monthlyTarget={goals?.monthlyTarget || 50000} 
@@ -402,7 +409,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
                 filterContext={filterContext}
               />
             </PinnableCard>
-            <PinnableCard elementKey="historical_comparison" elementName="Historical Comparison" category="Analytics Hub - Sales">
+            <PinnableCard elementKey="historical_comparison" elementName="Historical Comparison" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
               <HistoricalComparison 
                 currentDateFrom={filters.dateFrom} 
                 currentDateTo={filters.dateTo} 
@@ -415,13 +422,13 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
 
         <TabsContent value="commission" className="mt-6 space-y-6">
           <div className="grid lg:grid-cols-2 gap-6">
-            <PinnableCard elementKey="commission_calculator" elementName="Commission Calculator" category="Analytics Hub - Sales">
+            <PinnableCard elementKey="commission_calculator" elementName="Commission Calculator" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
               <CommissionCalculator 
                 serviceRevenue={metrics?.serviceRevenue || 0}
                 productRevenue={metrics?.productRevenue || 0}
               />
             </PinnableCard>
-            <PinnableCard elementKey="commission_tiers" elementName="Commission Tiers" category="Analytics Hub - Sales">
+            <PinnableCard elementKey="commission_tiers" elementName="Commission Tiers" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
               <CommissionTiersEditor />
             </PinnableCard>
           </div>

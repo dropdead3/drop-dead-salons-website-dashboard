@@ -4,6 +4,7 @@ import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { useOperationalAnalytics } from '@/hooks/useOperationalAnalytics';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useHistoricalCapacityUtilization } from '@/hooks/useHistoricalCapacityUtilization';
+import { useLocations } from '@/hooks/useLocations';
 
 
 // Existing content components
@@ -41,8 +42,13 @@ function mapDateRange(dateRange: string): 'tomorrow' | '7days' | '30days' | '90d
 }
 
 export function OperationsTabContent({ filters, subTab = 'overview', onSubTabChange }: OperationsTabContentProps) {
+  const { data: locations } = useLocations();
   const locationFilter = filters.locationId !== 'all' ? filters.locationId : undefined;
   const operationalDateRange = mapDateRange(filters.dateRange);
+
+  const selectedLocationName = locationFilter
+    ? locations?.find(l => l.id === locationFilter)?.name || 'Unknown'
+    : 'All Locations';
 
   const { 
     dailyVolume, 
@@ -112,6 +118,8 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
             capacityData={capacityData}
             capacityLoading={capacityLoading}
             dateRange={operationalDateRange}
+            analyticsDateRange={filters.dateRange}
+            locationName={selectedLocationName}
           />
         </TabsContent>
 
@@ -119,6 +127,8 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
           <ClientsContent 
             retention={retention}
             isLoading={isLoading}
+            dateRange={filters.dateRange}
+            locationName={selectedLocationName}
           />
         </TabsContent>
 
@@ -141,4 +151,3 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
     </div>
   );
 }
-
