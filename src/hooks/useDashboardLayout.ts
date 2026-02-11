@@ -48,8 +48,8 @@ export const PINNABLE_CARD_IDS = [
 ];
 
 const DEFAULT_LAYOUT: DashboardLayout = {
-  sections: ['ai_insights', 'hub_quicklinks', 'quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
-  sectionOrder: ['ai_insights', 'hub_quicklinks', 'quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sections: ['ai_insights', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
+  sectionOrder: ['ai_insights', 'hub_quicklinks', 'payroll_deadline', 'payday_countdown', 'quick_actions', 'todays_queue', 'quick_stats', 'schedule_tasks', 'announcements', 'client_engine', 'widgets'],
   pinnedCards: [],
   widgets: ['changelog', 'birthdays', 'anniversaries', 'schedule'],
   hasCompletedSetup: false,
@@ -98,6 +98,21 @@ function migrateLayout(layout: DashboardLayout, pinnedCards: string[]): Dashboar
       ...migrated,
       sections: ['ai_insights', ...(migrated.sections || [])],
       sectionOrder: ['ai_insights', ...(migrated.sectionOrder || [])],
+    };
+  }
+  
+  // Ensure payroll sections are added for existing layouts
+  if (!migrated.sections?.includes('payroll_deadline')) {
+    const insertAfter = migrated.sectionOrder?.indexOf('hub_quicklinks');
+    const idx = insertAfter !== undefined && insertAfter >= 0 ? insertAfter + 1 : 2;
+    const newSections = [...(migrated.sections || [])];
+    const newOrder = [...(migrated.sectionOrder || [])];
+    newSections.splice(idx, 0, 'payroll_deadline', 'payday_countdown');
+    newOrder.splice(idx, 0, 'payroll_deadline', 'payday_countdown');
+    migrated = {
+      ...migrated,
+      sections: newSections,
+      sectionOrder: newOrder,
     };
   }
   
