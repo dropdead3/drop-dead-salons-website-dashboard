@@ -479,25 +479,27 @@ function DashboardSections({
     
     schedule_tasks: (
       <div className="grid gap-6 lg:grid-cols-2">
-        <VisibilityGate elementKey="todays_schedule">
-          <Card className="relative overflow-hidden p-6 rounded-2xl shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
-              <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-oat" />
-                <h2 className="font-display text-xs tracking-[0.15em]">TODAY'S SCHEDULE</h2>
+        {hasStylistRole && (
+          <VisibilityGate elementKey="todays_schedule">
+            <Card className="relative overflow-hidden p-6 rounded-2xl shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
+              <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-oat" />
+                  <h2 className="font-display text-xs tracking-[0.15em]">TODAY'S SCHEDULE</h2>
+                </div>
+                <Clock className="w-4 h-4 text-muted-foreground" />
               </div>
-              <Clock className="w-4 h-4 text-muted-foreground" />
-            </div>
-            <div className="space-y-3">
-              <div className="text-center py-14 text-muted-foreground">
-                <Calendar className="w-7 h-7 mx-auto mb-3 opacity-20" />
-                <p className="text-sm font-display">No appointments today</p>
-                <p className="text-xs mt-1 text-muted-foreground/60">Enjoy your day off!</p>
+              <div className="space-y-3">
+                <div className="text-center py-14 text-muted-foreground">
+                  <Calendar className="w-7 h-7 mx-auto mb-3 opacity-20" />
+                  <p className="text-sm font-display">No appointments today</p>
+                  <p className="text-xs mt-1 text-muted-foreground/60">Enjoy your day off!</p>
+                </div>
               </div>
-            </div>
-          </Card>
-        </VisibilityGate>
+            </Card>
+          </VisibilityGate>
+        )}
 
         <VisibilityGate elementKey="my_tasks">
           <Card className="relative overflow-hidden p-6 rounded-2xl shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
