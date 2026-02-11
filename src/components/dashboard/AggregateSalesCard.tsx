@@ -450,7 +450,7 @@ export function AggregateSalesCard({
               />
               <div className="flex items-center gap-1 justify-center mt-2">
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <MetricInfoTooltip description="Sum of all service and product sales for the selected date range, synced from Phorest daily summaries." />
+                <MetricInfoTooltip description="Sum of all service and product sales. Tips are excluded." />
               </div>
               {(dateRange === 'today' || dateRange === 'todayToEom') && (
                 <div className="flex items-center justify-center gap-1.5 mt-2">
@@ -526,6 +526,7 @@ export function AggregateSalesCard({
                 <div className="flex items-center justify-center gap-1.5 mb-2">
                   <Scissors className="w-3.5 h-3.5 text-primary" />
                   <span className="text-xs text-muted-foreground">Services</span>
+                  <MetricInfoTooltip description="Revenue from booked services. Tips are tracked separately." />
                 </div>
                 <AnimatedBlurredAmount 
                   value={displayMetrics.serviceRevenue}
@@ -561,7 +562,7 @@ export function AggregateSalesCard({
             const dailyAverage = workingDays > 0 ? displayMetrics.totalRevenue / workingDays : 0;
 
             return (
-              <div className={`grid ${showDailyAvg ? 'grid-cols-4' : 'grid-cols-3'} gap-6 mt-6`}>
+              <div className={`grid ${showDailyAvg ? 'grid-cols-5' : 'grid-cols-4'} gap-6 mt-6`}>
                 {/* Transactions */}
                 <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
                   <div className="flex justify-center mb-2">
@@ -589,7 +590,7 @@ export function AggregateSalesCard({
                   />
                   <div className="flex items-center gap-1 justify-center mt-1">
                     <p className="text-xs text-muted-foreground">Avg Ticket</p>
-                    <MetricInfoTooltip description="Total Revenue ÷ Transactions." />
+                    <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Transactions." />
                   </div>
                 </div>
                 
@@ -605,7 +606,7 @@ export function AggregateSalesCard({
                   />
                   <div className="flex items-center gap-1 justify-center mt-1">
                     <p className="text-xs text-muted-foreground">Rev/Hour</p>
-                    <MetricInfoTooltip description="Total Revenue ÷ Service Hours." />
+                    <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Service Hours." />
                   </div>
                 </div>
 
@@ -626,6 +627,22 @@ export function AggregateSalesCard({
                     </div>
                   </div>
                 )}
+
+                {/* Tips */}
+                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
+                  <div className="flex justify-center mb-2">
+                    <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                  </div>
+                  <AnimatedBlurredAmount 
+                    value={metrics?.totalTips ?? 0}
+                    prefix="$"
+                    className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
+                  />
+                  <div className="flex items-center gap-1 justify-center mt-1">
+                    <p className="text-xs text-muted-foreground">Tips</p>
+                    <MetricInfoTooltip description="Total tips collected from completed appointments." />
+                  </div>
+                </div>
               </div>
             );
           })()}
