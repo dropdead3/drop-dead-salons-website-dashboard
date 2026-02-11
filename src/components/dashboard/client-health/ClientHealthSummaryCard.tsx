@@ -1,0 +1,76 @@
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { HeartPulse, ChevronRight, CalendarX, AlertTriangle, UserX, TrendingDown } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useClientHealthSegments } from '@/hooks/useClientHealthSegments';
+import { Skeleton } from '@/components/ui/skeleton';
+
+export function ClientHealthSummaryCard() {
+  const { data: segments, isLoading } = useClientHealthSegments();
+
+  if (isLoading) {
+    return (
+      <Card className="border-border/50">
+        <CardContent className="p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <Skeleton className="h-10 w-10 rounded-xl" />
+            <Skeleton className="h-5 w-40 rounded-md" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-12 rounded-lg" />)}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const metrics = [
+    { key: 'needs-rebooking' as const, label: 'Need Rebooking', icon: CalendarX, color: 'text-amber-600 dark:text-amber-400' },
+    { key: 'at-risk' as const, label: 'At-Risk', icon: AlertTriangle, color: 'text-orange-600 dark:text-orange-400' },
+    { key: 'win-back' as const, label: 'Win-Back', icon: UserX, color: 'text-red-600 dark:text-red-400' },
+    { key: 'high-value-quiet' as const, label: 'High-Value Quiet', icon: TrendingDown, color: 'text-purple-600 dark:text-purple-400' },
+  ];
+
+  return (
+    <Card className="border-border/50 hover:shadow-md transition-shadow">
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-rose-500/10">
+              <HeartPulse className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+            </div>
+            <div>
+              <h3 className="font-medium text-sm">Client Health Pulse</h3>
+              <p className="text-xs text-muted-foreground">Clients needing attention</p>
+            </div>
+          </div>
+          <Button variant="ghost" size="sm" asChild className="gap-1 text-xs">
+            <Link to="/dashboard/admin/client-health">
+              View Hub <ChevronRight className="h-3 w-3" />
+            </Link>
+          </Button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          {metrics.map(m => {
+            const count = segments?.[m.key]?.length || 0;
+            return (
+              <Link
+                key={m.key}
+                to={`/dashboard/admin/client-health?segment=${m.key}`}
+                className="flex items-center gap-2 p-2.5 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors"
+              >
+                <m.icon className={`h-4 w-4 ${m.color}`} />
+                <div className="min-w-0">
+                  <p className="text-lg font-semibold leading-none">{count}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{m.label}</p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

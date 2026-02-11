@@ -143,6 +143,7 @@ import ClientFeedbackPage from "./pages/ClientFeedback";
 import ClientPortalPage from "./pages/ClientPortal";
 import FeedbackHub from "./pages/dashboard/admin/FeedbackHub";
 import ReengagementHub from "./pages/dashboard/admin/ReengagementHub";
+import ClientHealthHub from "./pages/dashboard/admin/ClientHealthHub";
 
 // Renter Portal pages
 import RenterPortal from "./pages/dashboard/RenterPortal";
@@ -300,6 +301,7 @@ const App = () => (
                       <Route path="/dashboard/admin/booth-renters" element={<ProtectedRoute requiredPermission="manage_booth_renters"><BoothRenters /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/feedback" element={<ProtectedRoute requiredPermission="manage_settings"><FeedbackHub /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/reengagement" element={<ProtectedRoute requiredPermission="manage_settings"><ReengagementHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/client-health" element={<ProtectedRoute requiredPermission="view_team_overview"><ClientHealthHub /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/features" element={<ProtectedRoute requiredPermission="manage_settings"><FeaturesCenter /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/access-hub" element={<ProtectedRoute requiredPermission="manage_settings"><AccessHub /></ProtectedRoute>} />
                       
