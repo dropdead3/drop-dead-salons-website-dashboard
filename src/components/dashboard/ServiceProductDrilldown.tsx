@@ -111,7 +111,7 @@ export function ServiceProductDrilldown({
   return (
     <Dialog open={!!mode} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent
-        className="max-w-lg p-0 overflow-hidden gap-0"
+        className="max-w-lg p-0 overflow-hidden gap-0 max-h-[85vh] flex flex-col"
         overlayClassName="backdrop-blur-sm bg-black/60"
       >
         {/* Header */}
@@ -168,7 +168,7 @@ export function ServiceProductDrilldown({
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
+        <div className="p-6 flex-1 min-h-0 overflow-y-auto">
           {!isServices ? (
             <div className="py-14 text-center">
               <ShoppingBag className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
