@@ -57,19 +57,19 @@ export function useChatMessages(channelId: string | null, channelType?: string, 
 
       if (error) throw error;
 
-      // Get reactions for these messages
+      // Get reactions and reply counts in parallel
       const messageIds = data?.map((m) => m.id) || [];
-      const { data: reactions } = await supabase
-        .from('chat_message_reactions')
-        .select('message_id, emoji, user_id')
-        .in('message_id', messageIds);
-
-      // Get reply counts
-      const { data: replyCounts } = await supabase
-        .from('chat_messages')
-        .select('parent_message_id')
-        .in('parent_message_id', messageIds)
-        .eq('is_deleted', false);
+      const [{ data: reactions }, { data: replyCounts }] = await Promise.all([
+        supabase
+          .from('chat_message_reactions')
+          .select('message_id, emoji, user_id')
+          .in('message_id', messageIds),
+        supabase
+          .from('chat_messages')
+          .select('parent_message_id')
+          .in('parent_message_id', messageIds)
+          .eq('is_deleted', false),
+      ]);
 
       // Map reactions and replies to messages
       return data?.map((msg) => {
@@ -102,6 +102,7 @@ export function useChatMessages(channelId: string | null, channelType?: string, 
       }) as MessageWithSender[];
     },
     enabled: !!channelId,
+    staleTime: 10_000,
   });
 
   // Set up realtime subscription

@@ -150,6 +150,7 @@ export function useChatChannels() {
       });
     },
     enabled: !!user?.id && !!effectiveOrganization?.id,
+    staleTime: 30_000,
   });
 
   const createChannelMutation = useMutation({
