@@ -1,76 +1,35 @@
 
 
-# Services & Products Drill-Down with Retail-to-Service Ratio
+# Fix Services Drill-Down: Query Appointments Instead of Empty Transaction Items
 
-## What You'll Get
+## Problem
 
-Clicking the **Services** tile opens a dialog showing each stylist's service revenue, number of services performed, and their retail-to-service ratio. Clicking the **Products** tile opens a similar dialog showing each stylist's product sales, items sold, and the same retail-to-service ratio. Both follow the same premium dialog pattern already used for the New Bookings drill-down.
+The `useServiceProductDrilldown` hook queries `phorest_transaction_items`, which has **0 rows**. Your actual service data lives in `phorest_appointments` (321 records with service names, staff IDs, and prices from the Phorest scheduling API).
 
-## UX Layout
+## Fix
 
-```text
-+-----------------------------------------------+
-|  [X]                                           |
-|  SERVICES BY STYLIST           Yesterday       |
-|                                                |
-|  +-------------------------------------------+ |
-|  |  [Avatar] Sarah M.                        | |
-|  |  $620 service revenue · 8 services        | |
-|  |  Retail : Service  12%                     | |
-|  |  ================================ (bar)    | |
-|  +-------------------------------------------+ |
-|                                                |
-|  +-------------------------------------------+ |
-|  |  [Avatar] Jamie L.                        | |
-|  |  $380 service revenue · 5 services        | |
-|  |  Retail : Service  8%                      | |
-|  |  ====================  (bar)              | |
-|  +-------------------------------------------+ |
-+-----------------------------------------------+
-```
+### Rewrite `useServiceProductDrilldown.ts`
 
-The Products variant swaps to show product revenue, quantity sold, and the same ratio (so the user can see which stylists are strong at retail regardless of which tile they click).
+Change the data source from `phorest_transaction_items` to `phorest_appointments`:
 
-## Technical Approach
+- Query `phorest_appointments` filtered by date range, location, and excluding cancelled/no-show statuses
+- Group by `phorest_staff_id` to compute: service revenue (`SUM(total_price)`), service count, and each stylist's share of total
+- Resolve staff names via the existing `phorest_staff_mapping` + `employee_profiles` join
+- For the **products** mode: since product sales aren't tracked in appointments (only in the empty transaction items table), the products drill-down will display a clear message: "Product sales data requires transaction sync" until that pipeline is operational
+- The retail-to-service ratio will be omitted for now (requires product data), replaced with a simpler "share of total services" metric
 
-### 1. New hook: `useServiceProductDrilldown`
+### Update `ServiceProductDrilldown.tsx`
 
-A focused hook that queries `phorest_transaction_items` for the selected date range, grouped by `phorest_staff_id` and `item_type`. Returns:
+- Adjust the UI to handle the case where product data is unavailable
+- When in services mode: show service revenue, service count, and share of total per stylist (all data available from appointments)
+- When in products mode: show an informative empty state explaining product tracking requires the transaction data sync
 
-- **By stylist**: service revenue, service count, product revenue, product count, and computed retail-to-service ratio (product revenue / service revenue as a percentage)
-- Resolves staff names/photos via the existing `phorest_staff_mapping` + `employee_profiles` join pattern
+### No changes to `AggregateSalesCard.tsx`
 
-This uses `phorest_transaction_items` (not appointments) because it has both service and product line items with staff attribution -- giving accurate retail tracking.
+The click handlers and state management are already correct -- only the data source needs to change.
 
-### 2. New component: `ServiceProductDrilldown.tsx`
+## Why This Is the Right Approach
 
-- Reuses the exact same dialog pattern as `NewBookingsDrilldown` (backdrop-blur, max-w-lg, scrollable 70vh content, branded footer)
-- Two modes: `'services'` and `'products'`
-- **Services mode**: Shows service revenue (large number), service count, and retail:service ratio per stylist
-- **Products mode**: Shows product revenue (large number), items sold, and retail:service ratio per stylist
-- Progress bar represents each stylist's share of total (services or products)
-- Sorted by revenue descending
+The Phorest scheduling API reliably provides service-level data through appointments. The CSV Export Job (which would populate `phorest_transaction_items` with both service and product line items) has not successfully loaded data. Rather than waiting for that pipeline, we use the data that is already available and working.
 
-### 3. Update `AggregateSalesCard.tsx`
-
-- Add `cursor-pointer` and hover states to the Services and Products tiles (lines 516-544)
-- Add state: `drilldownMode: 'services' | 'products' | null`
-- Render the `ServiceProductDrilldown` dialog conditionally
-- Pass the date filters through to the new hook
-
-### 4. Retail-to-Service Ratio Display
-
-Each stylist row shows a subtle "Retail : Service" label with their ratio as a percentage. Color-coded:
-- 15%+ = emerald (strong retail performer)
-- 8-15% = amber (average)
-- Below 8% = red/muted (opportunity for improvement)
-
-This gives owners instant visibility into who is cross-selling effectively.
-
-### Files Created/Modified
-
-| File | Action |
-|---|---|
-| `src/hooks/useServiceProductDrilldown.ts` | New hook |
-| `src/components/dashboard/ServiceProductDrilldown.tsx` | New component |
-| `src/components/dashboard/AggregateSalesCard.tsx` | Make tiles clickable |
+Once the transaction items sync is operational in the future, the hook can be extended to pull product data from that table to enable the full retail-to-service ratio and product drill-down.
