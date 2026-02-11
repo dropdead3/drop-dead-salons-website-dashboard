@@ -446,9 +446,19 @@ When analyzing a card, you MUST:
 1. Explain what this metric means in 1-2 sentences
 2. Assess current performance (strong / average / needs attention)
 3. Compare to typical salon industry benchmarks when applicable
-4. Provide 1-2 specific, actionable next steps
+4. Provide actionable recommendations in your markdown analysis
 
-Keep responses concise: 150-250 words max. Use markdown formatting (bold for emphasis, bullet points for recommendations).
+Keep the markdown analysis concise: 150-250 words max. Use markdown formatting (bold for emphasis, bullet points for recommendations).
+
+IMPORTANT: After your markdown analysis, you MUST output a fenced JSON block with structured action items. This block must start with \`\`\`json:actions and end with \`\`\`. Each action item needs a title (short, verb-led), priority (high/medium/low), dueInDays (number), and details (explicit step-by-step instructions with numbered steps). Include 2-4 action items.
+
+Example format:
+\`\`\`json:actions
+[
+  { "title": "Review retail attachment rates", "priority": "high", "dueInDays": 3, "details": "1. Navigate to [Sales Analytics](/dashboard/admin/analytics?tab=sales)\\n2. Filter by last 30 days\\n3. Compare retail vs service revenue ratio\\n4. Identify top 3 stylists with lowest attachment rates\\n5. Schedule brief training on product recommendations" },
+  { "title": "Audit no-show patterns", "priority": "medium", "dueInDays": 7, "details": "1. Go to [Client Directory](/dashboard/clients)\\n2. Sort by no-show count\\n3. Identify repeat offenders\\n4. Enable deposit requirements for those clients" }
+]
+\`\`\`
 
 CRITICAL: If you include any internal links, you MUST only use routes from this reference. Never invent routes.
 ${ROUTE_MAP}
@@ -512,9 +522,25 @@ Provide a brief, insightful analysis.`;
     }
 
     const data = await response.json();
-    const insight = data.choices?.[0]?.message?.content || "Unable to generate analysis.";
+    const rawContent = data.choices?.[0]?.message?.content || "Unable to generate analysis.";
 
-    return new Response(JSON.stringify({ insight }), {
+    // Parse structured action items from the response
+    let insightText = rawContent;
+    let actionItems: Array<{ title: string; priority: string; dueInDays: number; details: string }> = [];
+
+    const jsonMatch = rawContent.match(/```json:actions\s*\n([\s\S]*?)\n```/);
+    if (jsonMatch) {
+      try {
+        actionItems = JSON.parse(jsonMatch[1]);
+        // Remove the JSON block from the insight text
+        insightText = rawContent.replace(/```json:actions\s*\n[\s\S]*?\n```/, '').trim();
+      } catch (parseErr) {
+        console.error("Failed to parse action items JSON:", parseErr);
+        // Fall back to empty array, insight still displays
+      }
+    }
+
+    return new Response(JSON.stringify({ insight: insightText, actionItems }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
