@@ -191,7 +191,7 @@ export default function DashboardHome() {
   return (
     <DashboardLayout>
       <motion.div 
-        className="p-6 lg:p-8 space-y-10 overflow-x-hidden"
+        className="p-6 lg:p-8 space-y-6 overflow-x-hidden"
         initial="hidden"
         animate="visible"
         variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.05 } } }}
@@ -335,7 +335,7 @@ function DashboardSections({
   // Build section components map (excludes pinned cards - those are rendered separately)
   const sectionComponents = useMemo(() => ({
     ai_insights: (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 -mt-2">
         <div className="flex flex-wrap items-center gap-2">
           {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
           <AnnouncementsDrawer isLeadership={isLeadership} />
@@ -659,14 +659,20 @@ function DashboardSections({
           return (
             <React.Fragment key={sectionId}>
               {showFilterBar && (
-                <AnalyticsFilterBar
-                  locationId={analyticsFilters.locationId}
-                  onLocationChange={onLocationChange}
-                  dateRange={analyticsFilters.dateRange}
-                  onDateRangeChange={onDateRangeChange}
-                  accessibleLocations={accessibleLocations}
-                  canViewAggregate={canViewAggregate}
-                />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-oat" />
+                    <h2 className="font-display text-xs tracking-[0.15em] text-muted-foreground">ANALYTICS</h2>
+                  </div>
+                  <AnalyticsFilterBar
+                    locationId={analyticsFilters.locationId}
+                    onLocationChange={onLocationChange}
+                    dateRange={analyticsFilters.dateRange}
+                    onDateRangeChange={onDateRangeChange}
+                    accessibleLocations={accessibleLocations}
+                    canViewAggregate={canViewAggregate}
+                  />
+                </div>
               )}
               <PinnedAnalyticsCard cardId={cardId} filters={analyticsFilters} />
             </React.Fragment>
