@@ -693,8 +693,6 @@ export function ForecastingCard() {
                       return (
                         <g style={{ pointerEvents: hideNumbers ? 'auto' : 'none', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
                           {hideNumbers && <title>Click to reveal</title>}
-                          {/* Halo line for visibility over bars */}
-                          <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgba(0,0,0,0.5)" strokeWidth={3} />
                           <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgb(202 138 4)" strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
                           <foreignObject x={chartLeft} y={yPos - 12} width={200} height={24} style={{ overflow: 'visible' }}>
                             <div style={{
@@ -734,8 +732,6 @@ export function ForecastingCard() {
                       return (
                         <g style={{ pointerEvents: hideNumbers ? 'auto' : 'none', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
                           {hideNumbers && <title>Click to reveal</title>}
-                          {/* Halo line for visibility over bars */}
-                          <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgba(0,0,0,0.5)" strokeWidth={3} />
                           <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgb(202 138 4)" strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
                           <foreignObject x={chartLeft} y={yPos - 11} width={200} height={22} style={{ overflow: 'visible' }}>
                             <div style={{
