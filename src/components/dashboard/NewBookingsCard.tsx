@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CalendarPlus, UserPlus, RefreshCw, TrendingUp, TrendingDown, Minus, MapPin } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { CalendarPlus, UserPlus, RefreshCw, TrendingUp, TrendingDown, Minus, MapPin, CalendarCheck } from 'lucide-react';
 import { useNewBookings } from '@/hooks/useNewBookings';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
@@ -93,6 +94,42 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
           </div>
         </div>
       </div>
+
+      {/* After-Service Rebook Rate */}
+      {!isLoading && data?.rebookRate !== undefined && (
+        <div className="mb-4 p-4 bg-muted/30 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <CalendarCheck className={`w-5 h-5 ${
+              data.rebookRate !== null && data.rebookRate >= 70 ? 'text-emerald-600' 
+              : data.rebookRate !== null && data.rebookRate >= 40 ? 'text-amber-500' 
+              : 'text-red-500'
+            }`} />
+            <span className="text-sm font-medium">After-Service Rebook</span>
+            <MetricInfoTooltip description="Percentage of returning clients serviced today who rebooked their next appointment before leaving." />
+          </div>
+          {data.rebookRate !== null ? (
+            <>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-muted-foreground">
+                  {data.rebookedAtCheckoutToday} of {data.returningServicedToday} rebooked
+                </span>
+                <span className="font-display tabular-nums text-lg">{data.rebookRate}%</span>
+              </div>
+              <Progress 
+                value={data.rebookRate} 
+                className="h-2" 
+                indicatorClassName={
+                  data.rebookRate >= 70 ? 'bg-emerald-500' 
+                  : data.rebookRate >= 40 ? 'bg-amber-500' 
+                  : 'bg-red-500'
+                }
+              />
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">No returning clients serviced yet today</p>
+          )}
+        </div>
+      )}
 
       {/* Location Breakdown - only shown for "All Locations" and when >1 location has data */}
       {showLocationBreakdown && data?.locationBreakdown && data.locationBreakdown.length > 1 && (
