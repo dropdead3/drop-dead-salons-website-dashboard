@@ -1,18 +1,20 @@
 
 
-# Enhance Dark Mode Border Brightness
+# Increase Dark Mode Border Brightness
 
-## What Changes
-A small increase in the `--border` and `--sidebar-border` lightness values across all four dark theme variants in `src/index.css`, making card strokes slightly more visible for better definition.
+## Change
 
-## File: `src/index.css`
+Bump `--border` and `--sidebar-border` lightness by another 4% across all dark theme variants in `src/index.css`.
 
-| Dark Theme | Current `--border` | New `--border` | Current `--sidebar-border` | New `--sidebar-border` |
-|---|---|---|---|---|
-| `.dark.theme-cream` | `0 0% 18%` | `0 0% 22%` | `0 0% 18%` | `0 0% 22%` |
-| `.dark.theme-rose` | `350 10% 20%` | `350 10% 24%` | `350 10% 20%` | `350 10% 24%` |
-| `.dark.theme-sage` | `145 8% 20%` | `145 8% 24%` | `145 8% 20%` | `145 8% 24%` |
-| `.dark.theme-ocean` | `210 10% 20%` | `210 10% 24%` | `210 10% 20%` | `210 10% 24%` |
+| Dark Theme | Current | New |
+|---|---|---|
+| Cream | 22% | 26% |
+| Rose | 24% | 28% |
+| Sage | 24% | 28% |
+| Ocean | 24% | 28% |
 
-This is a ~4% lightness bump -- enough to add visible structure without creating the harsh white-stroke issue from before.
+This will make the Services/Products sub-cards and other internal card boundaries clearly visible while still keeping borders subtle and premium.
+
+## File
+`src/index.css` -- update 8 CSS variable values (4 `--border` + 4 `--sidebar-border`).
 
