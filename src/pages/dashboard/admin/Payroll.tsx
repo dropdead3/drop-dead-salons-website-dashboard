@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
@@ -91,8 +92,9 @@ export default function Payroll() {
             </Alert>
           )}
 
+          <EnforcementGateBanner gateKey="gate_commission_model" advisory>
           {showWizard ? (
-            <RunPayrollWizard 
+            <RunPayrollWizard
               onComplete={() => setShowWizard(false)} 
               onCancel={() => setShowWizard(false)} 
             />
@@ -221,6 +223,7 @@ export default function Payroll() {
               </TabsContent>
             </Tabs>
           )}
+          </EnforcementGateBanner>
         </div>
       </PlatformPageContainer>
     </DashboardLayout>
