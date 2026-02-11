@@ -1,46 +1,50 @@
 
 
-## Add Visual Pin State to Command Center Toggle Icon
+## Move Hover Controls Outside the Card Boundary
 
 ### Problem
-The pin icon on card hover always looks the same regardless of whether the card is pinned to the Command Center or not. There's no at-a-glance indication of pin state.
+The Zura (Z) and pin icons are absolutely positioned **inside** the card. Whether top-right or bottom-right, they cover card data (revenue figures, location rows, etc.). This is a fundamental layout issue — no internal position is safe.
 
 ### Solution
-Use the existing `isVisibleToLeadership` state (already computed in the component) to change the pin icon's appearance:
+Position the hover controls as a floating pill that appears **just below the card's bottom edge**, outside the card content area entirely. On hover, the pill slides up into view from beneath the card.
 
-- **Pinned**: Filled/rotated pin with primary color -- immediately signals "this is active"
-- **Not pinned**: Default outline pin in muted color -- signals "not pinned"
-
-### Changes
-
-**File:** `src/components/dashboard/CommandCenterVisibilityToggle.tsx`
-
-Update the `Pin` icon on the trigger button (lines 60-67) to reflect pinned state:
-
-```tsx
-<Button 
-  variant="ghost" 
-  size="icon" 
-  className={cn(
-    "h-8 w-8",
-    isVisibleToLeadership 
-      ? "text-primary" 
-      : "text-muted-foreground hover:text-foreground"
-  )}
->
-  <Pin className={cn(
-    "h-4 w-4 transition-transform",
-    isVisibleToLeadership && "fill-current rotate-[-45deg]"
-  )} />
-</Button>
+```text
++------------------------------------------+
+| Card content...                          |
+| $875            $1,146                   |
++------------------------------------------+
+              [Z] [pin]   <-- appears below card on hover
 ```
 
-Key visual cues:
-- **Pinned**: Pin icon is filled (`fill-current`), rotated 45 degrees (like a "stuck" pin), and colored with the primary brand color
-- **Not pinned**: Standard outline pin in muted gray
+### Technical Approach
 
-This requires adding a `cn` import (likely already available) and no logic changes -- just styling the existing computed state.
+**File: `src/components/dashboard/PinnableCard.tsx`**
+
+1. Add `overflow-visible` to the wrapper so child elements can render outside the card bounds
+2. Position the controls with `bottom-0 translate-y-full` -- this places the pill flush below the card
+3. Add a small `pb-1` bottom margin so the pill doesn't visually collide with cards stacked below
+4. Keep the existing hover opacity transition for smooth appearance
+
+Updated positioning classes:
+```
+- absolute bottom-3 right-3 ...
++ absolute -bottom-1 right-3 translate-y-full ...
+```
+
+The wrapper gets:
+```
+- relative group
++ relative group overflow-visible mb-2
+```
+
+The `mb-2` adds a small gap between cards to give the floating pill space to appear without overlapping the next card below.
+
+### Why This Works
+- Zero overlap with card content -- controls exist outside the card boundary
+- The pill only appears on hover, so it doesn't permanently consume vertical space
+- Works universally for all card sizes and content layouts
+- Keeps the existing luxury backdrop-blur pill aesthetic
+- The small added margin between cards is barely noticeable in normal state
 
 ### Files Modified
-1. `src/components/dashboard/CommandCenterVisibilityToggle.tsx` -- conditional icon styling based on pin state
-
+1. `src/components/dashboard/PinnableCard.tsx` -- reposition overlay outside card boundary
