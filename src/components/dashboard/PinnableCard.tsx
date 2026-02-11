@@ -45,9 +45,8 @@ export function PinnableCard({
   
   return (
     <div className={cn("relative group", className)}>
-      {children}
       <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
-        <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
+        <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-b border-border/30">
           <ZuraCardInsight 
             cardName={elementName}
             metricData={metricData}
@@ -60,6 +59,7 @@ export function PinnableCard({
           />
         </div>
       </div>
+      {children}
     </div>
   );
 }
