@@ -128,6 +128,7 @@ import RenterOnboardWizard from "./pages/dashboard/admin/RenterOnboardWizard";
 import RewardShop from "./pages/dashboard/RewardShop";
 import PointsConfig from "./pages/dashboard/admin/PointsConfig";
 import DailyHuddle from "./pages/dashboard/admin/DailyHuddle";
+import ZuraConfigPage from "./pages/dashboard/admin/ZuraConfigPage";
 
 // Team Chat
 import TeamChat from "./pages/dashboard/TeamChat";
@@ -280,6 +281,7 @@ const App = () => (
                       <Route path="/dashboard/admin/leads" element={<ProtectedRoute requiredPermission="view_team_overview"><LeadManagement /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/feature-flags" element={<Navigate to="/dashboard/platform/feature-flags" replace />} />
                       <Route path="/dashboard/admin/changelog" element={<ProtectedRoute requiredPermission="manage_announcements"><ChangelogManager /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/zura-config" element={<ProtectedRoute requiredPermission="manage_settings"><ZuraConfigPage /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/import" element={<ProtectedRoute requiredPermission="manage_settings"><DataImport /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/payroll" element={<ProtectedRoute requiredPermission="manage_payroll"><Payroll /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/payroll/callback" element={<ProtectedRoute requiredPermission="manage_payroll"><PayrollCallback /></ProtectedRoute>} />
