@@ -1,52 +1,96 @@
 
 
-# Smart Pace Tracker: Open Days Only
+# Payroll Deadline Card: Smart Timing + Missed-Deadline Notifications
 
 ## What Changes
 
-The pace tracker's "$/day needed to hit goal" will calculate using only **open business days** remaining in the period, instead of all calendar days. This means the daily target is realistic and actionable.
+### 1. Smart Visibility for the Payroll Deadline Card
 
-Example: If there are 4 calendar days left in the week but the salon is closed Sunday and Monday, the pace tracker divides by 2 open days instead of 4 -- giving you the real number you need to hit each working day.
+The card currently shows at all times. It will now follow a **timeliness rule**:
 
----
+- **Hidden** when the deadline is more than 5 days away (no noise)
+- **Visible (calm)** when 2-5 days remain before deadline
+- **Visible (urgent/amber)** when within 48 hours of deadline
+- **Visible (critical/red)** when past deadline AND payroll has not been submitted for the current period
+- **Hidden again** once payroll has been submitted for the current period
 
-## How It Works
+The component will query `payroll_runs` to check if a run exists for the current pay period. If a matching run with status `submitted`, `processed`, or `completed` exists, the card disappears -- payroll is handled.
 
-The system already stores each location's operating schedule (`hours_json`) and holiday closures (`holiday_closures`). The pace tracker will now use this data to count only open days.
+### 2. New Edge Function: `check-payroll-deadline`
+
+A scheduled function (cron) that runs once daily (e.g., 9 AM). It checks:
+
+- Is today the period end date (deadline day)? If yes, and no payroll run exists for this period, send a **deadline-day warning** via email and push notification to all users with `manage_payroll` permission.
+- Is today the day AFTER the deadline? If yes, and still no payroll run, send a **missed deadline alert** (escalation) via email, push, and SMS to the same users.
+
+This ensures the notification fires **at deadline** and **after deadline if payroll was not run**, exactly as requested.
+
+### 3. New SMS Template: `payroll_deadline_missed`
+
+Added to the `sms_templates` table:
+- **Key:** `payroll_deadline_missed`
+- **Message:** `URGENT: Payroll for {{period_range}} was due {{deadline_date}} and has not been submitted. Please run payroll immediately. {{action_url}}`
+- **Variables:** `period_range`, `deadline_date`, `action_url`
+
+### 4. New SMS Template: `payroll_deadline_today`
+
+Added to the `sms_templates` table:
+- **Key:** `payroll_deadline_today`
+- **Message:** `Reminder: Payroll for {{period_range}} is due today ({{deadline_date}}). Submit before end of day. {{action_url}}`
+- **Variables:** `period_range`, `deadline_date`, `action_url`
+
+### 5. New Email Templates (in-code, following existing pattern)
+
+Two HTML email templates built into the edge function (same pattern as `send-daily-reminders`):
+
+- **Deadline Day:** "Payroll submission due today" -- includes period dates, check date, and a CTA button to run payroll
+- **Missed Deadline:** "URGENT: Payroll deadline missed" -- stronger language, red styling, same CTA
+
+### 6. Notification Preference: `payroll_deadline_enabled`
+
+A new column on `notification_preferences` so users can opt out of payroll deadline notifications if desired (default: true for users with payroll permission).
+
+### 7. SMS Sender Utility
+
+There is no shared SMS sending utility yet. A minimal `_shared/sms-sender.ts` will be created that uses the existing `sms_templates` table to resolve templates and a placeholder SMS provider integration. Since no SMS provider (Twilio, etc.) is connected yet, the function will log the message and can be wired to a provider later. This keeps the architecture ready without requiring a new API key right now.
 
 ---
 
 ## Technical Details
 
-### 1. New Utility: `getOpenDaysRemaining`
-**File:** `src/components/dashboard/sales/SalesGoalProgress.tsx`
+### PayrollDeadlineCard.tsx Changes
 
-Replace the simple `getRemainingDays()` function with a smarter version that:
-- Accepts an optional `hoursJson` and `holidayClosures` from the location
-- Iterates through each remaining day in the period
-- Checks if that day is closed (via `hours_json` day-of-week flags) or a holiday (via `holiday_closures` date list)
-- Counts only open days
-- Falls back to calendar days if no location hours data is provided (e.g., "All Locations" filter)
+```
+// New hook: usePayrollRunForPeriod(periodStart, periodEnd)
+// Queries payroll_runs for a matching period with status in ('submitted','processed','completed')
+// Returns { hasRun: boolean, isLoading: boolean }
 
-### 2. Update `SalesGoalProgress` Props
-**File:** `src/components/dashboard/sales/SalesGoalProgress.tsx`
+// Visibility logic:
+const daysUntilDeadline = differenceInDays(periodEndDate, now);
+const hasSubmitted = payrollRun.hasRun;
 
-Add optional props:
-- `hoursJson` -- the selected location's operating hours
-- `holidayClosures` -- the selected location's holiday closure dates
+if (hasSubmitted) return null; // payroll done, hide
+if (daysUntilDeadline > 5) return null; // too early, hide
 
-These are already available wherever `SalesGoalProgress` is rendered because the location data is fetched by parent components.
+// Otherwise show with urgency styling based on daysUntilDeadline
+```
 
-### 3. Pass Location Data from Parent
-**Files:** Parent components that render `SalesGoalProgress` (e.g., Sales Overview card, Weekly Goal card)
+### Edge Function: `check-payroll-deadline/index.ts`
 
-- When a specific location is selected, pass that location's `hours_json` and `holiday_closures` to `SalesGoalProgress`
-- When "All Locations" is selected, omit these props (falls back to calendar days, since different locations have different schedules)
+- Queries all organizations with `organization_payroll_settings`
+- For each, calculates current period end date
+- Checks `payroll_runs` for a matching submitted run
+- If deadline is today or passed without a run:
+  - Finds users with `manage_payroll` permission (via `user_roles` + `effective_permissions`)
+  - Sends email via Resend (using `_shared/email-sender.ts`)
+  - Sends push notification (via `send-push-notification` invocation)
+  - Sends SMS using template (logs for now until SMS provider is connected)
 
-### 4. Updated Pace Display
+### Database Migration
 
-The displayed "$/day needed" message will also clarify the basis:
-- With location data: "$2,050/day needed (2 open days left)"
-- Without location data (all locations): "$1,025/day needed" (unchanged, calendar-based)
+1. Add `payroll_deadline_enabled` boolean column to `notification_preferences` (default `true`)
+2. Insert two new SMS templates (`payroll_deadline_today`, `payroll_deadline_missed`)
 
-This keeps the UX informative without adding clutter.
+### Cron Schedule
+
+A `pg_cron` job to invoke `check-payroll-deadline` daily at 9:00 AM UTC.
