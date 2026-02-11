@@ -46,12 +46,12 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 min-w-0">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
             <Scissors className="w-5 h-5 text-primary shrink-0" />
             <CardTitle className="font-display">Service Popularity</CardTitle>
           </div>
-          <div className="flex items-center gap-2 flex-wrap justify-end">
+          <div className="flex items-center gap-2 flex-wrap">
             {filterContext && (
               <AnalyticsFilterBadge 
                 locationId={filterContext.locationId} 
