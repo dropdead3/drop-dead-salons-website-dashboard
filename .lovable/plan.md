@@ -1,33 +1,63 @@
 
 
-# Fix: "Booked Today" Should Mean Appointments Created Today
+# Payroll Countdown and Payday Visibility
 
-## Problem
+## What This Does
 
-The "New Bookings" card says "Booked Today" but actually shows appointments *occurring* today, not appointments *created* (booked) today. At 3:27 AM, zero new bookings have been made today, yet the card shows 20 — because 20 appointments are *scheduled* for today (all booked days ago).
+Two additions that bring payroll timing front-and-center for the people who need it:
 
-Database confirms: all 20 appointments for today were created between Feb 4-10. None were created on Feb 11.
+1. **For payroll managers/bookkeepers (Command Center):** A "Payroll Submission Deadline" countdown card that shows exactly how many days/hours remain before payroll must be submitted for the current period. This uses the pay period end date from the configured pay schedule settings. It links directly to the Hiring & Payroll Hub so they can take action.
 
-## Fix
+2. **For staff on payroll (My Pay page + employee profiles):** A "Countdown to Payday" display showing days until their next paycheck, along with their estimated payout amount. This surfaces on the My Pay dashboard's Current Period card and can also appear as a compact banner on the Command Center for any employee who has payroll settings configured.
 
-Change `useNewBookings.ts` to filter by `created_at` (when the booking was made) instead of `appointment_date` (when the appointment occurs).
+---
 
-## Technical Details
+## Detailed Changes
 
-| File | Change |
-|---|---|
-| `src/hooks/useNewBookings.ts` | Replace `appointment_date` filtering with `created_at` filtering throughout the hook. Since `created_at` is a timestamp (not a date), we need to use timestamp bounds for date ranges (e.g., `gte('created_at', '2026-02-11T00:00:00')` and `lte('created_at', '2026-02-11T23:59:59')`). The `getDateBounds` function will return ISO timestamp strings instead of date strings. The new/returning client logic (checking for prior appointments) should still use `appointment_date` since that determines if a client has visited before. |
+### 1. New Component: `PayrollDeadlineCard`
+**File:** `src/components/dashboard/payroll/PayrollDeadlineCard.tsx`
 
-### Specific changes in `useNewBookings.ts`:
+A card for the Command Center visible only to users with `manage_payroll` permission. It will:
+- Use `usePaySchedule()` to get the current pay period end date
+- Display a `LiveCountdown` (in `days` mode) counting down to the period end date (the submission deadline)
+- Show the period range (e.g., "Feb 1 - Feb 15") and the check date
+- Include a "Run Payroll" link to `/dashboard/admin/payroll`
+- Use `VisibilityGate` with a new element key `payroll_deadline_countdown`
+- When no pay schedule is configured, show a prompt to configure it in settings
 
-1. **`getDateBounds()`** (lines 12-49): Return start-of-day and end-of-day timestamps instead of date strings. Use local timezone bounds to avoid the UTC shift issue (e.g., `new Date(year, month, day, 0, 0, 0).toISOString()`).
+### 2. New Component: `PaydayCountdownBanner`
+**File:** `src/components/dashboard/mypay/PaydayCountdownBanner.tsx`
 
-2. **Main range query** (lines 113-120): Change `.gte('appointment_date', startDate).lte('appointment_date', endDate)` to `.gte('created_at', startDate).lte('created_at', endDate)`. This makes "Booked Today" show appointments that were *created* today.
+A compact, calm banner for staff on payroll. It will:
+- Use `useMyPayData()` to get the next check date and estimated net pay
+- Display a `LiveCountdown` (in `days` mode) to the check date
+- Show the estimated payout as a blurred amount (`BlurredAmount`)
+- Render as a subtle card/banner, not attention-grabbing unless payday is within 3 days
 
-3. **30-day comparison queries** (lines 157-174): Same change — use `created_at` instead of `appointment_date` for the 30-day and previous 30-day counts, so the trend comparison is also based on booking creation date.
+### 3. Update: My Pay Page - `CurrentPeriodCard`
+**File:** `src/components/dashboard/mypay/CurrentPeriodCard.tsx`
 
-4. **Prior appointment check** (lines 133-138): Keep using `appointment_date` here — this determines if a client is "new" (no prior visits), which is correctly based on when appointments occur, not when they were booked.
+- Add a `LiveCountdown` to the check date at the top of the card showing "Payday in X days, Y hours"
+- The countdown uses `days` display mode for a calm, non-urgent feel
+- Pass the `checkDate` from `currentPeriod` to the countdown
 
-5. **Future appointment check for rebook rate** (lines 193-198): Keep using `appointment_date` here — rebook rate checks if a client has a future scheduled appointment, which should be based on when it occurs.
+### 4. Update: Command Center - `DashboardHome.tsx`
+**File:** `src/pages/dashboard/DashboardHome.tsx`
 
-This aligns the "Booked Today" metric with its natural meaning: how many appointments were booked (created) today.
+- Import `PayrollDeadlineCard` and `PaydayCountdownBanner`
+- Add `PayrollDeadlineCard` to the `sectionComponents` map, gated behind `manage_payroll` permission check (using `roles` array to check for leadership/bookkeeper)
+- Add `PaydayCountdownBanner` as a small section visible to any authenticated user who has payroll settings (the component self-hides if no settings exist)
+- Both integrate into the existing layout system as new section keys
+
+### 5. Register New Dashboard Elements
+The new element keys (`payroll_deadline_countdown`, `payday_countdown_banner`) will need visibility entries. These can be added via the existing `CommandCenterContent` patterns or auto-registered.
+
+---
+
+## Technical Notes
+
+- **No new database tables or migrations needed.** All data comes from existing `organization_payroll_settings` and `employee_payroll_settings` tables.
+- **`LiveCountdown` reuse:** The existing component supports `days` display mode which is perfect for multi-day countdowns (shows "5d 12h" format).
+- **Permission gating:** `PayrollDeadlineCard` checks for `manage_payroll` via role membership (same pattern as `HubQuickLinks`). `PaydayCountdownBanner` is self-gating -- it queries the user's own payroll settings and renders nothing if none exist.
+- **UX alignment with Zura principles:** The payday countdown is calm and informational. The payroll deadline countdown becomes urgent (red) only when the deadline is within 24 hours. Otherwise it is quiet and confident.
+
