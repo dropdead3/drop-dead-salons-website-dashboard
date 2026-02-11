@@ -564,7 +564,7 @@ export function AggregateSalesCard({
             return (
               <div className={`grid ${showDailyAvg ? 'grid-cols-5' : 'grid-cols-4'} gap-6 mt-6`}>
                 {/* Transactions */}
-                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
+                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/30">
                   <div className="flex justify-center mb-2">
                     <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   </div>
@@ -579,7 +579,7 @@ export function AggregateSalesCard({
                 </div>
                 
                 {/* Avg Ticket */}
-                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
+                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/30">
                   <div className="flex justify-center mb-2">
                     <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   </div>
@@ -595,7 +595,7 @@ export function AggregateSalesCard({
                 </div>
                 
                 {/* Rev/Hour */}
-                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
+                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/30">
                   <div className="flex justify-center mb-2">
                     <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   </div>
@@ -612,7 +612,7 @@ export function AggregateSalesCard({
 
                 {/* Daily Avg - only for multi-day ranges */}
                 {showDailyAvg && (
-                  <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
+                  <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/30">
                     <div className="flex justify-center mb-2">
                       <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
@@ -629,7 +629,7 @@ export function AggregateSalesCard({
                 )}
 
                 {/* Tips */}
-                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg">
+                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/30">
                   <div className="flex justify-center mb-2">
                     <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   </div>
