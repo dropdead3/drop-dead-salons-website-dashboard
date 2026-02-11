@@ -1,53 +1,63 @@
 
 
-## Fix Duplicate Pin Icons on Command Center Cards
+## Fix Counter Animations: Once-Only + Settle Effect
 
 ### Problem
-Cards like New Bookings show **two pin icons** on hover because they have their own internal `CommandCenterVisibilityToggle` AND are wrapped by `PinnableCard` in `PinnedAnalyticsCard.tsx`. The internal controls were needed when the cards lived standalone in the Analytics Hub, but now `PinnableCard` provides the hover-reveal everywhere -- so the internal ones create duplicates.
+Counter animations re-trigger every time elements scroll back into view. They should animate once on first load and stay put. The easing also needs a "laggy ramp down settle" -- the number should overshoot slightly then bounce back to the final value, like a dial settling.
 
-### Solution
-Remove the manual hover-reveal pattern (and direct `CommandCenterVisibilityToggle` usage) from inside each card component. The cards should render only their content -- the `PinnableCard` wrapper handles the Zura AI button and pin toggle externally.
+### Files to Change
 
-### Cards to Fix
+**3 files** share the same pattern and all need the same two fixes:
 
-| File | Issue | Fix |
-|---|---|---|
-| `NewBookingsCard.tsx` | Manual `relative group` wrapper + hover-reveal footer | Remove outer `div.relative.group`, remove hover-reveal `div`, remove `CommandCenterVisibilityToggle` import |
-| `StylistWorkloadCard.tsx` | 3 render paths each with manual hover-reveal | Remove from all 3 paths (loading, empty, and main) |
-| `StaffingTrendChart.tsx` | Manual hover-reveal footer | Remove wrapper and footer |
-| `StylistsOverviewCard.tsx` | 2 render paths with manual hover-reveal | Remove from both paths |
-| `HiringCapacityCard.tsx` | Manual hover-reveal footer | Remove wrapper and footer |
-| `ClientEngineOverview.tsx` | Manual hover-reveal footer | Remove wrapper and footer |
-| `ProgramCompletionFunnel.tsx` | 2 render paths with manual hover-reveal | Remove from both paths |
-| `TeamGoalsCard.tsx` | `CommandCenterVisibilityToggle` in card header | Remove from header |
-| `CapacityUtilizationCard.tsx` | `CommandCenterVisibilityToggle` in card header | Remove from header |
-| `ClientFunnelCard.tsx` | `CommandCenterVisibilityToggle` imported/used | Remove usage |
+| File | Used By |
+|---|---|
+| `src/hooks/use-counter-animation.ts` | StatsSection (About), Extensions page |
+| `src/components/ui/AnimatedNumber.tsx` | PlatformLiveAnalytics |
+| `src/components/ui/AnimatedBlurredAmount.tsx` | Dashboard sales cards, forecasting, capacity |
 
-### Pattern Change Per Card
+### Change 1: Animate Once Only
 
-**Before (e.g., NewBookingsCard):**
+All three currently use `IntersectionObserver` to trigger on scroll-into-view. The fix:
+- Trigger the initial animation immediately on mount (or on first data load), not on intersection
+- Remove the `IntersectionObserver` entirely from `AnimatedNumber` and `AnimatedBlurredAmount`
+- For `useCounterAnimation`, the `startOnView` flag already exists -- default it to `false` and simplify
+- Keep the "animate on value change" behavior in `AnimatedNumber` and `AnimatedBlurredAmount` (so when data updates, the number smoothly transitions from old to new)
+
+### Change 2: Settle/Overshoot Easing
+
+Replace the current `easeOut = 1 - Math.pow(1 - progress, N)` with a damped spring curve that:
+- Ramps up fast to ~105% of the target
+- Overshoots slightly
+- Oscillates back below target (~99%)
+- Settles exactly on target
+
+The math (damped sine wave):
+
 ```text
-<div className="relative group">
-  <Card>...content...</Card>
-  <div className="max-h-0 opacity-0 group-hover:max-h-10 ...">
-    <CommandCenterVisibilityToggle ... />
-  </div>
-</div>
+const settle = 1 - Math.exp(-6 * progress) * Math.cos(4 * Math.PI * progress);
 ```
 
-**After:**
-```text
-<Card>...content...</Card>
-```
+This produces a curve that hits ~1.05 around 15% progress, dips to ~0.99 around 40%, and fully settles by 85%. The result feels like a physical counter dial coming to rest.
 
-The `PinnableCard` wrapper in the Analytics Hub pages and `PinnedAnalyticsCard.tsx` already provides the hover-reveal with both Zura AI and pin toggle. Removing the internal one eliminates the duplication.
+### Technical Details
 
-### Why This Is Safe
-Every place these cards are rendered is already wrapped with `PinnableCard`:
-- **Command Center**: via `PinnedAnalyticsCard.tsx` (recently added)
-- **Analytics Hub**: the parent pages (Sales, Operations, Marketing dashboards) already use `PinnableCard` wrappers around these cards
+**`use-counter-animation.ts`**:
+- Change `startOnView` default to `false`
+- Replace easing function with damped spring
+- Keep `hasStarted` guard so it only runs once
 
-Removing the internal toggle does not remove the pin functionality -- it just stops it from appearing twice.
+**`AnimatedNumber.tsx`**:
+- Remove `IntersectionObserver` setup entirely
+- Trigger initial animation immediately via `useEffect` on mount
+- Replace easing with damped spring
+- Keep the value-change re-animation (old value to new value transition)
 
-### No Database Changes Required
-This is a pure frontend cleanup across ~10 component files.
+**`AnimatedBlurredAmount.tsx`**:
+- Same as AnimatedNumber: remove observer, animate on mount
+- Replace easing with damped spring
+- Keep value-change re-animation
+
+### No Breaking Changes
+- The settle effect is subtle (5% overshoot) so numbers won't look wrong mid-animation
+- Cards that pass changing `value` props still get smooth transitions between values
+- Public site counters (StatsSection, Extensions) get the same improved feel
