@@ -6743,6 +6743,7 @@ export type Database = {
           insights_email_next_at: string | null
           meeting_reminder_enabled: boolean
           mention_enabled: boolean | null
+          payroll_deadline_enabled: boolean
           program_reminder_enabled: boolean
           push_notifications_enabled: boolean | null
           streak_warning_enabled: boolean
@@ -6765,6 +6766,7 @@ export type Database = {
           insights_email_next_at?: string | null
           meeting_reminder_enabled?: boolean
           mention_enabled?: boolean | null
+          payroll_deadline_enabled?: boolean
           program_reminder_enabled?: boolean
           push_notifications_enabled?: boolean | null
           streak_warning_enabled?: boolean
@@ -6787,6 +6789,7 @@ export type Database = {
           insights_email_next_at?: string | null
           meeting_reminder_enabled?: boolean
           mention_enabled?: boolean | null
+          payroll_deadline_enabled?: boolean
           program_reminder_enabled?: boolean
           push_notifications_enabled?: boolean | null
           streak_warning_enabled?: boolean

@@ -16,6 +16,7 @@ export interface NotificationPreferences {
   insights_email_frequency: string;
   insights_email_last_sent: string | null;
   insights_email_next_at: string | null;
+  payroll_deadline_enabled: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -31,6 +32,7 @@ const defaultPreferences: Omit<NotificationPreferences, 'id' | 'user_id' | 'crea
   insights_email_frequency: 'weekly',
   insights_email_last_sent: null,
   insights_email_next_at: null,
+  payroll_deadline_enabled: true,
 };
 
 export function useNotificationPreferences() {
