@@ -71,16 +71,32 @@ export function HideNumbersProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-  // On login/mount, always start hidden (security feature)
+  // On login/mount, load persisted preference from database
   useEffect(() => {
     if (!user) {
       setIsLoading(false);
       return;
     }
     
-    // Always hide on login - this is the security feature
-    setHideNumbers(true);
-    setIsLoading(false);
+    const loadPreference = async () => {
+      try {
+        const { data } = await supabase
+          .from('employee_profiles')
+          .select('hide_numbers')
+          .eq('user_id', user.id)
+          .single();
+        
+        // Use persisted value, default to hidden if no record
+        setHideNumbers(data?.hide_numbers ?? true);
+      } catch (err) {
+        console.error('Error loading hide_numbers preference:', err);
+        setHideNumbers(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadPreference();
   }, [user]);
 
   // Request to unhide - shows confirmation dialog
