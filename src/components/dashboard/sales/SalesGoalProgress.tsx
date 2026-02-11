@@ -233,7 +233,7 @@ export function SalesGoalProgress({
                 size="sm"
                 onClick={handleGetBackOnTrack}
                 disabled={loading}
-                className="h-auto py-0.5 px-2 text-[11px] text-destructive hover:text-destructive ml-1 gap-1"
+                className="h-auto py-0.5 px-2 text-[11px] text-muted-foreground hover:text-foreground ml-1 gap-1"
               >
                 {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <ZuraAvatar size="sm" className="h-4 w-4 text-[7px]" />}
                 Get back on track
