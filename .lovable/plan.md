@@ -1,66 +1,35 @@
 
 
-## Fix Overlapping Card Headers -- Stack Title and Badges Vertically
+## Fix Hover Overlay Covering Card Header Content
 
 ### Problem
-The title text ("PRODUCT CATEGORIES", "SERVICE POPULARITY") and filter/summary badges ("All Locations · Today", "19 services", "$2,021") are fighting for the same horizontal row. Even with `flex-wrap`, the title font is too large and the badges too wide -- they overlap visually.
+The Zura AI icon and pin-to-dashboard icon appear on hover via `PinnableCard` at a fixed position (`absolute top-3 right-3`). This overlaps with card header elements like filter badges and revenue totals (e.g., "$2,021 total" on Location Comparison), making them unreadable and unclickable.
+
+This affects every card wrapped in `PinnableCard` -- not just Location Comparison.
 
 ### Solution
-Stop trying to fit everything on one line. Instead, stack vertically:
-1. Title row: icon + title (full width)
-2. Badges row: filter badge + summary badges, right-aligned on their own line
+Move the hover overlay from the top-right corner (where it conflicts with header content) to the **bottom-right corner** of the card. This keeps the controls accessible without covering any card content.
 
-```text
-+------------------------------------------+
-| [icon] Product Categories                |
-|          All Locations · Today     $0    |
-| Revenue breakdown by product category    |
-+------------------------------------------+
+### What Changes
+
+**File:** `src/components/dashboard/PinnableCard.tsx` (line 48)
+
+Change the overlay positioning from:
+```
+absolute top-3 right-3
+```
+to:
+```
+absolute bottom-3 right-3
 ```
 
-### Changes
+This is a single class change. The overlay keeps its existing behavior (opacity on hover, backdrop blur pill, z-10) but anchors to the bottom-right instead.
 
-**1. `src/components/dashboard/sales/ProductCategoryChart.tsx`** (lines 52-66)
-
-Replace the single `flex justify-between` wrapper with a vertical stack:
-
-```tsx
-<div className="space-y-2">
-  <div className="flex items-center gap-2">
-    <ShoppingBag className="w-5 h-5 text-chart-2 shrink-0" />
-    <CardTitle className="font-display">Product Categories</CardTitle>
-  </div>
-  <div className="flex items-center gap-2 flex-wrap">
-    {filterContext && <AnalyticsFilterBadge ... />}
-    <Badge variant="outline">$0</Badge>
-  </div>
-</div>
-```
-
-**2. `src/components/dashboard/sales/ServicePopularityChart.tsx`** (lines 49-64)
-
-Same restructure:
-
-```tsx
-<div className="space-y-2">
-  <div className="flex items-center gap-2">
-    <Scissors className="w-5 h-5 text-primary shrink-0" />
-    <CardTitle className="font-display">Service Popularity</CardTitle>
-  </div>
-  <div className="flex items-center gap-2 flex-wrap">
-    {filterContext && <AnalyticsFilterBadge ... />}
-    <Badge variant="outline">{totalServices} services</Badge>
-    <Badge variant="secondary">${totalRevenue}</Badge>
-  </div>
-</div>
-```
-
-### What This Fixes
-- Title gets its own full-width line -- no more overlap with badges
-- Badges wrap naturally on their own row
-- Clean, readable hierarchy: Title > Filters/Stats > Description
-- Works at any card width without spilling
+### Why Bottom-Right
+- Card headers universally contain titles, badges, and filters in the top area
+- Card footers/bottom areas are typically empty or have minimal content
+- Bottom-right is a common pattern for floating action buttons
+- No card currently has interactive elements in the bottom-right corner
 
 ### Files Modified
-1. `src/components/dashboard/sales/ProductCategoryChart.tsx` -- vertical stack header
-2. `src/components/dashboard/sales/ServicePopularityChart.tsx` -- vertical stack header
+1. `src/components/dashboard/PinnableCard.tsx` -- move overlay from top-right to bottom-right
