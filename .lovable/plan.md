@@ -1,68 +1,59 @@
 
 
-## Enhanced Sales Overview: Actual vs Expected Revenue for "Today"
+## Add Actual vs Expected Status to Location Line Items (Today Filter)
 
-### What This Does
+### Overview
+When the "By Location" table is shown with the "Today" filter active, each location row will indicate whether all transactions are checked out or how much revenue is still expected. This gives managers instant per-location visibility into checkout progress without clicking into each location.
 
-When the Sales Overview card is filtered to "Today", it will:
+### What Changes
 
-1. Show **Expected Revenue** (from scheduled appointments) as the hero number -- same as now
-2. Show **Actual Revenue** (from daily sales summary / checked-out transactions) alongside it when available
-3. Display a contextual message: "Actual revenue updates as appointments check out"
-4. Show the **estimated final transaction time** based on the last scheduled appointment's end time (e.g., "Last appointment ends at 7:45 PM")
-5. As actual revenue accumulates through the day, show a progress-style comparison
+**1. Expand `useTodayActualRevenue` hook** (`src/hooks/useTodayActualRevenue.ts`)
+- Add a new query that fetches actual revenue **grouped by location_id** from `phorest_daily_sales_summary` for today
+- Add a new query that fetches the last appointment end time **per location** from `phorest_appointments` for today
+- Return a new `byLocation` map: `Record<string, { actualRevenue, lastEndTime, hasActualData }>`
+- Only fires when `enabled` is true (i.e., dateRange is "today")
 
-### How It Works
+**2. Update the "By Location" table** (`src/components/dashboard/AggregateSalesCard.tsx`)
+- When `dateRange === 'today'`, add a new **Status** column to the table
+- For each location row, compare `actualRevenue` (checked out) vs `expectedRevenue` (from scheduled appointments):
+  - **All done**: Show a subtle "Checked out" badge with a check icon when actual >= expected (or all appointments are past)
+  - **In progress**: Show "X of Y checked out" with a mini progress indicator when some revenue is still pending
+  - **Not started**: Show "Pending" in muted text when no actual revenue exists yet
+- Below the status, show the last appointment end time for that location (e.g., "Last appt: 7:45 PM")
 
-**Data Sources:**
-- **Expected Revenue**: Already fetched from `phorest_appointments` via `useSalesMetrics` -- no change needed
-- **Actual Revenue**: Query `phorest_daily_sales_summary` for today's date (currently returns null/0 until Phorest syncs checked-out data)
-- **Last Appointment Time**: Query `MAX(end_time)` from `phorest_appointments` for today
-
-### Visual Design
-
-When dateRange is "Today":
+### Visual Design (Today filter only)
 
 ```text
-+-------------------------------------------------+
-|              $2,021                              |
-|           Total Revenue                          |
-|      [Clock] Expected Revenue  (i)               |
-|                                                  |
-|   Actual Revenue: $850 of $2,021 expected        |
-|   [progress bar ~~~~~~~~~~~~-------]             |
-|                                                  |
-|   Last appointment ends at 7:45 PM               |
-|   Actual revenue updates as appointments         |
-|   check out                                      |
-+-------------------------------------------------+
+| Location       | Revenue | ... | Status                          |
+|----------------|---------|-----|---------------------------------|
+| North Mesa     | $1,146  | ... | $420 of $1,146 checked out      |
+|                |         |     | Last appt: 6:30 PM              |
+| Val Vista Lakes| $875    | ... | Checked out [checkmark]         |
 ```
 
-- If actual revenue is 0 or unavailable: show "Actual revenue not available until appointments check out"
-- If actual > 0 but < expected: show progress bar and both amounts
-- If all appointments are past current time: the "Expected" badge could shift to indicate the day is wrapping up
+- The Status column only appears when dateRange is "today"
+- Uses existing muted/primary color palette
+- Check icon uses `text-primary`, progress text uses `text-muted-foreground`
 
-### Files to Change
-
-**1. New Hook: `src/hooks/useTodayActualRevenue.ts`**
-- Queries `phorest_daily_sales_summary` for today's date to get actual checked-out revenue
-- Queries `phorest_appointments` for today's `MAX(end_time)` to get the last appointment end time
-- Returns `{ actualRevenue, lastAppointmentEndTime, hasActualData }`
-
-**2. Update: `src/components/dashboard/AggregateSalesCard.tsx`**
-- Import and call the new hook when `dateRange === 'today'`
-- Below the "Expected Revenue" badge, add a new section showing:
-  - Actual revenue amount (or "not yet available" message)
-  - A subtle progress indicator (actual / expected)
-  - The estimated final transaction time formatted as "Last appointment ends at X:XX PM"
-  - A muted helper text explaining the data flow
+### What Stays the Same
+- For all other date ranges (yesterday, 7d, 30d, etc.), the table looks exactly as it does now -- no Status column
+- The aggregate actual vs expected section at the top of the card remains unchanged
+- Sorting, trend sparklines, and click-to-filter behavior are unaffected
 
 ### Technical Details
 
-- The new hook only fires when dateRange is "today" (`enabled: dateRange === 'today'`)
-- `end_time` is stored as `HH:MM:SS` in the database -- will be formatted to 12-hour time for display
-- The actual revenue query targets `phorest_daily_sales_summary` which aggregates checked-out/completed transaction data from Phorest syncs
-- The progress bar uses `@radix-ui/react-progress` (already installed)
-- Styling follows the existing luxury aesthetic: muted backgrounds, primary accent, editorial typography
-- No database changes needed -- all data already exists in current tables
+**Hook changes** (`useTodayActualRevenue.ts`):
+- New query: `SELECT location_id, SUM(total_revenue), SUM(service_revenue), SUM(product_revenue), SUM(total_transactions) FROM phorest_daily_sales_summary WHERE summary_date = today GROUP BY location_id`
+- New query: `SELECT location_id, MAX(end_time) FROM phorest_appointments WHERE appointment_date = today AND status NOT IN ('cancelled','no_show') GROUP BY location_id`
+- Returns `locationActuals: Record<string, { actualRevenue, actualServiceRevenue, actualProductRevenue, actualTransactions, lastEndTime }>`
+
+**Component changes** (`AggregateSalesCard.tsx`):
+- Conditionally render the Status `TableHead` and `TableCell` only when `isToday` is true
+- Look up each location's actual data from the hook's `locationActuals` map using `location.location_id`
+- Format end times from `HH:MM:SS` to `h:mm A` using date-fns `parse`/`format`
+- No new components needed -- inline rendering in the existing table structure
+
+### Files Modified
+1. `src/hooks/useTodayActualRevenue.ts` -- add per-location actual revenue and last appointment queries
+2. `src/components/dashboard/AggregateSalesCard.tsx` -- add conditional Status column to location table
 
