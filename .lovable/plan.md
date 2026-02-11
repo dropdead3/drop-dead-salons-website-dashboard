@@ -1,46 +1,41 @@
 
 
-# Add Step Selection to "Let's Implement" Dialog
+# Fix: Show Selectable Action Steps in "Let's Implement" Dialog
 
-## What's Missing
+## Problem
 
-The action steps are currently read-only with no way to select which ones matter. You need to be able to scan the plan overview and check/uncheck individual steps before deciding how to route them.
+The "Action Steps" section appears empty because the `extractActions` function can't parse the AI-generated content. The AI edge function returns free-form markdown (2-3 paragraphs with bold actions, bullet points, and links) -- not a rigid numbered-list format. The regex strategies are too strict or conflict with each other.
 
-## Change
+## Root Cause
 
-Add a checkbox to each action step row. All steps start selected. The user deselects any they don't want to implement. Only selected steps get created as tasks, included in DMs, or copied to clipboard.
+The AI prompt says "Format with markdown (bold key actions, use bullet points for steps)" -- so the output mixes inline bold text within paragraphs, markdown links, and bullet sub-points. The extraction patterns miss these because:
+- Bold text often contains colons within links or extra formatting
+- Bullet points may be nested or mixed with paragraph text  
+- Numbered lists may not start at the beginning of lines
 
-## Layout After Change
+## Solution
 
-```text
-Action Steps
-  [x] 1. Power Fill Promotion
-         Schedule targeted promos...    Due Feb 13
-  [x] 2. Retail Attachment Push
-         Train staff on add-on...       Due Feb 13
-  [ ] 3. Rebooking Blitz
-         Call last week's clients...    Due Feb 16
+Overhaul `extractActions` with a more resilient, multi-pass approach:
 
-Route This Plan
-  [x] Add to my tasks
-  [ ] Share with team via DM
-  [ ] Copy formatted plan
+1. **Normalize content first**: Strip markdown links `[text](url)` down to just `text` before matching, so links inside bold text don't break patterns.
 
-              Cancel    [Activate Plan]
-```
+2. **Broader bold extraction**: Match any `**bold text**` that looks like an action (longer than 4 chars), then grab the rest of the line or next sentence as description.
+
+3. **Sentence-level fallback**: If no structured items are found, split content into sentences/lines and pick substantive ones (over 20 chars, not generic headers) as individual action items. This ensures the dialog always has something to show.
+
+4. **Deduplication**: Since multiple strategies run, deduplicate by title similarity to avoid showing the same action twice.
 
 ## Technical Changes
 
-### `ImplementPlanDialog.tsx`
+### `ImplementPlanDialog.tsx` -- `extractActions` function rewrite
 
-1. **Add selection state**: New `selectedSteps` state as a `Set<number>` of indices, initialized with all steps selected when dialog opens.
+- Add a `normalizeContent` helper that strips markdown links and extra whitespace
+- Rewrite Strategy 1: Match `**any bold text**` followed by remaining line content as description
+- Rewrite Strategy 2: Match bullet/numbered items (with or without bold), capture full line as title
+- Add Strategy 3 (fallback): Split by newlines, filter to substantive lines (length > 20, not just headers), use each as a step
+- Keep the position-based due date assignment at the end
+- Cap at 8 steps
 
-2. **Checkbox on each step row**: Add a `Checkbox` to the left of each step's number. Clicking toggles that index in the set.
+### No other file changes needed
 
-3. **Filter on activation**: `handleActivate`, `formatPlanForClipboard`, and `formatPlanForDM` all filter `steps` to only include indices in `selectedSteps`.
-
-4. **Update validation**: `hasValidSteps` checks that at least one step is selected (not just that steps exist).
-
-5. **Select All / Deselect All**: A small toggle link above the steps list ("Select all" / "Deselect all") for quick bulk control.
-
-No new files. No database changes. Single file edit.
+The dialog UI (checkboxes, selection state, routing options) already works correctly -- only the extraction logic needs fixing.
