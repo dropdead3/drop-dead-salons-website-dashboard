@@ -1,96 +1,70 @@
 
 
-# Payroll Deadline Card: Smart Timing + Missed-Deadline Notifications
+# Split Top Bar into Two Rows
 
-## What Changes
+## Problem
+The current single top bar is overcrowded with too many controls: sidebar toggle, search, help, org switcher, hide numbers, access badge, View As, Phorest sync, notifications, and user menu -- all fighting for space on one 56px row.
 
-### 1. Smart Visibility for the Payroll Deadline Card
+## Solution
+Split into two distinct bars:
 
-The card currently shows at all times. It will now follow a **timeliness rule**:
+### Bar 1: Platform and Context Bar (top)
+A slim, secondary bar dedicated to platform-level and organizational context controls:
+- **Organization Switcher** ("Platform View" dropdown) -- left-aligned
+- **Show/hide $** toggle
+- **Access Badge** (Super Admin / General Manager / etc.)
+- **View As** dropdown
+- **Phorest Sync** popout
 
-- **Hidden** when the deadline is more than 5 days away (no noise)
-- **Visible (calm)** when 2-5 days remain before deadline
-- **Visible (urgent/amber)** when within 48 hours of deadline
-- **Visible (critical/red)** when past deadline AND payroll has not been submitted for the current period
-- **Hidden again** once payroll has been submitted for the current period
+This bar only renders for admin/platform users who actually need these controls. Non-admin users see only the main bar.
 
-The component will query `payroll_runs` to check if a run exists for the current pay period. If a matching run with status `submitted`, `processed`, or `completed` exists, the card disappears -- payroll is handled.
+### Bar 2: Main Top Bar (below)
+The primary navigation bar with everyday tools:
+- **Sidebar toggle** (left)
+- **Search bar** (center)
+- **Help Center** icon
+- **Next Client Indicator** (stylists only)
+- **Notifications bell**
+- **User avatar/menu** (right)
 
-### 2. New Edge Function: `check-payroll-deadline`
-
-A scheduled function (cron) that runs once daily (e.g., 9 AM). It checks:
-
-- Is today the period end date (deadline day)? If yes, and no payroll run exists for this period, send a **deadline-day warning** via email and push notification to all users with `manage_payroll` permission.
-- Is today the day AFTER the deadline? If yes, and still no payroll run, send a **missed deadline alert** (escalation) via email, push, and SMS to the same users.
-
-This ensures the notification fires **at deadline** and **after deadline if payroll was not run**, exactly as requested.
-
-### 3. New SMS Template: `payroll_deadline_missed`
-
-Added to the `sms_templates` table:
-- **Key:** `payroll_deadline_missed`
-- **Message:** `URGENT: Payroll for {{period_range}} was due {{deadline_date}} and has not been submitted. Please run payroll immediately. {{action_url}}`
-- **Variables:** `period_range`, `deadline_date`, `action_url`
-
-### 4. New SMS Template: `payroll_deadline_today`
-
-Added to the `sms_templates` table:
-- **Key:** `payroll_deadline_today`
-- **Message:** `Reminder: Payroll for {{period_range}} is due today ({{deadline_date}}). Submit before end of day. {{action_url}}`
-- **Variables:** `period_range`, `deadline_date`, `action_url`
-
-### 5. New Email Templates (in-code, following existing pattern)
-
-Two HTML email templates built into the edge function (same pattern as `send-daily-reminders`):
-
-- **Deadline Day:** "Payroll submission due today" -- includes period dates, check date, and a CTA button to run payroll
-- **Missed Deadline:** "URGENT: Payroll deadline missed" -- stronger language, red styling, same CTA
-
-### 6. Notification Preference: `payroll_deadline_enabled`
-
-A new column on `notification_preferences` so users can opt out of payroll deadline notifications if desired (default: true for users with payroll permission).
-
-### 7. SMS Sender Utility
-
-There is no shared SMS sending utility yet. A minimal `_shared/sms-sender.ts` will be created that uses the existing `sms_templates` table to resolve templates and a placeholder SMS provider integration. Since no SMS provider (Twilio, etc.) is connected yet, the function will log the message and can be wired to a provider later. This keeps the architecture ready without requiring a new API key right now.
+## Visual Treatment
+- **Bar 1 (Context Bar):** Slightly shorter height (`h-10`), subtle background distinction (slightly darker/tinted), thinner bottom border. Feels like a toolbar ribbon.
+- **Bar 2 (Main Bar):** Keeps current `h-14` height and styling. Feels like the primary header.
+- Both bars are sticky together at the top, so they scroll as one unit.
 
 ---
 
 ## Technical Details
 
-### PayrollDeadlineCard.tsx Changes
+### File: `src/components/dashboard/DashboardLayout.tsx`
 
+**Extract a new component** `DashboardContextBar` inline (or as a separate file) that contains:
+- `OrganizationSwitcher` (platform users only)
+- `HideNumbersToggle`
+- Access `Badge`
+- `ViewAsToggle`
+- `PhorestSyncPopout`
+
+Replace the single desktop top bar block (lines ~997-1093) with two stacked bars:
+
+```text
++--------------------------------------------------+
+| [Platform View v]  Show/hide $  [Super Admin]  [View As v]  [Sync] |  <-- Context Bar (h-10)
++--------------------------------------------------+
+| [=]         [ Search...  Cmd+K ]         [?] [Sync] [Bell] [Avatar] |  <-- Main Bar (h-14)
++--------------------------------------------------+
 ```
-// New hook: usePayrollRunForPeriod(periodStart, periodEnd)
-// Queries payroll_runs for a matching period with status in ('submitted','processed','completed')
-// Returns { hasRun: boolean, isLoading: boolean }
 
-// Visibility logic:
-const daysUntilDeadline = differenceInDays(periodEndDate, now);
-const hasSubmitted = payrollRun.hasRun;
+**Visibility rules:**
+- Context Bar: Only renders when `isAdmin || isPlatformUser` (users who need org/role controls)
+- Main Bar: Always renders for all desktop users
 
-if (hasSubmitted) return null; // payroll done, hide
-if (daysUntilDeadline > 5) return null; // too early, hide
+**Sticky behavior:** Wrap both bars in the existing sticky container so they pin together.
 
-// Otherwise show with urgency styling based on daysUntilDeadline
-```
+### Files Changed
+| File | Change |
+|---|---|
+| `src/components/dashboard/DashboardLayout.tsx` | Split the desktop top bar section (lines ~997-1093) into two stacked bars. Move platform/org/access controls into the new context bar. Keep search, help, notifications, and user menu in the main bar. |
 
-### Edge Function: `check-payroll-deadline/index.ts`
+No new files or dependencies required -- this is a layout reorganization within the existing component.
 
-- Queries all organizations with `organization_payroll_settings`
-- For each, calculates current period end date
-- Checks `payroll_runs` for a matching submitted run
-- If deadline is today or passed without a run:
-  - Finds users with `manage_payroll` permission (via `user_roles` + `effective_permissions`)
-  - Sends email via Resend (using `_shared/email-sender.ts`)
-  - Sends push notification (via `send-push-notification` invocation)
-  - Sends SMS using template (logs for now until SMS provider is connected)
-
-### Database Migration
-
-1. Add `payroll_deadline_enabled` boolean column to `notification_preferences` (default `true`)
-2. Insert two new SMS templates (`payroll_deadline_today`, `payroll_deadline_missed`)
-
-### Cron Schedule
-
-A `pg_cron` job to invoke `check-payroll-deadline` daily at 9:00 AM UTC.
