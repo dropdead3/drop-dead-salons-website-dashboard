@@ -50,6 +50,8 @@ import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import { HubQuickLinks } from '@/components/dashboard/HubQuickLinks';
 import { AIInsightsDrawer } from '@/components/dashboard/AIInsightsDrawer';
 import { PersonalInsightsDrawer } from '@/components/dashboard/PersonalInsightsDrawer';
+import { PayrollDeadlineCard } from '@/components/dashboard/payroll/PayrollDeadlineCard';
+import { PaydayCountdownBanner } from '@/components/dashboard/mypay/PaydayCountdownBanner';
 import { InsightsNudgeBanner } from '@/components/dashboard/InsightsNudgeBanner';
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -346,6 +348,10 @@ function DashboardSections({
         enabledHubs={layout.enabledHubs}
       />
     ),
+
+    payroll_deadline: <PayrollDeadlineCard />,
+
+    payday_countdown: <PaydayCountdownBanner />,
     
     quick_actions: showQuickActions && (
       <VisibilityGate elementKey="quick_actions">
