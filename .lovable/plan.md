@@ -1,39 +1,68 @@
 
 
-## Unify Dashboard Icon Colors: Primary with Subtle Warmth
+## Enhanced Sales Overview: Actual vs Expected Revenue for "Today"
 
-### Overview
-Replace the multi-colored rainbow of icon tints across the staff dashboard with a cohesive monochrome system: **primary-colored icons** sitting on **warm muted backgrounds** (bg-muted). This creates a clean, editorial look where icons feel intentional rather than decorative.
+### What This Does
 
-### What Changes
+When the Sales Overview card is filtered to "Today", it will:
 
-**1. Quick Stats Cards** (`src/pages/dashboard/DashboardHome.tsx`, lines ~426-469)
-Currently each stat card has a different colored icon container (blue, green, purple, orange). Change all four to:
-- Background: `bg-muted` (replaces `bg-blue-500/10`, `bg-green-500/10`, etc.)
-- Icon color: `text-primary` (replaces `text-blue-600`, `text-green-600`, etc.)
+1. Show **Expected Revenue** (from scheduled appointments) as the hero number -- same as now
+2. Show **Actual Revenue** (from daily sales summary / checked-out transactions) alongside it when available
+3. Display a contextual message: "Actual revenue updates as appointments check out"
+4. Show the **estimated final transaction time** based on the last scheduled appointment's end time (e.g., "Last appointment ends at 7:45 PM")
+5. As actual revenue accumulates through the day, show a progress-style comparison
 
-**2. Hub Quick Links** (`src/components/dashboard/HubQuickLinks.tsx`, lines 26-89)
-Currently each hub link has a unique color class (blue, purple, green, amber, rose, etc.). Change all `colorClass` values to a unified:
-- `bg-primary/5 text-primary hover:bg-primary/10`
+### How It Works
 
-This keeps the hover interaction but removes the rainbow.
+**Data Sources:**
+- **Expected Revenue**: Already fetched from `phorest_appointments` via `useSalesMetrics` -- no change needed
+- **Actual Revenue**: Query `phorest_daily_sales_summary` for today's date (currently returns null/0 until Phorest syncs checked-out data)
+- **Last Appointment Time**: Query `MAX(end_time)` from `phorest_appointments` for today
 
-**3. Client Engine flame icon** (`src/pages/dashboard/DashboardHome.tsx`, line ~566)
-The streak flame icon currently uses `text-orange-500`. Change to `text-primary` to stay in family.
+### Visual Design
 
-### What Stays the Same
-- **Quick Actions section** -- already uses `text-primary` with `bg-primary/10` consistently. No changes needed.
-- **Schedule/Tasks section headers** -- use `text-muted-foreground` for utility icons (Clock, etc.). This is correct and stays.
-- **Empty state ghost icons** -- use `opacity-20` which is correct editorial styling.
-- **Client Engine card** -- the gold gradient container is a deliberate premium accent and stays as-is.
+When dateRange is "Today":
 
-### Files Modified
-1. `src/pages/dashboard/DashboardHome.tsx` -- Quick Stats icon colors + flame icon
-2. `src/components/dashboard/HubQuickLinks.tsx` -- Hub link color classes
+```text
++-------------------------------------------------+
+|              $2,021                              |
+|           Total Revenue                          |
+|      [Clock] Expected Revenue  (i)               |
+|                                                  |
+|   Actual Revenue: $850 of $2,021 expected        |
+|   [progress bar ~~~~~~~~~~~~-------]             |
+|                                                  |
+|   Last appointment ends at 7:45 PM               |
+|   Actual revenue updates as appointments         |
+|   check out                                      |
++-------------------------------------------------+
+```
+
+- If actual revenue is 0 or unavailable: show "Actual revenue not available until appointments check out"
+- If actual > 0 but < expected: show progress bar and both amounts
+- If all appointments are past current time: the "Expected" badge could shift to indicate the day is wrapping up
+
+### Files to Change
+
+**1. New Hook: `src/hooks/useTodayActualRevenue.ts`**
+- Queries `phorest_daily_sales_summary` for today's date to get actual checked-out revenue
+- Queries `phorest_appointments` for today's `MAX(end_time)` to get the last appointment end time
+- Returns `{ actualRevenue, lastAppointmentEndTime, hasActualData }`
+
+**2. Update: `src/components/dashboard/AggregateSalesCard.tsx`**
+- Import and call the new hook when `dateRange === 'today'`
+- Below the "Expected Revenue" badge, add a new section showing:
+  - Actual revenue amount (or "not yet available" message)
+  - A subtle progress indicator (actual / expected)
+  - The estimated final transaction time formatted as "Last appointment ends at X:XX PM"
+  - A muted helper text explaining the data flow
 
 ### Technical Details
-- All changes use existing Tailwind utilities and CSS variables
-- `text-primary` and `bg-muted` are theme-aware, so they automatically adapt to dark mode and custom theme overrides
-- No new dependencies or components needed
-- Two files, roughly 15 line-level edits total
+
+- The new hook only fires when dateRange is "today" (`enabled: dateRange === 'today'`)
+- `end_time` is stored as `HH:MM:SS` in the database -- will be formatted to 12-hour time for display
+- The actual revenue query targets `phorest_daily_sales_summary` which aggregates checked-out/completed transaction data from Phorest syncs
+- The progress bar uses `@radix-ui/react-progress` (already installed)
+- Styling follows the existing luxury aesthetic: muted backgrounds, primary accent, editorial typography
+- No database changes needed -- all data already exists in current tables
 
