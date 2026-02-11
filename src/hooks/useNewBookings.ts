@@ -95,6 +95,29 @@ export function useNewBookings(locationId?: string) {
       const { data: prev30DaysBookings, error: prev30Error } = await prev30Query;
       if (prev30Error) throw prev30Error;
 
+      // Fetch today's SERVICE appointments for returning clients (by appointment_date, not created_at)
+      const todayDate = format(today, 'yyyy-MM-dd');
+      let rebookQuery = supabase
+        .from('phorest_appointments')
+        .select('id, rebooked_at_checkout, location_id')
+        .eq('appointment_date', todayDate)
+        .eq('is_new_client', false)
+        .not('status', 'eq', 'cancelled');
+
+      if (locationId && locationId !== 'all') {
+        rebookQuery = rebookQuery.eq('location_id', locationId);
+      }
+
+      const { data: rebookData, error: rebookError } = await rebookQuery;
+      if (rebookError) throw rebookError;
+
+      const rebookAppointments = rebookData || [];
+      const returningServicedToday = rebookAppointments.length;
+      const rebookedAtCheckoutToday = rebookAppointments.filter(apt => apt.rebooked_at_checkout).length;
+      const rebookRate = returningServicedToday > 0
+        ? Math.round((rebookedAtCheckoutToday / returningServicedToday) * 100)
+        : null;
+
       const bookedToday = todayBookings || [];
       const bookedLast7Days = last7DaysBookings || [];
       const last30Days = last30DaysBookings || [];
@@ -141,6 +164,9 @@ export function useNewBookings(locationId?: string) {
         prev30Days: prev30Count,
         percentChange,
         locationBreakdown,
+        returningServicedToday,
+        rebookedAtCheckoutToday,
+        rebookRate,
       };
     },
     staleTime: 1000 * 60 * 5,
