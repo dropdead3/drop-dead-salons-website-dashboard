@@ -241,6 +241,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
           totalDiscounts: 0,
           unmappedStaffRecords: 0,
           totalServiceHours: 0,
+          daysWithSales: 0,
           dataSource: 'appointments' as const,
         };
       }
@@ -248,6 +249,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       const totalRevenue = data.reduce((sum, apt) => sum + (Number(apt.total_price) || 0), 0);
       const totalServices = data.length;
       const uniqueStaff = new Set(data.map(d => d.phorest_staff_id).filter(Boolean));
+      const daysWithSales = new Set(data.map(d => d.appointment_date).filter(Boolean)).size;
       
       // Calculate total service hours from appointment durations
       const totalServiceHours = data.reduce((sum, apt) => {
@@ -268,6 +270,7 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
         totalDiscounts: 0,
         unmappedStaffRecords: 0,
         totalServiceHours,
+        daysWithSales,
         dataSource: 'appointments' as const,
       };
     },

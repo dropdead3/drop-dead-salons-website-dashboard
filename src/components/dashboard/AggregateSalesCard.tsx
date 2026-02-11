@@ -30,7 +30,7 @@ import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
-import { format, subDays, startOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears, differenceInCalendarDays } from 'date-fns';
+import { format, subDays, startOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears } from 'date-fns';
 import {
   Select,
   SelectContent,
@@ -547,11 +547,8 @@ export function AggregateSalesCard({
           {/* Secondary KPIs Row */}
           {(() => {
             const showDailyAvg = dateRange !== 'today';
-            const daysInRange = differenceInCalendarDays(
-              new Date(dateFilters.dateTo),
-              new Date(dateFilters.dateFrom)
-            ) + 1;
-            const dailyAverage = daysInRange > 0 ? displayMetrics.totalRevenue / daysInRange : 0;
+            const workingDays = metrics?.daysWithSales ?? 0;
+            const dailyAverage = workingDays > 0 ? displayMetrics.totalRevenue / workingDays : 0;
 
             return (
               <div className={`grid ${showDailyAvg ? 'grid-cols-4' : 'grid-cols-3'} gap-6 mt-6`}>
@@ -615,7 +612,7 @@ export function AggregateSalesCard({
                     />
                     <div className="flex items-center gap-1 justify-center mt-1">
                       <p className="text-xs text-muted-foreground">Daily Avg</p>
-                      <MetricInfoTooltip description="Total Revenue divided by number of days in the selected range." />
+                      <MetricInfoTooltip description="Average daily revenue across days with recorded sales." />
                     </div>
                   </div>
                 )}
