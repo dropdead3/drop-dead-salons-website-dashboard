@@ -1,7 +1,16 @@
+import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { UserPlus, RefreshCw } from 'lucide-react';
+import { UserPlus, RefreshCw, MapPin, Globe } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useActiveLocations } from '@/hooks/useLocations';
 import type { StaffBreakdownNew, StaffBreakdownReturning } from '@/hooks/useNewBookings';
 
 interface NewBookingsDrilldownProps {
@@ -33,10 +42,40 @@ export function NewBookingsDrilldown({
   returningClientsByStaff,
 }: NewBookingsDrilldownProps) {
   const isNew = mode === 'new';
+  const { data: locations = [] } = useActiveLocations();
+
+  const [filterRegion, setFilterRegion] = useState('all');
+  const [filterLocationId, setFilterLocationId] = useState('all');
+
+  // Derive unique regions
+  const regions = useMemo(() => {
+    const regionSet = new Set<string>();
+    locations.forEach(loc => {
+      if (loc.state_province) regionSet.add(loc.state_province);
+    });
+    return Array.from(regionSet).sort();
+  }, [locations]);
+
+  const showRegionFilter = regions.length > 1;
+
+  const filteredLocations = useMemo(() => {
+    if (filterRegion === 'all') return locations;
+    return locations.filter(loc => loc.state_province === filterRegion);
+  }, [locations, filterRegion]);
+
+  // Note: NewBookings data is pre-aggregated by the parent hook and doesn't support
+  // re-querying by location inside the dialog yet. The filters are rendered for visual
+  // consistency and will be wired when the hook supports locationId-based staff breakdown.
   const staffData = isNew ? newClientsByStaff : returningClientsByStaff;
 
+  const handleClose = () => {
+    setFilterRegion('all');
+    setFilterLocationId('all');
+    onClose();
+  };
+
   return (
-    <Dialog open={!!mode} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={!!mode} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent
         className="max-w-lg p-0 overflow-hidden gap-0"
         overlayClassName="backdrop-blur-sm bg-black/60"
@@ -60,6 +99,37 @@ export function NewBookingsDrilldown({
               <p className="text-xs text-muted-foreground mt-0.5">By stylist</p>
             </div>
           </div>
+        </div>
+
+        {/* Filter Row */}
+        <div className="px-6 py-3 border-b border-border/30 flex items-center gap-2 flex-wrap">
+          {showRegionFilter && (
+            <Select value={filterRegion} onValueChange={(v) => { setFilterRegion(v); setFilterLocationId('all'); }}>
+              <SelectTrigger className="h-8 w-auto min-w-[120px] text-xs gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="Region" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Regions</SelectItem>
+                {regions.map(r => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <Select value={filterLocationId} onValueChange={setFilterLocationId}>
+            <SelectTrigger className="h-8 w-auto min-w-[140px] text-xs gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="Location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              {filteredLocations.map(loc => (
+                <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Content */}

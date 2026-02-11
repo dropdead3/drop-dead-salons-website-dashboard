@@ -1,16 +1,25 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Scissors, ShoppingBag } from 'lucide-react';
+import { Scissors, ShoppingBag, MapPin, Globe } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useActiveLocations } from '@/hooks/useLocations';
+import { useServiceProductDrilldown } from '@/hooks/useServiceProductDrilldown';
 import type { StaffServiceProduct } from '@/hooks/useServiceProductDrilldown';
 
 interface ServiceProductDrilldownProps {
   mode: 'services' | 'products' | null;
   onClose: () => void;
-  staffData: StaffServiceProduct[];
-  totalServiceRevenue: number;
-  totalProductRevenue: number;
+  dateFrom: string;
+  dateTo: string;
+  parentLocationId?: string;
 }
 
 function getInitials(name: string) {
@@ -30,11 +39,54 @@ function fmt(n: number) {
 export function ServiceProductDrilldown({
   mode,
   onClose,
-  staffData,
-  totalServiceRevenue,
-  totalProductRevenue,
+  dateFrom,
+  dateTo,
+  parentLocationId,
 }: ServiceProductDrilldownProps) {
   const isServices = mode === 'services';
+  const { data: locations = [] } = useActiveLocations();
+
+  // Local filter state — resets when dialog closes
+  const [filterRegion, setFilterRegion] = useState('all');
+  const [filterLocationId, setFilterLocationId] = useState('all');
+
+  // Derive unique regions from locations
+  const regions = useMemo(() => {
+    const regionSet = new Set<string>();
+    locations.forEach(loc => {
+      if (loc.state_province) regionSet.add(loc.state_province);
+    });
+    return Array.from(regionSet).sort();
+  }, [locations]);
+
+  const showRegionFilter = regions.length > 1;
+
+  // Filter locations by selected region
+  const filteredLocations = useMemo(() => {
+    if (filterRegion === 'all') return locations;
+    return locations.filter(loc => loc.state_province === filterRegion);
+  }, [locations, filterRegion]);
+
+  // Determine effective locationId for the query
+  const effectiveLocationId = useMemo(() => {
+    if (filterLocationId !== 'all') return filterLocationId;
+    if (filterRegion !== 'all') {
+      // Return comma-separated IDs for region filtering — hook handles array
+      const ids = filteredLocations.map(l => l.id);
+      return ids.length > 0 ? ids.join(',') : 'none';
+    }
+    return parentLocationId || 'all';
+  }, [filterLocationId, filterRegion, filteredLocations, parentLocationId]);
+
+  const { data: drilldownData } = useServiceProductDrilldown({
+    dateFrom,
+    dateTo,
+    locationId: effectiveLocationId,
+  });
+
+  const staffData = drilldownData?.staffData || [];
+  const totalServiceRevenue = drilldownData?.totalServiceRevenue || 0;
+  const totalProductRevenue = drilldownData?.totalProductRevenue || 0;
 
   const sorted = useMemo(() => {
     if (!staffData?.length) return [];
@@ -52,8 +104,15 @@ export function ServiceProductDrilldown({
       .sort((a, b) => b.primaryRevenue - a.primaryRevenue);
   }, [staffData, isServices, totalServiceRevenue, totalProductRevenue]);
 
+  // Reset filters when dialog closes
+  const handleClose = () => {
+    setFilterRegion('all');
+    setFilterLocationId('all');
+    onClose();
+  };
+
   return (
-    <Dialog open={!!mode} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={!!mode} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent
         className="max-w-lg p-0 overflow-hidden gap-0"
         overlayClassName="backdrop-blur-sm bg-black/60"
@@ -61,9 +120,7 @@ export function ServiceProductDrilldown({
         {/* Header */}
         <div className="p-6 border-b border-border/50">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-              isServices ? 'bg-primary/10' : 'bg-primary/10'
-            }`}>
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10">
               {isServices ? (
                 <Scissors className="w-5 h-5 text-primary" />
               ) : (
@@ -74,9 +131,40 @@ export function ServiceProductDrilldown({
               <DialogTitle className="font-display text-base font-medium tracking-wide">
                 {isServices ? 'Services by Stylist' : 'Products by Stylist'}
               </DialogTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">Revenue &amp; retail-to-service ratio</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Revenue &amp; share of total</p>
             </div>
           </div>
+        </div>
+
+        {/* Filter Row */}
+        <div className="px-6 py-3 border-b border-border/30 flex items-center gap-2 flex-wrap">
+          {showRegionFilter && (
+            <Select value={filterRegion} onValueChange={(v) => { setFilterRegion(v); setFilterLocationId('all'); }}>
+              <SelectTrigger className="h-8 w-auto min-w-[120px] text-xs gap-1.5">
+                <Globe className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <SelectValue placeholder="Region" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Regions</SelectItem>
+                {regions.map(r => (
+                  <SelectItem key={r} value={r}>{r}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <Select value={filterLocationId} onValueChange={setFilterLocationId}>
+            <SelectTrigger className="h-8 w-auto min-w-[140px] text-xs gap-1.5">
+              <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="Location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              {filteredLocations.map(loc => (
+                <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Content */}

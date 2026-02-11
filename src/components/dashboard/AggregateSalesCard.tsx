@@ -39,7 +39,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useState, useMemo } from 'react';
-import { useServiceProductDrilldown } from '@/hooks/useServiceProductDrilldown';
+
 import { ServiceProductDrilldown } from './ServiceProductDrilldown';
 import { useNavigate } from 'react-router-dom';
 
@@ -161,11 +161,7 @@ export function AggregateSalesCard({
   const { goals } = useSalesGoals();
   const { data: locations } = useActiveLocations();
   const { data: todayActual, locationActuals, isLoading: todayActualLoading } = useTodayActualRevenue(dateRange === 'today');
-  const { data: drilldownData } = useServiceProductDrilldown({ 
-    dateFrom: dateFilters.dateFrom, 
-    dateTo: dateFilters.dateTo, 
-    locationId: filterContext?.locationId 
-  });
+  // Drilldown data now fetched inside the dialog component itself
   const isToday = dateRange === 'today';
 
   // Location display logic
@@ -879,9 +875,9 @@ export function AggregateSalesCard({
       <ServiceProductDrilldown
         mode={drilldownMode}
         onClose={() => setDrilldownMode(null)}
-        staffData={drilldownData?.staffData || []}
-        totalServiceRevenue={drilldownData?.totalServiceRevenue || 0}
-        totalProductRevenue={drilldownData?.totalProductRevenue || 0}
+        dateFrom={dateFilters.dateFrom}
+        dateTo={dateFilters.dateTo}
+        parentLocationId={filterContext?.locationId}
       />
     </Card>
   );
