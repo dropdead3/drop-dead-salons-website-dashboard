@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Check, ChevronsUpDown, Building2, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -27,6 +28,7 @@ interface OrganizationSwitcherProps {
 
 export function OrganizationSwitcher({ className, compact = false }: OrganizationSwitcherProps) {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
   const { data: organizations = [], isLoading } = useOrganizations();
   const { selectedOrganization, setSelectedOrganization, isImpersonating } = useOrganizationContext();
 
@@ -34,13 +36,18 @@ export function OrganizationSwitcher({ className, compact = false }: Organizatio
     setSelectedOrganization(org);
     setOpen(false);
     
-    // Log the context switch for audit
     if (org) {
+      // Navigate to org dashboard
+      navigate('/dashboard');
+      
       logPlatformAction(org.id, 'org_viewed', 'organization', org.id, {
         organization_name: org.name,
         organization_slug: org.slug,
         action: 'context_switch',
       });
+    } else {
+      // Navigate to platform overview
+      navigate('/dashboard/platform/overview');
     }
   };
 
