@@ -1,50 +1,44 @@
 
-# Add Goal Pace Indicator to Sales Goal Progress
 
-## What Changes
+# Fix Daily Average Badge Styling in Forecasting Chart
 
-Enhance `SalesGoalProgress.tsx` to show whether the operator is behind, on track, or on pace to surpass the goal. This adds a third line below the progress bar with a colored status badge.
+## Problem
 
-### Pace Calculation Logic
+The "Daily Avg: $1,042" badge in the forecasting chart (`ForecastingCard.tsx`) uses raw SVG `rect` + `text` elements. This causes:
+- No backdrop blur behind the badge, making it hard to read over bar fills
+- The pill blends into the bar behind it without proper contrast
 
-The component needs to know how far through the current period we are to determine expected progress:
+The `WeekAheadForecast.tsx` already uses a better approach with `foreignObject` + CSS `backdropFilter`, which renders a crisp, readable pill with glass-blur effect.
 
-- **Weekly Goal**: days elapsed this week / 7
-- **Monthly Goal**: day of month / days in month
-- **Yearly Goal**: day of year / days in year
+## Fix
 
-Compare `actual %` vs `expected %`:
-- **Ahead** (actual >= expected + 5%): Green badge -- "On pace to surpass goal" with TrendingUp icon
-- **On Track** (within 5% of expected): Amber/neutral badge -- "On track" with Target icon  
-- **Behind** (actual < expected - 5%): Red/warning badge -- "Behind pace -- need $X/day to catch up" with TrendingDown icon
+Replace the SVG `rect`/`text` approach in `ForecastingCard.tsx` (daily avg badge, lines ~686-725) with the same `foreignObject` + CSS pattern used in `WeekAheadForecast.tsx`:
 
-### UI Addition
+- Use `foreignObject` with a `div` inside
+- Apply `backdropFilter: 'blur(6px)'` for the glass effect
+- Keep the existing amber/gold gradient background, border, and text color
+- Keep the existing text-width measurement logic (or switch to `width: 'fit-content'`)
+- Add a background halo line (like WeekAheadForecast does) before the dashed reference line for visibility over bars
 
-Below the existing "earned / to go" row, add a small status line:
-
-```
-$1,815 earned                              $17,418 to go
-[TrendingDown] Behind pace · $2,488/day needed to hit goal
-```
-
-- Uses `text-[11px]` muted styling, colored by status
-- When goal is reached, this line is hidden (the existing "Goal reached!" message suffices)
-
-### Props Change
-
-Add an optional `goalPeriod` prop to `SalesGoalProgress`:
-
-```typescript
-goalPeriod?: 'weekly' | 'monthly' | 'yearly'
-```
-
-This tells the component which calendar period to calculate expected pace against. Defaults to `'monthly'`.
+Also apply the same fix to the weekly avg badge (lines ~743-800) for consistency.
 
 ## Technical Details
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/sales/SalesGoalProgress.tsx` | Add `goalPeriod` prop; compute elapsed fraction, expected revenue, pace status; render status badge below progress bar |
-| `src/components/dashboard/AggregateSalesCard.tsx` | Pass `goalPeriod` prop based on `dateRange` (weekly/monthly/yearly) |
-| `src/pages/dashboard/admin/SalesDashboard.tsx` | Pass `goalPeriod` prop similarly |
-| `src/components/dashboard/analytics/SalesTabContent.tsx` | Pass `goalPeriod` prop if `SalesGoalProgress` is used there |
+| `src/components/dashboard/sales/ForecastingCard.tsx` | Lines ~686-736: Replace SVG `rect`+`text` with `foreignObject`+`div` using `backdropFilter: blur(6px)`, matching WeekAheadForecast pattern. Add background halo line before dashed line. Same treatment for weekly avg badge (~755-800). |
+
+Key styling properties for the badge `div`:
+```css
+fontSize: 12, fontWeight: 500,
+color: 'rgb(254 240 138)',
+backdropFilter: 'blur(6px)',
+background: 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))',
+border: '1px solid rgb(202 138 4 / 0.6)',
+borderRadius: 9999,
+padding: '2px 8px',
+whiteSpace: 'nowrap',
+width: 'fit-content'
+```
+
+This removes the manual text-width measurement ref hack and produces a cleaner, more readable badge that matches the existing WeekAheadForecast styling.
