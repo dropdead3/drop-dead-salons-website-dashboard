@@ -254,15 +254,17 @@ export function SalesGoalProgress({
             </DialogTitle>
           </DialogHeader>
           <ScrollArea className="max-h-[70vh]">
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : (
-              <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:mb-4 [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:mt-4 [&_h3]:mb-2 [&_li]:leading-relaxed">
-                <ReactMarkdown>{guidance}</ReactMarkdown>
-              </div>
-            )}
+            <div className="pr-4">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:mb-4 [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:mt-4 [&_h3]:mb-2 [&_li]:leading-relaxed">
+                  <ReactMarkdown>{guidance}</ReactMarkdown>
+                </div>
+              )}
+            </div>
           </ScrollArea>
           {!loading && guidance && (
             <RecoveryPlanActions
