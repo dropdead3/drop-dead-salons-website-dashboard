@@ -10,15 +10,15 @@ import { useActiveLocations } from '@/hooks/useLocations';
 import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
 
 const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
-  today: 'Today',
-  yesterday: 'Yesterday',
-  '7d': 'Last 7 days',
+  lastMonth: 'Last Month',
   '30d': 'Last 30 days',
+  '7d': 'Last 7 days',
   thisWeek: 'This Week',
   thisMonth: 'This Month',
+  yesterday: 'Yesterday',
+  today: 'Today',
   todayToEom: 'Today to EOM',
   todayToPayday: 'Today to Next Pay Day',
-  lastMonth: 'Last Month',
 };
 
 interface Location {
