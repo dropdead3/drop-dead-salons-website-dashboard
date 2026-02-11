@@ -1,40 +1,44 @@
 
 
-# Make Widgets Grid Fully Responsive
+# Make Widgets Fill Remaining Row Space
 
 ## The Problem
-The widgets grid currently uses an inline `gridTemplateColumns` style calculated from the number of enabled widgets. This creates a fixed column count that never reflows — on narrow screens, 4 widgets stay in 4 tiny columns instead of wrapping into rows.
+With `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`, the grid always creates that many columns. When the last row has fewer widgets than columns, the widgets stay at their fixed column width and empty space remains.
 
-## The Fix
+## The Fix: CSS Grid `auto-fit` with `minmax`
 
 ### File: `src/components/dashboard/WidgetsSection.tsx`
 
-Replace the inline `style` grid (lines 112-115) with standard Tailwind responsive grid classes:
+Replace the Tailwind grid classes with an inline `auto-fit` grid:
 
 **Before:**
-```tsx
-<div 
-  className="grid gap-4"
-  style={{
-    gridTemplateColumns: `repeat(${Math.min(enabledWidgets.length, 4)}, minmax(0, 1fr))`,
-  }}
->
-```
-
-**After:**
 ```tsx
 <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
 ```
 
-This gives us:
-- **Mobile** (< 640px): 1 column -- full width cards
-- **Small** (640px+): 2 columns
-- **Large** (1024px+): 3 columns
-- **XL** (1280px+): 4 columns (matches the current max)
+**After:**
+```tsx
+<div
+  className="grid gap-4"
+  style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}
+>
+```
 
-Widgets naturally wrap into clean rows at every breakpoint. If only 1 or 2 widgets are enabled, they simply fill the first slots in the grid without leaving awkward gaps -- CSS grid handles partial rows gracefully.
+### How it works
+- `auto-fit` creates as many columns as fit, then **collapses empty tracks** so remaining items stretch to fill the row
+- `minmax(280px, 1fr)` means each widget is at least 280px wide but grows to share available space equally
+- On narrow screens, widgets naturally stack to 1 column (since 2 x 280px won't fit)
+- On wide screens, up to 4+ columns form automatically
+- **Crucially**: a last row with 2 widgets in a 3-column layout will have those 2 widgets expand to fill the full width -- no dead space
+
+### Result by viewport
+- ~560px and below: 1 column
+- ~560-840px: 2 columns
+- ~840-1120px: 3 columns
+- ~1120px+: 4 columns
+- Partial last rows always stretch to fill
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/WidgetsSection.tsx` | Replace inline `style` grid with Tailwind responsive `grid-cols-*` classes |
+| `src/components/dashboard/WidgetsSection.tsx` | Replace Tailwind grid-cols classes with `auto-fit` + `minmax` inline style |
 
