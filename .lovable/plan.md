@@ -1,34 +1,27 @@
 
+# Make Schedule/Tasks Grid Responsive When Cards Are Hidden
 
-# Show "Today's Schedule" Only for Appointment-Taking Roles
+## The Problem
+When "Today's Schedule" is hidden (for non-stylist roles), the "My Tasks" card only spans half the grid width, leaving an empty gap on the right side.
 
-## What Changes
-The "Today's Schedule" card on the Command Center dashboard will only appear for roles that take appointments: **stylist**, **stylist_assistant**, and **booth_renter**. All other roles (admin, manager, receptionist, etc.) will no longer see this card.
-
-## Technical Details
+## The Fix
 
 ### File: `src/pages/dashboard/DashboardHome.tsx`
 
-Wrap the existing `VisibilityGate` for "Today's Schedule" (lines 482-500) with the already-defined `hasStylistRole` check:
+Change the grid container (line 481) from a static `lg:grid-cols-2` to a dynamic column count based on whether `hasStylistRole` is true:
 
+**Before:**
 ```tsx
-{hasStylistRole && (
-  <VisibilityGate elementKey="todays_schedule">
-    <Card ...>
-      {/* Today's Schedule content */}
-    </Card>
-  </VisibilityGate>
-)}
+<div className="grid gap-6 lg:grid-cols-2">
 ```
 
-The variable `hasStylistRole` (already on line 129) covers all three appointment-taking roles:
-- stylist
-- stylist_assistant
-- booth_renter
+**After:**
+```tsx
+<div className={cn("grid gap-6", hasStylistRole && "lg:grid-cols-2")}>
+```
 
-No new files, hooks, or database changes needed. One small conditional wrapper is all that is required.
+When `hasStylistRole` is false, the grid stays single-column and "My Tasks" spans the full width. When true, both cards sit side by side as before.
 
 | File | Change |
 |---|---|
-| `src/pages/dashboard/DashboardHome.tsx` | Wrap Today's Schedule card with `hasStylistRole` conditional |
-
+| `src/pages/dashboard/DashboardHome.tsx` | Make grid cols conditional on `hasStylistRole` |
