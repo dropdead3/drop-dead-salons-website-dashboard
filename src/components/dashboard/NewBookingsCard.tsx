@@ -6,18 +6,31 @@ import { useNewBookings } from '@/hooks/useNewBookings';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
+
+const RANGE_LABELS: Record<DateRangeType, string> = {
+  today: 'Booked Today',
+  yesterday: 'Booked Yesterday',
+  '7d': 'Last 7 Days',
+  '30d': 'Last 30 Days',
+  thisWeek: 'This Week',
+  thisMonth: 'This Month',
+  lastMonth: 'Last Month',
+  todayToEom: 'Today to End of Month',
+  todayToPayday: 'Today to Next Pay Day',
+};
 
 interface NewBookingsCardProps {
   filterContext?: FilterContext;
 }
 
 export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
-  const { data, isLoading } = useNewBookings(filterContext?.locationId);
+  const dateRange = (filterContext?.dateRange ?? 'today') as DateRangeType;
+  const { data, isLoading } = useNewBookings(filterContext?.locationId, dateRange);
 
-  // Show location breakdown only when viewing "All Locations"
   const showLocationBreakdown = !filterContext?.locationId || filterContext.locationId === 'all';
+  const heroLabel = RANGE_LABELS[dateRange] || 'Booked';
 
-  // Trend icon based on percent change
   const TrendIcon = data?.percentChange && data.percentChange > 0 ? TrendingUp 
     : data?.percentChange && data.percentChange < 0 ? TrendingDown 
     : Minus;
@@ -36,9 +49,8 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
           <div className="flex items-center gap-2">
             <div>
               <h2 className="font-display text-sm tracking-wide">NEW BOOKINGS</h2>
-              <p className="text-xs text-muted-foreground">Appointments created</p>
+              <p className="text-xs text-muted-foreground">Appointments scheduled</p>
             </div>
-            
           </div>
         </div>
         {filterContext && (
@@ -49,16 +61,16 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
         )}
       </div>
 
-      {/* Hero: Total Booked Today */}
+      {/* Hero: Total Booked in Range */}
       <div className="text-center mb-6">
         {isLoading ? (
           <Skeleton className="h-12 w-16 mx-auto" />
         ) : (
-          <p className="text-4xl font-display tabular-nums">{data?.bookedToday || 0}</p>
+          <p className="text-4xl font-display tabular-nums">{data?.bookedInRange || 0}</p>
         )}
         <div className="flex items-center gap-1 justify-center mt-1">
-          <p className="text-sm text-muted-foreground">Booked Today</p>
-          <MetricInfoTooltip description="Total new appointments created today (by creation date)." />
+          <p className="text-sm text-muted-foreground">{heroLabel}</p>
+          <MetricInfoTooltip description={`Total appointments scheduled for the selected period (${heroLabel.toLowerCase()}).`} />
         </div>
       </div>
 
@@ -71,11 +83,11 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
           {isLoading ? (
             <Skeleton className="h-7 w-10 mx-auto" />
           ) : (
-            <p className="text-xl font-display tabular-nums">{data?.newClientToday || 0}</p>
+            <p className="text-xl font-display tabular-nums">{data?.newClientCount || 0}</p>
           )}
           <div className="flex items-center gap-1 justify-center mt-1">
             <p className="text-xs text-muted-foreground">New Clients</p>
-            <MetricInfoTooltip description="Bookings today from first-time clients." />
+            <MetricInfoTooltip description="Bookings from first-time clients in this period." />
           </div>
         </div>
 
@@ -86,11 +98,11 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
           {isLoading ? (
             <Skeleton className="h-7 w-10 mx-auto" />
           ) : (
-            <p className="text-xl font-display tabular-nums">{data?.returningClientToday || 0}</p>
+            <p className="text-xl font-display tabular-nums">{data?.returningClientCount || 0}</p>
           )}
           <div className="flex items-center gap-1 justify-center mt-1">
             <p className="text-xs text-muted-foreground">Returning Clients</p>
-            <MetricInfoTooltip description="Bookings today from repeat clients." />
+            <MetricInfoTooltip description="Bookings from repeat clients in this period." />
           </div>
         </div>
       </div>
@@ -105,15 +117,15 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
               : 'text-red-500'
             }`} />
             <span className="text-sm font-medium">After-Service Rebook</span>
-            <MetricInfoTooltip description="Percentage of returning clients serviced today who rebooked their next appointment before leaving." />
+            <MetricInfoTooltip description="Percentage of returning clients serviced in this period who rebooked their next appointment." />
           </div>
           {data.rebookRate !== null ? (
             <>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-muted-foreground">
-                  {data.rebookedAtCheckoutToday} of {data.returningServicedToday} rebooked
-                  {(data.returningServicedToday! - data.rebookedAtCheckoutToday!) > 0 && (
-                    <span className="text-red-400"> · {data.returningServicedToday! - data.rebookedAtCheckoutToday!} did not</span>
+                  {data.rebookedAtCheckoutInRange} of {data.returningServicedInRange} rebooked
+                  {(data.returningServicedInRange! - data.rebookedAtCheckoutInRange!) > 0 && (
+                    <span className="text-red-400"> · {data.returningServicedInRange! - data.rebookedAtCheckoutInRange!} did not</span>
                   )}
                 </span>
                 <span className="font-display tabular-nums text-lg">{data.rebookRate}%</span>
@@ -129,12 +141,12 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
               />
             </>
           ) : (
-            <p className="text-sm text-muted-foreground">No returning clients serviced yet today</p>
+            <p className="text-sm text-muted-foreground">No returning clients serviced in this period</p>
           )}
         </div>
       )}
 
-      {/* Location Breakdown - only shown for "All Locations" and when >1 location has data */}
+      {/* Location Breakdown */}
       {showLocationBreakdown && data?.locationBreakdown && data.locationBreakdown.length > 1 && (
         <div className="mb-4">
           <div className="flex items-center gap-2 mb-2">
