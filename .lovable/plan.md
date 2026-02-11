@@ -1,62 +1,66 @@
 
 
-## Fix Card Header Overflow on Sales Charts
+## Fix Overlapping Card Headers -- Stack Title and Badges Vertically
 
 ### Problem
-The "Product Categories" and "Service Popularity" card headers pack the title, filter badge, and summary badges into a single horizontal row. When card width is constrained (especially in the 2-column grid), content overflows outside the card boundary.
+The title text ("PRODUCT CATEGORIES", "SERVICE POPULARITY") and filter/summary badges ("All Locations · Today", "19 services", "$2,021") are fighting for the same horizontal row. Even with `flex-wrap`, the title font is too large and the badges too wide -- they overlap visually.
 
 ### Solution
-Restructure both card headers to wrap cleanly:
-- Stack the title row and the badges/filter row vertically instead of forcing everything onto one line
-- Move the filter badge and summary badges below the title, aligned right, with `flex-wrap` so they gracefully wrap on small screens
-
-### Visual Result
+Stop trying to fit everything on one line. Instead, stack vertically:
+1. Title row: icon + title (full width)
+2. Badges row: filter badge + summary badges, right-aligned on their own line
 
 ```text
 +------------------------------------------+
-| [icon] SERVICE POPULARITY                |
-| Most requested services ranked by...     |
-|          All Locations . Today  19  $2k  |
+| [icon] Product Categories                |
+|          All Locations · Today     $0    |
+| Revenue breakdown by product category    |
 +------------------------------------------+
 ```
 
-Instead of the current single-line layout that overflows.
+### Changes
 
-### Files to Change
+**1. `src/components/dashboard/sales/ProductCategoryChart.tsx`** (lines 52-66)
 
-**1. `src/components/dashboard/sales/ServicePopularityChart.tsx`** (lines 48-65)
-- Change the header from a single `flex justify-between` row to a stacked layout
-- Title on its own line
-- Filter badge + summary badges on the next line, right-aligned with `flex-wrap`
+Replace the single `flex justify-between` wrapper with a vertical stack:
 
-**2. `src/components/dashboard/sales/ProductCategoryChart.tsx`** (lines 51-67)
-- Same restructure: title on top, badges below with `flex-wrap`
-
-### Technical Detail
-Both headers currently use:
 ```tsx
-<div className="flex items-center justify-between">
-  <div>{icon + title}</div>
-  <div>{filterBadge + badges}</div>
-</div>
-```
-
-Change to:
-```tsx
-<div className="flex items-start justify-between gap-2">
-  <div className="flex items-center gap-2 min-w-0">
-    {icon + title}
+<div className="space-y-2">
+  <div className="flex items-center gap-2">
+    <ShoppingBag className="w-5 h-5 text-chart-2 shrink-0" />
+    <CardTitle className="font-display">Product Categories</CardTitle>
   </div>
-  <div className="flex items-center gap-2 flex-wrap justify-end shrink-0">
-    {filterBadge + badges}
+  <div className="flex items-center gap-2 flex-wrap">
+    {filterContext && <AnalyticsFilterBadge ... />}
+    <Badge variant="outline">$0</Badge>
   </div>
 </div>
 ```
 
-Key fixes:
-- `min-w-0` on the title side allows it to shrink
-- `flex-wrap justify-end` on the badges side lets them wrap to a second line
-- `items-start` instead of `items-center` so wrapped content aligns cleanly
-- `shrink-0` is removed if badges should also shrink; or we allow the badge group to wrap
+**2. `src/components/dashboard/sales/ServicePopularityChart.tsx`** (lines 49-64)
 
-This is a CSS-only fix -- no logic changes needed.
+Same restructure:
+
+```tsx
+<div className="space-y-2">
+  <div className="flex items-center gap-2">
+    <Scissors className="w-5 h-5 text-primary shrink-0" />
+    <CardTitle className="font-display">Service Popularity</CardTitle>
+  </div>
+  <div className="flex items-center gap-2 flex-wrap">
+    {filterContext && <AnalyticsFilterBadge ... />}
+    <Badge variant="outline">{totalServices} services</Badge>
+    <Badge variant="secondary">${totalRevenue}</Badge>
+  </div>
+</div>
+```
+
+### What This Fixes
+- Title gets its own full-width line -- no more overlap with badges
+- Badges wrap naturally on their own row
+- Clean, readable hierarchy: Title > Filters/Stats > Description
+- Works at any card width without spilling
+
+### Files Modified
+1. `src/components/dashboard/sales/ProductCategoryChart.tsx` -- vertical stack header
+2. `src/components/dashboard/sales/ServicePopularityChart.tsx` -- vertical stack header
