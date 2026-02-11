@@ -5,8 +5,8 @@ import { VisibilityGate } from '@/components/visibility';
 import { usePaySchedule } from '@/hooks/usePaySchedule';
 import { usePayrollRunForPeriod } from '@/hooks/usePayrollRunForPeriod';
 import { useHasEffectivePermission } from '@/hooks/useEffectivePermissions';
-import { differenceInDays, differenceInHours, format } from 'date-fns';
-import { AlertTriangle, ChevronRight, DollarSign, Settings } from 'lucide-react';
+import { differenceInDays, addDays, format } from 'date-fns';
+import { AlertTriangle, CheckCircle2, ChevronRight, DollarSign, Settings, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -85,11 +85,18 @@ export function PayrollDeadlineCard() {
   const checkDate = currentPeriod.nextPayDay;
   const now = new Date();
   const daysUntilDeadline = differenceInDays(periodEndDate, now);
+  const isAutomatic = settings.processing_mode === 'automatic';
 
   // More than 5 days away — too early, hide
   if (daysUntilDeadline > 5) return null;
 
-  const urgency = getUrgencyLevel(daysUntilDeadline);
+  // Calculate scheduled auto-run date for automatic mode
+  const autoRunDate = isAutomatic
+    ? addDays(checkDate, -(settings.auto_run_days_before_check ?? 2))
+    : null;
+  const daysUntilAutoRun = autoRunDate ? differenceInDays(autoRunDate, now) : null;
+
+  const urgency = isAutomatic ? 'calm' : getUrgencyLevel(daysUntilDeadline);
   const styles = urgencyStyles[urgency];
   const isPastDeadline = daysUntilDeadline < 0;
 
@@ -103,7 +110,9 @@ export function PayrollDeadlineCard() {
         <CardHeader className="pb-2 pt-4 px-5">
           <div className="flex items-center gap-2">
             <div className={cn('w-8 h-8 rounded-full flex items-center justify-center', styles.iconBg)}>
-              {isPastDeadline ? (
+              {isAutomatic ? (
+                <Zap className={cn('h-4 w-4', styles.icon)} />
+              ) : isPastDeadline ? (
                 <AlertTriangle className={cn('h-4 w-4', styles.icon)} />
               ) : (
                 <DollarSign className={cn('h-4 w-4', styles.icon)} />
@@ -111,7 +120,11 @@ export function PayrollDeadlineCard() {
             </div>
             <div className="flex-1">
               <CardTitle className="text-sm font-display tracking-wide">
-                {isPastDeadline ? 'PAYROLL OVERDUE' : 'PAYROLL SUBMISSION'}
+                {isAutomatic
+                  ? 'AUTO PAYROLL SCHEDULED'
+                  : isPastDeadline
+                    ? 'PAYROLL OVERDUE'
+                    : 'PAYROLL SUBMISSION'}
               </CardTitle>
               <p className="text-xs text-muted-foreground">
                 {format(currentPeriod.periodStart, 'MMM d')} – {format(periodEndDate, 'MMM d')}
@@ -120,10 +133,34 @@ export function PayrollDeadlineCard() {
           </div>
         </CardHeader>
         <CardContent className="px-5 pb-4 pt-1 space-y-3">
-          {isPastDeadline ? (
+          {isAutomatic ? (
+            /* Automatic payroll mode */
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-destructive font-medium mb-1">Deadline Passed</p>
+                <div className="flex items-center gap-1.5 mb-1">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                  <p className="text-xs font-medium text-primary">Auto-run enabled</p>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {autoRunDate && daysUntilAutoRun !== null
+                    ? daysUntilAutoRun <= 0
+                      ? `Scheduled to run today`
+                      : daysUntilAutoRun === 1
+                        ? `Runs tomorrow (${format(autoRunDate, 'MMM d')})`
+                        : `Runs ${format(autoRunDate, 'MMM d')} (${daysUntilAutoRun} days)`
+                    : 'Scheduled via provider'}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-muted-foreground mb-1">Check Date</p>
+                <p className="text-sm font-medium">{format(checkDate, 'MMM d')}</p>
+              </div>
+            </div>
+          ) : isPastDeadline ? (
+            /* Manual mode — overdue */
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-destructive font-medium mb-1">Deadline Passed — Manual Submission Required</p>
                 <p className="text-sm font-medium text-destructive">
                   {Math.abs(daysUntilDeadline)} day{Math.abs(daysUntilDeadline) !== 1 ? 's' : ''} overdue
                 </p>
@@ -134,9 +171,10 @@ export function PayrollDeadlineCard() {
               </div>
             </div>
           ) : (
+            /* Manual mode — upcoming */
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Deadline</p>
+                <p className="text-xs text-muted-foreground mb-1">Manual Submission Due</p>
                 <LiveCountdown
                   expiresAt={periodEndDate}
                   displayMode="days"
@@ -153,13 +191,18 @@ export function PayrollDeadlineCard() {
           )}
 
           <Button
-            variant={isPastDeadline ? 'destructive' : 'outline'}
+            variant={isPastDeadline && !isAutomatic ? 'destructive' : 'outline'}
             size="sm"
             className="w-full"
             asChild
           >
             <Link to="/dashboard/admin/payroll">
-              {isPastDeadline ? 'Run Payroll Now' : 'Run Payroll'} <ChevronRight className="h-3 w-3 ml-1" />
+              {isAutomatic
+                ? 'View Payroll'
+                : isPastDeadline
+                  ? 'Run Payroll Now'
+                  : 'Run Payroll'}{' '}
+              <ChevronRight className="h-3 w-3 ml-1" />
             </Link>
           </Button>
         </CardContent>

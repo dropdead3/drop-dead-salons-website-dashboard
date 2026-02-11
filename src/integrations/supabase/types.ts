@@ -7490,6 +7490,7 @@ export type Database = {
       }
       organization_payroll_settings: {
         Row: {
+          auto_run_days_before_check: number
           bi_weekly_day_of_week: number
           bi_weekly_start_date: string | null
           created_at: string
@@ -7498,12 +7499,14 @@ export type Database = {
           monthly_pay_day: number
           organization_id: string
           pay_schedule_type: string
+          processing_mode: string
           semi_monthly_first_day: number
           semi_monthly_second_day: number
           updated_at: string
           weekly_day_of_week: number
         }
         Insert: {
+          auto_run_days_before_check?: number
           bi_weekly_day_of_week?: number
           bi_weekly_start_date?: string | null
           created_at?: string
@@ -7512,12 +7515,14 @@ export type Database = {
           monthly_pay_day?: number
           organization_id: string
           pay_schedule_type?: string
+          processing_mode?: string
           semi_monthly_first_day?: number
           semi_monthly_second_day?: number
           updated_at?: string
           weekly_day_of_week?: number
         }
         Update: {
+          auto_run_days_before_check?: number
           bi_weekly_day_of_week?: number
           bi_weekly_start_date?: string | null
           created_at?: string
@@ -7526,6 +7531,7 @@ export type Database = {
           monthly_pay_day?: number
           organization_id?: string
           pay_schedule_type?: string
+          processing_mode?: string
           semi_monthly_first_day?: number
           semi_monthly_second_day?: number
           updated_at?: string
