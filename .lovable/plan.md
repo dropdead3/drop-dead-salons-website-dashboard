@@ -1,86 +1,128 @@
 
 
-# Client Health Hub -- Centralized Outreach & Relationship Management
+# "Let's Implement" -- AI Plan-to-Action Workflow
 
-## What We're Building
+## Overview
 
-A dedicated **Client Health Hub** that consolidates every actionable client opportunity into one place -- at-risk clients, no-rebooks, win-back candidates, birthday outreach, and more -- with the ability to take immediate action (send emails, share with staff via Team Chat DMs, or export CSVs) directly from each segment.
+Replace the **Share** button on AI recovery plans with a **"Let's Implement"** button that opens a multi-step workflow. Instead of just reading Zura's recommendations, leadership can immediately break them into structured steps, add context, assign owners, and distribute the plan -- all without leaving the dialog.
 
-## Where It Lives
+## User Flow
 
-1. **New dedicated page**: `/dashboard/admin/client-health` -- the full hub with all segments, filters, outreach tools, and tracking
-2. **Summary widget on Client Directory**: A compact "Client Health Pulse" card on `/dashboard/clients` showing top-level metrics (e.g., "21 clients need rebooking", "8 at-risk clients") with a link to the full hub
-3. **Sidebar entry**: Under Management Hub, labeled "Client Health"
-4. **AI Insights integration**: Action items like "Reach out to 21 clients for rebooking" will get a "Begin Outreach" button linking directly to the relevant segment in the hub
+```text
+[Recovery Plan Dialog]
+  Save Plan | Remind Me | Let's Implement
+                              |
+                    Click "Let's Implement"
+                              |
+                 +---------------------------+
+                 | STEP 1: Review Action Steps |
+                 |                           |
+                 | Zura auto-extracts steps  |
+                 | from the AI content:      |
+                 |                           |
+                 | [ ] Power Fill Promotion   |
+                 |     Owner: [Select staff]  |
+                 |     Due: [+2 days]         |
+                 |     Notes: [editable]      |
+                 |                           |
+                 | [ ] Retail Attachment Push  |
+                 |     Owner: [Select staff]  |
+                 |     Due: [+3 days]         |
+                 |     Notes: [editable]      |
+                 |                           |
+                 | [+ Add Custom Step]        |
+                 |                           |
+                 | Owner can edit titles,     |
+                 | reorder, remove, or add    |
+                 | their own steps.           |
+                 |                           |
+                 | Leadership Notes:          |
+                 | [textarea for context]     |
+                 |                           |
+                 |      [Next ->]             |
+                 +---------------------------+
+                              |
+                 +---------------------------+
+                 | STEP 2: Distribute & Act   |
+                 |                           |
+                 | Choose one or more:        |
+                 |                           |
+                 | [x] Create my task list    |
+                 |     -> Saves all steps to  |
+                 |        your Tasks with     |
+                 |        owners & due dates  |
+                 |                           |
+                 | [x] Share with team via DM |
+                 |     -> Pick recipients,    |
+                 |        sends formatted     |
+                 |        plan + assignments  |
+                 |                           |
+                 | [ ] Post to a channel      |
+                 |     -> Pick a Team Chat    |
+                 |        channel to announce |
+                 |                           |
+                 | [ ] Copy formatted plan    |
+                 |     -> Clipboard with      |
+                 |        assignments         |
+                 |                           |
+                 |    [Execute Plan ->]        |
+                 +---------------------------+
+                              |
+                        Confirmation
+                  "Plan activated. 4 tasks
+                   created, shared with 2
+                   team members."
+```
 
-## Hub Segments (Tabs or Sections)
+## What Changes
 
-| Segment | Data Source | Logic |
-|---------|------------|-------|
-| Needs Rebooking | `phorest_appointments` | Clients whose last appointment was X days ago with no future booking |
-| At-Risk / Lapsing | `phorest_clients.last_visit` | Clients inactive for 60+ days (configurable threshold) |
-| Win-Back Candidates | `phorest_clients.last_visit` | Clients inactive for 90+ days -- deeper lapsed |
-| New Clients (No Return) | `phorest_appointments` | First-time visitors who never rebooked |
-| Birthday Outreach | `phorest_clients` | Clients with upcoming birthdays (next 7/14/30 days) |
-| High-Value Quiet | `phorest_clients.total_spend` + `last_visit` | Top spenders who have gone quiet |
+### 1. New Component: `ImplementPlanDialog`
+A two-step dialog that replaces the Share button's functionality:
 
-Each segment shows:
-- Client count and trend
-- Filterable client list (name, last visit, total spend, assigned stylist)
-- Bulk selection checkboxes
-- Action bar with outreach options
+**Step 1 -- Review & Customize Steps:**
+- Auto-extracts action items from the AI markdown (reuses existing `extractActionItems` logic, enhanced to also grab the description text after the bold title)
+- Each step is editable: title, owner (staff picker dropdown), due date (quick-pick: tomorrow / 3 days / 1 week), and notes
+- Owner can reorder steps (drag or up/down arrows), delete steps, or add custom ones
+- A "Leadership Notes" textarea at the bottom for adding context that gets included when sharing
 
-## Outreach Actions (Per Segment)
+**Step 2 -- Distribute:**
+- Checkboxes for distribution channels (multi-select):
+  - **Create Task List**: Inserts each step into the `tasks` table with owner, due date, priority, and `source: 'ai_recovery_plan'`
+  - **Share via DM**: Opens inline recipient picker (reuses `useTeamMembers` + `useDMChannels`), sends a formatted message with the plan + step assignments
+  - **Post to Channel**: Channel picker from existing Team Chat channels, posts as a formatted announcement
+  - **Copy to Clipboard**: Copies a clean, formatted version with assignments
+- "Execute Plan" button runs all selected actions simultaneously
 
-### 1. Email via Resend
-- Select clients, pick an existing email template (from `email_templates` table), preview, and send
-- Reuses the existing `process-client-automations` Edge Function pattern
-- Logs outreach to `client_automation_log` for tracking
+### 2. Modify `RecoveryPlanActions`
+- Replace the **Share** dropdown button with **"Let's Implement"** button (uses a rocket or play icon)
+- Keep Save Plan and Remind Me as-is
+- The new button opens the `ImplementPlanDialog`
 
-### 2. Share with Staff via Team Chat DM
-- Summarize the segment into a formatted message (e.g., "21 clients from last week didn't rebook -- here's the list")
-- Opens the `ShareToDMDialog` (already built) to pick recipients
-- Staff can then personally follow up
-
-### 3. Export CSV
-- One-click download of filtered client list
-- Columns: Name, Email, Phone, Last Visit, Days Inactive, Total Spend, Assigned Stylist
-- For use in Mailchimp, SMS platforms, or external CRMs
-
-## AI Insights Integration
-
-- On the AI Insights action items (like the screenshot: "Reach out to 21 clients for rebooking"), add a small "Begin Outreach" button next to "What you should do"
-- Clicking it navigates to `/dashboard/admin/client-health?segment=needs-rebooking` with the relevant filters pre-applied
+### 3. Enhanced Action Item Extraction
+- Upgrade `extractActionItems()` to return structured objects: `{ title, description, suggestedDueInDays }` instead of just title strings
+- Parse the markdown more intelligently to capture the text after each bold heading
 
 ## Technical Details
 
 ### New Files
-- `src/pages/dashboard/admin/ClientHealthHub.tsx` -- Main hub page with tabbed segments
-- `src/components/dashboard/client-health/ClientHealthSummaryCard.tsx` -- Summary widget for Client Directory
-- `src/components/dashboard/client-health/ClientSegmentTable.tsx` -- Reusable filtered client table with bulk selection
-- `src/components/dashboard/client-health/BulkOutreachBar.tsx` -- Action bar (Email, Share, Export) that appears when clients are selected
-- `src/components/dashboard/client-health/EmailOutreachDialog.tsx` -- Template picker and send confirmation dialog
-- `src/hooks/useClientHealthSegments.ts` -- Hook that queries each segment's client list and counts
+- `src/components/dashboard/sales/ImplementPlanDialog.tsx` -- The two-step dialog with step editor and distribution options
+- `src/components/dashboard/sales/PlanStepEditor.tsx` -- Individual step row component (title, owner picker, due date, notes)
 
 ### Modified Files
-- `src/App.tsx` -- Add route for `/dashboard/admin/client-health`
-- `src/components/dashboard/SidebarNavContent.tsx` -- Add sidebar entry under Management Hub
-- `src/pages/dashboard/admin/ManagementHub.tsx` -- Add card linking to Client Health
-- `src/components/dashboard/AIInsightsDrawer.tsx` -- Add "Begin Outreach" button to `ActionItemCard` for client-related action items
-- `src/components/dashboard/AIInsightsCard.tsx` -- Same "Begin Outreach" button addition
-- Client Directory page -- Add `ClientHealthSummaryCard` widget
+- `src/components/dashboard/sales/RecoveryPlanActions.tsx` -- Replace Share button with "Let's Implement" button; enhance `extractActionItems` to return structured objects
+- `src/components/dashboard/sales/ShareToDMDialog.tsx` -- Minor: accept optional `assignments` prop to include step assignments in the message format
 
 ### Database
-- No new tables needed -- leverages existing `phorest_clients`, `phorest_appointments`, `email_templates`, `client_automation_log`, and `reengagement_outreach`
-- May add a `client_health_outreach_log` table later for hub-specific tracking, but Phase 1 reuses `client_automation_log`
+- No new tables needed. Tasks go into the existing `tasks` table. The `description` field will include assignment context (e.g., "From recovery plan: Weekly Goal Recovery Plan -- Assigned to: Sarah")
 
-### Edge Function
-- Reuse `process-client-automations` for email sends
-- Alternatively, create a lightweight `send-bulk-outreach` Edge Function that accepts a list of client IDs + template ID and sends via Resend -- this gives the hub direct control without needing automation rules
+### Reused Infrastructure
+- `useTeamMembers` hook for the owner/staff picker
+- `useDMChannels` + `createDM` for DM distribution
+- `useChatChannels` for channel posting
+- Existing `tasks` table schema (title, description, due_date, priority, source, user_id)
 
-## Phased Approach (Recommended)
-
-**Phase 1** (this implementation): Hub page with all segments, bulk email, Team Chat share, CSV export, AI insights integration
-
-**Phase 2** (future): Outreach tracking dashboard (open rates, conversion to bookings), automated scheduling of recurring outreach, per-segment performance metrics
+### UI Standards
+- Same dialog styling as existing Zura dialogs: `backdrop-blur-sm bg-black/60` overlay, `max-w-lg`, branded header with ZuraAvatar
+- Step indicators (1/2) in the dialog header
+- Smooth transitions between steps using framer-motion or CSS transitions
 
