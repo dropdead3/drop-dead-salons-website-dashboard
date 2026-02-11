@@ -11968,6 +11968,54 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_recovery_plans: {
+        Row: {
+          content: string
+          created_at: string
+          current_revenue: number | null
+          goal_period: string
+          id: string
+          is_archived: boolean
+          reminder_date: string | null
+          reminder_sent: boolean
+          shortfall: number | null
+          target_revenue: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          current_revenue?: number | null
+          goal_period?: string
+          id?: string
+          is_archived?: boolean
+          reminder_date?: string | null
+          reminder_sent?: boolean
+          shortfall?: number | null
+          target_revenue?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          current_revenue?: number | null
+          goal_period?: string
+          id?: string
+          is_archived?: boolean
+          reminder_date?: string | null
+          reminder_sent?: boolean
+          shortfall?: number | null
+          target_revenue?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       schedule_change_requests: {
         Row: {
           created_at: string | null

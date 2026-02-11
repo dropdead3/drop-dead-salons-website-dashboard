@@ -12,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/integrations/supabase/client';
+import { RecoveryPlanActions } from './RecoveryPlanActions';
 
 interface SalesGoalProgressProps {
   current: number;
@@ -263,6 +264,16 @@ export function SalesGoalProgress({
               </div>
             )}
           </ScrollArea>
+          {!loading && guidance && (
+            <RecoveryPlanActions
+              title={`${label} Recovery Plan`}
+              content={guidance}
+              goalPeriod={goalPeriod}
+              targetRevenue={target}
+              currentRevenue={current}
+              shortfall={remaining}
+            />
+          )}
           <div className="text-[10px] text-muted-foreground text-center pt-2 border-t border-border/30">
             Powered by Zura AI
           </div>
