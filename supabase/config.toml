@@ -185,3 +185,6 @@ verify_jwt = false
 
 [functions.lever-engine]
 verify_jwt = false
+
+[functions.check-payroll-deadline]
+verify_jwt = false
