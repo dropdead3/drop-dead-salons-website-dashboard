@@ -1,39 +1,52 @@
 
 
-# Daily Average: Use Working Days, Not Calendar Days
+# Fix After-Service Rebook: Missing Client Data in Sync
 
-## Problem
+## Root Cause
 
-The Daily Avg metric currently divides total revenue by all calendar days in the range (e.g., 7 days for "Last 7 Days"). Since the salon is closed 2 days per week with $0 in sales, this deflates the average and misrepresents daily performance.
+The Phorest sync function intentionally drops `phorest_client_id` from appointments when the client does not already exist in the local `phorest_clients` table. Out of 321 total appointments, only 53 (16.5%) have a `phorest_client_id` populated. Yesterday, only 5 of 20 appointments had client IDs linked.
 
-## Solution
+This means 75% of appointments are invisible to any client-based analytics -- including new/returning classification and rebook rate.
 
-Instead of counting calendar days, count the **distinct days that actually had transactions** in the selected range. This automatically handles closed days, holidays, and any other non-operating days without needing a hardcoded schedule.
-
-For the screenshot example: $3,836 across ~3 working days = ~$1,279/day (which happens to match, suggesting the current range has 3 active days out of the week so far).
-
-## Implementation
-
-### File: `src/components/dashboard/AggregateSalesCard.tsx`
-
-**Current logic (line ~550-554):**
-```
-daysInRange = differenceInCalendarDays(dateTo, dateFrom) + 1
-dailyAverage = totalRevenue / daysInRange
+The code at line 330 of `sync-phorest-data/index.ts`:
+```text
+phorest_client_id: localClientId  // null if client not in local DB
 ```
 
-**New logic:**
-- The aggregate sales data already comes from a hook that queries `phorest_sales`. Query for distinct `sale_date` values within the range to get the count of days with actual sales activity.
-- Alternatively (simpler, no extra query): the location breakdown data or the sales query already returns per-row sale dates. Count unique `sale_date` values from the existing data to derive working days.
-- Compute: `dailyAverage = totalRevenue / workingDays`
-- Update the tooltip to read: "Average daily revenue across days with recorded sales."
-- If zero working days (no sales at all), show $0.
+Should instead always store the raw ID from the Phorest API, since it serves as a grouping key for analytics (not a foreign key constraint).
 
-### Determining working days without an extra query
+## Fix Plan
 
-The existing `useAggregateSales` hook fetches sales rows. I need to check if it already returns individual sale dates or just aggregated totals. If aggregated, I will add a `daysWithSales` count to the hook's return value by querying distinct sale dates from the same data source.
+### 1. Fix the sync function (`supabase/functions/sync-phorest-data/index.ts`)
 
-### Changes summary
+- **Line 330**: Change from `localClientId` to the raw `phorestClientId` value from the API response. This ensures every appointment with a client in Phorest gets properly tagged, regardless of whether that client has been separately synced to the local table.
+- Keep the existing client lookup logic (lines 311-322) for logging purposes, but do not gate the `phorest_client_id` field on it.
 
-1. **`useAggregateSales` hook** -- add a `daysWithSales` field that counts distinct `sale_date` values within the range from the already-queried sales data.
-2. **`AggregateSalesCard.tsx`** -- replace `differenceInCalendarDays` with the `daysWithSales` value from the hook. Update the tooltip text.
+### 2. Backfill existing appointments
+
+- Run a one-time data fix after deploying the sync update. Re-trigger a sync (or write a targeted update query) to populate `phorest_client_id` on the 268 appointments currently missing it. The simplest approach: re-run the sync for recent date ranges, which will now correctly upsert the client IDs.
+
+### 3. No changes needed in `useNewBookings.ts`
+
+The rebook logic is already correct -- it groups by `phorest_client_id`, checks for prior visits, and looks for future appointments. It will work properly once the data is populated.
+
+## What This Fixes
+
+- "New Clients" and "Returning Clients" counts will reflect all booked clients, not just the 16% with local records.
+- "After-Service Rebook" will correctly identify returning clients who scheduled future appointments.
+- All downstream analytics (rebook rate, client retention, stylist experience scores) that depend on `phorest_client_id` will become accurate.
+
+## Technical Detail
+
+**File**: `supabase/functions/sync-phorest-data/index.ts`
+
+Change line 330 from:
+```text
+phorest_client_id: localClientId,
+```
+to:
+```text
+phorest_client_id: phorestClientId,
+```
+
+This is a one-line fix in the sync function. After deploying, the next sync cycle will backfill the missing client IDs for any appointments it processes. For historical data outside the sync window, a manual re-sync or SQL update may be needed.
