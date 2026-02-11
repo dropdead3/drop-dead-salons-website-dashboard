@@ -82,7 +82,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
         <button
           type="button"
           onClick={() => setDrilldown('new')}
-          className="text-center p-4 bg-muted/30 rounded-lg cursor-pointer transition-transform hover:-translate-y-0.5"
+          className="text-center p-4 bg-muted/30 rounded-lg border border-border/50 cursor-pointer transition-transform hover:-translate-y-0.5"
         >
           <div className="flex justify-center mb-2">
             <UserPlus className="w-5 h-5 text-emerald-600" />
@@ -101,7 +101,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
         <button
           type="button"
           onClick={() => setDrilldown('returning')}
-          className="text-center p-4 bg-muted/30 rounded-lg cursor-pointer transition-transform hover:-translate-y-0.5"
+          className="text-center p-4 bg-muted/30 rounded-lg border border-border/50 cursor-pointer transition-transform hover:-translate-y-0.5"
         >
           <div className="flex justify-center mb-2">
             <RefreshCw className="w-5 h-5 text-purple-600" />
@@ -120,7 +120,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
 
       {/* After-Service Rebook Rate */}
       {!isLoading && data?.rebookRate !== undefined && (
-        <div className="mb-4 p-4 bg-muted/30 rounded-lg">
+        <div className="mb-4 p-4 bg-muted/30 rounded-lg border border-border/50">
           <div className="flex items-center gap-2 mb-2">
             <CalendarCheck className={`w-5 h-5 ${
               data.rebookRate !== null && data.rebookRate >= 70 ? 'text-emerald-600' 
@@ -170,7 +170,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
             {data.locationBreakdown.map(loc => (
               <div
                 key={loc.locationId}
-                className="flex items-center justify-between p-2 bg-muted/20 rounded-md"
+                className="flex items-center justify-between p-2 bg-muted/20 rounded-md border border-border/30"
               >
                 <span className="text-sm">{loc.name}</span>
                 <span className="font-display tabular-nums">{loc.count}</span>

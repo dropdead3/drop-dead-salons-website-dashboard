@@ -52,7 +52,7 @@ export function LocationBreakdownSection({
         {sortedData.map((loc) => (
           <div
             key={loc.locationId}
-            className="flex items-center justify-between p-2 bg-muted/20 rounded-md"
+            className="flex items-center justify-between p-2 bg-muted/20 rounded-md border border-border/30"
           >
             <span className="text-sm truncate max-w-[150px]">{loc.locationName}</span>
             <span className="font-display tabular-nums text-sm">{formatValue(loc.value)}</span>
