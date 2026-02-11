@@ -1,39 +1,39 @@
 
 
-## Fix: Square Corners Bug on Dashboard Elements
+## Unify Dashboard Icon Colors: Primary with Subtle Warmth
 
-### Root Cause
+### Overview
+Replace the multi-colored rainbow of icon tints across the staff dashboard with a cohesive monochrome system: **primary-colored icons** sitting on **warm muted backgrounds** (bg-muted). This creates a clean, editorial look where icons feel intentional rather than decorative.
 
-In `src/index.css` (line 147), the CSS variable `--radius` is set to `0rem`:
+### What Changes
 
-```css
---radius: 0rem;
-```
+**1. Quick Stats Cards** (`src/pages/dashboard/DashboardHome.tsx`, lines ~426-469)
+Currently each stat card has a different colored icon container (blue, green, purple, orange). Change all four to:
+- Background: `bg-muted` (replaces `bg-blue-500/10`, `bg-green-500/10`, etc.)
+- Icon color: `text-primary` (replaces `text-blue-600`, `text-green-600`, etc.)
 
-Many UI components from the component library internally reference `var(--radius)` for their default border-radius calculations. When this is set to `0`, those components render with sharp/square corners instead of the soft, rounded "bento" look you had before.
+**2. Hub Quick Links** (`src/components/dashboard/HubQuickLinks.tsx`, lines 26-89)
+Currently each hub link has a unique color class (blue, purple, green, amber, rose, etc.). Change all `colorClass` values to a unified:
+- `bg-primary/5 text-primary hover:bg-primary/10`
 
-Components that explicitly use Tailwind classes like `rounded-2xl` (such as the main dashboard cards) are unaffected since they pull from `tailwind.config.ts` values directly. But elements using the CSS variable -- including default dialog corners, input fields, dropdown menus, and some nested card elements -- all become square.
+This keeps the hover interaction but removes the rainbow.
 
-### The Fix
+**3. Client Engine flame icon** (`src/pages/dashboard/DashboardHome.tsx`, line ~566)
+The streak flame icon currently uses `text-orange-500`. Change to `text-primary` to stay in family.
 
-Change `--radius` from `0rem` to a value that matches the luxury bento aesthetic. A value of `0.75rem` (12px) provides soft, premium-feeling default rounding for all components that rely on this variable:
+### What Stays the Same
+- **Quick Actions section** -- already uses `text-primary` with `bg-primary/10` consistently. No changes needed.
+- **Schedule/Tasks section headers** -- use `text-muted-foreground` for utility icons (Clock, etc.). This is correct and stays.
+- **Empty state ghost icons** -- use `opacity-20` which is correct editorial styling.
+- **Client Engine card** -- the gold gradient container is a deliberate premium accent and stays as-is.
 
-**File:** `src/index.css`, line 147
-
-```css
-/* Before */
---radius: 0rem;
-
-/* After */
---radius: 0.75rem;
-```
-
-This single-line change will restore rounded corners across all affected components while preserving the explicit `rounded-2xl` and `rounded-xl` classes already used on dashboard bento cards.
+### Files Modified
+1. `src/pages/dashboard/DashboardHome.tsx` -- Quick Stats icon colors + flame icon
+2. `src/components/dashboard/HubQuickLinks.tsx` -- Hub link color classes
 
 ### Technical Details
-
-- The `--radius` variable is defined once in the `:root` / `.theme-cream` block and cascades to all themes (rose, sage, ocean, etc.)
-- shadcn components (Dialog, Select, Popover, DropdownMenu, etc.) use `calc(var(--radius) - Xpx)` internally for nested elements, so a `0rem` base causes all of them to collapse to zero or negative values
-- The explicit Tailwind border-radius classes in `tailwind.config.ts` remain unchanged and continue to work as expected
-- No other files need to change
+- All changes use existing Tailwind utilities and CSS variables
+- `text-primary` and `bg-muted` are theme-aware, so they automatically adapt to dark mode and custom theme overrides
+- No new dependencies or components needed
+- Two files, roughly 15 line-level edits total
 
