@@ -546,7 +546,7 @@ export function AggregateSalesCard({
           
           {/* Secondary KPIs Row */}
           {(() => {
-            const showDailyAvg = dateRange !== 'today';
+            const showDailyAvg = dateRange !== 'today' && dateRange !== 'yesterday';
             const workingDays = metrics?.daysWithSales ?? 0;
             const dailyAverage = workingDays > 0 ? displayMetrics.totalRevenue / workingDays : 0;
 
