@@ -1,128 +1,74 @@
 
 
-# "Let's Implement" -- AI Plan-to-Action Workflow
-
-## Overview
-
-Replace the **Share** button on AI recovery plans with a **"Let's Implement"** button that opens a multi-step workflow. Instead of just reading Zura's recommendations, leadership can immediately break them into structured steps, add context, assign owners, and distribute the plan -- all without leaving the dialog.
-
-## User Flow
-
-```text
-[Recovery Plan Dialog]
-  Save Plan | Remind Me | Let's Implement
-                              |
-                    Click "Let's Implement"
-                              |
-                 +---------------------------+
-                 | STEP 1: Review Action Steps |
-                 |                           |
-                 | Zura auto-extracts steps  |
-                 | from the AI content:      |
-                 |                           |
-                 | [ ] Power Fill Promotion   |
-                 |     Owner: [Select staff]  |
-                 |     Due: [+2 days]         |
-                 |     Notes: [editable]      |
-                 |                           |
-                 | [ ] Retail Attachment Push  |
-                 |     Owner: [Select staff]  |
-                 |     Due: [+3 days]         |
-                 |     Notes: [editable]      |
-                 |                           |
-                 | [+ Add Custom Step]        |
-                 |                           |
-                 | Owner can edit titles,     |
-                 | reorder, remove, or add    |
-                 | their own steps.           |
-                 |                           |
-                 | Leadership Notes:          |
-                 | [textarea for context]     |
-                 |                           |
-                 |      [Next ->]             |
-                 +---------------------------+
-                              |
-                 +---------------------------+
-                 | STEP 2: Distribute & Act   |
-                 |                           |
-                 | Choose one or more:        |
-                 |                           |
-                 | [x] Create my task list    |
-                 |     -> Saves all steps to  |
-                 |        your Tasks with     |
-                 |        owners & due dates  |
-                 |                           |
-                 | [x] Share with team via DM |
-                 |     -> Pick recipients,    |
-                 |        sends formatted     |
-                 |        plan + assignments  |
-                 |                           |
-                 | [ ] Post to a channel      |
-                 |     -> Pick a Team Chat    |
-                 |        channel to announce |
-                 |                           |
-                 | [ ] Copy formatted plan    |
-                 |     -> Clipboard with      |
-                 |        assignments         |
-                 |                           |
-                 |    [Execute Plan ->]        |
-                 +---------------------------+
-                              |
-                        Confirmation
-                  "Plan activated. 4 tasks
-                   created, shared with 2
-                   team members."
-```
+# Simplify "Let's Implement" to an Approve & Route Flow
 
 ## What Changes
 
-### 1. New Component: `ImplementPlanDialog`
-A two-step dialog that replaces the Share button's functionality:
+The current two-step wizard with editable task forms gets replaced by a **single-screen approval flow**. The mental model shifts from "edit a plan" to "approve Zura's plan and decide where to send it."
 
-**Step 1 -- Review & Customize Steps:**
-- Auto-extracts action items from the AI markdown (reuses existing `extractActionItems` logic, enhanced to also grab the description text after the bold title)
-- Each step is editable: title, owner (staff picker dropdown), due date (quick-pick: tomorrow / 3 days / 1 week), and notes
-- Owner can reorder steps (drag or up/down arrows), delete steps, or add custom ones
-- A "Leadership Notes" textarea at the bottom for adding context that gets included when sharing
+## New Layout (Single Screen)
 
-**Step 2 -- Distribute:**
-- Checkboxes for distribution channels (multi-select):
-  - **Create Task List**: Inserts each step into the `tasks` table with owner, due date, priority, and `source: 'ai_recovery_plan'`
-  - **Share via DM**: Opens inline recipient picker (reuses `useTeamMembers` + `useDMChannels`), sends a formatted message with the plan + step assignments
-  - **Post to Channel**: Channel picker from existing Team Chat channels, posts as a formatted announcement
-  - **Copy to Clipboard**: Copies a clean, formatted version with assignments
-- "Execute Plan" button runs all selected actions simultaneously
+```text
++----------------------------------+
+| [Zura] Let's Implement           |
+| "Approve Zura's plan and route   |
+|  it to your team"                |
++----------------------------------+
+|                                  |
+| Plan: Weekly Goal Recovery       |
+|                                  |
+| Action Steps (read-only):        |
+|  1. Power Fill Promotion         |
+|     Schedule targeted promos...  |
+|  2. Retail Attachment Push       |
+|     Train staff on add-on...     |
+|  3. Rebooking Blitz              |
+|     Call last week's clients...  |
+|                                  |
+| + Add leadership note (toggle)   |
+|   [textarea if expanded]         |
+|                                  |
+| --- Route This Plan ---          |
+|                                  |
+| [x] Add to my tasks             |
+| [ ] Share with team via DM       |
+| [ ] Copy formatted plan          |
+|                                  |
+|         [Activate Plan ->]       |
++----------------------------------+
+```
 
-### 2. Modify `RecoveryPlanActions`
-- Replace the **Share** dropdown button with **"Let's Implement"** button (uses a rocket or play icon)
-- Keep Save Plan and Remind Me as-is
-- The new button opens the `ImplementPlanDialog`
+## Key Design Decisions
 
-### 3. Enhanced Action Item Extraction
-- Upgrade `extractActionItems()` to return structured objects: `{ title, description, suggestedDueInDays }` instead of just title strings
-- Parse the markdown more intelligently to capture the text after each bold heading
+1. **Read-only steps**: Steps extracted from AI content display as a clean numbered list with title + description. No inputs, no owner pickers, no due date selectors. The leader is approving, not editing.
 
-## Technical Details
+2. **Single screen**: No Step 1 / Step 2 wizard. Everything visible at once -- scan the plan, pick routing options, click activate.
 
-### New Files
-- `src/components/dashboard/sales/ImplementPlanDialog.tsx` -- The two-step dialog with step editor and distribution options
-- `src/components/dashboard/sales/PlanStepEditor.tsx` -- Individual step row component (title, owner picker, due date, notes)
+3. **Leadership note collapsed**: Hidden behind a "+ Add leadership note" toggle to save space. Only shown when the leader has something to add.
 
-### Modified Files
-- `src/components/dashboard/sales/RecoveryPlanActions.tsx` -- Replace Share button with "Let's Implement" button; enhance `extractActionItems` to return structured objects
-- `src/components/dashboard/sales/ShareToDMDialog.tsx` -- Minor: accept optional `assignments` prop to include step assignments in the message format
+4. **Same distribution options**: Create tasks, Share via DM, Copy to clipboard -- but presented more compactly.
 
-### Database
-- No new tables needed. Tasks go into the existing `tasks` table. The `description` field will include assignment context (e.g., "From recovery plan: Weekly Goal Recovery Plan -- Assigned to: Sarah")
+5. **Success state**: After clicking "Activate Plan", the dialog shows a brief confirmation and auto-closes after 2 seconds.
 
-### Reused Infrastructure
-- `useTeamMembers` hook for the owner/staff picker
-- `useDMChannels` + `createDM` for DM distribution
-- `useChatChannels` for channel posting
-- Existing `tasks` table schema (title, description, due_date, priority, source, user_id)
+## Technical Changes
 
-### UI Standards
-- Same dialog styling as existing Zura dialogs: `backdrop-blur-sm bg-black/60` overlay, `max-w-lg`, branded header with ZuraAvatar
-- Step indicators (1/2) in the dialog header
-- Smooth transitions between steps using framer-motion or CSS transitions
+### `ImplementPlanDialog.tsx` -- Major refactor
+- Remove the `currentStep` state machine (no more Step 1 / Step 2)
+- Remove all step editing logic (`updateStep`, `removeStep`, `moveStep`, `addStep`)
+- Display extracted steps as read-only list items (simple divs, not `PlanStepEditor` components)
+- Move distribution checkboxes onto the same screen below the steps
+- Collapse leadership notes behind a toggle
+- Auto-close dialog 2 seconds after successful activation
+- Remove step indicator dots from header
+
+### `PlanStepEditor.tsx` -- Delete or keep unused
+- No longer imported by `ImplementPlanDialog`
+- Can be kept in codebase for potential future use, but removed from the dialog import
+
+### `RecoveryPlanActions.tsx` -- No changes needed
+- Already has the correct "Let's Implement" button wiring
+
+### Task creation logic stays the same
+- Steps still get inserted into `tasks` table with `source: 'ai_recovery_plan'` and `priority: 'high'`
+- Due dates auto-assigned based on step position (first 2 steps: +2 days, next 2: +5 days, rest: +7 days) -- no user input needed
 
