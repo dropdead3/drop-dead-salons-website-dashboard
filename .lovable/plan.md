@@ -1,53 +1,53 @@
 
 
-## Pass metricData to PinnableCard Wrappers in Command Center
+## Fix Duplicate Pin Icons on Command Center Cards
 
-### What Changes
+### Problem
+Cards like New Bookings show **two pin icons** on hover because they have their own internal `CommandCenterVisibilityToggle` AND are wrapped by `PinnableCard` in `PinnedAnalyticsCard.tsx`. The internal controls were needed when the cards lived standalone in the Analytics Hub, but now `PinnableCard` provides the hover-reveal everywhere -- so the internal ones create duplicates.
 
-**File: `src/components/dashboard/PinnedAnalyticsCard.tsx`**
+### Solution
+Remove the manual hover-reveal pattern (and direct `CommandCenterVisibilityToggle` usage) from inside each card component. The cards should render only their content -- the `PinnableCard` wrapper handles the Zura AI button and pin toggle externally.
 
-Add `metricData`, `dateRange`, and `locationName` props to each `PinnableCard` wrapper using data already available in the component. No new hooks or API calls needed.
+### Cards to Fix
 
-### Per-Card metricData Mapping
+| File | Issue | Fix |
+|---|---|---|
+| `NewBookingsCard.tsx` | Manual `relative group` wrapper + hover-reveal footer | Remove outer `div.relative.group`, remove hover-reveal `div`, remove `CommandCenterVisibilityToggle` import |
+| `StylistWorkloadCard.tsx` | 3 render paths each with manual hover-reveal | Remove from all 3 paths (loading, empty, and main) |
+| `StaffingTrendChart.tsx` | Manual hover-reveal footer | Remove wrapper and footer |
+| `StylistsOverviewCard.tsx` | 2 render paths with manual hover-reveal | Remove from both paths |
+| `HiringCapacityCard.tsx` | Manual hover-reveal footer | Remove wrapper and footer |
+| `ClientEngineOverview.tsx` | Manual hover-reveal footer | Remove wrapper and footer |
+| `ProgramCompletionFunnel.tsx` | 2 render paths with manual hover-reveal | Remove from both paths |
+| `TeamGoalsCard.tsx` | `CommandCenterVisibilityToggle` in card header | Remove from header |
+| `CapacityUtilizationCard.tsx` | `CommandCenterVisibilityToggle` in card header | Remove from header |
+| `ClientFunnelCard.tsx` | `CommandCenterVisibilityToggle` imported/used | Remove usage |
 
-Using data already fetched by the existing hooks (`useSalesMetrics`, `useSalesByStylist`, `useStaffUtilization`) plus the `filters` object:
+### Pattern Change Per Card
 
-| Card | metricData source |
-|---|---|
-| `sales_overview` | `salesData` -- Total Revenue, Service Rev, Product Rev, Avg Ticket |
-| `top_performers` | `performers` -- Top 5 names + revenue amounts |
-| `revenue_breakdown` | `salesData` -- serviceRevenue, productRevenue split |
-| `team_goals` | `salesData` -- currentRevenue vs target |
-| `new_bookings` | None (card fetches its own data internally; edge function DB fallback handles it) |
-| `week_ahead_forecast` | None (card fetches its own data internally) |
-| `capacity_utilization` | None (card fetches its own data internally) |
-| `client_funnel` | None (card fetches its own data internally) |
-| `operations_stats` | None (card fetches its own data internally) |
-| `hiring_capacity` | None (no metrics available at this level) |
-| `staffing_trends` | None (no metrics available at this level) |
-| `stylist_workload` | `workload` -- staff names + booked hours/utilization |
-
-All PinnableCard wrappers will also receive:
-- `dateRange={filters.dateRange}` -- so Zura knows the time window
-- `locationName` -- resolved from a location lookup or passed as the filter label
-
-### Technical Details
-
-- For cards where metric data is available from existing hooks, we build a `Record<string, string | number>` inline and pass it. Example:
-
-```
-metricData={{
-  "Total Revenue": salesData?.totalRevenue || 0,
-  "Service Revenue": salesData?.serviceRevenue || 0,
-  "Product Revenue": salesData?.productRevenue || 0,
-}}
+**Before (e.g., NewBookingsCard):**
+```text
+<div className="relative group">
+  <Card>...content...</Card>
+  <div className="max-h-0 opacity-0 group-hover:max-h-10 ...">
+    <CommandCenterVisibilityToggle ... />
+  </div>
+</div>
 ```
 
-- For cards where the component fetches its own data internally (like `NewBookingsCard`, `ForecastingCard`), we skip `metricData`. The edge function's DB fallback will query the data directly using the `cardName` -- this already works today.
+**After:**
+```text
+<Card>...content...</Card>
+```
 
-- We'll need to resolve the location name from the `filters.locationId`. The component can either:
-  - Use a lightweight `useLocationName(filters.locationId)` hook (if one exists), or
-  - Pass the locationId and let the edge function resolve it (which it already does via `locationName`)
+The `PinnableCard` wrapper in the Analytics Hub pages and `PinnedAnalyticsCard.tsx` already provides the hover-reveal with both Zura AI and pin toggle. Removing the internal one eliminates the duplication.
 
-- This is a single-file change to `PinnedAnalyticsCard.tsx` with no new dependencies.
+### Why This Is Safe
+Every place these cards are rendered is already wrapped with `PinnableCard`:
+- **Command Center**: via `PinnedAnalyticsCard.tsx` (recently added)
+- **Analytics Hub**: the parent pages (Sales, Operations, Marketing dashboards) already use `PinnableCard` wrappers around these cards
 
+Removing the internal toggle does not remove the pin functionality -- it just stops it from appearing twice.
+
+### No Database Changes Required
+This is a pure frontend cleanup across ~10 component files.
