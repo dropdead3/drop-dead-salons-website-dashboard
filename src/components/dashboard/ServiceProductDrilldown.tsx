@@ -17,16 +17,10 @@ function getInitials(name: string) {
   return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
-function getRatioColor(ratio: number) {
-  if (ratio >= 15) return 'text-emerald-600';
-  if (ratio >= 8) return 'text-amber-600';
-  return 'text-red-500';
-}
-
-function getRatioBarColor(ratio: number) {
-  if (ratio >= 15) return 'bg-emerald-500';
-  if (ratio >= 8) return 'bg-amber-500';
-  return 'bg-red-500';
+function getShareBarColor(share: number) {
+  if (share >= 25) return 'bg-primary';
+  if (share >= 10) return 'bg-primary/70';
+  return 'bg-primary/40';
 }
 
 function fmt(n: number) {
@@ -87,10 +81,18 @@ export function ServiceProductDrilldown({
 
         {/* Content */}
         <div className="p-6 max-h-[70vh] overflow-y-auto">
-          {sorted.length === 0 ? (
+          {!isServices ? (
+            <div className="py-14 text-center">
+              <ShoppingBag className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
+              <p className="text-sm font-medium text-foreground mb-1">Product data not yet available</p>
+              <p className="text-xs text-muted-foreground max-w-[280px] mx-auto">
+                Product sales tracking requires the transaction data sync to be operational. Service data is available from the scheduling API.
+              </p>
+            </div>
+          ) : sorted.length === 0 ? (
             <div className="py-14 text-center">
               <p className="text-sm text-muted-foreground">
-                No {isServices ? 'service' : 'product'} data in this period
+                No service data in this period
               </p>
             </div>
           ) : (
@@ -109,24 +111,16 @@ export function ServiceProductDrilldown({
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{staff.staffName}</p>
                       <p className="text-xs text-muted-foreground">
-                        {fmt(staff.primaryRevenue)} · {staff.primaryCount} {isServices ? 'service' : 'item'}{staff.primaryCount !== 1 ? 's' : ''} · {staff.sharePercent}%
+                        {staff.primaryCount} service{staff.primaryCount !== 1 ? 's' : ''} · {staff.sharePercent}% of total
                       </p>
                     </div>
                     <span className="font-display text-lg tabular-nums">{fmt(staff.primaryRevenue)}</span>
                   </div>
 
-                  {/* Retail : Service ratio */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[10px] tracking-wide text-muted-foreground uppercase">Retail : Service</span>
-                    <span className={`text-xs font-medium tabular-nums ${getRatioColor(staff.retailToServiceRatio)}`}>
-                      {staff.retailToServiceRatio}%
-                    </span>
-                  </div>
-
                   <Progress
                     value={staff.sharePercent}
                     className="h-1.5"
-                    indicatorClassName={getRatioBarColor(staff.retailToServiceRatio)}
+                    indicatorClassName={getShareBarColor(staff.sharePercent)}
                   />
                 </div>
               ))}
