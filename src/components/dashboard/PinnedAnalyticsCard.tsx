@@ -16,6 +16,7 @@ import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard'
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
+import { useLocations } from '@/hooks/useLocations';
 import type { FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { getNextPayDay, type PayScheduleSettings } from '@/hooks/usePaySchedule';
 
@@ -145,6 +146,12 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
   );
   const { workload, isLoading: isLoadingWorkload } = useStaffUtilization(undefined, '30days');
   
+  // Resolve location name for Zura AI context
+  const { data: locations } = useLocations();
+  const selectedLocationName = locationFilter
+    ? locations?.find(l => l.id === locationFilter)?.name || 'Unknown'
+    : 'All Locations';
+  
   // Transform performers data to match TopPerformersCard expected format
   const performersForCard = performers?.map(p => ({
     user_id: p.user_id,
@@ -167,7 +174,7 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
           elementName="Operations Quick Stats"
           elementCategory="operations"
         >
-          <PinnableCard elementKey="operations_quick_stats" elementName="Operations Quick Stats" category="Command Center">
+          <PinnableCard elementKey="operations_quick_stats" elementName="Operations Quick Stats" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <OperationsQuickStats locationId={locationFilter} filterContext={filterContext} />
           </PinnableCard>
         </VisibilityGate>
@@ -175,7 +182,16 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     case 'sales_overview':
       return (
         <VisibilityGate elementKey="sales_overview">
-          <PinnableCard elementKey="sales_overview" elementName="Sales Overview" category="Command Center">
+          <PinnableCard elementKey="sales_overview" elementName="Sales Overview" category="Command Center"
+            metricData={{
+              "Total Revenue": salesData?.totalRevenue || 0,
+              "Service Revenue": salesData?.serviceRevenue || 0,
+              "Product Revenue": salesData?.productRevenue || 0,
+              "Average Ticket": salesData?.averageTicket || 0,
+            }}
+            dateRange={filters.dateRange}
+            locationName={selectedLocationName}
+          >
             <AggregateSalesCard 
               externalDateRange={mapToSalesDateRange(filters.dateRange)}
               externalDateFilters={{ dateFrom: filters.dateFrom, dateTo: filters.dateTo }}
@@ -188,7 +204,14 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     case 'top_performers':
       return (
         <VisibilityGate elementKey="top_performers">
-          <PinnableCard elementKey="top_performers" elementName="Top Performers" category="Command Center">
+          <PinnableCard elementKey="top_performers" elementName="Top Performers" category="Command Center"
+            metricData={performersForCard.slice(0, 5).reduce((acc, p, i) => {
+              acc[`#${i + 1} ${p.name}`] = p.totalRevenue;
+              return acc;
+            }, {} as Record<string, string | number>)}
+            dateRange={filters.dateRange}
+            locationName={selectedLocationName}
+          >
             <TopPerformersCard 
               performers={performersForCard} 
               isLoading={isLoadingPerformers}
@@ -200,7 +223,14 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     case 'revenue_breakdown':
       return (
         <VisibilityGate elementKey="revenue_breakdown">
-          <PinnableCard elementKey="revenue_breakdown" elementName="Revenue Breakdown" category="Command Center">
+          <PinnableCard elementKey="revenue_breakdown" elementName="Revenue Breakdown" category="Command Center"
+            metricData={{
+              "Service Revenue": salesData?.serviceRevenue || 0,
+              "Product Revenue": salesData?.productRevenue || 0,
+            }}
+            dateRange={filters.dateRange}
+            locationName={selectedLocationName}
+          >
             <RevenueDonutChart 
               serviceRevenue={salesData?.serviceRevenue || 0}
               productRevenue={salesData?.productRevenue || 0}
@@ -212,7 +242,7 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     case 'client_funnel':
       return (
         <VisibilityGate elementKey="client_funnel">
-          <PinnableCard elementKey="client_funnel" elementName="Client Funnel" category="Command Center">
+          <PinnableCard elementKey="client_funnel" elementName="Client Funnel" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <ClientFunnelCard 
               dateFrom={filters.dateFrom} 
               dateTo={filters.dateTo}
@@ -224,7 +254,13 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     case 'team_goals':
       return (
         <VisibilityGate elementKey="team_goals">
-          <PinnableCard elementKey="team_goals" elementName="Team Goals" category="Command Center">
+          <PinnableCard elementKey="team_goals" elementName="Team Goals" category="Command Center"
+            metricData={{
+              "Current Revenue": salesData?.totalRevenue || 0,
+            }}
+            dateRange={filters.dateRange}
+            locationName={selectedLocationName}
+          >
             <TeamGoalsCard 
               currentRevenue={salesData?.totalRevenue || 0}
               filterContext={filterContext}
@@ -235,7 +271,7 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     case 'new_bookings':
       return (
         <VisibilityGate elementKey="new_bookings">
-          <PinnableCard elementKey="new_bookings" elementName="New Bookings" category="Command Center">
+          <PinnableCard elementKey="new_bookings" elementName="New Bookings" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <NewBookingsCard filterContext={filterContext} />
           </PinnableCard>
         </VisibilityGate>
@@ -243,7 +279,7 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     case 'week_ahead_forecast':
       return (
         <VisibilityGate elementKey="week_ahead_forecast">
-          <PinnableCard elementKey="week_ahead_forecast" elementName="Week Ahead Forecast" category="Command Center">
+          <PinnableCard elementKey="week_ahead_forecast" elementName="Week Ahead Forecast" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <ForecastingCard />
           </PinnableCard>
         </VisibilityGate>
@@ -251,7 +287,7 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     case 'capacity_utilization':
       return (
         <VisibilityGate elementKey="capacity_utilization">
-          <PinnableCard elementKey="capacity_utilization" elementName="Capacity Utilization" category="Command Center">
+          <PinnableCard elementKey="capacity_utilization" elementName="Capacity Utilization" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <CapacityUtilizationCard />
           </PinnableCard>
         </VisibilityGate>
@@ -259,7 +295,7 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     case 'hiring_capacity':
       return (
         <VisibilityGate elementKey="hiring_capacity">
-          <PinnableCard elementKey="hiring_capacity" elementName="Hiring Capacity" category="Command Center">
+          <PinnableCard elementKey="hiring_capacity" elementName="Hiring Capacity" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <HiringCapacityCard />
           </PinnableCard>
         </VisibilityGate>
@@ -267,7 +303,7 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     case 'staffing_trends':
       return (
         <VisibilityGate elementKey="staffing_trends">
-          <PinnableCard elementKey="staffing_trends" elementName="Staffing Trends" category="Command Center">
+          <PinnableCard elementKey="staffing_trends" elementName="Staffing Trends" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <StaffingTrendChart />
           </PinnableCard>
         </VisibilityGate>
@@ -275,7 +311,15 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     case 'stylist_workload':
       return (
         <VisibilityGate elementKey="stylist_workload">
-          <PinnableCard elementKey="stylist_workload" elementName="Stylist Workload" category="Command Center">
+          <PinnableCard elementKey="stylist_workload" elementName="Stylist Workload" category="Command Center"
+            metricData={workload?.slice(0, 5).reduce((acc, w) => {
+              acc[`${w.name} Utilization`] = `${w.utilizationScore}%`;
+              acc[`${w.name} Appointments`] = w.appointmentCount;
+              return acc;
+            }, {} as Record<string, string | number>)}
+            dateRange={filters.dateRange}
+            locationName={selectedLocationName}
+          >
             <StylistWorkloadCard 
               workload={workload || []} 
               isLoading={isLoadingWorkload} 
