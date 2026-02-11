@@ -44,8 +44,8 @@ export function PinnableCard({
   }, [elementKey, elementName, category, registerMutation]);
   
   return (
-    <div className={cn("relative group", className)}>
-      <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-0.5 bg-card/80 backdrop-blur-sm rounded-full px-1.5 py-1">
+    <div className={cn("relative group overflow-visible mb-2", className)}>
+      <div className="absolute -bottom-1 right-3 translate-y-full opacity-0 group-hover:opacity-100 transition-opacity z-10 flex items-center gap-0.5 bg-card/80 backdrop-blur-sm rounded-full px-1.5 py-1">
         <ZuraCardInsight 
           cardName={elementName}
           metricData={metricData}
