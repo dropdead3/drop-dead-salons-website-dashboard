@@ -63,16 +63,13 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
 
   if (isLoading) {
     return (
+      <div className="relative group">
       <Card className="mb-6">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" />
               Stylist Workload Distribution
-              <CommandCenterVisibilityToggle 
-                elementKey="stylist_workload" 
-                elementName="Stylist Workload" 
-              />
             </CardTitle>
           </div>
         </CardHeader>
@@ -83,6 +80,12 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
           </div>
         </CardContent>
       </Card>
+      <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
+        <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
+          <CommandCenterVisibilityToggle elementKey="stylist_workload" elementName="Stylist Workload" />
+        </div>
+      </div>
+      </div>
     );
   }
 
@@ -90,16 +93,13 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
   
   if (activeWorkload.length === 0) {
     return (
+      <div className="relative group">
       <Card className="mb-6">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" />
               Stylist Workload Distribution
-              <CommandCenterVisibilityToggle 
-                elementKey="stylist_workload" 
-                elementName="Stylist Workload" 
-              />
             </CardTitle>
             <Button
               variant="ghost"
@@ -119,6 +119,12 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
           </div>
         </CardContent>
       </Card>
+      <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
+        <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
+          <CommandCenterVisibilityToggle elementKey="stylist_workload" elementName="Stylist Workload" />
+        </div>
+      </div>
+      </div>
     );
   }
 
@@ -148,16 +154,13 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
   }));
 
   return (
+    <div className="relative group">
     <Card className="mb-6">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-lg">
             <Users className="w-5 h-5 text-primary" />
             Stylist Workload Distribution
-            <CommandCenterVisibilityToggle 
-              elementKey="stylist_workload" 
-              elementName="Stylist Workload" 
-            />
           </CardTitle>
           <Button
             variant="ghost"
@@ -324,5 +327,11 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
         </div>
       </CardContent>
     </Card>
+    <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
+      <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
+        <CommandCenterVisibilityToggle elementKey="stylist_workload" elementName="Stylist Workload" />
+      </div>
+    </div>
+    </div>
   );
 }

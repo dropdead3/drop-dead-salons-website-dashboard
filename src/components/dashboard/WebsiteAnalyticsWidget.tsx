@@ -131,10 +131,6 @@ export function WebsiteAnalyticsWidget() {
                 View full analytics
               </TooltipContent>
             </UITooltip>
-            <CommandCenterVisibilityToggle 
-              elementKey="website_analytics" 
-              elementName="Website Traffic" 
-            />
           </div>
           <Button
             variant="ghost"

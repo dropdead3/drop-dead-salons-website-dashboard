@@ -476,10 +476,6 @@ export function ForecastingCard() {
                   View full analytics
                 </TooltipContent>
               </UITooltip>
-              <CommandCenterVisibilityToggle 
-                elementKey="week_ahead_forecast" 
-                elementName="Forecasting" 
-              />
             </div>
             <div className="flex items-center gap-2">
                 <LocationSelect

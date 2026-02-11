@@ -52,16 +52,13 @@ export function StaffingTrendChart({ className }: StaffingTrendChartProps) {
     : 0;
 
   return (
+    <div className="relative group">
     <Card className={cn("premium-card", className)}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <CardTitle className="flex items-center gap-2 text-lg">
             <TrendingUp className="h-5 w-5 text-primary" />
             Staffing Trends
-            <CommandCenterVisibilityToggle 
-              elementKey="staffing_trends" 
-              elementName="Staffing Trends" 
-            />
           </CardTitle>
           <div className="flex gap-2">
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
@@ -178,5 +175,11 @@ export function StaffingTrendChart({ className }: StaffingTrendChartProps) {
         )}
       </CardContent>
     </Card>
+    <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
+      <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
+        <CommandCenterVisibilityToggle elementKey="staffing_trends" elementName="Staffing Trends" />
+      </div>
+    </div>
+    </div>
   );
 }
