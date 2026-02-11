@@ -45,7 +45,7 @@ export function ServiceProductDrilldown({
 
   // Local filter state — resets when dialog closes
   const [filterRegion, setFilterRegion] = useState('all');
-  const [filterLocationId, setFilterLocationId] = useState('all');
+  const [filterLocationId, setFilterLocationId] = useState(parentLocationId || 'all');
 
   // Derive unique regions from locations
   const regions = useMemo(() => {
@@ -104,7 +104,7 @@ export function ServiceProductDrilldown({
   // Reset filters when dialog closes
   const handleClose = () => {
     setFilterRegion('all');
-    setFilterLocationId('all');
+    setFilterLocationId(parentLocationId || 'all');
     onClose();
   };
 
@@ -162,6 +162,9 @@ export function ServiceProductDrilldown({
               ))}
             </SelectContent>
           </Select>
+          {parentLocationId && parentLocationId !== 'all' && filterLocationId === parentLocationId && (
+            <span className="text-[10px] text-muted-foreground">Filtered from Command Center</span>
+          )}
         </div>
 
         {/* Content */}
