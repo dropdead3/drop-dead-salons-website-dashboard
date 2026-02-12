@@ -54,26 +54,21 @@ export function RevenueDonutChart({
 
   if (!data.length) {
     return (
-      <Card className="overflow-hidden border-border/40">
+      <Card className="overflow-hidden border-border/40 h-full">
         <CardHeader className="px-4 py-2 pb-1">{headerContent}</CardHeader>
-        <CardContent className="px-4 pb-2 pt-0">
-          <div 
-            className="flex items-center justify-center text-muted-foreground text-xs"
-            style={{ width: size, height: size }}
-          >
-            No data
-          </div>
+        <CardContent className="px-4 pb-3 pt-0 flex-1 flex items-center justify-center">
+          <div className="text-muted-foreground text-xs">No data</div>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="overflow-hidden border-border/40">
+    <Card className="overflow-hidden border-border/40 h-full">
       <CardHeader className="px-4 py-2 pb-1">{headerContent}</CardHeader>
-      <CardContent className="px-4 pb-2 pt-0">
-        <div className="flex items-center gap-3">
-          <div style={{ width: size, height: size }}>
+      <CardContent className="px-4 pb-3 pt-0">
+        <div className="flex items-center gap-4 w-full">
+          <div className="shrink-0" style={{ width: size, height: size }}>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -103,29 +98,37 @@ export function RevenueDonutChart({
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="text-xs space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary" />
-              <span className="text-muted-foreground">Services</span>
-              <span className="font-medium">{servicePercent}%</span>
+          <div className="flex-1 min-w-0 text-xs space-y-1">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-primary shrink-0" />
+                <span className="text-muted-foreground">Services</span>
+              </div>
+              <span className="font-medium tabular-nums">{servicePercent}%</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-chart-2" />
-              <span className="text-muted-foreground">Products</span>
-              <span className="font-medium">{100 - servicePercent}%</span>
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-chart-2 shrink-0" />
+                <span className="text-muted-foreground">Products</span>
+              </div>
+              <span className="font-medium tabular-nums">{100 - servicePercent}%</span>
             </div>
             <div className="pt-2 mt-2 border-t border-border/50 space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Retail %</span>
-                <MetricInfoTooltip description="Product Revenue ÷ Total Revenue × 100. Shows retail sales as a percentage of all revenue." />
-                <span className="font-medium text-foreground">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground">Retail %</span>
+                  <MetricInfoTooltip description="Product Revenue ÷ Total Revenue × 100. Shows retail sales as a percentage of all revenue." />
+                </div>
+                <span className="font-medium text-foreground tabular-nums">
                   {100 - servicePercent}%
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-muted-foreground">Attach Rate</span>
-                <MetricInfoTooltip description="Percentage of service clients who also purchased a retail product in this period. A key indicator of cross-selling effectiveness." />
-                <span className="font-medium text-foreground">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-muted-foreground">Attach Rate</span>
+                  <MetricInfoTooltip description="Percentage of service clients who also purchased a retail product in this period. A key indicator of cross-selling effectiveness." />
+                </div>
+                <span className="font-medium text-foreground tabular-nums">
                   {retailAttachmentLoading ? '…' : retailAttachmentRate !== undefined ? `${retailAttachmentRate}%` : '—'}
                 </span>
               </div>
