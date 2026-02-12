@@ -233,7 +233,7 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
               const allEntries = [...displayData, ...(othersEntry ? [othersEntry] : [])];
               const isLast = idx === allEntries.length - 1;
               const cssVar = (entry as any).colorVar || '--chart-5';
-              const opacity = isOthers ? 0.25 : 0.45;
+              const opacity = isOthers ? 0.35 : 0.65;
               return (
                 <Tooltip key={entry.name}>
                   <TooltipTrigger asChild>
