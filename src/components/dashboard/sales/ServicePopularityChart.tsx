@@ -25,7 +25,7 @@ interface ServicePopularityChartProps {
 
 export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterContext }: ServicePopularityChartProps) {
   const { data, isLoading } = useServicePopularity(dateFrom, dateTo, locationId);
-  const [sortBy, setSortBy] = useState<'frequency' | 'revenue'>('frequency');
+  const [sortBy, setSortBy] = useState<'frequency' | 'revenue'>('revenue');
 
   const sortedData = [...(data || [])].sort((a, b) => 
     sortBy === 'frequency' ? b.frequency - a.frequency : b.totalRevenue - a.totalRevenue
@@ -70,13 +70,13 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
       <CardContent>
         <Tabs value={sortBy} onValueChange={(v) => setSortBy(v as 'frequency' | 'revenue')}>
           <TabsList className="mb-4">
-            <TabsTrigger value="frequency" className="flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" />
-              By Frequency
-            </TabsTrigger>
             <TabsTrigger value="revenue" className="flex items-center gap-1">
               <DollarSign className="w-3 h-3" />
               By Revenue
+            </TabsTrigger>
+            <TabsTrigger value="frequency" className="flex items-center gap-1">
+              <TrendingUp className="w-3 h-3" />
+              By Frequency
             </TabsTrigger>
           </TabsList>
 
