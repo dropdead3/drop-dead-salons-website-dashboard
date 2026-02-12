@@ -10,11 +10,11 @@ import type { LocationCardData } from './location-comparison/LocationComparisonC
 import { cn } from '@/lib/utils';
 
 const COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
+  'hsl(var(--primary))',
+  'hsl(var(--primary) / 0.65)',
+  'hsl(var(--primary) / 0.45)',
+  'hsl(var(--primary) / 0.3)',
+  'hsl(var(--primary) / 0.2)',
 ];
 
 interface LocationData {
