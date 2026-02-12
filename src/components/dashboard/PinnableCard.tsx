@@ -44,7 +44,7 @@ export function PinnableCard({
   }, [elementKey, elementName, category, registerMutation]);
   
   return (
-    <div className={cn("relative group flex flex-row", className)}>
+    <div className={cn("relative group flex flex-row rounded-xl overflow-hidden border border-border bg-card text-card-foreground shadow-sm", className)}>
       <div className="flex flex-col items-center justify-start pt-3 gap-1 max-w-0 opacity-0 group-hover:max-w-[40px] group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out shrink-0 border-r border-border/0 group-hover:border-border/30">
         <ZuraCardInsight 
           cardName={elementName}
@@ -57,7 +57,7 @@ export function PinnableCard({
           elementName={elementName} 
         />
       </div>
-      <div className="flex-1 min-w-0 transition-all duration-200">
+      <div className="flex-1 min-w-0 transition-all duration-200 [&>*]:border-0 [&>*]:shadow-none [&>*]:rounded-none">
         {children}
       </div>
     </div>
