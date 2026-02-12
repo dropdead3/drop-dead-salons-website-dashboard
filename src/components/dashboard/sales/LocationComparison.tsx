@@ -116,7 +116,7 @@ export function LocationComparison({ locations, isLoading, filterContext, dateFr
             </div>
             <span className="font-display text-base tracking-wide">LOCATION COMPARISON</span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 font-sans">
             {filterContext && (
               <AnalyticsFilterBadge
                 locationId={filterContext.locationId}
