@@ -81,10 +81,10 @@ export function PinnableCard({
       {/* Z and Pin icons overlaid on the card header icon */}
       {iconRect && (
         <div 
-          className="absolute z-10 flex items-center justify-center gap-1 transition-opacity duration-200 ease-in-out"
+          className="absolute z-10 flex items-center justify-center gap-1.5 transition-opacity duration-200 ease-in-out"
           style={{
             top: iconRect.top - 2,
-            left: iconRect.left - 4,
+            left: iconRect.left - 6,
             opacity: hovered ? 1 : 0,
             pointerEvents: hovered ? 'auto' : 'none',
           }}
