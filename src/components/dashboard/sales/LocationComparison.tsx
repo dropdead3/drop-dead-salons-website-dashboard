@@ -101,7 +101,7 @@ export function LocationComparison({ locations, isLoading, filterContext, dateFr
                 dateRange={filterContext.dateRange}
               />
             )}
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="font-sans">
               <BlurredAmount>${totalRevenue.toLocaleString()}</BlurredAmount> total
             </Badge>
             {showViewToggle && (
