@@ -1,20 +1,24 @@
 import { useMemo, useState } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MapPin, LayoutGrid, TableProperties } from 'lucide-react';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { LocationComparisonCard } from './location-comparison/LocationComparisonCard';
 import { LocationComparisonTable } from './location-comparison/LocationComparisonTable';
+import { LocationBarChart } from './location-comparison/LocationBarChart';
+import { LocationTreemap } from './location-comparison/LocationTreemap';
+import { LocationDonutChart } from './location-comparison/LocationDonutChart';
 import type { LocationCardData } from './location-comparison/LocationComparisonCard';
 import { cn } from '@/lib/utils';
 
-const COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--primary) / 0.65)',
-  'hsl(var(--primary) / 0.45)',
-  'hsl(var(--primary) / 0.3)',
-  'hsl(var(--primary) / 0.2)',
+const LOCATION_COLORS = [
+  '#60a5fa', '#f472b6', '#facc15', '#10b981', '#a78bfa',
+  '#f97316', '#06b6d4', '#ec4899', '#84cc16', '#8b5cf6',
+  '#ef4444', '#14b8a6', '#eab308', '#6366f1', '#d946ef',
+  '#0ea5e9', '#f59e0b', '#22c55e', '#e11d48', '#7c3aed',
 ];
 
 interface LocationData {
@@ -37,12 +41,28 @@ interface LocationComparisonProps {
 }
 
 type ViewMode = 'cards' | 'table';
+type ChartType = 'bar' | 'treemap' | 'donut';
+
+function getDefaultChart(count: number): ChartType {
+  if (count <= 5) return 'donut';
+  if (count <= 20) return 'bar';
+  return 'treemap';
+}
+
+function getAvailableCharts(count: number): { value: ChartType; label: string }[] {
+  const charts: { value: ChartType; label: string }[] = [];
+  if (count <= 10) charts.push({ value: 'donut', label: 'Donut' });
+  charts.push({ value: 'bar', label: 'Bar Chart' });
+  charts.push({ value: 'treemap', label: 'Treemap' });
+  return charts;
+}
 
 export function LocationComparison({ locations, isLoading, filterContext, dateFrom = '', dateTo = '' }: LocationComparisonProps) {
   const count = locations.length;
   const autoTier = count <= 5 ? 1 : count <= 20 ? 2 : 3;
 
   const [viewMode, setViewMode] = useState<ViewMode>(autoTier === 1 ? 'cards' : 'table');
+  const [chartType, setChartType] = useState<ChartType>(getDefaultChart(count));
 
   const totalRevenue = useMemo(() => locations.reduce((s, l) => s + l.totalRevenue, 0), [locations]);
 
@@ -59,6 +79,8 @@ export function LocationComparison({ locations, isLoading, filterContext, dateFr
       isLowest: sortedLocations.length > 1 && loc.location_id === lowest?.location_id,
     }));
   }, [sortedLocations, totalRevenue]);
+
+  const availableCharts = useMemo(() => getAvailableCharts(count), [count]);
 
   if (isLoading) {
     return (
@@ -104,6 +126,16 @@ export function LocationComparison({ locations, isLoading, filterContext, dateFr
             <Badge variant="secondary" className="font-sans">
               <BlurredAmount>${totalRevenue.toLocaleString()}</BlurredAmount> total
             </Badge>
+            <Select value={chartType} onValueChange={(v) => setChartType(v as ChartType)}>
+              <SelectTrigger className="h-7 w-[110px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {availableCharts.map(c => (
+                  <SelectItem key={c.value} value={c.value} className="text-xs">{c.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             {showViewToggle && (
               <div className="flex items-center border rounded-md overflow-hidden ml-1">
                 <button
@@ -130,6 +162,18 @@ export function LocationComparison({ locations, isLoading, filterContext, dateFr
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <AnimatePresence mode="wait">
+          {chartType === 'donut' && (
+            <LocationDonutChart key="donut" locations={cardData} colors={LOCATION_COLORS} totalRevenue={totalRevenue} />
+          )}
+          {chartType === 'bar' && (
+            <LocationBarChart key="bar" locations={cardData} colors={LOCATION_COLORS} totalRevenue={totalRevenue} />
+          )}
+          {chartType === 'treemap' && (
+            <LocationTreemap key="treemap" locations={cardData} colors={LOCATION_COLORS} totalRevenue={totalRevenue} />
+          )}
+        </AnimatePresence>
+
         {viewMode === 'cards' ? (
           <div className={cn(
             "grid gap-4",
@@ -144,7 +188,7 @@ export function LocationComparison({ locations, isLoading, filterContext, dateFr
                 gapPercent={gapPercent}
                 dateFrom={dateFrom}
                 dateTo={dateTo}
-                color={COLORS[i % COLORS.length]}
+                color={LOCATION_COLORS[i % LOCATION_COLORS.length]}
               />
             ))}
           </div>
@@ -155,7 +199,7 @@ export function LocationComparison({ locations, isLoading, filterContext, dateFr
             dateFrom={dateFrom}
             dateTo={dateTo}
             showSearch={autoTier === 3}
-            colors={COLORS}
+            colors={LOCATION_COLORS}
           />
         )}
       </CardContent>
