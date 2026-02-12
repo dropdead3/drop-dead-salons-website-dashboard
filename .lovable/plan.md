@@ -1,61 +1,27 @@
 
 
-# Scale-Proof Location Comparison Bar
+# Refined Location Revenue Share Bar
 
-## Problem
-When an organization has many locations (10, 50, 1,000+), the current divided bar and legend break down:
-- Tiny slivers become invisible and unhoverable
-- The legend lists every location regardless of count
-- The 5-color palette repeats, making segments indistinguishable
+## What Changes
 
-## Solution: "Top N + Others" Grouping
+The divided bar needs three refinements to match the premium aesthetic shown in the screenshot:
 
-Show the top locations individually, then roll everything else into a single "Others" segment with its own expandable detail.
+1. **Text color**: Use dark text (`foreground`) on all segments instead of white/inverted text. The oat and green segments both have enough lightness to support dark labels.
 
-### Bar Behavior
-- Show the **top 5 locations** as individual colored segments (matches the 5-color palette exactly -- no repeats)
-- Aggregate all remaining locations into a single **"Others"** segment in a neutral gray
-- The "Others" segment is hoverable and shows: "X other locations: $total (Y%)"
+2. **Segment colors**: Use the theme-aware `chart-*` variables directly (which already map to oat-toned and emerald values per theme), but ensure the foreground text is always dark for readability -- matching the screenshot exactly.
 
-### Legend Behavior
-- Show legend entries only for the top 5 + "Others"
-- Cap at 6 items max, always clean
-
-### "Others" Expandable Detail
-- Below the bar/legend, if "Others" exists, show a collapsible section
-- Follows existing list-capping standards: top 5 visible, "Show all X locations" toggle
-- When expanded with more than 8 items, wrap in a ScrollArea (max-h-[280px])
-- Each row: location name + revenue + percentage (simple, no color dot needed since they share the gray bucket)
-
-### Side-by-Side Cards
-- Keep showing the top 2 locations as featured cards (no change)
-- This remains the "Leader vs. Runner-up" comparison
+3. **Bar polish**: Slightly increase rounding and ensure the glass sheen is subtle, not heavy. The screenshot shows a clean, flat-ish bar with just enough dimension.
 
 ## Technical Details
 
-### Changes to `src/components/dashboard/sales/LocationComparison.tsx`
+### File: `src/components/dashboard/sales/LocationComparison.tsx`
 
-1. **Add constants**:
-   - `MAX_BAR_SEGMENTS = 5` -- max individually colored segments
-   - `MAX_VISIBLE_OTHERS = 5` -- initial cap for the "Others" expanded list
+**Changes to the bar segment rendering (lines ~207-246):**
 
-2. **Derive `displayData` and `othersData`** in `useMemo`:
-   - `displayData` = top 5 from `chartData` (each gets a unique color)
-   - `othersData` = remaining locations aggregated into one entry with `color: 'hsl(var(--muted))'`
-   - `othersLocations` = the individual locations rolled into "Others" (for the expandable list)
+- Remove the conditional `color` style that switches between `background` and `muted-foreground` for text. Instead, always use a dark foreground color: `hsl(var(--foreground))` for all segments.
+- Reduce the glass sheen opacity from `0.15` to `0.08` for a more subtle, premium feel.
+- Keep `rounded-full` and `h-10` as-is (these match the screenshot).
+- Show the percentage label when the segment is at least 12% wide (lowered from 15%) to display more labels when possible.
 
-3. **Bar rendering**: Map over `[...displayData, othersEntry]` instead of `chartData`
-   - "Others" tooltip shows count and total
+That is the only file changed. The colors themselves (`chart-1`, `chart-2`, etc.) are already correctly themed per the CSS variables -- the issue is purely the text contrast and sheen intensity.
 
-4. **Legend rendering**: Same array, 6 items max
-
-5. **Expandable "Others" section** (new):
-   - `useState` for `showOthers` toggle
-   - `useState` for `showAllOthers` (list cap toggle)
-   - Render a bordered section with location rows
-   - Wrap in `ScrollArea` when count > 8 and fully expanded
-   - Uses existing project patterns (ChevronDown rotation, "Show all X / Show less")
-
-6. **Imports to add**: `useState` from React, `ScrollArea` from ui, `ChevronDown` from lucide
-
-### No other files affected.
