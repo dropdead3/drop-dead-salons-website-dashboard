@@ -17,15 +17,13 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
-const COLOR_VARS = [
-  '--chart-1',
-  '--chart-2',
-  '--chart-3',
-  '--chart-4',
-  '--chart-5',
+const COLORS = [
+  'hsl(var(--chart-1))',
+  'hsl(var(--chart-2))',
+  'hsl(var(--chart-3))',
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))',
 ];
-
-const COLORS = COLOR_VARS.map(v => `hsl(var(${v}))`);
 
 const MAX_BAR_SEGMENTS = 5;
 const MAX_VISIBLE_OTHERS = 5;
@@ -71,7 +69,6 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
         ? ((location.totalRevenue / totalRevenue) * 100).toFixed(0)
         : '0',
       color: COLORS[idx % COLORS.length],
-      colorVar: COLOR_VARS[idx % COLOR_VARS.length],
     }));
   }, [sortedLocations, totalRevenue]);
 
@@ -207,7 +204,7 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
 
         {/* Revenue Share Bar */}
         <div className="space-y-2">
-          <div className="flex h-10 rounded-full overflow-hidden border border-border/40">
+          <div className="flex h-10 rounded-full overflow-hidden bg-muted/30">
             {[...displayData, ...(othersEntry ? [othersEntry] : [])].map((entry) => {
               const pct = totalRevenue > 0 ? (entry.value / totalRevenue) * 100 : 0;
               if (pct <= 0) return null;
@@ -219,18 +216,16 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
                       className="h-full flex items-center justify-center text-xs font-medium transition-all cursor-default relative overflow-hidden"
                       style={{
                         width: `${pct}%`,
-                        background: isOthers
-                          ? 'hsl(var(--muted))'
-                          : `linear-gradient(180deg, hsl(var(${(entry as any).colorVar}) / 0.7) 0%, hsl(var(${(entry as any).colorVar}) / 0.5) 40%, hsl(var(${(entry as any).colorVar}) / 0.35) 100%)`,
-                        color: isOthers ? 'hsl(var(--muted-foreground))' : 'hsl(var(--foreground))',
+                        backgroundColor: entry.color,
+                        color: isOthers ? 'hsl(var(--muted-foreground))' : 'hsl(var(--background))',
                         minWidth: pct > 5 ? undefined : '24px',
                       }}
                     >
-                      {/* Vertical sheen */}
+                      {/* Glass sheen overlay */}
                       <div 
                         className="absolute inset-0 pointer-events-none"
                         style={{
-                          background: 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0) 100%)',
+                          background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 60%)',
                         }}
                       />
                       <span className="relative z-10 font-display tracking-wide">
