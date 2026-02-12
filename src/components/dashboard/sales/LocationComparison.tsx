@@ -223,61 +223,6 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
           })}
         </div>
 
-        {/* Revenue Share Bar */}
-        <div className="space-y-2.5">
-           <div className="flex h-10 rounded-xl overflow-hidden border border-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
-            {[...displayData, ...(othersEntry ? [othersEntry] : [])].map((entry, idx) => {
-              const pct = totalRevenue > 0 ? (entry.value / totalRevenue) * 100 : 0;
-              if (pct <= 0) return null;
-              const isOthers = entry.name === 'Others';
-              const allEntries = [...displayData, ...(othersEntry ? [othersEntry] : [])];
-              const isLast = idx === allEntries.length - 1;
-              const cssVar = (entry as any).colorVar || '--chart-5';
-              const opacity = isOthers ? 0.35 : 0.65;
-              return (
-                <Tooltip key={entry.name}>
-                  <TooltipTrigger asChild>
-                    <div
-                      className="h-full flex items-center justify-center text-xs transition-all cursor-default relative overflow-hidden"
-                      style={{
-                        width: `${pct}%`,
-                        backgroundColor: `hsl(var(${cssVar}) / ${opacity})`,
-                        borderRight: isLast ? 'none' : `1px solid hsl(var(--border) / 0.15)`,
-                        minWidth: pct > 5 ? undefined : '24px',
-                      }}
-                    >
-                      {/* Glass top highlight */}
-                      <div className="absolute inset-x-0 top-0 h-px bg-white/[0.08] pointer-events-none" />
-                      <span className="relative z-10 font-display tracking-wide text-[11px] font-medium text-foreground/70">
-                        {pct >= 12 && `${entry.percentage}%`}
-                      </span>
-                    </div>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {isOthers ? (
-                      <p>{'count' in entry ? (entry as any).count : 0} other locations: ${entry.value.toLocaleString()} ({entry.percentage}%)</p>
-                    ) : (
-                      <p>{entry.name}: ${entry.value.toLocaleString()} ({entry.percentage}%)</p>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
-              );
-            })}
-          </div>
-          {/* Legend */}
-          <div className="flex items-center gap-4 flex-wrap">
-            {[...displayData, ...(othersEntry ? [othersEntry] : [])].map((entry) => (
-              <div key={entry.name} className="flex items-center gap-1.5 text-xs">
-                <div 
-                  className="w-2.5 h-2.5 rounded-full shrink-0" 
-                  style={{ backgroundColor: entry.color }} 
-                />
-                <span className="text-muted-foreground">{entry.name}</span>
-                <span className="font-display tabular-nums">{entry.percentage}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {/* Others Expandable Detail */}
         {othersEntry && othersLocations.length > 0 && (
