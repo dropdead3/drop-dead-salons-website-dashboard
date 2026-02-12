@@ -302,9 +302,8 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                           const padY = 3;
                           const padX = 4;
                           const badgeH = barH - padY * 2;
-                          const pct = totalServices > 0 ? ((value / totalServices) * 100).toFixed(0) : '0';
-                          const label = `${value} · ${pct}%`;
-                          const badgeW = Math.max(label.length * 7 + 12, 50);
+                          const label = `${value}`;
+                          const badgeW = Math.max(label.length * 7 + 12, 36);
                           // Hide badge if it doesn't fit inside the bar
                           if (badgeW + padX * 2 > barW) return null;
                           const bx = (x || 0) + barW - badgeW - padX;
@@ -388,10 +387,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                           const padY = 3;
                           const padX = 4;
                           const badgeH = barH - padY * 2;
-                          const pct = totalRevenue > 0 ? ((value / totalRevenue) * 100).toFixed(0) : '0';
-                          const svcName = sortedData[index]?.name;
-                          const avg = svcName ? avgPriceMap[svcName] : 0;
-                          const label = `$${Number(value).toLocaleString()} · ${pct}% · avg $${(avg || 0).toFixed(0)}`;
+                          const label = `$${Number(value).toLocaleString()}`;
                           const badgeW = Math.max(label.length * 6.5 + 14, 50);
                           // Hide badge if it doesn't fit inside the bar
                           if (badgeW + padX * 2 > barW) return null;
