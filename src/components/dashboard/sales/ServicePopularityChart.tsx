@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Scissors, TrendingUp, DollarSign } from 'lucide-react';
+import { Loader2, Scissors, TrendingUp, DollarSign, ChevronDown, User } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BarChart,
@@ -14,7 +14,10 @@ import {
 } from 'recharts';
 import { useServicePopularity } from '@/hooks/useSalesAnalytics';
 import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { motion, AnimatePresence } from 'framer-motion';
 
 let barIdCounter = 0;
 
@@ -74,6 +77,115 @@ const AnimatedBar = (props: any) => {
   );
 };
 
+// Hook to fetch stylist breakdown for a specific service
+function useServiceStylistBreakdown(serviceName: string | null, dateFrom?: string, dateTo?: string, locationId?: string) {
+  return useQuery({
+    queryKey: ['service-stylist-breakdown', serviceName, dateFrom, dateTo, locationId],
+    queryFn: async () => {
+      if (!serviceName) return [];
+      
+      let query = supabase
+        .from('phorest_appointments')
+        .select('phorest_staff_id, total_price')
+        .eq('service_name', serviceName)
+        .not('phorest_staff_id', 'is', null);
+
+      if (dateFrom) query = query.gte('appointment_date', dateFrom);
+      if (dateTo) query = query.lte('appointment_date', dateTo);
+      if (locationId) query = query.eq('location_id', locationId);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      // Aggregate by staff
+      const byStaff: Record<string, { count: number; revenue: number }> = {};
+      data?.forEach(row => {
+        const id = row.phorest_staff_id;
+        if (!id) return;
+        if (!byStaff[id]) byStaff[id] = { count: 0, revenue: 0 };
+        byStaff[id].count += 1;
+        byStaff[id].revenue += Number(row.total_price) || 0;
+      });
+
+      // Get staff names from mapping
+      const staffIds = Object.keys(byStaff);
+      if (staffIds.length === 0) return [];
+
+      const { data: mappings } = await supabase
+        .from('phorest_staff_mapping')
+        .select('phorest_staff_id, phorest_staff_name')
+        .in('phorest_staff_id', staffIds);
+
+      const nameMap: Record<string, string> = {};
+      mappings?.forEach(m => {
+        if (m.phorest_staff_id && m.phorest_staff_name) {
+          nameMap[m.phorest_staff_id] = m.phorest_staff_name;
+        }
+      });
+
+      return Object.entries(byStaff)
+        .map(([staffId, stats]) => ({
+          name: nameMap[staffId] || 'Unknown Stylist',
+          count: stats.count,
+          revenue: stats.revenue,
+          avgPrice: stats.count > 0 ? stats.revenue / stats.count : 0,
+        }))
+        .sort((a, b) => b.count - a.count);
+    },
+    enabled: !!serviceName && !!dateFrom && !!dateTo,
+  });
+}
+
+// Expandable stylist detail panel
+function StylistBreakdownPanel({ serviceName, dateFrom, dateTo, locationId }: {
+  serviceName: string;
+  dateFrom: string;
+  dateTo: string;
+  locationId?: string;
+}) {
+  const { data: stylists, isLoading } = useServiceStylistBreakdown(serviceName, dateFrom, dateTo, locationId);
+  const totalCount = stylists?.reduce((s, st) => s + st.count, 0) || 0;
+
+  return (
+    <motion.div
+      initial={{ height: 0, opacity: 0 }}
+      animate={{ height: 'auto', opacity: 1 }}
+      exit={{ height: 0, opacity: 0 }}
+      transition={{ duration: 0.3, ease: 'easeInOut' }}
+      className="overflow-hidden"
+    >
+      <div className="pt-3 pb-1 px-1 space-y-1.5">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-4">
+            <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+          </div>
+        ) : stylists && stylists.length > 0 ? (
+          stylists.map((stylist, idx) => {
+            const pct = totalCount > 0 ? ((stylist.count / totalCount) * 100).toFixed(0) : '0';
+            return (
+              <div key={idx} className="flex items-center justify-between p-2 bg-muted/20 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-muted/50 flex items-center justify-center rounded-full">
+                    <User className="w-3 h-3 text-muted-foreground" />
+                  </div>
+                  <span className="text-sm">{stylist.name}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground">{stylist.count}× · {pct}%</span>
+                  <Badge variant="secondary" className="text-xs">${stylist.revenue.toLocaleString()}</Badge>
+                  <span className="text-xs text-muted-foreground">avg ${stylist.avgPrice.toFixed(0)}</span>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <p className="text-sm text-muted-foreground text-center py-3">No stylist data available</p>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
 interface ServicePopularityChartProps {
   dateFrom: string;
   dateTo: string;
@@ -84,6 +196,7 @@ interface ServicePopularityChartProps {
 export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterContext }: ServicePopularityChartProps) {
   const { data, isLoading } = useServicePopularity(dateFrom, dateTo, locationId);
   const [sortBy, setSortBy] = useState<'frequency' | 'revenue'>('revenue');
+  const [expandedService, setExpandedService] = useState<string | null>(null);
 
   const sortedData = [...(data || [])].sort((a, b) => 
     sortBy === 'frequency' ? b.frequency - a.frequency : b.totalRevenue - a.totalRevenue
@@ -91,6 +204,10 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
 
   const totalServices = data?.reduce((sum, s) => sum + s.frequency, 0) || 0;
   const totalRevenue = data?.reduce((sum, s) => sum + s.totalRevenue, 0) || 0;
+
+  // Build avgPrice lookup from data
+  const avgPriceMap: Record<string, number> = {};
+  data?.forEach(s => { avgPriceMap[s.name] = s.avgPrice; });
 
   if (isLoading) {
     return (
@@ -263,8 +380,10 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                           const padX = 4;
                           const badgeH = barH - padY * 2;
                           const pct = totalRevenue > 0 ? ((value / totalRevenue) * 100).toFixed(0) : '0';
-                          const label = `$${Number(value).toLocaleString()} · ${pct}%`;
-                          const badgeW = Math.max(label.length * 7 + 12, 50);
+                          const svcName = sortedData[index]?.name;
+                          const avg = svcName ? avgPriceMap[svcName] : 0;
+                          const label = `$${Number(value).toLocaleString()} · ${pct}% · avg $${(avg || 0).toFixed(0)}`;
+                          const badgeW = Math.max(label.length * 6.5 + 14, 50);
                           const bx = (x || 0) + (width || 0) - badgeW - padX;
                           const by = (y || 0) + padY;
                           const delay = (index || 0) * 60 + 650;
@@ -282,7 +401,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                                 x={bx + badgeW / 2}
                                 y={by + badgeH / 2 + 4}
                                 textAnchor="middle"
-                                style={{ fontSize: 11, fontWeight: 500, fill: 'hsl(var(--foreground))' }}
+                                style={{ fontSize: 10, fontWeight: 500, fill: 'hsl(var(--foreground))' }}
                               >
                                 {label}
                               </text>
@@ -297,6 +416,42 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Expandable service detail rows */}
+        {sortedData.length > 0 && (
+          <div className="mt-4 space-y-1">
+            <p className="text-xs tracking-[0.15em] uppercase text-muted-foreground flex items-center gap-2 mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-oat" />
+              STYLIST BREAKDOWN
+            </p>
+            {sortedData.slice(0, 5).map((svc) => (
+              <div key={svc.name}>
+                <button
+                  onClick={() => setExpandedService(expandedService === svc.name ? null : svc.name)}
+                  className="w-full flex items-center justify-between p-2.5 bg-muted/20 hover:bg-muted/30 rounded-lg transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{svc.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">{svc.frequency}× · ${svc.totalRevenue.toLocaleString()} · avg ${svc.avgPrice.toFixed(0)}</span>
+                    <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedService === svc.name ? 'rotate-180' : ''}`} />
+                  </div>
+                </button>
+                <AnimatePresence>
+                  {expandedService === svc.name && (
+                    <StylistBreakdownPanel
+                      serviceName={svc.name}
+                      dateFrom={dateFrom}
+                      dateTo={dateTo}
+                      locationId={locationId}
+                    />
+                  )}
+                </AnimatePresence>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
