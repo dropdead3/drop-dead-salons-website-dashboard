@@ -1,96 +1,105 @@
 
 
-# Enterprise Location Comparison -- Redesign
+# Location Comparison: Scalable Visualization with View Selector
 
 ## Overview
-Replace the current 2-card side-by-side `LocationComparison` component with a scalable, tiered system that adapts its layout and density based on how many locations the organization has. Three distinct visual tiers ensure the UI stays clean whether you have 2 locations or 50.
+Replace the single-color revenue bar with a **user-selectable visualization system** offering three chart types optimized for different scales. Add a rich, diverse color palette derived from the existing service category color system.
 
----
+## Color Palette
 
-## Tier System
+Replace the 5 monochrome primary-opacity colors with a curated palette of 20+ distinct, visually harmonious colors. Source these from:
+- The existing `categoryColors.ts` fallback palette (pinks, blues, golds, teals, greens, purples)
+- Extended with additional hues for large orgs (coral, indigo, amber, slate, rose, cyan, lime, fuchsia, etc.)
 
-### Tier 1: Small (2-5 locations) -- "Head-to-Head Cards"
-- Full detail cards in a responsive grid (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`)
-- Each card shows: revenue, share-of-total progress bar, services count, products count, avg ticket, and a period-over-period trend badge
-- Leader card gets a subtle accent border; lowest performer gets a gentle "opportunity" flag
-- Click a card to expand an inline drill-down panel (service/product split, top 3 stylists at that location, hourly peak)
+Each location gets a unique, deterministic color assignment based on its sorted index.
 
-### Tier 2: Medium (6-20 locations) -- "Ranked Table with Expandable Rows"
-- Compact sortable table with columns: Rank, Location, Revenue, Services, Products, Avg Ticket, Share %, Trend
-- Default sort: revenue descending
-- Each row is expandable (framer-motion) to reveal a detail panel identical to the Tier 1 drill-down
-- Sticky header; capped at 10 visible rows with "Show all N locations" toggle
-- A mini stacked bar at the top shows revenue distribution across all locations (thin, single-row, color-coded)
+## Visualization Options (User Dropdown)
 
-### Tier 3: Large (20+ locations) -- "Scoreboard + Search"
-- Same ranked table as Tier 2 but with:
-  - A search/filter input to find locations by name
-  - Region grouping dropdown (by state/city)
-  - Pagination or virtualized scroll for 50+ locations
-  - Bulk "Expand All / Collapse All" controls
+Add a `Select` dropdown next to the existing card/table toggle that lets the user choose their chart type:
 
-### Shared Elements (all tiers)
-- Header with MapPin icon, "LOCATION COMPARISON" title, AnalyticsFilterBadge, and total revenue Badge (variant="secondary")
-- Sort controls: dropdown to pick metric (Revenue, Avg Ticket, Services, Products, Trend) + direction toggle
-- "View mode" toggle (Cards vs Table) available in Tier 1-2 range so users can switch
+### 1. Horizontal Bar Chart (default for 6+ locations)
+- Recharts `BarChart` with `layout="vertical"`
+- Each location = one horizontal bar, sorted by revenue descending
+- Color-coded per location from the palette
+- Scrollable via `ScrollArea` for large lists
+- Tooltip with location name, revenue, and share %
+- Best for: 5-100 locations (ranked comparison)
 
----
+### 2. Treemap (default suggestion for 100+ locations)
+- Recharts `Treemap` component (already available in the installed recharts package)
+- Each rectangle = one location, area proportional to revenue
+- Color-coded per location
+- Labels show location name + revenue (auto-hidden when rectangle is too small)
+- Tooltip on hover with full details
+- Best for: 20-1,000+ locations (proportional overview at a glance)
 
-## Drill-Down Panel (per location)
-When a location card or table row is expanded, show:
-1. **Revenue Breakdown** -- service vs product split (horizontal stacked bar)
-2. **Top 3 Stylists** -- avatar, name, revenue at that location
-3. **Peak Hour** -- single stat from capacity data
-4. **Period Comparison** -- delta vs previous period (arrow + percentage)
+### 3. Donut Chart (available for 2-10 locations)
+- Recharts `PieChart` with inner radius for donut style
+- Each slice = one location
+- Center label shows total revenue
+- Only offered when location count is 10 or fewer (hidden from dropdown otherwise)
+- Best for: small orgs wanting a quick visual split
 
-Uses `framer-motion` AnimatePresence for smooth expand/collapse.
+## Auto-Selection Logic
+- 2-5 locations: Default to Donut, all 3 options available
+- 6-20 locations: Default to Bar, Bar + Treemap available (Donut hidden)
+- 21+ locations: Default to Treemap, Bar + Treemap available
 
----
+The user's selection persists via `useState` within the component (resets on page reload, which is fine for an analytics view).
 
-## Technical Plan
+## Technical Details
 
-### Files to create
-1. **`src/components/dashboard/sales/location-comparison/LocationComparisonCard.tsx`** -- Single location detail card (Tier 1 unit)
-2. **`src/components/dashboard/sales/location-comparison/LocationComparisonTable.tsx`** -- Sortable table with expandable rows (Tier 2/3)
-3. **`src/components/dashboard/sales/location-comparison/LocationDrilldownPanel.tsx`** -- Shared drill-down content
-4. **`src/components/dashboard/sales/location-comparison/LocationRevenueBar.tsx`** -- Thin stacked revenue distribution bar
-5. **`src/components/dashboard/sales/location-comparison/index.tsx`** -- Re-export barrel
+### Files to Create
+1. **`src/components/dashboard/sales/location-comparison/LocationBarChart.tsx`**
+   - Vertical layout `BarChart` using Recharts
+   - Props: locations array, colors, totalRevenue
+   - `BlurredAmount`-compatible tooltips
+   - Wrapped in `ScrollArea` when locations exceed ~15
+   - Entrance animation via `framer-motion`
 
-### Files to modify
-1. **`src/components/dashboard/sales/LocationComparison.tsx`** -- Refactor to act as the tier-routing wrapper:
-   - Count locations, select Tier 1/2/3 layout
-   - Pass shared sort state, expand state, and drill-down handlers
-   - Keep existing `LocationData` interface and props contract so `SalesTabContent` and `SalesDashboard` imports remain unchanged
+2. **`src/components/dashboard/sales/location-comparison/LocationTreemap.tsx`**
+   - Recharts `Treemap` with custom content renderer
+   - Props: locations array, colors
+   - Custom cell rendering: location name + abbreviated revenue inside each rectangle
+   - Tooltip with full name, revenue, share %, services, products
+   - Minimum cell size threshold for label visibility
+   - `BlurredAmount` integration
 
-### Data flow
-- Existing `locationData` prop provides revenue, services, products, transactions per location
-- Drill-down panel will call `useServiceProductDrilldown` filtered to the specific `locationId`
-- Period comparison uses `useSalesComparison` scoped to the single location
-- Peak hour uses `useCapacityReport` scoped to the single location
-- All queries are lazy-loaded (only fetched when the drill-down panel opens)
+3. **`src/components/dashboard/sales/location-comparison/LocationDonutChart.tsx`**
+   - Recharts `PieChart` with `innerRadius`
+   - Center text showing total revenue
+   - Legend with location names + colors
+   - `BlurredAmount` integration
 
-### Tier detection logic
-```text
-locations.length <= 5   -->  Tier 1 (Cards)
-locations.length <= 20  -->  Tier 2 (Table)
-locations.length > 20   -->  Tier 3 (Scoreboard + Search)
+### Files to Modify
+
+4. **`src/components/dashboard/sales/LocationComparison.tsx`**
+   - Replace the 5-color `COLORS` array with a 20+ color palette
+   - Add a `chartType` state (`'bar' | 'treemap' | 'donut'`) with auto-selection logic
+   - Add a `Select` dropdown in the header (next to the card/table toggle) for chart type selection
+   - Conditionally render the selected chart component above the table/cards
+   - Pass the expanded color palette to all child components
+
+5. **`src/components/dashboard/sales/location-comparison/LocationComparisonTable.tsx`**
+   - Update `LocationRevenueBar` usage to be replaced by the selected chart (the bar is moved into the parent)
+   - Remove the inline `LocationRevenueBar` reference (chart now lives at parent level)
+
+### Color Palette Definition (in LocationComparison.tsx)
+```
+const LOCATION_COLORS = [
+  '#60a5fa', '#f472b6', '#facc15', '#10b981', '#a78bfa',
+  '#f97316', '#06b6d4', '#ec4899', '#84cc16', '#8b5cf6',
+  '#ef4444', '#14b8a6', '#eab308', '#6366f1', '#d946ef',
+  '#0ea5e9', '#f59e0b', '#22c55e', '#e11d48', '#7c3aed',
+];
 ```
 
-Users can override via the Cards/Table view toggle in Tiers 1-2.
-
-### Sorting
-- Shared `useState` for `sortKey` (revenue | avgTicket | services | products | trend) and `sortDirection`
-- Applied to all tiers uniformly via a `useMemo` sorted array
-
-### Animations
-- `framer-motion` `AnimatePresence` + `motion.div` for drill-down expand/collapse
-- Consistent with existing patterns (e.g., `CategoryBreakdownPanel`)
-
-### Capping and expansion
-- Tier 2: default shows top 10, "Show all N" toggle
-- Tier 3: default shows top 10, search filters full list, ScrollArea for overflow
-- Follows existing `ui/list-capping-and-expansion-standards` memory
+### UX Flow
+- The chart type selector appears as a small `Select` component in the card header
+- Changing chart type smoothly transitions via `framer-motion` `AnimatePresence`
+- The chart sits between the header and the table/cards content
+- Table/cards remain below as the detailed data view; charts provide the visual summary
 
 ### Privacy
-- All monetary values wrapped in `BlurredAmount` from `HideNumbersContext`
-
+- All revenue values in tooltips and labels wrapped in `BlurredAmount`
+- Treemap cell labels use abbreviated amounts when blurred
