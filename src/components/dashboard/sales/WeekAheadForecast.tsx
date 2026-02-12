@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,7 +8,8 @@ import { useWeekAheadRevenue, DayForecast } from '@/hooks/useWeekAheadRevenue';
 import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsSheet } from './DayAppointmentsSheet';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
-import { CalendarRange, TrendingUp, Calendar, Users } from 'lucide-react';
+import { CalendarRange, TrendingUp, Calendar, Users, ChevronDown } from 'lucide-react';
+import { CategoryBreakdownPanel, BreakdownMode } from './CategoryBreakdownPanel';
 import { cn } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { motion, useInView } from 'framer-motion';
@@ -97,6 +98,7 @@ export function WeekAheadForecast() {
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [selectedDay, setSelectedDay] = useState<DayForecast | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedStatCard, setSelectedStatCard] = useState<BreakdownMode | null>(null);
   const { data, isLoading, error } = useWeekAheadRevenue(selectedLocation);
   
   const chartRef = useRef<HTMLDivElement>(null);
@@ -106,6 +108,10 @@ export function WeekAheadForecast() {
     setSelectedDay(day);
     setSheetOpen(true);
   };
+
+  const handleStatCardClick = useCallback((mode: BreakdownMode) => {
+    setSelectedStatCard(prev => prev === mode ? null : mode);
+  }, []);
 
   if (isLoading) {
     return (
@@ -136,7 +142,7 @@ export function WeekAheadForecast() {
     );
   }
 
-  const { days, totalRevenue, totalAppointments, averageDaily, peakDay } = data;
+  const { days, totalRevenue, totalAppointments, averageDaily, peakDay, byCategory } = data;
 
   // Chart data with confirmed/unconfirmed split
   const chartData = days.map(day => ({
@@ -175,7 +181,13 @@ export function WeekAheadForecast() {
         <CardContent className="space-y-4">
           {/* Summary Stats */}
           <div className="grid grid-cols-3 gap-3">
-            <div className="text-center p-3 bg-muted/30 rounded-lg">
+            <div
+              className={cn(
+                "text-center p-3 bg-muted/30 rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
+                selectedStatCard === 'revenue' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
+              )}
+              onClick={() => handleStatCardClick('revenue')}
+            >
               <div className="flex justify-center mb-1">
                 <TrendingUp className="w-4 h-4 text-primary" />
               </div>
@@ -188,8 +200,15 @@ export function WeekAheadForecast() {
                 <p className="text-xs text-muted-foreground">7-Day Total</p>
                 <MetricInfoTooltip description="Sum of projected revenue from all scheduled appointments over the next 7 days." />
               </div>
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'revenue' && 'rotate-180 text-primary')} />
             </div>
-            <div className="text-center p-3 bg-muted/30 rounded-lg">
+            <div
+              className={cn(
+                "text-center p-3 bg-muted/30 rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
+                selectedStatCard === 'dailyAvg' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
+              )}
+              onClick={() => handleStatCardClick('dailyAvg')}
+            >
               <div className="flex justify-center mb-1">
                 <Calendar className="w-4 h-4 text-chart-2" />
               </div>
@@ -202,8 +221,15 @@ export function WeekAheadForecast() {
                 <p className="text-xs text-muted-foreground">Daily Avg</p>
                 <MetricInfoTooltip description="7-Day Total ÷ 7. Average projected daily revenue for the upcoming week." />
               </div>
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'dailyAvg' && 'rotate-180 text-primary')} />
             </div>
-            <div className="text-center p-3 bg-muted/30 rounded-lg">
+            <div
+              className={cn(
+                "text-center p-3 bg-muted/30 rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
+                selectedStatCard === 'count' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
+              )}
+              onClick={() => handleStatCardClick('count')}
+            >
               <div className="flex justify-center mb-1">
                 <Users className="w-4 h-4 text-chart-3" />
               </div>
@@ -212,8 +238,20 @@ export function WeekAheadForecast() {
                 <p className="text-xs text-muted-foreground">Appointments</p>
                 <MetricInfoTooltip description="Total count of scheduled appointments across the next 7 days." />
               </div>
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'count' && 'rotate-180 text-primary')} />
             </div>
           </div>
+
+          {/* Category Breakdown Panel */}
+          {byCategory && (
+            <CategoryBreakdownPanel
+              data={byCategory}
+              mode={selectedStatCard || 'revenue'}
+              dayCount={7}
+              isOpen={selectedStatCard !== null}
+            />
+          )}
+
 
           {/* Bar Chart with stacked confirmed/unconfirmed and labels above */}
           <div className="h-[200px]" ref={chartRef}>
