@@ -114,21 +114,27 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                         dataKey="frequency"
                         position="insideRight"
                         content={({ x, y, width, height, value }: any) => {
-                          const labelX = (x || 0) + (width || 0) - 8;
-                          const labelY = (y || 0) + (height || 0) / 2;
+                          const barH = height || 0;
+                          const padY = 3;
+                          const padX = 4;
+                          const badgeH = barH - padY * 2;
+                          const text = String(value);
+                          const badgeW = Math.max(text.length * 8 + 12, 28);
+                          const bx = (x || 0) + (width || 0) - badgeW - padX;
+                          const by = (y || 0) + padY;
                           return (
                             <g>
                               <rect
-                                x={labelX - 24}
-                                y={labelY - 10}
-                                width={28}
-                                height={20}
-                                rx={6}
-                                fill="hsl(var(--background) / 0.85)"
+                                x={bx}
+                                y={by}
+                                width={badgeW}
+                                height={badgeH}
+                                rx={3}
+                                fill="hsl(var(--background) / 0.8)"
                               />
                               <text
-                                x={labelX - 10}
-                                y={labelY + 4}
+                                x={bx + badgeW / 2}
+                                y={by + badgeH / 2 + 4}
                                 textAnchor="middle"
                                 style={{ fontSize: 11, fontWeight: 500, fill: 'hsl(var(--foreground))' }}
                               >
