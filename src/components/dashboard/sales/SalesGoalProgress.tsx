@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Target, TrendingUp, TrendingDown, Loader2, ListChecks, Settings } from 'lucide-react';
+import { Target, TrendingUp, TrendingDown, Loader2, ListChecks, Settings, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -24,6 +24,8 @@ interface SalesGoalProgressProps {
   goalPeriod?: 'weekly' | 'monthly' | 'yearly';
   hoursJson?: HoursJson | null;
   holidayClosures?: HolidayClosure[] | null;
+  onClick?: () => void;
+  isExpanded?: boolean;
 }
 
 function getElapsedFraction(period: 'weekly' | 'monthly' | 'yearly'): number {
@@ -128,6 +130,8 @@ export function SalesGoalProgress({
   goalPeriod = 'monthly',
   hoursJson,
   holidayClosures,
+  onClick,
+  isExpanded,
 }: SalesGoalProgressProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -220,7 +224,16 @@ export function SalesGoalProgress({
 
   return (
     <div className={cn('space-y-2', className)}>
-      <div className="flex items-center justify-between text-sm">
+      <div 
+        className={cn(
+          'flex items-center justify-between text-sm',
+          onClick && 'cursor-pointer group'
+        )}
+        onClick={onClick}
+        role={onClick ? 'button' : undefined}
+        tabIndex={onClick ? 0 : undefined}
+        onKeyDown={onClick ? (e) => e.key === 'Enter' && onClick() : undefined}
+      >
         <div className="flex items-center gap-2">
           <Target className={cn(
             'w-4 h-4',
@@ -229,17 +242,29 @@ export function SalesGoalProgress({
           <span className="font-medium">{label}</span>
           <MetricInfoTooltip description="Progress toward your configured sales target. Percentage = (Current Revenue ÷ Target) × 100." />
           <SalesGoalsDialog trigger={
-            <button className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Edit sales goals">
+            <button 
+              className="text-muted-foreground hover:text-foreground transition-colors" 
+              aria-label="Edit sales goals"
+              onClick={(e) => e.stopPropagation()}
+            >
               <Settings className="w-3.5 h-3.5" />
             </button>
           } />
         </div>
-        <span className={cn(
-          'text-xs font-medium',
-          isComplete ? 'text-chart-2' : 'text-muted-foreground'
-        )}>
-          {percentage.toFixed(0)}%
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className={cn(
+            'text-xs font-medium',
+            isComplete ? 'text-chart-2' : 'text-muted-foreground'
+          )}>
+            {percentage.toFixed(0)}%
+          </span>
+          {onClick && (
+            <ChevronDown className={cn(
+              'w-3.5 h-3.5 text-muted-foreground transition-transform duration-200',
+              isExpanded && 'rotate-180'
+            )} />
+          )}
+        </div>
       </div>
       
       <Progress 

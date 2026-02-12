@@ -49,6 +49,7 @@ import { TransactionsByHourPanel } from './sales/TransactionsByHourPanel';
 import { TicketDistributionPanel } from './sales/TicketDistributionPanel';
 import { RevPerHourByStylistPanel } from './sales/RevPerHourByStylistPanel';
 import { useNavigate } from 'react-router-dom';
+import { GoalLocationsDrilldown } from './sales/GoalLocationsDrilldown';
 
 // Sub-components
 import { SalesTrendIndicator } from './sales/SalesTrendIndicator';
@@ -64,13 +65,15 @@ import { Progress } from '@/components/ui/progress';
 export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'todayToEom' | 'ytd' | 'lastYear' | 'last365';
 
 /** Wrapper that fetches goal-period revenue independently of the dashboard filter */
-function GoalProgressWithOwnRevenue({ goalPeriod, locationId, target, label, hoursJson, holidayClosures }: {
+function GoalProgressWithOwnRevenue({ goalPeriod, locationId, target, label, hoursJson, holidayClosures, onClick, isExpanded }: {
   goalPeriod: 'weekly' | 'monthly';
   locationId?: string;
   target: number;
   label: string;
   hoursJson?: any;
   holidayClosures?: any;
+  onClick?: () => void;
+  isExpanded?: boolean;
 }) {
   const { data: goalRevenue = 0 } = useGoalPeriodRevenue(goalPeriod, locationId);
   return (
@@ -81,6 +84,8 @@ function GoalProgressWithOwnRevenue({ goalPeriod, locationId, target, label, hou
       goalPeriod={goalPeriod}
       hoursJson={hoursJson}
       holidayClosures={holidayClosures}
+      onClick={onClick}
+      isExpanded={isExpanded}
     />
   );
 }
@@ -118,11 +123,11 @@ export function AggregateSalesCard({
   const [internalDateRange, setInternalDateRange] = useState<DateRange>('today');
   const [drilldownMode, setDrilldownMode] = useState<'services' | 'products' | null>(null);
   const [tipsDrilldownOpen, setTipsDrilldownOpen] = useState(false);
-  const [activeDrilldown, setActiveDrilldown] = useState<'transactions' | 'avgTicket' | 'revPerHour' | null>(null);
+  const [activeDrilldown, setActiveDrilldown] = useState<'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | null>(null);
   const { hideNumbers } = useHideNumbers();
 
   // Toggle a secondary KPI drilldown with mutual exclusivity
-  const toggleDrilldown = (panel: 'transactions' | 'avgTicket' | 'revPerHour') => {
+  const toggleDrilldown = (panel: 'transactions' | 'avgTicket' | 'revPerHour' | 'goals') => {
     setActiveDrilldown(prev => prev === panel ? null : panel);
     setTipsDrilldownOpen(false); // Close tips when opening another
   };
@@ -793,14 +798,22 @@ export function AggregateSalesCard({
                 : null;
               const goalPeriod = dateRange === 'thisWeek' || dateRange === '7d' ? 'weekly' : 'monthly';
               return (
-                <GoalProgressWithOwnRevenue
-                  goalPeriod={goalPeriod}
-                  locationId={filterContext?.locationId}
-                  target={currentGoal}
-                  label={goalLabel}
-                  hoursJson={selectedLoc?.hours_json}
-                  holidayClosures={selectedLoc?.holiday_closures}
-                />
+                <>
+                  <GoalProgressWithOwnRevenue
+                    goalPeriod={goalPeriod}
+                    locationId={filterContext?.locationId}
+                    target={currentGoal}
+                    label={goalLabel}
+                    hoursJson={selectedLoc?.hours_json}
+                    holidayClosures={selectedLoc?.holiday_closures}
+                    onClick={() => toggleDrilldown('goals')}
+                    isExpanded={activeDrilldown === 'goals'}
+                  />
+                  <GoalLocationsDrilldown
+                    isOpen={activeDrilldown === 'goals'}
+                    period={goalPeriod}
+                  />
+                </>
               );
             })()}
           </div>
