@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Target, TrendingUp, TrendingDown, Loader2, ListChecks } from 'lucide-react';
+import { Target, TrendingUp, TrendingDown, Loader2, ListChecks, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -14,6 +14,7 @@ import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/integrations/supabase/client';
 import { RecoveryPlanActions } from './RecoveryPlanActions';
 import { Checkbox } from '@/components/ui/checkbox';
+import { SalesGoalsDialog } from './SalesGoalsDialog';
 
 interface SalesGoalProgressProps {
   current: number;
@@ -227,6 +228,11 @@ export function SalesGoalProgress({
           )} />
           <span className="font-medium">{label}</span>
           <MetricInfoTooltip description="Progress toward your configured sales target. Percentage = (Current Revenue ÷ Target) × 100." />
+          <SalesGoalsDialog trigger={
+            <button className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Edit sales goals">
+              <Settings className="w-3.5 h-3.5" />
+            </button>
+          } />
         </div>
         <span className={cn(
           'text-xs font-medium',
