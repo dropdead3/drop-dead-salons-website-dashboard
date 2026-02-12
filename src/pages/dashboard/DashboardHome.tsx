@@ -41,7 +41,7 @@ import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
 import { AnnouncementsDrawer } from '@/components/dashboard/AnnouncementsDrawer';
 import { DashboardSetupWizard } from '@/components/dashboard/DashboardSetupWizard';
 import { DashboardCustomizeMenu } from '@/components/dashboard/DashboardCustomizeMenu';
-import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId } from '@/hooks/useDashboardLayout';
+import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId, PINNABLE_CARD_IDS } from '@/hooks/useDashboardLayout';
 import { TodaysQueueSection } from '@/components/dashboard/TodaysQueueSection';
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { PinnedAnalyticsCard, getDateRange, type AnalyticsFilters, type DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
@@ -327,11 +327,19 @@ function DashboardSections({
     );
   };
   
-  // Check if there are any pinned analytics in the layout
+  // Find cards that are pinned in DB but missing from sectionOrder
+  const missingPinnedCards = useMemo(() => {
+    const orderedIds = layout.sectionOrder || [];
+    const existingPinnedIds = orderedIds.filter(isPinnedCardEntry).map(getPinnedCardId);
+    return PINNABLE_CARD_IDS.filter(id => isCardPinned(id) && !existingPinnedIds.includes(id));
+  }, [layout.sectionOrder, visibilityData]);
+
+  // Check if there are any pinned analytics in the layout or missing from layout
   const hasPinnedAnalytics = useMemo(() => {
     const orderedIds = layout.sectionOrder?.length > 0 ? layout.sectionOrder : [];
-    return orderedIds.some(id => isPinnedCardEntry(id) && isCardPinned(getPinnedCardId(id)));
-  }, [layout.sectionOrder, visibilityData]);
+    const hasInOrder = orderedIds.some(id => isPinnedCardEntry(id) && isCardPinned(getPinnedCardId(id)));
+    return hasInOrder || missingPinnedCards.length > 0;
+  }, [layout.sectionOrder, visibilityData, missingPinnedCards]);
 
   // Build section components map (excludes pinned cards - those are rendered separately)
   const sectionComponents = useMemo(() => ({
@@ -690,6 +698,10 @@ function DashboardSections({
         
         return <React.Fragment key={sectionId}>{component}</React.Fragment>;
       })}
+      {/* Render pinned cards that are visible in DB but missing from sectionOrder */}
+      {missingPinnedCards.map(cardId => (
+        <PinnedAnalyticsCard key={`pinned:${cardId}`} cardId={cardId} filters={analyticsFilters} />
+      ))}
     </>
   );
 }

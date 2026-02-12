@@ -39,6 +39,7 @@ export const PINNABLE_CARD_IDS = [
   'revenue_breakdown',
   'client_funnel',
   'team_goals',
+  'goal_tracker',
   'new_bookings',
   'week_ahead_forecast',
   'capacity_utilization',
