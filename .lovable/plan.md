@@ -1,49 +1,33 @@
 
 
-## Location Comparison Card Enhancements
+## Fix: Align Column Headers to Data Values
 
-Three targeted upgrades to the location comparison cards, aligned with the luxury aesthetic.
+**Problem**: The sortable column headers use a `flex` button that left-aligns within the table cell, while the data values below are right-aligned via `text-right`. This creates a visual misalignment.
 
----
-
-### 1. Colored Share Progress Bars
-
-The "Share of total" progress bar currently uses the default `bg-primary` fill. We will tint it to match each location's assigned chart color, creating visual continuity between the donut/bar chart and the cards.
-
-**What changes:**
-- Pass the location `color` prop into the `Progress` component via `indicatorClassName` using an inline style approach, or wrap it with a styled div.
-- Since `Progress` already supports `indicatorClassName`, we will use a small wrapper approach: set the indicator background to the location's color using a style override.
+**Solution**: Add `ml-auto` (or `justify-end` with `w-full`) to the `SortHeader` button so it aligns to the right edge of the cell, matching the numeric data beneath it.
 
 ---
 
-### 2. Staggered Card Entrance Animation
+### Change
 
-Cards will fade-in and slide-up sequentially when the section mounts, creating a cascading reveal that complements the donut's clockwise sweep.
+**File**: `src/components/dashboard/sales/location-comparison/LocationComparisonTable.tsx`
 
-**What changes:**
-- In `LocationComparison.tsx`, wrap the card grid with `framer-motion` and apply staggered `variants` to each `LocationComparisonCard`.
-- Each card gets a `motion.div` wrapper with a delay based on its index (e.g., `i * 0.08s`).
-- Animation: fade from 0 + translateY(12px) to full opacity and y=0, with spring easing.
+Update the `SortHeader` component (lines 85-96) to add `ml-auto` to the button class, pushing the flex content to the right side of the cell:
 
----
+```tsx
+const SortHeader = ({ label, column }: { label: string; column: SortKey }) => (
+  <button
+    className="flex items-center gap-1 hover:text-foreground transition-colors ml-auto"
+    onClick={() => toggleSort(column)}
+  >
+    {label}
+    <ChevronsUpDown className={cn(
+      'w-3 h-3',
+      sortKey === column ? 'text-foreground' : 'text-muted-foreground/50'
+    )} />
+  </button>
+);
+```
 
-### 3. Service-to-Product Ratio Mini Bar
-
-A thin inline split bar showing the revenue mix between services and products at a glance, placed between the share bar and the metric grid.
-
-**What changes:**
-- Add a new section in `LocationComparisonCard` below the share progress bar.
-- Render a thin (h-1.5) rounded bar split into two segments: services (primary color) and products (muted/secondary color).
-- Label it with "Services vs Products" and show percentages on hover via tooltips.
-- Uses the existing `serviceRevenue` and `productRevenue` fields already available on the card data.
-
----
-
-### Technical Details
-
-**Files modified:**
-- `src/components/dashboard/sales/location-comparison/LocationComparisonCard.tsx` — colored progress bar indicator, service/product ratio mini bar
-- `src/components/dashboard/sales/LocationComparison.tsx` — staggered motion wrapper around card grid items
-
-**No new dependencies required.** Uses existing `framer-motion`, `Progress` component, and `Tooltip` components.
+This single addition (`ml-auto`) will push every sortable header flush-right to align with the `text-right` data cells below. No other files need changes.
 
