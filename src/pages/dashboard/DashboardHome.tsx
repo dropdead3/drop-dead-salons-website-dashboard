@@ -54,6 +54,7 @@ import { PersonalInsightsDrawer } from '@/components/dashboard/PersonalInsightsD
 import { PayrollDeadlineCard } from '@/components/dashboard/payroll/PayrollDeadlineCard';
 import { PaydayCountdownBanner } from '@/components/dashboard/mypay/PaydayCountdownBanner';
 import { InsightsNudgeBanner } from '@/components/dashboard/InsightsNudgeBanner';
+import { ActiveCampaignsCard } from '@/components/dashboard/ActiveCampaignsCard';
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
 interface Announcement {
@@ -616,6 +617,8 @@ function DashboardSections({
         </div>
       </VisibilityGate>
     ),
+    
+    active_campaigns: isLeadership && <ActiveCampaignsCard />,
     
     widgets: <WidgetsSection />,
   }), [

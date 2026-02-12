@@ -8,6 +8,7 @@ import {
   Check,
   Sparkles,
   ChevronDown,
+  Hash,
 } from 'lucide-react';
 import {
   Dialog,
@@ -17,6 +18,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -32,6 +34,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import { useCreateCampaign } from '@/hooks/useActionCampaigns';
 
 interface ImplementPlanDialogProps {
   open: boolean;
@@ -50,9 +53,7 @@ interface ActionStep {
 
 /** Normalize markdown content for easier parsing */
 function normalizeContent(content: string): string {
-  // Strip markdown links [text](url) → text
   let normalized = content.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-  // Collapse multiple spaces/tabs
   normalized = normalized.replace(/[ \t]+/g, ' ');
   return normalized;
 }
@@ -72,7 +73,6 @@ function deduplicateSteps(steps: ActionStep[]): ActionStep[] {
 function extractActions(content: string): ActionStep[] {
   let steps: ActionStep[] = [];
 
-  // Strategy 0 (Primary): Parse ---ACTIONS--- block from AI
   const actionsBlockMatch = content.match(/---ACTIONS---\s*([\s\S]*?)(?:---END---|$)/);
   if (actionsBlockMatch) {
     const rawBlock = actionsBlockMatch[1].replace(/---END---/g, '').trim();
@@ -82,18 +82,15 @@ function extractActions(content: string): ActionStep[] {
       if (lineMatch) {
         steps.push({ title: lineMatch[1].trim(), description: lineMatch[2].trim(), dueDays: 0 });
       } else if (line.length > 5) {
-        // Fallback: use entire line as title if no colon-separated format
         steps.push({ title: line.replace(/^[\d.)\-•]+\s*/, '').trim(), description: '', dueDays: 0 });
       }
     }
   }
 
-  // Fallback strategies for older content without markers
   if (steps.length === 0) {
     const normalized = normalizeContent(content);
     let match: RegExpExecArray | null;
 
-    // Strategy 1: Any **bold text** as action title, rest of line as description
     const boldPattern = /\*\*([^*]{4,120})\*\*[:\s]*(.*)/g;
     while ((match = boldPattern.exec(normalized)) !== null) {
       const title = match[1].trim().replace(/^[\d.)\-•]+\s*/, '');
@@ -103,7 +100,6 @@ function extractActions(content: string): ActionStep[] {
       steps.push({ title, description, dueDays: 0 });
     }
 
-    // Strategy 2: Numbered or bulleted list items
     if (steps.length === 0) {
       const listPattern = /^[\s]*(?:\d+[.)]\s+|[-•]\s+)(.{5,150})/gm;
       while ((match = listPattern.exec(normalized)) !== null) {
@@ -115,7 +111,6 @@ function extractActions(content: string): ActionStep[] {
       }
     }
 
-    // Strategy 3: Sentence/line-level fallback
     if (steps.length === 0) {
       const lines = normalized.split('\n').map((l) => l.trim()).filter(Boolean);
       for (const line of lines) {
@@ -128,7 +123,6 @@ function extractActions(content: string): ActionStep[] {
     }
   }
 
-  // Deduplicate and cap
   const result = deduplicateSteps(steps).slice(0, 8);
   result.forEach((step, i) => {
     step.dueDays = i < 2 ? 2 : i < 4 ? 5 : 7;
@@ -146,13 +140,15 @@ export function ImplementPlanDialog({
   preSelectedSteps,
 }: ImplementPlanDialogProps) {
   const { user } = useAuth();
+  const createCampaign = useCreateCampaign();
 
   const [steps, setSteps] = useState<ActionStep[]>([]);
+  const [campaignName, setCampaignName] = useState('');
   const [leadershipNote, setLeadershipNote] = useState('');
   const [noteOpen, setNoteOpen] = useState(false);
 
-  // Distribution options
-  const [createTasks, setCreateTasks] = useState(true);
+  // Distribution options (post-creation)
+  const [alsoCreateTasks, setAlsoCreateTasks] = useState(false);
   const [shareDM, setShareDM] = useState(false);
   const [copyClipboard, setCopyClipboard] = useState(false);
 
@@ -178,7 +174,6 @@ export function ImplementPlanDialog({
 
   const allSelected = steps.length > 0 && selectedSteps.size === steps.length;
 
-  // Reset state when dialog opens
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
       const extracted = preSelectedSteps && preSelectedSteps.length > 0
@@ -186,9 +181,10 @@ export function ImplementPlanDialog({
         : extractActions(planContent);
       setSteps(extracted);
       setSelectedSteps(new Set(extracted.map((_, i) => i)));
+      setCampaignName(planTitle || 'Recovery Campaign');
       setLeadershipNote('');
       setNoteOpen(false);
-      setCreateTasks(true);
+      setAlsoCreateTasks(false);
       setShareDM(false);
       setCopyClipboard(false);
       setExecuted(false);
@@ -197,7 +193,6 @@ export function ImplementPlanDialog({
     onOpenChange(isOpen);
   };
 
-  // Auto-close after success
   useEffect(() => {
     if (executed) {
       const timer = setTimeout(() => handleOpenChange(false), 2000);
@@ -208,7 +203,7 @@ export function ImplementPlanDialog({
   const activeSteps = steps.filter((_, i) => selectedSteps.has(i));
 
   const formatPlanForClipboard = () => {
-    let text = `📋 ${planTitle}\n`;
+    let text = `📋 ${campaignName}\n`;
     if (goalPeriod) text += `Period: ${goalPeriod}\n`;
     text += '\n--- Action Steps ---\n\n';
 
@@ -227,7 +222,7 @@ export function ImplementPlanDialog({
   };
 
   const formatPlanForDM = () => {
-    let md = `**📋 ${planTitle}**\n\n`;
+    let md = `**📋 ${campaignName}**\n\n`;
     activeSteps.forEach((step, i) => {
       md += `**${i + 1}. ${step.title}**`;
       md += ` (due ${format(addDays(new Date(), step.dueDays), 'MMM d')})`;
@@ -241,18 +236,36 @@ export function ImplementPlanDialog({
   };
 
   const handleActivate = async () => {
-    if (!user?.id) return;
+    if (!user?.id || !campaignName.trim()) return;
     setExecuting(true);
     const actionResults: string[] = [];
 
     try {
-      if (createTasks) {
+      // 1. Create the campaign
+      await createCampaign.mutateAsync({
+        name: campaignName.trim(),
+        description: planContent.replace(/---ACTIONS---[\s\S]*?(---END---|$)/g, '').trim().slice(0, 500),
+        goal_period: goalPeriod,
+        source_plan_type: 'recovery',
+        leadership_note: leadershipNote || undefined,
+        tasks: activeSteps.map((step, i) => ({
+          title: step.title,
+          description: step.description || undefined,
+          priority: i === 0 ? 'high' : 'medium',
+          due_date: addDays(new Date(), step.dueDays).toISOString(),
+          sort_order: i,
+        })),
+      });
+      actionResults.push('Campaign created');
+
+      // 2. Also add to personal tasks if checked
+      if (alsoCreateTasks) {
         const tasks = activeSteps
           .filter((s) => s.title.trim())
           .map((step) => ({
             user_id: user.id,
             title: step.title,
-            description: `From recovery plan: ${planTitle}${step.description ? `\n${step.description}` : ''}`,
+            description: `From campaign: ${campaignName}${step.description ? `\n${step.description}` : ''}`,
             due_date: addDays(new Date(), step.dueDays).toISOString(),
             priority: 'high',
             source: 'ai_recovery_plan',
@@ -261,15 +274,17 @@ export function ImplementPlanDialog({
         if (tasks.length > 0) {
           const { error } = await supabase.from('tasks').insert(tasks);
           if (error) throw error;
-          actionResults.push(`${tasks.length} tasks created`);
+          actionResults.push(`${tasks.length} personal tasks added`);
         }
       }
 
+      // 3. Copy to clipboard
       if (copyClipboard) {
         await navigator.clipboard.writeText(formatPlanForClipboard());
         actionResults.push('Copied to clipboard');
       }
 
+      // 4. Open DM dialog
       if (shareDM) {
         setDmDialogOpen(true);
         actionResults.push('DM sharing opened');
@@ -279,18 +294,17 @@ export function ImplementPlanDialog({
       setExecuted(true);
 
       if (actionResults.length > 0) {
-        toast.success(`Plan activated: ${actionResults.join(', ')}`);
+        toast.success(`Campaign launched: ${actionResults.join(', ')}`);
       }
     } catch (err) {
       console.error('Execute plan error:', err);
-      toast.error('Failed to activate plan');
+      toast.error('Failed to create campaign');
     } finally {
       setExecuting(false);
     }
   };
 
   const hasValidSteps = activeSteps.some((s) => s.title.trim());
-  const hasDistribution = createTasks || shareDM || copyClipboard;
 
   return (
     <>
@@ -303,25 +317,24 @@ export function ImplementPlanDialog({
           <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <ZuraAvatar size="sm" />
-              Let's Implement
+              Create Campaign
             </DialogTitle>
             <p className="text-xs text-muted-foreground">
               {executed
-                ? 'Plan activated!'
-                : 'Approve Zura\'s plan and route it to your team'}
+                ? 'Campaign launched!'
+                : 'Name your campaign, review the actions, and launch it'}
             </p>
           </DialogHeader>
 
           {/* Content */}
           <ScrollArea className="flex-1 min-h-0 -mx-6 px-6">
             {executed ? (
-              /* Success state */
               <div className="py-8 text-center space-y-4">
                 <div className="w-12 h-12 rounded-full bg-chart-2/10 flex items-center justify-center mx-auto">
                   <Check className="w-6 h-6 text-chart-2" />
                 </div>
                 <div>
-                  <p className="font-medium">Plan Activated</p>
+                  <p className="font-medium">Campaign Launched</p>
                   <div className="text-sm text-muted-foreground mt-1 space-y-0.5">
                     {results.map((r, i) => (
                       <p key={i}>✓ {r}</p>
@@ -331,12 +344,15 @@ export function ImplementPlanDialog({
               </div>
             ) : (
               <div className="space-y-4 pb-4">
-                {/* Plan title context */}
-                <div className="flex items-center gap-2 p-2 rounded-md bg-muted/30 border border-border/20">
-                  <Sparkles className="w-4 h-4 text-primary shrink-0" />
-                  <p className="text-xs text-muted-foreground truncate">
-                    {planTitle}
-                  </p>
+                {/* Campaign name */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Campaign Name</label>
+                  <Input
+                    value={campaignName}
+                    onChange={(e) => setCampaignName(e.target.value)}
+                    placeholder="e.g., Weekly Recovery Sprint"
+                    className="text-sm"
+                  />
                 </div>
 
                 {/* Selectable action steps */}
@@ -426,16 +442,16 @@ export function ImplementPlanDialog({
                 {/* Distribution options */}
                 <div className="space-y-2 pt-2 border-t border-border/30">
                   <p className="text-xs font-medium text-muted-foreground">
-                    Route This Plan
+                    Also...
                   </p>
 
                   <label className="flex items-center gap-3 p-2.5 rounded-lg border border-border/30 hover:border-border/50 cursor-pointer transition-colors">
                     <Checkbox
-                      checked={createTasks}
-                      onCheckedChange={(v) => setCreateTasks(!!v)}
+                      checked={alsoCreateTasks}
+                      onCheckedChange={(v) => setAlsoCreateTasks(!!v)}
                     />
                     <ListChecks className="w-4 h-4 text-primary shrink-0" />
-                    <span className="text-sm">Add to my tasks</span>
+                    <span className="text-sm">Add to my personal tasks</span>
                   </label>
 
                   <label className="flex items-center gap-3 p-2.5 rounded-lg border border-border/30 hover:border-border/50 cursor-pointer transition-colors">
@@ -474,7 +490,7 @@ export function ImplementPlanDialog({
                 <Button
                   size="sm"
                   onClick={handleActivate}
-                  disabled={!hasValidSteps || !hasDistribution || executing}
+                  disabled={!hasValidSteps || !campaignName.trim() || executing}
                   className="gap-1.5"
                 >
                   {executing ? (
@@ -482,7 +498,7 @@ export function ImplementPlanDialog({
                   ) : (
                     <Rocket className="w-4 h-4" />
                   )}
-                  Activate Plan
+                  Launch Campaign
                 </Button>
               </>
             )}
@@ -493,7 +509,7 @@ export function ImplementPlanDialog({
       <ShareToDMDialog
         open={dmDialogOpen}
         onOpenChange={setDmDialogOpen}
-        planTitle={planTitle}
+        planTitle={campaignName}
         planContent={formatPlanForDM()}
       />
     </>
