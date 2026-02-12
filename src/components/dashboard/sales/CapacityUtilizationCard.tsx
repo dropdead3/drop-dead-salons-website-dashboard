@@ -180,9 +180,11 @@ export function CapacityUtilizationCard() {
       <CardHeader className="pb-3">
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Gauge className="w-5 h-5 text-primary" />
-              <CardTitle className="font-display text-base">Capacity Utilization</CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                <Gauge className="w-5 h-5 text-primary" />
+              </div>
+              <CardTitle className="font-display text-base tracking-wide">CAPACITY UTILIZATION</CardTitle>
               <UITooltip>
                 <TooltipTrigger asChild>
                   <Button

@@ -68,9 +68,11 @@ export function GoalTrackerCard() {
       <Card className="shadow-2xl rounded-2xl">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Target className="w-4 h-4 text-primary" />
-              <CardTitle className="font-display text-base">Goal Tracker</CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                <Target className="w-5 h-5 text-primary" />
+              </div>
+              <CardTitle className="font-display text-base tracking-wide">GOAL TRACKER</CardTitle>
               <MetricInfoTooltip description="Tracks whether you're on pace to hit your revenue targets for the current period." />
             </div>
             <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-0.5">

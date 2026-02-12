@@ -109,10 +109,12 @@ export function TeamGoalsCard({
         className
       )}>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-primary" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Users className="w-5 h-5 text-primary" />
+            </div>
             <div>
-              <CardTitle className="font-display text-lg">Team Goal</CardTitle>
+              <CardTitle className="font-display text-base tracking-wide">TEAM GOAL</CardTitle>
               <CardDescription className="capitalize">{period} Target</CardDescription>
             </div>
           </div>

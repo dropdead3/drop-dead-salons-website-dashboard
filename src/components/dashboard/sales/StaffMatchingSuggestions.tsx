@@ -89,12 +89,12 @@ export function StaffMatchingSuggestions({
     <Card className="border-primary/20 bg-primary/5">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-              <Link2 className="w-4 h-4 text-primary" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Link2 className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-base font-display">Staff Matching Suggestions</CardTitle>
+              <CardTitle className="font-display text-base tracking-wide">STAFF MATCHING</CardTitle>
               <CardDescription className="text-xs">
                 Link your team to Phorest to track individual stats
               </CardDescription>

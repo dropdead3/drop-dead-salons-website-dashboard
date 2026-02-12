@@ -157,9 +157,14 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <div>
-            <CardTitle className="font-display text-lg">Revenue Trend</CardTitle>
-            <p className="text-sm text-muted-foreground">Last {weeks} weeks performance</p>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <TrendingUp className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="font-display text-base tracking-wide">REVENUE TREND</CardTitle>
+              <p className="text-sm text-muted-foreground">Last {weeks} weeks performance</p>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             {/* Location Switcher */}

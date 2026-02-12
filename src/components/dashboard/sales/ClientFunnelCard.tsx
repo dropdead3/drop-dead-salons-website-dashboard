@@ -38,9 +38,11 @@ export function ClientFunnelCard({ dateFrom, dateTo, locationId, filterContext }
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-chart-3" />
-            <CardTitle className="font-display">Client Acquisition</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Users className="w-5 h-5 text-primary" />
+            </div>
+            <CardTitle className="font-display text-base tracking-wide">CLIENT ACQUISITION</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             {filterContext && (

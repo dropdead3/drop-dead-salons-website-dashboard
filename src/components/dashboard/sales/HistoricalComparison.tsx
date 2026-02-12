@@ -109,10 +109,12 @@ export function HistoricalComparison({
     <Card>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="font-display text-sm flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            PERIOD COMPARISON
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Calendar className="w-5 h-5 text-primary" />
+            </div>
+            <CardTitle className="font-display text-base tracking-wide">PERIOD COMPARISON</CardTitle>
+          </div>
           <div className="flex items-center gap-2">
             {filterContext && (
               <AnalyticsFilterBadge 
