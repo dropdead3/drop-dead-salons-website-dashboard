@@ -63,14 +63,14 @@ export function CommandCenterVisibilityToggle({
           variant="ghost" 
           size="icon" 
           className={cn(
-            "h-6 w-6 rounded-full p-0",
+            "h-8 w-8",
             isVisibleToLeadership 
-              ? "text-primary hover:bg-primary/10" 
-              : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              ? "text-primary" 
+              : "text-muted-foreground hover:text-foreground"
           )}
         >
           <Pin className={cn(
-            "h-3.5 w-3.5 transition-transform",
+            "h-4 w-4 transition-transform",
             isVisibleToLeadership && "fill-current rotate-[-45deg]"
           )} />
         </Button>
