@@ -51,7 +51,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
           </div>
           <div className="flex items-center gap-2">
             <div>
-              <h2 className="font-display text-sm tracking-wide">NEW BOOKINGS</h2>
+              <h2 className="font-display text-base tracking-wide">NEW BOOKINGS</h2>
               <p className="text-xs text-muted-foreground">Appointments scheduled</p>
             </div>
           </div>

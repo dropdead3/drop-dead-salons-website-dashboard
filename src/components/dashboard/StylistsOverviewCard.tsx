@@ -40,7 +40,7 @@ export function StylistsOverviewCard() {
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h2 className="font-display text-sm tracking-wide">STYLISTS BY LEVEL</h2>
+          <h2 className="font-display text-base tracking-wide">STYLISTS BY LEVEL</h2>
         </div>
         <Users className="w-4 h-4 text-muted-foreground" />
       </div>
@@ -133,7 +133,7 @@ export function StaffOverviewCard() {
     <Card className="p-6">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h2 className="font-display text-sm tracking-wide">TEAM OVERVIEW</h2>
+          <h2 className="font-display text-base tracking-wide">TEAM OVERVIEW</h2>
         </div>
         <MapPin className="w-4 h-4 text-muted-foreground" />
       </div>

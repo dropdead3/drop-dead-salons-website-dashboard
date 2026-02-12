@@ -100,7 +100,7 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <DollarSign className="w-5 h-5 text-chart-2" />
-          <h2 className="font-display text-sm tracking-wide">MY SALES DATA</h2>
+          <h2 className="font-display text-base tracking-wide">MY SALES DATA</h2>
           {hasNoSales && (
             <span className="text-xs text-muted-foreground ml-2">
               (No sales recorded for this period)
