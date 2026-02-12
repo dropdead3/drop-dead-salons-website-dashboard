@@ -81,14 +81,14 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
           </TabsList>
 
           <TabsContent value="frequency" className="mt-0">
-            <div className="h-[300px]">
+            <div className="h-[400px]">
               {sortedData.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-muted-foreground">
                   No service data available
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={sortedData} layout="vertical">
+                  <BarChart data={sortedData} layout="vertical" barSize={28}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
                     <XAxis type="number" />
                     <YAxis 
@@ -152,14 +152,14 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
           </TabsContent>
 
           <TabsContent value="revenue" className="mt-0">
-            <div className="h-[300px]">
+            <div className="h-[400px]">
               {sortedData.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-muted-foreground">
                   No service data available
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={sortedData} layout="vertical">
+                  <BarChart data={sortedData} layout="vertical" barSize={28}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
                     <XAxis type="number" tickFormatter={(v) => `$${v}`} />
                     <YAxis 
