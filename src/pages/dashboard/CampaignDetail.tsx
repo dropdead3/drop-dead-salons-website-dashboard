@@ -22,7 +22,7 @@ import {
 import {
   ArrowLeft, Rocket, CheckCircle2, Archive, Loader2,
   MessageSquare, Hash, Copy, Calendar, Clock,
-  Circle, PlayCircle, Trash2, Plus, Pencil, RotateCcw,
+  Circle, PlayCircle, Trash2, Plus, Pencil, RotateCcw, GripVertical,
 } from 'lucide-react';
 import {
   useActionCampaignWithTasks,
@@ -32,12 +32,31 @@ import {
   useUpdateCampaign,
   useAddCampaignTask,
   useDeleteCampaignTask,
+  useReorderCampaignTasks,
+  ActionCampaignTask,
 } from '@/hooks/useActionCampaigns';
 import { ShareToDMDialog } from '@/components/dashboard/sales/ShareToDMDialog';
 import { ShareToChannelDialog } from '@/components/dashboard/campaigns/ShareToChannelDialog';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 const taskStatusIcon: Record<string, typeof Circle> = {
   not_started: Circle,
@@ -57,6 +76,108 @@ const priorityColor: Record<string, string> = {
   low: 'bg-muted text-muted-foreground border-border',
 };
 
+function SortableTaskCard({
+  task,
+  updateTaskStatus,
+  deleteTask,
+}: {
+  task: ActionCampaignTask;
+  updateTaskStatus: ReturnType<typeof useUpdateCampaignTaskStatus>;
+  deleteTask: ReturnType<typeof useDeleteCampaignTask>;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : undefined,
+  };
+
+  const Icon = taskStatusIcon[task.status] || Circle;
+
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'p-4 rounded-xl shadow-sm transition-all',
+        task.status === 'done' && 'opacity-60'
+      )}
+    >
+      <div className="flex items-start gap-3">
+        <button
+          {...attributes}
+          {...listeners}
+          className="mt-1 shrink-0 cursor-grab active:cursor-grabbing touch-none"
+          tabIndex={-1}
+        >
+          <GripVertical className="w-4 h-4 text-muted-foreground/30" />
+        </button>
+        <button
+          onClick={() => {
+            const next = task.status === 'not_started' ? 'in_progress' : task.status === 'in_progress' ? 'done' : 'not_started';
+            updateTaskStatus.mutate({ id: task.id, status: next });
+          }}
+          className="mt-0.5 shrink-0"
+        >
+          <Icon className={cn('w-5 h-5', taskStatusColor[task.status])} />
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className={cn(
+              'text-sm font-medium',
+              task.status === 'done' && 'line-through text-muted-foreground'
+            )}>
+              {task.title}
+            </span>
+            <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0', priorityColor[task.priority])}>
+              {task.priority}
+            </Badge>
+          </div>
+          {task.description && (
+            <p className="text-xs text-muted-foreground mt-0.5">{task.description}</p>
+          )}
+          {task.due_date && (
+            <p className="text-[11px] text-muted-foreground/60 mt-1">
+              Due {format(new Date(task.due_date), 'MMM d')}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          <Select
+            value={task.status}
+            onValueChange={(v) => updateTaskStatus.mutate({ id: task.id, status: v })}
+          >
+            <SelectTrigger className="w-[120px] h-7 text-[11px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="not_started">Not Started</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="done">Done</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-destructive/40 hover:text-destructive"
+            onClick={() => deleteTask.mutate(task.id)}
+          >
+            <Trash2 className="w-3 h-3" />
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
 export default function CampaignDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -67,6 +188,7 @@ export default function CampaignDetail() {
   const updateCampaign = useUpdateCampaign();
   const addTask = useAddCampaignTask();
   const deleteTask = useDeleteCampaignTask();
+  const reorderTasks = useReorderCampaignTasks();
 
   const [dmOpen, setDmOpen] = useState(false);
   const [channelOpen, setChannelOpen] = useState(false);
@@ -76,7 +198,14 @@ export default function CampaignDetail() {
   const [nameValue, setNameValue] = useState('');
   const [editingNote, setEditingNote] = useState(false);
   const [noteValue, setNoteValue] = useState('');
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [descriptionValue, setDescriptionValue] = useState('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   if (isLoading) {
     return (
@@ -137,6 +266,11 @@ export default function CampaignDetail() {
     setEditingNote(false);
   };
 
+  const handleSaveDescription = () => {
+    updateCampaign.mutate({ id: campaign.id, description: descriptionValue.trim() || undefined });
+    setEditingDescription(false);
+  };
+
   const handleAddTask = () => {
     if (!newTaskTitle.trim()) return;
     addTask.mutate({
@@ -145,6 +279,20 @@ export default function CampaignDetail() {
       sort_order: tasks.length,
     });
     setNewTaskTitle('');
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = tasks.findIndex((t) => t.id === active.id);
+    const newIndex = tasks.findIndex((t) => t.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(tasks, oldIndex, newIndex);
+    reorderTasks.mutate(
+      reordered.map((t, i) => ({ id: t.id, sort_order: i }))
+    );
   };
 
   return (
@@ -200,6 +348,35 @@ export default function CampaignDetail() {
                 {format(new Date(campaign.created_at), 'MMM d')}
               </Badge>
             </div>
+
+            {/* Editable description */}
+            {editingDescription ? (
+              <div className="mt-2 space-y-2">
+                <Textarea
+                  value={descriptionValue}
+                  onChange={(e) => setDescriptionValue(e.target.value)}
+                  rows={2}
+                  className="text-sm resize-none"
+                  placeholder="Add a campaign description..."
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => setEditingDescription(false)}>Cancel</Button>
+                  <Button size="sm" onClick={handleSaveDescription}>Save</Button>
+                </div>
+              </div>
+            ) : (
+              <p
+                className="text-xs text-muted-foreground mt-2 cursor-pointer hover:text-foreground transition-colors"
+                onClick={() => {
+                  setDescriptionValue(campaign.description || '');
+                  setEditingDescription(true);
+                }}
+                title="Click to edit"
+              >
+                {campaign.description || <span className="italic text-muted-foreground/60">Add description...</span>}
+              </p>
+            )}
           </div>
         </div>
 
@@ -322,74 +499,22 @@ export default function CampaignDetail() {
             <h2 className="font-display text-xs tracking-[0.15em]">ACTION STEPS</h2>
           </div>
 
-          {tasks.map((task) => {
-            const Icon = taskStatusIcon[task.status] || Circle;
-            return (
-              <Card
-                key={task.id}
-                className={cn(
-                  'p-4 rounded-xl shadow-sm transition-all',
-                  task.status === 'done' && 'opacity-60'
-                )}
-              >
-                <div className="flex items-start gap-3">
-                  <button
-                    onClick={() => {
-                      const next = task.status === 'not_started' ? 'in_progress' : task.status === 'in_progress' ? 'done' : 'not_started';
-                      updateTaskStatus.mutate({ id: task.id, status: next });
-                    }}
-                    className="mt-0.5 shrink-0"
-                  >
-                    <Icon className={cn('w-5 h-5', taskStatusColor[task.status])} />
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={cn(
-                        'text-sm font-medium',
-                        task.status === 'done' && 'line-through text-muted-foreground'
-                      )}>
-                        {task.title}
-                      </span>
-                      <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0', priorityColor[task.priority])}>
-                        {task.priority}
-                      </Badge>
-                    </div>
-                    {task.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5">{task.description}</p>
-                    )}
-                    {task.due_date && (
-                      <p className="text-[11px] text-muted-foreground/60 mt-1">
-                        Due {format(new Date(task.due_date), 'MMM d')}
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Select
-                      value={task.status}
-                      onValueChange={(v) => updateTaskStatus.mutate({ id: task.id, status: v })}
-                    >
-                      <SelectTrigger className="w-[120px] h-7 text-[11px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="not_started">Not Started</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="done">Done</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive/40 hover:text-destructive"
-                      onClick={() => deleteTask.mutate(task.id)}
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={tasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+              {tasks.map((task) => (
+                <SortableTaskCard
+                  key={task.id}
+                  task={task}
+                  updateTaskStatus={updateTaskStatus}
+                  deleteTask={deleteTask}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
 
           {/* Add task row */}
           <div className="flex items-center gap-2 pt-1">

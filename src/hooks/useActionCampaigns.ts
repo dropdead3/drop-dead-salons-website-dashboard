@@ -255,6 +255,7 @@ export function useAddCampaignTask() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-campaign'] });
+      toast.success('Task added');
     },
   });
 }
@@ -269,6 +270,25 @@ export function useDeleteCampaignTask() {
         .delete()
         .eq('id', id);
       if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['action-campaign'] });
+      toast.success('Task removed');
+    },
+  });
+}
+
+export function useReorderCampaignTasks() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (tasks: { id: string; sort_order: number }[]) => {
+      const updates = tasks.map((t) =>
+        supabase.from('action_campaign_tasks').update({ sort_order: t.sort_order }).eq('id', t.id)
+      );
+      const results = await Promise.all(updates);
+      const failed = results.find((r) => r.error);
+      if (failed?.error) throw failed.error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['action-campaign'] });
