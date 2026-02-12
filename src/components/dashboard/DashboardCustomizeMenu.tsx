@@ -150,6 +150,7 @@ const PINNABLE_CARDS = [
   // Forecasting & Goals
   { id: 'week_ahead_forecast', label: 'Revenue Forecast', category: 'Forecasting', icon: <TrendingUp className="w-4 h-4" /> },
   { id: 'team_goals', label: 'Team Goals', category: 'Forecasting', icon: <Target className="w-4 h-4" /> },
+  { id: 'goal_tracker', label: 'Goal Tracker', category: 'Forecasting', icon: <Target className="w-4 h-4" /> },
   { id: 'new_bookings', label: 'New Bookings', category: 'Forecasting', icon: <CalendarPlus className="w-4 h-4" /> },
   
   // Clients
