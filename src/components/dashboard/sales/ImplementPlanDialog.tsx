@@ -74,12 +74,15 @@ function extractActions(content: string): ActionStep[] {
   // Strategy 0 (Primary): Parse ---ACTIONS--- block from AI
   const actionsBlockMatch = content.match(/---ACTIONS---\s*([\s\S]*?)(?:---END---|$)/);
   if (actionsBlockMatch) {
-    const rawBlock = actionsBlockMatch[1].replace(/---END---/g, '');
+    const rawBlock = actionsBlockMatch[1].replace(/---END---/g, '').trim();
     const lines = rawBlock.split('\n').map((l) => l.trim()).filter(Boolean);
     for (const line of lines) {
       const lineMatch = line.match(/^(?:\d+[.)]\s*)?(.+?):\s+(.+)$/);
       if (lineMatch) {
         steps.push({ title: lineMatch[1].trim(), description: lineMatch[2].trim(), dueDays: 0 });
+      } else if (line.length > 5) {
+        // Fallback: use entire line as title if no colon-separated format
+        steps.push({ title: line.replace(/^[\d.)\-•]+\s*/, '').trim(), description: '', dueDays: 0 });
       }
     }
   }
