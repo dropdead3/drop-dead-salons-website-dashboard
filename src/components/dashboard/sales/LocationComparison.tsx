@@ -143,6 +143,7 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
         <div className="grid grid-cols-2 gap-4">
           {sortedLocations.slice(0, 2).map((location, idx) => {
             const isLeader = idx === 0;
+            const locationColor = COLORS[idx % COLORS.length];
             const sharePercent = totalRevenue > 0 
               ? ((location.totalRevenue / totalRevenue) * 100).toFixed(0)
               : 0;
@@ -151,50 +152,60 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
               <div 
                 key={location.location_id} 
                 className={cn(
-                  'p-4 rounded-lg border',
-                  isLeader ? 'bg-primary/5 border-primary/20' : 'bg-muted/30'
+                  'p-4 rounded-lg border relative overflow-hidden',
+                  isLeader ? 'bg-primary/5 border-primary/20' : 'bg-muted/30 border-border/40'
                 )}
               >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium truncate">{location.name}</span>
-                  {isLeader ? (
-                    <Badge className="bg-primary/10 text-primary border-0 text-xs">
-                      <TrendingUp className="w-3 h-3 mr-1" />
-                      Leader
-                    </Badge>
-                  ) : (
-                    <Badge variant="outline" className="text-xs">
-                      <TrendingDown className="w-3 h-3 mr-1" />
-                      -{gapPercent}%
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-2xl font-display mb-2">
-                  ${location.totalRevenue.toLocaleString()}
-                </p>
-                <div className="space-y-1">
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>Share of total</span>
-                    <span>{sharePercent}%</span>
+                {/* Color accent bar */}
+                <div 
+                  className="absolute left-0 top-0 bottom-0 w-1 rounded-l-lg"
+                  style={{ backgroundColor: locationColor }}
+                />
+                <div className="pl-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: locationColor }} />
+                      <span className="text-sm font-medium truncate">{location.name}</span>
+                    </div>
+                    {isLeader ? (
+                      <Badge className="bg-primary/10 text-primary border-0 text-xs">
+                        <TrendingUp className="w-3 h-3 mr-1" />
+                        Leader
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs">
+                        <TrendingDown className="w-3 h-3 mr-1" />
+                        -{gapPercent}%
+                      </Badge>
+                    )}
                   </div>
-                  <Progress value={Number(sharePercent)} className="h-1.5" />
-                </div>
-                <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t text-center">
-                  <div>
-                    <p className="text-lg font-display">{location.totalServices}</p>
-                    <p className="text-xs text-muted-foreground">Services</p>
+                  <p className="text-2xl font-display mb-2">
+                    ${location.totalRevenue.toLocaleString()}
+                  </p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Share of total</span>
+                      <span>{sharePercent}%</span>
+                    </div>
+                    <Progress value={Number(sharePercent)} className="h-1.5" />
                   </div>
-                  <div>
-                    <p className="text-lg font-display">{location.totalProducts}</p>
-                    <p className="text-xs text-muted-foreground">Products</p>
-                  </div>
-                  <div>
-                    <p className="text-lg font-display">
-                      ${location.totalTransactions > 0 
-                        ? Math.round(location.totalRevenue / location.totalTransactions)
-                        : 0}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Avg</p>
+                  <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t text-center">
+                    <div>
+                      <p className="text-lg font-display">{location.totalServices}</p>
+                      <p className="text-xs text-muted-foreground">Services</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-display">{location.totalProducts}</p>
+                      <p className="text-xs text-muted-foreground">Products</p>
+                    </div>
+                    <div>
+                      <p className="text-lg font-display">
+                        ${location.totalTransactions > 0 
+                          ? Math.round(location.totalRevenue / location.totalTransactions)
+                          : 0}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Avg</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -203,13 +214,14 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
         </div>
 
         {/* Revenue Share Bar */}
-        <div className="space-y-2">
-           <div className="flex h-9 rounded-lg overflow-hidden bg-muted/20 border border-border/40">
+        <div className="space-y-2.5">
+           <div className="flex h-10 rounded-lg overflow-hidden border border-border/40">
             {[...displayData, ...(othersEntry ? [othersEntry] : [])].map((entry, idx) => {
               const pct = totalRevenue > 0 ? (entry.value / totalRevenue) * 100 : 0;
               if (pct <= 0) return null;
               const isOthers = entry.name === 'Others';
-              const isLast = idx === displayData.length - 1 && !othersEntry || (isOthers);
+              const allEntries = [...displayData, ...(othersEntry ? [othersEntry] : [])];
+              const isLast = idx === allEntries.length - 1;
               return (
                 <Tooltip key={entry.name}>
                   <TooltipTrigger asChild>
@@ -217,12 +229,13 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
                       className="h-full flex items-center justify-center text-xs transition-all cursor-default relative"
                       style={{
                         width: `${pct}%`,
-                        background: `linear-gradient(90deg, ${entry.color}50 0%, ${entry.color}90 100%)`,
-                        borderRight: isLast ? 'none' : `1px solid hsl(var(--border) / 0.3)`,
+                        backgroundColor: entry.color,
+                        opacity: isOthers ? 0.5 : 0.75,
+                        borderRight: isLast ? 'none' : `1px solid hsl(var(--background) / 0.4)`,
                         minWidth: pct > 5 ? undefined : '24px',
                       }}
                     >
-                      <span className="relative z-10 font-display tracking-wide text-foreground text-[11px]">
+                      <span className="relative z-10 font-display tracking-wide text-foreground text-[11px] font-medium">
                         {pct >= 12 && `${entry.percentage}%`}
                       </span>
                     </div>
@@ -247,7 +260,7 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
                   style={{ backgroundColor: entry.color }} 
                 />
                 <span className="text-muted-foreground">{entry.name}</span>
-                <span className="font-medium tabular-nums">{entry.percentage}%</span>
+                <span className="font-display tabular-nums">{entry.percentage}%</span>
               </div>
             ))}
           </div>
