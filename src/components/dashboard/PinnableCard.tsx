@@ -46,15 +46,12 @@ export function PinnableCard({
     }
   }, [elementKey, elementName, category, registerMutation]);
 
-  // Find and track the header icon element
+  // Find and track the header icon box element (the bg-muted rounded-lg icon container)
   useEffect(() => {
     const wrapper = contentRef.current;
     if (!wrapper) return;
-    // Structure: wrapper > Card > headerRow > iconTitleGroup > iconDiv
-    const card = wrapper.firstElementChild;
-    const headerRow = card?.firstElementChild;
-    const iconTitleGroup = headerRow?.firstElementChild;
-    const iconEl = iconTitleGroup?.firstElementChild as HTMLElement | null;
+    // Find the icon box by looking for the standardized w-10 h-10 bg-muted container
+    const iconEl = wrapper.querySelector('[class*="bg-muted"][class*="rounded-lg"][class*="w-10"]') as HTMLElement | null;
     if (iconEl) {
       iconEl.style.transition = 'opacity 200ms ease-in-out';
       iconEl.style.opacity = hovered ? '0' : '1';
