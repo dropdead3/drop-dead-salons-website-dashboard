@@ -617,9 +617,9 @@ export function AggregateSalesCard({
             const dailyAverage = workingDays > 0 ? displayMetrics.totalRevenue / workingDays : 0;
 
             return (
-              <div className="mt-6 space-y-6">
+              <div className="mt-6 space-y-3">
                 {/* Row 1: First 3 cards */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {/* Transactions */}
                   <div 
                     className={cn(
@@ -705,7 +705,7 @@ export function AggregateSalesCard({
                 </div>
 
                 {/* Row 2: Remaining cards span full width of row 1 */}
-                <div className={`grid ${showDailyAvg ? 'grid-cols-2' : 'grid-cols-1'} gap-6`}>
+                <div className={`grid ${showDailyAvg ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
                   {/* Daily Avg - only for multi-day ranges */}
                   {showDailyAvg && (
                     <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/30">
