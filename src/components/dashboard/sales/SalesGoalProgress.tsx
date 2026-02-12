@@ -133,6 +133,14 @@ export function SalesGoalProgress({
   const [guidance, setGuidance] = useState('');
   const [selectedTaskIndices, setSelectedTaskIndices] = useState<Set<number>>(new Set());
 
+  // Strip markdown formatting from parsed text
+  const stripMarkdown = (text: string): string => {
+    return text
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/\*(.+?)\*/g, '$1')
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+  };
+
   // Parse tasks from ---ACTIONS--- block
   const parsedTasks = useMemo(() => {
     if (!guidance) return [];
@@ -142,8 +150,8 @@ export function SalesGoalProgress({
     const lines = rawBlock.split('\n').map(l => l.trim()).filter(Boolean);
     return lines.map((line, i) => {
       const lineMatch = line.match(/^(?:\d+[.)]\s*)?(.+?):\s+(.+)$/);
-      const title = lineMatch ? lineMatch[1].trim() : line.replace(/^[\d.)\-•]+\s*/, '').trim();
-      const description = lineMatch ? lineMatch[2].trim() : '';
+      const title = stripMarkdown(lineMatch ? lineMatch[1].trim() : line.replace(/^[\d.)\-•]+\s*/, '').trim());
+      const description = stripMarkdown(lineMatch ? lineMatch[2].trim() : '');
       const priority: 'high' | 'medium' = i === 0 ? 'high' : 'medium';
       const dueDays = i < 2 ? 2 : i < 4 ? 5 : 7;
       return { title, description, priority, dueDays };
