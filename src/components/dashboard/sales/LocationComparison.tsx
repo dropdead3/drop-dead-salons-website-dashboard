@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { 
   TrendingUp,
   TrendingDown,
+  MapPin,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -96,8 +97,13 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-sm flex items-center justify-between">
-          <span className="font-display">LOCATION COMPARISON</span>
+        <CardTitle className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <MapPin className="w-5 h-5 text-primary" />
+            </div>
+            <span className="font-display text-base tracking-wide">LOCATION COMPARISON</span>
+          </div>
           <div className="flex items-center gap-2">
             {filterContext && (
               <AnalyticsFilterBadge 

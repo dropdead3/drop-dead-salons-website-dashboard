@@ -90,9 +90,11 @@ export function ServiceMixChart({ userId, days = 30 }: ServiceMixChartProps) {
     return (
       <Card>
         <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <Scissors className="w-5 h-5 text-primary" />
-            <CardTitle className="font-display text-lg">Service Mix</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Scissors className="w-5 h-5 text-primary" />
+            </div>
+            <CardTitle className="font-display text-base tracking-wide">SERVICE MIX</CardTitle>
           </div>
         </CardHeader>
         <CardContent>
@@ -108,9 +110,11 @@ export function ServiceMixChart({ userId, days = 30 }: ServiceMixChartProps) {
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Scissors className="w-5 h-5 text-primary" />
-            <CardTitle className="font-display text-lg">Service Mix</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Scissors className="w-5 h-5 text-primary" />
+            </div>
+            <CardTitle className="font-display text-base tracking-wide">SERVICE MIX</CardTitle>
           </div>
           <Badge variant="outline" className="text-xs">
             Last {days} days

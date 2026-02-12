@@ -39,9 +39,11 @@ export function RevenueDonutChart({
 
   const headerContent = (
     <div className="flex items-center justify-between w-full">
-      <div className="flex items-center gap-2">
-        <PieChartIcon className="w-4 h-4 text-primary" />
-        <CardTitle className="font-display text-xs tracking-wide uppercase">Revenue Breakdown</CardTitle>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+          <PieChartIcon className="w-5 h-5 text-primary" />
+        </div>
+        <CardTitle className="font-display text-base tracking-wide">REVENUE BREAKDOWN</CardTitle>
       </div>
       {filterContext && (
         <AnalyticsFilterBadge 

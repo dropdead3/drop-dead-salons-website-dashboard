@@ -142,9 +142,11 @@ export function YearOverYearComparison({ locationId, filterContext }: YearOverYe
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CalendarRange className="w-5 h-5 text-primary" />
-            <CardTitle className="font-display">Year-over-Year</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <CalendarRange className="w-5 h-5 text-primary" />
+            </div>
+            <CardTitle className="font-display text-base tracking-wide">YEAR-OVER-YEAR</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             {filterContext && (

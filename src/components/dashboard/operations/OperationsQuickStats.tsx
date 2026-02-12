@@ -75,7 +75,7 @@ export function OperationsQuickStats({ locationId, hideRevenue, filterContext }:
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-sm tracking-wide">TODAY'S OPERATIONS</h2>
+        <h2 className="font-display text-base tracking-wide">TODAY'S OPERATIONS</h2>
         {filterContext && (
           <AnalyticsFilterBadge 
             locationId={filterContext.locationId} 

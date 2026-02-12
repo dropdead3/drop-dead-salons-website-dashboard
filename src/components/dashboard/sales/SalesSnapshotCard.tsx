@@ -73,9 +73,11 @@ export function SalesSnapshotCard({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-primary" />
-          <CardTitle className="font-display text-base">Sales Snapshot</CardTitle>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+            <BarChart3 className="w-5 h-5 text-primary" />
+          </div>
+          <CardTitle className="font-display text-base tracking-wide">SALES SNAPSHOT</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
