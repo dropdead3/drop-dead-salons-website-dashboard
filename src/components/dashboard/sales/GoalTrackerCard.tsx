@@ -115,7 +115,7 @@ export function GoalTrackerCard() {
                       cy={size / 2}
                       r={radius}
                       fill="none"
-                      stroke="hsl(var(--muted))"
+                      stroke="hsl(var(--muted) / 0.4)"
                       strokeWidth={strokeWidth}
                     />
                     <circle
