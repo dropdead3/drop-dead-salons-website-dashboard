@@ -432,7 +432,7 @@ export function AggregateSalesCard({
             <DollarSign className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h2 className="font-display text-sm tracking-wide">SALES OVERVIEW</h2>
+            <h2 className="font-display text-base tracking-wide">SALES OVERVIEW</h2>
           </div>
           {hasNoData && (
             <Badge variant="outline" className="text-muted-foreground">
