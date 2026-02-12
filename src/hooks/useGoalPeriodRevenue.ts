@@ -24,10 +24,11 @@ export function useGoalPeriodRevenue(period: GoalPeriod, locationId?: string) {
       const dateTo = format(new Date(), 'yyyy-MM-dd');
 
       let query = supabase
-        .from('phorest_daily_sales_summary')
-        .select('total_revenue')
-        .gte('summary_date', dateFrom)
-        .lte('summary_date', dateTo);
+        .from('phorest_appointments')
+        .select('total_price')
+        .gte('appointment_date', dateFrom)
+        .lte('appointment_date', dateTo)
+        .not('status', 'in', '("cancelled","no_show")');
 
       if (locationId && locationId !== 'all') {
         query = query.eq('location_id', locationId);
@@ -36,7 +37,7 @@ export function useGoalPeriodRevenue(period: GoalPeriod, locationId?: string) {
       const { data, error } = await query;
       if (error) throw error;
 
-      return data?.reduce((sum, row) => sum + (Number(row.total_revenue) || 0), 0) ?? 0;
+      return data?.reduce((sum, row) => sum + (Number(row.total_price) || 0), 0) ?? 0;
     },
     staleTime: 5 * 60 * 1000,
   });
