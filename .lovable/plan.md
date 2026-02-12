@@ -1,53 +1,37 @@
 
 
-# Sales Overview Goal Widget -- Drill-Down Enhancement
+# Left-Reveal Card Controls
 
-## Current State
-The Aggregate Sales Card (Sales Overview) has an inline `SalesGoalProgress` widget showing:
-- Linear progress bar with percentage
-- Pace status (Ahead / On Track / Behind)
-- "Get back on track" recovery button (Behind only)
+## Overview
+Relocate the Zura AI and Pin icons from the bottom hover row to the **left edge** of each card. On hover, the icons slide in from the left and the card header content shifts right to accommodate them, keeping the card height completely stable.
 
-The new standalone `GoalTrackerCard` in the Goals tab provides the full experience: progress ring, location scoreboard, pace trend chart, and location deep dives.
+## Current Behavior
+- Icons appear in a collapsible row **below** the card on hover
+- This causes vertical layout shift as the row expands/collapses
+- Cards grow taller on hover, pushing content below them down
 
-## What Changes
+## New Behavior
+- Icons sit on the **left edge** of the card, hidden by default (zero width, opacity 0)
+- On card hover, the icon column expands (~40px) and fades in
+- The card content shifts right with a smooth CSS transition
+- No vertical layout shift at all
 
-### Keep the compact widget, add a drill-down gateway
-The inline `SalesGoalProgress` stays as-is for quick-glance value, but gains a clickable affordance that expands a **location breakdown panel** directly beneath it -- matching the existing drill-down pattern used by Transactions, Avg Ticket, and Rev/Hour panels on the same card.
+## Technical Approach
 
-### Drill-Down Content (When Expanded)
-- **Per-location mini rows**: Each active location with a slim progress bar, percentage, and pace badge (Ahead/On Track/Behind)
-- **Sorted "most behind first"** -- consistent with the Goal Tracker card
-- **"View full breakdown" link** at the bottom that navigates to Analytics Hub > Sales > Goals tab
-- Reuses `useGoalTrackerData` hook for location scaffold data and `useGoalPeriodRevenue` per location
+### 1. Refactor `PinnableCard.tsx`
+- Change the layout from a vertical stack (children + bottom bar) to a **horizontal flex row** (icon column + children)
+- The icon column uses `max-w-0 opacity-0 group-hover:max-w-[40px] group-hover:opacity-100` with `overflow-hidden` and `transition-all`
+- Icons stack vertically in the column (Zura on top, Pin below)
+- The `children` wrapper gets `transition-all` so it smoothly adjusts as the icon column appears
 
-### Interaction Pattern
-- Add the goal section to the existing mutually exclusive drill-down toggle state (`drilldownMode`) on the Aggregate Sales Card
-- Clicking the goal progress area toggles open the location breakdown
-- Opening it closes any other active drill-down (Transactions, Avg Ticket, Rev/Hour)
-- Uses `framer-motion` AnimatePresence for expansion, matching existing panels
+### 2. Icon Column Styling
+- Flex column, centered, with a subtle right border separator (`border-r border-border/30`)
+- Icons sized at their current compact dimensions (h-7 w-7 touch targets)
+- Vertically centered relative to the card header area
 
-## Technical Details
+### 3. Remove Bottom Bar
+- Delete the existing bottom-expanding `div` with `max-h-0` / `group-hover:max-h-10` pattern entirely
 
-### Modified Files
-
-**`src/components/dashboard/AggregateSalesCard.tsx`**
-- Extend `drilldownMode` state to include `'goals'` as a valid value
-- Wrap the `GoalProgressWithOwnRevenue` section in a clickable container that toggles `drilldownMode` to `'goals'`
-- Render a new `GoalLocationsDrilldown` panel when `drilldownMode === 'goals'`
-
-**`src/components/dashboard/sales/GoalLocationsDrilldown.tsx`** (New File)
-- Receives `period` ('weekly' | 'monthly') and `target` from parent
-- Uses `useGoalTrackerData` to get `locationScaffold`
-- For each location, renders a `GoalLocationMiniRow` with its own `useGoalPeriodRevenue` call
-- Includes a "View full breakdown" link that navigates to the Goals tab
-- Sorted by percentage ascending (most behind first)
-- Wrapped in `framer-motion` for smooth expand/collapse
-
-**`src/components/dashboard/sales/SalesGoalProgress.tsx`**
-- Add an optional `onClick` prop so the parent card can wire up the drill-down toggle
-- Add a subtle visual cue (chevron or "by location" label) indicating it's expandable
-
-### No Database Changes Required
-All data comes from existing hooks and tables.
+### 4. No Changes Needed to Child Components
+- `ZuraCardInsight` and `CommandCenterVisibilityToggle` components remain unchanged -- only their container moves
 
