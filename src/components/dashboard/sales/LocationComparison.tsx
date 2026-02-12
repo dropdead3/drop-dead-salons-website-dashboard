@@ -9,12 +9,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
-  PieChart,
-  Pie,
-  Cell,
-  ResponsiveContainer,
   Tooltip,
-} from 'recharts';
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 const COLORS = [
@@ -181,46 +179,44 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
           })}
         </div>
 
-        {/* Revenue Share Donut Chart */}
-        <div className="flex items-center justify-center gap-6">
-          <div className="w-32 h-32">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={35}
-                  outerRadius={50}
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--background))', 
-                    border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px',
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+        {/* Revenue Share Bar */}
+        <div className="space-y-2">
+          <div className="flex h-8 rounded-lg overflow-hidden">
+            {chartData.map((entry) => {
+              const pct = totalRevenue > 0 ? (entry.value / totalRevenue) * 100 : 0;
+              if (pct <= 0) return null;
+              return (
+                <Tooltip key={entry.name}>
+                  <TooltipTrigger asChild>
+                    <div
+                      className="h-full flex items-center justify-center text-xs font-medium transition-all cursor-default"
+                      style={{
+                        width: `${pct}%`,
+                        backgroundColor: entry.color,
+                        color: 'hsl(var(--background))',
+                        minWidth: pct > 5 ? undefined : '24px',
+                      }}
+                    >
+                      {pct >= 15 && `${entry.percentage}%`}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{entry.name}: ${entry.value.toLocaleString()} ({entry.percentage}%)</p>
+                  </TooltipContent>
+                </Tooltip>
+              );
+            })}
           </div>
-          
           {/* Legend */}
-          <div className="space-y-2">
+          <div className="flex items-center gap-4">
             {chartData.map((entry) => (
-              <div key={entry.name} className="flex items-center gap-2 text-sm">
+              <div key={entry.name} className="flex items-center gap-1.5 text-xs">
                 <div 
-                  className="w-3 h-3 rounded-full" 
+                  className="w-2.5 h-2.5 rounded-full shrink-0" 
                   style={{ backgroundColor: entry.color }} 
                 />
                 <span className="text-muted-foreground">{entry.name}</span>
-                <span className="font-display">{entry.percentage}%</span>
+                <span className="font-medium tabular-nums">{entry.percentage}%</span>
               </div>
             ))}
           </div>
