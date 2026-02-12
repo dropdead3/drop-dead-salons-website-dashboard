@@ -76,7 +76,7 @@ export function LeaderboardHistoryPanel({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <History className="w-4 h-4 text-muted-foreground" />
-          <h3 className="font-display text-sm tracking-wide">RANKING HISTORY</h3>
+          <h3 className="font-display text-base tracking-wide">RANKING HISTORY</h3>
         </div>
         {canSaveSnapshot && (
           <Button

@@ -46,7 +46,7 @@ export function AchievementsShowcase({ userId, compact = false }: AchievementsSh
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Trophy className="w-4 h-4 text-primary" />
-            <h3 className="font-display text-sm tracking-wide">ACHIEVEMENTS</h3>
+            <h3 className="font-display text-base tracking-wide">ACHIEVEMENTS</h3>
           </div>
           <span className="text-xs text-muted-foreground font-sans">
             {earned.length}/{achievements.length} earned
