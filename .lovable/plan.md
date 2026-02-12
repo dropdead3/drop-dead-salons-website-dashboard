@@ -1,93 +1,101 @@
 
 
-# Drill-Down by Service Category for Forecasting Cards
+# Tips Drill-Down with Enterprise-Scale Filters
 
 ## What This Does
-Clicking any of the 3 summary stat cards expands a breakdown panel showing that card's specific metric grouped by service category. Each card tells its own story.
+Clicking the Tips stat card in AggregateSalesCard expands a drill-down panel showing per-stylist tip performance and per-category tip analysis. Designed for enterprise brands with thousands of employees by including region, location, and service category filters within the panel itself.
 
-## Card-Specific Drill-Downs
-
-### 7-Day Total (Revenue)
-Shows total revenue per service category for the forecast period.
+## Drill-Down Layout
 
 ```text
-Color          $3,200   39%  ████████████░░░░░░░
-Blonding       $2,400   29%  █████████░░░░░░░░░░
-Haircut        $1,500   18%  ██████░░░░░░░░░░░░░
-Extensions     $1,108   14%  ████░░░░░░░░░░░░░░░
++---------------------------------------------------------------+
+| TIPS PERFORMANCE                                               |
+| [30 Days] [90 Days]   Region: [All v]  Location: [All v]      |
+|                                                                |
+| TOP TIP EARNERS (avg per service)                              |
+| Name           Avg Tip   Tip %   No-Tip Rate   Total Tips     |
+| ─────────────────────────────────────────────────────────────  |
+| Sarah J.       $18.50    22%     8%            $740           |
+| Marcus R.      $15.20    19%     12%           $608           |
+| Amy L.         $12.00    15%     25%           $360           |
+| ... Show all (47 stylists)                                     |
+|                                                                |
+| LOWEST AVG TIPS (coaching opportunities)                       |
+| Name           Avg Tip   Tip %   No-Tip Rate   Total Tips     |
+| ─────────────────────────────────────────────────────────────  |
+| Kim T.         $4.00     6%      55%           $80            |
+| Devon P.       $5.50     8%      42%           $132           |
+|                                                                |
+| BY SERVICE CATEGORY                                            |
+| Color          $16.40 avg   18% tip rate                       |
+| Blonding       $14.20 avg   16% tip rate                       |
+| Haircut        $8.50 avg    20% tip rate                       |
++---------------------------------------------------------------+
 ```
 
-### Daily Avg (Revenue per Day)
-Shows average daily revenue per service category (category total / number of forecast days).
+## Enterprise-Scale Design Decisions
 
-```text
-Color          $457/day   39%  ████████████░░░░░░░
-Blonding       $343/day   29%  █████████░░░░░░░░░░
-Haircut        $214/day   18%  ██████░░░░░░░░░░░░░
-Extensions     $158/day   14%  ████░░░░░░░░░░░░░░░
-```
+### Filter Architecture (inside the panel)
+- **Time Toggle**: 30 Days (default) / 90 Days -- simple toggle buttons, not tied to the parent card's date range since tips analysis benefits from a longer lookback
+- **Region Filter**: Reuses the existing `availableRegions` and `locationRegionMap` patterns already built in AggregateSalesCard (lines 250-267). Dropdown filters stylists by their assigned location's region
+- **Location Filter**: Cascading -- when a region is selected, the location dropdown only shows locations within that region. Defaults to "All"
+- **Pagination**: Top 10 shown by default with "Show all" toggle (avoids rendering 1000+ rows on load)
 
-### Appointments (Count)
-Shows appointment count per service category -- no dollar signs, just counts.
+### Two Ranked Sections
+- **Top Tip Earners**: Sorted descending by avg tip -- shows leadership who's earning well
+- **Lowest Avg Tips**: Bottom 5 stylists with meaningful volume (minimum 10 appointments filter to avoid noisy data) -- coaching signal for managers
 
-```text
-Color          28 appts   39%  ████████████░░░░░░░
-Haircut        18 appts   25%  ████████░░░░░░░░░░░
-Blonding       14 appts   20%  ██████░░░░░░░░░░░░░
-Styling        11 appts   16%  █████░░░░░░░░░░░░░░
-```
+### Metrics Per Stylist
+| Metric | What It Shows | Why It Matters |
+|--------|--------------|----------------|
+| Avg Tip | Average tip dollar per appointment | Raw earning power |
+| Tip % | Tips as % of service revenue | Normalizes across price points |
+| No-Tip Rate | % of appointments with $0 tip | Coaching opportunity signal |
+| Total Tips | Sum in period | Volume context |
 
-## UX Behavior
-- Clicking a card toggles the breakdown panel below the 3-card grid
-- Clicking a different card swaps the panel content (no collapse/re-expand)
-- Clicking the same card again collapses the panel
-- Active card gets a subtle ring/border highlight
-- Panel animates with framer-motion (height + opacity)
-- Sorted by the active metric descending (revenue for Total/Avg, count for Appointments)
+### By Service Category (bottom section)
+- Avg tip and tip rate per category
+- Reuses the `CategoryBreakdownPanel` visual pattern with horizontal bars
 
 ## Technical Changes
 
-### 1. Hooks: `useForecastRevenue.ts` and `useWeekAheadRevenue.ts`
-- Add `service_category` to the `.select()` query on `phorest_appointments`
-- Aggregate a `byCategory` map in the return data:
+### 1. New Hook: `src/hooks/useTipsDrilldown.ts`
+- Queries `phorest_appointments` for the selected 30/90 day period
+- SELECT: `phorest_staff_id`, `tip_amount`, `total_price`, `service_category`, `appointment_date`
+- WHERE: status NOT IN ('cancelled', 'no_show'), `tip_amount` is not null or 0 tracked
+- Accepts optional `locationId` param for filtering
+- Joins `phorest_staff_mapping` and `employee_profiles` for stylist names and photos
+- Returns two structures:
+  - `byStylist`: array of stylist objects with avg tip, tip %, no-tip rate, total tips, appointment count
+  - `byCategory`: Record of category name to { avgTip, tipRate, count }
+- Minimum appointment threshold param (default 10) to filter out noisy low-volume data
 
-```text
-byCategory: Record<string, { revenue: number; count: number }>
-```
+### 2. New Component: `src/components/dashboard/sales/TipsDrilldownPanel.tsx`
+- Receives: `isOpen`, `parentLocationId` (from AggregateSalesCard's filter context)
+- Internal state: `period` (30 | 90), `regionFilter`, `locationFilter`
+- Derives region/location options from `useActiveLocations()` (same pattern as AggregateSalesCard lines 250-267)
+- Cascading filter: region selection narrows location dropdown
+- Sections:
+  1. Filter bar (time toggle + region + location dropdowns)
+  2. Top Earners table (top 10 with "show all" expansion)
+  3. Coaching Opportunities (bottom 5 by avg tip, min volume filter)
+  4. Category breakdown (reuses horizontal bar pattern)
+- AnimatePresence for expand/collapse animation
+- Empty state: "No tip data recorded for this period"
 
-Both values are always computed so any card can render its view without re-fetching.
+### 3. Modify: `src/components/dashboard/AggregateSalesCard.tsx`
+- Add `tipsDrilldownOpen` boolean state
+- Make the Tips div (lines 632-645) clickable with hover effect and ChevronDown indicator
+- Render `TipsDrilldownPanel` below the secondary KPIs row when open
+- Pass `filterContext?.locationId` as `parentLocationId` so the panel respects the card's location filter as a default
 
-### 2. Component: `ForecastingCard.tsx`
-- Add `selectedCard` state: `'total' | 'avg' | 'appointments' | null`
-- Make each stat card clickable with hover effect and a subtle chevron/indicator
-- Render a `CategoryBreakdownPanel` below the grid using `AnimatePresence`
-- The panel receives `selectedCard` and `byCategory` data
-- Panel rendering logic per card type:
-  - **total**: Shows `category.revenue` formatted as currency, sorted by revenue desc
-  - **avg**: Shows `category.revenue / dayCount` formatted as currency with "/day" suffix, sorted by avg desc
-  - **appointments**: Shows `category.count` formatted as integer with "appts" suffix, sorted by count desc
-- Each row includes a percentage bar (proportion of total for that metric)
+### File Summary
 
-### 3. Component: `WeekAheadForecast.tsx`
-- Same pattern applied to the week-ahead view's stat cards
+| File | Action | Description |
+|------|--------|-------------|
+| `src/hooks/useTipsDrilldown.ts` | Create | Hook to aggregate tip metrics by stylist and category |
+| `src/components/dashboard/sales/TipsDrilldownPanel.tsx` | Create | Expandable panel with filters, ranked tables, category breakdown |
+| `src/components/dashboard/AggregateSalesCard.tsx` | Modify | Make Tips card clickable, render drill-down panel |
 
-### 4. Shared `CategoryBreakdownPanel` Component
-A small shared component that accepts:
-- `data`: the `byCategory` map
-- `mode`: `'revenue' | 'dailyAvg' | 'count'`
-- `dayCount`: number (needed for daily avg calculation)
-
-Handles formatting, sorting, and percentage bar rendering for all three modes.
-
-### File Change Summary
-
-| File | Changes |
-|------|---------|
-| `src/hooks/useForecastRevenue.ts` | Add `service_category` to select, aggregate `byCategory` |
-| `src/hooks/useWeekAheadRevenue.ts` | Same: add `service_category`, aggregate `byCategory` |
-| `src/components/dashboard/sales/CategoryBreakdownPanel.tsx` | New shared component for the expandable breakdown rows |
-| `src/components/dashboard/sales/ForecastingCard.tsx` | Clickable stat cards, selectedCard state, render breakdown panel |
-| `src/components/dashboard/sales/WeekAheadForecast.tsx` | Same clickable pattern with breakdown panel |
-
-No database changes needed -- `service_category` already exists on `phorest_appointments`.
+No database changes needed -- all data comes from existing `phorest_appointments` fields.
 
