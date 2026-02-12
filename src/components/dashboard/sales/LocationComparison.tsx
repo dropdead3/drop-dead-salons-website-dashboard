@@ -204,7 +204,7 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
 
         {/* Revenue Share Bar */}
         <div className="space-y-2">
-          <div className="flex h-8 rounded-lg overflow-hidden">
+          <div className="flex h-10 rounded-full overflow-hidden bg-muted/30">
             {[...displayData, ...(othersEntry ? [othersEntry] : [])].map((entry) => {
               const pct = totalRevenue > 0 ? (entry.value / totalRevenue) * 100 : 0;
               if (pct <= 0) return null;
@@ -213,7 +213,7 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
                 <Tooltip key={entry.name}>
                   <TooltipTrigger asChild>
                     <div
-                      className="h-full flex items-center justify-center text-xs font-medium transition-all cursor-default"
+                      className="h-full flex items-center justify-center text-xs font-medium transition-all cursor-default relative overflow-hidden"
                       style={{
                         width: `${pct}%`,
                         backgroundColor: entry.color,
@@ -221,7 +221,16 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
                         minWidth: pct > 5 ? undefined : '24px',
                       }}
                     >
-                      {pct >= 15 && `${entry.percentage}%`}
+                      {/* Glass sheen overlay */}
+                      <div 
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 60%)',
+                        }}
+                      />
+                      <span className="relative z-10 font-display tracking-wide">
+                        {pct >= 15 && `${entry.percentage}%`}
+                      </span>
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
