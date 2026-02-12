@@ -204,7 +204,7 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
 
         {/* Revenue Share Bar */}
         <div className="space-y-2">
-          <div className="flex h-10 rounded-full overflow-hidden bg-muted/30">
+          <div className="flex h-10 rounded-full overflow-hidden border border-border/40">
             {[...displayData, ...(othersEntry ? [othersEntry] : [])].map((entry) => {
               const pct = totalRevenue > 0 ? (entry.value / totalRevenue) * 100 : 0;
               if (pct <= 0) return null;
@@ -216,16 +216,18 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
                       className="h-full flex items-center justify-center text-xs font-medium transition-all cursor-default relative overflow-hidden"
                       style={{
                         width: `${pct}%`,
-                        backgroundColor: entry.color,
+                        background: isOthers
+                          ? 'hsl(var(--muted))'
+                          : `linear-gradient(180deg, ${entry.color.replace(')', ' / 0.7)')} 0%, ${entry.color.replace(')', ' / 0.5)')} 40%, ${entry.color.replace(')', ' / 0.35)')} 100%)`,
                         color: isOthers ? 'hsl(var(--muted-foreground))' : 'hsl(var(--background))',
                         minWidth: pct > 5 ? undefined : '24px',
                       }}
                     >
-                      {/* Glass sheen overlay */}
+                      {/* Vertical sheen */}
                       <div 
                         className="absolute inset-0 pointer-events-none"
                         style={{
-                          background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 60%)',
+                          background: 'linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.04) 50%, rgba(255,255,255,0) 100%)',
                         }}
                       />
                       <span className="relative z-10 font-display tracking-wide">
