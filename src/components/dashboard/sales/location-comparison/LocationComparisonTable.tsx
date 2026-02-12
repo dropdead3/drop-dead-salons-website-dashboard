@@ -84,7 +84,7 @@ export function LocationComparisonTable({
 
   const SortHeader = ({ label, column }: { label: string; column: SortKey }) => (
     <button
-      className="flex items-center gap-1 hover:text-foreground transition-colors"
+      className="flex items-center gap-1 hover:text-foreground transition-colors ml-auto"
       onClick={() => toggleSort(column)}
     >
       {label}
