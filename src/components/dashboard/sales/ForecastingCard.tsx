@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -7,13 +7,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { BlurredAmount, useHideNumbers } from '@/contexts/HideNumbersContext';
-import { useForecastRevenue, ForecastPeriod, DayForecast, WeekForecast } from '@/hooks/useForecastRevenue';
+import { useForecastRevenue, ForecastPeriod, DayForecast, WeekForecast, CategoryBreakdown } from '@/hooks/useForecastRevenue';
+import { CategoryBreakdownPanel, BreakdownMode } from './CategoryBreakdownPanel';
 import { useYearlyGoalProgress } from '@/hooks/useYearlyGoalProgress';
 import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsSheet } from './DayAppointmentsSheet';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { CalendarRange, TrendingUp, TrendingDown, Calendar, Users, Info, Target } from 'lucide-react';
+import { CalendarRange, TrendingUp, TrendingDown, Calendar, Users, Info, Target, ChevronDown } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { cn } from '@/lib/utils';
@@ -371,6 +372,7 @@ export function ForecastingCard() {
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [selectedDay, setSelectedDay] = useState<DayForecast | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [selectedStatCard, setSelectedStatCard] = useState<BreakdownMode | null>(null);
   const { data, isLoading, error } = useForecastRevenue(period, selectedLocation);
   const { hideNumbers, requestUnhide } = useHideNumbers();
   
@@ -385,6 +387,10 @@ export function ForecastingCard() {
   const handleViewDetails = () => {
     navigate('/dashboard/admin/sales');
   };
+
+  const handleStatCardClick = useCallback((mode: BreakdownMode) => {
+    setSelectedStatCard(prev => prev === mode ? null : mode);
+  }, []);
 
   const showWeeklyChart = period === '30days' || period === '60days';
   const showChart = period !== 'tomorrow';
@@ -420,7 +426,9 @@ export function ForecastingCard() {
     );
   }
 
-  const { days, weeks, totalRevenue, totalAppointments, averageDaily, averageWeekly, peakDay, peakWeek } = data;
+  const { days, weeks, totalRevenue, totalAppointments, averageDaily, averageWeekly, peakDay, peakWeek, byCategory } = data;
+  const dayCount = days.length;
+
 
   // Chart data for daily view
   const dailyChartData = days.map((day, index) => ({
@@ -527,7 +535,13 @@ export function ForecastingCard() {
         <CardContent className="space-y-4">
           {/* Summary Stats */}
           <div className={cn("grid gap-3", period === 'tomorrow' ? 'grid-cols-2' : 'grid-cols-3')}>
-            <div className="text-center p-3 bg-muted/30 rounded-lg border border-border/30">
+            <div
+              className={cn(
+                "text-center p-3 bg-muted/30 rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
+                selectedStatCard === 'revenue' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
+              )}
+              onClick={() => handleStatCardClick('revenue')}
+            >
               <div className="flex justify-center mb-1">
                 <TrendingUp className="w-4 h-4 text-primary" />
               </div>
@@ -540,9 +554,16 @@ export function ForecastingCard() {
                 <p className="text-xs text-muted-foreground">{PERIOD_TOTAL_LABELS[period]}</p>
                 <MetricInfoTooltip description={totalTooltip} />
               </div>
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'revenue' && 'rotate-180 text-primary')} />
             </div>
             {period !== 'tomorrow' && (
-              <div className="text-center p-3 bg-muted/30 rounded-lg border border-border/30">
+              <div
+                className={cn(
+                  "text-center p-3 bg-muted/30 rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
+                  selectedStatCard === 'dailyAvg' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
+                )}
+                onClick={() => handleStatCardClick('dailyAvg')}
+              >
                 <div className="flex justify-center mb-1">
                   <Calendar className="w-4 h-4 text-chart-2" />
                 </div>
@@ -555,9 +576,16 @@ export function ForecastingCard() {
                   <p className="text-xs text-muted-foreground">{PERIOD_AVG_LABELS[period]}</p>
                   <MetricInfoTooltip description={avgTooltip} />
                 </div>
+                <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'dailyAvg' && 'rotate-180 text-primary')} />
               </div>
             )}
-            <div className="text-center p-3 bg-muted/30 rounded-lg border border-border/30">
+            <div
+              className={cn(
+                "text-center p-3 bg-muted/30 rounded-lg border cursor-pointer transition-all hover:-translate-y-0.5",
+                selectedStatCard === 'count' ? 'border-primary/50 ring-1 ring-primary/20' : 'border-border/30'
+              )}
+              onClick={() => handleStatCardClick('count')}
+            >
               <div className="flex justify-center mb-1">
                 <Users className="w-4 h-4 text-chart-3" />
               </div>
@@ -566,8 +594,19 @@ export function ForecastingCard() {
                 <p className="text-xs text-muted-foreground">Appointments</p>
                 <MetricInfoTooltip description={apptTooltip} />
               </div>
+              <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'count' && 'rotate-180 text-primary')} />
             </div>
           </div>
+
+          {/* Category Breakdown Panel */}
+          {byCategory && (
+            <CategoryBreakdownPanel
+              data={byCategory}
+              mode={selectedStatCard || 'revenue'}
+              dayCount={dayCount}
+              isOpen={selectedStatCard !== null}
+            />
+          )}
 
           {/* Bar Chart - only show if not tomorrow */}
           {showChart && chartData.length > 0 && (

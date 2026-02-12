@@ -36,6 +36,11 @@ export interface WeekForecast {
   days: DayForecast[];
 }
 
+export interface CategoryBreakdown {
+  revenue: number;
+  count: number;
+}
+
 export interface ForecastData {
   days: DayForecast[];
   weeks: WeekForecast[];
@@ -45,6 +50,7 @@ export interface ForecastData {
   averageWeekly: number;
   peakDay: DayForecast | null;
   peakWeek: WeekForecast | null;
+  byCategory: Record<string, CategoryBreakdown>;
 }
 
 const PERIOD_DAYS: Record<Exclude<ForecastPeriod, 'todayToEom'>, number> = {
@@ -88,7 +94,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('id, appointment_date, total_price, status, client_name, service_name, start_time, end_time, phorest_staff_id')
+        .select('id, appointment_date, total_price, status, client_name, service_name, start_time, end_time, phorest_staff_id, service_category')
         .gte('appointment_date', startDate)
         .lte('appointment_date', endDate)
         .not('status', 'in', '("cancelled","no_show")')
@@ -155,6 +161,18 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
             stylist_name: apt.phorest_staff_id ? staffMap[apt.phorest_staff_id] || null : null,
           });
         }
+      });
+
+      // Aggregate by service category
+      const byCategory: Record<string, CategoryBreakdown> = {};
+      appointments.forEach(apt => {
+        const category = (apt as any).service_category || 'Uncategorized';
+        const price = Number(apt.total_price) || 0;
+        if (!byCategory[category]) {
+          byCategory[category] = { revenue: 0, count: 0 };
+        }
+        byCategory[category].revenue += price;
+        byCategory[category].count += 1;
       });
 
       // Build days array
@@ -231,6 +249,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
         averageWeekly,
         peakDay,
         peakWeek,
+        byCategory,
       } as ForecastData;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
