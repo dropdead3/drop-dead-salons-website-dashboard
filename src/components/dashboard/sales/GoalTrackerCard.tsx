@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Target, TrendingUp, TrendingDown, ChevronDown, Loader2 } from 'lucide-react';
+import { Target, TrendingUp, TrendingDown, ChevronDown, Loader2, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
@@ -16,12 +16,27 @@ import { startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 export function GoalTrackerCard() {
   const [period, setPeriod] = useState<'weekly' | 'monthly'>('monthly');
   const [showTrend, setShowTrend] = useState(false);
+  const [expandedLocations, setExpandedLocations] = useState<Record<string, boolean>>({});
 
   const { orgMetrics, locationScaffold, isLoading } = useGoalTrackerData(period);
 
   const now = new Date();
   const periodStart = period === 'weekly' ? startOfWeek(now, { weekStartsOn: 1 }) : startOfMonth(now);
   const periodEnd = period === 'weekly' ? endOfWeek(now, { weekStartsOn: 1 }) : endOfMonth(now);
+
+  const allExpanded = locationScaffold.length > 0 && locationScaffold.every(l => expandedLocations[l.locationId]);
+  const toggleAll = useCallback(() => {
+    if (allExpanded) {
+      setExpandedLocations({});
+    } else {
+      const all: Record<string, boolean> = {};
+      locationScaffold.forEach(l => { all[l.locationId] = true; });
+      setExpandedLocations(all);
+    }
+  }, [allExpanded, locationScaffold]);
+  const toggleLocation = useCallback((id: string) => {
+    setExpandedLocations(prev => ({ ...prev, [id]: !prev[id] }));
+  }, []);
 
   // SVG progress ring
   const size = 120;
@@ -194,9 +209,18 @@ export function GoalTrackerCard() {
               {/* Location scoreboard */}
               {locationScaffold.length > 0 && (
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 font-display">
-                    Location Scoreboard
-                  </p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">
+                      Location Scoreboard
+                    </p>
+                    <button
+                      onClick={toggleAll}
+                      className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <ChevronsUpDown className="w-3 h-3" />
+                      {allExpanded ? 'Collapse all' : 'Expand all'}
+                    </button>
+                  </div>
                   <div className="space-y-1.5">
                     {locationScaffold.map(loc => (
                       <GoalLocationRow
@@ -209,6 +233,8 @@ export function GoalTrackerCard() {
                         periodEnd={periodEnd}
                         hoursJson={loc.hoursJson}
                         holidayClosures={loc.holidayClosures}
+                        isExpanded={!!expandedLocations[loc.locationId]}
+                        onToggle={() => toggleLocation(loc.locationId)}
                       />
                     ))}
                   </div>

@@ -43,13 +43,17 @@ interface GoalLocationRowProps {
   periodEnd: Date;
   hoursJson?: HoursJson | null;
   holidayClosures?: HolidayClosure[] | null;
+  isExpanded?: boolean;
+  onToggle?: () => void;
 }
 
 export function GoalLocationRow({
   locationId, locationName, target, period,
   periodStart, periodEnd, hoursJson, holidayClosures,
+  isExpanded: controlledExpanded, onToggle,
 }: GoalLocationRowProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [internalExpanded, setInternalExpanded] = useState(false);
+  const expanded = controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [guidance, setGuidance] = useState('');
@@ -96,7 +100,7 @@ export function GoalLocationRow({
   return (
     <div className="rounded-xl bg-muted/30 hover:bg-muted/50 transition-colors">
       <button
-        onClick={() => setExpanded(v => !v)}
+        onClick={() => onToggle ? onToggle() : setInternalExpanded(v => !v)}
         className="flex items-center gap-3 w-full px-4 py-3 text-left"
       >
         <div className="flex-1 min-w-0">
