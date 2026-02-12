@@ -153,70 +153,76 @@ export function LocationComparisonTable({
               const color = colors[i % colors.length];
 
               return (
-                <TableRow
-                  key={loc.location_id}
-                  className="cursor-pointer group"
-                  onClick={() => handleRowClick(loc.location_id)}
-                >
-                  <TableCell className="font-display text-muted-foreground">{i + 1}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                      <span className="font-medium truncate">{loc.name}</span>
-                      {loc.isLeader && (
-                        <Badge className="bg-primary/10 text-primary border-0 text-[10px] px-1.5 py-0">
-                          <TrendingUp className="w-2.5 h-2.5 mr-0.5" />
-                          Top
-                        </Badge>
-                      )}
-                    </div>
-                    {/* Inline drilldown */}
-                    <AnimatePresence>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="overflow-hidden"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <div className="col-span-full pt-2">
-                            <LocationDrilldownPanel
-                              locationId={loc.location_id}
-                              dateFrom={dateFrom}
-                              dateTo={dateTo}
-                              serviceRevenue={loc.serviceRevenue}
-                              productRevenue={loc.productRevenue}
-                              isOpen={isExpanded}
-                            />
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </TableCell>
-                  <TableCell className="text-right font-display tabular-nums">
-                    <BlurredAmount>${loc.totalRevenue.toLocaleString()}</BlurredAmount>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums hidden sm:table-cell">
-                    {loc.totalServices}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums hidden sm:table-cell">
-                    {loc.totalProducts}
-                  </TableCell>
-                  <TableCell className="text-right font-display tabular-nums hidden md:table-cell">
-                    <BlurredAmount>${avgTicket}</BlurredAmount>
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums text-muted-foreground">
-                    {Math.round(loc.sharePercent)}%
-                  </TableCell>
-                  <TableCell>
-                    <ChevronDown className={cn(
-                      'w-4 h-4 text-muted-foreground transition-transform',
-                      isExpanded && 'rotate-180'
-                    )} />
-                  </TableCell>
-                </TableRow>
+                <>
+                  <TableRow
+                    key={loc.location_id}
+                    className="cursor-pointer group"
+                    onClick={() => handleRowClick(loc.location_id)}
+                  >
+                    <TableCell className="font-display text-muted-foreground">{i + 1}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                        <span className="font-medium truncate">{loc.name}</span>
+                        {loc.isLeader && (
+                          <Badge className="bg-primary/10 text-primary border-0 text-[10px] px-1.5 py-0">
+                            <TrendingUp className="w-2.5 h-2.5 mr-0.5" />
+                            Top
+                          </Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right font-display tabular-nums">
+                      <BlurredAmount>${loc.totalRevenue.toLocaleString()}</BlurredAmount>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums hidden sm:table-cell">
+                      {loc.totalServices}
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums hidden sm:table-cell">
+                      {loc.totalProducts}
+                    </TableCell>
+                    <TableCell className="text-right font-display tabular-nums hidden md:table-cell">
+                      <BlurredAmount>${avgTicket}</BlurredAmount>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      {Math.round(loc.sharePercent)}%
+                    </TableCell>
+                    <TableCell>
+                      <ChevronDown className={cn(
+                        'w-4 h-4 text-muted-foreground transition-transform',
+                        isExpanded && 'rotate-180'
+                      )} />
+                    </TableCell>
+                  </TableRow>
+                  {/* Full-width drilldown row */}
+                  <AnimatePresence key={`drilldown-${loc.location_id}`}>
+                    {isExpanded && (
+                      <tr>
+                        <td colSpan={8} className="p-0 border-0">
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="overflow-hidden"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <div className="px-4 pb-4 border-b border-border/20">
+                              <LocationDrilldownPanel
+                                locationId={loc.location_id}
+                                dateFrom={dateFrom}
+                                dateTo={dateTo}
+                                serviceRevenue={loc.serviceRevenue}
+                                productRevenue={loc.productRevenue}
+                                isOpen={isExpanded}
+                              />
+                            </div>
+                          </motion.div>
+                        </td>
+                      </tr>
+                    )}
+                  </AnimatePresence>
+                </>
               );
             })}
           </TableBody>
