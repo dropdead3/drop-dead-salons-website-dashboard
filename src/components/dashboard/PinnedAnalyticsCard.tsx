@@ -281,9 +281,7 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     case 'goal_tracker':
       return (
         <VisibilityGate elementKey="goal_tracker">
-          <PinnableCard elementKey="goal_tracker" elementName="Goal Tracker" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
-            <GoalTrackerCard />
-          </PinnableCard>
+          <GoalTrackerCard />
         </VisibilityGate>
       );
     case 'new_bookings':
