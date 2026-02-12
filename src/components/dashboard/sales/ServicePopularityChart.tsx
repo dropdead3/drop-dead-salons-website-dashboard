@@ -282,10 +282,10 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                     />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted) / 0.15)' }}
-                      formatter={(value: number, name: string) => [
-                        name === 'frequency' ? `${value} times` : `$${value.toLocaleString()}`,
-                        name === 'frequency' ? 'Bookings' : 'Revenue'
-                      ]}
+                      formatter={(value: number, name: string, props: any) => {
+                        const pct = totalServices > 0 ? ((value / totalServices) * 100).toFixed(1) : '0';
+                        return [`${value} bookings · ${pct}%`, props.payload?.name || 'Service'];
+                      }}
                       contentStyle={{
                         backgroundColor: 'hsl(var(--background))',
                         border: '1px solid hsl(var(--border))',
@@ -297,6 +297,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                         dataKey="frequency"
                         position="insideRight"
                         content={({ x, y, width, height, value, index }: any) => {
+                          const barW = width || 0;
                           const barH = height || 0;
                           const padY = 3;
                           const padX = 4;
@@ -304,7 +305,9 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                           const pct = totalServices > 0 ? ((value / totalServices) * 100).toFixed(0) : '0';
                           const label = `${value} · ${pct}%`;
                           const badgeW = Math.max(label.length * 7 + 12, 50);
-                          const bx = (x || 0) + (width || 0) - badgeW - padX;
+                          // Hide badge if it doesn't fit inside the bar
+                          if (badgeW + padX * 2 > barW) return null;
+                          const bx = (x || 0) + barW - badgeW - padX;
                           const by = (y || 0) + padY;
                           const delay = (index || 0) * 60 + 650;
                           return (
@@ -363,7 +366,12 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                     />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted) / 0.15)' }}
-                      formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                      formatter={(value: number, name: string, props: any) => {
+                        const pct = totalRevenue > 0 ? ((value / totalRevenue) * 100).toFixed(1) : '0';
+                        const svcName = props.payload?.name;
+                        const avg = svcName ? avgPriceMap[svcName] : 0;
+                        return [`$${value.toLocaleString()} · ${pct}% · avg $${(avg || 0).toFixed(0)}`, svcName || 'Revenue'];
+                      }}
                       contentStyle={{
                         backgroundColor: 'hsl(var(--background))',
                         border: '1px solid hsl(var(--border))',
@@ -375,6 +383,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                         dataKey="totalRevenue"
                         position="insideRight"
                         content={({ x, y, width, height, value, index }: any) => {
+                          const barW = width || 0;
                           const barH = height || 0;
                           const padY = 3;
                           const padX = 4;
@@ -384,7 +393,9 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                           const avg = svcName ? avgPriceMap[svcName] : 0;
                           const label = `$${Number(value).toLocaleString()} · ${pct}% · avg $${(avg || 0).toFixed(0)}`;
                           const badgeW = Math.max(label.length * 6.5 + 14, 50);
-                          const bx = (x || 0) + (width || 0) - badgeW - padX;
+                          // Hide badge if it doesn't fit inside the bar
+                          if (badgeW + padX * 2 > barW) return null;
+                          const bx = (x || 0) + barW - badgeW - padX;
                           const by = (y || 0) + padY;
                           const delay = (index || 0) * 60 + 650;
                           return (
