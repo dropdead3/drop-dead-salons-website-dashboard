@@ -44,21 +44,21 @@ export function PinnableCard({
   }, [elementKey, elementName, category, registerMutation]);
   
   return (
-    <div className={cn("relative group", className)}>
-      {children}
-      <div className="max-h-0 opacity-0 group-hover:max-h-10 group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out">
-        <div className="flex items-center justify-end gap-0.5 px-3 py-1 border-t border-border/30">
-          <ZuraCardInsight 
-            cardName={elementName}
-            metricData={metricData}
-            dateRange={dateRange}
-            locationName={locationName}
-          />
-          <CommandCenterVisibilityToggle 
-            elementKey={elementKey} 
-            elementName={elementName} 
-          />
-        </div>
+    <div className={cn("relative group flex flex-row", className)}>
+      <div className="flex flex-col items-center justify-start pt-3 gap-1 max-w-0 opacity-0 group-hover:max-w-[40px] group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out shrink-0 border-r border-border/0 group-hover:border-border/30">
+        <ZuraCardInsight 
+          cardName={elementName}
+          metricData={metricData}
+          dateRange={dateRange}
+          locationName={locationName}
+        />
+        <CommandCenterVisibilityToggle 
+          elementKey={elementKey} 
+          elementName={elementName} 
+        />
+      </div>
+      <div className="flex-1 min-w-0 transition-all duration-200">
+        {children}
       </div>
     </div>
   );
