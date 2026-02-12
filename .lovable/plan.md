@@ -1,39 +1,39 @@
 
 
-# Fix: Action Steps Not Parsing in "Let's Implement" Dialog
+# Fix: Strip Action Markers from Display + Ensure Extraction Works
 
-## Problem
+## Two Issues
 
-The AI is generating the `---ACTIONS---` block correctly, but without numbered prefixes. The parser regex requires lines to start with `1.`, `2.`, etc. -- so every line fails to match, and the steps array stays empty.
+1. **Visible markers in guidance panel**: The `---ACTIONS---` block (including all action items and `---END---`) is displayed as raw text in the recovery plan dialog. Users see the machine-readable block, which looks ugly and confusing.
 
-Screenshot evidence:
-```text
----ACTIONS---
-Utilization Audit: Review the Schedule to...
-High-Margin Upsells: Brief the team to...
----END---
+2. **Extraction still may fail**: The `---END---` appears inline at the end of the last sentence (no newline before it), which could still cause issues.
+
+## Changes
+
+### File 1: `src/components/dashboard/sales/SalesGoalProgress.tsx` (line ~264)
+
+Strip the `---ACTIONS---` block from the displayed content before passing to ReactMarkdown:
+
+```tsx
+// Before:
+<ReactMarkdown>{guidance}</ReactMarkdown>
+
+// After:
+<ReactMarkdown>{guidance?.replace(/---ACTIONS---[\s\S]*?(---END---|$)/g, '').trim()}</ReactMarkdown>
 ```
 
-Parser expects: `^\d+\.\s*(.+?):\s*(.+)$`
-Actual format: `Title: Description` (no number)
+This removes everything from `---ACTIONS---` to `---END---` (or end of string) from the visible display, while the full raw content is still passed to `ImplementPlanDialog` via `RecoveryPlanActions` for extraction.
 
-Additionally, `---END---` appears on the same line as the last item, so the block regex may not capture the last entry cleanly.
+### File 2: `src/components/dashboard/sales/ImplementPlanDialog.tsx` (lines ~75-84)
 
-## Fix (single file, ~5 lines changed)
+Make the extraction more resilient to inline `---END---`:
 
-### `src/components/dashboard/sales/ImplementPlanDialog.tsx`
+- Before splitting into lines, also strip `---END---` that appears mid-sentence (e.g., `...cutting service. ---END---`)
+- After the colon-split regex, add a simpler fallback: if a line has no colon, use the whole line as the title with empty description
+- This ensures even malformed action blocks produce visible steps
 
-**Line 75**: Update the `---END---` capture to also handle it appearing inline (not on its own line). Replace the block regex with one that strips `---END---` from content before splitting.
+### File 3: `src/components/dashboard/sales/ShareToDMDialog.tsx` (line ~53)
 
-**Line 79**: Change the line-matching regex from requiring a numbered prefix to making it optional:
+Also strip the `---ACTIONS---` block from DM-shared content so team members don't see machine-readable markers.
 
-```
-Before:  /^\d+\.\s*(.+?):\s*(.+)$/
-After:   /^(?:\d+[.)]\s*)?(.+?):\s+(.+)$/
-```
-
-This matches both `1. Title: Description` and just `Title: Description`.
-
-**Line 77**: After splitting lines, also strip any trailing `---END---` from the last line so the final action item isn't lost.
-
-No other files changed. No database changes. No edge function changes needed -- the prompt already asks for numbered items, but we should be resilient when the AI omits them.
+No edge function changes. No database changes. Three small file edits.
