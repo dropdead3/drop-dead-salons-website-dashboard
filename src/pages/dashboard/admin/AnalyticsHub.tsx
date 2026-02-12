@@ -31,12 +31,14 @@ import { ProgramTabContent } from '@/components/dashboard/analytics/ProgramTabCo
 import { RentRevenueTab } from '@/components/dashboard/analytics/RentRevenueTab';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { ReportsTabContent } from '@/components/dashboard/analytics/ReportsTabContent';
+import { CampaignsTabContent } from '@/components/dashboard/analytics/CampaignsTabContent';
 
 
 const baseCategories = [
   { id: 'sales', label: 'Sales', icon: DollarSign },
   { id: 'operations', label: 'Operations', icon: BarChart3 },
   { id: 'marketing', label: 'Marketing', icon: TrendingUp },
+  { id: 'campaigns', label: 'Campaigns', icon: Target },
   { id: 'program', label: 'Program', icon: Target },
   { id: 'reports', label: 'Reports', icon: FileText },
 ];
@@ -69,6 +71,7 @@ export default function AnalyticsHub() {
   const salesTabVisible = useElementVisibility('analytics_sales_tab');
   const operationsTabVisible = useElementVisibility('analytics_operations_tab');
   const marketingTabVisible = useElementVisibility('analytics_marketing_tab');
+  const campaignsTabVisible = useElementVisibility('analytics_campaigns_tab');
   const programTabVisible = useElementVisibility('analytics_program_tab');
   const reportsTabVisible = useElementVisibility('analytics_reports_tab');
   const rentTabVisible = useElementVisibility('analytics_rent_tab');
@@ -78,11 +81,12 @@ export default function AnalyticsHub() {
     if (salesTabVisible) return 'sales';
     if (operationsTabVisible) return 'operations';
     if (marketingTabVisible) return 'marketing';
+    if (campaignsTabVisible) return 'campaigns';
     if (programTabVisible) return 'program';
     if (reportsTabVisible) return 'reports';
     if (rentTabVisible && isSuperAdmin) return 'rent';
     return null;
-  }, [salesTabVisible, operationsTabVisible, marketingTabVisible, programTabVisible, reportsTabVisible, rentTabVisible, isSuperAdmin]);
+  }, [salesTabVisible, operationsTabVisible, marketingTabVisible, campaignsTabVisible, programTabVisible, reportsTabVisible, rentTabVisible, isSuperAdmin]);
   
   // Auto-redirect if current tab is hidden
   useEffect(() => {
@@ -90,6 +94,7 @@ export default function AnalyticsHub() {
       (activeTab === 'sales' && !salesTabVisible) ||
       (activeTab === 'operations' && !operationsTabVisible) ||
       (activeTab === 'marketing' && !marketingTabVisible) ||
+      (activeTab === 'campaigns' && !campaignsTabVisible) ||
       (activeTab === 'program' && !programTabVisible) ||
       (activeTab === 'reports' && !reportsTabVisible) ||
       (activeTab === 'rent' && (!rentTabVisible || !isSuperAdmin));
@@ -100,7 +105,7 @@ export default function AnalyticsHub() {
         setSearchParams({ tab: firstVisible });
       }
     }
-  }, [activeTab, salesTabVisible, operationsTabVisible, marketingTabVisible, programTabVisible, reportsTabVisible, rentTabVisible, isSuperAdmin, getFirstVisibleTab, setSearchParams]);
+  }, [activeTab, salesTabVisible, operationsTabVisible, marketingTabVisible, campaignsTabVisible, programTabVisible, reportsTabVisible, rentTabVisible, isSuperAdmin, getFirstVisibleTab, setSearchParams]);
   
   // Location access control
   const { 
@@ -347,6 +352,12 @@ export default function AnalyticsHub() {
           <VisibilityGate elementKey="analytics_marketing_tab">
             <TabsContent value="marketing" className="mt-6">
               <MarketingTabContent filters={filters} />
+            </TabsContent>
+          </VisibilityGate>
+
+          <VisibilityGate elementKey="analytics_campaigns_tab">
+            <TabsContent value="campaigns" className="mt-6">
+              <CampaignsTabContent />
             </TabsContent>
           </VisibilityGate>
 

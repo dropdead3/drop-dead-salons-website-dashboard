@@ -137,6 +137,8 @@ import DecisionHistoryPage from "./pages/dashboard/admin/DecisionHistoryPage";
 
 // Team Chat
 import TeamChat from "./pages/dashboard/TeamChat";
+import Campaigns from "./pages/dashboard/Campaigns";
+import CampaignDetail from "./pages/dashboard/CampaignDetail";
 
 // Phase 3: Client Engagement Tools
 import ClientFeedbackPage from "./pages/ClientFeedback";
@@ -239,6 +241,8 @@ const App = () => (
                       <Route path="/dashboard/schedule" element={<ProtectedRoute requiredPermission="view_booking_calendar"><Schedule /></ProtectedRoute>} />
                       <Route path="/dashboard/team-chat" element={<ProtectedRoute><TeamChat /></ProtectedRoute>} />
                       <Route path="/dashboard/changelog" element={<ProtectedRoute><Changelog /></ProtectedRoute>} />
+                      <Route path="/dashboard/campaigns" element={<ProtectedRoute requiredPermission="view_team_overview"><Campaigns /></ProtectedRoute>} />
+                      <Route path="/dashboard/campaigns/:id" element={<ProtectedRoute requiredPermission="view_team_overview"><CampaignDetail /></ProtectedRoute>} />
                       <Route path="/dashboard/metrics-glossary" element={<ProtectedRoute><MetricsGlossary /></ProtectedRoute>} />
                       <Route path="/dashboard/design-system" element={<ProtectedRoute requiredPermission="manage_settings"><DesignSystem /></ProtectedRoute>} />
                       <Route path="/dashboard/help" element={<ProtectedRoute><HelpCenter /></ProtectedRoute>} />
