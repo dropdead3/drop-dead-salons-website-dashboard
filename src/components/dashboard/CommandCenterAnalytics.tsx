@@ -9,6 +9,7 @@ import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCar
 import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
 import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
+import { GoalTrackerCard } from '@/components/dashboard/sales/GoalTrackerCard';
 import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
 import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
@@ -88,6 +89,7 @@ const CARD_COMPONENTS: Record<string, string> = {
   'revenue_breakdown': 'RevenueBreakdown',
   'client_funnel': 'ClientFunnel',
   'team_goals': 'TeamGoals',
+  'goal_tracker': 'GoalTracker',
   'new_bookings': 'NewBookings',
   'week_ahead_forecast': 'Forecast',
   'capacity_utilization': 'Capacity',
@@ -255,6 +257,12 @@ export function CommandCenterAnalytics() {
             <PinnableCard elementKey="team_goals" elementName="Team Goals" category="Command Center">
               <TeamGoalsCard currentRevenue={salesData?.totalRevenue || 0} />
             </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'goal_tracker':
+        return (
+          <VisibilityGate key={cardId} elementKey="goal_tracker">
+            <GoalTrackerCard />
           </VisibilityGate>
         );
       case 'new_bookings':
