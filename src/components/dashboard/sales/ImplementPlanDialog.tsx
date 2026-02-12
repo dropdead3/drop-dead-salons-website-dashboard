@@ -39,6 +39,7 @@ interface ImplementPlanDialogProps {
   planTitle: string;
   planContent: string;
   goalPeriod?: string;
+  preSelectedSteps?: ActionStep[];
 }
 
 interface ActionStep {
@@ -142,6 +143,7 @@ export function ImplementPlanDialog({
   planTitle,
   planContent,
   goalPeriod,
+  preSelectedSteps,
 }: ImplementPlanDialogProps) {
   const { user } = useAuth();
 
@@ -179,7 +181,9 @@ export function ImplementPlanDialog({
   // Reset state when dialog opens
   const handleOpenChange = (isOpen: boolean) => {
     if (isOpen) {
-      const extracted = extractActions(planContent);
+      const extracted = preSelectedSteps && preSelectedSteps.length > 0
+        ? preSelectedSteps
+        : extractActions(planContent);
       setSteps(extracted);
       setSelectedSteps(new Set(extracted.map((_, i) => i)));
       setLeadershipNote('');

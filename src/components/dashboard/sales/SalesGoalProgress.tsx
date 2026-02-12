@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Target, TrendingUp, TrendingDown, Loader2 } from 'lucide-react';
+import { Target, TrendingUp, TrendingDown, Loader2, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -13,6 +13,7 @@ import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import ReactMarkdown from 'react-markdown';
 import { supabase } from '@/integrations/supabase/client';
 import { RecoveryPlanActions } from './RecoveryPlanActions';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface SalesGoalProgressProps {
   current: number;
@@ -130,6 +131,48 @@ export function SalesGoalProgress({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [guidance, setGuidance] = useState('');
+  const [selectedTaskIndices, setSelectedTaskIndices] = useState<Set<number>>(new Set());
+
+  // Parse tasks from ---ACTIONS--- block
+  const parsedTasks = useMemo(() => {
+    if (!guidance) return [];
+    const match = guidance.match(/---ACTIONS---\s*([\s\S]*?)(?:---END---|$)/);
+    if (!match) return [];
+    const rawBlock = match[1].replace(/---END---/g, '').trim();
+    const lines = rawBlock.split('\n').map(l => l.trim()).filter(Boolean);
+    return lines.map((line, i) => {
+      const lineMatch = line.match(/^(?:\d+[.)]\s*)?(.+?):\s+(.+)$/);
+      const title = lineMatch ? lineMatch[1].trim() : line.replace(/^[\d.)\-•]+\s*/, '').trim();
+      const description = lineMatch ? lineMatch[2].trim() : '';
+      const priority: 'high' | 'medium' = i === 0 ? 'high' : 'medium';
+      const dueDays = i < 2 ? 2 : i < 4 ? 5 : 7;
+      return { title, description, priority, dueDays };
+    }).filter(t => t.title.length > 3).slice(0, 8);
+  }, [guidance]);
+
+  // Auto-select all when parsed tasks change
+  const toggleTaskSelection = (idx: number) => {
+    setSelectedTaskIndices(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
+  // Reset selection when tasks parse
+  useMemo(() => {
+    if (parsedTasks.length > 0) {
+      setSelectedTaskIndices(new Set(parsedTasks.map((_, i) => i)));
+    }
+  }, [parsedTasks]);
+
+  const allTasksSelected = parsedTasks.length > 0 && selectedTaskIndices.size === parsedTasks.length;
+
+  // Build selected tasks for RecoveryPlanActions
+  const selectedTasksForImplement = parsedTasks
+    .filter((_, i) => selectedTaskIndices.has(i))
+    .map(t => ({ title: t.title, description: t.description, dueDays: t.dueDays }));
 
   const percentage = target > 0 ? Math.min((current / target) * 100, 100) : 0;
   const isComplete = percentage >= 100;
@@ -260,9 +303,81 @@ export function SalesGoalProgress({
                   <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
                 </div>
               ) : (
-                <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:mb-4 [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:mt-4 [&_h3]:mb-2 [&_li]:leading-relaxed">
-                  <ReactMarkdown>{guidance?.replace(/---ACTIONS---[\s\S]*?(---END---|$)/g, '').trim()}</ReactMarkdown>
-                </div>
+                <>
+                  <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:mb-4 [&_h2]:mt-6 [&_h2]:mb-2 [&_h3]:mt-4 [&_h3]:mb-2 [&_li]:leading-relaxed">
+                    <ReactMarkdown>{guidance?.replace(/---ACTIONS---[\s\S]*?(---END---|$)/g, '').trim()}</ReactMarkdown>
+                  </div>
+
+                  {/* Selectable AI Tasks */}
+                  {parsedTasks.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-border/30">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1.5">
+                          <ListChecks className="w-3.5 h-3.5 text-violet-500" />
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">
+                            AI SUGGESTED TASKS
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSelectedTaskIndices(
+                              allTasksSelected
+                                ? new Set()
+                                : new Set(parsedTasks.map((_, i) => i))
+                            )
+                          }
+                          className="text-[11px] text-primary hover:underline"
+                        >
+                          {allTasksSelected ? 'Deselect all' : 'Select all'}
+                        </button>
+                      </div>
+                      <div className="space-y-1.5">
+                        {parsedTasks.map((task, i) => {
+                          const selected = selectedTaskIndices.has(i);
+                          return (
+                            <label
+                              key={i}
+                              className={cn(
+                                'flex items-start gap-2.5 py-2 px-2.5 rounded-lg cursor-pointer transition-colors',
+                                selected ? 'bg-card/50' : 'opacity-50'
+                              )}
+                            >
+                              <Checkbox
+                                checked={selected}
+                                onCheckedChange={() => toggleTaskSelection(i)}
+                                className="mt-0.5"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className={cn('text-sm leading-snug', !selected && 'line-through text-muted-foreground')}>
+                                  {task.title}
+                                </p>
+                                {task.description && selected && (
+                                  <p className="text-[11px] text-muted-foreground/70 mt-0.5 line-clamp-2">
+                                    {task.description}
+                                  </p>
+                                )}
+                                {selected && (
+                                  <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                                    Due in {task.dueDays} day{task.dueDays !== 1 ? 's' : ''}
+                                  </p>
+                                )}
+                              </div>
+                              <span className={cn(
+                                'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display flex-shrink-0',
+                                task.priority === 'high'
+                                  ? 'bg-destructive/10 text-destructive'
+                                  : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                              )}>
+                                {task.priority}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </ScrollArea>
@@ -274,6 +389,7 @@ export function SalesGoalProgress({
               targetRevenue={target}
               currentRevenue={current}
               shortfall={remaining}
+              selectedTasks={selectedTasksForImplement}
             />
           )}
           <div className="text-[10px] text-muted-foreground text-center pt-2 border-t border-border/30">
