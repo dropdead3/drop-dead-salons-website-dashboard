@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Scissors, TrendingUp, DollarSign, ChevronDown, User } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BarChart,
@@ -125,6 +126,8 @@ function useServiceStylistBreakdown(serviceName: string | null, dateFrom?: strin
   });
 }
 
+const MAX_VISIBLE_STYLISTS = 5;
+
 // Expandable stylist detail panel
 function StylistBreakdownPanel({ serviceName, dateFrom, dateTo, locationId }: {
   serviceName: string;
@@ -134,6 +137,37 @@ function StylistBreakdownPanel({ serviceName, dateFrom, dateTo, locationId }: {
 }) {
   const { data: stylists, isLoading } = useServiceStylistBreakdown(serviceName, dateFrom, dateTo, locationId);
   const totalCount = stylists?.reduce((s, st) => s + st.count, 0) || 0;
+  const [showAll, setShowAll] = useState(false);
+
+  const visibleStylists = showAll ? stylists : stylists?.slice(0, MAX_VISIBLE_STYLISTS);
+  const hasMore = (stylists?.length || 0) > MAX_VISIBLE_STYLISTS;
+  const useScroll = showAll && (stylists?.length || 0) > 8;
+
+  const renderRows = () => (
+    <>
+      {visibleStylists?.map((stylist, idx) => {
+        const pct = totalCount > 0 ? ((stylist.count / totalCount) * 100).toFixed(0) : '0';
+        return (
+          <div
+            key={idx}
+            className="flex items-center justify-between py-2.5 px-3 border-l-2 border-primary/20"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 bg-primary/10 flex items-center justify-center rounded-full">
+                <User className="w-3 h-3 text-primary/50" />
+              </div>
+              <span className="text-sm text-muted-foreground">{stylist.name}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground/70 text-xs">{stylist.count}× · {pct}%</span>
+              <Badge variant="secondary" className="text-xs">${stylist.revenue.toLocaleString()}</Badge>
+              <span className="text-xs text-muted-foreground/60">avg ${stylist.avgPrice.toFixed(0)}</span>
+            </div>
+          </div>
+        );
+      })}
+    </>
+  );
 
   return (
     <motion.div
@@ -149,27 +183,24 @@ function StylistBreakdownPanel({ serviceName, dateFrom, dateTo, locationId }: {
             <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
           </div>
         ) : stylists && stylists.length > 0 ? (
-          stylists.map((stylist, idx) => {
-            const pct = totalCount > 0 ? ((stylist.count / totalCount) * 100).toFixed(0) : '0';
-            return (
-              <div
-                key={idx}
-                className="flex items-center justify-between py-2.5 px-3 border-l-2 border-primary/20"
+          <>
+            {useScroll ? (
+              <ScrollArea className="max-h-[280px]">
+                {renderRows()}
+              </ScrollArea>
+            ) : (
+              renderRows()
+            )}
+            {hasMore && (
+              <button
+                onClick={() => setShowAll(!showAll)}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors py-2 pl-3"
               >
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 bg-primary/10 flex items-center justify-center rounded-full">
-                    <User className="w-3 h-3 text-primary/50" />
-                  </div>
-                  <span className="text-sm text-muted-foreground">{stylist.name}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground/70 text-xs">{stylist.count}× · {pct}%</span>
-                  <Badge variant="secondary" className="text-xs">${stylist.revenue.toLocaleString()}</Badge>
-                  <span className="text-xs text-muted-foreground/60">avg ${stylist.avgPrice.toFixed(0)}</span>
-                </div>
-              </div>
-            );
-          })
+                <ChevronDown className={`w-3 h-3 transition-transform ${showAll ? 'rotate-180' : ''}`} />
+                {showAll ? 'Show less' : `Show all ${stylists.length} stylists`}
+              </button>
+            )}
+          </>
         ) : (
           <p className="text-sm text-muted-foreground text-center py-3">No stylist data available</p>
         )}
