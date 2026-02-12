@@ -751,6 +751,11 @@
   }
 }
 
+@keyframes svgFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @keyframes slide-up {
   from {
     opacity: 0;

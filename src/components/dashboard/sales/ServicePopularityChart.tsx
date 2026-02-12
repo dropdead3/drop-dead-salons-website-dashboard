@@ -151,7 +151,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                       <LabelList
                         dataKey="frequency"
                         position="insideRight"
-                        content={({ x, y, width, height, value }: any) => {
+                        content={({ x, y, width, height, value, index }: any) => {
                           const barH = height || 0;
                           const padY = 3;
                           const padX = 4;
@@ -161,8 +161,9 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                           const badgeW = Math.max(label.length * 7 + 12, 50);
                           const bx = (x || 0) + (width || 0) - badgeW - padX;
                           const by = (y || 0) + padY;
+                          const delay = (index || 0) * 60 + 650;
                           return (
-                            <g>
+                            <g opacity={0} style={{ animation: `svgFadeIn 350ms ease-out ${delay}ms forwards` }}>
                               <rect
                                 x={bx}
                                 y={by}
@@ -228,7 +229,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                       <LabelList
                         dataKey="totalRevenue"
                         position="insideRight"
-                        content={({ x, y, width, height, value }: any) => {
+                        content={({ x, y, width, height, value, index }: any) => {
                           const barH = height || 0;
                           const padY = 3;
                           const padX = 4;
@@ -238,8 +239,9 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                           const badgeW = Math.max(label.length * 7 + 12, 50);
                           const bx = (x || 0) + (width || 0) - badgeW - padX;
                           const by = (y || 0) + padY;
+                          const delay = (index || 0) * 60 + 650;
                           return (
-                            <g>
+                            <g opacity={0} style={{ animation: `svgFadeIn 350ms ease-out ${delay}ms forwards` }}>
                               <rect
                                 x={bx}
                                 y={by}
