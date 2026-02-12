@@ -89,6 +89,13 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={sortedData} layout="vertical" barSize={28}>
+                    <defs>
+                      <linearGradient id="glassFrequency" x1="1" y1="0" x2="0" y2="0">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
+                        <stop offset="40%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
                     <XAxis type="number" />
                     <YAxis 
@@ -110,7 +117,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                         borderRadius: '8px',
                       }}
                     />
-                    <Bar dataKey="frequency" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="frequency" fill="url(#glassFrequency)" radius={[0, 4, 4, 0]} stroke="hsl(var(--primary) / 0.3)" strokeWidth={1}>
                       <LabelList
                         dataKey="frequency"
                         position="insideRight"
@@ -162,6 +169,13 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={sortedData} layout="vertical" barSize={28}>
+                    <defs>
+                      <linearGradient id="glassRevenue" x1="1" y1="0" x2="0" y2="0">
+                        <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.7} />
+                        <stop offset="40%" stopColor="hsl(var(--chart-2))" stopOpacity={0.5} />
+                        <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.35} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
                     <XAxis type="number" tickFormatter={(v) => `$${v}`} />
                     <YAxis 
@@ -180,7 +194,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                         borderRadius: '8px',
                       }}
                     />
-                    <Bar dataKey="totalRevenue" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="totalRevenue" fill="url(#glassRevenue)" radius={[0, 4, 4, 0]} stroke="hsl(var(--chart-2) / 0.3)" strokeWidth={1}>
                       <LabelList
                         dataKey="totalRevenue"
                         position="insideRight"
