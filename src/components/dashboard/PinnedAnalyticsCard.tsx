@@ -10,6 +10,7 @@ import { TopPerformersCard } from '@/components/dashboard/sales/TopPerformersCar
 import { RevenueDonutChart } from '@/components/dashboard/sales/RevenueDonutChart';
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
 import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
+import { GoalTrackerCard } from '@/components/dashboard/sales/GoalTrackerCard';
 import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
 import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
@@ -30,6 +31,7 @@ const CARD_TO_TAB_MAP: Record<string, string> = {
   'top_performers': 'analytics_sales_tab',
   'revenue_breakdown': 'analytics_sales_tab',
   'team_goals': 'analytics_sales_tab',
+  'goal_tracker': 'analytics_sales_tab',
   'week_ahead_forecast': 'analytics_sales_tab',
   'capacity_utilization': 'analytics_operations_tab',
   'operations_stats': 'analytics_operations_tab',
@@ -273,6 +275,14 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
               currentRevenue={salesData?.totalRevenue || 0}
               filterContext={filterContext}
             />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'goal_tracker':
+      return (
+        <VisibilityGate elementKey="goal_tracker">
+          <PinnableCard elementKey="goal_tracker" elementName="Goal Tracker" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <GoalTrackerCard />
           </PinnableCard>
         </VisibilityGate>
       );
