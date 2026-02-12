@@ -6,7 +6,8 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useServiceProductDrilldown } from '@/hooks/useServiceProductDrilldown';
 import { useCapacityReport } from '@/hooks/useCapacityReport';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
-import { TrendingUp, TrendingDown, Clock, Users, Minus, Zap } from 'lucide-react';
+import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
+import { TrendingUp, TrendingDown, Clock, Users, Minus, Zap, ShoppingBag } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { cn } from '@/lib/utils';
@@ -78,6 +79,12 @@ export function LocationDrilldownPanel({
   );
 
   const { data: teamSize, isLoading: teamLoading } = useLocationTeamSize(locationId, isOpen);
+
+  const { data: attachmentData, isLoading: attachmentLoading } = useRetailAttachmentRate({
+    dateFrom,
+    dateTo,
+    locationId,
+  });
 
   const totalSplit = serviceRevenue + productRevenue;
   const servicePct = totalSplit > 0 ? (serviceRevenue / totalSplit) * 100 : 0;
@@ -173,7 +180,7 @@ export function LocationDrilldownPanel({
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {/* Team Size */}
               <div className="p-3 rounded-lg border border-border/30 bg-muted/20">
                 <div className="flex items-center gap-1.5 mb-1">
@@ -240,6 +247,21 @@ export function LocationDrilldownPanel({
                       {revenueChange > 0 ? '+' : ''}{Math.round(revenueChange)}%
                     </span>
                   </div>
+                ) : (
+                  <p className="text-lg font-display text-muted-foreground">—</p>
+                )}
+              </div>
+
+              {/* Retail Attach Rate */}
+              <div className="p-3 rounded-lg border border-border/30 bg-muted/20">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <ShoppingBag className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Attach Rate</span>
+                </div>
+                {attachmentLoading ? (
+                  <Skeleton className="h-6 w-12 rounded" />
+                ) : attachmentData ? (
+                  <p className="text-lg font-display tabular-nums">{attachmentData.attachmentRate}%</p>
                 ) : (
                   <p className="text-lg font-display text-muted-foreground">—</p>
                 )}
