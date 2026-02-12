@@ -24,25 +24,41 @@ function CustomTooltip({ active, payload }: any) {
   );
 }
 
+let treemapGradCounter = 0;
+
 function CustomContent(props: any) {
-  const { x, y, width, height, name, fill } = props;
+  const { x, y, width, height, name, fill, color } = props;
   if (width < 4 || height < 4) return null;
 
   const showLabel = width > 60 && height > 28;
   const showRevenue = width > 80 && height > 44;
+  const hex = color || '#6b7280';
+  const gradId = `treemap-glass-${(treemapGradCounter++)}`;
 
   return (
     <g>
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor={hex} stopOpacity={0.75} />
+          <stop offset="50%" stopColor={hex} stopOpacity={0.55} />
+          <stop offset="100%" stopColor={hex} stopOpacity={0.4} />
+        </linearGradient>
+      </defs>
       <rect
-        x={x}
-        y={y}
-        width={width}
-        height={height}
-        rx={4}
-        fill={fill}
-        stroke="hsl(var(--background))"
-        strokeWidth={2}
+        x={x} y={y} width={width} height={height}
+        rx={6}
+        fill={`url(#${gradId})`}
+        stroke={`${hex}40`}
+        strokeWidth={1}
         className="transition-opacity hover:opacity-80"
+      />
+      {/* Glass sheen highlight */}
+      <rect
+        x={x + 1} y={y + 1}
+        width={Math.max(0, width - 2)}
+        height={Math.max(0, Math.min(height * 0.35, height - 2))}
+        rx={5}
+        fill="rgba(255,255,255,0.08)"
       />
       {showLabel && (
         <text
@@ -51,7 +67,7 @@ function CustomContent(props: any) {
           textAnchor="middle"
           fill="#fff"
           fontSize={Math.min(12, width / 8)}
-          fontWeight={600}
+          fontWeight={500}
         >
           {name.length > width / 8 ? name.slice(0, Math.floor(width / 8)) + '…' : name}
         </text>
@@ -61,7 +77,7 @@ function CustomContent(props: any) {
           x={x + width / 2}
           y={y + height / 2 + 12}
           textAnchor="middle"
-          fill="rgba(255,255,255,0.8)"
+          fill="rgba(255,255,255,0.7)"
           fontSize={Math.min(10, width / 10)}
         >
           ${((props.totalRevenue ?? props.value ?? 0) / 1000).toFixed(0)}k
@@ -79,6 +95,7 @@ export function LocationTreemap({ locations, colors, totalRevenue }: LocationTre
       totalRevenue: loc.totalRevenue,
       sharePercent: loc.sharePercent,
       fill: colors[i % colors.length],
+      color: colors[i % colors.length],
     })),
     [locations, colors]
   );
