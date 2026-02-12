@@ -156,7 +156,10 @@ export function LocationComparisonTable({
                 <>
                   <TableRow
                     key={loc.location_id}
-                    className="cursor-pointer group"
+                    className={cn(
+                      'cursor-pointer group transition-colors',
+                      isExpanded && 'bg-muted/30 border-b-0'
+                    )}
                     onClick={() => handleRowClick(loc.location_id)}
                   >
                     <TableCell className="font-display text-muted-foreground">{i + 1}</TableCell>
@@ -207,7 +210,7 @@ export function LocationComparisonTable({
                             className="overflow-hidden"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            <div className="px-4 pb-4 border-b border-border/20">
+                            <div className="px-6 py-4 bg-muted/10 border-b border-border/30 border-l-2 border-l-primary/20">
                               <LocationDrilldownPanel
                                 locationId={loc.location_id}
                                 dateFrom={dateFrom}
