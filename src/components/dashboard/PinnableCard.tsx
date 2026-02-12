@@ -81,15 +81,12 @@ export function PinnableCard({
       {/* Z and Pin icons overlaid on the card header icon */}
       {iconRect && (
         <div 
-          className="absolute z-10 flex items-center justify-center gap-0 transition-opacity duration-200 ease-in-out"
+          className="absolute z-10 flex items-center justify-center gap-1 transition-opacity duration-200 ease-in-out"
           style={{
-            top: iconRect.top,
-            left: iconRect.left,
-            width: iconRect.width,
-            height: iconRect.height,
+            top: iconRect.top - 2,
+            left: iconRect.left - 4,
             opacity: hovered ? 1 : 0,
             pointerEvents: hovered ? 'auto' : 'none',
-            transform: 'scale(0.85)',
           }}
         >
           <ZuraCardInsight 
@@ -98,10 +95,12 @@ export function PinnableCard({
             dateRange={dateRange}
             locationName={locationName}
           />
-          <CommandCenterVisibilityToggle 
-            elementKey={elementKey} 
-            elementName={elementName} 
-          />
+          <div className="[&>button]:rounded-full [&>button]:h-7 [&>button]:w-7">
+            <CommandCenterVisibilityToggle 
+              elementKey={elementKey} 
+              elementName={elementName} 
+            />
+          </div>
         </div>
       )}
       <div ref={contentRef}>
