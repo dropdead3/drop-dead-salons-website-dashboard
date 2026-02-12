@@ -120,6 +120,7 @@ import {
   MoreHorizontal,
   RefreshCw,
   HeartPulse,
+  Rocket,
 } from 'lucide-react';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
@@ -186,6 +187,7 @@ const managerNavItems: NavItem[] = [
   { href: '/dashboard/admin/team', label: 'Program Team Overview', icon: Users, permission: 'view_team_overview' },
   // Analytics & Insights group
   { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
+  { href: '/dashboard/campaigns', label: 'Campaigns', icon: Rocket, permission: 'view_team_overview' },
   { href: '/dashboard/admin/executive-brief', label: 'Executive Brief', icon: TrendingUp, permission: 'manage_settings' },
   { href: '/dashboard/admin/kpi-builder', label: 'KPI Architecture', icon: Target, permission: 'manage_settings' },
   { href: '/dashboard/admin/decision-history', label: 'Decision History', icon: BarChart3, permission: 'manage_settings' },
