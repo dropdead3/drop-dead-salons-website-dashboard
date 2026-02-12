@@ -97,6 +97,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                       tick={{ fontSize: 13 }}
                     />
                     <Tooltip
+                      cursor={{ fill: 'hsl(var(--muted) / 0.15)' }}
                       formatter={(value: number, name: string) => [
                         name === 'frequency' ? `${value} times` : `$${value.toLocaleString()}`,
                         name === 'frequency' ? 'Bookings' : 'Revenue'
@@ -132,6 +133,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                       tick={{ fontSize: 13 }}
                     />
                     <Tooltip
+                      cursor={{ fill: 'hsl(var(--muted) / 0.15)' }}
                       formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
                       contentStyle={{
                         backgroundColor: 'hsl(var(--background))',
