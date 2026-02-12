@@ -78,10 +78,10 @@ export function PinnableCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Z and Pin icons overlaid exactly on the card header icon */}
+      {/* Z and Pin icons overlaid on the card header icon */}
       {iconRect && (
         <div 
-          className="absolute z-10 flex items-center justify-center gap-1 transition-opacity duration-200 ease-in-out"
+          className="absolute z-10 flex items-center justify-center gap-0 transition-opacity duration-200 ease-in-out"
           style={{
             top: iconRect.top,
             left: iconRect.left,
@@ -89,6 +89,7 @@ export function PinnableCard({
             height: iconRect.height,
             opacity: hovered ? 1 : 0,
             pointerEvents: hovered ? 'auto' : 'none',
+            transform: 'scale(0.85)',
           }}
         >
           <ZuraCardInsight 
