@@ -38,7 +38,7 @@ function CenterLabel({ viewBox, totalRevenue }: any) {
       <text x={cx} y={cy - 6} textAnchor="middle" fill="hsl(var(--foreground))" fontSize={10} className="uppercase tracking-wider">
         Total
       </text>
-      <text x={cx} y={cy + 14} textAnchor="middle" fill="hsl(var(--foreground))" fontSize={16} fontWeight={700} className="font-display">
+      <text x={cx} y={cy + 14} textAnchor="middle" fill="hsl(var(--foreground))" fontSize={16} fontWeight={500} className="font-display">
         ${(totalRevenue / 1000).toFixed(0)}k
       </text>
     </g>
@@ -57,6 +57,12 @@ export function LocationDonutChart({ locations, colors, totalRevenue }: Location
     [locations, colors]
   );
 
+  // Build unique gradient defs per color
+  const gradientDefs = useMemo(() => {
+    const unique = [...new Set(colors.slice(0, locations.length))];
+    return unique.map(hex => ({ id: `donut-glass-${hex.replace('#', '')}`, hex }));
+  }, [colors, locations.length]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -66,6 +72,15 @@ export function LocationDonutChart({ locations, colors, totalRevenue }: Location
     >
       <ResponsiveContainer width="100%" height={280}>
         <PieChart>
+          <defs>
+            {gradientDefs.map(({ id, hex }) => (
+              <linearGradient key={id} id={id} x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stopColor={hex} stopOpacity={0.9} />
+                <stop offset="50%" stopColor={hex} stopOpacity={0.7} />
+                <stop offset="100%" stopColor={hex} stopOpacity={0.5} />
+              </linearGradient>
+            ))}
+          </defs>
           <Pie
             data={data}
             dataKey="value"
@@ -75,12 +90,15 @@ export function LocationDonutChart({ locations, colors, totalRevenue }: Location
             innerRadius={60}
             outerRadius={100}
             paddingAngle={2}
-            strokeWidth={0}
+            stroke="hsl(var(--background))"
+            strokeWidth={2}
             label={false}
           >
-            {data.map((_, i) => (
-              <Cell key={i} fill={colors[i % colors.length]} />
-            ))}
+            {data.map((_, i) => {
+              const hex = colors[i % colors.length];
+              const gradId = `donut-glass-${hex.replace('#', '')}`;
+              return <Cell key={i} fill={`url(#${gradId})`} />;
+            })}
             <CenterLabel totalRevenue={totalRevenue} />
           </Pie>
           <Tooltip content={<CustomTooltip />} />
