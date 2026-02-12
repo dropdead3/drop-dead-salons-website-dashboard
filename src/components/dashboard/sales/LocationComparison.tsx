@@ -131,7 +131,12 @@ export function LocationComparison({ locations, isLoading, filterContext, dateFr
       </CardHeader>
       <CardContent className="space-y-4">
         {viewMode === 'cards' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className={cn(
+            "grid gap-4",
+            count === 2
+              ? "grid-cols-1 sm:grid-cols-2"
+              : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          )}>
             {cardData.map((loc, i) => (
               <LocationComparisonCard
                 key={loc.location_id}
