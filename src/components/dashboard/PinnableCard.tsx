@@ -46,8 +46,8 @@ export function PinnableCard({
   return (
     <div className={cn(
       "relative group",
-      "[&>*>*:first-child]:transition-all [&>*>*:first-child]:duration-200 [&>*>*:first-child]:ease-in-out",
-      "hover:[&>*>*:first-child]:pl-10",
+      "[&>*>*:first-child]:transition-[padding] [&>*>*:first-child]:duration-200 [&>*>*:first-child]:ease-in-out",
+      "[&>*>*:first-child]:group-hover:pl-10",
       className
     )}>
       {/* Icons absolutely positioned in the card header area */}
