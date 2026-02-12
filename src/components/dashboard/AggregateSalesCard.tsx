@@ -433,9 +433,6 @@ export function AggregateSalesCard({
           </div>
           <div>
             <h2 className="font-display text-sm tracking-wide">SALES OVERVIEW</h2>
-            <p className="text-xs text-muted-foreground">
-              {isAllLocations ? 'All locations combined' : selectedLocationName || 'Loading...'}
-            </p>
           </div>
           {hasNoData && (
             <Badge variant="outline" className="text-muted-foreground">
@@ -495,7 +492,10 @@ export function AggregateSalesCard({
         {/* KPIs with Trends */}
         <div className="lg:col-span-2">
           {/* Hero: Total Revenue with Breakdown */}
-          <div className="bg-muted/30 dark:bg-card rounded-xl p-4 sm:p-6 border border-border/40">
+          <div className="bg-muted/30 dark:bg-card rounded-xl p-4 sm:p-6 border border-border/40 relative">
+            <p className="absolute top-3 left-4 sm:left-6 text-xs text-muted-foreground">
+              {isAllLocations ? 'All locations combined' : selectedLocationName || 'Loading...'}
+            </p>
             {/* Total Revenue - Hero */}
             <div className="text-center mb-4 sm:mb-6">
               <AnimatedBlurredAmount
