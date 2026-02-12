@@ -25,6 +25,14 @@ const COLORS = [
   'hsl(var(--chart-5))',
 ];
 
+const COLOR_VARS = [
+  '--chart-1',
+  '--chart-2',
+  '--chart-3',
+  '--chart-4',
+  '--chart-5',
+];
+
 const MAX_BAR_SEGMENTS = 5;
 const MAX_VISIBLE_OTHERS = 5;
 
@@ -69,6 +77,7 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
         ? ((location.totalRevenue / totalRevenue) * 100).toFixed(0)
         : '0',
       color: COLORS[idx % COLORS.length],
+      colorVar: COLOR_VARS[idx % COLOR_VARS.length],
     }));
   }, [sortedLocations, totalRevenue]);
 
@@ -82,6 +91,7 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
       value: othersValue,
       percentage: othersPct,
       color: 'hsl(var(--muted-foreground))',
+      colorVar: '--muted-foreground',
       count: rest.length,
     } : null;
     return { displayData: top, othersEntry: entry, othersLocations: rest };
@@ -215,13 +225,15 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
 
         {/* Revenue Share Bar */}
         <div className="space-y-2.5">
-           <div className="flex h-10 rounded-xl overflow-hidden border border-border/30">
+           <div className="flex h-10 rounded-xl overflow-hidden border border-white/[0.08] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.06)]">
             {[...displayData, ...(othersEntry ? [othersEntry] : [])].map((entry, idx) => {
               const pct = totalRevenue > 0 ? (entry.value / totalRevenue) * 100 : 0;
               if (pct <= 0) return null;
               const isOthers = entry.name === 'Others';
               const allEntries = [...displayData, ...(othersEntry ? [othersEntry] : [])];
               const isLast = idx === allEntries.length - 1;
+              const cssVar = (entry as any).colorVar || '--chart-5';
+              const opacity = isOthers ? 0.25 : 0.45;
               return (
                 <Tooltip key={entry.name}>
                   <TooltipTrigger asChild>
@@ -229,12 +241,14 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
                       className="h-full flex items-center justify-center text-xs transition-all cursor-default relative overflow-hidden"
                       style={{
                         width: `${pct}%`,
-                        backgroundColor: `${entry.color}${isOthers ? '30' : '55'}`,
-                        borderRight: isLast ? 'none' : `1px solid hsl(var(--border) / 0.3)`,
+                        backgroundColor: `hsl(var(${cssVar}) / ${opacity})`,
+                        borderRight: isLast ? 'none' : `1px solid hsl(var(--border) / 0.15)`,
                         minWidth: pct > 5 ? undefined : '24px',
                       }}
                     >
-                      <span className="relative z-10 font-display tracking-wide text-[11px] font-medium text-foreground/80">
+                      {/* Glass top highlight */}
+                      <div className="absolute inset-x-0 top-0 h-px bg-white/[0.08] pointer-events-none" />
+                      <span className="relative z-10 font-display tracking-wide text-[11px] font-medium text-foreground/70">
                         {pct >= 12 && `${entry.percentage}%`}
                       </span>
                     </div>
