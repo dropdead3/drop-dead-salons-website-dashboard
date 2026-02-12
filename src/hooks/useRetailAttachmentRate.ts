@@ -2,11 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export interface RetailAttachmentData {
-  /** Total distinct clients who had at least one service */
-  serviceClients: number;
-  /** Distinct clients who had both a service AND a product purchase */
-  retailClients: number;
-  /** retailClients / serviceClients × 100 */
+  /** Total distinct transactions containing at least one service */
+  serviceTransactions: number;
+  /** Distinct service transactions that also included a retail product */
+  attachedTransactions: number;
+  /** attachedTransactions / serviceTransactions × 100 */
   attachmentRate: number;
 }
 
@@ -20,21 +20,20 @@ export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRet
   return useQuery({
     queryKey: ['retail-attachment-rate', dateFrom, dateTo, locationId || 'all'],
     queryFn: async (): Promise<RetailAttachmentData> => {
-      // Build base filter
       let serviceQuery = supabase
         .from('phorest_transaction_items')
-        .select('phorest_client_id')
+        .select('transaction_id')
         .gte('transaction_date', dateFrom)
         .lte('transaction_date', dateTo)
-        .not('phorest_client_id', 'is', null)
+        .not('transaction_id', 'is', null)
         .in('item_type', ['Service', 'service', 'SERVICE']);
 
       let productQuery = supabase
         .from('phorest_transaction_items')
-        .select('phorest_client_id')
+        .select('transaction_id')
         .gte('transaction_date', dateFrom)
         .lte('transaction_date', dateTo)
-        .not('phorest_client_id', 'is', null)
+        .not('transaction_id', 'is', null)
         .in('item_type', ['Product', 'product', 'PRODUCT', 'Retail', 'retail', 'RETAIL']);
 
       if (locationId && locationId !== 'all') {
@@ -50,30 +49,30 @@ export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRet
       if (serviceResult.error) throw serviceResult.error;
       if (productResult.error) throw productResult.error;
 
-      // Get distinct service clients
-      const serviceClientSet = new Set<string>();
+      // Distinct service transactions
+      const serviceTxSet = new Set<string>();
       (serviceResult.data || []).forEach(row => {
-        if (row.phorest_client_id) serviceClientSet.add(row.phorest_client_id);
+        if (row.transaction_id) serviceTxSet.add(row.transaction_id);
       });
 
-      // Get distinct product clients
-      const productClientSet = new Set<string>();
+      // Distinct product transactions
+      const productTxSet = new Set<string>();
       (productResult.data || []).forEach(row => {
-        if (row.phorest_client_id) productClientSet.add(row.phorest_client_id);
+        if (row.transaction_id) productTxSet.add(row.transaction_id);
       });
 
-      // Attachment = service clients who also appear in product clients
-      const serviceClients = serviceClientSet.size;
-      let retailClients = 0;
-      serviceClientSet.forEach(clientId => {
-        if (productClientSet.has(clientId)) retailClients++;
+      // Attachment = service transactions that also appear in product transactions
+      const serviceTransactions = serviceTxSet.size;
+      let attachedTransactions = 0;
+      serviceTxSet.forEach(txId => {
+        if (productTxSet.has(txId)) attachedTransactions++;
       });
 
-      const attachmentRate = serviceClients > 0
-        ? Math.round((retailClients / serviceClients) * 100)
+      const attachmentRate = serviceTransactions > 0
+        ? Math.round((attachedTransactions / serviceTransactions) * 100)
         : 0;
 
-      return { serviceClients, retailClients, attachmentRate };
+      return { serviceTransactions, attachedTransactions, attachmentRate };
     },
     staleTime: 5 * 60 * 1000,
   });
