@@ -110,7 +110,34 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                       }}
                     />
                     <Bar dataKey="frequency" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
-                      <LabelList dataKey="frequency" position="insideRight" style={{ fill: 'hsl(var(--primary-foreground))', fontSize: 11, fontWeight: 500 }} />
+                      <LabelList
+                        dataKey="frequency"
+                        position="insideRight"
+                        content={({ x, y, width, height, value }: any) => {
+                          const labelX = (x || 0) + (width || 0) - 8;
+                          const labelY = (y || 0) + (height || 0) / 2;
+                          return (
+                            <g>
+                              <rect
+                                x={labelX - 24}
+                                y={labelY - 10}
+                                width={28}
+                                height={20}
+                                rx={6}
+                                fill="hsl(var(--background) / 0.85)"
+                              />
+                              <text
+                                x={labelX - 10}
+                                y={labelY + 4}
+                                textAnchor="middle"
+                                style={{ fontSize: 11, fontWeight: 500, fill: 'hsl(var(--foreground))' }}
+                              >
+                                {value}
+                              </text>
+                            </g>
+                          );
+                        }}
+                      />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
