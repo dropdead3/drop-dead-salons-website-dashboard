@@ -87,7 +87,7 @@ function StylistRow({ stylist, delay }: { stylist: CategoryStylistData; delay: n
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{stylist.staffName}</p>
           <p className="text-xs text-muted-foreground">
-            {stylist.count} appt{stylist.count !== 1 ? 's' : ''} · {stylist.sharePercent}% of category
+            {stylist.count} appointment{stylist.count !== 1 ? 's' : ''} · {stylist.sharePercent}% of category
           </p>
         </div>
         <span className="text-sm font-display tabular-nums">
@@ -138,7 +138,7 @@ function CategoryRow({ category, index }: { category: CategoryBreakdownData; ind
               className="h-1 flex-1 max-w-[120px]"
               indicatorStyle={{ backgroundColor: color }}
             />
-            <span className="text-xs text-muted-foreground">{category.count} appts</span>
+            <span className="text-xs text-muted-foreground">{category.count} appointments</span>
           </div>
         </div>
         <span className="text-base font-display tabular-nums">

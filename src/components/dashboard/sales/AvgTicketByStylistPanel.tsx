@@ -46,7 +46,7 @@ function ServiceMixPanel({ categories }: { categories: StylistCategoryBreakdown[
             >
               <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
               <span className="text-xs flex-1 truncate">{cat.category}</span>
-              <span className="text-xs tabular-nums text-muted-foreground">{cat.count} appts</span>
+              <span className="text-xs tabular-nums text-muted-foreground">{cat.count} appointment{cat.count !== 1 ? 's' : ''}</span>
               <span className="text-xs tabular-nums font-medium w-[50px] text-right">
                 <BlurredAmount>${Math.round(cat.revenue).toLocaleString()}</BlurredAmount>
               </span>
@@ -78,7 +78,7 @@ function StylistTicketRow({ stylist, delay, orgAvg }: { stylist: StylistTicketDa
         <div className="flex-1 min-w-0">
           <p className="text-sm font-medium truncate">{stylist.staffName}</p>
           <p className="text-xs text-muted-foreground">
-            {stylist.transactionCount} appt{stylist.transactionCount !== 1 ? 's' : ''}
+            {stylist.transactionCount} appointment{stylist.transactionCount !== 1 ? 's' : ''}
             {diff !== 0 && (
               <span className={cn('ml-1.5', diff > 0 ? 'text-chart-4' : 'text-destructive')}>
                 {diff > 0 ? '+' : ''}{diff}% vs avg

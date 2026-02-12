@@ -25,7 +25,7 @@ function formatValue(mode: BreakdownMode, entry: { revenue: number; count: numbe
     case 'dailyAvg':
       return `$${Math.round(entry.revenue / Math.max(dayCount, 1)).toLocaleString()}/day`;
     case 'count':
-      return `${entry.count} appt${entry.count !== 1 ? 's' : ''}`;
+      return `${entry.count} appointment${entry.count !== 1 ? 's' : ''}`;
   }
 }
 
