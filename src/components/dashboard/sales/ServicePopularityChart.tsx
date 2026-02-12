@@ -10,6 +10,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  LabelList,
 } from 'recharts';
 import { useServicePopularity } from '@/hooks/useSalesAnalytics';
 import { useState } from 'react';
@@ -108,7 +109,9 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                         borderRadius: '8px',
                       }}
                     />
-                    <Bar dataKey="frequency" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="frequency" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]}>
+                      <LabelList dataKey="frequency" position="insideRight" style={{ fill: 'hsl(var(--primary-foreground))', fontSize: 11, fontWeight: 500 }} />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               )}
