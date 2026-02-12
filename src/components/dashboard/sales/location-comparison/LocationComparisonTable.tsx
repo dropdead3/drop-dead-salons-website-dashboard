@@ -102,9 +102,6 @@ export function LocationComparisonTable({
 
   return (
     <div className="space-y-3">
-      {/* Revenue distribution bar */}
-      <LocationRevenueBar locations={locations} totalRevenue={totalRevenue} colors={colors} />
-
       {/* Search + controls for Tier 3 */}
       {showSearch && (
         <div className="flex items-center gap-2">
