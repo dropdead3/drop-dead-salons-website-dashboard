@@ -1,4 +1,4 @@
-import { ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Minus, TableProperties } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -80,7 +80,12 @@ export function ComparisonBreakdownTable({
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-display">DETAILED BREAKDOWN</CardTitle>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+            <TableProperties className="w-5 h-5 text-primary" />
+          </div>
+          <CardTitle className="font-display text-base tracking-wide">DETAILED BREAKDOWN</CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>

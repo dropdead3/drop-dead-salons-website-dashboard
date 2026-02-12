@@ -254,7 +254,12 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
           <PinnableCard elementKey="revenue_trend_chart" elementName="Revenue Trend" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <Card>
               <CardHeader>
-                <CardTitle className="font-display">Revenue Trend</CardTitle>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                    <DollarSign className="w-5 h-5 text-primary" />
+                  </div>
+                  <CardTitle className="font-display text-base tracking-wide">REVENUE TREND</CardTitle>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px] relative">
@@ -359,8 +364,15 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
           <PinnableCard elementKey="staff_leaderboard" elementName="Staff Performance" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <Card>
               <CardHeader>
-                <CardTitle className="font-display">Staff Performance</CardTitle>
-                <CardDescription>Revenue by team member</CardDescription>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="font-display text-base tracking-wide">STAFF PERFORMANCE</CardTitle>
+                    <CardDescription>Revenue by team member</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 {stylistLoading ? (

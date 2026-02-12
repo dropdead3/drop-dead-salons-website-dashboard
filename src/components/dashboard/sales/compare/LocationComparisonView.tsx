@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Loader2, MapPin } from 'lucide-react';
+import { Loader2, MapPin, PieChart as PieChartIcon } from 'lucide-react';
 import {
   PieChart,
   Pie,
@@ -98,7 +98,12 @@ export function LocationComparisonView({ locations, isLoading }: LocationCompari
       {/* Pie Chart */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-display">REVENUE SHARE</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <PieChartIcon className="w-5 h-5 text-primary" />
+            </div>
+            <CardTitle className="font-display text-base tracking-wide">REVENUE SHARE</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-8">
