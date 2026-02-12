@@ -97,6 +97,16 @@ export function useServicePopularity(dateFrom?: string, dateTo?: string, locatio
       const { data, error } = await query;
       if (error) throw error;
 
+      // Fetch service→category mapping from phorest_services
+      const { data: services } = await supabase
+        .from('phorest_services')
+        .select('name, category');
+      
+      const categoryMap: Record<string, string> = {};
+      services?.forEach(s => {
+        if (s.name && s.category) categoryMap[s.name] = s.category;
+      });
+
       // Aggregate by service name
       const byService: Record<string, ServicePopularityData> = {};
       data?.forEach(row => {
@@ -105,7 +115,7 @@ export function useServicePopularity(dateFrom?: string, dateTo?: string, locatio
         if (!byService[name]) {
           byService[name] = {
             name,
-            category: null, // appointments don't have category
+            category: categoryMap[name] || null,
             frequency: 0,
             totalRevenue: 0,
             avgPrice: 0,
