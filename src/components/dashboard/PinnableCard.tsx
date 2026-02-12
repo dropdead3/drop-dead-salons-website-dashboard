@@ -50,12 +50,11 @@ export function PinnableCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Icons absolutely positioned in the card header area */}
+      {/* Z and Pin icons overlaid on the card header icon position */}
       <div 
-        className="absolute top-5 left-3 z-10 flex flex-col items-center gap-1 transition-all duration-200 ease-in-out pointer-events-none"
+        className="absolute top-6 left-6 z-10 flex items-center gap-1 transition-all duration-200 ease-in-out"
         style={{
           opacity: hovered ? 1 : 0,
-          transform: hovered ? 'translateX(0)' : 'translateX(-12px)',
           pointerEvents: hovered ? 'auto' : 'none',
         }}
       >
@@ -77,19 +76,20 @@ export function PinnableCard({
   );
 }
 
-/** Injects padding-left into the card's header row (first child of the Card) on hover */
+/** Fades out the card's header icon on hover so the Z/Pin icons replace it */
 function PinnableCardContent({ hovered, children }: { hovered: boolean; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const wrapper = ref.current;
     if (!wrapper) return;
-    // Target: wrapper > Card > first child (header row)
+    // Target: wrapper > Card > header row > first element (the icon container)
     const card = wrapper.firstElementChild;
     const headerRow = card?.firstElementChild as HTMLElement | null;
-    if (headerRow) {
-      headerRow.style.transition = 'padding-left 200ms ease-in-out';
-      headerRow.style.paddingLeft = hovered ? '2.5rem' : '';
+    const headerIcon = headerRow?.firstElementChild as HTMLElement | null;
+    if (headerIcon) {
+      headerIcon.style.transition = 'opacity 200ms ease-in-out';
+      headerIcon.style.opacity = hovered ? '0' : '1';
     }
   }, [hovered]);
 
