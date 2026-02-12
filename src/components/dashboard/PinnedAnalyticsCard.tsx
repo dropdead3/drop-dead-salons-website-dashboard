@@ -15,6 +15,7 @@ import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
+import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useLocations } from '@/hooks/useLocations';
 import type { FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
@@ -145,6 +146,11 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     filters.dateTo
   );
   const { workload, isLoading: isLoadingWorkload } = useStaffUtilization(undefined, '30days');
+  const { data: attachmentData, isLoading: isLoadingAttachment } = useRetailAttachmentRate({
+    dateFrom: filters.dateFrom,
+    dateTo: filters.dateTo,
+    locationId: locationFilter,
+  });
   
   // Resolve location name for Zura AI context
   const { data: locations } = useLocations();
@@ -235,6 +241,8 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
               serviceRevenue={salesData?.serviceRevenue || 0}
               productRevenue={salesData?.productRevenue || 0}
               filterContext={filterContext}
+              retailAttachmentRate={attachmentData?.attachmentRate}
+              retailAttachmentLoading={isLoadingAttachment}
             />
           </PinnableCard>
         </VisibilityGate>

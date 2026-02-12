@@ -11,6 +11,8 @@ interface RevenueDonutChartProps {
   productRevenue: number;
   size?: number;
   filterContext?: FilterContext;
+  retailAttachmentRate?: number;
+  retailAttachmentLoading?: boolean;
 }
 
 export function RevenueDonutChart({ 
@@ -18,6 +20,8 @@ export function RevenueDonutChart({
   productRevenue,
   size = 80,
   filterContext,
+  retailAttachmentRate,
+  retailAttachmentLoading,
 }: RevenueDonutChartProps) {
   const { hideNumbers } = useHideNumbers();
   
@@ -110,12 +114,19 @@ export function RevenueDonutChart({
               <span className="text-muted-foreground">Products</span>
               <span className="font-medium">{100 - servicePercent}%</span>
             </div>
-            <div className="pt-2 mt-2 border-t border-border/50">
+            <div className="pt-2 mt-2 border-t border-border/50 space-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground">Retail %</span>
                 <MetricInfoTooltip description="Product Revenue ÷ Total Revenue × 100. Shows retail sales as a percentage of all revenue." />
                 <span className="font-medium text-foreground">
                   {100 - servicePercent}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-muted-foreground">Attach Rate</span>
+                <MetricInfoTooltip description="Percentage of service clients who also purchased a retail product in this period. A key indicator of cross-selling effectiveness." />
+                <span className="font-medium text-foreground">
+                  {retailAttachmentLoading ? '…' : retailAttachmentRate !== undefined ? `${retailAttachmentRate}%` : '—'}
                 </span>
               </div>
             </div>

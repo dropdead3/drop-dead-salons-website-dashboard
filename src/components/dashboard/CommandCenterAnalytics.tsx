@@ -19,6 +19,7 @@ import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useActiveLocations } from '@/hooks/useLocations';
+import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 import { Link } from 'react-router-dom';
 import { Settings2, MapPin, Calendar } from 'lucide-react';
 import { format, startOfMonth, subDays, startOfWeek } from 'date-fns';
@@ -161,6 +162,11 @@ export function CommandCenterAnalytics() {
     dateFilters.dateTo
   );
   const { workload, isLoading: isLoadingWorkload } = useStaffUtilization(undefined, '30days');
+  const { data: attachmentData, isLoading: isLoadingAttachment } = useRetailAttachmentRate({
+    dateFrom: dateFilters.dateFrom,
+    dateTo: dateFilters.dateTo,
+    locationId: locationFilter,
+  });
   
   // Show nothing if loading
   if (isLoading) return null;
@@ -229,6 +235,8 @@ export function CommandCenterAnalytics() {
               <RevenueDonutChart 
                 serviceRevenue={salesData?.serviceRevenue || 0}
                 productRevenue={salesData?.productRevenue || 0}
+                retailAttachmentRate={attachmentData?.attachmentRate}
+                retailAttachmentLoading={isLoadingAttachment}
               />
             </PinnableCard>
           </VisibilityGate>
