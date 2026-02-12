@@ -51,6 +51,8 @@ import { RevPerHourByStylistPanel } from './sales/RevPerHourByStylistPanel';
 import { useNavigate } from 'react-router-dom';
 import { GoalLocationsDrilldown } from './sales/GoalLocationsDrilldown';
 import { RevenueByCategoryPanel } from './sales/RevenueByCategoryPanel';
+import { AvgTicketByStylistPanel } from './sales/AvgTicketByStylistPanel';
+import { ClientTypeSplitPanel } from './sales/ClientTypeSplitPanel';
 
 // Sub-components
 import { SalesTrendIndicator } from './sales/SalesTrendIndicator';
@@ -829,9 +831,23 @@ export function AggregateSalesCard({
             dateTo={dateFilters.dateTo}
             locationId={filterContext?.locationId}
           />
+          {/* Client Type Split → Rebooking (Level 2) */}
+          <ClientTypeSplitPanel
+            isOpen={activeDrilldown === 'transactions'}
+            dateFrom={dateFilters.dateFrom}
+            dateTo={dateFilters.dateTo}
+            locationId={filterContext?.locationId}
+          />
 
           {/* Ticket Distribution Drill-Down */}
           <TicketDistributionPanel
+            isOpen={activeDrilldown === 'avgTicket'}
+            dateFrom={dateFilters.dateFrom}
+            dateTo={dateFilters.dateTo}
+            locationId={filterContext?.locationId}
+          />
+          {/* Avg Ticket by Stylist → Service Mix (Level 2) */}
+          <AvgTicketByStylistPanel
             isOpen={activeDrilldown === 'avgTicket'}
             dateFrom={dateFilters.dateFrom}
             dateTo={dateFilters.dateTo}
