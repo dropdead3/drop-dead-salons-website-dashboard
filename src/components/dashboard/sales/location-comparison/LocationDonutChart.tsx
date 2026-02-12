@@ -89,9 +89,9 @@ export function LocationDonutChart({ locations, colors, totalRevenue }: Location
             cy="50%"
             innerRadius={60}
             outerRadius={100}
-            paddingAngle={2}
-            stroke="hsl(var(--background))"
-            strokeWidth={2}
+            paddingAngle={0}
+            stroke="hsl(var(--border) / 0.4)"
+            strokeWidth={1}
             label={false}
           >
             {data.map((_, i) => {
