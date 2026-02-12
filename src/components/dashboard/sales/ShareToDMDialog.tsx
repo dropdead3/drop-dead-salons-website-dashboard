@@ -50,7 +50,8 @@ export function ShareToDMDialog({ open, onOpenChange, planTitle, planContent }: 
     const prefix = customMessage
       ? `${customMessage}\n\n---\n\n`
       : `Hey team — Zura flagged that we're behind pace on our revenue goal. Here's the recovery plan I'd like to discuss:\n\n---\n\n`;
-    return `${prefix}**📋 ${planTitle}**\n\n${planContent}`;
+    const cleanContent = planContent.replace(/---ACTIONS---[\s\S]*?(---END---|$)/g, '').trim();
+    return `${prefix}**📋 ${planTitle}**\n\n${cleanContent}`;
   };
 
   const handleSend = async () => {

@@ -106,7 +106,7 @@ export function GuidancePanel({ title, type, guidance, isLoading, onBack, sugges
                     },
                   }}
                 >
-                  {guidance || ''}
+                  {(guidance || '').replace(/---ACTIONS---[\s\S]*?(---END---|$)/g, '').trim()}
                 </ReactMarkdown>
               </div>
               {suggestedTasks && suggestedTasks.length > 0 && onAddTask && (
