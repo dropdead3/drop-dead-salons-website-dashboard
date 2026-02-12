@@ -50,9 +50,11 @@ export function ProductCategoryChart({ dateFrom, dateTo, locationId, filterConte
     <Card>
       <CardHeader>
         <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="w-5 h-5 text-chart-2 shrink-0" />
-            <CardTitle className="font-display">Product Categories</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <ShoppingBag className="w-5 h-5 text-primary" />
+            </div>
+            <CardTitle className="font-display text-base tracking-wide">PRODUCT CATEGORIES</CardTitle>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {filterContext && (
