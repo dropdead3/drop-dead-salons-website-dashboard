@@ -1,39 +1,64 @@
 
 
-# Fix: Strip Action Markers from Display + Ensure Extraction Works
+# Show Selectable AI Tasks in Recovery Plan Dialog
 
-## Two Issues
+## What Changes
 
-1. **Visible markers in guidance panel**: The `---ACTIONS---` block (including all action items and `---END---`) is displayed as raw text in the recovery plan dialog. Users see the machine-readable block, which looks ugly and confusing.
+The recovery plan dialog currently shows a wall of text followed by action buttons. We'll add a selectable task list (matching the AI Suggested Tasks pattern you see in the guidance panel) between the plan text and the Save/Remind/Implement buttons.
 
-2. **Extraction still may fail**: The `---END---` appears inline at the end of the last sentence (no newline before it), which could still cause issues.
+These extracted tasks become the curated list that flows into "Let's Implement" -- so you see exactly what actions are being proposed, pick which ones matter, and then route them.
 
-## Changes
+## How It Works
 
-### File 1: `src/components/dashboard/sales/SalesGoalProgress.tsx` (line ~264)
+1. When the recovery plan loads, the `---ACTIONS---` block is parsed into structured task items
+2. Tasks appear as a selectable checklist (with priority badges and due dates) below the plan text
+3. You select/deselect which tasks to include
+4. Clicking "Let's Implement" passes only the selected tasks into the implementation dialog -- pre-populated and ready to route
 
-Strip the `---ACTIONS---` block from the displayed content before passing to ReactMarkdown:
+## Technical Changes
 
-```tsx
-// Before:
-<ReactMarkdown>{guidance}</ReactMarkdown>
+### File 1: `src/components/dashboard/sales/SalesGoalProgress.tsx`
 
-// After:
-<ReactMarkdown>{guidance?.replace(/---ACTIONS---[\s\S]*?(---END---|$)/g, '').trim()}</ReactMarkdown>
+- Add state for parsed tasks and selected task indices
+- After `guidance` is loaded, parse the `---ACTIONS---` block into a task array (title, priority, dueDays)
+- Render a checklist section between the markdown and `RecoveryPlanActions` using the same visual pattern as `SuggestedTasksSection` (checkbox, title, priority badge, due date)
+- Add select all / deselect all toggle
+- Pass the selected tasks to `RecoveryPlanActions` as a new prop
+
+### File 2: `src/components/dashboard/sales/RecoveryPlanActions.tsx`
+
+- Accept an optional `selectedTasks` prop (array of action steps)
+- Pass these through to `ImplementPlanDialog` as a new `preSelectedSteps` prop
+- When `preSelectedSteps` are provided, the dialog uses them directly instead of re-parsing from markdown
+
+### File 3: `src/components/dashboard/sales/ImplementPlanDialog.tsx`
+
+- Accept optional `preSelectedSteps` prop
+- When provided, skip the `extractActions` parsing entirely and use the pre-selected steps directly
+- All existing routing logic (create tasks, share DM, clipboard) works unchanged
+
+### Parser utility (inline in SalesGoalProgress)
+
+Extracts from the `---ACTIONS---` block:
+- Title and description from colon-separated format
+- Assigns priority based on position (first = high, rest = medium)
+- Assigns dueDays based on position (1-2 = 2 days, 3-4 = 5 days, 5+ = 7 days)
+
+## What You'll See
+
+The recovery plan dialog will now look like:
+
+```text
+[Plan markdown text - no ---ACTIONS--- block visible]
+
+-----
+AI SUGGESTED TASKS                    Select all
+[x] Review the Schedule...           HIGH    Due in 2 days
+[x] Brief the team on upsells...     MEDIUM  Due in 5 days
+[ ] Run targeted SMS campaign...     MEDIUM  Due in 7 days
+-----
+
+[Save Plan]  [Remind Me]  [Let's Implement]
 ```
 
-This removes everything from `---ACTIONS---` to `---END---` (or end of string) from the visible display, while the full raw content is still passed to `ImplementPlanDialog` via `RecoveryPlanActions` for extraction.
-
-### File 2: `src/components/dashboard/sales/ImplementPlanDialog.tsx` (lines ~75-84)
-
-Make the extraction more resilient to inline `---END---`:
-
-- Before splitting into lines, also strip `---END---` that appears mid-sentence (e.g., `...cutting service. ---END---`)
-- After the colon-split regex, add a simpler fallback: if a line has no colon, use the whole line as the title with empty description
-- This ensures even malformed action blocks produce visible steps
-
-### File 3: `src/components/dashboard/sales/ShareToDMDialog.tsx` (line ~53)
-
-Also strip the `---ACTIONS---` block from DM-shared content so team members don't see machine-readable markers.
-
-No edge function changes. No database changes. Three small file edits.
+Unchecking a task excludes it from implementation. "Let's Implement" opens with only your curated selection.
