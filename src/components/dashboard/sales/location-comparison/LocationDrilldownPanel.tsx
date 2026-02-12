@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useServiceProductDrilldown } from '@/hooks/useServiceProductDrilldown';
 import { useCapacityReport } from '@/hooks/useCapacityReport';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
-import { TrendingUp, TrendingDown, Clock, Users, Minus } from 'lucide-react';
+import { TrendingUp, TrendingDown, Clock, Users, Minus, Zap } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { cn } from '@/lib/utils';
@@ -18,6 +20,26 @@ interface LocationDrilldownPanelProps {
   isOpen: boolean;
 }
 
+function useLocationTeamSize(locationId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['location-team-size', locationId],
+    queryFn: async () => {
+      // Service providers: commission + independent stylists at this location
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .select('user_id')
+        .eq('is_active', true)
+        .in('stylist_type', ['commission', 'independent'])
+        .contains('location_ids', [locationId]);
+
+      if (error) throw error;
+      return data?.length || 0;
+    },
+    enabled,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
 export function LocationDrilldownPanel({
   locationId,
   dateFrom,
@@ -26,7 +48,6 @@ export function LocationDrilldownPanel({
   productRevenue,
   isOpen,
 }: LocationDrilldownPanelProps) {
-  // Lazy-load data only when panel is open
   const { data: drilldown, isLoading: drilldownLoading } = useServiceProductDrilldown({
     dateFrom,
     dateTo,
@@ -45,6 +66,8 @@ export function LocationDrilldownPanel({
     locationId,
   );
 
+  const { data: teamSize, isLoading: teamLoading } = useLocationTeamSize(locationId, isOpen);
+
   const totalSplit = serviceRevenue + productRevenue;
   const servicePct = totalSplit > 0 ? (serviceRevenue / totalSplit) * 100 : 0;
   const productPct = totalSplit > 0 ? (productRevenue / totalSplit) * 100 : 0;
@@ -57,6 +80,11 @@ export function LocationDrilldownPanel({
   }, [drilldown]);
 
   const revenueChange = comparison?.percentChange?.totalRevenue;
+
+  const revenuePerProvider = useMemo(() => {
+    if (!teamSize || teamSize === 0) return 0;
+    return Math.round((serviceRevenue + productRevenue) / teamSize);
+  }, [teamSize, serviceRevenue, productRevenue]);
 
   return (
     <AnimatePresence mode="wait">
@@ -133,8 +161,36 @@ export function LocationDrilldownPanel({
               )}
             </div>
 
-            {/* Peak Hour + Period Comparison */}
-            <div className="grid grid-cols-2 gap-3">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {/* Team Size */}
+              <div className="p-3 rounded-lg border border-border/30 bg-muted/20">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Users className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Team Size</span>
+                </div>
+                {teamLoading ? (
+                  <Skeleton className="h-6 w-10 rounded" />
+                ) : (
+                  <p className="text-lg font-display">{teamSize ?? 0}</p>
+                )}
+              </div>
+
+              {/* Rev / Provider */}
+              <div className="p-3 rounded-lg border border-border/30 bg-muted/20">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Zap className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">Rev / Provider</span>
+                </div>
+                {teamLoading ? (
+                  <Skeleton className="h-6 w-16 rounded" />
+                ) : (
+                  <p className="text-lg font-display tabular-nums">
+                    <BlurredAmount>${revenuePerProvider.toLocaleString()}</BlurredAmount>
+                  </p>
+                )}
+              </div>
+
               {/* Peak Hour */}
               <div className="p-3 rounded-lg border border-border/30 bg-muted/20">
                 <div className="flex items-center gap-1.5 mb-1">
