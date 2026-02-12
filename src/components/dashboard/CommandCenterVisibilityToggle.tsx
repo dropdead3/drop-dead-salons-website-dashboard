@@ -63,10 +63,10 @@ export function CommandCenterVisibilityToggle({
           variant="ghost" 
           size="icon" 
           className={cn(
-            "h-8 w-8",
+            "h-7 w-7 rounded-full",
             isVisibleToLeadership 
               ? "text-primary" 
-              : "text-muted-foreground hover:text-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted"
           )}
         >
           <Pin className={cn(
