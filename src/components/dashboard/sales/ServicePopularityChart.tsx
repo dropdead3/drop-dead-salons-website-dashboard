@@ -143,7 +143,7 @@ function StylistBreakdownPanel({ serviceName, dateFrom, dateTo, locationId }: {
       transition={{ duration: 0.3, ease: 'easeInOut' }}
       className="overflow-hidden"
     >
-      <div className="pt-3 pb-1 px-1 space-y-1.5">
+      <div className="pt-2 pb-1 pl-6 space-y-0">
         {isLoading ? (
           <div className="flex items-center justify-center py-4">
             <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
@@ -152,17 +152,20 @@ function StylistBreakdownPanel({ serviceName, dateFrom, dateTo, locationId }: {
           stylists.map((stylist, idx) => {
             const pct = totalCount > 0 ? ((stylist.count / totalCount) * 100).toFixed(0) : '0';
             return (
-              <div key={idx} className="flex items-center justify-between p-2 bg-muted/20 rounded-lg">
+              <div
+                key={idx}
+                className="flex items-center justify-between py-2.5 px-3 border-l-2 border-primary/20"
+              >
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-muted/50 flex items-center justify-center rounded-full">
-                    <User className="w-3 h-3 text-muted-foreground" />
+                  <div className="w-5 h-5 bg-primary/10 flex items-center justify-center rounded-full">
+                    <User className="w-3 h-3 text-primary/50" />
                   </div>
-                  <span className="text-sm">{stylist.name}</span>
+                  <span className="text-sm text-muted-foreground">{stylist.name}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
-                  <span className="text-muted-foreground">{stylist.count}× · {pct}%</span>
+                  <span className="text-muted-foreground/70 text-xs">{stylist.count}× · {pct}%</span>
                   <Badge variant="secondary" className="text-xs">${stylist.revenue.toLocaleString()}</Badge>
-                  <span className="text-xs text-muted-foreground">avg ${stylist.avgPrice.toFixed(0)}</span>
+                  <span className="text-xs text-muted-foreground/60">avg ${stylist.avgPrice.toFixed(0)}</span>
                 </div>
               </div>
             );
