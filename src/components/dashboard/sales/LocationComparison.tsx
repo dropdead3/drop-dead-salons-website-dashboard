@@ -142,7 +142,7 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
                 dateRange={filterContext.dateRange} 
               />
             )}
-            <Badge variant="outline" className="font-normal">
+            <Badge variant="secondary">
               ${totalRevenue.toLocaleString()} total
             </Badge>
           </div>
