@@ -12,6 +12,7 @@ import {
   CalendarClock,
   MessageSquarePlus,
   Shield,
+  Rocket,
 } from 'lucide-react';
 
 export interface HubLinkProps {
@@ -57,6 +58,13 @@ export const hubLinks: HubLinkProps[] = [
     label: 'Website Editor', 
     colorClass: 'bg-primary/5 text-primary hover:bg-primary/10',
     permission: 'manage_homepage_stylists',
+  },
+  { 
+    href: '/dashboard/campaigns', 
+    icon: Rocket, 
+    label: 'Campaigns', 
+    colorClass: 'bg-primary/5 text-primary hover:bg-primary/10',
+    permission: 'view_team_overview',
   },
   { 
     href: '/dashboard/admin/feedback', 
