@@ -12,13 +12,16 @@ import {
   Tooltip,
   ResponsiveContainer,
   LabelList,
+  Cell,
 } from 'recharts';
 import { useServicePopularity } from '@/hooks/useSalesAnalytics';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
+import { getCategoryColor, getGradientFromMarker, isGradientMarker } from '@/utils/categoryColors';
 
 let barIdCounter = 0;
 
@@ -39,7 +42,6 @@ const AnimatedBar = (props: any) => {
 
   if (h <= 0) return null;
 
-  // Rounded-right shape used as clip mask
   const clipPath = w > 0
     ? `M${x},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y + h - r} Q${x + w},${y + h} ${x + w - r},${y + h} H${x} Z`
     : `M${x},${y} H${x} V${y + h} H${x} Z`;
@@ -51,7 +53,6 @@ const AnimatedBar = (props: any) => {
           <path d={clipPath} />
         </clipPath>
       </defs>
-      {/* Animated rect whose width grows — clipped to the rounded shape */}
       <rect
         x={x}
         y={y}
@@ -87,7 +88,6 @@ function useServiceStylistBreakdown(serviceName: string | null, dateFrom?: strin
       const { data, error } = await query;
       if (error) throw error;
 
-      // Aggregate by staff
       const byStaff: Record<string, { count: number; revenue: number }> = {};
       data?.forEach(row => {
         const id = row.phorest_staff_id;
@@ -97,7 +97,6 @@ function useServiceStylistBreakdown(serviceName: string | null, dateFrom?: strin
         byStaff[id].revenue += Number(row.total_price) || 0;
       });
 
-      // Get staff names from mapping
       const staffIds = Object.keys(byStaff);
       if (staffIds.length === 0) return [];
 
@@ -128,7 +127,6 @@ function useServiceStylistBreakdown(serviceName: string | null, dateFrom?: strin
 
 const MAX_VISIBLE_STYLISTS = 5;
 
-// Expandable stylist detail panel
 function StylistBreakdownPanel({ serviceName, dateFrom, dateTo, locationId }: {
   serviceName: string;
   dateFrom: string;
@@ -216,10 +214,31 @@ interface ServicePopularityChartProps {
   filterContext?: FilterContext;
 }
 
+/**
+ * Resolve a category color to a solid hex for SVG gradients.
+ * If the DB stores a gradient marker, extract the first stop color.
+ */
+function resolveCategoryHex(colorMap: Record<string, { bg: string; text: string; abbr: string }>, category: string | null): string {
+  if (!category) return '#6b7280';
+  const info = getCategoryColor(category, colorMap);
+  if (isGradientMarker(info.bg)) {
+    const grad = getGradientFromMarker(info.bg);
+    // Pull a representative color from the gradient name palette
+    if (grad) {
+      // Extract the first hex from the CSS gradient background
+      const match = grad.background.match(/#[0-9a-fA-F]{6}/);
+      return match ? match[0] : '#6b7280';
+    }
+    return '#6b7280';
+  }
+  return info.bg;
+}
+
 export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterContext }: ServicePopularityChartProps) {
   const { data, isLoading } = useServicePopularity(dateFrom, dateTo, locationId);
   const [sortBy, setSortBy] = useState<'frequency' | 'revenue'>('revenue');
   const [expandedService, setExpandedService] = useState<string | null>(null);
+  const { colorMap } = useServiceCategoryColorsMap();
 
   const sortedData = [...(data || [])].sort((a, b) => 
     sortBy === 'frequency' ? b.frequency - a.frequency : b.totalRevenue - a.totalRevenue
@@ -228,9 +247,22 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
   const totalServices = data?.reduce((sum, s) => sum + s.frequency, 0) || 0;
   const totalRevenue = data?.reduce((sum, s) => sum + s.totalRevenue, 0) || 0;
 
-  // Build avgPrice lookup from data
   const avgPriceMap: Record<string, number> = {};
   data?.forEach(s => { avgPriceMap[s.name] = s.avgPrice; });
+
+  // Resolve per-service colors based on their category
+  const serviceColors = useMemo(() => {
+    return sortedData.map(svc => resolveCategoryHex(colorMap, svc.category));
+  }, [sortedData, colorMap]);
+
+  // Generate unique gradient defs for each color
+  const gradientDefs = useMemo(() => {
+    const unique = [...new Set(serviceColors)];
+    return unique.map(hex => ({
+      id: `glass-${hex.replace('#', '')}`,
+      hex,
+    }));
+  }, [serviceColors]);
 
   if (isLoading) {
     return (
@@ -241,6 +273,116 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
       </Card>
     );
   }
+
+  const renderBarChart = (dataKey: string, isRevenue: boolean) => {
+    const total = isRevenue ? totalRevenue : totalServices;
+    return (
+      <div className="h-[400px]">
+        {sortedData.length === 0 ? (
+          <div className="h-full flex items-center justify-center text-muted-foreground">
+            No service data available
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={sortedData} layout="vertical" barSize={28}>
+              <defs>
+                {gradientDefs.map(({ id, hex }) => (
+                  <linearGradient key={id} id={id} x1="1" y1="0" x2="0" y2="0">
+                    <stop offset="0%" stopColor={hex} stopOpacity={0.75} />
+                    <stop offset="40%" stopColor={hex} stopOpacity={0.55} />
+                    <stop offset="100%" stopColor={hex} stopOpacity={0.35} />
+                  </linearGradient>
+                ))}
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
+              <XAxis type="number" tickFormatter={isRevenue ? (v) => `$${v}` : undefined} />
+              <YAxis 
+                type="category" 
+                dataKey="name" 
+                width={200}
+                tick={{ fontSize: 13 }}
+                tickMargin={12}
+              />
+              <Tooltip
+                cursor={{ fill: 'hsl(var(--muted) / 0.15)' }}
+                formatter={(value: number, _name: string, props: any) => {
+                  if (isRevenue) {
+                    const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                    const svcName = props.payload?.name;
+                    const avg = svcName ? avgPriceMap[svcName] : 0;
+                    return [`$${value.toLocaleString()} · ${pct}% · avg $${(avg || 0).toFixed(0)}`, svcName || 'Revenue'];
+                  }
+                  const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+                  return [`${value} bookings · ${pct}%`, props.payload?.name || 'Service'];
+                }}
+                contentStyle={{
+                  backgroundColor: 'hsl(var(--background))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '8px',
+                }}
+              />
+              <Bar
+                dataKey={dataKey}
+                radius={[0, 4, 4, 0]}
+                shape={<AnimatedBar />}
+                isAnimationActive={false}
+              >
+                {sortedData.map((_, i) => {
+                  const hex = serviceColors[i];
+                  const gradId = `glass-${hex.replace('#', '')}`;
+                  return (
+                    <Cell
+                      key={i}
+                      fill={`url(#${gradId})`}
+                      stroke={`${hex}50`}
+                      strokeWidth={1}
+                    />
+                  );
+                })}
+                <LabelList
+                  dataKey={dataKey}
+                  position="insideRight"
+                  content={({ x, y, width, height, value, index }: any) => {
+                    const barW = width || 0;
+                    const barH = height || 0;
+                    const padY = 3;
+                    const padX = 4;
+                    const badgeH = barH - padY * 2;
+                    const label = isRevenue ? `$${Number(value).toLocaleString()}` : `${value}`;
+                    const badgeW = Math.max(label.length * (isRevenue ? 6.5 : 7) + (isRevenue ? 14 : 12), isRevenue ? 50 : 36);
+                    if (badgeW + padX * 2 > barW) return null;
+                    const bx = (x || 0) + barW - badgeW - padX;
+                    const by = (y || 0) + padY;
+                    const delay = (index || 0) * 60 + 650;
+                    return (
+                      <g opacity={0} style={{ animation: `svgFadeIn 350ms ease-out ${delay}ms forwards` }}>
+                        <rect
+                          x={bx}
+                          y={by}
+                          width={badgeW}
+                          height={badgeH}
+                          rx={3}
+                          fill="hsl(var(--background) / 0.8)"
+                        />
+                        <text
+                          x={bx + badgeW / 2}
+                          y={by + badgeH / 2 + 4}
+                          textAnchor="middle"
+                          style={{ fontSize: isRevenue ? 10 : 11, fontWeight: 500, fill: 'hsl(var(--foreground))' }}
+                        >
+                          {label}
+                        </text>
+                      </g>
+                    );
+                  }}
+                />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+    );
+  };
 
   return (
     <Card>
@@ -279,171 +421,11 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
           </TabsList>
 
           <TabsContent value="frequency" className="mt-0">
-            <div className="h-[400px]">
-              {sortedData.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-muted-foreground">
-                  No service data available
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={sortedData} layout="vertical" barSize={28}>
-                    <defs>
-                      <linearGradient id="glassFrequency" x1="1" y1="0" x2="0" y2="0">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
-                        <stop offset="40%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
-                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
-                    <XAxis type="number" />
-                    <YAxis 
-                      type="category" 
-                      dataKey="name" 
-                      width={200}
-                      tick={{ fontSize: 13 }}
-                      tickMargin={12}
-                    />
-                    <Tooltip
-                      cursor={{ fill: 'hsl(var(--muted) / 0.15)' }}
-                      formatter={(value: number, name: string, props: any) => {
-                        const pct = totalServices > 0 ? ((value / totalServices) * 100).toFixed(1) : '0';
-                        return [`${value} bookings · ${pct}%`, props.payload?.name || 'Service'];
-                      }}
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--background))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                      }}
-                    />
-                    <Bar dataKey="frequency" fill="url(#glassFrequency)" radius={[0, 4, 4, 0]} stroke="hsl(var(--primary) / 0.3)" strokeWidth={1} shape={<AnimatedBar />} isAnimationActive={false}>
-                      <LabelList
-                        dataKey="frequency"
-                        position="insideRight"
-                        content={({ x, y, width, height, value, index }: any) => {
-                          const barW = width || 0;
-                          const barH = height || 0;
-                          const padY = 3;
-                          const padX = 4;
-                          const badgeH = barH - padY * 2;
-                          const label = `${value}`;
-                          const badgeW = Math.max(label.length * 7 + 12, 36);
-                          // Hide badge if it doesn't fit inside the bar
-                          if (badgeW + padX * 2 > barW) return null;
-                          const bx = (x || 0) + barW - badgeW - padX;
-                          const by = (y || 0) + padY;
-                          const delay = (index || 0) * 60 + 650;
-                          return (
-                            <g opacity={0} style={{ animation: `svgFadeIn 350ms ease-out ${delay}ms forwards` }}>
-                              <rect
-                                x={bx}
-                                y={by}
-                                width={badgeW}
-                                height={badgeH}
-                                rx={3}
-                                fill="hsl(var(--background) / 0.8)"
-                              />
-                              <text
-                                x={bx + badgeW / 2}
-                                y={by + badgeH / 2 + 4}
-                                textAnchor="middle"
-                                style={{ fontSize: 11, fontWeight: 500, fill: 'hsl(var(--foreground))' }}
-                              >
-                                {label}
-                              </text>
-                            </g>
-                          );
-                        }}
-                      />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
+            {renderBarChart('frequency', false)}
           </TabsContent>
 
           <TabsContent value="revenue" className="mt-0">
-            <div className="h-[400px]">
-              {sortedData.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-muted-foreground">
-                  No service data available
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={sortedData} layout="vertical" barSize={28}>
-                    <defs>
-                      <linearGradient id="glassRevenue" x1="1" y1="0" x2="0" y2="0">
-                        <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.7} />
-                        <stop offset="40%" stopColor="hsl(var(--chart-2))" stopOpacity={0.5} />
-                        <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.35} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
-                    <XAxis type="number" tickFormatter={(v) => `$${v}`} />
-                    <YAxis 
-                      type="category" 
-                      dataKey="name" 
-                      width={200}
-                      tick={{ fontSize: 13 }}
-                      tickMargin={12}
-                    />
-                    <Tooltip
-                      cursor={{ fill: 'hsl(var(--muted) / 0.15)' }}
-                      formatter={(value: number, name: string, props: any) => {
-                        const pct = totalRevenue > 0 ? ((value / totalRevenue) * 100).toFixed(1) : '0';
-                        const svcName = props.payload?.name;
-                        const avg = svcName ? avgPriceMap[svcName] : 0;
-                        return [`$${value.toLocaleString()} · ${pct}% · avg $${(avg || 0).toFixed(0)}`, svcName || 'Revenue'];
-                      }}
-                      contentStyle={{
-                        backgroundColor: 'hsl(var(--background))',
-                        border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px',
-                      }}
-                    />
-                    <Bar dataKey="totalRevenue" fill="url(#glassRevenue)" radius={[0, 4, 4, 0]} stroke="hsl(var(--chart-2) / 0.3)" strokeWidth={1} shape={<AnimatedBar />} isAnimationActive={false}>
-                      <LabelList
-                        dataKey="totalRevenue"
-                        position="insideRight"
-                        content={({ x, y, width, height, value, index }: any) => {
-                          const barW = width || 0;
-                          const barH = height || 0;
-                          const padY = 3;
-                          const padX = 4;
-                          const badgeH = barH - padY * 2;
-                          const label = `$${Number(value).toLocaleString()}`;
-                          const badgeW = Math.max(label.length * 6.5 + 14, 50);
-                          // Hide badge if it doesn't fit inside the bar
-                          if (badgeW + padX * 2 > barW) return null;
-                          const bx = (x || 0) + barW - badgeW - padX;
-                          const by = (y || 0) + padY;
-                          const delay = (index || 0) * 60 + 650;
-                          return (
-                            <g opacity={0} style={{ animation: `svgFadeIn 350ms ease-out ${delay}ms forwards` }}>
-                              <rect
-                                x={bx}
-                                y={by}
-                                width={badgeW}
-                                height={badgeH}
-                                rx={3}
-                                fill="hsl(var(--background) / 0.8)"
-                              />
-                              <text
-                                x={bx + badgeW / 2}
-                                y={by + badgeH / 2 + 4}
-                                textAnchor="middle"
-                                style={{ fontSize: 10, fontWeight: 500, fill: 'hsl(var(--foreground))' }}
-                              >
-                                {label}
-                              </text>
-                            </g>
-                          );
-                        }}
-                      />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
+            {renderBarChart('totalRevenue', true)}
           </TabsContent>
         </Tabs>
 
@@ -454,14 +436,21 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
               <span className="w-1.5 h-1.5 rounded-full bg-oat" />
               STYLIST BREAKDOWN
             </p>
-            {sortedData.slice(0, 5).map((svc) => (
+            {sortedData.slice(0, 5).map((svc, i) => (
               <div key={svc.name}>
                 <button
                   onClick={() => setExpandedService(expandedService === svc.name ? null : svc.name)}
                   className="w-full flex items-center justify-between p-2.5 bg-muted/20 hover:bg-muted/30 rounded-lg transition-colors"
                 >
                   <div className="flex items-center gap-2">
+                    <div
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: serviceColors[i] || '#6b7280' }}
+                    />
                     <span className="text-sm font-medium">{svc.name}</span>
+                    {svc.category && (
+                      <span className="text-[10px] text-muted-foreground/60 uppercase tracking-wider">{svc.category}</span>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground">{svc.frequency}× · ${svc.totalRevenue.toLocaleString()} · avg ${svc.avgPrice.toFixed(0)}</span>
