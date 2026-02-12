@@ -50,6 +50,7 @@ import { TicketDistributionPanel } from './sales/TicketDistributionPanel';
 import { RevPerHourByStylistPanel } from './sales/RevPerHourByStylistPanel';
 import { useNavigate } from 'react-router-dom';
 import { GoalLocationsDrilldown } from './sales/GoalLocationsDrilldown';
+import { RevenueByCategoryPanel } from './sales/RevenueByCategoryPanel';
 
 // Sub-components
 import { SalesTrendIndicator } from './sales/SalesTrendIndicator';
@@ -123,11 +124,11 @@ export function AggregateSalesCard({
   const [internalDateRange, setInternalDateRange] = useState<DateRange>('today');
   const [drilldownMode, setDrilldownMode] = useState<'services' | 'products' | null>(null);
   const [tipsDrilldownOpen, setTipsDrilldownOpen] = useState(false);
-  const [activeDrilldown, setActiveDrilldown] = useState<'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | null>(null);
+  const [activeDrilldown, setActiveDrilldown] = useState<'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | null>(null);
   const { hideNumbers } = useHideNumbers();
 
   // Toggle a secondary KPI drilldown with mutual exclusivity
-  const toggleDrilldown = (panel: 'transactions' | 'avgTicket' | 'revPerHour' | 'goals') => {
+  const toggleDrilldown = (panel: 'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals') => {
     setActiveDrilldown(prev => prev === panel ? null : panel);
     setTipsDrilldownOpen(false); // Close tips when opening another
   };
@@ -497,7 +498,15 @@ export function AggregateSalesCard({
               {isAllLocations ? 'All locations combined' : selectedLocationName || 'Loading...'}
             </p>
             {/* Total Revenue - Hero */}
-            <div className="text-center mb-4 sm:mb-6">
+            <div
+              className={cn(
+                "text-center mb-4 sm:mb-6 cursor-pointer transition-all rounded-lg p-2 -m-2",
+                activeDrilldown === 'revenue'
+                  ? "ring-1 ring-primary/20 bg-primary/5"
+                  : "hover:bg-muted/30"
+              )}
+              onClick={() => toggleDrilldown('revenue')}
+            >
               <AnimatedBlurredAmount
                 value={displayMetrics.totalRevenue}
                 prefix="$"
@@ -505,7 +514,8 @@ export function AggregateSalesCard({
               />
               <div className="flex items-center gap-1 justify-center mt-2">
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <MetricInfoTooltip description="Sum of all service and product sales. Tips are excluded." />
+                <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform duration-200", activeDrilldown === 'revenue' && "rotate-180")} />
+                <MetricInfoTooltip description="Sum of all service and product sales. Tips are excluded. Click for category breakdown." />
               </div>
               {(dateRange === 'today' || dateRange === 'todayToEom') && (
                 <div className="flex items-center justify-center gap-1.5 mt-2">
@@ -608,6 +618,14 @@ export function AggregateSalesCard({
                 <p className="text-xs text-muted-foreground/70 mt-1">{productPercent}%</p>
               </div>
             </div>
+
+            {/* Revenue by Category Drill-Down */}
+            <RevenueByCategoryPanel
+              isOpen={activeDrilldown === 'revenue'}
+              dateFrom={dateFilters.dateFrom}
+              dateTo={dateFilters.dateTo}
+              locationId={filterContext?.locationId}
+            />
           </div>
           
           {/* Secondary KPIs Row */}
