@@ -116,7 +116,7 @@ export function GoalLocationRow({
               <div className="w-24">
                 <Progress
                   value={percentage}
-                  className="h-1.5"
+                  className="h-1.5 bg-muted/40"
                   indicatorClassName={cn(
                     paceStatus === 'ahead' && 'bg-chart-2',
                     paceStatus === 'on-track' && 'bg-primary',
