@@ -502,10 +502,10 @@ export function AggregateSalesCard({
             {/* Total Revenue - Hero */}
             <div
               className={cn(
-                "text-center mb-4 sm:mb-6 cursor-pointer transition-all rounded-lg p-2 -m-2",
+                "text-center mb-4 sm:mb-6 cursor-pointer transition-all rounded-lg p-2 -m-2 group/revenue",
                 activeDrilldown === 'revenue'
                   ? "ring-1 ring-primary/20 bg-primary/5"
-                  : "hover:bg-muted/30"
+                  : ""
               )}
               onClick={() => toggleDrilldown('revenue')}
             >
@@ -516,7 +516,10 @@ export function AggregateSalesCard({
               />
               <div className="flex items-center gap-1 justify-center mt-2">
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <ChevronDown className={cn("w-3.5 h-3.5 text-muted-foreground transition-transform duration-200", activeDrilldown === 'revenue' && "rotate-180")} />
+                <ChevronDown className={cn(
+                  "w-3.5 h-3.5 text-muted-foreground transition-all duration-200",
+                  activeDrilldown === 'revenue' ? "rotate-180 opacity-100" : "opacity-0 group-hover/revenue:opacity-100"
+                )} />
                 <MetricInfoTooltip description="Sum of all service and product sales. Tips are excluded. Click for category breakdown." />
               </div>
               {(dateRange === 'today' || dateRange === 'todayToEom') && (
