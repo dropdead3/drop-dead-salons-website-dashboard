@@ -93,6 +93,12 @@ export function LocationDonutChart({ locations, colors, totalRevenue }: Location
             stroke="hsl(var(--border) / 0.4)"
             strokeWidth={1}
             label={false}
+            startAngle={90}
+            endAngle={-270}
+            isAnimationActive={true}
+            animationBegin={0}
+            animationDuration={1200}
+            animationEasing="ease-out"
           >
             {data.map((_, i) => {
               const hex = colors[i % colors.length];
