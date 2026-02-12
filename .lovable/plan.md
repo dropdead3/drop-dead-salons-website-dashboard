@@ -1,32 +1,76 @@
 
-# Fix Weekly/Monthly Goal Revenue Tracking
 
-## Problem
-The Weekly Goal progress bar shows revenue from the selected date range filter (e.g., "Last 7 Days" or "Last 30 Days") instead of the actual current week or month. The pace indicator correctly calculates elapsed time for the current week/month, but the revenue number is wrong because it comes from the filtered `displayMetrics.totalRevenue`.
+# Sales Goal Tracker Card -- Implementation Plan
 
-Example: If "Last 7 Days" is selected and covers Wed-to-Wed, the Weekly Goal shows 7 days of cross-week revenue but calculates pace against a Mon-to-Sun week structure.
+## What Gets Built
+A standalone **Goal Tracker** analytics card that shows whether your organization and each location are on pace to hit weekly/monthly revenue targets. It lives in the Analytics Hub (Sales > Goals tab) and can be pinned to your Super Admin Command Center via the existing `PinnableCard` system.
 
-## Solution
-Decouple the goal revenue from the date range filter. The goal progress component will always use revenue from the correct goal period:
-- **Weekly Goal**: Revenue from Monday of this week through today
-- **Monthly Goal**: Revenue from 1st of this month through today
-- **Yearly Goal**: Revenue from Jan 1 through today
+## Card Surface (At a Glance)
 
-## Technical Changes
+- **Period toggle**: Switch between Weekly and Monthly goal views
+- **Organization progress ring**: Visual arc showing total revenue vs. target with percentage
+- **Pace status badge**: "Ahead", "On Track", or "Behind" with color coding
+- **Projected end-of-period revenue**: Based on current daily run rate across open business days
+- **Location scoreboard**: Each active location as a compact row with mini progress bar, percentage, and pace indicator -- sorted "most behind first" so problem areas are immediately visible
 
-### 1. New hook: `src/hooks/useGoalPeriodRevenue.ts`
-A lightweight hook that queries `phorest_daily_sales_summary` for the correct goal period date range, independent of the dashboard filter.
-- Accepts `goalPeriod` ('weekly' | 'monthly' | 'yearly') and optional `locationId`
-- Calculates the correct `dateFrom` using `startOfWeek(now, { weekStartsOn: 1 })`, `startOfMonth(now)`, or `startOfYear(now)`
-- Returns the summed revenue for that period
+## Drill-Down Panels (Click to Expand)
 
-### 2. Modify `src/components/dashboard/AggregateSalesCard.tsx`
-- Import and call `useGoalPeriodRevenue` with the derived `goalPeriod` and location
-- Pass the hook's revenue to `SalesGoalProgress` as `current` instead of `displayMetrics.totalRevenue`
-- The goal period derivation already exists (line 758): `dateRange === 'thisWeek' || dateRange === '7d' ? 'weekly' : 'monthly'` -- extend this for yearly cases too
+### 1. Location Deep Dive
+Click any location row to expand:
+- Revenue earned vs. target for that location
+- Daily run rate vs. required daily rate
+- Open days remaining (holiday/closure-aware)
+- "Get back on track" button invoking Zura AI recovery plan (reuses existing `SalesGoalProgress` recovery flow)
 
-### 3. No changes to `SalesGoalProgress.tsx`
-The component's pace calculation logic is already correct. It just needs to receive the right `current` value.
+### 2. Pace Trend (Organization Level)
+Click the main progress visual to expand:
+- Recharts line chart: cumulative revenue day-by-day through the period
+- "Ideal pace" reference line (diagonal from $0 to target)
+- Visual shading for ahead/behind zones
 
-## Result
-The goal progress bar will always reflect "How much have we earned this week/month/year?" regardless of whether the user is viewing "Today", "Last 7 Days", or "Last 30 Days" in the filter. The pace indicator will correctly compare current-period revenue against the elapsed fraction of that period.
+### 3. Period Comparison
+When Monthly is selected, show a week-by-week breakdown within the month indicating which weeks carried or underperformed
+
+## Technical Approach
+
+### New Files
+
+**`src/hooks/useGoalTrackerData.ts`**
+- Calls `useGoalPeriodRevenue` for org-wide and per-location revenue
+- Calls `useSalesGoals` for targets (falls back to proportional split per location)
+- Computes pace status, daily run rate, projected revenue, and days remaining per location
+- Returns a structured object: `{ orgMetrics, locationMetrics[], period }`
+
+**`src/components/dashboard/sales/GoalTrackerCard.tsx`**
+- Main card wrapped in `PinnableCard` with `elementKey="goal_tracker"`
+- Period toggle (Weekly/Monthly)
+- Organization summary with progress ring and pace badge
+- Location scoreboard rows
+- Drill-down panels using `framer-motion` AnimatePresence
+- All revenue figures wrapped in `BlurredAmount`
+
+**`src/components/dashboard/sales/GoalPaceTrendPanel.tsx`**
+- Recharts `AreaChart` showing cumulative daily revenue vs. ideal pace line
+- Queries daily appointment revenue for the current goal period
+- Uses the luxury glass aesthetic with translucent fills
+
+### Modified Files
+
+**`src/components/dashboard/analytics/SalesTabContent.tsx`**
+- Import `GoalTrackerCard`
+- Add it to the "Goals" sub-tab (currently only has `TeamGoalsCard`)
+- Wrap in `PinnableCard` so it appears in Command Center when pinned
+
+### Reused Patterns
+- `useGoalPeriodRevenue` hook for fetching period-specific revenue from `phorest_appointments`
+- `useSalesGoals` for targets and location-specific overrides
+- `getOpenDaysRemaining()` logic from `SalesGoalProgress` for location-aware day counting
+- `PinnableCard` + `CommandCenterVisibilityToggle` for pinning
+- `BlurredAmount` / `AnimatedBlurredAmount` for privacy
+- `ZuraCardInsight` for AI hover analysis
+- Recovery plan flow (existing "Get back on track" button pattern)
+- `framer-motion` for drill-down expansion animations
+
+### No Database Changes Required
+All data comes from existing tables (`phorest_appointments`, `locations`) and localStorage goals. No migrations needed.
+
