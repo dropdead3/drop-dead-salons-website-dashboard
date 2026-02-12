@@ -333,14 +333,12 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
           )}
 
           {/* Product and Service Charts */}
-          <div className="grid lg:grid-cols-2 gap-6">
-            <PinnableCard elementKey="product_category_chart" elementName="Product Categories" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
-              <ProductCategoryChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
-            </PinnableCard>
-            <PinnableCard elementKey="service_popularity_chart" elementName="Service Popularity" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
-              <ServicePopularityChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
-            </PinnableCard>
-          </div>
+          <PinnableCard elementKey="product_category_chart" elementName="Product Categories" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <ProductCategoryChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
+          </PinnableCard>
+          <PinnableCard elementKey="service_popularity_chart" elementName="Service Popularity" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <ServicePopularityChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
+          </PinnableCard>
         </TabsContent>
 
         <TabsContent value="goals" className="mt-6 space-y-6">
