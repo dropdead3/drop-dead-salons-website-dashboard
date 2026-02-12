@@ -1,27 +1,96 @@
 
 
-# Refined Location Revenue Share Bar
+# Enterprise Location Comparison -- Redesign
 
-## What Changes
+## Overview
+Replace the current 2-card side-by-side `LocationComparison` component with a scalable, tiered system that adapts its layout and density based on how many locations the organization has. Three distinct visual tiers ensure the UI stays clean whether you have 2 locations or 50.
 
-The divided bar needs three refinements to match the premium aesthetic shown in the screenshot:
+---
 
-1. **Text color**: Use dark text (`foreground`) on all segments instead of white/inverted text. The oat and green segments both have enough lightness to support dark labels.
+## Tier System
 
-2. **Segment colors**: Use the theme-aware `chart-*` variables directly (which already map to oat-toned and emerald values per theme), but ensure the foreground text is always dark for readability -- matching the screenshot exactly.
+### Tier 1: Small (2-5 locations) -- "Head-to-Head Cards"
+- Full detail cards in a responsive grid (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`)
+- Each card shows: revenue, share-of-total progress bar, services count, products count, avg ticket, and a period-over-period trend badge
+- Leader card gets a subtle accent border; lowest performer gets a gentle "opportunity" flag
+- Click a card to expand an inline drill-down panel (service/product split, top 3 stylists at that location, hourly peak)
 
-3. **Bar polish**: Slightly increase rounding and ensure the glass sheen is subtle, not heavy. The screenshot shows a clean, flat-ish bar with just enough dimension.
+### Tier 2: Medium (6-20 locations) -- "Ranked Table with Expandable Rows"
+- Compact sortable table with columns: Rank, Location, Revenue, Services, Products, Avg Ticket, Share %, Trend
+- Default sort: revenue descending
+- Each row is expandable (framer-motion) to reveal a detail panel identical to the Tier 1 drill-down
+- Sticky header; capped at 10 visible rows with "Show all N locations" toggle
+- A mini stacked bar at the top shows revenue distribution across all locations (thin, single-row, color-coded)
 
-## Technical Details
+### Tier 3: Large (20+ locations) -- "Scoreboard + Search"
+- Same ranked table as Tier 2 but with:
+  - A search/filter input to find locations by name
+  - Region grouping dropdown (by state/city)
+  - Pagination or virtualized scroll for 50+ locations
+  - Bulk "Expand All / Collapse All" controls
 
-### File: `src/components/dashboard/sales/LocationComparison.tsx`
+### Shared Elements (all tiers)
+- Header with MapPin icon, "LOCATION COMPARISON" title, AnalyticsFilterBadge, and total revenue Badge (variant="secondary")
+- Sort controls: dropdown to pick metric (Revenue, Avg Ticket, Services, Products, Trend) + direction toggle
+- "View mode" toggle (Cards vs Table) available in Tier 1-2 range so users can switch
 
-**Changes to the bar segment rendering (lines ~207-246):**
+---
 
-- Remove the conditional `color` style that switches between `background` and `muted-foreground` for text. Instead, always use a dark foreground color: `hsl(var(--foreground))` for all segments.
-- Reduce the glass sheen opacity from `0.15` to `0.08` for a more subtle, premium feel.
-- Keep `rounded-full` and `h-10` as-is (these match the screenshot).
-- Show the percentage label when the segment is at least 12% wide (lowered from 15%) to display more labels when possible.
+## Drill-Down Panel (per location)
+When a location card or table row is expanded, show:
+1. **Revenue Breakdown** -- service vs product split (horizontal stacked bar)
+2. **Top 3 Stylists** -- avatar, name, revenue at that location
+3. **Peak Hour** -- single stat from capacity data
+4. **Period Comparison** -- delta vs previous period (arrow + percentage)
 
-That is the only file changed. The colors themselves (`chart-1`, `chart-2`, etc.) are already correctly themed per the CSS variables -- the issue is purely the text contrast and sheen intensity.
+Uses `framer-motion` AnimatePresence for smooth expand/collapse.
+
+---
+
+## Technical Plan
+
+### Files to create
+1. **`src/components/dashboard/sales/location-comparison/LocationComparisonCard.tsx`** -- Single location detail card (Tier 1 unit)
+2. **`src/components/dashboard/sales/location-comparison/LocationComparisonTable.tsx`** -- Sortable table with expandable rows (Tier 2/3)
+3. **`src/components/dashboard/sales/location-comparison/LocationDrilldownPanel.tsx`** -- Shared drill-down content
+4. **`src/components/dashboard/sales/location-comparison/LocationRevenueBar.tsx`** -- Thin stacked revenue distribution bar
+5. **`src/components/dashboard/sales/location-comparison/index.tsx`** -- Re-export barrel
+
+### Files to modify
+1. **`src/components/dashboard/sales/LocationComparison.tsx`** -- Refactor to act as the tier-routing wrapper:
+   - Count locations, select Tier 1/2/3 layout
+   - Pass shared sort state, expand state, and drill-down handlers
+   - Keep existing `LocationData` interface and props contract so `SalesTabContent` and `SalesDashboard` imports remain unchanged
+
+### Data flow
+- Existing `locationData` prop provides revenue, services, products, transactions per location
+- Drill-down panel will call `useServiceProductDrilldown` filtered to the specific `locationId`
+- Period comparison uses `useSalesComparison` scoped to the single location
+- Peak hour uses `useCapacityReport` scoped to the single location
+- All queries are lazy-loaded (only fetched when the drill-down panel opens)
+
+### Tier detection logic
+```text
+locations.length <= 5   -->  Tier 1 (Cards)
+locations.length <= 20  -->  Tier 2 (Table)
+locations.length > 20   -->  Tier 3 (Scoreboard + Search)
+```
+
+Users can override via the Cards/Table view toggle in Tiers 1-2.
+
+### Sorting
+- Shared `useState` for `sortKey` (revenue | avgTicket | services | products | trend) and `sortDirection`
+- Applied to all tiers uniformly via a `useMemo` sorted array
+
+### Animations
+- `framer-motion` `AnimatePresence` + `motion.div` for drill-down expand/collapse
+- Consistent with existing patterns (e.g., `CategoryBreakdownPanel`)
+
+### Capping and expansion
+- Tier 2: default shows top 10, "Show all N" toggle
+- Tier 3: default shows top 10, search filters full list, ScrollArea for overflow
+- Follows existing `ui/list-capping-and-expansion-standards` memory
+
+### Privacy
+- All monetary values wrapped in `BlurredAmount` from `HideNumbersContext`
 
