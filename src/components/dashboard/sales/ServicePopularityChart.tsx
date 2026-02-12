@@ -13,12 +13,11 @@ import {
   LabelList,
 } from 'recharts';
 import { useServicePopularity } from '@/hooks/useSalesAnalytics';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 const AnimatedBar = (props: any) => {
   const { x, y, width, height, fill, stroke, strokeWidth, index } = props;
-  const ref = useRef<SVGRectElement>(null);
   const [animWidth, setAnimWidth] = useState(0);
 
   useEffect(() => {
@@ -27,21 +26,22 @@ const AnimatedBar = (props: any) => {
     return () => clearTimeout(t);
   }, [width, index]);
 
-  const r = Math.min(4, (animWidth || 0) / 2, (height || 0) / 2);
+  const w = animWidth;
+  const h = height || 0;
+  const r = Math.min(4, w / 2, h / 2);
+
+  if (w <= 0 || h <= 0) return null;
+
+  // Path with flat left side, rounded right side
+  const d = `M${x},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y + h - r} Q${x + w},${y + h} ${x + w - r},${y + h} H${x} Z`;
 
   return (
-    <rect
-      ref={ref}
-      x={x}
-      y={y}
-      width={animWidth}
-      height={height}
-      rx={r}
-      ry={r}
+    <path
+      d={d}
       fill={fill}
-      stroke={animWidth > 0 ? stroke : 'none'}
+      stroke={w > 0 ? stroke : 'none'}
       strokeWidth={strokeWidth}
-      style={{ transition: 'width 800ms cubic-bezier(0.25, 1, 0.5, 1)' }}
+      style={{ transition: 'd 800ms cubic-bezier(0.25, 1, 0.5, 1)' }}
     />
   );
 };
