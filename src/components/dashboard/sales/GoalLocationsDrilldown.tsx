@@ -1,13 +1,16 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useGoalTrackerData } from '@/hooks/useGoalTrackerData';
 import { useGoalPeriodRevenue } from '@/hooks/useGoalPeriodRevenue';
 import { Progress } from '@/components/ui/progress';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
-import { TrendingUp, TrendingDown, Target, ChevronRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, ChevronRight, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { differenceInDays } from 'date-fns';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+const MAX_VISIBLE = 5;
 
 interface GoalLocationsDrilldownProps {
   isOpen: boolean;
@@ -69,12 +72,16 @@ function LocationMiniRow({ locationId, locationName, target, period }: {
 
 export function GoalLocationsDrilldown({ isOpen, period }: GoalLocationsDrilldownProps) {
   const navigate = useNavigate();
+  const [showAll, setShowAll] = useState(false);
   const { locationScaffold } = useGoalTrackerData(period);
 
   const sortedLocations = useMemo(() => {
     if (!locationScaffold) return [];
     return [...locationScaffold];
   }, [locationScaffold]);
+
+  const hasMore = sortedLocations.length > MAX_VISIBLE;
+  const visibleLocations = showAll ? sortedLocations : sortedLocations.slice(0, MAX_VISIBLE);
 
   return (
     <AnimatePresence>
@@ -90,15 +97,26 @@ export function GoalLocationsDrilldown({ isOpen, period }: GoalLocationsDrilldow
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-display mb-2">
               By Location
             </p>
-            {sortedLocations.map(loc => (
-              <LocationMiniRow
-                key={loc.locationId}
-                locationId={loc.locationId}
-                locationName={loc.locationName}
-                target={loc.target}
-                period={period}
-              />
-            ))}
+            <ScrollArea className={cn(showAll && sortedLocations.length > 8 && 'max-h-[280px]')}>
+              {visibleLocations.map(loc => (
+                <LocationMiniRow
+                  key={loc.locationId}
+                  locationId={loc.locationId}
+                  locationName={loc.locationName}
+                  target={loc.target}
+                  period={period}
+                />
+              ))}
+            </ScrollArea>
+            {hasMore && (
+              <button
+                onClick={() => setShowAll(prev => !prev)}
+                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground pt-1 w-full"
+              >
+                {showAll ? 'Show less' : `Show all ${sortedLocations.length} locations`}
+                <ChevronDown className={cn('w-3 h-3 transition-transform', showAll && 'rotate-180')} />
+              </button>
+            )}
             <button
               onClick={() => navigate('/dashboard/admin/analytics?tab=sales&subtab=goals')}
               className="flex items-center gap-1 text-xs text-primary hover:underline pt-2 w-full"
