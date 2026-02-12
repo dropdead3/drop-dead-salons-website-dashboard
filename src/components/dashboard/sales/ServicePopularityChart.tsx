@@ -94,8 +94,9 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                     <YAxis 
                       type="category" 
                       dataKey="name" 
-                      width={220}
+                      width={200}
                       tick={{ fontSize: 13 }}
+                      tickMargin={12}
                     />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted) / 0.15)' }}
@@ -166,8 +167,9 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                     <YAxis 
                       type="category" 
                       dataKey="name" 
-                      width={220}
+                      width={200}
                       tick={{ fontSize: 13 }}
+                      tickMargin={12}
                     />
                     <Tooltip
                       cursor={{ fill: 'hsl(var(--muted) / 0.15)' }}
