@@ -32,6 +32,7 @@ import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
+import { useGoalPeriodRevenue } from '@/hooks/useGoalPeriodRevenue';
 import { format, subDays, startOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears } from 'date-fns';
 import {
   Select,
@@ -61,6 +62,28 @@ import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard
 import { Progress } from '@/components/ui/progress';
 
 export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'todayToEom' | 'ytd' | 'lastYear' | 'last365';
+
+/** Wrapper that fetches goal-period revenue independently of the dashboard filter */
+function GoalProgressWithOwnRevenue({ goalPeriod, locationId, target, label, hoursJson, holidayClosures }: {
+  goalPeriod: 'weekly' | 'monthly';
+  locationId?: string;
+  target: number;
+  label: string;
+  hoursJson?: any;
+  holidayClosures?: any;
+}) {
+  const { data: goalRevenue = 0 } = useGoalPeriodRevenue(goalPeriod, locationId);
+  return (
+    <SalesGoalProgress
+      current={goalRevenue}
+      target={target}
+      label={label}
+      goalPeriod={goalPeriod}
+      hoursJson={hoursJson}
+      holidayClosures={holidayClosures}
+    />
+  );
+}
 
 /** Format HH:MM:SS to 12-hour time like "7:45 PM" */
 function formatEndTime(time: string): string {
@@ -746,16 +769,17 @@ export function AggregateSalesCard({
 
           {/* Goal Progress */}
           <div className="mt-6">
-            {(() => {
+           {(() => {
               const selectedLoc = !isAllLocations
                 ? locations?.find(loc => loc.id === filterContext?.locationId)
                 : null;
+              const goalPeriod = dateRange === 'thisWeek' || dateRange === '7d' ? 'weekly' : 'monthly';
               return (
-                <SalesGoalProgress 
-                  current={displayMetrics.totalRevenue} 
+                <GoalProgressWithOwnRevenue
+                  goalPeriod={goalPeriod}
+                  locationId={filterContext?.locationId}
                   target={currentGoal}
                   label={goalLabel}
-                  goalPeriod={dateRange === 'thisWeek' || dateRange === '7d' ? 'weekly' : 'monthly'}
                   hoursJson={selectedLoc?.hours_json}
                   holidayClosures={selectedLoc?.holiday_closures}
                 />
