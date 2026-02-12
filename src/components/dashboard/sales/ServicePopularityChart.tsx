@@ -24,7 +24,6 @@ let barIdCounter = 0;
 const AnimatedBar = (props: any) => {
   const { x, y, width, height, fill, stroke, strokeWidth, index } = props;
   const [animWidth, setAnimWidth] = useState(0);
-  const [clipId] = useState(() => `bar-clip-${barIdCounter++}`);
 
   useEffect(() => {
     const delay = (index || 0) * 60;
@@ -38,42 +37,21 @@ const AnimatedBar = (props: any) => {
 
   if (h <= 0) return null;
 
+  // Build a path with flat left edges and rounded right edges
+  const path = w > 0
+    ? `M${x},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y + h - r} Q${x + w},${y + h} ${x + w - r},${y + h} H${x} Z`
+    : '';
+
   return (
-    <g>
-      <defs>
-        <clipPath id={clipId}>
-          <rect x={x} y={y} width={w} height={h} style={{ transition: 'width 800ms cubic-bezier(0.25, 1, 0.5, 1)' }} />
-        </clipPath>
-      </defs>
-      <rect
-        x={x}
-        y={y}
-        width={Math.max(w, r * 2)}
-        height={h}
-        rx={0}
-        ry={0}
-        fill={fill}
-        stroke={w > 0 ? stroke : 'none'}
-        strokeWidth={strokeWidth}
-        clipPath={`url(#${clipId})`}
-        style={{ transition: 'width 800ms cubic-bezier(0.25, 1, 0.5, 1)' }}
-      />
-      {w > r && (
-        <rect
-          x={x + w - r * 2}
-          y={y}
-          width={r * 2}
-          height={h}
-          rx={r}
-          ry={r}
-          fill={fill}
-          stroke={w > 0 ? stroke : 'none'}
-          strokeWidth={strokeWidth}
-          clipPath={`url(#${clipId})`}
-          style={{ transition: 'all 800ms cubic-bezier(0.25, 1, 0.5, 1)' }}
-        />
-      )}
-    </g>
+    <path
+      d={path}
+      fill={fill}
+      stroke={w > 0 ? stroke : 'none'}
+      strokeWidth={strokeWidth}
+      style={{
+        transition: 'all 800ms cubic-bezier(0.25, 1, 0.5, 1)',
+      }}
+    />
   );
 };
 
