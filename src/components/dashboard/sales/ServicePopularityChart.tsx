@@ -13,8 +13,48 @@ import {
   LabelList,
 } from 'recharts';
 import { useServicePopularity } from '@/hooks/useSalesAnalytics';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+
+const StaggeredBar = (props: any) => {
+  const { x, y, width, height, fill, stroke, strokeWidth, index, radius } = props;
+  const [scale, setScale] = useState(0);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (hasAnimated.current) return;
+    hasAnimated.current = true;
+    const delay = (index || 0) * 80;
+    const timer = setTimeout(() => {
+      requestAnimationFrame(() => setScale(1));
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [index]);
+
+  const [r0, r1, r2, r3] = radius || [0, 4, 4, 0];
+  const actualWidth = (width || 0) * scale;
+
+  if (actualWidth <= 0 || !height) return null;
+
+  const rr = Math.min(r1, actualWidth / 2, (height || 0) / 2);
+
+  return (
+    <rect
+      x={x}
+      y={y}
+      width={actualWidth}
+      height={height}
+      rx={rr}
+      ry={rr}
+      fill={fill}
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+      style={{
+        transition: `width 600ms cubic-bezier(0.34, 1.56, 0.64, 1)`,
+      }}
+    />
+  );
+};
 
 interface ServicePopularityChartProps {
   dateFrom: string;
@@ -117,7 +157,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                         borderRadius: '8px',
                       }}
                     />
-                    <Bar dataKey="frequency" fill="url(#glassFrequency)" radius={[0, 4, 4, 0]} stroke="hsl(var(--primary) / 0.3)" strokeWidth={1}>
+                    <Bar dataKey="frequency" fill="url(#glassFrequency)" radius={[0, 4, 4, 0]} stroke="hsl(var(--primary) / 0.3)" strokeWidth={1} shape={<StaggeredBar />} isAnimationActive={false}>
                       <LabelList
                         dataKey="frequency"
                         position="insideRight"
@@ -194,7 +234,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                         borderRadius: '8px',
                       }}
                     />
-                    <Bar dataKey="totalRevenue" fill="url(#glassRevenue)" radius={[0, 4, 4, 0]} stroke="hsl(var(--chart-2) / 0.3)" strokeWidth={1}>
+                    <Bar dataKey="totalRevenue" fill="url(#glassRevenue)" radius={[0, 4, 4, 0]} stroke="hsl(var(--chart-2) / 0.3)" strokeWidth={1} shape={<StaggeredBar />} isAnimationActive={false}>
                       <LabelList
                         dataKey="totalRevenue"
                         position="insideRight"
