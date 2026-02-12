@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { BlurredAmount, useHideNumbers } from '@/contexts/HideNumbersContext';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
@@ -16,6 +17,7 @@ import {
   Download,
   Info,
   ChevronRight,
+  ChevronDown,
   Clock,
   ArrowUpDown,
   ArrowUp,
@@ -41,6 +43,7 @@ import {
 import { useState, useMemo } from 'react';
 
 import { ServiceProductDrilldown } from './ServiceProductDrilldown';
+import { TipsDrilldownPanel } from './sales/TipsDrilldownPanel';
 import { useNavigate } from 'react-router-dom';
 
 // Sub-components
@@ -88,6 +91,7 @@ export function AggregateSalesCard({
   const navigate = useNavigate();
   const [internalDateRange, setInternalDateRange] = useState<DateRange>('today');
   const [drilldownMode, setDrilldownMode] = useState<'services' | 'products' | null>(null);
+  const [tipsDrilldownOpen, setTipsDrilldownOpen] = useState(false);
   const { hideNumbers } = useHideNumbers();
 
   // Location table sorting
@@ -628,8 +632,16 @@ export function AggregateSalesCard({
                   </div>
                 )}
 
-                {/* Tips */}
-                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/30">
+                {/* Tips - Clickable for drill-down */}
+                <div 
+                  className={cn(
+                    "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
+                    tipsDrilldownOpen 
+                      ? "border-primary/50 ring-1 ring-primary/20" 
+                      : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                  )}
+                  onClick={() => setTipsDrilldownOpen(prev => !prev)}
+                >
                   <div className="flex justify-center mb-2">
                     <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   </div>
@@ -640,12 +652,22 @@ export function AggregateSalesCard({
                   />
                   <div className="flex items-center gap-1 justify-center mt-1">
                     <p className="text-xs text-muted-foreground">Tips</p>
-                    <MetricInfoTooltip description="Total tips collected from completed appointments." />
+                    <ChevronDown className={cn(
+                      "w-3 h-3 text-muted-foreground transition-transform duration-200",
+                      tipsDrilldownOpen && "rotate-180"
+                    )} />
+                    <MetricInfoTooltip description="Total tips collected from completed appointments. Click for stylist breakdown." />
                   </div>
                 </div>
               </div>
             );
           })()}
+
+          {/* Tips Drill-Down Panel */}
+          <TipsDrilldownPanel
+            isOpen={tipsDrilldownOpen}
+            parentLocationId={filterContext?.locationId}
+          />
 
           {/* Goal Progress */}
           <div className="mt-6">

@@ -1,0 +1,172 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useMemo } from 'react';
+import { format, subDays } from 'date-fns';
+import { getServiceCategory } from '@/utils/serviceCategorization';
+
+export interface StylistTipMetrics {
+  stylistUserId: string;
+  displayName: string;
+  photoUrl: string | null;
+  avgTip: number;
+  tipPercentage: number;
+  noTipRate: number;
+  totalTips: number;
+  appointmentCount: number;
+  locationId: string | null;
+}
+
+export interface CategoryTipMetrics {
+  avgTip: number;
+  tipRate: number;
+  count: number;
+  totalTips: number;
+}
+
+export interface TipsDrilldownData {
+  byStylist: StylistTipMetrics[];
+  byCategory: Record<string, CategoryTipMetrics>;
+  isLoading: boolean;
+  error: Error | null;
+}
+
+interface UseTipsDrilldownParams {
+  period: 30 | 90;
+  locationId?: string;
+  minAppointments?: number;
+}
+
+export function useTipsDrilldown({ period, locationId, minAppointments = 10 }: UseTipsDrilldownParams): TipsDrilldownData {
+  const dateFrom = useMemo(() => {
+    return format(subDays(new Date(), period), 'yyyy-MM-dd');
+  }, [period]);
+
+  const dateTo = useMemo(() => format(new Date(), 'yyyy-MM-dd'), []);
+
+  // Fetch appointments with tips data
+  const { data: appointments, isLoading: aptsLoading, error: aptsError } = useQuery({
+    queryKey: ['tips-drilldown-appointments', dateFrom, dateTo, locationId],
+    queryFn: async () => {
+      let query = supabase
+        .from('phorest_appointments')
+        .select('stylist_user_id, tip_amount, total_price, service_name, service_category, location_id')
+        .gte('appointment_date', dateFrom)
+        .lte('appointment_date', dateTo)
+        .not('status', 'in', '("cancelled","no_show")');
+
+      if (locationId && locationId !== 'all') {
+        query = query.eq('location_id', locationId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Fetch employee profiles for names/photos
+  const { data: profiles, isLoading: profilesLoading } = useQuery({
+    queryKey: ['tips-drilldown-profiles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('employee_profiles')
+        .select('user_id, display_name, full_name, photo_url')
+        .eq('is_active', true);
+      if (error) throw error;
+      return data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const result = useMemo(() => {
+    if (!appointments || !profiles) {
+      return { byStylist: [], byCategory: {} };
+    }
+
+    const profileMap = new Map(
+      profiles.map(p => [p.user_id, { name: p.display_name || p.full_name || 'Unknown', photo: p.photo_url }])
+    );
+
+    // Aggregate by stylist
+    const stylistMap = new Map<string, {
+      totalTips: number;
+      totalRevenue: number;
+      noTipCount: number;
+      count: number;
+      locationId: string | null;
+    }>();
+
+    // Aggregate by category
+    const categoryMap = new Map<string, {
+      totalTips: number;
+      totalRevenue: number;
+      count: number;
+    }>();
+
+    for (const apt of appointments) {
+      const tip = apt.tip_amount ?? 0;
+      const revenue = apt.total_price ?? 0;
+      const category = apt.service_category || getServiceCategory(apt.service_name);
+
+      // Stylist aggregation
+      if (apt.stylist_user_id) {
+        const existing = stylistMap.get(apt.stylist_user_id) ?? {
+          totalTips: 0, totalRevenue: 0, noTipCount: 0, count: 0, locationId: apt.location_id
+        };
+        existing.totalTips += tip;
+        existing.totalRevenue += revenue;
+        existing.noTipCount += tip === 0 ? 1 : 0;
+        existing.count += 1;
+        stylistMap.set(apt.stylist_user_id, existing);
+      }
+
+      // Category aggregation
+      const catExisting = categoryMap.get(category) ?? { totalTips: 0, totalRevenue: 0, count: 0 };
+      catExisting.totalTips += tip;
+      catExisting.totalRevenue += revenue;
+      catExisting.count += 1;
+      categoryMap.set(category, catExisting);
+    }
+
+    // Build stylist array
+    const byStylist: StylistTipMetrics[] = [];
+    for (const [userId, data] of stylistMap) {
+      if (data.count < minAppointments) continue;
+      const profile = profileMap.get(userId);
+      byStylist.push({
+        stylistUserId: userId,
+        displayName: profile?.name ?? 'Unknown',
+        photoUrl: profile?.photo ?? null,
+        avgTip: data.count > 0 ? data.totalTips / data.count : 0,
+        tipPercentage: data.totalRevenue > 0 ? (data.totalTips / data.totalRevenue) * 100 : 0,
+        noTipRate: data.count > 0 ? (data.noTipCount / data.count) * 100 : 0,
+        totalTips: data.totalTips,
+        appointmentCount: data.count,
+        locationId: data.locationId,
+      });
+    }
+
+    // Sort by avg tip descending
+    byStylist.sort((a, b) => b.avgTip - a.avgTip);
+
+    // Build category record
+    const byCategory: Record<string, CategoryTipMetrics> = {};
+    for (const [name, data] of categoryMap) {
+      byCategory[name] = {
+        avgTip: data.count > 0 ? data.totalTips / data.count : 0,
+        tipRate: data.totalRevenue > 0 ? (data.totalTips / data.totalRevenue) * 100 : 0,
+        count: data.count,
+        totalTips: data.totalTips,
+      };
+    }
+
+    return { byStylist, byCategory };
+  }, [appointments, profiles, minAppointments]);
+
+  return {
+    ...result,
+    isLoading: aptsLoading || profilesLoading,
+    error: aptsError as Error | null,
+  };
+}
