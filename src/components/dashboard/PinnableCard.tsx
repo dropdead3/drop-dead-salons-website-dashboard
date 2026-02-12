@@ -32,6 +32,8 @@ export function PinnableCard({
   const registerMutation = useRegisterVisibilityElement();
   const hasRegistered = useRef(false);
   const [hovered, setHovered] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [iconRect, setIconRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
   
   useEffect(() => {
     if (!hasRegistered.current) {
@@ -43,6 +45,32 @@ export function PinnableCard({
       });
     }
   }, [elementKey, elementName, category, registerMutation]);
+
+  // Find and track the header icon element
+  useEffect(() => {
+    const wrapper = contentRef.current;
+    if (!wrapper) return;
+    // Structure: wrapper > Card > headerRow > iconTitleGroup > iconDiv
+    const card = wrapper.firstElementChild;
+    const headerRow = card?.firstElementChild;
+    const iconTitleGroup = headerRow?.firstElementChild;
+    const iconEl = iconTitleGroup?.firstElementChild as HTMLElement | null;
+    if (iconEl) {
+      iconEl.style.transition = 'opacity 200ms ease-in-out';
+      iconEl.style.opacity = hovered ? '0' : '1';
+      // Measure position relative to the PinnableCard wrapper
+      const wrapperRect = wrapper.parentElement?.getBoundingClientRect();
+      const elRect = iconEl.getBoundingClientRect();
+      if (wrapperRect) {
+        setIconRect({
+          top: elRect.top - wrapperRect.top,
+          left: elRect.left - wrapperRect.left,
+          width: elRect.width,
+          height: elRect.height,
+        });
+      }
+    }
+  }, [hovered]);
   
   return (
     <div 
@@ -50,48 +78,34 @@ export function PinnableCard({
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Z and Pin icons overlaid on the card header icon position */}
-      <div 
-        className="absolute top-6 left-6 z-10 flex items-center gap-1 transition-all duration-200 ease-in-out"
-        style={{
-          opacity: hovered ? 1 : 0,
-          pointerEvents: hovered ? 'auto' : 'none',
-        }}
-      >
-        <ZuraCardInsight 
-          cardName={elementName}
-          metricData={metricData}
-          dateRange={dateRange}
-          locationName={locationName}
-        />
-        <CommandCenterVisibilityToggle 
-          elementKey={elementKey} 
-          elementName={elementName} 
-        />
-      </div>
-      <PinnableCardContent hovered={hovered}>
+      {/* Z and Pin icons overlaid exactly on the card header icon */}
+      {iconRect && (
+        <div 
+          className="absolute z-10 flex items-center justify-center gap-1 transition-opacity duration-200 ease-in-out"
+          style={{
+            top: iconRect.top,
+            left: iconRect.left,
+            width: iconRect.width,
+            height: iconRect.height,
+            opacity: hovered ? 1 : 0,
+            pointerEvents: hovered ? 'auto' : 'none',
+          }}
+        >
+          <ZuraCardInsight 
+            cardName={elementName}
+            metricData={metricData}
+            dateRange={dateRange}
+            locationName={locationName}
+          />
+          <CommandCenterVisibilityToggle 
+            elementKey={elementKey} 
+            elementName={elementName} 
+          />
+        </div>
+      )}
+      <div ref={contentRef}>
         {children}
-      </PinnableCardContent>
+      </div>
     </div>
   );
-}
-
-/** Fades out the card's header icon on hover so the Z/Pin icons replace it */
-function PinnableCardContent({ hovered, children }: { hovered: boolean; children: ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const wrapper = ref.current;
-    if (!wrapper) return;
-    // Target: wrapper > Card > header row > first element (the icon container)
-    const card = wrapper.firstElementChild;
-    const headerRow = card?.firstElementChild as HTMLElement | null;
-    const headerIcon = headerRow?.firstElementChild as HTMLElement | null;
-    if (headerIcon) {
-      headerIcon.style.transition = 'opacity 200ms ease-in-out';
-      headerIcon.style.opacity = hovered ? '0' : '1';
-    }
-  }, [hovered]);
-
-  return <div ref={ref}>{children}</div>;
 }
