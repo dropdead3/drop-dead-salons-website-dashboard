@@ -230,19 +230,37 @@ export function AggregateSalesCard({
     ? Math.round(((metrics?.productRevenue || 0) / totalRevenueSum) * 100) 
     : 0;
 
-  // Calculate goal based on date range
+  // Calculate goal based on date range, accounting for single-location view
   const currentGoal = (() => {
+    let globalTarget: number;
     switch (dateRange) {
       case 'mtd':
       case '30d':
-        return goals?.monthlyTarget || 50000;
+        globalTarget = goals?.monthlyTarget || 50000;
+        break;
       case 'ytd':
       case 'lastYear':
       case 'last365':
-        return (goals?.monthlyTarget || 50000) * 12; // Yearly goal
+        globalTarget = (goals?.monthlyTarget || 50000) * 12;
+        break;
       default:
-        return goals?.weeklyTarget || 12500;
+        globalTarget = goals?.weeklyTarget || 12500;
+        break;
     }
+
+    // When viewing a single location, use location-specific target or divide evenly
+    if (!isAllLocations && filterContext?.locationId) {
+      const period = (dateRange === 'mtd' || dateRange === '30d') ? 'monthly' : 'weekly';
+      const locTargets = goals?.locationTargets?.[filterContext.locationId];
+      if (locTargets) {
+        return period === 'monthly' ? locTargets.monthly : locTargets.weekly;
+      }
+      // Fallback: divide global target by number of active locations
+      const locationCount = locations?.length || 1;
+      return Math.round(globalTarget / locationCount);
+    }
+
+    return globalTarget;
   })();
 
   // Get goal label based on date range
