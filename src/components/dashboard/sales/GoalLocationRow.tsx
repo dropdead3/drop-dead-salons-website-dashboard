@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, TrendingUp, TrendingDown, Target, Loader2 } from 'lucide-react';
+import { ChevronDown, TrendingUp, TrendingDown, Target, Loader2, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
@@ -8,6 +8,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Button } from '@/components/ui/button';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { useGoalPeriodRevenue } from '@/hooks/useGoalPeriodRevenue';
+import { GoalPaceTrendPanel } from './GoalPaceTrendPanel';
 import type { HoursJson, HolidayClosure } from '@/hooks/useLocations';
 import { differenceInDays, addDays, getDay, format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -53,6 +54,7 @@ export function GoalLocationRow({
   isExpanded: controlledExpanded, onToggle,
 }: GoalLocationRowProps) {
   const [internalExpanded, setInternalExpanded] = useState(false);
+  const [showTrend, setShowTrend] = useState(false);
   const expanded = controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [recoveryLoading, setRecoveryLoading] = useState(false);
@@ -177,6 +179,34 @@ export function GoalLocationRow({
                     <AnimatedBlurredAmount value={projectedRevenue} prefix="$" />
                   </p>
                 </div>
+              </div>
+
+              {/* Pace trend: auto-visible on lg+, toggle on smaller screens */}
+              <div className="hidden lg:block">
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 font-display">Pace Trend</p>
+                <GoalPaceTrendPanel period={period} target={target} locationId={locationId} />
+              </div>
+              <div className="lg:hidden">
+                <button
+                  onClick={(e) => { e.stopPropagation(); setShowTrend(v => !v); }}
+                  className="flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <BarChart3 className="w-3 h-3" />
+                  {showTrend ? 'Hide pace trend' : 'Show pace trend'}
+                </button>
+                <AnimatePresence>
+                  {showTrend && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden mt-1"
+                    >
+                      <GoalPaceTrendPanel period={period} target={target} locationId={locationId} />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {paceStatus === 'behind' && (
