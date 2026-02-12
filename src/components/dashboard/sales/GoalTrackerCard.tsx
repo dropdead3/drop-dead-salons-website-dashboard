@@ -17,6 +17,8 @@ export function GoalTrackerCard() {
   const [period, setPeriod] = useState<'weekly' | 'monthly'>('monthly');
   const [showTrend, setShowTrend] = useState(false);
   const [expandedLocations, setExpandedLocations] = useState<Record<string, boolean>>({});
+  const [showAllLocations, setShowAllLocations] = useState(false);
+  const MAX_VISIBLE_LOCATIONS = 3;
 
   const { orgMetrics, locationScaffold, isLoading } = useGoalTrackerData(period);
 
@@ -222,7 +224,7 @@ export function GoalTrackerCard() {
                     </button>
                   </div>
                   <div className="space-y-1.5">
-                    {locationScaffold.map(loc => (
+                    {(showAllLocations ? locationScaffold : locationScaffold.slice(0, MAX_VISIBLE_LOCATIONS)).map(loc => (
                       <GoalLocationRow
                         key={loc.locationId}
                         locationId={loc.locationId}
@@ -238,6 +240,15 @@ export function GoalTrackerCard() {
                       />
                     ))}
                   </div>
+                  {locationScaffold.length > MAX_VISIBLE_LOCATIONS && (
+                    <button
+                      onClick={() => setShowAllLocations(v => !v)}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground pt-2 w-full transition-colors"
+                    >
+                      <ChevronDown className={cn('w-3 h-3 transition-transform', showAllLocations && 'rotate-180')} />
+                      {showAllLocations ? 'Show less' : `Show all ${locationScaffold.length} locations`}
+                    </button>
+                  )}
                 </div>
               )}
             </>
