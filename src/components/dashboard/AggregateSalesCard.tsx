@@ -44,6 +44,9 @@ import { useState, useMemo } from 'react';
 
 import { ServiceProductDrilldown } from './ServiceProductDrilldown';
 import { TipsDrilldownPanel } from './sales/TipsDrilldownPanel';
+import { TransactionsByHourPanel } from './sales/TransactionsByHourPanel';
+import { TicketDistributionPanel } from './sales/TicketDistributionPanel';
+import { RevPerHourByStylistPanel } from './sales/RevPerHourByStylistPanel';
 import { useNavigate } from 'react-router-dom';
 
 // Sub-components
@@ -92,7 +95,19 @@ export function AggregateSalesCard({
   const [internalDateRange, setInternalDateRange] = useState<DateRange>('today');
   const [drilldownMode, setDrilldownMode] = useState<'services' | 'products' | null>(null);
   const [tipsDrilldownOpen, setTipsDrilldownOpen] = useState(false);
+  const [activeDrilldown, setActiveDrilldown] = useState<'transactions' | 'avgTicket' | 'revPerHour' | null>(null);
   const { hideNumbers } = useHideNumbers();
+
+  // Toggle a secondary KPI drilldown with mutual exclusivity
+  const toggleDrilldown = (panel: 'transactions' | 'avgTicket' | 'revPerHour') => {
+    setActiveDrilldown(prev => prev === panel ? null : panel);
+    setTipsDrilldownOpen(false); // Close tips when opening another
+  };
+
+  const handleTipsToggle = () => {
+    setTipsDrilldownOpen(prev => !prev);
+    setActiveDrilldown(null); // Close others when opening tips
+  };
 
   // Location table sorting
   type LocationSortField = 'name' | 'totalRevenue' | 'serviceRevenue' | 'productRevenue' | 'totalTransactions' | 'avgTicket';
@@ -568,7 +583,15 @@ export function AggregateSalesCard({
             return (
               <div className={`grid ${showDailyAvg ? 'grid-cols-5' : 'grid-cols-4'} gap-6 mt-6`}>
                 {/* Transactions */}
-                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/30">
+                <div 
+                  className={cn(
+                    "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
+                    activeDrilldown === 'transactions'
+                      ? "border-primary/50 ring-1 ring-primary/20"
+                      : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                  )}
+                  onClick={() => toggleDrilldown('transactions')}
+                >
                   <div className="flex justify-center mb-2">
                     <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   </div>
@@ -578,12 +601,24 @@ export function AggregateSalesCard({
                   />
                   <div className="flex items-center gap-1 justify-center mt-1">
                     <p className="text-xs text-muted-foreground">Transactions</p>
-                    <MetricInfoTooltip description="Total number of completed sales transactions." />
+                    <ChevronDown className={cn(
+                      "w-3 h-3 text-muted-foreground transition-transform duration-200",
+                      activeDrilldown === 'transactions' && "rotate-180"
+                    )} />
+                    <MetricInfoTooltip description="Total number of completed sales transactions. Click for hourly breakdown." />
                   </div>
                 </div>
                 
                 {/* Avg Ticket */}
-                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/30">
+                <div 
+                  className={cn(
+                    "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
+                    activeDrilldown === 'avgTicket'
+                      ? "border-primary/50 ring-1 ring-primary/20"
+                      : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                  )}
+                  onClick={() => toggleDrilldown('avgTicket')}
+                >
                   <div className="flex justify-center mb-2">
                     <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   </div>
@@ -594,12 +629,24 @@ export function AggregateSalesCard({
                   />
                   <div className="flex items-center gap-1 justify-center mt-1">
                     <p className="text-xs text-muted-foreground">Avg Ticket</p>
-                    <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Transactions." />
+                    <ChevronDown className={cn(
+                      "w-3 h-3 text-muted-foreground transition-transform duration-200",
+                      activeDrilldown === 'avgTicket' && "rotate-180"
+                    )} />
+                    <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Transactions. Click for distribution." />
                   </div>
                 </div>
                 
                 {/* Rev/Hour */}
-                <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/30">
+                <div 
+                  className={cn(
+                    "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
+                    activeDrilldown === 'revPerHour'
+                      ? "border-primary/50 ring-1 ring-primary/20"
+                      : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                  )}
+                  onClick={() => toggleDrilldown('revPerHour')}
+                >
                   <div className="flex justify-center mb-2">
                     <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                   </div>
@@ -610,7 +657,11 @@ export function AggregateSalesCard({
                   />
                   <div className="flex items-center gap-1 justify-center mt-1">
                     <p className="text-xs text-muted-foreground">Rev/Hour</p>
-                    <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Service Hours." />
+                    <ChevronDown className={cn(
+                      "w-3 h-3 text-muted-foreground transition-transform duration-200",
+                      activeDrilldown === 'revPerHour' && "rotate-180"
+                    )} />
+                    <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Service Hours. Click for stylist breakdown." />
                   </div>
                 </div>
 
@@ -640,7 +691,7 @@ export function AggregateSalesCard({
                       ? "border-primary/50 ring-1 ring-primary/20" 
                       : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
                   )}
-                  onClick={() => setTipsDrilldownOpen(prev => !prev)}
+                  onClick={handleTipsToggle}
                 >
                   <div className="flex justify-center mb-2">
                     <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
@@ -667,6 +718,30 @@ export function AggregateSalesCard({
           <TipsDrilldownPanel
             isOpen={tipsDrilldownOpen}
             parentLocationId={filterContext?.locationId}
+          />
+
+          {/* Transactions by Hour Drill-Down */}
+          <TransactionsByHourPanel
+            isOpen={activeDrilldown === 'transactions'}
+            dateFrom={dateFilters.dateFrom}
+            dateTo={dateFilters.dateTo}
+            locationId={filterContext?.locationId}
+          />
+
+          {/* Ticket Distribution Drill-Down */}
+          <TicketDistributionPanel
+            isOpen={activeDrilldown === 'avgTicket'}
+            dateFrom={dateFilters.dateFrom}
+            dateTo={dateFilters.dateTo}
+            locationId={filterContext?.locationId}
+          />
+
+          {/* Rev/Hour by Stylist Drill-Down */}
+          <RevPerHourByStylistPanel
+            isOpen={activeDrilldown === 'revPerHour'}
+            stylistData={stylistData}
+            totalServiceHours={metrics?.totalServiceHours || 0}
+            isLoading={stylistLoading}
           />
 
           {/* Goal Progress */}
