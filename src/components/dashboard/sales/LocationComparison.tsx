@@ -215,7 +215,7 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
 
         {/* Revenue Share Bar */}
         <div className="space-y-2.5">
-           <div className="flex h-10 rounded-lg overflow-hidden bg-muted/10">
+           <div className="flex h-10 rounded-xl overflow-hidden border border-border/30">
             {[...displayData, ...(othersEntry ? [othersEntry] : [])].map((entry, idx) => {
               const pct = totalRevenue > 0 ? (entry.value / totalRevenue) * 100 : 0;
               if (pct <= 0) return null;
@@ -229,16 +229,12 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
                       className="h-full flex items-center justify-center text-xs transition-all cursor-default relative overflow-hidden"
                       style={{
                         width: `${pct}%`,
-                        background: `linear-gradient(180deg, ${entry.color}88 0%, ${entry.color}cc 100%)`,
-                        borderRight: isLast ? 'none' : `1px solid hsl(var(--background) / 0.25)`,
+                        backgroundColor: `${entry.color}${isOthers ? '30' : '55'}`,
+                        borderRight: isLast ? 'none' : `1px solid hsl(var(--border) / 0.3)`,
                         minWidth: pct > 5 ? undefined : '24px',
-                        boxShadow: `inset 0 1px 0 0 rgba(255,255,255,0.15), inset 0 -1px 0 0 rgba(0,0,0,0.1)`,
-                        border: isLast ? undefined : undefined,
                       }}
                     >
-                      {/* Glass stroke top highlight */}
-                      <div className="absolute inset-x-0 top-0 h-px bg-white/20 pointer-events-none" />
-                      <span className="relative z-10 font-display tracking-wide text-[11px] font-medium dark:text-white/90 text-foreground">
+                      <span className="relative z-10 font-display tracking-wide text-[11px] font-medium text-foreground/80">
                         {pct >= 12 && `${entry.percentage}%`}
                       </span>
                     </div>
