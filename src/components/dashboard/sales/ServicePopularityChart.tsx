@@ -118,8 +118,9 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                           const padY = 3;
                           const padX = 4;
                           const badgeH = barH - padY * 2;
-                          const text = String(value);
-                          const badgeW = Math.max(text.length * 8 + 12, 28);
+                          const pct = totalServices > 0 ? ((value / totalServices) * 100).toFixed(0) : '0';
+                          const label = `${value} · ${pct}%`;
+                          const badgeW = Math.max(label.length * 7 + 12, 50);
                           const bx = (x || 0) + (width || 0) - badgeW - padX;
                           const by = (y || 0) + padY;
                           return (
@@ -138,7 +139,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                                 textAnchor="middle"
                                 style={{ fontSize: 11, fontWeight: 500, fill: 'hsl(var(--foreground))' }}
                               >
-                                {value}
+                                {label}
                               </text>
                             </g>
                           );
