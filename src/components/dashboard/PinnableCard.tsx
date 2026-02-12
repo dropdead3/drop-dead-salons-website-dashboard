@@ -44,8 +44,14 @@ export function PinnableCard({
   }, [elementKey, elementName, category, registerMutation]);
   
   return (
-    <div className={cn("relative group flex flex-row rounded-xl overflow-hidden border border-border bg-card text-card-foreground shadow-sm", className)}>
-      <div className="flex flex-col items-center justify-start pt-3 gap-1 max-w-0 opacity-0 group-hover:max-w-[40px] group-hover:opacity-100 overflow-hidden transition-all duration-200 ease-in-out shrink-0 border-r border-border/0 group-hover:border-border/30">
+    <div className={cn(
+      "relative group",
+      "[&>*>*:first-child]:transition-all [&>*>*:first-child]:duration-200 [&>*>*:first-child]:ease-in-out",
+      "hover:[&>*>*:first-child]:pl-10",
+      className
+    )}>
+      {/* Icons absolutely positioned in the card header area */}
+      <div className="absolute top-5 left-3 z-10 flex flex-col items-center gap-1 opacity-0 -translate-x-3 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-200 ease-in-out pointer-events-none group-hover:pointer-events-auto">
         <ZuraCardInsight 
           cardName={elementName}
           metricData={metricData}
@@ -57,9 +63,7 @@ export function PinnableCard({
           elementName={elementName} 
         />
       </div>
-      <div className="flex-1 min-w-0 transition-all duration-200 [&>*]:border-0 [&>*]:shadow-none [&>*]:rounded-none">
-        {children}
-      </div>
+      {children}
     </div>
   );
 }
