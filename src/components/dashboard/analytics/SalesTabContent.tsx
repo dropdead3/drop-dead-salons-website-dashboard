@@ -328,6 +328,8 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
                 locations={locationData || []} 
                 isLoading={locationLoading}
                 filterContext={filterContext}
+                dateFrom={filters.dateFrom}
+                dateTo={filters.dateTo}
               />
             </PinnableCard>
           )}

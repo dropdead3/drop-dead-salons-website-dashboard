@@ -812,6 +812,8 @@ export default function SalesDashboard() {
               <LocationComparison 
                 locations={locationData || []} 
                 isLoading={locationLoading}
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
               />
             </TabsContent>
           )}
