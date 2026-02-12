@@ -295,37 +295,23 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                     <Bar dataKey="frequency" fill="url(#glassFrequency)" radius={[0, 4, 4, 0]} stroke="hsl(var(--primary) / 0.3)" strokeWidth={1} shape={<AnimatedBar />} isAnimationActive={false}>
                       <LabelList
                         dataKey="frequency"
-                        position="insideRight"
+                        position="right"
                         content={({ x, y, width, height, value, index }: any) => {
                           const barH = height || 0;
-                          const padY = 3;
-                          const padX = 4;
-                          const badgeH = barH - padY * 2;
                           const pct = totalServices > 0 ? ((value / totalServices) * 100).toFixed(0) : '0';
                           const label = `${value} · ${pct}%`;
-                          const badgeW = Math.max(label.length * 7 + 12, 50);
-                          const bx = (x || 0) + (width || 0) - badgeW - padX;
-                          const by = (y || 0) + padY;
+                          const lx = (x || 0) + (width || 0) + 8;
+                          const ly = (y || 0) + barH / 2 + 4;
                           const delay = (index || 0) * 60 + 650;
                           return (
-                            <g opacity={0} style={{ animation: `svgFadeIn 350ms ease-out ${delay}ms forwards` }}>
-                              <rect
-                                x={bx}
-                                y={by}
-                                width={badgeW}
-                                height={badgeH}
-                                rx={3}
-                                fill="hsl(var(--background) / 0.8)"
-                              />
-                              <text
-                                x={bx + badgeW / 2}
-                                y={by + badgeH / 2 + 4}
-                                textAnchor="middle"
-                                style={{ fontSize: 11, fontWeight: 500, fill: 'hsl(var(--foreground))' }}
-                              >
-                                {label}
-                              </text>
-                            </g>
+                            <text
+                              x={lx}
+                              y={ly}
+                              opacity={0}
+                              style={{ animation: `svgFadeIn 350ms ease-out ${delay}ms forwards`, fontSize: 11, fontWeight: 500, fill: 'hsl(var(--muted-foreground))' }}
+                            >
+                              {label}
+                            </text>
                           );
                         }}
                       />
@@ -373,39 +359,25 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                     <Bar dataKey="totalRevenue" fill="url(#glassRevenue)" radius={[0, 4, 4, 0]} stroke="hsl(var(--chart-2) / 0.3)" strokeWidth={1} shape={<AnimatedBar />} isAnimationActive={false}>
                       <LabelList
                         dataKey="totalRevenue"
-                        position="insideRight"
+                        position="right"
                         content={({ x, y, width, height, value, index }: any) => {
                           const barH = height || 0;
-                          const padY = 3;
-                          const padX = 4;
-                          const badgeH = barH - padY * 2;
                           const pct = totalRevenue > 0 ? ((value / totalRevenue) * 100).toFixed(0) : '0';
                           const svcName = sortedData[index]?.name;
                           const avg = svcName ? avgPriceMap[svcName] : 0;
                           const label = `$${Number(value).toLocaleString()} · ${pct}% · avg $${(avg || 0).toFixed(0)}`;
-                          const badgeW = Math.max(label.length * 6.5 + 14, 50);
-                          const bx = (x || 0) + (width || 0) - badgeW - padX;
-                          const by = (y || 0) + padY;
+                          const lx = (x || 0) + (width || 0) + 8;
+                          const ly = (y || 0) + barH / 2 + 4;
                           const delay = (index || 0) * 60 + 650;
                           return (
-                            <g opacity={0} style={{ animation: `svgFadeIn 350ms ease-out ${delay}ms forwards` }}>
-                              <rect
-                                x={bx}
-                                y={by}
-                                width={badgeW}
-                                height={badgeH}
-                                rx={3}
-                                fill="hsl(var(--background) / 0.8)"
-                              />
-                              <text
-                                x={bx + badgeW / 2}
-                                y={by + badgeH / 2 + 4}
-                                textAnchor="middle"
-                                style={{ fontSize: 10, fontWeight: 500, fill: 'hsl(var(--foreground))' }}
-                              >
-                                {label}
-                              </text>
-                            </g>
+                            <text
+                              x={lx}
+                              y={ly}
+                              opacity={0}
+                              style={{ animation: `svgFadeIn 350ms ease-out ${delay}ms forwards`, fontSize: 11, fontWeight: 500, fill: 'hsl(var(--muted-foreground))' }}
+                            >
+                              {label}
+                            </text>
                           );
                         }}
                       />
