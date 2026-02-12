@@ -67,10 +67,12 @@ export function WebsiteAnalyticsWidget() {
     return (
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm font-medium">
-            <Globe className="h-4 w-4 text-primary" />
-            Website Traffic
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Globe className="w-5 h-5 text-primary" />
+            </div>
+            <CardTitle className="font-display text-base tracking-wide">WEBSITE TRAFFIC</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -111,11 +113,11 @@ export function WebsiteAnalyticsWidget() {
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CardTitle className="flex items-center gap-2 text-sm font-medium">
-              <Globe className="h-4 w-4 text-primary" />
-              Website Traffic
-            </CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Globe className="w-5 h-5 text-primary" />
+            </div>
+            <CardTitle className="font-display text-base tracking-wide">WEBSITE TRAFFIC</CardTitle>
             <UITooltip>
               <TooltipTrigger asChild>
                 <Button

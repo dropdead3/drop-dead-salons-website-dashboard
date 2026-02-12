@@ -87,10 +87,12 @@ export function CompareTabContent({ filters, filterContext }: CompareTabContentP
       <Card>
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="font-display text-sm flex items-center gap-2">
-              <GitCompare className="w-4 h-4" />
-              COMPARISON BUILDER
-            </CardTitle>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                <GitCompare className="w-5 h-5 text-primary" />
+              </div>
+              <CardTitle className="font-display text-base tracking-wide">COMPARISON BUILDER</CardTitle>
+            </div>
             {filterContext && (
               <AnalyticsFilterBadge 
                 locationId={filterContext.locationId} 

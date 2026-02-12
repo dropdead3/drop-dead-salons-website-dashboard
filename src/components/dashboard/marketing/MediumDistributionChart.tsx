@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Layers } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { MediumPerformance, formatMediumName, getMediumColor } from '@/hooks/useMarketingAnalytics';
 
@@ -22,7 +23,12 @@ export function MediumDistributionChart({ mediums, isLoading }: MediumDistributi
     return (
       <Card className="premium-card">
         <CardHeader>
-          <CardTitle className="font-display text-lg">LEADS BY MEDIUM</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Layers className="w-5 h-5 text-primary" />
+            </div>
+            <CardTitle className="font-display text-base tracking-wide">LEADS BY MEDIUM</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="h-[250px] flex items-center justify-center text-muted-foreground">
@@ -37,7 +43,12 @@ export function MediumDistributionChart({ mediums, isLoading }: MediumDistributi
     return (
       <Card className="premium-card">
         <CardHeader>
-          <CardTitle className="font-display text-lg">LEADS BY MEDIUM</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Layers className="w-5 h-5 text-primary" />
+            </div>
+            <CardTitle className="font-display text-base tracking-wide">LEADS BY MEDIUM</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="h-[250px] flex items-center justify-center text-muted-foreground text-sm">
@@ -72,7 +83,12 @@ export function MediumDistributionChart({ mediums, isLoading }: MediumDistributi
   return (
     <Card className="premium-card">
       <CardHeader>
-        <CardTitle className="font-display text-lg">LEADS BY MEDIUM</CardTitle>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+            <Layers className="w-5 h-5 text-primary" />
+          </div>
+          <CardTitle className="font-display text-base tracking-wide">LEADS BY MEDIUM</CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="h-[200px]">

@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Share2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { SourcePerformance, formatSourceName, getSourceColor } from '@/hooks/useMarketingAnalytics';
 
@@ -22,7 +23,12 @@ export function SourceBreakdownChart({ sources, isLoading }: SourceBreakdownChar
     return (
       <Card className="premium-card">
         <CardHeader>
-          <CardTitle className="font-display text-lg">LEADS BY SOURCE</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Share2 className="w-5 h-5 text-primary" />
+            </div>
+            <CardTitle className="font-display text-base tracking-wide">LEADS BY SOURCE</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="h-[250px] flex items-center justify-center text-muted-foreground">
@@ -37,7 +43,12 @@ export function SourceBreakdownChart({ sources, isLoading }: SourceBreakdownChar
     return (
       <Card className="premium-card">
         <CardHeader>
-          <CardTitle className="font-display text-lg">LEADS BY SOURCE</CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Share2 className="w-5 h-5 text-primary" />
+            </div>
+            <CardTitle className="font-display text-base tracking-wide">LEADS BY SOURCE</CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="h-[250px] flex items-center justify-center text-muted-foreground text-sm">
@@ -51,7 +62,12 @@ export function SourceBreakdownChart({ sources, isLoading }: SourceBreakdownChar
   return (
     <Card className="premium-card">
       <CardHeader>
-        <CardTitle className="font-display text-lg">LEADS BY SOURCE</CardTitle>
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+            <Share2 className="w-5 h-5 text-primary" />
+          </div>
+          <CardTitle className="font-display text-base tracking-wide">LEADS BY SOURCE</CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="h-[250px]">
