@@ -617,133 +617,139 @@ export function AggregateSalesCard({
             const dailyAverage = workingDays > 0 ? displayMetrics.totalRevenue / workingDays : 0;
 
             return (
-              <div className={`grid ${showDailyAvg ? 'grid-cols-5' : 'grid-cols-4'} gap-6 mt-6`}>
-                {/* Transactions */}
-                <div 
-                  className={cn(
-                    "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
-                    activeDrilldown === 'transactions'
-                      ? "border-primary/50 ring-1 ring-primary/20"
-                      : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
-                  )}
-                  onClick={() => toggleDrilldown('transactions')}
-                >
-                  <div className="flex justify-center mb-2">
-                    <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                  </div>
-                  <AnimatedBlurredAmount 
-                    value={displayMetrics.totalTransactions}
-                    className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
-                  />
-                  <div className="flex items-center gap-1 justify-center mt-1">
-                    <p className="text-xs text-muted-foreground">Transactions</p>
-                    <ChevronDown className={cn(
-                      "w-3 h-3 text-muted-foreground transition-transform duration-200",
-                      activeDrilldown === 'transactions' && "rotate-180"
-                    )} />
-                    <MetricInfoTooltip description="Total number of completed sales transactions. Click for hourly breakdown." />
-                  </div>
-                </div>
-                
-                {/* Avg Ticket */}
-                <div 
-                  className={cn(
-                    "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
-                    activeDrilldown === 'avgTicket'
-                      ? "border-primary/50 ring-1 ring-primary/20"
-                      : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
-                  )}
-                  onClick={() => toggleDrilldown('avgTicket')}
-                >
-                  <div className="flex justify-center mb-2">
-                    <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                  </div>
-                  <AnimatedBlurredAmount 
-                    value={Math.round(displayMetrics.averageTicket)}
-                    prefix="$"
-                    className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
-                  />
-                  <div className="flex items-center gap-1 justify-center mt-1">
-                    <p className="text-xs text-muted-foreground">Avg Ticket</p>
-                    <ChevronDown className={cn(
-                      "w-3 h-3 text-muted-foreground transition-transform duration-200",
-                      activeDrilldown === 'avgTicket' && "rotate-180"
-                    )} />
-                    <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Transactions. Click for distribution." />
-                  </div>
-                </div>
-                
-                {/* Rev/Hour */}
-                <div 
-                  className={cn(
-                    "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
-                    activeDrilldown === 'revPerHour'
-                      ? "border-primary/50 ring-1 ring-primary/20"
-                      : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
-                  )}
-                  onClick={() => toggleDrilldown('revPerHour')}
-                >
-                  <div className="flex justify-center mb-2">
-                    <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                  </div>
-                  <AnimatedBlurredAmount 
-                    value={Math.round(revenuePerHour)}
-                    prefix="$"
-                    className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
-                  />
-                  <div className="flex items-center gap-1 justify-center mt-1">
-                    <p className="text-xs text-muted-foreground">Rev/Hour</p>
-                    <ChevronDown className={cn(
-                      "w-3 h-3 text-muted-foreground transition-transform duration-200",
-                      activeDrilldown === 'revPerHour' && "rotate-180"
-                    )} />
-                    <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Service Hours. Click for stylist breakdown." />
-                  </div>
-                </div>
-
-                {/* Daily Avg - only for multi-day ranges */}
-                {showDailyAvg && (
-                  <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/30">
+              <div className="mt-6 space-y-6">
+                {/* Row 1: First 3 cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
+                  {/* Transactions */}
+                  <div 
+                    className={cn(
+                      "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
+                      activeDrilldown === 'transactions'
+                        ? "border-primary/50 ring-1 ring-primary/20"
+                        : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                    )}
+                    onClick={() => toggleDrilldown('transactions')}
+                  >
                     <div className="flex justify-center mb-2">
-                      <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                      <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
                     <AnimatedBlurredAmount 
-                      value={Math.round(dailyAverage)}
+                      value={displayMetrics.totalTransactions}
+                      className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
+                    />
+                    <div className="flex items-center gap-1 justify-center mt-1">
+                      <p className="text-xs text-muted-foreground">Transactions</p>
+                      <ChevronDown className={cn(
+                        "w-3 h-3 text-muted-foreground transition-transform duration-200",
+                        activeDrilldown === 'transactions' && "rotate-180"
+                      )} />
+                      <MetricInfoTooltip description="Total number of completed sales transactions. Click for hourly breakdown." />
+                    </div>
+                  </div>
+                  
+                  {/* Avg Ticket */}
+                  <div 
+                    className={cn(
+                      "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
+                      activeDrilldown === 'avgTicket'
+                        ? "border-primary/50 ring-1 ring-primary/20"
+                        : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                    )}
+                    onClick={() => toggleDrilldown('avgTicket')}
+                  >
+                    <div className="flex justify-center mb-2">
+                      <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                    </div>
+                    <AnimatedBlurredAmount 
+                      value={Math.round(displayMetrics.averageTicket)}
                       prefix="$"
                       className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
                     />
                     <div className="flex items-center gap-1 justify-center mt-1">
-                      <p className="text-xs text-muted-foreground">Daily Avg</p>
-                      <MetricInfoTooltip description="Average daily revenue across days with recorded sales." />
+                      <p className="text-xs text-muted-foreground">Avg Ticket</p>
+                      <ChevronDown className={cn(
+                        "w-3 h-3 text-muted-foreground transition-transform duration-200",
+                        activeDrilldown === 'avgTicket' && "rotate-180"
+                      )} />
+                      <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Transactions. Click for distribution." />
                     </div>
                   </div>
-                )}
-
-                {/* Tips - Clickable for drill-down */}
-                <div 
-                  className={cn(
-                    "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
-                    tipsDrilldownOpen 
-                      ? "border-primary/50 ring-1 ring-primary/20" 
-                      : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
-                  )}
-                  onClick={handleTipsToggle}
-                >
-                  <div className="flex justify-center mb-2">
-                    <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                  
+                  {/* Rev/Hour */}
+                  <div 
+                    className={cn(
+                      "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group col-span-2 sm:col-span-1",
+                      activeDrilldown === 'revPerHour'
+                        ? "border-primary/50 ring-1 ring-primary/20"
+                        : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                    )}
+                    onClick={() => toggleDrilldown('revPerHour')}
+                  >
+                    <div className="flex justify-center mb-2">
+                      <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                    </div>
+                    <AnimatedBlurredAmount 
+                      value={Math.round(revenuePerHour)}
+                      prefix="$"
+                      className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
+                    />
+                    <div className="flex items-center gap-1 justify-center mt-1">
+                      <p className="text-xs text-muted-foreground">Rev/Hour</p>
+                      <ChevronDown className={cn(
+                        "w-3 h-3 text-muted-foreground transition-transform duration-200",
+                        activeDrilldown === 'revPerHour' && "rotate-180"
+                      )} />
+                      <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Service Hours. Click for stylist breakdown." />
+                    </div>
                   </div>
-                  <AnimatedBlurredAmount 
-                    value={metrics?.totalTips ?? 0}
-                    prefix="$"
-                    className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
-                  />
-                  <div className="flex items-center gap-1 justify-center mt-1">
-                    <p className="text-xs text-muted-foreground">Tips</p>
-                    <ChevronDown className={cn(
-                      "w-3 h-3 text-muted-foreground transition-transform duration-200",
-                      tipsDrilldownOpen && "rotate-180"
-                    )} />
-                    <MetricInfoTooltip description="Total tips collected from completed appointments. Click for stylist breakdown." />
+                </div>
+
+                {/* Row 2: Remaining cards span full width of row 1 */}
+                <div className={`grid ${showDailyAvg ? 'grid-cols-2' : 'grid-cols-1'} gap-6`}>
+                  {/* Daily Avg - only for multi-day ranges */}
+                  {showDailyAvg && (
+                    <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/30">
+                      <div className="flex justify-center mb-2">
+                        <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                      </div>
+                      <AnimatedBlurredAmount 
+                        value={Math.round(dailyAverage)}
+                        prefix="$"
+                        className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
+                      />
+                      <div className="flex items-center gap-1 justify-center mt-1">
+                        <p className="text-xs text-muted-foreground">Daily Avg</p>
+                        <MetricInfoTooltip description="Average daily revenue across days with recorded sales." />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tips */}
+                  <div 
+                    className={cn(
+                      "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
+                      tipsDrilldownOpen 
+                        ? "border-primary/50 ring-1 ring-primary/20" 
+                        : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                    )}
+                    onClick={handleTipsToggle}
+                  >
+                    <div className="flex justify-center mb-2">
+                      <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                    </div>
+                    <AnimatedBlurredAmount 
+                      value={metrics?.totalTips ?? 0}
+                      prefix="$"
+                      className="text-lg sm:text-xl md:text-2xl font-display tabular-nums"
+                    />
+                    <div className="flex items-center gap-1 justify-center mt-1">
+                      <p className="text-xs text-muted-foreground">Tips</p>
+                      <ChevronDown className={cn(
+                        "w-3 h-3 text-muted-foreground transition-transform duration-200",
+                        tipsDrilldownOpen && "rotate-180"
+                      )} />
+                      <MetricInfoTooltip description="Total tips collected from completed appointments. Click for stylist breakdown." />
+                    </div>
                   </div>
                 </div>
               </div>
