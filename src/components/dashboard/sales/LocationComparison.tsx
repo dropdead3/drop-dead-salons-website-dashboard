@@ -217,7 +217,7 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
                       style={{
                         width: `${pct}%`,
                         backgroundColor: entry.color,
-                        color: isOthers ? 'hsl(var(--muted-foreground))' : 'hsl(var(--background))',
+                        color: 'hsl(var(--foreground))',
                         minWidth: pct > 5 ? undefined : '24px',
                       }}
                     >
@@ -225,11 +225,11 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
                       <div 
                         className="absolute inset-0 pointer-events-none"
                         style={{
-                          background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 60%)',
+                          background: 'linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 60%)',
                         }}
                       />
                       <span className="relative z-10 font-display tracking-wide">
-                        {pct >= 15 && `${entry.percentage}%`}
+                        {pct >= 12 && `${entry.percentage}%`}
                       </span>
                     </div>
                   </TooltipTrigger>
