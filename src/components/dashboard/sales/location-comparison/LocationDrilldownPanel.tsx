@@ -25,15 +25,26 @@ function useLocationTeamSize(locationId: string, enabled: boolean) {
     queryKey: ['location-team-size', locationId],
     queryFn: async () => {
       // Service providers: commission + independent stylists at this location
-      const { data, error } = await supabase
+      // Check both location_ids array and legacy location_id field
+      const { data: byArray } = await supabase
         .from('employee_profiles')
         .select('user_id')
         .eq('is_active', true)
         .in('stylist_type', ['commission', 'independent'])
         .contains('location_ids', [locationId]);
 
-      if (error) throw error;
-      return data?.length || 0;
+      const { data: byLegacy } = await supabase
+        .from('employee_profiles')
+        .select('user_id')
+        .eq('is_active', true)
+        .in('stylist_type', ['commission', 'independent'])
+        .eq('location_id', locationId);
+
+      // Deduplicate by user_id
+      const allIds = new Set<string>();
+      byArray?.forEach(r => allIds.add(r.user_id));
+      byLegacy?.forEach(r => allIds.add(r.user_id));
+      return allIds.size;
     },
     enabled,
     staleTime: 5 * 60 * 1000,
