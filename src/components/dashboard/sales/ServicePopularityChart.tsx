@@ -24,6 +24,7 @@ let barIdCounter = 0;
 const AnimatedBar = (props: any) => {
   const { x, y, width, height, fill, stroke, strokeWidth, index } = props;
   const [animWidth, setAnimWidth] = useState(0);
+  const [clipId] = useState(() => `bar-clip-${barIdCounter++}`);
 
   useEffect(() => {
     const delay = (index || 0) * 60;
@@ -31,27 +32,37 @@ const AnimatedBar = (props: any) => {
     return () => clearTimeout(t);
   }, [width, index]);
 
-  const w = animWidth;
+  const w = width || 0;
   const h = height || 0;
   const r = Math.min(4, w / 2, h / 2);
 
   if (h <= 0) return null;
 
-  // Build a path with flat left edges and rounded right edges
-  const path = w > 0
+  // Rounded-right shape used as clip mask
+  const clipPath = w > 0
     ? `M${x},${y} H${x + w - r} Q${x + w},${y} ${x + w},${y + r} V${y + h - r} Q${x + w},${y + h} ${x + w - r},${y + h} H${x} Z`
-    : '';
+    : `M${x},${y} H${x} V${y + h} H${x} Z`;
 
   return (
-    <path
-      d={path}
-      fill={fill}
-      stroke={w > 0 ? stroke : 'none'}
-      strokeWidth={strokeWidth}
-      style={{
-        transition: 'all 800ms cubic-bezier(0.25, 1, 0.5, 1)',
-      }}
-    />
+    <g>
+      <defs>
+        <clipPath id={clipId}>
+          <path d={clipPath} />
+        </clipPath>
+      </defs>
+      {/* Animated rect whose width grows — clipped to the rounded shape */}
+      <rect
+        x={x}
+        y={y}
+        width={animWidth}
+        height={h}
+        fill={fill}
+        stroke={animWidth > 0 ? stroke : 'none'}
+        strokeWidth={strokeWidth}
+        clipPath={`url(#${clipId})`}
+        style={{ transition: 'width 800ms cubic-bezier(0.25, 1, 0.5, 1)' }}
+      />
+    </g>
   );
 };
 
