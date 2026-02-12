@@ -51,6 +51,7 @@ import { CommissionCalculator } from '@/components/dashboard/sales/CommissionCal
 import { SalesReportPDF } from '@/components/dashboard/sales/SalesReportPDF';
 import { CommissionTiersEditor } from '@/components/dashboard/sales/CommissionTiersEditor';
 import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
+import { GoalTrackerCard } from '@/components/dashboard/sales/GoalTrackerCard';
 import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { GrowthForecastCard } from '@/components/dashboard/sales/GrowthForecastCard';
@@ -338,6 +339,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         </TabsContent>
 
         <TabsContent value="goals" className="mt-6 space-y-6">
+          <GoalTrackerCard />
           <PinnableCard elementKey="team_goals" elementName="Team Goals" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <TeamGoalsCard currentRevenue={metrics?.totalRevenue || 0} />
           </PinnableCard>
