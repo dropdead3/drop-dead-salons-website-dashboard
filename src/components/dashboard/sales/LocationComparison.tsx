@@ -17,13 +17,15 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
-const COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
+const COLOR_VARS = [
+  '--chart-1',
+  '--chart-2',
+  '--chart-3',
+  '--chart-4',
+  '--chart-5',
 ];
+
+const COLORS = COLOR_VARS.map(v => `hsl(var(${v}))`);
 
 const MAX_BAR_SEGMENTS = 5;
 const MAX_VISIBLE_OTHERS = 5;
@@ -69,6 +71,7 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
         ? ((location.totalRevenue / totalRevenue) * 100).toFixed(0)
         : '0',
       color: COLORS[idx % COLORS.length],
+      colorVar: COLOR_VARS[idx % COLOR_VARS.length],
     }));
   }, [sortedLocations, totalRevenue]);
 
@@ -218,8 +221,8 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
                         width: `${pct}%`,
                         background: isOthers
                           ? 'hsl(var(--muted))'
-                          : `linear-gradient(180deg, ${entry.color.replace(')', ' / 0.7)')} 0%, ${entry.color.replace(')', ' / 0.5)')} 40%, ${entry.color.replace(')', ' / 0.35)')} 100%)`,
-                        color: isOthers ? 'hsl(var(--muted-foreground))' : 'hsl(var(--background))',
+                          : `linear-gradient(180deg, hsl(var(${(entry as any).colorVar}) / 0.7) 0%, hsl(var(${(entry as any).colorVar}) / 0.5) 40%, hsl(var(${(entry as any).colorVar}) / 0.35) 100%)`,
+                        color: isOthers ? 'hsl(var(--muted-foreground))' : 'hsl(var(--foreground))',
                         minWidth: pct > 5 ? undefined : '24px',
                       }}
                     >
