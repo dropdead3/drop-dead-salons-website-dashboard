@@ -180,7 +180,43 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                         borderRadius: '8px',
                       }}
                     />
-                    <Bar dataKey="totalRevenue" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="totalRevenue" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]}>
+                      <LabelList
+                        dataKey="totalRevenue"
+                        position="insideRight"
+                        content={({ x, y, width, height, value }: any) => {
+                          const barH = height || 0;
+                          const padY = 3;
+                          const padX = 4;
+                          const badgeH = barH - padY * 2;
+                          const pct = totalRevenue > 0 ? ((value / totalRevenue) * 100).toFixed(0) : '0';
+                          const label = `$${Number(value).toLocaleString()} · ${pct}%`;
+                          const badgeW = Math.max(label.length * 7 + 12, 50);
+                          const bx = (x || 0) + (width || 0) - badgeW - padX;
+                          const by = (y || 0) + padY;
+                          return (
+                            <g>
+                              <rect
+                                x={bx}
+                                y={by}
+                                width={badgeW}
+                                height={badgeH}
+                                rx={3}
+                                fill="hsl(var(--background) / 0.8)"
+                              />
+                              <text
+                                x={bx + badgeW / 2}
+                                y={by + badgeH / 2 + 4}
+                                textAnchor="middle"
+                                style={{ fontSize: 11, fontWeight: 500, fill: 'hsl(var(--foreground))' }}
+                              >
+                                {label}
+                              </text>
+                            </g>
+                          );
+                        }}
+                      />
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               )}
