@@ -6,6 +6,7 @@ import { TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { LocationDrilldownPanel } from './LocationDrilldownPanel';
+import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 
 export interface LocationCardData {
   location_id: string;
@@ -43,9 +44,11 @@ export function LocationComparisonCard({
     ? Math.round(location.totalRevenue / location.totalTransactions)
     : 0;
 
-  const revTotal = location.serviceRevenue + location.productRevenue;
-  const servicePct = revTotal > 0 ? Math.round((location.serviceRevenue / revTotal) * 100) : 0;
-  const productPct = 100 - servicePct;
+  const { data: attachmentData } = useRetailAttachmentRate({
+    dateFrom,
+    dateTo,
+    locationId: location.location_id,
+  });
 
   return (
     <div
@@ -107,34 +110,28 @@ export function LocationComparisonCard({
           />
         </div>
 
-        {/* Service vs Product ratio mini bar */}
-        {revTotal > 0 && (
+        {/* Retail Attachment Rate */}
+        {attachmentData && (
           <div className="space-y-1 mt-2">
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>Services vs Products</span>
-              <span>{servicePct}% / {productPct}%</span>
+              <span>Attach Rate</span>
+              <span>{attachmentData.attachmentRate}%</span>
             </div>
             <TooltipProvider delayDuration={100}>
-              <div className="h-1.5 w-full rounded-full overflow-hidden flex bg-secondary">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div
-                      className="h-full transition-all"
-                      style={{ width: `${servicePct}%`, backgroundColor: color }}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div>
+                    <Progress
+                      value={attachmentData.attachmentRate}
+                      className="h-1.5"
+                      indicatorStyle={{ backgroundColor: color }}
                     />
-                  </TooltipTrigger>
-                  <TooltipContent>Services: {servicePct}%</TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <div
-                      className="h-full bg-muted-foreground/25 transition-all"
-                      style={{ width: `${productPct}%` }}
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent>Products: {productPct}%</TooltipContent>
-                </Tooltip>
-              </div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {attachmentData.attachedTransactions} of {attachmentData.serviceTransactions} service transactions included retail
+                </TooltipContent>
+              </Tooltip>
             </TooltipProvider>
           </div>
         )}
