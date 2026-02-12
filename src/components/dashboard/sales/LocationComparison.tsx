@@ -204,31 +204,25 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
 
         {/* Revenue Share Bar */}
         <div className="space-y-2">
-          <div className="flex h-10 rounded-full overflow-hidden bg-muted/30">
-            {[...displayData, ...(othersEntry ? [othersEntry] : [])].map((entry) => {
+           <div className="flex h-9 rounded-lg overflow-hidden bg-muted/20 border border-border/40">
+            {[...displayData, ...(othersEntry ? [othersEntry] : [])].map((entry, idx) => {
               const pct = totalRevenue > 0 ? (entry.value / totalRevenue) * 100 : 0;
               if (pct <= 0) return null;
               const isOthers = entry.name === 'Others';
+              const isLast = idx === displayData.length - 1 && !othersEntry || (isOthers);
               return (
                 <Tooltip key={entry.name}>
                   <TooltipTrigger asChild>
                     <div
-                      className="h-full flex items-center justify-center text-xs font-medium transition-all cursor-default relative overflow-hidden"
+                      className="h-full flex items-center justify-center text-xs transition-all cursor-default relative"
                       style={{
                         width: `${pct}%`,
-                        backgroundColor: entry.color,
-                        color: 'hsl(var(--foreground))',
+                        background: `linear-gradient(90deg, ${entry.color}50 0%, ${entry.color}90 100%)`,
+                        borderRight: isLast ? 'none' : `1px solid hsl(var(--border) / 0.3)`,
                         minWidth: pct > 5 ? undefined : '24px',
                       }}
                     >
-                      {/* Glass sheen overlay */}
-                      <div 
-                        className="absolute inset-0 pointer-events-none"
-                        style={{
-                          background: 'linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0) 60%)',
-                        }}
-                      />
-                      <span className="relative z-10 font-display tracking-wide">
+                      <span className="relative z-10 font-display tracking-wide text-foreground text-[11px]">
                         {pct >= 12 && `${entry.percentage}%`}
                       </span>
                     </div>
