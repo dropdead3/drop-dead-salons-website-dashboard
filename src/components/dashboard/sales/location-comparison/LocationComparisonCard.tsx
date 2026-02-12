@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
@@ -41,6 +42,10 @@ export function LocationComparisonCard({
   const avgTicket = location.totalTransactions > 0
     ? Math.round(location.totalRevenue / location.totalTransactions)
     : 0;
+
+  const revTotal = location.serviceRevenue + location.productRevenue;
+  const servicePct = revTotal > 0 ? Math.round((location.serviceRevenue / revTotal) * 100) : 0;
+  const productPct = 100 - servicePct;
 
   return (
     <div
@@ -89,14 +94,50 @@ export function LocationComparisonCard({
           <BlurredAmount>${location.totalRevenue.toLocaleString()}</BlurredAmount>
         </p>
 
-        {/* Share bar */}
+        {/* Share bar — colored to match location */}
         <div className="space-y-1">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Share of total</span>
             <span>{Math.round(location.sharePercent)}%</span>
           </div>
-          <Progress value={location.sharePercent} className="h-1.5" />
+          <Progress
+            value={location.sharePercent}
+            className="h-1.5"
+            indicatorStyle={{ backgroundColor: color }}
+          />
         </div>
+
+        {/* Service vs Product ratio mini bar */}
+        {revTotal > 0 && (
+          <div className="space-y-1 mt-2">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Services vs Products</span>
+              <span>{servicePct}% / {productPct}%</span>
+            </div>
+            <TooltipProvider delayDuration={100}>
+              <div className="h-1.5 w-full rounded-full overflow-hidden flex bg-secondary">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className="h-full transition-all"
+                      style={{ width: `${servicePct}%`, backgroundColor: color }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>Services: {servicePct}%</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div
+                      className="h-full bg-muted-foreground/25 transition-all"
+                      style={{ width: `${productPct}%` }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>Products: {productPct}%</TooltipContent>
+                </Tooltip>
+              </div>
+            </TooltipProvider>
+          </div>
+        )}
 
         {/* Metric grid */}
         <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-border/30 text-center">

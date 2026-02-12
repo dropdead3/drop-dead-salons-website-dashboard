@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -182,14 +182,20 @@ export function LocationComparison({ locations, isLoading, filterContext, dateFr
               : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
           )}>
             {cardData.map((loc, i) => (
-              <LocationComparisonCard
+              <motion.div
                 key={loc.location_id}
-                location={loc}
-                gapPercent={gapPercent}
-                dateFrom={dateFrom}
-                dateTo={dateTo}
-                color={LOCATION_COLORS[i % LOCATION_COLORS.length]}
-              />
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08, duration: 0.35, ease: 'easeOut' }}
+              >
+                <LocationComparisonCard
+                  location={loc}
+                  gapPercent={gapPercent}
+                  dateFrom={dateFrom}
+                  dateTo={dateTo}
+                  color={LOCATION_COLORS[i % LOCATION_COLORS.length]}
+                />
+              </motion.div>
             ))}
           </div>
         ) : (
