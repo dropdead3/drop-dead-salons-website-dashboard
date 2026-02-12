@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -6,6 +6,7 @@ import {
   TrendingUp,
   TrendingDown,
   MapPin,
+  ChevronDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -13,6 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 const COLORS = [
@@ -22,6 +24,9 @@ const COLORS = [
   'hsl(var(--chart-4))',
   'hsl(var(--chart-5))',
 ];
+
+const MAX_BAR_SEGMENTS = 5;
+const MAX_VISIBLE_OTHERS = 5;
 
 interface LocationData {
   location_id: string;
@@ -41,6 +46,9 @@ interface LocationComparisonProps {
 }
 
 export function LocationComparison({ locations, isLoading, filterContext }: LocationComparisonProps) {
+  const [showOthers, setShowOthers] = useState(false);
+  const [showAllOthers, setShowAllOthers] = useState(false);
+
   const sortedLocations = useMemo(() => {
     return [...locations].sort((a, b) => b.totalRevenue - a.totalRevenue);
   }, [locations]);
@@ -59,10 +67,25 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
       value: location.totalRevenue,
       percentage: totalRevenue > 0 
         ? ((location.totalRevenue / totalRevenue) * 100).toFixed(0)
-        : 0,
+        : '0',
       color: COLORS[idx % COLORS.length],
     }));
   }, [sortedLocations, totalRevenue]);
+
+  const { displayData, othersEntry, othersLocations } = useMemo(() => {
+    const top = chartData.slice(0, MAX_BAR_SEGMENTS);
+    const rest = chartData.slice(MAX_BAR_SEGMENTS);
+    const othersValue = rest.reduce((sum, l) => sum + l.value, 0);
+    const othersPct = totalRevenue > 0 ? ((othersValue / totalRevenue) * 100).toFixed(0) : '0';
+    const entry = rest.length > 0 ? {
+      name: 'Others',
+      value: othersValue,
+      percentage: othersPct,
+      color: 'hsl(var(--muted-foreground))',
+      count: rest.length,
+    } : null;
+    return { displayData: top, othersEntry: entry, othersLocations: rest };
+  }, [chartData, totalRevenue]);
 
   if (isLoading) {
     return (
@@ -182,9 +205,10 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
         {/* Revenue Share Bar */}
         <div className="space-y-2">
           <div className="flex h-8 rounded-lg overflow-hidden">
-            {chartData.map((entry) => {
+            {[...displayData, ...(othersEntry ? [othersEntry] : [])].map((entry) => {
               const pct = totalRevenue > 0 ? (entry.value / totalRevenue) * 100 : 0;
               if (pct <= 0) return null;
+              const isOthers = entry.name === 'Others';
               return (
                 <Tooltip key={entry.name}>
                   <TooltipTrigger asChild>
@@ -193,7 +217,7 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
                       style={{
                         width: `${pct}%`,
                         backgroundColor: entry.color,
-                        color: 'hsl(var(--background))',
+                        color: isOthers ? 'hsl(var(--muted-foreground))' : 'hsl(var(--background))',
                         minWidth: pct > 5 ? undefined : '24px',
                       }}
                     >
@@ -201,15 +225,19 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{entry.name}: ${entry.value.toLocaleString()} ({entry.percentage}%)</p>
+                    {isOthers ? (
+                      <p>{'count' in entry ? (entry as any).count : 0} other locations: ${entry.value.toLocaleString()} ({entry.percentage}%)</p>
+                    ) : (
+                      <p>{entry.name}: ${entry.value.toLocaleString()} ({entry.percentage}%)</p>
+                    )}
                   </TooltipContent>
                 </Tooltip>
               );
             })}
           </div>
           {/* Legend */}
-          <div className="flex items-center gap-4">
-            {chartData.map((entry) => (
+          <div className="flex items-center gap-4 flex-wrap">
+            {[...displayData, ...(othersEntry ? [othersEntry] : [])].map((entry) => (
               <div key={entry.name} className="flex items-center gap-1.5 text-xs">
                 <div 
                   className="w-2.5 h-2.5 rounded-full shrink-0" 
@@ -221,6 +249,53 @@ export function LocationComparison({ locations, isLoading, filterContext }: Loca
             ))}
           </div>
         </div>
+
+        {/* Others Expandable Detail */}
+        {othersEntry && othersLocations.length > 0 && (
+          <div className="border rounded-lg">
+            <button
+              onClick={() => setShowOthers(!showOthers)}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <span>{othersEntry.count} other locations — ${othersEntry.value.toLocaleString()}</span>
+              <ChevronDown className={cn('w-4 h-4 transition-transform', showOthers && 'rotate-180')} />
+            </button>
+            {showOthers && (
+              <div className="border-t px-4 py-2">
+                {(() => {
+                  const visibleList = showAllOthers ? othersLocations : othersLocations.slice(0, MAX_VISIBLE_OTHERS);
+                  const useScroll = showAllOthers && othersLocations.length > 8;
+                  const rows = (
+                    <div className="space-y-1.5">
+                      {visibleList.map((loc) => (
+                        <div key={loc.name} className="flex items-center justify-between py-1 text-sm">
+                          <span className="truncate">{loc.name}</span>
+                          <span className="text-muted-foreground tabular-nums ml-4 shrink-0">
+                            ${loc.value.toLocaleString()} ({loc.percentage}%)
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                  return (
+                    <>
+                      {useScroll ? <ScrollArea className="max-h-[280px]">{rows}</ScrollArea> : rows}
+                      {othersLocations.length > MAX_VISIBLE_OTHERS && (
+                        <button
+                          onClick={() => setShowAllOthers(!showAllOthers)}
+                          className="mt-2 text-xs text-primary hover:underline flex items-center gap-1"
+                        >
+                          <ChevronDown className={cn('w-3 h-3 transition-transform', showAllOthers && 'rotate-180')} />
+                          {showAllOthers ? 'Show less' : `Show all ${othersLocations.length} locations`}
+                        </button>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
