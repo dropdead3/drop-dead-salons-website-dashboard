@@ -24,6 +24,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { ShareToDMDialog } from './ShareToDMDialog';
+import { ShareToChannelDialog } from '@/components/dashboard/campaigns/ShareToChannelDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -150,10 +151,12 @@ export function ImplementPlanDialog({
   // Distribution options (post-creation)
   const [alsoCreateTasks, setAlsoCreateTasks] = useState(false);
   const [shareDM, setShareDM] = useState(false);
+  const [shareChannel, setShareChannel] = useState(false);
   const [copyClipboard, setCopyClipboard] = useState(false);
 
   // DM sharing sub-dialog
   const [dmDialogOpen, setDmDialogOpen] = useState(false);
+  const [channelDialogOpen, setChannelDialogOpen] = useState(false);
 
   // Execution state
   const [executing, setExecuting] = useState(false);
@@ -186,6 +189,7 @@ export function ImplementPlanDialog({
       setNoteOpen(false);
       setAlsoCreateTasks(false);
       setShareDM(false);
+      setShareChannel(false);
       setCopyClipboard(false);
       setExecuted(false);
       setResults([]);
@@ -288,6 +292,12 @@ export function ImplementPlanDialog({
       if (shareDM) {
         setDmDialogOpen(true);
         actionResults.push('DM sharing opened');
+      }
+
+      // 5. Open channel dialog
+      if (shareChannel) {
+        setChannelDialogOpen(true);
+        actionResults.push('Channel sharing opened');
       }
 
       setResults(actionResults);
@@ -465,6 +475,15 @@ export function ImplementPlanDialog({
 
                   <label className="flex items-center gap-3 p-2.5 rounded-lg border border-border/30 hover:border-border/50 cursor-pointer transition-colors">
                     <Checkbox
+                      checked={shareChannel}
+                      onCheckedChange={(v) => setShareChannel(!!v)}
+                    />
+                    <Hash className="w-4 h-4 text-primary shrink-0" />
+                    <span className="text-sm">Post to a channel</span>
+                  </label>
+
+                  <label className="flex items-center gap-3 p-2.5 rounded-lg border border-border/30 hover:border-border/50 cursor-pointer transition-colors">
+                    <Checkbox
                       checked={copyClipboard}
                       onCheckedChange={(v) => setCopyClipboard(!!v)}
                     />
@@ -511,6 +530,12 @@ export function ImplementPlanDialog({
         onOpenChange={setDmDialogOpen}
         planTitle={campaignName}
         planContent={formatPlanForDM()}
+      />
+      <ShareToChannelDialog
+        open={channelDialogOpen}
+        onOpenChange={setChannelDialogOpen}
+        campaignName={campaignName}
+        content={formatPlanForDM()}
       />
     </>
   );

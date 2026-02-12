@@ -198,3 +198,80 @@ export function useUpdateCampaignTaskStatus() {
     },
   });
 }
+
+export function useDeleteCampaign() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('action_campaigns')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['action-campaigns'] });
+      toast.success('Campaign deleted');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to delete campaign: ${error.message}`);
+    },
+  });
+}
+
+export function useUpdateCampaign() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; name?: string; description?: string; leadership_note?: string }) => {
+      const { error } = await supabase
+        .from('action_campaigns')
+        .update(updates)
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['action-campaigns'] });
+      queryClient.invalidateQueries({ queryKey: ['action-campaign'] });
+    },
+  });
+}
+
+export function useAddCampaignTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (input: { campaign_id: string; title: string; priority?: string; sort_order?: number }) => {
+      const { error } = await supabase
+        .from('action_campaign_tasks')
+        .insert({
+          campaign_id: input.campaign_id,
+          title: input.title,
+          priority: input.priority || 'medium',
+          sort_order: input.sort_order || 0,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['action-campaign'] });
+    },
+  });
+}
+
+export function useDeleteCampaignTask() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('action_campaign_tasks')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['action-campaign'] });
+    },
+  });
+}

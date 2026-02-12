@@ -5,16 +5,33 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  ArrowLeft, Rocket, CheckCircle2, Archive, Loader2, 
-  MessageSquare, Hash, Share2, Copy, Calendar, Clock,
-  Circle, PlayCircle,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+  ArrowLeft, Rocket, CheckCircle2, Archive, Loader2,
+  MessageSquare, Hash, Copy, Calendar, Clock,
+  Circle, PlayCircle, Trash2, Plus, Pencil, RotateCcw,
 } from 'lucide-react';
 import {
   useActionCampaignWithTasks,
   useUpdateCampaignStatus,
   useUpdateCampaignTaskStatus,
+  useDeleteCampaign,
+  useUpdateCampaign,
+  useAddCampaignTask,
+  useDeleteCampaignTask,
 } from '@/hooks/useActionCampaigns';
 import { ShareToDMDialog } from '@/components/dashboard/sales/ShareToDMDialog';
 import { ShareToChannelDialog } from '@/components/dashboard/campaigns/ShareToChannelDialog';
@@ -46,9 +63,20 @@ export default function CampaignDetail() {
   const { data: campaign, isLoading } = useActionCampaignWithTasks(id || null);
   const updateStatus = useUpdateCampaignStatus();
   const updateTaskStatus = useUpdateCampaignTaskStatus();
+  const deleteCampaign = useDeleteCampaign();
+  const updateCampaign = useUpdateCampaign();
+  const addTask = useAddCampaignTask();
+  const deleteTask = useDeleteCampaignTask();
 
   const [dmOpen, setDmOpen] = useState(false);
   const [channelOpen, setChannelOpen] = useState(false);
+
+  // Inline edit states
+  const [editingName, setEditingName] = useState(false);
+  const [nameValue, setNameValue] = useState('');
+  const [editingNote, setEditingNote] = useState(false);
+  const [noteValue, setNoteValue] = useState('');
+  const [newTaskTitle, setNewTaskTitle] = useState('');
 
   if (isLoading) {
     return (
@@ -91,6 +119,34 @@ export default function CampaignDetail() {
     toast.success('Copied to clipboard');
   };
 
+  const handleDelete = () => {
+    deleteCampaign.mutate(campaign.id, {
+      onSuccess: () => navigate('/dashboard/campaigns'),
+    });
+  };
+
+  const handleSaveName = () => {
+    if (nameValue.trim() && nameValue.trim() !== campaign.name) {
+      updateCampaign.mutate({ id: campaign.id, name: nameValue.trim() });
+    }
+    setEditingName(false);
+  };
+
+  const handleSaveNote = () => {
+    updateCampaign.mutate({ id: campaign.id, leadership_note: noteValue.trim() || undefined });
+    setEditingNote(false);
+  };
+
+  const handleAddTask = () => {
+    if (!newTaskTitle.trim()) return;
+    addTask.mutate({
+      campaign_id: campaign.id,
+      title: newTaskTitle.trim(),
+      sort_order: tasks.length,
+    });
+    setNewTaskTitle('');
+  };
+
   return (
     <DashboardLayout>
       <div className="p-4 md:p-6 lg:p-8 space-y-6 max-w-4xl mx-auto">
@@ -107,11 +163,29 @@ export default function CampaignDetail() {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <Rocket className="w-4 h-4 text-primary shrink-0" />
-              <h1 className="text-xl md:text-2xl font-display tracking-wide truncate">
-                {campaign.name}
-              </h1>
+              {editingName ? (
+                <Input
+                  value={nameValue}
+                  onChange={(e) => setNameValue(e.target.value)}
+                  onBlur={handleSaveName}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+                  className="text-xl font-display tracking-wide h-auto py-0 px-1"
+                  autoFocus
+                />
+              ) : (
+                <h1
+                  className="text-xl md:text-2xl font-display tracking-wide truncate cursor-pointer hover:text-primary/80 transition-colors"
+                  onClick={() => {
+                    setNameValue(campaign.name);
+                    setEditingName(true);
+                  }}
+                  title="Click to edit"
+                >
+                  {campaign.name}
+                </h1>
+              )}
             </div>
-            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               <Badge variant="outline" className="text-[11px] capitalize">
                 {campaign.status}
               </Badge>
@@ -121,10 +195,10 @@ export default function CampaignDetail() {
                   {campaign.goal_period}
                 </span>
               )}
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                Created {format(new Date(campaign.created_at), 'MMM d, yyyy')}
-              </span>
+              <Badge variant="outline" className="text-[10px] gap-1">
+                <Calendar className="w-2.5 h-2.5" />
+                {format(new Date(campaign.created_at), 'MMM d')}
+              </Badge>
             </div>
           </div>
         </div>
@@ -136,7 +210,7 @@ export default function CampaignDetail() {
               <span className="text-sm font-medium">{doneCount}/{tasks.length} complete</span>
               <span className="text-xs text-muted-foreground">{progress}%</span>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCopy} title="Copy">
                 <Copy className="w-3.5 h-3.5" />
               </Button>
@@ -168,18 +242,78 @@ export default function CampaignDetail() {
                   Archive
                 </Button>
               )}
+              {(campaign.status === 'completed' || campaign.status === 'archived') && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-primary text-xs"
+                  onClick={() => updateStatus.mutate({ id: campaign.id, status: 'active' })}
+                >
+                  <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                  Reactivate
+                </Button>
+              )}
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/60 hover:text-destructive" title="Delete campaign">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete "{campaign.name}" and all its tasks. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </div>
           <Progress value={progress} className="h-2" />
         </Card>
 
         {/* Leadership note */}
-        {campaign.leadership_note && (
-          <Card className="p-4 rounded-2xl border-primary/10 bg-primary/5">
-            <p className="text-xs font-medium text-muted-foreground mb-1">Leadership Note</p>
-            <p className="text-sm">{campaign.leadership_note}</p>
-          </Card>
-        )}
+        <Card className="p-4 rounded-2xl border-primary/10 bg-primary/5">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-xs font-medium text-muted-foreground">Leadership Note</p>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => {
+                setNoteValue(campaign.leadership_note || '');
+                setEditingNote(!editingNote);
+              }}
+            >
+              <Pencil className="w-3 h-3" />
+            </Button>
+          </div>
+          {editingNote ? (
+            <div className="space-y-2">
+              <Textarea
+                value={noteValue}
+                onChange={(e) => setNoteValue(e.target.value)}
+                rows={2}
+                className="text-sm resize-none"
+                placeholder="Add context for your team..."
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <Button size="sm" variant="ghost" onClick={() => setEditingNote(false)}>Cancel</Button>
+                <Button size="sm" onClick={handleSaveNote}>Save</Button>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm">{campaign.leadership_note || <span className="text-muted-foreground/60 italic">No note added</span>}</p>
+          )}
+        </Card>
 
         {/* Tasks */}
         <div className="space-y-2">
@@ -188,7 +322,7 @@ export default function CampaignDetail() {
             <h2 className="font-display text-xs tracking-[0.15em]">ACTION STEPS</h2>
           </div>
 
-          {tasks.map((task, i) => {
+          {tasks.map((task) => {
             const Icon = taskStatusIcon[task.status] || Circle;
             return (
               <Card
@@ -229,23 +363,54 @@ export default function CampaignDetail() {
                       </p>
                     )}
                   </div>
-                  <Select
-                    value={task.status}
-                    onValueChange={(v) => updateTaskStatus.mutate({ id: task.id, status: v })}
-                  >
-                    <SelectTrigger className="w-[120px] h-7 text-[11px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="not_started">Not Started</SelectItem>
-                      <SelectItem value="in_progress">In Progress</SelectItem>
-                      <SelectItem value="done">Done</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center gap-1">
+                    <Select
+                      value={task.status}
+                      onValueChange={(v) => updateTaskStatus.mutate({ id: task.id, status: v })}
+                    >
+                      <SelectTrigger className="w-[120px] h-7 text-[11px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="not_started">Not Started</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="done">Done</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive/40 hover:text-destructive"
+                      onClick={() => deleteTask.mutate(task.id)}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
                 </div>
               </Card>
             );
           })}
+
+          {/* Add task row */}
+          <div className="flex items-center gap-2 pt-1">
+            <Plus className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+            <Input
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
+              placeholder="Add a task..."
+              className="text-sm h-9 border-dashed"
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleAddTask}
+              disabled={!newTaskTitle.trim()}
+              className="shrink-0 text-xs"
+            >
+              Add
+            </Button>
+          </div>
         </div>
       </div>
 

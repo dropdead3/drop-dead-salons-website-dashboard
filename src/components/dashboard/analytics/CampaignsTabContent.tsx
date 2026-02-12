@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Rocket, CheckCircle2, Archive, ChevronRight, Target, Loader2 } from 'lucide-react';
+import { Rocket, CheckCircle2, Archive, ChevronRight, Target, Loader2, Calendar } from 'lucide-react';
 import { useActionCampaigns } from '@/hooks/useActionCampaigns';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -126,9 +126,10 @@ export function CampaignsTabContent() {
                         <div className="flex items-center gap-2 mt-1">
                           <Progress value={progress} className="h-1 flex-1 max-w-[120px]" />
                           <span className="text-[11px] text-muted-foreground">{counts.done}/{counts.total}</span>
-                          <span className="text-[11px] text-muted-foreground/60">
+                          <Badge variant="outline" className="text-[10px] gap-1">
+                            <Calendar className="w-2.5 h-2.5" />
                             {format(new Date(campaign.created_at), 'MMM d')}
-                          </span>
+                          </Badge>
                         </div>
                       </div>
                       <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
