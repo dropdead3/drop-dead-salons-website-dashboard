@@ -516,10 +516,6 @@ export function AggregateSalesCard({
               />
               <div className="flex items-center gap-1 justify-center mt-2">
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <ChevronDown className={cn(
-                  "w-3.5 h-3.5 text-muted-foreground transition-all duration-200",
-                  activeDrilldown === 'revenue' ? "rotate-180 opacity-100" : "opacity-0 group-hover/revenue:opacity-100"
-                )} />
                 <MetricInfoTooltip description="Sum of all service and product sales. Tips are excluded. Click for category breakdown." />
               </div>
               {(dateRange === 'today' || dateRange === 'todayToEom') && (
@@ -584,6 +580,13 @@ export function AggregateSalesCard({
                   />
                 </div>
               )}
+              {/* Bottom center chevron indicator */}
+              <div className="flex justify-center mt-3">
+                <ChevronDown className={cn(
+                  "w-4 h-4 text-muted-foreground transition-all duration-200",
+                  activeDrilldown === 'revenue' ? "rotate-180 opacity-100" : "opacity-0 group-hover/revenue:opacity-100"
+                )} />
+              </div>
             </div>
             
             {/* Services & Products Sub-cards */}
