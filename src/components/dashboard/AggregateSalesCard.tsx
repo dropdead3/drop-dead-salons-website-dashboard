@@ -492,8 +492,8 @@ export function AggregateSalesCard({
         {/* KPIs with Trends */}
         <div className="lg:col-span-2">
           {/* Hero: Total Revenue with Breakdown */}
-          <div className="bg-muted/30 dark:bg-card rounded-xl p-4 sm:p-6 border border-border/40 relative">
-            <p className="absolute top-3 left-4 sm:left-6 text-xs text-muted-foreground">
+          <div className="bg-muted/30 dark:bg-card rounded-xl p-4 sm:p-6 border border-border/40">
+            <p className="text-xs text-muted-foreground mb-2">
               {isAllLocations ? 'All locations combined' : selectedLocationName || 'Loading...'}
             </p>
             {/* Total Revenue - Hero */}
