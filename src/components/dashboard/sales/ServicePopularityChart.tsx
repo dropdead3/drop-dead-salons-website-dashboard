@@ -93,8 +93,8 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                     <YAxis 
                       type="category" 
                       dataKey="name" 
-                      width={200}
-                      tick={{ fontSize: 11 }}
+                      width={220}
+                      tick={{ fontSize: 13 }}
                     />
                     <Tooltip
                       formatter={(value: number, name: string) => [
@@ -128,8 +128,8 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                     <YAxis 
                       type="category" 
                       dataKey="name" 
-                      width={200}
-                      tick={{ fontSize: 11 }}
+                      width={220}
+                      tick={{ fontSize: 13 }}
                     />
                     <Tooltip
                       formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
