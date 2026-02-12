@@ -13,6 +13,12 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { format, addDays } from 'date-fns';
 import { ImplementPlanDialog } from './ImplementPlanDialog';
 
+interface SelectedTask {
+  title: string;
+  description: string;
+  dueDays: number;
+}
+
 interface RecoveryPlanActionsProps {
   title: string;
   content: string;
@@ -21,6 +27,7 @@ interface RecoveryPlanActionsProps {
   targetRevenue?: number;
   currentRevenue?: number;
   shortfall?: number;
+  selectedTasks?: SelectedTask[];
 }
 
 export function RecoveryPlanActions({
@@ -31,6 +38,7 @@ export function RecoveryPlanActions({
   targetRevenue,
   currentRevenue,
   shortfall,
+  selectedTasks,
 }: RecoveryPlanActionsProps) {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
@@ -192,6 +200,7 @@ export function RecoveryPlanActions({
         planTitle={title}
         planContent={content}
         goalPeriod={goalPeriod}
+        preSelectedSteps={selectedTasks}
       />
     </div>
   );
