@@ -2,18 +2,19 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Rocket, Target, CheckCircle2, Archive, ChevronRight, 
-  Loader2, Calendar, Clock 
+  Loader2, Calendar, AlertCircle 
 } from 'lucide-react';
 import { useActionCampaigns, useUpdateCampaignStatus } from '@/hooks/useActionCampaigns';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 const statusConfig: Record<string, { label: string; color: string; icon: typeof Rocket }> = {
   active: { label: 'Active', color: 'text-primary', icon: Rocket },
@@ -27,22 +28,28 @@ export default function Campaigns() {
   const updateStatus = useUpdateCampaignStatus();
 
   const campaignIds = campaigns?.map(c => c.id) || [];
-  const { data: taskCounts } = useQuery({
-    queryKey: ['campaign-task-counts', campaignIds],
+  const { data: taskData } = useQuery({
+    queryKey: ['campaign-task-data', campaignIds],
     queryFn: async () => {
       if (campaignIds.length === 0) return {};
       const { data, error } = await supabase
         .from('action_campaign_tasks')
-        .select('campaign_id, status')
+        .select('campaign_id, status, due_date')
         .in('campaign_id', campaignIds);
       if (error) throw error;
-      const counts: Record<string, { total: number; done: number }> = {};
+      const result: Record<string, { total: number; done: number; nextDue: string | null }> = {};
       (data || []).forEach((t) => {
-        if (!counts[t.campaign_id]) counts[t.campaign_id] = { total: 0, done: 0 };
-        counts[t.campaign_id].total++;
-        if (t.status === 'done') counts[t.campaign_id].done++;
+        if (!result[t.campaign_id]) result[t.campaign_id] = { total: 0, done: 0, nextDue: null };
+        result[t.campaign_id].total++;
+        if (t.status === 'done') result[t.campaign_id].done++;
+        // Track earliest incomplete due date
+        if (t.status !== 'done' && t.due_date) {
+          if (!result[t.campaign_id].nextDue || t.due_date < result[t.campaign_id].nextDue!) {
+            result[t.campaign_id].nextDue = t.due_date;
+          }
+        }
       });
-      return counts;
+      return result;
     },
     enabled: campaignIds.length > 0,
   });
@@ -81,7 +88,7 @@ export default function Campaigns() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {campaigns.map((campaign) => {
-              const counts = taskCounts?.[campaign.id] || { total: 0, done: 0 };
+              const counts = taskData?.[campaign.id] || { total: 0, done: 0, nextDue: null };
               const progress = counts.total > 0 ? Math.round((counts.done / counts.total) * 100) : 0;
               const cfg = statusConfig[campaign.status] || statusConfig.active;
               const StatusIcon = cfg.icon;
@@ -110,17 +117,22 @@ export default function Campaigns() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-3 text-[11px] text-muted-foreground/60">
-                      {campaign.goal_period && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {campaign.goal_period}
-                        </span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge variant="outline" className="text-[10px] gap-1">
+                        <Calendar className="w-2.5 h-2.5" />
                         {format(new Date(campaign.created_at), 'MMM d')}
-                      </span>
+                      </Badge>
+                      {campaign.goal_period && (
+                        <Badge variant="outline" className="text-[10px]">
+                          {campaign.goal_period}
+                        </Badge>
+                      )}
+                      {counts.nextDue && (
+                        <Badge variant="outline" className="text-[10px] gap-1 text-primary border-primary/20">
+                          <AlertCircle className="w-2.5 h-2.5" />
+                          Due {format(new Date(counts.nextDue), 'MMM d')}
+                        </Badge>
+                      )}
                     </div>
 
                     {progress === 100 && campaign.status === 'active' && (

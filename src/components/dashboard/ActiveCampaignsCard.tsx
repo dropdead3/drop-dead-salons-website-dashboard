@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Target, ChevronRight, CheckCircle2, Archive, Rocket } from 'lucide-react';
+import { Target, ChevronRight, CheckCircle2, Rocket, Calendar } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useActionCampaigns, useUpdateCampaignStatus } from '@/hooks/useActionCampaigns';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,7 +15,6 @@ export function ActiveCampaignsCard() {
   const { data: campaigns, isLoading } = useActionCampaigns('active');
   const updateStatus = useUpdateCampaignStatus();
 
-  // Fetch task counts for active campaigns
   const campaignIds = useMemo(() => campaigns?.map(c => c.id) || [], [campaigns]);
 
   const { data: taskCounts } = useQuery({
@@ -40,7 +40,6 @@ export function ActiveCampaignsCard() {
   });
 
   if (isLoading) return null;
-  if (!campaigns || campaigns.length === 0) return null;
 
   return (
     <div>
@@ -49,57 +48,76 @@ export function ActiveCampaignsCard() {
           <div className="w-1.5 h-1.5 rounded-full bg-oat" />
           <h2 className="font-display text-xs tracking-[0.15em]">ACTIVE CAMPAIGNS</h2>
         </div>
-        <span className="text-[11px] text-muted-foreground">
-          {campaigns.length} active
-        </span>
+        <Link to="/dashboard/campaigns" className="text-[11px] text-primary hover:underline">
+          {campaigns && campaigns.length > 0 ? `View all (${campaigns.length})` : 'View all'}
+        </Link>
       </div>
-      <div className="space-y-3">
-        {campaigns.slice(0, 3).map((campaign) => {
-          const counts = taskCounts?.[campaign.id] || { total: 0, done: 0 };
-          const progress = counts.total > 0 ? Math.round((counts.done / counts.total) * 100) : 0;
 
-          return (
-            <Card
-              key={campaign.id}
-              className="relative overflow-hidden p-4 rounded-2xl shadow-md backdrop-blur-sm hover:shadow-lg transition-all duration-300"
-            >
-              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Rocket className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <h3 className="text-sm font-medium truncate">{campaign.name}</h3>
+      {!campaigns || campaigns.length === 0 ? (
+        <Card className="p-6 rounded-2xl shadow-md text-center">
+          <Target className="w-6 h-6 mx-auto text-muted-foreground/20 mb-2" />
+          <p className="text-xs text-muted-foreground">No active campaigns</p>
+          <p className="text-[11px] text-muted-foreground/60 mt-1">Launch one from Zura AI insights</p>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {campaigns.slice(0, 3).map((campaign) => {
+            const counts = taskCounts?.[campaign.id] || { total: 0, done: 0 };
+            const progress = counts.total > 0 ? Math.round((counts.done / counts.total) * 100) : 0;
+
+            return (
+              <Link key={campaign.id} to={`/dashboard/campaigns/${campaign.id}`}>
+                <Card
+                  className="relative overflow-hidden p-4 rounded-2xl shadow-md backdrop-blur-sm hover:shadow-lg transition-all duration-300 group"
+                >
+                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Rocket className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <h3 className="text-sm font-medium truncate">{campaign.name}</h3>
+                        <ChevronRight className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Badge variant="outline" className="text-[10px] gap-1">
+                          <Calendar className="w-2.5 h-2.5" />
+                          {format(new Date(campaign.created_at), 'MMM d')}
+                        </Badge>
+                        {campaign.goal_period && (
+                          <span className="text-[11px] text-muted-foreground">{campaign.goal_period}</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Progress value={progress} className="h-1.5 flex-1" />
+                        <span className="text-[11px] text-muted-foreground whitespace-nowrap">
+                          {counts.done}/{counts.total}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {progress === 100 && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            updateStatus.mutate({ id: campaign.id, status: 'completed' });
+                          }}
+                          title="Mark complete"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 text-chart-2" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  {campaign.goal_period && (
-                    <p className="text-[11px] text-muted-foreground mb-2">
-                      {campaign.goal_period} • Created {format(new Date(campaign.created_at), 'MMM d')}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <Progress value={progress} className="h-1.5 flex-1" />
-                    <span className="text-[11px] text-muted-foreground whitespace-nowrap">
-                      {counts.done}/{counts.total}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  {progress === 100 && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() => updateStatus.mutate({ id: campaign.id, status: 'completed' })}
-                      title="Mark complete"
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5 text-chart-2" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+                </Card>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
