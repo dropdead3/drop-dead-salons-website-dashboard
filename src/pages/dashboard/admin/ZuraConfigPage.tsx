@@ -1,5 +1,5 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Brain, BookOpen, Users, ShieldCheck } from 'lucide-react';
@@ -33,7 +33,7 @@ export default function ZuraConfigPage() {
 
         {orgId ? (
           <Tabs defaultValue="personality" className="space-y-6">
-            <TabsList>
+            <ResponsiveTabsList>
               <TabsTrigger value="personality" className="gap-2">
                 <Brain className="h-4 w-4" /> Personality
               </TabsTrigger>
@@ -46,7 +46,7 @@ export default function ZuraConfigPage() {
               <TabsTrigger value="guardrails" className="gap-2">
                 <ShieldCheck className="h-4 w-4" /> Guardrails
               </TabsTrigger>
-            </TabsList>
+            </ResponsiveTabsList>
 
             <TabsContent value="personality">
               <PersonalityTab organizationId={orgId} />

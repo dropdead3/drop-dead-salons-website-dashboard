@@ -5,7 +5,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RequestAssistantDialog } from '@/components/dashboard/RequestAssistantDialog';
@@ -383,11 +383,11 @@ export default function AssistantSchedule() {
         {/* List View */}
         {viewMode === 'list' && (
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-            <TabsList className="mb-6">
+            <ResponsiveTabsList onTabChange={(v) => setActiveTab(v as typeof activeTab)}>
               {isStylist && <TabsTrigger value="my-requests">My Requests</TabsTrigger>}
               {isStylistAssistant && <TabsTrigger value="my-assignments">My Assignments</TabsTrigger>}
               {isAdmin && <TabsTrigger value="all">All Requests</TabsTrigger>}
-            </TabsList>
+            </ResponsiveTabsList>
 
             {isStylist && (
               <TabsContent value="my-requests">

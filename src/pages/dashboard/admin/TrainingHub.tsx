@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Video, UserPlus, BarChart3, HelpCircle } from 'lucide-react';
 import { VideoLibraryManager } from '@/components/training/VideoLibraryManager';
@@ -32,7 +32,7 @@ export default function TrainingHub() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full max-w-lg grid-cols-4">
+          <ResponsiveTabsList onTabChange={setActiveTab}>
             <TabsTrigger value="library" className="gap-2">
               <Video className="w-4 h-4" />
               <span className="hidden sm:inline">Library</span>
@@ -49,7 +49,7 @@ export default function TrainingHub() {
               <BarChart3 className="w-4 h-4" />
               <span className="hidden sm:inline">Progress</span>
             </TabsTrigger>
-          </TabsList>
+          </ResponsiveTabsList>
 
           <TabsContent value="library" className="mt-6">
             <VideoLibraryManager />

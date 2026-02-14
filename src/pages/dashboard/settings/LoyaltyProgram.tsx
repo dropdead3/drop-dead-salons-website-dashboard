@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { 
   Gift, 
   Star, 
@@ -37,7 +37,7 @@ export default function LoyaltyProgram() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+          <ResponsiveTabsList onTabChange={setActiveTab}>
             <TabsTrigger value="program" className="gap-2">
               <Star className="h-4 w-4" />
               <span className="hidden sm:inline">Program</span>
@@ -58,7 +58,7 @@ export default function LoyaltyProgram() {
               <Package className="h-4 w-4" />
               <span className="hidden sm:inline">Order</span>
             </TabsTrigger>
-          </TabsList>
+          </ResponsiveTabsList>
 
           <TabsContent value="program">
             <LoyaltyProgramConfigurator organizationId={organizationId} />

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { 
   Settings, 
   ListChecks, 
@@ -653,7 +653,7 @@ export default function ProgramEditor() {
         </div>
 
         <Tabs defaultValue="settings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <ResponsiveTabsList>
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="w-4 h-4" />
               Settings
@@ -674,7 +674,7 @@ export default function ProgramEditor() {
               <Eye className="w-4 h-4" />
               Editor
             </TabsTrigger>
-          </TabsList>
+          </ResponsiveTabsList>
 
           {/* Settings Tab */}
           <TabsContent value="settings">

@@ -1,4 +1,4 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Gift, Sparkles, Clock, BarChart3 } from 'lucide-react';
 import {
   RewardsCatalogTab,
@@ -14,7 +14,7 @@ export function TeamRewardsConfigurator() {
 
   return (
     <Tabs defaultValue="catalog" className="space-y-6">
-      <TabsList className="grid grid-cols-4 w-full max-w-xl">
+      <ResponsiveTabsList>
         <TabsTrigger value="catalog" className="gap-2">
           <Gift className="w-4 h-4" />
           <span className="hidden sm:inline">Catalog</span>
@@ -39,7 +39,7 @@ export function TeamRewardsConfigurator() {
           <BarChart3 className="w-4 h-4" />
           <span className="hidden sm:inline">Analytics</span>
         </TabsTrigger>
-      </TabsList>
+      </ResponsiveTabsList>
 
       <TabsContent value="catalog" className="mt-6">
         <RewardsCatalogTab />
