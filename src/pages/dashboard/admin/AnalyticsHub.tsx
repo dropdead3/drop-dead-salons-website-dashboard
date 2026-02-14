@@ -3,7 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { getNextPayDay } from '@/hooks/usePaySchedule';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
+import { ResponsiveTabsList } from '@/components/ui/responsive-tabs-list';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VisibilityGate, useElementVisibility } from '@/components/visibility/VisibilityGate';
 import { Button } from '@/components/ui/button';
@@ -310,7 +311,7 @@ export default function AnalyticsHub() {
 
         {/* Main Tab Navigation */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="w-full md:w-auto flex-wrap h-auto gap-1 p-1">
+          <ResponsiveTabsList onTabChange={handleTabChange}>
             {analyticsCategories.map((cat) => (
               <VisibilityGate 
                 key={cat.id}
@@ -320,14 +321,14 @@ export default function AnalyticsHub() {
               >
                 <TabsTrigger 
                   value={cat.id} 
-                  className="gap-2 data-[state=active]:bg-background"
+                  className="gap-2"
                 >
                   <cat.icon className="w-4 h-4" />
                   <span className="hidden sm:inline">{cat.label}</span>
                 </TabsTrigger>
               </VisibilityGate>
             ))}
-          </TabsList>
+          </ResponsiveTabsList>
 
           <VisibilityGate elementKey="analytics_sales_tab">
             <TabsContent value="sales" className="mt-6">
