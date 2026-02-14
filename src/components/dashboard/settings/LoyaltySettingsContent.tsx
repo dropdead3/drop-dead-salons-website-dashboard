@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Star, Crown, Sparkles, CreditCard, Package, Percent, BarChart3 } from 'lucide-react';
 import { LoyaltyProgramConfigurator } from '@/components/dashboard/loyalty/LoyaltyProgramConfigurator';
 import { LoyaltyTiersEditor } from '@/components/dashboard/loyalty/LoyaltyTiersEditor';
@@ -17,7 +17,7 @@ export function LoyaltySettingsContent() {
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
+        <ResponsiveTabsList onTabChange={setActiveTab}>
           <TabsTrigger value="program" className="gap-2">
             <Star className="h-4 w-4" />
             <span className="hidden sm:inline">Program</span>
@@ -42,7 +42,7 @@ export function LoyaltySettingsContent() {
             <Package className="h-4 w-4" />
             <span className="hidden sm:inline">Order</span>
           </TabsTrigger>
-        </TabsList>
+        </ResponsiveTabsList>
 
         <TabsContent value="program" className="mt-6">
           <LoyaltyProgramConfigurator organizationId={organizationId} />

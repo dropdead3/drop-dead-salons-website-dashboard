@@ -112,7 +112,7 @@ export function WelcomePagePreview({
       </div>
 
       <Tabs defaultValue="edit" className="w-full">
-        <TabsList className="grid grid-cols-2 w-full max-w-xs">
+        <TabsList className="grid grid-cols-2">
           <TabsTrigger value="edit" className="gap-2">
             <Paintbrush className="w-4 h-4" />
             Customize

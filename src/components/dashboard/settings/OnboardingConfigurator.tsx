@@ -113,7 +113,7 @@ export function OnboardingConfigurator() {
 
               {/* Tabs for Tasks vs Sections */}
               <Tabs defaultValue="tasks" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid grid-cols-2">
                   <TabsTrigger value="tasks" className="gap-2">
                     <ClipboardCheck className="w-4 h-4" />
                     Tasks

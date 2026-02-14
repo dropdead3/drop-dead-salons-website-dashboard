@@ -149,7 +149,7 @@ export function RenterDetailSheet({
         </SheetHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid grid-cols-4">
             <TabsTrigger value="profile" className="gap-1.5">
               <User className="h-4 w-4" />
               <span className="hidden sm:inline">Profile</span>

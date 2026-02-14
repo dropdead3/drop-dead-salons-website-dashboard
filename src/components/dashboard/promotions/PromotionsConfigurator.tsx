@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Percent, Ticket, Sparkles, BarChart3 } from 'lucide-react';
 import { PromotionsList } from './PromotionsList';
 import { VouchersList } from './VouchersList';
@@ -16,7 +16,7 @@ export function PromotionsConfigurator({ organizationId }: PromotionsConfigurato
   return (
     <div className="space-y-6">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+        <ResponsiveTabsList onTabChange={setActiveTab}>
           <TabsTrigger value="promotions" className="gap-2">
             <Percent className="h-4 w-4" />
             <span className="hidden sm:inline">Promotions</span>
@@ -33,7 +33,7 @@ export function PromotionsConfigurator({ organizationId }: PromotionsConfigurato
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Analytics</span>
           </TabsTrigger>
-        </TabsList>
+        </ResponsiveTabsList>
 
         <TabsContent value="promotions" className="mt-6">
           <PromotionsList organizationId={organizationId} />

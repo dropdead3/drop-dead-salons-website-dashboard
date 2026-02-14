@@ -84,3 +84,4 @@ const SubTabsTrigger = React.forwardRef<
 SubTabsTrigger.displayName = "SubTabsTrigger";
 
 export { Tabs, TabsList, TabsTrigger, TabsContent, SubTabsList, SubTabsTrigger };
+export { ResponsiveTabsList } from '@/components/ui/responsive-tabs-list';

@@ -1,4 +1,4 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Armchair, FileText } from 'lucide-react';
 import { ChairManager } from '@/components/dashboard/day-rate/ChairManager';
 import { AgreementEditor } from '@/components/dashboard/day-rate/AgreementEditor';
@@ -17,7 +17,7 @@ export default function DayRateSettings() {
         </div>
 
         <Tabs defaultValue="chairs" className="w-full">
-          <TabsList>
+          <ResponsiveTabsList>
             <VisibilityGate elementKey="dayrate_chairs_tab" elementName="Chair Inventory" elementCategory="Page Tabs">
               <TabsTrigger value="chairs" className="flex items-center gap-2">
                 <Armchair className="w-4 h-4" />
@@ -30,7 +30,7 @@ export default function DayRateSettings() {
                 Agreement
               </TabsTrigger>
             </VisibilityGate>
-          </TabsList>
+          </ResponsiveTabsList>
 
           <TabsContent value="chairs" className="mt-6">
             <ChairManager />
