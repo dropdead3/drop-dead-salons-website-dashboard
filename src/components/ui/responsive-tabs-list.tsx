@@ -18,101 +18,92 @@ export const ResponsiveTabsList = React.forwardRef<
   ResponsiveTabsListProps
 >(({ className, children, onTabChange, ...props }, ref) => {
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const measureRef = useRef<HTMLDivElement>(null);
-  const [visibleCount, setVisibleCount] = useState<number | null>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState<number>(Infinity);
   const [open, setOpen] = useState(false);
-  const [measured, setMeasured] = useState(false);
 
   const childArray = React.Children.toArray(children).filter(React.isValidElement);
 
   const measure = useCallback(() => {
     const wrapper = wrapperRef.current;
-    const measureRow = measureRef.current;
-    if (!wrapper || !measureRow) return;
+    const list = listRef.current;
+    if (!wrapper || !list) return;
 
-    const availableWidth = wrapper.clientWidth;
-    // Padding of TabsList (p-1.5 = 6px each side = 12px total)
-    const listPadding = 12;
-    const overflowBtnWidth = 40;
+    const availableWidth = wrapper.offsetWidth;
+    const listPadding = 12; // p-1.5 = 6px * 2
+    const overflowBtnWidth = 36;
     const gap = 2;
-    const maxContentWidth = availableWidth - listPadding;
+    const maxWidth = availableWidth - listPadding;
 
-    const items = Array.from(measureRow.children) as HTMLElement[];
+    // Temporarily show all to measure
+    const items = Array.from(list.querySelectorAll('[data-tab-item]')) as HTMLElement[];
     let usedWidth = 0;
     let count = 0;
 
     for (let i = 0; i < items.length; i++) {
+      items[i].style.display = '';
       const itemWidth = items[i].offsetWidth + (count > 0 ? gap : 0);
+      const needsOverflowSpace = i < items.length - 1;
 
-      // If this isn't the last item, reserve space for overflow button
-      const remaining = i < items.length - 1 ? overflowBtnWidth + gap : 0;
-
-      if (usedWidth + itemWidth + remaining > maxContentWidth && count > 0) {
+      if (usedWidth + itemWidth + (needsOverflowSpace ? overflowBtnWidth + gap : 0) > maxWidth && count > 0) {
         break;
       }
       usedWidth += itemWidth;
       count++;
     }
 
-    if (count >= items.length) {
-      setVisibleCount(null);
-    } else {
-      setVisibleCount(Math.max(1, count));
+    // Hide items that don't fit
+    for (let i = 0; i < items.length; i++) {
+      if (count < items.length && i >= count) {
+        items[i].style.display = 'none';
+      }
     }
-    setMeasured(true);
+
+    setVisibleCount(count);
   }, []);
 
   useEffect(() => {
-    const timer = setTimeout(measure, 30);
-    const observer = new ResizeObserver(() => measure());
+    measure();
+    const observer = new ResizeObserver(() => {
+      // Reset display before re-measuring
+      const list = listRef.current;
+      if (list) {
+        const items = Array.from(list.querySelectorAll('[data-tab-item]')) as HTMLElement[];
+        items.forEach(item => item.style.display = '');
+      }
+      measure();
+    });
     if (wrapperRef.current) {
       observer.observe(wrapperRef.current);
     }
-    return () => {
-      clearTimeout(timer);
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, [measure, childArray.length]);
 
-  const showAll = visibleCount === null;
-  const overflowChildren = showAll ? [] : childArray.slice(visibleCount);
+  const hasOverflow = visibleCount < childArray.length;
+  const overflowChildren = hasOverflow ? childArray.slice(visibleCount) : [];
 
   return (
-    <div ref={wrapperRef} className="w-full max-w-full overflow-hidden">
-      {/* Hidden measure row — full natural widths, outside TabsList to avoid Radix issues */}
-      <div
-        ref={measureRef}
-        className="flex items-center gap-0.5 h-0 overflow-hidden invisible pointer-events-none absolute"
-        aria-hidden
-      >
-        {childArray.map((child, i) => (
-          <div key={i} className="inline-flex items-center gap-2 whitespace-nowrap px-3.5 py-1.5 text-sm font-medium">
-            {(child as React.ReactElement<any>).props.children}
-          </div>
-        ))}
-      </div>
-
+    <div ref={wrapperRef} className="w-full">
       <TabsList
-        ref={ref}
-        className={cn('w-full', measured ? '' : 'invisible', className)}
+        ref={(node) => {
+          (listRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+          if (typeof ref === 'function') ref(node);
+          else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        }}
+        className={cn('w-full', className)}
         {...props}
       >
-        {childArray.map((child, i) => {
-          if (!showAll && i >= visibleCount!) {
-            return React.cloneElement(child as React.ReactElement<any>, {
-              key: (child as React.ReactElement<any>).key || i,
-              style: { display: 'none' },
-            });
-          }
-          return child;
-        })}
+        {childArray.map((child, i) => (
+          <span key={(child as React.ReactElement<any>).key || i} data-tab-item>
+            {child}
+          </span>
+        ))}
 
-        {overflowChildren.length > 0 && (
+        {hasOverflow && (
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <button
-                data-overflow="true"
-                className="inline-flex items-center justify-center whitespace-nowrap px-2 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:text-foreground ml-auto"
+                className="inline-flex items-center justify-center px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 style={{ borderRadius: 6 }}
                 aria-label="More tabs"
               >
@@ -125,8 +116,9 @@ export const ResponsiveTabsList = React.forwardRef<
             >
               {overflowChildren.map((child) => {
                 const childEl = child as React.ReactElement<any>;
-                const value = childEl.props.value;
-                const childContent = childEl.props.children;
+                // Try to get value from the child or its nested TabsTrigger
+                const value = childEl.props.value || childEl.props.children?.props?.value;
+                const content = childEl.props.children?.props?.children || childEl.props.children;
 
                 return (
                   <button
@@ -138,7 +130,7 @@ export const ResponsiveTabsList = React.forwardRef<
                       setOpen(false);
                     }}
                   >
-                    {childContent}
+                    {content}
                   </button>
                 );
               })}
