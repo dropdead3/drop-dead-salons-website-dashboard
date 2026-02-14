@@ -1,52 +1,72 @@
 
 
-## Replace "Services vs Products" Bar with Retail Attachment Rate
+# Tokenize Tab Bar Styling and Responsiveness
 
-### What Changes
+## Problem
+There are 50+ files using `TabsList` with inconsistent styling -- custom classNames, varying radii, grid layouts, and different padding. Only one file (AnalyticsHub) uses the responsive `ResponsiveTabsList`. The tab bar look and responsive behavior needs to be unified.
 
-The current "Services vs Products" revenue split bar on each Location Comparison Card will be replaced with a **Retail Attachment Rate** bar — a far more actionable metric.
+## Approach
 
-**Definition**: Of all transactions that contain at least one service, what percentage also include a retail product? E.g., 10 service transactions, 2 also had retail = 20% attachment rate.
+Rather than modifying all 50+ files at once (high risk, massive diff), we split tabs into two standardized variants and migrate in batches.
 
----
+### Two Tab Bar Variants
 
-### 1. Update `useRetailAttachmentRate` Hook
+1. **ResponsiveTabsList** (default for page-level navigation)
+   - Left-anchored, auto-width, overflow into "more" menu
+   - Used for page tabs with 3+ options (Analytics, Training, Settings, etc.)
+   - Already built -- just needs wider adoption
 
-The existing hook in `src/hooks/useRetailAttachmentRate.ts` currently counts by **distinct clients**. We will update it to count by **distinct transactions** instead:
+2. **TabsList** (compact/inline)
+   - For small toggles (list/card view), dialog tabs, and 2-option switchers
+   - Keep the base styling (radius 9px outer / 6px inner, p-1.5, h-11) already defined
 
-- Query `phorest_transaction_items` for distinct `transaction_id` values where `item_type` is a service
-- Query distinct `transaction_id` values where `item_type` is a product/retail
-- Compute intersection: service transactions that also appear in the product set
-- Return `serviceTransactions`, `attachedTransactions`, and `attachmentRate`
+### Migration Categories
 
-The interface will update from `serviceClients/retailClients` to `serviceTransactions/attachedTransactions` while keeping `attachmentRate` the same.
+**Category A -- Page-level tabs (convert to ResponsiveTabsList):** ~25 files
+These currently use `TabsList` with grid or overflow hacks. Examples:
+- TrainingHub, ZuraConfigPage, DayRateSettings, PromotionsConfigurator
+- AccessHub, LoyaltyProgram, ProgramEditor, LeadManagement
+- SalesDashboard, PTOManager, AccountManagement, ReportsHub
 
----
+**Category B -- Inline/compact tabs (standardize base TabsList):** ~15 files
+These are small toggles or dialog-embedded tabs that just need className cleanup to match the tokenized base. Examples:
+- ChallengeLeaderboard (list/cards toggle), ProductLeaderboard, StaffRevenueLeaderboard
+- IssueContractDialog, RenterDetailSheet, KioskSettings, LocationSettings
 
-### 2. Update LocationComparisonCard
+**Category C -- Platform admin tabs (separate theme, skip for now):** ~8 files
+Platform pages (Revenue, Analytics, Onboarding, PlatformSettings) use a slate/dark theme with custom borders. These should be standardized separately.
 
-In `src/components/dashboard/sales/location-comparison/LocationComparisonCard.tsx`:
+### Technical Steps
 
-- Remove the "Services vs Products" revenue ratio calculation and bar (lines 46-48 and the corresponding JSX block)
-- Add a call to `useRetailAttachmentRate({ dateFrom, dateTo, locationId: location.location_id })`
-- Replace the ratio bar with:
-  - Label: "Attach Rate" on the left, percentage on the right
-  - A `Progress` bar filled to the attachment rate percentage, colored with the location's chart color
-  - Tooltip showing "X of Y service transactions included retail"
+1. **Strip override classNames from Category A files**
+   - Remove `grid`, `w-full`, `grid-cols-N`, `max-w-lg` from TabsList
+   - Replace `TabsList` with `ResponsiveTabsList`
+   - Add `onTabChange` prop wired to existing `setActiveTab` / `onValueChange` handlers
 
----
+2. **Strip override classNames from Category B files**
+   - Remove redundant `h-8`, `p-1`, custom radius classes
+   - Keep only intentional size overrides for genuinely small inline toggles
 
-### 3. Update Anywhere Else Using the Old Interface
+3. **Ensure `ResponsiveTabsList` wrapper does not force full width on the inner list**
+   - The wrapper div stays `w-full` (for measurement), but the inner `TabsList` stays `w-auto` (left-anchored)
 
-Check if `serviceClients` / `retailClients` fields from the hook are used elsewhere and update those references to match the new transaction-based naming.
+4. **Export `ResponsiveTabsList` from the tabs barrel** so imports are cleaner:
+   ```
+   import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
+   ```
 
----
+### File Changes Summary
 
-### Technical Notes
+| File | Change |
+|------|--------|
+| `src/components/ui/tabs.tsx` | Re-export `ResponsiveTabsList` |
+| `src/components/ui/responsive-tabs-list.tsx` | No changes needed |
+| ~25 Category A page files | Replace `TabsList` with `ResponsiveTabsList`, remove grid/width overrides |
+| ~15 Category B inline files | Remove redundant className overrides to match base token |
 
-- **Files modified**:
-  - `src/hooks/useRetailAttachmentRate.ts` — switch from client-based to transaction-based counting
-  - `src/components/dashboard/sales/location-comparison/LocationComparisonCard.tsx` — swap ratio bar for attachment rate bar
-  - Any other consumers of `useRetailAttachmentRate` (will verify during implementation)
-- No new dependencies needed
-- The hook already accepts `locationId`, so per-location attachment rates work out of the box
+### Risk Mitigation
+- Each file change is a simple import swap + className removal
+- No styling logic changes to the base components
+- Radix context is preserved (already solved in previous fixes)
+- Category C (platform admin) is excluded to avoid theme conflicts
+
