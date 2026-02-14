@@ -14,122 +14,131 @@ interface ResponsiveTabsListProps extends React.ComponentPropsWithoutRef<typeof 
 }
 
 /**
- * A responsive TabsList that measures available space and collapses
- * overflow tabs (right-to-left) into a "⋯" popover menu.
+ * A responsive TabsList that hides overflow tabs into a "⋯" popover.
+ * Children must be TabsTrigger elements (or wrappers around them).
  */
 export const ResponsiveTabsList = React.forwardRef<
   React.ElementRef<typeof TabsList>,
   ResponsiveTabsListProps
 >(({ className, children, onTabChange, ...props }, ref) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const measureRef = useRef<HTMLDivElement>(null);
-  const [visibleCount, setVisibleCount] = useState<number>(React.Children.count(children));
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [visibleCount, setVisibleCount] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
 
   const childArray = React.Children.toArray(children).filter(React.isValidElement);
 
   const measure = useCallback(() => {
-    const container = containerRef.current;
-    const measureRow = measureRef.current;
-    if (!container || !measureRow) return;
+    const list = innerRef.current;
+    if (!list) return;
 
-    const containerWidth = container.clientWidth;
-    // Reserve space for the overflow button (40px + gap)
+    const listWidth = list.clientWidth;
+    const items = Array.from(list.children) as HTMLElement[];
     const overflowBtnWidth = 44;
-    const gap = 2; // gap-0.5 = 2px
+    const gap = 2;
     let usedWidth = 0;
     let count = 0;
 
-    const items = measureRow.children;
     for (let i = 0; i < items.length; i++) {
-      const itemWidth = (items[i] as HTMLElement).offsetWidth + (i > 0 ? gap : 0);
-      // Check if adding this item (and potentially the overflow btn) would exceed
-      if (usedWidth + itemWidth + (i < items.length - 1 ? overflowBtnWidth + gap : 0) > containerWidth) {
+      // Skip the overflow button itself
+      if (items[i].dataset.overflow === 'true') continue;
+      
+      const itemWidth = items[i].scrollWidth + (count > 0 ? gap : 0);
+      const needsOverflow = i < childArray.length - 1;
+      
+      if (usedWidth + itemWidth + (needsOverflow ? overflowBtnWidth + gap : 0) > listWidth && count > 0) {
         break;
       }
       usedWidth += itemWidth;
       count++;
     }
 
-    // If all items fit without overflow button, show them all
-    if (count === items.length) {
-      setVisibleCount(items.length);
+    if (count >= childArray.length) {
+      setVisibleCount(null); // show all
     } else {
       setVisibleCount(Math.max(1, count));
     }
-  }, []);
+  }, [childArray.length]);
 
   useEffect(() => {
-    measure();
+    // Delay initial measure to let items render
+    const timer = setTimeout(measure, 50);
     const observer = new ResizeObserver(() => measure());
-    if (containerRef.current) {
-      observer.observe(containerRef.current);
+    if (innerRef.current) {
+      observer.observe(innerRef.current);
     }
-    return () => observer.disconnect();
-  }, [measure, childArray.length]);
+    return () => {
+      clearTimeout(timer);
+      observer.disconnect();
+    };
+  }, [measure]);
 
-  const visibleChildren = childArray.slice(0, visibleCount);
-  const overflowChildren = childArray.slice(visibleCount);
+  const showAll = visibleCount === null;
+  const overflowChildren = showAll ? [] : childArray.slice(visibleCount);
 
   return (
-    <div ref={containerRef} className="w-full overflow-hidden">
-      {/* Hidden measurement row — renders all children to get natural widths */}
-      <div
-        ref={measureRef}
-        className="flex items-center gap-0.5 absolute invisible pointer-events-none h-0 overflow-hidden"
-        aria-hidden
-      >
-        {childArray}
-      </div>
+    <TabsList
+      ref={(node) => {
+        // Merge refs
+        (innerRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        if (typeof ref === 'function') ref(node);
+        else if (ref) (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
+      }}
+      className={cn('w-auto inline-flex', className)}
+      {...props}
+    >
+      {childArray.map((child, i) => {
+        if (!showAll && i >= visibleCount!) {
+          // Hide overflow items via CSS (keep in DOM for Radix context but visually hidden)
+          return React.cloneElement(child as React.ReactElement<any>, {
+            key: (child as React.ReactElement<any>).key || i,
+            className: cn((child as React.ReactElement<any>).props.className, 'hidden'),
+          });
+        }
+        return child;
+      })}
 
-      {/* Visible row */}
-      <TabsList
-        ref={ref}
-        className={cn('w-auto inline-flex', className)}
-        {...props}
-      >
-        {visibleChildren}
-
-        {overflowChildren.length > 0 && (
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <button
-                className={cn(
-                  'inline-flex items-center justify-center whitespace-nowrap px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:text-foreground',
-                )}
-                style={{ borderRadius: 7 }}
-                aria-label="More tabs"
-              >
-                <MoreHorizontal className="w-4 h-4" />
-              </button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              className="w-auto min-w-[160px] p-1.5 flex flex-col gap-0.5"
+      {overflowChildren.length > 0 && (
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <button
+              data-overflow="true"
+              className="inline-flex items-center justify-center whitespace-nowrap px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-all hover:text-foreground"
+              style={{ borderRadius: 7 }}
+              aria-label="More tabs"
             >
-              {overflowChildren.map((child) => {
-                if (!React.isValidElement(child)) return null;
-                // Clone the trigger but render as a full-width menu item
-                return React.cloneElement(child as React.ReactElement<any>, {
-                  key: (child as React.ReactElement<any>).props.value || (child as React.ReactElement<any>).key,
-                  className: cn(
-                    (child as React.ReactElement<any>).props.className,
-                    'w-full justify-start'
-                  ),
-                  onClick: () => {
-                    const value = (child as React.ReactElement<any>).props.value;
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent
+            align="end"
+            className="w-auto min-w-[160px] p-1.5 flex flex-col gap-0.5"
+          >
+            {overflowChildren.map((child) => {
+              const childEl = child as React.ReactElement<any>;
+              // Extract info to render a plain button
+              const value = childEl.props.value;
+              const childContent = childEl.props.children;
+              
+              return (
+                <button
+                  key={value || childEl.key}
+                  className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.08] transition-colors"
+                  style={{ borderRadius: 7 }}
+                  onClick={() => {
                     if (value && onTabChange) {
                       onTabChange(value);
                     }
                     setOpen(false);
-                  },
-                });
-              })}
-            </PopoverContent>
-          </Popover>
-        )}
-      </TabsList>
-    </div>
+                  }}
+                >
+                  {childContent}
+                </button>
+              );
+            })}
+          </PopoverContent>
+        </Popover>
+      )}
+    </TabsList>
   );
 });
 
