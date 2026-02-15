@@ -420,10 +420,7 @@ function DashboardSections({
     quick_actions: showQuickActions && (
       <VisibilityGate elementKey="quick_actions">
         <div>
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-1.5 h-1.5 rounded-full bg-oat" />
-            <h2 className="font-display text-xs tracking-[0.15em]">{t('home.quick_actions')}</h2>
-          </div>
+          <h2 className="font-display text-xs tracking-[0.15em] mb-4">{t('home.quick_actions')}</h2>
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <VisibilityGate elementKey="ring_the_bell_action">
               <Button variant="ghost" className="h-auto py-4 flex-col gap-2 rounded-xl bg-muted/50 hover:bg-muted border border-border/40 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200" asChild>
@@ -556,10 +553,7 @@ function DashboardSections({
             <Card className="relative overflow-hidden p-6 rounded-2xl shadow-lg backdrop-blur-sm hover:shadow-xl transition-all duration-300">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-oat" />
-                  <h2 className="font-display text-xs tracking-[0.15em]">{t('home.todays_schedule')}</h2>
-                </div>
+                <h2 className="font-display text-xs tracking-[0.15em]">{t('home.todays_schedule')}</h2>
                 <Clock className="w-4 h-4 text-muted-foreground" />
               </div>
               <div className="space-y-3">
@@ -578,7 +572,6 @@ function DashboardSections({
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
               <div className="flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-oat" />
                 <h2 className="font-display text-xs tracking-[0.15em]">{t('home.my_tasks')}</h2>
                 {isImpersonating && (
                   <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
@@ -734,10 +727,7 @@ function DashboardSections({
               {showFilterBar && (
                 <div className="pt-6 pb-2">
                   <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-oat" />
-                      <h2 className="font-display text-sm tracking-[0.12em] text-foreground">{t('home.analytics')}</h2>
-                    </div>
+                    <h2 className="font-display text-sm tracking-[0.12em] text-foreground">{t('home.analytics')}</h2>
                     <AnalyticsFilterBar
                       locationId={analyticsFilters.locationId}
                       onLocationChange={onLocationChange}

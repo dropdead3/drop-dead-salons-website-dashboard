@@ -45,10 +45,7 @@ export function ActiveCampaignsCard() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-oat" />
-          <h2 className="font-display text-xs tracking-[0.15em]">ACTIVE CAMPAIGNS</h2>
-        </div>
+        <h2 className="font-display text-xs tracking-[0.15em]">ACTIVE CAMPAIGNS</h2>
         <Link to="/dashboard/campaigns" className="text-[11px] text-primary hover:underline">
           {campaigns && campaigns.length > 0 ? `View all (${campaigns.length})` : 'View all'}
         </Link>

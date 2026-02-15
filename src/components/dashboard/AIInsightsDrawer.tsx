@@ -322,10 +322,7 @@ export function AIInsightsDrawer() {
               {!activeGuidance && (
                 <div className="p-4 pb-3">
                   <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-oat" />
-                      <span className="font-display text-xs tracking-[0.15em]">ZURA BUSINESS INSIGHTS</span>
-                    </div>
+                    <span className="font-display text-xs tracking-[0.15em]">ZURA BUSINESS INSIGHTS</span>
                     <div className="flex items-center gap-1">
                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0}>
                         <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />

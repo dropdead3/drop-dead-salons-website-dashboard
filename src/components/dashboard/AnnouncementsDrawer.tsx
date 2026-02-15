@@ -202,10 +202,7 @@ export function AnnouncementsDrawer({ isLeadership }: AnnouncementsWidgetProps) 
             {/* Header */}
             <div className="p-4 pb-3">
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-oat" />
-                  <span className="font-display text-xs tracking-[0.15em]">ANNOUNCEMENTS</span>
-                </div>
+                <span className="font-display text-xs tracking-[0.15em]">ANNOUNCEMENTS</span>
                 <div className="flex items-center gap-1">
                   {/* Compact location filter */}
                   <LocationSelect
