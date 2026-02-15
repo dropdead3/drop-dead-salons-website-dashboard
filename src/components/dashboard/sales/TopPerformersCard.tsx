@@ -112,7 +112,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
 
   if (!performers.length) {
     return (
-      <Card className="flex flex-col overflow-hidden border-border/40">
+      <Card className="h-full flex flex-col overflow-hidden border-border/40">
         <CardHeader className="px-4 py-2 pb-1">{headerContent}</CardHeader>
         <CardContent className="px-4 pb-2 pt-0 flex-1 flex items-center justify-center">
           <div className="text-center py-2 text-muted-foreground text-xs">
