@@ -60,6 +60,7 @@ import {
   Trophy,
   TabletSmartphone,
   Keyboard,
+  Lightbulb,
 } from 'lucide-react';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
@@ -98,6 +99,7 @@ import { useRoleUtils } from '@/hooks/useRoleUtils';
 import { useSettingsLayout, useUpdateSettingsLayout, DEFAULT_ICON_COLORS, DEFAULT_ORDER, SECTION_GROUPS } from '@/hooks/useSettingsLayout';
 import { useStaffingAlertSettings, useUpdateStaffingAlertSettings } from '@/hooks/useStaffingAlertSettings';
 import { cn } from '@/lib/utils';
+import { useInfotainerSettings } from '@/hooks/useInfotainers';
 import { Slider } from '@/components/ui/slider';
 import {
   DndContext,
@@ -246,6 +248,35 @@ function SortableCard({ category, isEditMode, iconColor, onColorChange, onClick 
         </CardContent>
       </Card>
     </DragFeedback>
+  );
+}
+
+// Help & Guidance toggle card
+function InfotainerToggleCard() {
+  const { showInfotainers, toggleInfotainers, isToggling } = useInfotainerSettings();
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Lightbulb className="w-5 h-5 text-primary" />
+          <CardTitle className="font-display text-lg">HELP &amp; GUIDANCE</CardTitle>
+        </div>
+        <CardDescription>Control feature guide banners across the platform.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-sans font-medium text-sm">Show feature guides</p>
+            <p className="text-xs text-muted-foreground">Display helpful information banners on feature pages to explain how each tool works.</p>
+          </div>
+          <Switch
+            checked={showInfotainers}
+            onCheckedChange={toggleInfotainers}
+            disabled={isToggling}
+          />
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -1270,6 +1301,9 @@ export default function Settings() {
                 </Card>
 
                 <SoundSettingsSection />
+
+                {/* Help & Guidance */}
+                <InfotainerToggleCard />
 
                 {/* Security */}
                 <Card>
