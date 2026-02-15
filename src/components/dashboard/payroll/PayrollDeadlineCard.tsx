@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LiveCountdown } from '@/components/dashboard/LiveCountdown';
@@ -7,7 +8,7 @@ import { usePayrollRunForPeriod } from '@/hooks/usePayrollRunForPeriod';
 import { useHasEffectivePermission } from '@/hooks/useEffectivePermissions';
 import { differenceInDays, addDays } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { AlertTriangle, CheckCircle2, ChevronRight, DollarSign, Settings, Zap } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, ChevronRight, DollarSign, Settings, X, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +49,9 @@ export function PayrollDeadlineCard() {
     currentPeriod?.periodStart ?? null,
     currentPeriod?.periodEnd ?? null
   );
+  const [configDismissed, setConfigDismissed] = useState(
+    () => localStorage.getItem('payroll-deadline-config-dismissed') === 'true'
+  );
 
   // Only visible to users with manage_payroll permission
   if (!hasPayrollPermission) return null;
@@ -55,6 +59,13 @@ export function PayrollDeadlineCard() {
 
   // No pay schedule configured
   if (!settings) {
+    if (configDismissed) return null;
+
+    const handleDismiss = () => {
+      setConfigDismissed(true);
+      localStorage.setItem('payroll-deadline-config-dismissed', 'true');
+    };
+
     return (
       <VisibilityGate
         elementKey="payroll_deadline_countdown"
@@ -76,6 +87,13 @@ export function PayrollDeadlineCard() {
                   {tc('configure')} <ChevronRight className="h-3 w-3 ml-1" />
                 </Link>
               </Button>
+              <button
+                onClick={handleDismiss}
+                className="p-1 rounded-full hover:bg-muted transition-colors text-muted-foreground"
+                aria-label="Dismiss"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
           </CardContent>
         </Card>
