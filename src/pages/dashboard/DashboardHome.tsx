@@ -244,7 +244,9 @@ export default function DashboardHome() {
               {t('home.whats_happening')}
             </p>
           </div>
-          <div className="flex flex-col items-end gap-3">
+          <div className="flex items-center gap-3">
+            {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
+            <AnnouncementsDrawer isLeadership={isLeadership} />
             <DashboardCustomizeMenu 
               variant="button" 
               roleContext={{
@@ -254,12 +256,6 @@ export default function DashboardHome() {
                 isReceptionist,
               }}
             />
-            <div className="rounded-xl border border-border/50 bg-muted/20 px-4 py-3">
-              <div className="flex flex-wrap items-center justify-end gap-3">
-                {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
-                <AnnouncementsDrawer isLeadership={isLeadership} />
-              </div>
-            </div>
           </div>
         </motion.div>
 
