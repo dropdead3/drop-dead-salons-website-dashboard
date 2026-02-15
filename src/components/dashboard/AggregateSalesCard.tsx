@@ -1018,7 +1018,15 @@ export function AggregateSalesCard({
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
                           <span className="text-sm font-display tabular-nums">
-                            <BlurredAmount>{formatCurrency(location.totalRevenue)}</BlurredAmount>
+                            <BlurredAmount>
+                              {locationSortField === 'totalTransactions'
+                                ? location.totalTransactions.toLocaleString()
+                                : locationSortField === 'avgTicket'
+                                  ? formatCurrency(avgTicket)
+                                  : locationSortField === 'name' || locationSortField === 'totalRevenue'
+                                    ? formatCurrency(location.totalRevenue)
+                                    : formatCurrency(location[locationSortField] ?? 0)}
+                            </BlurredAmount>
                           </span>
                           <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                         </div>
