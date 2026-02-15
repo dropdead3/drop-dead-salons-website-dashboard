@@ -61,27 +61,31 @@ import { PayrollDeadlineCard } from '@/components/dashboard/payroll/PayrollDeadl
 import { PaydayCountdownBanner } from '@/components/dashboard/mypay/PaydayCountdownBanner';
 import { InsightsNudgeBanner } from '@/components/dashboard/InsightsNudgeBanner';
 import { ActiveCampaignsCard } from '@/components/dashboard/ActiveCampaignsCard';
-const GREETINGS = [
-  "Welcome back,",
-  "Good to see you,",
-  "Let's build momentum,",
-  "Ready to lead,",
-  "Great things ahead,",
-  "Let's make it count,",
-  "You're on a roll,",
-  "Another great day ahead,",
-];
+const ROLE_MESSAGES = {
+  leadership: {
+    greetings: ["Welcome back,", "Ready to lead,", "Let's build momentum,", "Great things ahead,", "Another strong day,", "Let's make it count,"],
+    subtitles: ["Here's what's happening across your operations", "Your team is set up for a strong day", "The numbers are telling a story", "Let's see where things stand", "Everything's moving in the right direction", "Here's your snapshot for today"],
+  },
+  stylist: {
+    greetings: ["Welcome back,", "Good to see you,", "You're on a roll,", "Another great day ahead,", "Let's make it a great one,", "Time to create,"],
+    subtitles: ["Here's what's on your schedule", "Your clients are going to love today", "Let's keep the momentum going", "You're set up for a strong day", "Here's your lineup for today", "Let's make every appointment count"],
+  },
+  frontDesk: {
+    greetings: ["Welcome back,", "Good to see you,", "The front desk is yours,", "Another great day ahead,", "Let's keep things running smooth,", "Ready to roll,"],
+    subtitles: ["Here's what's coming in today", "The schedule is looking good", "Let's keep the flow going", "You're set up for a smooth day", "Here's your snapshot for today", "Everything's on track"],
+  },
+  default: {
+    greetings: ["Welcome back,", "Good to see you,", "Another great day ahead,", "Let's make it count,", "You're on a roll,", "Great things ahead,"],
+    subtitles: ["Here's what's happening today", "Let's keep the momentum going", "You're set up for a strong day", "Everything's moving in the right direction", "Here's your snapshot for today", "Let's see where things stand"],
+  },
+} as const;
 
-const SUBTITLES = [
-  "Here's what's happening today",
-  "Your operations are in motion",
-  "Let's see where you stand",
-  "The numbers are telling a story",
-  "Here's your snapshot for today",
-  "Everything's moving in the right direction",
-  "You're set up for a strong day",
-  "Let's keep the momentum going",
-];
+function getMessagePool(isLeadership: boolean, hasStylistRole: boolean, isFrontDesk: boolean) {
+  if (isLeadership) return ROLE_MESSAGES.leadership;
+  if (hasStylistRole) return ROLE_MESSAGES.stylist;
+  if (isFrontDesk) return ROLE_MESSAGES.frontDesk;
+  return ROLE_MESSAGES.default;
+}
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -208,8 +212,9 @@ export default function DashboardHome() {
   // Mark-as-read logic moved into AnnouncementsDrawer
   
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there';
-  const [greeting] = useState(() => GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
-  const [subtitle] = useState(() => SUBTITLES[Math.floor(Math.random() * SUBTITLES.length)]);
+  const pool = useMemo(() => getMessagePool(!!isLeadership, hasStylistRole, isFrontDesk), [isLeadership, hasStylistRole, isFrontDesk]);
+  const [greeting] = useState(() => pool.greetings[Math.floor(Math.random() * pool.greetings.length)]);
+  const [subtitle] = useState(() => pool.subtitles[Math.floor(Math.random() * pool.subtitles.length)]);
 
   // Show setup wizard for first-time users
   if (!hasCompletedSetup && !layoutLoading) {
