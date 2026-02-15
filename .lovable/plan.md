@@ -1,42 +1,32 @@
 
-## Refine Dashboard Header Layout
 
-### Current State
-The "Zura Insights" and "Announcements" buttons are stacked vertically inside a bordered container, which sits below the "Customize" button. This creates unnecessary vertical height in the header area.
+## Move Insights & Announcements to Their Own Row
 
-### Changes
+### What changes
 
-**File: `src/pages/dashboard/DashboardHome.tsx` (lines 247-263)**
+The "Zura Insights" and "Announcements" buttons will be pulled out of the right column of the welcome header and placed on their own full-width row beneath the welcome text/Customize row. The "Customize" button stays top-right, aligned with the welcome text.
 
-Restructure the right-side controls so that:
-1. The "Customize" button and the Insights/Announcements buttons all sit on the **same horizontal row**, aligned to the right
-2. Remove the extra bordered container wrapping the two drawers -- instead, place "Zura Insights" and "Announcements" as peer-level elements alongside "Customize"
-3. Use `flex items-center gap-3` so all three controls sit side by side in a single line
+### Layout (before -> after)
 
-The result: a single clean row on the right side of the header containing `[Zura Insights] [Announcements] [Customize]` (or similar order), eliminating the stacked vertical layout and the extra bordered box.
-
-### Technical Detail
-
-Replace the current right-side `div` structure:
-```
-<div className="flex flex-col items-end gap-3">
-  <DashboardCustomizeMenu ... />
-  <div className="rounded-xl border ...">
-    <div className="flex ... gap-3">
-      <AIInsightsDrawer />
-      <AnnouncementsDrawer />
-    </div>
-  </div>
-</div>
+**Before:**
+```text
+| WELCOME BACK, ERIC          [Insights] [Announcements] [Customize] |
+| Here's what's happening today                                       |
 ```
 
-With a flat horizontal layout:
-```
-<div className="flex items-center gap-3">
-  {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
-  <AnnouncementsDrawer isLeadership={isLeadership} />
-  <DashboardCustomizeMenu ... />
-</div>
+**After:**
+```text
+| WELCOME BACK, ERIC                                      [Customize] |
+| Here's what's happening today                                        |
+|                                                                      |
+| [Zura Insights]  [Announcements]                                     |
 ```
 
-This removes the nested container and border, placing all action buttons inline. On mobile, the flex will wrap naturally. The Zura Insights drawer already opens full-width, so no changes needed there.
+### Technical detail
+
+**File: `src/pages/dashboard/DashboardHome.tsx` (lines ~235-260)**
+
+1. Keep the existing `flex items-start justify-between` row but only include the welcome text (left) and `DashboardCustomizeMenu` (right).
+2. Add a new `div` row below, inside the same `motion.div`, containing the Insights and Announcements buttons side by side (`flex items-center gap-3`).
+3. The border-bottom on the `motion.div` will naturally span beneath both rows, visually grouping them as a single header section.
+
