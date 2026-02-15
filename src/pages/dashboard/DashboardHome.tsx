@@ -255,7 +255,7 @@ export default function DashboardHome() {
               }}
             />
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-start gap-3">
             {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
             <AnnouncementsDrawer isLeadership={isLeadership} />
           </div>
