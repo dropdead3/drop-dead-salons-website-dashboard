@@ -436,8 +436,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
         {/* Expandable service detail rows */}
         {sortedData.length > 0 && (
           <div className="mt-4 space-y-1">
-            <p className="text-xs tracking-[0.15em] uppercase text-muted-foreground flex items-center gap-2 mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-oat" />
+            <p className="text-xs tracking-[0.15em] uppercase text-muted-foreground mb-2">
               STYLIST BREAKDOWN
             </p>
             {sortedData.slice(0, 5).map((svc, i) => (

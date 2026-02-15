@@ -84,10 +84,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
           <div className="flex items-center gap-3">
             <CollapsibleTrigger asChild>
               <button className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-oat" />
-                  <h2 className="font-display text-xs tracking-[0.15em]">ANNOUNCEMENTS</h2>
-                </div>
+                <h2 className="font-display text-xs tracking-[0.15em]">ANNOUNCEMENTS</h2>
                 <ChevronDown 
                   className={cn(
                     "w-4 h-4 text-muted-foreground transition-transform duration-300 ease-out",

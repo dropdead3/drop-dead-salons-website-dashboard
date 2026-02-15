@@ -496,10 +496,7 @@ export default function CampaignDetail() {
 
         {/* Tasks */}
         <div className="space-y-2">
-          <div className="flex items-center gap-2 mb-3">
-            <div className="w-1.5 h-1.5 rounded-full bg-oat" />
-            <h2 className="font-display text-xs tracking-[0.15em]">ACTION STEPS</h2>
-          </div>
+          <h2 className="font-display text-xs tracking-[0.15em] mb-3">ACTION STEPS</h2>
 
           <DndContext
             sensors={sensors}
