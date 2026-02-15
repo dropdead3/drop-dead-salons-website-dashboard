@@ -45,7 +45,7 @@ export function RevenueDonutChart({
         <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
           <PieChartIcon className="w-5 h-5 text-primary" />
         </div>
-        <CardTitle className="font-display text-base tracking-wide truncate">REVENUE BREAKDOWN</CardTitle>
+        <CardTitle className="font-display text-sm tracking-wide">REVENUE BREAKDOWN</CardTitle>
       </div>
       {filterContext && (
         <AnalyticsFilterBadge 
