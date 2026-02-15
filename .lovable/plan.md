@@ -1,19 +1,42 @@
 
+## Refine Dashboard Header Layout
 
-## Add Dismiss Button to "Pay Schedule Not Configured" Notification
+### Current State
+The "Zura Insights" and "Announcements" buttons are stacked vertically inside a bordered container, which sits below the "Customize" button. This creates unnecessary vertical height in the header area.
 
-The screenshot shows the "Pay schedule not configured" banner on the dashboard. You want to be able to close/dismiss it so it stops showing.
+### Changes
 
-### What will change
+**File: `src/pages/dashboard/DashboardHome.tsx` (lines 247-263)**
 
-A small **X button** will be added to the top-right corner of the "Pay schedule not configured" card. Clicking it will hide the card for the current user. The dismissal will be remembered using `localStorage` so it stays hidden across page refreshes and sessions.
+Restructure the right-side controls so that:
+1. The "Customize" button and the Insights/Announcements buttons all sit on the **same horizontal row**, aligned to the right
+2. Remove the extra bordered container wrapping the two drawers -- instead, place "Zura Insights" and "Announcements" as peer-level elements alongside "Customize"
+3. Use `flex items-center gap-3` so all three controls sit side by side in a single line
 
-### Technical details
+The result: a single clean row on the right side of the header containing `[Zura Insights] [Announcements] [Customize]` (or similar order), eliminating the stacked vertical layout and the extra bordered box.
 
-**File: `src/components/dashboard/payroll/PayrollDeadlineCard.tsx`**
-- Add a `useState` for `dismissed`, initialized from `localStorage` (key: `payroll-deadline-config-dismissed`)
-- When `dismissed` is true and `!settings`, return `null`
-- Add an `X` (close) icon button to the "not configured" card layout, positioned at the top-right
-- On click, set `dismissed = true` and persist to `localStorage`
+### Technical Detail
 
-This approach keeps it simple -- no database changes needed. If you later configure your pay schedule, the card naturally won't show anyway (it only appears when `settings` is null).
+Replace the current right-side `div` structure:
+```
+<div className="flex flex-col items-end gap-3">
+  <DashboardCustomizeMenu ... />
+  <div className="rounded-xl border ...">
+    <div className="flex ... gap-3">
+      <AIInsightsDrawer />
+      <AnnouncementsDrawer />
+    </div>
+  </div>
+</div>
+```
+
+With a flat horizontal layout:
+```
+<div className="flex items-center gap-3">
+  {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
+  <AnnouncementsDrawer isLeadership={isLeadership} />
+  <DashboardCustomizeMenu ... />
+</div>
+```
+
+This removes the nested container and border, placing all action buttons inline. On mobile, the flex will wrap naturally. The Zura Insights drawer already opens full-width, so no changes needed there.
