@@ -1,12 +1,22 @@
 
 
-## Make Top Performers Empty State Fill Sidebar Gap
+## Fix Top Padding on Top Performers Card Header
+
+### Problem
+The trophy icon container has less space above it (8px from `py-2`) than on the sides (16px from `px-4`), creating an unbalanced look.
 
 ### Change
 
 **File: `src/components/dashboard/sales/TopPerformersCard.tsx`**
 
-Add `h-full` back to the empty-state Card (around line 115) so it stretches to fill the sidebar column, consistent with the loading and populated states. The card already uses `flex-1 flex items-center justify-center` for the content area, so the "No sales data available" message will remain vertically centered within the taller card.
+Update all three `CardHeader` instances (loading, empty, and populated states) from:
+```
+className="px-4 py-2 pb-1"
+```
+to:
+```
+className="px-4 pt-4 pb-1"
+```
 
-Single class addition -- no other files affected.
+This sets the top padding to 16px (`pt-4`), matching the 16px side padding (`px-4`), while keeping the bottom padding tight at 4px (`pb-1`).
 
