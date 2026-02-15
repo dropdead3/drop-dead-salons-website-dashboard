@@ -233,20 +233,18 @@ export default function DashboardHome() {
 
         {/* Header with Customize Button */}
         <motion.div
-          className="flex items-start justify-between border-b border-border/60 pb-6"
+          className="border-b border-border/60 pb-6 space-y-4"
           variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}
         >
-          <div>
-            <h1 className="font-display text-2xl lg:text-3xl mb-2 font-medium">
-              {t('home.welcome_back')} <span className="text-foreground/80">{firstName}</span>
-            </h1>
-            <p className="text-muted-foreground font-sans font-medium">
-              {t('home.whats_happening')}
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
-            <AnnouncementsDrawer isLeadership={isLeadership} />
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="font-display text-2xl lg:text-3xl mb-2 font-medium">
+                {t('home.welcome_back')} <span className="text-foreground/80">{firstName}</span>
+              </h1>
+              <p className="text-muted-foreground font-sans font-medium">
+                {t('home.whats_happening')}
+              </p>
+            </div>
             <DashboardCustomizeMenu 
               variant="button" 
               roleContext={{
@@ -256,6 +254,10 @@ export default function DashboardHome() {
                 isReceptionist,
               }}
             />
+          </div>
+          <div className="flex items-center gap-3">
+            {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
+            <AnnouncementsDrawer isLeadership={isLeadership} />
           </div>
         </motion.div>
 
