@@ -61,6 +61,24 @@ import { PayrollDeadlineCard } from '@/components/dashboard/payroll/PayrollDeadl
 import { PaydayCountdownBanner } from '@/components/dashboard/mypay/PaydayCountdownBanner';
 import { InsightsNudgeBanner } from '@/components/dashboard/InsightsNudgeBanner';
 import { ActiveCampaignsCard } from '@/components/dashboard/ActiveCampaignsCard';
+const GREETINGS = [
+  "Welcome back,",
+  "Good to see you,",
+  "Let's build momentum,",
+  "Ready to lead,",
+  "Great things ahead,",
+  "Let's make it count,",
+];
+
+const SUBTITLES = [
+  "Here's what's happening today",
+  "Your operations are in motion",
+  "Let's see where you stand",
+  "The numbers are telling a story",
+  "Here's your snapshot for today",
+  "Your team is counting on you",
+];
+
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
 interface Announcement {
@@ -186,6 +204,8 @@ export default function DashboardHome() {
   // Mark-as-read logic moved into AnnouncementsDrawer
   
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there';
+  const [greeting] = useState(() => GREETINGS[Math.floor(Math.random() * GREETINGS.length)]);
+  const [subtitle] = useState(() => SUBTITLES[Math.floor(Math.random() * SUBTITLES.length)]);
 
   // Show setup wizard for first-time users
   if (!hasCompletedSetup && !layoutLoading) {
@@ -239,10 +259,10 @@ export default function DashboardHome() {
           <div className="flex items-start justify-between">
             <div>
               <h1 className="font-display text-2xl lg:text-3xl mb-2 font-medium">
-                {t('home.welcome_back')} <span className="text-foreground/80">{firstName}</span>
+                {greeting} <span className="text-foreground/80">{firstName}</span>
               </h1>
               <p className="text-muted-foreground font-sans font-medium">
-                {t('home.whats_happening')}
+                {subtitle}
               </p>
             </div>
             <DashboardCustomizeMenu 
