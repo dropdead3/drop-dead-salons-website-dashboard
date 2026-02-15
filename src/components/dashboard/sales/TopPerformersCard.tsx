@@ -77,7 +77,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
         <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
           <Trophy className="w-5 h-5 text-primary" />
         </div>
-        <CardTitle className="font-display text-base tracking-wide">TOP PERFORMERS</CardTitle>
+        <CardTitle className="font-display text-sm tracking-wide">TOP PERFORMERS</CardTitle>
         <MetricInfoTooltip description="Ranks your team by total revenue or retail sales in the selected period." />
       </div>
       {filterContext && (
