@@ -1,36 +1,35 @@
 
 
-## Responsive Sales Overview Card — Sidebar Reflow
+## Fix Responsive Issues in Sales Overview Sidebar Cards
 
-### Problem
-On smaller screens (below `lg` breakpoint), the Top Performers and Revenue Breakdown cards stack directly after the main revenue hero area, pushing the secondary KPIs and goal progress further down. This creates an awkward reading order where sidebar content interrupts the primary sales flow.
+### Problems detected
+
+From the screenshot at a medium viewport width (roughly tablet portrait), the sidebar column is too narrow before the `lg` breakpoint triggers `order-last`. This causes:
+
+1. **Title truncation**: "TOP PERFORMERS" and "REVENUE BREAKDOWN" titles get clipped because the icon + title row doesn't wrap or scale.
+2. **Excessive empty space**: The Top Performers card in its empty state stretches vertically with "No sales data available" centered in a large void.
+3. **Label wrapping**: Revenue Breakdown labels like "Retail %" and "Attach Rate" wrap awkwardly in the cramped column.
 
 ### Solution
-Use Tailwind CSS `order` utilities so that on screens smaller than `lg`, the sidebar column (Top Performers + Revenue Breakdown) reflows to the bottom of the Sales Overview card, after the Location section. On `lg` and above, the current 3-column side-by-side layout is preserved.
 
-### What changes
+Since the sidebar already moves to the bottom via `order-last` below `lg`, the fix is to ensure the grid breaks to single-column **earlier** (at `md` instead of `lg`), and to tighten the sidebar cards for narrow contexts.
 
-**File: `src/components/dashboard/AggregateSalesCard.tsx`**
+### Changes
 
-1. On the main content grid (line 530), change from `grid lg:grid-cols-3` to include ordering:
-   - Keep `grid lg:grid-cols-3 gap-6 mb-6`
+**1. `src/components/dashboard/AggregateSalesCard.tsx`**
+- Change the main grid from `lg:grid-cols-3` to `xl:grid-cols-3` so the 3-column layout only activates on wider screens.
+- Update the KPI column from `lg:col-span-2` to `xl:col-span-2`.
+- Update sidebar ordering from `order-last lg:order-none` to `order-last xl:order-none`.
 
-2. On the KPI column (line 532, `lg:col-span-2`), add `order-1` so it always comes first.
+This ensures the sidebar stacks below the KPIs at `md` and `lg` widths instead of being squeezed into a narrow column.
 
-3. On the sidebar column (line 936), add `order-3 lg:order-2` so it appears last on mobile but in its normal position on desktop.
+**2. `src/components/dashboard/sales/TopPerformersCard.tsx`**
+- Remove `h-full` from the empty-state Card so it doesn't stretch to fill a tall flex container.
+- Reduce empty-state padding from `py-3` to `py-2` for a more compact look.
 
-4. Move the "By Location" section (currently outside the grid, starting at line 953) inside the grid with `order-2 lg:order-3 lg:col-span-3` — or alternatively, keep it outside and restructure the sidebar ordering.
+**3. `src/components/dashboard/sales/RevenueDonutChart.tsx`**
+- Add `truncate` to the title so it gracefully clips with an ellipsis if still constrained, rather than breaking layout.
 
-**Simpler approach:** Since the By Location section is outside the grid, we only need to reorder within the grid:
-- KPI column: `order-2 lg:order-1 lg:col-span-2` (stays first on desktop, second on mobile after... wait, we want KPIs first always)
-- Actually the simplest fix: sidebar column gets `order-last lg:order-none` — this pushes it to the bottom on mobile while keeping its natural grid position on desktop.
+### Why this approach
 
-### Technical detail
-
-Two class changes in `AggregateSalesCard.tsx`:
-
-1. **Line 532** (KPI column): No change needed, it naturally comes first.
-2. **Line 936** (sidebar column): Change from `flex flex-col gap-6 min-w-0` to `flex flex-col gap-6 min-w-0 order-last lg:order-none`. This uses `order-last` to push the sidebar below the KPI content on small screens, and `lg:order-none` to restore the natural grid position on desktop.
-
-No other files need changes. The By Location section sits outside the grid so it naturally appears after both columns regardless.
-
+Changing the breakpoint from `lg` (1024px) to `xl` (1280px) for the 3-column layout means the sidebar only appears side-by-side when there's genuinely enough room. At tablet widths, both cards stack full-width below the KPIs, which is a much better reading experience. This is a minimal change (3 class swaps in one file, minor tweaks in 2 card files) that directly addresses the root cause.
