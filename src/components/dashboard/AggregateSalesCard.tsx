@@ -527,9 +527,9 @@ export function AggregateSalesCard({
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid xl:grid-cols-3 gap-6 mb-6">
         {/* KPIs with Trends */}
-        <div className="lg:col-span-2">
+        <div className="xl:col-span-2">
           {/* Hero: Total Revenue with Breakdown */}
           <div className="bg-muted/30 dark:bg-card rounded-xl p-4 sm:p-6 border border-border/40">
             <p className="text-xs text-muted-foreground mb-2">
@@ -933,7 +933,7 @@ export function AggregateSalesCard({
         </div>
 
         {/* Sidebar - Top Performers & Donut */}
-        <div className="flex flex-col gap-6 min-w-0 order-last lg:order-none">
+        <div className="flex flex-col gap-6 min-w-0 order-last xl:order-none">
           <div className="flex-1">
             <TopPerformersCard 
               performers={stylistData || []} 
