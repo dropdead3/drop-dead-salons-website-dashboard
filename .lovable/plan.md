@@ -1,23 +1,38 @@
 
 
-## Fix: Revenue Breakdown Title Getting Cut Off
+## Fix Location Sort Display Values
 
 ### Problem
-The "REVENUE BREAKDOWN" title uses `truncate` which clips the text at smaller widths. The `font-display` (Termina) with `tracking-wide` also adds extra width to the characters.
+When sorting locations by a metric other than "Revenue" (e.g., Services, Products, Transactions, Avg Ticket), the displayed value on each row still shows total revenue. The number should reflect the selected sort field so users can see why locations are ranked in that order.
 
-### Solution
-Two small changes in `src/components/dashboard/sales/RevenueDonutChart.tsx` (line 48):
+**Exception**: When sorting by "Name" (alphabetical), the displayed value should remain as revenue since alphabetical sorting is just a different ordering of the same data.
 
-1. **Remove `truncate`** so the title can wrap or display fully.
-2. **Reduce font size** from `text-base` to `text-sm` so it fits the sidebar card width without clipping.
+### Changes
 
+**File**: `src/components/dashboard/AggregateSalesCard.tsx`
+
+**Location**: Around line 1019-1022, where each location row renders its value.
+
+Currently:
 ```tsx
-// Before
-<CardTitle className="font-display text-base tracking-wide truncate">REVENUE BREAKDOWN</CardTitle>
-
-// After
-<CardTitle className="font-display text-sm tracking-wide">REVENUE BREAKDOWN</CardTitle>
+<span className="text-sm font-display tabular-nums">
+  <BlurredAmount>{formatCurrency(location.totalRevenue)}</BlurredAmount>
+</span>
 ```
 
-This keeps the title fully visible while maintaining the uppercase Termina styling consistent with the card's compact sidebar layout.
+Will be updated to dynamically show the value matching the selected sort field:
+
+| Sort Field | Displayed Value | Format |
+|---|---|---|
+| Revenue (default) | `totalRevenue` | Currency |
+| Name | `totalRevenue` | Currency (no change) |
+| Services | `serviceRevenue` | Currency |
+| Products | `productRevenue` | Currency |
+| Transactions | `totalTransactions` | Plain number |
+| Avg Ticket | `totalRevenue / totalTransactions` | Currency |
+
+A helper function will map `locationSortField` to the correct value and format (currency vs plain number), keeping the logic clean and readable.
+
+### Scope
+Single file change, ~15 lines added. No new dependencies or data changes needed -- all required data fields already exist on each location object.
 
