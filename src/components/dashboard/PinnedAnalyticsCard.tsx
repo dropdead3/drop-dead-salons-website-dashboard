@@ -197,10 +197,6 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
         <VisibilityGate elementKey="executive_summary">
           <PinnableCard elementKey="executive_summary" elementName="Executive Summary" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <ExecutiveSummaryCard
-              filterContext={filterContext}
-              dateFrom={filters.dateFrom}
-              dateTo={filters.dateTo}
-              locationId={filters.locationId}
             />
           </PinnableCard>
         </VisibilityGate>

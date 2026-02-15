@@ -23,7 +23,7 @@ export function useSEOWorkshopProgress(organizationId: string | undefined) {
         .eq('organization_id', organizationId!);
 
       if (error) throw error;
-      return (data || []) as SEOWorkshopCompletionRow[];
+      return (data || []) as unknown as SEOWorkshopCompletionRow[];
     },
     enabled: !!organizationId,
   });
@@ -60,7 +60,7 @@ export function useCompleteSEOWorkshopAction() {
         .single();
 
       if (error) throw error;
-      return data as SEOWorkshopCompletionRow;
+      return data as unknown as SEOWorkshopCompletionRow;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['seo-workshop-progress', variables.organizationId] });

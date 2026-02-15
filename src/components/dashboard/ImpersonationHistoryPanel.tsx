@@ -51,7 +51,7 @@ function LogEntry({ log }: { log: ImpersonationLogWithAdmin }) {
         <p className="text-xs text-muted-foreground">
           {formatRelativeTime(log.created_at)}
           <span className="mx-1">•</span>
-          {formatDate(new Date(log.created_at), 'MMM d, h:mm a')}
+          {new Date(log.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
         </p>
       </div>
     </div>

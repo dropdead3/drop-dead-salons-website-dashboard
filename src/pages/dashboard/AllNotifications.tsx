@@ -16,8 +16,6 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { formatRelativeTime } from '@/lib/format';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
-import { formatRelativeTime } from '@/lib/format';
-import { EmptyState } from '@/components/ui/empty-state';
 
 interface Announcement {
   id: string;

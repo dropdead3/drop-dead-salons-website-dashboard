@@ -69,10 +69,8 @@ function makeViewAsMock(overrides: Partial<ViewAsMock> = {}): ViewAsMock {
     setViewAsRole: () => {},
     setViewAsUser: () => {},
     clearViewAs: () => {},
-    isDemoMode: false,
-    setDemoMode: () => {},
-    pinnedRole: null,
-    setPinnedRole: () => {},
+    sessionId: null,
+    ...overrides,
     ...overrides,
   };
 }

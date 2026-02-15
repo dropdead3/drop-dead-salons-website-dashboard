@@ -17,7 +17,7 @@ export function RecentReports() {
     queryKey: ['recent-reports', effectiveOrganization?.id],
     queryFn: async () => {
       let query = supabase
-        .from('report_history')
+        .from('report_history' as any)
         .select(`
           *,
           employee_profiles:generated_by (
@@ -34,7 +34,7 @@ export function RecentReports() {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data;
+      return data as any[];
     },
   });
 

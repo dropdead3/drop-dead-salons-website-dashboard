@@ -93,13 +93,13 @@ export function useTeamMeetingOverview() {
 
       // 2. Get cadence settings for this org
       const { data: cadenceRows } = await supabase
-        .from('meeting_cadence_settings')
+        .from('meeting_cadence_settings' as any)
         .select('user_id, cadence_days')
         .eq('organization_id', orgId);
 
       let globalDefault = 14;
       const overrides: Record<string, number> = {};
-      (cadenceRows || []).forEach(row => {
+      (cadenceRows || []).forEach((row: any) => {
         if (row.user_id === null) {
           globalDefault = row.cadence_days;
         } else {
@@ -212,7 +212,7 @@ export function useTeamMeetingOverview() {
       if (!orgId) throw new Error('No organization');
 
       const { error } = await supabase
-        .from('meeting_cadence_settings')
+        .from('meeting_cadence_settings' as any)
         .upsert({
           organization_id: orgId,
           user_id: userId,
@@ -239,7 +239,7 @@ export function useTeamMeetingOverview() {
       if (!orgId) throw new Error('No organization');
 
       const { error } = await supabase
-        .from('meeting_cadence_settings')
+        .from('meeting_cadence_settings' as any)
         .delete()
         .eq('organization_id', orgId)
         .eq('user_id', userId);

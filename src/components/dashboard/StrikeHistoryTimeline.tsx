@@ -223,7 +223,7 @@ export function StrikeHistoryTimeline({ userId }: StrikeHistoryTimelineProps) {
                     {STRIKE_TYPE_LABELS[selectedStrike.strike_type as keyof typeof STRIKE_TYPE_LABELS]}
                   </Badge>
                   <span className="text-xs text-muted-foreground">
-                    {format(new Date(selectedStrike.incident_date), 'MMM d, yyyy')}
+                    {new Date(selectedStrike.incident_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                 </div>
               </div>
