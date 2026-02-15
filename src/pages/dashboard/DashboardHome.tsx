@@ -68,6 +68,8 @@ const GREETINGS = [
   "Ready to lead,",
   "Great things ahead,",
   "Let's make it count,",
+  "You're on a roll,",
+  "Another great day ahead,",
 ];
 
 const SUBTITLES = [
@@ -76,7 +78,9 @@ const SUBTITLES = [
   "Let's see where you stand",
   "The numbers are telling a story",
   "Here's your snapshot for today",
-  "Your team is counting on you",
+  "Everything's moving in the right direction",
+  "You're set up for a strong day",
+  "Let's keep the momentum going",
 ];
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
