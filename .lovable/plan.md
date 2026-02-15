@@ -1,40 +1,35 @@
 
-
-## Dynamic Welcome & Subtitle Messages
+## Update Dynamic Messages — Remove Pressure, Add Positivity
 
 ### What changes
 
-Replace the static "Welcome back, [name]" and "Here's what's happening today" strings with arrays of rotating messages that change each time the user visits the dashboard.
+Remove "Your team is counting on you" from the subtitles array and expand both the greetings and subtitles pools with more positive, encouraging variants.
 
-### Message pools
+### Updated message pools
 
-**Greetings (replaces "Welcome back, [name]"):**
+**Greetings (8 total — 2 new):**
 - "Welcome back,"
 - "Good to see you,"
 - "Let's build momentum,"
 - "Ready to lead,"
 - "Great things ahead,"
 - "Let's make it count,"
+- "You're on a roll," *(new)*
+- "Another great day ahead," *(new)*
 
-**Subtitles (replaces "Here's what's happening today"):**
+**Subtitles (8 total — removed 1, added 3):**
 - "Here's what's happening today"
 - "Your operations are in motion"
 - "Let's see where you stand"
 - "The numbers are telling a story"
 - "Here's your snapshot for today"
-- "Your team is counting on you"
-
-### How rotation works
-
-Use a simple `useMemo` seeded by `Date.now()` at the session/component-mount level. Each time the user navigates to the dashboard (or refreshes), they get a random pair. The selection is stable for the duration of that page session (no flickering on re-renders).
+- ~~"Your team is counting on you"~~ *(removed)*
+- "Everything's moving in the right direction" *(new)*
+- "You're set up for a strong day" *(new)*
+- "Let's keep the momentum going" *(new)*
 
 ### Technical detail
 
-**File: `src/pages/dashboard/DashboardHome.tsx`**
+**File: `src/pages/dashboard/DashboardHome.tsx` (lines 64-80)**
 
-1. Add two constant arrays of greeting and subtitle strings at the top of the file (outside the component).
-2. Inside the component, use `useState` with a lazy initializer to pick a random index from each array once per mount.
-3. Replace `{t('home.welcome_back')}` with the selected greeting string, and `{t('home.whats_happening')}` with the selected subtitle string.
-
-No i18n key changes needed -- the dynamic strings will be hardcoded in the component (they can be moved to locale files later if multi-language support is needed for these messages).
-
+Replace the `GREETINGS` and `SUBTITLES` arrays with the expanded versions above. No other file changes needed.
