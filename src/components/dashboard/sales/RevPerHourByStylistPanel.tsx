@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface StylistData {
   user_id: string;
@@ -20,6 +21,7 @@ interface RevPerHourByStylistPanelProps {
 }
 
 export function RevPerHourByStylistPanel({ isOpen, stylistData, totalServiceHours, isLoading }: RevPerHourByStylistPanelProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   // Calculate salon-wide rev/hour and per-stylist rev/hour
   const { stylists, salonAvg, maxRevPerHour } = useMemo(() => {
     if (!stylistData || stylistData.length === 0 || totalServiceHours === 0) {
@@ -78,7 +80,7 @@ export function RevPerHourByStylistPanel({ isOpen, stylistData, totalServiceHour
               </div>
               {hasData && (
                 <span className="text-xs text-muted-foreground">
-                  Salon avg: <BlurredAmount><span className="font-medium text-foreground">${Math.round(salonAvg)}/hr</span></BlurredAmount>
+                  Salon avg: <BlurredAmount><span className="font-medium text-foreground">{formatCurrencyWhole(Math.round(salonAvg))}/hr</span></BlurredAmount>
                 </span>
               )}
             </div>
@@ -123,7 +125,7 @@ export function RevPerHourByStylistPanel({ isOpen, stylistData, totalServiceHour
                         />
                       </div>
                       <span className="text-sm font-display tabular-nums min-w-[60px] text-right">
-                        <BlurredAmount>${Math.round(stylist.revPerHour)}/hr</BlurredAmount>
+                        <BlurredAmount>{formatCurrencyWhole(Math.round(stylist.revPerHour))}/hr</BlurredAmount>
                       </span>
                     </motion.div>
                   );

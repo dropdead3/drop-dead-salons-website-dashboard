@@ -43,7 +43,7 @@ import {
   type AssistantProgress,
   type GraduationSubmission,
 } from '@/hooks/useGraduationTracker';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 const STATUS_COLORS = {
   pending: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
@@ -76,6 +76,7 @@ function SubmissionReviewSheet({
   requirementTitle: string;
   onClose: () => void;
 }) {
+  const { formatDate } = useFormatDate();
   const [feedback, setFeedback] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<'approved' | 'needs_revision' | 'rejected' | ''>('');
   const updateStatus = useUpdateSubmissionStatus();
@@ -121,7 +122,7 @@ function SubmissionReviewSheet({
       <div className="space-y-4">
         <div>
           <Label className="text-muted-foreground">Submitted</Label>
-          <p className="text-sm">{format(new Date(submission.submitted_at), 'PPP p')}</p>
+          <p className="text-sm">{formatDate(new Date(submission.submitted_at), 'PPP p')}</p>
         </div>
 
         {submission.assistant_notes && (
@@ -158,7 +159,7 @@ function SubmissionReviewSheet({
                   <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                     <span className="font-medium">{fb.coach?.full_name || 'Coach'}</span>
                     <span>•</span>
-                    <span>{format(new Date(fb.created_at), 'MMM d, h:mm a')}</span>
+                    <span>{formatDate(new Date(fb.created_at), 'MMM d, h:mm a')}</span>
                   </div>
                   <p>{fb.feedback}</p>
                 </div>

@@ -12,6 +12,7 @@ import {
   RefreshCw,
   AlertTriangle
 } from 'lucide-react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useProducts, useProductCategories } from '@/hooks/useProducts';
 import { useLocations } from '@/hooks/useLocations';
 import { ProductTable } from '@/components/dashboard/inventory/ProductTable';
@@ -25,6 +26,8 @@ export default function Inventory() {
   const [lowStockOnly, setLowStockOnly] = useState(false);
   const [editingProduct, setEditingProduct] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
+
+  const { formatCurrency } = useFormatCurrency();
 
   const { data: products = [], isLoading, refetch } = useProducts({
     search: search || undefined,
@@ -80,7 +83,7 @@ export default function Inventory() {
           <Card className="p-4">
             <p className="text-sm text-muted-foreground">Inventory Value</p>
             <p className="text-2xl font-display font-semibold">
-              ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              {formatCurrency(totalValue)}
             </p>
           </Card>
           <Card className="p-4">

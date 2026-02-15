@@ -96,7 +96,8 @@ export function PinnableCard({
           <div className="[&>button]:rounded-full [&>button]:h-7 [&>button]:w-7">
             <CommandCenterVisibilityToggle 
               elementKey={elementKey} 
-              elementName={elementName} 
+              elementName={elementName}
+              elementCategory={category}
             />
           </div>
         </div>

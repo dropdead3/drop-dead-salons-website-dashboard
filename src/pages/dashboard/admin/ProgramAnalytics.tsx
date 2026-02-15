@@ -45,6 +45,7 @@ import {
   RefreshCcw,
 } from 'lucide-react';
 import { format, subDays, startOfWeek, differenceInDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 
 interface EnrollmentData {
@@ -87,6 +88,7 @@ const FUNNEL_STAGES = [
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
 export default function ProgramAnalytics() {
+  const { formatDate } = useFormatDate();
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState<EnrollmentData[]>([]);
   const [completions, setCompletions] = useState<CompletionData[]>([]);
@@ -156,7 +158,7 @@ export default function ProgramAnalytics() {
     return Object.entries(cohorts)
       .map(([weekStart, members]) => ({
         weekStart,
-        weekLabel: format(new Date(weekStart), 'MMM d'),
+        weekLabel: formatDate(new Date(weekStart), 'MMM d'),
         count: members.length,
         active: members.filter(m => m.status === 'active').length,
         completed: members.filter(m => m.status === 'completed').length,
@@ -174,7 +176,7 @@ export default function ProgramAnalytics() {
     for (let i = days - 1; i >= 0; i--) {
       const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
       const count = completions.filter(c => c.completion_date?.split('T')[0] === date).length;
-      trendData.push({ date: format(new Date(date), 'MMM d'), completions: count });
+      trendData.push({ date: formatDate(new Date(date), 'MMM d'), completions: count });
     }
 
     return trendData;

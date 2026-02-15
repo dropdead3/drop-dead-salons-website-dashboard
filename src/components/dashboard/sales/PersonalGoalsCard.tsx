@@ -8,6 +8,8 @@ import { Progress } from '@/components/ui/progress';
 import { Target, Edit2, Save, X, Loader2 } from 'lucide-react';
 import { useStylistPersonalGoals } from '@/hooks/useStylistPersonalGoals';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface PersonalGoalsCardProps {
   userId: string;
@@ -17,6 +19,7 @@ interface PersonalGoalsCardProps {
 
 export function PersonalGoalsCard({ userId, currentMonthlyRevenue = 0, currentWeeklyRevenue = 0 }: PersonalGoalsCardProps) {
   const { goals, isLoading, upsertGoals, isUpdating } = useStylistPersonalGoals(userId);
+  const { formatCurrencyWhole } = useFormatCurrency();
   const [isEditing, setIsEditing] = useState(false);
   const [monthlyTarget, setMonthlyTarget] = useState(0);
   const [weeklyTarget, setWeeklyTarget] = useState(0);
@@ -56,7 +59,10 @@ export function PersonalGoalsCard({ userId, currentMonthlyRevenue = 0, currentWe
             <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
               <Target className="w-5 h-5 text-primary" />
             </div>
-            <CardTitle className="font-display text-base tracking-wide">MY PERSONAL GOALS</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="font-display text-base tracking-wide">MY PERSONAL GOALS</CardTitle>
+              <MetricInfoTooltip description="Your individual revenue and service goals. Progress is calculated from your booked appointments and completed services in the current period." />
+            </div>
           </div>
           {!isEditing ? (
             <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
@@ -125,7 +131,7 @@ export function PersonalGoalsCard({ userId, currentMonthlyRevenue = 0, currentWe
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Monthly</span>
                 <span className="font-medium">
-                  ${currentMonthlyRevenue.toLocaleString()} / ${monthlyTarget.toLocaleString()}
+                  {formatCurrencyWhole(currentMonthlyRevenue)} / {formatCurrencyWhole(monthlyTarget)}
                 </span>
               </div>
               <Progress 
@@ -145,7 +151,7 @@ export function PersonalGoalsCard({ userId, currentMonthlyRevenue = 0, currentWe
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Weekly</span>
                 <span className="font-medium">
-                  ${currentWeeklyRevenue.toLocaleString()} / ${weeklyTarget.toLocaleString()}
+                  {formatCurrencyWhole(currentWeeklyRevenue)} / {formatCurrencyWhole(weeklyTarget)}
                 </span>
               </div>
               <Progress 

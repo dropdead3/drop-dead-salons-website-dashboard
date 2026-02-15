@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/components/ui/use-toast';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
   Crown, 
   Shield, 
@@ -77,6 +77,7 @@ const roleConfig: Record<PlatformRole, { label: string; icon: React.ElementType;
 };
 
 export function PlatformTeamManager() {
+  const { formatDate } = useFormatDate();
   const { user, hasPlatformRole } = useAuth();
   const { data: team, isLoading } = usePlatformTeam();
   const removeMutation = useRemovePlatformRole();
@@ -257,7 +258,7 @@ export function PlatformTeamManager() {
                           </PlatformBadge>
                         </TableCell>
                         <TableCell className="text-slate-500 text-sm">
-                          {format(new Date(member.created_at), 'MMM d, yyyy')}
+                          {formatDate(new Date(member.created_at), 'MMM d, yyyy')}
                         </TableCell>
                         {canManageTeam && (
                           <TableCell>

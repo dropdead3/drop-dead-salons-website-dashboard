@@ -30,7 +30,9 @@ import {
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format, differenceInDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
 import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
 import { useLocations } from '@/hooks/useLocations';
@@ -42,7 +44,9 @@ type SortDirection = 'asc' | 'desc';
 type PrimaryTab = 'all' | 'my';
 
 export default function ClientDirectory() {
+  const { formatDate } = useFormatDate();
   const { user, roles } = useAuth();
+  const { formatCurrencyWhole } = useFormatCurrency();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortField, setSortField] = useState<SortField>('total_spend');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -304,7 +308,7 @@ export default function ClientDirectory() {
           </Card>
           <Card className="p-4 text-center">
             <DollarSign className="w-5 h-5 text-primary mx-auto mb-2" />
-            <p className="font-display text-2xl">${stats.totalRevenue.toLocaleString()}</p>
+            <p className="font-display text-2xl">{formatCurrencyWhole(stats.totalRevenue)}</p>
             <p className="text-xs text-muted-foreground">Total Revenue</p>
           </Card>
         </div>
@@ -488,7 +492,7 @@ export default function ClientDirectory() {
                           {client.last_visit && (
                             <>
                               <span>•</span>
-                              <span>Last: {format(new Date(client.last_visit), 'MMM d, yyyy')}</span>
+                              <span>Last: {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}</span>
                             </>
                           )}
                           {client.daysSinceVisit !== null && client.daysSinceVisit > 30 && (
@@ -536,7 +540,7 @@ export default function ClientDirectory() {
                       
                       <div className="text-right flex items-center gap-2">
                         <div>
-                          <p className="font-display text-lg">${Number(client.total_spend || 0).toLocaleString()}</p>
+                          <p className="font-display text-lg">{formatCurrencyWhole(Number(client.total_spend || 0))}</p>
                           <p className="text-xs text-muted-foreground">lifetime</p>
                         </div>
                         <ChevronRight className="w-5 h-5 text-muted-foreground" />

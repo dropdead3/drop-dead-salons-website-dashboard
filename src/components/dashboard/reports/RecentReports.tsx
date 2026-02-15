@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { supabase } from '@/integrations/supabase/client';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,10 +10,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { FileText, Download, Clock } from 'lucide-react';
 
 export function RecentReports() {
+  const { formatDate } = useFormatDate();
+  const { effectiveOrganization } = useOrganizationContext();
+
   const { data: reports, isLoading } = useQuery({
-    queryKey: ['recent-reports'],
+    queryKey: ['recent-reports', effectiveOrganization?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('report_history')
         .select(`
           *,
@@ -23,6 +28,11 @@ export function RecentReports() {
         .order('created_at', { ascending: false })
         .limit(5);
 
+      if (effectiveOrganization?.id) {
+        query = query.eq('organization_id', effectiveOrganization.id);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
@@ -110,7 +120,7 @@ export function RecentReports() {
                     </Badge>
                     <span>•</span>
                     <span>
-                      {format(new Date(report.date_from), 'MMM d')} - {format(new Date(report.date_to), 'MMM d, yyyy')}
+                      {formatDate(new Date(report.date_from), 'MMM d')} - {formatDate(new Date(report.date_to), 'MMM d, yyyy')}
                     </span>
                   </div>
                 </div>

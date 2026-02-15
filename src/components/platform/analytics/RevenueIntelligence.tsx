@@ -1,5 +1,7 @@
+import { useCallback } from 'react';
 import { DollarSign, TrendingUp, Building2, MapPin, Percent } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from 'recharts';
 import type { PlatformAnalyticsSummary } from '@/hooks/useOrganizationAnalytics';
@@ -8,15 +10,19 @@ interface RevenueIntelligenceProps {
   analytics: PlatformAnalyticsSummary;
 }
 
-const formatCurrency = (value: number) => {
-  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
-  if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`;
-  return `$${value.toFixed(0)}`;
-};
-
 export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
   const { resolvedTheme } = usePlatformTheme();
+  const { currency } = useFormatCurrency();
   const isDark = resolvedTheme === 'dark';
+
+  const formatCompact = useCallback((value: number) =>
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value),
+  [currency]);
 
   // Revenue by tier
   const tierRevenueData = analytics.tierDistribution.map(tier => ({
@@ -67,7 +73,7 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
             <div>
               <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Platform MRR</p>
               <p className={cn('text-xl font-bold', isDark ? 'text-white' : 'text-slate-900')}>
-                {formatCurrency(analytics.platformMRR)}
+                {formatCompact(analytics.platformMRR)}
               </p>
             </div>
           </div>
@@ -84,7 +90,7 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
             <div>
               <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Platform ARR</p>
               <p className={cn('text-xl font-bold', isDark ? 'text-white' : 'text-slate-900')}>
-                {formatCurrency(analytics.platformARR)}
+                {formatCompact(analytics.platformARR)}
               </p>
             </div>
           </div>
@@ -101,7 +107,7 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
             <div>
               <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Combined Salon Revenue</p>
               <p className={cn('text-xl font-bold', isDark ? 'text-white' : 'text-slate-900')}>
-                {formatCurrency(analytics.combinedMonthlyRevenue)}
+                {formatCompact(analytics.combinedMonthlyRevenue)}
               </p>
             </div>
           </div>
@@ -118,7 +124,7 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
             <div>
               <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Avg Revenue/Location</p>
               <p className={cn('text-xl font-bold', isDark ? 'text-white' : 'text-slate-900')}>
-                {formatCurrency(analytics.avgRevenuePerLocation)}
+                {formatCompact(analytics.avgRevenuePerLocation)}
               </p>
             </div>
           </div>
@@ -141,7 +147,7 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
                 <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#334155' : '#e2e8f0'} />
                 <XAxis 
                   type="number" 
-                  tickFormatter={(v) => formatCurrency(v)}
+                  tickFormatter={(v) => formatCompact(v)}
                   stroke={isDark ? '#94a3b8' : '#64748b'}
                 />
                 <YAxis 
@@ -156,7 +162,7 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
                     border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
                     borderRadius: '8px',
                   }}
-                  formatter={(value: number) => [formatCurrency(value), 'MRR']}
+                  formatter={(value: number) => [formatCompact(value), 'MRR']}
                 />
                 <Bar dataKey="mrr" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
               </BarChart>
@@ -195,7 +201,7 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
                     border: isDark ? '1px solid #334155' : '1px solid #e2e8f0',
                     borderRadius: '8px',
                   }}
-                  formatter={(value: number) => [formatCurrency(value), '']}
+                  formatter={(value: number) => [formatCompact(value), '']}
                 />
               </PieChart>
             </ResponsiveContainer>

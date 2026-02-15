@@ -22,6 +22,8 @@ import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/Anal
 import { motion, AnimatePresence } from 'framer-motion';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, getGradientFromMarker, isGradientMarker } from '@/utils/categoryColors';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { formatCurrencyWhole as formatCurrencyWholeUtil, formatCurrency as formatCurrencyUtil } from '@/lib/formatCurrency';
 
 let barIdCounter = 0;
 
@@ -133,6 +135,7 @@ function StylistBreakdownPanel({ serviceName, dateFrom, dateTo, locationId }: {
   dateTo: string;
   locationId?: string;
 }) {
+  const { formatCurrencyWhole: fmtWhole, formatCurrency: fmtCurrency } = useFormatCurrency();
   const { data: stylists, isLoading } = useServiceStylistBreakdown(serviceName, dateFrom, dateTo, locationId);
   const totalCount = stylists?.reduce((s, st) => s + st.count, 0) || 0;
   const [showAll, setShowAll] = useState(false);
@@ -158,8 +161,8 @@ function StylistBreakdownPanel({ serviceName, dateFrom, dateTo, locationId }: {
             </div>
             <div className="flex items-center gap-2 text-sm">
               <span className="text-muted-foreground/70 text-xs">{stylist.count}× · {pct}%</span>
-              <Badge variant="secondary" className="text-xs">${stylist.revenue.toLocaleString()}</Badge>
-              <span className="text-xs text-muted-foreground/60">avg ${stylist.avgPrice.toFixed(0)}</span>
+              <Badge variant="secondary" className="text-xs">{fmtWhole(stylist.revenue)}</Badge>
+              <span className="text-xs text-muted-foreground/60">avg {fmtWhole(Math.round(stylist.avgPrice))}</span>
             </div>
           </div>
         );
@@ -236,6 +239,7 @@ function resolveCategoryHex(colorMap: Record<string, { bg: string; text: string;
 
 export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterContext }: ServicePopularityChartProps) {
   const { data, isLoading } = useServicePopularity(dateFrom, dateTo, locationId);
+  const { formatCurrencyWhole } = useFormatCurrency();
   const [sortBy, setSortBy] = useState<'frequency' | 'revenue'>('revenue');
   const [expandedService, setExpandedService] = useState<string | null>(null);
   const { colorMap } = useServiceCategoryColorsMap();
@@ -295,7 +299,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                 ))}
               </defs>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
-              <XAxis type="number" tickFormatter={isRevenue ? (v) => `$${v}` : undefined} />
+              <XAxis type="number" tickFormatter={isRevenue ? (v) => formatCurrencyWholeUtil(v) : undefined} />
               <YAxis 
                 type="category" 
                 dataKey="name" 
@@ -310,7 +314,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                     const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
                     const svcName = props.payload?.name;
                     const avg = svcName ? avgPriceMap[svcName] : 0;
-                    return [`$${value.toLocaleString()} · ${pct}% · avg $${(avg || 0).toFixed(0)}`, svcName || 'Revenue'];
+                    return [`${formatCurrencyWholeUtil(value)} · ${pct}% · avg ${formatCurrencyWholeUtil(Math.round(avg || 0))}`, svcName || 'Revenue'];
                   }
                   const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
                   return [`${value} bookings · ${pct}%`, props.payload?.name || 'Service'];
@@ -348,7 +352,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                     const padY = 3;
                     const padX = 4;
                     const badgeH = barH - padY * 2;
-                    const label = isRevenue ? `$${Number(value).toLocaleString()}` : `${value}`;
+                    const label = isRevenue ? formatCurrencyWholeUtil(Number(value)) : `${value}`;
                     const badgeW = Math.max(label.length * (isRevenue ? 6.5 : 7) + (isRevenue ? 14 : 12), isRevenue ? 50 : 36);
                     if (badgeW + padX * 2 > barW) return null;
                     const bx = (x || 0) + barW - badgeW - padX;
@@ -402,7 +406,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
               />
             )}
             <Badge variant="outline">{totalServices} services</Badge>
-            <Badge variant="secondary">${totalRevenue.toLocaleString()}</Badge>
+            <Badge variant="secondary">{formatCurrencyWhole(totalRevenue)}</Badge>
           </div>
         </div>
         <CardDescription>Most requested services ranked by frequency and revenue</CardDescription>
@@ -453,7 +457,7 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">{svc.frequency}× · ${svc.totalRevenue.toLocaleString()} · avg ${svc.avgPrice.toFixed(0)}</span>
+                    <span className="text-xs text-muted-foreground">{svc.frequency}× · {formatCurrencyWhole(svc.totalRevenue)} · avg {formatCurrencyWhole(Math.round(svc.avgPrice))}</span>
                     <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${expandedService === svc.name ? 'rotate-180' : ''}`} />
                   </div>
                 </button>

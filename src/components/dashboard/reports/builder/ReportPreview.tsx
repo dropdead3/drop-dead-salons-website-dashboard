@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid } from 'recharts';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import type { ReportConfig } from '@/lib/reportMetrics';
+import { formatCurrency as formatCurrencyUtil, formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 
 interface ReportPreviewProps {
   config: ReportConfig;
@@ -53,9 +54,9 @@ export function ReportPreview({ config }: ReportPreviewProps) {
             {MOCK_DATA.slice(0, 3).map((row, i) => (
               <TableRow key={i}>
                 <TableCell className="font-medium">{row.label}</TableCell>
-                <TableCell className="text-right">${row.value.toLocaleString()}</TableCell>
+                <TableCell className="text-right">{formatCurrencyWholeUtil(row.value)}</TableCell>
                 {config.metrics.length > 1 && (
-                  <TableCell className="text-right">${row.secondary.toLocaleString()}</TableCell>
+                  <TableCell className="text-right">{formatCurrencyWholeUtil(row.secondary)}</TableCell>
                 )}
               </TableRow>
             ))}
@@ -83,7 +84,7 @@ export function ReportPreview({ config }: ReportPreviewProps) {
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+            <Tooltip formatter={(value: number) => formatCurrencyUtil(value)} />
           </PieChart>
         </ResponsiveContainer>
       </div>
@@ -97,8 +98,8 @@ export function ReportPreview({ config }: ReportPreviewProps) {
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis dataKey="name" tick={{ fontSize: 10 }} />
-            <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
-            <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+            <YAxis tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'} tick={{ fontSize: 10 }} />
+            <Tooltip formatter={(value: number) => formatCurrencyUtil(value)} />
             <Line 
               type="monotone" 
               dataKey={config.metrics[0]?.label || 'value'} 
@@ -116,9 +117,9 @@ export function ReportPreview({ config }: ReportPreviewProps) {
     <div className="h-48">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={chartData} layout="vertical">
-          <XAxis type="number" tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 10 }} />
+          <XAxis type="number" tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'} tick={{ fontSize: 10 }} />
           <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={70} />
-          <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />
+          <Tooltip formatter={(value: number) => formatCurrencyUtil(value)} />
           <Bar 
             dataKey={config.metrics[0]?.label || 'value'} 
             fill="hsl(var(--primary))" 

@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Tag, X, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useValidatePromoCode, PromoValidationResult } from '@/hooks/usePromoCodeValidation';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface PromoCodeInputProps {
   organizationId: string;
@@ -27,6 +28,7 @@ export function PromoCodeInput({
 }: PromoCodeInputProps) {
   const [promoCode, setPromoCode] = useState('');
   const validatePromo = useValidatePromoCode();
+  const { formatCurrency } = useFormatCurrency();
 
   const handleApplyPromo = async () => {
     if (!promoCode.trim()) {
@@ -46,7 +48,7 @@ export function PromoCodeInput({
 
       if (result.valid) {
         onPromoApplied(result);
-        toast.success(`Promo code applied! Save $${result.calculated_discount?.toFixed(2)}`);
+        toast.success(`Promo code applied! Save ${formatCurrency(result.calculated_discount ?? 0)}`);
       } else {
         toast.error(result.error || 'Invalid promo code');
       }
@@ -72,14 +74,14 @@ export function PromoCodeInput({
             <p className="text-xs text-green-600 dark:text-green-400">
               {appliedPromo.promotion?.promotion_type === 'percentage_discount' 
                 ? `${appliedPromo.promotion?.discount_value}% off`
-                : `$${appliedPromo.promotion?.discount_value?.toFixed(2)} off`
+                : `${formatCurrency(appliedPromo.promotion?.discount_value ?? 0)} off`
               }
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-200">
-            -${appliedPromo.calculated_discount?.toFixed(2)}
+            -{formatCurrency(appliedPromo.calculated_discount ?? 0)}
           </Badge>
           <Button
             variant="ghost"

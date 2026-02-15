@@ -3,8 +3,10 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Users, UserPlus, UserCheck, TrendingUp } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { useClientFunnel } from '@/hooks/useSalesAnalytics';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface ClientFunnelCardProps {
   dateFrom: string;
@@ -15,6 +17,7 @@ interface ClientFunnelCardProps {
 
 export function ClientFunnelCard({ dateFrom, dateTo, locationId, filterContext }: ClientFunnelCardProps) {
   const { data, isLoading } = useClientFunnel(dateFrom, dateTo, locationId);
+  const { formatCurrencyWhole } = useFormatCurrency();
 
   const chartData = data ? [
     { name: 'New Clients', value: data.newClientRevenue, color: 'hsl(var(--chart-3))' },
@@ -42,7 +45,10 @@ export function ClientFunnelCard({ dateFrom, dateTo, locationId, filterContext }
             <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
               <Users className="w-5 h-5 text-primary" />
             </div>
-            <CardTitle className="font-display text-base tracking-wide">CLIENT ACQUISITION</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="font-display text-base tracking-wide">CLIENT ACQUISITION</CardTitle>
+              <MetricInfoTooltip description="Shows the split between new and returning client revenue. New clients are those with their first appointment in the selected date range." />
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {filterContext && (
@@ -80,7 +86,7 @@ export function ClientFunnelCard({ dateFrom, dateTo, locationId, filterContext }
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                    formatter={(value: number) => [formatCurrencyWhole(value), 'Revenue']}
                     contentStyle={{
                       backgroundColor: 'hsl(var(--background))',
                       border: '1px solid hsl(var(--border))',
@@ -100,8 +106,8 @@ export function ClientFunnelCard({ dateFrom, dateTo, locationId, filterContext }
                 </div>
                 <p className="text-xl font-display">{data.newClientCount}</p>
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>${data.newClientRevenue.toLocaleString()}</span>
-                  <span>Avg: ${Math.round(data.newClientAvgTicket)}</span>
+                  <span>{formatCurrencyWhole(data.newClientRevenue)}</span>
+                  <span>Avg: {formatCurrencyWhole(Math.round(data.newClientAvgTicket))}</span>
                 </div>
               </div>
               
@@ -112,8 +118,8 @@ export function ClientFunnelCard({ dateFrom, dateTo, locationId, filterContext }
                 </div>
                 <p className="text-xl font-display">{data.returningClientCount}</p>
                 <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                  <span>${data.returningClientRevenue.toLocaleString()}</span>
-                  <span>Avg: ${Math.round(data.returningClientAvgTicket)}</span>
+                  <span>{formatCurrencyWhole(data.returningClientRevenue)}</span>
+                  <span>Avg: {formatCurrencyWhole(Math.round(data.returningClientAvgTicket))}</span>
                 </div>
               </div>
             </div>

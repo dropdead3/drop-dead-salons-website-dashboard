@@ -12,10 +12,20 @@ import { ViewAsProvider } from "./contexts/ViewAsContext";
 import { HideNumbersProvider } from "./contexts/HideNumbersContext";
 import { DashboardThemeProvider } from "./contexts/DashboardThemeContext";
 import { OrganizationProvider } from "./contexts/OrganizationContext";
+import { SoundSettingsProvider } from "./contexts/SoundSettingsContext";
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { ThemeInitializer } from "./components/ThemeInitializer";
+import { I18nLocaleSync } from "./components/I18nLocaleSync";
+import { DevContextBridge } from "./dev/DevContextBridge";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+import { CommandMenu } from "./components/command/CommandMenu";
 
-// Public pages
+// Platform pages
+import PlatformLanding from "./pages/PlatformLanding";
+import UnifiedLogin from "./pages/UnifiedLogin";
+import NotFound from "./pages/NotFound";
+
+// Organization public pages (under /org/:orgSlug)
 import Index from "./pages/Index";
 import Services from "./pages/Services";
 import About from "./pages/About";
@@ -23,9 +33,7 @@ import Booking from "./pages/Booking";
 import Stylists from "./pages/Stylists";
 import Extensions from "./pages/Extensions";
 import Policies from "./pages/Policies";
-import NotFound from "./pages/NotFound";
-import StaffLogin from "./pages/StaffLogin";
-import PlatformLogin from "./pages/PlatformLogin";
+import { OrgPublicRoute } from "./components/org/OrgPublicRoute";
 
 // Dashboard pages
 import DashboardHome from "./pages/dashboard/DashboardHome";
@@ -144,6 +152,7 @@ import CampaignDetail from "./pages/dashboard/CampaignDetail";
 import ClientFeedbackPage from "./pages/ClientFeedback";
 import ClientPortalPage from "./pages/ClientPortal";
 import FeedbackHub from "./pages/dashboard/admin/FeedbackHub";
+import SEOWorkshopHub from "./pages/dashboard/admin/SEOWorkshopHub";
 import ReengagementHub from "./pages/dashboard/admin/ReengagementHub";
 import ClientHealthHub from "./pages/dashboard/admin/ClientHealthHub";
 
@@ -172,6 +181,8 @@ import SystemHealthPage from "./pages/dashboard/platform/SystemHealth";
 import StripeHealthPage from "./pages/dashboard/platform/StripeHealth";
 import NotificationsPage from "./pages/dashboard/platform/Notifications";
 import DemoFeatures from "./pages/dashboard/platform/DemoFeatures";
+import HealthScoresPage from "./pages/dashboard/platform/HealthScores";
+import BenchmarksPage from "./pages/dashboard/platform/Benchmarks";
 import { PlatformLayout } from "./components/platform/layout/PlatformLayout";
 
 const queryClient = new QueryClient();
@@ -179,32 +190,47 @@ const queryClient = new QueryClient();
 const App = () => (
   <HelmetProvider>
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <ThemeInitializer />
-          <OrganizationProvider>
-            <DashboardThemeProvider>
-              <ViewAsProvider>
-                <HideNumbersProvider>
-                  <TooltipProvider>
-                    <Toaster />
-                    <Sonner />
-                    <BrowserRouter>
-                      <CustomCursor />
-                      <ScrollToTop />
-                    <Routes>
-                      {/* Public routes */}
-                      <Route path="/" element={<Index />} />
-                      <Route path="/about" element={<About />} />
-                      <Route path="/services" element={<Services />} />
-                      <Route path="/booking" element={<Booking />} />
-                      <Route path="/stylists" element={<Stylists />} />
-                      <Route path="/extensions" element={<Extensions />} />
-                      <Route path="/policies" element={<Policies />} />
-                      <Route path="/staff-login" element={<StaffLogin />} />
-                      <Route path="/platform-login" element={<PlatformLogin />} />
-                      <Route path="/book" element={<PublicBooking />} />
-                      <Route path="/day-rate" element={<DayRateBooking />} />
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ThemeInitializer />
+            <OrganizationProvider>
+              <I18nLocaleSync />
+              <DashboardThemeProvider>
+                <ViewAsProvider>
+                  <HideNumbersProvider>
+                    <SoundSettingsProvider>
+                      <TooltipProvider>
+                        <Toaster />
+                        <Sonner />
+                        <BrowserRouter>
+                          <CustomCursor />
+                          <ScrollToTop />
+                          {import.meta.env.DEV && <DevContextBridge />}
+                          <CommandMenu />
+                        <Routes>
+                      {/* Platform entry point */}
+                      <Route path="/" element={<PlatformLanding />} />
+                      <Route path="/login" element={<UnifiedLogin />} />
+
+                      {/* Backward-compatible redirects */}
+                      <Route path="/staff-login" element={<Navigate to="/login" replace />} />
+                      <Route path="/platform-login" element={<Navigate to="/login" replace />} />
+
+                      {/* Organization public pages */}
+                      <Route path="/org/:orgSlug" element={<OrgPublicRoute />}>
+                        <Route index element={<Index />} />
+                        <Route path="about" element={<About />} />
+                        <Route path="services" element={<Services />} />
+                        <Route path="booking" element={<Booking />} />
+                        <Route path="stylists" element={<Stylists />} />
+                        <Route path="extensions" element={<Extensions />} />
+                        <Route path="policies" element={<Policies />} />
+                        <Route path="book" element={<PublicBooking />} />
+                        <Route path="day-rate" element={<DayRateBooking />} />
+                      </Route>
+
+                      {/* Standalone public pages (not org-scoped) */}
                       <Route path="/demo" element={<ProductDemo />} />
                       <Route path="/feedback" element={<ClientFeedbackPage />} />
                       <Route path="/rewards" element={<ClientPortalPage />} />
@@ -304,6 +330,7 @@ const App = () => (
                       <Route path="/dashboard/settings/loyalty" element={<ProtectedRoute requiredPermission="manage_loyalty_program"><LoyaltyProgram /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/booth-renters" element={<ProtectedRoute requiredPermission="manage_booth_renters"><BoothRenters /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/feedback" element={<ProtectedRoute requiredPermission="manage_settings"><FeedbackHub /></ProtectedRoute>} />
+                      <Route path="/dashboard/admin/seo-workshop" element={<ProtectedRoute requiredPermission="view_team_overview"><SEOWorkshopHub /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/reengagement" element={<ProtectedRoute requiredPermission="manage_settings"><ReengagementHub /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/client-health" element={<ProtectedRoute requiredPermission="view_team_overview"><ClientHealthHub /></ProtectedRoute>} />
                       <Route path="/dashboard/admin/features" element={<ProtectedRoute requiredPermission="manage_settings"><FeaturesCenter /></ProtectedRoute>} />
@@ -339,9 +366,12 @@ const App = () => (
 
                       {/* Platform Admin routes - nested under PlatformLayout with sidebar */}
                       <Route path="/dashboard/platform" element={<ProtectedRoute requireAnyPlatformRole><PlatformLayout /></ProtectedRoute>}>
+                        <Route index element={<Navigate to="overview" replace />} />
                         <Route path="overview" element={<PlatformOverview />} />
                         <Route path="accounts" element={<PlatformAccounts />} />
                         <Route path="accounts/:orgId" element={<AccountDetail />} />
+                        <Route path="health-scores" element={<ProtectedRoute requirePlatformRole="platform_support"><HealthScoresPage /></ProtectedRoute>} />
+                        <Route path="benchmarks" element={<ProtectedRoute requirePlatformRole="platform_admin"><BenchmarksPage /></ProtectedRoute>} />
                         <Route path="onboarding" element={<PlatformOnboarding />} />
                         <Route path="import" element={<PlatformImport />} />
                         <Route path="audit-log" element={<AuditLogPage />} />
@@ -360,15 +390,17 @@ const App = () => (
                       </Route>
 
                         <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </BrowserRouter>
-                  </TooltipProvider>
-                </HideNumbersProvider>
-              </ViewAsProvider>
-            </DashboardThemeProvider>
-          </OrganizationProvider>
-        </AuthProvider>
-      </QueryClientProvider>
+                        </Routes>
+                        </BrowserRouter>
+                      </TooltipProvider>
+                    </SoundSettingsProvider>
+                  </HideNumbersProvider>
+                </ViewAsProvider>
+              </DashboardThemeProvider>
+            </OrganizationProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ErrorBoundary>
     </ThemeProvider>
   </HelmetProvider>
 );

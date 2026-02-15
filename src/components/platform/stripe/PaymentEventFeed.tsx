@@ -1,6 +1,7 @@
 import { formatDistanceToNow } from 'date-fns';
 import { CreditCard, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import type { StripePaymentsHealth } from '@/hooks/useStripePaymentsHealth';
 
 interface PaymentEventFeedProps {
@@ -41,6 +42,7 @@ const EVENT_CONFIG: Record<string, {
 };
 
 export function PaymentEventFeed({ events, isLoading }: PaymentEventFeedProps) {
+  const { formatCurrency } = useFormatCurrency();
   if (isLoading) {
     return (
       <div className="rounded-xl border border-slate-700/50 bg-slate-800/40">
@@ -111,7 +113,7 @@ export function PaymentEventFeed({ events, isLoading }: PaymentEventFeedProps) {
                   {event.message}
                   {event.amount && (
                     <span className="ml-2 text-slate-300">
-                      ${(event.amount / 100).toFixed(2)}
+                      {formatCurrency(event.amount / 100)}
                     </span>
                   )}
                 </p>

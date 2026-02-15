@@ -1,4 +1,5 @@
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import {
   Sheet,
   SheetContent,
@@ -10,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
   Select,
   SelectContent,
@@ -50,6 +52,8 @@ interface BookingDetailSheetProps {
 }
 
 export function BookingDetailSheet({ booking, locationName, onClose }: BookingDetailSheetProps) {
+  const { formatDate } = useFormatDate();
+  const { formatCurrency } = useFormatCurrency();
   const updateStatus = useUpdateBookingStatus();
   const updateBooking = useUpdateDayRateBooking();
   
@@ -122,7 +126,7 @@ export function BookingDetailSheet({ booking, locationName, onClose }: BookingDe
               <div className="flex items-start gap-3">
                 <Calendar className="w-4 h-4 text-muted-foreground mt-0.5" />
                 <div>
-                  <p className="font-medium">{format(bookingDate, 'EEEE, MMMM d, yyyy')}</p>
+                  <p className="font-medium">{formatDate(bookingDate, 'EEEE, MMMM d, yyyy')}</p>
                   <p className="text-sm text-muted-foreground">Booking Date</p>
                 </div>
               </div>
@@ -138,7 +142,7 @@ export function BookingDetailSheet({ booking, locationName, onClose }: BookingDe
               <div className="flex items-start gap-3">
                 <DollarSign className="w-4 h-4 text-muted-foreground mt-0.5" />
                 <div>
-                  <p className="font-medium">${booking.amount_paid || 0}</p>
+                  <p className="font-medium">{formatCurrency(booking.amount_paid || 0)}</p>
                   <p className="text-sm text-muted-foreground">
                     {booking.stripe_payment_id ? 'Paid' : 'Payment Pending'}
                   </p>
@@ -218,7 +222,7 @@ export function BookingDetailSheet({ booking, locationName, onClose }: BookingDe
                   <div>
                     <p className="font-medium">Version {booking.agreement_version}</p>
                     <p className="text-sm text-muted-foreground">
-                      Signed {format(new Date(booking.agreement_signed_at), 'MMM d, yyyy h:mm a')}
+                      Signed {formatDate(new Date(booking.agreement_signed_at), 'MMM d, yyyy h:mm a')}
                     </p>
                   </div>
                 </div>
@@ -255,12 +259,12 @@ export function BookingDetailSheet({ booking, locationName, onClose }: BookingDe
           <div className="text-xs text-muted-foreground space-y-1">
             <div className="flex items-center gap-2">
               <Clock className="w-3 h-3" />
-              Created: {format(new Date(booking.created_at), 'MMM d, yyyy h:mm a')}
+              Created: {formatDate(new Date(booking.created_at), 'MMM d, yyyy h:mm a')}
             </div>
             {booking.updated_at !== booking.created_at && (
               <div className="flex items-center gap-2">
                 <Clock className="w-3 h-3" />
-                Updated: {format(new Date(booking.updated_at), 'MMM d, yyyy h:mm a')}
+                Updated: {formatDate(new Date(booking.updated_at), 'MMM d, yyyy h:mm a')}
               </div>
             )}
           </div>

@@ -4,6 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Gift, Banknote, MinusCircle } from 'lucide-react';
 import { EmployeePayrollSettings } from '@/hooks/useEmployeePayrollSettings';
 import { EmployeeAdjustments } from '@/hooks/usePayrollCalculations';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface AdjustmentsStepProps {
   employees: EmployeePayrollSettings[];
@@ -16,6 +17,7 @@ export function AdjustmentsStep({
   adjustments,
   onAdjustmentsChange,
 }: AdjustmentsStepProps) {
+  const { formatCurrency, currency } = useFormatCurrency();
   const updateAdjustment = (
     employeeId: string,
     field: 'bonus' | 'tips' | 'deductions',
@@ -66,7 +68,7 @@ export function AdjustmentsStep({
             <span className="text-sm">Total Bonuses</span>
           </div>
           <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-            ${totalBonuses.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatCurrency(totalBonuses)}
           </p>
         </div>
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
@@ -75,7 +77,7 @@ export function AdjustmentsStep({
             <span className="text-sm">Total Tips</span>
           </div>
           <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            ${totalTips.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatCurrency(totalTips)}
           </p>
         </div>
         <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4">
@@ -84,7 +86,7 @@ export function AdjustmentsStep({
             <span className="text-sm">Total Deductions</span>
           </div>
           <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-            ${totalDeductions.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatCurrency(totalDeductions)}
           </p>
         </div>
       </div>
@@ -143,7 +145,7 @@ export function AdjustmentsStep({
                 <TableCell>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      $
+                      {currency}
                     </span>
                     <Input
                       type="number"
@@ -161,7 +163,7 @@ export function AdjustmentsStep({
                 <TableCell>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      $
+                      {currency}
                     </span>
                     <Input
                       type="number"
@@ -179,7 +181,7 @@ export function AdjustmentsStep({
                 <TableCell>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                      $
+                      {currency}
                     </span>
                     <Input
                       type="number"
@@ -204,10 +206,7 @@ export function AdjustmentsStep({
                         : ''
                     }
                   >
-                    {netAdjustment >= 0 ? '+' : '-'}$
-                    {Math.abs(netAdjustment).toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
+                    {netAdjustment >= 0 ? '+' : '-'}{formatCurrency(Math.abs(netAdjustment))}
                   </span>
                 </TableCell>
               </TableRow>

@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Download, FileText, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
 import {
   StaffStrikeWithDetails,
@@ -23,6 +24,7 @@ interface StrikeExportButtonProps {
 }
 
 export function StrikeExportButton({ strikes, filteredStrikes }: StrikeExportButtonProps) {
+  const { formatDate } = useFormatDate();
   const [isExporting, setIsExporting] = useState(false);
 
   const exportToCSV = (data: StaffStrikeWithDetails[], filename: string) => {
@@ -86,7 +88,7 @@ export function StrikeExportButton({ strikes, filteredStrikes }: StrikeExportBut
       // Subtitle with date
       doc.setFontSize(10);
       doc.setTextColor(100);
-      doc.text(`Generated on ${format(new Date(), 'MMMM d, yyyy h:mm a')}`, 14, 28);
+      doc.text(`Generated on ${formatDate(new Date(), 'MMMM d, yyyy h:mm a')}`, 14, 28);
       doc.text(`Total Records: ${data.length}`, 14, 34);
 
       // Summary stats

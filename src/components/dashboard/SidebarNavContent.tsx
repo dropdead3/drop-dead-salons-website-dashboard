@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useRef, useImperativeHandle, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRubberBandScroll } from '@/hooks/useRubberBandScroll';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
@@ -22,6 +23,7 @@ type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | '
 interface NavItem {
   href: string;
   label: string;
+  labelKey?: string;
   icon: React.ComponentType<{ className?: string }>;
   permission?: string;
   roles?: string[];
@@ -84,6 +86,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   }, ref) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation('dashboard');
   const { resolvedTheme } = useDashboardTheme();
   const internalRef = useRef<HTMLElement>(null);
   useRubberBandScroll(internalRef);
@@ -221,12 +224,13 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     };
   }, [location.pathname]);
 
-  // Dynamic label logic for stats page based on user role
+  // Dynamic label: i18n when labelKey set, role-based for stats, else fallback to label
   const getNavLabel = (item: NavItem): string => {
     if (item.href === '/dashboard/stats') {
       const isAdminUser = roles.includes('admin') || roles.includes('super_admin') || roles.includes('manager');
-      return isAdminUser ? 'Team Stats' : 'My Stats';
+      return isAdminUser ? t('nav.team_stats') : t('nav.my_stats');
     }
+    if (item.labelKey) return t(`nav.${item.labelKey}`);
     return item.label;
   };
 
@@ -244,8 +248,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     inFooter?: boolean;
   }) => {
     const isActive = location.pathname === href;
-    // Apply dynamic label logic
-    const displayLabel = href === '/dashboard/stats' ? getNavLabel({ href, label, icon: Icon }) : label;
+    const displayLabel = label;
     
     const handleClick = (e: React.MouseEvent) => {
       e.preventDefault();
@@ -357,7 +360,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       {/* Phorest Sync Status Widget moved to header popout */}
 
       {/* Navigation */}
-      <nav ref={internalRef} className="flex-1 py-4 overflow-y-auto overscroll-none">
+      <nav ref={internalRef} className="sidebar-nav flex-1 py-4 overflow-y-auto overscroll-none mb-3 min-h-0">
         {/* START HERE Priority Section - Only shows when onboarding incomplete (not for super_admin/owners) */}
         {!isOnboardingComplete && !roles.includes('super_admin') && (
           <div className="mb-4">
@@ -605,7 +608,9 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                   {filteredItems.map((item) => (
                     <NavLink 
                       key={item.href} 
-                      {...item} 
+                      href={item.href}
+                      label={getNavLabel(item)}
+                      icon={item.icon}
                       badgeCount={getBadgeCount(item.href)}
                     />
                   ))}
@@ -617,7 +622,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       </nav>
 
       {/* Fixed Footer Navigation - always at bottom */}
-      <div className="mt-auto">
+      <div className="mt-auto shrink-0">
         <div className={cn(
           "mx-3 rounded-lg bg-muted/30 border border-border/50",
           isCollapsed ? "mx-2 p-1" : "p-1.5"

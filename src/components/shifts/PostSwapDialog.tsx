@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { format, addDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ interface PostSwapDialogProps {
 }
 
 export function PostSwapDialog({ open, onOpenChange }: PostSwapDialogProps) {
+  const { formatDate } = useFormatDate();
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('17:00');
@@ -133,7 +135,7 @@ export function PostSwapDialog({ open, onOpenChange }: PostSwapDialogProps) {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date ? format(date, 'EEEE, MMMM d, yyyy') : 'Select date'}
+                  {date ? formatDate(date, 'EEEE, MMMM d, yyyy') : 'Select date'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">

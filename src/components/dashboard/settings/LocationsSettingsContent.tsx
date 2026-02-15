@@ -54,7 +54,7 @@ import {
   type DayHours,
   type HolidayClosure,
 } from '@/hooks/useLocations';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { LocationCapacityBar } from './LocationCapacityBar';
@@ -128,6 +128,7 @@ const emptyForm: LocationFormData = {
 };
 
 export function LocationsSettingsContent() {
+  const { formatDate } = useFormatDate();
   const { data: locations = [], isLoading } = useLocations();
   const createLocation = useCreateLocation();
   const updateLocation = useUpdateLocation();
@@ -888,7 +889,7 @@ export function LocationsSettingsContent() {
                         <div>
                           <p className="text-sm font-medium">{holiday.name}</p>
                           <p className="text-xs text-muted-foreground">
-                            {format(new Date(holiday.date + 'T12:00:00'), 'EEEE, MMMM d, yyyy')}
+                            {formatDate(new Date(holiday.date + 'T12:00:00'), 'EEEE, MMMM d, yyyy')}
                           </p>
                         </div>
                         <button

@@ -1,0 +1,50 @@
+import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+export interface DashboardPageHeaderProps {
+  title: string;
+  description?: string;
+  /** Path to navigate when back is clicked (e.g. hub or list). */
+  backTo?: string;
+  /** Accessible label for back button; e.g. "Back to Analytics Hub". */
+  backLabel?: string;
+  actions?: ReactNode;
+  className?: string;
+}
+
+/**
+ * Lightweight page header for dashboard hub and detail pages.
+ * Use for consistent "Back to [Hub name]" behavior when depth > 1.
+ */
+export function DashboardPageHeader({
+  title,
+  description,
+  backTo,
+  backLabel = 'Back',
+  actions,
+  className,
+}: DashboardPageHeaderProps) {
+  return (
+    <div className={cn('flex flex-col md:flex-row md:items-start md:justify-between gap-4', className)}>
+      <div className="flex items-start gap-3 min-w-0">
+        {backTo && (
+          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-0.5">
+            <Link to={backTo} aria-label={backLabel} title={backLabel}>
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+          </Button>
+        )}
+
+        <div className="min-w-0">
+          <h1 className="text-xl md:text-2xl font-display truncate">{title}</h1>
+          {description && <p className="text-muted-foreground text-sm">{description}</p>}
+        </div>
+      </div>
+
+      {actions && <div className="flex shrink-0">{actions}</div>}
+    </div>
+  );
+}

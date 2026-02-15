@@ -33,13 +33,14 @@ import {
 import { useTeamPinStatus, useAdminSetUserPin, usePinChangelog } from '@/hooks/useUserPin';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsPrimaryOwner } from '@/hooks/useIsPrimaryOwner';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface TeamPinManagementTabProps {
   canManage: boolean;
 }
 
 export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
+  const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const { data: teamMembers = [], isLoading } = useTeamPinStatus();
   const { data: changelog = [] } = usePinChangelog();
@@ -282,7 +283,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                 {changelog.slice(0, 10).map((entry) => (
                   <TableRow key={entry.id}>
                     <TableCell className="text-sm">
-                      {format(new Date(entry.changed_at), 'MMM d, yyyy h:mm a')}
+                      {formatDate(new Date(entry.changed_at), 'MMM d, yyyy h:mm a')}
                     </TableCell>
                     <TableCell className="text-sm">{entry.changer_name}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">

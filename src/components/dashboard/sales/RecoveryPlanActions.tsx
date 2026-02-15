@@ -10,7 +10,8 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
-import { format, addDays } from 'date-fns';
+import { addDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { ImplementPlanDialog } from './ImplementPlanDialog';
 
 interface SelectedTask {
@@ -41,6 +42,7 @@ export function RecoveryPlanActions({
   selectedTasks,
 }: RecoveryPlanActionsProps) {
   const { user } = useAuth();
+  const { formatDate } = useFormatDate();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [reminderSaving, setReminderSaving] = useState(false);
@@ -105,7 +107,7 @@ export function RecoveryPlanActions({
       });
       if (error) throw error;
       setReminderSet(true);
-      toast.success(`Reminder set for ${format(date, 'MMM d, yyyy')}`);
+      toast.success(`Reminder set for ${formatDate(date, 'MMM d, yyyy')}`);
     } catch (err) {
       console.error('Reminder error:', err);
       toast.error('Failed to set reminder');

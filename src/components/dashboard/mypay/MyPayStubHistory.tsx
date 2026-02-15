@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { PayStub } from '@/hooks/useMyPayData';
 import { PayStubDetailDialog } from './PayStubDetailDialog';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Eye, FileText, Receipt } from 'lucide-react';
 
 interface MyPayStubHistoryProps {
@@ -20,14 +21,6 @@ function formatCurrency(amount: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
-}
-
-function formatDate(dateStr: string): string {
-  try {
-    return format(parseISO(dateStr), 'MMM d, yyyy');
-  } catch {
-    return dateStr;
-  }
 }
 
 function getStatusBadge(status: string) {
@@ -45,7 +38,16 @@ function getStatusBadge(status: string) {
 }
 
 export function MyPayStubHistory({ payStubs }: MyPayStubHistoryProps) {
+  const { formatDate: formatDateLocale } = useFormatDate();
   const [selectedStub, setSelectedStub] = useState<PayStub | null>(null);
+
+  const formatDate = (dateStr: string): string => {
+    try {
+      return formatDateLocale(parseISO(dateStr), 'MMM d, yyyy');
+    } catch {
+      return dateStr;
+    }
+  };
 
   if (payStubs.length === 0) {
     return (

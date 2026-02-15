@@ -66,10 +66,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { formatDistanceToNow, format } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { PhorestApiHealthDashboard } from '@/components/dashboard/PhorestApiHealthDashboard';
 
 export default function PhorestSettings() {
+  const { formatDate } = useFormatDate();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedUserId, setSelectedUserId] = useState<string>('');
@@ -922,11 +924,11 @@ export default function PhorestSettings() {
                         </TableCell>
                         <TableCell>{log.records_synced}</TableCell>
                         <TableCell>
-                          {format(new Date(log.started_at), 'MMM d, HH:mm')}
+                          {formatDate(new Date(log.started_at), 'MMM d, HH:mm')}
                         </TableCell>
                         <TableCell>
                           {log.completed_at 
-                            ? format(new Date(log.completed_at), 'MMM d, HH:mm')
+                            ? formatDate(new Date(log.completed_at), 'MMM d, HH:mm')
                             : '-'}
                         </TableCell>
                         <TableCell>

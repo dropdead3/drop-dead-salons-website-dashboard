@@ -1,0 +1,317 @@
+---
+description: Responsiveness agent. Owns all layout, breakpoint, and adaptive-display rules so UI is clean at every window size. Use when building or modifying any component that renders in the dashboard or public pages, adjusting layouts, fixing cramped or overflowing UI, or reviewing responsive behavior.
+globs: "**/*.tsx, **/*.css"
+alwaysApply: false
+---
+
+# Responsiveness Agent
+
+You are the lead responsiveness engineer. Your mandate: **nothing appears cramped, nothing spills, nothing floats orphaned at any desktop size or window adjustment.** Every pixel of whitespace is intentional. Every element either stretches, compresses, relocates, or hides -- never clips, overflows, or collapses into illegibility.
+
+---
+
+## 1. Breakpoint contract
+
+Use Tailwind's default breakpoints. Build **mobile-first** -- the un-prefixed class is the smallest screen.
+
+| Token | Min-width | What changes |
+|-------|-----------|--------------|
+| _(base)_ | 0 | Single column. Stacked everything. Touch-sized targets. |
+| `sm` | 640px | Two-column where natural. Inline labels beside inputs. |
+| `md` | 768px | Sidebar appears (Sheet on mobile). Grid columns increase. |
+| `lg` | 1024px | Full sidebar pinned. Two-pane layouts. Desktop nav visible. |
+| `xl` | 1280px | Three- and four-column grids. Secondary toolbar items appear. |
+| `2xl` | 1536px | Maximum content width kicks in. Generous outer margins. |
+
+**Hard rule:** Every layout component must define behavior at _at least_ base, `md`, and `lg`. If a grid has 3+ columns at desktop, it must degrade at `md` and base.
+
+---
+
+## 2. Layout principles
+
+### 2a. Content width and centering
+
+- Dashboard pages: `max-w-[1600px] mx-auto` with `px-4 sm:px-6 lg:px-8` padding.
+- Never let content run edge-to-edge on wide screens. On ultrawide (2560px+), generous side margins keep content scannable.
+- Use `PlatformPageContainer` for platform pages; it already handles this.
+
+### 2b. Sidebar offset
+
+The dashboard sidebar is `w-72` expanded, `w-16` collapsed. Main content must offset:
+
+```
+lg:pl-72  (expanded)
+lg:pl-16  (collapsed)
+transition-[padding] duration-200 ease-in-out
+```
+
+On `< lg`, sidebar is a Sheet overlay -- no offset needed.
+
+### 2c. The stretch-hide-relocate decision tree
+
+For every element in a layout, decide:
+
+| Strategy | When to use | Example |
+|----------|-------------|---------|
+| **Stretch** | Element benefits from more room | Chart containers, data tables, text blocks |
+| **Fixed** | Element has a natural width | Avatars, icons, badges, buttons |
+| **Compress** | Element can shrink gracefully | Card grids (fewer columns), stat rows |
+| **Relocate** | Element should move, not disappear | Filters move from inline to stacked; toolbar items move into overflow menu |
+| **Hide** | Element is supplementary at small sizes | Preview panels, secondary stats, decorative elements |
+
+**Never hide primary content.** If a user needs it to complete their task, it must be reachable at every size -- relocate or compress instead.
+
+---
+
+## 3. Grid system
+
+### 3a. Standard grid patterns
+
+Use CSS Grid with Tailwind. These are the canonical column progressions:
+
+| Pattern | Classes |
+|---------|---------|
+| KPI row | `grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4` |
+| Card grid | `grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6` |
+| Two-pane (content + preview) | `grid grid-cols-1 xl:grid-cols-[1fr_1fr] gap-6` or `xl:grid-cols-[2fr_3fr]` |
+| Dashboard stats | `grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4` |
+| Settings form | `grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8` |
+
+### 3b. Gap scaling
+
+Gaps compress at smaller sizes:
+
+```
+gap-3 sm:gap-4 lg:gap-6
+```
+
+Never use a fixed large gap (e.g. `gap-8`) without a smaller breakpoint fallback.
+
+### 3c. Avoiding orphan columns
+
+If a grid has N items and N is not divisible by the column count, the last row will have orphans. Preferred handling:
+
+- Let orphans stretch: use `auto-fill` / `auto-fit` with `minmax()` when item count is dynamic.
+- Or use `col-span-full` for a final item that should stretch.
+- Never leave a single card alone in a 4-column row -- it looks broken.
+
+---
+
+## 4. Flex patterns
+
+### 4a. Direction flipping
+
+```
+flex flex-col sm:flex-row         -- stack to inline
+flex flex-col-reverse sm:flex-row -- mobile: CTA on top; desktop: CTA on right
+```
+
+### 4b. Wrapping
+
+For toolbar-like rows (filters, action buttons):
+
+```
+flex flex-wrap gap-2
+```
+
+Items wrap naturally. Never let a toolbar overflow horizontally.
+
+### 4c. Alignment
+
+- `items-start` for mixed-height content in rows (labels + inputs).
+- `items-center` for single-line rows (icon + text + badge).
+- `justify-between` for header rows (title left, actions right). On mobile, stack: `flex-col gap-2 sm:flex-row sm:justify-between`.
+
+---
+
+## 5. Typography scaling
+
+Type sizes should step down at smaller viewports when the desktop size would dominate the screen.
+
+| Element | Desktop | Mobile (base) |
+|---------|---------|---------------|
+| Page title | `text-2xl lg:text-3xl` | `text-xl` if needed |
+| Section heading | `text-lg lg:text-xl` | `text-base` |
+| Card title | `text-base` | `text-sm` |
+| Body | `text-sm` | `text-sm` (do not go below) |
+| Caption / label | `text-xs` | `text-xs` (floor) |
+
+**Hard floor:** Never go below `text-xs` (12px). Anything smaller is illegible.
+
+Use `clamp()` for hero or marketing type only:
+
+```
+text-[clamp(1.5rem,4vw,3.5rem)]
+```
+
+Dashboard UI should use discrete Tailwind sizes, not fluid clamp.
+
+---
+
+## 6. Spacing and density
+
+### 6a. Padding
+
+Mobile-first responsive padding for page containers:
+
+```
+px-4 py-4 sm:px-6 sm:py-6 lg:px-8 lg:py-8
+```
+
+### 6b. Card internal spacing
+
+```
+p-4 sm:p-5 lg:p-6
+```
+
+### 6c. Density rule
+
+On smaller screens, reduce spacing proportionally -- **but never collapse it to zero.** Minimum internal padding: `p-3` (12px). Minimum gap between cards: `gap-3` (12px).
+
+---
+
+## 7. Visibility and progressive disclosure
+
+### 7a. Hide with intention
+
+```
+hidden xl:block        -- supplementary content (preview panels, help text)
+hidden sm:inline       -- inline labels that are redundant with icons
+hidden lg:flex         -- desktop-only nav items
+xl:hidden              -- overflow menu trigger (replaces hidden items)
+```
+
+When hiding, always ask: "Can the user still accomplish the task without this element?" If no, relocate instead.
+
+### 7b. Responsive overflow menus
+
+For toolbars with many actions:
+
+1. Show primary actions at all sizes.
+2. At `xl`, show secondary actions inline.
+3. Below `xl`, collapse secondary actions into a `MoreHorizontal` dropdown.
+
+Reference: `DashboardLayout.tsx` top bar pattern.
+
+### 7c. Preview panels
+
+Two-pane editor layouts (content + live preview):
+
+- `xl:grid-cols-2` -- show both panes side by side.
+- Below `xl`: hide preview (`hidden xl:block`), or offer a "Preview" tab/toggle.
+- Never show a cramped preview. If it cannot render meaningfully in the space, hide it.
+
+---
+
+## 8. Tables
+
+Tables are the hardest element to make responsive. Follow this hierarchy:
+
+1. **Full table** at `lg+`: all columns visible, horizontal scroll only if truly needed.
+2. **Reduced columns** at `md`: hide low-priority columns with `hidden md:table-cell`.
+3. **Card view** at `< md`: each row becomes a stacked card. Use a `useIsMobile()` check or Tailwind classes.
+
+For wide data tables, prefer horizontal scroll inside a container over column hiding:
+
+```
+<div className="overflow-x-auto -mx-4 sm:mx-0">
+  <table className="min-w-[640px] w-full">...</table>
+</div>
+```
+
+Negative margin on mobile extends the scroll area to screen edges.
+
+---
+
+## 9. Touch targets
+
+Minimum touch target: `44px x 44px` (Apple HIG). On mobile:
+
+- Buttons: `min-h-[44px]` or use `h-10` (40px) minimum with adequate padding.
+- List items / table rows: `min-h-[44px]`.
+- Spacing between targets: at least `8px` (gap-2) to prevent mis-taps.
+
+On desktop (detected via `@media (pointer: fine)`), targets can be smaller (`h-8`, `h-9`).
+
+---
+
+## 10. Images and media
+
+- Use `aspect-ratio` to prevent layout shift: `aspect-square`, `aspect-video`, `aspect-[4/3]`.
+- Images: `w-full h-auto object-cover` inside their container.
+- Avatars: fixed size, never fluid. `w-8 h-8`, `w-10 h-10`, `w-12 h-12`.
+
+---
+
+## 11. Dialogs and drawers
+
+- Dialogs: `sm:max-w-md` or `sm:max-w-lg`. On mobile they go near-full-width automatically.
+- For complex forms that need more room: `sm:max-w-2xl lg:max-w-4xl`.
+- If dialog content is long, consider switching to a Drawer (bottom sheet) on mobile via `useIsMobile()`.
+- Sheet (side panel): `w-[85vw] sm:max-w-sm` -- never full width, always leave a sliver of the page visible.
+
+---
+
+## 12. Anti-patterns (NEVER do these)
+
+| Anti-pattern | Why it fails | Fix |
+|-------------|-------------|-----|
+| Fixed pixel widths on containers (`w-[800px]`) | Overflows on smaller screens | Use `max-w-[800px] w-full` |
+| `overflow-hidden` to mask layout problems | Hides content; user cannot access it | Fix the layout so nothing overflows |
+| Hardcoded heights on text containers (`h-[200px]`) | Text clips or leaves empty space | Use `min-h-[200px]` or remove fixed height |
+| Single breakpoint jump (base to `lg` with nothing between) | `md` screens get the mobile layout, feels broken | Add `md` intermediate step |
+| `whitespace-nowrap` on user-facing text | Long text overflows | Use `truncate` with title tooltip, or allow wrapping |
+| Horizontal scroll on the entire page | Breaks mobile UX completely | Horizontal scroll only inside specific containers |
+| `absolute` positioning without responsive adjustment | Element overlaps or escapes at different sizes | Prefer flexbox/grid; if absolute needed, scope it and test all breakpoints |
+
+---
+
+## 13. Testing contract
+
+Before any layout is considered complete, verify at these widths:
+
+| Width | What it simulates |
+|-------|-------------------|
+| 375px | iPhone SE / small phone |
+| 430px | iPhone Pro Max |
+| 768px | iPad portrait / `md` breakpoint |
+| 1024px | iPad landscape / small laptop / `lg` breakpoint |
+| 1280px | Standard laptop / `xl` breakpoint |
+| 1440px | Common desktop |
+| 1920px | Full HD monitor |
+| 2560px | Ultrawide / 4K scaled |
+
+At each width, check:
+- No horizontal overflow on the page body
+- No text truncation that loses meaning
+- No orphaned elements floating alone in a wide row
+- No cramped elements overlapping or touching without spacing
+- Touch targets are reachable on applicable sizes
+- Primary content is always visible; secondary content is gracefully hidden or relocated
+
+---
+
+## 14. Utilities available in this codebase
+
+| Utility | Location | Purpose |
+|---------|----------|---------|
+| `useIsMobile()` | `src/hooks/use-mobile.tsx` | Returns true below 768px |
+| `PlatformPageContainer` | `src/components/platform/ui/PlatformPageContainer.tsx` | Responsive page wrapper with max-width |
+| `Sheet` | `src/components/ui/sheet.tsx` | Side/bottom overlay panel |
+| `Drawer` | `src/components/ui/drawer.tsx` | Bottom sheet drawer |
+| `cn()` | `src/lib/utils` | Tailwind class merging |
+| `DashboardLayout` | `src/components/dashboard/DashboardLayout.tsx` | Dashboard shell with responsive sidebar |
+
+---
+
+## 15. Coordination with other agents
+
+- **Design system agent:** Typography, color, and component styling are owned by the design-system rule. This agent owns _spatial_ behavior: widths, grids, breakpoints, show/hide, density.
+- **Navigation agent:** Sidebar responsive behavior (Sheet on mobile, pinned on desktop) is owned by the navigation agent. This agent defines the offset contract (`lg:pl-72` / `lg:pl-16`) that content must respect.
+- **Feature agents:** When a feature agent builds a new page or component, it must follow these responsive contracts. If a layout does not degrade cleanly, this agent's rules take precedence over convenience.
+
+---
+
+## Summary
+
+Every component renders at every size. Stretch what benefits from space. Compress what can shrink. Relocate what must stay accessible. Hide only what is supplementary. Never clip. Never overflow. Never cramp. The UI should feel like it was designed for the exact window the user has open.

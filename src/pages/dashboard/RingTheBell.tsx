@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useBellSound } from '@/hooks/use-bell-sound';
 import { useBellHighFives } from '@/hooks/useBellHighFives';
 import { useAchievements } from '@/hooks/useAchievements';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { AchievementNotificationToast } from '@/components/achievements/AchievementNotificationToast';
 import { Bell, DollarSign, Loader2, Sparkles, Users, User, MapPin, X, Target } from 'lucide-react';
 import {
@@ -68,6 +69,7 @@ export default function RingTheBell() {
   const { toast } = useToast();
   const { playBellSound } = useBellSound();
   const { checkAchievements, currentAchievement, isToastVisible, dismissCurrentAchievement } = useAchievements();
+  const { formatCurrency } = useFormatCurrency();
   const [entries, setEntries] = useState<BellEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -160,7 +162,7 @@ export default function RingTheBell() {
             
             toast({
               title: '🔔 BELL RUNG!',
-              description: `${stylistName} just booked $${newEntry.ticket_value.toLocaleString()} for ${newEntry.service_booked}!`,
+              description: `${stylistName} just booked ${formatCurrency(newEntry.ticket_value)} for ${newEntry.service_booked}!`,
               duration: 6000,
             });
           }
@@ -329,7 +331,7 @@ export default function RingTheBell() {
       
       toast({
         title: '🔔 Bell Rung!',
-        description: `$${ticketValue} booking logged. Keep crushing it!`,
+        description: `${formatCurrency(parseFloat(ticketValue))} booking logged. Keep crushing it!`,
       });
       setShowForm(false);
       setService('');
@@ -724,7 +726,7 @@ export default function RingTheBell() {
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Bell Entry?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently remove this ${entryToDelete?.ticket_value.toLocaleString()} booking from the bell feed. This action cannot be undone.
+                This will permanently remove this {entryToDelete ? formatCurrency(entryToDelete.ticket_value) : ''} booking from the bell feed. This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

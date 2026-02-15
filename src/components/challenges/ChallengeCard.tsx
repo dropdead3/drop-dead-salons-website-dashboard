@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
-import { format, differenceInDays, isPast } from 'date-fns';
+import { differenceInDays, isPast } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,6 +55,7 @@ export function ChallengeCard({
   isJoined = false,
   compact = false,
 }: ChallengeCardProps) {
+  const { formatDate } = useFormatDate();
   const MetricIcon = metricIcons[challenge.metric_type] || Target;
   const TypeIcon = typeIcons[challenge.challenge_type] || Trophy;
 
@@ -165,7 +167,7 @@ export function ChallengeCard({
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Clock className="w-4 h-4" />
             <span>
-              {format(new Date(challenge.start_date), 'MMM d')} - {format(new Date(challenge.end_date), 'MMM d, yyyy')}
+              {formatDate(new Date(challenge.start_date), 'MMM d')} - {formatDate(new Date(challenge.end_date), 'MMM d, yyyy')}
             </span>
             {!isEnded && (
               <Badge variant="secondary" className="ml-auto">

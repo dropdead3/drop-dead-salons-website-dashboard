@@ -3,6 +3,8 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recha
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CompensationBreakdown } from '@/hooks/usePayrollAnalytics';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface CompensationBreakdownChartProps {
   breakdown: CompensationBreakdown;
@@ -17,16 +19,8 @@ const COLORS = [
   'hsl(160, 60%, 45%)',
 ];
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
 export function CompensationBreakdownChart({ breakdown, isLoading }: CompensationBreakdownChartProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const chartData = useMemo(() => {
     const items = [
       { name: 'Base Pay', value: breakdown.basePay, color: COLORS[0] },
@@ -59,7 +53,10 @@ export function CompensationBreakdownChart({ breakdown, isLoading }: Compensatio
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Compensation Breakdown</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>Compensation Breakdown</CardTitle>
+            <MetricInfoTooltip description="Visualizes the mix of base pay, commission, and bonuses across your team. Helps identify compensation structure balance." />
+          </div>
           <CardDescription>Distribution of pay types</CardDescription>
         </CardHeader>
         <CardContent>
@@ -74,7 +71,10 @@ export function CompensationBreakdownChart({ breakdown, isLoading }: Compensatio
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Compensation Breakdown</CardTitle>
+        <div className="flex items-center gap-2">
+          <CardTitle>Compensation Breakdown</CardTitle>
+          <MetricInfoTooltip description="Visualizes the mix of base pay, commission, and bonuses across your team. Helps identify compensation structure balance." />
+        </div>
         <CardDescription>Distribution of pay types (last 6 periods)</CardDescription>
       </CardHeader>
       <CardContent>
@@ -97,7 +97,7 @@ export function CompensationBreakdownChart({ breakdown, isLoading }: Compensatio
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: number) => formatCurrency(value)}
+                formatter={(value: number) => formatCurrencyWhole(value)}
                 contentStyle={{
                   backgroundColor: 'hsl(var(--background))',
                   border: '1px solid hsl(var(--border))',
@@ -126,7 +126,7 @@ export function CompensationBreakdownChart({ breakdown, isLoading }: Compensatio
                 />
                 <span className="text-muted-foreground">{item.name}</span>
               </div>
-              <span className="font-medium">{formatCurrency(item.value)}</span>
+              <span className="font-medium">{formatCurrencyWhole(item.value)}</span>
             </div>
           ))}
         </div>

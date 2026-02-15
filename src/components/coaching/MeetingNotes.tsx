@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Pencil, Trash2, Lock, Eye, Save, X, Camera, ImageIcon, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useMeetingNotes, useCreateMeetingNote, useUpdateMeetingNote, useDeleteMeetingNote, type TopicCategory, type MeetingNote } from '@/hooks/useMeetingNotes';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -30,11 +30,11 @@ import {
 } from '@/components/ui/dialog';
 
 const topicCategories: { value: TopicCategory; label: string; color: string }[] = [
-  { value: 'performance', label: 'Performance', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' },
-  { value: 'goals', label: 'Goals', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' },
-  { value: 'feedback', label: 'Feedback', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' },
-  { value: 'development', label: 'Development', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' },
-  { value: 'personal', label: 'Personal', color: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-300' },
+  { value: 'performance', label: 'Performance', color: 'bg-primary/10 text-primary' },
+  { value: 'goals', label: 'Goals', color: 'bg-chart-2/10 text-chart-2' },
+  { value: 'feedback', label: 'Feedback', color: 'bg-chart-5/10 text-chart-5' },
+  { value: 'development', label: 'Development', color: 'bg-chart-3/10 text-chart-3' },
+  { value: 'personal', label: 'Personal', color: 'bg-chart-1/10 text-chart-1' },
   { value: 'other', label: 'Other', color: 'bg-muted text-muted-foreground' },
 ];
 
@@ -44,6 +44,7 @@ interface MeetingNotesProps {
 }
 
 export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
+  const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const { data: notes, isLoading } = useMeetingNotes(meetingId);
   const createNote = useCreateMeetingNote();
@@ -336,7 +337,7 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-muted-foreground">
-                    {format(new Date(note.created_at), 'MMM d, yyyy h:mm a')}
+                    {formatDate(new Date(note.created_at), 'MMM d, yyyy h:mm a')}
                   </span>
                   {isCoach && note.coach_id === user?.id && (
                     <div className="flex gap-1">

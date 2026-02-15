@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, getDay, addMonths, subMonths, isToday } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, AlertTriangle, Clock, MapPin, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ interface ConflictInfo {
 }
 
 export function AssistantRequestsCalendar({ requests, onSelectRequest }: AssistantRequestsCalendarProps) {
+  const { formatDate } = useFormatDate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -146,7 +148,7 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm font-medium min-w-[120px] text-center">
-              {format(currentMonth, 'MMMM yyyy')}
+              {formatDate(currentMonth, 'MMMM yyyy')}
             </span>
             <Button
               variant="outline"
@@ -237,7 +239,7 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
                 
                 <PopoverContent className="w-80 p-0" align="start">
                   <div className="p-3 border-b">
-                    <h4 className="font-medium">{format(day, 'EEEE, MMMM d')}</h4>
+                    <h4 className="font-medium">{formatDate(day, 'EEEE, MMMM d')}</h4>
                     <p className="text-sm text-muted-foreground">
                       {dayRequests.length} request{dayRequests.length !== 1 ? 's' : ''}
                     </p>

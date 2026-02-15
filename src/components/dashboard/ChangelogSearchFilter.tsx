@@ -9,7 +9,8 @@ import {
   Search, Filter, X, Calendar as CalendarIcon, 
   Sparkles, Rocket, Bug, Lightbulb, Clock, Check
 } from 'lucide-react';
-import { format, isAfter, isBefore, startOfDay, endOfDay, parseISO } from 'date-fns';
+import { isAfter, isBefore, startOfDay, endOfDay, parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import type { ChangelogEntry } from '@/hooks/useChangelog';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -69,6 +70,7 @@ export function ChangelogSearchFilter({
   resultCount,
   totalCount,
 }: ChangelogSearchFilterProps) {
+  const { formatDate } = useFormatDate();
   const isMobile = useIsMobile();
   const [showFilters, setShowFilters] = useState(false);
 
@@ -171,7 +173,7 @@ export function ChangelogSearchFilter({
                     !filters.dateFrom && 'text-muted-foreground'
                   )}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filters.dateFrom ? format(filters.dateFrom, 'MMM d, yyyy') : 'From date'}
+                    {filters.dateFrom ? formatDate(filters.dateFrom, 'MMM d, yyyy') : 'From date'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -192,7 +194,7 @@ export function ChangelogSearchFilter({
                     !filters.dateTo && 'text-muted-foreground'
                   )}>
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {filters.dateTo ? format(filters.dateTo, 'MMM d, yyyy') : 'To date'}
+                    {filters.dateTo ? formatDate(filters.dateTo, 'MMM d, yyyy') : 'To date'}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -259,9 +261,9 @@ export function ChangelogSearchFilter({
               className="gap-1 cursor-pointer"
               onClick={() => onFiltersChange({ ...filters, dateFrom: undefined, dateTo: undefined })}
             >
-              {filters.dateFrom && format(filters.dateFrom, 'MMM d')}
+              {filters.dateFrom && formatDate(filters.dateFrom, 'MMM d')}
               {filters.dateFrom && filters.dateTo && ' - '}
-              {filters.dateTo && format(filters.dateTo, 'MMM d')}
+              {filters.dateTo && formatDate(filters.dateTo, 'MMM d')}
               <X className="h-3 w-3" />
             </Badge>
           )}

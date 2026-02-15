@@ -25,6 +25,7 @@ import {
   RefreshCcw,
 } from 'lucide-react';
 import { format, subDays, startOfWeek, differenceInDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
@@ -63,6 +64,7 @@ interface ProgramTabContentProps {
 }
 
 export function ProgramTabContent({ filters }: ProgramTabContentProps) {
+  const { formatDate } = useFormatDate();
   const [loading, setLoading] = useState(true);
   const [enrollments, setEnrollments] = useState<EnrollmentData[]>([]);
   const [completions, setCompletions] = useState<CompletionData[]>([]);
@@ -147,7 +149,7 @@ export function ProgramTabContent({ filters }: ProgramTabContentProps) {
     return Object.entries(cohorts)
       .map(([weekStart, members]) => ({
         weekStart,
-        weekLabel: format(new Date(weekStart), 'MMM d'),
+        weekLabel: formatDate(new Date(weekStart), 'MMM d'),
         count: members.length,
         active: members.filter(m => m.status === 'active').length,
         completed: members.filter(m => m.status === 'completed').length,
@@ -165,7 +167,7 @@ export function ProgramTabContent({ filters }: ProgramTabContentProps) {
     for (let i = days - 1; i >= 0; i--) {
       const date = format(subDays(new Date(), i), 'yyyy-MM-dd');
       const count = completions.filter(c => c.completion_date?.split('T')[0] === date).length;
-      trendData.push({ date: format(new Date(date), 'MMM d'), completions: count });
+      trendData.push({ date: formatDate(new Date(date), 'MMM d'), completions: count });
     }
 
     return trendData;

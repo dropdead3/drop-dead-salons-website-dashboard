@@ -1,5 +1,7 @@
 import { MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatCurrencyWhole } from '@/lib/formatCurrency';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 
 export interface LocationBreakdownItem {
   locationId: string;
@@ -20,6 +22,8 @@ export function LocationBreakdownSection({
   isAllLocations,
   className,
 }: LocationBreakdownSectionProps) {
+  const { formatNumber } = useFormatNumber();
+
   // Only show when viewing "All Locations" and when multiple locations have data
   if (!isAllLocations || data.length <= 1) {
     return null;
@@ -28,12 +32,12 @@ export function LocationBreakdownSection({
   const formatValue = (value: number): string => {
     switch (format) {
       case 'currency':
-        return `$${value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+        return formatCurrencyWhole(value);
       case 'percent':
         return `${value.toFixed(1)}%`;
       case 'number':
       default:
-        return value.toLocaleString();
+        return formatNumber(value);
     }
   };
 

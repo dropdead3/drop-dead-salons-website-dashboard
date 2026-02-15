@@ -87,6 +87,9 @@ export default function ReportsHub() {
   const [locationId, setLocationId] = useState<string>('all');
   
   const { data: locations } = useLocations();
+  const filteredSalesReports = (locations?.filter(l => l.is_active).length ?? 0) >= 2
+    ? salesReports
+    : salesReports.filter(r => r.id !== 'location-sales');
 
   const handleReportSelect = (reportId: string) => {
     setSelectedReport(reportId);
@@ -281,7 +284,7 @@ export default function ReportsHub() {
               </ResponsiveTabsList>
 
               <TabsContent value="sales" className="mt-6">
-                {renderReportCards(salesReports)}
+                {renderReportCards(filteredSalesReports)}
               </TabsContent>
 
               <TabsContent value="staff" className="mt-6">

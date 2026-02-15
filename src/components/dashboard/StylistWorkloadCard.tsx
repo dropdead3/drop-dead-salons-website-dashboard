@@ -1,13 +1,17 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Users, ArrowRight, TrendingUp, TrendingDown, Minus, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { analyticsHubUrl } from '@/config/dashboardNav';
 import { StaffWorkload } from '@/hooks/useStaffUtilization';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChartSkeleton } from '@/components/ui/chart-skeleton';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 
 interface StylistWorkloadCardProps {
@@ -60,22 +64,26 @@ const getBalanceIcon = (score: number) => {
 
 export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCardProps) {
   const navigate = useNavigate();
+  const { formatCurrencyWhole } = useFormatCurrency();
 
   if (isLoading) {
     return (
       <Card className="mb-6">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              Stylist Workload Distribution
-            </CardTitle>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-10 h-10 rounded-lg" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-4 w-48" />
+              <Skeleton className="h-3 w-64" />
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-3 gap-6">
-            <Skeleton className="h-32" />
-            <Skeleton className="h-32 md:col-span-2" />
+            <Skeleton className="h-32 rounded-lg" />
+            <div className="md:col-span-2">
+              <ChartSkeleton lines={5} className="h-[160px]" />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -96,7 +104,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/dashboard/admin/operational-analytics?tab=staff-utilization')}
+              onClick={() => navigate(analyticsHubUrl('operations', 'staff-utilization'))}
               className="gap-1 text-muted-foreground hover:text-foreground"
             >
               View Full Report
@@ -141,16 +149,24 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
 
   return (
     <Card className="mb-6">
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Users className="w-5 h-5 text-primary" />
-            Stylist Workload Distribution
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Users className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className="font-display text-base tracking-wide">STYLIST WORKLOAD DISTRIBUTION</CardTitle>
+                <MetricInfoTooltip description="Measures how evenly appointments are distributed across service providers. A high balance score (≥70%) indicates healthy distribution; lower scores suggest scheduling imbalances." />
+              </div>
+              <CardDescription>Appointment volume and balance across service providers</CardDescription>
+            </div>
+          </div>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => navigate('/dashboard/admin/operational-analytics?tab=staff-utilization')}
+            onClick={() => navigate(analyticsHubUrl('operations', 'staff-utilization'))}
             className="gap-1 text-muted-foreground hover:text-foreground"
           >
             View Full Report
@@ -169,7 +185,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
                   getBalanceBorderColor(balanceScore)
                 )}
               >
-                <span className={cn('font-display text-2xl', getBalanceColor(balanceScore))}>
+                <span className={cn('font-display text-2xl tabular-nums', getBalanceColor(balanceScore))}>
                   {balanceScore}%
                 </span>
               </div>
@@ -199,10 +215,11 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
                   formatter={(value: number) => [`${value} appointments`, 'Count']}
                   labelFormatter={(label) => chartData.find(d => d.name === label)?.fullName || label}
                   contentStyle={{
-                    backgroundColor: 'hsl(var(--popover))',
+                    backgroundColor: 'hsl(var(--background))',
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px',
                     fontSize: '12px',
+                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                   }}
                 />
                 <Bar dataKey="appointments" radius={[0, 4, 4, 0]}>
@@ -241,7 +258,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium tabular-nums">
-                          <BlurredAmount>${stylist.averageTicket.toFixed(0)}</BlurredAmount>
+                          <BlurredAmount>{formatCurrencyWhole(stylist.averageTicket)}</BlurredAmount>
                         </span>
                         <Badge 
                           variant="outline" 
@@ -265,19 +282,19 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
                 <div className="flex justify-between items-center p-2 rounded-lg bg-muted/50">
                   <span className="text-sm text-muted-foreground">Team Avg Ticket</span>
                   <span className="font-display text-lg tabular-nums">
-                    <BlurredAmount>${teamAvgTicket.toFixed(0)}</BlurredAmount>
+                    <BlurredAmount>{formatCurrencyWhole(teamAvgTicket)}</BlurredAmount>
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-2 rounded-lg bg-muted/50">
                   <span className="text-sm text-muted-foreground">Highest Performer</span>
                   <span className="font-display text-lg text-chart-2 tabular-nums">
-                    <BlurredAmount>${highestAvgTicket.toFixed(0)}</BlurredAmount>
+                    <BlurredAmount>{formatCurrencyWhole(highestAvgTicket)}</BlurredAmount>
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-2 rounded-lg bg-muted/50">
                   <span className="text-sm text-muted-foreground">Total Revenue</span>
                   <span className="font-display text-lg tabular-nums">
-                    <BlurredAmount>${totalRevenue.toLocaleString()}</BlurredAmount>
+                    <BlurredAmount>{formatCurrencyWhole(totalRevenue)}</BlurredAmount>
                   </span>
                 </div>
               </div>
@@ -293,19 +310,19 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
           </div>
           <div className="text-center">
             <p className="font-display text-lg tabular-nums">
-              <BlurredAmount>${teamAvgTicket.toFixed(0)}</BlurredAmount>
+              <BlurredAmount>{formatCurrencyWhole(teamAvgTicket)}</BlurredAmount>
             </p>
             <p className="text-xs text-muted-foreground">Avg Ticket</p>
           </div>
           <div className="text-center">
             <p className="font-display text-lg text-chart-2 tabular-nums">
-              <BlurredAmount>${highestAvgTicket.toFixed(0)}</BlurredAmount>
+              <BlurredAmount>{formatCurrencyWhole(highestAvgTicket)}</BlurredAmount>
             </p>
             <p className="text-xs text-muted-foreground">Top Productivity</p>
           </div>
           <div className="text-center">
             <p className="font-display text-lg tabular-nums">
-              <BlurredAmount>${totalRevenue.toLocaleString()}</BlurredAmount>
+              <BlurredAmount>{formatCurrencyWhole(totalRevenue)}</BlurredAmount>
             </p>
             <p className="text-xs text-muted-foreground">Total Revenue</p>
           </div>

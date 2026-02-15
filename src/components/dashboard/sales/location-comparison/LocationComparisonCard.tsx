@@ -5,6 +5,7 @@ import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/comp
 import { TrendingUp, TrendingDown, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { LocationDrilldownPanel } from './LocationDrilldownPanel';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 
@@ -38,6 +39,7 @@ export function LocationComparisonCard({
   dateTo,
   color,
 }: LocationComparisonCardProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const [expanded, setExpanded] = useState(false);
 
   const avgTicket = location.totalTransactions > 0
@@ -94,7 +96,7 @@ export function LocationComparisonCard({
 
         {/* Revenue */}
         <p className="text-2xl font-display mb-2">
-          <BlurredAmount>${location.totalRevenue.toLocaleString()}</BlurredAmount>
+          <BlurredAmount>{formatCurrencyWhole(location.totalRevenue)}</BlurredAmount>
         </p>
 
         {/* Share bar — colored to match location */}

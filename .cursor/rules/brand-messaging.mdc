@@ -1,0 +1,83 @@
+---
+description: Messaging matrices from the ZURA Brand Bible. Provides targeted copy and positioning for 4 psychological states and 4 organizational sizes.
+globs: src/pages/Index.tsx, src/components/home/**/*.tsx, src/pages/About.tsx
+alwaysApply: false
+---
+
+# Brand Messaging Matrices
+
+## By Psychological State
+
+### 1. The Overwhelmed Operator
+**State:** Working nonstop, still behind. Everything depends on them.
+**Root pain:** The founder IS the system.
+**Focus:** Relief from bottlenecks.
+**Core message:** "You do not need to work harder. You need infrastructure."
+**Trigger lines:**
+- Stop being the bottleneck
+- Replace chaos with structure
+- Centralize leadership
+- One system. Total clarity.
+
+### 2. The Plateaued Founder
+**State:** Revenue stable, growth stalled. Expansion feels risky.
+**Root pain:** Decisions are intuitive. Performance not quantified.
+**Focus:** Clarity and control.
+**Core message:** "Growth does not stall because of demand. It stalls because infrastructure has not scaled."
+**Trigger lines:**
+- See your entire organization clearly
+- Standardize before you scale
+- Replace instinct with intelligence
+- Engineer your next level
+
+### 3. The Scaling Operator
+**State:** Growing fast, getting messy. Inconsistent across locations.
+**Root pain:** Growth outpaced structure. Fragmented systems.
+**Focus:** Control and stability.
+**Core message:** "Revenue growth without infrastructure creates volatility."
+**Trigger lines:**
+- Command every location
+- Scale without fragmentation
+- Replace tool sprawl with infrastructure
+- Enforce standards at scale
+
+### 4. The Strategic Leader
+**State:** Multi-location, enterprise mindset. Thinks in KPIs and margins.
+**Root pain:** Disconnected reporting. Manual oversight. Inconsistent standards.
+**Focus:** Infrastructure and intelligence.
+**Core message:** "Zura is the structured operational framework behind high-performance beauty brands."
+**Trigger lines:**
+- Intelligence infrastructure
+- Centralized operational command
+- AI-assisted executive oversight
+- Infrastructure for the next generation
+
+## By Organizational Size
+
+### Single Location (3-15 chairs)
+**Angle:** Structure before expansion.
+**Message:** "Build infrastructure before your second location."
+**Emphasis:** Unified POS+CRM, commission automation, performance dashboard, AI insight.
+
+### Growth-Stage (2-5 locations)
+**Angle:** Command and control.
+**Message:** "Command every location from one system."
+**Emphasis:** Multi-location dashboards, location comparison, margin intelligence, AI alerts.
+
+### Regional Brand (5-15 locations)
+**Angle:** Infrastructure maturity.
+**Message:** "Infrastructure for real organizations."
+**Emphasis:** Executive dashboards, role-based permissions, KPI architecture, AI recommendations.
+
+### Enterprise (15+ locations)
+**Angle:** Infrastructure dominance.
+**Message:** "Intelligence infrastructure at scale."
+**Emphasis:** Cross-region benchmarking, executive summary intelligence, AI strategic forecasting.
+
+## Universal Thread
+
+Across every state and size:
+- Zura multiplies leadership
+- Zura eliminates operational chaos at its root
+- Zura replaces fragmentation with infrastructure
+- Zura makes scale structured

@@ -1,4 +1,5 @@
-import { format, formatDistanceToNow, isPast } from 'date-fns';
+import { formatDistanceToNow, isPast } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -85,6 +86,7 @@ export function SwapCard({
   isClaimer = false,
   compact = false,
 }: SwapCardProps) {
+  const { formatDate } = useFormatDate();
   const typeConfig = swapTypeConfig[swap.swap_type];
   const TypeIcon = typeConfig.icon;
   const status = statusConfig[swap.status] || statusConfig.open;
@@ -106,7 +108,7 @@ export function SwapCard({
     const [hours, minutes] = time.split(':');
     const date = new Date();
     date.setHours(parseInt(hours), parseInt(minutes));
-    return format(date, 'h:mm a');
+    return formatDate(date, 'h:mm a');
   };
 
   const isExpired = swap.expires_at && isPast(new Date(swap.expires_at));
@@ -128,7 +130,7 @@ export function SwapCard({
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{requesterName}</p>
               <p className="text-xs text-muted-foreground">
-                {format(new Date(swap.original_date), 'MMM d')} • {formatTime(swap.original_start_time)}
+                {formatDate(new Date(swap.original_date), 'MMM d')} • {formatTime(swap.original_start_time)}
               </p>
             </div>
             <Badge className={typeConfig.color}>{typeConfig.label}</Badge>
@@ -180,7 +182,7 @@ export function SwapCard({
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-muted-foreground" />
               <span className="font-medium">
-                {format(new Date(swap.original_date), 'EEEE, MMM d, yyyy')}
+                {formatDate(new Date(swap.original_date), 'EEEE, MMM d, yyyy')}
               </span>
             </div>
           </div>
@@ -213,7 +215,7 @@ export function SwapCard({
                 Trade Offered by {claimerName}
               </p>
               <p className="text-sm">
-                {format(new Date(swap.claimer_date), 'MMM d')} • {swap.claimer_start_time && formatTime(swap.claimer_start_time)} - {swap.claimer_end_time && formatTime(swap.claimer_end_time)}
+                {formatDate(new Date(swap.claimer_date), 'MMM d')} • {swap.claimer_start_time && formatTime(swap.claimer_start_time)} - {swap.claimer_end_time && formatTime(swap.claimer_end_time)}
               </p>
             </div>
           )}

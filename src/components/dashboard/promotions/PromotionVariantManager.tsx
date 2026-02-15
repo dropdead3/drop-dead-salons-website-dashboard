@@ -10,6 +10,7 @@ import {
 } from '@/hooks/usePromotionVariants';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -26,6 +27,7 @@ interface PromotionVariantManagerProps {
 }
 
 export function PromotionVariantManager({ promotionId, promotionName }: PromotionVariantManagerProps) {
+  const { formatCurrency } = useFormatCurrency();
   const { data: variants, isLoading } = usePromotionVariants(promotionId);
   const { data: testResults } = useVariantABTestResults(promotionId);
   const createVariant = useCreatePromotionVariant();
@@ -261,7 +263,7 @@ export function PromotionVariantManager({ promotionId, promotionName }: Promotio
                       <span>
                         {variant.discount_type === 'percentage' 
                           ? `${variant.discount_value}% off`
-                          : `$${variant.discount_value} off`
+                          : `${formatCurrency(variant.discount_value)} off`
                         }
                       </span>
                       <span>•</span>

@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Mail, Phone, Copy, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 export interface AtRiskClient {
   id: string;
@@ -25,6 +27,8 @@ interface AtRiskClientsListProps {
 export function AtRiskClientsList({ clients }: AtRiskClientsListProps) {
   const [showAll, setShowAll] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const { formatCurrencyWhole } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   
   const displayedClients = showAll ? clients : clients.slice(0, 10);
 
@@ -93,7 +97,7 @@ export function AtRiskClientsList({ clients }: AtRiskClientsListProps) {
               <div className="min-w-0">
                 <p className="font-medium truncate">{client.name}</p>
                 <p className="text-xs text-muted-foreground md:hidden">
-                  {client.visitCount} visits · ${client.totalSpend.toLocaleString()}
+                  {client.visitCount} visits · {formatCurrencyWhole(client.totalSpend)}
                 </p>
               </div>
             </div>
@@ -102,7 +106,7 @@ export function AtRiskClientsList({ clients }: AtRiskClientsListProps) {
             <div className="col-span-1 md:col-span-2 flex items-center">
               <span className="md:hidden text-xs text-muted-foreground mr-2">Last visit:</span>
               <span className="text-sm">
-                {client.lastVisit ? format(parseISO(client.lastVisit), 'MMM d, yyyy') : 'Unknown'}
+                {client.lastVisit ? formatDate(parseISO(client.lastVisit), 'MMM d, yyyy') : 'Unknown'}
               </span>
             </div>
 
@@ -157,7 +161,7 @@ export function AtRiskClientsList({ clients }: AtRiskClientsListProps) {
 
             {/* Spend - Desktop only */}
             <div className="hidden md:flex col-span-1 items-center justify-end">
-              <span className="text-sm font-medium">${client.totalSpend.toLocaleString()}</span>
+              <span className="text-sm font-medium">{formatCurrencyWhole(client.totalSpend)}</span>
             </div>
           </div>
         ))}

@@ -38,6 +38,7 @@ import { PlatformButton } from './ui/PlatformButton';
 import { PlatformInput } from './ui/PlatformInput';
 import { Button } from '@/components/ui/button';
 import { format, parseISO, isBefore, startOfDay } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 const editFormSchema = z.object({
@@ -128,6 +129,7 @@ interface EditOrganizationDialogProps {
 }
 
 export function EditOrganizationDialog({ organization, open, onOpenChange }: EditOrganizationDialogProps) {
+  const { formatDate } = useFormatDate();
   const updateOrg = useUpdateOrganization();
   const [originalSlug, setOriginalSlug] = useState(organization.slug);
 
@@ -502,7 +504,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
                               )}
                             >
                               {field.value ? (
-                                format(parseISO(field.value), "PPP")
+                                formatDate(parseISO(field.value), "PPP")
                               ) : (
                                 <span>Pick a date</span>
                               )}
@@ -634,7 +636,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
         <div className="flex items-center justify-between border-t border-slate-700/50 px-6 py-4 bg-slate-800/50">
           <div className="text-xs text-slate-500">
             {organization.account_number && `Account #${organization.account_number} • `}
-            Created {format(new Date(organization.created_at), 'MMM d, yyyy')}
+            Created {formatDate(new Date(organization.created_at), 'MMM d, yyyy')}
           </div>
           <div className="flex gap-2">
             <PlatformButton type="button" variant="secondary" onClick={() => onOpenChange(false)}>

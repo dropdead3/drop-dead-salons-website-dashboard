@@ -6,10 +6,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Users, Star, AlertTriangle, ChevronRight, Loader2, MapPin } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format, subDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Link } from 'react-router-dom';
 import { useLocations } from '@/hooks/useLocations';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface ClientInsightsCardProps {
   userId: string;
@@ -25,6 +27,8 @@ export function ClientInsightsCard({
   showLocationFilter = true 
 }: ClientInsightsCardProps) {
   const { data: locations } = useLocations();
+  const { formatDate } = useFormatDate();
+  const { formatCurrency } = useFormatCurrency();
 
   // Fetch clients from the dedicated phorest_clients table
   const { data: clients, isLoading } = useQuery({
@@ -123,6 +127,7 @@ export function ClientInsightsCard({
           <div className="flex items-center gap-2">
             <Users className="w-5 h-5 text-primary" />
             <CardTitle className="font-display text-lg">Client Insights</CardTitle>
+            <MetricInfoTooltip description="Highlights key client metrics including new vs returning breakdown, average ticket size, and visit frequency. Data is sourced from completed appointments." />
           </div>
           <Link to="/dashboard/my-clients">
             <Button variant="ghost" size="sm" className="text-xs">
@@ -188,7 +193,7 @@ export function ClientInsightsCard({
                     <p className="text-xs text-muted-foreground">{client.visit_count} visits</p>
                   </div>
                   <BlurredAmount className="font-display text-sm">
-                    ${Number(client.total_spend || 0).toLocaleString()}
+                    {formatCurrency(Number(client.total_spend || 0))}
                   </BlurredAmount>
                 </div>
               ))}
@@ -210,7 +215,7 @@ export function ClientInsightsCard({
                 <div key={client.id} className="flex items-center justify-between text-xs">
                   <span className="text-red-700 dark:text-red-400">{client.name}</span>
                   <span className="text-red-600 dark:text-red-500">
-                    Last visit: {client.last_visit ? format(new Date(client.last_visit), 'MMM d') : 'Unknown'}
+                    Last visit: {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d') : 'Unknown'}
                   </span>
                 </div>
               ))}

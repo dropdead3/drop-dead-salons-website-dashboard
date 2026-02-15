@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Mail, MessageSquare, Download, X } from 'lucide-react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { ShareToDMDialog } from '@/components/dashboard/sales/ShareToDMDialog';
 import { EmailOutreachDialog } from './EmailOutreachDialog';
 import type { HealthClient } from '@/hooks/useClientHealthSegments';
@@ -12,6 +13,7 @@ interface BulkOutreachBarProps {
 }
 
 export function BulkOutreachBar({ selectedClients, segmentLabel, onClearSelection }: BulkOutreachBarProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
@@ -38,7 +40,7 @@ export function BulkOutreachBar({ selectedClients, segmentLabel, onClearSelectio
   };
 
   const shareContent = selectedClients.slice(0, 10).map(c =>
-    `• ${c.name} — last visit ${c.last_visit || 'unknown'}, $${c.total_spend} total`
+    `• ${c.name} — last visit ${c.last_visit || 'unknown'}, ${formatCurrencyWhole(c.total_spend)} total`
   ).join('\n') + (selectedClients.length > 10 ? `\n...and ${selectedClients.length - 10} more` : '');
 
   return (

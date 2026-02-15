@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Trophy, Lock, ChevronRight, Loader2 } from 'lucide-react';
 import { Achievement, UserAchievement, useLeaderboardAchievements } from '@/hooks/useLeaderboardAchievements';
 import { AchievementBadge } from './AchievementBadge';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface AchievementsShowcaseProps {
   userId?: string;
@@ -11,6 +11,7 @@ interface AchievementsShowcaseProps {
 }
 
 export function AchievementsShowcase({ userId, compact = false }: AchievementsShowcaseProps) {
+  const { formatDate } = useFormatDate();
   const { achievements, userAchievements, loading, getUserAchievements } = useLeaderboardAchievements(userId);
 
   const earned = userId ? getUserAchievements(userId) : userAchievements;
@@ -146,7 +147,7 @@ export function AchievementsShowcase({ userId, compact = false }: AchievementsSh
                         </p>
                         {isEarned && userAch && (
                           <p className="text-[10px] text-primary mt-1">
-                            Earned {format(new Date(userAch.earned_at), 'MMM d')}
+                            Earned {formatDate(new Date(userAch.earned_at), 'MMM d')}
                           </p>
                         )}
                         {!isEarned && (

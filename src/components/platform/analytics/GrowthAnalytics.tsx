@@ -4,13 +4,15 @@ import { cn } from '@/lib/utils';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LineChart, Line, Legend } from 'recharts';
 import type { PlatformAnalyticsSummary } from '@/hooks/useOrganizationAnalytics';
-import { format, parseISO, startOfMonth, subMonths } from 'date-fns';
+import { parseISO, startOfMonth, subMonths } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface GrowthAnalyticsProps {
   analytics: PlatformAnalyticsSummary;
 }
 
 export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
+  const { formatDate } = useFormatDate();
   const { resolvedTheme } = usePlatformTheme();
   const isDark = resolvedTheme === 'dark';
 
@@ -25,7 +27,7 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
       cumUsers += item.users;
       return {
         month: item.month,
-        displayMonth: format(parseISO(item.month + '-01'), 'MMM yy'),
+        displayMonth: formatDate(parseISO(item.month + '-01'), 'MMM yy'),
         newOrganizations: item.organizations,
         totalOrganizations: cumOrgs,
         totalLocations: cumLocs,
@@ -293,7 +295,7 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
                     {org.subscriptionTier || 'No Plan'}
                   </p>
                   <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>
-                    {format(new Date(org.createdAt), 'MMM d, yyyy')}
+                    {formatDate(new Date(org.createdAt), 'MMM d, yyyy')}
                   </p>
                 </div>
               </div>

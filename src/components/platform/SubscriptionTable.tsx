@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import {
   Table,
   TableBody,
@@ -51,6 +51,7 @@ const formatCurrency = (value: number) => {
 };
 
 export function SubscriptionTable({ subscriptions }: SubscriptionTableProps) {
+  const { formatDate } = useFormatDate();
   const navigate = useNavigate();
 
   const sortedSubscriptions = [...subscriptions].sort((a, b) => {
@@ -112,7 +113,7 @@ export function SubscriptionTable({ subscriptions }: SubscriptionTableProps) {
                 <TableCell>
                   {subscription.current_period_start && subscription.current_period_end ? (
                     <span className="text-slate-400 text-sm">
-                      {format(new Date(subscription.current_period_start), 'MMM d')} - {format(new Date(subscription.current_period_end), 'MMM d, yyyy')}
+                      {formatDate(new Date(subscription.current_period_start), 'MMM d')} - {formatDate(new Date(subscription.current_period_end), 'MMM d, yyyy')}
                     </span>
                   ) : (
                     <span className="text-slate-500">—</span>
@@ -131,6 +132,7 @@ export function SubscriptionTable({ subscriptions }: SubscriptionTableProps) {
 }
 
 export function InvoiceTable({ invoices }: InvoiceTableProps) {
+  const { formatDate } = useFormatDate();
   const navigate = useNavigate();
 
   return (
@@ -181,13 +183,13 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
                 </TableCell>
                 <TableCell>
                   <span className="text-slate-400">
-                    {format(new Date(invoice.created_at), 'MMM d, yyyy')}
+                    {formatDate(new Date(invoice.created_at), 'MMM d, yyyy')}
                   </span>
                 </TableCell>
                 <TableCell>
                   {invoice.period_start && invoice.period_end ? (
                     <span className="text-slate-400 text-sm">
-                      {format(new Date(invoice.period_start), 'MMM d')} - {format(new Date(invoice.period_end), 'MMM d')}
+                      {formatDate(new Date(invoice.period_start), 'MMM d')} - {formatDate(new Date(invoice.period_end), 'MMM d')}
                     </span>
                   ) : (
                     <span className="text-slate-500">—</span>
@@ -203,6 +205,7 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
 }
 
 export function AtRiskTable({ subscriptions }: SubscriptionTableProps) {
+  const { formatDate } = useFormatDate();
   const navigate = useNavigate();
   
   const atRiskSubscriptions = subscriptions.filter(
@@ -248,7 +251,7 @@ export function AtRiskTable({ subscriptions }: SubscriptionTableProps) {
               <TableCell>
                 {subscription.current_period_end ? (
                   <span className="text-slate-400">
-                    {format(new Date(subscription.current_period_end), 'MMM d, yyyy')}
+                    {formatDate(new Date(subscription.current_period_end), 'MMM d, yyyy')}
                   </span>
                 ) : (
                   <span className="text-slate-500">—</span>

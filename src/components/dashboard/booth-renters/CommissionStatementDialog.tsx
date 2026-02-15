@@ -8,8 +8,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { CalendarIcon, FileText, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface CommissionStatementDialogProps {
   organizationId: string;
@@ -29,6 +31,8 @@ export function CommissionStatementDialog({
   onOpenChange,
 }: CommissionStatementDialogProps) {
   const createStatement = useCreateCommissionStatement();
+  const { formatDate } = useFormatDate();
+  const { formatCurrency, currency } = useFormatCurrency();
   
   const lastMonth = subMonths(new Date(), 1);
   const [periodStart, setPeriodStart] = useState<Date>(startOfMonth(lastMonth));
@@ -94,7 +98,7 @@ export function CommissionStatementDialog({
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {periodStart ? format(periodStart, "MMM d, yyyy") : "Select"}
+                    {periodStart ? formatDate(periodStart, "MMM d, yyyy") : "Select"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -120,7 +124,7 @@ export function CommissionStatementDialog({
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {periodEnd ? format(periodEnd, "MMM d, yyyy") : "Select"}
+                    {periodEnd ? formatDate(periodEnd, "MMM d, yyyy") : "Select"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -138,7 +142,7 @@ export function CommissionStatementDialog({
           <div className="space-y-2">
             <Label>Total Retail Sales</Label>
             <div className="relative">
-              <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
+              <span className="absolute left-3 top-2.5 text-muted-foreground">{currency}</span>
               <Input
                 type="number"
                 step="0.01"
@@ -153,7 +157,7 @@ export function CommissionStatementDialog({
           <div className="space-y-2">
             <Label>Total Service Revenue (Optional)</Label>
             <div className="relative">
-              <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
+              <span className="absolute left-3 top-2.5 text-muted-foreground">{currency}</span>
               <Input
                 type="number"
                 step="0.01"
@@ -171,7 +175,7 @@ export function CommissionStatementDialog({
           <div className="space-y-2">
             <Label>Deductions</Label>
             <div className="relative">
-              <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
+              <span className="absolute left-3 top-2.5 text-muted-foreground">{currency}</span>
               <Input
                 type="number"
                 step="0.01"
@@ -198,23 +202,22 @@ export function CommissionStatementDialog({
           <div className="rounded-lg border bg-card p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span>Retail Sales</span>
-              <span>${totalRetailSales.toFixed(2)}</span>
+              <span>{formatCurrency(totalRetailSales)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span>Commission ({(commissionRate * 100).toFixed(1)}%)</span>
-              <span>${totalCommission.toFixed(2)}</span>
+              <span>{formatCurrency(totalCommission)}</span>
             </div>
             {deductions > 0 && (
               <div className="flex justify-between text-sm text-red-600">
                 <span>Deductions</span>
-                <span>-${deductions.toFixed(2)}</span>
+                <span>-{formatCurrency(deductions)}</span>
               </div>
             )}
             <div className="border-t pt-2 flex justify-between font-semibold">
               <span>Net Payout</span>
               <span className="flex items-center gap-1">
-                <DollarSign className="h-4 w-4" />
-                {netPayout.toFixed(2)}
+                {formatCurrency(netPayout)}
               </span>
             </div>
           </div>

@@ -63,9 +63,11 @@ export function PageTabsAccessPanel({ role, roleColor }: PageTabsAccessPanelProp
     return groups;
   }, [tabItems]);
 
-  const handleToggle = (elementKey: string, currentVisible: boolean) => {
+  const handleToggle = (elementKey: string, elementName: string, elementCategory: string, currentVisible: boolean) => {
     toggleVisibility.mutate({
       elementKey,
+      elementName,
+      elementCategory,
       role,
       isVisible: !currentVisible,
     });
@@ -164,7 +166,7 @@ export function PageTabsAccessPanel({ role, roleColor }: PageTabsAccessPanelProp
                 >
                   <Switch
                     checked={item.is_visible}
-                    onCheckedChange={() => handleToggle(item.element_key, item.is_visible)}
+                    onCheckedChange={() => handleToggle(item.element_key, item.element_name, item.element_category, item.is_visible)}
                     disabled={toggleVisibility.isPending}
                     className="data-[state=checked]:bg-primary"
                   />

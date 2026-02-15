@@ -12,7 +12,7 @@ import { CalendarClock, Check, X, Loader2, ArrowRight, ArrowLeft, Clock, CheckCi
 import { usePendingScheduleChangeRequests, useReviewScheduleChangeRequest } from '@/hooks/useLocationSchedules';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useLocations } from '@/hooks/useLocations';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,6 +20,7 @@ import { supabase } from '@/integrations/supabase/client';
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function ScheduleRequests() {
+  const { formatDate } = useFormatDate();
   const { data: pendingRequests, isLoading: pendingLoading } = usePendingScheduleChangeRequests();
   const { data: teamMembers } = useTeamDirectory();
   const { data: locations } = useLocations();
@@ -101,7 +102,7 @@ export default function ScheduleRequests() {
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   <Clock className="w-3 h-3 inline mr-1" />
-                  Submitted {format(new Date(request.created_at), 'MMM d, yyyy')}
+                  Submitted {formatDate(new Date(request.created_at), 'MMM d, yyyy')}
                 </p>
               </div>
             </div>

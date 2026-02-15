@@ -17,7 +17,7 @@ import {
   Clock,
   ChevronRight,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useTodaysQueue, useUpdateQueueStatus } from '@/hooks/useTodaysQueue';
 import { useLocations } from '@/hooks/useLocations';
 import { QueueCard } from './operations/QueueCard';
@@ -25,6 +25,7 @@ import { WalkInDialog } from './operations/WalkInDialog';
 import { CheckoutSummarySheet } from './schedule/CheckoutSummarySheet';
 import { EditAppointmentDialog } from './schedule/EditAppointmentDialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChartSkeleton } from '@/components/ui/chart-skeleton';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -49,6 +50,7 @@ export function TodaysQueueSection({
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
+  const { formatDate } = useFormatDate();
   const locationId = externalLocationId ?? internalLocationId;
   const handleLocationChange = onLocationChange ?? setInternalLocationId;
 
@@ -118,7 +120,7 @@ export function TodaysQueueSection({
     setCheckoutAppointment(null);
   };
 
-  const today = format(new Date(), 'EEEE, MMMM d, yyyy');
+  const today = formatDate(new Date(), 'EEEE, MMMM d, yyyy');
   const totalAppointments = queueData 
     ? queueData.waiting.length + queueData.inService.length + queueData.upcoming.length + queueData.completed.length
     : 0;
@@ -173,7 +175,7 @@ export function TodaysQueueSection({
           <div className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map(i => (
-                <Skeleton key={i} className="h-40" />
+                <ChartSkeleton key={i} lines={5} className="h-40" />
               ))}
             </div>
           </div>

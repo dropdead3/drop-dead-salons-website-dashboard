@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from 'recharts';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import type { LocationBreakdown } from '@/hooks/useComparisonData';
 
 interface LocationComparisonViewProps {
@@ -26,6 +27,8 @@ const COLORS = [
 ];
 
 export function LocationComparisonView({ locations, isLoading }: LocationComparisonViewProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
+
   if (isLoading) {
     return (
       <Card>
@@ -71,7 +74,7 @@ export function LocationComparisonView({ locations, isLoading }: LocationCompari
                 )}
               </div>
               <p className="text-2xl font-display mb-2">
-                ${location.totalRevenue.toLocaleString()}
+                {formatCurrencyWhole(location.totalRevenue)}
               </p>
               <div className="space-y-1">
                 <div className="flex justify-between text-xs text-muted-foreground">
@@ -82,11 +85,11 @@ export function LocationComparisonView({ locations, isLoading }: LocationCompari
               </div>
               <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t text-center">
                 <div>
-                  <p className="text-lg font-display">${Math.round(location.serviceRevenue).toLocaleString()}</p>
+                  <p className="text-lg font-display">{formatCurrencyWhole(Math.round(location.serviceRevenue))}</p>
                   <p className="text-xs text-muted-foreground">Services</p>
                 </div>
                 <div>
-                  <p className="text-lg font-display">${Math.round(location.productRevenue).toLocaleString()}</p>
+                  <p className="text-lg font-display">{formatCurrencyWhole(Math.round(location.productRevenue))}</p>
                   <p className="text-xs text-muted-foreground">Products</p>
                 </div>
               </div>
@@ -124,7 +127,7 @@ export function LocationComparisonView({ locations, isLoading }: LocationCompari
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                    formatter={(value: number) => [formatCurrencyWhole(value), 'Revenue']}
                     contentStyle={{
                       backgroundColor: 'hsl(var(--background))',
                       border: '1px solid hsl(var(--border))',
@@ -147,7 +150,7 @@ export function LocationComparisonView({ locations, isLoading }: LocationCompari
                     <span className="text-sm">{entry.name}</span>
                   </div>
                   <span className="text-sm font-display">
-                    ${entry.value.toLocaleString()}
+                    {formatCurrencyWhole(entry.value)}
                   </span>
                 </div>
               ))}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { format, parseISO, differenceInMonths } from 'date-fns';
+import { parseISO, differenceInMonths } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Calendar, Gift, CalendarCog, FileEdit, Clock } from 'lucide-react';
 import {
   PlatformCard,
@@ -27,6 +28,7 @@ export function ContractAdjustmentsPanel({
   contractEndDate,
   monthlyRate,
 }: ContractAdjustmentsPanelProps) {
+  const { formatDate } = useFormatDate();
   const { data: adjustments, isLoading } = useContractAdjustments(organizationId);
   const [extendDialogOpen, setExtendDialogOpen] = useState(false);
   const [compDialogOpen, setCompDialogOpen] = useState(false);
@@ -54,7 +56,7 @@ export function ContractAdjustmentsPanel({
             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
               <p className="text-sm text-slate-400 mb-1">Current Contract</p>
               <p className="text-white font-medium">
-                {format(parseISO(contractStartDate), 'MMM d, yyyy')} → {format(parseISO(contractEndDate), 'MMM d, yyyy')}
+                {formatDate(parseISO(contractStartDate), 'MMM d, yyyy')} → {formatDate(parseISO(contractEndDate), 'MMM d, yyyy')}
                 {contractMonths !== null && (
                   <span className="text-slate-400 font-normal ml-2">
                     ({contractMonths} months)
@@ -117,7 +119,7 @@ export function ContractAdjustmentsPanel({
                     <Clock className="h-4 w-4 text-slate-500 mt-0.5 shrink-0" />
                     <div>
                       <p className="text-slate-300">
-                        {format(new Date(adjustment.created_at), 'MMM d')}: {adjustment.description}
+                        {formatDate(new Date(adjustment.created_at), 'MMM d')}: {adjustment.description}
                       </p>
                       <p className="text-xs text-slate-500">{adjustment.reason}</p>
                     </div>

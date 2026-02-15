@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, parseISO, isThisYear } from 'date-fns';
+import { parseISO, isThisYear } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ export function MobileChangelogViewer({
   onClose,
   onVote,
 }: MobileChangelogViewerProps) {
+  const { formatDate } = useFormatDate();
   const [api, setApi] = useState<CarouselApi>();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
@@ -51,9 +53,9 @@ export function MobileChangelogViewer({
     });
   }, [api, initialIndex]);
 
-  const formatDate = (dateStr: string) => {
+  const formatEntryDate = (dateStr: string) => {
     const date = parseISO(dateStr);
-    return isThisYear(date) ? format(date, 'MMMM d') : format(date, 'MMMM d, yyyy');
+    return isThisYear(date) ? formatDate(date, 'MMMM d') : formatDate(date, 'MMMM d, yyyy');
   };
 
   if (!open) return null;
@@ -121,9 +123,9 @@ export function MobileChangelogViewer({
 
                         {/* Date */}
                         <p className="text-sm text-muted-foreground mb-6">
-                          {entry.published_at && formatDate(entry.published_at)}
+                          {entry.published_at && formatEntryDate(entry.published_at)}
                           {entry.release_date && entry.entry_type === 'coming_soon' && (
-                            <> • Expected: {formatDate(entry.release_date)}</>
+                            <> • Expected: {formatEntryDate(entry.release_date)}</>
                           )}
                         </p>
 

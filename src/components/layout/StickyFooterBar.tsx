@@ -4,8 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight, Phone, ChevronUp } from "lucide-react";
 import { ScrollProgressButton } from "./ScrollProgressButton";
 import { useActiveLocations } from "@/hooks/useLocations";
+import { useOrgPath } from "@/hooks/useOrgPath";
 
 export function StickyFooterBar() {
+  const orgPath = useOrgPath();
   const [isVisible, setIsVisible] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -144,7 +146,7 @@ export function StickyFooterBar() {
 
               {/* Book CTA */}
               <Link
-                to="/booking"
+                to={orgPath("/booking")}
                 className="flex items-center justify-center gap-2 px-4 md:px-5 py-3 bg-foreground text-background rounded-full hover:bg-foreground/90 transition-all duration-200 group"
               >
                 <span className="text-xs md:text-sm font-medium">Book consult</span>

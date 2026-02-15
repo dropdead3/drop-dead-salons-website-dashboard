@@ -1,3 +1,4 @@
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Switch } from '@/components/ui/switch';
 import { PlatformInput } from '@/components/platform/ui/PlatformInput';
 import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
@@ -46,6 +47,8 @@ export function CustomPricingForm({
   onDiscountReasonChange,
   basePrice,
 }: CustomPricingFormProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
+
   return (
     <div className="space-y-4">
       {/* Custom Price Toggle */}
@@ -78,7 +81,7 @@ export function CustomPricingForm({
                 className="pl-7"
               />
             </div>
-            <p className="text-xs text-slate-500">Base price: ${basePrice}/mo</p>
+            <p className="text-xs text-slate-500">Base price: {formatCurrencyWhole(basePrice)}/mo</p>
           </div>
 
           {/* OR use discount */}

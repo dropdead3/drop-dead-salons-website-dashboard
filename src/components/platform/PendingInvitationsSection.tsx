@@ -1,4 +1,4 @@
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
   usePendingInvitations, 
   useCancelPlatformInvitation, 
@@ -33,6 +33,7 @@ const roleConfig: Record<PlatformRole, { label: string; icon: React.ElementType;
 };
 
 export function PendingInvitationsSection() {
+  const { formatDate } = useFormatDate();
   const { data: invitations, isLoading } = usePendingInvitations();
   const cancelMutation = useCancelPlatformInvitation();
   const resendMutation = useResendPlatformInvitation();
@@ -128,12 +129,12 @@ export function PendingInvitationsSection() {
                       </PlatformBadge>
                     </TableCell>
                     <TableCell className="text-slate-500 text-sm">
-                      {format(new Date(invitation.created_at), 'MMM d, yyyy')}
+                      {formatDate(new Date(invitation.created_at), 'MMM d, yyyy')}
                     </TableCell>
                     <TableCell>
                       <div className={`flex items-center gap-1.5 text-sm ${isExpiringSoon ? 'text-amber-400' : 'text-slate-500'}`}>
                         {isExpiringSoon && <Clock className="w-3.5 h-3.5" />}
-                        {format(expiresAt, 'MMM d')}
+                        {formatDate(expiresAt, 'MMM d')}
                       </div>
                     </TableCell>
                     <TableCell>

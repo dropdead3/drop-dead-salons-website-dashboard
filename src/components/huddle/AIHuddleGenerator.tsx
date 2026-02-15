@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Sparkles, Loader2, Check, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,6 +22,7 @@ export function AIHuddleGenerator({ huddleDate, locationId, onContentGenerated }
   const [dialogOpen, setDialogOpen] = useState(false);
   const [previewContent, setPreviewContent] = useState<GeneratedHuddleContent | null>(null);
   const generateHuddle = useGenerateAIHuddle();
+  const { formatCurrencyWhole } = useFormatCurrency();
 
   const handleGenerate = async () => {
     setDialogOpen(true);
@@ -151,11 +153,11 @@ export function AIHuddleGenerator({ huddleDate, locationId, onContentGenerated }
                 <div className="flex gap-4 text-sm">
                   <div>
                     <span className="text-muted-foreground">Retail:</span>{' '}
-                    <span className="font-medium">${previewContent.sales_goals.retail.toLocaleString()}</span>
+                    <span className="font-medium">{formatCurrencyWhole(previewContent.sales_goals.retail)}</span>
                   </div>
                   <div>
                     <span className="text-muted-foreground">Service:</span>{' '}
-                    <span className="font-medium">${previewContent.sales_goals.service.toLocaleString()}</span>
+                    <span className="font-medium">{formatCurrencyWhole(previewContent.sales_goals.service)}</span>
                   </div>
                 </div>
               </div>

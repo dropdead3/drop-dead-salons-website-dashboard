@@ -5,6 +5,7 @@ import { PieChartIcon } from 'lucide-react';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface RevenueDonutChartProps {
   serviceRevenue: number;
@@ -24,6 +25,7 @@ export function RevenueDonutChart({
   retailAttachmentLoading,
 }: RevenueDonutChartProps) {
   const { hideNumbers } = useHideNumbers();
+  const { formatCurrencyWhole } = useFormatCurrency();
   
   const data = useMemo(() => {
     const total = serviceRevenue + productRevenue;
@@ -88,7 +90,7 @@ export function RevenueDonutChart({
                 </Pie>
                 {!hideNumbers && (
                   <Tooltip 
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
+                    formatter={(value: number) => [formatCurrencyWhole(value), '']}
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--background))', 
                       border: '1px solid hsl(var(--border))',

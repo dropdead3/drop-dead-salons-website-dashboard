@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
 import { PersonalGoalsCard } from '@/components/dashboard/sales/PersonalGoalsCard';
 import { TierProgressAlert } from '@/components/dashboard/sales/TierProgressAlert';
@@ -29,6 +30,8 @@ export default function Stats() {
   const { user, roles } = useAuth();
   const [clientInsightsLocation, setClientInsightsLocation] = useState<string>('all');
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+
+  const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
 
   // Check if user is admin/manager
   const isAdmin = roles.some(role => ['admin', 'super_admin', 'manager'].includes(role));
@@ -158,7 +161,7 @@ export default function Stats() {
                     <p className="text-xs text-muted-foreground">New Clients</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-2xl font-display">${Number(myPhorestMetrics.total_revenue).toLocaleString()}</p>
+                    <p className="text-2xl font-display">{formatCurrencyWhole(Number(myPhorestMetrics.total_revenue))}</p>
                     <p className="text-xs text-muted-foreground">Revenue</p>
                   </div>
                   <div className="text-center">
@@ -271,10 +274,10 @@ export default function Stats() {
                 <StatCard
                   label="Avg Ticket Value"
                   value={myPhorestMetrics?.average_ticket 
-                    ? `$${Number(myPhorestMetrics.average_ticket).toLocaleString()}` 
+                    ? formatCurrencyWhole(Number(myPhorestMetrics.average_ticket)) 
                     : (userWeeklySales?.averageTicket 
-                      ? `$${userWeeklySales.averageTicket.toLocaleString()}` 
-                      : '$0')
+                      ? formatCurrencyWhole(userWeeklySales.averageTicket) 
+                      : formatCurrencyWhole(0))
                   }
                 />
                 <StatCard

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { format, isToday, isTomorrow, parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -25,6 +26,7 @@ interface MobileScheduleViewProps {
 }
 
 export function MobileScheduleView({ locationId, userId }: MobileScheduleViewProps) {
+  const { formatDate } = useFormatDate();
   const [selectedDate, setSelectedDate] = useState(new Date());
   
   const { data, isLoading, refetch, isRefetching } = useTodaysQueue(locationId);
@@ -79,7 +81,7 @@ export function MobileScheduleView({ locationId, userId }: MobileScheduleViewPro
     const today = new Date();
     if (isToday(today)) return 'Today';
     if (isTomorrow(today)) return 'Tomorrow';
-    return format(today, 'EEEE');
+    return formatDate(today, 'EEEE');
   };
 
   const dateString = format(new Date(), 'yyyy-MM-dd');
@@ -114,7 +116,7 @@ export function MobileScheduleView({ locationId, userId }: MobileScheduleViewPro
           <div className="text-center">
             <h1 className="text-lg font-semibold">{getDateLabel()}</h1>
             <p className="text-xs text-muted-foreground">
-              {format(selectedDate, 'MMMM d, yyyy')}
+              {formatDate(selectedDate, 'MMMM d, yyyy')}
             </p>
           </div>
           
@@ -263,7 +265,7 @@ export function MobileScheduleView({ locationId, userId }: MobileScheduleViewPro
               <p className="text-sm text-muted-foreground/70 mt-1">
                 {isToday(selectedDate)
                   ? "You're all clear for today"
-                  : `No appointments scheduled for ${format(selectedDate, 'MMM d')}`}
+                  : `No appointments scheduled for ${formatDate(selectedDate, 'MMM d')}`}
               </p>
             </div>
           )}

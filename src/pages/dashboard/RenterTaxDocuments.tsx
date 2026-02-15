@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileText, Download, DollarSign, AlertCircle } from 'lucide-react';
 import { useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useBoothRenter } from '@/hooks/useBoothRenters';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
@@ -20,6 +21,7 @@ interface TaxDocument {
 
 export default function RenterTaxDocuments() {
   const { user } = useAuth();
+  const { formatCurrency } = useFormatCurrency();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear - 1); // Default to last year
 
@@ -107,11 +109,11 @@ export default function RenterTaxDocuments() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-lg bg-muted">
                   <p className="text-sm text-muted-foreground">Total Commissions Earned</p>
-                  <p className="text-3xl font-bold">${selectedYearData.total_earnings.toFixed(2)}</p>
+                  <p className="text-3xl font-bold">{formatCurrency(selectedYearData.total_earnings)}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-muted">
                   <p className="text-sm text-muted-foreground">Total Payments Received</p>
-                  <p className="text-3xl font-bold">${selectedYearData.total_payments.toFixed(2)}</p>
+                  <p className="text-3xl font-bold">{formatCurrency(selectedYearData.total_payments)}</p>
                 </div>
               </div>
 
@@ -188,8 +190,8 @@ export default function RenterTaxDocuments() {
                 {taxDocuments.map((doc) => (
                   <TableRow key={doc.year}>
                     <TableCell className="font-medium">{doc.year}</TableCell>
-                    <TableCell className="text-right">${doc.total_earnings.toFixed(2)}</TableCell>
-                    <TableCell className="text-right">${doc.total_payments.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(doc.total_earnings)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(doc.total_payments)}</TableCell>
                     <TableCell>
                       {doc.total_payments >= 600 ? (
                         doc.document_url ? (

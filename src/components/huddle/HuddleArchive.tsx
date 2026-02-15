@@ -3,7 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Calendar, Target } from 'lucide-react';
 import { useHuddleHistory } from '@/hooks/useHuddles';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface HuddleArchiveProps {
   locationId?: string;
@@ -11,6 +11,7 @@ interface HuddleArchiveProps {
 }
 
 export function HuddleArchive({ locationId, onSelect }: HuddleArchiveProps) {
+  const { formatDate } = useFormatDate();
   const { data: huddles = [], isLoading } = useHuddleHistory(30, locationId);
 
   if (isLoading) {
@@ -43,7 +44,7 @@ export function HuddleArchive({ locationId, onSelect }: HuddleArchiveProps) {
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <span className="font-medium">
-                  {format(new Date(huddle.huddle_date), 'EEEE, MMMM d')}
+                  {formatDate(new Date(huddle.huddle_date), 'EEEE, MMMM d')}
                 </span>
               </div>
               {!huddle.is_published && (

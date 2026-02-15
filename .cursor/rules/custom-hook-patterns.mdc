@@ -1,0 +1,128 @@
+---
+description: Custom hook conventions for Zura. Covers query/mutation patterns, query keys, organization scoping, Supabase queries, error handling, and optimistic updates.
+globs: src/hooks/**/*.ts, src/hooks/**/*.tsx
+alwaysApply: false
+---
+
+# Custom Hook Patterns
+
+## Naming Conventions
+
+- **Query hooks:** `use[Entity]` or `use[Entity]s` (e.g., `useProducts`, `useClientBalance`)
+- **Mutation hooks:** `use[Action][Entity]` (e.g., `useUpdateProduct`, `useCreateStrike`, `useHireEmployee`)
+- **File names:** kebab-case matching hook name (e.g., `useProducts.ts`, `use-client-balances.ts`)
+
+## Query Keys
+
+Kebab-case string arrays. Always include entity name and filter/ID dependencies:
+```typescript
+['products', filters]
+['client-balance', clientId]
+['org-feature', orgId, featureKey]
+['platform-stats']
+```
+
+## Query Hook Pattern
+
+```typescript
+export function useProducts(filters: ProductFilters = {}) {
+  return useQuery({
+    queryKey: ['products', filters],
+    queryFn: async () => {
+      let query = supabase.from('products').select('*').eq('is_active', true);
+      if (filters.search) {
+        query = query.or(`name.ilike.%${filters.search}%`);
+      }
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as Product[];
+    },
+  });
+}
+```
+
+## Mutation Hook Pattern
+
+```typescript
+export function useUpdateProduct() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Product> }) => {
+      const { data, error } = await supabase
+        .from('products').update(updates).eq('id', id).select().single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Product updated');
+    },
+    onError: (error) => {
+      toast.error('Failed to update product: ' + error.message);
+    },
+  });
+}
+```
+
+## Organization Scoping
+
+```typescript
+const { effectiveOrganization } = useOrganizationContext();
+const orgId = effectiveOrganization?.id;
+
+return useQuery({
+  queryKey: ['feature', orgId, featureKey],
+  queryFn: async () => {
+    const { data, error } = await supabase.from('table')
+      .select('*').eq('organization_id', orgId);
+    if (error) throw error;
+    return data;
+  },
+  enabled: !!orgId,
+});
+```
+
+## Supabase Query Patterns
+
+- **Direct:** `supabase.from('table').select('*').eq('field', value)`
+- **Conditional filters:** `let query = ...; if (filter) query = query.eq(...)`
+- **Single row:** `.single()` (errors if not found) vs `.maybeSingle()` (returns null)
+- **Count only:** `.select('*', { count: 'exact', head: true })`
+- **RPC:** `supabase.rpc('function_name', { p_param: value })`
+- **Edge function:** `supabase.functions.invoke('name', { body: data })`
+
+## Error Handling
+
+Always: `const { data, error } = await supabase...; if (error) throw error;`
+TanStack Query catches thrown errors automatically.
+
+For edge functions, also check response errors:
+```typescript
+const { data: result, error } = await supabase.functions.invoke('fn', { body });
+if (error) throw error;
+if (result.error) throw new Error(result.error);
+```
+
+## Optimistic Updates
+
+```typescript
+onMutate: async (newData) => {
+  await queryClient.cancelQueries({ queryKey: ['messages', channelId] });
+  const previous = queryClient.getQueryData(['messages', channelId]);
+  queryClient.setQueryData(['messages', channelId], (old) => [...old, optimisticItem]);
+  return { previous };
+},
+onError: (error, _, context) => {
+  queryClient.setQueryData(['messages', channelId], context?.previous);
+  toast.error('Failed');
+},
+onSettled: () => {
+  queryClient.invalidateQueries({ queryKey: ['messages', channelId] });
+},
+```
+
+## Stale Times
+
+- Real-time data: `30000` (30s)
+- Settings/config: `2 * 60 * 1000` to `5 * 60 * 1000` (2-5 min)
+- Static/localStorage: `Infinity`

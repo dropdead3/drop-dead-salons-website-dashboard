@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
   Table, 
   TableBody, 
@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { TransactionItem } from '@/hooks/useTransactions';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface TransactionListProps {
   transactions: TransactionItem[];
@@ -45,6 +46,8 @@ export function TransactionList({
   onRefund,
   onViewDetails 
 }: TransactionListProps) {
+  const { formatCurrency } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   const [sortField, setSortField] = useState<SortField>('transaction_date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
@@ -143,7 +146,7 @@ export function TransactionList({
             {sortedTransactions.map((transaction) => (
               <TableRow key={transaction.id}>
                 <TableCell className="font-medium text-sm">
-                  {format(new Date(transaction.transaction_date), 'MMM d, yyyy')}
+                  {formatDate(new Date(transaction.transaction_date), 'MMM d, yyyy')}
                 </TableCell>
                 <TableCell>
                   <span className="font-medium">{transaction.client_name || 'Walk-in'}</span>
@@ -168,7 +171,7 @@ export function TransactionList({
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right font-medium">
-                  ${(Number(transaction.total_amount) || 0).toFixed(2)}
+                  {formatCurrency(Number(transaction.total_amount) || 0)}
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {transaction.branch_name || '-'}

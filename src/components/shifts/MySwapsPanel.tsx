@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,7 @@ interface SwapListItemProps {
 }
 
 function SwapListItem({ swap, type, onCancel }: SwapListItemProps) {
+  const { formatDate } = useFormatDate();
   const typeConfig = swapTypeConfig[swap.swap_type];
   const TypeIcon = typeConfig.icon;
   const status = statusConfig[swap.status];
@@ -44,7 +45,7 @@ function SwapListItem({ swap, type, onCancel }: SwapListItemProps) {
     const [hours, minutes] = time.split(':');
     const date = new Date();
     date.setHours(parseInt(hours), parseInt(minutes));
-    return format(date, 'h:mm a');
+    return formatDate(date, 'h:mm a');
   };
 
   return (
@@ -60,7 +61,7 @@ function SwapListItem({ swap, type, onCancel }: SwapListItemProps) {
             </div>
             <div className="min-w-0">
               <p className="font-medium text-sm">
-                {format(new Date(swap.original_date), 'EEE, MMM d')}
+                {formatDate(new Date(swap.original_date), 'EEE, MMM d')}
               </p>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="w-3 h-3" />

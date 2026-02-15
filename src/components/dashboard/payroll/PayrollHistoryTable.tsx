@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
   ChevronDown, 
   ChevronRight, 
@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { usePayroll, PayrollRun } from '@/hooks/usePayroll';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const statusConfig: Record<string, { label: string; icon: React.ElementType; className: string }> = {
   draft: {
@@ -71,6 +72,7 @@ interface PayrollRowProps {
 }
 
 function PayrollRow({ run, isExpanded, onToggle }: PayrollRowProps) {
+  const { formatDate } = useFormatDate();
   const status = statusConfig[run.status] || statusConfig.draft;
   const StatusIcon = status.icon;
 
@@ -91,12 +93,12 @@ function PayrollRow({ run, isExpanded, onToggle }: PayrollRowProps) {
         </TableCell>
         <TableCell>
           <div className="font-medium">
-            {format(new Date(run.pay_period_start), 'MMM d')} -{' '}
-            {format(new Date(run.pay_period_end), 'MMM d, yyyy')}
+            {formatDate(new Date(run.pay_period_start), 'MMM d')} -{' '}
+            {formatDate(new Date(run.pay_period_end), 'MMM d, yyyy')}
           </div>
         </TableCell>
         <TableCell>
-          {format(new Date(run.check_date), 'MMM d, yyyy')}
+          {formatDate(new Date(run.check_date), 'MMM d, yyyy')}
         </TableCell>
         <TableCell>
           <div className="flex items-center gap-1">
@@ -118,47 +120,60 @@ function PayrollRow({ run, isExpanded, onToggle }: PayrollRowProps) {
         </TableCell>
       </TableRow>
       
-      {isExpanded && (
-        <TableRow>
-          <TableCell colSpan={7} className="bg-muted/30 p-4">
-            <div className="grid grid-cols-4 gap-6 text-sm">
-              <div>
-                <p className="text-muted-foreground">Gross Pay</p>
-                <p className="font-semibold text-lg">{formatCurrency(run.total_gross_pay)}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Employer Taxes</p>
-                <p className="font-semibold text-lg text-amber-600">
-                  {formatCurrency(run.total_employer_taxes)}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Employee Deductions</p>
-                <p className="font-semibold text-lg text-red-600">
-                  {formatCurrency(run.total_employee_deductions)}
-                </p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Net Pay</p>
-                <p className="font-semibold text-lg text-green-600">
-                  {formatCurrency(run.total_net_pay)}
-                </p>
-              </div>
-            </div>
-            
-            {run.submitted_at && (
-              <div className="mt-4 pt-4 border-t text-sm text-muted-foreground">
-                Submitted on {format(new Date(run.submitted_at), 'MMMM d, yyyy at h:mm a')}
-                {run.processed_at && (
-                  <span>
-                    {' • '}Processed on {format(new Date(run.processed_at), 'MMMM d, yyyy at h:mm a')}
-                  </span>
-                )}
-              </div>
-            )}
-          </TableCell>
-        </TableRow>
-      )}
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <TableRow>
+            <TableCell colSpan={7} className="p-0 bg-muted/30">
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.22, ease: 'easeInOut' }}
+                className="overflow-hidden"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
+                    <div>
+                      <p className="text-muted-foreground">Gross Pay</p>
+                      <p className="font-semibold text-lg">{formatCurrency(run.total_gross_pay)}</p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Employer Taxes</p>
+                      <p className="font-semibold text-lg text-amber-600">
+                        {formatCurrency(run.total_employer_taxes)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Employee Deductions</p>
+                      <p className="font-semibold text-lg text-red-600">
+                        {formatCurrency(run.total_employee_deductions)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground">Net Pay</p>
+                      <p className="font-semibold text-lg text-green-600">
+                        {formatCurrency(run.total_net_pay)}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {run.submitted_at && (
+                    <div className="mt-4 pt-4 border-t text-sm text-muted-foreground">
+                      Submitted on {formatDate(new Date(run.submitted_at), 'MMMM d, yyyy at h:mm a')}
+                      {run.processed_at && (
+                        <span>
+                          {' • '}Processed on {formatDate(new Date(run.processed_at), 'MMMM d, yyyy at h:mm a')}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </TableCell>
+          </TableRow>
+        )}
+      </AnimatePresence>
     </>
   );
 }

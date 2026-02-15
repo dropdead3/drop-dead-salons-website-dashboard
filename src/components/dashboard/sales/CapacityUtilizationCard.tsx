@@ -7,6 +7,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { useCapacityUtilization, CapacityPeriod, DayCapacity } from '@/hooks/useCapacityUtilization';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { LocationSelect } from '@/components/ui/location-select';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CapacityBreakdown } from '@/components/dashboard/analytics/CapacityBreakdown';
@@ -15,7 +17,7 @@ import { Gauge, Clock, DollarSign, TrendingDown, Calendar, PieChart, Info } from
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { cn } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
+import { analyticsHubUrl } from '@/config/dashboardNav';
 import { 
   BarChart, 
   Bar, 
@@ -106,9 +108,11 @@ export function CapacityUtilizationCard() {
   const [period, setPeriod] = useState<CapacityPeriod>('7days');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const { data, isLoading, error } = useCapacityUtilization(period, selectedLocation);
+  const { formatCurrency, currency } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
 
   const handleViewDetails = () => {
-    navigate('/dashboard/admin/operational-analytics?tab=appointments');
+    navigate(analyticsHubUrl('operations', 'appointments'));
   };
 
   if (isLoading) {
@@ -291,12 +295,12 @@ export function CapacityUtilizationCard() {
             </div>
             <AnimatedBlurredAmount 
               value={gapRevenue}
-              prefix="$"
+              currency={currency}
               className="text-lg font-display tabular-nums"
             />
             <div className="flex items-center gap-1 justify-center">
               <p className="text-xs text-muted-foreground">Gap Revenue</p>
-              <MetricInfoTooltip description={`Potential revenue if unused hours were booked. Based on avg hourly revenue of $${avgHourlyRevenue}.`} />
+              <MetricInfoTooltip description={`Potential revenue if unused hours were booked. Based on avg hourly revenue of ${formatCurrency(avgHourlyRevenue)}.`} />
             </div>
           </div>
           <div className="text-center p-3 bg-muted/30 rounded-lg">
@@ -339,7 +343,7 @@ export function CapacityUtilizationCard() {
                   }}
                   labelFormatter={(label) => {
                     const day = days.find(d => d.dayName === label);
-                    return day ? format(parseISO(day.date), 'EEEE, MMM d') : label;
+                    return day ? formatDate(day.date, 'EEEE, MMM d') : label;
                   }}
                 />
                 <Bar 
@@ -365,7 +369,7 @@ export function CapacityUtilizationCard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">
-                  {format(parseISO(days[0].date), 'EEEE, MMMM d')}
+                  {formatDate(days[0].date, 'EEEE, MMMM d')}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {days[0].bookedHours}h booked • {days[0].gapHours}h available
@@ -442,9 +446,9 @@ export function CapacityUtilizationCard() {
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {lowDay && lowDay.utilizationPercent < 50 && (
-                    <>{format(parseISO(lowDay.date), 'EEEE')} has the most availability ({lowDay.gapHours}h open)</>
+                    <>{formatDate(lowDay.date, 'EEEE')} has the most availability ({lowDay.gapHours}h open)</>
                   )}
-                  {!lowDay && `Fill unused hours to capture $${gapRevenue.toLocaleString()} in potential revenue`}
+                  {!lowDay && `Fill unused hours to capture ${formatCurrency(gapRevenue)} in potential revenue`}
                 </p>
               </div>
             </div>

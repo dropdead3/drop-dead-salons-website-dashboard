@@ -29,9 +29,10 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
-import { Plus, Edit2, Trash2, Percent, Loader2, DollarSign } from 'lucide-react';
+import { Plus, Edit2, Trash2, Percent, Loader2, DollarSign, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface TierFormData {
   tier_name: string;
@@ -51,6 +52,7 @@ const initialFormData: TierFormData = {
 
 export function CommissionTiersEditor() {
   const { tiers, isLoading, updateTier, createTier } = useCommissionTiers();
+  const { formatCurrencyWhole } = useFormatCurrency();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<TierFormData>(initialFormData);
@@ -109,104 +111,110 @@ export function CommissionTiersEditor() {
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="font-display flex items-center gap-2">
-            <Percent className="w-5 h-5" />
-            Commission Tiers
-          </CardTitle>
-          <CardDescription>Configure commission rates based on revenue thresholds</CardDescription>
-        </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={handleOpenCreate}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Tier
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editingId ? 'Edit' : 'Add'} Commission Tier</DialogTitle>
-              <DialogDescription>
-                Define commission rate for a revenue range
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="tier_name">Tier Name</Label>
-                <Input
-                  id="tier_name"
-                  value={formData.tier_name}
-                  onChange={(e) => setFormData({ ...formData, tier_name: e.target.value })}
-                  placeholder="e.g., Bronze, Silver, Gold"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="min_revenue">Min Revenue</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="min_revenue"
-                      type="number"
-                      value={formData.min_revenue}
-                      onChange={(e) => setFormData({ ...formData, min_revenue: Number(e.target.value) })}
-                      className="pl-8"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="max_revenue">Max Revenue (blank = unlimited)</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="max_revenue"
-                      type="number"
-                      value={formData.max_revenue || ''}
-                      onChange={(e) => setFormData({ ...formData, max_revenue: e.target.value ? Number(e.target.value) : null })}
-                      className="pl-8"
-                      placeholder="∞"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="commission_rate">Commission Rate (%)</Label>
-                <Input
-                  id="commission_rate"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="1"
-                  value={(formData.commission_rate * 100).toFixed(0)}
-                  onChange={(e) => setFormData({ ...formData, commission_rate: Number(e.target.value) / 100 })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="applies_to">Applies To</Label>
-                <Select 
-                  value={formData.applies_to} 
-                  onValueChange={(v: 'all' | 'services' | 'products') => setFormData({ ...formData, applies_to: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Revenue</SelectItem>
-                    <SelectItem value="services">Services Only</SelectItem>
-                    <SelectItem value="products">Products Only</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Percent className="w-5 h-5 text-primary" />
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleSave}>Save Tier</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            <div>
+              <CardTitle className="font-display text-base tracking-wide">COMMISSION TIERS</CardTitle>
+              <CardDescription className="text-xs">
+                Define commission brackets -- stylists earn higher rates as their revenue grows
+              </CardDescription>
+            </div>
+          </div>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" onClick={handleOpenCreate}>
+                <Plus className="w-4 h-4 mr-1.5" />
+                Add Tier
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{editingId ? 'Edit' : 'Add'} Commission Tier</DialogTitle>
+                <DialogDescription>
+                  Define commission rate for a revenue range
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tier_name">Tier Name</Label>
+                  <Input
+                    id="tier_name"
+                    value={formData.tier_name}
+                    onChange={(e) => setFormData({ ...formData, tier_name: e.target.value })}
+                    placeholder="e.g., Bronze, Silver, Gold"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="min_revenue">Min Revenue</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="min_revenue"
+                        type="number"
+                        value={formData.min_revenue}
+                        onChange={(e) => setFormData({ ...formData, min_revenue: Number(e.target.value) })}
+                        className="pl-8"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="max_revenue">Max Revenue (blank = unlimited)</Label>
+                    <div className="relative">
+                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="max_revenue"
+                        type="number"
+                        value={formData.max_revenue || ''}
+                        onChange={(e) => setFormData({ ...formData, max_revenue: e.target.value ? Number(e.target.value) : null })}
+                        className="pl-8"
+                        placeholder="Unlimited"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="commission_rate">Commission Rate (%)</Label>
+                  <Input
+                    id="commission_rate"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="1"
+                    value={(formData.commission_rate * 100).toFixed(0)}
+                    onChange={(e) => setFormData({ ...formData, commission_rate: Number(e.target.value) / 100 })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="applies_to">Applies To</Label>
+                  <Select 
+                    value={formData.applies_to} 
+                    onValueChange={(v: 'all' | 'services' | 'products') => setFormData({ ...formData, applies_to: v })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Revenue</SelectItem>
+                      <SelectItem value="services">Services Only</SelectItem>
+                      <SelectItem value="products">Products Only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                <Button onClick={handleSave}>Save Tier</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
         {tiers.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <p>No commission tiers configured</p>
@@ -229,7 +237,7 @@ export function CommissionTiersEditor() {
                   <TableCell className="font-medium">{tier.tier_name}</TableCell>
                   <TableCell>
                     <BlurredAmount>
-                      ${tier.min_revenue.toLocaleString()} - {tier.max_revenue ? `$${tier.max_revenue.toLocaleString()}` : '∞'}
+                      {formatCurrencyWhole(tier.min_revenue)} - {tier.max_revenue ? formatCurrencyWhole(tier.max_revenue) : 'Unlimited'}
                     </BlurredAmount>
                   </TableCell>
                   <TableCell>
@@ -253,6 +261,15 @@ export function CommissionTiersEditor() {
             </TableBody>
           </Table>
         )}
+
+        {/* Help note */}
+        <div className="flex items-start gap-2 pt-2 border-t border-border/40">
+          <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/60 mt-0.5 shrink-0" />
+          <p className="text-[11px] text-muted-foreground/60 leading-relaxed">
+            Each stylist's service revenue for the selected period is matched against these ranges to determine their commission rate. 
+            Product commission is calculated separately. Tiers are checked from lowest to highest.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

@@ -15,6 +15,7 @@ import {
   Target,
   CircleDollarSign
 } from 'lucide-react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useMarketingAnalytics } from '@/hooks/useMarketingAnalytics';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { CampaignPerformanceTable } from '@/components/dashboard/marketing/CampaignPerformanceTable';
@@ -30,6 +31,7 @@ export default function MarketingAnalytics() {
   const [dateRange, setDateRange] = useState<DateRange>('month');
   const [showBudgetManager, setShowBudgetManager] = useState(false);
   
+  const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
   const { data: locations = [] } = useActiveLocations();
   const locationFilter = selectedLocation === 'all' ? undefined : selectedLocation;
   
@@ -116,7 +118,7 @@ export default function MarketingAnalytics() {
               <div className="flex flex-col items-center text-center">
                 <DollarSign className="h-5 w-5 text-muted-foreground mb-2" />
                 <span className="text-2xl font-medium tabular-nums">
-                  ${(analytics?.summary.totalRevenue ?? 0).toLocaleString()}
+                  {formatCurrencyWhole(analytics?.summary.totalRevenue ?? 0)}
                 </span>
                 <span className="text-xs text-muted-foreground">Attributed Revenue</span>
               </div>
@@ -156,7 +158,7 @@ export default function MarketingAnalytics() {
                 <div className="flex flex-col items-center text-center">
                   <DollarSign className="h-5 w-5 text-muted-foreground mb-2" />
                   <span className="text-2xl font-medium tabular-nums">
-                    ${(analytics?.summary.totalBudget ?? 0).toLocaleString()}
+                    {formatCurrencyWhole(analytics?.summary.totalBudget ?? 0)}
                   </span>
                   <span className="text-xs text-muted-foreground">Total Budget</span>
                 </div>
@@ -168,7 +170,7 @@ export default function MarketingAnalytics() {
                 <div className="flex flex-col items-center text-center">
                   <CircleDollarSign className="h-5 w-5 text-muted-foreground mb-2" />
                   <span className="text-2xl font-medium tabular-nums">
-                    ${(analytics?.summary.totalSpend ?? 0).toLocaleString()}
+                    {formatCurrencyWhole(analytics?.summary.totalSpend ?? 0)}
                   </span>
                   <span className="text-xs text-muted-foreground">Total Spend</span>
                 </div>
@@ -181,7 +183,7 @@ export default function MarketingAnalytics() {
                   <Target className="h-5 w-5 text-muted-foreground mb-2" />
                   <span className="text-2xl font-medium tabular-nums">
                     {analytics?.summary.avgCPL !== null 
-                      ? `$${analytics.summary.avgCPL.toFixed(2)}` 
+                      ? formatCurrency(analytics.summary.avgCPL) 
                       : '—'}
                   </span>
                   <span className="text-xs text-muted-foreground">Avg Cost Per Lead</span>

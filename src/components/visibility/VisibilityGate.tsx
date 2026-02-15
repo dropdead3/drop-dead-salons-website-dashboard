@@ -8,7 +8,7 @@ interface VisibilityGateProps {
   children: ReactNode;
   /** Optional fallback content when hidden (defaults to null) */
   fallback?: ReactNode;
-  /** If true, shows content while visibility data is loading (default: true) */
+  /** If true, shows content while visibility data is loading (default: false to prevent flash of hidden content) */
   showWhileLoading?: boolean;
   /** If provided with elementName and elementCategory, auto-registers the element */
   elementName?: string;
@@ -45,7 +45,7 @@ export function VisibilityGate({
   elementKey, 
   children, 
   fallback = null,
-  showWhileLoading = true,
+  showWhileLoading = false,
   elementName,
   elementCategory,
 }: VisibilityGateProps) {

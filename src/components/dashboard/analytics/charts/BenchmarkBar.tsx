@@ -2,6 +2,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useBenchmarkContext, getBenchmarkColor } from '@/hooks/useBenchmarks';
 import { cn } from '@/lib/utils';
+import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { TrendingUp, TrendingDown, Target, Building2, History } from 'lucide-react';
 
 interface BenchmarkBarProps {
@@ -27,15 +29,16 @@ export function BenchmarkBar({
   inverse = false,
 }: BenchmarkBarProps) {
   const context = useBenchmarkContext(metricKey, currentValue);
+  const { formatNumber } = useFormatNumber();
   
   const formatValue = (value: number): string => {
     switch (format) {
       case 'currency':
-        return `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+        return formatCurrencyWholeUtil(value);
       case 'percent':
         return `${value.toFixed(1)}%`;
       default:
-        return value.toLocaleString();
+        return formatNumber(value);
     }
   };
 

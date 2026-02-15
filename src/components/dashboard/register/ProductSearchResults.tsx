@@ -1,6 +1,7 @@
 import { Product } from '@/hooks/useProducts';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface ProductSearchResultsProps {
   results: Product[];
@@ -9,6 +10,7 @@ interface ProductSearchResultsProps {
 }
 
 export function ProductSearchResults({ results, onSelect, onClose }: ProductSearchResultsProps) {
+  const { formatCurrency } = useFormatCurrency();
   return (
     <div className="absolute top-full left-0 right-0 mt-1 bg-background border rounded-lg shadow-lg z-50 max-h-60 overflow-auto">
       <div className="flex items-center justify-between p-2 border-b bg-muted/50">
@@ -32,7 +34,7 @@ export function ProductSearchResults({ results, onSelect, onClose }: ProductSear
               </div>
             </div>
             <span className="font-semibold">
-              ${product.retail_price?.toFixed(2) || '0.00'}
+              {formatCurrency(product.retail_price ?? 0)}
             </span>
           </button>
         ))}

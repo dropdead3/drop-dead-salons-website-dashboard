@@ -12,6 +12,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface Stylist {
   user_id: string;
@@ -33,6 +34,7 @@ interface StylistSalesRowProps {
 
 export function StylistSalesRow({ stylist, rank, maxRevenue }: StylistSalesRowProps) {
   const navigate = useNavigate();
+  const { formatCurrencyWhole } = useFormatCurrency();
   
   const initials = stylist.name
     ?.split(' ')
@@ -80,7 +82,7 @@ export function StylistSalesRow({ stylist, rank, maxRevenue }: StylistSalesRowPr
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between mb-1">
               <p className="font-medium truncate">{stylist.name}</p>
-              <BlurredAmount className="font-display text-lg">${stylist.totalRevenue.toLocaleString()}</BlurredAmount>
+              <BlurredAmount className="font-display text-lg">{formatCurrencyWhole(stylist.totalRevenue)}</BlurredAmount>
             </div>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
               <div 
@@ -101,7 +103,7 @@ export function StylistSalesRow({ stylist, rank, maxRevenue }: StylistSalesRowPr
               <p className="text-xs">Products</p>
             </div>
             <div className="text-center">
-              <BlurredAmount className="font-medium text-foreground">${Math.round(avgTicket)}</BlurredAmount>
+              <BlurredAmount className="font-medium text-foreground">{formatCurrencyWhole(Math.round(avgTicket))}</BlurredAmount>
               <p className="text-xs">Avg</p>
             </div>
           </div>
@@ -122,7 +124,7 @@ export function StylistSalesRow({ stylist, rank, maxRevenue }: StylistSalesRowPr
           </div>
           <div className="flex items-center gap-1 text-muted-foreground">
             <TrendingUp className="w-3 h-3" />
-            <BlurredAmount>${Math.round(avgTicket)} avg</BlurredAmount>
+            <BlurredAmount>{formatCurrencyWhole(Math.round(avgTicket))} avg</BlurredAmount>
           </div>
         </div>
       </CardContent>

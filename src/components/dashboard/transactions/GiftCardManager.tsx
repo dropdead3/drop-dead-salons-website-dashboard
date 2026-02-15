@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +36,7 @@ import { useGiftCards, useCreateGiftCard, GiftCard } from '@/hooks/useGiftCards'
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 export function GiftCardManager() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -45,9 +46,11 @@ export function GiftCardManager() {
   const [recipientName, setRecipientName] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
+  const { formatDate } = useFormatDate();
   const { effectiveOrganization } = useOrganizationContext();
   const { data: giftCards = [], isLoading } = useGiftCards(effectiveOrganization?.id);
   const createGiftCard = useCreateGiftCard();
+  const { formatCurrency, currency } = useFormatCurrency();
 
   const filteredCards = searchCode
     ? giftCards.filter(gc => 
@@ -101,7 +104,7 @@ export function GiftCardManager() {
         </Card>
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Outstanding Balance</p>
-          <p className="text-2xl font-display font-semibold">${totalValue.toFixed(2)}</p>
+          <p className="text-2xl font-display font-semibold">{formatCurrency(totalValue)}</p>
         </Card>
       </div>
 
@@ -136,7 +139,7 @@ export function GiftCardManager() {
               <div className="space-y-2">
                 <Label htmlFor="gc-amount">Amount *</Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{currency}</span>
                   <Input
                     id="gc-amount"
                     type="number"
@@ -240,13 +243,13 @@ export function GiftCardManager() {
                     </div>
                   </TableCell>
                   <TableCell className="font-medium">
-                    ${Number(card.initial_amount).toFixed(2)}
+                    {formatCurrency(Number(card.initial_amount))}
                   </TableCell>
                   <TableCell className={cn(
                     "font-semibold",
                     Number(card.current_balance) === 0 && "text-muted-foreground"
                   )}>
-                    ${Number(card.current_balance).toFixed(2)}
+                    {formatCurrency(Number(card.current_balance))}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {card.purchaser_name || '-'}
@@ -266,7 +269,7 @@ export function GiftCardManager() {
                     )}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {format(new Date(card.created_at), 'MMM d, yyyy')}
+                    {formatDate(new Date(card.created_at), 'MMM d, yyyy')}
                   </TableCell>
                 </TableRow>
               ))

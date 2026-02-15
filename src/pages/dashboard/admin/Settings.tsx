@@ -59,6 +59,7 @@ import {
   Gift,
   Trophy,
   TabletSmartphone,
+  Keyboard,
 } from 'lucide-react';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
@@ -86,6 +87,7 @@ import { MetricsGlossaryContent } from '@/components/dashboard/settings/MetricsG
 import { LoyaltySettingsContent } from '@/components/dashboard/settings/LoyaltySettingsContent';
 import { TeamRewardsConfigurator } from '@/components/dashboard/settings/TeamRewardsConfigurator';
 import { UserPinSettings } from '@/components/dashboard/settings/UserPinSettings';
+import { SoundSettingsSection } from '@/components/dashboard/settings/SoundSettingsSection';
 import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
 import { KioskSettingsContent } from '@/components/dashboard/settings/KioskSettingsContent';
 import { MessageSquareHeart } from 'lucide-react';
@@ -114,6 +116,7 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { DragFeedback } from '@/components/dnd/DragFeedback';
 
 interface UserWithRole {
   user_id: string;
@@ -155,6 +158,7 @@ function SortableCard({ category, isEditMode, iconColor, onColorChange, onClick 
     transform,
     transition,
     isDragging,
+    isOver,
   } = useSortable({ id: category.id });
 
   const style = {
@@ -165,77 +169,83 @@ function SortableCard({ category, isEditMode, iconColor, onColorChange, onClick 
   const Icon = category.icon;
 
   return (
-    <Card 
+    <DragFeedback
       ref={setNodeRef}
       style={style}
-      className={cn(
-        "transition-all group relative",
-        isDragging && "opacity-50 ring-2 ring-primary",
-        !isEditMode && "cursor-pointer hover:border-primary/50"
-      )}
-      onClick={!isEditMode ? onClick : undefined}
+      isDragging={isDragging}
+      isOver={isOver}
+      className="group relative"
     >
-      {isEditMode && (
-        <div 
-          {...attributes}
-          {...listeners}
-          className="absolute top-3 right-3 p-1.5 rounded-md bg-muted hover:bg-muted/80 cursor-grab active:cursor-grabbing"
-        >
-          <GripVertical className="w-4 h-4 text-muted-foreground" />
-        </div>
-      )}
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div 
-              className="w-10 h-10 rounded-lg flex items-center justify-center"
-              style={{ backgroundColor: `${iconColor}20` }}
-            >
-              <Icon className="w-5 h-5" style={{ color: iconColor }} />
-            </div>
-            {isEditMode && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button 
-                    className="w-6 h-6 rounded-full border-2 border-border hover:scale-110 transition-transform"
-                    style={{ backgroundColor: iconColor }}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-3" align="start">
-                  <div className="space-y-2">
-                    <p className="text-xs font-medium text-muted-foreground">Icon Color</p>
-                    <div className="grid grid-cols-5 gap-1.5">
-                      {PRESET_COLORS.map((color) => (
-                        <button
-                          key={color}
-                          className={cn(
-                            "w-7 h-7 rounded-full transition-all hover:scale-110",
-                            iconColor === color && "ring-2 ring-offset-2 ring-primary"
-                          )}
-                          style={{ backgroundColor: color }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onColorChange(color);
-                          }}
-                        />
-                      ))}
+      <Card 
+        className={cn(
+          "transition-all relative",
+          isDragging && "ring-2 ring-primary/30",
+          !isEditMode && "cursor-pointer hover:border-primary/50"
+        )}
+        onClick={!isEditMode ? onClick : undefined}
+      >
+        {isEditMode && (
+          <div 
+            {...attributes}
+            {...listeners}
+            className="absolute top-3 right-3 p-1.5 rounded-md bg-muted hover:bg-muted/80 cursor-grab active:cursor-grabbing"
+          >
+            <GripVertical className="w-4 h-4 text-muted-foreground" />
+          </div>
+        )}
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div 
+                className="w-10 h-10 rounded-lg flex items-center justify-center"
+                style={{ backgroundColor: `${iconColor}20` }}
+              >
+                <Icon className="w-5 h-5" style={{ color: iconColor }} />
+              </div>
+              {isEditMode && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button 
+                      className="w-6 h-6 rounded-full border-2 border-border hover:scale-110 transition-transform"
+                      style={{ backgroundColor: iconColor }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-3" align="start">
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium text-muted-foreground">Icon Color</p>
+                      <div className="grid grid-cols-5 gap-1.5">
+                        {PRESET_COLORS.map((color) => (
+                          <button
+                            key={color}
+                            className={cn(
+                              "w-7 h-7 rounded-full transition-all hover:scale-110",
+                              iconColor === color && "ring-2 ring-offset-2 ring-primary"
+                            )}
+                            style={{ backgroundColor: color }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onColorChange(color);
+                            }}
+                          />
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+            {!isEditMode && (
+              <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
             )}
           </div>
-          {!isEditMode && (
-            <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-          )}
-        </div>
-      </CardHeader>
-      <CardContent>
-        <CardTitle className="font-display text-lg mb-1">{category.label}</CardTitle>
-        <CardDescription>{category.description}</CardDescription>
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent>
+          <CardTitle className="font-display text-lg mb-1">{category.label}</CardTitle>
+          <CardDescription>{category.description}</CardDescription>
+        </CardContent>
+      </Card>
+    </DragFeedback>
   );
 }
 
@@ -1223,6 +1233,43 @@ export default function Settings() {
                     </div>
                   </CardContent>
               </Card>
+
+                {/* Keyboard Shortcuts */}
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <Keyboard className="w-5 h-5 text-primary" />
+                      <CardTitle className="font-display text-lg">KEYBOARD SHORTCUTS</CardTitle>
+                    </div>
+                    <CardDescription>Built for fast navigation and control.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-sm">Command palette</span>
+                      <kbd className="inline-flex items-center gap-1 rounded border bg-muted px-2 py-0.5 text-xs font-mono">
+                        <span className="bg-background px-1 py-0.5 rounded border">⌘</span>
+                        <span className="bg-background px-1 py-0.5 rounded border">K</span>
+                      </kbd>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-sm">Help (shortcuts)</span>
+                      <kbd className="inline-flex items-center gap-1 rounded border bg-muted px-2 py-0.5 text-xs font-mono">
+                        <span className="bg-background px-1 py-0.5 rounded border">?</span>
+                      </kbd>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="text-sm">Close dialog/panel</span>
+                      <kbd className="inline-flex items-center gap-1 rounded border bg-muted px-2 py-0.5 text-xs font-mono">
+                        <span className="bg-background px-1 py-0.5 rounded border">Esc</span>
+                      </kbd>
+                    </div>
+                    <p className="text-xs text-muted-foreground pt-2 border-t">
+                      Use the command palette for navigation, quick actions, and switching theme.
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <SoundSettingsSection />
 
                 {/* Security */}
                 <Card>

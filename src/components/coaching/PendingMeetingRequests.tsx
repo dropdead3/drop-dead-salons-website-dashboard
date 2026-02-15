@@ -13,13 +13,15 @@ import {
 } from 'lucide-react';
 import { useMeetingRequests, useUpdateMeetingRequestStatus, type MeetingRequest } from '@/hooks/useMeetingRequests';
 import { useAuth } from '@/contexts/AuthContext';
-import { format, parseISO, isPast } from 'date-fns';
+import { parseISO, isPast } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface Props {
   viewAs: 'manager' | 'team_member';
 }
 
 export function PendingMeetingRequests({ viewAs }: Props) {
+  const { formatDate } = useFormatDate();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: requests = [], isLoading } = useMeetingRequests();
@@ -41,7 +43,7 @@ export function PendingMeetingRequests({ viewAs }: Props) {
       case 'urgent':
         return <Badge variant="destructive">Urgent</Badge>;
       case 'high':
-        return <Badge className="bg-amber-500 text-white">High</Badge>;
+        return <Badge className="bg-chart-4 text-foreground dark:text-background">High</Badge>;
       case 'medium':
         return <Badge variant="secondary">Medium</Badge>;
       case 'low':
@@ -56,7 +58,7 @@ export function PendingMeetingRequests({ viewAs }: Props) {
       case 'pending':
         return <Badge variant="secondary">Pending</Badge>;
       case 'scheduled':
-        return <Badge className="bg-green-600 text-white">Scheduled</Badge>;
+        return <Badge className="bg-chart-2 text-foreground dark:text-background">Scheduled</Badge>;
       case 'cancelled':
         return <Badge variant="destructive">Cancelled</Badge>;
       case 'expired':
@@ -120,13 +122,13 @@ export function PendingMeetingRequests({ viewAs }: Props) {
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  <span>Sent {format(parseISO(request.created_at), 'MMM d, yyyy')}</span>
+                  <span>Sent {formatDate(parseISO(request.created_at), 'MMM d, yyyy')}</span>
                 </div>
                 {request.expires_at && (
                   <div className={`flex items-center gap-1 ${isExpired ? 'text-destructive' : ''}`}>
                     <Calendar className="h-3 w-3" />
                     <span>
-                      {isExpired ? 'Expired' : `Schedule by ${format(parseISO(request.expires_at), 'MMM d')}`}
+                      {isExpired ? 'Expired' : `Schedule by ${formatDate(parseISO(request.expires_at), 'MMM d')}`}
                     </span>
                   </div>
                 )}

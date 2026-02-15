@@ -1,0 +1,100 @@
+---
+description: SQL migration conventions for Zura. Covers naming, table creation, RLS policies, safety patterns, enums, triggers, and indexes.
+globs: supabase/migrations/**/*.sql
+alwaysApply: false
+---
+
+# Database Migration Patterns
+
+## File Naming
+
+Format: `{YYYYMMDDHHMMSS}_{uuid}.sql`
+
+Example: `20260212002414_5f0ca8c0-b459-4646-93df-028b556e0e2c.sql`
+
+## Table Creation Template
+
+```sql
+-- Create enum if needed
+CREATE TYPE public.my_status AS ENUM ('active', 'inactive', 'archived');
+
+-- Create table
+CREATE TABLE IF NOT EXISTS public.my_table (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  status my_status NOT NULL DEFAULT 'active',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  created_by UUID REFERENCES auth.users(id)
+);
+
+-- Enable RLS
+ALTER TABLE public.my_table ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies
+CREATE POLICY "Org members can view"
+  ON public.my_table FOR SELECT
+  USING (public.is_org_member(auth.uid(), organization_id));
+
+CREATE POLICY "Org admins can create"
+  ON public.my_table FOR INSERT
+  WITH CHECK (public.is_org_admin(auth.uid(), organization_id));
+
+CREATE POLICY "Org admins can update"
+  ON public.my_table FOR UPDATE
+  USING (public.is_org_admin(auth.uid(), organization_id))
+  WITH CHECK (public.is_org_admin(auth.uid(), organization_id));
+
+CREATE POLICY "Org admins can delete"
+  ON public.my_table FOR DELETE
+  USING (public.is_org_admin(auth.uid(), organization_id));
+
+-- Updated_at trigger
+CREATE TRIGGER update_my_table_updated_at
+  BEFORE UPDATE ON public.my_table
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_my_table_org
+  ON public.my_table(organization_id);
+```
+
+## RLS Policy Patterns
+
+### Direct org scoping (most tables):
+```sql
+USING (public.is_org_member(auth.uid(), organization_id))
+```
+
+### Child table scoping (inherit from parent):
+```sql
+USING (EXISTS (
+  SELECT 1 FROM public.parent_table p
+  WHERE p.id = parent_id
+  AND public.is_org_member(auth.uid(), p.organization_id)
+))
+```
+
+### Owner + admin access:
+```sql
+USING (
+  auth.uid() = created_by
+  OR public.is_org_admin(auth.uid(), organization_id)
+)
+```
+
+## Safety Rules
+
+- `IF NOT EXISTS` on CREATE TABLE and CREATE INDEX
+- `CREATE OR REPLACE` on functions and views
+- NEVER modify existing migration files -- always create new ones
+- Each migration must be independently runnable
+- Enums must be created BEFORE the table that uses them
+
+## Helper Functions Available
+
+- `public.is_org_member(user_id, org_id)` -- checks employee_profiles + organization_admins + platform user
+- `public.is_org_admin(user_id, org_id)` -- checks organization_admins + platform user
+- `public.is_platform_user(user_id)` -- checks platform_roles table
+- `public.update_updated_at_column()` -- trigger function for updated_at timestamps

@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Clock, Users } from 'lucide-react';
 import { EmployeePayrollSettings } from '@/hooks/useEmployeePayrollSettings';
 import { EmployeeHours } from '@/hooks/usePayrollCalculations';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface EmployeeHoursStepProps {
   employees: EmployeePayrollSettings[];
@@ -24,6 +25,7 @@ const PAY_TYPE_LABELS: Record<string, string> = {
 
 export function EmployeeHoursStep({ employees, hours, onHoursChange }: EmployeeHoursStepProps) {
   const [standardHours, setStandardHours] = useState(80); // Default bi-weekly
+  const { formatCurrency, formatCurrencyWhole, currency } = useFormatCurrency();
 
   const updateHours = (employeeId: string, field: 'regularHours' | 'overtimeHours', value: number) => {
     const existing = hours[employeeId] || {
@@ -149,7 +151,7 @@ export function EmployeeHoursStep({ employees, hours, onHoursChange }: EmployeeH
                     <TableCell>
                       <Badge variant="outline">{PAY_TYPE_LABELS[emp.pay_type]}</Badge>
                     </TableCell>
-                    <TableCell>${rate.toFixed(2)}/hr</TableCell>
+                    <TableCell>{formatCurrency(rate)}/hr</TableCell>
                     <TableCell>
                       <Input
                         type="number"
@@ -175,7 +177,7 @@ export function EmployeeHoursStep({ employees, hours, onHoursChange }: EmployeeH
                       />
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      ${totalPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      {formatCurrency(totalPay)}
                     </TableCell>
                   </TableRow>
                 );
@@ -223,7 +225,7 @@ export function EmployeeHoursStep({ employees, hours, onHoursChange }: EmployeeH
                     </TableCell>
                     <TableCell>
                       {emp.salary_amount ? (
-                        <span>${emp.salary_amount.toLocaleString()}/year</span>
+                        <span>{formatCurrencyWhole(emp.salary_amount)}/year</span>
                       ) : emp.commission_enabled ? (
                         <span className="text-muted-foreground">Commission-based</span>
                       ) : (

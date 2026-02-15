@@ -40,7 +40,7 @@ import {
 } from 'lucide-react';
 import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface TeamMember {
   user_id: string;
@@ -83,6 +83,7 @@ interface HandbookStatus {
 type FilterStatus = 'all' | 'active' | 'paused' | 'at-risk' | 'restarted';
 
 export default function TeamOverview() {
+  const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
@@ -399,7 +400,7 @@ export default function TeamOverview() {
                           {member.display_name || member.full_name}
                         </p>
                         <p className="text-xs text-muted-foreground font-sans">
-                          Started {format(new Date(member.start_date), 'MMM d, yyyy')}
+                          Started {formatDate(new Date(member.start_date), 'MMM d, yyyy')}
                         </p>
                       </div>
 
@@ -476,7 +477,7 @@ export default function TeamOverview() {
                                   <p className="font-sans">{note.note_text}</p>
                                   <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                                     <Calendar className="w-3 h-3" />
-                                    {format(new Date(note.created_at), 'MMM d, yyyy h:mm a')}
+                                    {formatDate(new Date(note.created_at), 'MMM d, yyyy h:mm a')}
                                   </p>
                                 </div>
                               ))
@@ -503,7 +504,7 @@ export default function TeamOverview() {
                                     <span className="font-display text-sm">WEEK {report.week_number}</span>
                                     {report.submitted_at && (
                                       <span className="text-xs text-muted-foreground">
-                                        {format(new Date(report.submitted_at), 'MMM d')}
+                                        {formatDate(new Date(report.submitted_at), 'MMM d')}
                                       </span>
                                     )}
                                   </div>
@@ -620,7 +621,7 @@ export default function TeamOverview() {
                               <p className="text-xs text-muted-foreground font-display">LAST ACTIVE</p>
                               <p className="font-sans">
                                 {member.last_completion_date 
-                                  ? format(new Date(member.last_completion_date), 'MMM d')
+                                  ? formatDate(new Date(member.last_completion_date), 'MMM d')
                                   : 'Never'}
                               </p>
                             </div>

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -43,6 +44,7 @@ export function BookingWizard({
   defaultStylistId,
 }: BookingWizardProps) {
   const queryClient = useQueryClient();
+  const { formatDate } = useFormatDate();
   const { user, roles } = useAuth();
 
   // Step state
@@ -243,7 +245,7 @@ export function BookingWizard({
             subtitle={
               step !== 'service' && selectedServices.length > 0
                 ? `${selectedServices.length} service${selectedServices.length > 1 ? 's' : ''} selected`
-                : format(selectedDate, 'EEEE, MMM d') + ' at ' + formatTime12h(selectedTime)
+                : formatDate(selectedDate, 'EEEE, MMM d') + ' at ' + formatTime12h(selectedTime)
             }
             onClose={handleClose}
             onBack={step !== 'service' ? handleBack : undefined}

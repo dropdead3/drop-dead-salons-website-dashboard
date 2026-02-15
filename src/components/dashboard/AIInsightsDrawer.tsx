@@ -9,11 +9,14 @@ import { useDismissedSuggestions } from '@/hooks/useDismissedSuggestions';
 import { useTasks } from '@/hooks/useTasks';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { GuidancePanel } from './GuidancePanel';
+import { InsightDescriptionWithLinks } from './InsightDescriptionWithLinks';
 
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { analyticsHubUrl } from '@/config/dashboardNav';
 import {
   Brain,
   RefreshCw,
@@ -25,7 +28,6 @@ import {
   Activity,
   HeartPulse,
   CheckCircle2,
-  
   Clock,
   X,
   ChevronDown,
@@ -34,9 +36,24 @@ import {
   Lightbulb,
   Zap,
   ThumbsUp,
+  BarChart3,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
+
+type InsightTab = 'insights' | 'action_items' | 'suggestions';
+
+const severityOrder: Record<InsightItem['severity'], number> = { critical: 0, warning: 1, info: 2 };
+const priorityOrder: Record<ActionItem['priority'], number> = { high: 0, medium: 1, low: 2 };
+
+const categoryToAnalyticsTab: Partial<Record<InsightItem['category'], string>> = {
+  revenue_pulse: 'sales',
+  cash_flow: 'sales',
+  capacity: 'operations',
+  staffing: 'operations',
+  client_health: 'operations',
+  anomaly: 'sales',
+};
 
 const categoryConfig: Record<InsightItem['category'], { icon: typeof TrendingUp; label: string }> = {
   revenue_pulse: { icon: DollarSign, label: 'Revenue Pulse' },
@@ -101,22 +118,25 @@ function GuidanceTrigger({ label, onClick, icon: IconOverride, hideIcon }: { lab
   const Icon = IconOverride || CheckCheck;
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="group inline-flex items-center gap-1 h-6 px-2 mt-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 transition-colors duration-200"
+      className="group inline-flex items-center justify-center gap-1.5 h-8 pl-3 pr-3 rounded-md border border-border/60 bg-muted/30 text-xs font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 hover:border-violet-500/30 hover:text-violet-700 dark:hover:text-violet-300 transition-[color,background-color,border-color] duration-200"
     >
-      {!hideIcon && <Icon className="w-3 h-3" />}
-      {label}
-      <ChevronRight className="w-3 h-3 relative top-px opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+      {!hideIcon && <Icon className="w-3.5 h-3.5 shrink-0" />}
+      <span className="text-center">{label}</span>
+      <span className="flex items-center justify-center w-0 overflow-hidden transition-[width] duration-200 group-hover:w-4">
+        <ChevronRight className="w-3 h-3 shrink-0 opacity-0 -translate-x-0.5 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+      </span>
     </button>
   );
 }
 
-function InsightCard({ insight, onRequestGuidance }: { insight: InsightItem; onRequestGuidance: (req: GuidanceRequest) => void }) {
+function InsightCard({ insight, onRequestGuidance, drillDownHref }: { insight: InsightItem; onRequestGuidance: (req: GuidanceRequest) => void; drillDownHref?: string }) {
   const config = categoryConfig[insight.category];
   const Icon = config?.icon || Activity;
 
   return (
-    <div className="rounded-lg border border-border/50 p-3 transition-colors">
+    <div className="rounded-xl border border-border/50 p-3.5 transition-colors shadow-sm">
       <div className="flex items-start gap-2.5">
         <div className="mt-0.5 flex-shrink-0 text-muted-foreground">
           <Icon className="w-4 h-4" />
@@ -129,13 +149,27 @@ function InsightCard({ insight, onRequestGuidance }: { insight: InsightItem; onR
           </div>
           <p className="text-sm font-medium leading-snug">{insight.title}</p>
           <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-            {blurFinancialValues(insight.description)}
+            <InsightDescriptionWithLinks description={insight.description} />
           </p>
-           <GuidanceTrigger
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <GuidanceTrigger
               label="How to improve"
               icon={Lightbulb}
               onClick={() => onRequestGuidance({ type: 'insight', title: insight.title, description: insight.description, category: insight.category })}
             />
+            {drillDownHref && (
+              <a
+                href={drillDownHref}
+                className="group inline-flex items-center justify-center gap-1.5 h-8 pl-3 pr-3 rounded-md border border-border/60 bg-muted/30 text-xs font-medium text-muted-foreground hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-[color,background-color,border-color] duration-200"
+              >
+                <BarChart3 className="w-3.5 h-3.5 shrink-0" />
+                <span className="text-center">See in Analytics</span>
+                <span className="flex items-center justify-center w-0 overflow-hidden transition-[width] duration-200 group-hover:w-4">
+                  <ChevronRight className="w-3 h-3 shrink-0 opacity-0 -translate-x-0.5 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+                </span>
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -150,7 +184,9 @@ function ActionItemCard({ item, index, onRequestGuidance }: { item: ActionItem; 
           <span className="text-[10px] font-display">{index + 1}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm leading-snug">{blurFinancialValues(item.action)}</p>
+          <p className="text-sm leading-snug">
+            <InsightDescriptionWithLinks description={item.action} />
+          </p>
           <GuidanceTrigger
             label="What you should do"
             onClick={() => onRequestGuidance({ type: 'action', title: item.action, description: item.action, priority: item.priority })}
@@ -170,6 +206,7 @@ function ActionItemCard({ item, index, onRequestGuidance }: { item: ActionItem; 
 /** Self-contained expandable card widget for AI Business Insights */
 export function AIInsightsDrawer() {
   const [expanded, setExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<InsightTab>('insights');
   const { data, generatedAt, isLoading, isRefreshing, isStale, refresh, cooldownRemaining } = useAIInsights();
   const { dismissedKeys, dismiss } = useDismissedSuggestions();
   const { createTask } = useTasks();
@@ -178,6 +215,22 @@ export function AIInsightsDrawer() {
   const [guidanceText, setGuidanceText] = useState<string | null>(null);
   const [isLoadingGuidance, setIsLoadingGuidance] = useState(false);
   const zuraNav = useZuraNavigationSafe();
+
+  const visibleSuggestions = (data?.featureSuggestions || []).filter((s) => !dismissedKeys.has(s.suggestionKey));
+  const hasInsights = (data?.insights?.length ?? 0) > 0;
+  const hasActionItems = (data?.actionItems?.length ?? 0) > 0;
+  const hasSuggestions = visibleSuggestions.length > 0;
+  const sortedInsights = data?.insights ? [...data.insights].sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]) : [];
+  const sortedActionItems = data?.actionItems ? [...data.actionItems].sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]) : [];
+
+  const tabCount = [hasInsights, hasActionItems, hasSuggestions].filter(Boolean).length;
+  useEffect(() => {
+    if (!data || tabCount === 0) return;
+    const currentValid = (activeTab === 'insights' && hasInsights) || (activeTab === 'action_items' && hasActionItems) || (activeTab === 'suggestions' && hasSuggestions);
+    if (!currentValid) {
+      setActiveTab(hasInsights ? 'insights' : hasActionItems ? 'action_items' : 'suggestions');
+    }
+  }, [data, hasInsights, hasActionItems, hasSuggestions, tabCount, activeTab]);
 
   // Restore saved Zura navigation state on mount
   useEffect(() => {
@@ -242,7 +295,7 @@ export function AIInsightsDrawer() {
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
               onClick={() => setExpanded(true)}
-              className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-display tracking-wide hover:bg-muted/50 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-sans hover:bg-muted/50 transition-colors cursor-pointer"
             >
               <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
                 <Brain className="w-3 h-3 text-primary" />
@@ -300,24 +353,34 @@ export function AIInsightsDrawer() {
                         onWheel={(e) => e.stopPropagation()}
                       >
                         {data && (
-                          <div className="flex items-start gap-2 px-4 pb-3">
-                            <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
-                              <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
-                            </div>
-                            <div className="flex-1">
-                              <p className="text-sm text-muted-foreground leading-snug">{blurFinancialValues(data.summaryLine)}</p>
-                              {generatedAt && (
-                                <p className="text-[10px] text-muted-foreground/60 mt-1 flex items-center gap-1">
-                                  <Clock className="w-2.5 h-2.5" />
-                                  Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
-                                  {isStale && ' · Stale'}
-                                  {cooldown > 0 && ` · ${cooldown}s cooldown`}
-                                </p>
-                              )}
+                          <div className="px-4 pb-2">
+                            <div className="flex items-start gap-2">
+                              <div className={cn('flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center', sentiment?.bg)}>
+                                <SentimentIcon className={cn('w-3 h-3', sentiment?.color)} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-muted-foreground leading-snug">{blurFinancialValues(data.summaryLine)}</p>
+                                <p className="text-[10px] text-muted-foreground/70 mt-1">Based on your recent business data</p>
+                                {generatedAt && (
+                                  <p className="text-[10px] text-muted-foreground/60 mt-0.5 flex items-center gap-1 flex-wrap">
+                                    <Clock className="w-2.5 h-2.5" />
+                                    Updated {formatDistanceToNow(new Date(generatedAt), { addSuffix: true })}
+                                    {cooldown > 0 && ` · ${cooldown}s cooldown`}
+                                  </p>
+                                )}
+                                {isStale && (
+                                  <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                                    Insights are over 2 hours old
+                                    <button type="button" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="underline hover:no-underline">
+                                      Refresh for latest
+                                    </button>
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
                         )}
-                        <div className="px-4 pb-3">
+                        <div className="px-4 pb-6">
                           {isLoading ? (
                             <div className="space-y-3">
                               {[1, 2, 3].map(i => (
@@ -332,120 +395,106 @@ export function AIInsightsDrawer() {
                             <div className="text-center py-14">
                               <ZuraAvatar size="md" className="mx-auto mb-3 opacity-20" />
                               <p className="text-sm font-display text-muted-foreground">No insights generated yet</p>
+                              <p className="text-xs text-muted-foreground/80 mt-1 max-w-[240px] mx-auto">We’ll analyze your sales, capacity, and team data to surface what matters.</p>
                               <Button variant="outline" size="sm" onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
                                 <Brain className="w-3.5 h-3.5" />
                                 Generate Insights
                               </Button>
                             </div>
-                          ) : (
-                            <div className="space-y-5">
-                              {/* 2-column grid: Insights left, Action Items right */}
-                              {(data.insights.length > 0 || data.actionItems.length > 0) && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  {/* Left column: Insights */}
-                                  {data.insights.length > 0 && (
-                                    <div>
-                                      <div className="flex items-center gap-2 mb-3">
-                                        <Brain className="w-3.5 h-3.5 text-violet-500" />
-                                        <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Key Insights</span>
-                                        <div className="flex-1 h-px bg-border/40" />
-                                      </div>
-                                      <div className="space-y-2">
-                                        {data.insights.map((insight, i) => (
-                                          <InsightCard key={i} insight={insight} onRequestGuidance={handleRequestGuidance} />
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                  {/* Right column: Action Items */}
-                                  {data.actionItems.length > 0 && (
-                                    <div>
-                                      <div className="flex items-center gap-2 mb-3">
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
-                                        <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Action Items</span>
-                                        <div className="flex-1 h-px bg-border/40" />
-                                      </div>
-                                      <div className="space-y-1 rounded-lg border border-border/30 bg-muted/10 px-5 py-3">
-                                        {data.actionItems.map((item, i) => (
-                                          <ActionItemCard key={i} item={item} index={i} onRequestGuidance={handleRequestGuidance} />
-                                        ))}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
+                          ) : (hasInsights || hasActionItems || hasSuggestions) ? (
+                            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as InsightTab)} className="w-full">
+                              <TabsList className="w-full grid rounded-lg p-1 h-auto" style={{ gridTemplateColumns: tabCount ? `repeat(${tabCount}, 1fr)` : undefined }}>
+                                {hasInsights && <TabsTrigger value="insights" className="text-xs py-2">Key Insights</TabsTrigger>}
+                                {hasActionItems && <TabsTrigger value="action_items" className="text-xs py-2">Action Items</TabsTrigger>}
+                                {hasSuggestions && <TabsTrigger value="suggestions" className="text-xs py-2">More suggestions</TabsTrigger>}
+                              </TabsList>
+                              {hasInsights && (
+                                <TabsContent value="insights" className="mt-3 space-y-2.5">
+                                  {sortedInsights.map((insight, i) => (
+                                    <InsightCard
+                                      key={i}
+                                      insight={insight}
+                                      onRequestGuidance={handleRequestGuidance}
+                                      drillDownHref={categoryToAnalyticsTab[insight.category] ? analyticsHubUrl(categoryToAnalyticsTab[insight.category]!) : undefined}
+                                    />
+                                  ))}
+                                </TabsContent>
                               )}
-                              {/* Full-width: Suggested For You */}
-                              {(() => {
-                                const visibleSuggestions = (data.featureSuggestions || []).filter(
-                                  (s) => !dismissedKeys.has(s.suggestionKey)
-                                );
-                                if (visibleSuggestions.length === 0) return null;
-                                return (
-                                  <div>
-                                    <div className="flex items-center gap-2 mb-3">
-                                      <Zap className="w-3.5 h-3.5 text-amber-500" />
-                                      <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Suggested For You</span>
-                                      <div className="flex-1 h-px bg-border/40" />
-                                    </div>
-                                    <div className="space-y-2">
-                                      <AnimatePresence>
-                                        {visibleSuggestions.map((suggestion) => (
-                                          <motion.div
-                                            key={suggestion.suggestionKey}
-                                            initial={{ opacity: 1, height: 'auto' }}
-                                            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                                            transition={{ duration: 0.3 }}
-                                            className="relative border border-dashed border-amber-500/30 rounded-lg p-3 bg-gradient-to-br from-amber-500/5 to-orange-500/5"
-                                          >
-                                            <Tooltip>
-                                              <TooltipTrigger asChild>
-                                                <button
-                                                  onClick={() => dismiss(suggestion.suggestionKey)}
-                                                  className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                                                >
-                                                  <X className="w-3 h-3" />
-                                                </button>
-                                              </TooltipTrigger>
-                                              <TooltipContent side="left">Dismiss for 30 days</TooltipContent>
-                                            </Tooltip>
-                                            <div className="flex items-start gap-2.5 pr-5">
-                                              <Zap className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
-                                              <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-0.5">
-                                                  <span className="text-sm font-medium">{suggestion.featureName}</span>
-                                                  <span className={cn(
-                                                    'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display',
-                                                    priorityBadge[suggestion.priority],
-                                                  )}>
-                                                    {suggestion.priority}
-                                                  </span>
-                                                </div>
-                                                <p className="text-xs text-muted-foreground leading-relaxed">{suggestion.whyItHelps}</p>
-                                                <p className="text-xs text-muted-foreground/70 mt-1 italic">{suggestion.howToStart}</p>
-                                                <GuidanceTrigger
-                                                  label="Learn more"
-                                                  hideIcon
-                                                  onClick={() => handleRequestGuidance({
-                                                    type: 'action',
-                                                    title: `Enable ${suggestion.featureName}`,
-                                                    description: `${suggestion.whyItHelps} ${suggestion.howToStart}`,
-                                                  })}
-                                                />
-                                              </div>
-                                            </div>
-                                          </motion.div>
-                                        ))}
-                                      </AnimatePresence>
-                                    </div>
+                              {hasActionItems && (
+                                <TabsContent value="action_items" className="mt-3">
+                                  <div className="space-y-1 rounded-lg border border-border/30 bg-muted/10 px-4 py-3">
+                                    {sortedActionItems.map((item, i) => (
+                                      <ActionItemCard key={i} item={item} index={i} onRequestGuidance={handleRequestGuidance} />
+                                    ))}
                                   </div>
-                                );
-                              })()}
+                                </TabsContent>
+                              )}
+                              {hasSuggestions && (
+                                <TabsContent value="suggestions" className="mt-3 space-y-2">
+                                  <AnimatePresence>
+                                    {visibleSuggestions.map((suggestion) => (
+                                      <motion.div
+                                        key={suggestion.suggestionKey}
+                                        initial={{ opacity: 1, height: 'auto' }}
+                                        exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="relative border border-dashed border-amber-500/30 rounded-lg p-3 bg-gradient-to-br from-amber-500/5 to-orange-500/5"
+                                      >
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <button
+                                              onClick={() => dismiss(suggestion.suggestionKey)}
+                                              className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                                            >
+                                              <X className="w-3 h-3" />
+                                            </button>
+                                          </TooltipTrigger>
+                                          <TooltipContent side="left">Dismiss for 30 days</TooltipContent>
+                                        </Tooltip>
+                                        <div className="flex items-start gap-2.5 pr-5">
+                                          <Zap className="w-4 h-4 text-amber-500 mt-0.5 flex-shrink-0" />
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                              <span className="text-sm font-medium">{suggestion.featureName}</span>
+                                              <span className={cn(
+                                                'text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-display',
+                                                priorityBadge[suggestion.priority],
+                                              )}>
+                                                {suggestion.priority}
+                                              </span>
+                                            </div>
+                                            <p className="text-xs text-muted-foreground leading-relaxed">{suggestion.whyItHelps}</p>
+                                            <p className="text-xs text-muted-foreground/70 mt-1 italic">{suggestion.howToStart}</p>
+                                            <GuidanceTrigger
+                                              label="Learn more"
+                                              hideIcon
+                                              onClick={() => handleRequestGuidance({
+                                                type: 'action',
+                                                title: `Enable ${suggestion.featureName}`,
+                                                description: `${suggestion.whyItHelps} ${suggestion.howToStart}`,
+                                              })}
+                                            />
+                                          </div>
+                                        </div>
+                                      </motion.div>
+                                    ))}
+                                  </AnimatePresence>
+                                </TabsContent>
+                              )}
+                            </Tabs>
+                          ) : (
+                            <div className="text-center py-10">
+                              <p className="text-sm text-muted-foreground">No insights or actions right now</p>
+                              <Button variant="outline" size="sm" onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
+                                <RefreshCw className="w-3.5 h-3.5" />
+                                Refresh
+                              </Button>
                             </div>
                           )}
                         </div>
                       </div>
-                      <div className="px-4 pb-4 pt-1">
-                        <div className="flex items-center justify-center gap-1.5 pt-2 border-t border-border/50">
+                      <div className="px-4 pb-4 pt-4 mt-2 border-t border-border/50 bg-muted/20 rounded-b-2xl">
+                        <div className="flex items-center justify-center gap-1.5">
                           <ZuraAvatar size="sm" className="w-3 h-3 opacity-40" />
                           <span className="text-[10px] text-muted-foreground/50">Powered by Zura AI · Based on your data</span>
                         </div>

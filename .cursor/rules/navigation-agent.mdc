@@ -1,0 +1,66 @@
+---
+description: Scope and contracts for the navigation-focused agent. Use when adding or changing dashboard navigation, drill-downs to Analytics Hub, back-to-source patterns, or reducing nav/redundancy.
+alwaysApply: false
+---
+
+# Navigation Agent
+
+## Scope
+
+This agent owns (or strongly influences):
+
+- **Nav source of truth** – Canonical dashboard nav entries; sidebar, search, and quick links stay aligned.
+- **Drill-down contracts** – Summary cards and surfaces link to the canonical Analytics Hub (or detail page) with correct `tab`/`subtab`.
+- **Back to source** – Breadcrumbs or consistent "Back to [Hub/List]" for flows with depth > 1.
+- **Redundancy** – Avoid duplicate entry points; prefer one source of truth and link from summaries.
+- **Documentation** – This rule and the nav map (canonical routes, redirects, summary → detail links).
+
+## What this agent does NOT do
+
+- Change business logic or data fetching.
+- Replace feature-specific agents; it coordinates navigation and reduces redundancy only.
+- Modify platform-only or public routes except where they intersect dashboard navigation.
+
+---
+
+## Canonical URLs
+
+### Analytics Hub
+
+- **Base:** `/dashboard/admin/analytics`
+- **Tabs:** `tab=sales | operations | marketing | campaigns | program | reports | rent`
+- **Subtabs (examples):** `subtab=overview | goals | compare | staff | forecasting | commission | correlations` (sales); `subtab=overview | appointments | clients | staffing | staff-utilization` (operations)
+
+**Always link to Analytics Hub using the base path and query params.** Do not use legacy paths like `/dashboard/admin/operational-analytics` or `/dashboard/admin/sales` in new code; existing redirects exist for backward compatibility only.
+
+### Drill-down from summary → Analytics Hub
+
+| Summary surface        | Canonical link |
+|------------------------|----------------|
+| Sales / goals drill-down | `/dashboard/admin/analytics?tab=sales&subtab=goals` |
+| Capacity / appointments | `/dashboard/admin/analytics?tab=operations&subtab=appointments` |
+| Staff utilization      | `/dashboard/admin/analytics?tab=operations&subtab=staff-utilization` |
+| Sales overview         | `/dashboard/admin/analytics?tab=sales` |
+
+---
+
+## Nav registry
+
+Dashboard nav is defined in **[src/config/dashboardNav.ts](src/config/dashboardNav.ts)**. When adding or renaming a route or label:
+
+1. Update the registry (section arrays, search items, or hub links as needed).
+2. Sidebar (DashboardLayout), TopBarSearch, and HubQuickLinks consume from the registry; do not duplicate nav entries in those files.
+
+---
+
+## Back to source
+
+- For detail pages (e.g. entity view, analytics subview), provide a clear way back to the canonical list or hub (e.g. `PlatformPageHeader` with `backTo`, or breadcrumbs).
+- Use a consistent pattern: "Back to [Hub name]" or breadcrumb trail when depth > 1.
+
+---
+
+## Coordination
+
+- Claim `DashboardLayout.tsx`, `App.tsx`, `TopBarSearch.tsx`, `HubQuickLinks.tsx`, and `src/config/dashboardNav.ts` in `.cursor/agent-manifest.json` when working on navigation.
+- Do not change permission or visibility logic; only ensure links and visibility respect existing permission/VisibilityGate patterns.

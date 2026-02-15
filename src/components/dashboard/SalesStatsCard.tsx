@@ -15,6 +15,8 @@ import {
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PhorestSyncButton } from './PhorestSyncButton';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 
 interface SalesStatsCardProps {
   userId: string | undefined;
@@ -24,6 +26,7 @@ type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek';
 
 export function SalesStatsCard({ userId }: SalesStatsCardProps) {
   const [dateRange, setDateRange] = useState<DateRange>('7d');
+  const { currency } = useFormatCurrency();
 
   // Calculate date filters
   const dateFilters = (() => {
@@ -130,35 +133,57 @@ export function SalesStatsCard({ userId }: SalesStatsCardProps) {
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
             <DollarSign className="w-4 h-4 text-chart-2" />
-            <p className="text-2xl font-display">${displayData.totalRevenue.toLocaleString()}</p>
+            <p className="text-2xl font-display tabular-nums">
+              <AnimatedNumber
+                value={displayData.totalRevenue}
+                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+              />
+            </p>
           </div>
           <p className="text-xs text-muted-foreground">Total Revenue</p>
         </div>
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
             <Scissors className="w-4 h-4 text-chart-3" />
-            <p className="text-2xl font-display">${displayData.serviceRevenue.toLocaleString()}</p>
+            <p className="text-2xl font-display tabular-nums">
+              <AnimatedNumber
+                value={displayData.serviceRevenue}
+                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+              />
+            </p>
           </div>
           <p className="text-xs text-muted-foreground">Services</p>
         </div>
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
             <ShoppingBag className="w-4 h-4 text-chart-4" />
-            <p className="text-2xl font-display">${displayData.productRevenue.toLocaleString()}</p>
+            <p className="text-2xl font-display tabular-nums">
+              <AnimatedNumber
+                value={displayData.productRevenue}
+                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+              />
+            </p>
           </div>
           <p className="text-xs text-muted-foreground">Products</p>
         </div>
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
             <Receipt className="w-4 h-4 text-chart-5" />
-            <p className="text-2xl font-display">{displayData.totalTransactions}</p>
+            <p className="text-2xl font-display tabular-nums">
+              <AnimatedNumber value={displayData.totalTransactions} />
+            </p>
           </div>
           <p className="text-xs text-muted-foreground">Transactions</p>
         </div>
         <div className="text-center">
           <div className="flex items-center justify-center gap-1 mb-1">
             <TrendingUp className="w-4 h-4 text-primary" />
-            <p className="text-2xl font-display">${Math.round(displayData.averageTicket)}</p>
+            <p className="text-2xl font-display tabular-nums">
+              <AnimatedNumber
+                value={Math.round(displayData.averageTicket)}
+                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+              />
+            </p>
           </div>
           <p className="text-xs text-muted-foreground">Avg Ticket</p>
         </div>

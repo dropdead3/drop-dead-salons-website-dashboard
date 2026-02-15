@@ -8,7 +8,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useRevenueForecast } from '@/hooks/useRevenueForecast';
 import { cn } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface RevenueForecastCardProps {
   locationId?: string;
@@ -39,6 +41,8 @@ function RevenueForecastCardComponent({
   forecastDays = 7,
   className,
 }: RevenueForecastCardProps) {
+  const { formatCurrency } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   const { data, isLoading, error, refetch, isFetching } = useRevenueForecast({
     forecastDays,
     locationId,
@@ -113,7 +117,7 @@ function RevenueForecastCardComponent({
         <div className="mb-4">
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold font-display">
-              ${data?.summary.totalPredicted.toLocaleString()}
+              {formatCurrency(data?.summary.totalPredicted ?? 0)}
             </span>
             <span className="text-sm text-muted-foreground">
               next {forecastDays} days
@@ -141,12 +145,12 @@ function RevenueForecastCardComponent({
               <div className="flex items-center gap-2">
                 <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
                 <span className="text-sm">
-                  {format(parseISO(day.date), 'EEE, MMM d')}
+                  {formatDate(parseISO(day.date), 'EEE, MMM d')}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="font-semibold font-display">
-                  ${day.predictedRevenue.toLocaleString()}
+                  {formatCurrency(day.predictedRevenue)}
                 </span>
                 <TooltipProvider>
                   <Tooltip>
@@ -179,7 +183,7 @@ function RevenueForecastCardComponent({
         {/* Data quality indicator */}
         <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
           <span>Based on {data?.historicalDataPoints || 0} days of data</span>
-          <span>Avg: ${data?.summary.avgDaily.toLocaleString()}/day</span>
+          <span>Avg: {formatCurrency(data?.summary.avgDaily ?? 0)}/day</span>
         </div>
       </CardContent>
     </Card>

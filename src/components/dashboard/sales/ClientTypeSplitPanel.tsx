@@ -3,6 +3,8 @@ import { UserPlus, UserCheck, RefreshCw } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { cn } from '@/lib/utils';
 import { useClientTypeSplit, type ClientTypeSegment } from '@/hooks/useClientTypeSplit';
 
@@ -20,6 +22,8 @@ function SegmentCard({ segment, total, icon, color, delay }: {
   color: string;
   delay: number;
 }) {
+  const { formatCurrencyWhole } = useFormatCurrency();
+  const { formatNumber } = useFormatNumber();
   const pct = total > 0 ? Math.round((segment.count / total) * 100) : 0;
 
   return (
@@ -38,18 +42,18 @@ function SegmentCard({ segment, total, icon, color, delay }: {
       <div className="grid grid-cols-3 gap-2 text-center">
         <div>
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Visits</p>
-          <p className="text-sm font-display tabular-nums">{segment.count.toLocaleString()}</p>
+          <p className="text-sm font-display tabular-nums">{formatNumber(segment.count)}</p>
         </div>
         <div>
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Avg Ticket</p>
           <p className="text-sm font-display tabular-nums">
-            <BlurredAmount>${Math.round(segment.avgTicket).toLocaleString()}</BlurredAmount>
+            <BlurredAmount>{formatCurrencyWhole(Math.round(segment.avgTicket))}</BlurredAmount>
           </p>
         </div>
         <div>
           <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Revenue</p>
           <p className="text-sm font-display tabular-nums">
-            <BlurredAmount>${Math.round(segment.revenue).toLocaleString()}</BlurredAmount>
+            <BlurredAmount>{formatCurrencyWhole(Math.round(segment.revenue))}</BlurredAmount>
           </p>
         </div>
       </div>

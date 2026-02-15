@@ -3,8 +3,10 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import { ScrollProgressButton } from "./ScrollProgressButton";
+import { useOrgPath } from "@/hooks/useOrgPath";
 
 export function StickyBookButton() {
+  const orgPath = useOrgPath();
   const [isVisible, setIsVisible] = useState(false);
   const [shine, setShine] = useState(false);
   const location = useLocation();
@@ -61,7 +63,7 @@ export function StickyBookButton() {
               }}
             >
               <Link
-                to="/booking"
+                to={orgPath("/booking")}
                 className="relative inline-flex items-center gap-2 px-6 py-4 text-sm font-sans font-normal bg-foreground text-background hover:bg-foreground/90 transition-colors shadow-2xl overflow-hidden"
               >
                 {/* Shine effect */}

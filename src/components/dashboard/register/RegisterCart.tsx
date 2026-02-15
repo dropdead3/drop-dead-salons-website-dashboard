@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Minus, Plus, Trash2 } from 'lucide-react';
 import { CartItem } from '@/hooks/useRegisterCart';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface RegisterCartProps {
   items: CartItem[];
@@ -9,6 +10,7 @@ interface RegisterCartProps {
 }
 
 export function RegisterCart({ items, onRemove, onUpdateQuantity }: RegisterCartProps) {
+  const { formatCurrency } = useFormatCurrency();
   if (items.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-48 text-muted-foreground">
@@ -31,7 +33,7 @@ export function RegisterCart({ items, onRemove, onUpdateQuantity }: RegisterCart
               <p className="text-xs text-muted-foreground font-mono">{item.sku}</p>
             )}
             <p className="text-sm text-muted-foreground">
-              ${item.unitPrice.toFixed(2)} each
+              {formatCurrency(item.unitPrice)} each
             </p>
           </div>
 
@@ -58,7 +60,7 @@ export function RegisterCart({ items, onRemove, onUpdateQuantity }: RegisterCart
             </div>
 
             <p className="w-20 text-right font-semibold">
-              ${(item.unitPrice * item.quantity - item.discount).toFixed(2)}
+              {formatCurrency(item.unitPrice * item.quantity - item.discount)}
             </p>
 
             <Button

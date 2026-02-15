@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useReducedMotion } from 'framer-motion';
 
 interface AnimatedNumberProps {
   value: number;
@@ -19,6 +20,7 @@ export function AnimatedNumber({
   className = '',
   formatOptions
 }: AnimatedNumberProps) {
+  const reduceMotion = useReducedMotion();
   const [displayValue, setDisplayValue] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
   const previousValue = useRef(0);
@@ -26,6 +28,11 @@ export function AnimatedNumber({
 
   // Animate on mount
   useEffect(() => {
+    if (reduceMotion) {
+      setDisplayValue(value);
+      previousValue.current = value;
+      return;
+    }
     setHasAnimated(true);
     animateValue(0, value);
     previousValue.current = value;
@@ -34,11 +41,16 @@ export function AnimatedNumber({
 
   // Animate on value change
   useEffect(() => {
+    if (reduceMotion) {
+      setDisplayValue(value);
+      previousValue.current = value;
+      return;
+    }
     if (hasAnimated && value !== previousValue.current) {
       animateValue(previousValue.current, value);
       previousValue.current = value;
     }
-  }, [value, hasAnimated]);
+  }, [value, hasAnimated, reduceMotion]);
 
   const animateValue = (from: number, to: number) => {
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
@@ -69,7 +81,7 @@ export function AnimatedNumber({
   const formattedValue = formatOptions
     ? displayValue.toLocaleString(undefined, formatOptions)
     : decimals > 0
-      ? displayValue.toFixed(decimals)
+      ? displayValue.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
       : Math.round(displayValue).toLocaleString();
 
   return (

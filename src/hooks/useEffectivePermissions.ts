@@ -35,18 +35,28 @@ async function fetchPermissionsForRole(role: AppRole): Promise<string[]> {
   return Array.from(permissionNames);
 }
 
+export interface EffectivePermissionsResult {
+  permissions: string[];
+  isLoading: boolean;
+}
+
 /**
  * Returns the effective permissions for the current view context.
  * - When viewing as a specific role: returns that role's permissions
  * - When viewing as a specific user: returns that user's roles' permissions
  * - Otherwise: returns the actual logged-in user's permissions
+ *
+ * `isLoading` is true only when in View As mode and the permissions query is in flight.
  */
-export function useEffectivePermissions(): string[] {
+export function useEffectivePermissions(): EffectivePermissionsResult {
   const { permissions: authPermissions } = useAuth();
   const { viewAsRole, viewAsUser, isViewingAs, isViewingAsUser } = useViewAs();
 
   // Query for role-based impersonation permissions
-  const { data: rolePermissions = [] } = useQuery({
+  const {
+    data: rolePermissions = [],
+    isLoading: rolePermissionsLoading,
+  } = useQuery({
     queryKey: ['rolePermissions', viewAsRole],
     queryFn: () => fetchPermissionsForRole(viewAsRole!),
     enabled: isViewingAs && !!viewAsRole && !isViewingAsUser,
@@ -54,11 +64,14 @@ export function useEffectivePermissions(): string[] {
   });
 
   // Query for user-based impersonation permissions (fetch permissions for all user's roles)
-  const { data: userPermissions = [] } = useQuery({
+  const {
+    data: userPermissions = [],
+    isLoading: userPermissionsLoading,
+  } = useQuery({
     queryKey: ['userPermissions', viewAsUser?.id, viewAsUser?.roles],
     queryFn: async () => {
       if (!viewAsUser?.roles?.length) return [];
-      
+
       const allPermissions = new Set<string>();
       for (const role of viewAsUser.roles) {
         const perms = await fetchPermissionsForRole(role);
@@ -72,22 +85,31 @@ export function useEffectivePermissions(): string[] {
 
   // User-specific impersonation takes priority
   if (isViewingAsUser && viewAsUser?.roles) {
-    return userPermissions;
+    return {
+      permissions: userPermissions,
+      isLoading: userPermissionsLoading,
+    };
   }
 
   // Role-based impersonation
   if (isViewingAs && viewAsRole) {
-    return rolePermissions;
+    return {
+      permissions: rolePermissions,
+      isLoading: rolePermissionsLoading,
+    };
   }
 
-  // Default to actual permissions
-  return authPermissions;
+  // Default to actual permissions (no loading; from AuthContext)
+  return {
+    permissions: authPermissions,
+    isLoading: false,
+  };
 }
 
 /**
  * Hook to check if a specific permission is granted in the effective context.
  */
 export function useHasEffectivePermission(permissionName: string): boolean {
-  const effectivePermissions = useEffectivePermissions();
-  return effectivePermissions.includes(permissionName);
+  const { permissions } = useEffectivePermissions();
+  return permissions.includes(permissionName);
 }

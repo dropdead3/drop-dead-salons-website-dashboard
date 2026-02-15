@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { ChevronDown, Search, ChevronsUpDown, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { LocationDrilldownPanel } from './LocationDrilldownPanel';
@@ -39,6 +40,7 @@ export function LocationComparisonTable({
   showSearch = false,
   colors,
 }: LocationComparisonTableProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [expandAll, setExpandAll] = useState(false);
@@ -173,7 +175,7 @@ export function LocationComparisonTable({
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-display tabular-nums">
-                      <BlurredAmount>${loc.totalRevenue.toLocaleString()}</BlurredAmount>
+                      <BlurredAmount>{formatCurrencyWhole(loc.totalRevenue)}</BlurredAmount>
                     </TableCell>
                     <TableCell className="text-right tabular-nums hidden sm:table-cell">
                       {loc.totalServices}

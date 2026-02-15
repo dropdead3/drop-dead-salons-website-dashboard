@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, TrendingUp, TrendingDown, Target, Loader2, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Progress } from '@/components/ui/progress';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
@@ -53,6 +54,7 @@ export function GoalLocationRow({
   periodStart, periodEnd, hoursJson, holidayClosures,
   isExpanded: controlledExpanded, onToggle,
 }: GoalLocationRowProps) {
+  const { formatCurrencyWhole, currency } = useFormatCurrency();
   const [internalExpanded, setInternalExpanded] = useState(false);
   const [showTrend, setShowTrend] = useState(false);
   const expanded = controlledExpanded !== undefined ? controlledExpanded : internalExpanded;
@@ -155,19 +157,19 @@ export function GoalLocationRow({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Earned</p>
-                  <p className="text-sm font-medium"><AnimatedBlurredAmount value={revenue} prefix="$" /></p>
+                  <p className="text-sm font-medium"><AnimatedBlurredAmount value={revenue} currency={currency} /></p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Target</p>
-                  <p className="text-sm font-medium"><BlurredAmount>${target.toLocaleString()}</BlurredAmount></p>
+                  <p className="text-sm font-medium"><BlurredAmount>{formatCurrencyWhole(target)}</BlurredAmount></p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Daily Run Rate</p>
-                  <p className="text-sm font-medium"><AnimatedBlurredAmount value={dailyRunRate} prefix="$" /></p>
+                  <p className="text-sm font-medium"><AnimatedBlurredAmount value={dailyRunRate} currency={currency} /></p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Required/Day</p>
-                  <p className="text-sm font-medium"><BlurredAmount>${requiredDailyRate.toLocaleString(undefined, { maximumFractionDigits: 0 })}</BlurredAmount></p>
+                  <p className="text-sm font-medium"><BlurredAmount>{formatCurrencyWhole(Math.round(requiredDailyRate))}</BlurredAmount></p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Open Days Left</p>
@@ -176,7 +178,7 @@ export function GoalLocationRow({
                 <div>
                   <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">Projected</p>
                   <p className={cn('text-sm font-medium', projectedRevenue >= target ? 'text-chart-2' : 'text-destructive')}>
-                    <AnimatedBlurredAmount value={projectedRevenue} prefix="$" />
+                    <AnimatedBlurredAmount value={projectedRevenue} currency={currency} />
                   </p>
                 </div>
               </div>

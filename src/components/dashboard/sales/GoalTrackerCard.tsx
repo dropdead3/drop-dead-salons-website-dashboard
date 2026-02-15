@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Target, TrendingUp, TrendingDown, ChevronDown, Loader2, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
@@ -20,6 +21,7 @@ export function GoalTrackerCard() {
   const [showAllLocations, setShowAllLocations] = useState(false);
   const MAX_VISIBLE_LOCATIONS = 3;
 
+  const { formatCurrencyWhole, currency } = useFormatCurrency();
   const { orgMetrics, locationScaffold, isLoading } = useGoalTrackerData(period);
 
   const now = new Date();
@@ -167,19 +169,19 @@ export function GoalTrackerCard() {
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Earned</p>
                       <p className="text-sm font-medium">
-                        <AnimatedBlurredAmount value={orgMetrics.revenue} prefix="$" />
+                        <AnimatedBlurredAmount value={orgMetrics.revenue} currency={currency} />
                       </p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Target</p>
                       <p className="text-sm font-medium">
-                        <BlurredAmount>${orgMetrics.target.toLocaleString()}</BlurredAmount>
+                        <BlurredAmount>{formatCurrencyWhole(orgMetrics.target)}</BlurredAmount>
                       </p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Projected</p>
                       <p className={cn('text-sm font-medium', orgMetrics.projectedRevenue >= orgMetrics.target ? 'text-chart-2' : 'text-destructive')}>
-                        <AnimatedBlurredAmount value={orgMetrics.projectedRevenue} prefix="$" />
+                        <AnimatedBlurredAmount value={orgMetrics.projectedRevenue} currency={currency} />
                       </p>
                     </div>
                     <div>

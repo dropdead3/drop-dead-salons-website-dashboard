@@ -14,11 +14,13 @@ import {
 import { Search, FileSignature, Download } from 'lucide-react';
 import { useAllSignatures } from '@/hooks/useClientFormSignatures';
 import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export function SignaturesTab() {
+  const { formatDate } = useFormatDate();
   const [searchQuery, setSearchQuery] = useState('');
   const { data: signatures, isLoading } = useAllSignatures({ limit: 100 });
 
@@ -125,9 +127,9 @@ export function SignaturesTab() {
                 {filteredSignatures.map((sig) => (
                   <TableRow key={sig.id}>
                     <TableCell className="whitespace-nowrap">
-                      {format(new Date(sig.signed_at), 'MMM d, yyyy')}
+                      {formatDate(new Date(sig.signed_at), 'MMM d, yyyy')}
                       <span className="text-xs text-muted-foreground block">
-                        {format(new Date(sig.signed_at), 'h:mm a')}
+                        {formatDate(new Date(sig.signed_at), 'h:mm a')}
                       </span>
                     </TableCell>
                     <TableCell>

@@ -4,7 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Star, MessageSquare, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { useFeedbackResponses, type FeedbackResponse } from '@/hooks/useFeedbackSurveys';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface FeedbackResponseListProps {
   organizationId?: string;
@@ -31,6 +31,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 function FeedbackCard({ response }: { response: FeedbackResponse }) {
+  const { formatDate } = useFormatDate();
   const npsInfo = response.nps_score !== null ? getNPSLabel(response.nps_score) : null;
 
   return (
@@ -41,7 +42,7 @@ function FeedbackCard({ response }: { response: FeedbackResponse }) {
             <StarRating rating={response.overall_rating} />
           )}
           <p className="text-xs text-muted-foreground">
-            {response.responded_at && format(new Date(response.responded_at), 'MMM d, yyyy h:mm a')}
+            {response.responded_at && formatDate(new Date(response.responded_at), 'MMM d, yyyy h:mm a')}
           </p>
         </div>
         <div className="flex items-center gap-2">

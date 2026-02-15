@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
   Mail,
   Phone,
@@ -32,7 +33,8 @@ import {
 } from 'lucide-react';
 import { LeadWithAssignee } from '@/hooks/useLeadInbox';
 import { InquiryStatus, formatSourceName } from '@/hooks/useLeadAnalytics';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 
 interface ActivityItem {
@@ -73,6 +75,8 @@ export function LeadDetailsSheet({
   onAddNote,
   isUpdating,
 }: LeadDetailsSheetProps) {
+  const { formatDate } = useFormatDate();
+  const { formatCurrency } = useFormatCurrency();
   const [newNote, setNewNote] = useState('');
   const [isSendingNote, setIsSendingNote] = useState(false);
 
@@ -178,7 +182,7 @@ export function LeadDetailsSheet({
                 Created
               </div>
               <p className="text-sm font-medium">
-                {format(new Date(lead.created_at), 'MMM d, yyyy')}
+                {formatDate(new Date(lead.created_at), 'MMM d, yyyy')}
               </p>
               <p className="text-xs text-muted-foreground">
                 {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
@@ -218,7 +222,7 @@ export function LeadDetailsSheet({
                   First Service Revenue
                 </div>
                 <p className="text-sm font-medium text-green-700 dark:text-green-400">
-                  ${lead.first_service_revenue.toFixed(2)}
+                  {formatCurrency(lead.first_service_revenue)}
                 </p>
               </div>
             )}

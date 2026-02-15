@@ -6,9 +6,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Sparkles, Clock, ChevronRight, Star, ArrowRight } from 'lucide-react';
 import { usePublishedChangelog, useUnreadChangelogCount } from '@/hooks/useChangelog';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 export function ChangelogWidget() {
+  const { formatDate } = useFormatDate();
   const { data: entries = [], isLoading } = usePublishedChangelog();
   const { data: unreadCount = 0 } = useUnreadChangelogCount();
 
@@ -84,7 +86,7 @@ export function ChangelogWidget() {
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {entry.version && `${entry.version} • `}
-                      {entry.published_at && format(parseISO(entry.published_at), 'MMM d')}
+                      {entry.published_at && formatDate(parseISO(entry.published_at), 'MMM d')}
                     </p>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />

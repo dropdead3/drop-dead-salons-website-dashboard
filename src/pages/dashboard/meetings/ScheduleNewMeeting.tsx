@@ -1,16 +1,20 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowLeft, Loader2, X } from 'lucide-react';
+import { ArrowLeft, Loader2, X, Users } from 'lucide-react';
 import { useAvailableCoaches, useCreateMeeting } from '@/hooks/useOneOnOneMeetings';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const meetingTypes = [
   { value: 'coaching', label: 'Coaching Session' },
@@ -28,8 +32,31 @@ const timeSlots = [
 
 export default function ScheduleNewMeeting() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { user } = useAuth();
   const { data: coaches = [], isLoading: loadingCoaches } = useAvailableCoaches();
   const createMeeting = useCreateMeeting();
+
+  // Coach mode: when a manager clicks "Schedule" for a specific staff member
+  const preselectedStaffId = searchParams.get('staffId');
+
+  // Fetch the staff member's profile if in coach mode
+  const { data: staffProfile } = useQuery({
+    queryKey: ['staff-profile-for-meeting', preselectedStaffId],
+    queryFn: async () => {
+      if (!preselectedStaffId) return null;
+      const { data } = await supabase
+        .from('employee_profiles')
+        .select('user_id, full_name, display_name')
+        .eq('user_id', preselectedStaffId)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!preselectedStaffId,
+  });
+
+  const isCoachMode = !!preselectedStaffId;
+  const staffName = staffProfile?.display_name || staffProfile?.full_name || 'Team Member';
 
   const [selectedCoach, setSelectedCoach] = useState('');
   const [meetingDate, setMeetingDate] = useState('');
@@ -40,6 +67,42 @@ export default function ScheduleNewMeeting() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (isCoachMode) {
+      // Coach mode: manager is the coach, staff member is the requester
+      if (!meetingDate || !startTime) return;
+
+      const [hours, minutes] = startTime.split(':').map(Number);
+      const endHours = minutes >= 30 ? hours + 1 : hours;
+      const endMinutes = minutes >= 30 ? '00' : '30';
+      const endTime = `${endHours.toString().padStart(2, '0')}:${endMinutes}`;
+
+      // Insert directly with correct roles
+      supabase
+        .from('one_on_one_meetings')
+        .insert({
+          requester_id: preselectedStaffId!,
+          coach_id: user!.id,
+          meeting_date: meetingDate,
+          start_time: startTime,
+          end_time: endTime,
+          meeting_type: meetingType,
+          notes: notes || null,
+          status: 'confirmed', // Manager-scheduled = auto-confirmed
+        })
+        .select()
+        .single()
+        .then(({ error }) => {
+          if (error) {
+            console.error('Error creating meeting:', error);
+          } else {
+            navigate('/dashboard/schedule-meeting');
+          }
+        });
+
+      return;
+    }
+
+    // Normal mode: staff requests meeting with a coach
     if (!selectedCoach || !meetingDate || !startTime) return;
 
     // Calculate end time (30 min meeting)
@@ -92,34 +155,47 @@ export default function ScheduleNewMeeting() {
               <X className="w-5 h-5" />
             </button>
             <CardHeader>
-              <CardTitle>Request a Meeting</CardTitle>
+              <CardTitle>{isCoachMode ? 'Schedule 1:1 Meeting' : 'Request a Meeting'}</CardTitle>
               <CardDescription>
-                Select a coach and time that works for you.
+                {isCoachMode
+                  ? `Schedule a meeting with ${staffName}. This will be auto-confirmed.`
+                  : 'Select a coach and time that works for you.'}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="coach">Select Coach</Label>
-                  <Select value={selectedCoach} onValueChange={setSelectedCoach}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose a coach or manager..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {loadingCoaches ? (
-                        <SelectItem value="loading" disabled>Loading...</SelectItem>
-                      ) : coaches.length === 0 ? (
-                        <SelectItem value="none" disabled>No coaches available</SelectItem>
-                      ) : (
-                        coaches.map(coach => (
-                          <SelectItem key={coach.user_id} value={coach.user_id}>
-                            {coach.display_name || coach.full_name}
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {isCoachMode ? (
+                  <div className="space-y-2">
+                    <Label>Meeting With</Label>
+                    <div className="flex items-center gap-2 rounded-md border px-3 py-2 bg-muted/50">
+                      <Users className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium text-sm">{staffName}</span>
+                      <Badge variant="outline" className="text-[10px] ml-auto">Auto-confirmed</Badge>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label htmlFor="coach">Select Coach</Label>
+                    <Select value={selectedCoach} onValueChange={setSelectedCoach}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose a coach or manager..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {loadingCoaches ? (
+                          <SelectItem value="loading" disabled>Loading...</SelectItem>
+                        ) : coaches.length === 0 ? (
+                          <SelectItem value="none" disabled>No coaches available</SelectItem>
+                        ) : (
+                          coaches.map(coach => (
+                            <SelectItem key={coach.user_id} value={coach.user_id}>
+                              {coach.display_name || coach.full_name}
+                            </SelectItem>
+                          ))
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -179,7 +255,7 @@ export default function ScheduleNewMeeting() {
 
                 <Button
                   type="submit"
-                  disabled={!selectedCoach || !meetingDate || !startTime || createMeeting.isPending}
+                  disabled={(isCoachMode ? false : !selectedCoach) || !meetingDate || !startTime || createMeeting.isPending}
                   className="w-full"
                 >
                   {createMeeting.isPending ? (
@@ -188,7 +264,7 @@ export default function ScheduleNewMeeting() {
                       Submitting...
                     </>
                   ) : (
-                    'Request Meeting'
+                    isCoachMode ? 'Schedule Meeting' : 'Request Meeting'
                   )}
                 </Button>
               </form>

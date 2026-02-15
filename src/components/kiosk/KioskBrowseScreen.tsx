@@ -3,7 +3,8 @@ import { ArrowLeft, Clock, User, Calendar, Phone } from 'lucide-react';
 import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { KioskLocationBadge, isBadgeAtTop, isBadgeAtBottom } from './KioskLocationBadge';
-import { format, parse } from 'date-fns';
+import { parse } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 
 // Privacy-safe name formatting: "John S."
@@ -36,6 +37,7 @@ const groupByTimeSlot = (appointments: any[]) => {
 };
 
 export function KioskBrowseScreen() {
+  const { formatDate } = useFormatDate();
   const { 
     settings, 
     session, 
@@ -69,7 +71,7 @@ export function KioskBrowseScreen() {
   const formatTimeSlot = (slotKey: string) => {
     try {
       const parsed = parse(slotKey, 'HH:mm', new Date());
-      return format(parsed, 'h:mm a');
+      return formatDate(parsed, 'h:mm a');
     } catch {
       return slotKey;
     }
@@ -78,7 +80,7 @@ export function KioskBrowseScreen() {
   const formatTime = (timeStr: string) => {
     try {
       const parsed = parse(timeStr, 'HH:mm:ss', new Date());
-      return format(parsed, 'h:mm a');
+      return formatDate(parsed, 'h:mm a');
     } catch {
       return timeStr;
     }

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,7 @@ const swapTypeConfig = {
 };
 
 export default function ShiftSwapApprovals() {
+  const { formatDate } = useFormatDate();
   const [activeTab, setActiveTab] = useState<string>('pending');
   const [selectedSwap, setSelectedSwap] = useState<ShiftSwap | null>(null);
   const [managerNotes, setManagerNotes] = useState('');
@@ -47,7 +48,7 @@ export default function ShiftSwapApprovals() {
     const [hours, minutes] = time.split(':');
     const date = new Date();
     date.setHours(parseInt(hours), parseInt(minutes));
-    return format(date, 'h:mm a');
+    return formatDate(date, 'h:mm a');
   };
 
   const getInitials = (name: string | null) => {
@@ -96,7 +97,7 @@ export default function ShiftSwapApprovals() {
                 {typeConfig.label}
               </Badge>
               <span className="text-xs text-muted-foreground">
-                Requested {format(new Date(swap.created_at), 'MMM d')}
+                Requested {formatDate(new Date(swap.created_at), 'MMM d')}
               </span>
             </div>
 
@@ -132,7 +133,7 @@ export default function ShiftSwapApprovals() {
               <div className="flex items-center gap-2 text-sm">
                 <Clock className="w-4 h-4 text-muted-foreground" />
                 <span>
-                  {format(new Date(swap.original_date), 'EEE, MMM d')} • {formatTime(swap.original_start_time)} - {formatTime(swap.original_end_time)}
+                  {formatDate(new Date(swap.original_date), 'EEE, MMM d')} • {formatTime(swap.original_start_time)} - {formatTime(swap.original_end_time)}
                 </span>
               </div>
               {swap.location && (
@@ -148,7 +149,7 @@ export default function ShiftSwapApprovals() {
               <div className="mt-3 bg-blue-500/5 rounded-lg p-3 border border-blue-500/10">
                 <p className="text-xs font-medium text-blue-600 mb-1">In Exchange For</p>
                 <p className="text-sm">
-                  {format(new Date(swap.claimer_date), 'EEE, MMM d')} • {swap.claimer_start_time && formatTime(swap.claimer_start_time)} - {swap.claimer_end_time && formatTime(swap.claimer_end_time)}
+                  {formatDate(new Date(swap.claimer_date), 'EEE, MMM d')} • {swap.claimer_start_time && formatTime(swap.claimer_start_time)} - {swap.claimer_end_time && formatTime(swap.claimer_end_time)}
                 </p>
               </div>
             )}

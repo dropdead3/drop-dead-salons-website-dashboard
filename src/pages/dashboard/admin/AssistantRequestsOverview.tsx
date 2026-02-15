@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { format, parseISO, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { parseISO, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Users, CheckCircle2, XCircle, Clock, CalendarDays, TrendingUp, AlertCircle, MapPin, UserCheck, UserPlus } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,6 +61,7 @@ function StatCard({
 }
 
 function RequestRow({ request, onManualAssign }: { request: AssistantRequest; onManualAssign?: (req: AssistantRequest) => void }) {
+  const { formatDate } = useFormatDate();
   const isAccepted = !!request.accepted_at;
   const declinedCount = request.declined_by?.length || 0;
   const needsAssignment = request.status === 'pending' || (request.status === 'assigned' && !request.accepted_at);
@@ -93,7 +95,7 @@ function RequestRow({ request, onManualAssign }: { request: AssistantRequest; on
           )}
         </div>
         <div className="text-sm text-muted-foreground mt-1">
-          <span>{format(parseISO(request.request_date), 'MMM d')} • </span>
+          <span>{formatDate(parseISO(request.request_date), 'MMM d')} • </span>
           <span>{request.salon_services?.name}</span>
           {request.locations?.name && (
             <span className="flex items-center gap-1 inline-flex ml-2">

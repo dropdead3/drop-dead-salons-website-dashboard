@@ -18,7 +18,8 @@ import {
   XCircle,
   Loader2,
 } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useScheduledReports, useScheduledReportRuns, useUpdateScheduledReport, useDeleteScheduledReport } from '@/hooks/useScheduledReports';
 import {
   DropdownMenu,
@@ -49,6 +50,7 @@ interface ScheduledReportsManagerProps {
 }
 
 export function ScheduledReportsManager({ onScheduleNew }: ScheduledReportsManagerProps) {
+  const { formatDate } = useFormatDate();
   const { data: reports, isLoading } = useScheduledReports();
   const updateReport = useUpdateScheduledReport();
   const deleteReport = useDeleteScheduledReport();
@@ -161,7 +163,7 @@ export function ScheduledReportsManager({ onScheduleNew }: ScheduledReportsManag
                       )}
                       {report.next_run_at && report.is_active && (
                         <span>
-                          Next: {format(new Date(report.next_run_at), 'MMM d, yyyy h:mm a')}
+                          Next: {formatDate(new Date(report.next_run_at), 'MMM d, yyyy h:mm a')}
                         </span>
                       )}
                     </div>
@@ -280,7 +282,7 @@ function ReportHistoryDialog({ reportId, onClose }: { reportId: string | null; o
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-sm capitalize">{run.status}</span>
                       <span className="text-xs text-muted-foreground">
-                        {run.started_at && format(new Date(run.started_at), 'MMM d, h:mm a')}
+                        {run.started_at && formatDate(new Date(run.started_at), 'MMM d, h:mm a')}
                       </span>
                     </div>
                     {run.error_message && (

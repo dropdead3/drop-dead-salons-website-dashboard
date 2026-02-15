@@ -17,6 +17,7 @@ import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useLocations } from '@/hooks/useLocations';
 import { useSalesByLocation } from '@/hooks/useSalesData';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 const WEEKS_PER_MONTH = 4.333;
 const MONTHS_PER_YEAR = 12;
@@ -27,6 +28,7 @@ interface SalesGoalsDialogProps {
 
 export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
   const [open, setOpen] = useState(false);
+  const { formatCurrencyWhole } = useFormatCurrency();
   const { goals, updateGoals, isUpdating } = useSalesGoals();
   const { data: locations } = useLocations();
 
@@ -166,7 +168,7 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
                         <div className="space-y-1">
                           <Progress value={progressPercent} className="h-1.5" />
                           <p className="text-xs text-muted-foreground">
-                            ${currentRevenue.toLocaleString()} of ${monthlyGoal.toLocaleString()} this month
+                            {formatCurrencyWhole(currentRevenue)} of {formatCurrencyWhole(monthlyGoal)} this month
                           </p>
                         </div>
                       )}
@@ -190,14 +192,14 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Weekly</Label>
                           <p className="h-8 flex items-center text-sm text-muted-foreground">
-                            ${Math.round((locationTargets[location.id]?.monthly || 0) / WEEKS_PER_MONTH).toLocaleString()}
+                            {formatCurrencyWhole(Math.round((locationTargets[location.id]?.monthly || 0) / WEEKS_PER_MONTH))}
                           </p>
                         </div>
                         {/* Yearly - Read-Only */}
                         <div className="space-y-1">
                           <Label className="text-xs text-muted-foreground">Yearly</Label>
                           <p className="h-8 flex items-center text-sm text-muted-foreground">
-                            ${((locationTargets[location.id]?.monthly || 0) * MONTHS_PER_YEAR).toLocaleString()}
+                            {formatCurrencyWhole(Math.round((locationTargets[location.id]?.monthly || 0) * MONTHS_PER_YEAR))}
                           </p>
                         </div>
                       </div>
@@ -231,7 +233,7 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
               <div className="space-y-1">
                 <Progress value={overallProgress} className="h-2" />
                 <p className="text-xs text-muted-foreground">
-                  ${totalCurrentRevenue.toLocaleString()} of ${calculatedMonthly.toLocaleString()} this month
+                  {formatCurrencyWhole(totalCurrentRevenue)} of {formatCurrencyWhole(calculatedMonthly)} this month
                 </p>
               </div>
             )}
@@ -240,19 +242,19 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Monthly Goal</Label>
                 <p className="text-xl font-medium">
-                  ${calculatedMonthly.toLocaleString()}
+                  {formatCurrencyWhole(calculatedMonthly)}
                 </p>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Weekly Goal</Label>
                 <p className="text-xl font-medium">
-                  ${calculatedWeekly.toLocaleString()}
+                  {formatCurrencyWhole(calculatedWeekly)}
                 </p>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Yearly Goal</Label>
                 <p className="text-xl font-medium">
-                  ${calculatedYearly.toLocaleString()}
+                  {formatCurrencyWhole(calculatedYearly)}
                 </p>
               </div>
             </div>

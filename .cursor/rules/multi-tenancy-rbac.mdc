@@ -1,0 +1,68 @@
+---
+description: Non-negotiable data isolation and access control rules. Every table, query, and UI component must respect multi-tenancy and role-based access.
+alwaysApply: true
+---
+
+# Multi-Tenancy & RBAC
+
+## Data Isolation (Non-Negotiable)
+
+### Database Level
+- Every table with user/business data MUST have: `organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE`
+- Every new table MUST have RLS enabled: `ALTER TABLE ... ENABLE ROW LEVEL SECURITY`
+- RLS read policy: `USING (public.is_org_member(auth.uid(), organization_id))`
+- RLS write policy: `USING (public.is_org_admin(auth.uid(), organization_id)) WITH CHECK (public.is_org_admin(auth.uid(), organization_id))`
+- Child tables scope via parent: `USING (EXISTS (SELECT 1 FROM parent WHERE parent.id = child.parent_id AND public.is_org_member(auth.uid(), parent.organization_id)))`
+
+### Frontend Level
+- Every Supabase query MUST filter by organization
+- Get org from: `const { effectiveOrganization } = useOrganizationContext()`
+- Include orgId in query keys: `['feature', orgId, ...]`
+- Use `enabled: !!orgId` for conditional fetching
+
+## Role System
+
+### App Roles (salon-level)
+- `super_admin` -- Full access, can manage all settings
+- `admin` -- Organization administrator
+- `manager` -- Location/team manager
+- `stylist` -- Service provider
+- `stylist_assistant` -- Assists stylists
+- `receptionist` -- Front desk operations
+- `assistant` -- General assistant
+- `admin_assistant` -- Admin support
+- `operations_assistant` -- Operations support
+- `booth_renter` -- Independent booth renter
+- `bookkeeper` -- Financial access
+
+### Platform Roles (cross-org)
+- `platform_owner` -- Full platform access
+- `platform_admin` -- Platform administration
+- `platform_support` -- Support access
+- `platform_developer` -- Developer access
+
+## Frontend Permission Checks
+
+### Use VisibilityGate for configurable UI visibility:
+```tsx
+<VisibilityGate elementKey="quick_actions">
+  <QuickActions />
+</VisibilityGate>
+```
+
+### Use usePermission() for permission-based access:
+```tsx
+const { can } = usePermission();
+if (can('manage_settings')) { /* show settings */ }
+```
+
+### Use useEffectiveRoles() for role-based logic:
+```tsx
+const roles = useEffectiveRoles();
+const isLeadership = roles.includes('super_admin') || roles.includes('manager');
+```
+
+### Rules
+- Prefer permission checks over role checks when a permission exists
+- Never hardcode role names in components if a permission covers the use case
+- ProtectedRoute component wraps all authenticated dashboard routes

@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { TierProgressionOpportunity, CommissionImpactAnalysis } from '@/hooks/useTierDistribution';
 
 interface TierProgressionCardProps {
@@ -46,6 +47,7 @@ export function TierProgressionCard({ opportunities, impactAnalysis, isLoading }
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-amber-500" />
           Tier Progression Opportunities
+          <MetricInfoTooltip description="Identifies stylists close to reaching a higher commission tier. Shows the revenue gap remaining and projected timeline based on their current pace." />
         </CardTitle>
         <CardDescription>
           {opportunities.length > 0 

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { History, CheckCircle2, XCircle, Clock, MapPin } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,6 +20,7 @@ function formatDuration(seconds: number | null): string {
 }
 
 export function AssistantRequestHistoryCard({ userId }: AssistantRequestHistoryCardProps) {
+  const { formatDate } = useFormatDate();
   const { data: allRequests = [], isLoading } = useAssistantRequests('all');
 
   // Filter requests related to this user (as assistant or declined by)
@@ -143,7 +145,7 @@ export function AssistantRequestHistoryCard({ userId }: AssistantRequestHistoryC
                           )}
                         </div>
                         <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                          <span>{format(parseISO(request.request_date), 'MMM d, yyyy')}</span>
+                          <span>{formatDate(parseISO(request.request_date), 'MMM d, yyyy')}</span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-3 w-3" />
                             {request.start_time.slice(0, 5)}

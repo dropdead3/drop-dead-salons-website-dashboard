@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useInvitationByToken, useAcceptPlatformInvitation } from '@/hooks/usePlatformInvitations';
@@ -23,6 +23,10 @@ export default function PlatformLogin() {
   
   const { user, signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTarget = location.state?.from?.pathname?.startsWith('/dashboard/platform')
+    ? location.state.from.pathname
+    : '/dashboard/platform/overview';
   
   const { data: invitation, isLoading: loadingInvitation } = useInvitationByToken(invitationToken);
   const acceptInvitationMutation = useAcceptPlatformInvitation();
@@ -52,7 +56,7 @@ export default function PlatformLogin() {
               title: 'Welcome to the Platform Team!',
               description: `You've been granted ${invitation.role.replace('platform_', '')} access.`,
             });
-            navigate('/dashboard/platform/overview', { replace: true });
+            navigate(redirectTarget, { replace: true });
             return;
           } catch (error) {
             console.error('Failed to accept invitation:', error);
@@ -66,7 +70,7 @@ export default function PlatformLogin() {
           .limit(1);
 
         if (data && data.length > 0) {
-          navigate('/dashboard/platform/overview', { replace: true });
+          navigate(redirectTarget, { replace: true });
         }
         setCheckingAccess(false);
       }
@@ -106,7 +110,7 @@ export default function PlatformLogin() {
               title: 'Welcome to the Platform Team!',
               description: `You've been granted ${invitation.role.replace('platform_', '')} access.`,
             });
-            navigate('/dashboard/platform/overview', { replace: true });
+            navigate(redirectTarget, { replace: true });
             return;
           } catch (error) {
             console.error('Failed to accept invitation:', error);
@@ -136,7 +140,7 @@ export default function PlatformLogin() {
           description: 'Redirecting to Platform Admin Hub...',
         });
 
-        navigate('/dashboard/platform/overview', { replace: true });
+        navigate(redirectTarget, { replace: true });
       }
     } catch (err) {
       toast({
@@ -234,7 +238,7 @@ export default function PlatformLogin() {
               : 'This invitation has expired or been cancelled.'}
           </p>
           <PlatformButton 
-            onClick={() => navigate('/platform-login', { replace: true })}
+            onClick={() => navigate('/login', { replace: true })}
             variant="glow"
           >
             Go to Login
@@ -371,7 +375,7 @@ export default function PlatformLogin() {
           {/* Footer link */}
           <div className="text-center">
             <Link
-              to="/staff-login"
+              to="/login"
               className="inline-flex items-center gap-2 text-slate-500 hover:text-violet-400 text-sm transition-colors group"
             >
               Salon staff? Login here

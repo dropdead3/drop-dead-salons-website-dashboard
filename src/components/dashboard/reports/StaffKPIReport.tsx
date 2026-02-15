@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChartSkeleton } from '@/components/ui/chart-skeleton';
 import { 
   Table,
   TableBody,
@@ -13,11 +14,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { FileText, Download, Loader2, FileSpreadsheet } from 'lucide-react';
+import { FileText, Download, Loader2, FileSpreadsheet, Eye } from 'lucide-react';
+import { ReportPreviewModal } from '@/components/dashboard/reports/ReportPreviewModal';
 import { useStaffKPIReport } from '@/hooks/useStaffKPIReport';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
+import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface StaffKPIReportProps {
   reportType: string;
@@ -35,8 +40,12 @@ export function StaffKPIReport({
   onClose 
 }: StaffKPIReportProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const { formatDate } = useFormatDate();
   const { user } = useAuth();
-  
+  const { effectiveOrganization } = useOrganizationContext();
+  const { formatCurrencyWhole } = useFormatCurrency();
+
   const { data: kpiData, isLoading } = useStaffKPIReport(dateFrom, dateTo, locationId);
 
   const getReportTitle = () => {
@@ -53,61 +62,39 @@ export function StaffKPIReport({
     setIsGenerating(true);
     try {
       const doc = new jsPDF('landscape');
-      const pageWidth = doc.internal.pageSize.getWidth();
-      let y = 20;
-
-      // Header
-      doc.setFontSize(24);
-      doc.setFont('helvetica', 'bold');
-      doc.text(getReportTitle(), pageWidth / 2, y, { align: 'center' });
-      
-      y += 10;
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100);
-      doc.text(
-        `${format(new Date(dateFrom), 'MMM d, yyyy')} - ${format(new Date(dateTo), 'MMM d, yyyy')}`,
-        pageWidth / 2,
-        y,
-        { align: 'center' }
-      );
-      
-      doc.setTextColor(0);
-      y += 15;
+      const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
+      const headerOpts = {
+        orgName: effectiveOrganization?.name ?? 'Organization',
+        logoDataUrl,
+        reportTitle: getReportTitle(),
+        dateFrom,
+        dateTo,
+      } as const;
+      const branding = getReportAutoTableBranding(doc, headerOpts);
+      const y = addReportHeader(doc, headerOpts);
 
       // KPI Table
       if (kpiData && kpiData.length > 0) {
         autoTable(doc, {
+          ...branding,
           startY: y,
           head: [['Staff', 'Revenue', 'Services', 'Avg Ticket', 'Rebooking %', 'Retention %', 'New Clients']],
           body: kpiData.map(staff => [
             staff.staffName,
-            `$${staff.totalRevenue.toLocaleString()}`,
+            formatCurrencyWhole(staff.totalRevenue),
             staff.totalServices.toString(),
-            `$${Math.round(staff.averageTicket).toLocaleString()}`,
+            formatCurrencyWhole(Math.round(staff.averageTicket)),
             `${staff.rebookingRate.toFixed(1)}%`,
             `${staff.retentionRate.toFixed(1)}%`,
             staff.newClients.toString(),
           ]),
           theme: 'striped',
           headStyles: { fillColor: [51, 51, 51] },
-          margin: { left: 14, right: 14 },
+          margin: { ...branding.margin, left: 14, right: 14 },
         });
       }
 
-      // Footer
-      const pageCount = doc.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(150);
-        doc.text(
-          `Page ${i} of ${pageCount}`,
-          pageWidth / 2,
-          doc.internal.pageSize.getHeight() - 10,
-          { align: 'center' }
-        );
-      }
+      addReportFooter(doc);
 
       const filename = `${reportType}-${dateFrom}-to-${dateTo}.pdf`;
       doc.save(filename);
@@ -121,6 +108,7 @@ export function StaffKPIReport({
           date_to: dateTo,
           parameters: { locationId },
           generated_by: user.id,
+          organization_id: effectiveOrganization?.id ?? null,
         });
       }
 
@@ -160,83 +148,100 @@ export function StaffKPIReport({
           <Skeleton className="h-4 w-64" />
         </CardHeader>
         <CardContent className="space-y-4">
-          <Skeleton className="h-64 w-full" />
+          <ChartSkeleton lines={8} className="h-64" />
         </CardContent>
       </Card>
     );
   }
 
+  const reportTable =
+    kpiData && kpiData.length > 0 ? (
+      <div className="rounded-lg border overflow-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Staff Member</TableHead>
+              <TableHead className="text-right">Revenue</TableHead>
+              <TableHead className="text-right">Services</TableHead>
+              <TableHead className="text-right">Avg Ticket</TableHead>
+              <TableHead className="text-right">Rebooking %</TableHead>
+              <TableHead className="text-right">Retention %</TableHead>
+              <TableHead className="text-right">New Clients</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {kpiData.map((staff) => (
+              <TableRow key={staff.staffId}>
+                <TableCell className="font-medium">{staff.staffName}</TableCell>
+                <TableCell className="text-right">{formatCurrencyWhole(staff.totalRevenue)}</TableCell>
+                <TableCell className="text-right">{staff.totalServices}</TableCell>
+                <TableCell className="text-right">{formatCurrencyWhole(Math.round(staff.averageTicket))}</TableCell>
+                <TableCell className="text-right">{staff.rebookingRate.toFixed(1)}%</TableCell>
+                <TableCell className="text-right">{staff.retentionRate.toFixed(1)}%</TableCell>
+                <TableCell className="text-right">{staff.newClients}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    ) : (
+      <div className="text-center py-12 text-muted-foreground">
+        <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+        <p>No staff performance data available for this period</p>
+      </div>
+    );
+
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              {getReportTitle()}
-            </CardTitle>
-            <CardDescription>
-              {format(new Date(dateFrom), 'MMM d, yyyy')} - {format(new Date(dateTo), 'MMM d, yyyy')}
-            </CardDescription>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                {getReportTitle()}
+              </CardTitle>
+              <CardDescription>
+                {formatDate(new Date(dateFrom), 'MMM d, yyyy')} - {formatDate(new Date(dateTo), 'MMM d, yyyy')}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
+                <Eye className="w-4 h-4 mr-2" />
+                Preview
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportCSV}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                CSV
+              </Button>
+              <Button onClick={generatePDF} disabled={isGenerating}>
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={exportCSV}>
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
-              CSV
-            </Button>
-            <Button onClick={generatePDF} disabled={isGenerating}>
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download PDF
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {kpiData && kpiData.length > 0 ? (
-          <div className="rounded-lg border overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Staff Member</TableHead>
-                  <TableHead className="text-right">Revenue</TableHead>
-                  <TableHead className="text-right">Services</TableHead>
-                  <TableHead className="text-right">Avg Ticket</TableHead>
-                  <TableHead className="text-right">Rebooking %</TableHead>
-                  <TableHead className="text-right">Retention %</TableHead>
-                  <TableHead className="text-right">New Clients</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {kpiData.map((staff) => (
-                  <TableRow key={staff.staffId}>
-                    <TableCell className="font-medium">{staff.staffName}</TableCell>
-                    <TableCell className="text-right">${staff.totalRevenue.toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{staff.totalServices}</TableCell>
-                    <TableCell className="text-right">${Math.round(staff.averageTicket).toLocaleString()}</TableCell>
-                    <TableCell className="text-right">{staff.rebookingRate.toFixed(1)}%</TableCell>
-                    <TableCell className="text-right">{staff.retentionRate.toFixed(1)}%</TableCell>
-                    <TableCell className="text-right">{staff.newClients}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        ) : (
-          <div className="text-center py-12 text-muted-foreground">
-            <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>No staff performance data available for this period</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent>{reportTable}</CardContent>
+      </Card>
+
+      <ReportPreviewModal
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        reportTitle={getReportTitle()}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+      >
+        {reportTable}
+      </ReportPreviewModal>
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { AlertTriangle, CheckCircle2, Clock, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +22,7 @@ interface StrikeHistoryTimelineProps {
 }
 
 export function StrikeHistoryTimeline({ userId }: StrikeHistoryTimelineProps) {
+  const { formatDate } = useFormatDate();
   const { data: strikes = [], isLoading } = useStaffStrikes(userId);
   const resolveStrike = useResolveStrike();
   
@@ -148,7 +149,7 @@ export function StrikeHistoryTimeline({ userId }: StrikeHistoryTimelineProps) {
                             </div>
                           </div>
                           <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {format(new Date(strike.incident_date), 'MMM d, yyyy')}
+                            {formatDate(new Date(strike.incident_date), 'MMM d, yyyy')}
                           </span>
                         </div>
                         
@@ -182,7 +183,7 @@ export function StrikeHistoryTimeline({ userId }: StrikeHistoryTimelineProps) {
                             <div className="flex items-center gap-1 text-xs text-primary">
                               <CheckCircle2 className="w-3 h-3" />
                               <span>
-                                Resolved on {format(new Date(strike.resolved_at!), 'MMM d, yyyy')}
+                                Resolved on {formatDate(new Date(strike.resolved_at!), 'MMM d, yyyy')}
                                 {strike.resolved_by_name && ` by ${strike.resolved_by_name}`}
                               </span>
                             </div>

@@ -13,7 +13,8 @@ import {
   Loader2,
   StickyNote
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { PhorestClient } from './BookingWizard';
 
 interface Service {
@@ -52,6 +53,8 @@ export function ConfirmStep({
   isLoading,
   locationName,
 }: ConfirmStepProps) {
+  const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   const formatTime12h = (t: string) => {
     const [hours, minutes] = t.split(':');
     const hour = parseInt(hours);
@@ -118,7 +121,7 @@ export function ConfirmStep({
                 <div>
                   <div className="text-xs text-muted-foreground">Date & Time</div>
                   <div className="font-medium text-sm">
-                    {format(date, 'EEEE, MMMM d, yyyy')} at {formatTime12h(time)}
+                    {formatDate(date, 'EEEE, MMMM d, yyyy')} at {formatTime12h(time)}
                   </div>
                 </div>
               </div>
@@ -159,7 +162,7 @@ export function ConfirmStep({
                     </div>
                   </div>
                   {service.price !== null && (
-                    <span className="font-medium text-sm">${service.price.toFixed(0)}</span>
+                    <span className="font-medium text-sm">{formatCurrencyWhole(service.price)}</span>
                   )}
                 </div>
               ))}
@@ -188,7 +191,7 @@ export function ConfirmStep({
       <div className="p-4 border-t border-border bg-card space-y-3">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Estimated Total</span>
-          <span className="text-xl font-medium">${totalPrice.toFixed(2)}</span>
+          <span className="text-xl font-medium">{formatCurrency(totalPrice)}</span>
         </div>
         <Button
           className="w-full h-12 text-base font-medium"

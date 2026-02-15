@@ -7,6 +7,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface Performer {
   user_id: string;
@@ -59,6 +60,7 @@ const SORT_OPTIONS: { value: SortMode; label: string }[] = [
 export function TopPerformersCard({ performers, isLoading, showInfoTooltip = false, filterContext }: TopPerformersCardProps) {
   const [sortMode, setSortMode] = useState<SortMode>('totalRevenue');
   const [showDropdown, setShowDropdown] = useState(false);
+  const { formatCurrencyWhole } = useFormatCurrency();
 
   const sorted = [...performers].sort((a, b) => {
     if (sortMode === 'retail') {
@@ -183,7 +185,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{performer.name}</p>
                   <BlurredAmount className="text-xs text-muted-foreground">
-                    ${displayValue.toLocaleString()}
+                    {formatCurrencyWhole(displayValue)}
                   </BlurredAmount>
                 </div>
                 <Badge variant="outline" className="text-xs">

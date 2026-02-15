@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface TipsDrilldownPanelProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
   const { data: locations } = useActiveLocations();
   const { effectiveOrganization } = useOrganizationContext();
   const { user, roles } = useAuth();
+  const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
 
   const isMultiLocation = effectiveOrganization?.is_multi_location ?? false;
   const isLeadership = roles.includes('admin') || roles.includes('super_admin') || roles.includes('manager');
@@ -194,14 +196,14 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
                     )}
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    <SelfMetricCard label="Avg Tip" value={`$${selfStylist.avgTip.toFixed(2)}`} />
+                    <SelfMetricCard label="Avg Tip" value={formatCurrency(selfStylist.avgTip)} />
                     <SelfMetricCard label="Tip %" value={`${selfStylist.tipPercentage.toFixed(1)}%`} />
                     <SelfMetricCard 
                       label="No-Tip Rate" 
                       value={`${selfStylist.noTipRate.toFixed(0)}%`} 
                       alert={selfStylist.noTipRate > 30}
                     />
-                    <SelfMetricCard label="Total Tips" value={`$${Math.round(selfStylist.totalTips).toLocaleString()}`} />
+                    <SelfMetricCard label="Total Tips" value={formatCurrencyWhole(Math.round(selfStylist.totalTips))} />
                   </div>
 
                   {/* Category breakdown for self */}
@@ -319,6 +321,7 @@ function CategoryRows({ categories, totalCategoryTips }: {
   categories: Array<{ name: string; avgTip: number; tipRate: number; totalTips: number; count: number }>;
   totalCategoryTips: number;
 }) {
+  const { formatCurrency: fmtCurrency } = useFormatCurrency();
   return (
     <div className="space-y-1.5">
       {categories.map((cat, index) => {
@@ -343,7 +346,7 @@ function CategoryRows({ categories, totalCategoryTips }: {
               />
             </div>
             <span className="text-xs text-muted-foreground tabular-nums min-w-[60px] text-right">
-              <BlurredAmount>${cat.avgTip.toFixed(2)} avg</BlurredAmount>
+              <BlurredAmount>{fmtCurrency(cat.avgTip)} avg</BlurredAmount>
             </span>
             <span className="text-xs text-muted-foreground tabular-nums min-w-[55px] text-right">
               {cat.tipRate.toFixed(0)}% rate
@@ -357,6 +360,7 @@ function CategoryRows({ categories, totalCategoryTips }: {
 
 /* ── Stylist row for leadership table ── */
 function StylistTipRow({ stylist, index, isCoaching = false }: { stylist: StylistTipMetrics; index: number; isCoaching?: boolean }) {
+  const { formatCurrency: fmtCurrency, formatCurrencyWhole: fmtWhole } = useFormatCurrency();
   const initials = stylist.displayName
     .split(' ')
     .map(n => n[0])
@@ -379,7 +383,7 @@ function StylistTipRow({ stylist, index, isCoaching = false }: { stylist: Stylis
         {stylist.displayName}
       </span>
       <span className="text-sm font-display tabular-nums min-w-[55px] text-right">
-        <BlurredAmount>${stylist.avgTip.toFixed(2)}</BlurredAmount>
+        <BlurredAmount>{fmtCurrency(stylist.avgTip)}</BlurredAmount>
       </span>
       <span className="text-xs text-muted-foreground tabular-nums min-w-[40px] text-right">
         {stylist.tipPercentage.toFixed(0)}%
@@ -391,7 +395,7 @@ function StylistTipRow({ stylist, index, isCoaching = false }: { stylist: Stylis
         {stylist.noTipRate.toFixed(0)}% NT
       </span>
       <span className="text-xs text-muted-foreground tabular-nums min-w-[55px] text-right">
-        <BlurredAmount>${Math.round(stylist.totalTips).toLocaleString()}</BlurredAmount>
+        <BlurredAmount>{fmtWhole(Math.round(stylist.totalTips))}</BlurredAmount>
       </span>
     </motion.div>
   );

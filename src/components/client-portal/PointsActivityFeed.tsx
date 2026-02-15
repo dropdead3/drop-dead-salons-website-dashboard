@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ArrowUpCircle, ArrowDownCircle, Gift, Sparkles, Clock } from 'lucide-react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 
 interface Transaction {
@@ -33,6 +33,7 @@ const typeColors: Record<string, string> = {
 };
 
 export function PointsActivityFeed({ transactions }: PointsActivityFeedProps) {
+  const { formatDate } = useFormatDate();
   if (!transactions.length) {
     return (
       <Card>
@@ -74,7 +75,7 @@ export function PointsActivityFeed({ transactions }: PointsActivityFeedProps) {
                       {tx.description || tx.transaction_type.replace(/_/g, ' ')}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {format(new Date(tx.created_at), 'MMM d, yyyy')}
+                      {formatDate(new Date(tx.created_at), 'MMM d, yyyy')}
                     </p>
                   </div>
                   <div className={cn(

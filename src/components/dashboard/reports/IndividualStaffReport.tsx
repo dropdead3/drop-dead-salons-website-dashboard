@@ -1,0 +1,686 @@
+import { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
+} from 'recharts';
+import {
+  DollarSign, Users, TrendingUp, TrendingDown, UserCheck, Package,
+  Briefcase, Star, Calendar, Download, FileSpreadsheet, Loader2, ArrowLeft,
+  AlertTriangle, CheckCircle2, Target, Wallet,
+} from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { useOrganizationUsers } from '@/hooks/useOrganizationUsers';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
+import { useIndividualStaffReport, type IndividualStaffReportData } from '@/hooks/useIndividualStaffReport';
+
+interface IndividualStaffReportProps {
+  dateFrom: string;
+  dateTo: string;
+  locationId?: string;
+  onClose: () => void;
+  initialStaffId?: string;
+}
+
+const PIE_COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
+
+const getInitials = (name: string) =>
+  name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+
+function ScoreBadge({ score, status }: { score: number; status: string }) {
+  const colors = {
+    strong: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800',
+    watch: 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800',
+    'needs-attention': 'bg-red-100 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800',
+  };
+  return (
+    <Badge variant="outline" className={cn('text-sm font-display tabular-nums', colors[status as keyof typeof colors] || colors.watch)}>
+      {score}/100
+    </Badge>
+  );
+}
+
+function TrendIndicator({ values }: { values: [number, number, number] }) {
+  const [prev2, prev1, current] = values;
+  if (prev2 === 0 && prev1 === 0 && current === 0) return <span className="text-xs text-muted-foreground">--</span>;
+  const improving = current > prev1;
+  const declining = current < prev1;
+  return (
+    <div className="flex items-center gap-1 text-xs">
+      <span className="text-muted-foreground tabular-nums">{Math.round(prev2)}</span>
+      <span className="text-muted-foreground">{'\u2192'}</span>
+      <span className="text-muted-foreground tabular-nums">{Math.round(prev1)}</span>
+      <span className="text-muted-foreground">{'\u2192'}</span>
+      <span className={cn('font-medium tabular-nums', improving ? 'text-emerald-600 dark:text-emerald-400' : declining ? 'text-red-500 dark:text-red-400' : 'text-foreground')}>
+        {Math.round(current)}
+      </span>
+      {improving && <TrendingUp className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />}
+      {declining && <TrendingDown className="w-3 h-3 text-red-500 dark:text-red-400" />}
+    </div>
+  );
+}
+
+
+export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, initialStaffId }: IndividualStaffReportProps) {
+  const [selectedStaffId, setSelectedStaffId] = useState<string>(initialStaffId || '');
+  const { user } = useAuth();
+  const { effectiveOrganization } = useOrganizationContext();
+  const { data: orgUsers, isLoading: usersLoading } = useOrganizationUsers(effectiveOrganization?.id);
+  const { data, isLoading } = useIndividualStaffReport(selectedStaffId || null, dateFrom, dateTo);
+  const { formatCurrencyWhole } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  // Filter to active staff with relevant roles
+  const staffList = useMemo(() => {
+    if (!orgUsers) return [];
+    return orgUsers
+      .filter(u => u.is_active && u.roles?.some((r: string) => ['admin', 'manager', 'staff', 'stylist', 'super_admin'].includes(r)))
+      .sort((a, b) => (a.display_name || a.full_name || '').localeCompare(b.display_name || b.full_name || ''));
+  }, [orgUsers]);
+
+  // ── PDF Generation ──
+  const generatePDF = async () => {
+    if (!data) return;
+    setIsGenerating(true);
+    try {
+      const doc = new jsPDF('landscape');
+      const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
+      const headerOpts = {
+        orgName: effectiveOrganization?.name ?? 'Organization',
+        logoDataUrl,
+        reportTitle: `Staff Report: ${data.profile.name}`,
+        dateFrom,
+        dateTo,
+      } as const;
+      const branding = getReportAutoTableBranding(doc, headerOpts);
+      let y = addReportHeader(doc, headerOpts);
+
+      // Profile info
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      const profileLine = [
+        data.profile.role ? `Role: ${data.profile.role}` : '',
+        data.profile.hireDate ? `Hired: ${formatDate(new Date(data.profile.hireDate), 'MMM d, yyyy')}` : '',
+        data.profile.locationName ? `Location: ${data.profile.locationName}` : '',
+        `Experience Score: ${data.experienceScore.composite}/100`,
+        data.commission.tierName ? `Commission Tier: ${data.commission.tierName}` : '',
+      ].filter(Boolean).join('  |  ');
+      doc.text(profileLine, 14, y);
+      y += 8;
+
+      // KPI Table
+      autoTable(doc, {
+        ...branding,
+        startY: y,
+        head: [['Metric', 'Value', 'Team Average']],
+        body: [
+          ['Total Revenue', formatCurrencyWhole(data.revenue.total), formatCurrencyWhole(data.teamAverages.revenue)],
+          ['Avg Ticket', formatCurrencyWhole(data.revenue.avgTicket), formatCurrencyWhole(data.teamAverages.avgTicket)],
+          ['Appointments', data.productivity.totalAppointments.toString(), Math.round(data.teamAverages.appointments).toString()],
+          ['Rebooking Rate', `${data.clientMetrics.rebookingRate.toFixed(1)}%`, `${data.teamAverages.rebookingRate.toFixed(1)}%`],
+          ['Retention Rate', `${data.clientMetrics.retentionRate.toFixed(1)}%`, `${data.teamAverages.retentionRate.toFixed(1)}%`],
+          ['New Clients', data.clientMetrics.newClients.toString(), Math.round(data.teamAverages.newClients).toString()],
+          ['Commission Earned', formatCurrencyWhole(data.commission.totalCommission), ''],
+          ['Experience Score', `${data.experienceScore.composite}/100`, ''],
+        ],
+        theme: 'striped',
+        headStyles: { fillColor: [51, 51, 51] },
+        margin: { ...branding.margin, left: 14, right: 14 },
+      });
+
+      // Top Services
+      if (data.topServices.length > 0) {
+        y = (doc as any).lastAutoTable?.finalY + 10 || y + 60;
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text('Top Services', 14, y);
+        y += 4;
+        autoTable(doc, {
+          ...branding,
+          startY: y,
+          head: [['Service', 'Count', 'Revenue', 'Avg Price']],
+          body: data.topServices.map(s => [s.name, s.count.toString(), formatCurrencyWhole(s.revenue), formatCurrencyWhole(s.avgPrice)]),
+          theme: 'striped',
+          headStyles: { fillColor: [51, 51, 51] },
+          margin: { ...branding.margin, left: 14, right: 14 },
+        });
+      }
+
+      // Top Clients
+      if (data.topClients.length > 0) {
+        y = (doc as any).lastAutoTable?.finalY + 10 || y + 60;
+        if (y > 170) { doc.addPage(); y = 20; }
+        doc.setFontSize(12);
+        doc.setTextColor(0);
+        doc.text('Top Clients', 14, y);
+        y += 4;
+        autoTable(doc, {
+          ...branding,
+          startY: y,
+          head: [['Client', 'Visits', 'Revenue', 'Avg Ticket', 'Last Visit', 'Status']],
+          body: data.topClients.map(c => [
+            c.name, c.visits.toString(), formatCurrencyWhole(c.revenue),
+            formatCurrencyWhole(c.avgTicket), c.lastVisit, c.atRisk ? 'At Risk' : 'Active',
+          ]),
+          theme: 'striped',
+          headStyles: { fillColor: [51, 51, 51] },
+          margin: { ...branding.margin, left: 14, right: 14 },
+        });
+      }
+
+      addReportFooter(doc);
+      const filename = `staff-report-${data.profile.name.replace(/\s+/g, '-').toLowerCase()}-${dateFrom}-to-${dateTo}.pdf`;
+      doc.save(filename);
+
+      // Log to report history
+      if (user) {
+        await supabase.from('report_history').insert({
+          report_type: 'individual-staff',
+          report_name: `Staff Report: ${data.profile.name}`,
+          date_from: dateFrom,
+          date_to: dateTo,
+          parameters: { staffUserId: selectedStaffId, locationId },
+          generated_by: user.id,
+          organization_id: effectiveOrganization?.id ?? null,
+        });
+      }
+      toast.success('Report downloaded successfully');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate report');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // ── CSV Export ──
+  const exportCSV = () => {
+    if (!data) return;
+    let csv = 'Metric,Value,Team Average\n';
+    csv += `Total Revenue,${data.revenue.total},${data.teamAverages.revenue}\n`;
+    csv += `Avg Ticket,${data.revenue.avgTicket},${data.teamAverages.avgTicket}\n`;
+    csv += `Appointments,${data.productivity.totalAppointments},${Math.round(data.teamAverages.appointments)}\n`;
+    csv += `Rebooking Rate,${data.clientMetrics.rebookingRate.toFixed(1)}%,${data.teamAverages.rebookingRate.toFixed(1)}%\n`;
+    csv += `Retention Rate,${data.clientMetrics.retentionRate.toFixed(1)}%,${data.teamAverages.retentionRate.toFixed(1)}%\n`;
+    csv += `New Clients,${data.clientMetrics.newClients},${Math.round(data.teamAverages.newClients)}\n`;
+    csv += `Commission Earned,${data.commission.totalCommission},\n`;
+    csv += `Experience Score,${data.experienceScore.composite},\n`;
+    csv += '\nTop Services\nService,Count,Revenue,Avg Price\n';
+    data.topServices.forEach(s => { csv += `"${s.name}",${s.count},${s.revenue},${s.avgPrice}\n`; });
+    csv += '\nTop Clients\nClient,Visits,Revenue,Avg Ticket,Last Visit,Status\n';
+    data.topClients.forEach(c => { csv += `"${c.name}",${c.visits},${c.revenue},${c.avgTicket},${c.lastVisit},${c.atRisk ? 'At Risk' : 'Active'}\n`; });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `staff-report-${data.profile.name.replace(/\s+/g, '-').toLowerCase()}-${dateFrom}-to-${dateTo}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exported');
+  };
+
+
+  // ── KPI cards data ──
+  const kpis = data ? [
+    { label: 'Total Revenue', value: formatCurrencyWhole(data.revenue.total), teamAvg: formatCurrencyWhole(data.teamAverages.revenue), icon: DollarSign, change: data.revenue.revenueChange, tooltip: 'Total revenue from all appointments in the period.' },
+    { label: 'Avg Ticket', value: formatCurrencyWhole(data.revenue.avgTicket), teamAvg: formatCurrencyWhole(data.teamAverages.avgTicket), icon: Target, change: null, tooltip: 'Average revenue per completed appointment.' },
+    { label: 'Appointments', value: data.productivity.totalAppointments.toString(), teamAvg: Math.round(data.teamAverages.appointments).toString(), icon: Calendar, change: null, tooltip: 'Total appointments (all statuses) in the period.' },
+    { label: 'Rebooking Rate', value: `${data.clientMetrics.rebookingRate.toFixed(1)}%`, teamAvg: `${data.teamAverages.rebookingRate.toFixed(1)}%`, icon: UserCheck, change: null, tooltip: 'Percentage of clients who rebooked at checkout.' },
+    { label: 'Retention Rate', value: `${data.clientMetrics.retentionRate.toFixed(1)}%`, teamAvg: `${data.teamAverages.retentionRate.toFixed(1)}%`, icon: Users, change: null, tooltip: 'Percentage of clients who returned within the period.' },
+    { label: 'New Clients', value: data.clientMetrics.newClients.toString(), teamAvg: Math.round(data.teamAverages.newClients).toString(), icon: Star, change: null, tooltip: 'Number of first-time clients seen.' },
+    { label: 'Commission Earned', value: formatCurrencyWhole(data.commission.totalCommission), teamAvg: '', icon: Wallet, change: null, tooltip: 'Estimated commission based on current tier and revenue.' },
+    { label: 'Experience Score', value: `${data.experienceScore.composite}`, teamAvg: '', icon: Briefcase, change: null, tooltip: 'Composite score from rebooking, tips, retention, and retail.' },
+  ] : [];
+
+  // ── Strengths and improvements ──
+  const strengths: string[] = [];
+  const improvements: string[] = [];
+
+  if (data && data.teamAverages.revenue > 0) {
+    const ta = data.teamAverages;
+    if (data.revenue.total > ta.revenue * 1.1) strengths.push(`Revenue is ${Math.round(((data.revenue.total - ta.revenue) / ta.revenue) * 100)}% above team average`);
+    else if (data.revenue.total < ta.revenue * 0.9) improvements.push(`Revenue is ${Math.round(((ta.revenue - data.revenue.total) / ta.revenue) * 100)}% below team average`);
+
+    if (data.revenue.avgTicket > ta.avgTicket * 1.1) strengths.push(`Average ticket is ${formatCurrencyWhole(data.revenue.avgTicket - ta.avgTicket)} above team average`);
+    else if (data.revenue.avgTicket < ta.avgTicket * 0.9) improvements.push(`Average ticket is ${formatCurrencyWhole(ta.avgTicket - data.revenue.avgTicket)} below team average`);
+
+    if (data.clientMetrics.rebookingRate > ta.rebookingRate * 1.1) strengths.push(`Rebooking rate of ${data.clientMetrics.rebookingRate.toFixed(1)}% exceeds team average`);
+    else if (data.clientMetrics.rebookingRate < ta.rebookingRate * 0.9 && ta.rebookingRate > 0) improvements.push(`Rebooking rate of ${data.clientMetrics.rebookingRate.toFixed(1)}% is below team average of ${ta.rebookingRate.toFixed(1)}%`);
+
+    if (data.clientMetrics.retentionRate > ta.retentionRate * 1.1) strengths.push(`Strong client retention at ${data.clientMetrics.retentionRate.toFixed(1)}%`);
+    else if (data.clientMetrics.retentionRate < ta.retentionRate * 0.9 && ta.retentionRate > 0) improvements.push(`Retention rate of ${data.clientMetrics.retentionRate.toFixed(1)}% needs attention (team avg: ${ta.retentionRate.toFixed(1)}%)`);
+
+    if (data.retail.attachmentRate > 30) strengths.push(`Excellent retail attachment rate of ${data.retail.attachmentRate}%`);
+    else if (data.retail.attachmentRate < 15 && data.productivity.totalAppointments > 5) improvements.push(`Retail attachment rate of ${data.retail.attachmentRate}% has room to grow`);
+
+    if (data.clientMetrics.newClients > ta.newClients * 1.2) strengths.push(`Bringing in ${data.clientMetrics.newClients} new clients (above team average)`);
+
+    if (data.experienceScore.composite >= 70) strengths.push(`Experience score of ${data.experienceScore.composite}/100 shows strong overall performance`);
+    else if (data.experienceScore.composite < 50 && data.experienceScore.composite > 0) improvements.push(`Experience score of ${data.experienceScore.composite}/100 needs focused improvement`);
+  }
+
+  // ── Render ──
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <button onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1">
+          <ArrowLeft className="w-4 h-4" /> Back to Reports
+        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
+            <SelectTrigger className="w-[260px]">
+              <SelectValue placeholder="Select a staff member..." />
+            </SelectTrigger>
+            <SelectContent>
+              {staffList.map((member) => (
+                <SelectItem key={member.user_id} value={member.user_id}>
+                  <div className="flex items-center gap-2">
+                    <Avatar className="w-5 h-5">
+                      <AvatarImage src={member.photo_url || undefined} />
+                      <AvatarFallback className="text-[8px]">{getInitials(member.display_name || member.full_name || '?')}</AvatarFallback>
+                    </Avatar>
+                    {member.display_name || member.full_name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {data && (
+            <>
+              <Button variant="outline" size="sm" onClick={exportCSV}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" /> CSV
+              </Button>
+              <Button size="sm" onClick={generatePDF} disabled={isGenerating}>
+                {isGenerating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</> : <><Download className="w-4 h-4 mr-2" /> Download PDF</>}
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* No selection state */}
+      {!selectedStaffId && (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Users className="w-12 h-12 mx-auto mb-4 text-muted-foreground/30" />
+            <p className="text-lg font-medium mb-1">Select a Staff Member</p>
+            <p className="text-sm text-muted-foreground">Choose a team member above to view their comprehensive performance report.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Loading */}
+      {selectedStaffId && isLoading && (
+        <div className="space-y-4">
+          <Skeleton className="h-24 w-full" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[1,2,3,4,5,6,7,8].map(i => <Skeleton key={i} className="h-28" />)}</div>
+          <Skeleton className="h-64 w-full" />
+        </div>
+      )}
+
+
+      {/* Main report content */}
+      {data && !isLoading && (
+        <>
+          {/* Section 1: Profile Banner */}
+          <Card>
+            <CardContent className="p-5">
+              <div className="flex items-center gap-4">
+                <Avatar className="w-16 h-16">
+                  {data.profile.photoUrl && <AvatarImage src={data.profile.photoUrl} alt={data.profile.name} />}
+                  <AvatarFallback className="text-lg">{getInitials(data.profile.name)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-xl font-display tracking-wide">{data.profile.name}</h2>
+                  <div className="flex items-center gap-3 mt-1 flex-wrap">
+                    {data.profile.role && <Badge variant="outline" className="capitalize text-xs">{data.profile.role}</Badge>}
+                    {data.profile.locationName && <span className="text-xs text-muted-foreground">{data.profile.locationName}</span>}
+                    {data.profile.hireDate && <span className="text-xs text-muted-foreground">Hired {formatDate(new Date(data.profile.hireDate), 'MMM yyyy')}</span>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {data.commission.tierName && (
+                    <Badge variant="outline" className="text-xs"><Wallet className="w-3 h-3 mr-1" />{data.commission.tierName}</Badge>
+                  )}
+                  <div className="text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-0.5">Experience</p>
+                    <ScoreBadge score={data.experienceScore.composite} status={data.experienceScore.status} />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Section 2: KPI Summary (4x2 grid) */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {kpis.map((kpi) => {
+              const Icon = kpi.icon;
+              return (
+                <Card key={kpi.label}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                      <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">{kpi.label}</p>
+                      <MetricInfoTooltip description={kpi.tooltip} />
+                    </div>
+                    <div className="flex items-end gap-2">
+                      <span className="text-xl font-display tabular-nums"><BlurredAmount>{kpi.value}</BlurredAmount></span>
+                      {kpi.change !== null && kpi.change !== undefined && (
+                        <span className={cn('text-xs font-medium tabular-nums', kpi.change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-500 dark:text-red-400')}>
+                          {kpi.change >= 0 ? '+' : ''}{Math.round(kpi.change)}%
+                        </span>
+                      )}
+                    </div>
+                    {kpi.teamAvg && (
+                      <p className="text-[10px] text-muted-foreground mt-1">Team Avg: {kpi.teamAvg}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+
+          {/* Section 3: Multi-Period Trend Indicators */}
+          <Card>
+            <CardContent className="p-4">
+              <div className="grid grid-cols-3 gap-6">
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Revenue Trend (3 periods)</p>
+                  <TrendIndicator values={data.multiPeriodTrend.revenue.map(v => Math.round(v)) as [number, number, number]} />
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Rebooking Trend</p>
+                  <TrendIndicator values={data.multiPeriodTrend.rebooking.map(v => Math.round(v * 10) / 10) as [number, number, number]} />
+                </div>
+                <div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Retention Trend</p>
+                  <TrendIndicator values={data.multiPeriodTrend.retention.map(v => Math.round(v * 10) / 10) as [number, number, number]} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Section 4: Revenue Trend Chart */}
+          {data.revenue.dailyTrend.length >= 2 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-sm tracking-wide uppercase">Revenue Trend</CardTitle>
+                  <MetricInfoTooltip description="Daily revenue from appointments for this staff member over the selected period." />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[200px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={data.revenue.dailyTrend} margin={{ left: 0, right: 0, top: 4, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="staffRevGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis dataKey="date" tickFormatter={(d) => { const p = d.split('-'); return `${parseInt(p[1])}/${parseInt(p[2])}`; }} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                      <YAxis tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                      <Tooltip formatter={(v: number) => [formatCurrencyWhole(v), 'Revenue']} contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                      <Area type="monotone" dataKey="revenue" stroke="hsl(var(--chart-1))" fill="url(#staffRevGrad)" strokeWidth={2} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+
+          {/* Section 5: Performance Breakdown (2 col) */}
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Service vs Product */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="font-display text-sm tracking-wide uppercase">Revenue Split</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {data.revenue.service + data.revenue.product > 0 ? (
+                  <div className="flex items-center gap-6">
+                    <div className="w-[120px] h-[120px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={[{ name: 'Service', value: data.revenue.service }, { name: 'Product', value: data.revenue.product }]} cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={2} dataKey="value">
+                            <Cell fill={PIE_COLORS[0]} />
+                            <Cell fill={PIE_COLORS[1]} />
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: PIE_COLORS[0] }} />
+                        <span className="text-muted-foreground">Service:</span>
+                        <span className="font-medium tabular-nums"><BlurredAmount>{formatCurrencyWhole(data.revenue.service)}</BlurredAmount></span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: PIE_COLORS[1] }} />
+                        <span className="text-muted-foreground">Product:</span>
+                        <span className="font-medium tabular-nums"><BlurredAmount>{formatCurrencyWhole(data.revenue.product)}</BlurredAmount></span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No revenue data</p>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Appointment Status */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="font-display text-sm tracking-wide uppercase">Appointment Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {data.productivity.totalAppointments > 0 ? (
+                  <div className="flex items-center gap-6">
+                    <div className="w-[120px] h-[120px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie data={[{ name: 'Completed', value: data.productivity.completed }, { name: 'No-Show', value: data.productivity.noShows }, { name: 'Cancelled', value: data.productivity.cancelled }]} cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={2} dataKey="value">
+                            <Cell fill="hsl(var(--chart-2))" />
+                            <Cell fill="hsl(var(--destructive))" />
+                            <Cell fill="hsl(var(--chart-4))" />
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--chart-2))' }} /><span className="text-muted-foreground">Completed:</span><span className="font-medium">{data.productivity.completed}</span></div>
+                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--destructive))' }} /><span className="text-muted-foreground">No-Show:</span><span className="font-medium">{data.productivity.noShows}</span></div>
+                      <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-sm" style={{ backgroundColor: 'hsl(var(--chart-4))' }} /><span className="text-muted-foreground">Cancelled:</span><span className="font-medium">{data.productivity.cancelled}</span></div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No appointment data</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Section 6: Top Services */}
+          {data.topServices.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-sm tracking-wide uppercase">Top Services</CardTitle>
+                  <MetricInfoTooltip description="Top 5 services by revenue for this staff member in the selected period." />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Service</TableHead>
+                      <TableHead className="text-right">Count</TableHead>
+                      <TableHead className="text-right">Revenue</TableHead>
+                      <TableHead className="text-right">Avg Price</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.topServices.map(s => (
+                      <TableRow key={s.name}>
+                        <TableCell className="font-medium">{s.name}</TableCell>
+                        <TableCell className="text-right tabular-nums">{s.count}</TableCell>
+                        <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrencyWhole(s.revenue)}</BlurredAmount></TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(s.avgPrice)}</BlurredAmount></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
+
+          {/* Section 7: Top Clients */}
+          {data.topClients.length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-sm tracking-wide uppercase">Top Clients</CardTitle>
+                  <MetricInfoTooltip description="Top 10 clients by revenue for this staff member. Clients who haven't visited in 60+ days are flagged as at risk." />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Client</TableHead>
+                      <TableHead className="text-right">Visits</TableHead>
+                      <TableHead className="text-right">Revenue</TableHead>
+                      <TableHead className="text-right">Avg Ticket</TableHead>
+                      <TableHead>Last Visit</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {data.topClients.map(c => (
+                      <TableRow key={c.clientId} className={cn(c.atRisk && 'bg-red-50/50 dark:bg-red-950/10')}>
+                        <TableCell className="font-medium">{c.name}</TableCell>
+                        <TableCell className="text-right tabular-nums">{c.visits}</TableCell>
+                        <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrencyWhole(c.revenue)}</BlurredAmount></TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(c.avgTicket)}</BlurredAmount></TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{c.lastVisit}</TableCell>
+                        <TableCell>
+                          {c.atRisk ? (
+                            <Badge variant="outline" className="text-[10px] text-red-600 border-red-300 dark:text-red-400 dark:border-red-800">
+                              <AlertTriangle className="w-3 h-3 mr-1" />At Risk
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] text-emerald-600 border-emerald-300 dark:text-emerald-400 dark:border-emerald-800">
+                              <CheckCircle2 className="w-3 h-3 mr-1" />Active
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Section 8: Retail Performance */}
+          {data.retail.productRevenue > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-sm tracking-wide uppercase">Retail Performance</CardTitle>
+                  <MetricInfoTooltip description="Retail product sales for this staff member. Attachment rate is the percentage of their service transactions that included a product sale." />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Product Revenue</p>
+                    <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(data.retail.productRevenue)}</BlurredAmount></p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Units Sold</p>
+                    <p className="text-xl font-display tabular-nums">{data.retail.unitsSold}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Attachment Rate</p>
+                    <p className="text-xl font-display tabular-nums">{data.retail.attachmentRate}%</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Section 9: Strengths & Areas for Improvement */}
+          {(strengths.length > 0 || improvements.length > 0) && (
+            <div className="grid md:grid-cols-2 gap-4">
+              {strengths.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <CardTitle className="font-display text-sm tracking-wide uppercase">Strengths</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {strengths.map((s, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                          {s}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+              {improvements.length > 0 && (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-2">
+                      <Target className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                      <CardTitle className="font-display text-sm tracking-wide uppercase">Areas for Improvement</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {improvements.map((s, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm">
+                          <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
+                          {s}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}

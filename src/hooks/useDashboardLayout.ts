@@ -33,11 +33,19 @@ export const toPinnedEntry = (cardId: string): string => `pinned:${cardId}`;
 
 // All available pinnable card IDs for reference
 export const PINNABLE_CARD_IDS = [
+  'executive_summary',
   'operations_stats',
   'sales_overview',
   'top_performers',
   'revenue_breakdown',
   'client_funnel',
+  'client_health',
+  'daily_brief',
+  'operational_health',
+  'locations_rollup',
+  'service_mix',
+  'retail_effectiveness',
+  'rebooking',
   'team_goals',
   'goal_tracker',
   'new_bookings',

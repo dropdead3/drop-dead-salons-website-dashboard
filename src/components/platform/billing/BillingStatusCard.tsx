@@ -7,7 +7,7 @@ import {
   XCircle,
   Sparkles
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import {
   PlatformCard,
   PlatformCardContent,
@@ -48,6 +48,7 @@ export function BillingStatusCard({
   nextInvoiceDate,
   planName,
 }: BillingStatusCardProps) {
+  const { formatDate } = useFormatDate();
   const status = statusConfig[billingStatus];
 
   return (
@@ -96,7 +97,7 @@ export function BillingStatusCard({
               </p>
             ) : nextInvoiceDate ? (
               <p className="text-lg font-semibold text-white">
-                {format(new Date(nextInvoiceDate), 'MMM d, yyyy')}
+                {formatDate(new Date(nextInvoiceDate), 'MMM d, yyyy')}
               </p>
             ) : (
               <p className="text-lg font-semibold text-slate-500">Not scheduled</p>

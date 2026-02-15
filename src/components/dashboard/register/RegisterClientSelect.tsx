@@ -7,6 +7,7 @@ import { useClientSearch } from '@/hooks/useClientsData';
 import { useClientBalance } from '@/hooks/useClientBalances';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { BannedClientAlert } from '@/components/dashboard/clients/BannedClientAlert';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface RegisterClientSelectProps {
   selectedClientId: string | null;
@@ -29,6 +30,7 @@ export function RegisterClientSelect({
 }: RegisterClientSelectProps) {
   const [search, setSearch] = useState('');
   const [showSearch, setShowSearch] = useState(false);
+  const { formatCurrency } = useFormatCurrency();
 
   const { data: clients = [] } = useClientSearch(search, 10);
   const { data: balance } = useClientBalance(selectedClientId || '');
@@ -83,7 +85,7 @@ export function RegisterClientSelect({
                     <span className="text-muted-foreground">Credit Balance</span>
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-green-600">
-                        ${balance.salon_credit_balance.toFixed(2)}
+                        {formatCurrency(balance.salon_credit_balance)}
                       </span>
                       {appliedCredit === 0 && (
                         <Button size="sm" variant="outline" className="h-7" onClick={handleApplyCredit}>
@@ -97,7 +99,7 @@ export function RegisterClientSelect({
                 {balance.gift_card_balance > 0 && (
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Gift Card Balance</span>
-                    <span className="font-medium">${balance.gift_card_balance.toFixed(2)}</span>
+                    <span className="font-medium">{formatCurrency(balance.gift_card_balance)}</span>
                   </div>
                 )}
               </div>

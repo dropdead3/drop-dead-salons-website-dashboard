@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format, addDays, isToday, startOfWeek } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
   ChevronLeft, 
   ChevronRight,
@@ -69,6 +70,7 @@ export function ScheduleHeader({
   calendarFilters,
   onCalendarFiltersChange,
 }: ScheduleHeaderProps) {
+  const { formatDate } = useFormatDate();
   const navigate = useNavigate();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [staffPopoverOpen, setStaffPopoverOpen] = useState(false);
@@ -155,7 +157,7 @@ export function ScheduleHeader({
         {/* Center: Date Display */}
         <div className="text-center">
         <div className="text-lg font-display tracking-wide">
-          {format(currentDate, 'EEEE, MMMM d, yyyy')}
+          {formatDate(currentDate, 'EEEE, MMMM d, yyyy')}
         </div>
           {isToday(currentDate) && (
             <div className="text-xs text-background/70">Today</div>
@@ -309,7 +311,7 @@ export function ScheduleHeader({
                   isTodayDate && !isSelected && 'text-primary'
                 )}
               >
-                {format(day, 'EEE')}
+                {formatDate(day, 'EEE')}
               </Button>
             );
           })}
@@ -349,7 +351,7 @@ export function ScheduleHeader({
                       <div className="flex flex-col items-start">
                         <span className="font-medium">+{weeks} Weeks</span>
                         <span className="text-xs text-muted-foreground">
-                          {format(targetDate, 'EEE, MMM d, yyyy')}
+                          {formatDate(targetDate, 'EEE, MMM d, yyyy')}
                         </span>
                       </div>
                     </Button>

@@ -13,13 +13,14 @@ import {
   useMyHuddleAcknowledgment,
   useAcknowledgeHuddle,
 } from '@/hooks/useHuddles';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface TodaysHuddleCardProps {
   locationId?: string;
 }
 
 export function TodaysHuddleCard({ locationId }: TodaysHuddleCardProps) {
+  const { formatDate } = useFormatDate();
   const { data: huddle, isLoading } = useTodaysHuddle(locationId);
   const { data: acknowledgment } = useMyHuddleAcknowledgment(huddle?.id);
   const acknowledgeHuddle = useAcknowledgeHuddle();
@@ -52,7 +53,7 @@ export function TodaysHuddleCard({ locationId }: TodaysHuddleCardProps) {
           <div>
             <h3 className="font-display text-sm tracking-wide">DAILY HUDDLE</h3>
             <p className="text-sm text-muted-foreground">
-              {format(new Date(), 'EEEE, MMMM d')}
+              {formatDate(new Date(), 'EEEE, MMMM d')}
             </p>
           </div>
         </div>
@@ -73,7 +74,7 @@ export function TodaysHuddleCard({ locationId }: TodaysHuddleCardProps) {
           <div>
             <h3 className="font-display text-sm tracking-wide">DAILY HUDDLE</h3>
             <p className="text-sm text-muted-foreground">
-              {format(new Date(huddle.huddle_date), 'EEEE, MMMM d')}
+              {formatDate(new Date(huddle.huddle_date), 'EEEE, MMMM d')}
             </p>
           </div>
         </div>

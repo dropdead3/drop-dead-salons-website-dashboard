@@ -9,9 +9,10 @@ import { useActionCampaigns, useUpdateCampaignStatus } from '@/hooks/useActionCa
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 export function ActiveCampaignsCard() {
+  const { formatDate } = useFormatDate();
   const { data: campaigns, isLoading } = useActionCampaigns('active');
   const updateStatus = useUpdateCampaignStatus();
 
@@ -81,7 +82,7 @@ export function ActiveCampaignsCard() {
                       <div className="flex items-center gap-2 mb-2">
                         <Badge variant="outline" className="text-[10px] gap-1">
                           <Calendar className="w-2.5 h-2.5" />
-                          {format(new Date(campaign.created_at), 'MMM d')}
+                          {formatDate(new Date(campaign.created_at), 'MMM d')}
                         </Badge>
                         {campaign.goal_period && (
                           <span className="text-[11px] text-muted-foreground">{campaign.goal_period}</span>

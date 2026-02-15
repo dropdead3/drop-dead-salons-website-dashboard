@@ -19,7 +19,7 @@ import {
   Globe,
   MapPin,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { useActiveLocations } from '@/hooks/useLocations';
 
@@ -58,6 +58,7 @@ const normalizeUrl = (url: string): string => {
 };
 
 export function AnnouncementsBento({ announcements, isLeadership }: AnnouncementsBentoProps) {
+  const { formatDate } = useFormatDate();
   const [isExpanded, setIsExpanded] = useState(true);
   const [locationFilter, setLocationFilter] = useState<string>('all');
   const { data: locations = [] } = useActiveLocations();
@@ -171,7 +172,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
                   
                   <div className="flex items-center justify-between mt-auto">
                     <div className="flex items-center gap-2 text-xs text-muted-foreground/60 tracking-wide">
-                      <span>{format(new Date(announcement.created_at), 'MMM d')}</span>
+                      <span>{formatDate(new Date(announcement.created_at), 'MMM d')}</span>
                       <span>·</span>
                       <span className="flex items-center gap-1">
                         {announcement.location_id ? (

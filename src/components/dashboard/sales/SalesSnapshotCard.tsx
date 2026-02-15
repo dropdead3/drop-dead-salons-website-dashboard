@@ -7,6 +7,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { BarChart3, Trophy, Medal, PieChart as PieChartIcon } from 'lucide-react';
 import { BlurredAmount, useHideNumbers } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface Performer {
   user_id: string;
@@ -55,6 +56,7 @@ export function SalesSnapshotCard({
   productRevenue,
 }: SalesSnapshotCardProps) {
   const { hideNumbers } = useHideNumbers();
+  const { formatCurrencyWhole } = useFormatCurrency();
   const topThree = performers.slice(0, 3);
 
   // Revenue mix chart data
@@ -134,7 +136,7 @@ export function SalesSnapshotCard({
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{performer.name}</p>
                       <BlurredAmount className="text-xs text-muted-foreground">
-                        ${performer.totalRevenue.toLocaleString()}
+                        {formatCurrencyWhole(performer.totalRevenue)}
                       </BlurredAmount>
                     </div>
                     <Badge variant="outline" className="text-xs">
@@ -182,7 +184,7 @@ export function SalesSnapshotCard({
                     </Pie>
                     {!hideNumbers && (
                       <Tooltip
-                        formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
+                        formatter={(value: number) => [formatCurrencyWhole(value), '']}
                         contentStyle={{
                           backgroundColor: 'hsl(var(--background))',
                           border: '1px solid hsl(var(--border))',

@@ -9,6 +9,7 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
   Form,
   FormControl,
@@ -55,6 +56,7 @@ export function PromotionalServiceFormDialog({
   onOpenChange,
   organizationId,
 }: PromotionalServiceFormDialogProps) {
+  const { formatCurrency } = useFormatCurrency();
   const createPromoService = useCreatePromotionalService();
 
   // Fetch services for the dropdown
@@ -145,7 +147,7 @@ export function PromotionalServiceFormDialog({
                     <SelectContent>
                       {services?.map((service) => (
                         <SelectItem key={service.id} value={service.id}>
-                          {service.name} - ${service.price}
+                          {service.name} - {formatCurrency(service.price)}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -159,7 +161,7 @@ export function PromotionalServiceFormDialog({
               <div className="p-3 bg-muted rounded-lg text-sm">
                 <p>
                   <span className="text-muted-foreground">Original Price:</span>{' '}
-                  <span className="font-medium">${selectedService.price}</span>
+                  <span className="font-medium">{formatCurrency(selectedService.price)}</span>
                 </p>
               </div>
             )}

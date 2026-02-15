@@ -1,4 +1,6 @@
-import { format, differenceInDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,6 +42,8 @@ interface ClientProfileViewProps {
 }
 
 export function ClientProfileView({ client, onBack, onSelect }: ClientProfileViewProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   const { data: visitHistory = [], isLoading: historyLoading } = useClientVisitHistory(client.phorest_client_id);
 
   const initials = client.name
@@ -91,7 +95,7 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
         </Card>
         <Card className="p-2 text-center bg-muted/30 border-0">
           <TrendingUp className="w-3.5 h-3.5 mx-auto text-muted-foreground mb-0.5" />
-          <p className="font-medium text-sm">${(client.total_spend ?? 0).toLocaleString()}</p>
+          <p className="font-medium text-sm">{formatCurrencyWhole(client.total_spend ?? 0)}</p>
           <p className="text-[10px] text-muted-foreground">Spent</p>
         </Card>
         <Card className="p-2 text-center bg-muted/30 border-0">
@@ -114,7 +118,7 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
           <div className="flex items-center gap-3 text-xs">
             <span className="flex items-center gap-1">
               <Calendar className="w-3 h-3 text-muted-foreground" />
-              {format(new Date(lastVisit.appointment_date), 'MMM d, yyyy')}
+              {formatDate(new Date(lastVisit.appointment_date), 'MMM d, yyyy')}
             </span>
             {lastVisit.stylist_name && (
               <span className="flex items-center gap-1">

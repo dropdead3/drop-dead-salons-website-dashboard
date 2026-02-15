@@ -101,9 +101,10 @@ export function useComparisonData(params: ComparisonParams) {
       // Fetch Period A data
       let queryA = supabase
         .from('phorest_daily_sales_summary')
-        .select('total_revenue, service_revenue, product_revenue, total_transactions, location_id')
+        .select('summary_date, total_revenue, service_revenue, product_revenue, total_transactions, location_id')
         .gte('summary_date', periodA.dateFrom)
-        .lte('summary_date', periodA.dateTo);
+        .lte('summary_date', periodA.dateTo)
+        .order('summary_date', { ascending: true });
 
       if (locationIds && locationIds.length > 0) {
         queryA = queryA.in('location_id', locationIds);
@@ -114,9 +115,10 @@ export function useComparisonData(params: ComparisonParams) {
       // Fetch Period B data
       let queryB = supabase
         .from('phorest_daily_sales_summary')
-        .select('total_revenue, service_revenue, product_revenue, total_transactions, location_id')
+        .select('summary_date, total_revenue, service_revenue, product_revenue, total_transactions, location_id')
         .gte('summary_date', periodB.dateFrom)
-        .lte('summary_date', periodB.dateTo);
+        .lte('summary_date', periodB.dateTo)
+        .order('summary_date', { ascending: true });
 
       if (locationIds && locationIds.length > 0) {
         queryB = queryB.in('location_id', locationIds);
@@ -166,6 +168,39 @@ export function useComparisonData(params: ComparisonParams) {
           },
         ],
       };
+
+      // Daily overlay for time/yoy modes
+      if (mode === 'time' || mode === 'yoy') {
+        // Aggregate by date for each period
+        const dailyMapA: Record<string, number> = {};
+        const dailyMapB: Record<string, number> = {};
+
+        (dataA || []).forEach(row => {
+          const d = row.summary_date;
+          dailyMapA[d] = (dailyMapA[d] || 0) + (Number(row.total_revenue) || 0);
+        });
+        (dataB || []).forEach(row => {
+          const d = row.summary_date;
+          dailyMapB[d] = (dailyMapB[d] || 0) + (Number(row.total_revenue) || 0);
+        });
+
+        const daysA = Object.keys(dailyMapA).sort();
+        const daysB = Object.keys(dailyMapB).sort();
+        const maxLen = Math.max(daysA.length, daysB.length);
+
+        const overlay: DailyOverlayPoint[] = [];
+        for (let i = 0; i < maxLen; i++) {
+          const valA = i < daysA.length ? dailyMapA[daysA[i]] : 0;
+          const valB = i < daysB.length ? dailyMapB[daysB[i]] : 0;
+          overlay.push({
+            date: i < daysA.length ? daysA[i] : daysB[i],
+            periodA: valA,
+            periodB: valB,
+            delta: valA - valB,
+          });
+        }
+        result.dailyOverlay = overlay;
+      }
 
       // Location breakdown for location mode
       if (mode === 'location') {

@@ -7,8 +7,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { BlurredAmount, useHideNumbers } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useForecastRevenue, ForecastPeriod, DayForecast, WeekForecast, CategoryBreakdown } from '@/hooks/useForecastRevenue';
-import { CategoryBreakdownPanel, BreakdownMode } from './CategoryBreakdownPanel';
+import { CategoryBreakdownPanel, BreakdownMode, BreakdownType } from './CategoryBreakdownPanel';
 import { useYearlyGoalProgress } from '@/hooks/useYearlyGoalProgress';
 import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsSheet } from './DayAppointmentsSheet';
@@ -18,7 +21,8 @@ import { CalendarRange, TrendingUp, TrendingDown, Calendar, Users, Info, Target,
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { cn } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
+import { parseISO, differenceInDays, endOfMonth } from 'date-fns';
+import { useRevenueForecast } from '@/hooks/useRevenueForecast';
 import { motion, useInView } from 'framer-motion';
 import { 
   BarChart, 
@@ -73,6 +77,8 @@ const PERIOD_DESCRIPTIONS: Record<ForecastPeriod, string> = {
 
 // Custom tooltip for forecast chart
 function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart }: any) {
+  const { formatCurrency } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   if (!active || !payload?.length) return null;
   
   const data = payload[0]?.payload;
@@ -85,7 +91,7 @@ function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart 
     displayLabel = week ? week.weekLabel : label;
   } else {
     const day = days?.find((d: DayForecast) => d.date === label);
-    displayLabel = day ? format(parseISO(day.date), 'EEEE, MMM d') : label;
+    displayLabel = day ? formatDate(day.date, 'EEEE, MMM d') : label;
   }
   
   const confirmedRevenue = data.confirmedRevenue || 0;
@@ -105,7 +111,7 @@ function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart 
             <span className="text-muted-foreground">Confirmed</span>
           </div>
           <span className="font-medium tabular-nums">
-            ${confirmedRevenue.toLocaleString()}
+            {formatCurrency(confirmedRevenue)}
           </span>
         </div>
         
@@ -117,7 +123,7 @@ function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart 
               <span className="text-muted-foreground">Unconfirmed</span>
             </div>
             <span className="font-medium tabular-nums text-muted-foreground">
-              ${unconfirmedRevenue.toLocaleString()}
+              {formatCurrency(unconfirmedRevenue)}
             </span>
           </div>
         )}
@@ -129,7 +135,7 @@ function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart 
         <div className="flex items-center justify-between gap-4 text-sm">
           <span className="text-muted-foreground">Total</span>
           <span className="font-semibold tabular-nums text-primary">
-            ${totalRevenue.toLocaleString()}
+            {formatCurrency(totalRevenue)}
           </span>
         </div>
         
@@ -166,7 +172,7 @@ function AboveBarLabel({ x, y, width, value, ...rest }: any) {
         className={cn("text-xs tabular-nums", isPeak ? "fill-chart-2" : "fill-foreground")}
         style={{ fontWeight: isPeak ? 700 : 500, filter: isBlurred ? 'blur(8px)' : 'none' }}
       >
-        ${value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toLocaleString()}
+        {value >= 1000 ? formatCurrencyWholeUtil(Math.round(value / 1000)) + 'k' : formatCurrencyWholeUtil(value)}
       </text>
     </g>
   );
@@ -174,6 +180,7 @@ function AboveBarLabel({ x, y, width, value, ...rest }: any) {
 
 // Custom X-axis tick for daily view
 function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isEomPeriod, is7DaysPeriod }: any) {
+  const { formatDate } = useFormatDate();
   const [isHovered, setIsHovered] = useState(false);
   const day = days.find((d: DayForecast) => d.date === payload.value);
   if (!day) return null;
@@ -217,7 +224,7 @@ function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isEomPeriod
           textAnchor="middle" 
           className="text-[10px] fill-muted-foreground"
         >
-          {format(parseISO(day.date), 'MMM d')}
+          {formatDate(day.date, 'MMM d')}
         </text>
         <text 
           x={0} y={0} dy={38} 
@@ -280,6 +287,7 @@ function WeeklyXAxisTick({ x, y, payload, weeks, peakWeekStart }: any) {
 // Yearly Goal Progress Section
 function YearlyGoalProgressSection({ locationId }: { locationId?: string }) {
   const { data: goalData, isLoading } = useYearlyGoalProgress(locationId);
+  const { formatCurrency } = useFormatCurrency();
 
   if (isLoading) {
     return <Skeleton className="h-32 w-full" />;
@@ -337,10 +345,10 @@ function YearlyGoalProgressSection({ locationId }: { locationId?: string }) {
       {/* Revenue stats */}
       <div className="flex items-center justify-between text-sm">
         <span className="text-muted-foreground">
-          <BlurredAmount>${ytdRevenue.toLocaleString()}</BlurredAmount> earned
+          <BlurredAmount>{formatCurrency(ytdRevenue)}</BlurredAmount> earned
         </span>
         <span className="text-muted-foreground">
-          <BlurredAmount>${yearlyGoal.toLocaleString()}</BlurredAmount> goal
+          <BlurredAmount>{formatCurrency(yearlyGoal)}</BlurredAmount> goal
         </span>
       </div>
 
@@ -351,19 +359,28 @@ function YearlyGoalProgressSection({ locationId }: { locationId?: string }) {
       )}>
         <span className={statusColor}>
           {isOnTrack ? (
-            <>+<BlurredAmount>${Math.abs(aheadBehindAmount).toLocaleString()}</BlurredAmount> ahead of pace</>
+            <>+<BlurredAmount>{formatCurrency(Math.abs(aheadBehindAmount))}</BlurredAmount> ahead of pace</>
           ) : (
-            <>-<BlurredAmount>${Math.abs(aheadBehindAmount).toLocaleString()}</BlurredAmount> behind pace</>
+            <>-<BlurredAmount>{formatCurrency(Math.abs(aheadBehindAmount))}</BlurredAmount> behind pace</>
           )}
         </span>
         {!isOnTrack && remainingMonths > 0 && (
           <span className="text-xs text-muted-foreground">
-            Need <BlurredAmount>${Math.round(requiredMonthlyPace).toLocaleString()}</BlurredAmount>/mo
+            Need <BlurredAmount>{formatCurrency(Math.round(requiredMonthlyPace))}</BlurredAmount>/mo
           </span>
         )}
       </div>
     </div>
   );
+}
+
+function getForecastDays(period: ForecastPeriod): number {
+  if (period === 'tomorrow') return 1;
+  if (period === '7days') return 7;
+  if (period === '30days') return 30;
+  if (period === '60days') return 60;
+  const today = new Date();
+  return differenceInDays(endOfMonth(today), today) + 1;
 }
 
 export function ForecastingCard() {
@@ -373,8 +390,16 @@ export function ForecastingCard() {
   const [selectedDay, setSelectedDay] = useState<DayForecast | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedStatCard, setSelectedStatCard] = useState<BreakdownMode | null>(null);
+  const [breakdownType, setBreakdownType] = useState<BreakdownType>('category');
   const { data, isLoading, error } = useForecastRevenue(period, selectedLocation);
+  const forecastDays = getForecastDays(period);
+  const { data: predictedData } = useRevenueForecast({
+    forecastDays,
+    locationId: selectedLocation === 'all' ? undefined : selectedLocation,
+  });
   const { hideNumbers, requestUnhide } = useHideNumbers();
+  const { formatCurrency, currency } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   
   const chartRef = useRef<HTMLDivElement>(null);
   const isChartInView = useInView(chartRef, { once: true, amount: 0.3 });
@@ -426,7 +451,7 @@ export function ForecastingCard() {
     );
   }
 
-  const { days, weeks, totalRevenue, totalAppointments, averageDaily, averageWeekly, peakDay, peakWeek, byCategory } = data;
+  const { days, weeks, totalRevenue, totalAppointments, averageDaily, averageWeekly, peakDay, peakWeek, byCategory = {}, byLocation = {}, byStylist = {} } = data;
   const dayCount = days.length;
 
 
@@ -549,7 +574,7 @@ export function ForecastingCard() {
               </div>
               <AnimatedBlurredAmount 
                 value={totalRevenue}
-                prefix="$"
+                currency={currency}
                 className="text-lg font-display tabular-nums"
               />
               <div className="flex items-center gap-1 justify-center">
@@ -571,7 +596,7 @@ export function ForecastingCard() {
                 </div>
                 <AnimatedBlurredAmount 
                   value={avgValue}
-                  prefix="$"
+                  currency={currency}
                   className="text-lg font-display tabular-nums"
                 />
                 <div className="flex items-center gap-1 justify-center">
@@ -600,15 +625,67 @@ export function ForecastingCard() {
             </div>
           </div>
 
-          {/* Category Breakdown Panel */}
-          {byCategory && (
-            <CategoryBreakdownPanel
-              data={byCategory}
-              mode={selectedStatCard || 'revenue'}
-              dayCount={dayCount}
-              isOpen={selectedStatCard !== null}
-            />
+          {/* Scheduled vs Predicted (trend + history) */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1.5 py-2.5 px-3 rounded-lg bg-muted/20 border border-border/50 text-sm">
+            <span className="flex items-center gap-2">
+              <span className="text-muted-foreground">Scheduled</span>
+              <BlurredAmount className="font-medium tabular-nums">{formatCurrency(totalRevenue)}</BlurredAmount>
+            </span>
+            {predictedData?.summary != null && (
+              <span className="flex items-center gap-2">
+                <span className="text-muted-foreground">Predicted</span>
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <span className="font-medium tabular-nums cursor-help">
+                      <BlurredAmount>{formatCurrency(predictedData.summary.totalPredicted)}</BlurredAmount>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="text-xs max-w-[240px]">
+                    Based on last 90 days, day-of-week patterns, and current bookings.
+                  </TooltipContent>
+                </UITooltip>
+              </span>
+            )}
+          </div>
+
+          {/* Breakdown type selector - shown when a stat card is expanded */}
+          {selectedStatCard !== null && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Drill down by:</span>
+              <ToggleGroup
+                type="single"
+                value={breakdownType}
+                onValueChange={(v) => v && setBreakdownType(v as BreakdownType)}
+                className="bg-muted/50 p-1 rounded-lg"
+              >
+                <ToggleGroupItem value="category" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
+                  Category
+                </ToggleGroupItem>
+                <ToggleGroupItem value="location" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
+                  Location
+                </ToggleGroupItem>
+                <ToggleGroupItem value="stylist" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
+                  Service Provider
+                </ToggleGroupItem>
+              </ToggleGroup>
+            </div>
           )}
+
+          {/* Breakdown Panel - Category, Location, or Service Provider */}
+          {selectedStatCard !== null && (() => {
+            const breakdownData = breakdownType === 'location' ? (byLocation ?? {}) : breakdownType === 'stylist' ? (byStylist ?? {}) : (byCategory ?? {});
+            return Object.keys(breakdownData).length > 0 ? (
+              <CategoryBreakdownPanel
+                data={breakdownData}
+                mode={selectedStatCard}
+                dayCount={dayCount}
+                isOpen={true}
+                breakdownType={breakdownType}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground py-3">No {breakdownType === 'location' ? 'location' : breakdownType === 'stylist' ? 'service provider' : 'category'} data for this period</p>
+            );
+          })()}
 
           {/* Bar Chart - only show if not tomorrow */}
           {showChart && chartData.length > 0 && (
@@ -726,7 +803,7 @@ export function ForecastingCard() {
                       const chartLeft = xAxisMap[0].x;
                       const chartRight = chartLeft + xAxisMap[0].width;
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      const avgText = `Daily Avg: $${Math.round(averageDaily).toLocaleString()}`;
+                      const avgText = `Daily Avg: ${formatCurrency(Math.round(averageDaily))}`;
                       const padX = 8;
                       const padY = 4;
                       const fontSize = 12;
@@ -765,7 +842,7 @@ export function ForecastingCard() {
                       const chartLeft = xAxisMap[0].x;
                       const chartRight = chartLeft + xAxisMap[0].width;
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      const avgText = `Weekly Avg: $${Math.round(averageWeekly).toLocaleString()}`;
+                      const avgText = `Weekly Avg: ${formatCurrency(Math.round(averageWeekly))}`;
                       const padX = 6;
                       const padY = 3;
                       const fontSize = 11;
@@ -809,7 +886,7 @@ export function ForecastingCard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">
-                    {format(parseISO(days[0].date), 'EEEE, MMMM d')}
+                    {formatDate(days[0].date, 'EEEE, MMMM d')}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     Click to view {days[0].appointmentCount} appointment{days[0].appointmentCount !== 1 ? 's' : ''}
@@ -819,12 +896,12 @@ export function ForecastingCard() {
                   <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-xs">
                       {days[0].confirmedRevenue > 0 && (
-                        <span className="text-primary">${days[0].confirmedRevenue.toLocaleString()} confirmed</span>
+                        <span className="text-primary">{formatCurrency(days[0].confirmedRevenue)} confirmed</span>
                       )}
                     </Badge>
                     {days[0].unconfirmedRevenue > 0 && (
                       <Badge variant="outline" className="text-xs opacity-60">
-                        ${days[0].unconfirmedRevenue.toLocaleString()} unconfirmed
+                        {formatCurrency(days[0].unconfirmedRevenue)} unconfirmed
                       </Badge>
                     )}
                   </div>
@@ -845,7 +922,7 @@ export function ForecastingCard() {
                 Busiest week: <span className="font-medium text-foreground">{peakWeek.weekLabel}</span>
               </span>
               <span className="font-display text-chart-2">
-                <BlurredAmount>${peakWeek.revenue.toLocaleString()}</BlurredAmount>
+                <BlurredAmount>{formatCurrency(peakWeek.revenue)}</BlurredAmount>
               </span>
             </div>
           )}
@@ -853,10 +930,10 @@ export function ForecastingCard() {
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
               <span className="text-muted-foreground flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-chart-2" />
-                Busiest day: <span className="font-medium text-foreground">{format(parseISO(peakDay.date), 'EEEE')}</span>
+                Busiest day: <span className="font-medium text-foreground">{formatDate(peakDay.date, 'EEEE')}</span>
               </span>
               <span className="font-display text-chart-2">
-                <BlurredAmount>${peakDay.revenue.toLocaleString()}</BlurredAmount>
+                <BlurredAmount>{formatCurrency(peakDay.revenue)}</BlurredAmount>
               </span>
             </div>
           )}

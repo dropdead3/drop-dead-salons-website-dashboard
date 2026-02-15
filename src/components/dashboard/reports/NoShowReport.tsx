@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChartSkeleton } from '@/components/ui/chart-skeleton';
 import { 
   Table,
   TableBody,
@@ -13,11 +15,15 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { FileText, Download, Loader2, FileSpreadsheet, Clock } from 'lucide-react';
+import { FileText, Download, Loader2, FileSpreadsheet, Clock, Eye } from 'lucide-react';
+import { ReportPreviewModal } from '@/components/dashboard/reports/ReportPreviewModal';
 import { useNoShowReport } from '@/hooks/useNoShowReport';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { supabase } from '@/integrations/supabase/client';
+import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface NoShowReportProps {
   reportType: string;
@@ -35,8 +41,13 @@ export function NoShowReport({
   onClose 
 }: NoShowReportProps) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const { formatDate } = useFormatDate();
+  const { formatNumber } = useFormatNumber();
   const { user } = useAuth();
-  
+  const { effectiveOrganization } = useOrganizationContext();
+  const { formatCurrencyWhole } = useFormatCurrency();
+
   const { data: noShowData, isLoading } = useNoShowReport(dateFrom, dateTo, locationId);
 
   const getReportTitle = () => {
@@ -52,27 +63,16 @@ export function NoShowReport({
     setIsGenerating(true);
     try {
       const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      let y = 20;
-
-      // Header
-      doc.setFontSize(24);
-      doc.setFont('helvetica', 'bold');
-      doc.text(getReportTitle(), pageWidth / 2, y, { align: 'center' });
-      
-      y += 10;
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(100);
-      doc.text(
-        `${format(new Date(dateFrom), 'MMM d, yyyy')} - ${format(new Date(dateTo), 'MMM d, yyyy')}`,
-        pageWidth / 2,
-        y,
-        { align: 'center' }
-      );
-      
-      doc.setTextColor(0);
-      y += 15;
+      const logoDataUrl = await fetchLogoAsDataUrl(effectiveOrganization?.logo_url ?? null);
+      const headerOpts = {
+        orgName: effectiveOrganization?.name ?? 'Organization',
+        logoDataUrl,
+        reportTitle: getReportTitle(),
+        dateFrom,
+        dateTo,
+      } as const;
+      const branding = getReportAutoTableBranding(doc, headerOpts);
+      let y = addReportHeader(doc, headerOpts);
 
       // Summary
       if (noShowData) {
@@ -82,19 +82,20 @@ export function NoShowReport({
         y += 8;
 
         autoTable(doc, {
+          ...branding,
           startY: y,
           head: [['Metric', 'Value']],
           body: [
-            ['Total Appointments', noShowData.totalAppointments.toLocaleString()],
-            ['No-Shows', noShowData.noShows.toLocaleString()],
+            ['Total Appointments', formatNumber(noShowData.totalAppointments)],
+            ['No-Shows', formatNumber(noShowData.noShows)],
             ['No-Show Rate', `${noShowData.noShowRate.toFixed(1)}%`],
-            ['Cancellations', noShowData.cancellations.toLocaleString()],
+            ['Cancellations', formatNumber(noShowData.cancellations)],
             ['Cancellation Rate', `${noShowData.cancellationRate.toFixed(1)}%`],
-            ['Revenue Lost (Est.)', `$${noShowData.revenueLost.toLocaleString()}`],
+            ['Revenue Lost (Est.)', formatCurrencyWhole(noShowData.revenueLost)],
           ],
           theme: 'striped',
           headStyles: { fillColor: [51, 51, 51] },
-          margin: { left: 14, right: 14 },
+          margin: { ...branding.margin, left: 14, right: 14 },
         });
 
         y = (doc as any).lastAutoTable.finalY + 15;
@@ -107,6 +108,7 @@ export function NoShowReport({
           y += 8;
 
           autoTable(doc, {
+            ...branding,
             startY: y,
             head: [['Day', 'Total Appts', 'No-Shows', 'No-Show Rate']],
             body: noShowData.byDayOfWeek.map(day => [
@@ -117,24 +119,12 @@ export function NoShowReport({
             ]),
             theme: 'striped',
             headStyles: { fillColor: [51, 51, 51] },
-            margin: { left: 14, right: 14 },
+            margin: { ...branding.margin, left: 14, right: 14 },
           });
         }
       }
 
-      // Footer
-      const pageCount = doc.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(150);
-        doc.text(
-          `Page ${i} of ${pageCount}`,
-          pageWidth / 2,
-          doc.internal.pageSize.getHeight() - 10,
-          { align: 'center' }
-        );
-      }
+      addReportFooter(doc);
 
       const filename = `${reportType}-${dateFrom}-to-${dateTo}.pdf`;
       doc.save(filename);
@@ -148,6 +138,7 @@ export function NoShowReport({
           date_to: dateTo,
           parameters: { locationId },
           generated_by: user.id,
+          organization_id: effectiveOrganization?.id ?? null,
         });
       }
 
@@ -187,113 +178,129 @@ export function NoShowReport({
           <Skeleton className="h-4 w-64" />
         </CardHeader>
         <CardContent className="space-y-4">
-          <Skeleton className="h-32 w-full" />
-          <Skeleton className="h-64 w-full" />
+          <ChartSkeleton lines={4} className="h-32" />
+          <ChartSkeleton lines={8} className="h-64" />
         </CardContent>
       </Card>
     );
   }
 
-  return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              {getReportTitle()}
-            </CardTitle>
-            <CardDescription>
-              {format(new Date(dateFrom), 'MMM d, yyyy')} - {format(new Date(dateTo), 'MMM d, yyyy')}
-            </CardDescription>
-          </div>
+  const reportBody = noShowData ? (
+    <>
+      {/* Summary Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="p-4 rounded-lg bg-muted">
+          <p className="text-sm text-muted-foreground">Total Appointments</p>
+          <p className="text-2xl font-semibold">{formatNumber(noShowData.totalAppointments)}</p>
+        </div>
+        <div className="p-4 rounded-lg bg-muted">
+          <p className="text-sm text-muted-foreground">No-Show Rate</p>
+          <p className="text-2xl font-semibold text-red-500">{noShowData.noShowRate.toFixed(1)}%</p>
+        </div>
+        <div className="p-4 rounded-lg bg-muted">
+          <p className="text-sm text-muted-foreground">Cancellation Rate</p>
+          <p className="text-2xl font-semibold text-amber-500">{noShowData.cancellationRate.toFixed(1)}%</p>
+        </div>
+        <div className="p-4 rounded-lg bg-muted">
+          <p className="text-sm text-muted-foreground">Est. Revenue Lost</p>
+          <p className="text-2xl font-semibold text-red-500">{formatCurrencyWhole(noShowData.revenueLost)}</p>
+        </div>
+      </div>
+
+      {/* By Day of Week */}
+      {noShowData.byDayOfWeek && noShowData.byDayOfWeek.length > 0 && (
+        <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={exportCSV}>
-              <FileSpreadsheet className="w-4 h-4 mr-2" />
-              CSV
-            </Button>
-            <Button onClick={generatePDF} disabled={isGenerating}>
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Download className="w-4 h-4 mr-2" />
-                  Download PDF
-                </>
-              )}
-            </Button>
+            <Clock className="w-5 h-5 text-muted-foreground" />
+            <h3 className="font-medium">No-Shows by Day of Week</h3>
+          </div>
+          <div className="rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Day</TableHead>
+                  <TableHead className="text-right">Total Appts</TableHead>
+                  <TableHead className="text-right">No-Shows</TableHead>
+                  <TableHead className="text-right">Rate</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {noShowData.byDayOfWeek.map((day) => (
+                  <TableRow key={day.dayName}>
+                    <TableCell className="font-medium">{day.dayName}</TableCell>
+                    <TableCell className="text-right">{day.total}</TableCell>
+                    <TableCell className="text-right">{day.noShows}</TableCell>
+                    <TableCell className="text-right">
+                      <span className={day.rate > 10 ? 'text-red-500' : day.rate > 5 ? 'text-amber-500' : ''}>
+                        {day.rate.toFixed(1)}%
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {noShowData ? (
-          <>
-            {/* Summary Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-lg bg-muted">
-                <p className="text-sm text-muted-foreground">Total Appointments</p>
-                <p className="text-2xl font-semibold">{noShowData.totalAppointments.toLocaleString()}</p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted">
-                <p className="text-sm text-muted-foreground">No-Show Rate</p>
-                <p className="text-2xl font-semibold text-red-500">{noShowData.noShowRate.toFixed(1)}%</p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted">
-                <p className="text-sm text-muted-foreground">Cancellation Rate</p>
-                <p className="text-2xl font-semibold text-amber-500">{noShowData.cancellationRate.toFixed(1)}%</p>
-              </div>
-              <div className="p-4 rounded-lg bg-muted">
-                <p className="text-sm text-muted-foreground">Est. Revenue Lost</p>
-                <p className="text-2xl font-semibold text-red-500">${noShowData.revenueLost.toLocaleString()}</p>
-              </div>
-            </div>
+      )}
+    </>
+  ) : (
+    <div className="text-center py-12 text-muted-foreground">
+      <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+      <p>No appointment data available for this period</p>
+    </div>
+  );
 
-            {/* By Day of Week */}
-            {noShowData.byDayOfWeek && noShowData.byDayOfWeek.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-muted-foreground" />
-                  <h3 className="font-medium">No-Shows by Day of Week</h3>
-                </div>
-                <div className="rounded-lg border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Day</TableHead>
-                        <TableHead className="text-right">Total Appts</TableHead>
-                        <TableHead className="text-right">No-Shows</TableHead>
-                        <TableHead className="text-right">Rate</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {noShowData.byDayOfWeek.map((day) => (
-                        <TableRow key={day.dayName}>
-                          <TableCell className="font-medium">{day.dayName}</TableCell>
-                          <TableCell className="text-right">{day.total}</TableCell>
-                          <TableCell className="text-right">{day.noShows}</TableCell>
-                          <TableCell className="text-right">
-                            <span className={day.rate > 10 ? 'text-red-500' : day.rate > 5 ? 'text-amber-500' : ''}>
-                              {day.rate.toFixed(1)}%
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="text-center py-12 text-muted-foreground">
-            <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>No appointment data available for this period</p>
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                {getReportTitle()}
+              </CardTitle>
+              <CardDescription>
+                {formatDate(new Date(dateFrom), 'MMM d, yyyy')} - {formatDate(new Date(dateTo), 'MMM d, yyyy')}
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
+                <Eye className="w-4 h-4 mr-2" />
+                Preview
+              </Button>
+              <Button variant="outline" size="sm" onClick={exportCSV}>
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                CSV
+              </Button>
+              <Button onClick={generatePDF} disabled={isGenerating}>
+                {isGenerating ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent className="space-y-6">{reportBody}</CardContent>
+      </Card>
+
+      <ReportPreviewModal
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        reportTitle={getReportTitle()}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+      >
+        <div className="space-y-6">{reportBody}</div>
+      </ReportPreviewModal>
+    </>
   );
 }

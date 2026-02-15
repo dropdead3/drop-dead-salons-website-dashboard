@@ -15,7 +15,8 @@ import {
   getAnomalyLabel 
 } from '@/hooks/useAnomalies';
 import { cn } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface AnomalyAlertBannerProps {
   className?: string;
@@ -34,6 +35,7 @@ const severityBadgeStyles = {
 };
 
 function AnomalyAlertBannerComponent({ className }: AnomalyAlertBannerProps) {
+  const { formatDate } = useFormatDate();
   const [isExpanded, setIsExpanded] = useState(false);
   const { data: anomalies, isLoading } = useAnomalies(true);
   const acknowledgeAnomaly = useAcknowledgeAnomaly();
@@ -141,7 +143,7 @@ function AnomalyAlertBannerComponent({ className }: AnomalyAlertBannerProps) {
                           </Badge>
                         </div>
                         <p className="text-xs opacity-70">
-                          {format(parseISO(anomaly.detected_at), 'MMM d, h:mm a')}
+                          {formatDate(parseISO(anomaly.detected_at), 'MMM d, h:mm a')}
                         </p>
                       </div>
                     </div>

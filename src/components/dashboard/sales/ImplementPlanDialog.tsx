@@ -28,7 +28,8 @@ import { ShareToChannelDialog } from '@/components/dashboard/campaigns/ShareToCh
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { addDays, format } from 'date-fns';
+import { addDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import {
   Collapsible,
   CollapsibleContent,
@@ -141,6 +142,7 @@ export function ImplementPlanDialog({
   preSelectedSteps,
 }: ImplementPlanDialogProps) {
   const { user } = useAuth();
+  const { formatDate } = useFormatDate();
   const createCampaign = useCreateCampaign();
 
   const [steps, setSteps] = useState<ActionStep[]>([]);
@@ -213,7 +215,7 @@ export function ImplementPlanDialog({
 
     activeSteps.forEach((step, i) => {
       text += `${i + 1}. ${step.title}`;
-      text += ` (due ${format(addDays(new Date(), step.dueDays), 'MMM d')})`;
+      text += ` (due ${formatDate(addDays(new Date(), step.dueDays), 'MMM d')})`;
       text += '\n';
       if (step.description) text += `   ${step.description}\n`;
     });
@@ -229,7 +231,7 @@ export function ImplementPlanDialog({
     let md = `**📋 ${campaignName}**\n\n`;
     activeSteps.forEach((step, i) => {
       md += `**${i + 1}. ${step.title}**`;
-      md += ` (due ${format(addDays(new Date(), step.dueDays), 'MMM d')})`;
+      md += ` (due ${formatDate(addDays(new Date(), step.dueDays), 'MMM d')})`;
       md += '\n';
       if (step.description) md += `${step.description}\n`;
     });
@@ -416,7 +418,7 @@ export function ImplementPlanDialog({
                               </p>
                             )}
                             <p className="text-[11px] text-muted-foreground/60 mt-1">
-                              Due {format(addDays(new Date(), step.dueDays), 'MMM d')}
+                              Due {formatDate(addDays(new Date(), step.dueDays), 'MMM d')}
                             </p>
                           </div>
                         </label>

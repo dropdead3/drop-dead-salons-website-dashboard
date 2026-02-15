@@ -51,6 +51,8 @@ export interface ForecastData {
   peakDay: DayForecast | null;
   peakWeek: WeekForecast | null;
   byCategory: Record<string, CategoryBreakdown>;
+  byLocation: Record<string, CategoryBreakdown>;
+  byStylist: Record<string, CategoryBreakdown>;
 }
 
 const PERIOD_DAYS: Record<Exclude<ForecastPeriod, 'todayToEom'>, number> = {
@@ -94,7 +96,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('id, appointment_date, total_price, status, client_name, service_name, start_time, end_time, phorest_staff_id, service_category')
+        .select('id, appointment_date, total_price, status, client_name, service_name, start_time, end_time, phorest_staff_id, service_category, location_id')
         .gte('appointment_date', startDate)
         .lte('appointment_date', endDate)
         .not('status', 'in', '("cancelled","no_show")')
@@ -175,6 +177,45 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
         byCategory[category].count += 1;
       });
 
+      // Fetch location names for byLocation breakdown
+      const locationIds = [...new Set(appointments.map((a: any) => a.location_id).filter(Boolean))] as string[];
+      const locationMap: Record<string, string> = {};
+      if (locationIds.length > 0) {
+        const { data: locData } = await supabase
+          .from('locations')
+          .select('id, name')
+          .in('id', locationIds);
+        (locData || []).forEach((loc: { id: string; name: string }) => {
+          locationMap[loc.id] = loc.name || 'Unknown';
+        });
+      }
+
+      // Aggregate by location
+      const byLocation: Record<string, CategoryBreakdown> = {};
+      appointments.forEach((apt: any) => {
+        const locId = apt.location_id;
+        const key = locId ? (locationMap[locId] || locId) : 'No Location';
+        const price = Number(apt.total_price) || 0;
+        if (!byLocation[key]) {
+          byLocation[key] = { revenue: 0, count: 0 };
+        }
+        byLocation[key].revenue += price;
+        byLocation[key].count += 1;
+      });
+
+      // Aggregate by stylist (use staff name or fallback to ID)
+      const byStylist: Record<string, CategoryBreakdown> = {};
+      appointments.forEach((apt: any) => {
+        const staffId = apt.phorest_staff_id;
+        const key = staffId ? (staffMap[staffId] || `Staff ${staffId}`) : 'Unassigned';
+        const price = Number(apt.total_price) || 0;
+        if (!byStylist[key]) {
+          byStylist[key] = { revenue: 0, count: 0 };
+        }
+        byStylist[key].revenue += price;
+        byStylist[key].count += 1;
+      });
+
       // Build days array
       const days: DayForecast[] = dates.map(d => ({
         date: d.date,
@@ -250,6 +291,8 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
         peakDay,
         peakWeek,
         byCategory,
+        byLocation,
+        byStylist,
       } as ForecastData;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes

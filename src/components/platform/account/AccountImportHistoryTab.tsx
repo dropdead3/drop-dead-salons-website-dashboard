@@ -31,7 +31,7 @@ import {
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { PlatformBadge } from '@/components/platform/ui/PlatformBadge';
 import { useImportJobs, useRollbackImport, type ImportJob } from '@/hooks/useImportJobs';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
@@ -147,6 +147,7 @@ interface ImportJobCardProps {
 }
 
 function ImportJobCard({ job, onRollback, isRollingBack }: ImportJobCardProps) {
+  const { formatDate } = useFormatDate();
   const EntityIcon = entityTypeIcons[job.entity_type] || FileText;
   const status = statusConfig[job.status] || statusConfig.pending;
   const StatusIcon = status.icon;
@@ -184,7 +185,7 @@ function ImportJobCard({ job, onRollback, isRollingBack }: ImportJobCardProps) {
           
           <div className="flex items-center gap-3 text-sm text-slate-400 mt-1">
             {job.created_at && (
-              <span>{format(new Date(job.created_at), 'MMM d, yyyy h:mm a')}</span>
+              <span>{formatDate(new Date(job.created_at), 'MMM d, yyyy h:mm a')}</span>
             )}
             {job.success_count !== null && (
               <span className="text-emerald-400">

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Printer, Download } from 'lucide-react';
 import { GiftCardSettings } from '@/hooks/useGiftCardSettings';
 import { GiftCard } from '@/hooks/useGiftCards';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface PrintableGiftCardProps {
   giftCard: GiftCard;
@@ -21,6 +22,7 @@ export function PrintableGiftCard({
   fromName,
   message 
 }: PrintableGiftCardProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const qrRef = useRef<HTMLCanvasElement>(null);
 
   const generatePDF = useCallback(() => {
@@ -65,7 +67,7 @@ export function PrintableGiftCard({
     // Amount
     doc.setTextColor(accent.r, accent.g, accent.b);
     doc.setFontSize(36);
-    doc.text(`$${giftCard.current_balance.toFixed(0)}`, 0.5, 1.2);
+    doc.text(formatCurrencyWhole(giftCard.current_balance), 0.5, 1.2);
 
     // Code
     doc.setTextColor(text.r, text.g, text.b);

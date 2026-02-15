@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MapPin, LayoutGrid, TableProperties } from 'lucide-react';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { LocationComparisonCard } from './location-comparison/LocationComparisonCard';
 import { LocationComparisonTable } from './location-comparison/LocationComparisonTable';
 import { LocationBarChart } from './location-comparison/LocationBarChart';
@@ -58,6 +59,7 @@ function getAvailableCharts(count: number): { value: ChartType; label: string }[
 }
 
 export function LocationComparison({ locations, isLoading, filterContext, dateFrom = '', dateTo = '' }: LocationComparisonProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const count = locations.length;
   const autoTier = count <= 5 ? 1 : count <= 20 ? 2 : 3;
 
@@ -124,7 +126,7 @@ export function LocationComparison({ locations, isLoading, filterContext, dateFr
               />
             )}
             <Badge variant="secondary" className="font-sans">
-              <BlurredAmount>${totalRevenue.toLocaleString()}</BlurredAmount> total
+              <BlurredAmount>{formatCurrencyWhole(totalRevenue)}</BlurredAmount> total
             </Badge>
             <Select value={chartType} onValueChange={(v) => setChartType(v as ChartType)}>
               <SelectTrigger className="h-7 w-[110px] text-xs">

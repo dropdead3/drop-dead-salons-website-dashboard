@@ -1,0 +1,122 @@
+---
+description: Supabase Edge Function patterns for Zura. Covers Deno runtime, CORS, authentication, response format, shared utilities, AI functions, and webhooks.
+globs: supabase/functions/**/*.ts
+alwaysApply: false
+---
+
+# Edge Function Patterns
+
+## Runtime
+
+Deno (NOT Node.js). Use Deno-compatible imports:
+```typescript
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+```
+
+## Standard Structure
+
+```typescript
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const body = await req.json();
+    // ... function logic ...
+
+    return new Response(
+      JSON.stringify({ success: true, data: result }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (error) {
+    console.error("Error:", error);
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
+```
+
+## CORS
+
+- Define `corsHeaders` at the top of every function
+- Handle `OPTIONS` method FIRST (preflight)
+- Include `corsHeaders` in ALL responses (success AND error)
+- For webhooks, add signature headers to allowed headers
+
+## Supabase Client
+
+Always use `SUPABASE_SERVICE_ROLE_KEY` (not anon key) for admin access:
+```typescript
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+);
+```
+
+## Authentication
+
+```typescript
+const authHeader = req.headers.get('Authorization');
+if (!authHeader?.startsWith('Bearer ')) {
+  return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" }
+  });
+}
+const token = authHeader.replace('Bearer ', '');
+const { data: { user }, error } = await supabase.auth.getUser(token);
+if (error || !user) {
+  return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+    status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" }
+  });
+}
+```
+
+For role-based auth, query `user_roles` table after verifying the token.
+
+## Shared Utilities
+
+Import from `../_shared/`:
+- `email-sender.ts` -- `sendEmail()` via Resend API
+- `sms-sender.ts` -- `sendSms()` with template resolution
+- `zura-config-loader.ts` -- `loadZuraConfig()`, `buildZuraPromptPrefix()` for AI functions
+
+## AI Functions
+
+Use Lovable AI Gateway:
+```typescript
+const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${Deno.env.get("LOVABLE_API_KEY")}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    model: "google/gemini-3-flash-preview",
+    messages: [{ role: "system", content: systemPrompt }, ...messages],
+    stream: true,
+  }),
+});
+```
+
+For streaming, return `response.body` with `Content-Type: text/event-stream`.
+
+## Webhooks
+
+Verify signatures with Web Crypto API. Check timestamp freshness (5-minute window).
+```typescript
+const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(signedPayload));
+```

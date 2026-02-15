@@ -1,0 +1,59 @@
+---
+description: Phorest will be detached; Zura will run as a standalone system (scheduling, POS, payroll, etc.). Build so that detaching Phorest is straightforward—use adapters, canonical data, and native flows.
+alwaysApply: true
+---
+
+# Standalone System / Phorest Detach
+
+## Strategic direction
+
+**Phorest will be detached from this system.** Zura is moving to a **standalone** product that runs scheduling, POS, payroll, and related operations on its own. The codebase must be built and evolved so that we can **easily detach Phorest** and run entirely standalone.
+
+When adding or changing features in scheduling, POS, sales, payroll, clients, or appointments, assume Zura-owned data and flows are the primary path. Phorest is one possible data source during the transition, not the permanent backbone.
+
+## How to build for easy detach
+
+### 1. Prefer the POS adapter and canonical types
+
+- **Use the adapter when you can:** Data access for appointments, clients, sales, and staff should go through the POS adapter (`POSAdapter` in `src/types/pos.ts`) when feasible. The adapter returns normalized types: `POSAppointment`, `POSClient`, `POSSalesSummary`, `POSStaffMember`. Use `usePOSAdapter()` and `usePOSData` from `src/hooks/usePOSData.ts`.
+- **Canonical types:** Prefer these normalized types in new code rather than Phorest-specific shapes or `phorest_*` table row types. That way a future "native" or "standalone" adapter can plug in without changing callers.
+- **Reference:** `src/adapters/phorest-adapter.ts` implements the adapter today by reading from `phorest_*` tables (synced from Phorest). A future "native" adapter would read/write Zura-owned tables instead.
+
+### 2. Avoid new direct coupling to Phorest
+
+- **New features:** Do not add new direct reads/writes to `phorest_appointments`, `phorest_clients`, `phorest_*` in application code unless necessary for a migration or a Phorest-only integration. Prefer adapter APIs or Zura-owned tables.
+- **New hooks:** Prefer hooks that use the POS adapter or Zura-owned data. If you need Phorest-specific behavior during the transition, isolate it behind an adapter method or a clearly named "phorest" hook that can be replaced later.
+- **Edge functions:** New logic should not assume Phorest is the only source. Prefer canonical inputs/outputs and, where sync is needed, a generic "sync from external POS" contract rather than hardcoded Phorest API calls in every function.
+
+### 3. Zura-owned data models
+
+- **Target state:** Scheduling, POS, payroll, clients, and appointments will run on **Zura-owned schemas** (e.g. canonical `appointments`, `clients`, `services`, `transactions` tables) with RLS and org scoping. Phorest (or another external POS) can sync into or out of these as an option.
+- **New tables/features:** When introducing new domains (e.g. native scheduling, native POS transactions), define Zura-owned tables and APIs first. Add a Phorest sync path that populates or mirrors into those tables if needed, rather than building the feature on top of `phorest_*` only.
+- **Migrations:** Never modify existing migration files. Add new migrations for Zura-owned schemas or for columns that support both Phorest-synced and native data (e.g. `source: 'phorest' | 'zura'`).
+
+### 4. Existing Phorest usage (migrate over time)
+
+- Many hooks and components still read directly from `phorest_*` tables or call Phorest-specific hooks (`usePhorestSync`, `usePhorestCalendar`, `usePhorestServices`, etc.). That is the current state; do not rewrite everything at once.
+- **When touching existing code:** Prefer refactoring toward the adapter or toward Zura-owned data when you are already changing that area. For example, a hook that today queries `phorest_appointments` could be switched to `usePOSAdapter().getAppointments()` so the same UI works after detach.
+- **Sync and settings:** Phorest sync, Phorest settings, and "Phorest connection" UI will eventually be replaced or hidden when running standalone. New features should not depend on "Phorest sync" as the only way to get data; consider "Zura-native" or "adapter" as the default and Phorest as an optional source.
+
+### 5. Feature areas to keep in mind
+
+- **Scheduling:** Appointments and availability should be representable from the adapter or from native Zura scheduling. Booking flows should use canonical appointment/client types.
+- **POS / Sales:** Revenue, transactions, and product/service sales should be available via the adapter or native Zura POS. Analytics and reporting should consume normalized data (e.g. `POSSalesSummary` or Zura-owned aggregates), not only Phorest tables.
+- **Payroll:** Payroll logic should rely on Zura-owned employment and compensation data where possible; Phorest (e.g. staff mapping, sales data) can be one input during transition, not the only source of truth.
+- **Clients:** Client directory and client-based features should work with `POSClient` or Zura-owned client records so that after detach, native client data is the source.
+
+## References
+
+- POS types and adapter interface: `src/types/pos.ts`
+- Phorest adapter implementation: `src/adapters/phorest-adapter.ts`
+- POS data hook (adapter + config): `src/hooks/usePOSData.ts`
+- Multi-tenancy and RLS: `.cursor/rules/multi-tenancy-rbac.mdc`
+- Migrations: `.cursor/rules/database-migrations.mdc` (new migrations only; no editing of existing ones)
+
+## Summary
+
+- **Direction:** Zura will run standalone (scheduling, POS, payroll, etc.); Phorest will be detached.
+- **Build for detach:** Use the POS adapter and canonical types; avoid new direct `phorest_*` coupling; introduce Zura-owned data models for new domains; migrate existing call sites toward adapter/native over time.
+- **Outcome:** When Phorest is removed, the system can run on Zura-native (or another adapter) with minimal change to feature code that already uses the adapter and canonical types.

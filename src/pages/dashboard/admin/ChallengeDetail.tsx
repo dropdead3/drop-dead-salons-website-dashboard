@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { format, differenceInDays, isPast } from 'date-fns';
+import { differenceInDays, isPast } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -68,6 +70,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function ChallengeDetail() {
+  const { formatDate } = useFormatDate();
+  const { formatNumber } = useFormatNumber();
   const { challengeId } = useParams<{ challengeId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -233,7 +237,7 @@ export default function ChallengeDetail() {
                   <div>
                     <p className="text-sm font-medium">Duration</p>
                     <p className="text-xs text-muted-foreground">
-                      {format(new Date(challenge.start_date), 'MMM d')} - {format(new Date(challenge.end_date), 'MMM d, yyyy')}
+                      {formatDate(new Date(challenge.start_date), 'MMM d')} - {formatDate(new Date(challenge.end_date), 'MMM d, yyyy')}
                     </p>
                   </div>
                 </div>
@@ -256,7 +260,7 @@ export default function ChallengeDetail() {
                     <div>
                       <p className="text-sm font-medium">Goal</p>
                       <p className="text-xs text-muted-foreground">
-                        {challenge.goal_value.toLocaleString()} {metricLabels[challenge.metric_type]}
+                        {formatNumber(challenge.goal_value)} {metricLabels[challenge.metric_type]}
                       </p>
                     </div>
                   </div>
@@ -280,12 +284,12 @@ export default function ChallengeDetail() {
                   <p className="text-xs text-muted-foreground mb-2">Challenge Stats</p>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="bg-muted/50 rounded-lg p-2 text-center">
-                      <p className="text-lg font-display">{totalValue.toLocaleString()}</p>
+                      <p className="text-lg font-display">{formatNumber(totalValue)}</p>
                       <p className="text-[10px] text-muted-foreground">Total Progress</p>
                     </div>
                     <div className="bg-muted/50 rounded-lg p-2 text-center">
                       <p className="text-lg font-display">
-                        {topParticipant?.current_value?.toLocaleString() || 0}
+                        {topParticipant?.current_value != null ? formatNumber(topParticipant.current_value) : 0}
                       </p>
                       <p className="text-[10px] text-muted-foreground">Top Score</p>
                     </div>

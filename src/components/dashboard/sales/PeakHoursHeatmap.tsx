@@ -5,6 +5,7 @@ import { usePeakHoursAnalysis } from '@/hooks/useSalesAnalytics';
 import { cn } from '@/lib/utils';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { formatCurrencyWhole } from '@/lib/formatCurrency';
 
 interface PeakHoursHeatmapProps {
   dateFrom: string;
@@ -122,7 +123,7 @@ export function PeakHoursHeatmap({ dateFrom, dateTo, locationId, filterContext }
                       // Build tooltip - hide revenue if hideNumbers is on
                       const tooltipText = hideNumbers 
                         ? `${day} ${hour}:00 - ${cellData.count} transactions`
-                        : `${day} ${hour}:00 - ${cellData.count} transactions, $${cellData.revenue.toLocaleString()}`;
+                        : `${day} ${hour}:00 - ${cellData.count} transactions, ${formatCurrencyWhole(cellData.revenue)}`;
                       
                       return (
                         <div 

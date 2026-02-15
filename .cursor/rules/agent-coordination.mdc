@@ -1,0 +1,146 @@
+---
+description: Rules for parallel/swarm agent work. Prevents conflicts, enforces isolation, provides a common solutions registry, and defines the PM workflow protocol for coordinated multi-agent builds.
+alwaysApply: true
+---
+
+# Agent Coordination
+
+## Master Agent
+
+All agents (including this one) report to the **master-agent** (`.cursor/rules/master-agent.mdc`). The master agent is the general planner and builder. It enforces a pre-flight checklist, cross-references all specialist rules, and runs a post-build audit. Every agent session must follow the master agent's protocol.
+
+---
+
+## PM Workflow Protocol
+
+When working as part of a multi-agent swarm, follow this protocol:
+
+### 1. Before Starting Any Task
+- Read `.cursor/browser-context.json` to understand what the user is currently seeing
+- Read `.cursor/agent-manifest.json` to check what files other agents are actively modifying
+- If your target files appear in the manifest as owned by another agent, STOP and notify the user
+
+### 2. Claim Your Files
+- At the start of your task, register the files you plan to modify in `.cursor/agent-manifest.json`
+- Add entries under the `active` array with your task description and file paths
+- This prevents other parallel agents from creating merge conflicts
+
+### 3. During Your Task
+- Stay within your claimed files -- do not edit files outside your scope without re-checking the manifest
+- Follow all isolation rules below
+- Use the Common Solutions Registry before building anything from scratch
+
+### 4. When Finished
+- Remove your entries from the `active` array in `.cursor/agent-manifest.json`
+- Move them to the `completed` array with a summary of what changed
+- This gives other agents (and the PM) visibility into what was done
+
+### Agent Manifest Format (.cursor/agent-manifest.json)
+```json
+{
+  "active": [
+    {
+      "task": "Fix subscription-plans query error",
+      "files": ["src/hooks/useSubscriptionPlans.ts", "src/components/dashboard/SubscriptionCard.tsx"],
+      "started": "2026-02-12T23:30:00Z"
+    }
+  ],
+  "completed": [
+    {
+      "task": "Add client retention edge function",
+      "files": ["supabase/functions/client-retention/index.ts", "supabase/migrations/20260212_retention.sql"],
+      "finished": "2026-02-12T23:45:00Z",
+      "summary": "Created edge function and migration for client retention scoring"
+    }
+  ]
+}
+```
+
+If the manifest file does not exist, create it with empty arrays. If it exists, merge your entries -- never overwrite another agent's entries.
+
+---
+
+## Isolation Rules for Parallel Work
+
+### Component Isolation
+- Dashboard features live in `src/components/dashboard/{feature}/`
+- New features MUST get their own subdirectory -- never add unrelated components to another feature's folder
+- Shared UI primitives go in `src/components/ui/`
+
+### Hook Isolation
+- Each feature's hooks are self-contained in their own file(s) under `src/hooks/`
+- New features get new hook files -- do not extend unrelated hooks
+- File naming: `use{Feature}.ts` or `use-{feature}.ts` (kebab-case)
+
+### Query Key Namespacing
+- All TanStack Query keys are namespaced to their feature
+- Pattern: `['feature-name', ...dependencies]`
+- Examples: `['products', filters]`, `['client-balance', clientId]`
+- NEVER reuse another feature's query key namespace
+
+### Migration Safety
+- NEVER modify existing migration files
+- Always create new migration files
+- Use `IF NOT EXISTS` for CREATE TABLE/INDEX
+- Use `CREATE OR REPLACE` for functions/views
+- Each migration must be independently runnable
+
+### Edge Function Isolation
+- Each function lives in `supabase/functions/{name}/index.ts`
+- Shared code goes in `supabase/functions/_shared/`
+- Never modify another function's directory
+
+### Shared File Caution
+These files are touched by many features -- extra care required:
+- `src/App.tsx` -- route registration (high conflict risk)
+- `src/contexts/*.tsx` -- context providers (affects entire app)
+- `src/integrations/supabase/types.ts` -- auto-generated, never edit manually
+- `supabase/functions/_shared/*` -- shared edge function utils
+
+If you need to modify a shared file, check the manifest first. If another agent is active, wait or ask the user to coordinate.
+
+---
+
+## Common Solutions Registry
+
+Before building something new, check these reference implementations:
+
+### Forms (Zod + React Hook Form)
+Reference: `src/components/home/ApplicationFormDialog.tsx`
+Pattern: Zod schema -> useForm with zodResolver -> Form/FormField components
+
+### Data Tables
+Reference: `src/components/dashboard/inventory/ProductTable.tsx`
+Pattern: Table components + Skeleton loading + empty state
+
+### CRUD Hooks (Query + Mutation)
+Reference: `src/hooks/useProducts.ts`
+Pattern: useQuery for reads, useMutation with invalidation + toast for writes
+
+### Dialog Forms
+Reference: `src/components/platform/CreateOrganizationDialog.tsx`
+Pattern: Dialog + Form + controlled open/onOpenChange + loading state on submit button
+
+### Edge Functions
+Reference: `supabase/functions/check-availability/index.ts`
+Pattern: CORS headers + OPTIONS handler + try/catch + JSON response
+
+### Permission Checks
+Reference: `src/components/visibility/VisibilityGate.tsx`
+Pattern: Wrap content in VisibilityGate or use usePermission() hook
+
+### Navigation & drill-down
+Reference: `src/config/dashboardNav.ts`, `.cursor/rules/navigation-agent.mdc`
+Pattern: Nav entries live in the dashboard nav registry. Link from summary cards to Analytics Hub using `analyticsHubUrl(tab, subtab)` (e.g. `analyticsHubUrl('operations', 'staff-utilization')`). Do not use legacy paths like `/dashboard/admin/operational-analytics`; use `/dashboard/admin/analytics?tab=X&subtab=Y`.
+
+### Dashboard Pages
+Reference: `src/pages/dashboard/MyPay.tsx`
+Pattern: DashboardLayout wrapper + hook for data + loading/empty/error early returns
+
+### Full feature builds
+Reference: `.cursor/rules/comprehensive-feature-agent.mdc`, `.cursor/skills/comprehensive-feature-build/SKILL.md`
+Pattern: One agent owns full scope (data, API, hooks, UI, routes, nav, permissions); check/claim manifest, use nav registry and analyticsHubUrl for drill-downs, then move to completed with summary.
+
+### Responsive layouts
+Reference: `.cursor/rules/responsiveness-agent.mdc`
+Pattern: Mobile-first Tailwind breakpoints (base/sm/md/lg/xl/2xl). Every grid degrades: `grid-cols-1 sm:grid-cols-2 xl:grid-cols-4`. Stretch what benefits from space, compress grids, relocate toolbars into overflow, hide only supplementary content. Use `useIsMobile()` for JS-driven responsive behavior. 44px minimum touch targets on mobile. Test at 375/768/1024/1280/1440/1920/2560px.

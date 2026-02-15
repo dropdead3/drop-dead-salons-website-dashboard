@@ -7,9 +7,10 @@ import { ArrowLeft, Edit, Calendar, FileText } from 'lucide-react';
 import { HuddleEditor } from '@/components/huddle/HuddleEditor';
 import { HuddleArchive } from '@/components/huddle/HuddleArchive';
 import { useTodaysHuddle, useHuddleById } from '@/hooks/useHuddles';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 export default function DailyHuddle() {
+  const { formatDate } = useFormatDate();
   const [activeTab, setActiveTab] = useState('today');
   const [selectedHuddleId, setSelectedHuddleId] = useState<string | null>(null);
 
@@ -53,7 +54,7 @@ export default function DailyHuddle() {
           <TabsList>
             <TabsTrigger value="today" className="gap-2">
               <Edit className="w-4 h-4" />
-              Today ({format(new Date(), 'MMM d')})
+              Today ({formatDate(new Date(), 'MMM d')})
             </TabsTrigger>
             <TabsTrigger value="archive" className="gap-2">
               <Calendar className="w-4 h-4" />

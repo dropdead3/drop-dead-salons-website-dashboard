@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -61,8 +62,10 @@ export function MobileAgendaCard({
   onRefresh,
   isCompleted = false,
 }: MobileAgendaCardProps) {
+  const { formatDate } = useFormatDate();
   const [isOpen, setIsOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const { formatCurrency } = useFormatCurrency();
 
   const status = appointment.status || 'pending';
   const statusConfig = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
@@ -74,7 +77,7 @@ export function MobileAgendaCard({
       const [hours, minutes] = time.split(':');
       const date = new Date();
       date.setHours(parseInt(hours), parseInt(minutes));
-      return format(date, 'h:mm a');
+      return formatDate(date, 'h:mm a');
     } catch {
       return time;
     }
@@ -182,7 +185,7 @@ export function MobileAgendaCard({
                 <span className="text-xs">Price</span>
               </div>
               <p className="font-medium">
-                ${appointment.total_price?.toFixed(2) || '0.00'}
+                {formatCurrency(appointment.total_price ?? 0)}
               </p>
             </div>
           </div>

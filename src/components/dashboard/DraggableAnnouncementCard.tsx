@@ -17,7 +17,7 @@ import {
   MapPin,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -70,6 +70,7 @@ export function DraggableAnnouncementCard({
   isDraggable = false,
   locationName,
 }: DraggableAnnouncementCardProps) {
+  const { formatDate } = useFormatDate();
   const {
     attributes,
     listeners,
@@ -147,9 +148,9 @@ export function DraggableAnnouncementCard({
             </a>
           )}
           <p className="text-xs text-muted-foreground mt-4">
-            Posted {format(new Date(announcement.created_at), 'MMM d, yyyy h:mm a')}
+            Posted {formatDate(new Date(announcement.created_at), 'MMM d, yyyy h:mm a')}
             {announcement.expires_at && (
-              <span> · Expires {format(new Date(announcement.expires_at), 'MMM d, yyyy')}</span>
+              <span> · Expires {formatDate(new Date(announcement.expires_at), 'MMM d, yyyy')}</span>
             )}
           </p>
         </div>

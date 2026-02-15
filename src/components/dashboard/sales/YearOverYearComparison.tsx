@@ -17,6 +17,8 @@ import { format, subYears, getMonth, getYear } from 'date-fns';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface YearOverYearComparisonProps {
@@ -25,6 +27,7 @@ interface YearOverYearComparisonProps {
 }
 
 export function YearOverYearComparison({ locationId, filterContext }: YearOverYearComparisonProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const currentYear = getYear(new Date());
   const lastYear = currentYear - 1;
 
@@ -167,11 +170,11 @@ export function YearOverYearComparison({ locationId, filterContext }: YearOverYe
         {/* Summary stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center p-3 bg-primary/10 rounded-lg">
-            <p className="text-lg font-display">${comparison.currentTotal.toLocaleString()}</p>
+            <p className="text-lg font-display">{formatCurrencyWhole(comparison.currentTotal)}</p>
             <p className="text-xs text-muted-foreground">{currentYear} YTD</p>
           </div>
           <div className="text-center p-3 bg-muted/50 rounded-lg">
-            <p className="text-lg font-display">${comparison.lastTotal.toLocaleString()}</p>
+            <p className="text-lg font-display">{formatCurrencyWhole(comparison.lastTotal)}</p>
             <p className="text-xs text-muted-foreground">{lastYear} YTD</p>
           </div>
           <div className={cn(
@@ -191,7 +194,7 @@ export function YearOverYearComparison({ locationId, filterContext }: YearOverYe
             isUp ? 'bg-chart-2/10' : 'bg-destructive/10'
           )}>
             <p className={cn('text-lg font-display', isUp ? 'text-chart-2' : 'text-destructive')}>
-              ${Math.abs(comparison.currentTotal - comparison.lastTotal).toLocaleString()}
+              {formatCurrencyWhole(Math.abs(comparison.currentTotal - comparison.lastTotal))}
             </p>
             <p className="text-xs text-muted-foreground">{isUp ? 'Ahead' : 'Behind'} YTD</p>
           </div>
@@ -211,7 +214,7 @@ export function YearOverYearComparison({ locationId, filterContext }: YearOverYe
                 tick={{ fontSize: 10 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`}
+                tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
               />
               <Tooltip 
                 contentStyle={{ 
@@ -221,7 +224,7 @@ export function YearOverYearComparison({ locationId, filterContext }: YearOverYe
                   fontSize: '12px',
                 }}
                 formatter={(value: number, name: string) => [
-                  `$${value.toLocaleString()}`,
+                  formatCurrencyWhole(value),
                   name === 'currentYear' ? currentYear.toString() : lastYear.toString()
                 ]}
               />
@@ -245,7 +248,7 @@ export function YearOverYearComparison({ locationId, filterContext }: YearOverYe
         {/* Monthly breakdown */}
         <div className="text-xs text-muted-foreground text-center">
           <p>
-            {comparison.currentMonthName}: ${comparison.currentMonthNow.toLocaleString()} vs ${comparison.currentMonthLast.toLocaleString()} last year
+            {comparison.currentMonthName}: {formatCurrencyWhole(comparison.currentMonthNow)} vs {formatCurrencyWhole(comparison.currentMonthLast)} last year
           </p>
         </div>
       </CardContent>

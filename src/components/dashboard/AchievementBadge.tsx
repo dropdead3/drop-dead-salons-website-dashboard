@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Achievement } from '@/hooks/useLeaderboardAchievements';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   crown: Crown,
@@ -53,6 +53,7 @@ export function AchievementBadge({
   size = 'md',
   showTooltip = true 
 }: AchievementBadgeProps) {
+  const { formatDate } = useFormatDate();
   const Icon = iconMap[achievement.icon] || Trophy;
   const colorClass = colorMap[achievement.badge_color] || colorMap.primary;
 
@@ -95,7 +96,7 @@ export function AchievementBadge({
             <p className="text-xs text-muted-foreground">{achievement.description}</p>
             {earnedAt && (
               <p className="text-[10px] text-muted-foreground/70 pt-1 border-t">
-                Earned {format(new Date(earnedAt), 'MMM d, yyyy')}
+                Earned {formatDate(new Date(earnedAt), 'MMM d, yyyy')}
               </p>
             )}
           </div>

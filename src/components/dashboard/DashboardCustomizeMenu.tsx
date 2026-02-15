@@ -63,7 +63,9 @@ import { SortableWidgetItem } from './SortableWidgetItem';
 import { SortablePinnedCardItem } from './SortablePinnedCardItem';
 import { SortableHubItem } from './SortableHubItem';
 import { hubLinks } from './HubQuickLinks';
-import { useDashboardVisibility, useToggleDashboardVisibility, useRegisterVisibilityElement } from '@/hooks/useDashboardVisibility';
+import { useDashboardVisibility, useRegisterVisibilityElement } from '@/hooks/useDashboardVisibility';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Database } from '@/integrations/supabase/types';
 
 type AppRole = Database['public']['Enums']['app_role'];
@@ -191,8 +193,9 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
   
   // Visibility data for pinned analytics
   const { data: visibilityData, isLoading: isLoadingVisibility } = useDashboardVisibility();
-  const toggleVisibility = useToggleDashboardVisibility();
   const registerElement = useRegisterVisibilityElement();
+  const [isTogglingPin, setIsTogglingPin] = useState(false);
+  const queryClient = useQueryClient();
 
   // Sensors for drag and drop
   const sensors = useSensors(
@@ -316,25 +319,29 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
     const newIsVisible = !isPinned;
     const card = PINNABLE_CARDS.find(c => c.id === cardId);
     
-    // Check if element exists in visibility system
-    const elementExists = visibilityData?.some(v => v.element_key === cardId);
-    
-    // If turning ON and element doesn't exist, register it first
-    if (!elementExists && newIsVisible && card) {
-      await registerElement.mutateAsync({
-        elementKey: cardId,
-        elementName: card.label,
-        elementCategory: card.category,
-      });
-    }
-    
-    // Toggle visibility for all leadership roles
-    for (const role of leadershipRoles) {
-      await toggleVisibility.mutateAsync({
-        elementKey: cardId,
+    setIsTogglingPin(true);
+    try {
+      // Batch upsert all leadership roles at once
+      const rows = leadershipRoles.map(role => ({
+        element_key: cardId,
+        element_name: card?.label || cardId,
+        element_category: card?.category || 'Analytics Hub',
         role,
-        isVisible: newIsVisible,
-      });
+        is_visible: newIsVisible,
+      }));
+
+      const { error } = await supabase
+        .from('dashboard_element_visibility')
+        .upsert(rows, { onConflict: 'element_key,role' });
+
+      if (error) throw error;
+
+      // Invalidate visibility queries so UI updates everywhere
+      queryClient.invalidateQueries({ queryKey: ['dashboard-visibility'] });
+    } catch {
+      // Error handled silently; layout update below still proceeds
+    } finally {
+      setIsTogglingPin(false);
     }
     
     // Update sectionOrder when pinning/unpinning
@@ -477,7 +484,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                           icon={card.icon}
                           isPinned={true}
                           onToggle={() => handleTogglePinnedCard(cardId)}
-                          isLoading={toggleVisibility.isPending}
+                          isLoading={isTogglingPin}
                         />
                       );
                     }
@@ -602,7 +609,7 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
                       icon={card.icon}
                       isPinned={false}
                       onToggle={() => handleTogglePinnedCard(card.id)}
-                      isLoading={toggleVisibility.isPending}
+                      isLoading={isTogglingPin}
                     />
                   ))}
                 </div>

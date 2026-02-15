@@ -1,12 +1,15 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useStaffingHistory, useAggregatedStaffingHistory } from '@/hooks/useStaffingHistory';
 import { TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ReferenceLine } from 'recharts';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChartSkeleton } from '@/components/ui/chart-skeleton';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { cn } from '@/lib/utils';
 
 
@@ -15,6 +18,7 @@ interface StaffingTrendChartProps {
 }
 
 export function StaffingTrendChart({ className }: StaffingTrendChartProps) {
+  const { formatDate } = useFormatDate();
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [days, setDays] = useState<number>(90);
   
@@ -53,12 +57,20 @@ export function StaffingTrendChart({ className }: StaffingTrendChartProps) {
 
   return (
     <Card className={cn("premium-card", className)}>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <TrendingUp className="h-5 w-5 text-primary" />
-            Staffing Trends
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <TrendingUp className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className="font-display text-base tracking-wide">STAFFING TRENDS</CardTitle>
+                <MetricInfoTooltip description="Tracks stylist and assistant headcount over time against your configured capacity targets. Use to identify hiring gaps and growth patterns." />
+              </div>
+              <CardDescription>Historical headcount and capacity over time</CardDescription>
+            </div>
+          </div>
           <div className="flex gap-2">
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
               <SelectTrigger className="w-[160px] h-8 text-sm">
@@ -87,7 +99,7 @@ export function StaffingTrendChart({ className }: StaffingTrendChartProps) {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <Skeleton className="h-[250px] w-full" />
+          <ChartSkeleton lines={6} className="h-[250px]" />
         ) : !hasData ? (
           <div className="h-[250px] flex items-center justify-center text-muted-foreground">
             <div className="text-center">
@@ -109,10 +121,10 @@ export function StaffingTrendChart({ className }: StaffingTrendChartProps) {
                   <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" strokeOpacity={0.5} />
               <XAxis 
                 dataKey="date" 
-                tickFormatter={(d) => format(parseISO(d), 'MMM d')}
+                tickFormatter={(d) => formatDate(parseISO(d), 'MMM d')}
                 tick={{ fontSize: 11 }}
                 className="text-muted-foreground"
               />
@@ -124,12 +136,12 @@ export function StaffingTrendChart({ className }: StaffingTrendChartProps) {
                 content={({ active, payload, label }) => {
                   if (!active || !payload?.length) return null;
                   return (
-                    <div className="bg-popover border rounded-lg p-2 shadow-lg text-sm">
+                    <div className="bg-background border border-border rounded-lg p-2 shadow-lg text-sm">
                       <p className="font-medium mb-1">
-                        {format(parseISO(label), 'MMM d, yyyy')}
+                        {formatDate(parseISO(label), 'MMM d, yyyy')}
                       </p>
                       {payload.map((entry, idx) => (
-                        <p key={idx} style={{ color: entry.color }}>
+                        <p key={idx} className="tabular-nums" style={{ color: entry.color }}>
                           {entry.name}: {entry.value}
                         </p>
                       ))}

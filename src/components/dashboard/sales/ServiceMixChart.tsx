@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays } from 'date-fns';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface ServiceMixChartProps {
   userId: string;
@@ -29,6 +30,7 @@ const COLORS = [
 ];
 
 export function ServiceMixChart({ userId, days = 30 }: ServiceMixChartProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const today = new Date();
   const startDate = format(subDays(today, days), 'yyyy-MM-dd');
 
@@ -145,7 +147,7 @@ export function ServiceMixChart({ userId, days = 30 }: ServiceMixChartProps) {
                   ))}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: number) => `$${value.toLocaleString()}`}
+                  formatter={(value: number) => formatCurrencyWhole(value)}
                   contentStyle={{ 
                     borderRadius: '8px', 
                     border: '1px solid hsl(var(--border))',
@@ -168,7 +170,7 @@ export function ServiceMixChart({ userId, days = 30 }: ServiceMixChartProps) {
                   <span className="truncate max-w-[120px]">{item.name}</span>
                 </div>
                 <div className="text-right">
-                  <span className="font-medium">${item.revenue.toLocaleString()}</span>
+                  <span className="font-medium">{formatCurrencyWhole(item.revenue)}</span>
                   <span className="text-muted-foreground ml-1">({item.count})</span>
                 </div>
               </div>
@@ -183,12 +185,12 @@ export function ServiceMixChart({ userId, days = 30 }: ServiceMixChartProps) {
             <p className="text-xs text-muted-foreground">Total Services</p>
           </div>
           <div className="flex-1 text-center">
-            <p className="font-display text-lg">${totalRevenue.toLocaleString()}</p>
+            <p className="font-display text-lg">{formatCurrencyWhole(totalRevenue)}</p>
             <p className="text-xs text-muted-foreground">Service Revenue</p>
           </div>
           <div className="flex-1 text-center">
             <p className="font-display text-lg">
-              ${totalServices > 0 ? Math.round(totalRevenue / totalServices).toLocaleString() : 0}
+              {totalServices > 0 ? formatCurrencyWhole(Math.round(totalRevenue / totalServices)) : formatCurrencyWhole(0)}
             </p>
             <p className="text-xs text-muted-foreground">Avg Ticket</p>
           </div>

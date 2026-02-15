@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { stylistLevels } from '@/data/servicePricing';
 import { useActiveLocations } from '@/hooks/useLocations';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 
 export function StylistsOverviewCard() {
@@ -38,17 +39,23 @@ export function StylistsOverviewCard() {
 
   return (
     <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <h2 className="font-display text-base tracking-wide">STYLISTS BY LEVEL</h2>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
+          <Users className="w-5 h-5 text-chart-5" />
         </div>
-        <Users className="w-4 h-4 text-muted-foreground" />
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="font-display text-base tracking-wide">STYLISTS BY LEVEL</h2>
+            <MetricInfoTooltip description="Breaks down your team by assigned stylist level. Use this to ensure healthy distribution across experience tiers and plan promotions." />
+          </div>
+          <p className="text-xs text-muted-foreground">Team composition by experience tier</p>
+        </div>
       </div>
       
       <div className="space-y-3">
         <div className="flex items-center justify-between pb-3 border-b">
           <span className="text-sm text-muted-foreground">Total Assigned</span>
-          <span className="text-2xl font-display">{totalAssigned}</span>
+          <span className="text-2xl font-display tabular-nums">{totalAssigned}</span>
         </div>
         
         <div className="space-y-2">
@@ -64,7 +71,7 @@ export function StylistsOverviewCard() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <span className="text-sm truncate">{level.label}</span>
-                    <span className="text-sm text-muted-foreground shrink-0">{count}</span>
+                    <span className="text-sm text-muted-foreground tabular-nums shrink-0">{count}</span>
                   </div>
                   <div className="h-1 bg-muted rounded-full overflow-hidden">
                     <div 
@@ -131,17 +138,23 @@ export function StaffOverviewCard() {
 
   return (
     <Card className="p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <h2 className="font-display text-base tracking-wide">TEAM OVERVIEW</h2>
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
+          <MapPin className="w-5 h-5 text-primary" />
         </div>
-        <MapPin className="w-4 h-4 text-muted-foreground" />
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="font-display text-base tracking-wide">TEAM OVERVIEW</h2>
+            <MetricInfoTooltip description="Shows how your active staff are distributed across locations. Identifies multi-location staff and unassigned team members." />
+          </div>
+          <p className="text-xs text-muted-foreground">Staff distribution across locations</p>
+        </div>
       </div>
       
       <div className="space-y-3">
         <div className="flex items-center justify-between pb-3 border-b">
           <span className="text-sm text-muted-foreground">Total Staff</span>
-          <span className="text-2xl font-display">{totalStaff}</span>
+          <span className="text-2xl font-display tabular-nums">{totalStaff}</span>
         </div>
         
         <div className="space-y-2">
@@ -154,7 +167,7 @@ export function StaffOverviewCard() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between gap-2 mb-1">
                     <span className="text-sm truncate">{loc.name}</span>
-                    <span className="text-sm text-muted-foreground shrink-0">{loc.count}</span>
+                    <span className="text-sm text-muted-foreground tabular-nums shrink-0">{loc.count}</span>
                   </div>
                   <div className="h-1 bg-muted rounded-full overflow-hidden">
                     <div 
@@ -171,12 +184,12 @@ export function StaffOverviewCard() {
         <div className="pt-2 border-t space-y-1">
           <p className="text-xs text-muted-foreground flex items-center justify-between">
             <span>Multi-location staff</span>
-            <span>{multiLocationStaff}</span>
+            <span className="tabular-nums">{multiLocationStaff}</span>
           </p>
           {unassignedStaff > 0 && (
             <p className="text-xs text-muted-foreground flex items-center justify-between">
               <span>No location assigned</span>
-              <span>{unassignedStaff}</span>
+              <span className="tabular-nums">{unassignedStaff}</span>
             </p>
           )}
         </div>

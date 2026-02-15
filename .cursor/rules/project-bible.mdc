@@ -1,0 +1,94 @@
+---
+description: Master context for the Zura platform. Every agent reads this to understand the app, tech stack, directory structure, and core patterns.
+alwaysApply: true
+---
+
+# Zura Project Bible
+
+## What Is Zura
+
+Zura is a multi-tenant SaaS salon management platform (branded "Drop Dead 75 Dashboard"). It provides a unified operating system for beauty brands -- covering analytics, team management, client engagement, AI insights, scheduling, POS, and payroll. Built on the Lovable platform.
+
+## Strategic direction: standalone
+
+**Phorest will be detached.** Zura is being built to run as a **standalone system** for scheduling, POS, payroll, and related operations. The codebase is evolved so that we can easily detach Phorest and run entirely on Zura-owned data and flows. Use the POS adapter and canonical types for new work; avoid new direct coupling to Phorest tables. See `.cursor/rules/standalone-detach-phorest.mdc` for how to build for easy detach.
+
+## Tech Stack
+
+- **Frontend:** React 18 + Vite (port 8080) + TypeScript
+- **Backend:** Supabase -- PostgreSQL, Edge Functions (Deno), Auth, Storage, Realtime
+- **UI:** shadcn/ui + Tailwind CSS + Radix UI primitives
+- **State:** TanStack Query (server state) + React Context (app state)
+- **Forms:** React Hook Form + Zod validation
+- **Animations:** Framer Motion
+- **Icons:** Lucide React
+- **Toasts:** Sonner
+- **Charts:** Recharts
+- **Path aliases:** `@/*` maps to `./src/*`
+
+## Directory Structure
+
+```
+src/
+  components/       # 836 files -- React components
+    dashboard/      # 482 files -- dashboard feature components
+    platform/       # Platform admin components
+    ui/             # 63 shadcn/ui components
+    home/           # Public homepage sections
+    auth/           # Auth components (ProtectedRoute, etc.)
+  hooks/            # 318 custom React hooks
+  pages/            # Page components (routes)
+    dashboard/      # Dashboard route pages
+      admin/        # Admin pages (50+)
+      platform/     # Platform admin pages
+  contexts/         # 11 React context providers
+  integrations/     # Supabase client + auto-generated types
+  lib/              # Utilities (cn, design-rules, image-utils)
+  services/         # Business logic services
+  types/            # TypeScript type definitions
+  data/             # Static data
+  config/           # App configuration
+  constants/        # App constants
+  adapters/         # POS adapter pattern
+  assets/           # Images, SVGs
+
+supabase/
+  functions/        # 100+ Deno edge functions
+    _shared/        # Shared utilities (email, SMS, CORS, AI config)
+  migrations/       # 249 SQL migration files
+```
+
+## Core Imports (used across nearly every file)
+
+```typescript
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+```
+
+## Key Integrations
+
+- **Phorest** -- Current external POS/salon source (appointments, clients, services, transactions). Being phased toward standalone; data access should go through the POS adapter. See standalone-detach-phorest rule.
+- **Stripe** -- Subscription billing and payments
+- **Gusto / QuickBooks** -- Payroll (OAuth)
+- **Resend** -- Transactional email
+- **PandaDoc** -- Document signing
+- **Lovable AI Gateway** -- AI chat, insights, scheduling copilot (Google Gemini)
+
+## User Roles
+
+- **App roles:** admin, manager, stylist, stylist_assistant, receptionist, assistant, admin_assistant, operations_assistant, booth_renter, bookkeeper, super_admin
+- **Platform roles:** platform_owner, platform_admin, platform_support, platform_developer
+- **Public users:** clients (rewards portal, feedback, booking)
+
+## Route Structure
+
+- `/` -- Public homepage
+- `/staff-login` -- Staff authentication
+- `/dashboard` -- Protected dashboard (DashboardLayout)
+- `/dashboard/admin/*` -- Admin pages
+- `/dashboard/platform/*` -- Platform admin pages
+- `/kiosk/:locationId` -- Check-in kiosk
+- `/rewards` -- Client loyalty portal
+- `/booking`, `/book` -- Public booking

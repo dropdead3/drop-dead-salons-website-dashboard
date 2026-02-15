@@ -4,9 +4,11 @@ import { EmployeeCompensation } from '@/hooks/usePayrollCalculations';
 import { EmployeePayrollSettings } from '@/hooks/useEmployeePayrollSettings';
 import { CurrentPeriod } from '@/hooks/useMyPayData';
 import { LiveCountdown } from '@/components/dashboard/LiveCountdown';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { CalendarDays, TrendingUp } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface CurrentPeriodCardProps {
   currentPeriod: CurrentPeriod;
@@ -14,24 +16,17 @@ interface CurrentPeriodCardProps {
   settings: EmployeePayrollSettings;
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function formatDate(dateStr: string): string {
-  try {
-    return format(parseISO(dateStr), 'MMM d');
-  } catch {
-    return dateStr;
-  }
-}
-
 export function CurrentPeriodCard({ currentPeriod, estimatedCompensation, settings }: CurrentPeriodCardProps) {
+  const { formatDate: formatDateLocale } = useFormatDate();
+  const { formatCurrencyWhole } = useFormatCurrency();
+
+  const formatDate = (dateStr: string): string => {
+    try {
+      return formatDateLocale(parseISO(dateStr), 'MMM d');
+    } catch {
+      return dateStr;
+    }
+  };
   const comp = estimatedCompensation;
   
   return (
@@ -65,7 +60,7 @@ export function CurrentPeriodCard({ currentPeriod, estimatedCompensation, settin
                   {comp.salaryPay > 0 ? 'Salary' : 'Hourly Pay'}
                 </span>
                 <BlurredAmount className="text-sm">
-                  {formatCurrency(comp.salaryPay > 0 ? comp.salaryPay : comp.hourlyPay)}
+                  {formatCurrencyWhole(comp.salaryPay > 0 ? comp.salaryPay : comp.hourlyPay)}
                 </BlurredAmount>
               </div>
             )}
@@ -75,7 +70,7 @@ export function CurrentPeriodCard({ currentPeriod, estimatedCompensation, settin
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Commission*</span>
                 <BlurredAmount className="text-sm text-primary">
-                  {formatCurrency(comp.commissionPay)}
+                  {formatCurrencyWhole(comp.commissionPay)}
                 </BlurredAmount>
               </div>
             )}
@@ -86,7 +81,7 @@ export function CurrentPeriodCard({ currentPeriod, estimatedCompensation, settin
             <div className="flex justify-between items-center">
               <span className="text-sm">Est. Gross</span>
               <BlurredAmount className="text-sm font-medium">
-                {formatCurrency(comp.grossPay)}
+                {formatCurrencyWhole(comp.grossPay)}
               </BlurredAmount>
             </div>
 
@@ -94,7 +89,7 @@ export function CurrentPeriodCard({ currentPeriod, estimatedCompensation, settin
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Est. Taxes</span>
               <BlurredAmount className="text-sm text-muted-foreground">
-                ~{formatCurrency(comp.estimatedTaxes)}
+                ~{formatCurrencyWhole(comp.estimatedTaxes)}
               </BlurredAmount>
             </div>
 
@@ -104,7 +99,7 @@ export function CurrentPeriodCard({ currentPeriod, estimatedCompensation, settin
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium">Est. Net</span>
               <BlurredAmount className="text-lg font-medium text-primary">
-                ~{formatCurrency(comp.netPay)}
+                ~{formatCurrencyWhole(comp.netPay)}
               </BlurredAmount>
             </div>
 

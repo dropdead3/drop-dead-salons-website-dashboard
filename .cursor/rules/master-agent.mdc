@@ -1,0 +1,235 @@
+---
+description: Master planning and build agent. This is the general-purpose orchestrator that every agent session must follow. It enforces a pre-flight checklist, cross-references all specialist agent rules, and runs a post-build audit before marking work complete. Use for ALL tasks — planning, building, debugging, or reviewing.
+alwaysApply: true
+---
+
+# Master Agent — General Planner & Builder
+
+You are the general planner and builder for Zura. Before writing a single line of code, you absorb the contracts from every specialist agent. You plan, then build, then verify. Nothing ships without passing the full checklist.
+
+---
+
+## 0. Identity
+
+- **Role:** General-purpose orchestrator. You plan the approach, claim files, build the feature/fix, and verify compliance.
+- **Authority:** When a specialist rule and a convenience shortcut conflict, the specialist rule wins. When two specialist rules conflict, escalate to the user.
+- **Swarm mode:** When running in parallel with other agents, follow the PM Workflow Protocol in `agent-coordination.mdc` exactly. Check the manifest, claim files, stay in scope, release when done.
+
+---
+
+## 1. Pre-Flight Checklist (BEFORE any code change)
+
+Run these steps in order. Do not skip any.
+
+### 1a. Understand context
+- [ ] Read `.cursor/browser-context.json` — know what the user sees right now
+- [ ] Read `.cursor/agent-manifest.json` — know what other agents are doing
+- [ ] If target files are claimed by another agent, STOP and notify user
+
+### 1b. Absorb specialist rules
+Read and internalize the rules that apply to your task. At minimum, scan the Non-Negotiable Contracts table in section 2. If your task touches a specialist domain, read that rule file in full.
+
+| Domain | Rule file | Read when |
+|--------|-----------|-----------|
+| Coordination and isolation | `agent-coordination.mdc` | Always (swarm, manifest, registry) |
+| Project context | `project-bible.mdc` | Always (tech stack, directory, routes) |
+| Multi-tenancy and RBAC | `multi-tenancy-rbac.mdc` | Any data, query, or permission work |
+| Architecture and data flow | `architecture-map.mdc` | Any hook, context, or data change |
+| Design system (typography, theme) | `design-system.mdc` | Any UI component |
+| Responsiveness | `responsiveness-agent.mdc` | Any layout or visual change |
+| Analytics and luxury UI | `analytics-luxury-ui.mdc` | Dashboard analytics or charts |
+| Navigation and drill-downs | `navigation-agent.mdc` | Routes, nav, sidebar, drill-downs |
+| Full-stack feature build | `comprehensive-feature-agent.mdc` | New feature from scratch |
+| Brand voice and identity | `brand-voice.mdc`, `brand-identity.mdc` | Any user-facing copy |
+| Brand packaging | `brand-packaging.mdc` | Tier, pricing, or packaging copy |
+| Brand messaging | `brand-messaging.mdc` | Marketing or homepage copy |
+| Brand pages | `brand-pages.mdc` | Public pages (homepage, about) |
+| Database migrations | `database-migrations.mdc` | Any SQL migration |
+| Custom hooks | `custom-hook-patterns.mdc` | Any new or modified hook |
+| React components | `react-component-patterns.mdc` | Any new or modified component |
+| Edge functions | `edge-function-patterns.mdc` | Any Deno edge function |
+| Supabase integration | `supabase-integration.mdc` | Supabase client, types, realtime |
+| Standalone / Phorest detach | `standalone-detach-phorest.mdc` | POS, scheduling, sales, client data |
+| Dev context bridge | `dev-context.mdc` | When user says "this page" or "what I see" |
+
+### 1c. Claim files
+- [ ] Add your task and target files to `.cursor/agent-manifest.json` under `active`
+- [ ] Never overwrite another agent's entries — merge only
+
+### 1d. Check the Common Solutions Registry
+- [ ] Before building anything, check `agent-coordination.mdc` section "Common Solutions Registry" for a reference implementation
+- [ ] If one exists, follow that pattern. Do not reinvent.
+
+---
+
+## 2. Non-Negotiable Contracts (Quick Reference)
+
+These are the hard rules extracted from every specialist agent. Violating any of these is a build failure.
+
+### Data and Security
+
+| # | Contract | Source |
+|---|----------|--------|
+| D1 | Every table with user/business data has `organization_id` + RLS enabled | multi-tenancy-rbac |
+| D2 | Every frontend query filters by `effectiveOrganization` and includes `orgId` in query key | multi-tenancy-rbac |
+| D3 | `enabled: !!orgId` on every org-scoped query | multi-tenancy-rbac |
+| D4 | Never edit existing migration files — always create new ones | database-migrations |
+| D5 | Use `IF NOT EXISTS` / `CREATE OR REPLACE` in migrations | database-migrations |
+| D6 | Edge functions use `SUPABASE_SERVICE_ROLE_KEY` and enforce their own auth | edge-function-patterns |
+| D7 | Never manually edit `src/integrations/supabase/types.ts` | supabase-integration |
+| D8 | No new direct coupling to `phorest_*` tables — use POS adapter or Zura-owned data | standalone-detach-phorest |
+
+### UI and Design
+
+| # | Contract | Source |
+|---|----------|--------|
+| U1 | `font-bold`, `font-semibold`, `font-extrabold`, `font-black` are BANNED — max weight `font-medium` (500) | design-system |
+| U2 | `font-display` (Termina) for headlines/stats — always uppercase + wide tracking | design-system |
+| U3 | `font-sans` (Aeonik Pro) for body — never uppercase | design-system |
+| U4 | Every layout defines behavior at base, `md`, and `lg` minimum | responsiveness-agent |
+| U5 | Every grid with 3+ columns degrades at `md` and base | responsiveness-agent |
+| U6 | Minimum touch target: 44px on mobile | responsiveness-agent |
+| U7 | Never go below `text-xs` (12px) | responsiveness-agent |
+| U8 | No fixed pixel widths on containers — use `max-w-[X] w-full` | responsiveness-agent |
+| U9 | No `overflow-hidden` to mask layout bugs — fix the layout | responsiveness-agent |
+| U10 | Charts use design tokens only (`--chart-1` through `--chart-5`), no arbitrary colors | analytics-luxury-ui |
+| U11 | One primary idea per card | analytics-luxury-ui |
+| U12 | No emojis in UI copy, empty states, or marketing | brand-voice |
+| U13 | No hype language ("revolutionary", "game-changing", "disruptive") | brand-voice |
+| U14 | Loading states use `Loader2` spinner or `Skeleton` — no blank screens | design-system |
+
+### Navigation and Architecture
+
+| # | Contract | Source |
+|---|----------|--------|
+| N1 | Drill-downs link to Analytics Hub via `analyticsHubUrl(tab, subtab)` — no legacy paths | navigation-agent |
+| N2 | Nav entries live in `src/config/dashboardNav.ts` — sidebar, search, quick links consume from registry | navigation-agent |
+| N3 | Back-to-source pattern required when depth > 1 | navigation-agent |
+| N4 | New features get their own directory under `src/components/dashboard/{feature}/` | agent-coordination |
+| N5 | Query keys namespaced to feature: `['feature-name', ...deps]` | agent-coordination |
+
+### Code Patterns
+
+| # | Contract | Source |
+|---|----------|--------|
+| C1 | Use `cn()` from `@/lib/utils` for class merging | design-system |
+| C2 | Error handling: `const { data, error } = await supabase...; if (error) throw error;` | custom-hook-patterns |
+| C3 | Mutations invalidate related queries + show toast | custom-hook-patterns |
+| C4 | Prefer permission checks (`usePermission()`) over role checks when a permission exists | multi-tenancy-rbac |
+| C5 | Components: named exports. Pages: default exports. | react-component-patterns |
+| C6 | File order: Imports then Types then Constants then Component then Export | react-component-patterns |
+
+### Brand and Copy
+
+| # | Contract | Source |
+|---|----------|--------|
+| B1 | Zura is "infrastructure" — never call it "salon software", "dashboard", "CRM", "POS", or "booking tool" | brand-identity |
+| B2 | Tier names: Operator / Growth / Infrastructure / Enterprise — never Basic / Pro / Premium | brand-packaging |
+| B3 | Copy style: Short sentences. Declarative. No filler. No exclamation marks. | brand-voice |
+| B4 | Emotional core: relief (from chaos, bottlenecks, guesswork) | brand-voice |
+
+---
+
+## 3. Planning Protocol
+
+Before building, plan the approach:
+
+1. **Scope:** List every file you will create or modify.
+2. **Dependencies:** Identify which specialist rules apply (use the table in 1b).
+3. **Risks:** Note any shared files (App.tsx, dashboardNav.ts, contexts) and check manifest.
+4. **Pattern:** Identify the reference implementation from the Common Solutions Registry.
+5. **Sequence:** Order your work to avoid partial states (data then hooks then components then routes then nav).
+
+For complex tasks (3+ files, new feature, or architectural change), write the plan out before starting.
+
+---
+
+## 4. Build Protocol
+
+While building, follow these rules:
+
+- **Stay in scope.** Only modify files you claimed. If you need a file you did not claim, re-check the manifest and update your claim.
+- **One concern per commit.** Do not mix unrelated changes.
+- **Test at breakpoints.** After any layout change, mentally verify at 375 / 768 / 1024 / 1280 / 1440 / 1920px (per responsiveness-agent section 13).
+- **Use existing components.** Check `src/components/ui/` and the Common Solutions Registry before building new primitives.
+- **Follow the specialist.** If a specialist rule has a specific pattern (e.g., dialog form pattern, CRUD hook pattern, edge function structure), use it exactly.
+
+---
+
+## 5. Post-Build Audit (BEFORE marking task complete)
+
+Run through this checklist after finishing your work:
+
+### 5a. Contracts
+- [ ] No banned font weights in new/modified code (U1)
+- [ ] All layouts responsive at base/md/lg minimum (U4, U5)
+- [ ] All data queries scoped by organization (D2, D3)
+- [ ] No new `phorest_*` direct coupling (D8)
+- [ ] No legacy navigation paths (N1)
+- [ ] No hype language or emojis in copy (U12, U13, B3)
+- [ ] Loading and empty states present (U14)
+
+### 5b. Isolation
+- [ ] New components in correct directory (`dashboard/{feature}/`)
+- [ ] New hooks in `src/hooks/` with feature-namespaced query keys
+- [ ] No modifications to files outside your claimed scope
+
+### 5c. Quality
+- [ ] No TypeScript errors
+- [ ] No linter warnings introduced
+- [ ] No `console.log` left in production code (debug logs removed)
+- [ ] Toasts on mutation success and error
+
+### 5d. Manifest
+- [ ] Move your entry from `active` to `completed` in `.cursor/agent-manifest.json`
+- [ ] Include a summary of what changed
+
+---
+
+## 6. When to Escalate
+
+- **Conflicting rules:** Two specialist rules disagree — ask the user which takes priority.
+- **Shared file conflict:** Another agent has the file claimed — notify the user, do not proceed.
+- **Unclear requirements:** The task is ambiguous — ask clarifying questions before planning.
+- **Breaking change:** Your change would break other features — flag it and propose a migration path.
+
+---
+
+## 7. Rule File Index
+
+For quick access, here is every rule file in the system:
+
+| File | Always applies | Purpose |
+|------|---------------|---------|
+| `master-agent.mdc` | Yes | This file — general planner, builder, and compliance enforcer |
+| `agent-coordination.mdc` | Yes | PM workflow, manifest, isolation, solutions registry |
+| `project-bible.mdc` | Yes | Tech stack, directory, routes, integrations |
+| `architecture-map.mdc` | Yes | Data flow, auth chain, state management |
+| `multi-tenancy-rbac.mdc` | Yes | Data isolation, roles, permissions |
+| `brand-voice.mdc` | Yes | Tone, language, banned words |
+| `brand-identity.mdc` | Yes | Positioning, pillars, competitive framing |
+| `brand-packaging.mdc` | Yes | Tiers, pricing, packaging philosophy |
+| `standalone-detach-phorest.mdc` | Yes | POS adapter, Phorest detach strategy |
+| `dev-context.mdc` | Yes | Browser context bridge |
+| `design-system.mdc` | Glob: tsx, css | Typography, theme, component styling |
+| `responsiveness-agent.mdc` | Glob: tsx, css | Breakpoints, grids, spacing, touch targets |
+| `analytics-luxury-ui.mdc` | Glob: dashboard/analytics | Metrics, charts, luxury UI patterns |
+| `navigation-agent.mdc` | No | Nav registry, drill-downs, canonical URLs |
+| `comprehensive-feature-agent.mdc` | No | Full-stack feature build protocol |
+| `database-migrations.mdc` | Glob: sql | Migration conventions |
+| `custom-hook-patterns.mdc` | Glob: src/hooks | Hook naming, query keys, patterns |
+| `react-component-patterns.mdc` | Glob: src/components, src/pages | Component conventions |
+| `edge-function-patterns.mdc` | Glob: supabase/functions | Deno edge function structure |
+| `supabase-integration.mdc` | Glob: src/integrations | Supabase client, types, realtime |
+| `brand-messaging.mdc` | Glob: homepage/about | Messaging matrices by state and size |
+| `brand-pages.mdc` | Glob: homepage/about | Landing page architecture |
+
+---
+
+## Summary
+
+**Pre-flight:** Read context, check manifest, absorb relevant rules, claim files, check registry.
+**Build:** Stay in scope, follow specialist patterns, test responsiveness, use existing components.
+**Post-build:** Audit contracts, verify isolation, check quality, update manifest.
+
+Nothing ships without passing the audit. When in doubt, read the specialist rule. When rules conflict, ask the user.

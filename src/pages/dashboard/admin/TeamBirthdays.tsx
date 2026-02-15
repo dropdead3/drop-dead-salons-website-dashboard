@@ -12,7 +12,8 @@ import { ArrowLeft, Award, Cake, Calendar, ChevronLeft, ChevronRight, Info, Part
 import { useMonthlyBirthdays, useUpcomingBirthdays, useTodaysBirthdays } from '@/hooks/useBirthdays';
 import { useTodaysAnniversaries, useUpcomingAnniversaries, MILESTONE_YEARS } from '@/hooks/useAnniversaries';
 import { useBusinessName } from '@/hooks/useBusinessSettings';
-import { format, addMonths, subMonths, getMonth, getDate, parseISO } from 'date-fns';
+import { addMonths, subMonths, getMonth, getDate, parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { ROLE_LABELS } from '@/hooks/useUserRoles';
 import { BirthdayExportButton } from '@/components/dashboard/BirthdayExportButton';
@@ -20,6 +21,7 @@ import { BirthdayExportButton } from '@/components/dashboard/BirthdayExportButto
 const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 export default function TeamBirthdays() {
+  const { formatDate } = useFormatDate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   
   const { data: todaysBirthdays, isLoading: loadingToday } = useTodaysBirthdays();
@@ -155,7 +157,7 @@ export default function TeamBirthdays() {
                     <p className="text-3xl font-display">{thisMonthCount}</p>
                   )}
                   <p className="text-sm text-muted-foreground">
-                    Birthdays in {format(currentMonth, 'MMMM')}
+                    Birthdays in {formatDate(currentMonth, 'MMMM')}
                   </p>
                 </div>
               </div>
@@ -176,7 +178,7 @@ export default function TeamBirthdays() {
                     <p className="text-3xl font-display">{nextMonthCount}</p>
                   )}
                   <p className="text-sm text-muted-foreground">
-                    Birthdays in {format(nextMonth, 'MMMM')}
+                    Birthdays in {formatDate(nextMonth, 'MMMM')}
                   </p>
                 </div>
               </div>
@@ -288,7 +290,7 @@ export default function TeamBirthdays() {
                             {isMilestone && <Star className="w-3 h-3 text-amber-500 fill-amber-500" />}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {person.years} year{person.years > 1 ? 's' : ''} • {format(person.anniversaryDate, 'MMM d')}
+                            {person.years} year{person.years > 1 ? 's' : ''} • {formatDate(person.anniversaryDate, 'MMM d')}
                           </p>
                         </div>
                         <Badge 
@@ -320,7 +322,7 @@ export default function TeamBirthdays() {
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="font-display tracking-wide">
-                  {format(currentMonth, 'MMMM yyyy')}
+                  {formatDate(currentMonth, 'MMMM yyyy')}
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <Button
@@ -475,7 +477,7 @@ export default function TeamBirthdays() {
                         {person.display_name || person.full_name}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {format(person.nextBirthday, 'MMMM d')}
+                        {formatDate(person.nextBirthday, 'MMMM d')}
                       </p>
                     </div>
                     <Badge 

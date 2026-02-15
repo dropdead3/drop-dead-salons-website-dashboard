@@ -1,0 +1,95 @@
+---
+description: Visual design system rules for Zura. Hard typography rules, font families, emphasis patterns, theme system, component styling, and loading states.
+globs: "**/*.tsx, **/*.css"
+alwaysApply: false
+---
+
+# Design System
+
+## Typography Rules (HARD RULES)
+
+### BANNED Classes (cause synthetic bolding)
+- `font-bold` (700) -- BANNED
+- `font-semibold` (600) -- BANNED
+- `font-extrabold` (800) -- BANNED
+- `font-black` (900) -- BANNED
+
+Maximum allowed weight: `font-medium` (500)
+
+### ALLOWED Classes
+- `font-light` (300)
+- `font-normal` (400)
+- `font-medium` (500) -- MAXIMUM
+
+### Font Families
+| Class | Font | Usage | Rules |
+|-------|------|-------|-------|
+| `font-display` | Termina | Headlines, buttons, stats, navigation | Always uppercase, wide tracking (0.08em) |
+| `font-sans` | Aeonik Pro | Body text, paragraphs, UI labels | NEVER uppercase |
+| `font-serif` | Laguna | Editorial accents | Bold weight available |
+| `font-script` | Sloop Script | Decorative elements | Use sparingly |
+
+### Emphasis Without Bold
+
+When you need visual hierarchy:
+- Use `font-display` for headlines (automatic uppercase + tracking)
+- Increase font size (`text-lg`, `text-xl`, `text-2xl`)
+- Use color contrast (`text-foreground` vs `text-muted-foreground`)
+- Add letter-spacing (`tracking-wide`, `tracking-wider`)
+- Use borders or backgrounds for visual separation
+
+### Quick Reference
+```
+BAD:  className="text-2xl font-bold"
+GOOD: className="text-2xl font-medium"
+
+BAD:  className="font-semibold text-foreground"
+GOOD: className="font-medium text-foreground"
+
+Headlines:  className="font-display text-2xl"
+Body emphasis: className="font-medium text-foreground"
+```
+
+## Theme System
+
+HSL CSS variables. Available themes:
+- **Cream** (default) -- Light cream palette
+- **Rose** -- Blush pink pastel
+- **Sage** -- Mint green pastel
+- **Ocean** -- Soft blue pastel
+- **Platform** -- Purple/violet fintech-inspired (platform admin only)
+
+Semantic colors: `primary`, `secondary`, `accent`, `destructive`, `success`, `oat`, `gold`
+
+## Component Styling
+
+- Always use `cn()` from `@/lib/utils` to merge Tailwind classes
+- Use shadcn/ui components from `@/components/ui/`
+- Dashboard content: `<div className="px-8 py-8 max-w-[1600px] mx-auto">`
+
+## Loading States
+
+Spinner (full page):
+```tsx
+<div className="flex items-center justify-center h-64">
+  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+</div>
+```
+
+Skeleton (tables/cards):
+```tsx
+{[1, 2, 3, 4, 5].map((i) => (
+  <Skeleton key={i} className="h-14 w-full" />
+))}
+```
+
+## Empty States
+
+Centered icon + heading + description:
+```tsx
+<div className="text-center py-12 text-muted-foreground">
+  <Package className="w-12 h-12 mx-auto mb-4" />
+  <h3 className="font-medium text-lg mb-2">No items found</h3>
+  <p className="text-sm">Try adjusting your filters</p>
+</div>
+```

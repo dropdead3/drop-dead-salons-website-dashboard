@@ -5,11 +5,13 @@ import { useKiosk } from './KioskProvider';
 import { DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { KioskLocationBadge, isBadgeAtTop, isBadgeAtBottom } from './KioskLocationBadge';
 import { supabase } from '@/integrations/supabase/client';
-import { format, parse } from 'date-fns';
+import { parse } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 export function KioskWrongLocationScreen() {
+  const { formatDate } = useFormatDate();
   const { 
     settings, 
     session, 
@@ -45,7 +47,7 @@ export function KioskWrongLocationScreen() {
   const formatTime = (timeStr: string) => {
     try {
       const parsed = parse(timeStr, 'HH:mm:ss', new Date());
-      return format(parsed, 'h:mm a');
+      return formatDate(parsed, 'h:mm a');
     } catch {
       return timeStr;
     }

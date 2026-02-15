@@ -130,7 +130,7 @@ export function OrganizationProvider({ children }: { children: React.ReactNode }
         .from('employee_profiles')
         .select('active_organization_id')
         .eq('user_id', user?.id)
-        .single();
+        .maybeSingle();
 
       if (profile?.active_organization_id) {
         const persistedOrg = userOrganizations.find(o => o.id === profile.active_organization_id);

@@ -54,6 +54,7 @@ interface OrgSettings {
     default_location_id: string | null;
     timezone: string;
     currency: string;
+    locale: string;
   };
 }
 
@@ -72,6 +73,7 @@ const defaultSettings: OrgSettings = {
     default_location_id: null,
     timezone: 'America/New_York',
     currency: 'USD',
+    locale: 'en',
   },
 };
 
@@ -89,6 +91,18 @@ const currencies = [
   { value: 'CAD', label: 'Canadian Dollar (C$)' },
   { value: 'EUR', label: 'Euro (€)' },
   { value: 'GBP', label: 'British Pound (£)' },
+  { value: 'AUD', label: 'Australian Dollar (A$)' },
+  { value: 'NZD', label: 'New Zealand Dollar (NZ$)' },
+  { value: 'MXN', label: 'Mexican Peso (MX$)' },
+  { value: 'BRL', label: 'Brazilian Real (R$)' },
+];
+
+const locales = [
+  { value: 'en', label: 'English' },
+  { value: 'en-GB', label: 'English (UK)' },
+  { value: 'es', label: 'Spanish' },
+  { value: 'fr', label: 'French' },
+  { value: 'de', label: 'German' },
 ];
 
 export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) {
@@ -355,6 +369,28 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
                 {currencies.map(c => (
                   <SelectItem key={c.value} value={c.value} className="text-slate-300">
                     {c.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 border border-slate-700/50">
+            <div>
+              <Label className="text-white">Locale</Label>
+              <p className="text-sm text-slate-400">Date and number formatting</p>
+            </div>
+            <Select 
+              value={settings.defaults.locale ?? 'en'} 
+              onValueChange={(v) => updateSettings('defaults.locale', v)}
+            >
+              <SelectTrigger className="w-48 bg-slate-800 border-slate-700 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-900 border-slate-700">
+                {locales.map(l => (
+                  <SelectItem key={l.value} value={l.value} className="text-slate-300">
+                    {l.label}
                   </SelectItem>
                 ))}
               </SelectContent>

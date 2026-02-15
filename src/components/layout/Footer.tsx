@@ -2,14 +2,16 @@ import { Link } from "react-router-dom";
 import { Instagram, ArrowUpRight, MapPin, Phone, AlertCircle } from "lucide-react";
 import Logo from "@/assets/drop-dead-logo.svg";
 import { useActiveLocations, formatHoursForDisplay, isClosedForHoliday, isClosedToday } from "@/hooks/useLocations";
+import { useOrgPath } from "@/hooks/useOrgPath";
 
-const footerLinks = [
+const FOOTER_LINKS = [
   { href: "/services", label: "Services" },
   { href: "/booking", label: "Book" },
 ];
 
 export function Footer() {
   const { data: locations = [] } = useActiveLocations();
+  const orgPath = useOrgPath();
   
   // Get hours from the first location for display
   const hours = locations.length > 0 ? formatHoursForDisplay(locations[0].hours_json) : '';
@@ -24,7 +26,7 @@ export function Footer() {
         {/* Brand */}
           <div className="space-y-4 md:space-y-6 text-center md:text-left flex flex-col items-center md:items-start">
             <Link
-              to="/"
+              to={orgPath("/")}
               className="hover:opacity-70 transition-opacity inline-block"
             >
               <img 
@@ -44,10 +46,10 @@ export function Footer() {
               Navigate
             </h4>
             <nav className="flex flex-row justify-center md:justify-start md:flex-col gap-6 md:gap-3">
-              {footerLinks.map((link) => (
+              {FOOTER_LINKS.map((link) => (
                 <Link
                   key={link.href}
-                  to={link.href}
+                  to={orgPath(link.href)}
                   className="text-sm font-sans font-light text-foreground/70 hover:text-foreground transition-colors"
                 >
                   {link.label}
@@ -160,10 +162,10 @@ export function Footer() {
               <ArrowUpRight size={12} />
             </Link>
             <Link
-              to="/staff-login"
+              to="/login"
               className="inline-flex items-center gap-1.5 text-xs font-sans text-muted-foreground hover:text-foreground transition-colors"
             >
-              Staff Login
+              Login
             </Link>
           </div>
           

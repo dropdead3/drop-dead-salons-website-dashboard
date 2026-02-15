@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import DD75Logo from '@/assets/dd75-logo.svg';
+import { ImageWithSkeleton } from '@/components/ui/image-skeleton';
 
 interface ColoredLogoProps {
   logoUrl?: string | null;
@@ -70,11 +71,12 @@ export function ColoredLogo({
 
   // Fallback to regular img tag
   return (
-    <img 
-      src={displayUrl} 
+    <ImageWithSkeleton
+      src={displayUrl}
       alt={alt}
       className={className}
       style={{ height: size, width: 'auto' }}
+      wrapperClassName="inline-flex"
     />
   );
 }

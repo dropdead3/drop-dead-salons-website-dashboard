@@ -9,12 +9,21 @@ import {
   BarChart3,
   CalendarPlus,
   CalendarRange,
-  CalendarCheck
+  CalendarCheck,
+  MapPin,
+  Info,
 } from 'lucide-react';
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useNewBookings } from '@/hooks/useNewBookings';
 import { DailyVolume, HourlyDistribution, StatusBreakdown } from '@/hooks/useOperationalAnalytics';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
   AreaChart, 
   Area, 
@@ -79,6 +88,7 @@ export function AppointmentsContent({
   analyticsDateRange,
   locationName
 }: AppointmentsContentProps) {
+  const { formatDate } = useFormatDate();
   // Build heatmap data
   const heatmapData = HOURS.map(hour => {
     const row: Record<string, number | string> = { hour: `${hour % 12 || 12}${hour >= 12 ? 'p' : 'a'}` };
@@ -104,7 +114,7 @@ export function AppointmentsContent({
         dateRange={analyticsDateRange}
         locationName={locationName}
       >
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           <Card className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
@@ -200,6 +210,37 @@ export function AppointmentsContent({
               </div>
             </div>
           </Card>
+          <Card className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-sky-100 dark:bg-sky-900/30">
+                <MapPin className="w-5 h-5 text-sky-600" />
+              </div>
+              <div>
+                {newBookingsLoading ? (
+                  <Skeleton className="h-8 w-12" />
+                ) : (
+                  <p className="font-display text-2xl">
+                    {newBookings?.locationBreakdown?.length
+                      ? Math.round((newBookings.last30Days || 0) / newBookings.locationBreakdown.length)
+                      : 0}
+                  </p>
+                )}
+                <div className="flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground">Avg Bookings / Location</p>
+                  <TooltipProvider>
+                    <UITooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3 h-3 text-muted-foreground/60 cursor-help" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[200px]">
+                        <p className="text-xs">Average number of bookings per location over the last 30 days.</p>
+                      </TooltipContent>
+                    </UITooltip>
+                  </TooltipProvider>
+                </div>
+              </div>
+            </div>
+          </Card>
         </div>
       </PinnableCard>
 
@@ -242,12 +283,12 @@ export function AppointmentsContent({
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis 
                     dataKey="date" 
-                    tickFormatter={(date) => format(parseISO(date), 'MMM d')}
+                    tickFormatter={(date) => formatDate(parseISO(date), 'MMM d')}
                     tick={{ fontSize: 11 }}
                   />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip 
-                    labelFormatter={(date) => format(parseISO(date as string), 'EEEE, MMM d')}
+                    labelFormatter={(date) => formatDate(parseISO(date as string), 'EEEE, MMM d')}
                     formatter={(value: number, name: string) => {
                       const labels: Record<string, string> = {
                         count: 'Total',

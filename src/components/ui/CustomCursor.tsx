@@ -12,13 +12,22 @@ export function CustomCursor() {
   const isDashboard = location.pathname.startsWith("/dashboard");
 
   useEffect(() => {
-    // Toggle body class for cursor styling
+    // Toggle body and html class for cursor + scrollbar styling
     if (isDashboard) {
       document.body.classList.add('dashboard-cursor');
+      document.documentElement.classList.add('dashboard-cursor');
     } else {
       document.body.classList.remove('dashboard-cursor');
+      document.documentElement.classList.remove('dashboard-cursor');
     }
 
+    return () => {
+      document.body.classList.remove('dashboard-cursor');
+      document.documentElement.classList.remove('dashboard-cursor');
+    };
+  }, [isDashboard]);
+
+  useEffect(() => {
     // Only enable on devices with fine pointer (desktop) and not on dashboard
     const hasFinePointer = window.matchMedia("(pointer: fine)").matches;
     if (!hasFinePointer || isDashboard) {
@@ -68,7 +77,7 @@ export function CustomCursor() {
       document.removeEventListener("mouseover", handleMouseEnter);
       document.removeEventListener("mouseout", handleMouseLeave);
     };
-  }, []);
+  }, [isDashboard]);
 
   if (!isVisible) return null;
 

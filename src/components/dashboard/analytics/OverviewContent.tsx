@@ -1,22 +1,24 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Calendar, 
-  TrendingUp, 
   Users,
   CheckCircle,
   XCircle,
-  Clock,
   ArrowRight,
   BarChart3,
   UserCheck,
   AlertTriangle,
-  Gauge
+  Gauge,
+  TrendingUp
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { DailyVolume, StatusBreakdown, RetentionMetrics } from '@/hooks/useOperationalAnalytics';
-import { Skeleton } from '@/components/ui/skeleton';
-import { PinnableCard } from '@/components/dashboard/PinnableCard';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
+import type { DailyVolume, RetentionMetrics } from '@/hooks/useOperationalAnalytics';
 import type { CapacityData } from '@/hooks/useHistoricalCapacityUtilization';
+import type { StaffWorkload } from '@/hooks/useStaffUtilization';
+import type { LocationStaffingBalanceResult } from '@/hooks/useLocationStaffingBalance';
 
 interface OverviewContentProps {
   summary: {
@@ -26,253 +28,301 @@ interface OverviewContentProps {
     cancelledCount: number;
     noShowRate: number;
     cancellationRate: number;
+    rebookedCount: number;
+    rebookRate: number;
   };
   retention?: RetentionMetrics;
   dailyVolume: DailyVolume[];
-  statusBreakdown: StatusBreakdown[];
   isLoading: boolean;
   onNavigateToTab: (tab: string) => void;
   capacityData?: CapacityData | null;
   capacityLoading?: boolean;
+  workload: StaffWorkload[];
+  workloadLoading?: boolean;
+  staffingBalance?: LocationStaffingBalanceResult;
 }
 
 export function OverviewContent({ 
   summary, 
   retention, 
   dailyVolume,
-  statusBreakdown,
   isLoading,
   onNavigateToTab,
   capacityData,
-  capacityLoading 
+  capacityLoading,
+  workload,
+  workloadLoading,
+  staffingBalance,
 }: OverviewContentProps) {
-  // Calculate quick insights
-  const peakDay = dailyVolume.reduce((max, d) => d.count > max.count ? d : max, { date: '', count: 0 });
+  const { formatNumber } = useFormatNumber();
+
   const completionRate = summary.totalAppointments > 0 
     ? (summary.completedAppointments / summary.totalAppointments * 100).toFixed(1)
     : '0';
 
+  const peakDay = dailyVolume.reduce(
+    (max, d) => (d.count > max.count ? d : max),
+    { date: '', count: 0 }
+  );
+
+  const anyLoading = isLoading || capacityLoading || workloadLoading || staffingBalance?.isLoading;
+
   return (
-    <>
-      {/* Key Summary Stats */}
-      <PinnableCard 
-        elementKey="operations_summary" 
-        elementName="Operations Summary" 
-        category="Analytics Hub - Operations"
-        className="mb-8"
-      >
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-primary/10">
-                <Calendar className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <p className="font-display text-2xl">{summary.totalAppointments}</p>
-                <p className="text-xs text-muted-foreground">Total Appointments</p>
-              </div>
+    <div className="space-y-6">
+      {/* ── Section 1: Operations Pulse ── */}
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-2">
+            <CardTitle className="font-display text-base tracking-wide">OPERATIONS PULSE</CardTitle>
+            <MetricInfoTooltip description="High-level operational health: appointment volume, completion and no-show rates, and capacity utilization for the selected period." />
+          </div>
+          <CardDescription>Key operational indicators for the selected period</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {anyLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[...Array(4)].map((_, i) => (
+                <Skeleton key={i} className="h-20 w-full" />
+              ))}
             </div>
-          </Card>
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-                <CheckCircle className="w-5 h-5 text-green-600" />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="text-center p-3 bg-muted/30 rounded-lg">
+                <div className="flex justify-center mb-1">
+                  <Calendar className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-lg font-display tabular-nums">{summary.totalAppointments}</span>
+                <div className="flex items-center gap-1 justify-center">
+                  <p className="text-xs text-muted-foreground">Total Appointments</p>
+                  <MetricInfoTooltip description="All scheduled appointments (excluding cancelled) in the selected period." />
+                </div>
               </div>
-              <div>
-                <p className="font-display text-2xl">{completionRate}%</p>
-                <p className="text-xs text-muted-foreground">Completion Rate</p>
+              <div className="text-center p-3 bg-muted/30 rounded-lg">
+                <div className="flex justify-center mb-1">
+                  <CheckCircle className="w-4 h-4 text-chart-2" />
+                </div>
+                <span className="text-lg font-display tabular-nums">{completionRate}%</span>
+                <div className="flex items-center gap-1 justify-center">
+                  <p className="text-xs text-muted-foreground">Completion Rate</p>
+                  <MetricInfoTooltip description="Percentage of appointments that were completed versus total scheduled. Higher is better." />
+                </div>
               </div>
-            </div>
-          </Card>
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
-                <XCircle className="w-5 h-5 text-red-600" />
-              </div>
-              <div>
-                <p className={cn(
-                  "font-display text-2xl",
-                  summary.noShowRate > 5 && "text-red-600"
+              <div className="text-center p-3 bg-muted/30 rounded-lg">
+                <div className="flex justify-center mb-1">
+                  <XCircle className="w-4 h-4 text-destructive" />
+                </div>
+                <span className={cn(
+                  "text-lg font-display tabular-nums",
+                  summary.noShowRate > 5 && "text-destructive"
                 )}>
                   {summary.noShowRate.toFixed(1)}%
-                </p>
-                <p className="text-xs text-muted-foreground">No-Show Rate</p>
+                </span>
+                <div className="flex items-center gap-1 justify-center">
+                  <p className="text-xs text-muted-foreground">No-Show Rate</p>
+                  <MetricInfoTooltip description="Percentage of appointments where the client did not arrive. Rates above 5% are flagged." />
+                </div>
+              </div>
+              <div className="text-center p-3 bg-muted/30 rounded-lg">
+                <div className="flex justify-center mb-1">
+                  <Gauge className="w-4 h-4 text-chart-3" />
+                </div>
+                <span className="text-lg font-display tabular-nums">
+                  {capacityData ? `${capacityData.overallUtilization.toFixed(0)}%` : 'NA'}
+                </span>
+                <div className="flex items-center gap-1 justify-center">
+                  <p className="text-xs text-muted-foreground">Capacity Utilization</p>
+                  <MetricInfoTooltip description="Percentage of available chair-hours that are booked. Compares booked time against total stylist capacity." />
+                </div>
               </div>
             </div>
-          </Card>
-          <Card className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                <Users className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="font-display text-2xl">
-                  {retention?.retentionRate.toFixed(0) || 0}%
-                </p>
-                <p className="text-xs text-muted-foreground">Retention Rate</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </PinnableCard>
-
-      {/* Quick Insights Section */}
-      <PinnableCard 
-        elementKey="operations_insights" 
-        elementName="Quick Insights" 
-        category="Analytics Hub - Operations"
-        className="mb-8"
-      >
-        <div className="grid md:grid-cols-4 gap-4">
-          {isLoading || capacityLoading ? (
-            <>
-              <Skeleton className="h-24" />
-              <Skeleton className="h-24" />
-              <Skeleton className="h-24" />
-              <Skeleton className="h-24" />
-            </>
-          ) : (
-            <>
-              <Card className="p-4 bg-muted/30">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Peak Activity Day</p>
-                    <p className="font-display text-lg">
-                      {peakDay.date ? new Date(peakDay.date).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) : 'NA'}
-                    </p>
-                    <p className="text-sm text-muted-foreground">{peakDay.count} appointments</p>
-                  </div>
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                </div>
-              </Card>
-              <Card className="p-4 bg-muted/30">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Client Base</p>
-                    <p className="font-display text-lg">
-                      {retention?.totalClients.toLocaleString() || 'NA'}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {retention?.newClients || 0} new this period
-                    </p>
-                  </div>
-                  <UserCheck className="w-5 h-5 text-blue-600" />
-                </div>
-              </Card>
-              <Card className="p-4 bg-muted/30">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">At-Risk Clients</p>
-                    <p className={cn(
-                      "font-display text-lg",
-                      (retention?.atRiskClients || 0) > 10 && "text-amber-600"
-                    )}>
-                      {retention?.atRiskClients || 0}
-                    </p>
-                    <p className="text-sm text-muted-foreground">Need follow-up</p>
-                  </div>
-                  <AlertTriangle className="w-5 h-5 text-amber-600" />
-                </div>
-              </Card>
-              <Card 
-                className="p-4 bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => onNavigateToTab('appointments')}
-              >
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">Capacity Utilization</p>
-                    <p className={cn(
-                      "font-display text-lg",
-                      capacityData && capacityData.overallUtilization < 50 && "text-amber-600",
-                      capacityData && capacityData.overallUtilization >= 70 && "text-green-600"
-                    )}>
-                      {capacityData ? `${capacityData.overallUtilization.toFixed(0)}%` : 'NA'}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {capacityData ? `${capacityData.gapHours.toFixed(0)}h unused` : 'View details'}
-                    </p>
-                  </div>
-                  <Gauge className={cn(
-                    "w-5 h-5",
-                    capacityData && capacityData.overallUtilization < 50 && "text-amber-600",
-                    capacityData && capacityData.overallUtilization >= 50 && capacityData.overallUtilization < 70 && "text-amber-500",
-                    capacityData && capacityData.overallUtilization >= 70 && "text-green-600",
-                    !capacityData && "text-muted-foreground"
-                  )} />
-                </div>
-              </Card>
-            </>
           )}
-        </div>
-      </PinnableCard>
+        </CardContent>
+      </Card>
 
-      {/* Navigation Cards to Detailed Tabs */}
-      <h2 className="font-display text-xl mb-4">EXPLORE DETAILS</h2>
+      {/* ── Section 2: Category Drill-Down Cards ── */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        {/* Appointments Card */}
         <Card 
-          className="p-5 cursor-pointer hover:bg-muted/30 transition-colors group"
+          className="cursor-pointer hover:bg-muted/20 transition-colors group"
           onClick={() => onNavigateToTab('appointments')}
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Calendar className="w-5 h-5 text-primary" />
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                <Calendar className="w-5 h-5 text-primary" />
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
             </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-          </div>
-          <h3 className="font-medium mb-1">Appointments</h3>
-          <p className="text-sm text-muted-foreground">
-            Volume trends, status breakdown, peak hours
-          </p>
+            <h3 className="font-display text-sm tracking-wide mb-3">APPOINTMENTS</h3>
+            {anyLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-display tabular-nums">{summary.totalAppointments}</span>
+                  <span className="text-xs text-muted-foreground">total</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {peakDay.date
+                    ? `Peak: ${new Date(peakDay.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} (${peakDay.count})`
+                    : 'No peak day data'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Rebook rate: <span className="tabular-nums text-foreground">{summary.rebookRate.toFixed(1)}%</span>
+                </p>
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground/60 mt-3">Volume trends, status breakdown, peak hours</p>
+          </CardContent>
         </Card>
 
+        {/* Clients Card */}
         <Card 
-          className="p-5 cursor-pointer hover:bg-muted/30 transition-colors group"
+          className="cursor-pointer hover:bg-muted/20 transition-colors group"
           onClick={() => onNavigateToTab('clients')}
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-              <Users className="w-5 h-5 text-blue-600" />
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                <Users className="w-5 h-5 text-chart-4" />
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
             </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-          </div>
-          <h3 className="font-medium mb-1">Clients</h3>
-          <p className="text-sm text-muted-foreground">
-            Retention metrics, at-risk clients
-          </p>
+            <h3 className="font-display text-sm tracking-wide mb-3">CLIENTS</h3>
+            {anyLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-display tabular-nums">
+                    {retention ? formatNumber(retention.totalClients) : '0'}
+                  </span>
+                  <span className="text-xs text-muted-foreground">total clients</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  <span className="tabular-nums text-foreground">{retention?.newClients || 0}</span> new
+                  {' / '}
+                  Retention: <span className="tabular-nums text-foreground">{retention?.retentionRate.toFixed(0) || 0}%</span>
+                </p>
+                {(retention?.atRiskClients || 0) > 0 ? (
+                  <p className="text-xs flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 text-chart-4" />
+                    <span className="tabular-nums text-chart-4">{retention?.atRiskClients}</span>
+                    <span className="text-muted-foreground">at-risk</span>
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No at-risk clients</p>
+                )}
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground/60 mt-3">Retention metrics, at-risk clients, segments</p>
+          </CardContent>
         </Card>
 
+        {/* Staffing Card */}
         <Card 
-          className="p-5 cursor-pointer hover:bg-muted/30 transition-colors group"
+          className="cursor-pointer hover:bg-muted/20 transition-colors group"
           onClick={() => onNavigateToTab('staffing')}
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-              <BarChart3 className="w-5 h-5 text-amber-600" />
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                <BarChart3 className="w-5 h-5 text-chart-5" />
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
             </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-          </div>
-          <h3 className="font-medium mb-1">Staffing</h3>
-          <p className="text-sm text-muted-foreground">
-            Hiring capacity, staffing trends
-          </p>
+            <h3 className="font-display text-sm tracking-wide mb-3">STAFFING</h3>
+            {anyLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-display tabular-nums">{workload.length}</span>
+                  <span className="text-xs text-muted-foreground">service providers</span>
+                </div>
+                {staffingBalance && staffingBalance.locations.length > 0 ? (
+                  <>
+                    {staffingBalance.understaffedCount > 0 ? (
+                      <p className="text-xs flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3 text-destructive" />
+                        <span className="tabular-nums text-destructive">{staffingBalance.understaffedCount}</span>
+                        <span className="text-muted-foreground">understaffed</span>
+                      </p>
+                    ) : null}
+                    {staffingBalance.overstaffedCount > 0 ? (
+                      <p className="text-xs flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3 text-chart-5" />
+                        <span className="tabular-nums text-chart-5">{staffingBalance.overstaffedCount}</span>
+                        <span className="text-muted-foreground">overstaffed</span>
+                      </p>
+                    ) : null}
+                    {staffingBalance.understaffedCount === 0 && staffingBalance.overstaffedCount === 0 ? (
+                      <p className="text-xs flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3 text-chart-2" />
+                        <span className="text-chart-2">All locations balanced</span>
+                      </p>
+                    ) : null}
+                  </>
+                ) : (
+                  <p className="text-xs text-muted-foreground">No location data</p>
+                )}
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground/60 mt-3">Hiring capacity, staffing balance, trends</p>
+          </CardContent>
         </Card>
 
+        {/* Staff Utilization Card */}
         <Card 
-          className="p-5 cursor-pointer hover:bg-muted/30 transition-colors group"
+          className="cursor-pointer hover:bg-muted/20 transition-colors group"
           onClick={() => onNavigateToTab('staff-utilization')}
         >
-          <div className="flex items-center justify-between mb-3">
-            <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
-              <UserCheck className="w-5 h-5 text-green-600" />
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                <UserCheck className="w-5 h-5 text-chart-2" />
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
             </div>
-            <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:translate-x-1 transition-transform" />
-          </div>
-          <h3 className="font-medium mb-1">Staff Utilization</h3>
-          <p className="text-sm text-muted-foreground">
-            Workload distribution, qualifications
-          </p>
+            <h3 className="font-display text-sm tracking-wide mb-3">STAFF UTILIZATION</h3>
+            {anyLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-32" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-display tabular-nums">
+                    {capacityData ? `${capacityData.overallUtilization.toFixed(0)}%` : 'NA'}
+                  </span>
+                  <span className="text-xs text-muted-foreground">capacity</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {capacityData
+                    ? `${capacityData.totalBookedHours}h booked / ${capacityData.gapHours.toFixed(0)}h unused`
+                    : 'No capacity data'}
+                </p>
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground/60 mt-3">Workload distribution, qualifications</p>
+          </CardContent>
         </Card>
       </div>
-    </>
+    </div>
   );
 }

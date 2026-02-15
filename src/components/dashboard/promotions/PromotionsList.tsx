@@ -18,7 +18,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Plus, MoreHorizontal, Pencil, Trash2, Copy, Loader2 } from 'lucide-react';
-import { format, isPast, isFuture } from 'date-fns';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { isPast, isFuture } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { usePromotions, useUpdatePromotion, useDeletePromotion, type Promotion } from '@/hooks/usePromotions';
 import { PromotionFormDialog } from './PromotionFormDialog';
 import { toast } from 'sonner';
@@ -38,8 +40,10 @@ const PROMOTION_TYPE_LABELS: Record<string, string> = {
 };
 
 export function PromotionsList({ organizationId }: PromotionsListProps) {
+  const { formatDate } = useFormatDate();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<Promotion | null>(null);
+  const { formatCurrency } = useFormatCurrency();
   
   const { data: promotions, isLoading } = usePromotions(organizationId);
   const updatePromotion = useUpdatePromotion();
@@ -139,7 +143,7 @@ export function PromotionsList({ organizationId }: PromotionsListProps) {
                           <p className="font-medium">{promo.name}</p>
                           {promo.expires_at && (
                             <p className="text-xs text-muted-foreground">
-                              Expires {format(new Date(promo.expires_at), 'MMM d, yyyy')}
+                              Expires {formatDate(new Date(promo.expires_at), 'MMM d, yyyy')}
                             </p>
                           )}
                         </div>
@@ -153,7 +157,7 @@ export function PromotionsList({ organizationId }: PromotionsListProps) {
                         {promo.promotion_type === 'percentage_discount' 
                           ? `${promo.discount_value}%`
                           : promo.promotion_type === 'fixed_discount'
-                          ? `$${promo.discount_value}`
+                          ? formatCurrency(promo.discount_value)
                           : '-'}
                       </TableCell>
                       <TableCell>

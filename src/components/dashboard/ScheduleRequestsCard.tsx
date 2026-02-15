@@ -9,12 +9,13 @@ import { Calendar, Check, X, Loader2, ArrowRight, Clock } from 'lucide-react';
 import { usePendingScheduleChangeRequests, useReviewScheduleChangeRequest } from '@/hooks/useLocationSchedules';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useLocations } from '@/hooks/useLocations';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function ScheduleRequestsCard() {
+  const { formatDate } = useFormatDate();
   const { data: requests, isLoading } = usePendingScheduleChangeRequests();
   const { data: teamMembers } = useTeamDirectory();
   const { data: locations } = useLocations();
@@ -111,7 +112,7 @@ export function ScheduleRequestsCard() {
                       {member?.display_name || member?.full_name || 'Unknown'}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {location?.name || 'Unknown location'} • {format(new Date(request.created_at), 'MMM d')}
+                      {location?.name || 'Unknown location'} • {formatDate(new Date(request.created_at), 'MMM d')}
                     </p>
                   </div>
                 </div>

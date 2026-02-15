@@ -3,6 +3,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, Refere
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { formatCurrency as formatCurrencyUtil, formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 
 interface WaterfallDataPoint {
   category: string;
@@ -129,7 +130,7 @@ export function WaterfallChart({
             >
               <XAxis 
                 type="number" 
-                tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
                 tick={{ fontSize: 12 }}
               />
               <YAxis 
@@ -142,9 +143,9 @@ export function WaterfallChart({
                 formatter={(value: number, name: string, props: any) => {
                   const delta = props.payload.delta;
                   if (delta !== undefined) {
-                    return [`${delta >= 0 ? '+' : ''}$${delta.toLocaleString()}`, 'Change'];
+                    return [`${delta >= 0 ? '+' : ''}${formatCurrencyUtil(delta)}`, 'Change'];
                   }
-                  return [`$${value.toLocaleString()}`, 'Total'];
+                  return [formatCurrencyUtil(value), 'Total'];
                 }}
                 contentStyle={{
                   backgroundColor: 'hsl(var(--popover))',

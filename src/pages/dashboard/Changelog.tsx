@@ -8,7 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
-import { format, parseISO, isThisYear } from 'date-fns';
+import { parseISO, isThisYear } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import {
   ChevronUp, Star, Clock, Rocket, Bug, Sparkles, Lightbulb,
@@ -49,6 +50,7 @@ function ChangelogEntryCard({
   const typeConfig = ENTRY_TYPE_CONFIG[entry.entry_type] || ENTRY_TYPE_CONFIG.update;
   const TypeIcon = typeConfig.icon;
   const markRead = useMarkChangelogRead();
+  const { formatDate } = useFormatDate();
 
   useEffect(() => {
     if (!entry.is_read) {
@@ -56,9 +58,9 @@ function ChangelogEntryCard({
     }
   }, [entry.id, entry.is_read]);
 
-  const formatDate = (dateStr: string) => {
+  const formatEntryDate = (dateStr: string) => {
     const date = parseISO(dateStr);
-    return isThisYear(date) ? format(date, 'MMMM d') : format(date, 'MMMM d, yyyy');
+    return isThisYear(date) ? formatDate(date, 'MMMM d') : formatDate(date, 'MMMM d, yyyy');
   };
 
   return (
@@ -108,10 +110,10 @@ function ChangelogEntryCard({
 
             <div className="flex items-center gap-4 mt-4 text-xs text-muted-foreground">
               {entry.published_at && (
-                <span>{formatDate(entry.published_at)}</span>
+                <span>{formatEntryDate(entry.published_at)}</span>
               )}
               {entry.release_date && entry.entry_type === 'coming_soon' && (
-                <span>Expected: {formatDate(entry.release_date)}</span>
+                <span>Expected: {formatEntryDate(entry.release_date)}</span>
               )}
             </div>
           </div>
@@ -131,10 +133,11 @@ function MobileChangelogCard({
 }) {
   const typeConfig = ENTRY_TYPE_CONFIG[entry.entry_type] || ENTRY_TYPE_CONFIG.update;
   const TypeIcon = typeConfig.icon;
+  const { formatDate } = useFormatDate();
 
-  const formatDate = (dateStr: string) => {
+  const formatEntryDate = (dateStr: string) => {
     const date = parseISO(dateStr);
-    return format(date, 'MMM d');
+    return formatDate(date, 'MMM d');
   };
 
   return (
@@ -162,7 +165,7 @@ function MobileChangelogCard({
           <h4 className="font-medium line-clamp-1">{entry.title}</h4>
           <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{entry.content}</p>
           <p className="text-xs text-muted-foreground mt-2">
-            {entry.published_at && formatDate(entry.published_at)}
+            {entry.published_at && formatEntryDate(entry.published_at)}
             {entry.version && <> • {entry.version}</>}
           </p>
         </div>

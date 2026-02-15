@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Download, FileText, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
 import { ROLE_LABELS } from '@/hooks/useUserRoles';
 
@@ -27,6 +28,7 @@ interface BirthdayExportButtonProps {
 }
 
 export function BirthdayExportButton({ birthdays }: BirthdayExportButtonProps) {
+  const { formatDate } = useFormatDate();
   const [isExporting, setIsExporting] = useState(false);
 
   const exportToCSV = (data: BirthdayPerson[], filename: string) => {
@@ -42,8 +44,8 @@ export function BirthdayExportButton({ birthdays }: BirthdayExportButtonProps) {
     const rows = data.map((person) => [
       person.full_name,
       person.display_name || '',
-      person.birthday ? format(new Date(person.birthday + 'T00:00:00'), 'MMMM d') : '',
-      format(person.nextBirthday, 'MMMM d, yyyy'),
+      person.birthday ? formatDate(new Date(person.birthday + 'T00:00:00'), 'MMMM d') : '',
+      formatDate(person.nextBirthday, 'MMMM d, yyyy'),
       person.daysUntil.toString(),
       person.roles?.map(role => ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role).join('; ') || '',
     ]);
@@ -78,13 +80,13 @@ export function BirthdayExportButton({ birthdays }: BirthdayExportButtonProps) {
       // Subtitle with date
       doc.setFontSize(10);
       doc.setTextColor(100);
-      doc.text(`Generated on ${format(new Date(), 'MMMM d, yyyy h:mm a')}`, 14, 28);
+      doc.text(`Generated on ${formatDate(new Date(), 'MMMM d, yyyy h:mm a')}`, 14, 28);
       doc.text(`Total Team Members: ${data.length}`, 14, 34);
 
       // Group by month for summary
       const monthCounts: Record<string, number> = {};
       data.forEach((person) => {
-        const month = format(new Date(person.birthday + 'T00:00:00'), 'MMMM');
+        const month = formatDate(new Date(person.birthday + 'T00:00:00'), 'MMMM');
         monthCounts[month] = (monthCounts[month] || 0) + 1;
       });
 
@@ -100,8 +102,8 @@ export function BirthdayExportButton({ birthdays }: BirthdayExportButtonProps) {
       
       const tableData = sortedData.map((person) => [
         person.display_name || person.full_name,
-        format(new Date(person.birthday + 'T00:00:00'), 'MMMM d'),
-        format(person.nextBirthday, 'MMM d, yyyy'),
+        formatDate(new Date(person.birthday + 'T00:00:00'), 'MMMM d'),
+        formatDate(person.nextBirthday, 'MMM d, yyyy'),
         person.daysUntil === 0 ? 'Today! 🎂' : person.daysUntil === 1 ? 'Tomorrow' : `${person.daysUntil} days`,
         person.roles?.map(role => ROLE_LABELS[role as keyof typeof ROLE_LABELS] || role).join(', ') || '',
       ]);

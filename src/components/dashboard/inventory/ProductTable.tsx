@@ -8,6 +8,7 @@ import { MoreHorizontal, Pencil, AlertTriangle, Check, X } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Product, useUpdateProduct } from '@/hooks/useProducts';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface ProductTableProps {
   products: Product[];
@@ -16,6 +17,7 @@ interface ProductTableProps {
 }
 
 export function ProductTable({ products, isLoading, onEdit }: ProductTableProps) {
+  const { formatCurrency } = useFormatCurrency();
   const [editingSku, setEditingSku] = useState<string | null>(null);
   const [editingBarcode, setEditingBarcode] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState('');
@@ -158,7 +160,7 @@ export function ProductTable({ products, isLoading, onEdit }: ProductTableProps)
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   {product.retail_price 
-                    ? `$${product.retail_price.toFixed(2)}` 
+                    ? formatCurrency(product.retail_price) 
                     : '—'}
                 </TableCell>
                 <TableCell className="text-right">

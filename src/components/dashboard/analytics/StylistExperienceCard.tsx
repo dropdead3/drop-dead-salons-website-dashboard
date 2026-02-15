@@ -40,14 +40,14 @@ const STATUS_CONFIG = {
   },
   'watch': {
     label: 'Watch',
-    color: 'text-warning',
-    bgColor: 'bg-warning/10',
+    color: 'text-chart-5',
+    bgColor: 'bg-chart-5/10',
     icon: Eye,
   },
   'strong': {
     label: 'Strong',
-    color: 'text-success-foreground',
-    bgColor: 'bg-success',
+    color: 'text-chart-2',
+    bgColor: 'bg-chart-2/10',
     icon: CheckCircle2,
   },
 };
@@ -143,10 +143,10 @@ function StylistRow({ score }: { score: StylistExperienceScore }) {
       {/* Score */}
       <div className="text-center w-12">
         <p className={cn(
-          "text-lg font-bold tabular-nums",
+          "text-lg font-medium tabular-nums",
           score.compositeScore < 50 && "text-destructive",
-          score.compositeScore >= 50 && score.compositeScore < 70 && "text-warning",
-          score.compositeScore >= 70 && "text-success-foreground"
+          score.compositeScore >= 50 && score.compositeScore < 70 && "text-chart-5",
+          score.compositeScore >= 70 && "text-chart-2"
         )}>
           {score.compositeScore}
         </p>
@@ -193,10 +193,12 @@ export function StylistExperienceCard({ locationId, dateRange = '30days' }: Styl
     <Card className="mt-6">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-muted-foreground" />
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
+              <Users className="h-5 w-5 text-chart-4" />
+            </div>
             <div>
-              <CardTitle className="text-lg">Client Experience Scorecard</CardTitle>
+              <CardTitle className="font-display text-base tracking-wide">CLIENT EXPERIENCE SCORECARD</CardTitle>
               <CardDescription>
                 Identifies stylists who may need coaching on customer connection
               </CardDescription>
@@ -235,13 +237,13 @@ export function StylistExperienceCard({ locationId, dateRange = '30days' }: Styl
               </Badge>
             )}
             {statusCounts['watch'] > 0 && (
-              <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
+              <Badge variant="outline" className="bg-chart-5/10 text-chart-5 border-chart-5/20">
                 <Eye className="h-3 w-3 mr-1" />
                 {statusCounts['watch']} Watch
               </Badge>
             )}
             {statusCounts['strong'] > 0 && (
-              <Badge variant="outline" className="bg-success text-success-foreground border-success/20">
+              <Badge variant="outline" className="bg-chart-2/10 text-chart-2 border-chart-2/20">
                 <CheckCircle2 className="h-3 w-3 mr-1" />
                 {statusCounts['strong']} Strong
               </Badge>

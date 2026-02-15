@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import {
   Sheet,
   SheetContent,
@@ -52,6 +53,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useAppointmentNotes } from '@/hooks/useAppointmentNotes';
 import { useAuth } from '@/contexts/AuthContext';
@@ -103,6 +105,8 @@ export function AppointmentDetailSheet({
   isUpdating = false,
 }: AppointmentDetailSheetProps) {
   const { user, hasPermission } = useAuth();
+  const { formatCurrency } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   const [newNote, setNewNote] = useState('');
   const [isPrivateNote, setIsPrivateNote] = useState(false);
   const [confirmAction, setConfirmAction] = useState<AppointmentStatus | null>(null);
@@ -214,7 +218,7 @@ export function AppointmentDetailSheet({
                 <div className="grid gap-3">
                   <div className="flex items-center gap-3">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{format(parseISO(appointment.appointment_date), 'EEEE, MMMM d, yyyy')}</span>
+                    <span>{formatDate(parseISO(appointment.appointment_date), 'EEEE, MMMM d, yyyy')}</span>
                   </div>
                   
                   <div className="flex items-center gap-3">
@@ -227,7 +231,7 @@ export function AppointmentDetailSheet({
                   {appointment.total_price && (
                     <div className="flex items-center gap-3">
                       <DollarSign className="h-4 w-4 text-muted-foreground" />
-                      <span>${appointment.total_price.toFixed(2)}</span>
+                      <span>{formatCurrency(appointment.total_price)}</span>
                     </div>
                   )}
 
@@ -321,7 +325,7 @@ export function AppointmentDetailSheet({
                         </div>
                         <p className="mt-1 text-sm">{note.note}</p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                          {format(new Date(note.created_at), 'MMM d, h:mm a')}
+                          {formatDate(new Date(note.created_at), 'MMM d, h:mm a')}
                         </p>
                       </div>
                     ))}

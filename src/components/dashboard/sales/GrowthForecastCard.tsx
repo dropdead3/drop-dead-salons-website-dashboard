@@ -4,11 +4,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 import { useGrowthForecast, Scenario, GrowthDataPoint, AccuracyDataPoint } from '@/hooks/useGrowthForecast';
 import { LocationSelect } from '@/components/ui/location-select';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { TrendingUp, TrendingDown, Minus, BarChart3, Sparkles, ArrowUpRight, ArrowDownRight, Activity, Target, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { motion, useInView } from 'framer-motion';
 import {
   AreaChart,
@@ -29,6 +32,7 @@ import { useState } from 'react';
 
 // KPI Cards
 function TrendKPICards({ summary, scenario }: { summary: any; scenario: Scenario }) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   if (!summary) return null;
 
   const { momentum, lastQoQGrowth, yoyGrowth, nextQuarterBaseline, nextQuarterLabel, seasonalIndices } = summary;
@@ -98,7 +102,7 @@ function TrendKPICards({ summary, scenario }: { summary: any; scenario: Scenario
           </div>
           <div className="text-lg font-semibold tabular-nums">
             {card.isCurrency ? (
-              <BlurredAmount>${Math.round(card.value as number).toLocaleString()}</BlurredAmount>
+              <BlurredAmount>{formatCurrencyWhole(Math.round(card.value as number))}</BlurredAmount>
             ) : card.isPercent ? (
               card.value !== null ? (
                 <span className={card.accent}>{(card.value as number) >= 0 ? '+' : ''}{(card.value as number).toFixed(1)}%</span>
@@ -130,13 +134,13 @@ function TrajectoryTooltip({ active, payload, label }: any) {
       <div className="space-y-1">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Revenue</span>
-          <span className="font-semibold tabular-nums">${Math.round(data.revenue).toLocaleString()}</span>
+          <span className="font-semibold tabular-nums">{formatCurrencyWholeUtil(Math.round(data.revenue))}</span>
         </div>
         {data.confidenceUpper && (
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>Range</span>
             <span className="tabular-nums">
-              ${Math.round(data.confidenceLower).toLocaleString()} – ${Math.round(data.confidenceUpper).toLocaleString()}
+              {formatCurrencyWholeUtil(Math.round(data.confidenceLower))} – {formatCurrencyWholeUtil(Math.round(data.confidenceUpper))}
             </span>
           </div>
         )}
@@ -209,7 +213,7 @@ function RevenueTrajectoryChart({
             className="fill-muted-foreground"
           />
           <YAxis
-            tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+            tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
             tick={{ fontSize: 11 }}
             tickLine={false}
             axisLine={false}
@@ -370,11 +374,11 @@ function ForecastAccuracyTracker({ history, average }: { history: AccuracyDataPo
                     <div className="space-y-0.5 text-xs">
                       <div className="flex justify-between gap-4">
                         <span className="text-muted-foreground">Projected</span>
-                        <span className="tabular-nums font-medium">${Math.round(d.projected).toLocaleString()}</span>
+                        <span className="tabular-nums font-medium">{formatCurrencyWholeUtil(Math.round(d.projected))}</span>
                       </div>
                       <div className="flex justify-between gap-4">
                         <span className="text-muted-foreground">Actual</span>
-                        <span className="tabular-nums font-medium">${Math.round(d.actual).toLocaleString()}</span>
+                        <span className="tabular-nums font-medium">{formatCurrencyWholeUtil(Math.round(d.actual))}</span>
                       </div>
                       <div className="flex justify-between gap-4 pt-1 border-t border-border/50">
                         <span className="text-muted-foreground">Accuracy</span>
@@ -407,9 +411,9 @@ function ForecastAccuracyTracker({ history, average }: { history: AccuracyDataPo
               <span className="text-muted-foreground">{h.period}</span>
               <div className="flex items-center gap-3">
                 <span className="text-muted-foreground tabular-nums">
-                  <BlurredAmount>${Math.round(h.projected).toLocaleString()}</BlurredAmount>
+                  <BlurredAmount>{formatCurrencyWholeUtil(Math.round(h.projected))}</BlurredAmount>
                   {' → '}
-                  <BlurredAmount>${Math.round(h.actual).toLocaleString()}</BlurredAmount>
+                  <BlurredAmount>{formatCurrencyWholeUtil(Math.round(h.actual))}</BlurredAmount>
                 </span>
                 <span className={cn('font-medium tabular-nums', isOver ? 'text-chart-2' : 'text-destructive')}>
                   {isOver ? '+' : ''}{((diff / h.projected) * 100).toFixed(1)}%
@@ -478,7 +482,10 @@ export function GrowthForecastCard() {
               <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
-              <CardTitle className="font-display text-base tracking-wide">GROWTH FORECASTING</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="font-display text-base tracking-wide">GROWTH FORECASTING</CardTitle>
+                <MetricInfoTooltip description="Projects future revenue using historical trends and seasonal patterns. The forecast applies linear regression with monthly seasonal indices to estimate 3, 6, and 12-month outlooks." />
+              </div>
               <CommandCenterVisibilityToggle
                 elementKey="growth_forecast"
                 elementName="Growth Forecast"

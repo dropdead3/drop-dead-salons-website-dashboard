@@ -13,6 +13,7 @@ import {
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useServiceProductDrilldown } from '@/hooks/useServiceProductDrilldown';
 import type { StaffServiceProduct } from '@/hooks/useServiceProductDrilldown';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface ServiceProductDrilldownProps {
   mode: 'services' | 'products' | null;
@@ -29,9 +30,6 @@ function getInitials(name: string) {
 
 
 
-function fmt(n: number) {
-  return n.toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 });
-}
 
 export function ServiceProductDrilldown({
   mode,
@@ -42,6 +40,7 @@ export function ServiceProductDrilldown({
 }: ServiceProductDrilldownProps) {
   const isServices = mode === 'services';
   const { data: locations = [] } = useActiveLocations();
+  const { formatCurrencyWhole: fmt } = useFormatCurrency();
 
   // Local filter state — resets when dialog closes
   const [filterRegion, setFilterRegion] = useState('all');
@@ -116,8 +115,8 @@ export function ServiceProductDrilldown({
   return (
     <Dialog open={!!mode} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent
-        className="max-w-lg p-0 overflow-hidden gap-0 max-h-[85vh] flex flex-col"
-        overlayClassName="backdrop-blur-sm bg-black/60"
+        className="max-w-lg p-0 overflow-hidden gap-0 max-h-[85vh] flex flex-col duration-200 ease-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]"
+        overlayClassName="backdrop-blur-sm bg-black/60 duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
       >
         {/* Header */}
         <div className="p-6 border-b border-border/50">

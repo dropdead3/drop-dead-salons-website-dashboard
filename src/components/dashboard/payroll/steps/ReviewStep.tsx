@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +16,7 @@ import {
   Building2
 } from 'lucide-react';
 import { EmployeeCompensation, PayrollTotals } from '@/hooks/usePayrollCalculations';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface ReviewStepProps {
   compensations: EmployeeCompensation[];
@@ -47,6 +48,8 @@ export function ReviewStep({
   onFinalize,
 }: ReviewStepProps) {
   const [expandedEmployee, setExpandedEmployee] = useState<string | null>(null);
+  const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
 
   const getInitials = (name: string) => {
     return name
@@ -117,8 +120,8 @@ export function ReviewStep({
             <div>
               <p className="text-sm text-muted-foreground">Pay Period</p>
               <p className="font-medium">
-                {format(new Date(payPeriodStart), 'MMM d')} -{' '}
-                {format(new Date(payPeriodEnd), 'MMM d, yyyy')}
+                {formatDate(new Date(payPeriodStart), 'MMM d')} -{' '}
+                {formatDate(new Date(payPeriodEnd), 'MMM d, yyyy')}
               </p>
             </div>
           </div>
@@ -126,7 +129,7 @@ export function ReviewStep({
             <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
             <div>
               <p className="text-sm text-muted-foreground">Check Date</p>
-              <p className="font-medium">{format(new Date(checkDate), 'MMM d, yyyy')}</p>
+              <p className="font-medium">{formatDate(new Date(checkDate), 'MMM d, yyyy')}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
@@ -151,25 +154,25 @@ export function ReviewStep({
         <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
           <p className="text-sm text-muted-foreground mb-1">Total Gross Pay</p>
           <p className="text-2xl font-bold text-primary">
-            ${totals.grossPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatCurrency(totals.grossPay)}
           </p>
         </div>
         <div className="bg-muted/50 rounded-lg p-4">
           <p className="text-sm text-muted-foreground mb-1">Employee Taxes</p>
           <p className="text-2xl font-bold">
-            ${totals.employeeTaxes.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatCurrency(totals.employeeTaxes)}
           </p>
         </div>
         <div className="bg-muted/50 rounded-lg p-4">
           <p className="text-sm text-muted-foreground mb-1">Employer Taxes</p>
           <p className="text-2xl font-bold">
-            ${totals.employerTaxes.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatCurrency(totals.employerTaxes)}
           </p>
         </div>
         <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4">
           <p className="text-sm text-muted-foreground mb-1">Total Net Pay</p>
           <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-            ${totals.netPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatCurrency(totals.netPay)}
           </p>
         </div>
       </div>
@@ -178,23 +181,23 @@ export function ReviewStep({
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
         <div className="bg-muted/30 rounded p-3">
           <p className="text-muted-foreground">Hourly Pay</p>
-          <p className="font-medium">${totals.totalHourlyPay.toLocaleString()}</p>
+          <p className="font-medium">{formatCurrencyWhole(totals.totalHourlyPay)}</p>
         </div>
         <div className="bg-muted/30 rounded p-3">
           <p className="text-muted-foreground">Salary Pay</p>
-          <p className="font-medium">${totals.totalSalaryPay.toLocaleString()}</p>
+          <p className="font-medium">{formatCurrencyWhole(totals.totalSalaryPay)}</p>
         </div>
         <div className="bg-muted/30 rounded p-3">
           <p className="text-muted-foreground">Commissions</p>
-          <p className="font-medium">${totals.totalCommissions.toLocaleString()}</p>
+          <p className="font-medium">{formatCurrencyWhole(totals.totalCommissions)}</p>
         </div>
         <div className="bg-muted/30 rounded p-3">
           <p className="text-muted-foreground">Bonuses</p>
-          <p className="font-medium">${totals.totalBonuses.toLocaleString()}</p>
+          <p className="font-medium">{formatCurrencyWhole(totals.totalBonuses)}</p>
         </div>
         <div className="bg-muted/30 rounded p-3">
           <p className="text-muted-foreground">Tips</p>
-          <p className="font-medium">${totals.totalTips.toLocaleString()}</p>
+          <p className="font-medium">{formatCurrencyWhole(totals.totalTips)}</p>
         </div>
       </div>
 
@@ -235,13 +238,13 @@ export function ReviewStep({
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">Gross</p>
                       <p className="font-medium">
-                        ${comp.grossPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        {formatCurrency(comp.grossPay)}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">Net</p>
                       <p className="font-medium text-green-600 dark:text-green-400">
-                        ${comp.netPay.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        {formatCurrency(comp.netPay)}
                       </p>
                     </div>
                     <ChevronDown
@@ -258,50 +261,50 @@ export function ReviewStep({
                     <div>
                       <p className="text-muted-foreground">Hourly Pay</p>
                       <p>
-                        ${comp.hourlyPay.toFixed(2)} ({comp.regularHours}h + {comp.overtimeHours}h OT)
+                        {formatCurrency(comp.hourlyPay)} ({comp.regularHours}h + {comp.overtimeHours}h OT)
                       </p>
                     </div>
                   )}
                   {comp.salaryPay > 0 && (
                     <div>
                       <p className="text-muted-foreground">Salary Pay</p>
-                      <p>${comp.salaryPay.toFixed(2)}</p>
+                      <p>{formatCurrency(comp.salaryPay)}</p>
                     </div>
                   )}
                   {comp.commissionPay > 0 && (
                     <div>
                       <p className="text-muted-foreground">Commission</p>
-                      <p>${comp.commissionPay.toFixed(2)}</p>
+                      <p>{formatCurrency(comp.commissionPay)}</p>
                     </div>
                   )}
                   {comp.bonusPay > 0 && (
                     <div>
                       <p className="text-muted-foreground">Bonus</p>
-                      <p>${comp.bonusPay.toFixed(2)}</p>
+                      <p>{formatCurrency(comp.bonusPay)}</p>
                     </div>
                   )}
                   {comp.tips > 0 && (
                     <div>
                       <p className="text-muted-foreground">Tips</p>
-                      <p>${comp.tips.toFixed(2)}</p>
+                      <p>{formatCurrency(comp.tips)}</p>
                     </div>
                   )}
                   <div>
                     <p className="text-muted-foreground">Federal Tax (Est.)</p>
-                    <p>${comp.estimatedFederalTax.toFixed(2)}</p>
+                    <p>{formatCurrency(comp.estimatedFederalTax)}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">State Tax (Est.)</p>
-                    <p>${comp.estimatedStateTax.toFixed(2)}</p>
+                    <p>{formatCurrency(comp.estimatedStateTax)}</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">FICA (Est.)</p>
-                    <p>${comp.estimatedFICA.toFixed(2)}</p>
+                    <p>{formatCurrency(comp.estimatedFICA)}</p>
                   </div>
                   {comp.deductions > 0 && (
                     <div>
                       <p className="text-muted-foreground">Deductions</p>
-                      <p>-${comp.deductions.toFixed(2)}</p>
+                      <p>-{formatCurrency(comp.deductions)}</p>
                     </div>
                   )}
                 </div>

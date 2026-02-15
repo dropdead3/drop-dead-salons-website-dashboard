@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { AlertTriangle, ChevronRight, Building2 } from 'lucide-react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -13,6 +14,7 @@ interface AtRiskOrgTableProps {
 
 export function AtRiskOrgTable({ organizations, isLoading }: AtRiskOrgTableProps) {
   const navigate = useNavigate();
+  const { formatCurrency } = useFormatCurrency();
 
   if (isLoading) {
     return (
@@ -86,7 +88,7 @@ export function AtRiskOrgTable({ organizations, isLoading }: AtRiskOrgTableProps
                 </Badge>
                 {org.lastInvoice && (
                   <p className="text-xs text-slate-500 mt-1">
-                    ${(org.lastInvoice.amount / 100).toFixed(2)} • {formatDistanceToNow(new Date(org.lastInvoice.created_at), { addSuffix: true })}
+                    {formatCurrency(org.lastInvoice.amount / 100)} • {formatDistanceToNow(new Date(org.lastInvoice.created_at), { addSuffix: true })}
                   </p>
                 )}
               </div>

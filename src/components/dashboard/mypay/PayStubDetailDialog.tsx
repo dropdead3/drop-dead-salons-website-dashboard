@@ -2,7 +2,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Separator } from '@/components/ui/separator';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { PayStub } from '@/hooks/useMyPayData';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { CalendarDays, Clock, DollarSign } from 'lucide-react';
 
 interface PayStubDetailDialogProps {
@@ -20,15 +21,17 @@ function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-function formatDate(dateStr: string): string {
-  try {
-    return format(parseISO(dateStr), 'MMMM d, yyyy');
-  } catch {
-    return dateStr;
-  }
-}
-
 export function PayStubDetailDialog({ payStub, open, onOpenChange }: PayStubDetailDialogProps) {
+  const { formatDate: formatDateLocale } = useFormatDate();
+
+  const fmtDate = (dateStr: string): string => {
+    try {
+      return formatDateLocale(parseISO(dateStr), 'MMMM d, yyyy');
+    } catch {
+      return dateStr;
+    }
+  };
+
   if (!payStub) return null;
 
   const totalHours = payStub.regularHours + payStub.overtimeHours;
@@ -39,7 +42,7 @@ export function PayStubDetailDialog({ payStub, open, onOpenChange }: PayStubDeta
         <DialogHeader>
           <DialogTitle>Pay Stub Details</DialogTitle>
           <DialogDescription>
-            Pay period: {formatDate(payStub.payPeriodStart)} – {formatDate(payStub.payPeriodEnd)}
+            Pay period: {fmtDate(payStub.payPeriodStart)} – {fmtDate(payStub.payPeriodEnd)}
           </DialogDescription>
         </DialogHeader>
 
@@ -49,7 +52,7 @@ export function PayStubDetailDialog({ payStub, open, onOpenChange }: PayStubDeta
             <CalendarDays className="h-5 w-5 text-muted-foreground" />
             <div>
               <p className="text-xs text-muted-foreground">Check Date</p>
-              <p className="text-sm font-medium">{formatDate(payStub.checkDate)}</p>
+              <p className="text-sm font-medium">{fmtDate(payStub.checkDate)}</p>
             </div>
           </div>
 

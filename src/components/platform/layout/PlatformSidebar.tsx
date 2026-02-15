@@ -1,28 +1,15 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { NavLink } from '@/components/NavLink';
-import { 
-  Terminal, 
-  Building2, 
-  Upload, 
-  DollarSign, 
-  Shield, 
-  Settings,
+import {
   ChevronLeft,
   ChevronRight,
   Sparkles,
   Crown,
   Headphones,
   Code,
-  BookOpen,
-  Rocket,
-  BarChart3,
-  FileText,
-  Clock,
-  Activity,
-  Bell,
-  CreditCard,
-  Flag
+  Shield,
 } from 'lucide-react';
+import { platformNavGroups } from '@/config/platformNav';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
@@ -43,63 +30,6 @@ const roleConfig: Record<PlatformRole, { label: string; icon: React.ComponentTyp
   platform_support: { label: 'Support', icon: Headphones, variant: 'success' },
   platform_developer: { label: 'Developer', icon: Code, variant: 'primary' },
 };
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  platformRoles?: Array<'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer'>;
-}
-
-interface NavGroup {
-  label: string;
-  items: NavItem[];
-}
-
-const navGroups: NavGroup[] = [
-  {
-    label: 'Core',
-    items: [
-      { href: '/dashboard/platform/overview', label: 'Overview', icon: Terminal },
-      { href: '/dashboard/platform/accounts', label: 'Accounts', icon: Building2 },
-      { href: '/dashboard/platform/health-scores', label: 'Health Scores', icon: Activity, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
-      { href: '/dashboard/platform/benchmarks', label: 'Benchmarks', icon: BarChart3, platformRoles: ['platform_owner', 'platform_admin'] },
-    ],
-  },
-  {
-    label: 'Operations',
-    items: [
-      { href: '/dashboard/platform/onboarding', label: 'Onboarding', icon: Rocket, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
-      { href: '/dashboard/platform/import', label: 'Migrations', icon: Upload },
-      { href: '/dashboard/platform/jobs', label: 'Scheduled Jobs', icon: Clock, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
-    ],
-  },
-  {
-    label: 'Monitoring',
-    items: [
-      { href: '/dashboard/platform/audit-log', label: 'Audit Log', icon: FileText, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
-      { href: '/dashboard/platform/health', label: 'System Health', icon: Activity, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
-      { href: '/dashboard/platform/stripe-health', label: 'Payments Health', icon: CreditCard, platformRoles: ['platform_owner', 'platform_admin', 'platform_support'] },
-      { href: '/dashboard/platform/notifications', label: 'Notifications', icon: Bell, platformRoles: ['platform_owner', 'platform_admin'] },
-    ],
-  },
-  {
-    label: 'Intelligence',
-    items: [
-      { href: '/dashboard/platform/analytics', label: 'Analytics', icon: BarChart3, platformRoles: ['platform_owner'] },
-      { href: '/dashboard/platform/knowledge-base', label: 'Knowledge Base', icon: BookOpen, platformRoles: ['platform_owner', 'platform_admin'] },
-      { href: '/dashboard/platform/revenue', label: 'Revenue', icon: DollarSign, platformRoles: ['platform_owner', 'platform_admin'] },
-    ],
-  },
-  {
-    label: 'Admin',
-    items: [
-      { href: '/dashboard/platform/permissions', label: 'Permissions', icon: Shield, platformRoles: ['platform_owner', 'platform_admin'] },
-      { href: '/dashboard/platform/feature-flags', label: 'Feature Flags', icon: Flag, platformRoles: ['platform_owner', 'platform_admin'] },
-      { href: '/dashboard/platform/settings', label: 'Settings', icon: Settings, platformRoles: ['platform_owner', 'platform_admin'] },
-    ],
-  },
-];
 
 const SIDEBAR_COLLAPSED_KEY = 'platform-sidebar-collapsed';
 
@@ -133,7 +63,7 @@ export function PlatformSidebar() {
   const isDark = resolvedTheme === 'dark';
 
   // Filter groups to only show items the user has access to
-  const visibleGroups = navGroups
+  const visibleGroups = platformNavGroups
     .map(group => ({
       ...group,
       items: group.items.filter(item => {

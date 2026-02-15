@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,7 +18,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Plus, MoreHorizontal, PowerOff, Trash2, Loader2, Clock } from 'lucide-react';
-import { format, isPast, differenceInDays } from 'date-fns';
+import { isPast, differenceInDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
   usePromotionalServices, 
   useDeactivatePromotionalService,
@@ -31,7 +33,9 @@ interface PromotionalServicesManagerProps {
 }
 
 export function PromotionalServicesManager({ organizationId }: PromotionalServicesManagerProps) {
+  const { formatDate } = useFormatDate();
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const { formatCurrency } = useFormatCurrency();
   
   const { data: promoServices, isLoading } = usePromotionalServices(organizationId);
   const deactivate = useDeactivatePromotionalService();
@@ -133,19 +137,19 @@ export function PromotionalServicesManager({ organizationId }: PromotionalServic
                       <TableCell>
                         {ps.original_price ? (
                           <span className="line-through text-muted-foreground">
-                            ${ps.original_price}
+                            {formatCurrency(ps.original_price)}
                           </span>
                         ) : '—'}
                       </TableCell>
                       <TableCell>
                         <span className="font-medium text-primary">
-                          ${ps.promotional_price}
+                          {formatCurrency(ps.promotional_price)}
                         </span>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
-                          {format(new Date(ps.expires_at), 'MMM d, yyyy')}
+                          {formatDate(new Date(ps.expires_at), 'MMM d, yyyy')}
                         </div>
                       </TableCell>
                       <TableCell>

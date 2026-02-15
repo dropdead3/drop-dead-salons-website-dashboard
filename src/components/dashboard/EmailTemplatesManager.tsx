@@ -682,7 +682,7 @@ export function EmailTemplatesManager() {
                 <button
                   onClick={() => setPreviewMode('desktop')}
                   className={cn(
-                    "relative z-10 flex items-center justify-center gap-2 w-[100px] py-1.5 rounded-full text-sm font-medium transition-colors duration-200",
+                    "relative z-10 flex items-center justify-center gap-2 w-[100px] py-1.5 rounded-full text-sm font-sans font-medium transition-colors duration-200",
                     previewMode === 'desktop' 
                       ? "text-background" 
                       : "text-muted-foreground hover:text-foreground"
@@ -694,7 +694,7 @@ export function EmailTemplatesManager() {
                 <button
                   onClick={() => setPreviewMode('mobile')}
                   className={cn(
-                    "relative z-10 flex items-center justify-center gap-2 w-[100px] py-1.5 rounded-full text-sm font-medium transition-colors duration-200",
+                    "relative z-10 flex items-center justify-center gap-2 w-[100px] py-1.5 rounded-full text-sm font-sans font-medium transition-colors duration-200",
                     previewMode === 'mobile' 
                       ? "text-background" 
                       : "text-muted-foreground hover:text-foreground"

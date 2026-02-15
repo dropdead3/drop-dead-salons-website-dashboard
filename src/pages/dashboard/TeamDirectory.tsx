@@ -15,6 +15,7 @@ import { useLocations, formatHoursForDisplay, getClosedDays, getTodayHours, isCl
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { differenceInYears, differenceInMonths, parseISO, format, setYear, isSameDay, differenceInDays, isBefore } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { getAnniversaryMilestone } from '@/hooks/useAnniversaries';
 import { cn, formatFullDisplayName } from '@/lib/utils';
 import { useViewAs } from '@/contexts/ViewAsContext';
@@ -389,6 +390,7 @@ interface LocationCardProps {
 }
 
 function LocationCard({ location, teamMembers }: LocationCardProps) {
+  const { formatDate } = useFormatDate();
   const navigate = useNavigate();
   const hoursDisplay = formatHoursForDisplay(location.hours_json);
   const closedDays = getClosedDays(location.hours_json);
@@ -645,7 +647,7 @@ function LocationCard({ location, teamMembers }: LocationCardProps) {
               <p className="text-xs font-medium text-amber-600 dark:text-amber-400">Upcoming Closures</p>
               {upcomingHolidays.map((holiday, idx) => (
                 <p key={idx} className="text-xs text-muted-foreground">
-                  {format(new Date(holiday.date), 'MMM d')} — {holiday.name}
+                  {formatDate(new Date(holiday.date), 'MMM d')} — {holiday.name}
                 </p>
               ))}
             </div>

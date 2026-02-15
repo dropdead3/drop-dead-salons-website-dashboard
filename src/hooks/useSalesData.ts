@@ -415,6 +415,53 @@ export function useSalesByLocation(dateFrom?: string, dateTo?: string) {
   });
 }
 
+export interface ServiceMixItem {
+  category: string;
+  revenue: number;
+  count: number;
+  percentRevenue: number;
+}
+
+/** Revenue and count by service category from appointments. */
+export function useServiceMix(dateFrom?: string, dateTo?: string, locationId?: string) {
+  return useQuery({
+    queryKey: ['service-mix', dateFrom, dateTo, locationId],
+    queryFn: async (): Promise<ServiceMixItem[]> => {
+      let query = supabase
+        .from('phorest_appointments')
+        .select('service_category, total_price')
+        .not('total_price', 'is', null)
+        .in('status', ['completed']);
+
+      if (dateFrom) query = query.gte('appointment_date', dateFrom);
+      if (dateTo) query = query.lte('appointment_date', dateTo);
+      if (locationId && locationId !== 'all') query = query.eq('location_id', locationId);
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const byCategory: Record<string, { revenue: number; count: number }> = {};
+      (data || []).forEach((row) => {
+        const cat = (row as { service_category?: string | null }).service_category || 'Uncategorized';
+        if (!byCategory[cat]) byCategory[cat] = { revenue: 0, count: 0 };
+        byCategory[cat].revenue += Number((row as { total_price?: number | null }).total_price) || 0;
+        byCategory[cat].count += 1;
+      });
+
+      const total = Object.values(byCategory).reduce((s, x) => s + x.revenue, 0);
+      return Object.entries(byCategory)
+        .map(([category, { revenue, count }]) => ({
+          category,
+          revenue,
+          count,
+          percentRevenue: total > 0 ? (revenue / total) * 100 : 0,
+        }))
+        .sort((a, b) => b.revenue - a.revenue);
+    },
+    enabled: !!dateFrom && !!dateTo,
+  });
+}
+
 // Get daily trend data for charts (from appointments)
 export function useSalesTrend(dateFrom?: string, dateTo?: string, locationId?: string) {
   return useQuery({

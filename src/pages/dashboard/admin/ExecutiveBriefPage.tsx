@@ -1,5 +1,4 @@
-import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
-import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { WeeklyLeverBrief } from '@/components/executive-brief/WeeklyLeverBrief';
 import { SilenceState } from '@/components/executive-brief/SilenceState';
 import { useActiveRecommendation } from '@/hooks/useLeverRecommendations';
@@ -10,18 +9,19 @@ export default function ExecutiveBriefPage() {
   const { data: recommendation, isLoading } = useActiveRecommendation();
 
   return (
-    <PlatformPageContainer maxWidth="narrow">
-      <PlatformPageHeader
+    <div className="max-w-3xl mx-auto space-y-6">
+      <DashboardPageHeader
         title="Executive Brief"
         description="Your primary lever this period."
         backTo="/dashboard"
+        backLabel="Back to Command Center"
       />
 
       <EnforcementGateBanner gateKey="gate_kpi_architecture">
         <div className="mt-8">
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
-              <Loader2 className="h-6 w-6 animate-spin text-[hsl(var(--platform-foreground-muted))]" />
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
           ) : recommendation ? (
             <WeeklyLeverBrief recommendation={recommendation} />
@@ -30,6 +30,6 @@ export default function ExecutiveBriefPage() {
           )}
         </div>
       </EnforcementGateBanner>
-    </PlatformPageContainer>
+    </div>
   );
 }

@@ -14,6 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 export interface PhorestStaffData {
   phorestStaffId: string;
@@ -40,6 +41,7 @@ interface PhorestStaffRowProps {
 
 export function PhorestStaffRow({ staff, rank, maxRevenue, onLinkClick }: PhorestStaffRowProps) {
   const navigate = useNavigate();
+  const { formatCurrencyWhole } = useFormatCurrency();
   
   const displayName = staff.isMapped ? staff.linkedUserName : staff.phorestStaffName;
   const initials = displayName
@@ -116,7 +118,7 @@ export function PhorestStaffRow({ staff, rank, maxRevenue, onLinkClick }: Phores
                 )}
               </div>
               <BlurredAmount className="font-display text-lg shrink-0">
-                ${staff.totalRevenue.toLocaleString()}
+                {formatCurrencyWhole(staff.totalRevenue)}
               </BlurredAmount>
             </div>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -161,7 +163,7 @@ export function PhorestStaffRow({ staff, rank, maxRevenue, onLinkClick }: Phores
               <p className="text-xs">Products</p>
             </div>
             <div className="text-center">
-              <BlurredAmount className="font-medium text-foreground">${Math.round(avgTicket)}</BlurredAmount>
+              <BlurredAmount className="font-medium text-foreground">{formatCurrencyWhole(Math.round(avgTicket))}</BlurredAmount>
               <p className="text-xs">Avg</p>
             </div>
           </div>
@@ -185,7 +187,7 @@ export function PhorestStaffRow({ staff, rank, maxRevenue, onLinkClick }: Phores
             </div>
             <div className="flex items-center gap-1 text-muted-foreground">
               <TrendingUp className="w-3 h-3" />
-              <BlurredAmount>${Math.round(avgTicket)}</BlurredAmount>
+              <BlurredAmount>{formatCurrencyWhole(Math.round(avgTicket))}</BlurredAmount>
             </div>
           </div>
           {!staff.isMapped && (

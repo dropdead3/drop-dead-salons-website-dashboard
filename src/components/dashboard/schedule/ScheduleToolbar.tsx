@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
   Calendar, 
   CalendarDays, 
@@ -73,6 +73,7 @@ export function ScheduleToolbar({
   isSyncing = false,
   canCreate = false,
 }: ScheduleToolbarProps) {
+  const { formatDate } = useFormatDate();
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [filterOpen, setFilterOpen] = useState(false);
   
@@ -95,15 +96,15 @@ export function ScheduleToolbar({
   const getDateLabel = () => {
     switch (view) {
       case 'day':
-        return format(currentDate, 'EEEE, MMMM d, yyyy');
+        return formatDate(currentDate, 'EEEE, MMMM d, yyyy');
       case 'week':
-        return format(currentDate, "'Week of' MMMM d, yyyy");
+        return formatDate(currentDate, "'Week of' MMMM d, yyyy");
       case 'month':
-        return format(currentDate, 'MMMM yyyy');
+        return formatDate(currentDate, 'MMMM yyyy');
       case 'agenda':
-        return format(currentDate, "'Starting' MMMM d");
+        return formatDate(currentDate, "'Starting' MMMM d");
       default:
-        return format(currentDate, 'MMMM d, yyyy');
+        return formatDate(currentDate, 'MMMM d, yyyy');
     }
   };
 
@@ -339,7 +340,7 @@ export function ScheduleToolbar({
       {/* Sync Status */}
       {lastSync && (
         <div className="text-xs text-muted-foreground hidden lg:block">
-          Last synced: {format(lastSync, 'h:mm a')}
+          Last synced: {formatDate(lastSync, 'h:mm a')}
         </div>
       )}
     </div>

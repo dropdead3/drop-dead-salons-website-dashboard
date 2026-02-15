@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { GitCompare } from 'lucide-react';
-import { format } from 'date-fns';
+import { GitCompare, Lightbulb } from 'lucide-react';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useLocations } from '@/hooks/useLocations';
 import { useComparisonData, getPresetPeriods, type CompareMode } from '@/hooks/useComparisonData';
 import { CompareTypeSelector } from './CompareTypeSelector';
@@ -14,7 +14,10 @@ import { ComparisonBreakdownTable } from './ComparisonBreakdownTable';
 import { LocationComparisonView } from './LocationComparisonView';
 import { CategoryComparisonTable } from './CategoryComparisonTable';
 import { WaterfallChart } from '@/components/dashboard/analytics/charts/WaterfallChart';
+import { DailyOverlayChart } from './DailyOverlayChart';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+
+const COMPARE_MODE_KEY = 'zura-compare-mode';
 
 interface CompareTabContentProps {
   filters: {
@@ -27,16 +30,24 @@ interface CompareTabContentProps {
 }
 
 export function CompareTabContent({ filters, filterContext }: CompareTabContentProps) {
+  const { formatDate } = useFormatDate();
   const { data: locations } = useLocations();
   
-  // State for comparison configuration
-  const [mode, setMode] = useState<CompareMode>('time');
+  // Persisted state
+  const [mode, setMode] = useState<CompareMode>(() => {
+    try { return (localStorage.getItem(COMPARE_MODE_KEY) as CompareMode) || 'time'; } catch { return 'time'; }
+  });
   const [selectedLocationIds, setSelectedLocationIds] = useState<string[]>([]);
   
-  // Period state - initialized with defaults
+  // Period state
   const defaultPeriods = getPresetPeriods('thisMonth-lastMonth');
   const [periodA, setPeriodA] = useState(defaultPeriods.periodA);
   const [periodB, setPeriodB] = useState(defaultPeriods.periodB);
+
+  // Persist mode
+  useEffect(() => {
+    try { localStorage.setItem(COMPARE_MODE_KEY, mode); } catch {}
+  }, [mode]);
 
   // Update periods when mode changes to YoY
   useEffect(() => {
@@ -47,7 +58,7 @@ export function CompareTabContent({ filters, filterContext }: CompareTabContentP
     }
   }, [mode]);
 
-  // Initialize selected locations from filter
+  // Initialize selected locations
   useEffect(() => {
     if (locations && locations.length > 0 && selectedLocationIds.length === 0) {
       setSelectedLocationIds(locations.slice(0, 2).map(l => l.id));
@@ -62,13 +73,11 @@ export function CompareTabContent({ filters, filterContext }: CompareTabContentP
     locationIds: mode === 'location' ? selectedLocationIds : (filters.locationId !== 'all' ? [filters.locationId] : undefined),
   });
 
-  // Handle period changes
   const handlePeriodsChange = (newPeriodA: typeof periodA, newPeriodB: typeof periodB) => {
     setPeriodA(newPeriodA);
     setPeriodB(newPeriodB);
   };
 
-  // Handle location selection toggle
   const toggleLocation = (locationId: string) => {
     setSelectedLocationIds(prev => 
       prev.includes(locationId)
@@ -78,8 +87,40 @@ export function CompareTabContent({ filters, filterContext }: CompareTabContentP
   };
 
   // Generate period labels
-  const periodALabel = `${format(new Date(periodA.dateFrom), 'MMM d')} - ${format(new Date(periodA.dateTo), 'MMM d, yyyy')}`;
-  const periodBLabel = `${format(new Date(periodB.dateFrom), 'MMM d')} - ${format(new Date(periodB.dateTo), 'MMM d, yyyy')}`;
+  const periodALabel = `${formatDate(new Date(periodA.dateFrom), 'MMM d')} – ${formatDate(new Date(periodA.dateTo), 'MMM d, yyyy')}`;
+  const periodBLabel = `${formatDate(new Date(periodB.dateFrom), 'MMM d')} – ${formatDate(new Date(periodB.dateTo), 'MMM d, yyyy')}`;
+
+  // Generate insight text
+  const insight = useMemo(() => {
+    if (!data) return null;
+    const revChange = data.changes.totalRevenue;
+    const svcChange = data.changes.serviceRevenue;
+    const prdChange = data.changes.productRevenue;
+    const txnChange = data.changes.totalTransactions;
+
+    const parts: string[] = [];
+
+    // Main revenue direction
+    if (Math.abs(revChange) < 0.5) {
+      parts.push('Revenue is flat between periods');
+    } else {
+      parts.push(`Revenue ${revChange > 0 ? 'grew' : 'declined'} ${Math.abs(revChange).toFixed(1)}%`);
+    }
+
+    // What drove it
+    if (Math.abs(svcChange) > Math.abs(prdChange) && Math.abs(svcChange) > 1) {
+      parts.push(`services ${svcChange > 0 ? 'led the gain' : 'drove the decline'} (${svcChange > 0 ? '+' : ''}${svcChange.toFixed(1)}%)`);
+    } else if (Math.abs(prdChange) > 1) {
+      parts.push(`products ${prdChange > 0 ? 'led the gain' : 'drove the decline'} (${prdChange > 0 ? '+' : ''}${prdChange.toFixed(1)}%)`);
+    }
+
+    // Transactions
+    if (Math.abs(txnChange) > 2) {
+      parts.push(`transactions ${txnChange > 0 ? 'up' : 'down'} ${Math.abs(txnChange).toFixed(1)}%`);
+    }
+
+    return parts.join(' · ');
+  }, [data]);
 
   return (
     <div className="space-y-6">
@@ -101,17 +142,17 @@ export function CompareTabContent({ filters, filterContext }: CompareTabContentP
             )}
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-5">
           {/* Mode Selector */}
           <div>
-            <p className="text-sm text-muted-foreground mb-3">Compare by:</p>
+            <p className="text-xs text-muted-foreground mb-2">Compare by:</p>
             <CompareTypeSelector value={mode} onChange={setMode} />
           </div>
 
           {/* Location Selector (only in location mode) */}
           {mode === 'location' && locations && (
             <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">Select locations to compare:</p>
+              <p className="text-xs text-muted-foreground">Select locations to compare:</p>
               <div className="flex flex-wrap gap-3">
                 {locations.map(location => (
                   <div key={location.id} className="flex items-center space-x-2">
@@ -139,6 +180,14 @@ export function CompareTabContent({ filters, filterContext }: CompareTabContentP
         </CardContent>
       </Card>
 
+      {/* Insight Banner */}
+      {insight && !isLoading && (
+        <div className="flex items-start gap-3 rounded-lg border border-border/50 bg-muted/20 px-4 py-3">
+          <Lightbulb className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+          <p className="text-sm text-muted-foreground">{insight}</p>
+        </div>
+      )}
+
       {/* Results Section - Based on Mode */}
       {mode === 'location' ? (
         <LocationComparisonView 
@@ -147,7 +196,12 @@ export function CompareTabContent({ filters, filterContext }: CompareTabContentP
         />
       ) : mode === 'category' ? (
         <>
-          <ComparisonResultsGrid data={data} isLoading={isLoading} />
+          <ComparisonResultsGrid
+            data={data}
+            isLoading={isLoading}
+            periodALabel={periodALabel}
+            periodBLabel={periodBLabel}
+          />
           <CategoryComparisonTable 
             categories={data?.categoryBreakdown}
             isLoading={isLoading}
@@ -157,10 +211,25 @@ export function CompareTabContent({ filters, filterContext }: CompareTabContentP
         </>
       ) : (
         <>
-          {/* Standard Results Grid */}
-          <ComparisonResultsGrid data={data} isLoading={isLoading} />
+          {/* Results Grid with real date labels */}
+          <ComparisonResultsGrid
+            data={data}
+            isLoading={isLoading}
+            periodALabel={periodALabel}
+            periodBLabel={periodBLabel}
+          />
 
-          {/* Waterfall Chart - shows revenue breakdown */}
+          {/* Daily Overlay Chart */}
+          {data?.dailyOverlay && data.dailyOverlay.length > 1 && (
+            <DailyOverlayChart
+              data={data.dailyOverlay}
+              isLoading={isLoading}
+              periodALabel={periodALabel}
+              periodBLabel={periodBLabel}
+            />
+          )}
+
+          {/* Waterfall Chart */}
           {data?.waterfall && data.waterfall.length > 0 && (
             <WaterfallChart
               data={data.waterfall}

@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWebsiteAnalytics } from '@/hooks/useWebsiteAnalytics';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 
 interface TrendBadgeProps {
   value: number;
@@ -42,6 +44,8 @@ function formatDuration(seconds: number): string {
 }
 
 export function WebsiteAnalyticsWidget() {
+  const { formatDate } = useFormatDate();
+  const { formatNumber, formatPercent } = useFormatNumber();
   const navigate = useNavigate();
   const { summary, isLoading, refreshAnalytics, isRefreshing } = useWebsiteAnalytics();
 
@@ -104,7 +108,7 @@ export function WebsiteAnalyticsWidget() {
   }
 
   const chartData = summary.weeklyData.map(week => ({
-    week: format(parseISO(week.weekStart), 'MMM d'),
+    week: formatDate(parseISO(week.weekStart), 'MMM d'),
     visitors: week.visitors,
     pageviews: week.pageviews,
   }));
@@ -150,7 +154,7 @@ export function WebsiteAnalyticsWidget() {
         <div className="flex items-baseline justify-between">
           <div>
             <p className="text-3xl font-bold tracking-tight">
-              {summary.thisWeek.visitors.toLocaleString()}
+              {formatNumber(summary.thisWeek.visitors)}
             </p>
             <p className="text-xs text-muted-foreground">visitors this week</p>
           </div>
@@ -185,7 +189,7 @@ export function WebsiteAnalyticsWidget() {
                     <div className="rounded-lg border bg-background p-2 shadow-md">
                       <p className="text-xs font-medium">{payload[0]?.payload?.week}</p>
                       <p className="text-xs text-muted-foreground">
-                        {payload[0]?.value?.toLocaleString()} visitors
+                        {formatNumber(Number(payload[0]?.value ?? 0))} visitors
                       </p>
                     </div>
                   );
@@ -208,7 +212,7 @@ export function WebsiteAnalyticsWidget() {
             <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
               <Eye className="h-3 w-3" />
             </div>
-            <p className="text-sm font-medium">{summary.thisWeek.pageviews.toLocaleString()}</p>
+            <p className="text-sm font-medium">{formatNumber(summary.thisWeek.pageviews)}</p>
             <p className="text-xs text-muted-foreground">Pageviews</p>
           </div>
           <div className="text-center">
@@ -222,7 +226,7 @@ export function WebsiteAnalyticsWidget() {
             <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
               <MousePointerClick className="h-3 w-3" />
             </div>
-            <p className="text-sm font-medium">{summary.thisWeek.bounceRate.toFixed(0)}%</p>
+            <p className="text-sm font-medium">{formatPercent(summary.thisWeek.bounceRate)}</p>
             <p className="text-xs text-muted-foreground">Bounce Rate</p>
           </div>
         </div>

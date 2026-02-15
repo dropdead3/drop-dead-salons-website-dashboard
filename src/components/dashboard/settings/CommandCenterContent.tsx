@@ -145,8 +145,8 @@ export function CommandCenterContent() {
   };
 
   // Handle toggle
-  const handleToggle = (elementKey: string, role: AppRole, currentValue: boolean) => {
-    toggleMutation.mutate({ elementKey, role, isVisible: !currentValue });
+  const handleToggle = (elementKey: string, elementName: string, elementCategory: string, role: AppRole, currentValue: boolean) => {
+    toggleMutation.mutate({ elementKey, elementName, elementCategory, role, isVisible: !currentValue });
   };
 
   // Handle add element
@@ -643,7 +643,7 @@ export function CommandCenterContent() {
                                       <Switch
                                         checked={isVisible}
                                         onCheckedChange={() =>
-                                          handleToggle(element.element_key, role.name as AppRole, isVisible)
+                                          handleToggle(element.element_key, element.element_name, element.element_category, role.name as AppRole, isVisible)
                                         }
                                         disabled={isToggling}
                                         className={cn(

@@ -21,6 +21,7 @@ import { RegisterTotals } from '@/components/dashboard/register/RegisterTotals';
 import { RegisterClientSelect } from '@/components/dashboard/register/RegisterClientSelect';
 import { PaymentMethodSelect } from '@/components/dashboard/register/PaymentMethodSelect';
 import { ProductSearchResults } from '@/components/dashboard/register/ProductSearchResults';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
@@ -33,6 +34,7 @@ export default function Register() {
   const lastKeyTimeRef = useRef(0);
 
   const { user } = useAuth();
+  const { formatCurrency } = useFormatCurrency();
   const { data: profile } = useEmployeeProfile();
   const { effectiveOrganization } = useOrganizationContext();
   const productLookup = useProductLookup();
@@ -237,7 +239,7 @@ export default function Register() {
               disabled={cart.items.length === 0 || createSale.isPending}
             >
               <Receipt className="w-4 h-4 mr-2" />
-              {createSale.isPending ? 'Processing...' : `Complete Sale - $${total.toFixed(2)}`}
+              {createSale.isPending ? 'Processing...' : `Complete Sale - ${formatCurrency(total)}`}
             </Button>
             <Button
               variant="outline"

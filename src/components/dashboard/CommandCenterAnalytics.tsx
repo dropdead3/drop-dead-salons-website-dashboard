@@ -13,14 +13,23 @@ import { GoalTrackerCard } from '@/components/dashboard/sales/GoalTrackerCard';
 import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
 import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
+import { ExecutiveSummaryCard } from '@/components/dashboard/analytics/ExecutiveSummaryCard';
+import { DailyBriefCard } from '@/components/dashboard/analytics/DailyBriefCard';
+import { OperationalHealthCard } from '@/components/dashboard/analytics/OperationalHealthCard';
+import { LocationsRollupCard } from '@/components/dashboard/analytics/LocationsRollupCard';
+import { ServiceMixCard } from '@/components/dashboard/analytics/ServiceMixCard';
+import { RetailEffectivenessCard } from '@/components/dashboard/analytics/RetailEffectivenessCard';
+import { RebookingCard } from '@/components/dashboard/analytics/RebookingCard';
+import { ClientHealthSummaryCard } from '@/components/dashboard/client-health/ClientHealthSummaryCard';
+import { CommissionSummaryCard } from '@/components/dashboard/sales/CommissionSummaryCard';
+import { StaffCommissionTable } from '@/components/dashboard/sales/StaffCommissionTable';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useDashboardLayout } from '@/hooks/useDashboardLayout';
-import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
-import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
+import { useCommissionTiers } from '@/hooks/useCommissionTiers';
 import { Link } from 'react-router-dom';
 import { Settings2, MapPin, Calendar } from 'lucide-react';
 import { format, startOfMonth, subDays, startOfWeek } from 'date-fns';
@@ -84,10 +93,15 @@ function getDateRange(dateRange: DateRangeType): { dateFrom: string; dateTo: str
 
 // Map of card IDs to their render components
 const CARD_COMPONENTS: Record<string, string> = {
+  'executive_summary': 'ExecutiveSummary',
+  'daily_brief': 'DailyBrief',
   'sales_overview': 'SalesOverview',
   'top_performers': 'TopPerformers',
   'revenue_breakdown': 'RevenueBreakdown',
   'client_funnel': 'ClientFunnel',
+  'client_health': 'ClientHealth',
+  'operational_health': 'OperationalHealth',
+  'rebooking': 'Rebooking',
   'team_goals': 'TeamGoals',
   'goal_tracker': 'GoalTracker',
   'new_bookings': 'NewBookings',
@@ -96,6 +110,11 @@ const CARD_COMPONENTS: Record<string, string> = {
   'hiring_capacity': 'HiringCapacity',
   'staffing_trends': 'StaffingTrends',
   'stylist_workload': 'StylistWorkload',
+  'locations_rollup': 'LocationsRollup',
+  'service_mix': 'ServiceMix',
+  'retail_effectiveness': 'RetailEffectiveness',
+  'commission_summary': 'CommissionSummary',
+  'staff_commission_breakdown': 'StaffCommissionBreakdown',
 };
 
 /**
@@ -108,8 +127,6 @@ const CARD_COMPONENTS: Record<string, string> = {
 export function CommandCenterAnalytics() {
   const { data: visibilityData, isLoading } = useDashboardVisibility();
   const { layout } = useDashboardLayout();
-  const { data: profile } = useEmployeeProfile();
-  const roles = useEffectiveRoles();
   
   // Shared filter state for all pinned analytics cards
   const [locationId, setLocationId] = useState<string>('all');
@@ -169,6 +186,7 @@ export function CommandCenterAnalytics() {
     dateTo: dateFilters.dateTo,
     locationId: locationFilter,
   });
+  const { tiers, calculateCommission } = useCommissionTiers();
   
   // Show nothing if loading
   if (isLoading) return null;
@@ -203,6 +221,36 @@ export function CommandCenterAnalytics() {
   // Render a card by its ID
   const renderCard = (cardId: string) => {
     switch (cardId) {
+      case 'executive_summary':
+        return (
+          <VisibilityGate key={cardId} elementKey="executive_summary">
+            <PinnableCard elementKey="executive_summary" elementName="Executive Summary" category="Command Center">
+              <ExecutiveSummaryCard
+                filterContext={{
+                  locationId,
+                  dateRange,
+                }}
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
+                locationId={locationId}
+              />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'daily_brief':
+        return (
+          <VisibilityGate key={cardId} elementKey="daily_brief">
+            <PinnableCard elementKey="daily_brief" elementName="Daily Brief" category="Command Center">
+              <DailyBriefCard
+                filterContext={{
+                  locationId,
+                  dateRange,
+                }}
+                locationId={locationId}
+              />
+            </PinnableCard>
+          </VisibilityGate>
+        );
       case 'sales_overview':
         return (
           <VisibilityGate key={cardId} elementKey="sales_overview">
@@ -248,6 +296,46 @@ export function CommandCenterAnalytics() {
           <VisibilityGate key={cardId} elementKey="client_funnel">
             <PinnableCard elementKey="client_funnel" elementName="Client Funnel" category="Command Center">
               <ClientFunnelCard dateFrom={dateFilters.dateFrom} dateTo={dateFilters.dateTo} />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'client_health':
+        return (
+          <VisibilityGate key={cardId} elementKey="client_health">
+            <PinnableCard elementKey="client_health" elementName="Client Health" category="Command Center">
+              <ClientHealthSummaryCard />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'operational_health':
+        return (
+          <VisibilityGate key={cardId} elementKey="operational_health">
+            <PinnableCard elementKey="operational_health" elementName="Operational Health" category="Command Center">
+              <OperationalHealthCard
+                filterContext={{
+                  locationId,
+                  dateRange,
+                }}
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
+                locationId={locationId}
+              />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'rebooking':
+        return (
+          <VisibilityGate key={cardId} elementKey="rebooking">
+            <PinnableCard elementKey="rebooking" elementName="Rebooking Rate" category="Command Center">
+              <RebookingCard
+                filterContext={{
+                  locationId,
+                  dateRange,
+                }}
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
+                locationId={locationId}
+              />
             </PinnableCard>
           </VisibilityGate>
         );
@@ -317,6 +405,77 @@ export function CommandCenterAnalytics() {
               <StylistWorkloadCard 
                 workload={workload || []} 
                 isLoading={isLoadingWorkload} 
+              />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'locations_rollup':
+        return (
+          <VisibilityGate key={cardId} elementKey="locations_rollup">
+            <PinnableCard elementKey="locations_rollup" elementName="Locations Rollup" category="Command Center">
+              <LocationsRollupCard
+                filterContext={{
+                  locationId: 'all',
+                  dateRange,
+                }}
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
+              />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'service_mix':
+        return (
+          <VisibilityGate key={cardId} elementKey="service_mix">
+            <PinnableCard elementKey="service_mix" elementName="Service Mix" category="Command Center">
+              <ServiceMixCard
+                filterContext={{
+                  locationId,
+                  dateRange,
+                }}
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
+                locationId={locationId}
+              />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'retail_effectiveness':
+        return (
+          <VisibilityGate key={cardId} elementKey="retail_effectiveness">
+            <PinnableCard elementKey="retail_effectiveness" elementName="Retail Effectiveness" category="Command Center">
+              <RetailEffectivenessCard
+                filterContext={{
+                  locationId,
+                  dateRange,
+                }}
+                dateFrom={dateFilters.dateFrom}
+                dateTo={dateFilters.dateTo}
+                locationId={locationId}
+              />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'commission_summary':
+        return (
+          <VisibilityGate key={cardId} elementKey="commission_summary">
+            <PinnableCard elementKey="commission_summary" elementName="Commission Summary" category="Command Center">
+              <CommissionSummaryCard
+                stylistData={performers}
+                calculateCommission={calculateCommission}
+                isLoading={isLoadingPerformers}
+              />
+            </PinnableCard>
+          </VisibilityGate>
+        );
+      case 'staff_commission_breakdown':
+        return (
+          <VisibilityGate key={cardId} elementKey="staff_commission_breakdown">
+            <PinnableCard elementKey="staff_commission_breakdown" elementName="Staff Commission Breakdown" category="Command Center">
+              <StaffCommissionTable
+                stylistData={performers}
+                calculateCommission={calculateCommission}
+                isLoading={isLoadingPerformers}
               />
             </PinnableCard>
           </VisibilityGate>

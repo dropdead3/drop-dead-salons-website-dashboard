@@ -17,6 +17,7 @@ import { useIssueCredit } from '@/hooks/useClientBalances';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useClientsData } from '@/hooks/useClientsData';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface IssueCreditsDialogProps {
   open: boolean;
@@ -34,6 +35,7 @@ export function IssueCreditsDialog({ open, onOpenChange, preselectedClientId }: 
 
   const { effectiveOrganization } = useOrganizationContext();
   const issueCredit = useIssueCredit();
+  const { formatCurrency, currency } = useFormatCurrency();
   
   // Use clients data hook for search
   const { data: clients = [] } = useClientsData({ limit: 200 });
@@ -202,7 +204,7 @@ export function IssueCreditsDialog({ open, onOpenChange, preselectedClientId }: 
           <div className="space-y-2">
             <Label htmlFor="credit-amount">Amount</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{currency}</span>
               <Input
                 id="credit-amount"
                 type="number"
@@ -238,7 +240,7 @@ export function IssueCreditsDialog({ open, onOpenChange, preselectedClientId }: 
             disabled={issueCredit.isPending || !selectedClientId || !isValidAmount}
           >
             {issueCredit.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            Issue ${amountNum.toFixed(2)} Credit
+            Issue {formatCurrency(amountNum)} Credit
           </Button>
         </DialogFooter>
       </DialogContent>
