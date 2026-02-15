@@ -44,6 +44,7 @@ import {
 import { useState, useMemo } from 'react';
 
 import { ServiceProductDrilldown } from './ServiceProductDrilldown';
+import { LocationMetricDrilldownSheet, type LocationDrilldownType } from './LocationMetricDrilldownSheet';
 import { TipsDrilldownPanel } from './sales/TipsDrilldownPanel';
 import { TransactionsByHourPanel } from './sales/TransactionsByHourPanel';
 import { TicketDistributionPanel } from './sales/TicketDistributionPanel';
@@ -60,10 +61,12 @@ import { TrendSparkline } from './TrendSparkline';
 import { TopPerformersCard } from './sales/TopPerformersCard';
 import { RevenueDonutChart } from './sales/RevenueDonutChart';
 import { SalesGoalProgress } from './sales/SalesGoalProgress';
-import { LastSyncIndicator } from './sales/LastSyncIndicator';
+
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { Progress } from '@/components/ui/progress';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useTranslation } from 'react-i18next';
 
 export type DateRange = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'mtd' | 'todayToEom' | 'ytd' | 'lastYear' | 'last365';
 
@@ -123,11 +126,16 @@ export function AggregateSalesCard({
   filterContext,
 }: AggregateSalesCardProps = {}) {
   const navigate = useNavigate();
+  const { t } = useTranslation('dashboard');
+  const { t: tc } = useTranslation('common');
   const [internalDateRange, setInternalDateRange] = useState<DateRange>('today');
   const [drilldownMode, setDrilldownMode] = useState<'services' | 'products' | null>(null);
+  const [locationDrilldownTarget, setLocationDrilldownTarget] = useState<string | null>(null);
+  const [locationDrilldown, setLocationDrilldown] = useState<{ type: string; locationId: string; locationName: string } | null>(null);
   const [tipsDrilldownOpen, setTipsDrilldownOpen] = useState(false);
   const [activeDrilldown, setActiveDrilldown] = useState<'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | null>(null);
   const { hideNumbers } = useHideNumbers();
+  const { formatCurrency, formatCurrencyWhole, currency } = useFormatCurrency();
 
   // Toggle a secondary KPI drilldown with mutual exclusivity
   const toggleDrilldown = (panel: 'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals') => {
@@ -138,6 +146,22 @@ export function AggregateSalesCard({
   const handleTipsToggle = () => {
     setTipsDrilldownOpen(prev => !prev);
     setActiveDrilldown(null); // Close others when opening tips
+  };
+
+  const handleLocationMetricClick = (
+    e: React.MouseEvent,
+    type: LocationDrilldownType,
+    location: { location_id?: string | null; name: string }
+  ) => {
+    e.stopPropagation();
+    const locId = location.location_id;
+    if (!locId) return;
+    if (type === 'services' || type === 'products') {
+      setDrilldownMode(type);
+      setLocationDrilldownTarget(locId);
+    } else {
+      setLocationDrilldown({ type, locationId: locId, locationName: location.name });
+    }
   };
 
   // Location table sorting
@@ -428,14 +452,14 @@ export function AggregateSalesCard({
 
   return (
     <Card className="p-6">
-      {/* Header */}
+      {/* Header: left = title, middle = metadata, right = actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
             <DollarSign className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h2 className="font-display text-base tracking-wide">SALES OVERVIEW</h2>
+            <h2 className="font-display text-base tracking-wide">{t('sales.sales_overview')}</h2>
           </div>
           {hasNoData && (
             <Badge variant="outline" className="text-muted-foreground">
@@ -443,50 +467,62 @@ export function AggregateSalesCard({
             </Badge>
           )}
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {filterContext && (
-            <AnalyticsFilterBadge 
-              locationId={filterContext.locationId} 
-              dateRange={filterContext.dateRange as any} 
-            />
-          )}
-          <LastSyncIndicator syncType="sales" showAutoRefresh />
-          {!hideInternalFilter && (
-            <Select value={dateRange} onValueChange={(v: DateRange) => setInternalDateRange(v)}>
-              <SelectTrigger className="w-[130px] h-8 text-xs">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="yesterday">Yesterday</SelectItem>
-                <SelectItem value="thisWeek">This Week</SelectItem>
-                <SelectItem value="7d">Last 7 Days</SelectItem>
-                <SelectItem value="30d">Last 30 Days</SelectItem>
-                <SelectItem value="mtd">Month To Date</SelectItem>
-                <SelectItem value="ytd">Year To Date</SelectItem>
-                <SelectItem value="lastYear">Last Year</SelectItem>
-                <SelectItem value="last365">Last 365 Days</SelectItem>
-              </SelectContent>
-            </Select>
-          )}
-          <Button variant="outline" size="sm" className="h-8" onClick={handleExportCSV}>
-            <Download className="w-4 h-4" />
-          </Button>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-7 w-7 rounded-full hover:bg-primary/10"
-                onClick={() => handleViewDetails()}
-              >
-                <Info className="w-4 h-4 text-primary" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="text-xs">
-              View full analytics
-            </TooltipContent>
-          </Tooltip>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          {/* Metadata: filter context + sync */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {filterContext && (
+              <AnalyticsFilterBadge 
+                locationId={filterContext.locationId} 
+                dateRange={filterContext.dateRange as any} 
+              />
+            )}
+            {!hideInternalFilter && (
+              <Select value={dateRange} onValueChange={(v: DateRange) => setInternalDateRange(v)}>
+                <SelectTrigger className="w-[130px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="today">{tc('date_range.today')}</SelectItem>
+                  <SelectItem value="yesterday">{tc('date_range.yesterday')}</SelectItem>
+                  <SelectItem value="thisWeek">{tc('date_range.this_week')}</SelectItem>
+                  <SelectItem value="7d">{tc('date_range.last_7_days')}</SelectItem>
+                  <SelectItem value="30d">{tc('date_range.last_30_days')}</SelectItem>
+                  <SelectItem value="mtd">{tc('date_range.month_to_date')}</SelectItem>
+                  <SelectItem value="ytd">{tc('date_range.year_to_date')}</SelectItem>
+                  <SelectItem value="lastYear">{tc('date_range.last_year')}</SelectItem>
+                  <SelectItem value="last365">{tc('date_range.last_365_days')}</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          {/* Actions: export + info */}
+          <div className="flex items-center gap-1 border-l border-border/60 pl-2 sm:pl-3">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="sm" className="h-8" onClick={handleExportCSV}>
+                  <Download className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                {t('sales.export_data')}
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-7 w-7 rounded-full hover:bg-primary/10"
+                  onClick={() => handleViewDetails()}
+                >
+                  <Info className="w-4 h-4 text-primary" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                {t('sales.view_full_analytics')}
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
       </div>
 
@@ -497,7 +533,7 @@ export function AggregateSalesCard({
           {/* Hero: Total Revenue with Breakdown */}
           <div className="bg-muted/30 dark:bg-card rounded-xl p-4 sm:p-6 border border-border/40">
             <p className="text-xs text-muted-foreground mb-2">
-              {isAllLocations ? 'All locations combined' : selectedLocationName || 'Loading...'}
+              {isAllLocations ? t('sales.all_locations') : selectedLocationName || tc('loading')}
             </p>
             {/* Total Revenue - Hero */}
             <div
@@ -511,18 +547,18 @@ export function AggregateSalesCard({
             >
               <AnimatedBlurredAmount
                 value={displayMetrics.totalRevenue}
-                prefix="$"
+                currency={currency}
                 className="text-3xl sm:text-4xl md:text-5xl font-display tabular-nums"
               />
               <div className="flex items-center gap-1 justify-center mt-2">
-                <p className="text-sm text-muted-foreground">Total Revenue</p>
+                <p className="text-sm text-muted-foreground">{t('sales.total_revenue')}</p>
                 <MetricInfoTooltip description="Sum of all service and product sales. Tips are excluded. Click for category breakdown." />
               </div>
               {(dateRange === 'today' || dateRange === 'todayToEom') && (
                 <div className="flex items-center justify-center gap-1.5 mt-2">
                   <Badge variant="outline" className="text-xs font-normal bg-warning/10 text-warning border-warning/30">
                     <Clock className="w-3 h-3 mr-1" />
-                    Expected Revenue
+                    {t('sales.expected_revenue')}
                   </Badge>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -541,10 +577,10 @@ export function AggregateSalesCard({
                     <>
                       <div className="space-y-1.5">
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-muted-foreground">Actual Revenue</span>
+                          <span className="text-muted-foreground">{t('sales.actual_revenue')}</span>
                           <BlurredAmount>
                             <span className="font-medium">
-                              ${todayActual.actualRevenue.toLocaleString()} of ${displayMetrics.totalRevenue.toLocaleString()} expected
+                              {formatCurrency(todayActual.actualRevenue)} of {formatCurrency(displayMetrics.totalRevenue)} expected
                             </span>
                           </BlurredAmount>
                         </div>
@@ -559,12 +595,12 @@ export function AggregateSalesCard({
                     </>
                   ) : (
                     <p className="text-xs text-muted-foreground/70 text-center">
-                      Actual revenue not available until appointments check out
+                      {t('sales.actual_not_available')}
                     </p>
                   )}
                   {todayActual?.lastAppointmentEndTime && (
                     <p className="text-xs text-muted-foreground/70 text-center">
-                      Estimated final transaction at{' '}
+                      {t('sales.estimated_final_at')}{' '}
                       <span className="font-medium text-foreground/70">
                         {formatEndTime(todayActual.lastAppointmentEndTime)}
                       </span>
@@ -598,12 +634,12 @@ export function AggregateSalesCard({
               >
                 <div className="flex items-center justify-center gap-1.5 mb-2">
                   <Scissors className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-xs text-muted-foreground">Services</span>
+                  <span className="text-xs text-muted-foreground">{t('sales.services')}</span>
                   <MetricInfoTooltip description="Revenue from booked services. Tips are tracked separately." />
                 </div>
                 <AnimatedBlurredAmount 
                   value={displayMetrics.serviceRevenue}
-                  prefix="$"
+                  currency={currency}
                   className="text-xl sm:text-2xl font-display tabular-nums"
                 />
                 <p className="text-xs text-muted-foreground/70 mt-1">{servicePercent}%</p>
@@ -616,11 +652,11 @@ export function AggregateSalesCard({
               >
                 <div className="flex items-center justify-center gap-1.5 mb-2">
                   <ShoppingBag className="w-3.5 h-3.5 text-primary" />
-                  <span className="text-xs text-muted-foreground">Products</span>
+                  <span className="text-xs text-muted-foreground">{t('sales.products')}</span>
                 </div>
                 <AnimatedBlurredAmount 
                   value={displayMetrics.productRevenue}
-                  prefix="$"
+                  currency={currency}
                   className="text-xl sm:text-2xl font-display tabular-nums"
                 />
                 <p className="text-xs text-muted-foreground/70 mt-1">{productPercent}%</p>
@@ -661,7 +697,7 @@ export function AggregateSalesCard({
                       </div>
                       <AnimatedBlurredAmount value={displayMetrics.totalTransactions} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                       <div className="flex items-center gap-1 justify-center mt-1">
-                        <p className="text-xs text-muted-foreground">Transactions</p>
+                        <p className="text-xs text-muted-foreground">{t('sales.transactions')}</p>
                         <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'transactions' && "rotate-180")} />
                         <MetricInfoTooltip description="Total number of completed sales transactions. Click for hourly breakdown." />
                       </div>
@@ -678,9 +714,9 @@ export function AggregateSalesCard({
                       <div className="flex justify-center mb-2">
                         <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       </div>
-                      <AnimatedBlurredAmount value={Math.round(displayMetrics.averageTicket)} prefix="$" className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                      <AnimatedBlurredAmount value={Math.round(displayMetrics.averageTicket)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                       <div className="flex items-center gap-1 justify-center mt-1">
-                        <p className="text-xs text-muted-foreground">Avg Ticket</p>
+                        <p className="text-xs text-muted-foreground">{t('sales.avg_ticket')}</p>
                         <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'avgTicket' && "rotate-180")} />
                         <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Transactions. Click for distribution." />
                       </div>
@@ -697,9 +733,9 @@ export function AggregateSalesCard({
                       <div className="flex justify-center mb-2">
                         <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       </div>
-                      <AnimatedBlurredAmount value={Math.round(revenuePerHour)} prefix="$" className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                      <AnimatedBlurredAmount value={Math.round(revenuePerHour)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                       <div className="flex items-center gap-1 justify-center mt-1">
-                        <p className="text-xs text-muted-foreground">Rev/Hour</p>
+                        <p className="text-xs text-muted-foreground">{t('sales.rev_per_hour')}</p>
                         <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'revPerHour' && "rotate-180")} />
                         <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Service Hours. Click for stylist breakdown." />
                       </div>
@@ -716,9 +752,9 @@ export function AggregateSalesCard({
                       <div className="flex justify-center mb-2">
                         <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                       </div>
-                      <AnimatedBlurredAmount value={metrics?.totalTips ?? 0} prefix="$" className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                      <AnimatedBlurredAmount value={metrics?.totalTips ?? 0} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                       <div className="flex items-center gap-1 justify-center mt-1">
-                        <p className="text-xs text-muted-foreground">Tips</p>
+                        <p className="text-xs text-muted-foreground">{t('sales.tips')}</p>
                         <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", tipsDrilldownOpen && "rotate-180")} />
                         <MetricInfoTooltip description="Total tips collected from completed appointments. Click for stylist breakdown." />
                       </div>
@@ -745,7 +781,7 @@ export function AggregateSalesCard({
                     </div>
                     <AnimatedBlurredAmount value={displayMetrics.totalTransactions} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                     <div className="flex items-center gap-1 justify-center mt-1">
-                      <p className="text-xs text-muted-foreground">Transactions</p>
+                      <p className="text-xs text-muted-foreground">{t('sales.transactions')}</p>
                       <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'transactions' && "rotate-180")} />
                       <MetricInfoTooltip description="Total number of completed sales transactions. Click for hourly breakdown." />
                     </div>
@@ -762,9 +798,9 @@ export function AggregateSalesCard({
                     <div className="flex justify-center mb-2">
                       <Receipt className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
-                    <AnimatedBlurredAmount value={Math.round(displayMetrics.averageTicket)} prefix="$" className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                    <AnimatedBlurredAmount value={Math.round(displayMetrics.averageTicket)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                     <div className="flex items-center gap-1 justify-center mt-1">
-                      <p className="text-xs text-muted-foreground">Avg Ticket</p>
+                      <p className="text-xs text-muted-foreground">{t('sales.avg_ticket')}</p>
                       <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'avgTicket' && "rotate-180")} />
                       <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Transactions. Click for distribution." />
                     </div>
@@ -781,9 +817,9 @@ export function AggregateSalesCard({
                     <div className="flex justify-center mb-2">
                       <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
-                    <AnimatedBlurredAmount value={Math.round(revenuePerHour)} prefix="$" className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                    <AnimatedBlurredAmount value={Math.round(revenuePerHour)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                     <div className="flex items-center gap-1 justify-center mt-1">
-                      <p className="text-xs text-muted-foreground">Rev/Hour</p>
+                      <p className="text-xs text-muted-foreground">{t('sales.rev_per_hour')}</p>
                       <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", activeDrilldown === 'revPerHour' && "rotate-180")} />
                       <MetricInfoTooltip description="Total Revenue (excluding tips) ÷ Service Hours. Click for stylist breakdown." />
                     </div>
@@ -794,9 +830,9 @@ export function AggregateSalesCard({
                     <div className="flex justify-center mb-2">
                       <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
-                    <AnimatedBlurredAmount value={Math.round(dailyAverage)} prefix="$" className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                    <AnimatedBlurredAmount value={Math.round(dailyAverage)} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                     <div className="flex items-center gap-1 justify-center mt-1">
-                      <p className="text-xs text-muted-foreground">Daily Avg</p>
+                      <p className="text-xs text-muted-foreground">{t('sales.daily_avg')}</p>
                       <MetricInfoTooltip description="Average daily revenue across days with recorded sales." />
                     </div>
                   </div>
@@ -812,9 +848,9 @@ export function AggregateSalesCard({
                     <div className="flex justify-center mb-2">
                       <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
-                    <AnimatedBlurredAmount value={metrics?.totalTips ?? 0} prefix="$" className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
+                    <AnimatedBlurredAmount value={metrics?.totalTips ?? 0} currency={currency} className="text-lg sm:text-xl md:text-2xl font-display tabular-nums" />
                     <div className="flex items-center gap-1 justify-center mt-1">
-                      <p className="text-xs text-muted-foreground">Tips</p>
+                      <p className="text-xs text-muted-foreground">{t('sales.tips')}</p>
                       <ChevronDown className={cn("w-3 h-3 text-muted-foreground transition-transform duration-200", tipsDrilldownOpen && "rotate-180")} />
                       <MetricInfoTooltip description="Total tips collected from completed appointments. Click for stylist breakdown." />
                     </div>
@@ -919,16 +955,16 @@ export function AggregateSalesCard({
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <Building2 className="w-4 h-4 text-muted-foreground" />
-              <h3 className="font-display text-xs tracking-wide text-muted-foreground">BY LOCATION</h3>
+              <h3 className="font-display text-xs tracking-wide text-muted-foreground">{t('sales.by_location')}</h3>
             </div>
             <div className="flex items-center gap-2">
               {availableRegions.length >= 2 && (
                 <Select value={regionFilter} onValueChange={setRegionFilter}>
                   <SelectTrigger className="w-[140px] h-7 text-xs">
-                    <SelectValue placeholder="All Regions" />
+                    <SelectValue placeholder={t('sales.all_regions')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Regions</SelectItem>
+                    <SelectItem value="all">{t('sales.all_regions')}</SelectItem>
                     {availableRegions.map(region => (
                       <SelectItem key={region} value={region}>{region}</SelectItem>
                     ))}
@@ -940,12 +976,12 @@ export function AggregateSalesCard({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="totalRevenue">Revenue</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="serviceRevenue">Services</SelectItem>
-                  <SelectItem value="productRevenue">Products</SelectItem>
-                  <SelectItem value="totalTransactions">Transactions</SelectItem>
-                  <SelectItem value="avgTicket">Avg Ticket</SelectItem>
+                  <SelectItem value="totalRevenue">{t('sales.revenue')}</SelectItem>
+                  <SelectItem value="name">{t('sales.name')}</SelectItem>
+                  <SelectItem value="serviceRevenue">{t('sales.services')}</SelectItem>
+                  <SelectItem value="productRevenue">{t('sales.products')}</SelectItem>
+                  <SelectItem value="totalTransactions">{t('sales.transactions')}</SelectItem>
+                  <SelectItem value="avgTicket">{t('sales.avg_ticket')}</SelectItem>
                 </SelectContent>
               </Select>
               <Button
@@ -982,7 +1018,7 @@ export function AggregateSalesCard({
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
                           <span className="text-sm font-display tabular-nums">
-                            <BlurredAmount>${location.totalRevenue.toLocaleString()}</BlurredAmount>
+                            <BlurredAmount>{formatCurrency(location.totalRevenue)}</BlurredAmount>
                           </span>
                           <ChevronRight className={`w-4 h-4 text-muted-foreground transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`} />
                         </div>
@@ -1001,36 +1037,81 @@ export function AggregateSalesCard({
                             <div className="px-4 pb-4 pt-3">
                               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                                 {/* Services */}
-                                <div className="bg-muted/30 rounded-lg border border-border/30 p-3">
-                                  <p className="text-xs text-muted-foreground mb-1">Services</p>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleLocationMetricClick(e, 'services', location)}
+                                  disabled={!location.location_id}
+                                  className={cn(
+                                    'bg-muted/30 rounded-lg border border-border/30 p-3 text-left transition-colors',
+                                    location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
+                                  )}
+                                  aria-label={t('sales.services')}
+                                >
+                                  <p className="text-xs text-muted-foreground mb-1">{t('sales.services')}</p>
                                   <p className="text-sm font-display tabular-nums">
-                                    <BlurredAmount>${location.serviceRevenue.toLocaleString()}</BlurredAmount>
+                                    <BlurredAmount>{formatCurrency(location.serviceRevenue)}</BlurredAmount>
                                   </p>
-                                </div>
+                                </button>
                                 {/* Products */}
-                                <div className="bg-muted/30 rounded-lg border border-border/30 p-3">
-                                  <p className="text-xs text-muted-foreground mb-1">Products</p>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleLocationMetricClick(e, 'products', location)}
+                                  disabled={!location.location_id}
+                                  className={cn(
+                                    'bg-muted/30 rounded-lg border border-border/30 p-3 text-left transition-colors',
+                                    location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
+                                  )}
+                                  aria-label={t('sales.products')}
+                                >
+                                  <p className="text-xs text-muted-foreground mb-1">{t('sales.products')}</p>
                                   <p className="text-sm font-display tabular-nums">
-                                    <BlurredAmount>${location.productRevenue.toLocaleString()}</BlurredAmount>
+                                    <BlurredAmount>{formatCurrency(location.productRevenue)}</BlurredAmount>
                                   </p>
-                                </div>
+                                </button>
                                 {/* Transactions */}
-                                <div className="bg-muted/30 rounded-lg border border-border/30 p-3">
-                                  <p className="text-xs text-muted-foreground mb-1">Transactions</p>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleLocationMetricClick(e, 'transactions', location)}
+                                  disabled={!location.location_id}
+                                  className={cn(
+                                    'bg-muted/30 rounded-lg border border-border/30 p-3 text-left transition-colors',
+                                    location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
+                                  )}
+                                  aria-label={t('sales.transactions')}
+                                >
+                                  <p className="text-xs text-muted-foreground mb-1">{t('sales.transactions')}</p>
                                   <p className="text-sm font-display tabular-nums">
                                     <BlurredAmount>{location.totalTransactions}</BlurredAmount>
                                   </p>
-                                </div>
+                                </button>
                                 {/* Avg Ticket */}
-                                <div className="bg-muted/30 rounded-lg border border-border/30 p-3">
-                                  <p className="text-xs text-muted-foreground mb-1">Avg Ticket</p>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleLocationMetricClick(e, 'avgTicket', location)}
+                                  disabled={!location.location_id}
+                                  className={cn(
+                                    'bg-muted/30 rounded-lg border border-border/30 p-3 text-left transition-colors',
+                                    location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
+                                  )}
+                                  aria-label={t('sales.avg_ticket')}
+                                >
+                                  <p className="text-xs text-muted-foreground mb-1">{t('sales.avg_ticket')}</p>
                                   <p className="text-sm font-display tabular-nums">
-                                    <BlurredAmount>${isFinite(avgTicket) ? Math.round(avgTicket) : 0}</BlurredAmount>
+                                    <BlurredAmount>{formatCurrency(isFinite(avgTicket) ? Math.round(avgTicket) : 0)}</BlurredAmount>
                                   </p>
-                                </div>
+                                </button>
                                 {/* Trend */}
-                                <div className="bg-muted/30 rounded-lg border border-border/30 p-3">
-                                  <p className="text-xs text-muted-foreground mb-1">Trend</p>
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleLocationMetricClick(e, 'trend', location)}
+                                  disabled={!location.location_id}
+                                  className={cn(
+                                    'bg-muted/30 rounded-lg border border-border/30 p-3 text-left transition-colors',
+                                    location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
+                                  )}
+                                  aria-label={t('sales.trend')}
+                                >
+                                  <p className="text-xs text-muted-foreground mb-1">{t('sales.trend')}</p>
                                   {!hideNumbers ? (
                                     <TrendSparkline 
                                       data={getLocationTrend(location.location_id).map(d => d.value)} 
@@ -1040,23 +1121,32 @@ export function AggregateSalesCard({
                                   ) : (
                                     <span className="text-xs text-muted-foreground">—</span>
                                   )}
-                                </div>
+                                </button>
                                 {/* Status (Today only) */}
                                 {isToday && (
-                                  <div className="bg-muted/30 rounded-lg border border-border/30 p-3">
-                                    <p className="text-xs text-muted-foreground mb-1">Status</p>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => handleLocationMetricClick(e, 'status', location)}
+                                    disabled={!location.location_id}
+                                    className={cn(
+                                      'bg-muted/30 rounded-lg border border-border/30 p-3 text-left transition-colors',
+                                      location.location_id && 'cursor-pointer hover:bg-muted/50 hover:border-primary/30'
+                                    )}
+                                    aria-label={t('sales.status')}
+                                  >
+                                    <p className="text-xs text-muted-foreground mb-1">{t('sales.status')}</p>
                                     {(() => {
                                       const locActual = locationActuals[location.location_id || ''];
                                       const expectedRevenue = location.totalRevenue;
                                       if (!locActual || !locActual.hasActualData) {
-                                        return <span className="text-xs text-muted-foreground/70">Pending</span>;
+                                        return <span className="text-xs text-muted-foreground/70">{t('sales.pending')}</span>;
                                       }
                                       if (locActual.actualRevenue >= expectedRevenue && expectedRevenue > 0) {
                                         return (
                                           <div className="space-y-0.5">
                                             <Badge variant="outline" className="text-[10px] font-normal bg-primary/10 text-primary border-primary/30">
                                               <Check className="w-3 h-3 mr-1" />
-                                              Checked out
+                                              {t('sales.checked_out')}
                                             </Badge>
                                             {locActual.lastEndTime && (
                                               <p className="text-[10px] text-muted-foreground/60">
@@ -1070,7 +1160,7 @@ export function AggregateSalesCard({
                                         <div className="space-y-0.5">
                                           <BlurredAmount>
                                             <span className="text-xs text-muted-foreground">
-                                              ${locActual.actualRevenue.toLocaleString()} / ${expectedRevenue.toLocaleString()}
+                                              {formatCurrency(locActual.actualRevenue)} / {formatCurrency(expectedRevenue)}
                                             </span>
                                           </BlurredAmount>
                                           {locActual.lastEndTime && (
@@ -1081,7 +1171,7 @@ export function AggregateSalesCard({
                                         </div>
                                       );
                                     })()}
-                                  </div>
+                                  </button>
                                 )}
                               </div>
                               {/* View details link */}
@@ -1092,7 +1182,7 @@ export function AggregateSalesCard({
                                   handleViewDetails(location.location_id);
                                 }}
                               >
-                                View full details →
+                                {t('sales.view_full_details')} →
                               </button>
                             </div>
                           </motion.div>
@@ -1111,8 +1201,8 @@ export function AggregateSalesCard({
                     onClick={() => setLocationsExpanded(prev => !prev)}
                   >
                     {locationsExpanded 
-                      ? 'Show less' 
-                      : `Show all ${filteredLocationData.length} locations`
+                      ? tc('show_less') 
+                      : t('sales.show_all_locations', { count: filteredLocationData.length })
                     }
                   </Button>
                 </div>
@@ -1121,8 +1211,8 @@ export function AggregateSalesCard({
           ) : (
             <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/20">
               <Building2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No location data available</p>
-              <p className="text-xs mt-1">Sync sales to see breakdown by location</p>
+              <p className="text-sm">{t('sales.no_location_data')}</p>
+              <p className="text-xs mt-1">{t('sales.sync_to_see')}</p>
             </div>
           )}
         </div>
@@ -1130,10 +1220,22 @@ export function AggregateSalesCard({
       {/* Service/Product Drilldown Dialog */}
       <ServiceProductDrilldown
         mode={drilldownMode}
-        onClose={() => setDrilldownMode(null)}
+        onClose={() => {
+          setDrilldownMode(null);
+          setLocationDrilldownTarget(null);
+        }}
         dateFrom={dateFilters.dateFrom}
         dateTo={dateFilters.dateTo}
-        parentLocationId={filterContext?.locationId}
+        parentLocationId={locationDrilldownTarget ?? filterContext?.locationId}
+      />
+      <LocationMetricDrilldownSheet
+        open={!!locationDrilldown}
+        onOpenChange={(open) => !open && setLocationDrilldown(null)}
+        type={locationDrilldown?.type ?? 'transactions'}
+        locationId={locationDrilldown?.locationId ?? ''}
+        locationName={locationDrilldown?.locationName ?? ''}
+        dateFrom={dateFilters.dateFrom}
+        dateTo={dateFilters.dateTo}
       />
     </Card>
   );

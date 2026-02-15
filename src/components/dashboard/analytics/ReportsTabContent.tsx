@@ -1,7 +1,11 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { VisibilityGate, useElementVisibility } from '@/components/visibility/VisibilityGate';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   FileText, 
   Users, 
@@ -13,9 +17,14 @@ import {
   Building2,
   CalendarDays,
   Wand2,
-  Calendar
+  Calendar,
+  ArrowRight,
+  ShoppingBag,
+  Wallet,
+  ClipboardList,
 } from 'lucide-react';
 import { useLocations } from '@/hooks/useLocations';
+import { getReportTier, filterReportsByTier } from '@/config/reportCatalog';
 import { ReportCard } from '@/components/dashboard/reports/ReportCard';
 import { RecentReports } from '@/components/dashboard/reports/RecentReports';
 import { SalesReportGenerator } from '@/components/dashboard/reports/SalesReportGenerator';
@@ -23,6 +32,11 @@ import { StaffKPIReport } from '@/components/dashboard/reports/StaffKPIReport';
 import { ClientRetentionReport } from '@/components/dashboard/reports/ClientRetentionReport';
 import { NoShowReport } from '@/components/dashboard/reports/NoShowReport';
 import { CapacityReport } from '@/components/dashboard/reports/CapacityReport';
+import { FinancialReportGenerator } from '@/components/dashboard/reports/FinancialReportGenerator';
+import { IndividualStaffReport } from '@/components/dashboard/reports/IndividualStaffReport';
+import { PayrollSummaryReport } from '@/components/dashboard/reports/PayrollSummaryReport';
+import { RetailProductReport } from '@/components/dashboard/reports/RetailProductReport';
+import { EndOfMonthReport } from '@/components/dashboard/reports/EndOfMonthReport';
 import { ReportBuilderPage } from '@/components/dashboard/reports/builder/ReportBuilderPage';
 import { ScheduledReportsSubTab } from '@/components/dashboard/reports/scheduled/ScheduledReportsSubTab';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
@@ -42,9 +56,11 @@ const salesReports = [
   { id: 'stylist-sales', name: 'Sales by Stylist', description: 'Individual performance rankings', icon: Users },
   { id: 'location-sales', name: 'Sales by Location', description: 'Multi-location comparison', icon: Building2 },
   { id: 'product-sales', name: 'Product Sales Report', description: 'Top products and attachment rates', icon: DollarSign },
+  { id: 'retail-products', name: 'Retail Product Report', description: 'Full product performance with red flags and categories', icon: ShoppingBag },
 ];
 
 const staffReports = [
+  { id: 'individual-staff', name: 'Staff 1:1 Prep', description: 'Comprehensive individual report for meetings', icon: Users },
   { id: 'staff-kpi', name: 'Staff KPI Report', description: 'Comprehensive staff performance metrics', icon: BarChart3 },
   { id: 'productivity', name: 'Productivity Report', description: 'Hours worked vs revenue generated', icon: Clock },
   { id: 'rebooking', name: 'Rebooking Analysis', description: 'Staff rebooking rates and trends', icon: UserCheck },
@@ -70,6 +86,8 @@ const financialReports = [
   { id: 'commission', name: 'Commission Report', description: 'Staff earnings calculations', icon: DollarSign, visibilityKey: 'report_commission' },
   { id: 'goals', name: 'Goal Progress', description: 'Team and individual goal tracking', icon: BarChart3 },
   { id: 'yoy', name: 'Year-over-Year', description: 'Historical performance comparison', icon: TrendingUp, visibilityKey: 'report_yoy' },
+  { id: 'payroll-summary', name: 'Payroll Summary', description: 'Commission + rent for pay period processing', icon: Wallet },
+  { id: 'end-of-month', name: 'End-of-Month Summary', description: 'Comprehensive monthly business report', icon: ClipboardList },
 ];
 
 interface ReportsTabContentProps {
@@ -77,11 +95,62 @@ interface ReportsTabContentProps {
 }
 
 export function ReportsTabContent({ filters }: ReportsTabContentProps) {
+  const { hasPermission } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeCategory, setActiveCategory] = useState('sales');
   const [selectedReport, setSelectedReport] = useState<string | null>(null);
+  const deepLinkStaffId = useRef<string | null>(null);
+  const deepLinkProcessed = useRef(false);
+
+  // Deep-link support: ?report=individual-staff&staffId=abc
+  useEffect(() => {
+    if (deepLinkProcessed.current) return;
+    const reportParam = searchParams.get('report');
+    const staffIdParam = searchParams.get('staffId');
+    if (reportParam) {
+      setSelectedReport(reportParam);
+      if (staffIdParam) {
+        deepLinkStaffId.current = staffIdParam;
+      }
+      deepLinkProcessed.current = true;
+      // Clean up URL params to avoid re-triggering
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('report');
+      newParams.delete('staffId');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  const canRunReports = hasPermission('run_reports');
+  const { data: locations } = useLocations();
+  const locationCount = locations?.length ?? 1;
+  const reportTier = getReportTier(locationCount);
+  const filteredSalesReports = (locations?.filter(l => l.is_active).length ?? 0) >= 2
+    ? salesReports
+    : salesReports.filter(r => r.id !== 'location-sales');
 
   // Check if parent sales tab is visible (determines if sales/financial reports should show)
   const salesTabVisible = useElementVisibility('analytics_sales_tab');
+
+  if (!canRunReports) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Reports</CardTitle>
+            <CardDescription>
+              You do not have permission to run or download reports. Contact your administrator for access.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Reports can be previewed and downloaded as CSV or PDF. Access is granted to admins and managers.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Filter categories based on parent visibility
   const visibleCategories = useMemo(() => {
@@ -143,10 +212,50 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
     </div>
   );
 
+  // Reports that manage their own back button
+  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'end-of-month'];
+
   const renderSelectedReport = () => {
     const location = filters.locationId === 'all' ? undefined : filters.locationId;
 
     switch (selectedReport) {
+      case 'individual-staff':
+        return (
+          <IndividualStaffReport
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            locationId={location}
+            onClose={handleCloseReport}
+            initialStaffId={deepLinkStaffId.current || undefined}
+          />
+        );
+      case 'payroll-summary':
+        return (
+          <PayrollSummaryReport
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            locationId={location}
+            onClose={handleCloseReport}
+          />
+        );
+      case 'retail-products':
+        return (
+          <RetailProductReport
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            locationId={location}
+            onClose={handleCloseReport}
+          />
+        );
+      case 'end-of-month':
+        return (
+          <EndOfMonthReport
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            locationId={location}
+            onClose={handleCloseReport}
+          />
+        );
       case 'daily-sales':
       case 'stylist-sales':
       case 'location-sales':
@@ -207,12 +316,29 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
             onClose={handleCloseReport}
           />
         );
+      case 'revenue-trend':
+      case 'commission':
+      case 'goals':
+      case 'yoy':
+        return (
+          <FinancialReportGenerator
+            reportType={selectedReport}
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            locationId={location}
+            onClose={handleCloseReport}
+          />
+        );
       default:
         return null;
     }
   };
 
   if (selectedReport) {
+    // Self-contained reports have their own back button
+    if (selfContainedReports.includes(selectedReport)) {
+      return <div className="space-y-4">{renderSelectedReport()}</div>;
+    }
     return (
       <div className="space-y-4">
         <button 
@@ -226,12 +352,50 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
     );
   }
 
+  const quickActions = [
+    { id: 'individual-staff', label: 'Staff 1:1 Prep', desc: 'Full performance report for individual staff meetings', icon: Users, accent: 'from-indigo-500/10 to-purple-500/10 dark:from-indigo-500/5 dark:to-purple-500/5' },
+    { id: 'payroll-summary', label: 'Payroll Summary', desc: 'Commission + rent summary for pay processing', icon: Wallet, accent: 'from-emerald-500/10 to-teal-500/10 dark:from-emerald-500/5 dark:to-teal-500/5' },
+    { id: 'end-of-month', label: 'End-of-Month', desc: 'Comprehensive monthly business snapshot', icon: ClipboardList, accent: 'from-amber-500/10 to-orange-500/10 dark:from-amber-500/5 dark:to-orange-500/5' },
+    { id: 'retail-products', label: 'Retail Report', desc: 'Product performance, red flags, and trends', icon: ShoppingBag, accent: 'from-rose-500/10 to-pink-500/10 dark:from-rose-500/5 dark:to-pink-500/5' },
+  ];
+
   return (
     <div className="space-y-6">
+      {/* Quick Actions Hero */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-display text-base tracking-wide">Quick Actions</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Jump into your most-used reports</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {quickActions.map((qa) => {
+            const Icon = qa.icon;
+            return (
+              <button
+                key={qa.id}
+                onClick={() => handleReportSelect(qa.id)}
+                className={`group relative overflow-hidden rounded-xl border bg-gradient-to-br ${qa.accent} p-4 text-left transition-all hover:shadow-md hover:border-primary/20 active:scale-[0.98]`}
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className="rounded-lg bg-background/60 backdrop-blur-sm p-2 border">
+                    <Icon className="w-4 h-4 text-foreground" />
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <p className="text-sm font-medium">{qa.label}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{qa.desc}</p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Category Label + Sub-tabs */}
       <div className="space-y-2">
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-          Report Category
+          All Reports
         </span>
         <Tabs value={activeCategory} onValueChange={setActiveCategory}>
           <SubTabsList>
@@ -253,7 +417,7 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
         {/* Only render Sales content if visible */}
         {salesTabVisible && (
           <TabsContent value="sales" className="mt-6">
-            {renderReportCards(salesReports)}
+            {renderReportCards(filterReportsByTier(filteredSalesReports, reportTier))}
           </TabsContent>
         )}
 

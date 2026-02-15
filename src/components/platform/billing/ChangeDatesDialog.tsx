@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { AlertTriangle } from 'lucide-react';
 import {
   Dialog,
@@ -30,6 +31,7 @@ export function ChangeDatesDialog({
   currentStartDate,
   currentEndDate,
 }: ChangeDatesDialogProps) {
+  const { formatDate } = useFormatDate();
   const [newStartDate, setNewStartDate] = useState(currentStartDate || '');
   const [newEndDate, setNewEndDate] = useState(currentEndDate || '');
   const [reason, setReason] = useState('');
@@ -84,7 +86,7 @@ export function ChangeDatesDialog({
               <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
                 <p className="text-xs text-slate-500">Current Start</p>
                 <p className="text-sm text-slate-300">
-                  {format(parseISO(currentStartDate), 'MMM d, yyyy')}
+                  {formatDate(parseISO(currentStartDate), 'MMM d, yyyy')}
                 </p>
               </div>
             )}
@@ -92,7 +94,7 @@ export function ChangeDatesDialog({
               <div className="p-3 rounded-lg bg-slate-800/50 border border-slate-700/50">
                 <p className="text-xs text-slate-500">Current End</p>
                 <p className="text-sm text-slate-300">
-                  {format(parseISO(currentEndDate), 'MMM d, yyyy')}
+                  {formatDate(parseISO(currentEndDate), 'MMM d, yyyy')}
                 </p>
               </div>
             )}

@@ -18,6 +18,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Plus, MoreHorizontal, Trash2, Download, Loader2, QrCode } from 'lucide-react';
 import { format, isPast } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useVouchers, useDeleteVoucher, type Voucher } from '@/hooks/useVouchers';
 import { VoucherFormDialog } from './VoucherFormDialog';
 import { VoucherBulkDialog } from './VoucherBulkDialog';
@@ -34,8 +36,10 @@ const VOUCHER_TYPE_LABELS: Record<string, string> = {
 };
 
 export function VouchersList({ organizationId }: VouchersListProps) {
+  const { formatDate } = useFormatDate();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isBulkOpen, setIsBulkOpen] = useState(false);
+  const { formatCurrency } = useFormatCurrency();
   
   const { data: vouchers, isLoading } = useVouchers(organizationId);
   const deleteVoucher = useDeleteVoucher();
@@ -150,7 +154,7 @@ export function VouchersList({ organizationId }: VouchersListProps) {
                         {voucher.value_type === 'percentage' 
                           ? `${voucher.value}%`
                           : voucher.value 
-                          ? `$${voucher.value}`
+                          ? formatCurrency(voucher.value)
                           : '-'}
                       </TableCell>
                       <TableCell>
@@ -160,7 +164,7 @@ export function VouchersList({ organizationId }: VouchersListProps) {
                       </TableCell>
                       <TableCell>
                         {voucher.expires_at ? (
-                          format(new Date(voucher.expires_at), 'MMM d, yyyy')
+                          formatDate(new Date(voucher.expires_at), 'MMM d, yyyy')
                         ) : (
                           <span className="text-muted-foreground">Never</span>
                         )}

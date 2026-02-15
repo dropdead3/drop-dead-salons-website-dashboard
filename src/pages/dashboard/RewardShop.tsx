@@ -13,7 +13,8 @@ import {
   useMyRedemptions,
 } from '@/hooks/usePoints';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +27,8 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export default function RewardShop() {
+  const { formatDate } = useFormatDate();
+  const { formatNumber } = useFormatNumber();
   const [activeTab, setActiveTab] = useState('shop');
   const [confirmRewardId, setConfirmRewardId] = useState<string | null>(null);
 
@@ -73,7 +76,7 @@ export default function RewardShop() {
               {balanceLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <p className="text-xl font-bold">{balance.toLocaleString()}</p>
+                <p className="text-xl font-bold">{formatNumber(balance)}</p>
               )}
             </div>
           </Card>
@@ -149,12 +152,12 @@ export default function RewardShop() {
                           {redemption.reward?.name || 'Unknown Reward'}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {format(new Date(redemption.created_at), 'MMM d, yyyy')}
+                          {formatDate(new Date(redemption.created_at), 'MMM d, yyyy')}
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
                         <span className="text-sm text-muted-foreground">
-                          -{redemption.points_spent.toLocaleString()} pts
+                          -{formatNumber(redemption.points_spent)} pts
                         </span>
                         <Badge
                           variant="secondary"
@@ -194,12 +197,12 @@ export default function RewardShop() {
                   <>
                     Are you sure you want to redeem{' '}
                     <strong>{confirmingReward.name}</strong> for{' '}
-                    <strong>{confirmingReward.points_cost.toLocaleString()} points</strong>?
+                    <strong>{formatNumber(confirmingReward.points_cost)} points</strong>?
                     <br />
                     <br />
                     Your remaining balance will be{' '}
                     <strong>
-                      {(balance - confirmingReward.points_cost).toLocaleString()} points
+                      {formatNumber(balance - confirmingReward.points_cost)} points
                     </strong>
                     .
                   </>

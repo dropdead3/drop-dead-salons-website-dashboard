@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -9,7 +9,8 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
-import { format, isToday, isTomorrow, isPast } from 'date-fns';
+import { isToday, isTomorrow, isPast } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import {
   CalendarPlus,
   Calendar,
@@ -21,6 +22,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { ManagerMeetingRequest } from '@/components/coaching/ManagerMeetingRequest';
+import { TeamMeetingOverview } from '@/components/coaching/TeamMeetingOverview';
 
 interface StatCardProps {
   icon: React.ComponentType<{ className?: string }>;
@@ -31,13 +33,13 @@ interface StatCardProps {
 
 function StatCard({ icon: Icon, value, label, colorClass }: StatCardProps) {
   return (
-    <Card className="p-4 bg-card dark:bg-card">
+    <Card className="p-4">
       <div className="flex items-center gap-3">
         <div className={cn("w-10 h-10 flex items-center justify-center rounded-lg", colorClass)}>
           <Icon className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-2xl font-display font-medium text-foreground">{value}</p>
+          <p className="text-2xl font-display font-medium tabular-nums text-foreground">{value}</p>
           <p className="text-xs text-muted-foreground">{label}</p>
         </div>
       </div>
@@ -45,18 +47,18 @@ function StatCard({ icon: Icon, value, label, colorClass }: StatCardProps) {
   );
 }
 
-function formatMeetingDate(dateStr: string): string {
+function formatMeetingDate(dateStr: string, formatDate: (d: Date | string | number, f: string) => string): string {
   const date = new Date(dateStr);
   if (isToday(date)) return 'Today';
   if (isTomorrow(date)) return 'Tomorrow';
-  return format(date, 'MMM d');
+  return formatDate(date, 'MMM d');
 }
 
-function formatTime(timeStr: string): string {
+function formatTime(timeStr: string, formatDate: (d: Date | string | number, f: string) => string): string {
   const [hours, minutes] = timeStr.split(':');
   const date = new Date();
   date.setHours(parseInt(hours), parseInt(minutes));
-  return format(date, 'h:mm a');
+  return formatDate(date, 'h:mm a');
 }
 
 interface ProfileInfo {
@@ -96,6 +98,7 @@ interface CommitmentWithMember {
 export default function ScheduleMeeting() {
   const { user } = useAuth();
   const roles = useEffectiveRoles();
+  const { formatDate } = useFormatDate();
   const isCoach = roles.includes('admin') || roles.includes('manager') || roles.includes('super_admin');
 
   // Fetch dashboard data
@@ -246,14 +249,14 @@ export default function ScheduleMeeting() {
               icon={Calendar}
               value={stats.upcomingMeetings}
               label="Upcoming Meetings"
-              colorClass="bg-blue-500/10 text-blue-600 dark:text-blue-400"
+              colorClass="bg-primary/10 text-primary"
             />
             {isCoach && (
               <StatCard
                 icon={Inbox}
                 value={stats.pendingRequests}
                 label="Pending Requests"
-                colorClass="bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                colorClass="bg-chart-4/10 text-chart-4"
               />
             )}
             {isCoach && (
@@ -261,24 +264,32 @@ export default function ScheduleMeeting() {
                 icon={ClipboardList}
                 value={stats.activeCommitments}
                 label="Active Commitments"
-                colorClass="bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                colorClass="bg-chart-3/10 text-chart-3"
               />
             )}
             <StatCard
               icon={MessageSquareMore}
               value={stats.inboxPending}
               label="Inbox Pending"
-              colorClass="bg-green-500/10 text-green-600 dark:text-green-400"
+              colorClass="bg-chart-2/10 text-chart-2"
             />
           </div>
 
+          {/* Team Meeting Overview - Coach/Admin only */}
+          {isCoach && <TeamMeetingOverview />}
+
           {/* Upcoming Meetings Preview */}
-          <Card className="bg-card dark:bg-card">
+          <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-display uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Upcoming Meetings
-              </CardTitle>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                  <Calendar className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="font-display text-base tracking-wide">UPCOMING MEETINGS</CardTitle>
+                  <CardDescription>Scheduled sessions awaiting you</CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {data?.upcomingMeetings && data.upcomingMeetings.length > 0 ? (
@@ -288,7 +299,7 @@ export default function ScheduleMeeting() {
                       <div className="flex items-center gap-3">
                         <div className="flex flex-col">
                           <span className="font-medium text-sm">
-                            {formatMeetingDate(meeting.meeting_date)} at {formatTime(meeting.start_time)}
+                            {formatMeetingDate(meeting.meeting_date, formatDate)} at {formatTime(meeting.start_time, formatDate)}
                           </span>
                           <span className="text-xs text-muted-foreground capitalize">
                             {meeting.meeting_type?.replace('_', ' ') || 'Meeting'}
@@ -323,12 +334,17 @@ export default function ScheduleMeeting() {
           {isCoach && (
             <div className="grid lg:grid-cols-2 gap-6">
               {/* Pending Requests Card */}
-              <Card className="bg-card dark:bg-card">
+              <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-display uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-                    <Inbox className="w-4 h-4" />
-                    Pending Requests
-                  </CardTitle>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                      <Inbox className="w-5 h-5 text-chart-4" />
+                    </div>
+                    <div>
+                      <CardTitle className="font-display text-base tracking-wide">PENDING REQUESTS</CardTitle>
+                      <CardDescription>Meeting requests awaiting your response</CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {data?.pendingRequests && data.pendingRequests.length > 0 ? (
@@ -345,7 +361,7 @@ export default function ScheduleMeeting() {
                           </div>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="w-3.5 h-3.5" />
-                            {formatMeetingDate(request.meeting_date)}
+                            {formatMeetingDate(request.meeting_date, formatDate)}
                           </div>
                         </div>
                       ))}
@@ -364,12 +380,17 @@ export default function ScheduleMeeting() {
               </Card>
 
               {/* Active Commitments Card */}
-              <Card className="bg-card dark:bg-card">
+              <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-display uppercase tracking-wide text-muted-foreground flex items-center gap-2">
-                    <ClipboardList className="w-4 h-4" />
-                    Active Commitments
-                  </CardTitle>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                      <ClipboardList className="w-5 h-5 text-chart-3" />
+                    </div>
+                    <div>
+                      <CardTitle className="font-display text-base tracking-wide">ACTIVE COMMITMENTS</CardTitle>
+                      <CardDescription>Open action items from coaching sessions</CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {data?.activeCommitments && data.activeCommitments.length > 0 ? (
@@ -391,7 +412,7 @@ export default function ScheduleMeeting() {
                                   isOverdue ? "text-destructive" : "text-muted-foreground"
                                 )}>
                                   {isOverdue && <AlertCircle className="w-3 h-3" />}
-                                  {format(new Date(item.due_date), 'MMM d')}
+                                  {formatDate(new Date(item.due_date), 'MMM d')}
                                 </span>
                               )}
                               {item.priority === 'high' && (

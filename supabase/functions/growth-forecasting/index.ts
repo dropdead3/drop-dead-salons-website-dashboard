@@ -83,6 +83,36 @@ function calculateSeasonalIndices(quarters: QuarterData[]): Record<number, numbe
   return result;
 }
 
+// Calculate monthly seasonal indices (average ratio of each calendar month 1-12 to overall average)
+function calculateMonthlySeasonalIndicesFor(
+  months: MonthData[],
+  getValue: (m: MonthData) => number
+): Record<number, number> {
+  const indices: Record<number, number[]> = {};
+  for (let i = 1; i <= 12; i++) indices[i] = [];
+
+  const avg = months.reduce((s, m) => s + getValue(m), 0) / months.length;
+  if (avg === 0) {
+    const result: Record<number, number> = {};
+    for (let i = 1; i <= 12; i++) result[i] = 1;
+    return result;
+  }
+
+  months.forEach((m) => {
+    const calMonth = parseInt(m.month.split("-")[1]); // 1-12
+    indices[calMonth].push(getValue(m) / avg);
+  });
+
+  const result: Record<number, number> = {};
+  for (let i = 1; i <= 12; i++) {
+    const vals = indices[i];
+    result[i] = vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 1;
+  }
+  return result;
+}
+
+const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 // Determine momentum from recent growth rates
 function determineMomentum(growthRates: number[]): string {
   if (growthRates.length < 2) return "steady";
@@ -106,7 +136,7 @@ serve(async (req) => {
   }
 
   try {
-    const { organizationId, locationId } = await req.json();
+    const { organizationId, locationId, granularity = 'quarterly', horizonMonths = 12 } = await req.json();
 
     if (!organizationId) {
       return new Response(JSON.stringify({ error: "organizationId required" }), {
@@ -119,27 +149,29 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Check cache first
-    const { data: cached } = await supabase
-      .from("growth_forecasts")
-      .select("*")
-      .eq("organization_id", organizationId)
-      .gt("expires_at", new Date().toISOString())
-      .order("generated_at", { ascending: false })
-      .limit(20);
+    // Check cache first (only for quarterly — monthly is computed fresh, cached client-side)
+    if (granularity !== 'monthly') {
+      const { data: cached } = await supabase
+        .from("growth_forecasts")
+        .select("*")
+        .eq("organization_id", organizationId)
+        .gt("expires_at", new Date().toISOString())
+        .order("generated_at", { ascending: false })
+        .limit(20);
 
-    if (cached && cached.length > 0) {
-      // Group cached data by scenario
-      const scenarios: Record<string, any[]> = {};
-      cached.forEach((row: any) => {
-        if (!scenarios[row.scenario]) scenarios[row.scenario] = [];
-        scenarios[row.scenario].push(row);
-      });
+      if (cached && cached.length > 0) {
+        // Group cached data by scenario
+        const scenarios: Record<string, any[]> = {};
+        cached.forEach((row: any) => {
+          if (!scenarios[row.scenario]) scenarios[row.scenario] = [];
+          scenarios[row.scenario].push(row);
+        });
 
-      return new Response(
-        JSON.stringify({ source: "cache", forecasts: cached, scenarios }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+        return new Response(
+          JSON.stringify({ source: "cache", forecasts: cached, scenarios }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Pull all historical daily sales data
@@ -205,6 +237,230 @@ serve(async (req) => {
       }
     });
 
+    // ── Monthly forecasting branch ──────────────────────────────────────
+    if (granularity === "monthly") {
+      const sortedMonths = Array.from(monthMap.values()).sort((a, b) => a.month.localeCompare(b.month));
+
+      // Linear regression on monthly revenue
+      const mxs = sortedMonths.map((_, i) => i);
+      const revYs = sortedMonths.map((m) => m.totalRevenue);
+      const revRegression = linearRegression(mxs, revYs);
+
+      // Linear regression on monthly transactions (appointments)
+      const txnYs = sortedMonths.map((m) => m.transactions);
+      const txnRegression = linearRegression(mxs, txnYs);
+
+      // Monthly seasonal indices for revenue and appointments
+      const revSeasonalIdx = calculateMonthlySeasonalIndicesFor(sortedMonths, (m) => m.totalRevenue);
+      const txnSeasonalIdx = calculateMonthlySeasonalIndicesFor(sortedMonths, (m) => m.transactions);
+
+      // Monthly growth rates for momentum
+      const monthlyGrowthRates: number[] = [];
+      for (let i = 1; i < sortedMonths.length; i++) {
+        const prev = sortedMonths[i - 1].totalRevenue;
+        const curr = sortedMonths[i].totalRevenue;
+        if (prev > 0) monthlyGrowthRates.push(((curr - prev) / prev) * 100);
+      }
+      const monthlyMomentum = determineMomentum(monthlyGrowthRates);
+
+      // MoM growth (last month vs previous)
+      const lastMonth = sortedMonths[sortedMonths.length - 1];
+      const prevMonth = sortedMonths.length >= 2 ? sortedMonths[sortedMonths.length - 2] : null;
+      const lastMoMGrowth =
+        prevMonth && prevMonth.totalRevenue > 0
+          ? ((lastMonth.totalRevenue - prevMonth.totalRevenue) / prevMonth.totalRevenue) * 100
+          : null;
+
+      // YoY growth (last month vs same month last year)
+      const lastMonthCal = parseInt(lastMonth.month.split("-")[1]);
+      const lastMonthYear = parseInt(lastMonth.month.split("-")[0]);
+      const sameMonthLastYear = sortedMonths.find((m) => {
+        const cal = parseInt(m.month.split("-")[1]);
+        const yr = parseInt(m.month.split("-")[0]);
+        return cal === lastMonthCal && yr === lastMonthYear - 1;
+      });
+      const monthlyYoyGrowth =
+        sameMonthLastYear && sameMonthLastYear.totalRevenue > 0
+          ? ((lastMonth.totalRevenue - sameMonthLastYear.totalRevenue) / sameMonthLastYear.totalRevenue) * 100
+          : null;
+
+      const now = new Date();
+      const currentCalMonth = now.getMonth() + 1; // 1-12
+      const currentYear = now.getFullYear();
+
+      const scenarioMultipliers: Record<string, number> = {
+        conservative: 0.85,
+        baseline: 1.0,
+        optimistic: 1.15,
+      };
+
+      // Project forward horizonMonths months
+      const monthlyProjections: any[] = [];
+      for (let i = 1; i <= horizonMonths; i++) {
+        let futureMonth = currentCalMonth + i;
+        let futureYear = currentYear;
+        while (futureMonth > 12) {
+          futureMonth -= 12;
+          futureYear++;
+        }
+
+        const revTrend = revRegression.slope * (sortedMonths.length + i - 1) + revRegression.intercept;
+        const revSeasonal = revSeasonalIdx[futureMonth] || 1;
+        const baseRevenue = Math.max(0, revTrend * revSeasonal);
+
+        const txnTrend = txnRegression.slope * (sortedMonths.length + i - 1) + txnRegression.intercept;
+        const txnSeasonal = txnSeasonalIdx[futureMonth] || 1;
+        const baseAppointments = Math.max(0, txnTrend * txnSeasonal);
+
+        const monthKey = `${futureYear}-${String(futureMonth).padStart(2, "0")}`;
+        const label = `${MONTH_NAMES[futureMonth - 1]} ${futureYear}`;
+
+        for (const [scenario, multiplier] of Object.entries(scenarioMultipliers)) {
+          monthlyProjections.push({
+            month: monthKey,
+            period: label,
+            revenue: Math.round(baseRevenue * multiplier * 100) / 100,
+            appointments: Math.round(baseAppointments * multiplier),
+            confidenceLower: Math.round(baseRevenue * multiplier * 0.85 * 100) / 100,
+            confidenceUpper: Math.round(baseRevenue * multiplier * 1.15 * 100) / 100,
+            appointmentsLower: Math.round(baseAppointments * multiplier * 0.85),
+            appointmentsUpper: Math.round(baseAppointments * multiplier * 1.15),
+            scenario,
+            type: "projected",
+          });
+        }
+      }
+
+      // Build monthly actuals
+      const monthlyActuals = sortedMonths.map((m) => ({
+        period: `${MONTH_NAMES[parseInt(m.month.split("-")[1]) - 1]} ${m.month.split("-")[0]}`,
+        month: m.month,
+        revenue: m.totalRevenue,
+        appointments: m.transactions,
+        type: "actual" as const,
+      }));
+
+      // Build monthly scenarios grouped
+      const monthlyScenarios: Record<string, any[]> = {};
+      monthlyProjections.forEach((p) => {
+        if (!monthlyScenarios[p.scenario]) monthlyScenarios[p.scenario] = [];
+        monthlyScenarios[p.scenario].push({
+          period: p.period,
+          month: p.month,
+          revenue: p.revenue,
+          appointments: p.appointments,
+          confidenceLower: p.confidenceLower,
+          confidenceUpper: p.confidenceUpper,
+          appointmentsLower: p.appointmentsLower,
+          appointmentsUpper: p.appointmentsUpper,
+          type: "projected" as const,
+        });
+      });
+
+      // Calculate 3M/6M/12M summary totals from baseline
+      const baselineMonthly = monthlyProjections.filter((p) => p.scenario === "baseline");
+      const sum = (arr: any[], key: string) => arr.reduce((s, p) => s + (p[key] || 0), 0);
+
+      const projectedRevenue3m = Math.round(sum(baselineMonthly.slice(0, Math.min(3, horizonMonths)), "revenue") * 100) / 100;
+      const projectedRevenue6m = Math.round(sum(baselineMonthly.slice(0, Math.min(6, horizonMonths)), "revenue") * 100) / 100;
+      const projectedRevenue12m = Math.round(sum(baselineMonthly.slice(0, Math.min(12, horizonMonths)), "revenue") * 100) / 100;
+      const projectedAppointments3m = sum(baselineMonthly.slice(0, Math.min(3, horizonMonths)), "appointments");
+      const projectedAppointments6m = sum(baselineMonthly.slice(0, Math.min(6, horizonMonths)), "appointments");
+      const projectedAppointments12m = sum(baselineMonthly.slice(0, Math.min(12, horizonMonths)), "appointments");
+
+      // Generate AI insights for monthly data
+      let monthlyInsights: string[] = [];
+      try {
+        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+        if (LOVABLE_API_KEY && sortedMonths.length >= 3) {
+          const recentMonths = sortedMonths.slice(-12);
+          const context = `Historical monthly revenue & appointment data for a salon/beauty business (last ${recentMonths.length} months):
+${recentMonths.map((m) => `${MONTH_NAMES[parseInt(m.month.split("-")[1]) - 1]} ${m.month.split("-")[0]}: Revenue $${m.totalRevenue.toLocaleString()}, Appointments ${m.transactions}`).join("\n")}
+
+3-month projected revenue (baseline): $${projectedRevenue3m.toLocaleString()}
+6-month projected revenue (baseline): $${projectedRevenue6m.toLocaleString()}
+12-month projected revenue (baseline): $${projectedRevenue12m.toLocaleString()}
+Revenue trend R²: ${revRegression.r2.toFixed(3)}
+Momentum: ${monthlyMomentum}
+Monthly seasonal indices (revenue): ${Object.entries(revSeasonalIdx).map(([m, idx]) => `${MONTH_NAMES[parseInt(m) - 1]}: ${(idx as number).toFixed(2)}`).join(", ")}`;
+
+          const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              model: "google/gemini-3-flash-preview",
+              messages: [
+                {
+                  role: "system",
+                  content:
+                    "You are a business analytics advisor for salon/beauty businesses. Given monthly revenue and appointment data with projections, provide 3-4 concise, actionable insights about growth trends, seasonality, appointment volume, and recommendations. Each insight should be 1-2 sentences. Return ONLY a JSON array of strings. No markdown.",
+                },
+                { role: "user", content: context },
+              ],
+            }),
+          });
+
+          if (aiResponse.ok) {
+            const aiData = await aiResponse.json();
+            const content = aiData.choices?.[0]?.message?.content || "";
+            try {
+              const parsed = JSON.parse(content.replace(/```json\n?|\n?```/g, "").trim());
+              if (Array.isArray(parsed)) monthlyInsights = parsed;
+            } catch {
+              monthlyInsights = content
+                .split("\n")
+                .map((l: string) => l.replace(/^[-*•]\s*/, "").trim())
+                .filter((l: string) => l.length > 10);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Monthly AI insights error:", e);
+      }
+
+      // Fallback insights
+      if (monthlyInsights.length === 0 && sortedMonths.length >= 2) {
+        const momChange = lastMoMGrowth !== null ? lastMoMGrowth : 0;
+        monthlyInsights = [
+          `Revenue ${momChange >= 0 ? "grew" : "declined"} ${Math.abs(momChange).toFixed(1)}% month-over-month.`,
+          `Revenue momentum is ${monthlyMomentum} based on recent monthly trends.`,
+          `Projected baseline revenue over the next 3 months: $${projectedRevenue3m.toLocaleString()}.`,
+        ];
+      }
+
+      return new Response(
+        JSON.stringify({
+          source: "computed",
+          granularity: "monthly",
+          monthlyActuals,
+          monthlyScenarios,
+          insights: monthlyInsights,
+          summary: {
+            momentum: monthlyMomentum,
+            lastMoMGrowth,
+            yoyGrowth: monthlyYoyGrowth,
+            revenueSeasonalIndices: revSeasonalIdx,
+            appointmentSeasonalIndices: txnSeasonalIdx,
+            revenueTrendR2: revRegression.r2,
+            appointmentTrendR2: txnRegression.r2,
+            dataPoints: dailyData.length,
+            monthsAvailable: sortedMonths.length,
+            projectedRevenue3m,
+            projectedRevenue6m,
+            projectedRevenue12m,
+            projectedAppointments3m,
+            projectedAppointments6m,
+            projectedAppointments12m,
+          },
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── Quarterly forecasting (existing logic) ─────────────────────────
     // Aggregate into quarters
     const quarterMap = new Map<string, QuarterData>();
     monthMap.forEach((m) => {

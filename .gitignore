@@ -12,6 +12,20 @@ dist
 dist-ssr
 *.local
 
+# Environment variables (never commit secrets)
+.env
+.env.local
+.env.*.local
+
+# Dev context bridge (local-only browser state for Cursor agents)
+.cursor/browser-context.json
+.cursor/agent-manifest.json
+.cursor/debug.log
+.cursor/*.log
+
+# Supabase local temp output (never commit)
+supabase/.temp/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

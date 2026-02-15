@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Search, Building2, DollarSign, Calendar } from 'lucide-react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { RenterDetailSheet } from './RenterDetailSheet';
 import { IssueContractDialog } from './IssueContractDialog';
 
@@ -24,6 +24,7 @@ interface RentersTabContentProps {
 }
 
 export function RentersTabContent({ organizationId }: RentersTabContentProps) {
+  const { formatDate } = useFormatDate();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -197,7 +198,7 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
                       )}
                       {renter.start_date && (
                         <span className="text-muted-foreground">
-                          Started: {format(new Date(renter.start_date), 'MMM d, yyyy')}
+                          Started: {formatDate(new Date(renter.start_date), 'MMM d, yyyy')}
                         </span>
                       )}
                     </div>

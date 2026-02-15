@@ -3,15 +3,20 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { DollarSign, Users, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { formatCurrency as formatCurrencyUtil } from '@/lib/formatCurrency';
 
 interface RentRevenueTabProps {
   organizationId: string;
 }
 
 export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
+  const { formatDate } = useFormatDate();
+  const { formatCurrencyWhole } = useFormatCurrency();
   // Fetch rent revenue stats
   const { data: stats, isLoading } = useQuery({
     queryKey: ['rent-revenue-stats', organizationId],
@@ -79,7 +84,7 @@ export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
       // Convert to array for chart
       const chartData = Array.from(monthlyData.entries())
         .map(([month, data]) => ({
-          month: format(new Date(month + '-01'), 'MMM'),
+          month: formatDate(new Date(month + '-01'), 'MMM'),
           collected: data.collected,
           expected: data.expected,
           late_fees: data.late_fees,
@@ -132,10 +137,10 @@ export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
                 <div>
                   <p className="text-sm text-muted-foreground">MTD Collected</p>
                   <p className="text-2xl font-bold">
-                    ${(stats?.currentMonthCollected || 0).toFixed(0)}
+                    {formatCurrencyWhole(stats?.currentMonthCollected || 0)}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    of ${(stats?.currentMonthExpected || 0).toFixed(0)} expected
+                    of {formatCurrencyWhole(stats?.currentMonthExpected || 0)} expected
                   </p>
                 </div>
                 <div className="p-3 rounded-full bg-green-500/10">
@@ -180,7 +185,7 @@ export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
                 <div>
                   <p className="text-sm text-muted-foreground">Overdue</p>
                   <p className="text-2xl font-bold text-red-500">
-                    ${(stats?.overdueAmount || 0).toFixed(0)}
+                    {formatCurrencyWhole(stats?.overdueAmount || 0)}
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {stats?.overdueCount || 0} payments
@@ -206,7 +211,7 @@ export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
                   <p className="text-sm text-muted-foreground">Active Renters</p>
                   <p className="text-2xl font-bold">{stats?.activeRenters || 0}</p>
                   <p className="text-xs text-muted-foreground">
-                    ${(stats?.lateFees || 0).toFixed(0)} in late fees
+                    {formatCurrencyWhole(stats?.lateFees || 0)} in late fees
                   </p>
                 </div>
                 <div className="p-3 rounded-full bg-purple-500/10">
@@ -235,9 +240,9 @@ export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
                 <AreaChart data={stats?.chartData || []}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="month" className="text-xs" />
-                  <YAxis className="text-xs" tickFormatter={(v) => `$${v}`} />
+                  <YAxis className="text-xs" tickFormatter={(v) => formatCurrencyUtil(v, undefined, { maximumFractionDigits: 0, minimumFractionDigits: 0 })} />
                   <Tooltip 
-                    formatter={(value: number) => `$${value.toFixed(2)}`}
+                    formatter={(value: number) => formatCurrencyUtil(value)}
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
@@ -282,15 +287,15 @@ export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center p-4 rounded-lg bg-muted">
                 <p className="text-sm text-muted-foreground">Total Collected</p>
-                <p className="text-3xl font-bold">${(stats?.totalCollected || 0).toFixed(0)}</p>
+                <p className="text-3xl font-bold">{formatCurrencyWhole(stats?.totalCollected || 0)}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-muted">
                 <p className="text-sm text-muted-foreground">Total Expected</p>
-                <p className="text-3xl font-bold">${(stats?.totalExpected || 0).toFixed(0)}</p>
+                <p className="text-3xl font-bold">{formatCurrencyWhole(stats?.totalExpected || 0)}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-muted">
                 <p className="text-sm text-muted-foreground">Late Fees Collected</p>
-                <p className="text-3xl font-bold">${(stats?.lateFees || 0).toFixed(0)}</p>
+                <p className="text-3xl font-bold">{formatCurrencyWhole(stats?.lateFees || 0)}</p>
               </div>
             </div>
           </CardContent>

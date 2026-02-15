@@ -10,6 +10,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Loader2 } from 'lucide-react';
 import type { CategoryBreakdown } from '@/hooks/useComparisonData';
 
@@ -26,6 +27,8 @@ export function CategoryComparisonTable({
   periodALabel = 'Period A',
   periodBLabel = 'Period B',
 }: CategoryComparisonTableProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
+
   if (isLoading) {
     return (
       <Card>
@@ -80,10 +83,10 @@ export function CategoryComparisonTable({
                 <TableRow key={cat.category}>
                   <TableCell className="font-medium">{cat.category}</TableCell>
                   <TableCell className="text-right font-display">
-                    ${cat.periodA.toLocaleString()}
+                    {formatCurrencyWhole(cat.periodA)}
                   </TableCell>
                   <TableCell className="text-right text-muted-foreground">
-                    ${cat.periodB.toLocaleString()}
+                    {formatCurrencyWhole(cat.periodB)}
                   </TableCell>
                   <TableCell className={cn(
                     'text-right font-medium',

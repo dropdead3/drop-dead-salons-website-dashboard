@@ -37,7 +37,7 @@ import {
 } from '@/hooks/useActionCampaigns';
 import { ShareToDMDialog } from '@/components/dashboard/sales/ShareToDMDialog';
 import { ShareToChannelDialog } from '@/components/dashboard/campaigns/ShareToChannelDialog';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import {
@@ -85,6 +85,7 @@ function SortableTaskCard({
   updateTaskStatus: ReturnType<typeof useUpdateCampaignTaskStatus>;
   deleteTask: ReturnType<typeof useDeleteCampaignTask>;
 }) {
+  const { formatDate } = useFormatDate();
   const {
     attributes,
     listeners,
@@ -146,7 +147,7 @@ function SortableTaskCard({
           )}
           {task.due_date && (
             <p className="text-[11px] text-muted-foreground/60 mt-1">
-              Due {format(new Date(task.due_date), 'MMM d')}
+              Due {formatDate(new Date(task.due_date), 'MMM d')}
             </p>
           )}
         </div>
@@ -179,6 +180,7 @@ function SortableTaskCard({
 }
 
 export default function CampaignDetail() {
+  const { formatDate } = useFormatDate();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { data: campaign, isLoading } = useActionCampaignWithTasks(id || null);
@@ -234,7 +236,7 @@ export default function CampaignDetail() {
     tasks.forEach((t, i) => {
       const icon = t.status === 'done' ? '✅' : t.status === 'in_progress' ? '🔄' : '⬜';
       text += `${icon} ${i + 1}. ${t.title}`;
-      if (t.due_date) text += ` (due ${format(new Date(t.due_date), 'MMM d')})`;
+      if (t.due_date) text += ` (due ${formatDate(new Date(t.due_date), 'MMM d')})`;
       text += '\n';
     });
     if (campaign.leadership_note) {
@@ -345,7 +347,7 @@ export default function CampaignDetail() {
               )}
               <Badge variant="outline" className="text-[10px] gap-1">
                 <Calendar className="w-2.5 h-2.5" />
-                {format(new Date(campaign.created_at), 'MMM d')}
+                {formatDate(new Date(campaign.created_at), 'MMM d')}
               </Badge>
             </div>
 

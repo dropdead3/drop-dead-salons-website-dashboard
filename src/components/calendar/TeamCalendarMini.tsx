@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +15,7 @@ interface TeamCalendarMiniProps {
 }
 
 export function TeamCalendarMini({ onEventClick, showCreateButton = true }: TeamCalendarMiniProps) {
+  const { formatDate } = useFormatDate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -57,7 +59,7 @@ export function TeamCalendarMini({ onEventClick, showCreateButton = true }: Team
               <ChevronLeft className="h-4 w-4" />
             </Button>
             <span className="text-sm font-medium min-w-[100px] text-center">
-              {format(currentDate, 'MMMM yyyy')}
+              {formatDate(currentDate, 'MMMM yyyy')}
             </span>
             <Button variant="ghost" size="icon" onClick={() => setCurrentDate(addMonths(currentDate, 1))}>
               <ChevronRight className="h-4 w-4" />
@@ -118,7 +120,7 @@ export function TeamCalendarMini({ onEventClick, showCreateButton = true }: Team
           <div className="mt-3 pt-3 border-t">
             <div className="flex items-center justify-between mb-2">
               <h5 className="font-medium text-sm">
-                {format(selectedDate, 'MMMM d, yyyy')}
+                {formatDate(selectedDate, 'MMMM d, yyyy')}
               </h5>
               {showCreateButton && (
                 <Button variant="ghost" size="sm" onClick={() => setCreateDialogOpen(true)}>

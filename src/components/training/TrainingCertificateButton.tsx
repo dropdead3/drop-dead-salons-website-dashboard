@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Award, Download, Loader2 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
 
 interface TrainingCertificateButtonProps {
@@ -16,6 +16,7 @@ export function TrainingCertificateButton({
   completedVideos,
   completionDate,
 }: TrainingCertificateButtonProps) {
+  const { formatDate } = useFormatDate();
   const [generating, setGenerating] = useState(false);
 
   const generateCertificate = async () => {
@@ -114,7 +115,7 @@ export function TrainingCertificateButton({
       doc.setFontSize(11);
       doc.setTextColor(100, 100, 120);
       doc.text(
-        `Completed on ${format(completionDate, 'MMMM d, yyyy')}`,
+        `Completed on ${formatDate(completionDate, 'MMMM d, yyyy')}`,
         pageWidth / 2,
         155,
         { align: 'center' }

@@ -1,0 +1,57 @@
+---
+description: Dev Context Bridge -- read .cursor/browser-context.json to see what the user is currently viewing in their browser. Check this file when the user asks about what they see, what's broken on screen, or refers to "this page".
+alwaysApply: true
+---
+
+# Dev Context Bridge
+
+When the user refers to what they're seeing in the browser ("this page", "what I'm looking at", "fix this", "this is broken"), read `.cursor/browser-context.json` for their current browser state.
+
+## What It Contains
+
+```json
+{
+  "timestamp": "2026-02-12T10:30:00Z",
+  "route": "/dashboard/admin/analytics",
+  "user": {
+    "email": "eric@dropdeadsalons.com",
+    "roles": ["super_admin"],
+    "platformRoles": ["platform_owner"],
+    "isPlatformUser": true
+  },
+  "organization": {
+    "id": "...",
+    "name": "Drop Dead 75"
+  },
+  "viewAs": {
+    "isViewingAs": false
+  },
+  "effectiveRoles": ["super_admin"],
+  "queryStates": {
+    "analytics-data": "success",
+    "team-members": "loading"
+  },
+  "screenSize": {
+    "width": 1440,
+    "height": 900,
+    "breakpoint": "xl"
+  }
+}
+```
+
+## How To Use It
+
+1. Read `.cursor/browser-context.json`
+2. Use `route` to identify which page component the user is on
+3. Use `queryStates` to see if any data is failing to load
+4. Use `effectiveRoles` to understand what the user can see
+5. Use `organization` to understand the data scope
+6. Use `screenSize` to know if they're on mobile/desktop
+
+## Important Notes
+
+- Only updates when the dev server is running (`npm run dev`)
+- Only captures state for the owner email (eric@dropdeadhair.com)
+- Debounced at 2 seconds -- may lag slightly behind navigation
+- Query states show all cached TanStack Query keys and their status
+- File is NOT committed to git

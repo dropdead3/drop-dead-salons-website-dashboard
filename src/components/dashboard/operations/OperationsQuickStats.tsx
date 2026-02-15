@@ -9,6 +9,7 @@ import {
 import { useTodaysQueue } from '@/hooks/useTodaysQueue';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface OperationsQuickStatsProps {
   locationId?: string;
@@ -17,6 +18,7 @@ interface OperationsQuickStatsProps {
 }
 
 export function OperationsQuickStats({ locationId, hideRevenue, filterContext }: OperationsQuickStatsProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const { data: queueData, isLoading } = useTodaysQueue(locationId);
 
   const stats = [
@@ -107,7 +109,7 @@ export function OperationsQuickStats({ locationId, hideRevenue, filterContext }:
               </div>
               <div>
                 <p className="text-2xl font-display text-green-700 dark:text-green-400">
-                  ${queueData?.stats.totalRevenue?.toLocaleString() ?? 0}
+                  {formatCurrencyWhole(queueData?.stats.totalRevenue ?? 0)}
                 </p>
                 <p className="text-xs text-green-600/80 dark:text-green-500 font-sans">Today's Revenue</p>
               </div>

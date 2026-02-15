@@ -12,6 +12,7 @@ import { useDismissedSuggestions } from '@/hooks/useDismissedSuggestions';
 import { useTasks } from '@/hooks/useTasks';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { GuidancePanel } from './GuidancePanel';
+import { InsightDescriptionWithLinks } from './InsightDescriptionWithLinks';
 
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -149,7 +150,7 @@ function InsightCard({ insight, onRequestGuidance }: { insight: InsightItem; onR
           </span>
           <p className="text-sm font-medium leading-snug">{insight.title}</p>
           <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-            {blurFinancialValues(insight.description)}
+            <InsightDescriptionWithLinks description={insight.description} />
           </p>
            <GuidanceTrigger
               label="How to improve"
@@ -170,7 +171,9 @@ function ActionItemCard({ item, index, onRequestGuidance }: { item: ActionItem; 
           <span className="text-[10px] font-display font-medium">{index + 1}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm leading-snug">{blurFinancialValues(item.action)}</p>
+          <p className="text-sm leading-snug">
+            <InsightDescriptionWithLinks description={item.action} />
+          </p>
           <GuidanceTrigger
             label="What you should do"
             onClick={() => onRequestGuidance({ type: 'action', title: item.action, description: item.action, priority: item.priority })}

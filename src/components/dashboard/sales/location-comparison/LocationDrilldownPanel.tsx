@@ -11,6 +11,7 @@ import { TrendingUp, TrendingDown, Clock, Users, Minus, Zap, ShoppingBag } from 
 import { Skeleton } from '@/components/ui/skeleton';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface LocationDrilldownPanelProps {
   locationId: string;
@@ -60,6 +61,7 @@ export function LocationDrilldownPanel({
   productRevenue,
   isOpen,
 }: LocationDrilldownPanelProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const { data: drilldown, isLoading: drilldownLoading } = useServiceProductDrilldown({
     dateFrom,
     dateTo,
@@ -138,8 +140,8 @@ export function LocationDrilldownPanel({
                 />
               </div>
               <div className="flex justify-between mt-1.5 text-xs text-muted-foreground">
-                <span>Services <BlurredAmount>${Math.round(serviceRevenue).toLocaleString()}</BlurredAmount> ({Math.round(servicePct)}%)</span>
-                <span>Products <BlurredAmount>${Math.round(productRevenue).toLocaleString()}</BlurredAmount> ({Math.round(productPct)}%)</span>
+                <span>Services <BlurredAmount>{formatCurrencyWhole(Math.round(serviceRevenue))}</BlurredAmount> ({Math.round(servicePct)}%)</span>
+                <span>Products <BlurredAmount>{formatCurrencyWhole(Math.round(productRevenue))}</BlurredAmount> ({Math.round(productPct)}%)</span>
               </div>
             </div>
 
@@ -169,7 +171,7 @@ export function LocationDrilldownPanel({
                       <ZuraAvatar size="sm" />
                       <span className="text-sm font-medium flex-1 truncate">{stylist.staffName}</span>
                       <span className="text-sm font-display tabular-nums">
-                        <BlurredAmount>${Math.round(stylist.serviceRevenue).toLocaleString()}</BlurredAmount>
+                        <BlurredAmount>{formatCurrencyWhole(Math.round(stylist.serviceRevenue))}</BlurredAmount>
                       </span>
                     </motion.div>
                   ))}
@@ -204,7 +206,7 @@ export function LocationDrilldownPanel({
                   <Skeleton className="h-6 w-16 rounded" />
                 ) : (
                   <p className="text-lg font-display tabular-nums">
-                    <BlurredAmount>${revenuePerProvider.toLocaleString()}</BlurredAmount>
+                    <BlurredAmount>{formatCurrencyWhole(revenuePerProvider)}</BlurredAmount>
                   </p>
                 )}
               </div>

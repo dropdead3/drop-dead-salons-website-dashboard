@@ -7,6 +7,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useRevenueByCategoryDrilldown, type CategoryBreakdownData, type CategoryStylistData } from '@/hooks/useRevenueByCategoryDrilldown';
 import { CATEGORY_COLORS } from '@/utils/serviceCategorization';
 
@@ -72,6 +73,7 @@ function ClientMixPanel({ stylist }: { stylist: CategoryStylistData }) {
 /** Level 2: Stylists within a category */
 function StylistRow({ stylist, delay }: { stylist: CategoryStylistData; delay: number }) {
   const [expanded, setExpanded] = useState(false);
+  const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();
 
   return (
     <motion.div
@@ -91,7 +93,7 @@ function StylistRow({ stylist, delay }: { stylist: CategoryStylistData; delay: n
           </p>
         </div>
         <span className="text-sm font-display tabular-nums">
-          <BlurredAmount>${Math.round(stylist.revenue).toLocaleString()}</BlurredAmount>
+          <BlurredAmount>{fmtWhole(Math.round(stylist.revenue))}</BlurredAmount>
         </span>
         <ChevronDown className={cn(
           'w-3.5 h-3.5 text-muted-foreground transition-transform',
@@ -109,6 +111,7 @@ function StylistRow({ stylist, delay }: { stylist: CategoryStylistData; delay: n
 function CategoryRow({ category, index }: { category: CategoryBreakdownData; index: number }) {
   const [expanded, setExpanded] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();
 
   const color = CATEGORY_COLORS[category.category] || 'hsl(var(--muted-foreground))';
   const visibleStylists = showAll ? category.stylists : category.stylists.slice(0, MAX_VISIBLE);
@@ -142,7 +145,7 @@ function CategoryRow({ category, index }: { category: CategoryBreakdownData; ind
           </div>
         </div>
         <span className="text-base font-display tabular-nums">
-          <BlurredAmount>${Math.round(category.revenue).toLocaleString()}</BlurredAmount>
+          <BlurredAmount>{fmtWhole(Math.round(category.revenue))}</BlurredAmount>
         </span>
         <ChevronDown className={cn(
           'w-4 h-4 text-muted-foreground transition-transform',

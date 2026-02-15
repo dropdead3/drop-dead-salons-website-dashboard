@@ -9,7 +9,7 @@ import { Globe, Check, X, Loader2, User, MapPin, Clock, Eye, Users, Settings, Ex
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { getLocationName, type Location } from '@/data/stylists';
 import { useHomepageStylistsSettings, useUpdateHomepageStylistsSettings } from '@/hooks/useSiteSettings';
 import { sampleStylists } from '@/data/sampleStylists';
@@ -179,6 +179,7 @@ function useDenyRequest() {
 }
 
 export function StylistsContent() {
+  const { formatDate } = useFormatDate();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [orderedIds, setOrderedIds] = useState<string[] | null>(null);
   
@@ -277,7 +278,7 @@ export function StylistsContent() {
             {showActions && stylist.homepage_requested_at && (
               <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                Requested {format(new Date(stylist.homepage_requested_at), 'MMM d, yyyy')}
+                Requested {formatDate(new Date(stylist.homepage_requested_at), 'MMM d, yyyy')}
               </p>
             )}
           </div>

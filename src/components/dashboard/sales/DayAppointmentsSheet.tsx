@@ -3,8 +3,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { DayForecast, AppointmentSummary } from '@/hooks/useWeekAheadRevenue';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Clock, User, Scissors } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -31,6 +33,7 @@ function formatTime12h(time: string): string {
 }
 
 function AppointmentCard({ appointment }: { appointment: AppointmentSummary }) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const statusConfig = STATUS_CONFIG[appointment.status] || STATUS_CONFIG.booked;
   
   return (
@@ -76,7 +79,7 @@ function AppointmentCard({ appointment }: { appointment: AppointmentSummary }) {
       {appointment.total_price != null && appointment.total_price > 0 && (
         <div className="text-right">
           <span className="font-display text-sm text-primary tabular-nums">
-            <BlurredAmount>${appointment.total_price.toLocaleString()}</BlurredAmount>
+            <BlurredAmount>{formatCurrencyWhole(appointment.total_price)}</BlurredAmount>
           </span>
         </div>
       )}
@@ -85,6 +88,8 @@ function AppointmentCard({ appointment }: { appointment: AppointmentSummary }) {
 }
 
 export function DayAppointmentsSheet({ day, open, onOpenChange }: DayAppointmentsSheetProps) {
+  const { formatDate } = useFormatDate();
+  const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();
   if (!day) return null;
 
   const confirmedCount = day.appointments.filter(a => a.status === 'confirmed' || a.status === 'checked_in' || a.status === 'completed' || a.status === 'paid').length;
@@ -95,13 +100,13 @@ export function DayAppointmentsSheet({ day, open, onOpenChange }: DayAppointment
       <SheetContent className="sm:max-w-md">
         <SheetHeader className="pb-4">
           <SheetTitle className="font-display">
-            {format(parseISO(day.date), 'EEEE, MMMM d')}
+            {formatDate(parseISO(day.date), 'EEEE, MMMM d')}
           </SheetTitle>
           <SheetDescription className="flex items-center gap-2">
             <span>{day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}</span>
             <span>·</span>
             <span className="font-display">
-              <BlurredAmount>${day.revenue.toLocaleString()}</BlurredAmount> projected
+              <BlurredAmount>{fmtWhole(day.revenue)}</BlurredAmount> projected
             </span>
           </SheetDescription>
           

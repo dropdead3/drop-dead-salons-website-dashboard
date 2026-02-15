@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon } from 'lucide-react';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { Calendar as CalendarIcon, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { getPresetPeriods } from '@/hooks/useComparisonData';
 
@@ -21,24 +21,22 @@ interface PeriodSelectorProps {
 }
 
 const presets = [
-  { value: 'thisMonth-lastMonth', label: 'This Month vs Last Month' },
-  { value: 'thisWeek-lastWeek', label: 'This Week vs Last Week' },
-  { value: 'thisYear-lastYear', label: 'This Year vs Last Year' },
-  { value: 'q1-q1LastYear', label: 'Q1 vs Q1 Last Year' },
-  { value: 'custom', label: 'Custom Ranges' },
+  { value: 'thisMonth-lastMonth', label: 'Month vs Prior' },
+  { value: 'thisWeek-lastWeek', label: 'Week vs Prior' },
+  { value: 'thisYear-lastYear', label: 'Year vs Prior' },
+  { value: 'q1-q1LastYear', label: 'Q1 YoY' },
+  { value: 'custom', label: 'Custom' },
 ];
 
 export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: PeriodSelectorProps) {
+  const { formatDate } = useFormatDate();
   const [preset, setPreset] = useState('thisMonth-lastMonth');
-  const [isCustom, setIsCustom] = useState(false);
+  const isCustom = preset === 'custom';
 
   useEffect(() => {
     if (preset !== 'custom') {
       const periods = getPresetPeriods(preset);
       onPeriodsChange(periods.periodA, periods.periodB);
-      setIsCustom(false);
-    } else {
-      setIsCustom(true);
     }
   }, [preset]);
 
@@ -53,148 +51,156 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
     if (!date) return;
     const formatted = format(date, 'yyyy-MM-dd');
     if (period === 'A') {
-      onPeriodsChange(
-        { ...periodA, [field]: formatted },
-        periodB
-      );
+      onPeriodsChange({ ...periodA, [field]: formatted }, periodB);
     } else {
-      onPeriodsChange(
-        periodA,
-        { ...periodB, [field]: formatted }
-      );
+      onPeriodsChange(periodA, { ...periodB, [field]: formatted });
     }
   };
 
-  // For location/category mode, only show single period selector
   const showSinglePeriod = mode === 'location';
+  const fmtA = periodA.dateFrom ? `${formatDate(new Date(periodA.dateFrom), 'MMM d')} – ${formatDate(new Date(periodA.dateTo), 'MMM d, yyyy')}` : '';
+  const fmtB = periodB.dateFrom ? `${formatDate(new Date(periodB.dateFrom), 'MMM d')} – ${formatDate(new Date(periodB.dateTo), 'MMM d, yyyy')}` : '';
 
   return (
-    <div className="space-y-4">
-      {/* Preset Selector */}
+    <div className="space-y-3">
+      {/* Preset pills */}
       {!showSinglePeriod && (
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Quick select:</span>
-          <Select value={preset} onValueChange={setPreset}>
-            <SelectTrigger className="w-[220px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {presets.map(p => (
-                <SelectItem key={p.value} value={p.value}>
-                  {p.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {presets.map((p) => (
+            <button
+              key={p.value}
+              onClick={() => setPreset(p.value)}
+              className={cn(
+                'px-3 py-1.5 rounded-lg text-xs font-medium transition-all',
+                preset === p.value
+                  ? 'bg-primary/10 text-primary ring-1 ring-primary/20'
+                  : 'bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted'
+              )}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
       )}
 
-      {/* Period Cards */}
-      <div className={cn(
-        'grid gap-4',
-        showSinglePeriod ? 'grid-cols-1 max-w-sm' : 'grid-cols-1 md:grid-cols-2'
-      )}>
-        {/* Period A */}
-        <div className="bg-muted/30 rounded-lg p-4 border">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-sm font-medium text-primary">Period A</span>
-            {!showSinglePeriod && (
-              <span className="text-xs text-muted-foreground">Current</span>
-            )}
+      {/* Period summary or custom pickers */}
+      {isCustom || showSinglePeriod ? (
+        <div className={cn(
+          'flex items-center gap-2',
+          showSinglePeriod ? 'max-w-md' : ''
+        )}>
+          {/* Period A */}
+          <div className="flex-1 rounded-lg border-l-2 border-l-primary border border-border/50 bg-muted/20 p-3">
+            <p className="text-[10px] font-medium text-primary uppercase tracking-wide mb-2">
+              {showSinglePeriod ? 'Period' : 'Period A'}
+            </p>
+            <div className="flex gap-1.5">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal h-8 text-xs">
+                    <CalendarIcon className="mr-1.5 h-3 w-3" />
+                    {periodA.dateFrom ? formatDate(new Date(periodA.dateFrom), 'MMM d, yyyy') : 'Start'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={periodA.dateFrom ? new Date(periodA.dateFrom) : undefined}
+                    onSelect={(date) => handleDateChange('A', 'dateFrom', date)}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+              <span className="text-muted-foreground self-center text-xs">–</span>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal h-8 text-xs">
+                    <CalendarIcon className="mr-1.5 h-3 w-3" />
+                    {periodA.dateTo ? formatDate(new Date(periodA.dateTo), 'MMM d, yyyy') : 'End'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={periodA.dateTo ? new Date(periodA.dateTo) : undefined}
+                    onSelect={(date) => handleDateChange('A', 'dateTo', date)}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {periodA.dateFrom ? format(new Date(periodA.dateFrom), 'MMM d, yyyy') : 'Start date'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={periodA.dateFrom ? new Date(periodA.dateFrom) : undefined}
-                  onSelect={(date) => handleDateChange('A', 'dateFrom', date)}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
-            <span className="text-muted-foreground self-center">to</span>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {periodA.dateTo ? format(new Date(periodA.dateTo), 'MMM d, yyyy') : 'End date'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={periodA.dateTo ? new Date(periodA.dateTo) : undefined}
-                  onSelect={(date) => handleDateChange('A', 'dateTo', date)}
-                  initialFocus
-                  className="pointer-events-auto"
-                />
-              </PopoverContent>
-            </Popover>
+
+          {/* VS badge + Period B */}
+          {!showSinglePeriod && (
+            <>
+              <div className="shrink-0 flex flex-col items-center gap-0.5">
+                <div className="w-px h-3 bg-border" />
+                <div className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  VS
+                </div>
+                <div className="w-px h-3 bg-border" />
+              </div>
+
+              <div className="flex-1 rounded-lg border-l-2 border-l-muted-foreground/30 border border-border/50 bg-muted/20 p-3">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide mb-2">Period B</p>
+                <div className="flex gap-1.5">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal h-8 text-xs">
+                        <CalendarIcon className="mr-1.5 h-3 w-3" />
+                        {periodB.dateFrom ? formatDate(new Date(periodB.dateFrom), 'MMM d, yyyy') : 'Start'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={periodB.dateFrom ? new Date(periodB.dateFrom) : undefined}
+                        onSelect={(date) => handleDateChange('B', 'dateFrom', date)}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-muted-foreground self-center text-xs">–</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal h-8 text-xs">
+                        <CalendarIcon className="mr-1.5 h-3 w-3" />
+                        {periodB.dateTo ? formatDate(new Date(periodB.dateTo), 'MMM d, yyyy') : 'End'}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={periodB.dateTo ? new Date(periodB.dateTo) : undefined}
+                        onSelect={(date) => handleDateChange('B', 'dateTo', date)}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      ) : (
+        /* Compact summary when using a preset */
+        <div className="flex items-center gap-3 text-sm">
+          <div className="flex items-center gap-2 rounded-lg border-l-2 border-l-primary border border-border/50 bg-muted/20 px-3 py-2">
+            <CalendarIcon className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span className="text-xs">{fmtA}</span>
+          </div>
+          <ArrowRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <div className="flex items-center gap-2 rounded-lg border-l-2 border-l-muted-foreground/30 border border-border/50 bg-muted/20 px-3 py-2">
+            <CalendarIcon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+            <span className="text-xs">{fmtB}</span>
           </div>
         </div>
-
-        {/* Period B - Hidden for location mode */}
-        {!showSinglePeriod && (
-          <>
-            <div className="hidden md:flex items-center justify-center">
-              <div className="bg-primary/10 text-primary text-sm font-medium px-3 py-1 rounded-full">
-                VS
-              </div>
-            </div>
-            <div className="bg-muted/30 rounded-lg p-4 border md:col-start-2">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm font-medium text-muted-foreground">Period B</span>
-                <span className="text-xs text-muted-foreground">Previous</span>
-              </div>
-              <div className="flex gap-2">
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {periodB.dateFrom ? format(new Date(periodB.dateFrom), 'MMM d, yyyy') : 'Start date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={periodB.dateFrom ? new Date(periodB.dateFrom) : undefined}
-                      onSelect={(date) => handleDateChange('B', 'dateFrom', date)}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-                <span className="text-muted-foreground self-center">to</span>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {periodB.dateTo ? format(new Date(periodB.dateTo), 'MMM d, yyyy') : 'End date'}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={periodB.dateTo ? new Date(periodB.dateTo) : undefined}
-                      onSelect={(date) => handleDateChange('B', 'dateTo', date)}
-                      initialFocus
-                      className="pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
+      )}
     </div>
   );
 }

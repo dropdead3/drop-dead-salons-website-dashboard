@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths } from 'date-fns';
+import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subMonths, startOfYear } from 'date-fns';
 import { getNextPayDay } from '@/hooks/usePaySchedule';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { ResponsiveTabsList } from '@/components/ui/responsive-tabs-list';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VisibilityGate, useElementVisibility } from '@/components/visibility/VisibilityGate';
 import { Button } from '@/components/ui/button';
@@ -18,10 +19,13 @@ import {
   MapPin,
   Calendar as CalendarIcon,
   Home,
+  LayoutDashboard,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { cn } from '@/lib/utils';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useTranslation } from 'react-i18next';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 
 // Tab content components
 import { SalesTabContent } from '@/components/dashboard/analytics/SalesTabContent';
@@ -32,9 +36,13 @@ import { RentRevenueTab } from '@/components/dashboard/analytics/RentRevenueTab'
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { ReportsTabContent } from '@/components/dashboard/analytics/ReportsTabContent';
 import { CampaignsTabContent } from '@/components/dashboard/analytics/CampaignsTabContent';
+import { ExecutiveSummaryCard } from '@/components/dashboard/analytics/ExecutiveSummaryCard';
+import { ExecutiveTrendChart } from '@/components/dashboard/analytics/ExecutiveTrendChart';
+import { PinnableCard } from '@/components/dashboard/PinnableCard';
 
 
 const baseCategories = [
+  { id: 'leadership', label: 'Executive Summary', icon: LayoutDashboard },
   { id: 'sales', label: 'Sales', icon: DollarSign },
   { id: 'operations', label: 'Operations', icon: BarChart3 },
   { id: 'marketing', label: 'Marketing', icon: TrendingUp },
@@ -45,7 +53,7 @@ const baseCategories = [
 
 const rentCategory = { id: 'rent', label: 'Rent', icon: Home };
 
-export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | '90d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth' | 'custom';
+export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | '90d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth' | 'ytd' | 'custom';
 
 export interface AnalyticsFilters {
   locationId: string;
@@ -56,10 +64,12 @@ export interface AnalyticsFilters {
 
 export default function AnalyticsHub() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') || 'sales';
+  const tabFromUrl = searchParams.get('tab');
   const subTab = searchParams.get('subtab') || undefined;
   const { effectiveOrganization } = useOrganizationContext();
   const { roles } = useAuth();
+  const { t } = useTranslation('dashboard');
+  const { t: tc } = useTranslation('common');
 
   // Add rent tab only for super admins
   const isSuperAdmin = roles?.includes('super_admin') || roles?.includes('admin');
@@ -68,6 +78,7 @@ export default function AnalyticsHub() {
     : baseCategories;
   
   // Check visibility of each tab
+  const leadershipTabVisible = useElementVisibility('analytics_leadership_tab');
   const salesTabVisible = useElementVisibility('analytics_sales_tab');
   const operationsTabVisible = useElementVisibility('analytics_operations_tab');
   const marketingTabVisible = useElementVisibility('analytics_marketing_tab');
@@ -78,6 +89,7 @@ export default function AnalyticsHub() {
   
   // Find first visible tab for redirect
   const getFirstVisibleTab = useCallback(() => {
+    if (leadershipTabVisible) return 'leadership';
     if (salesTabVisible) return 'sales';
     if (operationsTabVisible) return 'operations';
     if (marketingTabVisible) return 'marketing';
@@ -86,11 +98,56 @@ export default function AnalyticsHub() {
     if (reportsTabVisible) return 'reports';
     if (rentTabVisible && isSuperAdmin) return 'rent';
     return null;
-  }, [salesTabVisible, operationsTabVisible, marketingTabVisible, campaignsTabVisible, programTabVisible, reportsTabVisible, rentTabVisible, isSuperAdmin]);
+  }, [leadershipTabVisible, salesTabVisible, operationsTabVisible, marketingTabVisible, campaignsTabVisible, programTabVisible, reportsTabVisible, rentTabVisible, isSuperAdmin]);
+
+  const firstVisibleTab = getFirstVisibleTab();
+  const activeTab =
+    tabFromUrl && analyticsCategories.some((c) => c.id === tabFromUrl)
+      ? tabFromUrl
+      : (firstVisibleTab ?? 'sales');
+
+  const visibilityByTab: Record<string, boolean> = useMemo(() => ({
+    leadership: leadershipTabVisible,
+    sales: salesTabVisible,
+    operations: operationsTabVisible,
+    marketing: marketingTabVisible,
+    campaigns: campaignsTabVisible,
+    program: programTabVisible,
+    reports: reportsTabVisible,
+    rent: rentTabVisible && !!isSuperAdmin,
+  }), [leadershipTabVisible, salesTabVisible, operationsTabVisible, marketingTabVisible, campaignsTabVisible, programTabVisible, reportsTabVisible, rentTabVisible, isSuperAdmin]);
+
+  const visibleCategories = useMemo(
+    () => analyticsCategories.filter((cat) => visibilityByTab[cat.id] !== false),
+    [analyticsCategories, visibilityByTab]
+  );
+
+  const responsiveTabItems = useMemo(
+    () =>
+      visibleCategories.map((cat) => ({
+        value: cat.id,
+        label: (
+          <>
+            <cat.icon className="w-4 h-4" />
+            <span>{t(`analytics.${cat.id}`, { defaultValue: cat.label })}</span>
+          </>
+        ),
+      })),
+    [visibleCategories, t]
+  );
+
+  // Sync URL when no tab param: default to first visible tab
+  useEffect(() => {
+    if (tabFromUrl === null || tabFromUrl === '') {
+      const defaultTab = firstVisibleTab ?? 'sales';
+      setSearchParams({ tab: defaultTab }, { replace: true });
+    }
+  }, [tabFromUrl, firstVisibleTab, setSearchParams]);
   
   // Auto-redirect if current tab is hidden
   useEffect(() => {
     const currentTabHidden = 
+      (activeTab === 'leadership' && !leadershipTabVisible) ||
       (activeTab === 'sales' && !salesTabVisible) ||
       (activeTab === 'operations' && !operationsTabVisible) ||
       (activeTab === 'marketing' && !marketingTabVisible) ||
@@ -105,7 +162,7 @@ export default function AnalyticsHub() {
         setSearchParams({ tab: firstVisible });
       }
     }
-  }, [activeTab, salesTabVisible, operationsTabVisible, marketingTabVisible, campaignsTabVisible, programTabVisible, reportsTabVisible, rentTabVisible, isSuperAdmin, getFirstVisibleTab, setSearchParams]);
+  }, [activeTab, leadershipTabVisible, salesTabVisible, operationsTabVisible, marketingTabVisible, campaignsTabVisible, programTabVisible, reportsTabVisible, rentTabVisible, isSuperAdmin, getFirstVisibleTab, setSearchParams]);
   
   // Location access control
   const { 
@@ -114,6 +171,7 @@ export default function AnalyticsHub() {
     defaultLocationId,
     isLoading: locationAccessLoading 
   } = useUserLocationAccess();
+  const { formatDate } = useFormatDate();
   
   const [locationId, setLocationId] = useState<string>('');
   const [dateRange, setDateRange] = useState<DateRangeType>('today');
@@ -174,6 +232,11 @@ export default function AnalyticsHub() {
           dateFrom: format(startOfMonth(lastMonth), 'yyyy-MM-dd'), 
           dateTo: format(endOfMonth(lastMonth), 'yyyy-MM-dd') 
         };
+      case 'ytd':
+        return {
+          dateFrom: format(startOfYear(now), 'yyyy-MM-dd'),
+          dateTo: format(now, 'yyyy-MM-dd'),
+        };
       case 'custom':
         return {
           dateFrom: format(customDateRange.from, 'yyyy-MM-dd'),
@@ -200,134 +263,143 @@ export default function AnalyticsHub() {
 
   return (
     <DashboardLayout>
-      <div className="p-4 md:p-6 lg:p-8 space-y-6">
-        {/* Header with filters on the right */}
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-          <div>
-            <h1 className="text-xl md:text-2xl font-display">ANALYTICS & REPORTS</h1>
-            <p className="text-muted-foreground text-sm">Business intelligence and data exports</p>
-          </div>
-          
-          {/* Filters - now on the right */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Location Filter - conditionally rendered based on access */}
-            {showLocationSelector && (
-              <Select value={locationId} onValueChange={setLocationId}>
-                <SelectTrigger className="w-[200px]">
-                  <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
-                  <SelectValue placeholder="Select Location" />
+      <div className="w-full max-w-none p-4 md:p-6 lg:p-8 space-y-6 overflow-x-hidden">
+        <DashboardPageHeader
+          title={t('analytics.title')}
+          description={t('analytics.subtitle')}
+          actions={activeTab !== 'leadership' ? (
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Location Filter - conditionally rendered based on access */}
+              {showLocationSelector && (
+                <Select value={locationId} onValueChange={setLocationId}>
+                  <SelectTrigger className="w-[200px]">
+                    <MapPin className="w-4 h-4 mr-2 text-muted-foreground" />
+                    <SelectValue placeholder={t('sales.select_location')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {canViewAggregate && (
+                      <SelectItem value="all">{t('sales.all_locations_option')}</SelectItem>
+                    )}
+                    {accessibleLocations.map(loc => (
+                      <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {/* Single location badge (when only one location assigned) */}
+              {!showLocationSelector && accessibleLocations.length === 1 && (
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md text-sm h-9">
+                  <MapPin className="w-4 h-4 text-muted-foreground" />
+                  <span>{accessibleLocations[0].name}</span>
+                </div>
+              )}
+
+              {/* Date Range Select */}
+              <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeType)}>
+                <SelectTrigger className="w-[180px]">
+                  <CalendarIcon className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {canViewAggregate && (
-                    <SelectItem value="all">All Locations</SelectItem>
-                  )}
-                  {accessibleLocations.map(loc => (
-                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
-                  ))}
+                  <SelectItem value="today">{tc('date_range.today')}</SelectItem>
+                  <SelectItem value="yesterday">{tc('date_range.yesterday')}</SelectItem>
+                  <SelectItem value="7d">{tc('date_range.last_7_days')}</SelectItem>
+                  <SelectItem value="30d">{tc('date_range.last_30_days')}</SelectItem>
+                  <SelectItem value="90d">{tc('date_range.last_90_days')}</SelectItem>
+                  <SelectItem value="thisWeek">{tc('date_range.this_week')}</SelectItem>
+                  <SelectItem value="thisMonth">{tc('date_range.this_month')}</SelectItem>
+                  <SelectItem value="todayToEom">{tc('date_range.today_to_eom')}</SelectItem>
+                  <SelectItem value="todayToPayday">{tc('date_range.today_to_payday')}</SelectItem>
+                  <SelectItem value="lastMonth">{tc('date_range.last_month')}</SelectItem>
+                  <SelectItem value="ytd">{tc('date_range.year_to_date')}</SelectItem>
+                  <SelectItem value="custom">{tc('date_range.custom_range')}</SelectItem>
                 </SelectContent>
               </Select>
-            )}
-            
-            {/* Single location badge (when only one location assigned) */}
-            {!showLocationSelector && accessibleLocations.length === 1 && (
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md text-sm h-9">
-                <MapPin className="w-4 h-4 text-muted-foreground" />
-                <span>{accessibleLocations[0].name}</span>
-              </div>
-            )}
 
-            {/* Date Range Select */}
-            <Select value={dateRange} onValueChange={(v) => setDateRange(v as DateRangeType)}>
-              <SelectTrigger className="w-[180px]">
-                <CalendarIcon className="w-4 h-4 mr-2 text-muted-foreground" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="today">Today</SelectItem>
-                <SelectItem value="yesterday">Yesterday</SelectItem>
-                <SelectItem value="7d">Last 7 days</SelectItem>
-                <SelectItem value="30d">Last 30 days</SelectItem>
-                <SelectItem value="90d">Last 90 days</SelectItem>
-                <SelectItem value="thisWeek">This Week</SelectItem>
-                <SelectItem value="thisMonth">This Month</SelectItem>
-                <SelectItem value="todayToEom">Today to EOM</SelectItem>
-                <SelectItem value="todayToPayday">Today to Next Pay Day</SelectItem>
-                <SelectItem value="lastMonth">Last Month</SelectItem>
-                <SelectItem value="custom">Custom Range</SelectItem>
-              </SelectContent>
-            </Select>
-
-            {/* Custom Date Picker (only when custom is selected) */}
-            {dateRange === 'custom' && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="min-w-[200px] justify-start">
-                    <CalendarIcon className="w-4 h-4 mr-2" />
-                    {format(customDateRange.from, 'MMM d')} - {format(customDateRange.to, 'MMM d, yyyy')}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <div className="p-3 space-y-3">
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCustomDateRange({
-                          from: startOfMonth(new Date()),
-                          to: endOfMonth(new Date()),
-                        })}
-                      >
-                        This Month
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCustomDateRange({
-                          from: startOfMonth(subMonths(new Date(), 1)),
-                          to: endOfMonth(subMonths(new Date(), 1)),
-                        })}
-                      >
-                        Last Month
-                      </Button>
+              {/* Custom Date Picker (only when custom is selected) */}
+              {dateRange === 'custom' && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="min-w-[200px] justify-start">
+                      <CalendarIcon className="w-4 h-4 mr-2" />
+                      {formatDate(customDateRange.from, 'MMM d')} - {formatDate(customDateRange.to, 'MMM d, yyyy')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <div className="p-3 space-y-3">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCustomDateRange({
+                            from: startOfMonth(new Date()),
+                            to: endOfMonth(new Date()),
+                          })}
+                        >
+                          {tc('date_range.this_month')}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setCustomDateRange({
+                            from: startOfMonth(subMonths(new Date(), 1)),
+                            to: endOfMonth(subMonths(new Date(), 1)),
+                          })}
+                        >
+                          {tc('date_range.last_month')}
+                        </Button>
+                      </div>
+                      <Calendar
+                        mode="range"
+                        selected={{ from: customDateRange.from, to: customDateRange.to }}
+                        onSelect={(range) => {
+                          if (range?.from && range?.to) {
+                            setCustomDateRange({ from: range.from, to: range.to });
+                          }
+                        }}
+                        numberOfMonths={2}
+                        className="pointer-events-auto"
+                      />
                     </div>
-                    <Calendar
-                      mode="range"
-                      selected={{ from: customDateRange.from, to: customDateRange.to }}
-                      onSelect={(range) => {
-                        if (range?.from && range?.to) {
-                          setCustomDateRange({ from: range.from, to: range.to });
-                        }
-                      }}
-                      numberOfMonths={2}
-                      className="pointer-events-auto"
-                    />
-                  </div>
-                </PopoverContent>
-              </Popover>
-            )}
-          </div>
-        </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
+          ) : undefined}
+        />
 
         {/* Main Tab Navigation */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <TabsList className="w-full md:w-auto flex-wrap h-auto gap-1 p-1">
-            {analyticsCategories.map((cat) => (
-              <VisibilityGate 
-                key={cat.id}
-                elementKey={`analytics_${cat.id}_tab`} 
-                elementName={cat.label} 
-                elementCategory="Page Tabs"
-              >
-                <TabsTrigger 
-                  value={cat.id} 
-                  className="gap-2 data-[state=active]:bg-background"
+          <div className="w-full min-w-0 max-w-full overflow-hidden rounded-[9px]">
+            <ResponsiveTabsList
+              items={responsiveTabItems}
+              onTabChange={handleTabChange}
+            />
+          </div>
+
+          <VisibilityGate elementKey="analytics_leadership_tab">
+            <TabsContent value="leadership" className="mt-6">
+              <div className="space-y-6">
+                <PinnableCard
+                  elementKey="executive_summary"
+                  elementName="Executive Summary"
+                  category="Analytics Hub - Leadership"
                 >
-                  <cat.icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{cat.label}</span>
-                </TabsTrigger>
-              </VisibilityGate>
-            ))}
-          </TabsList>
+                  <ExecutiveSummaryCard />
+                </PinnableCard>
+
+                <PinnableCard
+                  elementKey="executive_trend"
+                  elementName="Trend Analysis"
+                  category="Analytics Hub - Executive Summary"
+                >
+                  <ExecutiveTrendChart />
+                </PinnableCard>
+
+              </div>
+            </TabsContent>
+          </VisibilityGate>
 
           <VisibilityGate elementKey="analytics_sales_tab">
             <TabsContent value="sales" className="mt-6">

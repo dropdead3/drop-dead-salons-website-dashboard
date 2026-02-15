@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import {
   Dialog,
   DialogContent,
@@ -61,6 +62,7 @@ export function AddStrikeDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
 }: AddStrikeDialogProps) {
+  const { formatDate } = useFormatDate();
   const [internalOpen, setInternalOpen] = useState(false);
   const createStrike = useCreateStrike();
   
@@ -188,7 +190,7 @@ export function AddStrikeDialog({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {incidentDate ? format(incidentDate, 'PPP') : 'Pick a date'}
+                  {incidentDate ? formatDate(incidentDate, 'PPP') : 'Pick a date'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">

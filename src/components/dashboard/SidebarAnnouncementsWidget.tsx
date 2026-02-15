@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import { cn } from '@/lib/utils';
 import { Megaphone, ChevronRight, Pin, ExternalLink } from 'lucide-react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 type Priority = 'low' | 'normal' | 'high' | 'urgent';
 
@@ -42,6 +42,7 @@ interface SidebarAnnouncementsWidgetProps {
 }
 
 export function SidebarAnnouncementsWidget({ onNavClick }: SidebarAnnouncementsWidgetProps) {
+  const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [isExpanded, setIsExpanded] = useState(false);
@@ -167,7 +168,7 @@ export function SidebarAnnouncementsWidget({ onNavClick }: SidebarAnnouncementsW
               </p>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground/60 text-[10px]">
-                  {format(new Date(announcement.created_at), 'MMM d')}
+                  {formatDate(new Date(announcement.created_at), 'MMM d')}
                 </span>
                 {announcement.link_url && announcement.link_label && (
                   <a

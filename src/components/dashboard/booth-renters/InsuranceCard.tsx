@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
-import { format, differenceInDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Shield, ShieldCheck, ShieldAlert, ShieldX, Edit2, Check, ExternalLink } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -23,6 +24,7 @@ interface FormData {
 }
 
 export function InsuranceCard({ boothRenterId, canVerify = false }: InsuranceCardProps) {
+  const { formatDate } = useFormatDate();
   const { data: insurance, isLoading } = useRenterInsurance(boothRenterId);
   const updateInsurance = useUpdateRenterInsurance();
   const verifyInsurance = useVerifyRenterInsurance();
@@ -123,7 +125,7 @@ export function InsuranceCard({ boothRenterId, canVerify = false }: InsuranceCar
                   insurance.expiry_status === 'expired' && "text-red-500",
                   insurance.expiry_status === 'expiring_soon' && "text-amber-500"
                 )}>
-                  {format(new Date(insurance.insurance_expiry_date), 'PPP')}
+                  {formatDate(new Date(insurance.insurance_expiry_date), 'PPP')}
                 </span>
                 {insurance.days_until_expiry !== undefined && insurance.days_until_expiry >= 0 && (
                   <span className="text-muted-foreground ml-1">
@@ -139,7 +141,7 @@ export function InsuranceCard({ boothRenterId, canVerify = false }: InsuranceCar
                 Verified
                 {insurance.insurance_verified_at && (
                   <span className="text-muted-foreground">
-                    on {format(new Date(insurance.insurance_verified_at), 'PP')}
+                    on {formatDate(new Date(insurance.insurance_verified_at), 'PP')}
                   </span>
                 )}
               </div>

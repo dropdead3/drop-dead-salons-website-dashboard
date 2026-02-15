@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { CreditCard, Gift, Plus, Loader2 } from 'lucide-react';
 import { useClientBalance } from '@/hooks/useClientBalances';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface ClientBalanceCardProps {
   clientId: string | null;
@@ -19,6 +20,7 @@ export function ClientBalanceCard({
   compact = false 
 }: ClientBalanceCardProps) {
   const { data: balance, isLoading } = useClientBalance(clientId);
+  const { formatCurrency } = useFormatCurrency();
 
   if (isLoading) {
     return (
@@ -40,13 +42,13 @@ export function ClientBalanceCard({
         {salonCredit > 0 && (
           <Badge variant="outline" className="gap-1.5 py-1">
             <CreditCard className="w-3 h-3" />
-            ${salonCredit.toFixed(2)} credit
+            {formatCurrency(salonCredit)} credit
           </Badge>
         )}
         {giftCardBalance > 0 && (
           <Badge variant="outline" className="gap-1.5 py-1">
             <Gift className="w-3 h-3" />
-            ${giftCardBalance.toFixed(2)} gift card
+            {formatCurrency(giftCardBalance)} gift card
           </Badge>
         )}
         {!hasBalance && (
@@ -87,7 +89,7 @@ export function ClientBalanceCard({
                 "font-semibold",
                 salonCredit > 0 ? "text-primary" : "text-muted-foreground"
               )}>
-                ${salonCredit.toFixed(2)}
+                {formatCurrency(salonCredit)}
               </p>
             </div>
           </div>
@@ -108,7 +110,7 @@ export function ClientBalanceCard({
                 "font-semibold",
                 giftCardBalance > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"
               )}>
-                ${giftCardBalance.toFixed(2)}
+                {formatCurrency(giftCardBalance)}
               </p>
             </div>
           </div>

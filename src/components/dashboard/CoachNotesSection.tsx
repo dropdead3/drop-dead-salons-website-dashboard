@@ -34,7 +34,7 @@ import {
   Check,
   StickyNote,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
@@ -62,6 +62,7 @@ const NOTE_TYPES = [
 ];
 
 export function CoachNotesSection({ enrollmentId, participantName }: CoachNotesSectionProps) {
+  const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -295,7 +296,7 @@ export function CoachNotesSection({ enrollmentId, participantName }: CoachNotesS
                   </Badge>
                   <div className="flex items-center gap-1">
                     <span className="text-[10px] text-muted-foreground">
-                      {format(new Date(note.created_at), 'MMM d, h:mm a')}
+                      {formatDate(new Date(note.created_at), 'MMM d, h:mm a')}
                     </span>
                     {isOwnNote && !isEditing && (
                       <>
@@ -380,7 +381,7 @@ export function CoachNotesSection({ enrollmentId, participantName }: CoachNotesS
 
                 {note.created_at !== note.updated_at && !isEditing && (
                   <p className="text-[10px] text-muted-foreground mt-2">
-                    (edited {format(new Date(note.updated_at), 'MMM d')})
+                    (edited {formatDate(new Date(note.updated_at), 'MMM d')})
                   </p>
                 )}
               </div>

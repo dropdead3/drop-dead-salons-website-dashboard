@@ -5,7 +5,7 @@ import { useOperationalAnalytics } from '@/hooks/useOperationalAnalytics';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useHistoricalCapacityUtilization } from '@/hooks/useHistoricalCapacityUtilization';
 import { useLocations } from '@/hooks/useLocations';
-
+import { useLocationStaffingBalance } from '@/hooks/useLocationStaffingBalance';
 
 // Existing content components
 import { OverviewContent } from '@/components/dashboard/analytics/OverviewContent';
@@ -69,6 +69,8 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
     operationalDateRange
   );
 
+  const staffingBalance = useLocationStaffingBalance(operationalDateRange);
+
   return (
     <div className="space-y-6">
       {/* Sub-tabs */}
@@ -100,11 +102,13 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
             summary={summary}
             retention={retention}
             dailyVolume={dailyVolume}
-            statusBreakdown={statusBreakdown}
             isLoading={isLoading}
             onNavigateToTab={onSubTabChange}
             capacityData={capacityData}
             capacityLoading={capacityLoading}
+            workload={workload}
+            workloadLoading={utilizationLoading}
+            staffingBalance={staffingBalance}
           />
         </TabsContent>
 

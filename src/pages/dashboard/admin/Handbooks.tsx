@@ -32,7 +32,7 @@ import {
   EyeOff
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface Handbook {
   id: string;
@@ -65,6 +65,7 @@ const roleOptions = [
 ];
 
 export default function Handbooks() {
+  const { formatDate } = useFormatDate();
   const { toast } = useToast();
   const [handbooks, setHandbooks] = useState<Handbook[]>([]);
   const [loading, setLoading] = useState(true);
@@ -380,7 +381,7 @@ export default function Handbooks() {
                           <div>
                             <h3 className="font-sans font-medium">{handbook.title}</h3>
                             <p className="text-xs text-muted-foreground mt-1">
-                              v{handbook.version} • Updated {format(new Date(handbook.updated_at), 'MMM d, yyyy')}
+                              v{handbook.version} • Updated {formatDate(new Date(handbook.updated_at), 'MMM d, yyyy')}
                             </p>
                             <div className="flex flex-wrap gap-1 mt-2">
                               {handbook.visible_to_roles?.map(role => (

@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Plus, Pencil, Trash2, DollarSign } from 'lucide-react';
 import { 
   useMarketingCampaigns, 
@@ -60,6 +61,7 @@ const PLATFORMS = [
 ];
 
 export function CampaignBudgetManager({ open, onOpenChange }: CampaignBudgetManagerProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const { data: campaigns = [], isLoading } = useMarketingCampaigns();
   const createCampaign = useCreateCampaign();
   const updateCampaign = useUpdateCampaign();
@@ -152,7 +154,7 @@ export function CampaignBudgetManager({ open, onOpenChange }: CampaignBudgetMana
                     <span className="text-sm text-muted-foreground">Total Budget</span>
                   </div>
                   <p className="text-2xl font-medium tabular-nums mt-1">
-                    ${totalBudget.toLocaleString()}
+                    {formatCurrencyWhole(totalBudget)}
                   </p>
                 </CardContent>
               </Card>
@@ -163,7 +165,7 @@ export function CampaignBudgetManager({ open, onOpenChange }: CampaignBudgetMana
                     <span className="text-sm text-muted-foreground">Total Spend</span>
                   </div>
                   <p className="text-2xl font-medium tabular-nums mt-1">
-                    ${totalSpend.toLocaleString()}
+                    {formatCurrencyWhole(totalSpend)}
                   </p>
                 </CardContent>
               </Card>
@@ -329,10 +331,10 @@ export function CampaignBudgetManager({ open, onOpenChange }: CampaignBudgetMana
                               )}
                             </TableCell>
                             <TableCell className="text-right tabular-nums">
-                              {campaign.budget ? `$${campaign.budget.toLocaleString()}` : '—'}
+                              {campaign.budget ? formatCurrencyWhole(campaign.budget) : '—'}
                             </TableCell>
                             <TableCell className="text-right tabular-nums">
-                              ${(campaign.spend_to_date || 0).toLocaleString()}
+                              {formatCurrencyWhole(campaign.spend_to_date || 0)}
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex gap-1 justify-end">

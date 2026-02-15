@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,7 @@ const DAY_OF_WEEK_LABELS = [
 const DAY_OF_MONTH_OPTIONS = Array.from({ length: 28 }, (_, i) => i + 1);
 
 export function PayScheduleCard() {
+  const { formatDate } = useFormatDate();
   const { 
     settings, 
     isLoading, 
@@ -205,7 +207,7 @@ export function PayScheduleCard() {
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {biWeeklyAnchor 
-                      ? format(biWeeklyAnchor, 'PPP') 
+                      ? formatDate(biWeeklyAnchor, 'PPP') 
                       : 'Select a pay week Friday'}
                   </Button>
                 </PopoverTrigger>
@@ -297,11 +299,11 @@ export function PayScheduleCard() {
           <div className="text-sm text-muted-foreground space-y-1">
             <p>
               <span className="font-medium text-foreground">Next Pay Day:</span>{' '}
-              {format(nextPayDay, 'EEEE, MMMM d, yyyy')}
+              {formatDate(nextPayDay, 'EEEE, MMMM d, yyyy')}
             </p>
             <p>
               <span className="font-medium text-foreground">Current Period:</span>{' '}
-              {format(currentPeriod.periodStart, 'MMM d')} – {format(currentPeriod.periodEnd, 'MMM d, yyyy')}
+              {formatDate(currentPeriod.periodStart, 'MMM d')} – {formatDate(currentPeriod.periodEnd, 'MMM d, yyyy')}
             </p>
           </div>
         </div>

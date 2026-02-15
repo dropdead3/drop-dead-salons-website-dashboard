@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,11 +15,20 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { Users, Target, Edit2, Trophy, Gift, Loader2, PartyPopper } from 'lucide-react';
+import { Users, Target, Edit2, Trophy, Gift, Loader2, PartyPopper, Eye, Settings } from 'lucide-react';
 import { useTeamGoals } from '@/hooks/useTeamGoals';
 import { cn } from '@/lib/utils';
-
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+
+function formatRole(role: string): string {
+  return role
+    .split('_')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
 
 interface TeamGoalsCardProps {
   currentRevenue: number;
@@ -33,7 +43,17 @@ export function TeamGoalsCard({
   className,
   filterContext,
 }: TeamGoalsCardProps) {
+  const navigate = useNavigate();
   const { goals, isLoading, updateGoals, isUpdating } = useTeamGoals();
+  const { formatCurrencyWhole } = useFormatCurrency();
+  const { data: allVisibility } = useDashboardVisibility();
+
+  const visibleRoles = useMemo(() => {
+    if (!allVisibility) return [];
+    return allVisibility
+      .filter(v => v.element_key === 'team_goals' && v.is_visible)
+      .map(v => v.role);
+  }, [allVisibility]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [monthlyTarget, setMonthlyTarget] = useState(0);
   const [weeklyTarget, setWeeklyTarget] = useState(0);
@@ -114,7 +134,10 @@ export function TeamGoalsCard({
               <Users className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="font-display text-base tracking-wide">TEAM GOAL</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="font-display text-base tracking-wide">TEAM GOAL</CardTitle>
+                <MetricInfoTooltip description="Track progress toward your team revenue target. The goal and period are set in Settings. Progress is calculated from total service + product revenue in the selected period." />
+              </div>
               <CardDescription className="capitalize">{period} Target</CardDescription>
             </div>
           </div>
@@ -124,6 +147,27 @@ export function TeamGoalsCard({
                 locationId={filterContext.locationId} 
                 dateRange={filterContext.dateRange} 
               />
+            )}
+            {visibleRoles.length > 0 && (
+              <div className="group relative">
+                <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-muted/50 text-[10px] text-muted-foreground cursor-default">
+                  <Eye className="w-3 h-3" />
+                  <span>{visibleRoles.length} role{visibleRoles.length !== 1 ? 's' : ''}</span>
+                </div>
+                <div className="absolute right-0 top-full mt-1 z-50 hidden group-hover:block rounded-lg border border-border bg-popover px-3 py-2.5 shadow-lg min-w-[140px]">
+                  <p className="font-medium text-xs mb-1.5">Visible to:</p>
+                  {visibleRoles.map((role) => (
+                    <p key={role} className="text-xs text-muted-foreground py-0.5">{formatRole(role)}</p>
+                  ))}
+                  <button
+                    onClick={() => navigate('/dashboard/admin/access-hub?tab=role-access')}
+                    className="flex items-center gap-1.5 mt-2 pt-2 border-t border-border/50 text-[11px] text-primary hover:text-primary/80 transition-colors w-full"
+                  >
+                    <Settings className="w-3 h-3" />
+                    <span>Manage visibility</span>
+                  </button>
+                </div>
+              </div>
             )}
             <Button variant="ghost" size="sm" onClick={handleOpenEdit}>
               <Edit2 className="w-4 h-4" />
@@ -136,7 +180,7 @@ export function TeamGoalsCard({
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Team Progress</span>
               <span className="font-display">
-                ${currentRevenue.toLocaleString()} / ${target.toLocaleString()}
+                {formatCurrencyWhole(currentRevenue)} / {formatCurrencyWhole(target)}
               </span>
             </div>
             <Progress 
@@ -150,7 +194,7 @@ export function TeamGoalsCard({
                   <PartyPopper className="w-3 h-3" /> Goal reached!
                 </span>
               ) : (
-                <span>${remaining.toLocaleString()} to go</span>
+                <span>{formatCurrencyWhole(remaining)} to go</span>
               )}
             </div>
           </div>
@@ -184,7 +228,7 @@ export function TeamGoalsCard({
                             {milestone.reward}
                           </span>
                           <Badge variant={reached ? 'default' : 'outline'} className="text-xs ml-2 shrink-0">
-                            ${milestone.amount.toLocaleString()}
+                            {formatCurrencyWhole(milestone.amount)}
                           </Badge>
                         </div>
                         {isNext && (

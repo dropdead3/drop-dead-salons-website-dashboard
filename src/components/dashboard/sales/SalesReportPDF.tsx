@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Loader2, Download } from 'lucide-react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { formatCurrencyWhole } from '@/lib/formatCurrency';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +49,8 @@ interface SalesReportPDFProps {
 }
 
 export function SalesReportPDF({ dateFrom, dateTo, metrics, stylistData, locationData }: SalesReportPDFProps) {
+  const { formatDate } = useFormatDate();
+  const { formatNumber } = useFormatNumber();
   const [open, setOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [options, setOptions] = useState({
@@ -74,7 +78,7 @@ export function SalesReportPDF({ dateFrom, dateTo, metrics, stylistData, locatio
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100);
       doc.text(
-        `${format(new Date(dateFrom), 'MMM d, yyyy')} - ${format(new Date(dateTo), 'MMM d, yyyy')}`,
+        `${formatDate(new Date(dateFrom), 'MMM d, yyyy')} - ${formatDate(new Date(dateTo), 'MMM d, yyyy')}`,
         pageWidth / 2,
         y,
         { align: 'center' }
@@ -82,7 +86,7 @@ export function SalesReportPDF({ dateFrom, dateTo, metrics, stylistData, locatio
       
       y += 5;
       doc.text(
-        `Generated on ${format(new Date(), 'MMM d, yyyy h:mm a')}`,
+        `Generated on ${formatDate(new Date(), 'MMM d, yyyy h:mm a')}`,
         pageWidth / 2,
         y,
         { align: 'center' }
@@ -102,12 +106,12 @@ export function SalesReportPDF({ dateFrom, dateTo, metrics, stylistData, locatio
           startY: y,
           head: [['Metric', 'Value']],
           body: [
-            ['Total Revenue', `$${metrics.totalRevenue.toLocaleString()}`],
-            ['Service Revenue', `$${metrics.serviceRevenue.toLocaleString()}`],
-            ['Product Revenue', `$${metrics.productRevenue.toLocaleString()}`],
-            ['Total Services', metrics.totalServices.toLocaleString()],
-            ['Total Products', metrics.totalProducts.toLocaleString()],
-            ['Average Ticket', `$${Math.round(metrics.averageTicket).toLocaleString()}`],
+            ['Total Revenue', formatCurrencyWhole(metrics.totalRevenue)],
+            ['Service Revenue', formatCurrencyWhole(metrics.serviceRevenue)],
+            ['Product Revenue', formatCurrencyWhole(metrics.productRevenue)],
+            ['Total Services', formatNumber(metrics.totalServices)],
+            ['Total Products', formatNumber(metrics.totalProducts)],
+            ['Average Ticket', formatCurrencyWhole(Math.round(metrics.averageTicket))],
           ],
           theme: 'striped',
           headStyles: { fillColor: [51, 51, 51] },
@@ -136,9 +140,9 @@ export function SalesReportPDF({ dateFrom, dateTo, metrics, stylistData, locatio
           body: stylistData.slice(0, 15).map((s, idx) => [
             `#${idx + 1}`,
             s.name,
-            `$${s.totalRevenue.toLocaleString()}`,
-            `$${s.serviceRevenue.toLocaleString()}`,
-            `$${s.productRevenue.toLocaleString()}`,
+            formatCurrencyWhole(s.totalRevenue),
+            formatCurrencyWhole(s.serviceRevenue),
+            formatCurrencyWhole(s.productRevenue),
           ]),
           theme: 'striped',
           headStyles: { fillColor: [51, 51, 51] },
@@ -166,10 +170,10 @@ export function SalesReportPDF({ dateFrom, dateTo, metrics, stylistData, locatio
           head: [['Location', 'Total Revenue', 'Services', 'Products', 'Transactions']],
           body: locationData.map(l => [
             l.name,
-            `$${l.totalRevenue.toLocaleString()}`,
-            l.totalServices.toLocaleString(),
-            l.totalProducts.toLocaleString(),
-            (l.totalServices + l.totalProducts).toLocaleString(),
+            formatCurrencyWhole(l.totalRevenue),
+            formatNumber(l.totalServices),
+            formatNumber(l.totalProducts),
+            formatNumber(l.totalServices + l.totalProducts),
           ]),
           theme: 'striped',
           headStyles: { fillColor: [51, 51, 51] },
@@ -225,7 +229,7 @@ export function SalesReportPDF({ dateFrom, dateTo, metrics, stylistData, locatio
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Date Range</span>
             <Badge variant="outline">
-              {format(new Date(dateFrom), 'MMM d')} - {format(new Date(dateTo), 'MMM d, yyyy')}
+              {formatDate(new Date(dateFrom), 'MMM d')} - {formatDate(new Date(dateTo), 'MMM d, yyyy')}
             </Badge>
           </div>
 

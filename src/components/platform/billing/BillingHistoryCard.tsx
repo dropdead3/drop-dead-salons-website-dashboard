@@ -1,5 +1,5 @@
 import { History, ChevronDown } from 'lucide-react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import {
   PlatformCard,
   PlatformCardContent,
@@ -20,6 +20,7 @@ interface BillingHistoryCardProps {
 }
 
 export function BillingHistoryCard({ organizationId }: BillingHistoryCardProps) {
+  const { formatDate } = useFormatDate();
   const { data: history, isLoading } = useBillingHistory(organizationId);
 
   if (isLoading) {
@@ -79,7 +80,7 @@ export function BillingHistoryCard({ organizationId }: BillingHistoryCardProps) 
                         {getChangeTypeLabel(change.change_type)}
                       </p>
                       <p className="text-xs text-slate-500">
-                        {format(new Date(change.created_at), 'MMM d, yyyy')}
+                        {formatDate(new Date(change.created_at), 'MMM d, yyyy')}
                       </p>
                     </div>
                   </div>
@@ -102,7 +103,7 @@ export function BillingHistoryCard({ organizationId }: BillingHistoryCardProps) 
                   <div className="flex justify-between text-xs">
                     <span className="text-slate-500">Effective Date:</span>
                     <span className="text-slate-300">
-                      {format(new Date(change.effective_date), 'MMM d, yyyy')}
+                      {formatDate(new Date(change.effective_date), 'MMM d, yyyy')}
                     </span>
                   </div>
                   {change.notes && (

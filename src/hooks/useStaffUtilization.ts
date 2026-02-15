@@ -68,11 +68,27 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
   const startDateStr = format(startDate, 'yyyy-MM-dd');
   const endDateStr = format(today, 'yyyy-MM-dd');
 
+  // Fetch service provider IDs (stylists and stylist assistants only)
+  const roleQuery = useQuery({
+    queryKey: ['service-provider-ids'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .in('role', ['stylist', 'stylist_assistant']);
+      if (error) throw error;
+      return (data || []).map(r => r.user_id);
+    },
+  });
+
+  const serviceProviderIds = roleQuery.data || [];
+
   // Fetch staff workload data
   const workloadQuery = useQuery({
-    queryKey: ['staff-utilization-workload', locationId, startDateStr, endDateStr],
+    queryKey: ['staff-utilization-workload', locationId, startDateStr, endDateStr, serviceProviderIds],
+    enabled: serviceProviderIds.length > 0,
     queryFn: async () => {
-      // First get staff mappings
+      // Get staff mappings filtered to service providers only
       const { data: staffMappings, error: staffError } = await supabase
         .from('phorest_staff_mapping')
         .select(`
@@ -84,7 +100,8 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
             photo_url
           )
         `)
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .in('user_id', serviceProviderIds);
 
       if (staffError) throw staffError;
 
@@ -177,9 +194,10 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
     },
   });
 
-  // Fetch service qualifications
+  // Fetch service qualifications (service providers only)
   const qualificationsQuery = useQuery({
-    queryKey: ['staff-service-qualifications'],
+    queryKey: ['staff-service-qualifications', serviceProviderIds],
+    enabled: serviceProviderIds.length > 0,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('phorest_staff_services')
@@ -203,12 +221,13 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
 
       if (error) throw error;
 
-      // Group by staff
+      // Group by staff -- only include service providers
+      const providerSet = new Set(serviceProviderIds);
       const staffQualifications = new Map<string, ServiceQualification>();
 
       (data || []).forEach((qual: any) => {
         const userId = qual.phorest_staff_mapping?.user_id;
-        if (!userId) return;
+        if (!userId || !providerSet.has(userId)) return;
 
         const existing = staffQualifications.get(userId) || {
           userId,
@@ -275,6 +294,6 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
     workload: workloadQuery.data || [],
     qualifications: qualificationsQuery.data || [],
     locationDistribution: locationQuery.data || [],
-    isLoading: workloadQuery.isLoading || qualificationsQuery.isLoading || locationQuery.isLoading,
+    isLoading: roleQuery.isLoading || workloadQuery.isLoading || qualificationsQuery.isLoading || locationQuery.isLoading,
   };
 }

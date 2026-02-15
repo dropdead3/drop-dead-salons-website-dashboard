@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,7 @@ import { CreditCard, Gift, Wallet, AlertCircle, Loader2 } from 'lucide-react';
 import { TransactionItem } from '@/hooks/useTransactions';
 import { useProcessRefund } from '@/hooks/useRefunds';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface RefundDialogProps {
   transaction: TransactionItem | null;
@@ -43,6 +44,8 @@ export function RefundDialog({ transaction, open, onOpenChange }: RefundDialogPr
   
   const { effectiveOrganization } = useOrganizationContext();
   const processRefund = useProcessRefund();
+  const { formatCurrency, currency } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
 
   const maxAmount = Number(transaction?.total_amount) || 0;
 
@@ -101,9 +104,9 @@ export function RefundDialog({ transaction, open, onOpenChange }: RefundDialogPr
             <p className="font-medium">{transaction.item_name}</p>
             <div className="flex justify-between items-center mt-1">
               <span className="text-sm text-muted-foreground">
-                {transaction.client_name || 'Walk-in'} • {format(new Date(transaction.transaction_date), 'MMM d, yyyy')}
+                {transaction.client_name || 'Walk-in'} • {formatDate(new Date(transaction.transaction_date), 'MMM d, yyyy')}
               </span>
-              <span className="font-semibold">${maxAmount.toFixed(2)}</span>
+              <span className="font-semibold">{formatCurrency(maxAmount)}</span>
             </div>
           </div>
 
@@ -111,7 +114,7 @@ export function RefundDialog({ transaction, open, onOpenChange }: RefundDialogPr
           <div className="space-y-2">
             <Label htmlFor="amount">Refund Amount</Label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{currency}</span>
               <Input
                 id="amount"
                 type="number"
@@ -125,7 +128,7 @@ export function RefundDialog({ transaction, open, onOpenChange }: RefundDialogPr
             </div>
             {!isValidAmount && refundAmount && (
               <p className="text-sm text-destructive">
-                Amount must be between $0.01 and ${maxAmount.toFixed(2)}
+                Amount must be between {formatCurrency(0.01)} and {formatCurrency(maxAmount)}
               </p>
             )}
           </div>

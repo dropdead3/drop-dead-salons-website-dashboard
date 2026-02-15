@@ -1,0 +1,132 @@
+---
+description: React component conventions for Zura. Covers file structure, dashboard pages, forms, dialogs, tables, toasts, conditional rendering, and icons.
+globs: src/components/**/*.tsx, src/pages/**/*.tsx
+alwaysApply: false
+---
+
+# React Component Patterns
+
+## File Structure
+
+Every component file follows this order:
+1. Imports
+2. Types / Interfaces
+3. Constants
+4. Component function
+5. Export
+
+- **Components:** Named exports (`export function ProductTable() {}`)
+- **Pages:** Default exports (`export default function MyPay() {}`)
+
+## Dashboard Pages
+
+Wrap in `DashboardLayout`. Use hooks for data. Show loading/empty/error as early returns.
+
+```tsx
+export default function MyPage() {
+  const { data, isLoading } = useMyData();
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="px-8 py-8 max-w-[1600px] mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  return (
+    <DashboardLayout>
+      <div className="px-8 py-8 max-w-[1600px] mx-auto">
+        {/* Page content */}
+      </div>
+    </DashboardLayout>
+  );
+}
+```
+
+## Forms (Zod + React Hook Form)
+
+```tsx
+const schema = z.object({
+  name: z.string().min(1, "Required"),
+  email: z.string().email("Invalid email"),
+});
+type FormData = z.infer<typeof schema>;
+
+const form = useForm<FormData>({
+  resolver: zodResolver(schema),
+  defaultValues: { name: "", email: "" },
+});
+
+<Form {...form}>
+  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+    <FormField control={form.control} name="name" render={({ field }) => (
+      <FormItem>
+        <FormLabel>Name</FormLabel>
+        <FormControl><Input {...field} /></FormControl>
+        <FormMessage />
+      </FormItem>
+    )} />
+  </form>
+</Form>
+```
+
+## Dialog Forms
+
+```tsx
+<Dialog open={open} onOpenChange={onOpenChange}>
+  <DialogContent className="sm:max-w-[500px]">
+    <DialogHeader>
+      <DialogTitle>Title</DialogTitle>
+      <DialogDescription>Description</DialogDescription>
+    </DialogHeader>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {/* Fields */}
+        <div className="flex justify-end gap-2 pt-4">
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Submit
+          </Button>
+        </div>
+      </form>
+    </Form>
+  </DialogContent>
+</Dialog>
+```
+
+## Data Tables
+
+Use `Table` from `@/components/ui/table`. Always include loading and empty states.
+
+- Loading: `<Skeleton>` rows
+- Empty: Centered icon + message + description
+- Wrap in `<Card>` for consistent styling
+
+## Toasts
+
+```tsx
+import { toast } from 'sonner';
+
+toast.success('Item created');
+toast.error('Failed to create item');
+toast.error('Failed to create item', { description: error.message });
+```
+
+## Conditional Rendering
+
+- **Configurable visibility:** `<VisibilityGate elementKey="feature_key">`
+- **Role checks:** `const roles = useEffectiveRoles(); roles.includes('admin')`
+- **Permission checks:** `const { can } = usePermission(); can('manage_settings')`
+
+## Icons
+
+Import from `lucide-react`. Standard sizes:
+- Inline/labels: `className="h-4 w-4"`
+- Buttons: `className="h-5 w-5"`
+- Empty states: `className="h-8 w-8"` or larger

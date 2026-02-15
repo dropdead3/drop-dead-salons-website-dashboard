@@ -14,6 +14,7 @@ import {
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { format, subMonths, subYears, startOfMonth, endOfMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface HistoricalComparisonProps {
@@ -31,6 +32,7 @@ export function HistoricalComparison({
   locationId,
   filterContext
 }: HistoricalComparisonProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const [period, setPeriod] = useState<ComparisonPeriod>('lastMonth');
   const [showComparison, setShowComparison] = useState(true);
 
@@ -80,28 +82,28 @@ export function HistoricalComparison({
       current: comparison?.current.totalRevenue || 0,
       previous: comparison?.previous.totalRevenue || 0,
       change: comparison?.percentChange.totalRevenue || 0,
-      format: (v: number) => `$${v.toLocaleString()}`,
+      format: (v: number) => formatCurrencyWhole(v),
     },
     { 
       label: 'Services', 
       current: comparison?.current.serviceRevenue || 0,
       previous: comparison?.previous.serviceRevenue || 0,
       change: comparison?.percentChange.serviceRevenue || 0,
-      format: (v: number) => `$${v.toLocaleString()}`,
+      format: (v: number) => formatCurrencyWhole(v),
     },
     { 
       label: 'Products', 
       current: comparison?.current.productRevenue || 0,
       previous: comparison?.previous.productRevenue || 0,
       change: comparison?.percentChange.productRevenue || 0,
-      format: (v: number) => `$${v.toLocaleString()}`,
+      format: (v: number) => formatCurrencyWhole(v),
     },
     { 
       label: 'Avg Ticket', 
       current: comparison?.current.averageTicket || 0,
       previous: comparison?.previous.averageTicket || 0,
       change: comparison?.percentChange.averageTicket || 0,
-      format: (v: number) => `$${Math.round(v)}`,
+      format: (v: number) => formatCurrencyWhole(Math.round(v)),
     },
   ];
 

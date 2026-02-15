@@ -7,7 +7,8 @@ import { AlertCircle, TrendingUp, DollarSign } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { EmployeePayrollSettings } from '@/hooks/useEmployeePayrollSettings';
 import { EmployeeCompensation, EmployeeSalesData } from '@/hooks/usePayrollCalculations';
-import { format } from 'date-fns';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface CommissionStepProps {
   employees: EmployeePayrollSettings[];
@@ -30,6 +31,8 @@ export function CommissionStep({
   payPeriodStart,
   payPeriodEnd,
 }: CommissionStepProps) {
+  const { formatCurrency } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   const commissionEmployees = employees.filter((e) => e.commission_enabled);
 
   const getInitials = (name: string) => {
@@ -97,8 +100,8 @@ export function CommissionStep({
           Review commissions calculated from sales data for{' '}
           {payPeriodStart && payPeriodEnd && (
             <>
-              {format(new Date(payPeriodStart), 'MMM d')} -{' '}
-              {format(new Date(payPeriodEnd), 'MMM d, yyyy')}
+              {formatDate(new Date(payPeriodStart), 'MMM d')} -{' '}
+              {formatDate(new Date(payPeriodEnd), 'MMM d, yyyy')}
             </>
           )}
         </p>
@@ -112,7 +115,7 @@ export function CommissionStep({
             <span className="text-sm">Service Revenue</span>
           </div>
           <p className="text-2xl font-bold">
-            ${totalServiceRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatCurrency(totalServiceRevenue)}
           </p>
         </div>
         <div className="bg-muted/50 rounded-lg p-4">
@@ -121,7 +124,7 @@ export function CommissionStep({
             <span className="text-sm">Product Revenue</span>
           </div>
           <p className="text-2xl font-bold">
-            ${totalProductRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatCurrency(totalProductRevenue)}
           </p>
         </div>
         <div className="bg-primary/10 rounded-lg p-4 border border-primary/20">
@@ -130,7 +133,7 @@ export function CommissionStep({
             <span className="text-sm">Total Commissions</span>
           </div>
           <p className="text-2xl font-bold text-primary">
-            ${totalCommissions.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatCurrency(totalCommissions)}
           </p>
         </div>
       </div>
@@ -170,30 +173,20 @@ export function CommissionStep({
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
-                  ${(sales?.serviceRevenue || 0).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
+                  {formatCurrency(sales?.serviceRevenue || 0)}
                 </TableCell>
                 <TableCell className="text-right">
-                  ${(compensation?.serviceCommission || 0).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
+                  {formatCurrency(compensation?.serviceCommission || 0)}
                 </TableCell>
                 <TableCell className="text-right">
-                  ${(sales?.productRevenue || 0).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
+                  {formatCurrency(sales?.productRevenue || 0)}
                 </TableCell>
                 <TableCell className="text-right">
-                  ${(compensation?.productCommission || 0).toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                  })}
+                  {formatCurrency(compensation?.productCommission || 0)}
                 </TableCell>
                 <TableCell className="text-right font-medium">
                   <div className="flex items-center justify-end gap-2">
-                    ${(compensation?.commissionPay || 0).toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
+                    {formatCurrency(compensation?.commissionPay || 0)}
                     {hasOverride && (
                       <Badge variant="secondary" className="text-xs">
                         Modified

@@ -1,10 +1,12 @@
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar, Clock, User, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ClientVisit } from '@/hooks/useClientVisitHistory';
+import { formatCurrencyWhole } from '@/lib/formatCurrency';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface VisitHistoryTimelineProps {
   visits: ClientVisit[];
@@ -29,6 +31,7 @@ function formatTime12h(time: string): string {
 }
 
 export function VisitHistoryTimeline({ visits, isLoading }: VisitHistoryTimelineProps) {
+  const { formatDate } = useFormatDate();
   if (isLoading) {
     return (
       <div className="space-y-3">
@@ -45,10 +48,12 @@ export function VisitHistoryTimeline({ visits, isLoading }: VisitHistoryTimeline
 
   if (visits.length === 0) {
     return (
-      <div className="text-center py-8">
-        <Calendar className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-        <p className="text-sm text-muted-foreground">No visit history available</p>
-      </div>
+      <EmptyState
+        icon={Calendar}
+        title="No visit history"
+        description="No visits have been recorded for this client yet."
+        className="py-10"
+      />
     );
   }
 
@@ -67,7 +72,7 @@ export function VisitHistoryTimeline({ visits, isLoading }: VisitHistoryTimeline
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="w-4 h-4 text-muted-foreground" />
             <span className="text-sm font-medium">
-              {format(new Date(date), 'EEEE, MMMM d, yyyy')}
+              {formatDate(new Date(date), 'EEEE, MMMM d, yyyy')}
             </span>
           </div>
           
@@ -117,7 +122,7 @@ export function VisitHistoryTimeline({ visits, isLoading }: VisitHistoryTimeline
                     )}
                     {visit.total_price !== null && visit.total_price > 0 && (
                       <span className="font-medium text-foreground">
-                        ${visit.total_price.toLocaleString()}
+                        {formatCurrencyWhole(visit.total_price)}
                       </span>
                     )}
                   </div>

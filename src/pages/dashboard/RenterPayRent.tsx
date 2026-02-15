@@ -19,11 +19,14 @@ import { useState } from 'react';
 import { useRenterPaymentMethods } from '@/hooks/useRenterPaymentMethods';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { toast } from 'sonner';
 
 export default function RenterPayRent() {
+  const { formatDate } = useFormatDate();
   const { user } = useAuth();
+  const { formatCurrency } = useFormatCurrency();
   const { data: renterProfile, isLoading: profileLoading } = useBoothRenter(undefined);
   const { data: paymentMethods, isLoading: methodsLoading } = useRenterPaymentMethods(renterProfile?.id);
   const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
@@ -160,7 +163,7 @@ export default function RenterPayRent() {
                   <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
                     <div>
                       <p className="text-sm text-muted-foreground">Total Outstanding</p>
-                      <p className="text-2xl font-bold">${totalOutstanding.toFixed(2)}</p>
+                      <p className="text-2xl font-bold">{formatCurrency(totalOutstanding)}</p>
                     </div>
                     <Button 
                       onClick={handlePayAll}
@@ -195,11 +198,11 @@ export default function RenterPayRent() {
                             )}
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            Due: {format(new Date(invoice.due_date), 'MMM d, yyyy')}
+                            Due: {formatDate(new Date(invoice.due_date), 'MMM d, yyyy')}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
-                          <p className="font-semibold">${invoice.amount_due.toFixed(2)}</p>
+                          <p className="font-semibold">{formatCurrency(invoice.amount_due)}</p>
                           <Button 
                             size="sm"
                             onClick={() => handlePayNow(invoice.id, invoice.amount_due)}
@@ -294,12 +297,12 @@ export default function RenterPayRent() {
                       <div>
                         <p className="font-medium">Rent Payment</p>
                         <p className="text-sm text-muted-foreground">
-                          {format(new Date(payment.paid_at), 'MMM d, yyyy')}
+                          {formatDate(new Date(payment.paid_at), 'MMM d, yyyy')}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <p className="font-semibold">${payment.amount.toFixed(2)}</p>
+                      <p className="font-semibold">{formatCurrency(payment.amount)}</p>
                       <Button variant="ghost" size="icon">
                         <Download className="h-4 w-4" />
                       </Button>

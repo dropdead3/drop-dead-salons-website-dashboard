@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton';
 import { Package, ShoppingBag, TrendingUp, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface ProductLeaderboardProps {
   locationId?: string;
@@ -70,6 +71,7 @@ export function ProductLeaderboard({ locationId, className }: ProductLeaderboard
           <CardTitle className="flex items-center gap-2 text-base">
             <Package className="h-5 w-5 text-primary" />
             Product Sales Analytics
+            <MetricInfoTooltip description="Ranks products by revenue and units sold. Data is aggregated from completed appointment line items containing product sales." />
           </CardTitle>
           <Select value={timeRange} onValueChange={(v) => setTimeRange(v as ProductTimeRange)}>
             <SelectTrigger className="w-32 h-8 text-xs">

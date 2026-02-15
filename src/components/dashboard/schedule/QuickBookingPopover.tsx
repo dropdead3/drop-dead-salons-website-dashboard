@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import {
   Popover,
   PopoverContent,
@@ -10,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { 
   Search, 
   Clock, 
@@ -92,6 +94,8 @@ export function QuickBookingPopover({
 }: QuickBookingPopoverProps) {
   const queryClient = useQueryClient();
   const { user, roles } = useAuth();
+  const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
+  const { formatDate: formatDateLocale } = useFormatDate();
   const [step, setStep] = useState<Step>('service');
   const [showNewClientDialog, setShowNewClientDialog] = useState(false);
   const [highestStepReached, setHighestStepReached] = useState<number>(0);
@@ -500,7 +504,7 @@ export function QuickBookingPopover({
                     <>
                       <h2 className="font-semibold text-sm">New Booking</h2>
                       <p className="text-xs text-muted-foreground">
-                        {format(date, 'EEE, MMM d')} at {formatTime12h(time)}
+                        {formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}
                       </p>
                     </>
                   )}
@@ -746,8 +750,7 @@ export function QuickBookingPopover({
                                       </span>
                                       {service.price !== null && (
                                         <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
-                                          <DollarSign className="h-3 w-3" />
-                                          {service.price.toFixed(0)}
+                                          {formatCurrencyWhole(service.price)}
                                         </span>
                                       )}
                                     </div>
@@ -872,8 +875,7 @@ export function QuickBookingPopover({
                                   </span>
                                   {service.price !== null && (
                                     <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
-                                      <DollarSign className="h-3 w-3" />
-                                      {service.price.toFixed(0)}
+                                      {formatCurrencyWhole(service.price)}
                                     </span>
                                   )}
                                 </div>
@@ -907,7 +909,7 @@ export function QuickBookingPopover({
                       </Badge>
                       <span className="text-muted-foreground">{totalDuration}m</span>
                     </div>
-                    <span className="font-semibold">${totalPrice.toFixed(0)}</span>
+                    <span className="font-semibold">{formatCurrencyWhole(totalPrice)}</span>
                   </div>
                 )}
                 <Button
@@ -977,7 +979,7 @@ export function QuickBookingPopover({
                       </Badge>
                       <span className="text-muted-foreground">{totalDuration}m</span>
                     </div>
-                    <span className="font-semibold">${totalPrice.toFixed(0)}</span>
+                    <span className="font-semibold">{formatCurrencyWhole(totalPrice)}</span>
                   </div>
                 )}
                 <Button
@@ -1079,7 +1081,7 @@ export function QuickBookingPopover({
                             )}
                             {selectedServices.length > 0 && (
                               <span className="text-sm font-semibold text-foreground tabular-nums min-w-[70px] text-right">
-                                ${stylistTotalPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                {formatCurrency(stylistTotalPrice)}
                               </span>
                             )}
                           </div>
@@ -1101,7 +1103,7 @@ export function QuickBookingPopover({
                       <span className="text-muted-foreground">{totalDuration}m</span>
                     </div>
                     <div className="text-right">
-                      <span className="font-semibold">${levelBasedTotalPrice.toFixed(0)}</span>
+                      <span className="font-semibold">{formatCurrencyWhole(levelBasedTotalPrice)}</span>
                       <span className="text-muted-foreground ml-1.5">• Level {selectedLevelNumber}</span>
                     </div>
                   </div>
@@ -1156,7 +1158,7 @@ export function QuickBookingPopover({
                       </div>
                       <div>
                         <div className="text-[10px] text-muted-foreground">Date & Time</div>
-                        <div className="font-medium text-xs">{format(date, 'EEE, MMM d')} at {formatTime12h(time)}</div>
+                        <div className="font-medium text-xs">{formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}</div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2.5 p-2.5">
@@ -1188,7 +1190,7 @@ export function QuickBookingPopover({
                             </div>
                           </div>
                           {service.price !== null && (
-                            <span className="font-semibold text-xs">${service.price.toFixed(0)}</span>
+                            <span className="font-semibold text-xs">{formatCurrencyWhole(service.price)}</span>
                           )}
                         </div>
                       ))}
@@ -1219,7 +1221,7 @@ export function QuickBookingPopover({
               <div className="p-3 border-t border-border bg-card space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Total</span>
-                  <span className="text-lg font-bold">${totalPrice.toFixed(2)}</span>
+                  <span className="text-lg font-bold">{formatCurrency(totalPrice)}</span>
                 </div>
                 <Button
                   className="w-full h-10 font-semibold"

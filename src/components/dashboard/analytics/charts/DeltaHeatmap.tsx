@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
+import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 
 interface HeatmapDataPoint {
   dimension: string;
@@ -140,8 +141,8 @@ export function DeltaHeatmap({
                           <TooltipContent>
                             <div className="text-xs">
                               <p className="font-medium">{dim} - {sub}</p>
-                              <p>Previous: ${cell?.periodA?.toLocaleString() || 0}</p>
-                              <p>Current: ${cell?.periodB?.toLocaleString() || 0}</p>
+                              <p>Previous: {formatCurrencyWholeUtil(cell?.periodA ?? 0)}</p>
+                              <p>Current: {formatCurrencyWholeUtil(cell?.periodB ?? 0)}</p>
                               <p className={changePercent >= 0 ? 'text-chart-2' : 'text-destructive'}>
                                 Change: {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(1)}%
                               </p>

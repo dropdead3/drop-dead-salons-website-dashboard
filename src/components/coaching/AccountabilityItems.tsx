@@ -7,7 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Plus, Calendar, CheckCircle2, Clock, AlertTriangle, Trash2, X } from 'lucide-react';
-import { format, isPast, isToday } from 'date-fns';
+import { isPast, isToday } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useMeetingAccountabilityItems, useCreateAccountabilityItem, useUpdateAccountabilityItem, useCompleteAccountabilityItem, useDeleteAccountabilityItem, type ItemStatus, type ItemPriority, type AccountabilityItem } from '@/hooks/useAccountabilityItems';
 import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -15,14 +16,14 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const priorityConfig: Record<ItemPriority, { label: string; color: string; icon?: React.ReactNode }> = {
   low: { label: 'Low', color: 'bg-muted text-muted-foreground' },
-  medium: { label: 'Medium', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300' },
-  high: { label: 'High', color: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300', icon: <AlertTriangle className="h-3 w-3" /> },
+  medium: { label: 'Medium', color: 'bg-chart-5/10 text-chart-5' },
+  high: { label: 'High', color: 'bg-destructive/10 text-destructive', icon: <AlertTriangle className="h-3 w-3" /> },
 };
 
 const statusConfig: Record<ItemStatus, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: 'Pending', color: 'bg-muted text-muted-foreground', icon: <Clock className="h-3 w-3" /> },
-  in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300', icon: <Clock className="h-3 w-3" /> },
-  completed: { label: 'Completed', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300', icon: <CheckCircle2 className="h-3 w-3" /> },
+  in_progress: { label: 'In Progress', color: 'bg-primary/10 text-primary', icon: <Clock className="h-3 w-3" /> },
+  completed: { label: 'Completed', color: 'bg-chart-2/10 text-chart-2', icon: <CheckCircle2 className="h-3 w-3" /> },
   cancelled: { label: 'Cancelled', color: 'bg-muted text-muted-foreground line-through', icon: <X className="h-3 w-3" /> },
 };
 
@@ -33,6 +34,7 @@ interface AccountabilityItemsProps {
 }
 
 export function AccountabilityItems({ meetingId, teamMemberId, isCoach }: AccountabilityItemsProps) {
+  const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const { data: items, isLoading } = useMeetingAccountabilityItems(meetingId);
   const createItem = useCreateAccountabilityItem();
@@ -96,9 +98,9 @@ export function AccountabilityItems({ meetingId, teamMemberId, isCoach }: Accoun
     const isDueToday = isToday(date);
 
     return (
-      <span className={`text-xs flex items-center gap-1 ${isOverdue ? 'text-destructive' : isDueToday ? 'text-yellow-600' : 'text-muted-foreground'}`}>
+      <span className={`text-xs flex items-center gap-1 ${isOverdue ? 'text-destructive' : isDueToday ? 'text-chart-5' : 'text-muted-foreground'}`}>
         <Calendar className="h-3 w-3" />
-        {format(date, 'MMM d')}
+        {formatDate(date, 'MMM d')}
         {isOverdue && ' (overdue)'}
         {isDueToday && ' (today)'}
       </span>
@@ -257,11 +259,11 @@ export function AccountabilityItems({ meetingId, teamMemberId, isCoach }: Accoun
                 {completedItems.map((item) => (
                   <div key={item.id} className="p-3 border rounded-lg bg-muted/20 opacity-70">
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <CheckCircle2 className="h-4 w-4 text-chart-2" />
                       <span className="text-sm line-through">{item.title}</span>
                       {item.completed_at && (
                         <span className="text-xs text-muted-foreground">
-                          {format(new Date(item.completed_at), 'MMM d')}
+                          {formatDate(new Date(item.completed_at), 'MMM d')}
                         </span>
                       )}
                     </div>

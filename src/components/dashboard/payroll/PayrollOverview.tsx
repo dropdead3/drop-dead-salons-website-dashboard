@@ -1,5 +1,5 @@
 import { CalendarDays, Info } from 'lucide-react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -13,6 +13,7 @@ import { TeamCompensationTable } from './analytics/TeamCompensationTable';
 import { TierProgressionCard } from './analytics/TierProgressionCard';
 
 export function PayrollOverview() {
+  const { formatDate } = useFormatDate();
   const { kpis, compensationBreakdown, isLoading: isLoadingAnalytics } = usePayrollAnalytics();
   const { projection, isLoading: isLoadingForecast, currentPeriod } = usePayrollForecasting();
   const { progressionOpportunities, impactAnalysis, isLoading: isLoadingTiers } = useTierDistribution();
@@ -28,13 +29,13 @@ export function PayrollOverview() {
             <CalendarDays className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">Current Period:</span>
             <span className="font-medium">
-              {format(currentPeriod.periodStart, 'MMM d')} - {format(currentPeriod.periodEnd, 'MMM d, yyyy')}
+              {formatDate(currentPeriod.periodStart, 'MMM d')} - {formatDate(currentPeriod.periodEnd, 'MMM d, yyyy')}
             </span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">Next Pay Day:</span>
             <Badge variant="secondary">
-              {format(currentPeriod.nextPayDay, 'MMM d, yyyy')}
+              {formatDate(currentPeriod.nextPayDay, 'MMM d, yyyy')}
             </Badge>
           </div>
           {projection && (

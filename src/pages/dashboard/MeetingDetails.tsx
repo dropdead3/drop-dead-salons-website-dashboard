@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ArrowLeft, Calendar, Clock, User, CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useOneOnOneMeetings, useUpdateMeetingStatus } from '@/hooks/useOneOnOneMeetings';
@@ -28,6 +29,7 @@ export default function MeetingDetails() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const roles = useEffectiveRoles();
+  const { formatDate } = useFormatDate();
   const isCoach = roles.includes('admin') || roles.includes('manager') || roles.includes('super_admin');
   
   const { data: meetings = [], isLoading: loadingMeetings } = useOneOnOneMeetings();
@@ -131,7 +133,7 @@ export default function MeetingDetails() {
                 <div className="flex flex-wrap gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
-                    <span>{format(parseISO(meeting.meeting_date), 'EEEE, MMMM d, yyyy')}</span>
+                    <span>{formatDate(parseISO(meeting.meeting_date), 'EEEE, MMMM d, yyyy')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-muted-foreground" />

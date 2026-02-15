@@ -12,6 +12,7 @@ import {
   Loader2,
   Plus,
 } from 'lucide-react';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { RedemptionQueue } from '@/components/points/RedemptionQueue';
 import {
   usePointsRules,
@@ -42,6 +43,7 @@ import {
 export default function PointsConfig() {
   const [activeTab, setActiveTab] = useState('rules');
   const [showNewRewardDialog, setShowNewRewardDialog] = useState(false);
+  const { formatNumber } = useFormatNumber();
 
   const { data: rules = [], isLoading: rulesLoading } = usePointsRules();
   const { data: rewards = [], isLoading: rewardsLoading } = useRewardsCatalog(false);
@@ -307,7 +309,7 @@ export default function PointsConfig() {
                       <div>
                         <p className="font-medium">{reward.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {reward.points_cost.toLocaleString()} pts •{' '}
+                          {formatNumber(reward.points_cost)} pts •{' '}
                           {reward.quantity_available !== null
                             ? `${reward.quantity_available} available`
                             : 'Unlimited'}

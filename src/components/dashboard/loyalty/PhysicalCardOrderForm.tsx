@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { CreditCard, Package, Truck, Loader2 } from 'lucide-react';
 import { useCreateGiftCardOrder, CARD_STOCK_PRICING, SHIPPING_PRICING } from '@/hooks/useGiftCardOrders';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface PhysicalCardOrderFormProps {
   organizationId?: string;
@@ -28,6 +29,7 @@ const CARD_STOCKS = [
 const QUANTITIES = [50, 100, 250, 500, 1000];
 
 export function PhysicalCardOrderForm({ organizationId }: PhysicalCardOrderFormProps) {
+  const { formatCurrency } = useFormatCurrency();
   const createOrder = useCreateGiftCardOrder();
 
   const [cardDesign, setCardDesign] = useState('elegant');
@@ -130,7 +132,7 @@ export function PhysicalCardOrderForm({ organizationId }: PhysicalCardOrderFormP
                       <p className="text-xs text-muted-foreground">{stock.description}</p>
                     </div>
                   </div>
-                  <span className="font-medium">${stock.price.toFixed(2)}/card</span>
+                  <span className="font-medium">{formatCurrency(stock.price)}/card</span>
                 </Label>
               ))}
             </RadioGroup>
@@ -278,11 +280,11 @@ export function PhysicalCardOrderForm({ organizationId }: PhysicalCardOrderFormP
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{quantity} × {CARD_STOCKS.find(s => s.value === cardStock)?.label}</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>{formatCurrency(subtotal)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Shipping</span>
-                <span>{shippingPrice === 0 ? 'FREE' : `$${shippingPrice.toFixed(2)}`}</span>
+                <span>{shippingPrice === 0 ? 'FREE' : formatCurrency(shippingPrice)}</span>
               </div>
             </div>
 
@@ -290,7 +292,7 @@ export function PhysicalCardOrderForm({ organizationId }: PhysicalCardOrderFormP
 
             <div className="flex justify-between font-medium text-lg">
               <span>Total</span>
-              <span>${total.toFixed(2)}</span>
+              <span>{formatCurrency(total)}</span>
             </div>
 
             <Button 

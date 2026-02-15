@@ -1,0 +1,97 @@
+---
+description: Analytics and luxury UI for beauty brands, salons, and professionals. What metrics to surface, how to display them (calm, precise, architectural), and patterns for dashboard/analytics components.
+globs: "**/dashboard/**/*,**/analytics/**/*,**/sales/**/*,src/hooks/use*Analytics*.ts,src/hooks/useSales*.ts,src/hooks/useOperational*.ts,src/hooks/use*Retention*.ts"
+alwaysApply: false
+---
+
+# Analytics and Luxury UI
+
+This rule guides anyone building or refining analytics and their UI for Zura. Apply it when working on dashboard pages, analytics components, charts, or metrics for beauty brands, organizations, hair salons, and beauty professionals.
+
+## Purpose and audiences
+
+- **Purpose:** Consider analytics and luxury UI together—what to show and how to show it so leaders and pros get clarity without clutter.
+- **Audiences:** Founders, managers, stylists/technicians, multi-location operators. Respect hierarchy: org → location → team → individual. Use VisibilityGate and usePermission so each role sees the right depth.
+
+## Metrics to prioritize
+
+### Already in product (elevate, don't duplicate)
+
+- **Revenue intelligence:** Service vs product mix, retail attachment rate, revenue by location/stylist, goals and trends.
+- **Client health:** Retention rate, at-risk clients (e.g. 60+ days since visit), new vs returning, LTV, rebooking rate.
+- **Operations:** Appointments (volume, completion, no-show, cancellation), capacity utilization, staffing and workload.
+- **Experience and quality:** NPS, feedback, stylist experience scores; leaderboard dimensions (new clients, retention, retail, extensions).
+- **Marketing and campaigns:** Funnel, campaigns, program analytics, reports.
+
+### Creative additions for salons and beauty pros
+
+- **Visit rhythm:** Average days between visits by segment or service type; "next visit due" or "overdue" indicators.
+- **Service mix and yield:** Revenue and count by service category (cut vs color vs treatment); yield per hour or per slot.
+- **Retail effectiveness:** Attachment rate by stylist or by service; product revenue per client visit; top products by location or segment.
+- **Capacity and demand:** Peak vs off-peak utilization; "white space" (unused prime-time slots); demand vs capacity by day part.
+- **Client segments in one view:** VIP / regular / at-risk / lapsed with count, revenue, retention so leaders see the full picture.
+- **Benchmarks and context:** Compare to goal, prior period, or location. Use existing BenchmarkBar and benchmark hooks where they exist.
+- **Professional-level views:** Stylist/technician dashboards focused on "my" performance (my retention, my rebooks, my retail, my capacity) without clutter.
+
+**Priorities:** Surface **actionable** metrics (rebook, reach out to at-risk, fill capacity, improve retail). Keep **hierarchy** and **roles** in mind.
+
+## Luxury UI principles
+
+Luxury here = **calm, precise, architectural, high clarity**, not decorative excess. Align with brand-voice and design-rules.
+
+### Typography and hierarchy
+
+- Section/chart titles: `font-display` (Termina), uppercase, tracking (e.g. `tracking-[0.15em]`). **Never** use font-bold, font-semibold, or heavier (max weight 500 per design-rules).
+- Numbers and KPI values: `font-display` or clear `tabular-nums`; use size and color (`text-foreground` vs `text-muted-foreground`) for hierarchy, not weight.
+- Labels and axis text: `font-sans`, `text-muted-foreground`, consistent size (e.g. `text-xs`).
+- **When touching BenchmarkBar:** Replace `font-semibold` with `font-medium` to comply with design-rules.
+
+### Layout and spacing
+
+- Generous whitespace; cards with clear separation (`border-border/40`, subtle backgrounds).
+- Consistent grid (e.g. 2/4 columns for KPI blocks, full width for key charts).
+- Section labels: small accent (e.g. `w-1.5 h-1.5 rounded-full bg-oat`) + "ANALYTICS" style label as in DashboardHome.
+
+### Charts and data viz
+
+- Use design tokens only: `hsl(var(--primary))`, `hsl(var(--chart-1))` … `--chart-5`. No arbitrary bright colors.
+- Tooltips: `backgroundColor: hsl(var(--background))`, `border: 1px solid hsl(var(--border))`, `borderRadius: 8px` (see RevenueDonutChart).
+- Prefer clear, simple chart types: line for trends, bar for comparisons, donut/pie for composition, heatmaps for time/volume. Avoid chart junk.
+
+### Cards and components
+
+- One primary idea per card. Optional filter badge in header (AnalyticsFilterBadge).
+- Icon in small container: `w-10 h-10 bg-muted rounded-lg` with icon `text-primary` (see RevenueDonutChart, TopPerformersCard).
+- Empty and loading states: minimal copy, **no emojis**; skeleton or subtle spinner.
+
+### Motion
+
+- Subtle and purposeful (e.g. AnimatePresence for filters or tab changes). No flashy or playful animation. Respect `prefers-reduced-motion`.
+
+## Data and permissions
+
+- **Scope:** All analytics scoped by organization (and location where applicable). Use `effectiveOrganization` from OrganizationContext; include orgId in query keys; use `enabled: !!orgId` for conditional fetching.
+- **Visibility:** Use VisibilityGate for configurable UI; usePermission for permission-based access. Follow multi-tenancy and RBAC rules.
+- **Hide numbers:** When adding KPIs or charts with sensitive numbers (revenue, counts, PII), wire in HideNumbersContext (e.g. BlurredAmount, conditional tooltips) by default.
+
+## What else to consider
+
+- **Accessibility:** Contrast and focus states on filters/tabs; semantic headings and landmarks; chart data summarized in text or table where it adds value.
+- **Responsive/mobile:** Key metrics first on small screens; simplified charts or tables; touch-friendly controls; optional compact card variants.
+- **Data freshness:** Show "Last synced" or "Data as of" where data is from Phorest or batch jobs. Reference LastSyncIndicator for consistency.
+- **Export:** For report-like or key-metric views, consider export paths (PDF, CSV, screenshots) where it fits the feature.
+- **Comparison UX:** Period-over-period, location vs location, stylist vs team. One primary comparison per card; same luxury principles.
+- **Alerts/thresholds:** If adding inline alerts (e.g. no-show rate above 5%), keep them minimal and on-brand; clear "what to do" where possible.
+- **Empty/loading/error:** Graceful degradation: no emojis, skeleton that matches layout, calm error messaging.
+- **Dark mode:** Use design tokens so charts and cards work in both themes; test new charts and cards in both.
+- **Narrative layer (future):** If adding short AI narrative insights, keep minimal and factual; same voice as brand-voice (no hype, declarative).
+
+## Reference components and files
+
+- Design system: `src/lib/design-rules.ts`, `.cursor/rules/brand-voice.mdc`
+- Layout and cards: `src/components/dashboard/PinnedAnalyticsCard.tsx`, `src/components/dashboard/AnalyticsFilterBar.tsx`, `src/components/dashboard/AnalyticsFilterBadge.tsx`
+- Pages: `src/pages/dashboard/admin/AnalyticsHub.tsx`, `src/pages/dashboard/DashboardHome.tsx`
+- Card examples: `src/components/dashboard/sales/RevenueDonutChart.tsx`, `src/components/dashboard/AggregateSalesCard.tsx`, `src/components/dashboard/sales/TopPerformersCard.tsx`
+- Charts: `src/components/dashboard/analytics/charts/BenchmarkBar.tsx`
+- Data freshness: `src/components/dashboard/sales/LastSyncIndicator.tsx`
+- Privacy: `src/contexts/HideNumbersContext.tsx`, `src/components/ui/AnimatedBlurredAmount.tsx` / BlurredAmount

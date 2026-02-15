@@ -1,10 +1,12 @@
-import { format, formatDistanceToNow } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useImpersonationLogs, ImpersonationLogWithAdmin } from '@/hooks/useImpersonationLogs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Eye, EyeOff, Users, UserCheck, RefreshCw } from 'lucide-react';
+import { formatRelativeTime } from '@/lib/format';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const ACTION_CONFIG: Record<string, { label: string; icon: React.ReactNode; variant: 'default' | 'secondary' | 'outline' }> = {
   start_role: { label: 'Started Role View', icon: <Eye className="h-3 w-3" />, variant: 'default' },
@@ -47,9 +49,9 @@ function LogEntry({ log }: { log: ImpersonationLogWithAdmin }) {
         )}
         
         <p className="text-xs text-muted-foreground">
-          {formatDistanceToNow(new Date(log.created_at), { addSuffix: true })}
+          {formatRelativeTime(log.created_at)}
           <span className="mx-1">•</span>
-          {format(new Date(log.created_at), 'MMM d, h:mm a')}
+          {formatDate(new Date(log.created_at), 'MMM d, h:mm a')}
         </p>
       </div>
     </div>
@@ -79,6 +81,7 @@ interface ImpersonationHistoryPanelProps {
 }
 
 export function ImpersonationHistoryPanel({ limit = 50, className }: ImpersonationHistoryPanelProps) {
+  const { formatDate } = useFormatDate();
   const { data: logs, isLoading, error } = useImpersonationLogs(limit);
 
   if (isLoading) {
@@ -103,10 +106,12 @@ export function ImpersonationHistoryPanel({ limit = 50, className }: Impersonati
     return (
       <div className={className}>
         <h3 className="text-lg font-medium mb-4">Impersonation History</h3>
-        <div className="text-center py-8 text-muted-foreground">
-          <Eye className="h-8 w-8 mx-auto mb-2 opacity-50" />
-          <p className="text-sm">No impersonation activity yet</p>
-        </div>
+        <EmptyState
+          icon={Eye}
+          title="No impersonation activity"
+          description="No view-as sessions have been recorded yet."
+          className="py-10"
+        />
       </div>
     );
   }

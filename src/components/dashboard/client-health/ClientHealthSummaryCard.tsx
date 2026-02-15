@@ -5,6 +5,7 @@ import { HeartPulse, ChevronRight, CalendarX, AlertTriangle, UserX, TrendingDown
 import { Link } from 'react-router-dom';
 import { useClientHealthSegments } from '@/hooks/useClientHealthSegments';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 export function ClientHealthSummaryCard() {
   const { data: segments, isLoading } = useClientHealthSegments();
@@ -37,11 +38,14 @@ export function ClientHealthSummaryCard() {
       <CardContent className="p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-rose-500/10">
+            <div data-pinnable-anchor className="p-2.5 rounded-xl bg-rose-500/10">
               <HeartPulse className="w-5 h-5 text-rose-600 dark:text-rose-400" />
             </div>
             <div>
-              <h3 className="font-medium text-sm">Client Health Pulse</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-medium text-sm">Client Health Pulse</h3>
+                <MetricInfoTooltip description="Surfaces clients needing attention based on visit recency. At-risk clients haven't visited in 60+ days. Counts are based on active client records with appointment history." />
+              </div>
               <p className="text-xs text-muted-foreground">Clients needing attention</p>
             </div>
           </div>
@@ -63,7 +67,7 @@ export function ClientHealthSummaryCard() {
               >
                 <m.icon className={`h-4 w-4 ${m.color}`} />
                 <div className="min-w-0">
-                  <p className="text-lg font-semibold leading-none">{count}</p>
+                  <p className="text-lg font-medium leading-none">{count}</p>
                   <p className="text-[10px] text-muted-foreground truncate">{m.label}</p>
                 </div>
               </Link>

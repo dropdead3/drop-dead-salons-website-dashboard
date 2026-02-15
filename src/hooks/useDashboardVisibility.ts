@@ -139,12 +139,19 @@ export function useToggleDashboardVisibility() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ elementKey, role, isVisible }: { elementKey: string; role: AppRole; isVisible: boolean }) => {
+    mutationFn: async ({ elementKey, elementName, elementCategory, role, isVisible }: { elementKey: string; elementName: string; elementCategory: string; role: AppRole; isVisible: boolean }) => {
       const { error } = await supabase
         .from('dashboard_element_visibility')
-        .update({ is_visible: isVisible })
-        .eq('element_key', elementKey)
-        .eq('role', role);
+        .upsert(
+          {
+            element_key: elementKey,
+            element_name: elementName,
+            element_category: elementCategory,
+            role,
+            is_visible: isVisible,
+          },
+          { onConflict: 'element_key,role' }
+        );
 
       if (error) throw error;
     },

@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { format, addDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import {
   Sheet,
   SheetContent,
@@ -52,6 +53,7 @@ import {
 import { NewClientDialog } from './NewClientDialog';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useServicesByCategory } from '@/hooks/usePhorestServices';
@@ -97,6 +99,8 @@ export function NewBookingSheet({
   const [selectedLocation, setSelectedLocation] = useState('');
   const [notes, setNotes] = useState('');
 
+  const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   const { data: locations = [] } = useLocations();
   const { data: servicesByCategory, services = [] } = useServicesByCategory(selectedLocation || undefined);
   const checkAvailability = usePhorestAvailability();
@@ -438,8 +442,7 @@ export function NewBookingSheet({
                               </span>
                               {service.price && (
                                 <span className="flex items-center gap-1">
-                                  <DollarSign className="h-3 w-3" />
-                                  {service.price.toFixed(2)}
+                                  {formatCurrency(service.price)}
                                 </span>
                               )}
                             </div>
@@ -463,7 +466,7 @@ export function NewBookingSheet({
                   </div>
                   <div className="flex justify-between text-sm mt-1">
                     <span>Estimated Price:</span>
-                    <span className="font-medium">${totalPrice.toFixed(2)}</span>
+                    <span className="font-medium">{formatCurrency(totalPrice)}</span>
                   </div>
                 </div>
               )}
@@ -598,7 +601,7 @@ export function NewBookingSheet({
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Date & Time</span>
                     <span className="font-medium">
-                      {format(selectedDate, 'MMM d, yyyy')} at {formatTime12h(selectedTime)}
+                      {formatDate(selectedDate, 'MMM d, yyyy')} at {formatTime12h(selectedTime)}
                     </span>
                   </div>
 
@@ -611,7 +614,7 @@ export function NewBookingSheet({
 
                   <div className="flex justify-between text-lg">
                     <span className="font-medium">Total</span>
-                    <span className="font-medium">${totalPrice.toFixed(2)}</span>
+                    <span className="font-medium">{formatCurrency(totalPrice)}</span>
                   </div>
                 </div>
 

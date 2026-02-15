@@ -20,8 +20,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { DollarSign, Pin, Loader2, MessageSquare, Send, X, Pencil, Trash2, MoreVertical, MapPin, Star } from 'lucide-react';
-import { format } from 'date-fns';
 import { HighFiveButton } from './HighFiveButton';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface HighFiveUser {
   id: string;
@@ -88,6 +89,8 @@ export function BellEntryCard({
   onToggleHighFive,
   onLocationClick,
 }: BellEntryCardProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   // Edit entry state
   const [isEditing, setIsEditing] = useState(false);
   const [editService, setEditService] = useState('');
@@ -270,14 +273,14 @@ export function BellEntryCard({
               </div>
               <div className="flex items-center gap-2 mb-2">
                 <span className="font-display text-xl">
-                  ${entry.ticket_value.toLocaleString()}
+                  {formatCurrencyWhole(entry.ticket_value)}
                 </span>
                 <span className="text-muted-foreground">·</span>
                 <span className="font-sans text-sm text-foreground">{entry.service_booked}</span>
               </div>
               <p className="text-xs text-muted-foreground font-sans">
                 {leadSources.find(s => s.value === entry.lead_source)?.label} · {' '}
-                {format(new Date(entry.created_at), 'MMM d, yyyy')}
+                {formatDate(new Date(entry.created_at), 'MMM d, yyyy')}
               </p>
               {entry.closing_script && (
                 <p className="mt-3 text-sm text-muted-foreground font-sans italic">

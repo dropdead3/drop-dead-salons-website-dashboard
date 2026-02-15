@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -139,18 +139,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Super-admin / admin / platform users bypass all permission checks
+  const isSuperRole = roles.includes('super_admin') || roles.includes('admin') || isPlatformUser;
+
   // Permission check helpers
   const hasPermission = useCallback((permissionName: string): boolean => {
+    if (isSuperRole) return true;
     return permissions.includes(permissionName);
-  }, [permissions]);
+  }, [permissions, isSuperRole]);
 
   const hasAnyPermission = useCallback((permissionNames: string[]): boolean => {
+    if (isSuperRole) return true;
     return permissionNames.some(name => permissions.includes(name));
-  }, [permissions]);
+  }, [permissions, isSuperRole]);
 
   const hasAllPermissions = useCallback((permissionNames: string[]): boolean => {
+    if (isSuperRole) return true;
     return permissionNames.every(name => permissions.includes(name));
-  }, [permissions]);
+  }, [permissions, isSuperRole]);
 
   const hasPlatformRole = useCallback((role: PlatformRole): boolean => {
     return platformRoles.includes(role);
@@ -161,79 +167,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return platformRoles.some(role => PLATFORM_ROLE_HIERARCHY[role] >= requiredLevel);
   }, [platformRoles]);
 
-  useEffect(() => {
-    let mounted = true;
+  // Version guard: only apply async completions if no newer session resolution started
+  const requestVersionRef = useRef(0);
+  const mountedRef = useRef(true);
 
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state change:', event, !!session);
-        if (!mounted) return;
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (session?.user) {
-          // Use setTimeout to avoid Supabase deadlock on concurrent requests
-          setTimeout(async () => {
-            if (!mounted) return;
-            const [userRoles, userPlatformRoles] = await Promise.all([
-              fetchRoles(session.user.id),
-              fetchPlatformRoles(session.user.id)
-            ]);
-            if (mounted) {
-              setRoles(userRoles);
-              setPlatformRoles(userPlatformRoles);
-              // Fetch permissions based on roles
-              const userPermissions = await fetchPermissions(userRoles);
-              if (mounted) {
-                setPermissions(userPermissions);
-                setLoading(false);
-              }
-            }
-          }, 0);
-        } else {
-          setRoles([]);
-          setPermissions([]);
-          setPlatformRoles([]);
+  const processSession = useCallback(
+    (session: Session | null) => {
+      const v = ++requestVersionRef.current;
+
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (!session?.user) {
+        setRoles([]);
+        setPermissions([]);
+        setPlatformRoles([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch roles/platformRoles/permissions; apply only if this request is still current
+      const userId = session.user.id;
+      Promise.all([
+        fetchRoles(userId),
+        fetchPlatformRoles(userId),
+      ])
+        .then(async ([userRoles, userPlatformRoles]) => {
+          const userPermissions = await fetchPermissions(userRoles);
+          return { userRoles, userPlatformRoles, userPermissions };
+        })
+        .then(({ userRoles, userPlatformRoles, userPermissions }) => {
+          if (!mountedRef.current) return;
+          if (v !== requestVersionRef.current) return;
+          setRoles(userRoles);
+          setPlatformRoles(userPlatformRoles);
+          setPermissions(userPermissions);
           setLoading(false);
-        }
+        })
+        .catch(() => {
+          if (!mountedRef.current) return;
+          if (v !== requestVersionRef.current) return;
+          setLoading(false);
+        });
+    },
+    []
+  );
+
+  useEffect(() => {
+    mountedRef.current = true;
+
+    // Set up auth state listener FIRST (Supabase recommended order)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth state change:', event, !!session);
+        if (!mountedRef.current) return;
+        processSession(session);
       }
     );
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('Initial session check:', !!session);
-      if (!mounted) return;
-      
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        Promise.all([
-          fetchRoles(session.user.id),
-          fetchPlatformRoles(session.user.id)
-        ]).then(async ([userRoles, userPlatformRoles]) => {
-          if (mounted) {
-            setRoles(userRoles);
-            setPlatformRoles(userPlatformRoles);
-            const userPermissions = await fetchPermissions(userRoles);
-            if (mounted) {
-              setPermissions(userPermissions);
-              setLoading(false);
-            }
-          }
-        });
-      } else {
-        setLoading(false);
-      }
+      if (!mountedRef.current) return;
+      processSession(session);
     });
 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [processSession]);
 
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -270,7 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/staff-login`,
+      redirectTo: `${window.location.origin}/login`,
     });
     return { error: error as Error | null };
   };

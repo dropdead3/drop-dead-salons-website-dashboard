@@ -18,6 +18,7 @@ import {
   Filter
 } from 'lucide-react';
 import { useTransactions, TransactionFilters } from '@/hooks/useTransactions';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useLocations } from '@/hooks/useLocations';
 import { TransactionList } from '@/components/dashboard/transactions/TransactionList';
 import { RefundDialog } from '@/components/dashboard/transactions/RefundDialog';
@@ -80,6 +81,7 @@ export default function Transactions() {
   };
 
   const { data: transactions = [], isLoading, refetch } = useTransactions(filters);
+  const { formatCurrency } = useFormatCurrency();
 
   const handleRefund = (transaction: any) => {
     setSelectedTransaction(transaction);
@@ -133,7 +135,7 @@ export default function Transactions() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-display font-semibold">${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                <p className="text-2xl font-display font-semibold">{formatCurrency(totalRevenue)}</p>
               </Card>
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">Services</p>

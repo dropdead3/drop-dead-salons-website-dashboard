@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ export function MobileFeatureRequestViewer({
   onClose,
   onVote,
 }: MobileFeatureRequestViewerProps) {
+  const { formatDate } = useFormatDate();
   const [api, setApi] = useState<CarouselApi>();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
 
@@ -139,7 +141,7 @@ export function MobileFeatureRequestViewer({
                         <p className="text-xs text-muted-foreground mt-6">
                           Submitted by {request.submitter_name}
                           {request.created_at && (
-                            <> • {format(parseISO(request.created_at), 'MMM d, yyyy')}</>
+                            <> • {formatDate(parseISO(request.created_at), 'MMM d, yyyy')}</>
                           )}
                         </p>
 

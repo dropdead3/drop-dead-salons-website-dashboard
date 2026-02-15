@@ -313,3 +313,50 @@ export function useOperationalAnalytics(locationId?: string, dateRange: Analytic
     isLoading: volumeQuery.isLoading || heatmapQuery.isLoading || statusQuery.isLoading || retentionQuery.isLoading || rebookQuery.isLoading,
   };
 }
+
+export interface AppointmentSummary {
+  total: number;
+  completed: number;
+  noShow: number;
+  cancelled: number;
+  noShowRate: number;
+  cancellationRate: number;
+  completionRate: number;
+}
+
+/** Appointment counts by status for a given date range (past or future). */
+export function useAppointmentSummary(dateFrom: string, dateTo: string, locationId?: string) {
+  return useQuery({
+    queryKey: ['appointment-summary', dateFrom, dateTo, locationId],
+    queryFn: async () => {
+      let query = supabase
+        .from('phorest_appointments')
+        .select('status')
+        .gte('appointment_date', dateFrom)
+        .lte('appointment_date', dateTo);
+
+      if (locationId && locationId !== 'all') {
+        query = query.eq('location_id', locationId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      const total = data?.length || 0;
+      const completed = data?.filter(a => a.status === 'completed').length || 0;
+      const noShow = data?.filter(a => a.status === 'no_show').length || 0;
+      const cancelled = data?.filter(a => a.status === 'cancelled').length || 0;
+
+      return {
+        total,
+        completed,
+        noShow,
+        cancelled,
+        noShowRate: total > 0 ? (noShow / total) * 100 : 0,
+        cancellationRate: total > 0 ? (cancelled / total) * 100 : 0,
+        completionRate: total > 0 ? (completed / total) * 100 : 0,
+      } as AppointmentSummary;
+    },
+    enabled: !!dateFrom && !!dateTo,
+  });
+}

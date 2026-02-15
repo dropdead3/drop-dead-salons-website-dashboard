@@ -3,6 +3,7 @@ import { Badge } from '@/components/ui/badge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useTicketDistribution } from '@/hooks/useTicketDistribution';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface TicketDistributionPanelProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface TicketDistributionPanelProps {
 
 export function TicketDistributionPanel({ isOpen, dateFrom, dateTo, locationId }: TicketDistributionPanelProps) {
   const { data, isLoading } = useTicketDistribution(dateFrom, dateTo, locationId);
+  const { formatCurrencyWhole } = useFormatCurrency();
 
   const hasData = data && data.buckets.some(b => b.count > 0);
   const maxCount = hasData ? Math.max(...data!.buckets.map(b => b.count)) : 0;
@@ -49,14 +51,14 @@ export function TicketDistributionPanel({ isOpen, dateFrom, dateTo, locationId }
                   <div className="flex-1 text-center">
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Median</p>
                     <p className="text-sm font-display tabular-nums">
-                      <BlurredAmount>${Math.round(data!.median).toLocaleString()}</BlurredAmount>
+                      <BlurredAmount>{formatCurrencyWhole(Math.round(data!.median))}</BlurredAmount>
                     </p>
                   </div>
                   <div className="w-px h-8 bg-border/50" />
                   <div className="flex-1 text-center">
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Average</p>
                     <p className="text-sm font-display tabular-nums">
-                      <BlurredAmount>${Math.round(data!.average).toLocaleString()}</BlurredAmount>
+                      <BlurredAmount>{formatCurrencyWhole(Math.round(data!.average))}</BlurredAmount>
                     </p>
                   </div>
                   <div className="w-px h-8 bg-border/50" />

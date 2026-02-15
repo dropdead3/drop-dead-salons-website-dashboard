@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { TrendingUp, Target, Flame, Star, Zap } from 'lucide-react';
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface TierProgressAlertProps {
   currentRevenue: number;
@@ -13,6 +14,7 @@ interface TierProgressAlertProps {
 
 export function TierProgressAlert({ currentRevenue, className }: TierProgressAlertProps) {
   const { tiers } = useCommissionTiers();
+  const { formatCurrencyWhole } = useFormatCurrency();
 
   const tierProgress = useMemo(() => {
     if (!tiers.length) return null;
@@ -95,7 +97,7 @@ export function TierProgressAlert({ currentRevenue, className }: TierProgressAle
         bg: 'bg-chart-2/10 border-chart-2/30',
         icon: Flame,
         iconColor: 'text-chart-2',
-        message: `🔥 Almost there! Just $${remaining.toLocaleString()} to ${nextTier?.tier_name}!`,
+        message: `Almost there! Just ${formatCurrencyWhole(remaining)} to ${nextTier?.tier_name}!`,
       };
     }
     if (progress >= 75) {
@@ -103,14 +105,14 @@ export function TierProgressAlert({ currentRevenue, className }: TierProgressAle
         bg: 'bg-primary/10 border-primary/30',
         icon: Zap,
         iconColor: 'text-primary',
-        message: `⚡ $${remaining.toLocaleString()} to unlock ${nextTier?.tier_name} tier`,
+        message: `${formatCurrencyWhole(remaining)} to unlock ${nextTier?.tier_name} tier`,
       };
     }
     return {
       bg: 'bg-muted/50 border-muted',
       icon: Target,
       iconColor: 'text-muted-foreground',
-      message: `$${remaining.toLocaleString()} to next tier`,
+      message: `${formatCurrencyWhole(remaining)} to next tier`,
     };
   };
 

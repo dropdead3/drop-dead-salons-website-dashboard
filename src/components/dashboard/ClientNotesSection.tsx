@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
@@ -28,6 +28,7 @@ interface ClientNotesSectionProps {
 }
 
 export function ClientNotesSection({ clientId }: ClientNotesSectionProps) {
+  const { formatDate } = useFormatDate();
   const { user } = useAuth();
   const { data: notes, isLoading } = useClientNotes(clientId);
   const addNote = useAddClientNote();
@@ -147,7 +148,7 @@ export function ClientNotesSection({ clientId }: ClientNotesSectionProps) {
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-xs text-muted-foreground">
-                          {format(new Date(note.created_at), 'MMM d, yyyy')}
+                          {formatDate(new Date(note.created_at), 'MMM d, yyyy')}
                         </span>
                         {isOwner && (
                           <AlertDialog>

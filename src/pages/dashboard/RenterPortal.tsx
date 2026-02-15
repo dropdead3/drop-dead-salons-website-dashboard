@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useBoothRenter } from '@/hooks/useBoothRenters';
 import { useRenterPaymentMethods } from '@/hooks/useRenterPaymentMethods';
 import { useRenterYTDCommissions } from '@/hooks/useCommissionStatements';
@@ -6,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
   DollarSign, 
   CreditCard, 
@@ -20,7 +21,9 @@ import {
 import { Link } from 'react-router-dom';
 
 export default function RenterPortal() {
+  const { formatDate } = useFormatDate();
   const { user } = useAuth();
+  const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
   
   // Get booth renter profile by user ID
   const { data: boothRenters } = useBoothRenter(undefined);
@@ -65,9 +68,9 @@ export default function RenterPortal() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Next Rent Due</p>
-                <p className="text-2xl font-bold">${upcomingPayment.amount.toFixed(0)}</p>
+                <p className="text-2xl font-bold">{formatCurrencyWhole(upcomingPayment.amount)}</p>
                 <p className="text-xs text-muted-foreground">
-                  {format(upcomingPayment.dueDate, 'MMM d, yyyy')}
+                  {formatDate(upcomingPayment.dueDate, 'MMM d, yyyy')}
                 </p>
               </div>
               <div className="p-3 rounded-full bg-primary/10">
@@ -83,10 +86,10 @@ export default function RenterPortal() {
               <div>
                 <p className="text-sm text-muted-foreground">YTD Commission</p>
                 <p className="text-2xl font-bold">
-                  ${(ytdCommissions?.totalPaid || 0).toFixed(0)}
+                  {formatCurrencyWhole(ytdCommissions?.totalPaid || 0)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  ${(ytdCommissions?.totalPending || 0).toFixed(0)} pending
+                  {formatCurrencyWhole(ytdCommissions?.totalPending || 0)} pending
                 </p>
               </div>
               <div className="p-3 rounded-full bg-green-500/10">

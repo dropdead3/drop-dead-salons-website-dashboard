@@ -6,6 +6,8 @@ import { format, subDays } from 'date-fns';
 import { TrendingUp, Percent, DollarSign, Users, Award } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { formatCurrency as formatCurrencyUtil } from '@/lib/formatCurrency';
 
 interface PromotionROIPanelProps {
   organizationId: string;
@@ -14,6 +16,7 @@ interface PromotionROIPanelProps {
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))'];
 
 export function PromotionROIPanel({ organizationId }: PromotionROIPanelProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const { data: stats, isLoading } = useQuery({
     queryKey: ['promotion-roi-stats', organizationId],
     queryFn: async () => {
@@ -138,7 +141,7 @@ export function PromotionROIPanel({ organizationId }: PromotionROIPanelProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Revenue Generated</p>
-                <p className="text-2xl font-bold">${(stats?.totalRevenue || 0).toFixed(0)}</p>
+                <p className="text-2xl font-bold">{formatCurrencyWhole(stats?.totalRevenue || 0)}</p>
               </div>
               <div className="p-3 rounded-full bg-green-500/10">
                 <DollarSign className="h-5 w-5 text-green-500" />
@@ -152,7 +155,7 @@ export function PromotionROIPanel({ organizationId }: PromotionROIPanelProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Discounts Given</p>
-                <p className="text-2xl font-bold">${(stats?.totalDiscounts || 0).toFixed(0)}</p>
+                <p className="text-2xl font-bold">{formatCurrencyWhole(stats?.totalDiscounts || 0)}</p>
               </div>
               <div className="p-3 rounded-full bg-amber-500/10">
                 <Percent className="h-5 w-5 text-amber-500" />
@@ -190,10 +193,10 @@ export function PromotionROIPanel({ organizationId }: PromotionROIPanelProps) {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stats?.chartData || []} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis type="number" tickFormatter={(v) => `$${v}`} className="text-xs" />
+                  <XAxis type="number" tickFormatter={(v) => formatCurrencyUtil(v, undefined, { maximumFractionDigits: 0, minimumFractionDigits: 0 })} className="text-xs" />
                   <YAxis type="category" dataKey="name" className="text-xs" width={100} />
                   <Tooltip 
-                    formatter={(value: number) => `$${value.toFixed(2)}`}
+                    formatter={(value: number) => formatCurrencyUtil(value)}
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
@@ -285,8 +288,8 @@ export function PromotionROIPanel({ organizationId }: PromotionROIPanelProps) {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">{promo.redemptions}</TableCell>
-                  <TableCell className="text-right">${promo.total_revenue.toFixed(0)}</TableCell>
-                  <TableCell className="text-right">${promo.total_discounts.toFixed(0)}</TableCell>
+                  <TableCell className="text-right">{formatCurrencyWhole(promo.total_revenue)}</TableCell>
+                  <TableCell className="text-right">{formatCurrencyWhole(promo.total_discounts)}</TableCell>
                   <TableCell className={`text-right font-medium ${promo.roi > 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {promo.roi.toFixed(0)}%
                   </TableCell>

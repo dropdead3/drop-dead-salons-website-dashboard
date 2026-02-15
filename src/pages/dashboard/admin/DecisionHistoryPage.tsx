@@ -1,10 +1,11 @@
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, CheckCircle2, XCircle, PenLine, Clock } from 'lucide-react';
 import { useRecommendationHistory, type LeverRecommendation } from '@/hooks/useLeverRecommendations';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   approved: { label: 'Approved', icon: CheckCircle2, color: 'text-green-500' },
@@ -24,7 +25,9 @@ const LEVER_TYPE_LABELS: Record<string, string> = {
 };
 
 export default function DecisionHistoryPage() {
+  const { formatDate } = useFormatDate();
   const { data: recommendations, isLoading } = useRecommendationHistory();
+  const { formatCurrencyWhole } = useFormatCurrency();
 
   return (
     <PlatformPageContainer>
@@ -88,10 +91,10 @@ export default function DecisionHistoryPage() {
                     </p>
                   )}
                   <div className="flex items-center gap-3 text-xs text-[hsl(var(--platform-foreground-muted))]">
-                    <span>{format(new Date(rec.created_at), 'MMM d, yyyy')}</span>
+                    <span>{formatDate(new Date(rec.created_at), 'MMM d, yyyy')}</span>
                     {rec.estimated_monthly_impact && (
                       <span>
-                        Est. impact: ${rec.estimated_monthly_impact.toLocaleString()}/mo
+                        Est. impact: {formatCurrencyWhole(rec.estimated_monthly_impact)}/mo
                       </span>
                     )}
                   </div>

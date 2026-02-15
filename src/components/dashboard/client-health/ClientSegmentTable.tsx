@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import type { HealthClient } from '@/hooks/useClientHealthSegments';
 
 interface ClientSegmentTableProps {
@@ -17,6 +18,8 @@ interface ClientSegmentTableProps {
 type SortField = 'name' | 'last_visit' | 'total_spend' | 'days_inactive';
 
 export function ClientSegmentTable({ clients, selectedIds, onSelectionChange }: ClientSegmentTableProps) {
+  const { formatDate } = useFormatDate();
+  const { formatCurrencyWhole } = useFormatCurrency();
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('days_inactive');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
@@ -127,14 +130,14 @@ export function ClientSegmentTable({ clients, selectedIds, onSelectionChange }: 
                   <TableCell className="hidden md:table-cell text-muted-foreground text-xs">{client.email || '—'}</TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground text-xs">{client.phone || '—'}</TableCell>
                   <TableCell className="text-xs">
-                    {client.last_visit ? format(new Date(client.last_visit), 'MMM d, yyyy') : '—'}
+                    {client.last_visit ? formatDate(new Date(client.last_visit), 'MMM d, yyyy') : '—'}
                   </TableCell>
                   <TableCell>
                     <Badge variant={client.days_inactive >= 90 ? 'destructive' : client.days_inactive >= 60 ? 'secondary' : 'outline'} className="text-xs">
                       {client.days_inactive}d
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-xs font-medium">${client.total_spend.toLocaleString()}</TableCell>
+                  <TableCell className="text-xs font-medium">{formatCurrencyWhole(client.total_spend)}</TableCell>
                 </TableRow>
               ))
             )}

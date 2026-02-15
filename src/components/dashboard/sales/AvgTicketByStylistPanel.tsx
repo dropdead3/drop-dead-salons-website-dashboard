@@ -4,6 +4,7 @@ import { ChevronDown, Layers } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,7 @@ const MAX_VISIBLE = 5;
 
 /** Level 2: Service category breakdown for a stylist */
 function ServiceMixPanel({ categories }: { categories: StylistCategoryBreakdown[] }) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   return (
     <motion.div
       initial={{ height: 0, opacity: 0 }}
@@ -48,7 +50,7 @@ function ServiceMixPanel({ categories }: { categories: StylistCategoryBreakdown[
               <span className="text-xs flex-1 truncate">{cat.category}</span>
               <span className="text-xs tabular-nums text-muted-foreground">{cat.count} appointment{cat.count !== 1 ? 's' : ''}</span>
               <span className="text-xs tabular-nums font-medium w-[50px] text-right">
-                <BlurredAmount>${Math.round(cat.revenue).toLocaleString()}</BlurredAmount>
+                <BlurredAmount>{formatCurrencyWhole(Math.round(cat.revenue))}</BlurredAmount>
               </span>
               <span className="text-[10px] tabular-nums text-muted-foreground w-[30px] text-right">{cat.sharePercent}%</span>
             </motion.div>
@@ -61,6 +63,7 @@ function ServiceMixPanel({ categories }: { categories: StylistCategoryBreakdown[
 
 /** Level 1: Stylist row with avg ticket and expandable service mix */
 function StylistTicketRow({ stylist, delay, orgAvg }: { stylist: StylistTicketData; delay: number; orgAvg: number }) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const [expanded, setExpanded] = useState(false);
   const diff = orgAvg > 0 ? Math.round(((stylist.avgTicket - orgAvg) / orgAvg) * 100) : 0;
 
@@ -87,7 +90,7 @@ function StylistTicketRow({ stylist, delay, orgAvg }: { stylist: StylistTicketDa
           </p>
         </div>
         <span className="text-sm font-display tabular-nums">
-          <BlurredAmount>${Math.round(stylist.avgTicket).toLocaleString()}</BlurredAmount>
+          <BlurredAmount>{formatCurrencyWhole(Math.round(stylist.avgTicket))}</BlurredAmount>
         </span>
         <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform', expanded && 'rotate-180')} />
       </div>

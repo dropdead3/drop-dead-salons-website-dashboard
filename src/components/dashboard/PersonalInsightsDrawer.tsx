@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePersonalInsights } from '@/hooks/usePersonalInsights';
 import { GuidancePanel } from './GuidancePanel';
+import { InsightDescriptionWithLinks } from './InsightDescriptionWithLinks';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
@@ -104,7 +105,9 @@ function PersonalInsightCard({ insight, onRequestGuidance }: { insight: InsightI
             </span>
           </div>
           <p className="text-sm font-medium leading-snug">{insight.title}</p>
-          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{insight.description}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
+            <InsightDescriptionWithLinks description={insight.description} />
+          </p>
           <GuidanceTrigger
             label="How to improve"
             icon={Lightbulb}
@@ -124,7 +127,9 @@ function PersonalActionCard({ item, index, onRequestGuidance }: { item: ActionIt
           <span className="text-[10px] font-display">{index + 1}</span>
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm leading-snug">{item.action}</p>
+          <p className="text-sm leading-snug">
+            <InsightDescriptionWithLinks description={item.action} />
+          </p>
           <GuidanceTrigger
             label="What you should do"
             onClick={() => onRequestGuidance({ type: 'action', title: item.action, description: item.action, priority: item.priority })}
@@ -195,7 +200,7 @@ export function PersonalInsightsDrawer() {
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
           onClick={() => setExpanded(true)}
-          className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-display tracking-wide hover:bg-muted/50 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-sans hover:bg-muted/50 transition-colors cursor-pointer"
         >
           <div className="w-5 h-5 rounded-md bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
             <Brain className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />

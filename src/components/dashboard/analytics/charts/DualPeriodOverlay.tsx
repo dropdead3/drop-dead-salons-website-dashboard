@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatCurrency as formatCurrencyUtil, formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 
 interface OverlayDataPoint {
   date: string;
@@ -68,7 +69,7 @@ export function DualPeriodOverlay({
           <div className="text-sm text-muted-foreground">
             Avg daily difference:{' '}
             <span className={averageDelta >= 0 ? 'text-chart-2' : 'text-destructive'}>
-              {averageDelta >= 0 ? '+' : ''}${averageDelta.toFixed(0)}
+              {averageDelta >= 0 ? '+' : ''}{formatCurrencyWholeUtil(Math.abs(averageDelta))}
             </span>
           </div>
         </div>
@@ -85,14 +86,14 @@ export function DualPeriodOverlay({
                 axisLine={false}
               />
               <YAxis 
-                tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
                 tick={{ fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
               />
               <Tooltip
                 formatter={(value: number, name: string) => [
-                  `$${value.toLocaleString()}`,
+                  formatCurrencyUtil(value),
                   name === 'periodA' ? periodALabel : periodBLabel,
                 ]}
                 contentStyle={{
@@ -132,13 +133,13 @@ export function DualPeriodOverlay({
           <div className="text-center">
             <p className="text-xs text-muted-foreground">{periodALabel} Avg</p>
             <p className="font-semibold">
-              ${(data.reduce((s, d) => s + d.periodA, 0) / (data.length || 1)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              {formatCurrencyWholeUtil(data.reduce((s, d) => s + d.periodA, 0) / (data.length || 1))}
             </p>
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-foreground">{periodBLabel} Avg</p>
             <p className="font-semibold">
-              ${(data.reduce((s, d) => s + d.periodB, 0) / (data.length || 1)).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+              {formatCurrencyWholeUtil(data.reduce((s, d) => s + d.periodB, 0) / (data.length || 1))}
             </p>
           </div>
           <div className="text-center">

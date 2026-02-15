@@ -15,7 +15,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { ArrowLeft, Plus, ShieldAlert, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 const INCIDENT_TYPES = [
   { value: 'workplace_injury', label: 'Workplace Injury' },
@@ -42,6 +43,7 @@ const STATUS_MAP: Record<string, { label: string; variant: 'default' | 'secondar
 };
 
 export default function IncidentReports() {
+  const { formatDate } = useFormatDate();
   const { incidents, createIncident, updateIncident } = useIncidentReports();
   const { effectiveOrganization: organization } = useOrganizationContext();
   const [open, setOpen] = useState(false);
@@ -181,7 +183,7 @@ export default function IncidentReports() {
                         <TableCell><Badge variant={statusCfg.variant}>{statusCfg.label}</Badge></TableCell>
                         <TableCell>{INCIDENT_TYPES.find(t => t.value === incident.incident_type)?.label || incident.incident_type}</TableCell>
                         <TableCell><Badge variant="outline" className={sevCfg?.color}>{sevCfg?.label || incident.severity}</Badge></TableCell>
-                        <TableCell className="text-muted-foreground">{format(parseISO(incident.incident_date), 'MMM d, yyyy')}</TableCell>
+                        <TableCell className="text-muted-foreground">{formatDate(parseISO(incident.incident_date), 'MMM d, yyyy')}</TableCell>
                         <TableCell className="max-w-[250px] truncate">{incident.description}</TableCell>
                         <TableCell>
                           {incident.status === 'open' && (

@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { UserPlus, Loader2, Clock, Ban, Check, DollarSign, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -45,6 +46,7 @@ interface ServiceWithRestrictions {
 }
 
 export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
+  const { formatCurrency, currency } = useFormatCurrency();
   const [open, setOpen] = useState(false);
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
@@ -350,7 +352,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
                             "text-sm font-semibold tabular-nums min-w-[52px]",
                             isDisabled ? "text-muted-foreground" : "text-foreground"
                           )}>
-                            ${price}
+                            {formatCurrency(price)}
                           </span>
                         </div>
                       </div>
@@ -406,13 +408,13 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
                 {selectedServiceDetails.map((service) => (
                   <div key={service.id} className="flex justify-between text-muted-foreground">
                     <span className="truncate mr-3">{service.name}</span>
-                    <span className="font-mono tabular-nums">${getServicePrice(service)}</span>
+                    <span className="font-mono tabular-nums">{formatCurrency(getServicePrice(service))}</span>
                   </div>
                 ))}
               </div>
               <div className="flex justify-between font-semibold pt-2 border-t text-base">
                 <span>Total</span>
-                <span className="font-mono tabular-nums">${calculatedTotalPrice}</span>
+                <span className="font-mono tabular-nums">{formatCurrency(calculatedTotalPrice)}</span>
               </div>
               <p className="text-xs text-muted-foreground text-center pt-1">
                 Estimated price, not including overages

@@ -46,7 +46,8 @@ import {
 } from '@/hooks/useStaffInvitations';
 import { useAllUsersWithRoles } from '@/hooks/useUserRoles';
 import { InviteStaffDialog } from '@/components/dashboard/InviteStaffDialog';
-import { format, formatDistanceToNow, isPast } from 'date-fns';
+import { formatDistanceToNow, isPast } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
   Search, 
   Loader2, 
@@ -90,9 +91,9 @@ const INVITATION_STATUS_CONFIG: Record<string, { icon: typeof Clock; color: stri
 
 const getStaffLoginUrl = () => {
   if (typeof window !== 'undefined') {
-    return `${window.location.origin}/staff-login`;
+    return `${window.location.origin}/login`;
   }
-  return '/staff-login';
+  return '/login';
 };
 
 function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
@@ -325,6 +326,7 @@ function QRCodeCard() {
 }
 
 export default function AccountManagement() {
+  const { formatDate } = useFormatDate();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'invitations' | 'approvals'>('invitations');
 
@@ -454,7 +456,7 @@ export default function AccountManagement() {
 
               {account.approved_at && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  Approved {format(new Date(account.approved_at), 'MMM d, yyyy')}
+                  Approved {formatDate(new Date(account.approved_at), 'MMM d, yyyy')}
                 </p>
               )}
             </div>
@@ -573,7 +575,7 @@ export default function AccountManagement() {
                   <TooltipTrigger asChild>
                     <span className="cursor-help">{formatDistanceToNow(new Date(invitation.created_at), { addSuffix: true })}</span>
                   </TooltipTrigger>
-                  <TooltipContent>{format(new Date(invitation.created_at), 'PPpp')}</TooltipContent>
+                  <TooltipContent>{formatDate(new Date(invitation.created_at), 'PPpp')}</TooltipContent>
                 </Tooltip>
               </div>
 
@@ -584,7 +586,7 @@ export default function AccountManagement() {
               )}
 
               {actualStatus === 'accepted' && invitation.accepted_at && (
-                <p className="text-xs text-green-600 mt-1">Accepted {format(new Date(invitation.accepted_at), 'PPp')}</p>
+                <p className="text-xs text-green-600 mt-1">Accepted {formatDate(new Date(invitation.accepted_at), 'PPp')}</p>
               )}
             </div>
 

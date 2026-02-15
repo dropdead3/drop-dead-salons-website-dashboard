@@ -16,6 +16,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import {
   Plus, Search, Calendar as CalendarIcon, Clock, Edit, Trash2, Send, Archive,
@@ -57,6 +58,7 @@ function ChangelogEntryCard({
   onPublish: () => void;
   onDelete: () => void;
 }) {
+  const { formatDate } = useFormatDate();
   const typeConfig = ENTRY_TYPES.find(t => t.value === entry.entry_type) || ENTRY_TYPES[0];
   const statusConfig = STATUS_BADGES[entry.status] || STATUS_BADGES.draft;
   const TypeIcon = typeConfig.icon;
@@ -96,11 +98,11 @@ function ChangelogEntryCard({
               {entry.scheduled_publish_at && entry.status === 'scheduled' && (
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  Scheduled: {format(new Date(entry.scheduled_publish_at), 'MMM d, yyyy h:mm a')}
+                  Scheduled: {formatDate(new Date(entry.scheduled_publish_at), 'MMM d, yyyy h:mm a')}
                 </span>
               )}
               {entry.published_at && entry.status === 'published' && (
-                <span>Published {format(new Date(entry.published_at), 'MMM d, yyyy')}</span>
+                <span>Published {formatDate(new Date(entry.published_at), 'MMM d, yyyy')}</span>
               )}
               {entry.target_roles && entry.target_roles.length > 0 && (
                 <span>Targets: {entry.target_roles.join(', ')}</span>
@@ -146,6 +148,7 @@ function FeatureRequestCard({
   onUpdateStatus: (status: string) => void;
   onDelete: () => void;
 }) {
+  const { formatDate } = useFormatDate();
   const statusConfig = FEATURE_STATUSES.find(s => s.value === request.status) || FEATURE_STATUSES[0];
   const categoryConfig = FEATURE_CATEGORIES.find(c => c.value === request.category);
 
@@ -172,7 +175,7 @@ function FeatureRequestCard({
             <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
               <span>{categoryConfig?.label || request.category}</span>
               <span>by {request.submitter_name}</span>
-              <span>{format(new Date(request.created_at), 'MMM d, yyyy')}</span>
+              <span>{formatDate(new Date(request.created_at), 'MMM d, yyyy')}</span>
             </div>
 
             {request.admin_response && (
@@ -208,6 +211,7 @@ function FeatureRequestCard({
 }
 
 export default function ChangelogManager() {
+  const { formatDate } = useFormatDate();
   const [activeTab, setActiveTab] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -550,7 +554,7 @@ export default function ChangelogManager() {
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="w-full justify-start text-left font-normal">
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.release_date ? format(new Date(formData.release_date), 'PPP') : 'Select date'}
+                        {formData.release_date ? formatDate(new Date(formData.release_date), 'PPP') : 'Select date'}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -612,7 +616,7 @@ export default function ChangelogManager() {
                         <PopoverTrigger asChild>
                           <Button variant="outline" className="w-full justify-start text-left font-normal">
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {scheduleDate ? format(scheduleDate, 'PPP') : 'Pick a date'}
+                            {scheduleDate ? formatDate(scheduleDate, 'PPP') : 'Pick a date'}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0">

@@ -1069,7 +1069,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
           borderRadius: '12px 12px 0 0'
         },
         navLinks: [
-          { label: 'Dashboard Login', url: 'https://www.dropdeadsalon.com/staff-login', enabled: true },
+          { label: 'Dashboard Login', url: 'https://www.dropdeadsalon.com/login', enabled: true },
         ],
         headerConfig: {
           showLogo: true,
@@ -1680,7 +1680,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
       }),
       ...(type === 'header' && {
         navLinks: [
-          { label: 'Dashboard Login', url: 'https://www.dropdeadsalon.com/staff-login', enabled: true },
+          { label: 'Dashboard Login', url: 'https://www.dropdeadsalon.com/login', enabled: true },
         ],
         headerConfig: {
           showLogo: true,

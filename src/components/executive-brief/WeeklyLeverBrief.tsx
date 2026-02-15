@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -20,6 +21,7 @@ interface WeeklyLeverBriefProps {
 
 export function WeeklyLeverBrief({ recommendation }: WeeklyLeverBriefProps) {
   const [detailOpen, setDetailOpen] = useState(false);
+  const { formatCurrencyWhole } = useFormatCurrency();
   const isPending = recommendation.status === 'pending';
   const whyNow = Array.isArray(recommendation.why_now) ? recommendation.why_now : [];
 
@@ -42,7 +44,7 @@ export function WeeklyLeverBrief({ recommendation }: WeeklyLeverBriefProps) {
             <div className="flex items-center gap-1.5 rounded-xl bg-green-500/10 px-3 py-1.5 text-green-600">
               <DollarSign className="h-4 w-4" />
               <span className="text-sm font-medium">
-                +${recommendation.estimated_monthly_impact.toLocaleString()}/mo
+                +{formatCurrencyWhole(recommendation.estimated_monthly_impact)}/mo
               </span>
             </div>
           )}

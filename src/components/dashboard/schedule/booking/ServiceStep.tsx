@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Check, Clock, DollarSign, MapPin, Loader2, Scissors } from 'lucide-react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
 
 interface Service {
@@ -51,6 +52,7 @@ export function ServiceStep({
   canContinue,
   isLoadingServices,
 }: ServiceStepProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const hasServices = servicesByCategory && Object.keys(servicesByCategory).length > 0;
 
   return (
@@ -117,8 +119,7 @@ export function ServiceStep({
                             </span>
                             {service.price !== null && (
                               <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                                <DollarSign className="h-3 w-3" />
-                                {service.price.toFixed(0)}
+                                {formatCurrencyWhole(service.price)}
                               </span>
                             )}
                           </div>
@@ -161,7 +162,7 @@ export function ServiceStep({
               </Badge>
               <span className="text-muted-foreground">{totalDuration} min</span>
             </div>
-            <span className="font-semibold">${totalPrice.toFixed(0)}</span>
+            <span className="font-semibold">{formatCurrencyWhole(totalPrice)}</span>
           </div>
         )}
         <Button

@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { managerNavItems } from '@/config/dashboardNav';
+import type { ManagerGroupId } from '@/config/dashboardNav';
+import { platformNavGroups } from '@/config/platformNav';
+
+const DEFAULT_PLATFORM_LINK_ORDER = platformNavGroups.flatMap((g) => g.items.map((i) => i.href));
 
 // Default section order matching the sidebar structure
 // Consolidated from 9 sections to 6 sections (housekeeping items relocated to top bar)
@@ -13,7 +18,7 @@ export const DEFAULT_SECTION_ORDER = [
   'platform',
 ];
 
-// Section labels for display
+// Section labels for display (housekeeping is optional/legacy; shown only when in section order)
 export const SECTION_LABELS: Record<string, string> = {
   main: 'Main',
   growth: 'Growth & Development',
@@ -21,56 +26,37 @@ export const SECTION_LABELS: Record<string, string> = {
   manager: 'Management',
   adminOnly: 'Control Center',
   platform: 'Platform Admin',
-  // Legacy labels for backward compatibility
   housekeeping: 'Resources',
   website: 'Website',
 };
 
-// Management section sub-groups for collapsible organization
-export const MANAGEMENT_SUB_GROUPS = {
-  teamTools: {
-    id: 'teamTools',
-    label: 'Team Tools',
-    links: [
-      '/dashboard/schedule',
-      '/dashboard/shift-swaps',
-      '/dashboard/rewards',
-      '/dashboard/assistant-schedule',
-      '/dashboard/schedule-meeting',
-      '/dashboard/admin/team',
-    ],
-  },
-  analytics: {
-    id: 'analytics',
-    label: 'Analytics & Insights',
-    links: [
-      '/dashboard/admin/analytics',
-      '/dashboard/admin/executive-brief',
-      '/dashboard/admin/kpi-builder',
-      '/dashboard/admin/decision-history',
-      '/dashboard/stats',
-      '/dashboard/leaderboard',
-    ],
-  },
-  people: {
-    id: 'people',
-    label: 'People',
-    links: [
-      '/dashboard/directory',
-      '/dashboard/clients',
-    ],
-  },
-  operations: {
-    id: 'operations',
-    label: 'Operations',
-    links: [
-      '/dashboard/admin/management',
-      '/dashboard/admin/payroll',
-      '/dashboard/admin/booth-renters',
-      '/dashboard/admin/website-sections',
-    ],
-  },
+// Management section sub-group labels and display order (links derived from registry)
+const MANAGER_GROUP_LABELS: Record<ManagerGroupId, string> = {
+  teamTools: 'Team Tools',
+  analytics: 'Analytics & Insights',
+  people: 'People',
+  operations: 'Operations',
 };
+
+/** Sub-groups for Management section; links are derived from managerNavItems by managerGroup. */
+export const MANAGEMENT_SUB_GROUPS = (() => {
+  const order: ManagerGroupId[] = ['teamTools', 'analytics', 'people', 'operations'];
+  const linksByGroup: Record<string, string[]> = {};
+  order.forEach(id => { linksByGroup[id] = []; });
+  managerNavItems.forEach(item => {
+    if (item.managerGroup && linksByGroup[item.managerGroup]) {
+      linksByGroup[item.managerGroup].push(item.href);
+    }
+  });
+  return order.reduce((acc, id) => {
+    acc[id] = {
+      id,
+      label: MANAGER_GROUP_LABELS[id],
+      links: linksByGroup[id] || [],
+    };
+    return acc;
+  }, {} as Record<ManagerGroupId, { id: string; label: string; links: string[] }>);
+})();
 
 // Default link order for each section
 export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
@@ -111,20 +97,10 @@ export const DEFAULT_LINK_ORDER: Record<string, string[]> = {
     '/dashboard/admin/website-sections',
   ],
   adminOnly: [
-    '/dashboard/admin/accounts',
-    '/dashboard/admin/roles',
-    '/dashboard/admin/feature-flags',
     '/dashboard/admin/access-hub',
     '/dashboard/admin/settings',
   ],
-  platform: [
-    '/dashboard/platform/overview',
-    '/dashboard/platform/accounts',
-    '/dashboard/platform/import',
-    '/dashboard/platform/revenue',
-    '/dashboard/platform/permissions',
-    '/dashboard/platform/settings',
-  ],
+  platform: DEFAULT_PLATFORM_LINK_ORDER,
 };
 
 export interface CustomSectionConfig {

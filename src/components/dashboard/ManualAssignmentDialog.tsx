@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { format, parseISO, getDay } from 'date-fns';
+import { parseISO, getDay } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { UserCheck, MapPin, Clock, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ interface ManualAssignmentDialogProps {
 }
 
 export function ManualAssignmentDialog({ request, open, onOpenChange }: ManualAssignmentDialogProps) {
+  const { formatDate } = useFormatDate();
   const [isAssigning, setIsAssigning] = useState(false);
   const [selectedAssistantId, setSelectedAssistantId] = useState<string | null>(null);
   const queryClient = useQueryClient();
@@ -119,7 +121,7 @@ export function ManualAssignmentDialog({ request, open, onOpenChange }: ManualAs
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <span>
-                {format(parseISO(request.request_date), 'EEEE, MMM d')} • {request.start_time.slice(0, 5)} - {request.end_time.slice(0, 5)}
+                {formatDate(parseISO(request.request_date), 'EEEE, MMM d')} • {request.start_time.slice(0, 5)} - {request.end_time.slice(0, 5)}
               </span>
             </div>
             <div className="flex items-center gap-2">

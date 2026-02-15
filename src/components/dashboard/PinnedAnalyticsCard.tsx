@@ -15,10 +15,19 @@ import { HiringCapacityCard } from '@/components/dashboard/HiringCapacityCard';
 import { StaffingTrendChart } from '@/components/dashboard/StaffingTrendChart';
 import { StylistWorkloadCard } from '@/components/dashboard/StylistWorkloadCard';
 import { OperationsQuickStats } from '@/components/dashboard/operations/OperationsQuickStats';
+import { ExecutiveSummaryCard } from '@/components/dashboard/analytics/ExecutiveSummaryCard';
+import { ClientHealthSummaryCard } from '@/components/dashboard/client-health/ClientHealthSummaryCard';
+import { DailyBriefCard } from '@/components/dashboard/analytics/DailyBriefCard';
+import { OperationalHealthCard } from '@/components/dashboard/analytics/OperationalHealthCard';
+import { LocationsRollupCard } from '@/components/dashboard/analytics/LocationsRollupCard';
+import { ServiceMixCard } from '@/components/dashboard/analytics/ServiceMixCard';
+import { RetailEffectivenessCard } from '@/components/dashboard/analytics/RetailEffectivenessCard';
+import { RebookingCard } from '@/components/dashboard/analytics/RebookingCard';
 import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useLocations } from '@/hooks/useLocations';
+import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import type { FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { getNextPayDay, type PayScheduleSettings } from '@/hooks/usePaySchedule';
 
@@ -27,6 +36,7 @@ export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 
 // Map pinned cards to their parent analytics tab visibility keys
 // If the parent tab is hidden, the card should also be hidden
 const CARD_TO_TAB_MAP: Record<string, string> = {
+  'executive_summary': 'analytics_leadership_tab',
   'sales_overview': 'analytics_sales_tab',
   'top_performers': 'analytics_sales_tab',
   'revenue_breakdown': 'analytics_sales_tab',
@@ -40,6 +50,13 @@ const CARD_TO_TAB_MAP: Record<string, string> = {
   'staffing_trends': 'analytics_operations_tab',
   'stylist_workload': 'analytics_operations_tab',
   'client_funnel': 'analytics_marketing_tab',
+  'client_health': 'analytics_operations_tab',
+  'daily_brief': 'analytics_leadership_tab',
+  'operational_health': 'analytics_operations_tab',
+  'locations_rollup': 'analytics_sales_tab',
+  'service_mix': 'analytics_sales_tab',
+  'retail_effectiveness': 'analytics_sales_tab',
+  'rebooking': 'analytics_operations_tab',
 };
 
 // Map dashboard date range to Sales Overview date range
@@ -154,7 +171,7 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
     locationId: locationFilter,
   });
   
-  // Resolve location name for Zura AI context
+  const { accessibleLocations } = useUserLocationAccess();
   const { data: locations } = useLocations();
   const selectedLocationName = locationFilter
     ? locations?.find(l => l.id === locationFilter)?.name || 'Unknown'
@@ -175,6 +192,32 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
   }
   
   switch (cardId) {
+    case 'executive_summary':
+      return (
+        <VisibilityGate elementKey="executive_summary">
+          <PinnableCard elementKey="executive_summary" elementName="Executive Summary" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <ExecutiveSummaryCard
+              filterContext={filterContext}
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={filters.locationId}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'operational_health':
+      return (
+        <VisibilityGate elementKey="operational_health">
+          <PinnableCard elementKey="operational_health" elementName="Operational Health" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <OperationalHealthCard
+              filterContext={filterContext}
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={filters.locationId}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
     case 'operations_stats':
       return (
         <VisibilityGate 
@@ -228,6 +271,53 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
           </PinnableCard>
         </VisibilityGate>
       );
+    case 'locations_rollup':
+      return (
+        <VisibilityGate elementKey="locations_rollup">
+          <PinnableCard elementKey="locations_rollup" elementName="Locations Rollup" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <LocationsRollupCard filterContext={filterContext} dateFrom={filters.dateFrom} dateTo={filters.dateTo} />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'service_mix':
+      return (
+        <VisibilityGate elementKey="service_mix">
+          <PinnableCard elementKey="service_mix" elementName="Service Mix" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <ServiceMixCard
+              filterContext={filterContext}
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={filters.locationId}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'retail_effectiveness':
+      return (
+        <VisibilityGate elementKey="retail_effectiveness">
+          <PinnableCard elementKey="retail_effectiveness" elementName="Retail Effectiveness" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <RetailEffectivenessCard
+              filterContext={filterContext}
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={filters.locationId}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'rebooking':
+      return (
+        <VisibilityGate elementKey="rebooking">
+          <PinnableCard elementKey="rebooking" elementName="Rebooking Rate" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <RebookingCard
+              filterContext={filterContext}
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={filters.locationId}
+            />
+          </PinnableCard>
+        </VisibilityGate>
+      );
     case 'revenue_breakdown':
       return (
         <VisibilityGate elementKey="revenue_breakdown">
@@ -246,6 +336,22 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
               retailAttachmentRate={attachmentData?.attachmentRate}
               retailAttachmentLoading={isLoadingAttachment}
             />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'client_health':
+      return (
+        <VisibilityGate elementKey="client_health">
+          <PinnableCard elementKey="client_health" elementName="Client Health" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <ClientHealthSummaryCard />
+          </PinnableCard>
+        </VisibilityGate>
+      );
+    case 'daily_brief':
+      return (
+        <VisibilityGate elementKey="daily_brief">
+          <PinnableCard elementKey="daily_brief" elementName="Daily Brief" category="Command Center" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <DailyBriefCard filterContext={filterContext} locationId={filters.locationId} />
           </PinnableCard>
         </VisibilityGate>
       );

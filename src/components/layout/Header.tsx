@@ -6,6 +6,7 @@ import Logo from "@/assets/drop-dead-logo.svg";
 import LogoIcon from "@/assets/dd-secondary-logo.svg";
 import { cn } from "@/lib/utils";
 import { useAnnouncementBarSettings } from "@/hooks/useAnnouncementBar";
+import { useOrgPath } from "@/hooks/useOrgPath";
 import {
   Tooltip,
   TooltipContent,
@@ -20,14 +21,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 // Priority: lower number = higher priority (hidden last)
-const navLinks = [
+const NAV_LINKS = [
   { href: "/services", label: "Services", priority: 1 },
   { href: "/extensions", label: "Hair Extensions", priority: 3 },
   { href: "/careers", label: "Join The Team", priority: 4 },
   { href: "/gallery", label: "Gallery", priority: 5 },
 ];
 
-const aboutLinks = [
+const ABOUT_LINKS = [
   { href: "/about", label: "About Us" },
   { href: "/policies", label: "Salon Policies" },
 ];
@@ -48,6 +49,7 @@ export function Header() {
   const lastScrollY = useRef(0);
   const location = useLocation();
   const { data: announcementSettings } = useAnnouncementBarSettings();
+  const orgPath = useOrgPath();
 
   // Track desktop breakpoint for sticky effects
   useEffect(() => {
@@ -66,11 +68,11 @@ export function Header() {
   // All nav items with their priorities for responsive hiding
   // Priority: higher number = hidden first
   const allNavItems = [
-    { href: "/services", label: "Services", priority: 1, type: "link" as const },
-    { href: "/about", label: "About", priority: 2, type: "dropdown" as const },
-    { href: "/extensions", label: "Hair Extensions", priority: 3, type: "link" as const },
-    { href: "/careers", label: "Join The Team", priority: 4, type: "link" as const },
-    { href: "/gallery", label: "Gallery", priority: 5, type: "link" as const },
+    { href: orgPath("/services"), label: "Services", priority: 1, type: "link" as const },
+    { href: orgPath("/about"), label: "About", priority: 2, type: "dropdown" as const },
+    { href: orgPath("/extensions"), label: "Hair Extensions", priority: 3, type: "link" as const },
+    { href: orgPath("/careers"), label: "Join The Team", priority: 4, type: "link" as const },
+    { href: orgPath("/gallery"), label: "Gallery", priority: 5, type: "link" as const },
   ];
 
   // Calculate which items should be hidden based on window width
@@ -256,7 +258,7 @@ export function Header() {
             {/* Logo with scroll transition - responsive width to give nav more room */}
             <div className="w-40 lg:w-40 xl:w-56 shrink-0 flex items-center">
               <Link
-                to="/"
+                to={orgPath("/")}
                 className="flex items-center hover:opacity-70 transition-opacity relative h-12"
               >
                 {/* Primary Logo - shows when not scrolled OR scrolling up (desktop only for transition) */}
@@ -339,13 +341,13 @@ export function Header() {
                           sideOffset={12}
                           className="w-[180px] rounded-lg border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl p-1.5"
                         >
-                          {aboutLinks.map((link) => (
+                          {ABOUT_LINKS.map((link) => (
                             <DropdownMenuItem key={link.href} asChild>
                               <Link
-                                to={link.href}
+                                to={orgPath(link.href)}
                                 className={cn(
                                   "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
-                                  location.pathname === link.href 
+                                  location.pathname === orgPath(link.href)
                                     ? "bg-accent text-accent-foreground" 
                                     : "text-foreground/80"
                                 )}
@@ -419,13 +421,13 @@ export function Header() {
                         .map((item) => {
                           if (item.type === "dropdown") {
                             // Render about links as individual menu items
-                            return aboutLinks.map((link) => (
+                            return ABOUT_LINKS.map((link) => (
                               <DropdownMenuItem key={link.href} asChild>
                                 <Link
-                                  to={link.href}
+                                  to={orgPath(link.href)}
                                   className={cn(
                                     "flex items-center gap-3 select-none rounded-md px-3 py-2.5 text-sm font-medium leading-none cursor-pointer transition-all duration-200",
-                                    location.pathname === link.href 
+                                    location.pathname === orgPath(link.href)
                                       ? "bg-accent text-accent-foreground" 
                                       : "text-foreground/80"
                                   )}
@@ -478,7 +480,7 @@ export function Header() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Link
-                      to="/booking"
+                      to={orgPath("/booking")}
                       className={cn(
                         "inline-flex items-center gap-2 px-5 py-2.5 text-sm font-sans font-medium rounded-full border transition-all duration-300 active:scale-[0.98] hover:scale-105 hover:-translate-y-0.5 hover:shadow-lg",
                         isOverDark 
@@ -533,7 +535,7 @@ export function Header() {
                     className="flex items-center gap-3 pl-4 pr-2"
                   >
                     <Link
-                      to="/staff-login"
+                      to="/login"
                       onClick={() => setIsStaffMenuOpen(false)}
                       className={cn(
                         "text-sm font-sans font-medium whitespace-nowrap px-4 py-2 rounded-full border transition-all duration-200",
@@ -583,10 +585,10 @@ export function Header() {
             >
               <nav className="container mx-auto px-6 py-8 flex flex-col gap-6">
                 <Link
-                  to="/services"
+                  to={orgPath("/services")}
                   className={cn(
                     "text-xl font-display uppercase tracking-wide transition-opacity",
-                    location.pathname === "/services"
+                    location.pathname === orgPath("/services")
                       ? "opacity-100"
                       : "opacity-60"
                   )}
@@ -594,13 +596,13 @@ export function Header() {
                 >
                   Services
                 </Link>
-                {aboutLinks.map((link) => (
+                {ABOUT_LINKS.map((link) => (
                   <Link
                     key={link.href}
-                    to={link.href}
+                    to={orgPath(link.href)}
                     className={cn(
                       "text-xl font-display uppercase tracking-wide transition-opacity flex items-center gap-2",
-                      location.pathname === link.href
+                      location.pathname === orgPath(link.href)
                         ? "opacity-100"
                         : "opacity-60"
                     )}
@@ -610,13 +612,13 @@ export function Header() {
                     {link.label}
                   </Link>
                 ))}
-                {navLinks.slice(1).map((link) => (
+                {NAV_LINKS.slice(1).map((link) => (
                   <Link
                     key={link.href}
-                    to={link.href}
+                    to={orgPath(link.href)}
                     className={cn(
                       "text-xl font-display uppercase tracking-wide transition-opacity",
-                      location.pathname === link.href
+                      location.pathname === orgPath(link.href)
                         ? "opacity-100"
                         : "opacity-60"
                     )}
@@ -633,14 +635,14 @@ export function Header() {
                   Contact Us
                 </Link>
                 <Link
-                  to="/staff-login"
+                  to="/login"
                   className="text-sm font-sans text-muted-foreground hover:text-foreground transition-colors"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Staff Login
+                  Login
                 </Link>
                 <Link
-                  to="/booking"
+                  to={orgPath("/booking")}
                   className="mt-4 w-full text-center inline-flex items-center justify-center gap-2 px-6 py-4 text-sm font-display uppercase tracking-wide bg-foreground text-background rounded-full"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >

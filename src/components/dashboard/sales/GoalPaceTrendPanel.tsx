@@ -6,8 +6,10 @@ import {
   ResponsiveContainer, ReferenceLine,
 } from 'recharts';
 import { format, startOfWeek, startOfMonth, endOfWeek, endOfMonth, addDays, differenceInDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 
 interface GoalPaceTrendPanelProps {
   period: 'weekly' | 'monthly';
@@ -16,6 +18,7 @@ interface GoalPaceTrendPanelProps {
 }
 
 export function GoalPaceTrendPanel({ period, target, locationId }: GoalPaceTrendPanelProps) {
+  const { formatDate } = useFormatDate();
   const now = new Date();
   const periodStart = period === 'weekly' ? startOfWeek(now, { weekStartsOn: 1 }) : startOfMonth(now);
   const periodEnd = period === 'weekly' ? endOfWeek(now, { weekStartsOn: 1 }) : endOfMonth(now);
@@ -62,7 +65,7 @@ export function GoalPaceTrendPanel({ period, target, locationId }: GoalPaceTrend
     for (let i = 0; i < totalDays; i++) {
       const day = addDays(periodStart, i);
       const dateStr = format(day, 'yyyy-MM-dd');
-      const label = format(day, 'MMM d');
+      const label = formatDate(day, 'MMM d');
       const idealCum = dailyIdeal * (i + 1);
 
       if (day <= now) {
@@ -107,7 +110,7 @@ export function GoalPaceTrendPanel({ period, target, locationId }: GoalPaceTrend
               interval={period === 'monthly' ? 4 : 0}
             />
             <YAxis
-              tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+              tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
               tick={{ fontSize: 10 }}
               tickLine={false}
               axisLine={false}
@@ -115,7 +118,7 @@ export function GoalPaceTrendPanel({ period, target, locationId }: GoalPaceTrend
             />
             <Tooltip
               formatter={(value: number, name: string) => [
-                `$${value.toLocaleString()}`,
+                formatCurrencyWholeUtil(value),
                 name === 'actual' ? 'Cumulative Revenue' : 'Ideal Pace',
               ]}
               contentStyle={{

@@ -1,11 +1,10 @@
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { DashboardPageHeader } from '@/components/dashboard/DashboardPageHeader';
 import { ManagementInviteDialog } from '@/components/management/ManagementInviteDialog';
 import { usePendingInvitations } from '@/hooks/useStaffInvitations';
 import { useInvitableRoles } from '@/hooks/useInvitableRoles';
@@ -25,7 +24,6 @@ import {
   Bell,
   Sparkles,
   ChevronRight,
-  ArrowLeft,
   Video,
   Trophy,
   ArrowLeftRight,
@@ -40,6 +38,8 @@ import {
   CalendarDays,
   Store,
   Brain,
+  Globe,
+  Search,
 } from 'lucide-react';
 
 interface ManagementCardProps {
@@ -161,18 +161,12 @@ export default function ManagementHub() {
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8 max-w-[1600px] mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex items-start gap-4">
-          <Button variant="ghost" size="icon" asChild className="shrink-0 mt-1">
-            <Link to="/dashboard">
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-          </Button>
-          <div>
-            <h1 className="font-display text-3xl lg:text-4xl">Management Hub</h1>
-            <p className="text-muted-foreground mt-1">Central command for team operations</p>
-          </div>
-        </div>
+        <DashboardPageHeader
+          title="Management Hub"
+          description="Central command for team operations"
+          backTo="/dashboard"
+          backLabel="Back to Command Center"
+        />
 
         {/* Team Development */}
         <CategorySection title="Team Development">
@@ -374,6 +368,24 @@ export default function ManagementHub() {
             stat={stats?.pendingHeadshots || null}
             statLabel="pending"
             colorClass="bg-violet-500/10 text-violet-600 dark:text-violet-400"
+          />
+        </CategorySection>
+
+        {/* Marketing & Visibility */}
+        <CategorySection title="Marketing & Visibility">
+          <ManagementCard
+            href="/dashboard/admin/website-sections"
+            icon={Globe}
+            title="Website Editor"
+            description="Edit homepage sections, stylists, testimonials, and locations"
+            colorClass="bg-sky-500/10 text-sky-600 dark:text-sky-400"
+          />
+          <ManagementCard
+            href="/dashboard/admin/seo-workshop"
+            icon={Search}
+            title="SEO Workshop"
+            description="Tasks and guides to improve local search visibility"
+            colorClass="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
           />
         </CategorySection>
 

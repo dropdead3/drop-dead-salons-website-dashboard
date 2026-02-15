@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Calculator } from 'lucide-react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface RegisterTotalsProps {
   subtotal: number;
@@ -11,6 +12,7 @@ interface RegisterTotalsProps {
 }
 
 export function RegisterTotals({ subtotal, taxAmount, taxRate, appliedCredit, total }: RegisterTotalsProps) {
+  const { formatCurrency } = useFormatCurrency();
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -22,18 +24,18 @@ export function RegisterTotals({ subtotal, taxAmount, taxRate, appliedCredit, to
       <CardContent className="space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Subtotal</span>
-          <span>${subtotal.toFixed(2)}</span>
+          <span>{formatCurrency(subtotal)}</span>
         </div>
         
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Tax ({(taxRate * 100).toFixed(1)}%)</span>
-          <span>${taxAmount.toFixed(2)}</span>
+          <span>{formatCurrency(taxAmount)}</span>
         </div>
 
         {appliedCredit > 0 && (
           <div className="flex justify-between text-sm text-green-600">
             <span>Credit Applied</span>
-            <span>-${appliedCredit.toFixed(2)}</span>
+            <span>-{formatCurrency(appliedCredit)}</span>
           </div>
         )}
 
@@ -41,7 +43,7 @@ export function RegisterTotals({ subtotal, taxAmount, taxRate, appliedCredit, to
 
         <div className="flex justify-between font-semibold text-lg">
           <span>Total</span>
-          <span>${total.toFixed(2)}</span>
+          <span>{formatCurrency(total)}</span>
         </div>
       </CardContent>
     </Card>

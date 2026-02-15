@@ -9,8 +9,10 @@ import { Switch } from '@/components/ui/switch';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format, addMonths } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { CalendarIcon, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface RentIncreaseDialogProps {
   contractId: string;
@@ -28,6 +30,8 @@ export function RentIncreaseDialog({
   onOpenChange 
 }: RentIncreaseDialogProps) {
   const createRentChange = useCreateRentChange();
+  const { formatDate } = useFormatDate();
+  const { formatCurrency, currency } = useFormatCurrency();
   
   const [newRent, setNewRent] = useState<number>(currentRent);
   const [effectiveDate, setEffectiveDate] = useState<Date>(addMonths(new Date(), 1));
@@ -100,14 +104,14 @@ export function RentIncreaseDialog({
           <div className="rounded-lg bg-muted p-3">
             <p className="text-sm font-medium">{renterName}</p>
             <p className="text-xs text-muted-foreground">
-              Current rent: ${currentRent.toFixed(2)}/month
+              Current rent: {formatCurrency(currentRent)}/month
             </p>
           </div>
 
           <div className="space-y-2">
             <Label>New Rent Amount</Label>
             <div className="relative">
-              <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
+              <span className="absolute left-3 top-2.5 text-muted-foreground">{currency}</span>
               <Input
                 type="number"
                 step="0.01"
@@ -121,7 +125,7 @@ export function RentIncreaseDialog({
                 "text-xs",
                 increaseAmount > 0 ? "text-green-600" : "text-red-600"
               )}>
-                {increaseAmount > 0 ? '+' : ''}{increaseAmount.toFixed(2)} ({increasePercent}%)
+                {increaseAmount > 0 ? '+' : ''}{formatCurrency(increaseAmount)} ({increasePercent}%)
               </p>
             )}
           </div>
@@ -138,7 +142,7 @@ export function RentIncreaseDialog({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {effectiveDate ? format(effectiveDate, "PPP") : "Select date"}
+                  {effectiveDate ? formatDate(effectiveDate, "PPP") : "Select date"}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">

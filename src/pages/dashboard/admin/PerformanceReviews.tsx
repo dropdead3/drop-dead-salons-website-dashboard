@@ -15,7 +15,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { ArrowLeft, Plus, Star, FileCheck, Clock, CheckCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 const REVIEW_TYPES = [
   { value: 'annual', label: 'Annual' },
@@ -43,6 +44,7 @@ function RatingStars({ rating }: { rating: number | null }) {
 }
 
 export default function PerformanceReviews() {
+  const { formatDate } = useFormatDate();
   const { reviews, createReview, updateReview } = usePerformanceReviews();
   const { effectiveOrganization: organization } = useOrganizationContext();
   const [open, setOpen] = useState(false);
@@ -193,11 +195,11 @@ export default function PerformanceReviews() {
                         <TableCell>{REVIEW_TYPES.find(t => t.value === review.review_type)?.label || review.review_type}</TableCell>
                         <TableCell className="text-muted-foreground">
                           {review.review_period_start && review.review_period_end
-                            ? `${format(parseISO(review.review_period_start), 'MMM yyyy')} – ${format(parseISO(review.review_period_end), 'MMM yyyy')}`
+                            ? `${formatDate(parseISO(review.review_period_start), 'MMM yyyy')} – ${formatDate(parseISO(review.review_period_end), 'MMM yyyy')}`
                             : '—'}
                         </TableCell>
                         <TableCell><RatingStars rating={review.overall_rating} /></TableCell>
-                        <TableCell className="text-muted-foreground">{format(parseISO(review.created_at), 'MMM d, yyyy')}</TableCell>
+                        <TableCell className="text-muted-foreground">{formatDate(parseISO(review.created_at), 'MMM d, yyyy')}</TableCell>
                         <TableCell>
                           {review.status === 'draft' && (
                             <Button size="sm" variant="outline" onClick={() => handleSubmitReview(review.id)}>Submit</Button>

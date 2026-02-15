@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ChartSkeleton } from '@/components/ui/chart-skeleton';
 import { Settings, TrendingUp, AlertTriangle, Trophy, Users } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { useStaffRevenuePerformance, RevenueTimeRange, StaffRevenueData } from '@/hooks/useStaffRevenuePerformance';
@@ -12,6 +13,9 @@ import { usePerformanceThreshold } from '@/hooks/usePerformanceThreshold';
 import { PerformanceThresholdSettings } from './PerformanceThresholdSettings';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { formatCurrency as formatCurrencyUtil, formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 
 interface StaffRevenueLeaderboardProps {
   locationId?: string;
@@ -26,14 +30,6 @@ const TIME_RANGE_OPTIONS: { value: RevenueTimeRange; label: string }[] = [
   { value: '365days', label: '365 Days' },
 ];
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
 
 function getInitials(name: string): string {
   return name
@@ -50,14 +46,14 @@ function CustomTooltip({ active, payload }: any) {
   const data = payload[0].payload as StaffRevenueData;
   
   return (
-    <div className="rounded-lg border bg-background p-3 shadow-lg text-sm">
+    <div className="rounded-lg border border-border bg-background p-3 shadow-lg text-sm">
       <p className="font-medium mb-2">{data.name}</p>
       <div className="space-y-1 text-muted-foreground">
-        <p>Total: <BlurredAmount className="text-foreground font-medium">{formatCurrency(data.totalRevenue)}</BlurredAmount></p>
-        <p>Services: <BlurredAmount>{formatCurrency(data.serviceRevenue)}</BlurredAmount></p>
-        <p>Products: <BlurredAmount>{formatCurrency(data.productRevenue)}</BlurredAmount></p>
-        <p>Transactions: {data.transactionCount}</p>
-        <p>Avg Ticket: <BlurredAmount>{formatCurrency(data.averageTicket)}</BlurredAmount></p>
+        <p>Total: <BlurredAmount className="text-foreground font-medium tabular-nums">{formatCurrencyWholeUtil(data.totalRevenue)}</BlurredAmount></p>
+        <p>Services: <BlurredAmount className="tabular-nums">{formatCurrencyWholeUtil(data.serviceRevenue)}</BlurredAmount></p>
+        <p>Products: <BlurredAmount className="tabular-nums">{formatCurrencyWholeUtil(data.productRevenue)}</BlurredAmount></p>
+        <p>Transactions: <span className="tabular-nums">{data.transactionCount}</span></p>
+        <p>Avg Ticket: <BlurredAmount className="tabular-nums">{formatCurrencyWholeUtil(data.averageTicket)}</BlurredAmount></p>
       </div>
     </div>
   );
@@ -69,6 +65,7 @@ export function StaffRevenueLeaderboard({ locationId }: StaffRevenueLeaderboardP
   
   const { data, isLoading } = useStaffRevenuePerformance(timeRange, locationId);
   const { data: threshold } = usePerformanceThreshold();
+  const { formatCurrencyWhole } = useFormatCurrency();
   
   const chartData = data?.staff.slice(0, 15) || []; // Limit to top 15 for chart
   const chartHeight = Math.max(300, chartData.length * 45);
@@ -76,17 +73,32 @@ export function StaffRevenueLeaderboard({ locationId }: StaffRevenueLeaderboardP
   return (
     <>
       <Card className="mt-6">
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-3">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-primary" />
-              <CardTitle className="text-lg">Staff Revenue Leaderboard</CardTitle>
-              {data?.summary.belowThresholdCount && data.summary.belowThresholdCount > 0 && (
-                <Badge variant="destructive" className="ml-2">
-                  <AlertTriangle className="w-3 h-3 mr-1" />
-                  {data.summary.belowThresholdCount} Below Target
-                </Badge>
-              )}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0">
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-base tracking-wide">STAFF REVENUE LEADERBOARD</CardTitle>
+                  <MetricInfoTooltip description="Ranks team members by total revenue from completed appointments. Staff below the configurable performance threshold are flagged for attention." />
+                  {data?.summary.belowThresholdCount && data.summary.belowThresholdCount > 0 && (
+                    <Badge variant="destructive" className="ml-1">
+                      <AlertTriangle className="w-3 h-3 mr-1" />
+                      {data.summary.belowThresholdCount} Below Target
+                    </Badge>
+                  )}
+                </div>
+                <CardDescription>
+                  Performance ranking by total revenue
+                  {threshold?.alertsEnabled && (
+                    <span className="ml-2">
+                      &bull; Min target: <BlurredAmount>{formatCurrencyWhole(threshold.minimumRevenue)}</BlurredAmount> / {threshold.evaluationPeriodDays} days
+                    </span>
+                  )}
+                </CardDescription>
+              </div>
             </div>
             <div className="flex items-center gap-2">
               <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as RevenueTimeRange)}>
@@ -103,14 +115,6 @@ export function StaffRevenueLeaderboard({ locationId }: StaffRevenueLeaderboardP
               </Button>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            Performance ranking by total revenue
-            {threshold?.alertsEnabled && (
-              <span className="ml-2">
-                • Min target: <BlurredAmount>{formatCurrency(threshold.minimumRevenue)}</BlurredAmount> / {threshold.evaluationPeriodDays} days
-              </span>
-            )}
-          </p>
         </CardHeader>
         
         <CardContent>
@@ -121,7 +125,7 @@ export function StaffRevenueLeaderboard({ locationId }: StaffRevenueLeaderboardP
                   <Skeleton key={i} className="h-16 rounded-lg" />
                 ))}
               </div>
-              <Skeleton className="h-[300px] rounded-lg" />
+              <ChartSkeleton lines={8} className="h-[300px]" />
             </div>
           ) : data?.staff.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
@@ -135,14 +139,14 @@ export function StaffRevenueLeaderboard({ locationId }: StaffRevenueLeaderboardP
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="rounded-lg bg-muted/50 p-3">
                   <p className="text-xs text-muted-foreground">Total Revenue</p>
-                  <BlurredAmount className="text-lg font-medium">
-                    {formatCurrency(data?.summary.totalRevenue || 0)}
+                  <BlurredAmount className="text-lg font-medium tabular-nums">
+                    {formatCurrencyWhole(data?.summary.totalRevenue || 0)}
                   </BlurredAmount>
                 </div>
                 <div className="rounded-lg bg-muted/50 p-3">
                   <p className="text-xs text-muted-foreground">Avg per Staff</p>
-                  <BlurredAmount className="text-lg font-medium">
-                    {formatCurrency(data?.summary.avgPerStaff || 0)}
+                  <BlurredAmount className="text-lg font-medium tabular-nums">
+                    {formatCurrencyWhole(data?.summary.avgPerStaff || 0)}
                   </BlurredAmount>
                 </div>
                 <div className="rounded-lg bg-muted/50 p-3">
@@ -155,7 +159,7 @@ export function StaffRevenueLeaderboard({ locationId }: StaffRevenueLeaderboardP
                 </div>
                 <div className="rounded-lg bg-muted/50 p-3">
                   <p className="text-xs text-muted-foreground">Staff Count</p>
-                  <p className="text-lg font-medium">{data?.summary.staffCount || 0}</p>
+                  <p className="text-lg font-medium tabular-nums">{data?.summary.staffCount || 0}</p>
                 </div>
               </div>
               
@@ -167,7 +171,7 @@ export function StaffRevenueLeaderboard({ locationId }: StaffRevenueLeaderboardP
                     layout="vertical"
                     margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                   >
-                    <XAxis type="number" tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
+                    <XAxis type="number" tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'} />
                     <YAxis 
                       type="category" 
                       dataKey="name" 
@@ -240,10 +244,10 @@ export function StaffRevenueLeaderboard({ locationId }: StaffRevenueLeaderboardP
                         </div>
                         <div className="text-right">
                           <BlurredAmount className="font-medium text-destructive">
-                            {formatCurrency(staff.totalRevenue)}
+                            {formatCurrencyWhole(staff.totalRevenue)}
                           </BlurredAmount>
                           <p className="text-xs text-muted-foreground">
-                            Avg: <BlurredAmount>{formatCurrency(staff.averageTicket)}</BlurredAmount>
+                            Avg: <BlurredAmount>{formatCurrencyWhole(staff.averageTicket)}</BlurredAmount>
                           </p>
                         </div>
                       </div>

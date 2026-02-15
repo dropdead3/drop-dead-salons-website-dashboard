@@ -35,12 +35,14 @@ import {
   Mail,
 } from 'lucide-react';
 import { format, parse, parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { QueueAppointment } from '@/hooks/useTodaysQueue';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface EditAppointmentDialogProps {
   appointment: QueueAppointment | null;
@@ -70,6 +72,8 @@ export function EditAppointmentDialog({
 }: EditAppointmentDialogProps) {
   const queryClient = useQueryClient();
   const reschedule = useRescheduleAppointment();
+  const { formatCurrency } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState('');
@@ -204,7 +208,7 @@ export function EditAppointmentDialog({
             </div>
             {appointment.total_price && (
               <p className="text-sm text-muted-foreground mt-1">
-                ${appointment.total_price.toFixed(2)}
+                {formatCurrency(appointment.total_price)}
               </p>
             )}
           </div>
@@ -222,7 +226,7 @@ export function EditAppointmentDialog({
                   )}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, 'PPP') : 'Select date'}
+                  {selectedDate ? formatDate(selectedDate, 'PPP') : 'Select date'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -247,7 +251,7 @@ export function EditAppointmentDialog({
               <SelectContent className="max-h-[300px]">
                 {TIME_SLOTS.map(time => (
                   <SelectItem key={time} value={time}>
-                    {format(parse(time, 'HH:mm', new Date()), 'h:mm a')}
+                    {formatDate(parse(time, 'HH:mm', new Date()), 'h:mm a')}
                   </SelectItem>
                 ))}
               </SelectContent>

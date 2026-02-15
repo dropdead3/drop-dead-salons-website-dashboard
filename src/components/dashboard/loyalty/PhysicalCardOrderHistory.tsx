@@ -3,7 +3,8 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Loader2, Package } from 'lucide-react';
 import { useGiftCardOrders, GiftCardOrder } from '@/hooks/useGiftCardOrders';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface PhysicalCardOrderHistoryProps {
   organizationId?: string;
@@ -19,6 +20,8 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function PhysicalCardOrderHistory({ organizationId }: PhysicalCardOrderHistoryProps) {
+  const { formatDate } = useFormatDate();
+  const { formatCurrency } = useFormatCurrency();
   const { data: orders = [], isLoading } = useGiftCardOrders(organizationId);
 
   if (isLoading) {
@@ -69,12 +72,12 @@ export function PhysicalCardOrderHistory({ organizationId }: PhysicalCardOrderHi
                   {order.id.slice(0, 8).toUpperCase()}
                 </TableCell>
                 <TableCell>
-                  {format(new Date(order.ordered_at), 'MMM d, yyyy')}
+                  {formatDate(new Date(order.ordered_at), 'MMM d, yyyy')}
                 </TableCell>
                 <TableCell>{order.quantity}</TableCell>
                 <TableCell className="capitalize">{order.card_design}</TableCell>
                 <TableCell className="capitalize">{order.card_stock}</TableCell>
-                <TableCell>${order.total_price.toFixed(2)}</TableCell>
+                <TableCell>{formatCurrency(order.total_price)}</TableCell>
                 <TableCell>
                   <Badge className={STATUS_COLORS[order.status] || ''}>
                     {order.status.charAt(0).toUpperCase() + order.status.slice(1)}

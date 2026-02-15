@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowUpDown, ArrowUp, ArrowDown, ExternalLink, AlertTriangle, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { Input } from '@/components/ui/input';
 import type { PlatformAnalyticsSummary, OrganizationMetrics } from '@/hooks/useOrganizationAnalytics';
@@ -13,12 +14,12 @@ interface OperationalMetricsProps {
 type SortKey = 'name' | 'avgRebookingRate' | 'avgRetentionRate' | 'avgRetailAttachment' | 'averageTicket' | 'newClientsThisMonth';
 type SortDir = 'asc' | 'desc';
 
-const formatCurrency = (value: number) => `$${value.toFixed(0)}`;
 const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 
 export function OperationalMetrics({ analytics }: OperationalMetricsProps) {
   const navigate = useNavigate();
   const { resolvedTheme } = usePlatformTheme();
+  const { formatCurrencyWhole } = useFormatCurrency();
   const isDark = resolvedTheme === 'dark';
 
   const [search, setSearch] = useState('');
@@ -88,7 +89,7 @@ export function OperationalMetrics({ analytics }: OperationalMetricsProps) {
     { key: 'avgRebookingRate', label: 'Rebooking', format: formatPercent, avg: analytics.platformAvgRebooking, higherBetter: true },
     { key: 'avgRetentionRate', label: 'Retention', format: formatPercent, avg: analytics.platformAvgRetention, higherBetter: true },
     { key: 'avgRetailAttachment', label: 'Retail Attach', format: formatPercent, avg: analytics.platformAvgRetailAttachment, higherBetter: true },
-    { key: 'averageTicket', label: 'Avg Ticket', format: formatCurrency, avg: analytics.platformAvgTicket, higherBetter: true },
+    { key: 'averageTicket', label: 'Avg Ticket', format: formatCurrencyWhole, avg: analytics.platformAvgTicket, higherBetter: true },
     { key: 'newClientsThisMonth', label: 'New Clients', format: (v) => v.toString(), avg: 0, higherBetter: true },
   ];
 
@@ -112,7 +113,7 @@ export function OperationalMetrics({ analytics }: OperationalMetricsProps) {
             <p className={cn('text-sm mt-1', isDark ? 'text-slate-400' : 'text-slate-500')}>Avg Retention Rate</p>
           </div>
           <div className="text-center">
-            <p className="text-3xl font-medium text-blue-500">{formatCurrency(analytics.platformAvgTicket)}</p>
+            <p className="text-3xl font-medium text-blue-500">{formatCurrencyWhole(analytics.platformAvgTicket)}</p>
             <p className={cn('text-sm mt-1', isDark ? 'text-slate-400' : 'text-slate-500')}>Avg Ticket Size</p>
           </div>
           <div className="text-center">

@@ -24,10 +24,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-
-    if (!lovableApiKey) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+    const useAi = !!lovableApiKey;
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -52,8 +49,8 @@ serve(async (req) => {
     let salesQuery = supabase
       .from("phorest_daily_sales_summary")
       .select("*")
-      .gte("sales_date", ninetyDaysAgo.toISOString().split('T')[0])
-      .order("sales_date", { ascending: true });
+      .gte("summary_date", ninetyDaysAgo.toISOString().split('T')[0])
+      .order("summary_date", { ascending: true });
 
     if (locationId && locationId !== "all") {
       salesQuery = salesQuery.eq("location_id", locationId);
@@ -91,7 +88,7 @@ serve(async (req) => {
     // Aggregate historical data by day of week
     const dayOfWeekAverages: Record<number, { total: number; count: number; services: number; products: number }> = {};
     (historicalSales || []).forEach(day => {
-      const date = new Date(day.sales_date);
+      const date = new Date(day.summary_date);
       const dow = date.getDay();
       if (!dayOfWeekAverages[dow]) {
         dayOfWeekAverages[dow] = { total: 0, count: 0, services: 0, products: 0 };
@@ -110,38 +107,43 @@ serve(async (req) => {
       bookedByDate[date] += Number(apt.total_price) || 0;
     });
 
-    // Build context for AI
-    const forecastContext = {
-      historicalDays: historicalSales?.length || 0,
-      dayOfWeekAverages: Object.entries(dayOfWeekAverages).map(([dow, data]) => ({
-        dayOfWeek: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][Number(dow)],
-        avgRevenue: data.count > 0 ? Math.round(data.total / data.count) : 0,
-        avgServices: data.count > 0 ? Math.round(data.services / data.count) : 0,
-        avgProducts: data.count > 0 ? Math.round(data.products / data.count) : 0,
-        sampleSize: data.count
-      })),
-      bookedRevenue: Object.entries(bookedByDate).map(([date, amount]) => ({
-        date,
-        bookedAmount: Math.round(amount)
-      })),
-      recentTrend: calculateTrend(historicalSales || []),
-      forecastDays,
-      startDate: today.toISOString().split('T')[0]
-    };
+    const trend = calculateTrend(historicalSales || []);
 
-    // Call AI for intelligent forecasting
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${lovableApiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          {
-            role: "system",
-            content: `You are a revenue forecasting AI for a salon business. Analyze historical patterns and predict future revenue.
+    let forecasts: DailyForecast[] = [];
+    let summary: { totalPredicted: number; avgDaily: number; trend: 'up' | 'down' | 'stable'; peakDay?: string; keyInsight: string } | null = null;
+
+    if (useAi) {
+      // Build context for AI
+      const forecastContext = {
+        historicalDays: historicalSales?.length || 0,
+        dayOfWeekAverages: Object.entries(dayOfWeekAverages).map(([dow, data]) => ({
+          dayOfWeek: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][Number(dow)],
+          avgRevenue: data.count > 0 ? Math.round(data.total / data.count) : 0,
+          avgServices: data.count > 0 ? Math.round(data.services / data.count) : 0,
+          avgProducts: data.count > 0 ? Math.round(data.products / data.count) : 0,
+          sampleSize: data.count
+        })),
+        bookedRevenue: Object.entries(bookedByDate).map(([date, amount]) => ({
+          date,
+          bookedAmount: Math.round(amount)
+        })),
+        recentTrend: trend,
+        forecastDays,
+        startDate: today.toISOString().split('T')[0]
+      };
+
+      const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${lovableApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "google/gemini-3-flash-preview",
+          messages: [
+            {
+              role: "system",
+              content: `You are a revenue forecasting AI for a salon business. Analyze historical patterns and predict future revenue.
 
 Consider these factors:
 1. Day-of-week patterns (weekends typically busier)
@@ -175,60 +177,63 @@ Confidence levels:
 - high: Strong historical patterns + significant booked revenue
 - medium: Moderate patterns with some variability
 - low: Limited data or high uncertainty`
-          },
-          {
-            role: "user",
-            content: `Generate a ${forecastDays}-day revenue forecast based on this data:
+            },
+            {
+              role: "user",
+              content: `Generate a ${forecastDays}-day revenue forecast based on this data:
 
 ${JSON.stringify(forecastContext, null, 2)}
 
 Return ONLY valid JSON, no markdown or explanation.`
-          }
-        ],
-        temperature: 0.2,
-      }),
-    });
+            }
+          ],
+          temperature: 0.2,
+        }),
+      });
 
-    if (!aiResponse.ok) {
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      if (!aiResponse.ok) {
+        if (aiResponse.status === 429) {
+          return new Response(
+            JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        if (aiResponse.status === 402) {
+          return new Response(
+            JSON.stringify({ error: "AI usage limit reached. Please contact support." }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        throw new Error("AI service temporarily unavailable");
       }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI usage limit reached. Please contact support." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+
+      const aiData = await aiResponse.json();
+      const content = aiData.choices?.[0]?.message?.content || "{}";
+
+      try {
+        let cleanContent = content.trim();
+        if (cleanContent.startsWith("```json")) cleanContent = cleanContent.slice(7);
+        if (cleanContent.startsWith("```")) cleanContent = cleanContent.slice(3);
+        if (cleanContent.endsWith("```")) cleanContent = cleanContent.slice(0, -3);
+        
+        const parsed = JSON.parse(cleanContent.trim());
+        forecasts = parsed.forecasts || [];
+        summary = parsed.summary;
+      } catch (parseError) {
+        console.error("Failed to parse AI response:", parseError, content);
+        forecasts = generateFallbackForecasts(forecastDays, dayOfWeekAverages, bookedByDate, today, trend);
       }
-      throw new Error("AI service temporarily unavailable");
-    }
-
-    const aiData = await aiResponse.json();
-    const content = aiData.choices?.[0]?.message?.content || "{}";
-
-    let forecasts: DailyForecast[] = [];
-    let summary = null;
-
-    try {
-      let cleanContent = content.trim();
-      if (cleanContent.startsWith("```json")) cleanContent = cleanContent.slice(7);
-      if (cleanContent.startsWith("```")) cleanContent = cleanContent.slice(3);
-      if (cleanContent.endsWith("```")) cleanContent = cleanContent.slice(0, -3);
-      
-      const parsed = JSON.parse(cleanContent.trim());
-      forecasts = parsed.forecasts || [];
-      summary = parsed.summary;
-    } catch (parseError) {
-      console.error("Failed to parse AI response:", parseError, content);
-      // Generate fallback forecasts
-      forecasts = generateFallbackForecasts(
-        forecastDays,
-        dayOfWeekAverages,
-        bookedByDate,
-        today
-      );
+    } else {
+      forecasts = generateFallbackForecasts(forecastDays, dayOfWeekAverages, bookedByDate, today, trend);
+      const totalPredicted = forecasts.reduce((sum, f) => sum + f.predictedRevenue, 0);
+      summary = {
+        totalPredicted,
+        avgDaily: forecasts.length > 0 ? Math.round(totalPredicted / forecasts.length) : 0,
+        trend,
+        keyInsight: historicalSales?.length
+          ? `Based on ${historicalSales.length} days of history and day-of-week patterns`
+          : "Based on current bookings (add more history for trend-based predictions)"
+      };
     }
 
     // Store forecasts in database
@@ -258,8 +263,8 @@ Return ONLY valid JSON, no markdown or explanation.`
         forecasts,
         summary: summary || {
           totalPredicted: forecasts.reduce((sum, f) => sum + f.predictedRevenue, 0),
-          avgDaily: Math.round(forecasts.reduce((sum, f) => sum + f.predictedRevenue, 0) / forecasts.length),
-          trend: calculateTrend(historicalSales || []),
+          avgDaily: forecasts.length ? Math.round(forecasts.reduce((sum, f) => sum + f.predictedRevenue, 0) / forecasts.length) : 0,
+          trend,
           keyInsight: `Based on ${historicalSales?.length || 0} days of historical data`
         },
         historicalDataPoints: historicalSales?.length || 0
@@ -292,44 +297,48 @@ function calculateTrend(sales: any[]): 'up' | 'down' | 'stable' {
   return 'stable';
 }
 
+const TREND_MULTIPLIER = { up: 1.05, down: 0.95, stable: 1 };
+
 function generateFallbackForecasts(
   days: number,
   dayOfWeekAvg: Record<number, { total: number; count: number; services: number; products: number }>,
   bookedByDate: Record<string, number>,
-  startDate: Date
+  startDate: Date,
+  trend: 'up' | 'down' | 'stable' = 'stable'
 ): DailyForecast[] {
   const forecasts: DailyForecast[] = [];
-  
+  const mult = TREND_MULTIPLIER[trend];
+
   for (let i = 0; i < days; i++) {
     const date = new Date(startDate);
     date.setDate(date.getDate() + i);
     const dateStr = date.toISOString().split('T')[0];
     const dow = date.getDay();
-    
+
     const avgData = dayOfWeekAvg[dow];
-    const baseRevenue = avgData && avgData.count > 0 
-      ? Math.round(avgData.total / avgData.count)
+    const rawBase = avgData && avgData.count > 0
+      ? avgData.total / avgData.count
       : 0;
+    const baseRevenue = Math.round(rawBase * mult);
     const bookedRevenue = bookedByDate[dateStr] || 0;
-    
-    // Predicted = max of booked revenue or historical average
+
     const predicted = Math.max(bookedRevenue, baseRevenue);
-    
+
     forecasts.push({
       date: dateStr,
       predictedRevenue: predicted,
-      predictedServices: avgData && avgData.count > 0 
-        ? Math.round(avgData.services / avgData.count) 
+      predictedServices: avgData && avgData.count > 0
+        ? Math.round(avgData.services / avgData.count)
         : 0,
-      predictedProducts: avgData && avgData.count > 0 
-        ? Math.round(avgData.products / avgData.count) 
+      predictedProducts: avgData && avgData.count > 0
+        ? Math.round(avgData.products / avgData.count)
         : 0,
       confidence: bookedRevenue > 0 ? 'high' : (avgData && avgData.count >= 10 ? 'medium' : 'low'),
-      factors: bookedRevenue > 0 
+      factors: bookedRevenue > 0
         ? [`$${Math.round(bookedRevenue)} already booked`]
         : ['Based on historical average']
     });
   }
-  
+
   return forecasts;
 }

@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { formatCurrencyWhole } from '@/lib/formatCurrency';
 import { motion } from 'framer-motion';
 import type { LocationCardData } from './LocationComparisonCard';
 
@@ -69,7 +70,7 @@ function CustomTooltip({ active, payload }: any) {
     <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-lg text-sm">
       <p className="font-medium">{d.name}</p>
       <p className="text-muted-foreground">
-        <BlurredAmount>${d.totalRevenue.toLocaleString()}</BlurredAmount>
+        <BlurredAmount>{formatCurrencyWhole(d.totalRevenue)}</BlurredAmount>
         <span className="ml-2">({Math.round(d.sharePercent)}%)</span>
       </p>
     </div>
@@ -132,7 +133,7 @@ export function LocationBarChart({ locations, colors, totalRevenue }: LocationBa
               const padY = 3;
               const padX = 4;
               const badgeH = barH - padY * 2;
-              const label = `$${Number(value).toLocaleString()}`;
+              const label = formatCurrencyWhole(Number(value));
               const badgeW = Math.max(label.length * 6.5 + 14, 50);
               if (badgeW + padX * 2 > barW) return null;
               const bx = (x || 0) + barW - badgeW - padX;

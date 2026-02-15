@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ArrowUpDown, Download, TrendingUp, Clock, DollarSign, Target, BarChart3 } from 'lucide-react';
 import { CampaignPerformance, formatSourceName, formatMediumName } from '@/hooks/useMarketingAnalytics';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface CampaignPerformanceTableProps {
   campaigns: CampaignPerformance[];
@@ -30,6 +31,7 @@ function getRoasBadge(roas: number | null): { label: string; variant: 'default' 
 }
 
 export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerformanceTableProps) {
+  const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
   const [sortField, setSortField] = useState<SortField>('totalRevenue');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
@@ -221,18 +223,18 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
                       </span>
                     </TableCell>
                     <TableCell className="text-right tabular-nums font-medium">
-                      ${campaign.totalRevenue.toLocaleString()}
+                      {formatCurrencyWhole(campaign.totalRevenue)}
                     </TableCell>
                     {hasSpendData && (
                       <>
                         <TableCell className="text-right tabular-nums">
-                          {campaign.spendToDate !== null ? `$${campaign.spendToDate.toLocaleString()}` : '—'}
+                          {campaign.spendToDate !== null ? formatCurrencyWhole(campaign.spendToDate) : '—'}
                         </TableCell>
                         <TableCell className="text-right tabular-nums">
                           {campaign.costPerLead !== null ? (
                             <Tooltip>
                               <TooltipTrigger>
-                                ${campaign.costPerLead.toFixed(2)}
+                                {formatCurrency(campaign.costPerLead)}
                               </TooltipTrigger>
                               <TooltipContent>
                                 Cost per Lead

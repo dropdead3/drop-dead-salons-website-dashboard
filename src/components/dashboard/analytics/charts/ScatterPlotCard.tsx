@@ -8,6 +8,8 @@ import type { CorrelationPair } from '@/hooks/useCorrelationAnalysis';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { subDays, format } from 'date-fns';
+import { formatCurrency as formatCurrencyUtil, formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface ScatterPlotCardProps {
   pair: CorrelationPair;
@@ -92,6 +94,7 @@ export function ScatterPlotCard({ pair, locationId, onClose }: ScatterPlotCardPr
           <div>
             <CardTitle className="font-display flex items-center gap-2">
               {labelA} vs {labelB}
+              <MetricInfoTooltip description="Plots two metrics against each other to reveal correlations. Each point represents a daily observation. The correlation coefficient (r) indicates strength and direction of the relationship." />
               <Badge variant={direction === 'positive' ? 'default' : 'destructive'}>
                 {direction === 'positive' ? (
                   <TrendingUp className="w-3 h-3 mr-1" />
@@ -123,13 +126,13 @@ export function ScatterPlotCard({ pair, locationId, onClose }: ScatterPlotCardPr
                 <XAxis 
                   dataKey="x" 
                   type="number"
-                  tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                  tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
                   label={{ value: labelA, position: 'bottom', offset: 0 }}
                 />
                 <YAxis 
                   dataKey="y"
                   type="number"
-                  tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                  tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
                   label={{ value: labelB, angle: -90, position: 'insideLeft' }}
                 />
                 <Tooltip 
@@ -139,8 +142,8 @@ export function ScatterPlotCard({ pair, locationId, onClose }: ScatterPlotCardPr
                     return (
                       <div className="bg-popover border rounded-lg p-2 text-sm shadow-md">
                         <p className="text-muted-foreground">{data.date}</p>
-                        <p>{labelA}: ${data.x.toLocaleString()}</p>
-                        <p>{labelB}: ${data.y.toLocaleString()}</p>
+                        <p>{labelA}: {formatCurrencyUtil(data.x)}</p>
+                        <p>{labelB}: {formatCurrencyUtil(data.y)}</p>
                       </div>
                     );
                   }}

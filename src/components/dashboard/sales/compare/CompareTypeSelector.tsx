@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Tag, TrendingUp } from 'lucide-react';
+import { Calendar, MapPin, Tag, TrendingUp, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { CompareMode } from '@/hooks/useComparisonData';
 
@@ -16,7 +16,7 @@ const modes: { value: CompareMode; label: string; icon: React.ElementType; descr
 
 export function CompareTypeSelector({ value, onChange }: CompareTypeSelectorProps) {
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
       {modes.map((mode) => {
         const Icon = mode.icon;
         const isActive = value === mode.value;
@@ -26,15 +26,22 @@ export function CompareTypeSelector({ value, onChange }: CompareTypeSelectorProp
             key={mode.value}
             onClick={() => onChange(mode.value)}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-lg border transition-all',
-              'text-sm font-medium',
+              'relative flex flex-col items-start gap-1.5 px-3.5 py-3 rounded-lg border transition-all text-left',
               isActive
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'bg-card hover:bg-muted border-border text-muted-foreground hover:text-foreground'
+                ? 'bg-primary/5 border-primary/40 ring-1 ring-primary/20'
+                : 'bg-card hover:bg-muted/50 border-border text-muted-foreground hover:text-foreground'
             )}
           >
-            <Icon className="w-4 h-4" />
-            <span>{mode.label}</span>
+            <div className="flex items-center gap-2 w-full">
+              <Icon className={cn('w-4 h-4 shrink-0', isActive ? 'text-primary' : 'text-muted-foreground')} />
+              <span className={cn('text-sm font-medium', isActive && 'text-foreground')}>{mode.label}</span>
+              {isActive && (
+                <Check className="w-3.5 h-3.5 text-primary ml-auto shrink-0" />
+              )}
+            </div>
+            <p className="text-[11px] text-muted-foreground/70 leading-tight hidden sm:block">
+              {mode.description}
+            </p>
           </button>
         );
       })}

@@ -27,12 +27,16 @@ export function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user, loading, isCoach, hasPermission, permissions, roles, platformRoles, hasPlatformRoleOrHigher, isPlatformUser } = useAuth();
   const { isViewingAs, viewAsRole, clearViewAs } = useViewAs();
-  const effectivePermissions = useEffectivePermissions();
+  const { permissions: effectivePermissions, isLoading: effectivePermissionsLoading } = useEffectivePermissions();
   const { data: profile, isLoading: profileLoading } = useEmployeeProfile();
   const location = useLocation();
 
-  // Show loading while auth or permissions are being fetched
-  if (loading || (requireSuperAdmin && profileLoading)) {
+  // Spinner-first: wait for auth, roles, effective permissions (View As), and profile (super admin)
+  const authOrPermissionsLoading =
+    loading ||
+    (requireSuperAdmin && profileLoading) ||
+    (requiredPermission && !isPlatformUser && effectivePermissionsLoading);
+  if (authOrPermissionsLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-foreground" />
@@ -41,26 +45,12 @@ export function ProtectedRoute({
   }
 
   if (!user) {
-    // Redirect to platform login if trying to access platform routes
-    if (location.pathname.startsWith('/dashboard/platform')) {
-      return <Navigate to="/platform-login" state={{ from: location }} replace />;
-    }
-    return <Navigate to="/staff-login" state={{ from: location }} replace />;
-  }
-
-  // Wait for roles to be loaded before checking permissions
-  // If user exists but roles haven't loaded yet, show loading
-  if (roles.length === 0 && requiredPermission && !isPlatformUser) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-foreground" />
-      </div>
-    );
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Check platform role requirements
   if (requireAnyPlatformRole && !isPlatformUser) {
-    return <Navigate to="/platform-login" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   if (requirePlatformRole && !hasPlatformRoleOrHigher(requirePlatformRole)) {
@@ -72,12 +62,26 @@ export function ProtectedRoute({
     return <Navigate to="/dashboard" replace />;
   }
 
-  // Check permission-based access (only if permissions exist for the user's roles)
+  // Permission-based access: deny-by-default when permission required and data known
   // Platform users bypass permission checks for platform routes
   // When in View As mode, use effective permissions for accurate simulation
   if (requiredPermission && !isPlatformUser) {
+    // Explicit deny: never grant when effective permissions are empty (transient or known)
+    if (effectivePermissions.length === 0) {
+      if (isViewingAs) {
+        return (
+          <AccessDeniedView
+            role={viewAsRole}
+            permission={requiredPermission}
+            onExitViewAs={clearViewAs}
+          />
+        );
+      }
+      return <Navigate to="/dashboard" replace />;
+    }
+
     const hasEffectivePermission = effectivePermissions.includes(requiredPermission);
-    
+
     // In View As mode, show access denied view instead of redirecting
     if (isViewingAs && !hasEffectivePermission) {
       return (
@@ -90,7 +94,7 @@ export function ProtectedRoute({
     }
     
     // For real users (not in View As mode), redirect if no permission
-    if (!isViewingAs && permissions.length > 0 && !hasPermission(requiredPermission)) {
+    if (!isViewingAs && !hasPermission(requiredPermission)) {
       return <Navigate to="/dashboard" replace />;
     }
   }

@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +8,8 @@ import { useHiringCapacity, LocationCapacity } from '@/hooks/useHiringCapacity';
 import { useHiringForecast } from '@/hooks/useHiringForecast';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { ChartSkeleton } from '@/components/ui/chart-skeleton';
 
 
 interface HiringCapacityCardProps {
@@ -35,7 +37,7 @@ function getPriorityBadgeClass(level: 'critical' | 'high' | 'medium' | 'low'): s
     case 'critical':
       return 'bg-destructive text-destructive-foreground';
     case 'high':
-      return 'bg-orange-500 text-orange-50';
+      return 'bg-chart-5 text-foreground dark:text-background';
     case 'medium':
       return 'bg-chart-4 text-foreground dark:text-background';
     case 'low':
@@ -98,7 +100,7 @@ function LocationRow({ location }: { location: LocationCapacity }) {
             <Scissors className="h-3 w-3" />
             Stylists
           </span>
-          <span className={cn("font-medium", getCapacityTextColor(location.currentStylists, location.stylistCapacity || 0))}>
+          <span className={cn("font-medium tabular-nums", getCapacityTextColor(location.currentStylists, location.stylistCapacity || 0))}>
             {location.currentStylists} / {location.stylistCapacity}
             {location.stylistsNeeded > 0 && (
               <span className="text-destructive ml-1">({location.stylistsNeeded} needed)</span>
@@ -119,7 +121,7 @@ function LocationRow({ location }: { location: LocationCapacity }) {
             <Users className="h-3 w-3" />
             Assistants
           </span>
-          <span className={cn("font-medium", getCapacityTextColor(location.currentAssistants, location.targetAssistants))}>
+          <span className={cn("font-medium tabular-nums", getCapacityTextColor(location.currentAssistants, location.targetAssistants))}>
             {location.currentAssistants} / {location.targetAssistants}
             {location.assistantsNeeded > 0 && (
               <span className="text-destructive ml-1">({location.assistantsNeeded} needed)</span>
@@ -155,14 +157,22 @@ export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
   if (isLoading) {
     return (
       <Card className={cn("premium-card", className)}>
-        <CardHeader className="pb-2">
-          <Skeleton className="h-6 w-40" />
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-3">
+            <Skeleton className="w-10 h-10 rounded-lg" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-4 w-32" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-32 w-full" />
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <Skeleton className="h-20 rounded-lg" />
+            <Skeleton className="h-20 rounded-lg" />
+            <Skeleton className="h-20 rounded-lg" />
           </div>
+          <ChartSkeleton lines={4} className="h-[120px]" />
         </CardContent>
       </Card>
     );
@@ -178,12 +188,20 @@ export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
 
   return (
     <Card className={cn("premium-card", className)}>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <UserPlus className="h-5 w-5 text-primary" />
-            Hiring Capacity
-          </CardTitle>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <UserPlus className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className="font-display text-base tracking-wide">HIRING CAPACITY</CardTitle>
+                <MetricInfoTooltip description="Compares current headcount against configured stylist and assistant capacity targets per location. Locations are sorted by hiring priority." />
+              </div>
+              <CardDescription>Current staffing levels vs configured capacity</CardDescription>
+            </div>
+          </div>
           <Button 
             variant="ghost" 
             size="sm"
@@ -201,26 +219,26 @@ export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
           <>
             <div className="grid grid-cols-3 gap-4 mb-6">
               <div className="text-center p-3 rounded-lg bg-muted/50">
-                <div className="text-2xl font-bold text-destructive">
+                <div className="text-2xl font-medium tabular-nums text-destructive">
                   {totalStylistsNeeded}
                 </div>
                 <div className="text-xs text-muted-foreground">Stylists Needed</div>
-                <div className="text-xs text-muted-foreground mt-1">
+                <div className="text-xs text-muted-foreground tabular-nums mt-1">
                   {totalCurrentStylists} / {totalStylistCapacity}
                 </div>
               </div>
               <div className="text-center p-3 rounded-lg bg-muted/50">
-                <div className="text-2xl font-bold text-destructive">
+                <div className="text-2xl font-medium tabular-nums text-destructive">
                   {totalAssistantsNeeded}
                 </div>
                 <div className="text-xs text-muted-foreground">Assistants Needed</div>
-                <div className="text-xs text-muted-foreground mt-1">
+                <div className="text-xs text-muted-foreground tabular-nums mt-1">
                   {totalCurrentAssistants} / {totalTargetAssistants}
                 </div>
               </div>
               <div className="text-center p-3 rounded-lg bg-primary/10">
                 <div className={cn(
-                  "text-2xl font-bold",
+                  "text-2xl font-medium tabular-nums",
                   totalHiresNeeded > 0 ? "text-destructive" : "text-primary"
                 )}>
                   {totalHiresNeeded}
@@ -249,29 +267,29 @@ export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
                 </h4>
                 
                 <div className="grid grid-cols-3 gap-3">
-                  <div className="text-center p-2 rounded bg-amber-500/10">
+                  <div className="text-center p-2 rounded bg-chart-4/10">
                     <div className="flex items-center justify-center gap-1">
-                      <Calendar className="h-3 w-3 text-amber-600" />
-                      <span className="text-lg font-bold text-amber-600">{forecast.totalPlannedDepartures}</span>
+                      <Calendar className="h-3 w-3 text-chart-4" />
+                      <span className="text-lg font-medium tabular-nums text-chart-4">{forecast.totalPlannedDepartures}</span>
                     </div>
                     <div className="text-xs text-muted-foreground">Planned Departures</div>
                   </div>
-                  <div className="text-center p-2 rounded bg-blue-500/10">
+                  <div className="text-center p-2 rounded bg-primary/10">
                     <div className="flex items-center justify-center gap-1">
-                      <TrendingUp className="h-3 w-3 text-blue-600" />
-                      <span className="text-lg font-bold text-blue-600">{forecast.totalGrowthBasedNeed}</span>
+                      <TrendingUp className="h-3 w-3 text-primary" />
+                      <span className="text-lg font-medium tabular-nums text-primary">{forecast.totalGrowthBasedNeed}</span>
                     </div>
                     <div className="text-xs text-muted-foreground">Growth-Based Need</div>
                   </div>
-                  <div className="text-center p-2 rounded bg-primary/10">
-                    <span className="text-lg font-bold text-primary">{forecast.totalForecastedHires}</span>
+                  <div className="text-center p-2 rounded bg-muted/50">
+                    <span className="text-lg font-medium tabular-nums text-foreground">{forecast.totalForecastedHires}</span>
                     <div className="text-xs text-muted-foreground">Total Forecast</div>
                   </div>
                 </div>
 
                 {forecast.averageGrowthRate !== 0 && (
                   <p className="text-xs text-muted-foreground mt-2 text-center">
-                    Avg. appointment growth: {forecast.averageGrowthRate > 0 ? '+' : ''}{forecast.averageGrowthRate}%
+                    Avg. appointment growth: <span className="tabular-nums">{forecast.averageGrowthRate > 0 ? '+' : ''}{forecast.averageGrowthRate}%</span>
                   </p>
                 )}
               </div>

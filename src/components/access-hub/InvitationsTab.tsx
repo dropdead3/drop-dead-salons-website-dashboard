@@ -44,7 +44,8 @@ import {
 } from '@/hooks/useStaffInvitations';
 import { useAllUsersWithRoles } from '@/hooks/useUserRoles';
 import { InviteStaffDialog } from '@/components/dashboard/InviteStaffDialog';
-import { format, formatDistanceToNow, isPast } from 'date-fns';
+import { isPast } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
   Search, 
   Loader2, 
@@ -68,6 +69,8 @@ import { cn } from '@/lib/utils';
 import { QRCodeCanvas } from 'qrcode.react';
 import DropDeadLogo from '@/assets/drop-dead-logo.svg';
 import { QRCodeFullScreen } from '@/components/dashboard/QRCodeFullScreen';
+import { formatRelativeTime } from '@/lib/format';
+import { ImageWithSkeleton } from '@/components/ui/image-skeleton';
 
 const ROLE_COLORS: Record<string, string> = {
   admin: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
@@ -86,9 +89,9 @@ const INVITATION_STATUS_CONFIG: Record<string, { icon: typeof Clock; color: stri
 
 const getStaffLoginUrl = () => {
   if (typeof window !== 'undefined') {
-    return `${window.location.origin}/staff-login`;
+    return `${window.location.origin}/login`;
   }
-  return '/staff-login';
+  return '/login';
 };
 
 function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
@@ -96,7 +99,12 @@ function QRCodePDFPreview({ staffLoginUrl }: { staffLoginUrl: string }) {
     <div className="bg-gradient-to-b from-[hsl(40,30%,96%)] to-[hsl(35,25%,92%)] rounded-xl p-6 shadow-inner">
       <div className="bg-white rounded-lg shadow-xl overflow-hidden mx-auto relative" style={{ aspectRatio: '8.5/11', maxWidth: '340px' }}>
         <div className="bg-gradient-to-r from-[hsl(0,0%,8%)] to-[hsl(0,0%,15%)] py-3 px-4 text-center">
-          <img src={DropDeadLogo} alt="Drop Dead" className="h-3 mx-auto invert" />
+          <ImageWithSkeleton
+            src={DropDeadLogo}
+            alt="Drop Dead"
+            className="h-3 w-auto mx-auto invert"
+            wrapperClassName="mx-auto"
+          />
           <p className="text-[hsl(40,30%,70%)] text-[7px] mt-0.5 tracking-[0.2em] uppercase">Staff Portal</p>
         </div>
         <div className="flex flex-col items-center px-6 py-4">
@@ -325,6 +333,7 @@ interface InvitationsTabProps {
 }
 
 export function InvitationsTab({ canManage }: InvitationsTabProps) {
+  const { formatDate } = useFormatDate();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'invitations' | 'approvals'>('invitations');
 
@@ -454,7 +463,7 @@ export function InvitationsTab({ canManage }: InvitationsTabProps) {
 
               {account.approved_at && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  Approved {format(new Date(account.approved_at), 'MMM d, yyyy')}
+                  Approved {formatDate(new Date(account.approved_at), 'MMM d, yyyy')}
                 </p>
               )}
             </div>
@@ -575,20 +584,20 @@ export function InvitationsTab({ canManage }: InvitationsTabProps) {
                 <span>Invited by {invitation.inviter_name}</span>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <span className="cursor-help">{formatDistanceToNow(new Date(invitation.created_at), { addSuffix: true })}</span>
+                    <span className="cursor-help">{formatRelativeTime(invitation.created_at)}</span>
                   </TooltipTrigger>
-                  <TooltipContent>{format(new Date(invitation.created_at), 'PPpp')}</TooltipContent>
+                  <TooltipContent>{formatDate(new Date(invitation.created_at), 'PPpp')}</TooltipContent>
                 </Tooltip>
               </div>
 
               {isPending && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Expires {formatDistanceToNow(new Date(invitation.expires_at), { addSuffix: true })}
+                  Expires {formatRelativeTime(invitation.expires_at)}
                 </p>
               )}
 
               {actualStatus === 'accepted' && invitation.accepted_at && (
-                <p className="text-xs text-green-600 mt-1">Accepted {format(new Date(invitation.accepted_at), 'PPp')}</p>
+                <p className="text-xs text-green-600 mt-1">Accepted {formatDate(new Date(invitation.accepted_at), 'PPp')}</p>
               )}
             </div>
 

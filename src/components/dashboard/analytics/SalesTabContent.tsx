@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,19 +18,22 @@ import {
   DollarSign,
   ShoppingBag,
   Scissors,
-  RefreshCw,
   Loader2,
   Download,
   CreditCard,
   Receipt,
   CalendarClock,
+  Info,
+  ArrowRight,
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useSalesMetrics, useSalesTrend, useSalesByStylist, useSalesByLocation } from '@/hooks/useSalesData';
-import { useTriggerPhorestSync } from '@/hooks/usePhorestSync';
+
+import { useCommissionTiers } from '@/hooks/useCommissionTiers';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useLocations } from '@/hooks/useLocations';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
+import { formatCurrency as formatCurrencyUtil } from '@/lib/formatCurrency';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
@@ -47,9 +51,9 @@ import { ProductCategoryChart } from '@/components/dashboard/sales/ProductCatego
 import { ServicePopularityChart } from '@/components/dashboard/sales/ServicePopularityChart';
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
 import { PeakHoursHeatmap } from '@/components/dashboard/sales/PeakHoursHeatmap';
-import { CommissionCalculator } from '@/components/dashboard/sales/CommissionCalculator';
+import { CommissionSummaryCard } from '@/components/dashboard/sales/CommissionSummaryCard';
+import { StaffCommissionTable } from '@/components/dashboard/sales/StaffCommissionTable';
 import { SalesReportPDF } from '@/components/dashboard/sales/SalesReportPDF';
-import { CommissionTiersEditor } from '@/components/dashboard/sales/CommissionTiersEditor';
 import { TeamGoalsCard } from '@/components/dashboard/sales/TeamGoalsCard';
 import { GoalTrackerCard } from '@/components/dashboard/sales/GoalTrackerCard';
 import { RevenueForecast } from '@/components/dashboard/sales/RevenueForecast';
@@ -59,6 +63,7 @@ import { YearOverYearComparison } from '@/components/dashboard/sales/YearOverYea
 import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExport';
 import { CompareTabContent } from '@/components/dashboard/sales/compare/CompareTabContent';
 import { CorrelationsContent } from '@/components/dashboard/analytics/CorrelationsContent';
+import { RetailAnalyticsContent } from '@/components/dashboard/analytics/RetailAnalyticsContent';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface SalesTabContentProps {
@@ -68,10 +73,12 @@ interface SalesTabContentProps {
 }
 
 export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }: SalesTabContentProps) {
+  const navigate = useNavigate();
+  const { formatDate } = useFormatDate();
   const { data: locations } = useLocations();
-  const syncSales = useTriggerPhorestSync();
   const { goals } = useSalesGoals();
   const { data: tomorrowData } = useTomorrowRevenue();
+  const { calculateCommission, isLoading: tiersLoading } = useCommissionTiers();
 
   const locationFilter = filters.locationId !== 'all' ? filters.locationId : undefined;
 
@@ -120,7 +127,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
     const data = trendData?.overall || trendData || [];
     return (Array.isArray(data) ? data : []).map((d: any) => ({
       ...d,
-      dateLabel: format(new Date(d.date), 'MMM d'),
+      dateLabel: formatDate(new Date(d.date), 'MMM d'),
     }));
   }, [trendData]);
 
@@ -162,18 +169,6 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         </div>
         <div className="flex items-center gap-2">
           <SalesGoalsDialog />
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => syncSales.mutate('sales')}
-            disabled={syncSales.isPending}
-          >
-            {syncSales.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <RefreshCw className="w-4 h-4" />
-            )}
-          </Button>
           <Button variant="outline" size="icon" onClick={handleExportCSV}>
             <Download className="w-4 h-4" />
           </Button>
@@ -221,6 +216,9 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             </VisibilityGate>
             <VisibilityGate elementKey="sales_commission_subtab" elementName="Commission" elementCategory="Page Tabs">
               <SubTabsTrigger value="commission">Commission</SubTabsTrigger>
+            </VisibilityGate>
+            <VisibilityGate elementKey="sales_retail_subtab" elementName="Retail" elementCategory="Page Tabs">
+              <SubTabsTrigger value="retail">Retail</SubTabsTrigger>
             </VisibilityGate>
             <VisibilityGate elementKey="sales_correlations_subtab" elementName="Correlations" elementCategory="Page Tabs">
               <SubTabsTrigger value="correlations">Correlations</SubTabsTrigger>
@@ -279,13 +277,13 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
                             axisLine={false}
                           />
                           <YAxis 
-                            tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                            tickFormatter={(value) => formatCurrencyUtil(value / 1000, undefined, { maximumFractionDigits: 0, minimumFractionDigits: 0 }) + 'k'}
                             tick={{ fontSize: 12 }}
                             tickLine={false}
                             axisLine={false}
                           />
                           <Tooltip 
-                            formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                            formatter={(value: number) => [formatCurrencyUtil(value), 'Revenue']}
                             contentStyle={{ 
                               backgroundColor: 'hsl(var(--background))', 
                               border: '1px solid hsl(var(--border))',
@@ -438,17 +436,53 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         </TabsContent>
 
         <TabsContent value="commission" className="mt-6 space-y-6">
-          <div className="grid lg:grid-cols-2 gap-6">
-            <PinnableCard elementKey="commission_calculator" elementName="Commission Calculator" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
-              <CommissionCalculator 
-                serviceRevenue={metrics?.serviceRevenue || 0}
-                productRevenue={metrics?.productRevenue || 0}
-              />
-            </PinnableCard>
-            <PinnableCard elementKey="commission_tiers" elementName="Commission Tiers" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
-              <CommissionTiersEditor />
-            </PinnableCard>
+          {/* Instructional banner */}
+          <div className="flex items-start gap-3 rounded-lg border border-border/50 bg-muted/20 px-4 py-3">
+            <Info className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+            <div className="flex-1 space-y-1">
+              <p className="text-sm font-medium">How commission works</p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Commission tiers define the percentage each stylist earns based on their individual revenue. 
+                Higher revenue unlocks better rates. The breakdown below shows each stylist's estimated 
+                commission for the selected date range.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0 text-xs gap-1.5"
+              onClick={() => navigate('/dashboard/admin/payroll?tab=commissions')}
+            >
+              Manage Tiers
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Button>
           </div>
+
+          {/* Payroll Summary */}
+          <PinnableCard elementKey="commission_summary" elementName="Commission Summary" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <CommissionSummaryCard
+              stylistData={stylistData}
+              calculateCommission={calculateCommission}
+              isLoading={stylistLoading || tiersLoading}
+            />
+          </PinnableCard>
+
+          {/* Per-Stylist Breakdown */}
+          <PinnableCard elementKey="staff_commission_breakdown" elementName="Staff Commission Breakdown" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <StaffCommissionTable
+              stylistData={stylistData}
+              calculateCommission={calculateCommission}
+              isLoading={stylistLoading || tiersLoading}
+            />
+          </PinnableCard>
+        </TabsContent>
+
+        <TabsContent value="retail" className="mt-6">
+          <RetailAnalyticsContent
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            locationId={locationFilter}
+          />
         </TabsContent>
 
         <TabsContent value="correlations" className="mt-6">

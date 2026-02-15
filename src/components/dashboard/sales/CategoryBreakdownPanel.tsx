@@ -1,16 +1,26 @@
 import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { formatCurrencyWhole } from '@/lib/formatCurrency';
 import { cn } from '@/lib/utils';
 
 export type BreakdownMode = 'revenue' | 'dailyAvg' | 'count';
+
+export type BreakdownType = 'category' | 'location' | 'stylist';
 
 interface CategoryBreakdownPanelProps {
   data: Record<string, { revenue: number; count: number }>;
   mode: BreakdownMode;
   dayCount: number;
   isOpen: boolean;
+  breakdownType?: BreakdownType;
 }
+
+const BREAKDOWN_TYPE_LABELS: Record<BreakdownType, string> = {
+  category: 'Category',
+  location: 'Location',
+  stylist: 'Service Provider',
+};
 
 const MODE_LABELS: Record<BreakdownMode, string> = {
   revenue: 'Revenue by Category',
@@ -18,12 +28,19 @@ const MODE_LABELS: Record<BreakdownMode, string> = {
   count: 'Appointments by Category',
 };
 
+function getSectionLabel(mode: BreakdownMode, breakdownType?: BreakdownType): string {
+  const typeLabel = breakdownType ? BREAKDOWN_TYPE_LABELS[breakdownType] : 'Category';
+  if (mode === 'revenue') return `Revenue by ${typeLabel}`;
+  if (mode === 'dailyAvg') return `Daily Avg by ${typeLabel}`;
+  return `Appointments by ${typeLabel}`;
+}
+
 function formatValue(mode: BreakdownMode, entry: { revenue: number; count: number }, dayCount: number): string {
   switch (mode) {
     case 'revenue':
-      return `$${Math.round(entry.revenue).toLocaleString()}`;
+      return formatCurrencyWhole(Math.round(entry.revenue));
     case 'dailyAvg':
-      return `$${Math.round(entry.revenue / Math.max(dayCount, 1)).toLocaleString()}/day`;
+      return formatCurrencyWhole(Math.round(entry.revenue / Math.max(dayCount, 1))) + '/day';
     case 'count':
       return `${entry.count} appointment${entry.count !== 1 ? 's' : ''}`;
   }
@@ -33,7 +50,7 @@ function getSortValue(mode: BreakdownMode, entry: { revenue: number; count: numb
   return mode === 'count' ? entry.count : entry.revenue;
 }
 
-export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen }: CategoryBreakdownPanelProps) {
+export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen, breakdownType = 'category' }: CategoryBreakdownPanelProps) {
   const sorted = useMemo(() => {
     const entries = Object.entries(data).map(([name, vals]) => ({
       name,
@@ -63,7 +80,7 @@ export function CategoryBreakdownPanel({ data, mode, dayCount, isOpen }: Categor
             <div className="flex items-center gap-2 mb-2">
               <div className="w-1.5 h-1.5 rounded-full bg-primary" />
               <span className="text-xs tracking-wide uppercase text-muted-foreground font-medium">
-                {MODE_LABELS[mode]}
+                {getSectionLabel(mode, breakdownType)}
               </span>
             </div>
             {sorted.map((entry, index) => {

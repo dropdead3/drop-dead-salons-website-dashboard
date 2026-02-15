@@ -4,14 +4,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { FileText, Download, TrendingUp, DollarSign } from 'lucide-react';
 import { useState } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useBoothRenter } from '@/hooks/useBoothRenters';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function RenterCommissions() {
+  const { formatDate } = useFormatDate();
   const { user } = useAuth();
+  const { formatCurrency } = useFormatCurrency();
   const currentYear = new Date().getFullYear();
   const [selectedYear, setSelectedYear] = useState(currentYear);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -65,7 +68,7 @@ export default function RenterCommissions() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{selectedYear} Total Earned</p>
-                <p className="text-2xl font-bold">${totalEarned.toFixed(2)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(totalEarned)}</p>
               </div>
             </div>
           </CardContent>
@@ -79,7 +82,7 @@ export default function RenterCommissions() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Paid</p>
-                <p className="text-2xl font-bold">${totalPaid.toFixed(2)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(totalPaid)}</p>
               </div>
             </div>
           </CardContent>
@@ -93,7 +96,7 @@ export default function RenterCommissions() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Pending Payout</p>
-                <p className="text-2xl font-bold">${totalPending.toFixed(2)}</p>
+                <p className="text-2xl font-bold">{formatCurrency(totalPending)}</p>
               </div>
             </div>
           </CardContent>
@@ -159,30 +162,30 @@ export default function RenterCommissions() {
                     <TableCell>
                       <div>
                         <p className="font-medium">
-                          {format(new Date(statement.period_start), 'MMM yyyy')}
+                          {formatDate(new Date(statement.period_start), 'MMM yyyy')}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {format(new Date(statement.period_start), 'MMM d')} - {format(new Date(statement.period_end), 'MMM d')}
+                          {formatDate(new Date(statement.period_start), 'MMM d')} - {formatDate(new Date(statement.period_end), 'MMM d')}
                         </p>
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      ${statement.total_retail_sales.toFixed(2)}
+                      {formatCurrency(statement.total_retail_sales)}
                     </TableCell>
                     <TableCell className="text-right">
-                      ${statement.total_commission.toFixed(2)}
+                      {formatCurrency(statement.total_commission)}
                       <span className="text-xs text-muted-foreground ml-1">
                         ({(statement.commission_rate * 100).toFixed(0)}%)
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
                       {statement.deductions && statement.deductions > 0 
-                        ? `-$${statement.deductions.toFixed(2)}`
+                        ? `-${formatCurrency(statement.deductions)}`
                         : '-'
                       }
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      ${statement.net_payout.toFixed(2)}
+                      {formatCurrency(statement.net_payout)}
                     </TableCell>
                     <TableCell>
                       {getStatusBadge(statement.status)}

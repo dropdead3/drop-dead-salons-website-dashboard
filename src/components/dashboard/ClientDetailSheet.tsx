@@ -1,4 +1,5 @@
-import { format, differenceInDays } from 'date-fns';
+import { differenceInDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
   Sheet, 
   SheetContent, 
@@ -29,6 +30,7 @@ import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { BannedClientAlert } from './clients/BannedClientAlert';
 import { BannedClientBadge } from './clients/BannedClientBadge';
 import { BanClientToggle } from './clients/BanClientToggle';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface Client {
   id: string;
@@ -59,6 +61,8 @@ interface ClientDetailSheetProps {
 
 export function ClientDetailSheet({ client, open, onOpenChange, locationName }: ClientDetailSheetProps) {
   const { data: visitHistory, isLoading: historyLoading } = useClientVisitHistory(client?.phorest_client_id);
+  const { formatCurrencyWhole } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
 
   if (!client) return null;
 
@@ -150,7 +154,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
           </Card>
           <Card className="p-3 text-center">
             <TrendingUp className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-            <p className="font-display text-lg">${(client.total_spend || 0).toLocaleString()}</p>
+            <p className="font-display text-lg">{formatCurrencyWhole(client.total_spend || 0)}</p>
             <p className="text-xs text-muted-foreground">Total Spend</p>
           </Card>
           <Card className="p-3 text-center">
@@ -193,7 +197,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             {client.last_visit && (
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
-                <span>Last visit: {format(new Date(client.last_visit), 'MMM d, yyyy')}</span>
+                <span>Last visit: {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}</span>
               </div>
             )}
           </CardContent>

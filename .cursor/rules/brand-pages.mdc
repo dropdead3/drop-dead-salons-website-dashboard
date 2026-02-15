@@ -1,0 +1,83 @@
+---
+description: Landing page and website architecture from the ZURA Brand Bible. Section-by-section structure for homepage, about page, and navigation.
+globs: src/pages/Index.tsx, src/components/home/**/*.tsx, src/pages/About.tsx
+alwaysApply: false
+---
+
+# Brand Pages Architecture
+
+## Homepage Sections (in order)
+
+### 1. Hero
+Minimal. Architectural. Calm. White space.
+- Headline: "Zura"
+- Subline: "Infrastructure for Leaders Building the Next Generation of Beauty Brands."
+- Support: "We build intelligence infrastructure for scaling operators."
+- Primary CTA: "Request Access"
+- Secondary CTA: "See How Zura Works"
+- No feature list. No clutter.
+
+### 2. Industry Truth
+- "The beauty industry mastered artistry. It did not master infrastructure."
+- Most brands scale revenue before they scale systems.
+
+### 3. Define Chaos
+Headline: "Operational chaos doesn't start where you think it does."
+- Founder-dependent decisions
+- Fragmented tools
+- Spreadsheet visibility
+- Inconsistent standards
+- Manual KPI tracking
+- Reactive management
+- Closing: "These are symptoms. The root is infrastructure."
+
+### 4. The Solution
+- "One structured operational framework."
+- "Zura unifies intelligence, operations, and execution into one system."
+- Bullets: Centralized command, standardized architecture, AI-assisted leadership, multi-location control, real-time intelligence.
+
+### 5. Segment by Psychological State
+Four panels:
+- Overwhelmed Operator: "Working nonstop. Still behind."
+- Plateaued Founder: "Revenue stable. Growth stalled."
+- Scaling Operator: "Growing fast. Getting messy."
+- Strategic Leader: "You need structured intelligence."
+
+### 6. Three Pillars Visual
+Intelligence | Infrastructure | AI-Assisted Leadership
+
+### 7. Social Proof / Case Studies
+
+### 8. Final CTA
+"Request Access"
+
+## About Page Structure
+
+1. Industry problem statement
+2. What Zura does (replaces improvisation with architecture)
+3. Why infrastructure matters
+4. Built by industry insiders (credibility)
+5. Future of beauty brands
+6. Closing CTA
+
+## Navigation Architecture
+
+Consider segmentation:
+- Single Location
+- Multi-Location
+- Enterprise
+
+Each page adapts emphasis without changing core identity. Zura remains infrastructure.
+
+## Public Pages Available
+
+- `/` -- Homepage
+- `/about` -- About
+- `/services` -- Service listings
+- `/booking`, `/book` -- Booking flow
+- `/stylists` -- Stylist directory
+- `/extensions` -- Extensions showcase
+- `/policies` -- Policies
+- `/demo` -- Product demo
+- `/feedback` -- Client feedback
+- `/rewards` -- Client loyalty portal

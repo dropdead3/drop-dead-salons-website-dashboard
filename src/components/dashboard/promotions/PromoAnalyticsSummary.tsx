@@ -9,9 +9,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Loader2, TrendingUp, TrendingDown, DollarSign, Users, Percent, Gift } from 'lucide-react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useLoyaltyAnalytics, useTierDistribution, usePromotionPerformance } from '@/hooks/useLoyaltyAnalytics';
 import { PieChart, Pie, Cell, ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, Legend } from 'recharts';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 
 interface PromoAnalyticsSummaryProps {
   organizationId?: string;
@@ -20,6 +22,9 @@ interface PromoAnalyticsSummaryProps {
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
 
 export function PromoAnalyticsSummary({ organizationId }: PromoAnalyticsSummaryProps) {
+  const { formatDate } = useFormatDate();
+  const { formatNumber } = useFormatNumber();
+  const { formatCurrency } = useFormatCurrency();
   const { data: loyaltyStats, isLoading: loadingLoyalty } = useLoyaltyAnalytics(organizationId, 30);
   const { data: tierDistribution, isLoading: loadingTiers } = useTierDistribution(organizationId);
   const { data: promoPerformance, isLoading: loadingPromo } = usePromotionPerformance(organizationId, 30);
@@ -46,7 +51,7 @@ export function PromoAnalyticsSummary({ organizationId }: PromoAnalyticsSummaryP
 
   // Prepare chart data
   const pointsChartData = loyaltyStats?.dailyTrend.map(day => ({
-    date: format(new Date(day.analytics_date), 'MMM d'),
+    date: formatDate(new Date(day.analytics_date), 'MMM d'),
     earned: day.points_earned,
     redeemed: day.points_redeemed,
   })) || [];
@@ -60,7 +65,7 @@ export function PromoAnalyticsSummary({ organizationId }: PromoAnalyticsSummaryP
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Points Earned</p>
-                <p className="text-2xl font-bold">{loyaltyStats?.totalPointsEarned.toLocaleString() || 0}</p>
+                <p className="text-2xl font-bold">{formatNumber(loyaltyStats?.totalPointsEarned ?? 0)}</p>
               </div>
               <div className="p-3 bg-primary/10 rounded-full">
                 <TrendingUp className="h-5 w-5 text-primary" />
@@ -74,7 +79,7 @@ export function PromoAnalyticsSummary({ organizationId }: PromoAnalyticsSummaryP
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Points Redeemed</p>
-                <p className="text-2xl font-bold">{loyaltyStats?.totalPointsRedeemed.toLocaleString() || 0}</p>
+                <p className="text-2xl font-bold">{formatNumber(loyaltyStats?.totalPointsRedeemed ?? 0)}</p>
               </div>
               <div className="p-3 bg-chart-2/10 rounded-full">
                 <Gift className="h-5 w-5 text-chart-2" />
@@ -102,7 +107,7 @@ export function PromoAnalyticsSummary({ organizationId }: PromoAnalyticsSummaryP
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Points Liability</p>
-                <p className="text-2xl font-bold">${loyaltyStats?.pointsLiability.toFixed(2) || '0.00'}</p>
+                <p className="text-2xl font-bold">{formatCurrency(loyaltyStats?.pointsLiability ?? 0)}</p>
               </div>
               <div className="p-3 bg-destructive/10 rounded-full">
                 <DollarSign className="h-5 w-5 text-destructive" />
@@ -229,13 +234,13 @@ export function PromoAnalyticsSummary({ organizationId }: PromoAnalyticsSummaryP
                     </TableCell>
                     <TableCell className="text-right">{promo.uses}</TableCell>
                     <TableCell className="text-right">
-                      ${promo.totalOriginal.toFixed(2)}
+                      {formatCurrency(promo.totalOriginal)}
                     </TableCell>
                     <TableCell className="text-right text-destructive">
-                      -${promo.totalDiscount.toFixed(2)}
+                      -{formatCurrency(promo.totalDiscount)}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      ${promo.totalFinal.toFixed(2)}
+                      {formatCurrency(promo.totalFinal)}
                     </TableCell>
                   </TableRow>
                 ))}

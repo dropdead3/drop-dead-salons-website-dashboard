@@ -10,6 +10,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { RetentionMetrics } from '@/hooks/useOperationalAnalytics';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { AtRiskClientsList } from './AtRiskClientsList';
@@ -22,6 +23,8 @@ interface ClientsContentProps {
 }
 
 export function ClientsContent({ retention, isLoading, dateRange, locationName }: ClientsContentProps) {
+  const { formatNumber } = useFormatNumber();
+
   if (isLoading || !retention) {
     return (
       <div className="space-y-6">
@@ -59,7 +62,7 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
                 <Users className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="font-display text-2xl">{retention.totalClients.toLocaleString()}</p>
+                <p className="font-display text-2xl">{formatNumber(retention.totalClients)}</p>
                 <p className="text-xs text-muted-foreground">Total Clients</p>
               </div>
             </div>
@@ -70,7 +73,7 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
                 <UserCheck className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="font-display text-2xl text-green-600">{retention.returningClients.toLocaleString()}</p>
+                <p className="font-display text-2xl text-green-600">{formatNumber(retention.returningClients)}</p>
                 <p className="text-xs text-muted-foreground">Returning</p>
               </div>
             </div>
@@ -81,7 +84,7 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
                 <UserPlus className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="font-display text-2xl text-blue-600">{retention.newClients.toLocaleString()}</p>
+                <p className="font-display text-2xl text-blue-600">{formatNumber(retention.newClients)}</p>
                 <p className="text-xs text-muted-foreground">New Clients</p>
               </div>
             </div>

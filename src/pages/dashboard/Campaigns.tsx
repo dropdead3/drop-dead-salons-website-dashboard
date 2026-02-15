@@ -12,7 +12,7 @@ import {
 import { useActionCampaigns, useUpdateCampaignStatus } from '@/hooks/useActionCampaigns';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -23,6 +23,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
 };
 
 export default function Campaigns() {
+  const { formatDate } = useFormatDate();
   const [filter, setFilter] = useState('all');
   const { data: campaigns, isLoading } = useActionCampaigns(filter);
   const updateStatus = useUpdateCampaignStatus();
@@ -120,7 +121,7 @@ export default function Campaigns() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge variant="outline" className="text-[10px] gap-1">
                         <Calendar className="w-2.5 h-2.5" />
-                        {format(new Date(campaign.created_at), 'MMM d')}
+                        {formatDate(new Date(campaign.created_at), 'MMM d')}
                       </Badge>
                       {campaign.goal_period && (
                         <Badge variant="outline" className="text-[10px]">
@@ -130,7 +131,7 @@ export default function Campaigns() {
                       {counts.nextDue && (
                         <Badge variant="outline" className="text-[10px] gap-1 text-primary border-primary/20">
                           <AlertCircle className="w-2.5 h-2.5" />
-                          Due {format(new Date(counts.nextDue), 'MMM d')}
+                          Due {formatDate(new Date(counts.nextDue), 'MMM d')}
                         </Badge>
                       )}
                     </div>

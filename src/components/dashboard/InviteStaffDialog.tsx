@@ -25,6 +25,8 @@ import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { UserPlus, Loader2, Mail, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import type { Database } from '@/integrations/supabase/types';
+import { FormSuccess } from '@/components/ui/form-success';
+import { useNotificationSound } from '@/hooks/useNotificationSound';
 
 type AppRole = Database['public']['Enums']['app_role'];
 
@@ -35,10 +37,12 @@ export function InviteStaffDialog() {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<AppRole>('stylist');
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [didSucceed, setDidSucceed] = useState(false);
   
   const createInvitation = useCreateInvitation();
   const { roleOptions } = useRoleUtils();
   const capacity = useBusinessCapacity();
+  const { playSuccess, playError } = useNotificationSound();
   
   const canInvite = capacity.canAddUser || capacity.isLoading || capacity.users.isUnlimited;
 
@@ -56,16 +60,29 @@ export function InviteStaffDialog() {
       { email, role },
       {
         onSuccess: () => {
-          setOpen(false);
-          setEmail('');
-          setRole('stylist');
+          playSuccess();
+          setDidSucceed(true);
+        },
+        onError: () => {
+          playError();
         },
       }
     );
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) {
+          setEmail('');
+          setRole('stylist');
+          setEmailError(null);
+          setDidSucceed(false);
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <Button 
           className="gap-2" 
@@ -97,65 +114,80 @@ export function InviteStaffDialog() {
             </AlertDescription>
           </Alert>
         )}
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="name@example.com"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setEmailError(null);
-              }}
-              className={emailError ? 'border-destructive' : ''}
-            />
-            {emailError && (
-              <p className="text-xs text-destructive">{emailError}</p>
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Role</Label>
-            <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a role" />
-              </SelectTrigger>
-              <SelectContent>
-                {roleOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">{option.label}</span>
-                      <span className="text-xs text-muted-foreground">{option.description}</span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
 
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={createInvitation.isPending}>
-              {createInvitation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Sending...
-                </>
-              ) : (
-                'Send Invitation'
+        {didSucceed ? (
+          <FormSuccess
+            title="Invitation sent"
+            description="The invite is queued for delivery. They can create their account from the link in email."
+            action={
+              <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={() => setDidSucceed(false)}>
+                  Invite another
+                </Button>
+                <Button onClick={() => setOpen(false)}>Done</Button>
+              </div>
+            }
+          />
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@example.com"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setEmailError(null);
+                }}
+                className={emailError ? 'border-destructive' : ''}
+              />
+              {emailError && (
+                <p className="text-xs text-destructive">{emailError}</p>
               )}
-            </Button>
-          </DialogFooter>
-        </form>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Role</Label>
+              <Select value={role} onValueChange={(v) => setRole(v as AppRole)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a role" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roleOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <div className="flex flex-col items-start">
+                        <span className="font-medium">{option.label}</span>
+                        <span className="text-xs text-muted-foreground">{option.description}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createInvitation.isPending}>
+                {createInvitation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Sending...
+                  </>
+                ) : (
+                  'Send Invitation'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );

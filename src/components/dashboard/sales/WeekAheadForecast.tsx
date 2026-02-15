@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 import { useWeekAheadRevenue, DayForecast } from '@/hooks/useWeekAheadRevenue';
 import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsSheet } from './DayAppointmentsSheet';
@@ -11,7 +13,8 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CalendarRange, TrendingUp, Calendar, Users, ChevronDown } from 'lucide-react';
 import { CategoryBreakdownPanel, BreakdownMode } from './CategoryBreakdownPanel';
 import { cn } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { motion, useInView } from 'framer-motion';
 import { 
   BarChart, 
@@ -42,7 +45,7 @@ function AboveBarLabel({ x, y, width, value, ...rest }: any) {
         className={cn("text-xs tabular-nums", isPeak ? "fill-chart-2" : "fill-foreground")}
         style={{ fontWeight: isPeak ? 700 : 500 }}
       >
-        ${value.toLocaleString()}
+        {formatCurrencyWholeUtil(value)}
       </text>
     </g>
   );
@@ -95,6 +98,8 @@ function CustomXAxisTick({ x, y, payload, days, peakDate, onDayClick }: any) {
 }
 
 export function WeekAheadForecast() {
+  const { formatCurrencyWhole, currency } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [selectedDay, setSelectedDay] = useState<DayForecast | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -193,7 +198,7 @@ export function WeekAheadForecast() {
               </div>
               <AnimatedBlurredAmount 
                 value={totalRevenue}
-                prefix="$"
+                currency={currency}
                 className="text-lg font-display tabular-nums"
               />
               <div className="flex items-center gap-1 justify-center">
@@ -214,7 +219,7 @@ export function WeekAheadForecast() {
               </div>
               <AnimatedBlurredAmount 
                 value={Math.round(averageDaily)}
-                prefix="$"
+                currency={currency}
                 className="text-lg font-display tabular-nums"
               />
               <div className="flex items-center gap-1 justify-center">
@@ -275,13 +280,13 @@ export function WeekAheadForecast() {
                       fontSize: '12px',
                     }}
                     formatter={(value: number, name: string) => {
-                      if (name === 'confirmedRevenue') return [`$${value.toLocaleString()}`, 'Confirmed'];
-                      if (name === 'unconfirmedRevenue') return [`$${value.toLocaleString()}`, 'Unconfirmed'];
+                      if (name === 'confirmedRevenue') return [formatCurrencyWhole(value), 'Confirmed'];
+                      if (name === 'unconfirmedRevenue') return [formatCurrencyWhole(value), 'Unconfirmed'];
                       return [value, name];
                     }}
                     labelFormatter={(label) => {
                       const day = days.find(d => d.dayName === label);
-                      return day ? format(parseISO(day.date), 'EEEE, MMM d') : label;
+                      return day ? formatDate(parseISO(day.date), 'EEEE, MMM d') : label;
                     }}
                   />
                   {/* Unconfirmed revenue - bottom of stack */}
@@ -350,7 +355,7 @@ export function WeekAheadForecast() {
                               whiteSpace: 'nowrap',
                               width: 'fit-content',
                             }}>
-                              Daily Avg: ${Math.round(averageDaily).toLocaleString()}
+                              Daily Avg: {formatCurrencyWhole(Math.round(averageDaily))}
                             </div>
                           </foreignObject>
                           {(() => {
@@ -399,10 +404,10 @@ export function WeekAheadForecast() {
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
               <span className="text-muted-foreground flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-chart-2" />
-                Busiest day: <span className="font-medium text-foreground">{format(parseISO(peakDay.date), 'EEEE')}</span>
+                Busiest day: <span className="font-medium text-foreground">{formatDate(parseISO(peakDay.date), 'EEEE')}</span>
               </span>
               <span className="font-display text-chart-2">
-                <BlurredAmount>${peakDay.revenue.toLocaleString()}</BlurredAmount>
+                <BlurredAmount>{formatCurrencyWhole(peakDay.revenue)}</BlurredAmount>
               </span>
             </div>
           )}

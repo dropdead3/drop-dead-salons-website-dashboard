@@ -4,8 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { TrendingUp, TrendingDown, Target, CalendarDays, Loader2 } from 'lucide-react';
-import { format, getDaysInMonth, getDate, startOfMonth, addDays } from 'date-fns';
+import { getDaysInMonth, getDate, startOfMonth, addDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
@@ -17,6 +19,8 @@ interface RevenueForecastProps {
 }
 
 export function RevenueForecast({ dailyData, monthlyTarget, isLoading, filterContext }: RevenueForecastProps) {
+  const { formatCurrencyWhole, currency } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   const forecast = useMemo(() => {
     if (!dailyData?.length) return null;
 
@@ -51,7 +55,7 @@ export function RevenueForecast({ dailyData, monthlyTarget, isLoading, filterCon
     // Historical data
     dailyData.forEach(d => {
       chartData.push({
-        date: format(new Date(d.date), 'MMM d'),
+        date: formatDate(new Date(d.date), 'MMM d'),
         actual: d.revenue,
         projected: null,
       });
@@ -63,7 +67,7 @@ export function RevenueForecast({ dailyData, monthlyTarget, isLoading, filterCon
       const projectedDay = addDays(today, i);
       runningTotal += dailyAverage;
       chartData.push({
-        date: format(projectedDay, 'MMM d'),
+        date: formatDate(projectedDay, 'MMM d'),
         actual: null,
         projected: dailyAverage,
       });
@@ -83,7 +87,7 @@ export function RevenueForecast({ dailyData, monthlyTarget, isLoading, filterCon
       projectedVsTarget,
       chartData,
     };
-  }, [dailyData, monthlyTarget]);
+  }, [dailyData, monthlyTarget, formatDate]);
 
   if (isLoading) {
     return (
@@ -139,21 +143,21 @@ export function RevenueForecast({ dailyData, monthlyTarget, isLoading, filterCon
         {/* Key metrics */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center p-3 bg-muted/50 rounded-lg">
-            <p className="text-lg font-display">${forecast.totalSoFar.toLocaleString()}</p>
+            <p className="text-lg font-display">{formatCurrencyWhole(forecast.totalSoFar)}</p>
             <p className="text-xs text-muted-foreground">Earned to Date</p>
           </div>
           <div className="text-center p-3 bg-muted/50 rounded-lg">
-            <p className="text-lg font-display">${Math.round(forecast.dailyAverage).toLocaleString()}</p>
+            <p className="text-lg font-display">{formatCurrencyWhole(Math.round(forecast.dailyAverage))}</p>
             <p className="text-xs text-muted-foreground">Daily Average</p>
           </div>
           <div className={cn('text-center p-3 rounded-lg', forecast.isOnTrack ? 'bg-chart-2/10' : 'bg-chart-4/10')}>
             <p className={cn('text-lg font-display', statusColor)}>
-              ${Math.round(forecast.projectedTotal).toLocaleString()}
+              {formatCurrencyWhole(Math.round(forecast.projectedTotal))}
             </p>
             <p className="text-xs text-muted-foreground">Projected Total</p>
           </div>
           <div className="text-center p-3 bg-muted/50 rounded-lg">
-            <p className="text-lg font-display">${Math.round(forecast.requiredDaily).toLocaleString()}</p>
+            <p className="text-lg font-display">{formatCurrencyWhole(Math.round(forecast.requiredDaily))}</p>
             <p className="text-xs text-muted-foreground">Required Daily</p>
           </div>
         </div>
@@ -163,7 +167,7 @@ export function RevenueForecast({ dailyData, monthlyTarget, isLoading, filterCon
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground flex items-center gap-1">
               <Target className="w-4 h-4" />
-              Progress to ${monthlyTarget.toLocaleString()} goal
+              Progress to {formatCurrencyWhole(monthlyTarget)} goal
             </span>
             <span className="font-medium">
               Day {forecast.currentDay} of {forecast.daysInMonth}
@@ -209,7 +213,7 @@ export function RevenueForecast({ dailyData, monthlyTarget, isLoading, filterCon
                   fontSize: '12px',
                 }}
                 formatter={(value: number, name: string) => [
-                  `$${value?.toLocaleString() || '0'}`,
+                  formatCurrencyWhole(value || 0),
                   name === 'actual' ? 'Actual' : 'Projected'
                 ]}
               />
@@ -245,14 +249,14 @@ export function RevenueForecast({ dailyData, monthlyTarget, isLoading, filterCon
         )}>
           {forecast.isOnTrack ? (
             <>
-              🎯 At this pace, you'll exceed your goal by{' '}
-              <strong>${Math.round(forecast.projectedTotal - monthlyTarget).toLocaleString()}</strong>
+              At this pace, you'll exceed your goal by{' '}
+              <strong>{formatCurrencyWhole(Math.round(forecast.projectedTotal - monthlyTarget))}</strong>
             </>
           ) : (
             <>
-              ⚡ To hit your goal, increase daily revenue to{' '}
-              <strong>${Math.round(forecast.requiredDaily).toLocaleString()}</strong>
-              {' '}(+${Math.round(forecast.requiredDaily - forecast.dailyAverage).toLocaleString()}/day)
+              To hit your goal, increase daily revenue to{' '}
+              <strong>{formatCurrencyWhole(Math.round(forecast.requiredDaily))}</strong>
+              {' '}(+{formatCurrencyWhole(Math.round(forecast.requiredDaily - forecast.dailyAverage))}/day)
             </>
           )}
         </div>

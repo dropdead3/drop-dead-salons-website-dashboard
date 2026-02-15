@@ -1,0 +1,83 @@
+---
+description: Data flow architecture for Zura. Teaches agents how data moves through the system so they understand the blast radius of any change.
+alwaysApply: true
+---
+
+# Architecture Map
+
+## Authentication Flow
+
+```
+Supabase Auth (email/password)
+  → AuthContext (session, user)
+    → user_roles table → AppRole[] (admin, stylist, etc.)
+    → role_permissions join → permission names[]
+      → hasPermission() / usePermission() in components
+    → platform_roles table → PlatformRole[] (platform_owner, etc.)
+```
+
+Key files: `src/contexts/AuthContext.tsx`, `src/hooks/usePermission.ts`
+
+## Organization Context Flow
+
+```
+employee_profiles.organization_id
+  → OrganizationContext
+    → effectiveOrganization (supports multi-org switching via organization_admins)
+      → ALL data queries scoped by organization_id
+```
+
+Key files: `src/contexts/OrganizationContext.tsx`
+
+Multi-org users (owners of multiple salons) can switch between organizations. `effectiveOrganization` always reflects the currently active one.
+
+## Data Fetching Flow
+
+```
+React Component
+  → Custom hook (useX)
+    → TanStack Query (useQuery / useMutation)
+      → Supabase JS client (anon key, respects RLS)
+        → PostgreSQL (RLS enforces org isolation)
+```
+
+## Edge Function Flow
+
+```
+Frontend: supabase.functions.invoke('function-name', { body })
+  → Deno edge function (supabase/functions/{name}/index.ts)
+    → Supabase admin client (SERVICE_ROLE_KEY, bypasses RLS)
+      → PostgreSQL (direct access)
+```
+
+Edge functions bypass RLS -- they must enforce their own authorization checks.
+
+## RLS Enforcement Chain
+
+```
+is_org_member(auth.uid(), organization_id)  → SELECT (read access)
+is_org_admin(auth.uid(), organization_id)   → INSERT/UPDATE/DELETE (write access)
+is_platform_user(auth.uid())                → Platform bypass (all orgs)
+```
+
+These are SQL helper functions used in every RLS policy.
+
+## State Management Layers
+
+| Layer | Tool | Purpose |
+|-------|------|---------|
+| Server state | TanStack Query | Supabase data (cached, auto-refetch) |
+| App state | React Context | Auth, org, theme, view-as, presence |
+| Local state | useState/useReducer | Component-level UI state |
+| Offline | useOfflineSync | Queued actions synced when online |
+
+## Key Context Providers
+
+- `AuthContext` -- User, session, roles, permissions
+- `OrganizationContext` -- Current organization, multi-org switching
+- `ViewAsContext` -- Admin impersonation mode
+- `DashboardThemeContext` -- Scoped dark mode for dashboard
+- `HideNumbersContext` -- Toggle sensitive number visibility
+- `TeamChatContext` -- Chat state
+- `SmartActionContext` -- Smart actions
+- `ZuraNavigationContext` -- Navigation state

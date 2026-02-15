@@ -1,0 +1,213 @@
+import { useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableFooter,
+} from '@/components/ui/table';
+import { Loader2, Users } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+
+interface StylistData {
+  user_id: string;
+  name: string;
+  photo_url?: string;
+  serviceRevenue: number;
+  productRevenue: number;
+  totalRevenue: number;
+}
+
+interface CommissionResult {
+  serviceCommission: number;
+  productCommission: number;
+  totalCommission: number;
+  tierName: string;
+}
+
+interface StaffCommissionTableProps {
+  stylistData: StylistData[] | undefined;
+  calculateCommission: (serviceRevenue: number, productRevenue: number) => CommissionResult;
+  isLoading: boolean;
+}
+
+export function StaffCommissionTable({ stylistData, calculateCommission, isLoading }: StaffCommissionTableProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
+
+  const rows = useMemo(() => {
+    if (!stylistData?.length) return [];
+
+    return stylistData
+      .map((s) => {
+        const c = calculateCommission(s.serviceRevenue, s.productRevenue);
+        const totalRev = s.serviceRevenue + s.productRevenue;
+        return {
+          ...s,
+          commission: c,
+          effectiveRate: totalRev > 0 ? (c.totalCommission / totalRev) * 100 : 0,
+        };
+      })
+      .sort((a, b) => b.commission.totalCommission - a.commission.totalCommission);
+  }, [stylistData, calculateCommission]);
+
+  const totals = useMemo(() => {
+    return rows.reduce(
+      (acc, r) => ({
+        serviceRevenue: acc.serviceRevenue + r.serviceRevenue,
+        productRevenue: acc.productRevenue + r.productRevenue,
+        totalCommission: acc.totalCommission + r.commission.totalCommission,
+        serviceCommission: acc.serviceCommission + r.commission.serviceCommission,
+        productCommission: acc.productCommission + r.commission.productCommission,
+      }),
+      { serviceRevenue: 0, productRevenue: 0, totalCommission: 0, serviceCommission: 0, productCommission: 0 }
+    );
+  }, [rows]);
+
+  const getInitials = (name: string) =>
+    name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6 flex items-center justify-center h-[200px]">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!rows.length) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Users className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex items-center gap-2">
+              <CardTitle className="font-display text-base tracking-wide">STAFF COMMISSION BREAKDOWN</CardTitle>
+              <MetricInfoTooltip description="Per-stylist commission based on individual service and product revenue. Effective rate = total commission / total revenue. Tier is determined by each stylist's service revenue level." />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-muted-foreground">
+            <p>No stylist data for the selected period</p>
+            <p className="text-sm mt-1">Adjust the date range to see commission estimates</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+            <Users className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <CardTitle className="font-display text-base tracking-wide">STAFF COMMISSION BREAKDOWN</CardTitle>
+              <MetricInfoTooltip description="Per-stylist commission based on individual service and product revenue. Effective rate = total commission / total revenue. Tier is determined by each stylist's service revenue level." />
+            </div>
+            <CardDescription className="text-xs">
+              Per-stylist commission based on individual revenue and tier placement
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10">#</TableHead>
+                <TableHead>Stylist</TableHead>
+                <TableHead className="text-right">Service Rev</TableHead>
+                <TableHead className="text-right">Product Rev</TableHead>
+                <TableHead>Tier</TableHead>
+                <TableHead className="text-right">Commission</TableHead>
+                <TableHead className="text-right">Eff. Rate</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.map((row, idx) => {
+                const isTop = idx === 0 && row.commission.totalCommission > 0;
+                return (
+                  <TableRow key={row.user_id} className={cn(isTop && 'bg-chart-2/[0.03]')}>
+                    <TableCell className="text-muted-foreground tabular-nums">{idx + 1}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2.5">
+                        <Avatar className="w-7 h-7">
+                          {row.photo_url && <AvatarImage src={row.photo_url} alt={row.name} />}
+                          <AvatarFallback className="text-[10px]">{getInitials(row.name)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium text-sm">{row.name}</span>
+                        {isTop && (
+                          <span className="text-[9px] text-chart-2 font-medium uppercase tracking-wider">Top</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums">
+                      <BlurredAmount>{formatCurrencyWhole(row.serviceRevenue)}</BlurredAmount>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground">
+                      <BlurredAmount>{formatCurrencyWhole(row.productRevenue)}</BlurredAmount>
+                    </TableCell>
+                    <TableCell>
+                      {row.commission.tierName ? (
+                        <Badge variant="outline" className="text-xs">
+                          {row.commission.tierName}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">--</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-display tabular-nums">
+                      <BlurredAmount>{formatCurrencyWhole(Math.round(row.commission.totalCommission))}</BlurredAmount>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground text-sm">
+                      {row.effectiveRate.toFixed(1)}%
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+            <TableFooter>
+              <TableRow>
+                <TableCell />
+                <TableCell className="font-medium">Total</TableCell>
+                <TableCell className="text-right font-display tabular-nums">
+                  <BlurredAmount>{formatCurrencyWhole(totals.serviceRevenue)}</BlurredAmount>
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-muted-foreground">
+                  <BlurredAmount>{formatCurrencyWhole(totals.productRevenue)}</BlurredAmount>
+                </TableCell>
+                <TableCell />
+                <TableCell className="text-right font-display tabular-nums">
+                  <BlurredAmount>{formatCurrencyWhole(Math.round(totals.totalCommission))}</BlurredAmount>
+                </TableCell>
+                <TableCell />
+              </TableRow>
+            </TableFooter>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

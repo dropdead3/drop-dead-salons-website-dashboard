@@ -20,6 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { EmployeeProjection } from '@/hooks/usePayrollForecasting';
 
 interface TeamCompensationTableProps {
@@ -190,7 +191,10 @@ export function TeamCompensationTable({ employees, isLoading, periodLabel }: Tea
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Team Compensation</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>Team Compensation</CardTitle>
+            <MetricInfoTooltip description="Full compensation breakdown per team member including base pay, commission, bonuses, and total gross. Data is from the most recent completed payroll run." />
+          </div>
           <CardDescription>Projected earnings for current period</CardDescription>
         </CardHeader>
         <CardContent>
@@ -211,7 +215,10 @@ export function TeamCompensationTable({ employees, isLoading, periodLabel }: Tea
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Team Compensation</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle>Team Compensation</CardTitle>
+              <MetricInfoTooltip description="Full compensation breakdown per team member including base pay, commission, bonuses, and total gross. Data is from the most recent completed payroll run." />
+            </div>
             <CardDescription>Projected earnings for {periodLabel}</CardDescription>
           </div>
           <div className="text-right">

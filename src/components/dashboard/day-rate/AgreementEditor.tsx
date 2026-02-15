@@ -40,9 +40,10 @@ import {
   useDeleteDayRateAgreement 
 } from '@/hooks/useDayRateAgreement';
 import type { DayRateAgreement } from '@/hooks/useDayRateAgreement';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 export function AgreementEditor() {
+  const { formatDate } = useFormatDate();
   const { data: agreements, isLoading } = useDayRateAgreements();
   const createAgreement = useCreateDayRateAgreement();
   const setActive = useSetActiveAgreement();
@@ -103,7 +104,7 @@ export function AgreementEditor() {
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Created {format(new Date(agreement.created_at), 'MMM d, yyyy')}
+                      Created {formatDate(new Date(agreement.created_at), 'MMM d, yyyy')}
                     </p>
                   </div>
                 </div>

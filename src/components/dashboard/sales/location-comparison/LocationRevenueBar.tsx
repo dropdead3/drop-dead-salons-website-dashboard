@@ -5,6 +5,7 @@ import {
   TooltipProvider,
 } from '@/components/ui/tooltip';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface LocationRevenueBarProps {
   locations: { name: string; totalRevenue: number }[];
@@ -13,6 +14,7 @@ interface LocationRevenueBarProps {
 }
 
 export function LocationRevenueBar({ locations, totalRevenue, colors }: LocationRevenueBarProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   if (totalRevenue <= 0) return null;
 
   return (
@@ -35,7 +37,7 @@ export function LocationRevenueBar({ locations, totalRevenue, colors }: Location
               <TooltipContent className="rounded-lg">
                 <span className="font-medium">{loc.name}</span>
                 <span className="text-muted-foreground ml-2">
-                  <BlurredAmount>${loc.totalRevenue.toLocaleString()}</BlurredAmount> ({Math.round(pct)}%)
+                  <BlurredAmount>{formatCurrencyWhole(loc.totalRevenue)}</BlurredAmount> ({Math.round(pct)}%)
                 </span>
               </TooltipContent>
             </Tooltip>

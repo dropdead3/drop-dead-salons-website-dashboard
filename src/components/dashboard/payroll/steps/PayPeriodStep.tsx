@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { format, subDays, startOfMonth, endOfMonth, addDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -25,6 +26,7 @@ export function PayPeriodStep({
   onPayPeriodEndChange,
   onCheckDateChange,
 }: PayPeriodStepProps) {
+  const { formatDate } = useFormatDate();
   const today = new Date();
   const { currentPeriod, nextPayDay } = usePaySchedule();
 
@@ -141,7 +143,7 @@ export function PayPeriodStep({
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {payPeriodStart
-                  ? format(new Date(payPeriodStart), 'PPP')
+                  ? formatDate(new Date(payPeriodStart), 'PPP')
                   : 'Select start date'}
               </Button>
             </PopoverTrigger>
@@ -173,7 +175,7 @@ export function PayPeriodStep({
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {payPeriodEnd
-                  ? format(new Date(payPeriodEnd), 'PPP')
+                  ? formatDate(new Date(payPeriodEnd), 'PPP')
                   : 'Select end date'}
               </Button>
             </PopoverTrigger>
@@ -208,7 +210,7 @@ export function PayPeriodStep({
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {checkDate
-                  ? format(new Date(checkDate), 'PPP')
+                  ? formatDate(new Date(checkDate), 'PPP')
                   : 'Select check date'}
               </Button>
             </PopoverTrigger>
@@ -237,8 +239,8 @@ export function PayPeriodStep({
           <div className="text-sm text-muted-foreground space-y-1">
             <p>
               <span className="font-medium text-foreground">Period:</span>{' '}
-              {format(new Date(payPeriodStart), 'MMM d')} -{' '}
-              {format(new Date(payPeriodEnd), 'MMM d, yyyy')}
+              {formatDate(new Date(payPeriodStart), 'MMM d')} -{' '}
+              {formatDate(new Date(payPeriodEnd), 'MMM d, yyyy')}
             </p>
             <p>
               <span className="font-medium text-foreground">Duration:</span>{' '}
@@ -252,7 +254,7 @@ export function PayPeriodStep({
             {checkDate && (
               <p>
                 <span className="font-medium text-foreground">Pay Date:</span>{' '}
-                {format(new Date(checkDate), 'EEEE, MMMM d, yyyy')}
+                {formatDate(new Date(checkDate), 'EEEE, MMMM d, yyyy')}
               </p>
             )}
           </div>

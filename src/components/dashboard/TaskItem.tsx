@@ -3,7 +3,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Trash2, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import type { Task } from '@/hooks/useTasks';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -21,6 +21,7 @@ const priorityIndicator = {
 };
 
 export function TaskItem({ task, onToggle, onDelete, isReadOnly = false }: TaskItemProps) {
+  const { formatDate } = useFormatDate();
   const [isHovered, setIsHovered] = useState(false);
 
   return (
@@ -66,7 +67,7 @@ export function TaskItem({ task, onToggle, onDelete, isReadOnly = false }: TaskI
         </div>
         {task.due_date && (
           <p className="text-xs text-muted-foreground mt-0.5 ml-3.5">
-            Due {format(new Date(task.due_date), 'MMM d')}
+            Due {formatDate(new Date(task.due_date), 'MMM d')}
           </p>
         )}
       </div>

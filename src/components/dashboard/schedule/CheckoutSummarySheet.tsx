@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { format, differenceInMinutes, parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +19,7 @@ import type { PhorestAppointment } from '@/hooks/usePhorestCalendar';
 import type { BusinessSettings } from '@/hooks/useBusinessSettings';
 import { PromoCodeInput } from '@/components/dashboard/checkout/PromoCodeInput';
 import type { PromoValidationResult } from '@/hooks/usePromoCodeValidation';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface CheckoutSummarySheetProps {
   appointment: PhorestAppointment | null;
@@ -57,6 +59,8 @@ export function CheckoutSummarySheet({
   const [customTip, setCustomTip] = useState<string>('');
   const [rebooked, setRebooked] = useState<boolean>(false);
   const [appliedPromo, setAppliedPromo] = useState<PromoValidationResult | null>(null);
+  const { formatCurrency, currency } = useFormatCurrency();
+  const { formatDate: formatDateLocale } = useFormatDate();
 
   if (!appointment) return null;
 
@@ -95,7 +99,7 @@ export function CheckoutSummarySheet({
 
   const formatDate = () => {
     try {
-      return format(parseISO(appointment.appointment_date), 'EEEE, MMMM d, yyyy');
+      return formatDateLocale(parseISO(appointment.appointment_date), 'EEEE, MMMM d, yyyy');
     } catch {
       return appointment.appointment_date;
     }
@@ -104,7 +108,7 @@ export function CheckoutSummarySheet({
   const formatTime = () => {
     try {
       const start = parseISO(`${appointment.appointment_date}T${appointment.start_time}`);
-      return format(start, 'h:mm a');
+      return formatDateLocale(start, 'h:mm a');
     } catch {
       return appointment.start_time;
     }
@@ -364,7 +368,7 @@ export function CheckoutSummarySheet({
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Subtotal</span>
-                <span className="font-medium">${subtotal.toFixed(2)}</span>
+                <span className="font-medium">{formatCurrency(subtotal)}</span>
               </div>
               
               {/* Promo Code Section */}
@@ -384,18 +388,18 @@ export function CheckoutSummarySheet({
               {discount > 0 && (
                 <div className="flex justify-between text-primary">
                   <span>Discount</span>
-                  <span className="font-medium">-${discount.toFixed(2)}</span>
+                  <span className="font-medium">-{formatCurrency(discount)}</span>
                 </div>
               )}
 
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Tax ({(taxRate * 100).toFixed(1)}%)</span>
-                <span className="font-medium">${tax.toFixed(2)}</span>
+                <span className="font-medium">{formatCurrency(tax)}</span>
               </div>
               <Separator />
               <div className="flex justify-between">
                 <span className="font-medium">Checkout Total</span>
-                <span className="font-medium">${checkoutTotal.toFixed(2)}</span>
+                <span className="font-medium">{formatCurrency(checkoutTotal)}</span>
               </div>
             </div>
           </div>
@@ -434,7 +438,7 @@ export function CheckoutSummarySheet({
                 Custom:
               </Label>
               <div className="relative flex-1">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{currency}</span>
                 <Input
                   id="custom-tip"
                   type="number"
@@ -451,7 +455,7 @@ export function CheckoutSummarySheet({
             {tipAmount > 0 && (
               <div className="flex justify-between text-sm bg-muted/50 p-3 rounded-lg">
                 <span>Tip Amount</span>
-                <span className="font-medium">${tipAmount.toFixed(2)}</span>
+                <span className="font-medium">{formatCurrency(tipAmount)}</span>
               </div>
             )}
           </div>
@@ -462,7 +466,7 @@ export function CheckoutSummarySheet({
               <Separator />
               <div className="flex justify-between text-lg bg-primary/5 p-4 rounded-lg border border-primary/20">
                 <span className="font-medium">Grand Total</span>
-                <span className="font-medium text-primary">${grandTotal.toFixed(2)}</span>
+                <span className="font-medium text-primary">{formatCurrency(grandTotal)}</span>
               </div>
             </>
           )}

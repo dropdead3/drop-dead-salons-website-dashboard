@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format, addDays } from 'date-fns';
+import { addDays } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Dialog, DialogContent, DialogHeader, DialogTitle 
@@ -68,6 +69,7 @@ const metricTypes = [
 ];
 
 export function CreateChallengeWizard({ open, onOpenChange }: CreateChallengeWizardProps) {
+  const { formatDate } = useFormatDate();
   const [step, setStep] = useState(1);
   const createChallenge = useCreateChallenge();
 
@@ -251,7 +253,7 @@ export function CreateChallengeWizard({ open, onOpenChange }: CreateChallengeWiz
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start text-left mt-1">
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {format(form.watch('start_date'), 'MMM d, yyyy')}
+                          {formatDate(form.watch('start_date'), 'MMM d, yyyy')}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -269,7 +271,7 @@ export function CreateChallengeWizard({ open, onOpenChange }: CreateChallengeWiz
                       <PopoverTrigger asChild>
                         <Button variant="outline" className="w-full justify-start text-left mt-1">
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {format(form.watch('end_date'), 'MMM d, yyyy')}
+                          {formatDate(form.watch('end_date'), 'MMM d, yyyy')}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
@@ -326,7 +328,7 @@ export function CreateChallengeWizard({ open, onOpenChange }: CreateChallengeWiz
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Duration</span>
                     <span className="font-medium">
-                      {format(form.watch('start_date'), 'MMM d')} - {format(form.watch('end_date'), 'MMM d')}
+                      {formatDate(form.watch('start_date'), 'MMM d')} - {formatDate(form.watch('end_date'), 'MMM d')}
                     </span>
                   </div>
                   {form.watch('goal_value') && (

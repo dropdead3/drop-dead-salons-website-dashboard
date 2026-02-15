@@ -16,7 +16,8 @@ import {
   AlertCircle,
   CheckCircle2
 } from 'lucide-react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { 
   useScheduledReports, 
   useScheduledReportRuns,
@@ -70,6 +71,7 @@ function StatusBadge({ isActive }: { isActive: boolean | null }) {
 }
 
 export function ScheduledReportsSubTab() {
+  const { formatDate } = useFormatDate();
   const { data: reports, isLoading } = useScheduledReports();
   const updateReport = useUpdateScheduledReport();
   const deleteReport = useDeleteScheduledReport();
@@ -177,7 +179,7 @@ export function ScheduledReportsSubTab() {
                     )}
                     {report.next_run_at && report.is_active && (
                       <span>
-                        Next: {format(new Date(report.next_run_at), 'MMM d, yyyy h:mm a')}
+                        Next: {formatDate(new Date(report.next_run_at), 'MMM d, yyyy h:mm a')}
                       </span>
                     )}
                   </div>
@@ -265,7 +267,7 @@ export function ScheduledReportsSubTab() {
                   <div className="flex-1">
                     <p className="text-sm font-medium capitalize">{run.status}</p>
                     <p className="text-xs text-muted-foreground">
-                      {run.started_at && format(new Date(run.started_at), 'MMM d, yyyy h:mm a')}
+                      {run.started_at && formatDate(new Date(run.started_at), 'MMM d, yyyy h:mm a')}
                     </p>
                     {run.error_message && (
                       <p className="text-xs text-destructive mt-1">{run.error_message}</p>

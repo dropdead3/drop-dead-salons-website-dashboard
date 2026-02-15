@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { QrCode, Download, Printer, Copy, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface VoucherQRCodeProps {
   voucherId: string;
@@ -25,6 +26,7 @@ export function VoucherQRCode({
   recipientName,
   expiresAt,
 }: VoucherQRCodeProps) {
+  const { formatCurrency } = useFormatCurrency();
   const [isOpen, setIsOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -126,7 +128,7 @@ export function VoucherQRCode({
         <body>
           <div class="voucher-card">
             <h2>${voucherType}</h2>
-            <div class="value">$${voucherValue.toFixed(2)}</div>
+            <div class="value">${formatCurrency(voucherValue)}</div>
             ${recipientName ? `<p>For: ${recipientName}</p>` : ''}
             <div class="qr-container">${svg}</div>
             <div class="code">${voucherCode}</div>
@@ -164,7 +166,7 @@ export function VoucherQRCode({
           <div className="flex flex-col items-center space-y-4 py-4">
             <Card className="w-full">
               <CardContent className="p-6 flex flex-col items-center">
-                <p className="text-3xl font-bold mb-4">${voucherValue.toFixed(2)}</p>
+                <p className="text-3xl font-bold mb-4">{formatCurrency(voucherValue)}</p>
                 
                 <div className="bg-white p-4 rounded-lg">
                   <QRCodeSVG
@@ -232,6 +234,7 @@ interface BulkQRGeneratorProps {
 }
 
 export function BulkQRGenerator({ vouchers }: BulkQRGeneratorProps) {
+  const { formatCurrency } = useFormatCurrency();
   const handlePrintAll = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
@@ -241,7 +244,7 @@ export function BulkQRGenerator({ vouchers }: BulkQRGeneratorProps) {
       return `
         <div class="voucher-card">
           <h3>${v.type || 'Gift Card'}</h3>
-          <div class="value">$${v.value.toFixed(2)}</div>
+          <div class="value">${formatCurrency(v.value)}</div>
           <div class="qr-placeholder" data-qr="${encodeURIComponent(qrData)}"></div>
           <div class="code">${v.code}</div>
           ${v.recipient_name ? `<p class="recipient">For: ${v.recipient_name}</p>` : ''}

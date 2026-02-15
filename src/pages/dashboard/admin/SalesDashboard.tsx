@@ -45,11 +45,14 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useSalesMetrics, useSalesTrend, useSalesByStylist, useSalesByLocation, useSalesByPhorestStaff } from '@/hooks/useSalesData';
 import { useTriggerPhorestSync, usePhorestConnection, useCreateStaffMapping } from '@/hooks/usePhorestSync';
 import { useLocations } from '@/hooks/useLocations';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { cn } from '@/lib/utils';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 
@@ -86,12 +89,15 @@ const CHART_COLORS = [
 ];
 
 export default function SalesDashboard() {
+  const { formatDate } = useFormatDate();
   const [dateRange, setDateRange] = useState<DateRange>('today');
   const [locationFilter, setLocationFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState('overview');
   const [phorestStaffFilter, setPhorestStaffFilter] = useState<'all' | 'mapped' | 'unmapped'>('all');
   const [linkingStaffId, setLinkingStaffId] = useState<string | null>(null);
   
+  const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
+  const { formatNumber } = useFormatNumber();
   const { data: locations } = useLocations();
   const syncSales = useTriggerPhorestSync();
   const { goals } = useSalesGoals();
@@ -169,7 +175,7 @@ export default function SalesDashboard() {
     const data = trendData?.overall || trendData || [];
     return (Array.isArray(data) ? data : []).map((d: any) => ({
       ...d,
-      dateLabel: format(new Date(d.date), 'MMM d'),
+      dateLabel: formatDate(new Date(d.date), 'MMM d'),
     }));
   }, [trendData]);
 
@@ -397,7 +403,7 @@ export default function SalesDashboard() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-lg md:text-2xl font-display truncate">
-                    {metricsLoading ? '...' : `$${(metrics?.totalRevenue || 0).toLocaleString()}`}
+                    {metricsLoading ? '...' : formatCurrencyWhole(metrics?.totalRevenue || 0)}
                   </p>
                   <p className="text-xs text-muted-foreground">Revenue</p>
                 </div>
@@ -412,7 +418,7 @@ export default function SalesDashboard() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-lg md:text-2xl font-display">
-                    {metricsLoading ? '...' : `$${Math.round(metrics?.averageTicket || 0)}`}
+                    {metricsLoading ? '...' : formatCurrencyWhole(Math.round(metrics?.averageTicket || 0))}
                   </p>
                   <p className="text-xs text-muted-foreground">Avg Ticket</p>
                 </div>
@@ -427,7 +433,7 @@ export default function SalesDashboard() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-lg md:text-2xl font-display">
-                    {metricsLoading ? '...' : (metrics?.totalServices || 0).toLocaleString()}
+                    {metricsLoading ? '...' : formatNumber(metrics?.totalServices || 0)}
                   </p>
                   <p className="text-xs text-muted-foreground">Services</p>
                 </div>
@@ -442,7 +448,7 @@ export default function SalesDashboard() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-lg md:text-2xl font-display">
-                    {metricsLoading ? '...' : (metrics?.totalProducts || 0).toLocaleString()}
+                    {metricsLoading ? '...' : formatNumber(metrics?.totalProducts || 0)}
                   </p>
                   <p className="text-xs text-muted-foreground">Products</p>
                 </div>
@@ -462,7 +468,9 @@ export default function SalesDashboard() {
           <TabsList className="w-full md:w-auto overflow-x-auto">
             <TabsTrigger value="overview" className="flex-1 md:flex-none">Overview</TabsTrigger>
             <TabsTrigger value="stylists" className="flex-1 md:flex-none">By Stylist</TabsTrigger>
-            <TabsTrigger value="locations" className="flex-1 md:flex-none">By Location</TabsTrigger>
+            {(locations?.filter(l => l.is_active).length ?? 0) >= 2 && (
+              <TabsTrigger value="locations" className="flex-1 md:flex-none">By Location</TabsTrigger>
+            )}
             <TabsTrigger value="phorest-staff" className="flex-1 md:flex-none">
               <Users className="w-4 h-4 mr-1 hidden sm:inline" />
               Phorest Staff
@@ -513,7 +521,7 @@ export default function SalesDashboard() {
                             tick={{ fontSize: 12 }} 
                             tickLine={false}
                             axisLine={false}
-                            tickFormatter={(v) => `$${v}`}
+                            tickFormatter={(v) => formatCurrencyWhole(v)}
                           />
                           <Tooltip 
                             contentStyle={{ 
@@ -521,7 +529,7 @@ export default function SalesDashboard() {
                               border: '1px solid hsl(var(--border))',
                               borderRadius: '8px',
                             }}
-                            formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                            formatter={(value: number) => [formatCurrencyWhole(value), 'Revenue']}
                           />
                           <Area 
                             type="monotone" 
@@ -566,7 +574,7 @@ export default function SalesDashboard() {
                             ))}
                           </Pie>
                           <Tooltip 
-                            formatter={(value: number) => [`$${value.toLocaleString()}`, '']}
+                            formatter={(value: number) => [formatCurrencyWhole(value), '']}
                             contentStyle={{ 
                               backgroundColor: 'hsl(var(--background))', 
                               border: '1px solid hsl(var(--border))',
@@ -581,11 +589,11 @@ export default function SalesDashboard() {
                   <div className="mt-4 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Services</span>
-                      <span className="font-medium">${(metrics?.serviceRevenue || 0).toLocaleString()}</span>
+                      <span className="font-medium">{formatCurrencyWhole(metrics?.serviceRevenue || 0)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Products</span>
-                      <span className="font-medium">${(metrics?.productRevenue || 0).toLocaleString()}</span>
+                      <span className="font-medium">{formatCurrencyWhole(metrics?.productRevenue || 0)}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -642,7 +650,8 @@ export default function SalesDashboard() {
             )}
           </TabsContent>
 
-          {/* By Location Tab */}
+          {/* By Location Tab - only show when 2+ locations */}
+          {(locations?.filter(l => l.is_active).length ?? 0) >= 2 && (
           <TabsContent value="locations" className="space-y-6">
             <Card>
               <CardHeader>
@@ -661,10 +670,10 @@ export default function SalesDashboard() {
                         <BarChart data={locationData || []}>
                           <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
                           <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                          <YAxis tickFormatter={(v) => `$${v}`} />
+                          <YAxis tickFormatter={(v) => formatCurrencyWhole(v)} />
                           <Tooltip 
                             formatter={(value: number, name: string) => [
-                              `$${value.toLocaleString()}`, 
+                              formatCurrencyWhole(value), 
                               name === 'serviceRevenue' ? 'Services' : name === 'productRevenue' ? 'Products' : 'Total'
                             ]}
                             contentStyle={{ 
@@ -684,7 +693,7 @@ export default function SalesDashboard() {
                           <CardContent className="pt-4">
                             <div className="flex items-center justify-between mb-3">
                               <h3 className="font-display text-sm">{loc.name}</h3>
-                              <Badge variant="outline">${loc.totalRevenue.toLocaleString()}</Badge>
+                              <Badge variant="outline">{formatCurrencyWhole(loc.totalRevenue)}</Badge>
                             </div>
                             <div className="grid grid-cols-3 gap-2 text-center text-xs">
                               <div>
@@ -709,6 +718,7 @@ export default function SalesDashboard() {
               </CardContent>
             </Card>
           </TabsContent>
+          )}
 
           {/* Phorest Staff Tab */}
           <TabsContent value="phorest-staff" className="space-y-4">

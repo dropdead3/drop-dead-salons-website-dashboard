@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { supabase } from "@/integrations/supabase/client";
-import { format, formatDistanceToNow, subDays } from "date-fns";
+import { format, subDays } from "date-fns";
+import { formatRelativeTime } from '@/lib/format';
 import { 
   CheckCircle2, 
   AlertCircle, 
@@ -63,6 +65,7 @@ const DATA_SOURCES = [
 ];
 
 export function DataHealthSection() {
+  const { formatNumber } = useFormatNumber();
   const { data: syncLogs, isLoading } = useQuery({
     queryKey: ['data-health-sync-logs'],
     queryFn: async () => {
@@ -243,7 +246,7 @@ export function DataHealthSection() {
                   <span>Last sync</span>
                   <span className="font-medium text-foreground">
                     {source.lastSync 
-                      ? formatDistanceToNow(source.lastSync, { addSuffix: true })
+                      ? formatRelativeTime(source.lastSync)
                       : 'Never'}
                   </span>
                 </div>
@@ -259,7 +262,7 @@ export function DataHealthSection() {
                 <div className="flex items-center justify-between text-muted-foreground">
                   <span>Records (7d)</span>
                   <span className="font-medium text-foreground">
-                    {source.recordsSynced.toLocaleString()}
+                    {formatNumber(source.recordsSynced)}
                   </span>
                 </div>
                 
@@ -310,7 +313,7 @@ export function DataHealthSection() {
           </div>
           <div className="text-center">
             <div className="text-2xl font-medium">
-              {dataSourceHealth.reduce((sum, ds) => sum + ds.recordsSynced, 0).toLocaleString()}
+              {formatNumber(dataSourceHealth.reduce((sum, ds) => sum + ds.recordsSynced, 0))}
             </div>
             <div className="text-xs text-muted-foreground">Records Synced</div>
           </div>

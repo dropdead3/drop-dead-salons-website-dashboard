@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns';
+import { parseISO, isToday, isTomorrow, isPast } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Plus, Clock, User, CheckCircle2, XCircle, Calendar, List, LayoutGrid, MapPin, Repeat } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
@@ -25,11 +26,11 @@ function formatTime(time: string) {
   return `${hour12}:${minutes} ${ampm}`;
 }
 
-function formatDateLabel(dateStr: string) {
+function formatDateLabel(dateStr: string, formatDate: (d: Date | string | number, f: string) => string) {
   const date = parseISO(dateStr);
   if (isToday(date)) return 'Today';
   if (isTomorrow(date)) return 'Tomorrow';
-  return format(date, 'EEEE, MMM d');
+  return formatDate(date, 'EEEE, MMM d');
 }
 
 function RequestCard({ request, isStylistView }: { request: AssistantRequest; isStylistView: boolean }) {
@@ -233,6 +234,7 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
 }
 
 function RequestsList({ requests, isStylistView }: { requests: AssistantRequest[]; isStylistView: boolean }) {
+  const { formatDate } = useFormatDate();
   // Group by date
   const groupedByDate = requests.reduce((acc, request) => {
     if (!acc[request.request_date]) acc[request.request_date] = [];
@@ -256,7 +258,7 @@ function RequestsList({ requests, isStylistView }: { requests: AssistantRequest[
       {sortedDates.map((date) => (
         <div key={date}>
           <h3 className="font-medium text-sm text-muted-foreground mb-3">
-            {formatDateLabel(date)}
+            {formatDateLabel(date, formatDate)}
           </h3>
           <div className="space-y-3">
             {groupedByDate[date].map((request) => (

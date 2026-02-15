@@ -20,6 +20,7 @@ import { MediumDistributionChart } from '@/components/dashboard/marketing/Medium
 import { CampaignBudgetManager } from '@/components/dashboard/marketing/CampaignBudgetManager';
 import { WebsiteAnalyticsWidget } from '@/components/dashboard/WebsiteAnalyticsWidget';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface MarketingTabContentProps {
   filters: AnalyticsFilters;
@@ -47,6 +48,7 @@ function mapToMarketingDateRange(dateRange: string): 'week' | 'month' | '3months
 export function MarketingTabContent({ filters }: MarketingTabContentProps) {
   const [showBudgetManager, setShowBudgetManager] = useState(false);
   const { data: locations } = useLocations();
+  const { formatCurrency } = useFormatCurrency();
   
   const locationFilter = filters.locationId !== 'all' ? filters.locationId : undefined;
   const marketingDateRange = mapToMarketingDateRange(filters.dateRange);
@@ -107,7 +109,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
               <div className="flex flex-col items-center text-center">
                 <DollarSign className="h-5 w-5 text-muted-foreground mb-2" />
                 <span className="text-2xl font-bold tabular-nums">
-                  ${(analytics?.summary.totalRevenue ?? 0).toLocaleString()}
+                  {formatCurrency(analytics?.summary.totalRevenue ?? 0)}
                 </span>
                 <span className="text-xs text-muted-foreground">Attributed Revenue</span>
               </div>
@@ -149,7 +151,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
                 <div className="flex flex-col items-center text-center">
                   <DollarSign className="h-5 w-5 text-muted-foreground mb-2" />
                   <span className="text-2xl font-bold tabular-nums">
-                    ${(analytics?.summary.totalBudget ?? 0).toLocaleString()}
+                    {formatCurrency(analytics?.summary.totalBudget ?? 0)}
                   </span>
                   <span className="text-xs text-muted-foreground">Total Budget</span>
                 </div>
@@ -161,7 +163,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
                 <div className="flex flex-col items-center text-center">
                   <CircleDollarSign className="h-5 w-5 text-muted-foreground mb-2" />
                   <span className="text-2xl font-bold tabular-nums">
-                    ${(analytics?.summary.totalSpend ?? 0).toLocaleString()}
+                    {formatCurrency(analytics?.summary.totalSpend ?? 0)}
                   </span>
                   <span className="text-xs text-muted-foreground">Total Spend</span>
                 </div>
@@ -174,7 +176,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
                   <Target className="h-5 w-5 text-muted-foreground mb-2" />
                   <span className="text-2xl font-bold tabular-nums">
                     {analytics?.summary.avgCPL !== null 
-                      ? `$${analytics.summary.avgCPL.toFixed(2)}` 
+                      ? formatCurrency(analytics.summary.avgCPL) 
                       : '—'}
                   </span>
                   <span className="text-xs text-muted-foreground">Avg Cost Per Lead</span>

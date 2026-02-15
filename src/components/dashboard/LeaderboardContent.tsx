@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Trophy, Flame, Target, Loader2, Crown, Medal, Award, Users, Repeat, ShoppingBag, Sparkles, Star, Info, History, BadgeCheck, RefreshCw, Settings } from 'lucide-react';
 import { format, startOfWeek, endOfWeek } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useLeaderboardHistory } from '@/hooks/useLeaderboardHistory';
 import { useLeaderboardAchievements } from '@/hooks/useLeaderboardAchievements';
 import { usePhorestPerformanceMetrics, usePhorestConnection, useTriggerPhorestSync } from '@/hooks/usePhorestSync';
@@ -19,6 +20,8 @@ import { LeaderboardHistoryPanel } from '@/components/dashboard/LeaderboardHisto
 import { AchievementBadgeStack } from '@/components/dashboard/AchievementBadge';
 import { AchievementsShowcase } from '@/components/dashboard/AchievementsShowcase';
 import { Link } from 'react-router-dom';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 
 interface LeaderboardEntry {
   user_id: string;
@@ -155,6 +158,8 @@ function ScoreBreakdownTooltip({ breakdown, children }: { breakdown: ScoreBreakd
 export function LeaderboardContent() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const { formatCurrencyWhole } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   const [metric, setMetric] = useState<MetricType>('day');
   const [phorestCategory, setPhorestCategory] = useState<PhorestCategory>('overall');
   const [weights, setWeights] = useState<ScoreWeights>(DEFAULT_WEIGHTS);
@@ -251,7 +256,7 @@ export function LeaderboardContent() {
       label: 'Retail Sales',
       icon: ShoppingBag,
       getValue: (p) => p.retailSales,
-      formatValue: (v) => `$${v}`,
+      formatValue: (v) => formatCurrencyWhole(v),
       description: 'Top retail product sales',
     },
     extensions: {
@@ -337,7 +342,7 @@ export function LeaderboardContent() {
     switch (metric) {
       case 'day': return `Day ${entry.current_day}`;
       case 'streak': return `${entry.streak_count} days`;
-      case 'revenue': return `$${entry.total_revenue.toLocaleString()}`;
+      case 'revenue': return formatCurrencyWhole(entry.total_revenue);
       case 'bells': return `${entry.ring_count} bells`;
     }
   };
@@ -377,7 +382,7 @@ export function LeaderboardContent() {
                   This Week
                 </p>
                 <p className="font-sans font-medium">
-                  {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
+                  {formatDate(weekStart, 'MMM d')} - {formatDate(weekEnd, 'MMM d, yyyy')}
                 </p>
               </div>
               <div className="flex items-center gap-3">

@@ -7,7 +7,7 @@ import { Rocket, CheckCircle2, Archive, ChevronRight, Target, Loader2, Calendar 
 import { useActionCampaigns } from '@/hooks/useActionCampaigns';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 
 const statusIcon: Record<string, typeof Rocket> = {
@@ -23,6 +23,7 @@ const statusBadge: Record<string, string> = {
 };
 
 export function CampaignsTabContent() {
+  const { formatDate } = useFormatDate();
   const { data: campaigns, isLoading } = useActionCampaigns();
 
   const campaignIds = campaigns?.map(c => c.id) || [];
@@ -128,7 +129,7 @@ export function CampaignsTabContent() {
                           <span className="text-[11px] text-muted-foreground">{counts.done}/{counts.total}</span>
                           <Badge variant="outline" className="text-[10px] gap-1">
                             <Calendar className="w-2.5 h-2.5" />
-                            {format(new Date(campaign.created_at), 'MMM d')}
+                            {formatDate(new Date(campaign.created_at), 'MMM d')}
                           </Badge>
                         </div>
                       </div>

@@ -11,8 +11,9 @@ import {
 import { usePandaDocStats } from '@/hooks/usePandaDocStats';
 import { formatDistanceToNow } from 'date-fns';
 
-const SUPABASE_PROJECT_ID = 'vciqmwzgfjxtzagaxgnh';
-const WEBHOOK_URL = `https://${SUPABASE_PROJECT_ID}.supabase.co/functions/v1/pandadoc-webhook`;
+// Derive webhook URL from Supabase URL so it works with your own project
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const WEBHOOK_URL = SUPABASE_URL ? `${SUPABASE_URL}/functions/v1/pandadoc-webhook` : '';
 
 // Note: We can't check secrets from client-side, so we show a static configuration section
 // In production, you'd have an edge function to verify secret status

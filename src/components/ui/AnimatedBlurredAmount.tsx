@@ -2,9 +2,12 @@ import { useState, useEffect, useRef, ReactNode } from 'react';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
+import { formatCurrency } from '@/lib/formatCurrency';
 
 interface AnimatedBlurredAmountProps {
   value: number;
+  /** When set, value is formatted as money in this currency (e.g. USD); prefix/suffix are ignored for the amount. */
+  currency?: string;
   prefix?: string;
   suffix?: string;
   duration?: number;
@@ -15,6 +18,7 @@ interface AnimatedBlurredAmountProps {
 
 export function AnimatedBlurredAmount({
   value,
+  currency,
   prefix = '',
   suffix = '',
   duration = 1200,
@@ -69,13 +73,17 @@ export function AnimatedBlurredAmount({
     animationRef.current = requestAnimationFrame(animate);
   };
 
-  const formattedValue = decimals > 0
-    ? displayValue.toFixed(decimals)
-    : Math.round(displayValue).toLocaleString();
+  const formattedValue = currency
+    ? formatCurrency(displayValue, currency, decimals > 0 ? { maximumFractionDigits: decimals, minimumFractionDigits: decimals } : { maximumFractionDigits: 0, minimumFractionDigits: 0 })
+    : decimals > 0
+      ? displayValue.toFixed(decimals)
+      : Math.round(displayValue).toLocaleString();
 
   const handleClick = () => { if (hideNumbers) requestUnhide(); };
   const handleDoubleClick = () => { if (!hideNumbers) quickHide(); };
   const handleKeyDown = (e: React.KeyboardEvent) => { if (e.key === 'Enter' && hideNumbers) requestUnhide(); };
+
+  const displayContent = currency ? formattedValue : `${prefix}${formattedValue}${suffix}`;
 
   return (
     <TooltipProvider delayDuration={100}>
@@ -91,7 +99,7 @@ export function AnimatedBlurredAmount({
             onKeyDown={handleKeyDown}
             tabIndex={hideNumbers ? 0 : undefined}
           >
-            {prefix}{formattedValue}{suffix}
+            {displayContent}
           </span>
         </TooltipTrigger>
         <TooltipContent>{hideNumbers ? 'Click to reveal' : 'Double-click to hide'}</TooltipContent>

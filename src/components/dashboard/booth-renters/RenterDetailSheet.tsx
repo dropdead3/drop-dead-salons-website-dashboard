@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import {
   User,
   FileText,
@@ -57,6 +57,7 @@ export function RenterDetailSheet({
   renterId,
   onIssueContract,
 }: RenterDetailSheetProps) {
+  const { formatDate } = useFormatDate();
   const [activeTab, setActiveTab] = useState('profile');
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<Partial<BoothRenterProfile>>({});
@@ -278,7 +279,7 @@ export function RenterDetailSheet({
                         </div>
                         <div>
                           <p className="text-muted-foreground">Start Date</p>
-                          <p>{renter.start_date ? format(new Date(renter.start_date), 'MMM d, yyyy') : '—'}</p>
+                          <p>{renter.start_date ? formatDate(new Date(renter.start_date), 'MMM d, yyyy') : '—'}</p>
                         </div>
                       </div>
                     )}
@@ -339,8 +340,8 @@ export function RenterDetailSheet({
                         <div>
                           <p className="font-medium">{contract.contract_name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {format(new Date(contract.start_date), 'MMM d, yyyy')}
-                            {contract.end_date && ` - ${format(new Date(contract.end_date), 'MMM d, yyyy')}`}
+                            {formatDate(new Date(contract.start_date), 'MMM d, yyyy')}
+                            {contract.end_date && ` - ${formatDate(new Date(contract.end_date), 'MMM d, yyyy')}`}
                           </p>
                         </div>
                         <Badge variant="outline" className={statusColors[contract.status] || statusColors.pending}>
@@ -381,7 +382,7 @@ export function RenterDetailSheet({
                       <div>
                         <p className="font-medium">{formatCurrency(payment.amount)}</p>
                         <p className="text-sm text-muted-foreground">
-                          Due: {format(new Date(payment.due_date), 'MMM d, yyyy')}
+                          Due: {formatDate(new Date(payment.due_date), 'MMM d, yyyy')}
                         </p>
                       </div>
                       <Badge
@@ -444,7 +445,7 @@ export function RenterDetailSheet({
                       <p className="text-muted-foreground">Expiry Date</p>
                       <p>
                         {(renter as any).insurance_expiry_date
-                          ? format(new Date((renter as any).insurance_expiry_date), 'MMM d, yyyy')
+                          ? formatDate(new Date((renter as any).insurance_expiry_date), 'MMM d, yyyy')
                           : '—'}
                       </p>
                     </div>

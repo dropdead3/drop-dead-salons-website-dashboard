@@ -4,7 +4,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar } from '@/components/ui/calendar';
 import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, addDays, subDays, isSameDay } from 'date-fns';
+import { addDays, subDays, isSameDay } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { useState } from 'react';
 
 interface Stylist {
@@ -55,6 +56,7 @@ export function StylistStep({
   canContinue,
   qualificationInfo,
 }: StylistStepProps) {
+  const { formatDate } = useFormatDate();
   const [showCalendar, setShowCalendar] = useState(false);
 
   // Generate next 7 days for quick selection
@@ -163,14 +165,14 @@ export function StylistStep({
                         'text-[10px] uppercase',
                         isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
                       )}>
-                        {isToday ? 'Today' : format(date, 'EEE')}
+                        {isToday ? 'Today' : formatDate(date, 'EEE')}
                       </span>
-                      <span className="text-lg font-semibold">{format(date, 'd')}</span>
+                      <span className="text-lg font-semibold">{formatDate(date, 'd')}</span>
                       <span className={cn(
                         'text-[10px]',
                         isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
                       )}>
-                        {format(date, 'MMM')}
+                        {formatDate(date, 'MMM')}
                       </span>
                     </button>
                   );

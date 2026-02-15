@@ -1,4 +1,6 @@
+import { useCallback } from 'react';
 import { DollarSign, Building2, TrendingUp, Target, UserPlus, ShoppingBag } from 'lucide-react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { LeaderboardCard } from './LeaderboardCard';
 import type { OrganizationMetrics } from '@/hooks/useOrganizationAnalytics';
 
@@ -11,12 +13,6 @@ interface OrganizationLeaderboardsProps {
   topByRetail: OrganizationMetrics[];
 }
 
-const formatCurrency = (value: number) => {
-  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
-  if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`;
-  return `$${value.toFixed(0)}`;
-};
-
 export function OrganizationLeaderboards({
   topByRevenue,
   topBySize,
@@ -25,12 +21,23 @@ export function OrganizationLeaderboards({
   topByClients,
   topByRetail,
 }: OrganizationLeaderboardsProps) {
+  const { currency } = useFormatCurrency();
+
+  const formatCompact = useCallback((value: number) =>
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value),
+  [currency]);
+
   const revenueEntries = topByRevenue.map((org, index) => ({
     rank: index + 1,
     organization: org,
     value: org.revenueThisMonth,
     previousValue: org.revenueLastMonth,
-    formattedValue: formatCurrency(org.revenueThisMonth),
+    formattedValue: formatCompact(org.revenueThisMonth),
   }));
 
   const sizeEntries = topBySize.map((org, index) => ({

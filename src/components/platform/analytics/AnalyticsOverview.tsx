@@ -1,5 +1,7 @@
+import { useCallback } from 'react';
 import { Building2, MapPin, Users, DollarSign, UserPlus, Calendar, TrendingUp, Percent } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import type { PlatformAnalyticsSummary } from '@/hooks/useOrganizationAnalytics';
@@ -7,12 +9,6 @@ import type { PlatformAnalyticsSummary } from '@/hooks/useOrganizationAnalytics'
 interface AnalyticsOverviewProps {
   analytics: PlatformAnalyticsSummary;
 }
-
-const formatCurrency = (value: number) => {
-  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
-  if (value >= 1000) return `$${(value / 1000).toFixed(1)}K`;
-  return `$${value.toFixed(0)}`;
-};
 
 const formatNumber = (value: number) => {
   if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
@@ -22,7 +18,17 @@ const formatNumber = (value: number) => {
 
 export function AnalyticsOverview({ analytics }: AnalyticsOverviewProps) {
   const { resolvedTheme } = usePlatformTheme();
+  const { currency } = useFormatCurrency();
   const isDark = resolvedTheme === 'dark';
+
+  const formatCompact = useCallback((value: number) =>
+    new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value),
+  [currency]);
 
   const stats = [
     { label: 'Total Accounts', value: analytics.totalOrganizations, icon: Building2, color: 'violet' },
@@ -31,16 +37,16 @@ export function AnalyticsOverview({ analytics }: AnalyticsOverviewProps) {
     { label: 'Total Users', value: analytics.totalUsers, icon: Users, color: 'amber' },
     { label: 'Total Clients', value: formatNumber(analytics.totalClients), icon: UserPlus, color: 'pink' },
     { label: 'Total Appointments', value: formatNumber(analytics.totalAppointments), icon: Calendar, color: 'cyan' },
-    { label: 'Platform MRR', value: formatCurrency(analytics.platformMRR), icon: DollarSign, color: 'emerald' },
-    { label: 'Platform ARR', value: formatCurrency(analytics.platformARR), icon: DollarSign, color: 'violet' },
+    { label: 'Platform MRR', value: formatCompact(analytics.platformMRR), icon: DollarSign, color: 'emerald' },
+    { label: 'Platform ARR', value: formatCompact(analytics.platformARR), icon: DollarSign, color: 'violet' },
   ];
 
   const performanceStats = [
-    { label: 'Avg Salon Revenue/Month', value: formatCurrency(analytics.avgRevenuePerOrg), color: 'emerald' },
-    { label: 'Avg Revenue/Location', value: formatCurrency(analytics.avgRevenuePerLocation), color: 'blue' },
+    { label: 'Avg Salon Revenue/Month', value: formatCompact(analytics.avgRevenuePerOrg), color: 'emerald' },
+    { label: 'Avg Revenue/Location', value: formatCompact(analytics.avgRevenuePerLocation), color: 'blue' },
     { label: 'Platform Avg Rebooking', value: `${analytics.platformAvgRebooking.toFixed(1)}%`, color: 'violet' },
     { label: 'Platform Avg Retention', value: `${analytics.platformAvgRetention.toFixed(1)}%`, color: 'amber' },
-    { label: 'Platform Avg Ticket', value: formatCurrency(analytics.platformAvgTicket), color: 'pink' },
+    { label: 'Platform Avg Ticket', value: formatCompact(analytics.platformAvgTicket), color: 'pink' },
     { label: 'Avg Retail Attachment', value: `${analytics.platformAvgRetailAttachment.toFixed(1)}%`, color: 'cyan' },
   ];
 
@@ -225,7 +231,7 @@ export function AnalyticsOverview({ analytics }: AnalyticsOverviewProps) {
                     borderRadius: '8px',
                   }}
                   formatter={(value: number, name: string, entry: any) => [
-                    `${value} accounts (${formatCurrency(entry.payload.mrr)}/mo)`,
+                    `${value} accounts (${formatCompact(entry.payload.mrr)}/mo)`,
                     name
                   ]}
                 />

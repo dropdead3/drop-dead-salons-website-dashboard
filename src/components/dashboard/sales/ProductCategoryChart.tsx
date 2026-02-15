@@ -13,6 +13,8 @@ import {
 } from 'recharts';
 import { useProductCategoryBreakdown, ProductCategoryData } from '@/hooks/useSalesAnalytics';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 
 const COLORS = [
   'hsl(var(--primary))',
@@ -32,6 +34,7 @@ interface ProductCategoryChartProps {
 
 export function ProductCategoryChart({ dateFrom, dateTo, locationId, filterContext }: ProductCategoryChartProps) {
   const { data, isLoading } = useProductCategoryBreakdown(dateFrom, dateTo, locationId);
+  const { formatCurrencyWhole } = useFormatCurrency();
 
   const topCategories = data?.slice(0, 6) || [];
   const totalRevenue = data?.reduce((sum, cat) => sum + cat.totalRevenue, 0) || 0;
@@ -63,7 +66,7 @@ export function ProductCategoryChart({ dateFrom, dateTo, locationId, filterConte
                 dateRange={filterContext.dateRange} 
               />
             )}
-            <Badge variant="outline">${totalRevenue.toLocaleString()}</Badge>
+            <Badge variant="outline">{formatCurrencyWhole(totalRevenue)}</Badge>
           </div>
         </div>
         <CardDescription>Revenue breakdown by product category</CardDescription>
@@ -84,7 +87,7 @@ export function ProductCategoryChart({ dateFrom, dateTo, locationId, filterConte
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={topCategories} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-border" />
-                  <XAxis type="number" tickFormatter={(v) => `$${v}`} />
+                  <XAxis type="number" tickFormatter={(v) => formatCurrencyWholeUtil(v)} />
                   <YAxis 
                     type="category" 
                     dataKey="category" 
@@ -92,7 +95,7 @@ export function ProductCategoryChart({ dateFrom, dateTo, locationId, filterConte
                     tick={{ fontSize: 12 }}
                   />
                   <Tooltip
-                    formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                    formatter={(value: number) => [formatCurrencyWhole(value), 'Revenue']}
                     contentStyle={{
                       backgroundColor: 'hsl(var(--background))',
                       border: '1px solid hsl(var(--border))',
@@ -118,7 +121,7 @@ export function ProductCategoryChart({ dateFrom, dateTo, locationId, filterConte
                   </div>
                   <div className="flex items-center gap-3 text-sm">
                     <span className="text-muted-foreground">{cat.totalQuantity} sold</span>
-                    <Badge variant="secondary">${cat.totalRevenue.toLocaleString()}</Badge>
+                    <Badge variant="secondary">{formatCurrencyWhole(cat.totalRevenue)}</Badge>
                   </div>
                 </div>
               ))}

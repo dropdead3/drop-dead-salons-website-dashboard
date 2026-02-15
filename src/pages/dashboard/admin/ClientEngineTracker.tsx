@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -65,7 +66,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAllPauseRequests } from '@/hooks/usePauseRequests';
 import { cn } from '@/lib/utils';
-import { format, differenceInDays, formatDistanceToNow } from 'date-fns';
+import { differenceInDays, formatDistanceToNow } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import type { Database } from '@/integrations/supabase/types';
 import { CoachNotesSection } from '@/components/dashboard/CoachNotesSection';
 
@@ -125,8 +127,10 @@ const STATUS_CONFIG: Record<ProgramStatus, { label: string; color: string; icon:
 };
 
 export default function ClientEngineTracker() {
+  const { formatDate } = useFormatDate();
   const { toast } = useToast();
   const { user } = useAuth();
+  const { formatCurrencyWhole } = useFormatCurrency();
   const [loading, setLoading] = useState(true);
   const [participants, setParticipants] = useState<ParticipantData[]>([]);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
@@ -403,7 +407,7 @@ export default function ClientEngineTracker() {
                 <DollarSign className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-2xl font-display">${stats.totalRevenue.toLocaleString()}</p>
+                <p className="text-2xl font-display">{formatCurrencyWhole(stats.totalRevenue)}</p>
                 <p className="text-xs text-muted-foreground">Total Revenue</p>
               </div>
             </div>
@@ -545,7 +549,7 @@ export default function ClientEngineTracker() {
 
                       <div className="hidden md:flex items-center gap-6">
                         <div className="text-right">
-                          <p className="text-sm font-medium">${participant.totalRevenue.toLocaleString()}</p>
+                          <p className="text-sm font-medium">{formatCurrencyWhole(participant.totalRevenue)}</p>
                           <p className="text-xs text-muted-foreground">Revenue</p>
                         </div>
                         <div className="w-24">
@@ -570,14 +574,14 @@ export default function ClientEngineTracker() {
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">Start Date</p>
                           <p className="text-sm font-medium">
-                            {format(new Date(participant.enrollment.start_date), 'MMM d, yyyy')}
+                            {formatDate(new Date(participant.enrollment.start_date), 'MMM d, yyyy')}
                           </p>
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">Last Completion</p>
                           <p className="text-sm font-medium">
                             {participant.enrollment.last_completion_date 
-                              ? format(new Date(participant.enrollment.last_completion_date), 'MMM d, yyyy')
+                              ? formatDate(new Date(participant.enrollment.last_completion_date), 'MMM d, yyyy')
                               : 'Never'}
                           </p>
                         </div>

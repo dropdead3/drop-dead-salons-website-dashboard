@@ -32,14 +32,7 @@ interface PlanBreakdownChartProps {
   data: PlanRevenueData[];
 }
 
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-};
+import { formatCurrencyWhole } from '@/lib/formatCurrency';
 
 const tierColors: Record<string, string> = {
   starter: '#8b5cf6',
@@ -61,7 +54,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <div className="rounded-lg border border-slate-700 bg-slate-800 p-3 shadow-xl">
         <p className="text-sm font-medium text-slate-300">{label}</p>
         <p className="text-lg font-medium text-violet-400">
-          {formatCurrency(payload[0].value)}
+          {formatCurrencyWhole(payload[0].value)}
         </p>
       </div>
     );
@@ -78,7 +71,7 @@ const PlanTooltip = ({ active, payload }: any) => {
           {tierLabels[data.tier] || data.tier}
         </p>
         <p className="text-lg font-medium text-violet-400">
-          {formatCurrency(data.revenue)}
+          {formatCurrencyWhole(data.revenue)}
         </p>
         <p className="text-xs text-slate-400">{data.count} accounts</p>
       </div>
@@ -108,7 +101,7 @@ export function MonthlyRevenueChart({ data }: RevenueChartProps) {
           axisLine={false}
           tickLine={false}
           tick={{ fill: '#94a3b8', fontSize: 12 }}
-          tickFormatter={(value) => `$${value >= 1000 ? `${value / 1000}k` : value}`}
+          tickFormatter={(value) => formatCurrencyWhole(value)}
         />
         <Tooltip content={<CustomTooltip />} />
         <Area
@@ -140,7 +133,7 @@ export function PlanBreakdownChart({ data }: PlanBreakdownChartProps) {
           axisLine={false}
           tickLine={false}
           tick={{ fill: '#94a3b8', fontSize: 12 }}
-          tickFormatter={(value) => `$${value >= 1000 ? `${value / 1000}k` : value}`}
+          tickFormatter={(value) => formatCurrencyWhole(value)}
         />
         <Tooltip content={<PlanTooltip />} />
         <Bar dataKey="revenue" radius={[4, 4, 0, 0]}>

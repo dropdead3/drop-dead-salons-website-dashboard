@@ -18,6 +18,8 @@ import {
   Legend,
 } from 'recharts';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 
 interface StylistLocationRevenueChartProps {
   userId: string;
@@ -34,6 +36,7 @@ const LOCATION_COLORS = [
 ];
 
 export function StylistLocationRevenueChart({ userId, months = 3 }: StylistLocationRevenueChartProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const today = new Date();
   const dateFrom = format(startOfMonth(subMonths(today, months - 1)), 'yyyy-MM-dd');
   const dateTo = format(endOfMonth(today), 'yyyy-MM-dd');
@@ -137,7 +140,7 @@ export function StylistLocationRevenueChart({ userId, months = 3 }: StylistLocat
                   )}
                 </div>
                 <p className="text-2xl font-display mb-2">
-                  ${location.totalRevenue.toLocaleString()}
+                  {formatCurrencyWhole(location.totalRevenue)}
                 </p>
                 <div className="space-y-1">
                   <div className="flex justify-between text-xs text-muted-foreground">
@@ -185,7 +188,7 @@ export function StylistLocationRevenueChart({ userId, months = 3 }: StylistLocat
                   width={100}
                 />
                 <Tooltip 
-                  formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                  formatter={(value: number) => [formatCurrencyWhole(value), 'Revenue']}
                   contentStyle={{ 
                     borderRadius: '8px', 
                     border: '1px solid hsl(var(--border))',
@@ -222,10 +225,10 @@ export function StylistLocationRevenueChart({ userId, months = 3 }: StylistLocat
                     tick={{ fontSize: 11 }}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                    tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
                   />
                   <Tooltip 
-                    formatter={(value: number, name: string) => [`$${value.toLocaleString()}`, name]}
+                    formatter={(value: number, name: string) => [formatCurrencyWhole(value), name]}
                     contentStyle={{ 
                       borderRadius: '8px', 
                       border: '1px solid hsl(var(--border))',
@@ -264,7 +267,7 @@ export function StylistLocationRevenueChart({ userId, months = 3 }: StylistLocat
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-medium">{location.branchName}</span>
                   <span className="text-muted-foreground">
-                    ${location.serviceRevenue.toLocaleString()} services / ${location.productRevenue.toLocaleString()} products
+                    {formatCurrencyWhole(location.serviceRevenue)} services / {formatCurrencyWhole(location.productRevenue)} products
                   </span>
                 </div>
                 <div className="flex h-2 rounded-full overflow-hidden bg-muted">

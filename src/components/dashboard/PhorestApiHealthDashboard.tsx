@@ -37,7 +37,9 @@ import {
   FileText,
   Zap,
 } from 'lucide-react';
-import { formatDistanceToNow, format, subDays, differenceInMinutes } from 'date-fns';
+import { formatDistanceToNow, subDays, differenceInMinutes } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { cn } from '@/lib/utils';
 
 interface EndpointHealth {
@@ -63,6 +65,8 @@ const SYNC_TYPES = [
 ];
 
 export function PhorestApiHealthDashboard() {
+  const { formatDate } = useFormatDate();
+  const { formatNumber } = useFormatNumber();
   const [isTestingEndpoints, setIsTestingEndpoints] = useState(false);
 
   // Fetch sync logs for the last 7 days
@@ -313,7 +317,7 @@ export function PhorestApiHealthDashboard() {
                   </div>
                   <div>
                     <p className="text-muted-foreground">Records</p>
-                    <p className="font-medium">{endpoint.recordsSynced.toLocaleString()}</p>
+                    <p className="font-medium">{formatNumber(endpoint.recordsSynced)}</p>
                   </div>
                 </div>
                 
@@ -369,7 +373,7 @@ export function PhorestApiHealthDashboard() {
                         {formatDistanceToNow(new Date(failure.started_at), { addSuffix: true })}
                       </TooltipTrigger>
                       <TooltipContent>
-                        {format(new Date(failure.started_at), 'PPpp')}
+                        {formatDate(new Date(failure.started_at), 'PPpp')}
                       </TooltipContent>
                     </Tooltip>
                   </TableCell>
@@ -411,7 +415,7 @@ export function PhorestApiHealthDashboard() {
           </div>
           <div className="p-4 bg-muted/50 rounded-lg">
             <p className="text-2xl font-display">
-              {syncLogs?.reduce((sum, l) => sum + (l.records_synced || 0), 0).toLocaleString() || 0}
+              {formatNumber(syncLogs?.reduce((sum, l) => sum + (l.records_synced || 0), 0) ?? 0)}
             </p>
             <p className="text-sm text-muted-foreground">Records Synced</p>
           </div>

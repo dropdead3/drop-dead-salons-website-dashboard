@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { format } from 'date-fns';
 import { Plus, Link2, Users, Trophy, Copy, Check, ExternalLink, Ban } from 'lucide-react';
 import { toast } from 'sonner';
@@ -28,6 +29,7 @@ interface ReferralProgramManagerProps {
 }
 
 export function ReferralProgramManager({ organizationId }: ReferralProgramManagerProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
   const { data: referralLinks, isLoading } = useReferralLinks(organizationId);
   const { data: leaderboard } = useReferralLeaderboard(organizationId);
   const createLink = useCreateReferralLink();
@@ -97,14 +99,14 @@ export function ReferralProgramManager({ organizationId }: ReferralProgramManage
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <div className="text-2xl font-medium">${totalRevenue.toFixed(0)}</div>
+            <div className="text-2xl font-medium">{formatCurrencyWhole(totalRevenue)}</div>
             <p className="text-sm text-muted-foreground">Revenue Generated</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <div className="text-2xl font-medium">
-              {totalConversions > 0 ? `$${(totalRevenue / totalConversions).toFixed(0)}` : '$0'}
+              {totalConversions > 0 ? formatCurrencyWhole(totalRevenue / totalConversions) : formatCurrencyWhole(0)}
             </div>
             <p className="text-sm text-muted-foreground">Avg. Referral Value</p>
           </CardContent>
@@ -278,7 +280,7 @@ export function ReferralProgramManager({ organizationId }: ReferralProgramManage
                           <span>•</span>
                           <span>{link.conversions_count || 0} conversions</span>
                           <span>•</span>
-                          <span>${(link.total_revenue || 0).toFixed(0)} revenue</span>
+                          <span>{formatCurrencyWhole(link.total_revenue || 0)} revenue</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -353,7 +355,7 @@ export function ReferralProgramManager({ organizationId }: ReferralProgramManage
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-medium">{entry.count}</TableCell>
-                        <TableCell className="text-right">${entry.revenue.toFixed(0)}</TableCell>
+                        <TableCell className="text-right">{formatCurrencyWhole(entry.revenue)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

@@ -3,8 +3,10 @@ import { ArrowUpRight, Phone } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
 import { useActiveLocations } from "@/hooks/useLocations";
+import { useOrgPath } from "@/hooks/useOrgPath";
 
 export function FooterCTA() {
+  const orgPath = useOrgPath();
   const { data: locations = [] } = useActiveLocations();
   const sectionRef = useRef<HTMLElement>(null);
 
@@ -104,7 +106,7 @@ export function FooterCTA() {
           }}
         >
           <Link
-            to="/booking"
+            to={orgPath("/booking")}
             className="group inline-flex items-center gap-3 px-8 py-4 text-base font-sans font-medium bg-foreground text-background rounded-full hover:bg-foreground/90 transition-all duration-300 active:scale-[0.98]"
           >
             <span>Book consult</span>

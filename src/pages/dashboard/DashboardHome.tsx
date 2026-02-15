@@ -6,6 +6,8 @@ import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ChartSkeleton } from '@/components/ui/chart-skeleton';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { 
@@ -48,6 +50,10 @@ import { PinnedAnalyticsCard, getDateRange, type AnalyticsFilters, type DateRang
 import { AnalyticsFilterBar } from '@/components/dashboard/AnalyticsFilterBar';
 import { useDashboardVisibility } from '@/hooks/useDashboardVisibility';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
+import { useQuickStats } from '@/hooks/useQuickStats';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useTranslation } from 'react-i18next';
 import { HubQuickLinks } from '@/components/dashboard/HubQuickLinks';
 import { AIInsightsDrawer } from '@/components/dashboard/AIInsightsDrawer';
 import { PersonalInsightsDrawer } from '@/components/dashboard/PersonalInsightsDrawer';
@@ -103,6 +109,12 @@ export default function DashboardHome() {
     canViewAllLocations,
     isLoading: locationAccessLoading 
   } = useUserLocationAccess();
+
+  const quickStatsLocationId = canViewAggregate ? undefined : defaultLocationId;
+  const accessibleLocationIds = accessibleLocations.map((l) => l.id);
+  const { todayClients, thisWeekRevenue, newClients, rebookingRate, isLoading: quickStatsLoading } = useQuickStats(quickStatsLocationId, accessibleLocationIds);
+  const { formatCurrencyWhole } = useFormatCurrency();
+  const { t } = useTranslation('dashboard');
   
   // Analytics filter state (shared across all pinned analytics cards)
   const [locationId, setLocationId] = useState<string>('');
@@ -202,11 +214,10 @@ export default function DashboardHome() {
           <Alert className="border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 dark:border-amber-700">
             <Hourglass className="h-5 w-5 text-amber-600" />
             <AlertTitle className="text-amber-800 dark:text-amber-200 font-display">
-              Account Pending Approval
+              {t('home.pending_approval_title')}
             </AlertTitle>
             <AlertDescription className="text-amber-700 dark:text-amber-300">
-              Your account is waiting for admin approval. Some features may be limited until your account is approved. 
-              If you've been waiting a while, please contact your manager.
+              {t('home.pending_approval_desc')}
             </AlertDescription>
           </Alert>
         )}
@@ -221,27 +232,45 @@ export default function DashboardHome() {
         <InsightsNudgeBanner userId={user?.id} isLeadership={isLeadership} />
 
         {/* Header with Customize Button */}
-        <motion.div className="flex items-start justify-between" variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}>
+        <motion.div
+          className="flex items-start justify-between border-b border-border/60 pb-6"
+          variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}
+        >
           <div>
-            <h1 className="font-display text-2xl lg:text-3xl mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-              Welcome back, {firstName}
+            <h1 className="font-display text-2xl lg:text-3xl mb-2 font-medium">
+              {t('home.welcome_back')} <span className="text-foreground/80">{firstName}</span>
             </h1>
-            <p className="text-muted-foreground font-sans">
-              Here's what's happening today
+            <p className="text-muted-foreground font-sans font-medium">
+              {t('home.whats_happening')}
             </p>
           </div>
-          <DashboardCustomizeMenu 
-            variant="button" 
-            roleContext={{
-              isLeadership,
-              hasStylistRole,
-              isFrontDesk,
-              isReceptionist,
-            }}
-          />
+          <div className="flex flex-col items-end gap-3">
+            <DashboardCustomizeMenu 
+              variant="button" 
+              roleContext={{
+                isLeadership,
+                hasStylistRole,
+                isFrontDesk,
+                isReceptionist,
+              }}
+            />
+            <div className="rounded-xl border border-border/50 bg-muted/20 px-4 py-3">
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
+                <AnnouncementsDrawer isLeadership={isLeadership} />
+              </div>
+            </div>
+          </div>
         </motion.div>
 
-        {/* Dynamic sections based on layout order */}
+        {/* Dynamic sections based on layout order - wait for layout to prevent flash of hidden content */}
+        {layoutLoading ? (
+          <div className="space-y-6">
+            <Skeleton className="h-24 w-full rounded-xl" />
+            <ChartSkeleton lines={4} className="h-32" />
+            <ChartSkeleton lines={6} className="h-48" />
+          </div>
+        ) : (
         <DashboardSections 
           layout={layout}
           isLeadership={isLeadership}
@@ -263,6 +292,7 @@ export default function DashboardHome() {
           accessibleLocations={accessibleLocations}
           canViewAggregate={canViewAggregate}
         />
+        )}
       </motion.div>
       
       {/* Announcements drawer now rendered inline in ai_insights section */}
@@ -316,6 +346,7 @@ function DashboardSections({
   accessibleLocations,
   canViewAggregate,
 }: DashboardSectionsProps) {
+  const { t } = useTranslation('dashboard');
   // Fetch visibility data to check if cards are pinned
   const { data: visibilityData } = useDashboardVisibility();
   const leadershipRoles = ['super_admin', 'admin', 'manager'];
@@ -343,14 +374,8 @@ function DashboardSections({
 
   // Build section components map (excludes pinned cards - those are rendered separately)
   const sectionComponents = useMemo(() => ({
-    ai_insights: (
-      <div className="flex flex-col gap-3 -mt-2">
-        <div className="flex flex-wrap items-center gap-2">
-          {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
-          <AnnouncementsDrawer isLeadership={isLeadership} />
-        </div>
-      </div>
-    ),
+    // Moved to header (right side, under Customize)
+    ai_insights: null,
     
     hub_quicklinks: isLeadership && (
       <HubQuickLinks 
@@ -368,7 +393,7 @@ function DashboardSections({
         <div>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-1.5 h-1.5 rounded-full bg-oat" />
-            <h2 className="font-display text-xs tracking-[0.15em]">QUICK ACTIONS</h2>
+            <h2 className="font-display text-xs tracking-[0.15em]">{t('home.quick_actions')}</h2>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             <VisibilityGate elementKey="ring_the_bell_action">
@@ -377,7 +402,7 @@ function DashboardSections({
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                     <Bell className="w-4 h-4 text-primary" />
                   </div>
-                  <span className="text-xs">Ring the Bell</span>
+                  <span className="text-xs">{t('home.ring_the_bell')}</span>
                 </Link>
               </Button>
             </VisibilityGate>
@@ -387,7 +412,7 @@ function DashboardSections({
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                     <TrendingUp className="w-4 h-4 text-primary" />
                   </div>
-                  <span className="text-xs">Log Metrics</span>
+                  <span className="text-xs">{t('home.log_metrics')}</span>
                 </Link>
               </Button>
             </VisibilityGate>
@@ -396,7 +421,7 @@ function DashboardSections({
                 <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                   <Users className="w-4 h-4 text-primary" />
                 </div>
-                <span className="text-xs">My Clients</span>
+                <span className="text-xs">{t('home.my_clients')}</span>
               </Link>
             </Button>
             {roles.includes('stylist') && (
@@ -405,7 +430,7 @@ function DashboardSections({
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                     <HandHelping className="w-4 h-4 text-primary" />
                   </div>
-                  <span className="text-xs">Request Assistant</span>
+                  <span className="text-xs">{t('home.request_assistant')}</span>
                 </Link>
               </Button>
             )}
@@ -415,7 +440,7 @@ function DashboardSections({
                   <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center">
                     <Target className="w-4 h-4 text-primary" />
                   </div>
-                  <span className="text-xs">Training</span>
+                  <span className="text-xs">{t('home.training')}</span>
                 </Link>
               </Button>
             </VisibilityGate>
@@ -445,8 +470,10 @@ function DashboardSections({
                 <Calendar className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-display tabular-nums">0</p>
-                <p className="text-xs text-muted-foreground font-sans">Today's Clients</p>
+                <p className="text-2xl font-display tabular-nums">
+                  {quickStatsLoading ? '—' : todayClients}
+                </p>
+                <p className="text-xs text-muted-foreground font-sans">{t('home.today_clients')}</p>
               </div>
             </div>
           </Card>
@@ -456,8 +483,10 @@ function DashboardSections({
                 <DollarSign className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-display tabular-nums">$0</p>
-                <p className="text-xs text-muted-foreground font-sans">This Week</p>
+                <p className="text-2xl font-display tabular-nums">
+                  {quickStatsLoading ? '—' : <BlurredAmount>{formatCurrencyWhole(thisWeekRevenue)}</BlurredAmount>}
+                </p>
+                <p className="text-xs text-muted-foreground font-sans">{t('home.this_week')}</p>
               </div>
             </div>
           </Card>
@@ -467,8 +496,10 @@ function DashboardSections({
                 <Users className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-display tabular-nums">0</p>
-                <p className="text-xs text-muted-foreground font-sans">New Clients</p>
+                <p className="text-2xl font-display tabular-nums">
+                  {quickStatsLoading ? '—' : newClients}
+                </p>
+                <p className="text-xs text-muted-foreground font-sans">{t('home.new_clients')}</p>
               </div>
             </div>
           </Card>
@@ -478,8 +509,10 @@ function DashboardSections({
                 <TrendingUp className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <p className="text-2xl font-display tabular-nums">0%</p>
-                <p className="text-xs text-muted-foreground font-sans">Rebooking Rate</p>
+                <p className="text-2xl font-display tabular-nums">
+                  {quickStatsLoading ? '—' : `${rebookingRate.toFixed(0)}%`}
+                </p>
+                <p className="text-xs text-muted-foreground font-sans">{t('home.rebooking_rate')}</p>
               </div>
             </div>
           </Card>
@@ -496,15 +529,15 @@ function DashboardSections({
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-oat" />
-                  <h2 className="font-display text-xs tracking-[0.15em]">TODAY'S SCHEDULE</h2>
+                  <h2 className="font-display text-xs tracking-[0.15em]">{t('home.todays_schedule')}</h2>
                 </div>
                 <Clock className="w-4 h-4 text-muted-foreground" />
               </div>
               <div className="space-y-3">
                 <div className="text-center py-14 text-muted-foreground">
                   <Calendar className="w-7 h-7 mx-auto mb-3 opacity-20" />
-                  <p className="text-sm font-display">No appointments today</p>
-                  <p className="text-xs mt-1 text-muted-foreground/60">Enjoy your day off!</p>
+                  <p className="text-sm font-display">{t('home.no_appointments')}</p>
+                  <p className="text-xs mt-1 text-muted-foreground/60">{t('home.enjoy_day_off')}</p>
                 </div>
               </div>
             </Card>
@@ -517,10 +550,10 @@ function DashboardSections({
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-oat" />
-                <h2 className="font-display text-xs tracking-[0.15em]">MY TASKS</h2>
+                <h2 className="font-display text-xs tracking-[0.15em]">{t('home.my_tasks')}</h2>
                 {isImpersonating && (
                   <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                    View Only
+                    {t('home.view_only')}
                   </span>
                 )}
               </div>
@@ -544,14 +577,14 @@ function DashboardSections({
               ) : (
                 <div className="text-center py-14 text-muted-foreground">
                   <CheckSquare className="w-6 h-6 mx-auto mb-3 opacity-20" />
-                  <p className="text-sm font-display">No tasks yet</p>
-                  <p className="text-xs mt-1 text-muted-foreground/60">{isImpersonating ? 'This user has no tasks' : 'Add your first task above'}</p>
+                  <p className="text-sm font-display">{t('home.no_tasks')}</p>
+                  <p className="text-xs mt-1 text-muted-foreground/60">{isImpersonating ? t('home.impersonating_no_tasks') : t('home.add_first_task')}</p>
                 </div>
               )}
             </div>
             {tasks.length > 5 && (
               <p className="text-xs text-muted-foreground text-center mt-3">
-                +{tasks.length - 5} more tasks
+                {t('home.more_tasks', { count: tasks.length - 5 })}
               </p>
             )}
           </Card>
@@ -578,11 +611,11 @@ function DashboardSections({
                   </div>
                   <div>
                     <div className="flex items-center gap-3">
-                      <h2 className="font-display text-lg tracking-wide text-[hsl(35,30%,20%)]">CLIENT ENGINE</h2>
+                      <h2 className="font-display text-lg tracking-wide text-[hsl(35,30%,20%)]">{t('home.client_engine')}</h2>
                       {enrollment && (
                         <div className="flex items-center gap-1.5 text-sm">
                           <Flame className="w-4 h-4 text-primary" />
-                          <span className="font-display text-[hsl(35,30%,20%)]">{enrollment.streak_count} DAY STREAK</span>
+                          <span className="font-display text-[hsl(35,30%,20%)]">{enrollment.streak_count} {t('home.day_streak')}</span>
                         </div>
                       )}
                     </div>
@@ -616,7 +649,7 @@ function DashboardSections({
                 className="bg-gradient-to-r from-[hsl(40,40%,25%)] to-[hsl(35,35%,15%)] hover:from-[hsl(40,45%,30%)] hover:to-[hsl(35,40%,20%)] text-[hsl(45,50%,90%)] border border-[hsl(45,50%,60%)]/30 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] px-8 shrink-0"
               >
                 <Link to="/dashboard/program">
-                  {enrollment ? 'Continue Today' : 'Start Program'}
+                  {enrollment ? t('home.continue_today') : t('home.start_program')}
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Link>
               </Button>
@@ -670,19 +703,21 @@ function DashboardSections({
           return (
             <React.Fragment key={sectionId}>
               {showFilterBar && (
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-oat" />
-                    <h2 className="font-display text-xs tracking-[0.15em] text-muted-foreground">ANALYTICS</h2>
+                <div className="pt-6 pb-2">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-oat" />
+                      <h2 className="font-display text-sm tracking-[0.12em] text-foreground">{t('home.analytics')}</h2>
+                    </div>
+                    <AnalyticsFilterBar
+                      locationId={analyticsFilters.locationId}
+                      onLocationChange={onLocationChange}
+                      dateRange={analyticsFilters.dateRange}
+                      onDateRangeChange={onDateRangeChange}
+                      accessibleLocations={accessibleLocations}
+                      canViewAggregate={canViewAggregate}
+                    />
                   </div>
-                  <AnalyticsFilterBar
-                    locationId={analyticsFilters.locationId}
-                    onLocationChange={onLocationChange}
-                    dateRange={analyticsFilters.dateRange}
-                    onDateRangeChange={onDateRangeChange}
-                    accessibleLocations={accessibleLocations}
-                    canViewAggregate={canViewAggregate}
-                  />
                 </div>
               )}
               <PinnedAnalyticsCard cardId={cardId} filters={analyticsFilters} />

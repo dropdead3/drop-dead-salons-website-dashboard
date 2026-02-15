@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { format, addMonths, startOfMonth, endOfMonth } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -14,6 +15,7 @@ interface DateStepProps {
 }
 
 export function DateStep({ locationId, selectedDate, onSelect }: DateStepProps) {
+  const { formatDate } = useFormatDate();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   
   const startDate = format(startOfMonth(currentMonth), 'yyyy-MM-dd');
@@ -73,7 +75,7 @@ export function DateStep({ locationId, selectedDate, onSelect }: DateStepProps) 
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="font-medium">
-            {format(currentMonth, 'MMMM yyyy')}
+            {formatDate(currentMonth, 'MMMM yyyy')}
           </span>
           <Button
             variant="outline"

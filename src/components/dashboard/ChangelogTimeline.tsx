@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, parseISO, getYear, getQuarter } from 'date-fns';
+import { parseISO, getYear, getQuarter } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,6 +10,8 @@ import { Star, Clock, Rocket, Bug, Sparkles, Lightbulb, ChevronRight, ChevronUp 
 import type { ChangelogEntry } from '@/hooks/useChangelog';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useVoteChangelog } from '@/hooks/useChangelog';
+import { formatDate, formatDateShort } from '@/lib/format';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const ENTRY_TYPE_CONFIG: Record<string, { icon: typeof Sparkles; label: string; color: string; dotColor: string }> = {
   update: { icon: Sparkles, label: 'Update', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300', dotColor: 'bg-blue-500' },
@@ -75,9 +77,11 @@ export function ChangelogTimeline({ entries }: ChangelogTimelineProps) {
 
   if (entries.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        No changelog entries yet.
-      </div>
+      <EmptyState
+        icon={Sparkles}
+        title="No changelog entries"
+        description="No updates have been published yet."
+      />
     );
   }
 
@@ -143,7 +147,7 @@ export function ChangelogTimeline({ entries }: ChangelogTimelineProps) {
                             </div>
                             <h4 className="font-medium text-sm">{entry.title}</h4>
                             <p className="text-xs text-muted-foreground mt-1">
-                              {format(parseISO(date), 'MMM d, yyyy')}
+                              {formatDate(date)}
                             </p>
                           </div>
                           <ChevronRight className={cn(
@@ -241,7 +245,7 @@ export function ChangelogTimeline({ entries }: ChangelogTimelineProps) {
                         {/* Content */}
                         <div className="mt-3 text-center">
                           <p className="text-xs text-muted-foreground">
-                            {format(parseISO(date), 'MMM d')}
+                            {formatDateShort(date)}
                           </p>
                           {entry.version && (
                             <p className="text-xs font-medium">{entry.version}</p>
@@ -290,7 +294,7 @@ export function ChangelogTimeline({ entries }: ChangelogTimelineProps) {
                     
                     <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">
                       {selectedEntry.published_at && (
-                        <span>{format(parseISO(selectedEntry.published_at), 'MMMM d, yyyy')}</span>
+                        <span>{formatDate(selectedEntry.published_at)}</span>
                       )}
                     </div>
                   </div>
@@ -363,7 +367,7 @@ export function ChangelogTimeline({ entries }: ChangelogTimelineProps) {
                           </div>
                           <div className="text-right shrink-0">
                             <p className="text-xs text-muted-foreground">
-                              {format(parseISO(date), 'MMM d')}
+                              {formatDateShort(date)}
                             </p>
                             <ChevronRight className="h-4 w-4 text-muted-foreground mt-2 ml-auto" />
                           </div>

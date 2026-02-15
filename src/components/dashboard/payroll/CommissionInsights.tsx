@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTierDistribution, TierDistributionItem } from '@/hooks/useTierDistribution';
-import { useCommissionTiers } from '@/hooks/useCommissionTiers';
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-US', {
@@ -44,9 +43,8 @@ function TierDistributionBar({ tier }: { tier: TierDistributionItem }) {
 
 export function CommissionInsights() {
   const { distribution, progressionOpportunities, impactAnalysis, isLoading } = useTierDistribution();
-  const { tiers, isLoading: isLoadingTiers } = useCommissionTiers();
 
-  if (isLoading || isLoadingTiers) {
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-[300px] w-full" />
@@ -54,9 +52,6 @@ export function CommissionInsights() {
       </div>
     );
   }
-
-  const serviceTiers = tiers.filter(t => t.applies_to === 'services' || t.applies_to === 'all');
-  const productTiers = tiers.filter(t => t.applies_to === 'products');
 
   return (
     <div className="space-y-6">
@@ -109,103 +104,33 @@ export function CommissionInsights() {
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Tier Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Tier Distribution
-            </CardTitle>
-            <CardDescription>
-              How team members are distributed across commission tiers
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {distribution.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No tier distribution data available</p>
-                <p className="text-sm">Add employees with commission enabled to see distribution.</p>
-              </div>
-            ) : (
-              <div className="space-y-1">
-                {distribution.map((tier) => (
-                  <TierDistributionBar key={tier.tierName} tier={tier} />
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Commission Tiers Configuration */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Commission Tiers</CardTitle>
-            <CardDescription>
-              Current tier configuration for services and products
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              {/* Service Tiers */}
-              <div>
-                <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                  <Badge variant="outline">Services</Badge>
-                </h4>
-                <div className="space-y-2">
-                  {serviceTiers.map((tier) => (
-                    <div 
-                      key={tier.id} 
-                      className="flex items-center justify-between p-3 rounded-lg border bg-muted/30"
-                    >
-                      <div>
-                        <p className="font-medium text-sm">{tier.tier_name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {formatCurrency(tier.min_revenue)} - {tier.max_revenue ? formatCurrency(tier.max_revenue) : '∞'}
-                        </p>
-                      </div>
-                      <Badge className="text-sm font-medium">
-                        {(tier.commission_rate * 100).toFixed(0)}%
-                      </Badge>
-                    </div>
-                  ))}
-                  {serviceTiers.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No service tiers configured</p>
-                  )}
-                </div>
-              </div>
-
-              {/* Product Tiers */}
-              {productTiers.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-medium mb-3 flex items-center gap-2">
-                    <Badge variant="outline">Products</Badge>
-                  </h4>
-                  <div className="space-y-2">
-                    {productTiers.map((tier) => (
-                      <div 
-                        key={tier.id} 
-                        className="flex items-center justify-between p-3 rounded-lg border bg-muted/30"
-                      >
-                        <div>
-                          <p className="font-medium text-sm">{tier.tier_name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatCurrency(tier.min_revenue)} - {tier.max_revenue ? formatCurrency(tier.max_revenue) : '∞'}
-                          </p>
-                        </div>
-                        <Badge variant="secondary" className="text-sm font-medium">
-                          {(tier.commission_rate * 100).toFixed(0)}%
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+      {/* Tier Distribution */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Tier Distribution
+          </CardTitle>
+          <CardDescription>
+            How team members are distributed across commission tiers
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {distribution.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>No tier distribution data available</p>
+              <p className="text-sm">Add employees with commission enabled to see distribution.</p>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          ) : (
+            <div className="space-y-1">
+              {distribution.map((tier) => (
+                <TierDistributionBar key={tier.tierName} tier={tier} />
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

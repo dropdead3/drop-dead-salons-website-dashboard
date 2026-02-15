@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import type { BookingData } from './BookingWizard';
 import { format, parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 interface ConfirmationStepProps {
   bookingData: BookingData;
@@ -10,6 +11,7 @@ interface ConfirmationStepProps {
 }
 
 export function ConfirmationStep({ bookingData, onNewBooking }: ConfirmationStepProps) {
+  const { formatDate } = useFormatDate();
   const bookingDate = parseISO(bookingData.booking_date + 'T00:00:00');
 
   const generateICSFile = () => {
@@ -86,7 +88,7 @@ END:VCALENDAR`;
             <Calendar className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
             <div>
               <p className="font-medium">
-                {format(bookingDate, 'EEEE, MMMM d, yyyy')}
+                {formatDate(bookingDate, 'EEEE, MMMM d, yyyy')}
               </p>
               <p className="text-sm text-muted-foreground">Full Day Rental</p>
             </div>

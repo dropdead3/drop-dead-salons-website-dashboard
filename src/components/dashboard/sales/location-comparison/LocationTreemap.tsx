@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Treemap, ResponsiveContainer, Tooltip } from 'recharts';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { formatCurrencyWhole } from '@/lib/formatCurrency';
 import { motion } from 'framer-motion';
 import type { LocationCardData } from './LocationComparisonCard';
 
@@ -17,7 +18,7 @@ function CustomTooltip({ active, payload }: any) {
     <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-lg text-sm">
       <p className="font-medium">{d.name}</p>
       <p className="text-muted-foreground">
-        <BlurredAmount>${(d.totalRevenue ?? d.value ?? 0).toLocaleString()}</BlurredAmount>
+        <BlurredAmount>{formatCurrencyWhole(d.totalRevenue ?? d.value ?? 0)}</BlurredAmount>
         <span className="ml-2">({Math.round(d.sharePercent ?? 0)}%)</span>
       </p>
     </div>

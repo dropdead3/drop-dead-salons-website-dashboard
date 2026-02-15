@@ -21,6 +21,7 @@ import { useNavigate } from 'react-router-dom';
 
 import type { Database } from '@/integrations/supabase/types';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 type ProgramStatus = Database['public']['Enums']['program_status'];
 
@@ -37,6 +38,7 @@ interface ClientEngineStats {
 
 export function ClientEngineOverview() {
   const navigate = useNavigate();
+  const { formatCurrencyWhole } = useFormatCurrency();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<ClientEngineStats>({
     enrolled: 0,
@@ -202,7 +204,7 @@ export function ClientEngineOverview() {
               <p className="text-xs text-muted-foreground">Revenue</p>
               <MetricInfoTooltip description="Combined revenue from Ring the Bell entries logged by enrolled stylists." />
             </div>
-            <BlurredAmount className="text-sm font-medium">${stats.totalRevenue.toLocaleString()}</BlurredAmount>
+            <BlurredAmount className="text-sm font-medium">{formatCurrencyWhole(stats.totalRevenue)}</BlurredAmount>
           </div>
         </div>
         <div className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted/30 transition-colors">

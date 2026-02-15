@@ -2,99 +2,12 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  TrendingUp,
-  LayoutGrid,
-  DollarSign,
-  Store,
-  Globe,
-  ClipboardList,
-  CalendarClock,
-  MessageSquarePlus,
-  Shield,
-  Rocket,
-} from 'lucide-react';
+import { hubLinksConfig } from '@/config/dashboardNav';
 
-export interface HubLinkProps {
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  label: string;
-  colorClass: string;
-  permission?: string;
-}
+export type { HubLinkConfig as HubLinkProps } from '@/config/dashboardNav';
 
-export const hubLinks: HubLinkProps[] = [
-  { 
-    href: '/dashboard/admin/analytics', 
-    icon: TrendingUp, 
-    label: 'Analytics Hub', 
-    colorClass: 'bg-primary/5 text-primary hover:bg-primary/10',
-    permission: 'view_team_overview',
-  },
-  { 
-    href: '/dashboard/admin/management', 
-    icon: LayoutGrid, 
-    label: 'Management Hub', 
-    colorClass: 'bg-primary/5 text-primary hover:bg-primary/10',
-    permission: 'view_team_overview',
-  },
-  { 
-    href: '/dashboard/admin/payroll', 
-    icon: DollarSign, 
-    label: 'Hiring & Payroll Hub', 
-    colorClass: 'bg-primary/5 text-primary hover:bg-primary/10',
-    permission: 'manage_payroll',
-  },
-  { 
-    href: '/dashboard/admin/booth-renters', 
-    icon: Store, 
-    label: 'Renter Hub', 
-    colorClass: 'bg-primary/5 text-primary hover:bg-primary/10',
-    permission: 'manage_booth_renters',
-  },
-  { 
-    href: '/dashboard/admin/website-sections', 
-    icon: Globe, 
-    label: 'Website Editor', 
-    colorClass: 'bg-primary/5 text-primary hover:bg-primary/10',
-    permission: 'manage_homepage_stylists',
-  },
-  { 
-    href: '/dashboard/campaigns', 
-    icon: Rocket, 
-    label: 'Campaigns', 
-    colorClass: 'bg-primary/5 text-primary hover:bg-primary/10',
-    permission: 'view_team_overview',
-  },
-  { 
-    href: '/dashboard/admin/feedback', 
-    icon: MessageSquarePlus, 
-    label: 'Feedback Hub', 
-    colorClass: 'bg-primary/5 text-primary hover:bg-primary/10',
-    permission: 'manage_settings',
-  },
-  { 
-    href: '/dashboard/admin/access-hub', 
-    icon: Shield, 
-    label: 'Roles Hub', 
-    colorClass: 'bg-primary/5 text-primary hover:bg-primary/10',
-    permission: 'manage_settings',
-  },
-  {
-    href: '/dashboard/admin/onboarding-tracker', 
-    icon: ClipboardList, 
-    label: 'Onboarding Hub', 
-    colorClass: 'bg-primary/5 text-primary hover:bg-primary/10',
-    permission: 'view_team_overview',
-  },
-  { 
-    href: '/dashboard/schedule-meeting', 
-    icon: CalendarClock, 
-    label: 'Schedule 1:1', 
-    colorClass: 'bg-primary/5 text-primary hover:bg-primary/10',
-    permission: 'schedule_meetings',
-  },
-];
+/** @deprecated Import hubLinksConfig from '@/config/dashboardNav'. Re-exported for backward compatibility. */
+export const hubLinks = hubLinksConfig;
 
 interface HubQuickLinksProps {
   hubOrder?: string[];
@@ -104,8 +17,8 @@ interface HubQuickLinksProps {
 export function HubQuickLinks({ hubOrder, enabledHubs }: HubQuickLinksProps) {
   const { hasPermission } = useAuth();
 
-  // Filter by permission first
-  const permittedHubs = hubLinks.filter(hub => 
+  // Filter by permission first (from canonical nav registry)
+  const permittedHubs = hubLinksConfig.filter(hub => 
     !hub.permission || hasPermission(hub.permission)
   );
 

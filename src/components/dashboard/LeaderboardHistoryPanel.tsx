@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { format, subWeeks, startOfWeek } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { History, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, Save, Loader2 } from 'lucide-react';
@@ -24,6 +25,7 @@ export function LeaderboardHistoryPanel({
   currentRankings = [], 
   canSaveSnapshot = false 
 }: LeaderboardHistoryPanelProps) {
+  const { formatDate } = useFormatDate();
   const { allHistory, loading, saveWeeklySnapshot, refetch } = useLeaderboardHistory();
   const [selectedWeekOffset, setSelectedWeekOffset] = useState(0);
   const [saving, setSaving] = useState(false);
@@ -107,7 +109,7 @@ export function LeaderboardHistoryPanel({
           <ChevronLeft className="w-4 h-4" />
         </Button>
         <span className="font-sans text-sm">
-          Week of {format(new Date(selectedWeek), 'MMM d, yyyy')}
+          Week of {formatDate(new Date(selectedWeek), 'MMM d, yyyy')}
         </span>
         <Button
           variant="ghost"

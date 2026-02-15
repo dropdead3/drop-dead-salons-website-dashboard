@@ -1,22 +1,32 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Search, 
-  Sparkles, 
-  Navigation, 
-  BookOpen, 
-  Users, 
-  X,
-  Loader2,
-  Command
-} from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Search, X, Loader2, Command, Sparkles, Users, BookOpen, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useAIAssistant } from '@/hooks/useAIAssistant';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import ReactMarkdown from 'react-markdown';
+import {
+  mainNavItems,
+  growthNavItems,
+  statsNavItems,
+  managerNavItems,
+  adminOnlyNavItems,
+} from '@/config/dashboardNav';
+
+interface NavItem {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  permission?: string;
+  roles?: string[];
+  platformRoles?: string[];
+}
+
+interface TopBarSearchProps {
+  filterNavItems?: (items: NavItem[]) => NavItem[];
+}
 
 interface SearchResult {
   type: 'navigation' | 'help' | 'team';
@@ -26,23 +36,15 @@ interface SearchResult {
   icon: React.ReactNode;
 }
 
-const NAV_ITEMS: SearchResult[] = [
-  { type: 'navigation', title: 'Command Center', path: '/dashboard', icon: <Navigation className="w-4 h-4" /> },
-  { type: 'navigation', title: 'Schedule', path: '/dashboard/schedule', icon: <Navigation className="w-4 h-4" /> },
-  { type: 'navigation', title: 'Team Directory', path: '/dashboard/directory', icon: <Navigation className="w-4 h-4" /> },
-  { type: 'navigation', title: 'Client Directory', path: '/dashboard/clients', icon: <Navigation className="w-4 h-4" /> },
-  { type: 'navigation', title: 'Analytics Hub', path: '/dashboard/admin/analytics', icon: <Navigation className="w-4 h-4" /> },
-  { type: 'navigation', title: 'Management Hub', path: '/dashboard/admin/management', icon: <Navigation className="w-4 h-4" /> },
-  { type: 'navigation', title: 'Hiring & Payroll Hub', path: '/dashboard/admin/payroll', icon: <Navigation className="w-4 h-4" /> },
-  { type: 'navigation', title: 'Renter Hub', path: '/dashboard/admin/booth-renters', icon: <Navigation className="w-4 h-4" /> },
-  { type: 'navigation', title: 'Profile', path: '/dashboard/profile', icon: <Navigation className="w-4 h-4" /> },
-  // Relocated from Housekeeping section
-  { type: 'help', title: 'Help Center', path: '/dashboard/help', icon: <BookOpen className="w-4 h-4" /> },
-  { type: 'help', title: 'Handbooks', subtitle: 'Employee guides & resources', path: '/dashboard/handbooks', icon: <BookOpen className="w-4 h-4" /> },
-  { type: 'help', title: "What's New", subtitle: 'Latest updates & features', path: '/dashboard/changelog', icon: <Sparkles className="w-4 h-4" /> },
-];
+function dedupeByPath(items: NavItem[]): NavItem[] {
+  const map = new Map<string, NavItem>();
+  items.forEach((item) => {
+    if (!map.has(item.href)) map.set(item.href, item);
+  });
+  return Array.from(map.values());
+}
 
-export function TopBarSearch() {
+export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [aiMode, setAiMode] = useState(false);
@@ -54,6 +56,35 @@ export function TopBarSearch() {
   const { response: aiResponse, isLoading: aiLoading, error: aiError, sendMessage, reset: resetAI } = useAIAssistant();
   const { data: teamMembers } = useTeamDirectory();
 
+  const navigationResults = React.useMemo((): SearchResult[] => {
+    const derived = dedupeByPath([
+      ...mainNavItems,
+      ...growthNavItems,
+      ...statsNavItems,
+      ...managerNavItems,
+      ...adminOnlyNavItems,
+    ]);
+
+    const visible = filterNavItems ? filterNavItems(derived) : derived;
+
+    const results: SearchResult[] = visible.map((item) => ({
+      type: 'navigation',
+      title: item.label,
+      path: item.href,
+      icon: <item.icon className="w-4 h-4" />,
+    }));
+
+    // Always-searchable essentials (not in the sidebar registry)
+    results.push(
+      { type: 'navigation', title: 'Profile', path: '/dashboard/profile', icon: <UserCircle className="w-4 h-4" /> },
+      { type: 'help', title: 'Help Center', path: '/dashboard/help', icon: <BookOpen className="w-4 h-4" /> },
+      { type: 'help', title: 'Handbooks', subtitle: 'Employee guides & resources', path: '/dashboard/handbooks', icon: <BookOpen className="w-4 h-4" /> },
+      { type: 'help', title: "What's New", subtitle: 'Latest updates & features', path: '/dashboard/changelog', icon: <Sparkles className="w-4 h-4" /> }
+    );
+
+    return results;
+  }, [filterNavItems]);
+
   // Filter results based on query
   const filteredResults = React.useMemo(() => {
     if (!query.trim() || aiMode) return [];
@@ -62,10 +93,9 @@ export function TopBarSearch() {
     const results: SearchResult[] = [];
     
     // Filter navigation items
-    NAV_ITEMS.forEach(item => {
-      if (item.title.toLowerCase().includes(lowerQuery)) {
-        results.push(item);
-      }
+    navigationResults.forEach(item => {
+      const haystack = `${item.title} ${item.subtitle ?? ''}`.toLowerCase();
+      if (haystack.includes(lowerQuery)) results.push(item);
     });
     
     // Filter team members
@@ -83,7 +113,7 @@ export function TopBarSearch() {
     });
     
     return results.slice(0, 8);
-  }, [query, aiMode, teamMembers]);
+  }, [query, aiMode, teamMembers, navigationResults]);
 
   // Keyboard shortcut to open search
   useEffect(() => {

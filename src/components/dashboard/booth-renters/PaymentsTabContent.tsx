@@ -9,8 +9,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Search, DollarSign, AlertTriangle, CheckCircle2, Clock, Calendar, Receipt } from 'lucide-react';
-import { format, startOfMonth, endOfMonth } from 'date-fns';
+import { startOfMonth, endOfMonth } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { toast } from 'sonner';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 const statusColors: Record<string, string> = {
   paid: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -33,6 +35,7 @@ interface PaymentsTabContentProps {
 }
 
 export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) {
+  const { formatDate } = useFormatDate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
@@ -86,14 +89,13 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
     });
   };
 
-  const formatCurrency = (amount: number) => 
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  const { formatCurrency } = useFormatCurrency();
 
   return (
     <div className="space-y-6">
       {/* Month indicator */}
       <p className="text-muted-foreground">
-        {format(now, 'MMMM yyyy')} rent payments
+        {formatDate(now, 'MMMM yyyy')} rent payments
       </p>
 
       {/* Summary Cards */}
@@ -200,7 +202,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
                       <td className="p-4 text-sm">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          {format(new Date(payment.due_date), 'MMM d, yyyy')}
+                          {formatDate(new Date(payment.due_date), 'MMM d, yyyy')}
                         </div>
                       </td>
                       <td className="p-4 text-right font-medium">{formatCurrency(payment.total_due)}</td>
@@ -209,7 +211,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
                         {payment.balance > 0 ? (
                           <span className="text-amber-400">{formatCurrency(payment.balance)}</span>
                         ) : (
-                          <span className="text-emerald-400">$0.00</span>
+                          <span className="text-emerald-400">{formatCurrency(0)}</span>
                         )}
                       </td>
                       <td className="p-4">
@@ -259,7 +261,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
               <div className="bg-muted/50 rounded-lg p-4">
                 <p className="font-medium">{selectedPayment.renter_name}</p>
                 <p className="text-sm text-muted-foreground">
-                  Due: {format(new Date(selectedPayment.due_date), 'MMM d, yyyy')}
+                  Due: {formatDate(new Date(selectedPayment.due_date), 'MMM d, yyyy')}
                 </p>
                 <p className="text-sm">
                   Balance: <span className="font-medium text-amber-400">{formatCurrency(selectedPayment.balance)}</span>

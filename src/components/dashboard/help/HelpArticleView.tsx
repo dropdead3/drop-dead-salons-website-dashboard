@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { KBArticle, useIncrementArticleViews } from '@/hooks/useKnowledgeBase';
-import { formatDistanceToNow } from 'date-fns';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
+import { formatRelativeTime } from '@/lib/format';
 
 interface HelpArticleViewProps {
   article: KBArticle;
@@ -42,6 +43,7 @@ function renderMarkdown(content: string) {
 
 export function HelpArticleView({ article }: HelpArticleViewProps) {
   const navigate = useNavigate();
+  const { formatNumber } = useFormatNumber();
   const incrementViews = useIncrementArticleViews();
 
   // Track view on mount
@@ -93,12 +95,12 @@ export function HelpArticleView({ article }: HelpArticleViewProps) {
             {article.published_at && (
               <span className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
-                {formatDistanceToNow(new Date(article.published_at), { addSuffix: true })}
+                {formatRelativeTime(article.published_at)}
               </span>
             )}
             <span className="flex items-center gap-1">
               <Eye className="h-4 w-4" />
-              {article.view_count.toLocaleString()} views
+              {formatNumber(article.view_count)} views
             </span>
           </div>
         </CardHeader>

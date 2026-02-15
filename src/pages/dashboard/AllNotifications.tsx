@@ -11,10 +11,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatRelativeTime } from '@/lib/format';
+import { EmptyState } from '@/components/ui/empty-state';
 
 interface Announcement {
   id: string;
@@ -290,7 +291,7 @@ export default function AllNotifications() {
                 {notification.message}
               </p>
               <p className="text-xs text-muted-foreground mt-2">
-                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                {formatRelativeTime(notification.created_at)}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -362,7 +363,7 @@ export default function AllNotifications() {
                 {announcement.content}
               </p>
               <p className="text-xs text-muted-foreground mt-2">
-                {formatDistanceToNow(new Date(announcement.created_at), { addSuffix: true })}
+                {formatRelativeTime(announcement.created_at)}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -469,11 +470,12 @@ export default function AllNotifications() {
                     )}
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Bell className="w-12 h-12 text-muted-foreground/30 mb-4" />
-                    <p className="text-muted-foreground">No notifications</p>
-                    <p className="text-sm text-muted-foreground/70">You're all caught up!</p>
-                  </div>
+                  <EmptyState
+                    icon={Bell}
+                    title="No notifications"
+                    description="You’re all caught up."
+                    className="border-none bg-transparent"
+                  />
                 )}
               </TabsContent>
             </Tabs>

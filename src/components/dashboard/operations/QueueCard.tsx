@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { 
   Clock, 
   User, 
@@ -25,7 +26,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import type { QueueAppointment } from '@/hooks/useTodaysQueue';
 import { toast } from 'sonner';
 
@@ -48,13 +49,15 @@ export function QueueCard({
   onDelete,
   isUpdating = false,
 }: QueueCardProps) {
+  const { formatDate } = useFormatDate();
+  const { formatCurrencyWhole } = useFormatCurrency();
   const [copied, setCopied] = useState(false);
 
   const formatTime = (time: string) => {
     const [hours, minutes] = time.split(':').map(Number);
     const date = new Date();
     date.setHours(hours, minutes);
-    return format(date, 'h:mm a');
+    return formatDate(date, 'h:mm a');
   };
 
   const copyPhone = async () => {
@@ -211,7 +214,7 @@ export function QueueCard({
         {appointment.total_price && appointment.total_price > 0 && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <DollarSign className="w-4 h-4" />
-            <span>${appointment.total_price.toFixed(0)}</span>
+            <span>{formatCurrencyWhole(appointment.total_price)}</span>
           </div>
         )}
 

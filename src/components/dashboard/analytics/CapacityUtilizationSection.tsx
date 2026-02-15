@@ -7,7 +7,9 @@ import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { CapacityBreakdown } from '@/components/dashboard/analytics/CapacityBreakdown';
 import { Gauge, Clock, TrendingDown, Calendar, PieChart as PieChartIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
+import { parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import {
   BarChart,
   Bar,
@@ -105,6 +107,9 @@ export function CapacityUtilizationSection({
   isLoading,
   dateRange 
 }: CapacityUtilizationSectionProps) {
+  const { formatCurrencyWhole, currency } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
+
   if (isLoading) {
     return (
       <Card>
@@ -260,12 +265,12 @@ export function CapacityUtilizationSection({
             </div>
             <AnimatedBlurredAmount 
               value={gapRevenue}
-              prefix="$"
+              currency={currency}
               className="text-lg font-display tabular-nums"
             />
             <div className="flex items-center gap-1 justify-center">
               <p className="text-xs text-muted-foreground">Gap Revenue</p>
-              <MetricInfoTooltip description={`Potential revenue if unused hours were booked. Based on avg hourly revenue of $${avgHourlyRevenue}.`} />
+              <MetricInfoTooltip description={`Potential revenue if unused hours were booked. Based on avg hourly revenue of ${formatCurrencyWhole(avgHourlyRevenue)}.`} />
             </div>
           </div>
           <div className="text-center p-3 bg-muted/30 rounded-lg">
@@ -300,7 +305,7 @@ export function CapacityUtilizationSection({
                       const day = chartData[index];
                       if (day) {
                         try {
-                          return format(parseISO(day.date), dateRange === '90days' ? 'MMM d' : 'EEE');
+                          return formatDate(parseISO(day.date), dateRange === '90days' ? 'MMM d' : 'EEE');
                         } catch {
                           return value;
                         }
@@ -329,7 +334,7 @@ export function CapacityUtilizationSection({
                       if (payload && payload[0]) {
                         const day = payload[0].payload;
                         try {
-                          return format(parseISO(day.date), 'EEEE, MMM d');
+                          return formatDate(parseISO(day.date), 'EEEE, MMM d');
                         } catch {
                           return label;
                         }
@@ -414,14 +419,14 @@ export function CapacityUtilizationSection({
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {lowDay && lowDay.utilizationPercent < 50 ? (
-                    <>{format(parseISO(lowDay.date), 'EEEE')} had the most availability ({Math.round(lowDay.gapHours)}h open)</>
+                    <>{formatDate(parseISO(lowDay.date), 'EEEE')} had the most availability ({Math.round(lowDay.gapHours)}h open)</>
                   ) : (
-                    <>Fill unused hours to capture ${gapRevenue.toLocaleString()} in potential revenue</>
+                    <>Fill unused hours to capture {formatCurrencyWhole(gapRevenue)} in potential revenue</>
                   )}
                 </p>
                 {peakDay && peakDay.utilizationPercent >= 80 && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    💪 {format(parseISO(peakDay.date), 'EEEE')} was your strongest day ({peakDay.utilizationPercent}% utilized)
+                    💪 {formatDate(parseISO(peakDay.date), 'EEEE')} was your strongest day ({peakDay.utilizationPercent}% utilized)
                   </p>
                 )}
               </div>

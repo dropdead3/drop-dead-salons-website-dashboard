@@ -1,0 +1,73 @@
+---
+description: Supabase client, types, auth, storage, and realtime patterns for the Zura frontend.
+globs: src/integrations/**/*.ts
+alwaysApply: false
+---
+
+# Supabase Integration Patterns
+
+## Client
+
+Import from `@/integrations/supabase/client`. The client is typed with the auto-generated `Database` type.
+
+```typescript
+import { supabase } from '@/integrations/supabase/client';
+```
+
+Client config (in `src/integrations/supabase/client.ts`):
+- Uses `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` env vars
+- Auth persisted to localStorage with auto-refresh
+
+## Auto-Generated Types
+
+File: `src/integrations/supabase/types.ts`
+
+- **Do NOT manually edit this file** -- it is auto-generated from the Supabase schema
+- Row type: `Database['public']['Tables']['table_name']['Row']`
+- Insert type: `Database['public']['Tables']['table_name']['Insert']`
+- Update type: `Database['public']['Tables']['table_name']['Update']`
+
+## Authentication
+
+```typescript
+// Get current user
+const { data: { user } } = await supabase.auth.getUser();
+
+// Get current session
+const { data: { session } } = await supabase.auth.getSession();
+```
+
+Auth state is managed by `AuthContext` -- components should use `useAuth()` hook, not call Supabase auth directly.
+
+## Storage Buckets
+
+| Bucket | Access | Limit | Usage |
+|--------|--------|-------|-------|
+| `business-logos` | Public | -- | Business branding |
+| `chat-attachments` | Public | 10MB | Team chat files |
+| `meeting-notes` | User-scoped | -- | Meeting photos |
+| `kiosk-assets` | Public | -- | Kiosk media |
+
+Use client-side image optimization via `@/lib/image-utils` before uploading.
+
+## Realtime Subscriptions
+
+```typescript
+useEffect(() => {
+  const channel = supabase
+    .channel('my-channel')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'my_table',
+      filter: `organization_id=eq.${orgId}`,
+    }, (payload) => {
+      // Handle change
+    })
+    .subscribe();
+
+  return () => { supabase.removeChannel(channel); };
+}, [orgId]);
+```
+
+Always unsubscribe in the cleanup function. Always filter by organization_id.

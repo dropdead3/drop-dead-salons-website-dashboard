@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { AlertTriangle } from 'lucide-react';
 import {
   Dialog,
@@ -30,6 +31,7 @@ export function CompMonthsDialog({
   const [monthsToComp, setMonthsToComp] = useState(1);
   const [reason, setReason] = useState('');
   const compMonths = useCompMonths();
+  const { formatCurrency } = useFormatCurrency();
 
   const compValue = useMemo(() => {
     return monthsToComp * monthlyRate;
@@ -83,10 +85,10 @@ export function CompMonthsDialog({
           <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/30">
             <p className="text-sm text-green-300">Credit Value</p>
             <p className="text-white font-medium text-lg">
-              ${compValue.toFixed(2)}
+              {formatCurrency(compValue)}
             </p>
             <p className="text-xs text-green-400/70">
-              Based on ${monthlyRate.toFixed(2)}/month × {monthsToComp} month{monthsToComp > 1 ? 's' : ''}
+              Based on {formatCurrency(monthlyRate)}/month × {monthsToComp} month{monthsToComp > 1 ? 's' : ''}
             </p>
           </div>
 

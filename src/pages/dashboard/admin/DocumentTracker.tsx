@@ -15,7 +15,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { ArrowLeft, Plus, FileText, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { format, differenceInDays, parseISO } from 'date-fns';
+import { differenceInDays, parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 const DOCUMENT_TYPES = [
   { value: 'cosmetology_license', label: 'Cosmetology License' },
@@ -40,6 +41,7 @@ function StatusIcon({ status }: { status: string }) {
 }
 
 export default function DocumentTracker() {
+  const { formatDate } = useFormatDate();
   const { documents, createDocument } = useStaffDocuments();
   const { effectiveOrganization: organization } = useOrganizationContext();
   const [open, setOpen] = useState(false);
@@ -216,7 +218,7 @@ export default function DocumentTracker() {
                         <TableCell className="text-muted-foreground">{doc.license_number || '—'}</TableCell>
                         <TableCell>
                           {doc.expiration_date ? (
-                            <Badge variant={docStatus.variant}>{docStatus.label} · {format(parseISO(doc.expiration_date), 'MMM d, yyyy')}</Badge>
+                            <Badge variant={docStatus.variant}>{docStatus.label} · {formatDate(parseISO(doc.expiration_date), 'MMM d, yyyy')}</Badge>
                           ) : '—'}
                         </TableCell>
                         <TableCell className="text-muted-foreground max-w-[200px] truncate">{doc.notes || '—'}</TableCell>

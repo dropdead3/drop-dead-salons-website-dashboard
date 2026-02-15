@@ -15,6 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { RecoveryPlanActions } from './RecoveryPlanActions';
 import { Checkbox } from '@/components/ui/checkbox';
 import { SalesGoalsDialog } from './SalesGoalsDialog';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface SalesGoalProgressProps {
   current: number;
@@ -136,6 +137,7 @@ export function SalesGoalProgress({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [guidance, setGuidance] = useState('');
+  const { formatCurrencyWhole } = useFormatCurrency();
   const [selectedTaskIndices, setSelectedTaskIndices] = useState<Set<number>>(new Set());
 
   // Strip markdown formatting from parsed text
@@ -276,14 +278,14 @@ export function SalesGoalProgress({
       />
       
       <div className="flex items-center justify-between text-xs text-muted-foreground">
-        <BlurredAmount>${current.toLocaleString()} earned</BlurredAmount>
+        <BlurredAmount>{formatCurrencyWhole(current)} earned</BlurredAmount>
         {isComplete ? (
           <span className="text-chart-2 flex items-center gap-1">
             <TrendingUp className="w-3 h-3" />
             Goal reached!
           </span>
         ) : (
-          <BlurredAmount>${remaining.toLocaleString()} to go</BlurredAmount>
+          <BlurredAmount>{formatCurrencyWhole(remaining)} to go</BlurredAmount>
         )}
       </div>
 
@@ -310,7 +312,7 @@ export function SalesGoalProgress({
           {paceStatus === 'behind' && (
             <>
               <TrendingDown className="w-3 h-3" />
-              <span>Behind pace · <BlurredAmount>${neededPerDay.toLocaleString(undefined, { maximumFractionDigits: 0 })}/day</BlurredAmount> needed{isLocationAware ? ` (${daysLeft} open day${daysLeft !== 1 ? 's' : ''} left)` : ''}</span>
+              <span>Behind pace · <BlurredAmount>{formatCurrencyWhole(Math.round(neededPerDay))}/day</BlurredAmount> needed{isLocationAware ? ` (${daysLeft} open day${daysLeft !== 1 ? 's' : ''} left)` : ''}</span>
               <Button
                 variant="ghost"
                 size="sm"

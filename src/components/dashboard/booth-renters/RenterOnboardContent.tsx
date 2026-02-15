@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 type RentalModel = 'monthly' | 'weekly' | 'daily';
 
@@ -77,6 +78,7 @@ interface RenterOnboardContentProps {
 export function RenterOnboardContent({ organizationId }: RenterOnboardContentProps) {
   const navigate = useNavigate();
   const { effectiveOrganization: organization } = useOrganizationContext();
+  const { formatCurrency, currency } = useFormatCurrency();
   const [step, setStep] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [result, setResult] = useState<OnboardResult | null>(null);
@@ -537,7 +539,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
                 <div>
                   <Label>Rent Amount *</Label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{currency}</span>
                     <Input type="number" className="pl-7" value={form.rentAmount} onChange={e => updateField('rentAmount', e.target.value)} placeholder="1200" />
                   </div>
                 </div>
@@ -569,7 +571,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
                 <div>
                   <Label>Security Deposit</Label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">{currency}</span>
                     <Input type="number" className="pl-7" value={form.securityDeposit} onChange={e => updateField('securityDeposit', e.target.value)} placeholder="0" />
                   </div>
                 </div>
@@ -648,7 +650,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
                       <p className="text-xs text-muted-foreground mt-1 capitalize">{station.station_type}</p>
                       {(station.monthly_rate || station.weekly_rate) && (
                         <p className="text-xs text-muted-foreground">
-                          {station.monthly_rate ? `$${station.monthly_rate}/mo` : `$${station.weekly_rate}/wk`}
+                          {station.monthly_rate ? `${currency}${station.monthly_rate}/mo` : `${currency}${station.weekly_rate}/wk`}
                         </p>
                       )}
                     </button>
@@ -722,7 +724,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
                 {rentalModel !== 'daily' && form.rentAmount && (
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Rent</span>
-                    <span>${form.rentAmount}/{form.rentFrequency === 'monthly' ? 'mo' : 'wk'}</span>
+                    <span>{currency}{form.rentAmount}/{form.rentFrequency === 'monthly' ? 'mo' : 'wk'}</span>
                   </div>
                 )}
                 {rentalModel === 'daily' && (

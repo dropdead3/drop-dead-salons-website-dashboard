@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'; // force rebuild
-import { motion, AnimatePresence } from 'framer-motion';
+import { Fragment, useState, useEffect, useRef } from 'react'; // force rebuild
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useViewAs } from '@/contexts/ViewAsContext';
@@ -52,6 +52,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Database } from '@/integrations/supabase/types';
+import { ImageWithSkeleton } from '@/components/ui/image-skeleton';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 
 type AppRole = Database['public']['Enums']['app_role'];
 import {
@@ -122,8 +131,20 @@ import {
   HeartPulse,
   Rocket,
 } from 'lucide-react';
+import {
+  mainNavItems as mainNavFromConfig,
+  growthNavItems as growthNavFromConfig,
+  statsNavItems as statsNavFromConfig,
+  housekeepingNavItems as housekeepingNavFromConfig,
+  managerNavItems as managerNavFromConfig,
+  adminOnlyNavItems as adminOnlyNavFromConfig,
+  footerNavItems as footerNavFromConfig,
+  websiteNavItems as websiteNavFromConfig,
+} from '@/config/dashboardNav';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
+import LogoIcon from '@/assets/dd-secondary-logo.svg';
+import LogoIconWhite from '@/assets/dd-secondary-logo-white.svg';
 // Dark mode is now scoped via DashboardThemeContext
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
@@ -137,99 +158,44 @@ interface DashboardLayoutProps {
 
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
 
+// Nav items from canonical registry (src/config/dashboardNav.ts)
 interface NavItem {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
-  permission?: string; // Permission required to view this item
-  roles?: AppRole[]; // Fallback: If undefined, visible to all authenticated users
-  platformRoles?: PlatformRole[]; // Restrict to specific platform roles (uses hierarchy)
+  permission?: string;
+  roles?: AppRole[];
+  platformRoles?: PlatformRole[];
 }
 
-const mainNavItems: NavItem[] = [
-  { href: '/dashboard', label: 'Command Center', icon: LayoutDashboard, permission: 'view_command_center' },
-  { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['admin', 'manager', 'stylist', 'stylist_assistant', 'receptionist', 'assistant', 'admin_assistant', 'operations_assistant', 'booth_renter', 'bookkeeper'] },
-  { href: '/dashboard/team-chat', label: 'Team Chat', icon: MessageSquare },
-];
-
-// Housekeeping items relocated to top bar (What's New -> Bell, Handbooks/Help -> Help menu)
-// Only Onboarding remains, shown via START HERE priority section
-const housekeepingNavItems: NavItem[] = [
-  { href: '/dashboard/onboarding', label: 'Onboarding', icon: Users, permission: 'view_onboarding' },
-];
-
-// Growth & Development section
-const growthNavItems: NavItem[] = [
-  { href: '/dashboard/training', label: 'Training', icon: Video, permission: 'view_training', roles: ['admin', 'manager', 'stylist', 'stylist_assistant'] },
-  { href: '/dashboard/program', label: 'New-Client Engine Program', icon: Target, permission: 'access_client_engine', roles: ['stylist', 'stylist_assistant'] },
-  { href: '/dashboard/ring-the-bell', label: 'Ring the Bell', icon: Bell, permission: 'ring_the_bell', roles: ['stylist', 'stylist_assistant'] },
-  { href: '/dashboard/my-graduation', label: 'My Graduation', icon: GraduationCap, permission: 'view_my_graduation', roles: ['stylist_assistant'] },
-];
-
-// My Performance section (for stylists/assistants)
-const statsNavItems: NavItem[] = [
-  { href: '/dashboard/stats', label: 'My Stats', icon: BarChart3, permission: 'view_own_stats', roles: ['stylist', 'stylist_assistant'] },
-  { href: '/dashboard/leaderboard', label: 'Team Leaderboard', icon: Trophy, permission: 'view_leaderboard', roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
-  { href: '/dashboard/my-pay', label: 'My Pay', icon: Wallet, permission: 'view_my_pay' },
-];
-
-// Team Tools items are now consolidated into managerNavItems (Management section)
-
-// Management section - consolidated with collapsible sub-groups
-// These are the flat items used for permission checking; UI groups them via CollapsibleNavGroup
-const managerNavItems: NavItem[] = [
-  // Team Tools group (moved from standalone section)
-  { href: '/dashboard/schedule', label: 'Schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['super_admin'] },
-  { href: '/dashboard/shift-swaps', label: 'Shift Swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'] },
-  { href: '/dashboard/rewards', label: 'Rewards', icon: Gift, roles: ['stylist', 'stylist_assistant', 'receptionist'] },
-  { href: '/dashboard/assistant-schedule', label: 'Assistant Scheduling', icon: Users, permission: 'view_assistant_schedule' },
-  { href: '/dashboard/schedule-meeting', label: 'Meetings & Accountability', icon: CalendarClock, permission: 'schedule_meetings' },
-  { href: '/dashboard/admin/team', label: 'Program Team Overview', icon: Users, permission: 'view_team_overview' },
-  // Analytics & Insights group
-  { href: '/dashboard/admin/analytics', label: 'Analytics Hub', icon: TrendingUp, permission: 'view_team_overview' },
-  { href: '/dashboard/campaigns', label: 'Campaigns', icon: Rocket, permission: 'view_team_overview' },
-  { href: '/dashboard/admin/executive-brief', label: 'Executive Brief', icon: TrendingUp, permission: 'manage_settings' },
-  { href: '/dashboard/admin/kpi-builder', label: 'KPI Architecture', icon: Target, permission: 'manage_settings' },
-  { href: '/dashboard/admin/decision-history', label: 'Decision History', icon: BarChart3, permission: 'manage_settings' },
-  { href: '/dashboard/stats', label: 'Team Stats', icon: BarChart3, permission: 'view_all_stats' },
-  { href: '/dashboard/leaderboard', label: 'Team Leaderboard', icon: Trophy, permission: 'view_leaderboard' },
-  // People group
-  { href: '/dashboard/directory', label: 'Team Directory', icon: Contact, permission: 'view_team_directory' },
-  { href: '/dashboard/clients', label: 'Client Directory', icon: Users, permission: 'view_clients' },
-  // Operations group (includes former Website section)
-  { href: '/dashboard/admin/management', label: 'Management Hub', icon: LayoutGrid, permission: 'view_team_overview' },
-  { href: '/dashboard/admin/client-health', label: 'Client Health', icon: HeartPulse, permission: 'view_team_overview' },
-  { href: '/dashboard/admin/payroll', label: 'Hiring & Payroll Hub', icon: DollarSign, permission: 'manage_payroll' },
-  { href: '/dashboard/admin/booth-renters', label: 'Renter Hub', icon: Store, permission: 'manage_booth_renters' },
-  { href: '/dashboard/admin/website-sections', label: 'Website Editor', icon: Globe, permission: 'manage_homepage_stylists' },
-];
-
-// Roles & Controls section
-const adminOnlyNavItems: NavItem[] = [
-  { href: '/dashboard/admin/access-hub', label: 'Roles & Controls Hub', icon: Shield, permission: 'manage_settings' },
-  { href: '/dashboard/admin/settings', label: 'Settings', icon: Settings, permission: 'manage_settings' },
-];
-
-// Footer items - always pinned to bottom of sidebar (Clock In + Lock only)
-const footerNavItems: NavItem[] = [];
-
-// Website items merged into managerNavItems (Operations group)
-const websiteNavItems: NavItem[] = [];
-
-// Platform admin nav items - only for platform team members
-const platformNavItems: NavItem[] = [
-  { href: '/dashboard/platform/overview', label: 'Platform Overview', icon: Terminal },
-  { href: '/dashboard/platform/accounts', label: 'Accounts', icon: Building2 },
-  { href: '/dashboard/platform/import', label: 'Migrations', icon: Upload },
-  { href: '/dashboard/platform/revenue', label: 'Revenue', icon: DollarSign, platformRoles: ['platform_owner', 'platform_admin'] },
-  { href: '/dashboard/platform/permissions', label: 'Permissions', icon: Shield, platformRoles: ['platform_owner', 'platform_admin'] },
-  { href: '/dashboard/platform/settings', label: 'Platform Settings', icon: Settings, platformRoles: ['platform_owner', 'platform_admin'] },
-];
+const mainNavItems: NavItem[] = mainNavFromConfig;
+const housekeepingNavItems: NavItem[] = housekeepingNavFromConfig;
+const growthNavItems: NavItem[] = growthNavFromConfig;
+const statsNavItems: NavItem[] = statsNavFromConfig;
+const managerNavItems: NavItem[] = managerNavFromConfig;
+const adminOnlyNavItems: NavItem[] = adminOnlyNavFromConfig;
+const footerNavItems: NavItem[] = footerNavFromConfig;
+const websiteNavItems: NavItem[] = websiteNavFromConfig;
 
 const SIDEBAR_COLLAPSED_KEY = 'dashboard-sidebar-collapsed';
 
+const SCROLL_THRESHOLD = 50;
+
+function isLikelyIdSegment(segment: string) {
+  // UUID v4-ish or long opaque ids
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment) || segment.length >= 18;
+}
+
+function humanizeSegment(segment: string) {
+  const s = segment.replace(/[-_]+/g, ' ').trim();
+  return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [headerScrollingUp, setHeaderScrollingUp] = useState(true);
+  const lastScrollY = useRef(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
@@ -249,6 +215,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const { hideNumbers, toggleHideNumbers } = useHideNumbers();
   const location = useLocation();
+  const reduceMotion = useReducedMotion();
   const hasZuraGuidance = !!(zuraCtx?.savedState && location.pathname !== '/dashboard');
   const navigate = useNavigate();
   const { resolvedTheme } = useDashboardTheme();
@@ -271,6 +238,38 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
     const fallbackLogo = isDark ? LogoWhite : Logo;
     return customLogo || fallbackLogo;
   };
+
+  // Secondary (icon) logo for scrolled header state
+  const hasCustomIcon = () => {
+    const isDark = resolvedTheme === 'dark';
+    const customIcon = isDark ? businessSettings?.icon_dark_url : businessSettings?.icon_light_url;
+    return !!customIcon;
+  };
+  const getSecondaryLogo = () => {
+    const isDark = resolvedTheme === 'dark';
+    if (hasCustomIcon()) {
+      return isDark ? businessSettings?.icon_dark_url : businessSettings?.icon_light_url;
+    }
+    return isDark ? LogoIconWhite : LogoIcon;
+  };
+
+  // Scroll-driven logo transition (mobile header)
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY < lastScrollY.current || currentScrollY < SCROLL_THRESHOLD) {
+        setHeaderScrollingUp(true);
+      } else if (currentScrollY > lastScrollY.current && currentScrollY > SCROLL_THRESHOLD) {
+        setHeaderScrollingUp(false);
+      }
+      lastScrollY.current = currentScrollY;
+      setHeaderScrolled(currentScrollY > SCROLL_THRESHOLD);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   // Calculate total items for progress display
   const onboardingTotalItems = tasksTotal + handbooksTotal + 2; // +2 for business card and headshot
   const onboardingCompletedItems = tasksCompleted + handbooksCompleted + (hasBusinessCard ? 1 : 0) + (hasHeadshot ? 1 : 0);
@@ -425,7 +424,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
   const handleSignOut = async () => {
     clearViewAs(); // Clear all view as modes on sign out
     await signOut();
-    navigate('/staff-login');
+    navigate('/login');
   };
 
   // Filter nav items based on permissions AND roles (both must pass if specified)
@@ -819,7 +818,6 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           managerNavItems={managerNavItems}
           websiteNavItems={websiteNavItems}
           adminOnlyNavItems={adminOnlyNavItems}
-          platformNavItems={platformNavItems}
           footerNavItems={footerNavItems}
           isPlatformUser={isPlatformUser}
           isMultiOrgOwner={isMultiOrgOwner}
@@ -837,7 +835,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
 
       {/* Content wrapper - flex column when hideFooter for proper height chain */}
       <div className={cn(
-        "transition-[padding-left] duration-200 ease-in-out",
+        "w-full transition-[padding-left] duration-200 ease-in-out min-w-0 overflow-x-hidden",
         sidebarCollapsed ? "lg:pl-16" : "lg:pl-72",
         hideFooter && "h-screen flex flex-col"
       )}>
@@ -848,47 +846,76 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
         "lg:hidden sticky top-0 z-40 flex items-center justify-between h-16 px-4 border-b border-border bg-background",
         hideFooter && "shrink-0"
       )}>
-        <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="w-5 h-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-72 p-0">
-            <SidebarNavContent
-              mainNavItems={mainNavItems}
-              growthNavItems={growthNavItems}
-              statsNavItems={statsNavItems}
-              housekeepingNavItems={housekeepingNavItems}
-              managerNavItems={managerNavItems}
-              websiteNavItems={websiteNavItems}
-              adminOnlyNavItems={adminOnlyNavItems}
-              platformNavItems={platformNavItems}
-              footerNavItems={footerNavItems}
-              isPlatformUser={isPlatformUser}
-              isMultiOrgOwner={isMultiOrgOwner}
-              unreadCount={unreadCount}
-              roles={roles}
-              effectiveIsCoach={effectiveIsCoach}
-              filterNavItems={filterNavItems}
-              onNavClick={handleNavClick}
-              isOnboardingComplete={isOnboardingComplete}
-              onboardingProgress={onboardingProgress}
-            />
-          </SheetContent>
-        </Sheet>
-
-        <Link to="/dashboard">
-          {hasCustomLogo() ? (
-            <img src={getLogo()} alt={businessSettings?.business_name || 'Drop Dead'} className="h-4 w-auto" />
-          ) : (
-            <span className="font-display text-sm uppercase tracking-wider text-foreground">
-              {businessSettings?.business_name || 'Drop Dead'}
+        <div className="flex items-center gap-3 min-w-0">
+          <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="shrink-0">
+                <Menu className="w-5 h-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-72 p-0">
+              <SidebarNavContent
+                mainNavItems={mainNavItems}
+                growthNavItems={growthNavItems}
+                statsNavItems={statsNavItems}
+                housekeepingNavItems={housekeepingNavItems}
+                managerNavItems={managerNavItems}
+                websiteNavItems={websiteNavItems}
+                adminOnlyNavItems={adminOnlyNavItems}
+                footerNavItems={footerNavItems}
+                isPlatformUser={isPlatformUser}
+                isMultiOrgOwner={isMultiOrgOwner}
+                unreadCount={unreadCount}
+                roles={roles}
+                effectiveIsCoach={effectiveIsCoach}
+                filterNavItems={filterNavItems}
+                onNavClick={handleNavClick}
+                isOnboardingComplete={isOnboardingComplete}
+                onboardingProgress={onboardingProgress}
+              />
+            </SheetContent>
+          </Sheet>
+          <Link to="/dashboard" className="min-w-0 flex items-center h-8">
+            <span className="relative inline-flex items-center h-6 min-w-0">
+              {/* Primary logo/text – visible when not scrolled or scrolling up */}
+              <span
+                className="inline-flex items-center h-6 min-w-0"
+                style={{
+                  opacity: !headerScrolled || headerScrollingUp ? 1 : 0,
+                  transform: headerScrolled && !headerScrollingUp ? 'scale(0.96)' : 'scale(1)',
+                  transition: 'opacity 0.35s ease-out, transform 0.35s ease-out',
+                }}
+              >
+                {hasCustomLogo() ? (
+                  <ImageWithSkeleton
+                    src={getLogo()}
+                    alt={businessSettings?.business_name || 'Drop Dead'}
+                    className="h-4 w-auto max-w-full object-contain"
+                    wrapperClassName="inline-flex"
+                  />
+                ) : (
+                  <span className="font-display text-sm uppercase tracking-wider text-foreground truncate">
+                    {businessSettings?.business_name || 'Drop Dead'}
+                  </span>
+                )}
+              </span>
+              {/* Secondary (icon) logo – visible when scrolled and scrolling down */}
+              <ImageWithSkeleton
+                src={getSecondaryLogo()}
+                alt={businessSettings?.business_name || 'Drop Dead'}
+                className="h-4 w-auto pointer-events-none object-contain"
+                wrapperClassName="absolute left-0 top-1/2 -translate-y-1/2 pointer-events-none"
+                style={{
+                  opacity: headerScrolled && !headerScrollingUp ? 1 : 0,
+                  transform: headerScrolled && !headerScrollingUp ? 'scale(1) translateY(-50%)' : 'scale(0.96) translateY(-50%)',
+                  transition: 'opacity 0.35s ease-out 0.06s, transform 0.35s ease-out 0.06s',
+                }}
+              />
             </span>
-          )}
-        </Link>
+          </Link>
+        </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           <Badge variant="outline" className={cn("text-xs font-medium gap-1.5", getAccessBadgeColor())}>
             <AccessIcon className="w-3 h-3" />
             <span className="hidden sm:inline">{getAccessLabel()}</span>
@@ -1019,10 +1046,10 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
 
       {/* Desktop Top Bar - Single unified bar */}
       <div className={cn(
-        "hidden lg:block sticky top-0 z-30",
+        "dashboard-top-bar hidden lg:block sticky top-0 z-30",
         hideFooter && "shrink-0"
       )}>
-        <div className="relative flex items-center justify-between h-14 px-6 bg-card/70 backdrop-blur-xl">
+        <div className="relative w-full max-w-none flex items-center justify-between h-14 px-6 bg-card/70 backdrop-blur-xl">
           <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/30 to-transparent" />
           {/* Left side - Sidebar toggle + Org Switcher */}
           <div className="flex items-center gap-3">
@@ -1050,7 +1077,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
 
           {/* Center - Search Bar */}
           <div className="flex-1 flex justify-center px-4">
-            <TopBarSearch />
+            <TopBarSearch filterNavItems={filterNavItems} />
           </div>
 
           {/* Next Client Indicator - Stylists and Assistants only */}
@@ -1060,6 +1087,13 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           
           {/* Right side - User controls */}
           <div className="flex items-center gap-3">
+            {/* View As - keep visible below xl for admins */}
+            {isAdmin && (
+              <div className="flex items-center xl:hidden">
+                <ViewAsToggle />
+              </div>
+            )}
+
             {/* Secondary items - visible on xl+, hidden below */}
             {(isPlatformUser || isAdmin) && (
               <div className="hidden xl:flex items-center gap-3">
@@ -1138,7 +1172,9 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                   </Link>
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">Help Center</TooltipContent>
+              <TooltipContent side="bottom">
+                Help Center <span className="ml-2 inline-flex items-center gap-1 text-[10px] text-muted-foreground"><kbd className="px-1 py-0.5 bg-muted rounded border">?</kbd></span>
+              </TooltipContent>
             </Tooltip>
             <NotificationsPanel unreadCount={unreadCount} />
             <DropdownMenu>
@@ -1176,8 +1212,63 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           isAdmin && "lg:pt-0",
           hasZuraGuidance && !hideFooter && "pb-64"
         )}>
-          <div className={cn("flex-1", hideFooter && "h-full")}>
-            {children}
+          <div className={cn("w-full max-w-none flex-1 min-w-0", hideFooter && "h-full")}>
+            {!hideFooter && (() => {
+              const parts = location.pathname.split('/').filter(Boolean);
+              if (parts[0] !== 'dashboard' || parts.length <= 2) return null;
+
+              const crumbs: Array<{ label: string; href?: string }> = [{ label: 'Dashboard', href: '/dashboard' }];
+              let href = '/dashboard';
+              for (const seg of parts.slice(1)) {
+                href += `/${seg}`;
+                const label =
+                  seg === 'admin'
+                    ? 'Admin'
+                    : seg === 'platform'
+                      ? 'Platform'
+                      : isLikelyIdSegment(seg)
+                        ? 'Detail'
+                        : humanizeSegment(seg);
+                crumbs.push({ label, href });
+              }
+
+              return (
+                <div className="px-4 lg:px-6 pt-3 pb-1">
+                  <Breadcrumb>
+                    <BreadcrumbList className="text-xs">
+                      {crumbs.map((c, idx) => {
+                        const isLast = idx === crumbs.length - 1;
+                        return (
+                          <Fragment key={`${c.label}-${idx}`}>
+                            <BreadcrumbItem>
+                              {isLast || !c.href ? (
+                                <BreadcrumbPage className="text-xs">{c.label}</BreadcrumbPage>
+                              ) : (
+                                <BreadcrumbLink asChild className="text-xs">
+                                  <Link to={c.href}>{c.label}</Link>
+                                </BreadcrumbLink>
+                              )}
+                            </BreadcrumbItem>
+                            {!isLast && <BreadcrumbSeparator />}
+                          </Fragment>
+                        );
+                      })}
+                    </BreadcrumbList>
+                  </Breadcrumb>
+                </div>
+              );
+            })()}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={`${location.pathname}${location.search}`}
+                initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+                animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+                exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
           </div>
           {/* Dashboard Footer - hidden for full-screen pages */}
           {!hideFooter && (

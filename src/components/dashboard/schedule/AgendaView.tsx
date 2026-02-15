@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { format, addDays, isToday, isTomorrow, parseISO } from 'date-fns';
+import { addDays, isToday, isTomorrow, parseISO } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,11 +32,11 @@ function formatTime12h(time: string): string {
   return `${hour12}:${minutes} ${ampm}`;
 }
 
-function getDateLabel(dateStr: string): string {
+function getDateLabel(dateStr: string, formatDate: (date: Date, pattern: string) => string): string {
   const date = parseISO(dateStr);
   if (isToday(date)) return 'Today';
   if (isTomorrow(date)) return 'Tomorrow';
-  return format(date, 'EEEE, MMMM d');
+  return formatDate(date, 'EEEE, MMMM d');
 }
 
 function AppointmentCard({ 
@@ -125,6 +126,8 @@ export function AgendaView({
   appointments,
   onAppointmentClick,
 }: AgendaViewProps) {
+  const { formatDate } = useFormatDate();
+
   // Group appointments by date
   const appointmentsByDate = useMemo(() => {
     const map = new Map<string, PhorestAppointment[]>();
@@ -168,7 +171,7 @@ export function AgendaView({
       {dates.map((dateStr) => {
         const dayAppointments = appointmentsByDate.get(dateStr) || [];
         const date = parseISO(dateStr);
-        const dateLabel = getDateLabel(dateStr);
+        const dateLabel = getDateLabel(dateStr, formatDate);
 
         return (
           <div key={dateStr}>

@@ -1,0 +1,46 @@
+---
+description: Protocol for building comprehensive new features: full scope (data, API, UI, nav, permissions), interface and navigation, and coordination with other agents. Use when adding a major feature, full-stack feature, or when the user asks for a feature build.
+alwaysApply: false
+---
+
+# Comprehensive Feature Build Agent
+
+This agent owns **end-to-end feature delivery**: data model and RLS, backend/edge if needed, hooks, components, pages, routes, navigation, permissions, and coordination with other agents. It does not hand off to other agents mid-feature; it plans and executes the full scope.
+
+## Coordination (Non-Negotiable)
+
+- **Before starting:** Read `.cursor/agent-manifest.json`. If any file you need is in another agent's `active` list, STOP and notify the user.
+- **Claim at start:** Add your task and all files you plan to create or modify to `active` in the manifest. Merge into existing JSON; never overwrite other entries.
+- **During build:** Stay within claimed files. If you must touch a shared file (e.g. `App.tsx`, `dashboardNav.ts`), ensure it is in your claimed list and re-check manifest for conflicts.
+- **When finished:** Move your entry from `active` to `completed` with a short summary. Do not leave claims in `active`.
+
+## Full-Scope Checklist
+
+Every comprehensive feature must account for:
+
+| Layer | Requirement |
+|-------|-------------|
+| **Data** | New tables: `organization_id`, RLS enabled, `is_org_member`/`is_org_admin` policies. New migrations only; never edit existing migrations. |
+| **Backend** | Edge functions in `supabase/functions/{name}/index.ts`; auth/org checks inside the function. Shared code in `_shared/`. |
+| **Hooks** | Feature-scoped hooks in `src/hooks/`; query keys namespaced `['feature-name', ...]`. Use `effectiveOrganization` and `enabled: !!orgId` for org-scoped data. |
+| **Components** | New feature directory `src/components/dashboard/{feature}/`. Use Common Solutions Registry patterns (see agent-coordination.mdc). |
+| **Pages** | New pages under `src/pages/dashboard/` or `admin/`; wrap in `DashboardLayout`. Loading/empty/error early returns. |
+| **Routes** | Register in `App.tsx`; add to **`src/config/dashboardNav.ts`** in the correct section (mainNavItems, managerNavItems, adminOnlyNavItems, etc.) with `permission` and/or `roles` so sidebar and search stay in sync. |
+| **Navigation** | Drill-downs from summary cards or lists: use `analyticsHubUrl(tab, subtab)` to Analytics Hub. No legacy paths like `/dashboard/admin/operational-analytics`. Back-to-source (breadcrumb or "Back to…") when depth > 1. |
+| **Permissions** | Wrap UI in `VisibilityGate` or `usePermission()`. Prefer permission over role when a permission exists. |
+| **Multi-tenancy** | All data reads/writes scoped by organization from `useOrganizationContext().effectiveOrganization`. |
+| **Brand** | Copy: minimal, precise, no hype or emojis. See brand-voice.mdc and brand-identity.mdc. |
+
+## Shared Files (High Conflict)
+
+If you touch these, claim them and coordinate:
+
+- `src/App.tsx` — route registration
+- `src/config/dashboardNav.ts` — nav registry (sidebar, search, quick links)
+- `src/contexts/*.tsx` — only if the feature truly requires new app-wide state
+
+## References
+
+- **Agent coordination (manifest, isolation, registry):** `.cursor/rules/agent-coordination.mdc`
+- **Navigation (nav registry, Analytics Hub, drill-downs):** `.cursor/rules/navigation-agent.mdc`
+- **Step-by-step workflow and task checklist:** Use the **comprehensive-feature-build** skill (`.cursor/skills/comprehensive-feature-build/SKILL.md`).

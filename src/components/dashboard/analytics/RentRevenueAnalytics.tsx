@@ -3,6 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, TrendingUp, AlertTriangle, Users } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
+import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 
 const statusColors: Record<string, string> = {
   current: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -15,6 +18,7 @@ interface RentRevenueAnalyticsProps {
 
 export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsProps) {
   const { data: metrics, isLoading } = useRentRevenueAnalytics(organizationId);
+  const { currency } = useFormatCurrency();
 
   if (isLoading) {
     return (
@@ -30,8 +34,6 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
     );
   }
 
-  const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
 
   return (
     <div className="space-y-6">
@@ -43,7 +45,12 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
               <DollarSign className="h-4 w-4" />
               <span className="text-xs uppercase tracking-wider">Monthly Revenue</span>
             </div>
-            <p className="text-2xl font-bold text-primary">{formatCurrency(metrics.monthlyRentRevenue)}</p>
+            <p className="text-2xl font-bold text-primary tabular-nums">
+              <AnimatedNumber
+                value={metrics.monthlyRentRevenue}
+                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+              />
+            </p>
           </CardContent>
         </Card>
 
@@ -53,7 +60,12 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
               <TrendingUp className="h-4 w-4" />
               <span className="text-xs uppercase tracking-wider">YTD Revenue</span>
             </div>
-            <p className="text-2xl font-bold">{formatCurrency(metrics.yearlyRentRevenue)}</p>
+            <p className="text-2xl font-bold tabular-nums">
+              <AnimatedNumber
+                value={metrics.yearlyRentRevenue}
+                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+              />
+            </p>
           </CardContent>
         </Card>
 
@@ -75,8 +87,11 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
               <AlertTriangle className="h-4 w-4" />
               <span className="text-xs uppercase tracking-wider">Overdue</span>
             </div>
-            <p className="text-2xl font-bold text-red-400">
-              {formatCurrency(metrics.overdueBalance)}
+            <p className="text-2xl font-bold text-red-400 tabular-nums">
+              <AnimatedNumber
+                value={metrics.overdueBalance}
+                formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
+              />
             </p>
             {metrics.overdueRenterCount > 0 && (
               <p className="text-xs text-muted-foreground mt-1">{metrics.overdueRenterCount} renter{metrics.overdueRenterCount !== 1 ? 's' : ''}</p>
@@ -114,7 +129,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
                   <YAxis 
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
                     tickLine={{ stroke: 'hsl(var(--border))' }}
-                    tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`}
+                    tickFormatter={(value) => formatCurrencyWholeUtil(value / 1000) + 'k'}
                   />
                   <Tooltip
                     contentStyle={{
@@ -123,7 +138,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
                       borderRadius: '8px',
                     }}
                     labelStyle={{ color: 'hsl(var(--foreground))' }}
-                    formatter={(value: number) => [formatCurrency(value), '']}
+                    formatter={(value: number) => [formatCurrencyWholeUtil(value), '']}
                   />
                   <Line
                     type="monotone"
@@ -178,13 +193,13 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
                           )}
                         </div>
                       </td>
-                      <td className="p-4 text-right font-medium">{formatCurrency(renter.monthly_rent)}</td>
-                      <td className="p-4 text-right text-emerald-400">{formatCurrency(renter.collected_ytd)}</td>
+                      <td className="p-4 text-right font-medium">{formatCurrencyWhole(renter.monthly_rent)}</td>
+                      <td className="p-4 text-right text-emerald-400">{formatCurrencyWhole(renter.collected_ytd)}</td>
                       <td className="p-4 text-right">
                         {renter.outstanding > 0 ? (
-                          <span className="text-red-400">{formatCurrency(renter.outstanding)}</span>
+                          <span className="text-red-400">{formatCurrencyWhole(renter.outstanding)}</span>
                         ) : (
-                          <span className="text-emerald-400">$0</span>
+                          <span className="text-emerald-400">{formatCurrencyWhole(0)}</span>
                         )}
                       </td>
                       <td className="p-4">

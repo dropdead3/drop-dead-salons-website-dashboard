@@ -173,7 +173,7 @@ export function AnnouncementsDrawer({ isLeadership }: AnnouncementsWidgetProps) 
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
             onClick={() => setExpanded(true)}
-            className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-display tracking-wide hover:bg-muted/50 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-sans hover:bg-muted/50 transition-colors cursor-pointer"
           >
             <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center">
               <Megaphone className="w-3 h-3 text-primary" />

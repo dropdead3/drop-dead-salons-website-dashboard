@@ -32,7 +32,7 @@ import {
   type GraduationSubmission,
 } from '@/hooks/useGraduationTracker';
 import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
-import { format } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 const STATUS_COLORS = {
   pending: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
@@ -65,6 +65,7 @@ const CATEGORY_ICONS: Record<string, React.ReactNode> = {
 };
 
 function FeedbackSection({ submissionId }: { submissionId: string }) {
+  const { formatDate } = useFormatDate();
   const { data: feedback, isLoading } = useSubmissionFeedback(submissionId);
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Loading feedback...</p>;
@@ -80,7 +81,7 @@ function FeedbackSection({ submissionId }: { submissionId: string }) {
               <div className="flex items-center gap-2 text-muted-foreground text-xs mb-1">
                 <span className="font-medium">{fb.coach?.full_name || 'Coach'}</span>
                 <span>•</span>
-                <span>{format(new Date(fb.created_at), 'MMM d, h:mm a')}</span>
+                <span>{formatDate(new Date(fb.created_at), 'MMM d, h:mm a')}</span>
               </div>
               <p className="text-foreground">{fb.feedback}</p>
             </div>
@@ -255,6 +256,7 @@ function RequirementCard({
   requirement: GraduationRequirement; 
   submission?: GraduationSubmission;
 }) {
+  const { formatDate } = useFormatDate();
   const [isExpanded, setIsExpanded] = useState(submission?.status === 'needs_revision');
   const status = submission?.status;
   const hasNeedsRevision = status === 'needs_revision';
@@ -305,7 +307,7 @@ function RequirementCard({
                 <div className="mt-3 space-y-2 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Clock className="h-3 w-3" />
-                    <span>Submitted {format(new Date(submission.submitted_at), 'PPP')}</span>
+                    <span>Submitted {formatDate(new Date(submission.submitted_at), 'PPP')}</span>
                   </div>
                   
                   {submission.proof_url && (

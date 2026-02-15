@@ -15,11 +15,13 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useCoachAccountabilityItems, type AccountabilityItem } from '@/hooks/useAccountabilityItems';
-import { format, parseISO, isPast, isToday } from 'date-fns';
+import { parseISO, isPast, isToday } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 
 type StatusFilter = 'all' | 'pending' | 'in_progress' | 'completed' | 'overdue';
 
 export function AccountabilityOverview() {
+  const { formatDate } = useFormatDate();
   const navigate = useNavigate();
   const { data: items = [], isLoading } = useCoachAccountabilityItems();
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
@@ -75,13 +77,13 @@ export function AccountabilityOverview() {
     const isOverdue = item.due_date && isPast(parseISO(item.due_date)) && !isToday(parseISO(item.due_date));
     
     if (item.status === 'completed') {
-      return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+      return <CheckCircle2 className="h-4 w-4 text-chart-2" />;
     }
     if (isOverdue) {
       return <AlertTriangle className="h-4 w-4 text-destructive" />;
     }
     if (item.status === 'in_progress') {
-      return <Clock className="h-4 w-4 text-amber-500" />;
+      return <Clock className="h-4 w-4 text-chart-4" />;
     }
     return <Target className="h-4 w-4 text-muted-foreground" />;
   };
@@ -102,13 +104,13 @@ export function AccountabilityOverview() {
       <div className="grid grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold">{activeItems.length}</div>
+            <div className="text-2xl font-medium tabular-nums">{activeItems.length}</div>
             <div className="text-sm text-muted-foreground">Active Items</div>
           </CardContent>
         </Card>
         <Card className={overdueItems.length > 0 ? 'border-destructive' : ''}>
           <CardContent className="p-4 text-center">
-            <div className={`text-2xl font-bold ${overdueItems.length > 0 ? 'text-destructive' : ''}`}>
+            <div className={`text-2xl font-medium tabular-nums ${overdueItems.length > 0 ? 'text-destructive' : ''}`}>
               {overdueItems.length}
             </div>
             <div className="text-sm text-muted-foreground">Overdue</div>
@@ -116,7 +118,7 @@ export function AccountabilityOverview() {
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-green-600">{completedThisWeek.length}</div>
+            <div className="text-2xl font-medium tabular-nums text-chart-2">{completedThisWeek.length}</div>
             <div className="text-sm text-muted-foreground">Completed This Week</div>
           </CardContent>
         </Card>
@@ -194,7 +196,7 @@ export function AccountabilityOverview() {
                           <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
                             <Calendar className="h-3 w-3" />
                             <span className={isOverdue && item.status !== 'completed' ? 'text-destructive' : ''}>
-                              Due: {format(parseISO(item.due_date), 'MMM d, yyyy')}
+                              Due: {formatDate(parseISO(item.due_date), 'MMM d, yyyy')}
                             </span>
                           </div>
                         )}

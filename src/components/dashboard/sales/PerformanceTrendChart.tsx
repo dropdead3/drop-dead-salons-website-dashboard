@@ -5,8 +5,11 @@ import { TrendingUp, TrendingDown, Minus, Loader2, MapPin } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subWeeks, startOfWeek, endOfWeek } from 'date-fns';
+import { useFormatDate } from '@/hooks/useFormatDate';
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 import {
   Select,
   SelectContent,
@@ -34,6 +37,8 @@ interface LocationOption {
 }
 
 export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendChartProps) {
+  const { formatCurrencyWhole } = useFormatCurrency();
+  const { formatDate } = useFormatDate();
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
 
   // Fetch weekly performance data with location info
@@ -50,7 +55,7 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
         weekRanges.push({
           start: format(start, 'yyyy-MM-dd'),
           end: format(end, 'yyyy-MM-dd'),
-          label: format(start, 'MMM d'),
+          label: formatDate(start, 'MMM d'),
         });
       }
 
@@ -185,7 +190,7 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
               </Select>
             )}
             <div className="text-right">
-              <p className="font-display text-2xl">${totalRevenue.toLocaleString()}</p>
+              <p className="font-display text-2xl">{formatCurrencyWhole(totalRevenue)}</p>
               <div className="flex items-center gap-1 justify-end">
                 {trend.direction === 'up' ? (
                   <TrendingUp className="w-4 h-4 text-green-600" />
@@ -226,10 +231,10 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
                 tick={{ fontSize: 11 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
+                tickFormatter={(v) => formatCurrencyWholeUtil(v / 1000) + 'k'}
               />
               <Tooltip 
-                formatter={(value: number) => [`$${value.toLocaleString()}`, 'Revenue']}
+                formatter={(value: number) => [formatCurrencyWhole(value), 'Revenue']}
                 contentStyle={{ 
                   borderRadius: '8px', 
                   border: '1px solid hsl(var(--border))',
