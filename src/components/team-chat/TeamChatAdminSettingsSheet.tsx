@@ -9,7 +9,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useTeamChatSettings } from '@/hooks/team-chat/useTeamChatSettings';
 import { ChannelPermissionsTab } from './settings/ChannelPermissionsTab';
@@ -53,13 +53,13 @@ export function TeamChatAdminSettingsSheet({ open, onOpenChange }: TeamChatAdmin
           </div>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-            <TabsList className="grid w-full grid-cols-5">
+            <ResponsiveTabsList onTabChange={setActiveTab}>
               <TabsTrigger value="channels">Channels</TabsTrigger>
               <TabsTrigger value="sections">Sections</TabsTrigger>
               <TabsTrigger value="roles">Roles</TabsTrigger>
               <TabsTrigger value="auto-join">Auto</TabsTrigger>
               <TabsTrigger value="ai">AI</TabsTrigger>
-            </TabsList>
+            </ResponsiveTabsList>
 
             <ScrollArea className="h-[calc(100vh-220px)] mt-4 pr-4">
               <TabsContent value="channels" className="mt-0">

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Calendar } from '@/components/ui/calendar';
@@ -274,14 +274,14 @@ export default function ReportsHub() {
           <>
             {/* Category Tabs */}
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full md:w-auto">
+              <ResponsiveTabsList onTabChange={setActiveTab}>
                 {reportCategories.map((cat) => (
                   <TabsTrigger key={cat.id} value={cat.id} className="gap-2">
                     <cat.icon className="w-4 h-4" />
                     <span className="hidden sm:inline">{cat.label}</span>
                   </TabsTrigger>
                 ))}
-              </TabsList>
+              </ResponsiveTabsList>
 
               <TabsContent value="sales" className="mt-6">
                 {renderReportCards(filteredSalesReports)}

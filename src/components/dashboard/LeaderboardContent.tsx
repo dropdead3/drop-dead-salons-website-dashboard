@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
@@ -357,7 +357,7 @@ export function LeaderboardContent() {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="phorest" className="space-y-6">
-        <TabsList className="bg-muted/50">
+        <ResponsiveTabsList>
           <TabsTrigger value="phorest" className="font-display text-xs tracking-wide">
             <Trophy className="w-4 h-4 mr-2" />
             Weekly Rankings
@@ -370,7 +370,7 @@ export function LeaderboardContent() {
             <Target className="w-4 h-4 mr-2" />
             Program Progress
           </TabsTrigger>
-        </TabsList>
+        </ResponsiveTabsList>
 
         {/* Phorest Weekly Rankings Tab */}
         <TabsContent value="phorest" className="space-y-6">

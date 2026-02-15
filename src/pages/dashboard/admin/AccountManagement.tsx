@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -721,7 +721,7 @@ export default function AccountManagement() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v as 'invitations' | 'approvals'); setSearchQuery(''); }}>
-          <TabsList className="grid w-full grid-cols-2">
+          <ResponsiveTabsList onTabChange={(v) => { setActiveTab(v as 'invitations' | 'approvals'); setSearchQuery(''); }}>
             <TabsTrigger value="invitations" className="gap-2">
               <Mail className="w-4 h-4" />
               Invitations
@@ -736,7 +736,7 @@ export default function AccountManagement() {
                 <Badge variant="destructive" className="h-5 min-w-5 text-xs px-1.5">{pendingApprovalCount}</Badge>
               )}
             </TabsTrigger>
-          </TabsList>
+          </ResponsiveTabsList>
 
           {/* Invitations Tab */}
           <TabsContent value="invitations" className="space-y-4 mt-4">

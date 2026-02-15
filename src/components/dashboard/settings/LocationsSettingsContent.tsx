@@ -460,7 +460,7 @@ export function LocationsSettingsContent() {
           </DialogHeader>
           
           <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid grid-cols-3">
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="hours">Hours</TabsTrigger>
               <TabsTrigger value="holidays">Holidays</TabsTrigger>

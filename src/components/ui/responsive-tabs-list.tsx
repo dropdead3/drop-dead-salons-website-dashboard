@@ -2,191 +2,161 @@ import * as React from "react";
 import { MoreHorizontal } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RESPONSIVE_TABS_CLASSES, RESPONSIVE_TABS_LAYOUT } from "./tabs.tokens";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { TabsList } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-const OVERFLOW_BUTTON_WIDTH = RESPONSIVE_TABS_LAYOUT.overflowButtonWidth;
-const LIST_TO_OVERFLOW_GAP_PX = RESPONSIVE_TABS_LAYOUT.listToOverflowGapPx;
-const RIGHT_SAFE_INSET_PX = RESPONSIVE_TABS_LAYOUT.rightSafeInsetPx;
-const EPSILON_PX = RESPONSIVE_TABS_LAYOUT.epsilonPx;
-
-export interface ResponsiveTabsItem {
-  value: string;
-  label: React.ReactNode;
-}
-
-export interface ResponsiveTabsListProps {
-  items: ResponsiveTabsItem[];
+interface ResponsiveTabsListProps
+  extends React.ComponentPropsWithoutRef<typeof TabsList> {
   onTabChange?: (value: string) => void;
-  className?: string;
 }
 
-export function ResponsiveTabsList({
-  items,
-  onTabChange,
-  className,
-}: ResponsiveTabsListProps) {
+export const ResponsiveTabsList = React.forwardRef<
+  React.ElementRef<typeof TabsList>,
+  ResponsiveTabsListProps
+>(({ className, children, onTabChange, ...props }, ref) => {
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const listRef = React.useRef<HTMLDivElement>(null);
-  const itemRefs = React.useRef<Map<string, HTMLButtonElement>>(new Map());
-  const [visibleCount, setVisibleCount] = React.useState(items.length);
-  const [overflowOpen, setOverflowOpen] = React.useState(false);
+  const [visibleCount, setVisibleCount] = React.useState<number>(Infinity);
+  const [open, setOpen] = React.useState(false);
+
+  const childArray = React.Children.toArray(children).filter(React.isValidElement);
 
   const measure = React.useCallback(() => {
     const wrapper = wrapperRef.current;
-    if (!wrapper || items.length === 0) return;
+    const list = listRef.current;
+    if (!wrapper || !list) return;
 
-    const applyVisibility = (count: number) => {
-      for (let i = 0; i < items.length; i++) {
-        const el = itemRefs.current.get(items[i].value);
-        if (!el) continue;
-        el.style.display = i < count ? "" : "none";
+    const availableWidth = wrapper.offsetWidth;
+    const listPadding = 12; // p-1.5 = 6px * 2
+    const overflowBtnWidth = 36;
+    const gap = 2;
+    const maxWidth = availableWidth - listPadding;
+
+    // Temporarily show all to measure
+    const items = Array.from(
+      list.querySelectorAll("[data-tab-item]"),
+    ) as HTMLElement[];
+
+    let usedWidth = 0;
+    let count = 0;
+
+    for (let i = 0; i < items.length; i++) {
+      items[i].style.display = "";
+      const itemWidth = items[i].offsetWidth + (count > 0 ? gap : 0);
+      const needsOverflowSpace = i < items.length - 1;
+
+      if (
+        usedWidth +
+          itemWidth +
+          (needsOverflowSpace ? overflowBtnWidth + gap : 0) >
+          maxWidth &&
+        count > 0
+      ) {
+        break;
       }
-    };
 
-    // Temporarily show all items so we can measure them (hidden items have offsetWidth 0)
-    applyVisibility(items.length);
-
-    // Use rendered positions instead of width math, so tabs disappear BEFORE they touch the right edge.
-    // Also clamp to the viewport right edge: in some layouts the container can extend past the viewport.
-    const containerEl = listRef.current ?? wrapper.parentElement ?? wrapper;
-    const containerRect = containerEl.getBoundingClientRect();
-    const viewportRight = wrapper.ownerDocument?.documentElement?.clientWidth ?? window.innerWidth;
-    const clampedContainerRight = Math.min(containerRect.right, viewportRight);
-    const eps = EPSILON_PX; // tolerance to avoid flicker at pixel boundaries
-
-    const triggers = items.map((item) => itemRefs.current.get(item.value));
-    if (triggers.some((t) => !t)) return;
-
-    const calcVisible = (rightLimit: number) => {
-      for (let i = 0; i < triggers.length; i++) {
-        const rect = (triggers[i] as HTMLButtonElement).getBoundingClientRect();
-        if (rect.right > rightLimit + eps) return i;
-      }
-      return triggers.length;
-    };
-
-    // Pass 1: no overflow button reserved.
-    const countNoOverflow = calcVisible(clampedContainerRight - RIGHT_SAFE_INSET_PX);
-    if (countNoOverflow === triggers.length) {
-      applyVisibility(triggers.length);
-      setVisibleCount(triggers.length);
-      return;
+      usedWidth += itemWidth;
+      count++;
     }
 
-    // Pass 2: reserve space for overflow button.
-    const reservedRight =
-      clampedContainerRight -
-      OVERFLOW_BUTTON_WIDTH -
-      LIST_TO_OVERFLOW_GAP_PX -
-      RIGHT_SAFE_INSET_PX;
-    const countWithOverflow = calcVisible(reservedRight);
-    applyVisibility(countWithOverflow);
-    setVisibleCount(countWithOverflow);
-  }, [items]);
+    // Hide items that don't fit
+    for (let i = 0; i < items.length; i++) {
+      if (count < items.length && i >= count) {
+        items[i].style.display = "none";
+      }
+    }
 
-  React.useLayoutEffect(() => {
-    // Double rAF ensures layout is complete (refs set, parent dimensions settled)
-    let raf1: number | undefined;
-    const raf2 = requestAnimationFrame(() => {
-      raf1 = requestAnimationFrame(() => measure());
-    });
-    return () => {
-      cancelAnimationFrame(raf2);
-      if (typeof raf1 === "number") cancelAnimationFrame(raf1);
-    };
-  }, [measure, items]);
+    setVisibleCount(count);
+  }, []);
 
   React.useEffect(() => {
-    const wrapper = wrapperRef.current;
-    if (!wrapper) return;
+    measure();
 
-    const ro = new ResizeObserver(measure);
-    ro.observe(wrapper);
-    // Also observe parent - it's the overflow-hidden container that constrains our width
-    const parent = wrapper.parentElement;
-    if (parent) ro.observe(parent);
-    // Observe the list itself — its width changes when fonts load / labels change,
-    // even if the wrapper width stays constant.
-    if (listRef.current) ro.observe(listRef.current);
-    // Fallback: viewport resize can change the effective right edge without changing element widths.
-    window.addEventListener("resize", measure);
-    return () => {
-      window.removeEventListener("resize", measure);
-      ro.disconnect();
-    };
-  }, [measure]);
+    const observer = new ResizeObserver(() => {
+      // Reset display before re-measuring
+      const list = listRef.current;
+      if (list) {
+        const items = Array.from(
+          list.querySelectorAll("[data-tab-item]"),
+        ) as HTMLElement[];
+        items.forEach((item) => (item.style.display = ""));
+      }
+      measure();
+    });
 
-  const overflowItems = visibleCount < items.length ? items.slice(visibleCount) : [];
-  const showOverflow = overflowItems.length > 0;
+    if (wrapperRef.current) observer.observe(wrapperRef.current);
+    return () => observer.disconnect();
+  }, [measure, childArray.length]);
 
-  const handleOverflowSelect = (value: string) => {
-    onTabChange?.(value);
-    setOverflowOpen(false);
-  };
+  const hasOverflow = visibleCount < childArray.length;
+  const overflowChildren = hasOverflow ? childArray.slice(visibleCount) : [];
 
   return (
-    <div
-      ref={wrapperRef}
-      className={cn(
-        RESPONSIVE_TABS_CLASSES.wrapper,
-        className
-      )}
-    >
+    <div ref={wrapperRef} className="w-full min-w-0">
       <TabsList
-        ref={listRef}
-        className={RESPONSIVE_TABS_CLASSES.list}
+        ref={(node) => {
+          (listRef as React.MutableRefObject<HTMLDivElement | null>).current =
+            node;
+          if (typeof ref === "function") ref(node);
+          else if (ref)
+            (ref as React.MutableRefObject<HTMLDivElement | null>).current =
+              node;
+        }}
+        className={cn("w-auto max-w-full", className)}
+        {...props}
       >
-        {items.map((item, idx) => (
-          <TabsTrigger
-            key={item.value}
-            ref={(el) => {
-              if (el) itemRefs.current.set(item.value, el);
-            }}
-            value={item.value}
-            className="gap-2"
-            data-tab-item
-          >
-            <span className="inline-flex items-center gap-2">
-              {item.label}
-            </span>
-          </TabsTrigger>
+        {childArray.map((child, i) => (
+          <span key={(child as React.ReactElement<any>).key || i} data-tab-item>
+            {child}
+          </span>
         ))}
 
-        {/* Overflow trigger lives INSIDE the same TabsList pill */}
-        {showOverflow && (
-          <Popover open={overflowOpen} onOpenChange={setOverflowOpen}>
-          <PopoverTrigger asChild>
+        {hasOverflow && (
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
               <button
-                type="button"
-                className={RESPONSIVE_TABS_CLASSES.overflowTrigger}
+                className="inline-flex items-center justify-center px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                style={{ borderRadius: 6 }}
                 aria-label="More tabs"
+                type="button"
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal className="w-4 h-4" />
               </button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-auto p-1 min-w-[140px]">
-              <div className="flex flex-col gap-0.5">
-                {overflowItems.map((item) => (
+
+            <PopoverContent
+              align="end"
+              className="w-auto min-w-[180px] p-1.5 flex flex-col gap-0.5"
+            >
+              {overflowChildren.map((child) => {
+                const childEl = child as React.ReactElement<any>;
+                // Try to get value from the child or its nested TabsTrigger
+                const value =
+                  childEl.props.value || childEl.props.children?.props?.value;
+                const content =
+                  childEl.props.children?.props?.children || childEl.props.children;
+
+                return (
                   <button
-                    key={item.value}
+                    key={value || childEl.key}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.08] transition-colors"
+                    style={{ borderRadius: 6 }}
                     type="button"
-                    className={RESPONSIVE_TABS_CLASSES.overflowMenuItem}
-                    onClick={() => handleOverflowSelect(item.value)}
+                    onClick={() => {
+                      if (value && onTabChange) onTabChange(value);
+                      setOpen(false);
+                    }}
                   >
-                    {item.label}
+                    {content}
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </PopoverContent>
           </Popover>
         )}
       </TabsList>
     </div>
   );
-}
+});
+
+ResponsiveTabsList.displayName = "ResponsiveTabsList";

@@ -13,7 +13,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatRelativeTime } from '@/lib/format';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { formatRelativeTime } from '@/lib/format';
 import { EmptyState } from '@/components/ui/empty-state';
 
@@ -428,7 +430,7 @@ export default function AllNotifications() {
           </CardHeader>
           <CardContent>
             <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterType)} className="w-full">
-              <TabsList className="mb-4">
+              <ResponsiveTabsList onTabChange={(v) => setFilter(v as FilterType)}>
                 <TabsTrigger value="all" className="flex items-center gap-1">
                   <Filter className="w-3 h-3" />
                   All
@@ -443,7 +445,7 @@ export default function AllNotifications() {
                 </TabsTrigger>
                 <TabsTrigger value="announcements">Announcements</TabsTrigger>
                 <TabsTrigger value="system">System</TabsTrigger>
-              </TabsList>
+              </ResponsiveTabsList>
 
               <TabsContent value={filter} className="mt-0">
                 {isLoading ? (

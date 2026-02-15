@@ -115,7 +115,7 @@ export function MySwapsPanel({ className }: MySwapsPanelProps) {
   return (
     <div className={className}>
       <Tabs defaultValue="requested">
-        <TabsList className="w-full">
+        <TabsList>
           <TabsTrigger value="requested" className="flex-1">
             My Requests
             {requested.length > 0 && (

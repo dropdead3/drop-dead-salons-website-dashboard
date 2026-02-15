@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { 
   Shield, 
@@ -76,7 +76,7 @@ export default function AccessHub() {
 
         {/* Main Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-8 lg:w-auto lg:inline-grid">
+          <ResponsiveTabsList onTabChange={handleTabChange}>
             <TabsTrigger value="modules" className="gap-2">
               <Blocks className="h-4 w-4" />
               <span className="hidden sm:inline">Modules</span>
@@ -109,7 +109,7 @@ export default function AccessHub() {
               <UserPlus className="h-4 w-4" />
               <span className="hidden sm:inline">Invitations</span>
             </TabsTrigger>
-          </TabsList>
+          </ResponsiveTabsList>
 
           <TabsContent value="modules" className="mt-0">
             <ModulesTab canManage={canManage} />

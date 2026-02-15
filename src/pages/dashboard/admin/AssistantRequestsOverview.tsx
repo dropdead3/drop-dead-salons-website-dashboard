@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { useAssistantRequests, type AssistantRequest } from '@/hooks/useAssistantRequests';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useActiveAssistants, useAssistantCoverageSummary } from '@/hooks/useAssistantAvailability';
@@ -233,7 +233,7 @@ export default function AssistantRequestsOverview() {
           <div className="text-center py-12 text-muted-foreground">Loading...</div>
         ) : (
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-            <TabsList className="mb-6">
+            <ResponsiveTabsList onTabChange={(v) => setActiveTab(v as typeof activeTab)}>
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="assistants">
                 <UserCheck className="h-4 w-4 mr-1" />
@@ -246,7 +246,7 @@ export default function AssistantRequestsOverview() {
                 )}
               </TabsTrigger>
               <TabsTrigger value="all">All Requests</TabsTrigger>
-            </TabsList>
+            </ResponsiveTabsList>
 
             {/* Assistants Tab */}
             <TabsContent value="assistants">

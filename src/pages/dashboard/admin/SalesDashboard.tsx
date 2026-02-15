@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -465,7 +465,7 @@ export default function SalesDashboard() {
         />
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="w-full md:w-auto overflow-x-auto">
+          <ResponsiveTabsList onTabChange={setActiveTab}>
             <TabsTrigger value="overview" className="flex-1 md:flex-none">Overview</TabsTrigger>
             <TabsTrigger value="stylists" className="flex-1 md:flex-none">By Stylist</TabsTrigger>
             {(locations?.filter(l => l.is_active).length ?? 0) >= 2 && (
@@ -490,7 +490,7 @@ export default function SalesDashboard() {
               <BarChart3 className="w-4 h-4 mr-1 hidden sm:inline" />
               Analytics
             </TabsTrigger>
-          </TabsList>
+          </ResponsiveTabsList>
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">

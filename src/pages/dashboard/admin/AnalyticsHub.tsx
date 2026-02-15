@@ -4,6 +4,7 @@ import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subM
 import { getNextPayDay } from '@/hooks/usePaySchedule';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsTrigger } from '@/components/ui/tabs';
 import { ResponsiveTabsList } from '@/components/ui/responsive-tabs-list';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VisibilityGate, useElementVisibility } from '@/components/visibility/VisibilityGate';
@@ -106,35 +107,7 @@ export default function AnalyticsHub() {
       ? tabFromUrl
       : (firstVisibleTab ?? 'sales');
 
-  const visibilityByTab: Record<string, boolean> = useMemo(() => ({
-    leadership: leadershipTabVisible,
-    sales: salesTabVisible,
-    operations: operationsTabVisible,
-    marketing: marketingTabVisible,
-    campaigns: campaignsTabVisible,
-    program: programTabVisible,
-    reports: reportsTabVisible,
-    rent: rentTabVisible && !!isSuperAdmin,
-  }), [leadershipTabVisible, salesTabVisible, operationsTabVisible, marketingTabVisible, campaignsTabVisible, programTabVisible, reportsTabVisible, rentTabVisible, isSuperAdmin]);
-
-  const visibleCategories = useMemo(
-    () => analyticsCategories.filter((cat) => visibilityByTab[cat.id] !== false),
-    [analyticsCategories, visibilityByTab]
-  );
-
-  const responsiveTabItems = useMemo(
-    () =>
-      visibleCategories.map((cat) => ({
-        value: cat.id,
-        label: (
-          <>
-            <cat.icon className="w-4 h-4" />
-            <span>{t(`analytics.${cat.id}`, { defaultValue: cat.label })}</span>
-          </>
-        ),
-      })),
-    [visibleCategories, t]
-  );
+  // Visibility is enforced at render time via `VisibilityGate` and for redirects via `useElementVisibility` checks above.
 
   // Sync URL when no tab param: default to first visible tab
   useEffect(() => {
@@ -371,12 +344,27 @@ export default function AnalyticsHub() {
 
         {/* Main Tab Navigation */}
         <Tabs value={activeTab} onValueChange={handleTabChange}>
-          <div className="w-full min-w-0 max-w-full overflow-hidden rounded-[9px]">
-            <ResponsiveTabsList
-              items={responsiveTabItems}
-              onTabChange={handleTabChange}
-            />
-          </div>
+          <ResponsiveTabsList onTabChange={handleTabChange}>
+            {analyticsCategories.map((cat) => (
+              // VisibilityGate is the source of truth for whether the tab should render at all.
+              <VisibilityGate
+                key={cat.id}
+                elementKey={`analytics_${cat.id}_tab`}
+                elementName={t(`analytics.${cat.id}`, { defaultValue: cat.label })}
+                elementCategory="Page Tabs"
+              >
+                <TabsTrigger
+                  value={cat.id}
+                  className="gap-2"
+                >
+                  <cat.icon className="w-4 h-4" />
+                  <span className="hidden sm:inline">
+                    {t(`analytics.${cat.id}`, { defaultValue: cat.label })}
+                  </span>
+                </TabsTrigger>
+              </VisibilityGate>
+            ))}
+          </ResponsiveTabsList>
 
           <VisibilityGate elementKey="analytics_leadership_tab">
             <TabsContent value="leadership" className="mt-6">
@@ -396,7 +384,6 @@ export default function AnalyticsHub() {
                 >
                   <ExecutiveTrendChart />
                 </PinnableCard>
-
               </div>
             </TabsContent>
           </VisibilityGate>

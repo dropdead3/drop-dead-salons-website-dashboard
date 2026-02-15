@@ -13,9 +13,10 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      TABS_CLASSES.list,
+      "inline-flex h-11 items-center justify-center p-1.5 text-muted-foreground gap-0.5 bg-muted/70",
       className,
     )}
+    style={{ borderRadius: 9 }}
     {...props}
   />
 ));
@@ -28,9 +29,10 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      TABS_CLASSES.trigger,
+      "inline-flex items-center justify-center whitespace-nowrap px-3.5 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white/[0.08] data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-white/[0.12] data-[state=active]:backdrop-blur-sm",
       className,
     )}
+    style={{ borderRadius: 6 }}
     {...props}
   />
 ));
@@ -83,3 +85,4 @@ const SubTabsTrigger = React.forwardRef<
 SubTabsTrigger.displayName = "SubTabsTrigger";
 
 export { Tabs, TabsList, TabsTrigger, TabsContent, SubTabsList, SubTabsTrigger };
+export { ResponsiveTabsList } from '@/components/ui/responsive-tabs-list';

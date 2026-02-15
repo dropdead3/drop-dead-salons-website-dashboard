@@ -104,7 +104,7 @@ export function ProductLeaderboard({ locationId, className }: ProductLeaderboard
         </div>
 
         <Tabs defaultValue="products" className="w-full">
-          <TabsList className="w-full grid grid-cols-2 h-8">
+          <TabsList className="grid grid-cols-2">
             <TabsTrigger value="products" className="text-xs">
               <ShoppingBag className="h-3 w-3 mr-1" />
               Top Products
