@@ -282,7 +282,7 @@ function ReportHistoryDialog({ reportId, onClose }: { reportId: string | null; o
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-sm capitalize">{run.status}</span>
                       <span className="text-xs text-muted-foreground">
-                        {run.started_at && formatDate(new Date(run.started_at), 'MMM d, h:mm a')}
+                        {run.started_at && new Date(run.started_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}
                       </span>
                     </div>
                     {run.error_message && (

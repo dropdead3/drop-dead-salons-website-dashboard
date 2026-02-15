@@ -225,15 +225,7 @@ export function CommandCenterAnalytics() {
         return (
           <VisibilityGate key={cardId} elementKey="executive_summary">
             <PinnableCard elementKey="executive_summary" elementName="Executive Summary" category="Command Center">
-              <ExecutiveSummaryCard
-                filterContext={{
-                  locationId,
-                  dateRange,
-                }}
-                dateFrom={dateFilters.dateFrom}
-                dateTo={dateFilters.dateTo}
-                locationId={locationId}
-              />
+              <ExecutiveSummaryCard />
             </PinnableCard>
           </VisibilityGate>
         );

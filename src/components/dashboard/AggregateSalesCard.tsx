@@ -131,7 +131,7 @@ export function AggregateSalesCard({
   const [internalDateRange, setInternalDateRange] = useState<DateRange>('today');
   const [drilldownMode, setDrilldownMode] = useState<'services' | 'products' | null>(null);
   const [locationDrilldownTarget, setLocationDrilldownTarget] = useState<string | null>(null);
-  const [locationDrilldown, setLocationDrilldown] = useState<{ type: string; locationId: string; locationName: string } | null>(null);
+  const [locationDrilldown, setLocationDrilldown] = useState<{ type: LocationDrilldownType; locationId: string; locationName: string } | null>(null);
   const [tipsDrilldownOpen, setTipsDrilldownOpen] = useState(false);
   const [activeDrilldown, setActiveDrilldown] = useState<'revenue' | 'transactions' | 'avgTicket' | 'revPerHour' | 'goals' | null>(null);
   const { hideNumbers } = useHideNumbers();

@@ -193,13 +193,13 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
                           )}
                         </div>
                       </td>
-                      <td className="p-4 text-right font-medium">{formatCurrencyWhole(renter.monthly_rent)}</td>
-                      <td className="p-4 text-right text-emerald-400">{formatCurrencyWhole(renter.collected_ytd)}</td>
+                      <td className="p-4 text-right font-medium">{formatCurrencyWholeUtil(renter.monthly_rent)}</td>
+                      <td className="p-4 text-right text-emerald-400">{formatCurrencyWholeUtil(renter.collected_ytd)}</td>
                       <td className="p-4 text-right">
                         {renter.outstanding > 0 ? (
-                          <span className="text-red-400">{formatCurrencyWhole(renter.outstanding)}</span>
+                          <span className="text-red-400">{formatCurrencyWholeUtil(renter.outstanding)}</span>
                         ) : (
-                          <span className="text-emerald-400">{formatCurrencyWhole(0)}</span>
+                          <span className="text-emerald-400">{formatCurrencyWholeUtil(0)}</span>
                         )}
                       </td>
                       <td className="p-4">

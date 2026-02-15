@@ -41,8 +41,8 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
 
   const { calculateCommission, isLoading: tiersLoading } = useCommissionTiers();
   const { currentPeriod } = usePaySchedule();
-  const payFrom = currentPeriod?.startDate ? format(currentPeriod.startDate, 'yyyy-MM-dd') : dateFrom;
-  const payTo = currentPeriod?.endDate ? format(currentPeriod.endDate, 'yyyy-MM-dd') : dateTo;
+  const payFrom = currentPeriod?.periodStart ? format(currentPeriod.periodStart, 'yyyy-MM-dd') : dateFrom;
+  const payTo = currentPeriod?.periodEnd ? format(currentPeriod.periodEnd, 'yyyy-MM-dd') : dateTo;
 
   const { data: stylistData, isLoading: stylistLoading } = useSalesByStylist(payFrom, payTo);
   const { data: rentData, isLoading: rentLoading } = useExpectedRentRevenue(payFrom, payTo);

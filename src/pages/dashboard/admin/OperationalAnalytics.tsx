@@ -110,11 +110,12 @@ export default function OperationalAnalytics() {
               summary={summary}
               retention={retention}
               dailyVolume={dailyVolume}
-              statusBreakdown={statusBreakdown}
               isLoading={isLoading}
               onNavigateToTab={handleTabChange}
               capacityData={capacityData}
               capacityLoading={capacityLoading}
+              workload={workload}
+              workloadLoading={utilizationLoading}
             />
           </TabsContent>
 

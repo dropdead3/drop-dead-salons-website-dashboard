@@ -347,6 +347,8 @@ function DashboardSections({
   canViewAggregate,
 }: DashboardSectionsProps) {
   const { t } = useTranslation('dashboard');
+  const { formatCurrencyWhole } = useFormatCurrency();
+  const { todayClients, thisWeekRevenue, newClients, rebookingRate, isLoading: quickStatsLoading } = useQuickStats();
   // Fetch visibility data to check if cards are pinned
   const { data: visibilityData } = useDashboardVisibility();
   const leadershipRoles = ['super_admin', 'admin', 'manager'];
