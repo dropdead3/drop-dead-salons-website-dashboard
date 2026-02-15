@@ -92,7 +92,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   if (isLoading) {
     return (
       <Card className="h-full flex flex-col overflow-hidden border-border/40">
-        <CardHeader className="px-4 py-2 pb-1">{headerContent}</CardHeader>
+        <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
         <CardContent className="px-4 pb-2 pt-0 flex-1">
           <div className="space-y-2">
             {[1, 2, 3].map((i) => (
@@ -113,7 +113,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
   if (!performers.length) {
     return (
       <Card className="h-full flex flex-col overflow-hidden border-border/40">
-        <CardHeader className="px-4 py-2 pb-1">{headerContent}</CardHeader>
+        <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
         <CardContent className="px-4 pb-2 pt-0 flex-1 flex items-center justify-center">
           <div className="text-center py-2 text-muted-foreground text-xs">
             No sales data available
@@ -127,7 +127,7 @@ export function TopPerformersCard({ performers, isLoading, showInfoTooltip = fal
 
   return (
     <Card className="h-full flex flex-col overflow-hidden border-border/40">
-      <CardHeader className="px-4 py-2 pb-1">{headerContent}</CardHeader>
+      <CardHeader className="px-4 pt-4 pb-1">{headerContent}</CardHeader>
       <CardContent className="px-4 pb-2 pt-0 flex-1">
         {/* Sort toggle */}
         <div className="relative mb-2">
