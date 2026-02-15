@@ -1,48 +1,36 @@
 
 
-## Role-Aware Dynamic Welcome Messages
+## Responsive Sales Overview Card — Sidebar Reflow
 
 ### Problem
-The current greeting and subtitle pools are one-size-fits-all. Messages like "Ready to lead" or "Your operations are in motion" feel misplaced for stylists, receptionists, or booth renters. Zura should speak to each persona appropriately.
+On smaller screens (below `lg` breakpoint), the Top Performers and Revenue Breakdown cards stack directly after the main revenue hero area, pushing the secondary KPIs and goal progress further down. This creates an awkward reading order where sidebar content interrupts the primary sales flow.
 
 ### Solution
-Replace the single `GREETINGS` and `SUBTITLES` arrays with role-segmented message pools. The component already computes `isLeadership`, `hasStylistRole`, `isFrontDesk`, and `isReceptionist` -- we use those flags to pick the right pool at mount time.
+Use Tailwind CSS `order` utilities so that on screens smaller than `lg`, the sidebar column (Top Performers + Revenue Breakdown) reflows to the bottom of the Sales Overview card, after the Location section. On `lg` and above, the current 3-column side-by-side layout is preserved.
 
-### Message pools by role context
+### What changes
 
-**Leadership (super_admin, manager):**
-- Greetings: "Welcome back,", "Ready to lead,", "Let's build momentum,", "Great things ahead,", "Another strong day,", "Let's make it count,"
-- Subtitles: "Here's what's happening across your operations", "Your team is set up for a strong day", "The numbers are telling a story", "Let's see where things stand", "Everything's moving in the right direction", "Here's your snapshot for today"
+**File: `src/components/dashboard/AggregateSalesCard.tsx`**
 
-**Stylist / Stylist Assistant / Booth Renter:**
-- Greetings: "Welcome back,", "Good to see you,", "You're on a roll,", "Another great day ahead,", "Let's make it a great one,", "Time to create,"
-- Subtitles: "Here's what's on your schedule", "Your clients are going to love today", "Let's keep the momentum going", "You're set up for a strong day", "Here's your lineup for today", "Let's make every appointment count"
+1. On the main content grid (line 530), change from `grid lg:grid-cols-3` to include ordering:
+   - Keep `grid lg:grid-cols-3 gap-6 mb-6`
 
-**Front Desk / Receptionist:**
-- Greetings: "Welcome back,", "Good to see you,", "The front desk is yours,", "Another great day ahead,", "Let's keep things running smooth,", "Ready to roll,"
-- Subtitles: "Here's what's coming in today", "The schedule is looking good", "Let's keep the flow going", "You're set up for a smooth day", "Here's your snapshot for today", "Everything's on track"
+2. On the KPI column (line 532, `lg:col-span-2`), add `order-1` so it always comes first.
 
-**Default (any other role -- admin_assistant, operations_assistant, bookkeeper, etc.):**
-- Greetings: "Welcome back,", "Good to see you,", "Another great day ahead,", "Let's make it count,", "You're on a roll,", "Great things ahead,"
-- Subtitles: "Here's what's happening today", "Let's keep the momentum going", "You're set up for a strong day", "Everything's moving in the right direction", "Here's your snapshot for today", "Let's see where things stand"
+3. On the sidebar column (line 936), add `order-3 lg:order-2` so it appears last on mobile but in its normal position on desktop.
+
+4. Move the "By Location" section (currently outside the grid, starting at line 953) inside the grid with `order-2 lg:order-3 lg:col-span-3` — or alternatively, keep it outside and restructure the sidebar ordering.
+
+**Simpler approach:** Since the By Location section is outside the grid, we only need to reorder within the grid:
+- KPI column: `order-2 lg:order-1 lg:col-span-2` (stays first on desktop, second on mobile after... wait, we want KPIs first always)
+- Actually the simplest fix: sidebar column gets `order-last lg:order-none` — this pushes it to the bottom on mobile while keeping its natural grid position on desktop.
 
 ### Technical detail
 
-**File: `src/pages/dashboard/DashboardHome.tsx`**
+Two class changes in `AggregateSalesCard.tsx`:
 
-1. Replace the two flat arrays (`GREETINGS` and `SUBTITLES`) with a single object mapping role contexts to their greeting/subtitle pools:
+1. **Line 532** (KPI column): No change needed, it naturally comes first.
+2. **Line 936** (sidebar column): Change from `flex flex-col gap-6 min-w-0` to `flex flex-col gap-6 min-w-0 order-last lg:order-none`. This uses `order-last` to push the sidebar below the KPI content on small screens, and `lg:order-none` to restore the natural grid position on desktop.
 
-```text
-ROLE_MESSAGES = {
-  leadership: { greetings: [...], subtitles: [...] },
-  stylist:    { greetings: [...], subtitles: [...] },
-  frontDesk:  { greetings: [...], subtitles: [...] },
-  default:    { greetings: [...], subtitles: [...] },
-}
-```
+No other files need changes. The By Location section sits outside the grid so it naturally appears after both columns regardless.
 
-2. Add a helper function `getMessagePool(isLeadership, hasStylistRole, isFrontDesk)` that returns the appropriate pool based on priority order: leadership first, then stylist, then front desk, then default.
-
-3. Move the `useState` lazy initializers for `greeting` and `subtitle` below the role flag computations (lines ~160-171) so they can reference `isLeadership`, `hasStylistRole`, and `isFrontDesk`. The selection will use `useMemo` instead of `useState` since the role flags are available at mount and won't change during the session.
-
-4. No other files need changes. The JSX rendering (lines 265-270) stays the same -- it already uses `{greeting}` and `{subtitle}`.
