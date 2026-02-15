@@ -436,9 +436,8 @@ export function DashboardCustomizeMenu({ variant = 'icon', roleContext }: Dashbo
             <Settings2 className="w-4 h-4" />
           </Button>
         ) : (
-          <Button variant="outline" size="sm" className="gap-2">
+          <Button variant="outline" size="icon" className="h-8 w-8">
             <Settings2 className="w-4 h-4" />
-            Customize
           </Button>
         )}
       </SheetTrigger>
