@@ -1,23 +1,40 @@
 
-## Fix Zura Insights Expanded Card to Use Full Width
 
-### Problem
-The "Zura Insights" and "Announcements" buttons sit side by side in a `flex` row. When the Insights card expands, it tries to be `w-full` but the Announcements button remains next to it, stealing horizontal space and preventing the card from being truly full width.
+## Dynamic Welcome & Subtitle Messages
 
-### Solution
-Wrap the row in a `flex-wrap` container so that when the Insights card expands (becoming `w-full`), the Announcements button wraps to the next line (or hides). Alternatively -- and more cleanly -- switch the container layout so that when Insights is expanded, the flex direction changes to `flex-col`, placing Announcements below the full-width insights card.
+### What changes
+
+Replace the static "Welcome back, [name]" and "Here's what's happening today" strings with arrays of rotating messages that change each time the user visits the dashboard.
+
+### Message pools
+
+**Greetings (replaces "Welcome back, [name]"):**
+- "Welcome back,"
+- "Good to see you,"
+- "Let's build momentum,"
+- "Ready to lead,"
+- "Great things ahead,"
+- "Let's make it count,"
+
+**Subtitles (replaces "Here's what's happening today"):**
+- "Here's what's happening today"
+- "Your operations are in motion"
+- "Let's see where you stand"
+- "The numbers are telling a story"
+- "Here's your snapshot for today"
+- "Your team is counting on you"
+
+### How rotation works
+
+Use a simple `useMemo` seeded by `Date.now()` at the session/component-mount level. Each time the user navigates to the dashboard (or refreshes), they get a random pair. The selection is stable for the duration of that page session (no flickering on re-renders).
 
 ### Technical detail
 
-**File: `src/pages/dashboard/DashboardHome.tsx` (line 258)**
+**File: `src/pages/dashboard/DashboardHome.tsx`**
 
-Change the button row from:
-```
-<div className="flex items-center gap-3">
-```
-to:
-```
-<div className="flex flex-wrap items-start gap-3">
-```
+1. Add two constant arrays of greeting and subtitle strings at the top of the file (outside the component).
+2. Inside the component, use `useState` with a lazy initializer to pick a random index from each array once per mount.
+3. Replace `{t('home.welcome_back')}` with the selected greeting string, and `{t('home.whats_happening')}` with the selected subtitle string.
 
-This single change allows the expanded Insights card (which has `w-full`) to claim 100% of the row width, naturally wrapping the Announcements button to a new line underneath. The `items-start` alignment ensures both elements align to the top when side by side in collapsed state.
+No i18n key changes needed -- the dynamic strings will be hardcoded in the component (they can be moved to locale files later if multi-language support is needed for these messages).
+
