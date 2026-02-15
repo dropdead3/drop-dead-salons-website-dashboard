@@ -1,15 +1,12 @@
 
 
-## Fix Top Padding on Top Performers Card Header
-
-### Problem
-The trophy icon container has less space above it (8px from `py-2`) than on the sides (16px from `px-4`), creating an unbalanced look.
+## Apply Matching Header Padding to Revenue Breakdown Card
 
 ### Change
 
-**File: `src/components/dashboard/sales/TopPerformersCard.tsx`**
+**File: `src/components/dashboard/sales/RevenueDonutChart.tsx`**
 
-Update all three `CardHeader` instances (loading, empty, and populated states) from:
+Update both `CardHeader` instances (empty state and populated state) from:
 ```
 className="px-4 py-2 pb-1"
 ```
@@ -18,5 +15,5 @@ to:
 className="px-4 pt-4 pb-1"
 ```
 
-This sets the top padding to 16px (`pt-4`), matching the 16px side padding (`px-4`), while keeping the bottom padding tight at 4px (`pb-1`).
+This matches the fix already applied to the Top Performers card, ensuring consistent 16px top padding across both sidebar cards.
 
