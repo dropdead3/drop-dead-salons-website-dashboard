@@ -1,124 +1,51 @@
 
 
-# Font-Weight Cleanup (Remaining ~130 files) + Design Token System
+# Bar Drill-Down: Appointments by Service Provider
 
-## Part 1: Remaining Font-Weight Violations
+## What Changes
 
-~1,400 instances of `font-bold` and `font-semibold` remain across ~130 files. These will be replaced using the same rules as the previous batch:
+Clicking any bar in the Revenue Forecast chart will expand an inline panel below the chart showing that day's appointments grouped by stylist/service provider. This follows the existing drill-down pattern (framer-motion expand, nested breakdown styling) used throughout the analytics hub.
 
-| Current | Replacement |
-|---|---|
-| `font-bold` | `font-medium` |
-| `font-semibold` | `font-medium` |
-| `font-bold` on page headings | `font-display font-medium` |
-| `font-serif font-bold` | Keep as-is (Laguna supports bold) |
+## User Experience
 
-### Files by area (all remaining)
+1. User clicks a bar (or taps on mobile)
+2. The bar highlights and a panel smoothly expands below the chart
+3. The panel shows:
+   - Day header (e.g., "Wednesday, Feb 17 -- 20 appointments")
+   - Stylist rows sorted by revenue (highest first), each showing:
+     - Stylist name
+     - Appointment count
+     - Revenue total
+     - Expandable list of their individual appointments (service name, time, client, price)
+4. Clicking another bar switches the drill-down; clicking the same bar closes it
+5. The existing "X appts" text link continues to open the full DayAppointmentsSheet side panel
 
-**Dashboard components (~65 files):**
-- Schedule: `CheckoutSummarySheet`, `AgendaView`, `ScheduleActionBar`, `QuickBookingPopover`, `MonthView`, and remaining booking/calendar files
-- Analytics: `ExecutiveTrendChart`, `CorrelationMatrix`, `RentRevenueAnalytics`, remaining chart components
-- Payroll: `ReviewStep`, `PayrollProviderSelector`, remaining step files
-- Booth Renters: `PaymentsTabContent`, `StationAssignmentManager`, `CommissionStatementDialog`
-- Settings: `ScheduleSettingsContent`, `AddLocationSeatsDialog`
-- Reports: `SalesReportGenerator`, `ReportBuilderPage`
-- Email: `EmailTemplatesManager`
-- Misc: `ChangelogTimeline`, `MobileChangelogViewer`, `AssistantRequestsCalendar`, `HighFiveButton`, `GuidancePanel`, `ZuraStickyGuidance`, `RequestAssistantDialog`, `WalkInDialog`
+## Technical Approach
 
-**Pages (~28 files):**
-- `RenterPayRent`, `RenterTaxDocuments`, `DashboardBuild`, `DemoFeatures`, `Changelog`, `TeamDirectory`, `Transactions`, `DesignSystem`, and all remaining page-level files
+### 1. New Component: `DayProviderBreakdownPanel.tsx`
+Location: `src/components/dashboard/sales/DayProviderBreakdownPanel.tsx`
 
-**Other components (~37 files):**
-- `src/components/home/ServicesPreview`
-- `src/components/demo/DemoChat`
-- `src/components/huddle/AIHuddleGenerator`
-- `src/components/day-rate/AgreementStep`
-- `src/components/features/`, `src/components/auth/`, `src/components/coaching/`, `src/components/achievements/`, `src/components/executive-brief/`, `src/components/client-portal/`, `src/components/scheduling/`
+- Accepts: `day: DayForecast | null`, `isOpen: boolean`
+- Groups `day.appointments` by `stylist_name`
+- Renders a `framer-motion` `AnimatePresence` panel (matching `CategoryBreakdownPanel` animation pattern)
+- Each stylist row is expandable to show their individual appointments
+- Uses `pl-6 border-l-2 border-primary/20` nested styling for appointment details
+- Caps at 5 stylists with "Show all" toggle; uses `ScrollArea` if > 8
 
----
+### 2. Update `WeekAheadForecast.tsx`
+- Add `selectedBarDay` state (`DayForecast | null`)
+- Add `onClick` handler to each `<Cell>` in the `<Bar>` components that sets `selectedBarDay`
+- Highlight the selected bar (increased opacity or ring)
+- Render `<DayProviderBreakdownPanel>` between the chart and the "Busiest day" callout
+- Selected bar gets a subtle visual indicator (e.g., stroke outline)
 
-## Part 2: Design Token System (Tokenization for Cohesion)
+### 3. No Backend Changes
+All appointment data (including `stylist_name`) is already fetched by `useWeekAheadRevenue` and stored in each `DayForecast.appointments` array. No additional queries needed.
 
-Currently, design rules live as documentation (`design-rules.ts`, `.cursor/rules/`) but are not consumable by components. New components are created with inconsistent class strings because there is no single source of truth to import.
+## Visual Design
 
-### New file: `src/lib/design-tokens.ts`
+- Panel uses the standard nested breakdown styling: `bg-muted/30 rounded-lg border border-border/30`
+- Stylist rows show a horizontal bar (percentage of day's revenue) matching the luxury glass aesthetic
+- Uses design tokens for typography (`tokens.heading.subsection` for "By Provider" label, `tokens.body.muted` for details)
+- Smooth `framer-motion` height animation (0.3s ease-out) matching existing drill-down panels
 
-A set of exportable, composable class-string constants that encode the full design system so every new component stays cohesive automatically.
-
-```text
-Tokens to define:
-
-TYPOGRAPHY TOKENS
-  heading.page      -> "font-display text-2xl font-medium tracking-wide"
-  heading.section   -> "font-display text-base font-medium tracking-wide uppercase"
-  heading.card      -> "font-display text-base font-medium tracking-wide"
-  heading.subsection -> "text-xs font-medium text-muted-foreground uppercase tracking-[0.15em]"
-  body.default      -> "font-sans text-sm text-foreground"
-  body.muted        -> "font-sans text-sm text-muted-foreground"
-  body.emphasis     -> "font-sans text-sm font-medium text-foreground"
-  label.default     -> "font-sans text-sm font-medium"
-  label.tiny        -> "font-sans text-[10px] font-medium text-muted-foreground uppercase tracking-wider"
-  stat.large        -> "font-display text-2xl font-medium"
-  stat.xlarge       -> "font-display text-3xl font-medium"
-
-LAYOUT TOKENS
-  page.container    -> "px-6 lg:px-8 py-8 max-w-[1600px] mx-auto"
-  card.base         -> "rounded-2xl shadow-2xl"
-  card.padding      -> "p-6"
-
-STATUS TOKENS
-  status.booked     -> "bg-slate-100 text-slate-700"
-  status.confirmed  -> "bg-green-100 text-green-800"
-  status.checked_in -> "bg-blue-100 text-blue-800"
-  status.completed  -> "bg-purple-100 text-purple-800"
-  status.cancelled  -> "bg-gray-100 text-gray-600"
-  status.no_show    -> "bg-red-100 text-red-800"
-
-EMPTY STATE TOKENS
-  empty.container   -> "text-center py-14"
-  empty.icon        -> "w-12 h-12 mx-auto mb-4 opacity-20"
-  empty.heading     -> "font-medium text-lg mb-2"
-  empty.description -> "text-sm text-muted-foreground"
-
-LOADING TOKENS
-  loading.spinner   -> "h-8 w-8 animate-spin text-muted-foreground"
-  loading.skeleton  -> "h-14 w-full"
-```
-
-### Usage pattern
-
-```text
-import { tokens } from '@/lib/design-tokens';
-
-// Before (inconsistent, error-prone):
-<h1 className="text-2xl font-bold">Revenue</h1>
-<p className="text-2xl font-semibold">$12,400</p>
-
-// After (tokenized, cohesive):
-<h1 className={tokens.heading.page}>Revenue</h1>
-<p className={tokens.stat.large}>$12,400</p>
-```
-
-Components can still use `cn()` to layer on conditional classes:
-
-```text
-<h3 className={cn(tokens.heading.card, isActive && 'text-primary')}>
-```
-
-### Update `design-rules.ts`
-
-Expand `design-rules.ts` to re-export from `design-tokens.ts` and add a `getTokenFor(context)` helper that maps common scenarios to the correct token, making it discoverable for new component creation.
-
-### Update `.cursor/rules/design-system.mdc`
-
-Add a section documenting the token import pattern so AI-assisted code generation always uses tokens instead of raw class strings.
-
----
-
-## Execution Order
-
-1. Create `src/lib/design-tokens.ts` with all token constants
-2. Update `src/lib/design-rules.ts` to reference tokens
-3. Update `.cursor/rules/design-system.mdc` with token usage docs
-4. Batch-replace all remaining `font-bold`/`font-semibold` instances across ~130 files (replacing with `font-medium` or the appropriate token where practical)
-5. Final verification search to confirm zero remaining violations (excluding `font-serif` exceptions and string literals like documentation text)
