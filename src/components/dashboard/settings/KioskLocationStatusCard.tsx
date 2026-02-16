@@ -1,13 +1,19 @@
-import { UserCheck, ClipboardCheck, CalendarPlus, FileSignature, Upload, Loader2, Tablet } from 'lucide-react';
+import { useState } from 'react';
+import { UserCheck, ClipboardCheck, CalendarPlus, FileSignature, Upload, Loader2, Tablet, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { useLocations } from '@/hooks/useLocations';
-import { useAllOrgKioskSettings, usePushDefaultsToAllLocations, useKioskDeviceStatus, KioskSettings, KioskDeviceStatus } from '@/hooks/useKioskSettings';
+import { useAllOrgKioskSettings, usePushDefaultsToAllLocations, useKioskDeviceStatus, KioskDeviceStatus } from '@/hooks/useKioskSettings';
 import { OnlineIndicator } from '@/components/platform/ui/OnlineIndicator';
+import { KioskLocationSettingsForm } from './KioskLocationSettingsForm';
+import { KioskPreviewPanel } from './KioskPreviewPanel';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { formatDistanceToNow } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +29,6 @@ import { cn } from '@/lib/utils';
 
 interface KioskLocationStatusCardProps {
   orgId: string;
-  onLocationSelect: (locationId: string | null) => void;
 }
 
 type LocationStatus = 'Customized' | 'Using Defaults' | 'Not Configured';
@@ -89,22 +94,23 @@ function DeviceStatusCell({ status }: { status?: KioskDeviceStatus }) {
   );
 }
 
-export function KioskLocationStatusCard({ orgId, onLocationSelect }: KioskLocationStatusCardProps) {
+export function KioskLocationStatusCard({ orgId }: KioskLocationStatusCardProps) {
+  const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewSettings, setPreviewSettings] = useState<any>(null);
+  const [previewLocationName, setPreviewLocationName] = useState<string>('');
+
   const { data: locations = [] } = useLocations();
   const { data: allSettings = [], isLoading } = useAllOrgKioskSettings(orgId);
   const { data: deviceStatusMap = new Map() } = useKioskDeviceStatus(orgId);
+  const { data: businessSettings } = useBusinessSettings();
   const pushToAll = usePushDefaultsToAllLocations();
 
-  // Only active locations
   const activeLocations = locations.filter(l => l.is_active);
-
-  // Find org default row (location_id is null)
   const orgDefault = allSettings.find(s => !s.location_id);
 
-  // Build rows
   const rows: LocationRow[] = activeLocations.map(loc => {
     const locSettings = allSettings.find(s => s.location_id === loc.id);
-
     if (locSettings) {
       return {
         locationId: loc.id,
@@ -115,7 +121,6 @@ export function KioskLocationStatusCard({ orgId, onLocationSelect }: KioskLocati
         requireFormSigning: locSettings.require_form_signing,
       };
     }
-
     if (orgDefault) {
       return {
         locationId: loc.id,
@@ -126,7 +131,6 @@ export function KioskLocationStatusCard({ orgId, onLocationSelect }: KioskLocati
         requireFormSigning: orgDefault.require_form_signing,
       };
     }
-
     return {
       locationId: loc.id,
       locationName: loc.name,
@@ -139,123 +143,191 @@ export function KioskLocationStatusCard({ orgId, onLocationSelect }: KioskLocati
 
   const hasOverrides = allSettings.some(s => s.location_id !== null);
 
+  const handleRowClick = (locationId: string) => {
+    setExpandedLocationId(prev => prev === locationId ? null : locationId);
+  };
+
+  const handlePreviewOpen = (settings: any, locationName: string) => {
+    setPreviewSettings(settings);
+    setPreviewLocationName(locationName);
+    setPreviewOpen(true);
+  };
+
   if (activeLocations.length === 0) return null;
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="font-display text-lg">KIOSK STATUS BY LOCATION</CardTitle>
-            <CardDescription>
-              Overview of kiosk configuration across all locations
-            </CardDescription>
+    <>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="font-display text-lg">LOCATIONS</CardTitle>
+              <CardDescription>
+                Click a location to configure its kiosk settings
+              </CardDescription>
+            </div>
+            {hasOverrides && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" disabled={pushToAll.isPending}>
+                    {pushToAll.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
+                    Apply Defaults to All
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Apply Defaults to All Locations?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will remove all location-specific customizations. All locations will inherit from the organization defaults.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => pushToAll.mutate(orgId)}>
+                      Yes, Apply to All
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
-          {hasOverrides && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="outline" size="sm" disabled={pushToAll.isPending}>
-                  {pushToAll.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <Upload className="w-4 h-4 mr-2" />
-                  )}
-                  Apply Defaults to All
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Apply Defaults to All Locations?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will remove all location-specific customizations. All locations will inherit from the organization defaults.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => pushToAll.mutate(orgId)}>
-                    Yes, Apply to All
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-6">
-            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Location</TableHead>
-                <TableHead className="text-center w-24">
+        </CardHeader>
+        <CardContent className="pt-0">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <div className="divide-y divide-border/50">
+              {/* Table Header */}
+              <div className="grid grid-cols-[1fr_80px_56px_56px_56px_56px_80px] items-center px-4 py-2 text-xs text-muted-foreground font-medium">
+                <span>Location</span>
+                <span className="text-center">
                   <div className="flex flex-col items-center gap-0.5">
                     <Tablet className="h-3.5 w-3.5" />
                     <span className="text-[10px]">Device</span>
                   </div>
-                </TableHead>
-                <TableHead className="text-center w-20">
+                </span>
+                <span className="text-center">
                   <div className="flex flex-col items-center gap-0.5">
                     <UserCheck className="h-3.5 w-3.5" />
                     <span className="text-[10px]">Check-In</span>
                   </div>
-                </TableHead>
-                <TableHead className="text-center w-20">
+                </span>
+                <span className="text-center">
                   <div className="flex flex-col items-center gap-0.5">
                     <ClipboardCheck className="h-3.5 w-3.5" />
                     <span className="text-[10px]">Walk-In</span>
                   </div>
-                </TableHead>
-                <TableHead className="text-center w-20">
+                </span>
+                <span className="text-center">
                   <div className="flex flex-col items-center gap-0.5">
                     <CalendarPlus className="h-3.5 w-3.5" />
                     <span className="text-[10px]">Booking</span>
                   </div>
-                </TableHead>
-                <TableHead className="text-center w-20">
+                </span>
+                <span className="text-center">
                   <div className="flex flex-col items-center gap-0.5">
                     <FileSignature className="h-3.5 w-3.5" />
                     <span className="text-[10px]">Forms</span>
                   </div>
-                </TableHead>
-                <TableHead className="text-center w-24">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rows.map(row => (
-                <TableRow
-                  key={row.locationId}
-                  className="cursor-pointer hover:bg-accent/50"
-                  onClick={() => onLocationSelect(row.locationId)}
-                >
-                  <TableCell className="font-medium">{row.locationName}</TableCell>
-                  <TableCell className="text-center">
-                    <DeviceStatusCell status={deviceStatusMap instanceof Map ? deviceStatusMap.get(row.locationId) : undefined} />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <FeatureDot enabled={row.status === 'Not Configured' ? null : true} />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <FeatureDot enabled={row.enableWalkIns} />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <FeatureDot enabled={row.enableSelfBooking} />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <FeatureDot enabled={row.requireFormSigning} />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <StatusBadge status={row.status} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+                </span>
+                <span className="text-center">Status</span>
+              </div>
+
+              {/* Location Rows */}
+              {rows.map(row => {
+                const isExpanded = expandedLocationId === row.locationId;
+                return (
+                  <div key={row.locationId}>
+                    {/* Summary Row */}
+                    <div
+                      className={cn(
+                        "grid grid-cols-[1fr_80px_56px_56px_56px_56px_80px] items-center px-4 py-3 cursor-pointer transition-colors",
+                        isExpanded 
+                          ? "bg-primary/5 border-l-2 border-l-primary" 
+                          : "hover:bg-muted/50"
+                      )}
+                      onClick={() => handleRowClick(row.locationId)}
+                    >
+                      <span className="flex items-center gap-2 font-medium text-sm">
+                        <ChevronDown className={cn(
+                          "h-4 w-4 text-muted-foreground transition-transform duration-200 shrink-0",
+                          isExpanded && "rotate-180"
+                        )} />
+                        {row.locationName}
+                      </span>
+                      <span className="text-center" onClick={(e) => e.stopPropagation()}>
+                        <DeviceStatusCell status={deviceStatusMap instanceof Map ? deviceStatusMap.get(row.locationId) : undefined} />
+                      </span>
+                      <span className="text-center">
+                        <FeatureDot enabled={row.status === 'Not Configured' ? null : true} />
+                      </span>
+                      <span className="text-center">
+                        <FeatureDot enabled={row.enableWalkIns} />
+                      </span>
+                      <span className="text-center">
+                        <FeatureDot enabled={row.enableSelfBooking} />
+                      </span>
+                      <span className="text-center">
+                        <FeatureDot enabled={row.requireFormSigning} />
+                      </span>
+                      <span className="text-center">
+                        <StatusBadge status={row.status} />
+                      </span>
+                    </div>
+
+                    {/* Expanded Settings Panel */}
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: 'easeInOut' }}
+                          className="overflow-hidden"
+                        >
+                          <div className="border-l-2 border-l-primary bg-muted/20 px-6 py-6">
+                            <KioskLocationSettingsForm
+                              locationId={row.locationId}
+                              orgId={orgId}
+                              locationName={row.locationName}
+                              onPreviewOpen={(settings) => handlePreviewOpen(settings, row.locationName)}
+                            />
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Preview Sheet */}
+      <Sheet open={previewOpen} onOpenChange={setPreviewOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Kiosk Preview — {previewLocationName}</SheetTitle>
+            <SheetDescription>Live preview of how the kiosk will appear</SheetDescription>
+          </SheetHeader>
+          {previewSettings && (
+            <div className="mt-4">
+              <KioskPreviewPanel 
+                settings={previewSettings} 
+                businessSettings={businessSettings}
+                locationName={previewLocationName}
+              />
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }
