@@ -9,6 +9,7 @@ import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurr
 import { useWeekAheadRevenue, DayForecast } from '@/hooks/useWeekAheadRevenue';
 import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsSheet } from './DayAppointmentsSheet';
+import { DayProviderBreakdownPanel } from './DayProviderBreakdownPanel';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CalendarRange, TrendingUp, Calendar, Users, ChevronDown } from 'lucide-react';
 import { CategoryBreakdownPanel, BreakdownMode } from './CategoryBreakdownPanel';
@@ -104,6 +105,7 @@ export function WeekAheadForecast() {
   const [selectedDay, setSelectedDay] = useState<DayForecast | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedStatCard, setSelectedStatCard] = useState<BreakdownMode | null>(null);
+  const [selectedBarDay, setSelectedBarDay] = useState<DayForecast | null>(null);
   const { data, isLoading, error } = useWeekAheadRevenue(selectedLocation);
   
   const chartRef = useRef<HTMLDivElement>(null);
@@ -117,6 +119,13 @@ export function WeekAheadForecast() {
   const handleStatCardClick = useCallback((mode: BreakdownMode) => {
     setSelectedStatCard(prev => prev === mode ? null : mode);
   }, []);
+
+  const handleBarClick = useCallback((dayName: string) => {
+    if (!data?.days) return;
+    const day = data.days.find(d => d.dayName === dayName);
+    if (!day) return;
+    setSelectedBarDay(prev => prev?.date === day.date ? null : day);
+  }, [data?.days]);
 
   if (isLoading) {
     return (
@@ -157,7 +166,9 @@ export function WeekAheadForecast() {
     totalRevenue: day.revenue,
     appointments: day.appointmentCount,
     isPeak: peakDay?.date === day.date,
+    date: day.date,
   }));
+
 
   return (
     <>
@@ -298,13 +309,20 @@ export function WeekAheadForecast() {
                     animationDuration={800}
                     animationEasing="ease-out"
                   >
-                    {chartData.map((entry, index) => (
-                      <Cell 
-                        key={`unconfirmed-${index}`}
-                        fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
-                        fillOpacity={entry.isPeak ? 0.6 : 0.5}
-                      />
-                    ))}
+                    {chartData.map((entry, index) => {
+                      const isSelected = selectedBarDay?.dayName === entry.name;
+                      return (
+                        <Cell 
+                          key={`unconfirmed-${index}`}
+                          fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
+                          fillOpacity={isSelected ? 0.8 : (entry.isPeak ? 0.6 : 0.5)}
+                          stroke={isSelected ? 'hsl(var(--foreground))' : 'none'}
+                          strokeWidth={isSelected ? 1.5 : 0}
+                          cursor="pointer"
+                          onClick={() => handleBarClick(entry.name)}
+                        />
+                      );
+                    })}
                   </Bar>
                   {/* Confirmed revenue - top of stack, solid */}
                   <Bar 
@@ -319,13 +337,20 @@ export function WeekAheadForecast() {
                       dataKey="totalRevenue"
                       content={AboveBarLabel}
                     />
-                    {chartData.map((entry, index) => (
-                      <Cell 
-                        key={`confirmed-${index}`}
-                        fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
-                        fillOpacity={entry.isPeak ? 1 : 0.9}
-                      />
-                    ))}
+                    {chartData.map((entry, index) => {
+                      const isSelected = selectedBarDay?.dayName === entry.name;
+                      return (
+                        <Cell 
+                          key={`confirmed-${index}`}
+                          fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
+                          fillOpacity={isSelected ? 1 : (entry.isPeak ? 1 : 0.9)}
+                          stroke={isSelected ? 'hsl(var(--foreground))' : 'none'}
+                          strokeWidth={isSelected ? 1.5 : 0}
+                          cursor="pointer"
+                          onClick={() => handleBarClick(entry.name)}
+                        />
+                      );
+                    })}
                   </Bar>
                   {averageDaily > 0 && (
                     <Customized component={(props: any) => {
@@ -398,6 +423,12 @@ export function WeekAheadForecast() {
               <div className="w-full h-full" />
             )}
           </div>
+
+          {/* Provider Breakdown Drill-Down */}
+          <DayProviderBreakdownPanel
+            day={selectedBarDay}
+            isOpen={selectedBarDay !== null}
+          />
 
           {/* Peak Day Callout */}
           {peakDay && peakDay.revenue > 0 && (
