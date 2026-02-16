@@ -89,7 +89,7 @@ export function InsightsNudgeBanner({ userId, isLeadership }: InsightsNudgeBanne
             <Brain className="w-5 h-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-medium text-foreground">
               {isNeverChecked
                 ? "You haven't explored your Zura Insights yet"
                 : `You haven't checked your insights in ${daysSinceLastCheck} days`}
