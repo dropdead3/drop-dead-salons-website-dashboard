@@ -1,128 +1,117 @@
 
-# Continue Multi-Tenant Email Refactor (Remaining ~19 Functions)
 
-All remaining edge functions still use hardcoded `from` addresses (Resend sandbox, wrong domains, "Drop Dead" branding). This batch completes the migration to the shared `sendOrgEmail` / `sendEmail` utilities.
+# Complete Multi-Tenant Email & Branding Cleanup (Items 1-7)
+
+This plan addresses all remaining gaps from the email infrastructure audit to complete the multi-tenant migration.
 
 ---
 
-## Category A: Org-Level Functions (use `sendOrgEmail`)
+## 1. Fix `send-inactivity-alerts` (missed function)
 
-These send to staff/clients within an organization and need dynamic org branding. Each will:
-- Import `sendOrgEmail` from `../_shared/email-sender.ts`
-- Remove `Resend` import and direct `resend.emails.send()` / `fetch("https://api.resend.com/...")` calls
-- Pass the `organization_id` so branding is pulled automatically
-- Strip inline HTML wrappers (the branded template handles that)
+**Current state:** Still uses direct `fetch("https://api.resend.com/emails")` with hardcoded `from: "Drop Dead Gorgeous <onboarding@resend.dev>"` (line 238). Also references `SITE_URL` with a `dropdeadsalon.com` fallback.
 
-| Function | Current `from` | Org ID Source |
-|---|---|---|
-| `notify-low-score` | `Feedback Alert <noreply@dropdeadsalons.com>` | From `feedback.organization` join |
-| `check-expired-assignments` | `Drop Dead 75 <onboarding@resend.dev>` (x2) | Need to join through `assistant_requests` to org |
-| `assign-assistant` | `Drop Dead 75 <onboarding@resend.dev>` | Same join pattern |
-| `notify-assignment-response` | `Drop Dead 75 <onboarding@resend.dev>` (x2) | Same join pattern |
-| `reassign-assistant` | `Drop Dead 75 <onboarding@resend.dev>` (x2) | Same join pattern |
-| `check-client-inactivity` | `Salon <noreply@dropdead.salon>` | From `campaign.organization_id` |
-| `send-birthday-reminders` | `Drop Dead Gorgeous <onboarding@resend.dev>` | Need to add org awareness |
-| `generate-rent-invoices` | `Drop Dead Gorgeous <noreply@dropdeadsalons.com>` | From `contract.organization_id` |
-| `check-insurance-expiry` | `Drop Dead Gorgeous <noreply@dropdeadsalons.com>` | From `renter.organization_id` |
-| `send-test-email` | `Drop Dead Gorgeous <onboarding@resend.dev>` | From authenticated user's org |
-| `notify-rent-change` | Already uses `sendEmail` | Switch to `sendOrgEmail` with org from contract |
-| `check-payroll-deadline` | Uses platform `sendEmail` | Switch to `sendOrgEmail` with `settings.organization_id` |
-| `kiosk-wrong-location-notify` | `notifications@dropdeadsalons.com` | From `body.organization_id` |
-| `process-client-automations` | `Drop Dead Salons <noreply@notifications.dropdeadsalons.com>` | From `rule.organization_id` |
-| `check-lead-sla` | Already refactored sender but has hardcoded URL | Fix dashboard URL |
-| `notify-headshot-request` | Already refactored sender but has hardcoded URL | Fix dashboard URL |
-| `send-program-reminders` | No email (in-app only) | No changes needed |
+**Fix:**
+- Import and use `sendOrgEmail` from the shared utility
+- Resolve `organization_id` from the employee profiles of the inactive participants
+- Remove the direct Resend API call
+- Remove the hardcoded "Drop Dead Gorgeous" sender
 
-## Category B: Platform-Level Functions (use `sendEmail` with Zura branding)
+---
 
-These are about the platform/billing relationship and should come from `Zura <notifications@mail.getzura.com>`.
+## 2. Fix `send-insights-email` (missed function)
 
-| Function | Current `from` |
-|---|---|
-| `trial-expiration` | `Platform <noreply@lovable.app>` |
-| `onboarding-drip` | `Platform Onboarding <onboarding@lovable.app>` |
-| `weekly-digest` | `Platform Weekly Digest <digest@lovable.app>` |
-| `send-platform-invitation` | `Platform <noreply@dropdeadsalons.com>` |
-| `send-changelog-digest` | `updates@updates.dropdeadstudio.com` |
+**Current state:** Uses `sendEmail()` (platform-level) but has its own 150-line hardcoded HTML template with:
+- "Drop Dead Gorgeous" in the footer (line 143)
+- Hardcoded `https://dropdeadsalon.com/dashboard` URL (line 296)
+- Zura-branded purple gradient header baked into the function
+
+**Fix:**
+- Switch from `sendEmail` to `sendOrgEmail` (insights are per-user within an org)
+- Strip the custom HTML template wrapper and let `buildBrandedTemplate` handle the chrome
+- Keep the insight cards / action items HTML as the inner content
+- Replace hardcoded dashboard URL with `SITE_URL` env var
+
+---
+
+## 3. Set `SITE_URL` secret
+
+**Current state:** `SITE_URL` is referenced in 7+ edge functions but is NOT configured as a secret. Every function falls back to either `dropdeadsalon.com` or a `.lovable.app` URL -- inconsistent and wrong for production.
+
+**Fix:** Add `SITE_URL` as a secret. You will need to provide the value (e.g., `https://getzura.com` or your production domain).
+
+---
+
+## 4. Make AI assistant prompts dynamic
+
+**Current state:**
+- `ai-assistant/index.ts` (line 10): Hardcoded `"Drop Dead Salon Software"` in system prompt. It does load dynamic config via `loadZuraConfig()` and can override the display name, but the base prompt is still Drop Dead-branded.
+- `demo-assistant/index.ts` (line 9): Hardcoded `"Drop Dead Salon Software"` with no dynamic config loading at all.
+
+**Fix:**
+- `ai-assistant`: Change base prompt to use generic "Zura" branding. The existing `loadZuraConfig()` mechanism already handles org-specific overrides, so this just fixes the default.
+- `demo-assistant`: This is the public-facing product demo. It should stay branded to whatever the platform product name is. Update from "Drop Dead Salon Software" to "Zura" since this is the SaaS product, not a specific tenant.
+
+---
+
+## 5. Fix push notification VAPID contact
+
+**Current state:** `send-push-notification/index.ts` (line 321) uses `"mailto:support@dropdeadhair.com"` as the VAPID subject.
+
+**Fix:** Change to `"mailto:support@getzura.com"` (platform-level contact, not org-specific -- VAPID subject is a platform concern).
+
+---
+
+## 6. Clean up remaining hardcoded "Drop Dead" references
+
+**Current state:** Beyond the functions above, there are references in:
+- `test-phorest-connection/index.ts` (line 183): Fallback business name `"Drop Dead Hair Studios"` -- this is Phorest-specific and acceptable as a fallback for that integration, but should ideally use the org name.
+- `sync-phorest-data/index.ts`: Comments referencing "Drop Dead Hair Studio" branch name format -- these are legitimate code comments explaining data format, no change needed.
+
+**Fix:** Update `test-phorest-connection` to use a generic fallback like `"Unknown"` instead of hardcoding "Drop Dead Hair Studios".
+
+---
+
+## 7. Build Email Branding Admin UI
+
+**Current state:** The database columns (`email_sender_name`, `email_reply_to`, `email_logo_url`, `email_accent_color`) exist on the `organizations` table but there is NO frontend UI to configure them. The only way to set these values is directly in the database.
+
+**Fix:** Add an "Email Branding" section to the organization settings page with:
+- **Sender display name** -- text input (what appears before the `@` in the "from" line)
+- **Reply-to email** -- email input (where recipient replies go)
+- **Email logo** -- image upload (reuse existing `business-logos` storage bucket)
+- **Accent color** -- color picker (header background and accent bar in email template)
+- **Preview** -- a small live preview showing the email header/footer with current branding so admins can see what recipients will receive
+
+This will be added as a new card/section within the existing organization settings admin page.
 
 ---
 
 ## Technical Details
 
-### For each org-level function, the pattern is:
+### Files to modify
 
-```
-// BEFORE
-import { Resend } from "https://esm.sh/resend@2.0.0";
-const resend = new Resend(resendApiKey);
-await resend.emails.send({
-  from: "Drop Dead 75 <onboarding@resend.dev>",
-  to: [email],
-  subject: "...",
-  html: "<div>...</div>",
-});
+| File | Change |
+|---|---|
+| `supabase/functions/send-inactivity-alerts/index.ts` | Replace direct Resend call with `sendOrgEmail`, resolve org ID |
+| `supabase/functions/send-insights-email/index.ts` | Switch to `sendOrgEmail`, strip custom template, fix dashboard URL |
+| `supabase/functions/ai-assistant/index.ts` | Change base prompt from "Drop Dead Salon Software" to "Zura" |
+| `supabase/functions/demo-assistant/index.ts` | Change prompt from "Drop Dead Salon Software" to "Zura" |
+| `supabase/functions/send-push-notification/index.ts` | Change VAPID subject to `support@getzura.com` |
+| `supabase/functions/test-phorest-connection/index.ts` | Change fallback name from "Drop Dead Hair Studios" to "Unknown" |
 
-// AFTER
-import { sendOrgEmail } from "../_shared/email-sender.ts";
-await sendOrgEmail(supabase, organizationId, {
-  to: [email],
-  subject: "...",
-  html: "<p>Inner content only</p>",  // No wrapper needed
-});
-```
+### New file
 
-### For platform-level functions:
+| File | Purpose |
+|---|---|
+| `src/components/dashboard/settings/EmailBrandingSection.tsx` | Email branding config UI for org admins |
 
-```
-// BEFORE
-await resend.emails.send({
-  from: 'Platform <noreply@lovable.app>',
-  to: [email],
-  ...
-});
+### Secret to add
 
-// AFTER
-import { sendEmail } from "../_shared/email-sender.ts";
-await sendEmail({
-  to: [email],
-  subject: "...",
-  html: "...",
-  // from defaults to "Zura <notifications@mail.getzura.com>"
-});
-```
+| Secret | Value needed from you |
+|---|---|
+| `SITE_URL` | Your production domain (e.g. `https://getzura.com`) |
 
-### Hardcoded URL fixes
+### Domain verification reminder
 
-Several already-refactored functions still have hardcoded URLs like `https://dropdeadsalon.com/dashboard/...`. These will be updated to use `SITE_URL` environment variable or the Supabase URL pattern, making them org-aware.
+`mail.getzura.com` must be verified in your Resend dashboard for any of these emails to actually deliver. This is a manual step in the Resend console (add domain, set DNS records).
 
-### Organization ID resolution
-
-Some functions (assistant-related ones, birthday reminders) don't currently track `organization_id`. For these, the org will be resolved via:
-- `employee_profiles.organization_id` for the relevant user
-- Falling back gracefully if no org is found (sends without branding)
-
----
-
-## Files to modify (19 total)
-
-1. `notify-low-score/index.ts`
-2. `check-expired-assignments/index.ts`
-3. `assign-assistant/index.ts`
-4. `notify-assignment-response/index.ts`
-5. `reassign-assistant/index.ts`
-6. `check-client-inactivity/index.ts`
-7. `send-birthday-reminders/index.ts`
-8. `generate-rent-invoices/index.ts`
-9. `check-insurance-expiry/index.ts`
-10. `send-test-email/index.ts`
-11. `notify-rent-change/index.ts`
-12. `check-payroll-deadline/index.ts`
-13. `kiosk-wrong-location-notify/index.ts`
-14. `process-client-automations/index.ts`
-15. `trial-expiration/index.ts`
-16. `onboarding-drip/index.ts`
-17. `weekly-digest/index.ts`
-18. `send-platform-invitation/index.ts`
-19. `send-changelog-digest/index.ts`
-
-Plus URL fixes in `check-lead-sla` and `notify-headshot-request`.
