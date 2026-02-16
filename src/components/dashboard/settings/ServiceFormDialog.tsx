@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import type { Service } from '@/hooks/useServicesData';
 import type { ServiceCategoryColor } from '@/hooks/useServiceCategoryColors';
 
@@ -113,16 +114,16 @@ export function ServiceFormDialog({ open, onOpenChange, onSubmit, isPending, cat
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Requires Qualification</p>
-                <p className="text-xs text-muted-foreground">Only qualified stylists can book this service</p>
+                <p className={tokens.body.emphasis}>Requires Qualification</p>
+                <p className={tokens.body.muted}>Only qualified stylists can book this service</p>
               </div>
               <Switch checked={requiresQualification} onCheckedChange={setRequiresQualification} />
             </div>
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Same-Day Booking</p>
-                <p className="text-xs text-muted-foreground">Allow clients to book this service same day</p>
+                <p className={tokens.body.emphasis}>Same-Day Booking</p>
+                <p className={tokens.body.muted}>Allow clients to book this service same day</p>
               </div>
               <Switch checked={allowSameDayBooking} onCheckedChange={setAllowSameDayBooking} />
             </div>
