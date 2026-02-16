@@ -263,13 +263,8 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
                 <div className="flex items-center gap-2.5">
                   <div className={cn('w-2.5 h-2.5 rounded-full shrink-0', config.dot)} />
                   <span className="font-display text-sm tracking-wide">{loc.locationName}</span>
-                  <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
                 </div>
-                {loc.status !== 'no_data' && (
-                  <span className="text-xs text-muted-foreground tabular-nums">
-                    ratio: {ratioPercent}%
-                  </span>
-                )}
+                <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
               </div>
 
               {/* Detail line */}
@@ -279,14 +274,16 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
 
               {/* Progress bar */}
               {loc.status !== 'no_data' && (
-                <div className="flex items-center gap-3">
+                <>
                   <Progress
                     value={Math.min(ratioPercent, 100)}
-                    className="h-2 flex-1"
+                    className="h-2"
                     indicatorClassName={config.bar}
                   />
-                  <span className="text-xs font-display tabular-nums w-10 text-right">{ratioPercent}%</span>
-                </div>
+                  <span className="text-xs text-muted-foreground tabular-nums mt-1.5">
+                    ratio: {ratioPercent}%
+                  </span>
+                </>
               )}
 
               {/* Timeline drill-down */}
