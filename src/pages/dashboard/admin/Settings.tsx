@@ -92,6 +92,7 @@ import { SoundSettingsSection } from '@/components/dashboard/settings/SoundSetti
 import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
 import { EmailBrandingSettings } from '@/components/dashboard/settings/EmailBrandingSettings';
 import { KioskSettingsContent } from '@/components/dashboard/settings/KioskSettingsContent';
+import { ServiceEmailFlowsManager } from '@/components/dashboard/settings/ServiceEmailFlowsManager';
 import { MessageSquareHeart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
@@ -989,6 +990,7 @@ export default function Settings() {
           {activeCategory === 'service-flows' && (
             <div className="space-y-6">
               <ServiceCommunicationFlowsCard />
+              <ServiceEmailFlowsManager />
             </div>
           )}
 

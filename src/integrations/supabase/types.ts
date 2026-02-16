@@ -639,6 +639,89 @@ export type Database = {
           },
         ]
       }
+      appointment_reminder_overrides: {
+        Row: {
+          config_id: string
+          created_at: string
+          html_body: string | null
+          id: string
+          location_id: string
+          subject: string | null
+        }
+        Insert: {
+          config_id: string
+          created_at?: string
+          html_body?: string | null
+          id?: string
+          location_id: string
+          subject?: string | null
+        }
+        Update: {
+          config_id?: string
+          created_at?: string
+          html_body?: string | null
+          id?: string
+          location_id?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_reminder_overrides_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "appointment_reminders_config"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_reminder_overrides_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointment_reminders_config: {
+        Row: {
+          created_at: string
+          html_body: string
+          id: string
+          is_active: boolean
+          organization_id: string
+          reminder_type: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          html_body?: string
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          reminder_type: string
+          subject?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          html_body?: string
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          reminder_type?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_reminders_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           appointment_date: string
@@ -661,6 +744,8 @@ export type Database = {
           original_price: number | null
           payment_method: string | null
           rebooked_at_checkout: boolean | null
+          reminder_24h_sent: boolean | null
+          reminder_2h_sent: boolean | null
           service_category: string | null
           service_id: string | null
           service_name: string | null
@@ -693,6 +778,8 @@ export type Database = {
           original_price?: number | null
           payment_method?: string | null
           rebooked_at_checkout?: boolean | null
+          reminder_24h_sent?: boolean | null
+          reminder_2h_sent?: boolean | null
           service_category?: string | null
           service_id?: string | null
           service_name?: string | null
@@ -725,6 +812,8 @@ export type Database = {
           original_price?: number | null
           payment_method?: string | null
           rebooked_at_checkout?: boolean | null
+          reminder_24h_sent?: boolean | null
+          reminder_2h_sent?: boolean | null
           service_category?: string | null
           service_id?: string | null
           service_name?: string | null
@@ -12610,6 +12699,237 @@ export type Database = {
             columns: ["sms_template_id"]
             isOneToOne: false
             referencedRelation: "sms_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_email_flow_step_overrides: {
+        Row: {
+          created_at: string
+          html_body: string | null
+          id: string
+          location_id: string
+          step_id: string
+          subject: string | null
+        }
+        Insert: {
+          created_at?: string
+          html_body?: string | null
+          id?: string
+          location_id: string
+          step_id: string
+          subject?: string | null
+        }
+        Update: {
+          created_at?: string
+          html_body?: string | null
+          id?: string
+          location_id?: string
+          step_id?: string
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_email_flow_step_overrides_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_email_flow_step_overrides_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "service_email_flow_steps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_email_flow_steps: {
+        Row: {
+          created_at: string
+          email_template_id: string | null
+          flow_id: string
+          html_body: string
+          id: string
+          is_active: boolean
+          step_order: number
+          subject: string
+          timing_type: string
+          timing_value: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_template_id?: string | null
+          flow_id: string
+          html_body?: string
+          id?: string
+          is_active?: boolean
+          step_order?: number
+          subject: string
+          timing_type?: string
+          timing_value?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_template_id?: string | null
+          flow_id?: string
+          html_body?: string
+          id?: string
+          is_active?: boolean
+          step_order?: number
+          subject?: string
+          timing_type?: string
+          timing_value?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_email_flow_steps_email_template_id_fkey"
+            columns: ["email_template_id"]
+            isOneToOne: false
+            referencedRelation: "email_templates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_email_flow_steps_flow_id_fkey"
+            columns: ["flow_id"]
+            isOneToOne: false
+            referencedRelation: "service_email_flows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_email_flows: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          service_category: string | null
+          service_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          service_category?: string | null
+          service_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          service_category?: string | null
+          service_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_email_flows_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_email_flows_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_email_queue: {
+        Row: {
+          appointment_id: string
+          client_id: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          merged_into_id: string | null
+          message_id: string | null
+          organization_id: string
+          scheduled_at: string
+          sent_at: string | null
+          status: string
+          step_id: string
+        }
+        Insert: {
+          appointment_id: string
+          client_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          merged_into_id?: string | null
+          message_id?: string | null
+          organization_id: string
+          scheduled_at: string
+          sent_at?: string | null
+          status?: string
+          step_id: string
+        }
+        Update: {
+          appointment_id?: string
+          client_id?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          merged_into_id?: string | null
+          message_id?: string | null
+          organization_id?: string
+          scheduled_at?: string
+          sent_at?: string | null
+          status?: string
+          step_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_email_queue_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_email_queue_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_email_queue_merged_into_id_fkey"
+            columns: ["merged_into_id"]
+            isOneToOne: false
+            referencedRelation: "service_email_queue"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_email_queue_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_email_queue_step_id_fkey"
+            columns: ["step_id"]
+            isOneToOne: false
+            referencedRelation: "service_email_flow_steps"
             referencedColumns: ["id"]
           },
         ]
