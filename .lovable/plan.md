@@ -1,64 +1,44 @@
 
 
-## Make SilenceState KPI-Aware
+## Add Executive Brief Button to Leadership Tab
 
-### Problem
-The "Operations within thresholds" message is misleading when no KPIs have been defined. The lever engine cannot generate recommendations without KPI definitions, so the silence is not because everything is healthy — it is because the system has nothing to monitor.
+### What changes
 
-### Solution
-Update `SilenceState` to check whether KPI definitions exist. If none are defined, show an explanatory state with a CTA to the KPI Builder instead of the false-positive green checkmark.
+**1. Remove the Infotainer banner**
+- File: `src/components/dashboard/analytics/LeadershipTabContent.tsx`
+- Remove the "EXECUTIVE INTELLIGENCE" Infotainer component entirely
 
-### Changes
+**2. Add an "Executive Brief" button to the Leadership tab**
+- Add a button (e.g., "View Executive Brief") at the top of the Leadership tab that opens a dialog/drawer containing the Weekly Lever content
+- When clicked, it opens a Sheet (slide-over drawer) showing:
+  - The `WeeklyLeverSection` content (lever recommendation or SilenceState/KPI setup prompt)
+  - Generate New button for refreshing the lever
+- This keeps the Leadership tab clean (Executive Summary + Trend Chart) while making the AI brief one click away
 
-**1. `src/components/executive-brief/SilenceState.tsx`**
-- Import and call `useKpiDefinitions()` to check if any KPIs exist
-- When KPIs count is 0: render a distinct "setup needed" state with:
-  - A neutral icon (e.g., `Settings` or `Target`) instead of the green checkmark
-  - Title: "No KPIs configured yet"
-  - Description: "Before Zura can surface levers, define the metrics you want monitored — targets, thresholds, and review cadence."
-  - CTA button: "Build KPI Architecture" linking to `/dashboard/admin/kpi-builder`
-- When KPIs exist but no recommendation: keep the current green "Operations within thresholds" state
-- The compact variant should also reflect this: show "No KPIs configured" with a setup icon instead of the green check
+**3. Implementation in `LeadershipTabContent.tsx`**
+- Import `Sheet`, `SheetContent`, `SheetHeader`, `SheetTitle`, `SheetTrigger` from the existing UI components
+- Import `WeeklyLeverSection` (already exists at `src/components/dashboard/analytics/WeeklyLeverSection.tsx`)
+- Add a row at the top with a styled button: "Executive Brief" with a `Brain` or `Target` icon
+- Clicking opens a Sheet from the right containing `WeeklyLeverSection`
 
-**2. No other files need changes**
-The `SilenceState` is already used in `WeeklyLeverSection`, `AIInsightsDrawer`, and `AIInsightsCard` — all will automatically inherit the improved behavior.
+### Visual layout
 
-### Visual (No KPIs — Full)
 ```text
 |-------------------------------------------------------|
-|                    [Target icon]                       |
+| [Target] Executive Brief  ............  [View Brief >] |
+|-------------------------------------------------------|
 |                                                       |
-|            No KPIs configured yet                     |
+|  [Executive Summary Card]                             |
 |                                                       |
-|   Before Zura can surface levers, define the          |
-|   metrics you want monitored -- targets,              |
-|   thresholds, and review cadence.                     |
+|  [Executive Trend Chart]                              |
 |                                                       |
-|          [ Build KPI Architecture ]                   |
 |-------------------------------------------------------|
 ```
 
-### Visual (No KPIs — Compact)
-```text
-|-------------------------------------------------------|
-| [target] No KPIs configured    [Build KPIs ->]        |
-|-------------------------------------------------------|
-```
+When the button is clicked, a right-side drawer slides open with the full Weekly Lever content (recommendation, silence state, or KPI setup prompt).
 
-### Visual (KPIs exist, no lever — unchanged)
-```text
-|-------------------------------------------------------|
-|            [green check]                               |
-|     Operations within thresholds                       |
-|-------------------------------------------------------|
-```
-
-### Technical Details
-- `useKpiDefinitions()` from `src/hooks/useKpiDefinitions.ts` returns the list scoped to the org via `useOrganizationContext`
-- Use `useNavigate()` for the CTA button to route to `/dashboard/admin/kpi-builder`
-- Advisory-first copy: no shame language, framed as "before monitoring begins"
-- The loading state of KPI definitions is handled gracefully (show nothing extra while loading)
-
-### File to modify
-- `src/components/executive-brief/SilenceState.tsx`
+### Technical details
+- File to modify: `src/components/dashboard/analytics/LeadershipTabContent.tsx`
+- No new files needed -- reuses existing `WeeklyLeverSection` and shadcn `Sheet` components
+- The Infotainer import can be removed since it will no longer be used here
 
