@@ -45,7 +45,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
               <DollarSign className="h-4 w-4" />
               <span className="text-xs uppercase tracking-wider">Monthly Revenue</span>
             </div>
-            <p className="text-2xl font-bold text-primary tabular-nums">
+            <p className="text-2xl font-medium text-primary tabular-nums">
               <AnimatedNumber
                 value={metrics.monthlyRentRevenue}
                 formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
@@ -60,7 +60,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
               <TrendingUp className="h-4 w-4" />
               <span className="text-xs uppercase tracking-wider">YTD Revenue</span>
             </div>
-            <p className="text-2xl font-bold tabular-nums">
+            <p className="text-2xl font-medium tabular-nums">
               <AnimatedNumber
                 value={metrics.yearlyRentRevenue}
                 formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}
@@ -75,7 +75,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
               <TrendingUp className="h-4 w-4" />
               <span className="text-xs uppercase tracking-wider">Collection Rate</span>
             </div>
-            <p className={`text-2xl font-bold ${metrics.collectionRate >= 95 ? 'text-emerald-400' : metrics.collectionRate >= 80 ? 'text-amber-400' : 'text-red-400'}`}>
+            <p className={`text-2xl font-medium ${metrics.collectionRate >= 95 ? 'text-emerald-400' : metrics.collectionRate >= 80 ? 'text-amber-400' : 'text-red-400'}`}>
               {metrics.collectionRate.toFixed(1)}%
             </p>
           </CardContent>
@@ -87,7 +87,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
               <AlertTriangle className="h-4 w-4" />
               <span className="text-xs uppercase tracking-wider">Overdue</span>
             </div>
-            <p className="text-2xl font-bold text-red-400 tabular-nums">
+            <p className="text-2xl font-medium text-red-400 tabular-nums">
               <AnimatedNumber
                 value={metrics.overdueBalance}
                 formatOptions={{ style: 'currency', currency, maximumFractionDigits: 0, minimumFractionDigits: 0 }}

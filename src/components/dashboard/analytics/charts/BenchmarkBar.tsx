@@ -61,7 +61,7 @@ export function BenchmarkBar({
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm font-medium">{label}</span>
-          <span className="text-lg font-semibold">{formatValue(currentValue)}</span>
+          <span className="text-lg font-medium">{formatValue(currentValue)}</span>
         </div>
 
         {/* Progress bar with markers */}

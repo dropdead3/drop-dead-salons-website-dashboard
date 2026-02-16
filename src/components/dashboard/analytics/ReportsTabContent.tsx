@@ -33,6 +33,7 @@ import { ClientRetentionReport } from '@/components/dashboard/reports/ClientRete
 import { NoShowReport } from '@/components/dashboard/reports/NoShowReport';
 import { CapacityReport } from '@/components/dashboard/reports/CapacityReport';
 import { FinancialReportGenerator } from '@/components/dashboard/reports/FinancialReportGenerator';
+import { ExecutiveSummaryReport } from '@/components/dashboard/reports/ExecutiveSummaryReport';
 import { IndividualStaffReport } from '@/components/dashboard/reports/IndividualStaffReport';
 import { PayrollSummaryReport } from '@/components/dashboard/reports/PayrollSummaryReport';
 import { RetailProductReport } from '@/components/dashboard/reports/RetailProductReport';
@@ -82,6 +83,7 @@ const operationsReports = [
 ];
 
 const financialReports = [
+  { id: 'executive-summary', name: 'Executive Summary', description: 'One-page org overview with location breakdown', icon: Building2 },
   { id: 'revenue-trend', name: 'Revenue Trend', description: 'Daily/weekly/monthly trends', icon: TrendingUp, visibilityKey: 'report_revenue_trend' },
   { id: 'commission', name: 'Commission Report', description: 'Staff earnings calculations', icon: DollarSign, visibilityKey: 'report_commission' },
   { id: 'goals', name: 'Goal Progress', description: 'Team and individual goal tracking', icon: BarChart3 },
@@ -310,6 +312,15 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
       case 'capacity':
         return (
           <CapacityReport
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            locationId={location}
+            onClose={handleCloseReport}
+          />
+        );
+      case 'executive-summary':
+        return (
+          <ExecutiveSummaryReport
             dateFrom={filters.dateFrom}
             dateTo={filters.dateTo}
             locationId={location}

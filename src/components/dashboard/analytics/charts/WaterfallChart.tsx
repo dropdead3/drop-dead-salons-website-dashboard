@@ -112,7 +112,7 @@ export function WaterfallChart({
             ) : (
               <Minus className="w-4 h-4 text-muted-foreground" />
             )}
-            <span className={`text-sm font-semibold ${
+            <span className={`text-sm font-medium ${
               percentChange > 0 ? 'text-chart-2' : percentChange < 0 ? 'text-destructive' : 'text-muted-foreground'
             }`}>
               {percentChange > 0 ? '+' : ''}{percentChange.toFixed(1)}%
