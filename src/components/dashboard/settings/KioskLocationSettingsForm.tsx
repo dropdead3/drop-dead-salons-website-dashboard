@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save, Image, RotateCcw, Upload, MapPin as MapPinIcon, Info, Shield, Eye } from 'lucide-react';
+import { Loader2, Save, Image, RotateCcw, Upload, MapPin as MapPinIcon, Info, Shield, Eye, Maximize2, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +10,8 @@ import { Slider } from '@/components/ui/slider';
 import { KioskMediaUploader } from './KioskMediaUploader';
 import { KioskFeatureToggles } from './KioskFeatureToggles';
 import { KioskDeployCard } from './KioskDeployCard';
+import { KioskPreviewPanel } from './KioskPreviewPanel';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { useLocations } from '@/hooks/useLocations';
 import { 
   useKioskSettings, 
@@ -671,19 +673,52 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
         </Tabs>
       </div>
 
+      {/* Inline Live Preview */}
+      <Collapsible defaultOpen>
+        <div className="border rounded-lg">
+          <CollapsibleTrigger asChild>
+            <div className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors">
+              <div className="flex items-center gap-2">
+                <Eye className="w-4 h-4 text-muted-foreground" />
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Live Preview</h4>
+              </div>
+              <div className="flex items-center gap-2">
+                {onPreviewOpen && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onPreviewOpen(localSettings);
+                    }}
+                  >
+                    <Maximize2 className="w-3 h-3 mr-1" />
+                    Expand
+                  </Button>
+                )}
+                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
+              </div>
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="px-4 pb-4">
+              <KioskPreviewPanel
+                settings={localSettings}
+                businessSettings={businessSettings}
+                locationName={locationName}
+              />
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+
       {/* Action Buttons */}
       <div className="flex flex-wrap items-center gap-2 pt-4 border-t">
         <Button onClick={handleSave} disabled={updateSettings.isPending}>
           {updateSettings.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
           Save {!locationId ? 'Defaults' : 'Settings'}
         </Button>
-
-        {onPreviewOpen && (
-          <Button variant="outline" onClick={() => onPreviewOpen(localSettings)}>
-            <Eye className="w-4 h-4 mr-2" />
-            Preview
-          </Button>
-        )}
 
         {locationId && locations.length > 1 && (
           <AlertDialog>
