@@ -357,9 +357,7 @@ export default function Schedule() {
       <div className="flex flex-col h-[calc(100vh-4rem)]">
         {/* Header */}
         <div className="px-4 pt-4">
-          <div className="flex items-center gap-2">
-            <div className="flex-1">
-              <ScheduleHeader
+          <ScheduleHeader
                 currentDate={currentDate}
                 setCurrentDate={setCurrentDate}
                 view={view}
@@ -374,20 +372,9 @@ export default function Schedule() {
                 canCreate={canCreate}
                 calendarFilters={calendarFilters}
                 onCalendarFiltersChange={setCalendarFilters}
+                copilotOpen={copilotOpen}
+                onCopilotToggle={() => setCopilotOpen(!copilotOpen)}
               />
-            </div>
-            {/* Copilot Toggle */}
-            {!isMobile && (
-              <Button
-                variant={copilotOpen ? 'default' : 'outline'}
-                size="icon"
-                className="shrink-0 h-9 w-9"
-                onClick={() => setCopilotOpen(!copilotOpen)}
-              >
-                <Sparkles className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
         </div>
 
         {/* Utilization Bar (Day/Week views only) */}
