@@ -4,8 +4,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { CalendarPlus, UserPlus, RefreshCw, TrendingUp, TrendingDown, Minus, MapPin, CalendarCheck } from 'lucide-react';
 import { useNewBookings } from '@/hooks/useNewBookings';
+import { useBookingPipeline } from '@/hooks/useBookingPipeline';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { NewBookingsDrilldown } from './NewBookingsDrilldown';
+import { cn } from '@/lib/utils';
 
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
@@ -28,7 +30,9 @@ interface NewBookingsCardProps {
 
 export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
   const dateRange = (filterContext?.dateRange ?? 'today') as DateRangeType;
+  const locationIdForPipeline = filterContext?.locationId === 'all' ? undefined : filterContext?.locationId;
   const { data, isLoading } = useNewBookings(filterContext?.locationId, dateRange);
+  const pipeline = useBookingPipeline(locationIdForPipeline);
   const [drilldown, setDrilldown] = useState<'new' | 'returning' | null>(null);
 
   const showLocationBreakdown = !filterContext?.locationId || filterContext.locationId === 'all';
@@ -75,6 +79,29 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
           <p className="text-sm text-muted-foreground">{heroLabel}</p>
           <MetricInfoTooltip description={`Total appointments scheduled for the selected period (${heroLabel.toLowerCase()}).`} />
         </div>
+      </div>
+
+      {/* Booking Pipeline Health */}
+      <div className="p-3 bg-muted/30 rounded-lg border border-border/50 mb-4">
+        {pipeline.isLoading ? (
+          <Skeleton className="h-5 w-full" />
+        ) : (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "w-2 h-2 rounded-full shrink-0",
+                pipeline.status === 'healthy' && 'bg-emerald-500',
+                pipeline.status === 'slowing' && 'bg-amber-500',
+                pipeline.status === 'critical' && 'bg-red-500',
+              )} />
+              <span className="text-sm font-medium">Pipeline: {pipeline.label}</span>
+              <MetricInfoTooltip description="Compares confirmed appointments in the next 14 days against the trailing 14 days. Healthy ≥ 90%, Slowing ≥ 70%, Critical < 70%." />
+            </div>
+            <span className="text-xs text-muted-foreground tabular-nums">
+              {pipeline.forwardCount} next 14d vs {pipeline.baselineCount} trailing
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Breakdown: New vs Returning */}
