@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,9 +7,45 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEmailTemplates } from '@/hooks/useEmailTemplates';
 import { Loader2, Upload, X, Eye, EyeOff, Save, Mail, Send, Monitor, Smartphone, Info } from 'lucide-react';
+
+const SAMPLE_VARIABLES: Record<string, string> = {
+  stylist_name: 'Sarah Johnson',
+  employee_name: 'Sarah Johnson',
+  birthday_date: 'Monday, March 15',
+  date: 'Monday, March 15',
+  birthday_count: '2',
+  count: '2',
+  birthday_list: '<ul style="padding-left:20px"><li style="margin-bottom:4px">Emma Wilson — March 15</li><li style="margin-bottom:4px">Alex Chen — March 16</li></ul>',
+  birthday_names: 'Emma Wilson, Alex Chen',
+  days_until: '3',
+  handbook_title: 'Employee Handbook 2026',
+  training_title: 'Advanced Color Techniques',
+  dashboard_url: '#',
+  link: '#',
+  plural: 's',
+  inactive_count: '3',
+  day_number: '5',
+  current_day: '5',
+  salon_name: 'Luxe Salon',
+  organization_name: 'Luxe Salon',
+  manager_name: 'Jessica Taylor',
+  strike_count: '2',
+  strike_reason: 'Late arrival',
+  strike_date: 'February 10, 2026',
+};
+
+function fillSampleVariables(html: string): string {
+  return html.replace(/\{\{(\w+)\}\}/g, (match, varName) => {
+    const value = SAMPLE_VARIABLES[varName];
+    if (value !== undefined) return value;
+    return `<span style="display:inline-block;background:#e0e7ff;color:#4338ca;padding:1px 6px;border-radius:4px;font-size:12px;font-family:monospace;">{{${varName}}}</span>`;
+  });
+}
 
 export function EmailBrandingSettings() {
   const { effectiveOrganization } = useOrganizationContext();
@@ -30,6 +66,10 @@ export function EmailBrandingSettings() {
   const [testEmail, setTestEmail] = useState(user?.email || '');
   const [sendingTest, setSendingTest] = useState(false);
   const [testPopoverOpen, setTestPopoverOpen] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState('sample');
+
+  // Fetch email templates for preview selector
+  const { data: emailTemplates } = useEmailTemplates();
 
   // Fetch current branding from org
   const { data: branding, isLoading } = useQuery({
@@ -159,6 +199,14 @@ export function EmailBrandingSettings() {
   // Build preview HTML that mirrors buildBrandedTemplate exactly
   const displayName = senderName || orgName;
   const previewAccent = accentColor || '#6366F1';
+
+  // Compute the selected template's filled HTML for preview
+  const templatePreviewHtml = useMemo(() => {
+    if (selectedTemplate === 'sample' || !emailTemplates) return null;
+    const tmpl = emailTemplates.find((t) => t.template_key === selectedTemplate);
+    if (!tmpl) return null;
+    return fillSampleVariables(tmpl.html_body);
+  }, [selectedTemplate, emailTemplates]);
 
   if (isLoading) {
     return (
@@ -365,23 +413,38 @@ export function EmailBrandingSettings() {
         {/* Live Preview */}
         {showPreview && (
           <div className="rounded-lg border overflow-hidden bg-muted/20">
-            <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            <div className="flex items-center justify-between px-4 pt-3 pb-2 gap-3 flex-wrap">
               <p className="text-xs font-medium text-muted-foreground tracking-wide">EMAIL PREVIEW</p>
-              <div className="flex items-center gap-1 border rounded-full p-0.5">
-                <button
-                  onClick={() => setPreviewMode('desktop')}
-                  className={`p-1.5 rounded-full transition-colors ${previewMode === 'desktop' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                  title="Desktop (600px)"
-                >
-                  <Monitor className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => setPreviewMode('mobile')}
-                  className={`p-1.5 rounded-full transition-colors ${previewMode === 'mobile' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
-                  title="Mobile (360px)"
-                >
-                  <Smartphone className="w-3.5 h-3.5" />
-                </button>
+              <div className="flex items-center gap-2">
+                <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
+                  <SelectTrigger className="h-8 w-[180px] text-xs rounded-lg">
+                    <SelectValue placeholder="Sample Content" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sample">Sample Content</SelectItem>
+                    {emailTemplates?.filter((t) => t.is_active).map((t) => (
+                      <SelectItem key={t.template_key} value={t.template_key}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center gap-1 border rounded-full p-0.5">
+                  <button
+                    onClick={() => setPreviewMode('desktop')}
+                    className={`p-1.5 rounded-full transition-colors ${previewMode === 'desktop' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    title="Desktop (600px)"
+                  >
+                    <Monitor className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setPreviewMode('mobile')}
+                    className={`p-1.5 rounded-full transition-colors ${previewMode === 'mobile' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                    title="Mobile (360px)"
+                  >
+                    <Smartphone className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -443,37 +506,43 @@ export function EmailBrandingSettings() {
                       fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
                     }}
                   >
-                    <p style={{ fontSize: 16, color: '#18181b', margin: '0 0 16px' }}>
-                      Hi there 👋
-                    </p>
-                    <p style={{ fontSize: 14, color: '#3f3f46', lineHeight: 1.6, margin: '0 0 16px' }}>
-                      This is a preview of how your branded emails will appear to recipients.
-                      The header, accent color, and footer below match the real template used
-                      for all outbound emails from your organization.
-                    </p>
-                    <p style={{ fontSize: 14, color: '#3f3f46', lineHeight: 1.6, margin: '0 0 24px' }}>
-                      You can adjust the sender name, reply-to address, logo, and accent color
-                      above to see changes reflected here instantly.
-                    </p>
-                    {/* CTA Button */}
-                    <div style={{ textAlign: 'center' as const }}>
-                      <a
-                        href="#"
-                        onClick={(e) => e.preventDefault()}
-                        style={{
-                          display: 'inline-block',
-                          backgroundColor: previewAccent,
-                          color: '#ffffff',
-                          padding: '12px 32px',
-                          borderRadius: '8px',
-                          textDecoration: 'none',
-                          fontSize: 14,
-                          fontWeight: 600,
-                        }}
-                      >
-                        View Dashboard
-                      </a>
-                    </div>
+                    {templatePreviewHtml ? (
+                      <div dangerouslySetInnerHTML={{ __html: templatePreviewHtml }} />
+                    ) : (
+                      <>
+                        <p style={{ fontSize: 16, color: '#18181b', margin: '0 0 16px' }}>
+                          Hi there 👋
+                        </p>
+                        <p style={{ fontSize: 14, color: '#3f3f46', lineHeight: 1.6, margin: '0 0 16px' }}>
+                          This is a preview of how your branded emails will appear to recipients.
+                          The header, accent color, and footer below match the real template used
+                          for all outbound emails from your organization.
+                        </p>
+                        <p style={{ fontSize: 14, color: '#3f3f46', lineHeight: 1.6, margin: '0 0 24px' }}>
+                          You can adjust the sender name, reply-to address, logo, and accent color
+                          above to see changes reflected here instantly.
+                        </p>
+                        {/* CTA Button */}
+                        <div style={{ textAlign: 'center' as const }}>
+                          <a
+                            href="#"
+                            onClick={(e) => e.preventDefault()}
+                            style={{
+                              display: 'inline-block',
+                              backgroundColor: previewAccent,
+                              color: '#ffffff',
+                              padding: '12px 32px',
+                              borderRadius: '8px',
+                              textDecoration: 'none',
+                              fontSize: 14,
+                              fontWeight: 600,
+                            }}
+                          >
+                            View Dashboard
+                          </a>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   {/* Footer */}
