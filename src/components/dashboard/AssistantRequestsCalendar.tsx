@@ -200,7 +200,7 @@ export function AssistantRequestsCalendar({ requests, onSelectRequest }: Assista
                   >
                     <span className={cn(
                       "text-xs",
-                      isToday(day) && "font-bold text-primary"
+                      isToday(day) && "font-medium text-primary"
                     )}>
                       {format(day, 'd')}
                     </span>

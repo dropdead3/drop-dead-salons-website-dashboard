@@ -138,7 +138,7 @@ export function ScheduleSettingsContent() {
           <PopoverTrigger asChild>
             <button
               className={cn(
-                'w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold shrink-0 relative',
+                'w-12 h-12 rounded-full flex items-center justify-center text-sm font-medium shrink-0 relative',
                 'transition-transform hover:scale-105 active:scale-95',
                 'ring-2 ring-offset-2 ring-offset-background ring-transparent hover:ring-primary/50',
                 displayGradient && 'shadow-lg'
@@ -171,7 +171,7 @@ export function ScheduleSettingsContent() {
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold relative"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium relative"
                   style={displayGradient ? {
                     background: displayGradient.background,
                     color: displayGradient.textColor,
@@ -206,7 +206,7 @@ export function ScheduleSettingsContent() {
 
               {/* Special Styles Section */}
               <div className="space-y-2">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                   Special Styles
                 </p>
                 <div className="flex gap-2 flex-wrap">
@@ -253,7 +253,7 @@ export function ScheduleSettingsContent() {
               
               {/* Solid Colors Section */}
               <div className="space-y-2">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                   Solid Colors
                 </p>
                 <div className="grid grid-cols-6 gap-1.5">

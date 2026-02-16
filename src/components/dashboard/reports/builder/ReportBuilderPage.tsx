@@ -106,7 +106,7 @@ export function ReportBuilderPage({ onClose, initialConfig, templateId }: Report
             </Button>
           )}
           <div>
-            <h1 className="text-xl font-semibold">Report Builder</h1>
+            <h1 className="text-xl font-medium">Report Builder</h1>
             <p className="text-sm text-muted-foreground">Create custom reports with your selected metrics</p>
           </div>
         </div>

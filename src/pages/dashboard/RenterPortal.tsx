@@ -106,7 +106,7 @@ export default function RenterPortal() {
                 <p className="text-sm text-muted-foreground">Payment Method</p>
                 {defaultPaymentMethod ? (
                   <>
-                    <p className="text-lg font-semibold capitalize">
+                    <p className="text-lg font-medium capitalize">
                       {defaultPaymentMethod.card_brand} •••• {defaultPaymentMethod.card_last4}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -114,7 +114,7 @@ export default function RenterPortal() {
                     </p>
                   </>
                 ) : (
-                  <p className="text-lg font-semibold text-muted-foreground">Not set up</p>
+                  <p className="text-lg font-medium text-muted-foreground">Not set up</p>
                 )}
               </div>
               <div className="p-3 rounded-full bg-blue-500/10">
@@ -129,7 +129,7 @@ export default function RenterPortal() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Autopay</p>
-                <p className="text-lg font-semibold">
+                <p className="text-lg font-medium">
                   {hasAutopay ? 'Enabled' : 'Disabled'}
                 </p>
                 <p className="text-xs text-muted-foreground">

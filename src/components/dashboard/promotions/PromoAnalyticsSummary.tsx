@@ -93,7 +93,7 @@ export function PromoAnalyticsSummary({ organizationId }: PromoAnalyticsSummaryP
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Active Members</p>
-                <p className="text-2xl font-bold">{loyaltyStats?.activeMembersCount || 0}</p>
+                <p className="text-2xl font-medium">{loyaltyStats?.activeMembersCount || 0}</p>
               </div>
               <div className="p-3 bg-chart-3/10 rounded-full">
                 <Users className="h-5 w-5 text-chart-3" />
@@ -107,7 +107,7 @@ export function PromoAnalyticsSummary({ organizationId }: PromoAnalyticsSummaryP
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Points Liability</p>
-                <p className="text-2xl font-bold">{formatCurrency(loyaltyStats?.pointsLiability ?? 0)}</p>
+                <p className="text-2xl font-medium">{formatCurrency(loyaltyStats?.pointsLiability ?? 0)}</p>
               </div>
               <div className="p-3 bg-destructive/10 rounded-full">
                 <DollarSign className="h-5 w-5 text-destructive" />

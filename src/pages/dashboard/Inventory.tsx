@@ -54,7 +54,7 @@ export default function Inventory() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="font-display text-2xl font-semibold flex items-center gap-2">
+            <h1 className="font-display text-2xl font-medium flex items-center gap-2">
               <Package className="h-6 w-6 text-primary" />
               Inventory
             </h1>
@@ -78,22 +78,22 @@ export default function Inventory() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <Card className="p-4">
             <p className="text-sm text-muted-foreground">Total Products</p>
-            <p className="text-2xl font-display font-semibold">{products.length}</p>
+            <p className="text-2xl font-display font-medium">{products.length}</p>
           </Card>
           <Card className="p-4">
             <p className="text-sm text-muted-foreground">Inventory Value</p>
-            <p className="text-2xl font-display font-semibold">
+            <p className="text-2xl font-display font-medium">
               {formatCurrency(totalValue)}
             </p>
           </Card>
           <Card className="p-4">
             <p className="text-sm text-muted-foreground">Categories</p>
-            <p className="text-2xl font-display font-semibold">{categories.length}</p>
+            <p className="text-2xl font-display font-medium">{categories.length}</p>
           </Card>
           <Card className="p-4 cursor-pointer" onClick={() => setLowStockOnly(!lowStockOnly)}>
             <p className="text-sm text-muted-foreground">Low Stock Items</p>
             <p className={cn(
-              "text-2xl font-display font-semibold flex items-center gap-2",
+              "text-2xl font-display font-medium flex items-center gap-2",
               lowStockCount > 0 && "text-amber-600"
             )}>
               {lowStockCount}

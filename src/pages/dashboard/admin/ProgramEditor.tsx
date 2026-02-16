@@ -238,7 +238,7 @@ function SortableRuleItem({
       </div>
       
       <div className="flex-1 min-w-0">
-        <p className={`text-sm ${rule.is_emphasized ? 'font-semibold' : ''}`}>{rule.rule_text}</p>
+        <p className={`text-sm ${rule.is_emphasized ? 'font-medium' : ''}`}>{rule.rule_text}</p>
       </div>
 
       <div className="flex items-center gap-2">

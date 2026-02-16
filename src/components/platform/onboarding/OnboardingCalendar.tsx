@@ -256,7 +256,7 @@ export function OnboardingCalendar({ organizations, billingData }: OnboardingCal
                   "text-slate-300"
                 ),
                 day_selected: "bg-violet-600 text-white hover:bg-violet-600 hover:text-white focus:bg-violet-600 focus:text-white",
-                day_today: "bg-slate-700/50 text-white font-semibold",
+                day_today: "bg-slate-700/50 text-white font-medium",
                 day_outside: "text-slate-600 opacity-50",
                 day_disabled: "text-slate-600 opacity-50",
                 day_hidden: "invisible",

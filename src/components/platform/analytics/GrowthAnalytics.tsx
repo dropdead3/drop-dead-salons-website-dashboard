@@ -75,7 +75,7 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
             </div>
             <div>
               <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Total Accounts</p>
-              <p className={cn('text-xl font-bold', isDark ? 'text-white' : 'text-slate-900')}>
+              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900')}>
                 {analytics.totalOrganizations}
               </p>
             </div>
@@ -92,7 +92,7 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
             </div>
             <div>
               <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Active Accounts</p>
-              <p className={cn('text-xl font-bold', isDark ? 'text-white' : 'text-slate-900')}>
+              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900')}>
                 {activeCount}
               </p>
             </div>
@@ -109,7 +109,7 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
             </div>
             <div>
               <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>In Trial</p>
-              <p className={cn('text-xl font-bold', isDark ? 'text-white' : 'text-slate-900')}>
+              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900')}>
                 {trialCount}
               </p>
             </div>
@@ -126,7 +126,7 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
             </div>
             <div>
               <p className={cn('text-xs', isDark ? 'text-slate-400' : 'text-slate-500')}>Inactive</p>
-              <p className={cn('text-xl font-bold', isDark ? 'text-white' : 'text-slate-900')}>
+              <p className={cn('text-xl font-medium', isDark ? 'text-white' : 'text-slate-900')}>
                 {inactiveCount}
               </p>
             </div>
@@ -141,7 +141,7 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
           'rounded-xl border p-6',
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
-          <h3 className={cn('font-semibold mb-4', isDark ? 'text-white' : 'text-slate-900')}>
+          <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900')}>
             Account Growth Timeline
           </h3>
           <div className="h-64">
@@ -181,7 +181,7 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
           'rounded-xl border p-6',
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
-          <h3 className={cn('font-semibold mb-4', isDark ? 'text-white' : 'text-slate-900')}>
+          <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900')}>
             New Accounts Per Month
           </h3>
           <div className="h-64">
@@ -222,7 +222,7 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
         'rounded-xl border p-6',
         isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
       )}>
-        <h3 className={cn('font-semibold mb-4', isDark ? 'text-white' : 'text-slate-900')}>
+        <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900')}>
           Platform Expansion (Locations & Users)
         </h3>
         <div className="h-72">
@@ -265,7 +265,7 @@ export function GrowthAnalytics({ analytics }: GrowthAnalyticsProps) {
         'rounded-xl border p-6',
         isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
       )}>
-        <h3 className={cn('font-semibold mb-4', isDark ? 'text-white' : 'text-slate-900')}>
+        <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900')}>
           Recent Signups (Last 30 Days)
         </h3>
         {recentSignups.length === 0 ? (

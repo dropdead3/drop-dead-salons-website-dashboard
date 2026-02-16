@@ -306,7 +306,7 @@ export function CheckoutSummarySheet({
           <div className="space-y-2">
             <h3 className="text-sm font-medium text-muted-foreground">Client</h3>
             <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <p className="font-semibold text-lg">
+              <p className="font-medium text-lg">
                 {appointment.client_name || 'Walk-in'}
               </p>
               {appointment.client_phone && (

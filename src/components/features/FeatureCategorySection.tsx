@@ -80,7 +80,7 @@ export function FeatureCategorySection({
                 <IconComponent className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="font-semibold">{categoryLabel}</h3>
+                <h3 className="font-medium">{categoryLabel}</h3>
                 {!isCore && (
                   <p className="text-sm text-muted-foreground">
                     {enabledCount} of {totalCount} enabled

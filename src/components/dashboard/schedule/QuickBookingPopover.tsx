@@ -497,12 +497,12 @@ export function QuickBookingPopover({
                 <div>
                   {viewingClientProfile ? (
                     <>
-                      <h2 className="font-semibold text-sm truncate max-w-[180px]">{viewingClientProfile.name}</h2>
+                      <h2 className="font-medium text-sm truncate max-w-[180px]">{viewingClientProfile.name}</h2>
                       <p className="text-xs text-muted-foreground">Client Profile</p>
                     </>
                   ) : (
                     <>
-                      <h2 className="font-semibold text-sm">New Booking</h2>
+                      <h2 className="font-medium text-sm">New Booking</h2>
                       <p className="text-xs text-muted-foreground">
                         {formatDateLocale(date, 'EEE, MMM d')} at {formatTime12h(time)}
                       </p>
@@ -841,7 +841,7 @@ export function QuickBookingPopover({
                     <>
 
                       <div className="bg-muted -mx-3 px-3 py-1.5 mb-2">
-                        <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                        <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                           {selectedCategory}
                         </h4>
                       </div>
@@ -909,7 +909,7 @@ export function QuickBookingPopover({
                       </Badge>
                       <span className="text-muted-foreground">{totalDuration}m</span>
                     </div>
-                    <span className="font-semibold">{formatCurrencyWhole(totalPrice)}</span>
+                    <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
                   </div>
                 )}
                 <Button
@@ -979,7 +979,7 @@ export function QuickBookingPopover({
                       </Badge>
                       <span className="text-muted-foreground">{totalDuration}m</span>
                     </div>
-                    <span className="font-semibold">{formatCurrencyWhole(totalPrice)}</span>
+                    <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
                   </div>
                 )}
                 <Button
@@ -1080,7 +1080,7 @@ export function QuickBookingPopover({
                               </Badge>
                             )}
                             {selectedServices.length > 0 && (
-                              <span className="text-sm font-semibold text-foreground tabular-nums min-w-[70px] text-right">
+                              <span className="text-sm font-medium text-foreground tabular-nums min-w-[70px] text-right">
                                 {formatCurrency(stylistTotalPrice)}
                               </span>
                             )}
@@ -1103,7 +1103,7 @@ export function QuickBookingPopover({
                       <span className="text-muted-foreground">{totalDuration}m</span>
                     </div>
                     <div className="text-right">
-                      <span className="font-semibold">{formatCurrencyWhole(levelBasedTotalPrice)}</span>
+                      <span className="font-medium">{formatCurrencyWhole(levelBasedTotalPrice)}</span>
                       <span className="text-muted-foreground ml-1.5">• Level {selectedLevelNumber}</span>
                     </div>
                   </div>

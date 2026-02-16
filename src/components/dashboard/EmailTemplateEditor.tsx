@@ -3085,11 +3085,11 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     <span className="text-[11px] font-medium text-foreground/80">Image</span>
                   </button>
                   <button onClick={() => { addBlock('button', 'primary'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
-                    <div className="px-2.5 py-1 text-[8px] font-bold rounded-md bg-foreground text-background">Aa</div>
+                    <div className="px-2.5 py-1 text-[8px] font-medium rounded-md bg-foreground text-background">Aa</div>
                     <span className="text-[11px] font-medium text-foreground/80">Primary</span>
                   </button>
                   <button onClick={() => { addBlock('button', 'secondary'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
-                    <div className="px-2.5 py-1 text-[8px] font-bold rounded-md border-2 border-foreground/60">Aa</div>
+                    <div className="px-2.5 py-1 text-[8px] font-medium rounded-md border-2 border-foreground/60">Aa</div>
                     <span className="text-[11px] font-medium text-foreground/80">Secondary</span>
                   </button>
                   <button onClick={() => { addBlock('link'); setToolbarPanel(null); }} className="flex flex-col items-center gap-2 p-4 rounded-xl bg-muted/40 hover:bg-muted/70 transition-all hover:shadow-sm">
@@ -3215,7 +3215,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                     <div className="mb-4">
                       <div className="flex items-center gap-2 mb-3">
                         <Sparkles className="w-4 h-4 text-amber-500" />
-                        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Recommended</span>
+                        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Recommended</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                         {recommendedVars.map((v) => {
@@ -3234,7 +3234,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               {inUse && (
                                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500" title="Used in this template" />
                               )}
-                              <code className="text-xs font-mono font-semibold text-foreground group-hover:text-amber-600 transition-colors">
+                              <code className="text-xs font-mono font-medium text-foreground group-hover:text-amber-600 transition-colors">
                                 {`{{${v.variable_key}}}`}
                               </code>
                               <span className="text-[11px] text-muted-foreground mt-1 leading-snug">
@@ -3309,7 +3309,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                       <div key={category}>
                         <div className="flex items-center gap-2 mb-2">
                           <span className="text-sm">{categoryStyles[category]?.icon || '📦'}</span>
-                          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{category}</span>
+                          <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{category}</span>
                           <span className="text-[10px] text-muted-foreground/60">({vars.length})</span>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -3327,7 +3327,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               {v.inUse && (
                                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" title="Used in this template" />
                               )}
-                              <code className="text-xs font-mono font-semibold text-foreground group-hover:text-primary transition-colors">
+                              <code className="text-xs font-mono font-medium text-foreground group-hover:text-primary transition-colors">
                                 {`{{${v.name}}}`}
                               </code>
                               <span className="text-[11px] text-muted-foreground mt-1 leading-snug">
@@ -5241,7 +5241,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           className="absolute -top-6 left-1/2 -translate-x-1/2 z-40 pointer-events-none animate-fade-in"
                         >
                           <span 
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold text-white shadow-lg backdrop-blur-sm"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium text-white shadow-lg backdrop-blur-sm"
                             style={{ backgroundColor: getSectionType(block.type).color }}
                           >
                             <span className="w-1.5 h-1.5 rounded-full bg-white/60" />
@@ -5844,7 +5844,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           
                           const textElement = (
                             <div>
-                              <div className="font-bold text-base">{config.name}</div>
+                              <div className="font-medium text-base">{config.name}</div>
                               <div className="text-sm opacity-80">{config.title}</div>
                               {(config.showPhone && config.phone) && (
                                 <div className="text-xs opacity-70 mt-1">📞 {config.phone}</div>

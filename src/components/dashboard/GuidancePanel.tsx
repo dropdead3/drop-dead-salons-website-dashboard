@@ -63,7 +63,7 @@ export function GuidancePanel({ title, type, guidance, isLoading, onBack, sugges
                 <ReactMarkdown
                   components={{
                     p: ({ children }) => <p className="mb-4 leading-relaxed">{children}</p>,
-                    strong: ({ children }) => <strong className="font-semibold text-foreground">{children}</strong>,
+                    strong: ({ children }) => <strong className="font-medium text-foreground">{children}</strong>,
                     h3: ({ children }) => <h3 className="mt-5 mb-2 text-sm font-medium text-foreground">{children}</h3>,
                     h4: ({ children }) => <h4 className="mt-4 mb-1.5 text-sm font-medium text-foreground">{children}</h4>,
                     ul: ({ children }) => <ul className="mb-4 pl-5 space-y-1.5 list-disc marker:text-muted-foreground/50">{children}</ul>,

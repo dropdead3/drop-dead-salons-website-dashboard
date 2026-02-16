@@ -172,7 +172,7 @@ export default function AccountDetail() {
               </div>
               <div>
                 <p className="text-sm text-slate-500">Onboarding Stage</p>
-                <p className="font-semibold text-white">{stage.label}</p>
+                <p className="font-medium text-white">{stage.label}</p>
               </div>
             </div>
           </PlatformCardContent>
@@ -185,7 +185,7 @@ export default function AccountDetail() {
               </div>
               <div>
                 <p className="text-sm text-slate-500">Locations</p>
-                <p className="font-semibold text-white">{organization.locationCount}</p>
+                <p className="font-medium text-white">{organization.locationCount}</p>
               </div>
             </div>
           </PlatformCardContent>
@@ -198,7 +198,7 @@ export default function AccountDetail() {
               </div>
               <div>
                 <p className="text-sm text-slate-500">Team Members</p>
-                <p className="font-semibold text-white">{organization.adminCount}</p>
+                <p className="font-medium text-white">{organization.adminCount}</p>
               </div>
             </div>
           </PlatformCardContent>
@@ -211,7 +211,7 @@ export default function AccountDetail() {
               </div>
               <div>
                 <p className="text-sm text-slate-500">Imports</p>
-                <p className="font-semibold text-white">{organization.completedImports} / {organization.importCount}</p>
+                <p className="font-medium text-white">{organization.completedImports} / {organization.importCount}</p>
               </div>
             </div>
           </PlatformCardContent>
