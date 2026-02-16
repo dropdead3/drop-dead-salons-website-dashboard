@@ -1,54 +1,41 @@
 
 
-# Tokenize Compact Filter Toggle and Standardize All Analytics Cards
+# Add MetricInfoTooltip to All Analytics Cards Missing It
 
-## What Changes
+## Audit Results
 
-### 1. Add compact filter variant to the token system
+13 analytics cards are currently missing the info circle tooltip. Every other analytics card already has one.
 
-Add `filterList` and `filterTrigger` entries to `TABS_CLASSES` in `src/components/ui/tabs.tokens.ts`. These encode the compact size (h-8, p-1, text-xs, px-2.5 py-1) used for inline filter toggles on analytics cards, distinct from the full-size page-level tabs.
+## Cards to Update
 
-### 2. Create FilterTabsList and FilterTabsTrigger components
+| # | File | Card Title | Tooltip Description |
+|---|------|-----------|---------------------|
+| 1 | `sales/PeakHoursHeatmap.tsx` | PEAK HOURS | "Heatmap of appointment volume by hour and day of week. Darker cells indicate higher booking density. Data is aggregated from completed appointments in the selected period." |
+| 2 | `sales/PerformanceTrendChart.tsx` | REVENUE TREND | "Weekly revenue trend over the selected timeframe. Each data point represents total service and product revenue for that week. The trend arrow shows the direction of the most recent week vs the prior week." |
+| 3 | `sales/YearOverYearComparison.tsx` | YEAR-OVER-YEAR | "Compares monthly revenue between the current year and the prior year. The percentage badge shows the overall year-to-date change. Use this to identify seasonal patterns and long-term growth." |
+| 4 | `sales/HistoricalComparison.tsx` | PERIOD COMPARISON | "Side-by-side comparison of key metrics (revenue, services, products, transactions) between the current period and a prior period (last month or last year). Percentage changes highlight growth or decline." |
+| 5 | `sales/ServicePopularityChart.tsx` | SERVICE POPULARITY | "Ranks services by revenue or appointment count. Use this to identify your highest-demand and highest-revenue services. Data is sourced from completed appointment line items." |
+| 6 | `analytics/StylistExperienceCard.tsx` | CLIENT EXPERIENCE SCORECARD | "Flags stylists with lower client retention or rebooking patterns who may benefit from coaching. Scores are based on repeat visit rates and average client tenure per stylist." |
+| 7 | `analytics/RevenueForecastCard.tsx` | AI Revenue Forecast | "AI-generated revenue projection based on historical patterns, seasonal trends, and current booking pipeline. Confidence level reflects how much historical data is available." |
+| 8 | `analytics/WeeklyLeverSection.tsx` | WEEKLY LEVER | "The single highest-confidence action recommended by Zura this week. Generated from performance data, benchmarks, and operational signals. Only surfaces when confidence is high." |
+| 9 | `analytics/DailyBriefCard.tsx` | Daily Brief | "Today's real-time snapshot: total revenue, scheduled vs completed appointments, and no-show rate. Revenue is from completed transactions only." |
+| 10 | `analytics/LocationsRollupCard.tsx` | Location Performance | "Revenue breakdown across all your locations for the selected period. Only locations with activity are shown. Use this to compare location productivity at a glance." |
+| 11 | `analytics/OperationalHealthCard.tsx` | Operational Health | "Tracks no-show rate, cancellation rate, and completion rate for appointments in the selected period. Rates are calculated as a percentage of total scheduled appointments." |
+| 12 | `analytics/RebookingCard.tsx` | Rebooking Rate | "Percentage of completed appointments where the client booked a future appointment. Calculated as rebooked clients / total completed appointments x 100." |
+| 13 | `analytics/RetailEffectivenessCard.tsx` | Retail Effectiveness | "Measures retail sales performance: product revenue as a share of total revenue and the attachment rate (percentage of service transactions that included a product sale)." |
+| 14 | `analytics/ServiceMixCard.tsx` | Service Mix | "Revenue distribution across service categories for the selected period. Shows each category's share of total service revenue to highlight your most profitable service lines." |
 
-Add these two thin wrapper components to `src/components/ui/tabs.tsx` that automatically apply the compact token classes. This means card code becomes:
+## Implementation Pattern
 
-```text
-<Tabs value={...} onValueChange={...}>
-  <FilterTabsList>
-    <FilterTabsTrigger value="7days">7 Days</FilterTabsTrigger>
-    <FilterTabsTrigger value="30days">30 Days</FilterTabsTrigger>
-  </FilterTabsList>
-</Tabs>
-```
+Each card follows the same pattern -- add a `MetricInfoTooltip` import and place it immediately after the card title text inside a `flex items-center gap-2` wrapper (or add to existing wrapper). For cards using `h3` tags instead of `CardTitle`, the tooltip goes right after the text element.
 
-No more inline `className="h-8 p-1"` / `className="text-xs px-2.5 py-1"` scattered across cards.
+## Technical Details
 
-### 3. Update all analytics cards to use the new filter components
-
-| File | Current Pattern | Change |
-|------|----------------|--------|
-| `sales/ForecastingCard.tsx` | `TabsList className="h-8 p-1"` + inline trigger classes | Switch to `FilterTabsList` / `FilterTabsTrigger` (both selectors) |
-| `sales/CapacityUtilizationCard.tsx` | `ToggleGroup` with custom classes | Replace with `Tabs` + `FilterTabsList` / `FilterTabsTrigger` |
-| `sales/GrowthForecastCard.tsx` | `ToggleGroup` with custom classes | Replace with `Tabs` + `FilterTabsList` / `FilterTabsTrigger` |
-| `sales/ServicePopularityChart.tsx` | `TabsList className="mb-4"` (full-size, oversized for context) | Switch to `FilterTabsList` / `FilterTabsTrigger` |
-| `analytics/StaffRevenueLeaderboard.tsx` | `TabsList className="h-8"` + partial inline classes | Switch to `FilterTabsList` / `FilterTabsTrigger` |
-
-### Token Values
-
-```
-filterList:    "inline-flex h-8 items-center justify-center p-1 text-muted-foreground gap-0.5 bg-muted/70 rounded-[7px]"
-filterTrigger: "inline-flex items-center justify-center whitespace-nowrap rounded-[5px] px-2.5 py-1 text-xs font-medium ..."
-               (same active/focus states as standard trigger)
-```
-
-The 7px/5px radii maintain the 2px nested offset ratio from the standard 9px/6px pair, scaled down proportionally.
+- Import: `import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';`
+- For cards with `CardTitle`: wrap in `<div className="flex items-center gap-2">` if not already wrapped, then add `<MetricInfoTooltip description="..." />` after the title
+- For cards with `h3` titles (LocationsRollupCard, OperationalHealthCard, RebookingCard, RetailEffectivenessCard, ServiceMixCard, DailyBriefCard): same pattern, wrap the `h3` in a flex container with the tooltip
 
 ## Files Changed
 
-1. **`src/components/ui/tabs.tokens.ts`** -- Add `filterList` and `filterTrigger` token strings
-2. **`src/components/ui/tabs.tsx`** -- Add `FilterTabsList` and `FilterTabsTrigger` components, export them
-3. **`src/components/dashboard/sales/ForecastingCard.tsx`** -- Use new filter components (both selectors)
-4. **`src/components/dashboard/sales/CapacityUtilizationCard.tsx`** -- Replace ToggleGroup with filter tabs
-5. **`src/components/dashboard/sales/GrowthForecastCard.tsx`** -- Replace ToggleGroup with filter tabs
-6. **`src/components/dashboard/sales/ServicePopularityChart.tsx`** -- Use new filter components
-7. **`src/components/dashboard/analytics/StaffRevenueLeaderboard.tsx`** -- Use new filter components
+14 files total, each receiving only a small import addition and 1-2 line insertion next to the card title.
+
