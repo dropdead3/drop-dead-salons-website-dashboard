@@ -2,7 +2,7 @@
  * Locale-aware date formatting for display.
  * Uses date-fns with org locale. Keep ISO (yyyy-MM-dd) for APIs; use this for user-facing dates.
  */
-import { format as dateFnsFormat, type Locale } from 'date-fns';
+import { format as dateFnsFormat, parseISO, type Locale } from 'date-fns';
 import { enUS } from 'date-fns/locale';
 import { enGB } from 'date-fns/locale';
 import { es } from 'date-fns/locale';
@@ -36,9 +36,11 @@ export function formatDate(
   formatStr: string,
   locale: string = DEFAULT_LOCALE
 ): string {
-  const d = typeof date === 'object' && date instanceof Date
+  const d = date instanceof Date
     ? date
-    : new Date(date);
+    : typeof date === 'string'
+      ? parseISO(date)
+      : new Date(date);
   const loc = getDateFnsLocale(locale);
   return dateFnsFormat(d, formatStr, { locale: loc });
 }
