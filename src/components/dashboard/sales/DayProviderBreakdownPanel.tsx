@@ -7,7 +7,7 @@ import { DRILLDOWN_DIALOG_CONTENT_CLASS, DRILLDOWN_OVERLAY_CLASS } from '@/compo
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { parseISO, format } from 'date-fns';
+import { parseISO, format, isValid } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import type { DayForecast, AppointmentSummary } from '@/hooks/useWeekAheadRevenue';
 
@@ -55,7 +55,12 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
           <>
             <DialogHeader className="px-5 pt-5 pb-3">
               <DialogTitle className="text-base font-display">
-                {formatDate(parseISO(day.date), 'EEEE, MMM d')}
+                {(() => {
+                  try {
+                    const parsed = parseISO(day.date);
+                    return isValid(parsed) ? formatDate(parsed, 'EEEE, MMM d') : day.dayName || day.date;
+                  } catch { return day.dayName || day.date; }
+                })()}
               </DialogTitle>
               <DialogDescription className={tokens.body.muted}>
                 {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''} · By Provider
@@ -116,7 +121,13 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
                                   <div className="flex items-center gap-2 min-w-0">
                                     <Clock className="w-3 h-3 text-muted-foreground shrink-0" />
                                     <span className="text-muted-foreground">
-                                      {apt.start_time ? format(parseISO(apt.start_time), 'h:mm a') : '—'}
+                                      {(() => {
+                                        if (!apt.start_time) return '—';
+                                        try {
+                                          const parsed = parseISO(apt.start_time);
+                                          return isValid(parsed) ? format(parsed, 'h:mm a') : apt.start_time;
+                                        } catch { return apt.start_time; }
+                                      })()}
                                     </span>
                                     <span className="font-medium truncate">{apt.service_name || 'Service'}</span>
                                   </div>
