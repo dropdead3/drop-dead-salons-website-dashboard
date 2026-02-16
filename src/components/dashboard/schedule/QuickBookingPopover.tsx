@@ -1133,7 +1133,7 @@ export function QuickBookingPopover({
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-semibold text-sm">{selectedClient?.name}</div>
+                        <div className="font-medium text-sm">{selectedClient?.name}</div>
                         <div className="text-xs text-muted-foreground">
                           {selectedClient?.phone || selectedClient?.email}
                         </div>
@@ -1174,7 +1174,7 @@ export function QuickBookingPopover({
 
                   {/* Services */}
                   <div>
-                    <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                    <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
                       Services
                     </h4>
                     <div className="bg-card border border-border rounded-lg divide-y divide-border">
@@ -1190,7 +1190,7 @@ export function QuickBookingPopover({
                             </div>
                           </div>
                           {service.price !== null && (
-                            <span className="font-semibold text-xs">{formatCurrencyWhole(service.price)}</span>
+                            <span className="font-medium text-xs">{formatCurrencyWhole(service.price)}</span>
                           )}
                         </div>
                       ))}

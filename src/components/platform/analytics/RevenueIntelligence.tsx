@@ -175,7 +175,7 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
           'rounded-xl border p-6',
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
-          <h3 className={cn('font-semibold mb-4', isDark ? 'text-white' : 'text-slate-900')}>
+          <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900')}>
             Service vs Retail Revenue
           </h3>
           <div className="h-64">
@@ -214,7 +214,7 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
         'rounded-xl border p-6',
         isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
       )}>
-        <h3 className={cn('font-semibold mb-4', isDark ? 'text-white' : 'text-slate-900')}>
+        <h3 className={cn('font-medium mb-4', isDark ? 'text-white' : 'text-slate-900')}>
           Organization Revenue Distribution (Monthly)
         </h3>
         <div className="h-64">

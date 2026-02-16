@@ -226,7 +226,7 @@ export function GalleryContent() {
               <ArrowLeftRight className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{transformations.length}</p>
+              <p className="text-2xl font-medium">{transformations.length}</p>
               <p className="text-sm text-muted-foreground">Before/After ({visibleTransforms} visible)</p>
             </div>
           </CardContent>

@@ -96,15 +96,15 @@ export function GiftCardManager() {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Total Gift Cards</p>
-          <p className="text-2xl font-display font-semibold">{giftCards.length}</p>
+          <p className="text-2xl font-display font-medium">{giftCards.length}</p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Active Cards</p>
-          <p className="text-2xl font-display font-semibold">{activeCount}</p>
+          <p className="text-2xl font-display font-medium">{activeCount}</p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-muted-foreground">Outstanding Balance</p>
-          <p className="text-2xl font-display font-semibold">{formatCurrency(totalValue)}</p>
+          <p className="text-2xl font-display font-medium">{formatCurrency(totalValue)}</p>
         </Card>
       </div>
 
@@ -246,7 +246,7 @@ export function GiftCardManager() {
                     {formatCurrency(Number(card.initial_amount))}
                   </TableCell>
                   <TableCell className={cn(
-                    "font-semibold",
+                    "font-medium",
                     Number(card.current_balance) === 0 && "text-muted-foreground"
                   )}>
                     {formatCurrency(Number(card.current_balance))}
