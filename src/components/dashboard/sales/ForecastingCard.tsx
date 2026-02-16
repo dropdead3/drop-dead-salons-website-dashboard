@@ -17,7 +17,7 @@ import { useYearlyGoalProgress } from '@/hooks/useYearlyGoalProgress';
 import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsSheet } from './DayAppointmentsSheet';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CalendarRange, TrendingUp, TrendingDown, Calendar, Users, Info, Target, ChevronDown } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
@@ -543,28 +543,15 @@ export function ForecastingCard() {
             </div>
             <div className="flex items-center justify-between">
               <CardDescription>{PERIOD_DESCRIPTIONS[period]}</CardDescription>
-              <ToggleGroup 
-                type="single" 
-                value={period} 
-                onValueChange={(v) => v && setPeriod(v as ForecastPeriod)}
-                className="bg-muted/50 p-1 rounded-lg"
-              >
-                <ToggleGroupItem value="tomorrow" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
-                  Tomorrow
-                </ToggleGroupItem>
-                <ToggleGroupItem value="todayToEom" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
-                  EOM
-                </ToggleGroupItem>
-                <ToggleGroupItem value="7days" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
-                  7 Days
-                </ToggleGroupItem>
-                <ToggleGroupItem value="30days" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
-                  30 Days
-                </ToggleGroupItem>
-                <ToggleGroupItem value="60days" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
-                  60 Days
-                </ToggleGroupItem>
-              </ToggleGroup>
+              <Tabs value={period} onValueChange={(v) => v && setPeriod(v as ForecastPeriod)}>
+                <TabsList>
+                  <TabsTrigger value="tomorrow">Tomorrow</TabsTrigger>
+                  <TabsTrigger value="todayToEom">EOM</TabsTrigger>
+                  <TabsTrigger value="7days">7 Days</TabsTrigger>
+                  <TabsTrigger value="30days">30 Days</TabsTrigger>
+                  <TabsTrigger value="60days">60 Days</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           </div>
         </CardHeader>
@@ -661,22 +648,13 @@ export function ForecastingCard() {
           {selectedStatCard !== null && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Drill down by:</span>
-              <ToggleGroup
-                type="single"
-                value={breakdownType}
-                onValueChange={(v) => v && setBreakdownType(v as BreakdownType)}
-                className="bg-muted/50 p-1 rounded-lg"
-              >
-                <ToggleGroupItem value="category" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
-                  Category
-                </ToggleGroupItem>
-                <ToggleGroupItem value="location" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
-                  Location
-                </ToggleGroupItem>
-                <ToggleGroupItem value="stylist" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:text-foreground data-[state=on]:shadow-sm">
-                  Service Provider
-                </ToggleGroupItem>
-              </ToggleGroup>
+              <Tabs value={breakdownType} onValueChange={(v) => v && setBreakdownType(v as BreakdownType)}>
+                <TabsList>
+                  <TabsTrigger value="category">Category</TabsTrigger>
+                  <TabsTrigger value="location">Location</TabsTrigger>
+                  <TabsTrigger value="stylist">Service Provider</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
           )}
 
