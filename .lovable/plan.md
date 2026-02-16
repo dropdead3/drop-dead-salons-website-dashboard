@@ -1,94 +1,120 @@
 
 
-# Fix Synthetic Bolding Across the Platform
+# Universal Client Email Unsubscribe System
 
-## The Problem
+## Overview
 
-Aeonik Pro is only loaded at weights 400 (Regular) and 500 (Medium). Any element using `font-semibold` (600), `font-bold` (700), or higher triggers the browser's synthetic bold algorithm -- producing ugly, inconsistent thickening that breaks the visual identity.
+Add a CAN-SPAM/GDPR-compliant unsubscribe mechanism to all client-facing marketing emails (re-engagement, bulk outreach). The unsubscribe confirmation page will include a clear reminder that appointment-related notifications remain active, encouraging clients to stay connected for booking updates.
 
-There are currently **1,975 instances** of prohibited weight classes across **164 files**. This is a systemic issue.
+## Current State
 
-## The Fix (Two-Part Strategy)
+- **Insights emails** (internal/staff): Already have their own unsubscribe flow via `unsubscribe-insights-email` edge function. No changes needed.
+- **Client marketing emails** (re-engagement, bulk outreach via `sendOrgEmail`): No unsubscribe mechanism. This is the gap.
 
-### Part 1: CSS-Level Guardrail (Immediate Protection)
+## What Gets Built
 
-Add a max font-weight override for `.font-sans` in `index.css`, identical to the existing Termina protection:
+### 1. Database: `client_email_preferences` Table
 
-```css
-.font-sans {
-  font-weight: 500 !important;
-}
+Tracks per-client, per-organization marketing email opt-out status.
+
+```
+client_email_preferences
+  id               UUID (PK)
+  organization_id  UUID (FK -> organizations)
+  client_id        UUID (FK -> phorest_clients)
+  marketing_opt_out BOOLEAN DEFAULT false
+  opt_out_at       TIMESTAMPTZ
+  created_at       TIMESTAMPTZ
+  UNIQUE(organization_id, client_id)
 ```
 
-Wait -- this would prevent `font-normal` (400) from working. Instead, a smarter approach: cap only the prohibited weights by intercepting the Tailwind utility classes themselves:
+RLS: Service role only (edge functions manage this, not browser clients).
 
-```css
-/* Prevent synthetic bolding for Aeonik Pro */
-.font-sans .font-semibold,
-.font-sans.font-semibold,
-.font-semibold:where(.font-sans, [class*="font-sans"]) {
-  font-weight: 500 !important;
-}
-```
+### 2. Edge Function: `unsubscribe-client-email`
 
-Actually, the cleanest approach: override the Tailwind weight utilities globally for the two fonts that lack bold weights:
+A new edge function that handles GET requests with signed tokens (same HMAC pattern as the existing insights unsubscribe). Renders a branded HTML confirmation page with:
 
-```css
-/* Global synthetic bold prevention */
-/* Aeonik Pro and Termina max out at 500 */
-:root {
-  /* These utilities get capped to 500 globally */
-}
-.font-semibold { font-weight: 500 !important; }
-.font-bold { font-weight: 500 !important; }
-.font-extrabold { font-weight: 500 !important; }
-.font-black { font-weight: 500 !important; }
-```
+- Confirmation message: "You've been unsubscribed from marketing emails."
+- Reassurance callout: "You'll still receive appointment confirmations, reminders, and booking updates -- no action needed."
+- A subtle link back to the salon's website (if configured in social links).
 
-This is safe because:
-- Laguna (font-serif) has a bold weight file and uses its own `font-serif` class
-- Sloop Script is decorative and never uses bold
-- Any future font with bold weights would need its own scoped override, which is the correct pattern
+### 3. Shared Utility: Signed URL Builder
 
-### Part 2: Codebase Cleanup (Phased)
+Extract the HMAC token-signing logic (currently duplicated in `send-insights-email`) into a shared helper in `_shared/`, so both the insights and client unsubscribe flows use the same pattern.
 
-Systematically replace all prohibited classes. This is a large sweep best done in batches:
+New file: `supabase/functions/_shared/signed-url.ts`
+- `buildSignedUrl(functionName, payload)` -- returns a full signed URL
+- `verifySignedPayload(payload, sig)` -- returns decoded payload or throws
 
-**Batch 1 -- Dashboard Home and visible components** (what the user sees first):
-- `DashboardHome.tsx` -- already clean
-- `InsightsNudgeBanner.tsx` -- line 92: `font-semibold` to `font-medium`
-- `AIInsightsDrawer.tsx` -- clean
-- `AnnouncementsDrawer.tsx` -- clean
+### 4. Email Sender Integration
 
-**Batch 2 -- High-traffic pages** (settings, analytics, schedule):
-- All files in `src/components/dashboard/` with violations
-- All files in `src/pages/dashboard/` with violations
+Modify `sendOrgEmail` to accept an optional `clientId` parameter. When provided:
 
-**Batch 3 -- Remaining files** across components, pages, and UI
+1. Check `client_email_preferences` -- skip sending if opted out
+2. Generate a signed unsubscribe URL
+3. Inject the unsubscribe link into the email footer (inside `buildBrandedTemplate`)
+4. Add `List-Unsubscribe` and `List-Unsubscribe-Post` headers to the Resend API call (required by Gmail/Yahoo 2024+ sender guidelines)
 
-Given the scale (164 files), Part 2 and 3 will be done as a comprehensive sweep, replacing:
-- `font-bold` with `font-medium`
-- `font-semibold` with `font-medium`
-- `font-extrabold` with `font-medium`
-- `font-black` with `font-medium`
+### 5. Callers Updated
 
-Exception: `font-bold` inside Laguna (`font-serif`) contexts is allowed and will be preserved.
+- `check-client-inactivity`: Pass `client_id` to `sendOrgEmail`, check opt-out before sending
+- `process-client-automations`: Same treatment for bulk outreach
 
 ## File Changes
 
-### Modified: `src/index.css`
-Add global CSS overrides that cap `font-semibold`, `font-bold`, `font-extrabold`, and `font-black` to weight 500. This acts as a safety net even if code violations remain.
+### New: `supabase/migrations/...add_client_email_preferences.sql`
+- Create `client_email_preferences` table with unique constraint and RLS enabled (no browser policies -- service role only)
 
-### Modified: 164 component/page files
-Replace all prohibited weight classes with `font-medium`. Laguna/serif contexts excluded.
+### New: `supabase/functions/_shared/signed-url.ts`
+- `buildSignedUrl(baseUrl, functionName, payload)` -- HMAC-signs and returns URL
+- `verifySignedPayload(payload, sig)` -- verifies and decodes
 
-### Modified: `src/components/dashboard/InsightsNudgeBanner.tsx`
-Specific fix: line 92 `font-semibold` to `font-medium` (visible in the screenshot area).
+### New: `supabase/functions/unsubscribe-client-email/index.ts`
+- GET handler: verify signature, set `marketing_opt_out = true`, render confirmation page
+- Confirmation page includes appointment notification reassurance message
+- Styled consistently with the existing insights unsubscribe page (purple gradient icon, clean layout)
 
-## Why This Approach
+### Modified: `supabase/functions/_shared/email-sender.ts`
+- `OrgEmailPayload` gains optional `clientId?: string`
+- `sendOrgEmail` checks opt-out status when `clientId` is provided
+- `buildBrandedTemplate` accepts optional `unsubscribeUrl` and renders it in the footer
+- Resend API call includes `List-Unsubscribe` header when URL is present
 
-The CSS guardrail (Part 1) provides **immediate, universal protection**. Even if a developer accidentally uses `font-bold` in the future, the browser will render weight 500 instead of synthesizing. The codebase cleanup (Part 2) ensures the code itself is correct and doesn't rely on overrides.
+### Modified: `supabase/functions/check-client-inactivity/index.ts`
+- Pass `client_id` when calling `sendOrgEmail`
 
-## Risk
+### Modified: `supabase/functions/send-insights-email/index.ts`
+- Refactor to use shared `buildSignedUrl` utility (removes duplicated HMAC logic)
 
-The global override means if Laguna's `font-bold` is applied without also having `font-serif`, it would get capped. Review will verify Laguna contexts always pair `font-bold` with `font-serif`.
+## Unsubscribe Confirmation Page Copy
+
+```
+Title: "Unsubscribed"
+Body: "You've been removed from marketing emails from [Salon Name]."
+
+Callout box:
+"Your appointment reminders and booking confirmations are not affected.
+You'll continue to receive notifications about your upcoming visits."
+```
+
+## Technical Details
+
+### Token Payload Structure
+```json
+{ "cid": "<client_id>", "oid": "<org_id>", "ts": 1234567890 }
+```
+
+### Opt-Out Check Flow
+```
+sendOrgEmail called with clientId
+  -> query client_email_preferences for (org_id, client_id)
+  -> if marketing_opt_out = true, skip send, return { success: true, skipped: true }
+  -> else proceed with send, inject unsubscribe footer
+```
+
+### List-Unsubscribe Headers (Gmail/Yahoo compliance)
+```
+List-Unsubscribe: <https://...functions/v1/unsubscribe-client-email?payload=...&sig=...>
+List-Unsubscribe-Post: List-Unsubscribe=One-Click
+```
+
