@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { EmailBrandingSection } from './EmailBrandingSection';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -398,6 +399,9 @@ export function AccountSettingsTab({ organizationId }: AccountSettingsTabProps) 
           </div>
         </PlatformCardContent>
       </PlatformCard>
+
+      {/* Email Branding */}
+      <EmailBrandingSection organizationId={organizationId} />
 
       {/* Save Button */}
       {hasChanges && (

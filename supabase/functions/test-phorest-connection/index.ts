@@ -180,7 +180,7 @@ serve(async (req: Request) => {
       JSON.stringify({ 
         connected: true,
         business: {
-          name: responseData?.name || responseData?.businessName || "Drop Dead Hair Studios",
+          name: responseData?.name || responseData?.businessName || "Unknown",
           id: businessId,
         },
         region: successfulConfig.regionName,
