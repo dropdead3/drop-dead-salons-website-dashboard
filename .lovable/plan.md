@@ -1,89 +1,49 @@
-## Booking Pipeline Health Indicator
+
+
+## Fix Executive Summary Card Grid Layout
 
 ### Problem
+The KPI tiles don't span the full width cleanly:
+- **Revenue and Liability** has 3 cards in a `md:grid-cols-4` grid, leaving a gap
+- **Operations** has 4 cards in a `md:grid-cols-3` grid, causing the 4th card to wrap alone at partial width
 
-As a leader, you have no forward-looking signal for whether your appointment books are thinning out beyond the next week. A sudden scheduling die-down at the 3-6 week horizon means revenue will crater -- and by the time you notice in weekly numbers, it's too late to act. You need an early warning system.
+### Solution
+Add a simple helper that picks the right grid column count based on the number of items, ensuring even rows that span the full width.
 
-### What We'll Build: "Booking Pipeline" KPI Tile
-
-A new KPI tile inside the Executive Summary card (under the Operations section) that shows the health of your forward appointment pipeline across 14-42 days.
-
-**What it shows:**
-
-- A pipeline health label: "Healthy", "Slowing", or "Critical"
-- Color-coded value (green/amber/red) based on how future bookings compare to your trailing average
-- A subtitle showing the comparison: e.g., "32 appts next 14d vs 45 avg"
-- Drills down to the Capacity/Utilization analytics tab for deeper analysis
-
-**How it works:**
-
-1. Count appointments booked for the next 14 days (forward pipeline)
-2. Count appointments that were on the books for the trailing 14 days (recent baseline)
-3. Compare: if forward is less than 50% of baseline, it's "Critical" (red). 50-80% is "Slowing" (amber). 80%+ is "Healthy" (green).
-
-### Visual (inside Executive Summary, Operations row)
-
-```text
-OPERATIONS
-|---------------------|---------------------|---------------------|---------------------|
-| TOTAL STAFF         | TOTAL CLIENTS       | UTILIZATION         | BOOKING PIPELINE    |
-| 2                   | 504                 | 3%                  | Slowing             |
-| View Team >         | View Clients >      | View Capacity >     | 18 vs 28 avg (14d)  |
-|                     |                     |                     | View Pipeline >     |
-|---------------------|---------------------|---------------------|---------------------|
-```
+**Grid logic:**
+| Count | Grid Columns | Result |
+|-------|-------------|--------|
+| 1     | 1 col       | Full width |
+| 2     | 2 cols      | 2 equal |
+| 3     | 3 cols      | 3 equal |
+| 4     | 2 or 4 cols | 2x2 on mobile, 4 across on desktop |
+| 5     | 3 cols top + 2 cols bottom (or 5 cols) | Handled gracefully |
+| 6     | 3 cols      | 2 clean rows of 3 |
 
 ### Changes
 
-**1. New hook: `src/hooks/useBookingPipeline.ts**`
+**File: `src/components/dashboard/analytics/ExecutiveSummaryCard.tsx`**
 
-- Queries `phorest_appointments` for the next 14 days (forward count)
-- Queries `phorest_appointments` for the trailing 14 days (baseline count)
-- Computes a ratio and returns health status, counts, and the percentage
-- Accepts optional `locationId` filter
-- Returns: `{ forwardCount, baselineCount, ratio, status: 'healthy' | 'slowing' | 'critical', label }`
+1. Create a small helper function that returns the appropriate grid class based on item count:
+   - 1 item: `grid-cols-1`
+   - 2 items: `grid-cols-2`
+   - 3 items: `grid-cols-1 md:grid-cols-3`
+   - 4 items: `grid-cols-2 md:grid-cols-4`
+   - 5 items: `grid-cols-2 md:grid-cols-3` (3+2 bento, per existing KPI grid memory)
+   - 6+ items: `grid-cols-2 md:grid-cols-3`
 
-**2. Update: `src/components/dashboard/analytics/ExecutiveSummaryCard.tsx**`
+2. **Revenue and Liability section** (3 items): Change from `grid-cols-2 md:grid-cols-4` to `grid-cols-1 md:grid-cols-3` so all 3 tiles fill the row evenly
 
-- Import and call `useBookingPipeline(locationId)`
-- Add a 7th KPI tile to the Operations section:
-  - Icon: `CalendarCheck2` (or `CalendarClock`)
-  - Label: "Booking Pipeline"
-  - Value: The health label ("Healthy" / "Slowing" / "Critical")
-  - Value color: green for healthy, amber for slowing, red for critical
-  - Subtitle: "X appts next 14d vs Y avg"
-  - Drill-down link: `/dashboard/admin/analytics?tab=operations&subtab=staff-utilization`
-  - Tooltip: "Compares appointments booked for the next 14 days against your trailing 14-day average. Flags slowdowns before they impact revenue."
-- The Operations grid will now hold 4 items (renders cleanly in a `grid-cols-2 md:grid-cols-4` or keeps the existing `md:grid-cols-3` with the 4th wrapping gracefully)
+3. **Operations section** (4 items): Change from `grid-cols-2 md:grid-cols-3` to `grid-cols-2 md:grid-cols-4` so all 4 tiles fill one row on desktop, or 2x2 on mobile
 
-### Thresholds
+4. Also update the loading skeleton grid to match (`grid-cols-2 md:grid-cols-3`)
 
+### Result
+- Revenue and Liability: 3 cards spanning the full width in one clean row
+- Operations: 4 cards spanning the full width in one clean row on desktop, 2x2 on tablet/mobile
+- If cards are added or removed in the future, the helper function adapts automatically
 
-| Ratio (Forward / Baseline) | Status   | Color |
-| -------------------------- | -------- | ----- |
-| >= 90%                     | Healthy  | green |
-| 70% - 89%                  | Slowing  | amber |
-| < 70%                      | Critical | red   |
-
-
-### Technical Details
-
-`**useBookingPipeline.ts**`
-
-```
-- Forward query: appointment_date between tomorrow and +14 days, excluding cancelled/no_show
-- Baseline query: appointment_date between -14 days and today, excluding cancelled/no_show
-- Both respect locationId filter
-- Returns { forwardCount, baselineCount, ratio, status, label }
-- staleTime: 10 minutes
-```
-
-**Grid layout adjustment:**
-
-- Operations section currently has 3 tiles (Staff, Clients, Utilization)
-- Adding a 4th keeps `md:grid-cols-3` with the 4th item wrapping to next row on medium screens, or we can switch to `grid-cols-2 md:grid-cols-4` for a balanced row
-
-### Files
-
-- **Create**: `src/hooks/useBookingPipeline.ts`
-- **Modify**: `src/components/dashboard/analytics/ExecutiveSummaryCard.tsx`
+### Technical details
+- Single file change: `src/components/dashboard/analytics/ExecutiveSummaryCard.tsx`
+- Helper function: `getGridCols(count: number): string`
+- Applied to both section grids via `className={cn('grid gap-4', getGridCols(items.length))}`
