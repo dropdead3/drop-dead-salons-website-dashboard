@@ -451,6 +451,12 @@ export function AggregateSalesCard({
 
   const hasNoData = !metrics || displayMetrics.totalRevenue === 0;
 
+  const isSingleDay = dateRange === 'today' || dateRange === 'yesterday';
+  const allLocationsClosed = isSingleDay && hasNoData
+    && (locations?.length ?? 0) > 0
+    && locations!.every(loc =>
+      isClosedOnDate(loc.hours_json, loc.holiday_closures, dateRange === 'yesterday' ? subDays(new Date(), 1) : new Date()).isClosed
+    );
 
   return (
     <Card className="p-6">
@@ -535,6 +541,20 @@ export function AggregateSalesCard({
         </div>
       </div>
 
+      {allLocationsClosed ? (
+        <div className="bg-muted/30 dark:bg-card rounded-xl border border-border/40 py-16 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full border border-border/60 bg-muted/40">
+            <Moon className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <h3 className="font-display text-lg text-foreground">
+            All locations closed {dateRange === 'yesterday' ? 'yesterday' : 'today'}
+          </h3>
+          <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+            No sales activity — all {locations?.length ?? 0} locations {dateRange === 'yesterday' ? 'were' : 'are'} closed {dateRange === 'yesterday' ? 'yesterday' : 'today'}.
+          </p>
+        </div>
+      ) : (
+      <>
       {/* Main Content Grid */}
       <div className="grid xl:grid-cols-3 gap-6 mb-6">
         {/* KPIs with Trends */}
@@ -1261,6 +1281,8 @@ export function AggregateSalesCard({
             </div>
           )}
         </div>
+      )}
+      </>
       )}
       {/* Service/Product Drilldown Dialog */}
       <ServiceProductDrilldown
