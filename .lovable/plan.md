@@ -1,52 +1,89 @@
-
-
-## Restyle Executive Brief as Inline Expandable Button
+## Booking Pipeline Health Indicator
 
 ### Problem
-The Executive Brief currently opens a side drawer (Sheet), but it should match the Zura Insights pattern: a compact pill button that expands into an inline card on the page.
 
-### Solution
-Replace the Sheet-based approach in `LeadershipTabContent.tsx` with a toggle button that expands/collapses the `WeeklyLeverSection` content inline, using the same visual pattern as `AIInsightsDrawer`:
-- **Collapsed**: A compact pill button with icon + label + chevron (matching the Zura Insights button style)
-- **Expanded**: An inline card below the button showing the full `WeeklyLeverSection` content with a close button
+As a leader, you have no forward-looking signal for whether your appointment books are thinning out beyond the next week. A sudden scheduling die-down at the 3-6 week horizon means revenue will crater -- and by the time you notice in weekly numbers, it's too late to act. You need an early warning system.
+
+### What We'll Build: "Booking Pipeline" KPI Tile
+
+A new KPI tile inside the Executive Summary card (under the Operations section) that shows the health of your forward appointment pipeline across 14-42 days.
+
+**What it shows:**
+
+- A pipeline health label: "Healthy", "Slowing", or "Critical"
+- Color-coded value (green/amber/red) based on how future bookings compare to your trailing average
+- A subtitle showing the comparison: e.g., "32 appts next 14d vs 45 avg"
+- Drills down to the Capacity/Utilization analytics tab for deeper analysis
+
+**How it works:**
+
+1. Count appointments booked for the next 14 days (forward pipeline)
+2. Count appointments that were on the books for the trailing 14 days (recent baseline)
+3. Compare: if forward is less than 50% of baseline, it's "Critical" (red). 50-80% is "Slowing" (amber). 80%+ is "Healthy" (green).
+
+### Visual (inside Executive Summary, Operations row)
+
+```text
+OPERATIONS
+|---------------------|---------------------|---------------------|---------------------|
+| TOTAL STAFF         | TOTAL CLIENTS       | UTILIZATION         | BOOKING PIPELINE    |
+| 2                   | 504                 | 3%                  | Slowing             |
+| View Team >         | View Clients >      | View Capacity >     | 18 vs 28 avg (14d)  |
+|                     |                     |                     | View Pipeline >     |
+|---------------------|---------------------|---------------------|---------------------|
+```
 
 ### Changes
 
-**File: `src/components/dashboard/analytics/LeadershipTabContent.tsx`**
+**1. New hook: `src/hooks/useBookingPipeline.ts**`
 
-1. Remove all Sheet-related imports and markup
-2. Add local `expanded` state toggle
-3. Collapsed state: render a compact pill button matching the Zura Insights style:
-   - `inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background`
-   - Target icon in a small rounded container
-   - "Executive Brief" label
-   - ChevronDown that rotates when expanded
-4. Expanded state: render the `WeeklyLeverSection` inside an animated card (using framer-motion `AnimatePresence` for smooth open/close, matching the Zura Insights expand animation)
-   - Card header with "EXECUTIVE BRIEF" title and close (X) button
-   - `WeeklyLeverSection` content inside
-5. Use framer-motion for the same transition feel as Zura Insights
+- Queries `phorest_appointments` for the next 14 days (forward count)
+- Queries `phorest_appointments` for the trailing 14 days (baseline count)
+- Computes a ratio and returns health status, counts, and the percentage
+- Accepts optional `locationId` filter
+- Returns: `{ forwardCount, baselineCount, ratio, status: 'healthy' | 'slowing' | 'critical', label }`
 
-### Visual
+**2. Update: `src/components/dashboard/analytics/ExecutiveSummaryCard.tsx**`
 
-Collapsed:
-```text
-[Target] Executive Brief  [v]
+- Import and call `useBookingPipeline(locationId)`
+- Add a 7th KPI tile to the Operations section:
+  - Icon: `CalendarCheck2` (or `CalendarClock`)
+  - Label: "Booking Pipeline"
+  - Value: The health label ("Healthy" / "Slowing" / "Critical")
+  - Value color: green for healthy, amber for slowing, red for critical
+  - Subtitle: "X appts next 14d vs Y avg"
+  - Drill-down link: `/dashboard/admin/analytics?tab=operations&subtab=staff-utilization`
+  - Tooltip: "Compares appointments booked for the next 14 days against your trailing 14-day average. Flags slowdowns before they impact revenue."
+- The Operations grid will now hold 4 items (renders cleanly in a `grid-cols-2 md:grid-cols-4` or keeps the existing `md:grid-cols-3` with the 4th wrapping gracefully)
+
+### Thresholds
+
+
+| Ratio (Forward / Baseline) | Status   | Color |
+| -------------------------- | -------- | ----- |
+| >= 90%                     | Healthy  | green |
+| 70% - 89%                  | Slowing  | amber |
+| < 70%                      | Critical | red   |
+
+
+### Technical Details
+
+`**useBookingPipeline.ts**`
+
+```
+- Forward query: appointment_date between tomorrow and +14 days, excluding cancelled/no_show
+- Baseline query: appointment_date between -14 days and today, excluding cancelled/no_show
+- Both respect locationId filter
+- Returns { forwardCount, baselineCount, ratio, status, label }
+- staleTime: 10 minutes
 ```
 
-Expanded:
-```text
-|-------------------------------------------------|
-| EXECUTIVE BRIEF                           [X]   |
-|-------------------------------------------------|
-| [WeeklyLeverSection content]                    |
-|-------------------------------------------------|
-```
+**Grid layout adjustment:**
 
-### Technical details
-- Import `useState` from React, `AnimatePresence` and `motion` from framer-motion
-- Remove `Sheet`, `SheetContent`, `SheetHeader`, `SheetTitle`, `SheetTrigger` imports
-- Replace `ChevronRight` with `ChevronDown` and add `X` icon
-- Button classes match `AIInsightsDrawer` line 309: `inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-sans hover:bg-muted/50 transition-colors cursor-pointer`
-- Expanded card classes match `AIInsightsDrawer` line 329: `w-full rounded-2xl shadow-lg border border-border/40 bg-card overflow-hidden`
-- Single file change only
+- Operations section currently has 3 tiles (Staff, Clients, Utilization)
+- Adding a 4th keeps `md:grid-cols-3` with the 4th item wrapping to next row on medium screens, or we can switch to `grid-cols-2 md:grid-cols-4` for a balanced row
 
+### Files
+
+- **Create**: `src/hooks/useBookingPipeline.ts`
+- **Modify**: `src/components/dashboard/analytics/ExecutiveSummaryCard.tsx`
