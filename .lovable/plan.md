@@ -1,121 +1,89 @@
 
 
-# Enhanced Email Preview and Test Email
+# Template-Specific Preview Mode for Email Branding
 
 ## Overview
 
-Upgrade the Email Branding tab with two major features: (1) a rich, accurate email preview that mirrors the actual `buildBrandedTemplate()` output from the backend, and (2) a "Send Test Email" button that sends a real branded email to the admin so they can see exactly what recipients will receive.
+Add a template selector dropdown to the Email Branding preview so admins can see how real email templates (birthday reminder, strike alert, welcome email, etc.) look when wrapped in their current branding -- not just the generic sample content.
 
 ## What Changes
 
-### 1. Enhanced Live Preview (in `EmailBrandingSettings.tsx`)
+### 1. Template Selector in Preview Header (in `EmailBrandingSettings.tsx`)
 
-Replace the current simplified preview with an accurate replica of the `buildBrandedTemplate()` function from `supabase/functions/_shared/email-sender.ts`. The current preview is a rough approximation -- the enhanced version will match the actual email output pixel-for-pixel:
+Add a `Select` dropdown next to the Desktop/Mobile toggle in the preview header area. Options:
 
-- Outer wrapper with `#f4f4f5` background (matches email body bg)
-- Header block with accent color, centered logo/org name (same logic as backend: logo image or fallback text)
-- 4px gradient accent bar
-- White content area with border, containing realistic sample content (not just skeleton lines) -- e.g., a greeting, a paragraph, and a CTA button
-- Footer with "Sent via Zura" link, matching the real template's styling
-- Desktop/mobile toggle to preview at 600px vs 360px width
+- **Sample Content** (default) -- the current generic preview
+- **Birthday Reminder** -- renders the `birthday_reminder` template with placeholder variables filled
+- **Strike Notification** -- renders `strike_notification` template
+- **Welcome Email** -- renders `welcome_email` template
+- **Handbook Reminder** -- renders `handbook_reminder` template
+- **Training Reminder** -- renders `training_reminder` template
+- Plus any other active templates found in the DB
 
-### 2. Send Test Email Button (in `EmailBrandingSettings.tsx`)
+The dropdown fetches templates via the existing `useEmailTemplates()` hook from `src/hooks/useEmailTemplates.ts`.
 
-Add a "Send Test Email" action next to Save Branding:
+### 2. Variable Substitution for Preview
 
-- Opens a small inline dialog/popover asking for recipient email (pre-filled with the logged-in user's email)
-- Calls a new edge function `send-branding-test-email` that:
-  - Authenticates the user and checks admin role
-  - Fetches the org's current saved branding from the `organizations` table
-  - Wraps sample content in `buildBrandedTemplate()` (the real branded template)
-  - Sends via `sendOrgEmail` with a `[BRANDING TEST]` subject prefix
-- Shows success/error toast after sending
-- Note: This is distinct from the existing `send-test-email` function which sends a specific template -- this one tests the branding wrapper itself
+Each template uses `{{variable}}` placeholders. For preview purposes, these get replaced with realistic sample data:
 
-### 3. New Edge Function: `send-branding-test-email`
+| Variable | Sample Value |
+|---|---|
+| `{{stylist_name}}` / `{{employee_name}}` | "Sarah Johnson" |
+| `{{birthday_date}}` / `{{date}}` | "Monday, March 15" |
+| `{{birthday_count}}` / `{{count}}` | "2" |
+| `{{birthday_list}}` | Sample HTML list with 2 names |
+| `{{birthday_names}}` | "Emma Wilson, Alex Chen" |
+| `{{days_until}}` | "3" |
+| `{{handbook_title}}` / `{{training_title}}` | "Employee Handbook 2026" |
+| `{{dashboard_url}}` / `{{link}}` | "#" |
+| `{{plural}}` | "s" |
+| `{{inactive_count}}` | "3" |
+| `{{day_number}}` / `{{current_day}}` | "5" |
 
-**File:** `supabase/functions/send-branding-test-email/index.ts`
+A helper function `fillSampleVariables()` maps known variable names to realistic preview values. Any unmatched `{{var}}` gets replaced with a styled placeholder badge so admins see what is dynamic.
 
-Purpose: Send a branded test email using the org's current branding settings with generic sample content (not tied to a specific template). This lets admins verify logo, color, sender name, and reply-to before going live.
+### 3. Preview Content Swap
 
-Request body: `{ recipient_email: string }`
+When a template is selected from the dropdown, the preview area renders the template's `html_body` (with variables filled) inside the same branded wrapper (header, accent bar, footer). This is the same content flow as the backend: `buildBrandedTemplate(branding, templateHtml)`.
 
-Flow:
-1. Authenticate user via Bearer token
-2. Check admin role via `user_roles` table
-3. Get user's `organization_id` from `employee_profiles`
-4. Call `sendOrgEmail()` with sample HTML content (greeting, paragraph, sample button)
-5. Return success/error
+When "Sample Content" is selected, it shows the current generic preview (greeting + paragraph + CTA button).
 
-### 4. Component UI Layout (Updated)
+### 4. Updated Preview Layout
 
 ```text
-+----------------------------------------------+
-| EMAIL BRANDING                               |
-| Customize how your outbound emails appear    |
-|                                              |
-| [Sender Name]        [Reply-To Email]        |
-| [Logo Upload]        [Accent Color]          |
-|                                              |
-| [Show Preview]  [Send Test] [Save Branding]  |
-+----------------------------------------------+
-|                                              |
-| EMAIL PREVIEW                 [Desktop|Mobile]|
-| +------------------------------------------+ |
-| |     [accent-color header with logo]      | |
-| |     ================================     | |
-| |                                          | |
-| |  Hi there,                               | |
-| |                                          | |
-| |  This is a preview of how your branded   | |
-| |  emails will appear to recipients...     | |
-| |                                          | |
-| |  [ View Dashboard ]  (accent CTA button) | |
-| |                                          | |
-| |     -------- footer --------             | |
-| |     Sent via Zura                        | |
-| +------------------------------------------+ |
-+----------------------------------------------+
+EMAIL PREVIEW          [Template: v] [Desktop|Mobile]
++--------------------------------------------------+
+|        [accent-color header with logo]            |
+|        ==================================         |
+|                                                   |
+|  (selected template content with sample data)     |
+|                                                   |
+|        -------- footer --------                   |
+|        Sent via Zura                              |
++--------------------------------------------------+
 ```
 
-## Gap Analysis and Enhancements
-
-### Gaps Identified
-
-1. **Unsaved branding in test email**: The existing `send-test-email` uses saved DB values. The new test email will also use saved values, so the UI should warn admins to save first if there are unsaved changes.
-
-2. **Preview uses local state, email uses DB state**: The preview reflects unsaved edits (good for design iteration), but the test email reflects what is saved. The UI will make this distinction clear with a note: "Test email uses your last saved branding."
-
-3. **No email deliverability feedback**: After sending a test email, admins have no way to know if it landed in spam. This is a future enhancement (delivery status tracking).
-
-### Suggested Future Enhancements
-
-1. **Dark mode email preview** -- Toggle to see how the email renders in dark mode email clients (Gmail, Apple Mail dark mode invert colors).
-
-2. **Template-specific preview** -- Let admins pick a real template (birthday, strike, onboarding) and preview it with branding applied, not just generic content.
-
-3. **Custom footer text** -- Add a field for custom footer content (e.g., salon address, phone number) that appears above the "Sent via Zura" line.
-
-4. **Email signature integration** -- Connect the Signatures tab presets so admins can preview signatures within the branded wrapper.
-
 ## Technical Details
-
-### Files to Create
-
-| File | Purpose |
-|---|---|
-| `supabase/functions/send-branding-test-email/index.ts` | Edge function to send a branded test email with sample content |
 
 ### Files to Modify
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/settings/EmailBrandingSettings.tsx` | Enhanced preview matching real template output, desktop/mobile toggle, send test email button with recipient input |
+| `src/components/dashboard/settings/EmailBrandingSettings.tsx` | Add template selector dropdown using `Select` component, `useEmailTemplates()` hook, sample variable map, and conditional content rendering inside the preview |
 
-### Dependencies
-- Uses existing `sendOrgEmail()` and `buildBrandedTemplate()` from `_shared/email-sender.ts`
-- Uses existing `business-logos` storage bucket
-- Uses existing `organizations` table columns
-- No new database migrations needed
-- No new secrets needed (uses existing RESEND_API_KEY)
+### No New Files Needed
+
+This is entirely a frontend preview enhancement. No edge functions or database changes required.
+
+### Dependencies Used
+- Existing `useEmailTemplates()` hook for fetching active templates
+- Existing `Select`, `SelectContent`, `SelectItem`, `SelectTrigger`, `SelectValue` UI components
+- No new packages or migrations
+
+### Key Implementation Details
+
+1. The `useEmailTemplates()` query only fires when the preview is visible (`enabled: showPreview`) to avoid unnecessary DB calls.
+2. The sample variable replacement is client-side only -- it never touches the real email sending flow.
+3. Template HTML is rendered via `dangerouslySetInnerHTML` inside the branded wrapper, same as the current preview approach.
+4. The template dropdown defaults to "sample" (generic content) so existing behavior is unchanged.
 
