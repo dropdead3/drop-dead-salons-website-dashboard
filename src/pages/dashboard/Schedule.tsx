@@ -72,6 +72,13 @@ export default function Schedule() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [copilotOpen, setCopilotOpen] = useState(false);
+
+  // Listen for FAB toggle event
+  useEffect(() => {
+    const handleToggle = () => setCopilotOpen(prev => !prev);
+    window.addEventListener('toggle-scheduling-copilot', handleToggle);
+    return () => window.removeEventListener('toggle-scheduling-copilot', handleToggle);
+  }, []);
   const [bookingDefaults, setBookingDefaults] = useState<{ date?: Date; stylistId?: string; time?: string }>({});
   const [calendarFilters, setCalendarFilters] = useState<CalendarFilterState>({
     clientTypes: [],
