@@ -1,28 +1,26 @@
 
 
-# Make Service Row Clickable for Edit
+# Remove Base Price References from Pricing Tabs
 
-## Overview
+## Problem
 
-Make the entire service line item row clickable to open the Service Editor dialog, instead of requiring users to find and click the small pencil icon.
+The Level Pricing and Location Pricing tabs show the base price as placeholder text in every input field and reference it in the helper copy ("Leave blank to use the base price ($15.00)"). This creates a misleading impression that there is a standard default price pre-set, when there is not.
 
 ## Changes
 
-### File: `src/components/dashboard/settings/ServicesSettingsContent.tsx`
+### 1. `src/components/dashboard/settings/LevelPricingContent.tsx`
 
-**Service row (lines 387-406)**:
-- Add `cursor-pointer` to the row div and attach an `onClick` handler that opens the editor dialog
-- The delete button (Trash icon) needs `e.stopPropagation()` to prevent the row click from firing when deleting
-- Remove the separate pencil edit button since the whole row now serves that purpose
-- Keep the delete icon visible on hover as the only action icon
+- Change helper text from "Set pricing by stylist level. Leave blank to use the base price ($15.00)." to "Set pricing by stylist level. Leave blank if no level-specific price applies."
+- Change input placeholder from the base price value (e.g. "15.00") to a neutral "0.00"
 
-**Before**: Row is passive, edit requires clicking the small pencil icon
-**After**: Clicking anywhere on the row (except the delete icon) opens the Service Editor
+### 2. `src/components/dashboard/settings/LocationPricingContent.tsx`
 
-## Technical Detail
+- Change helper text from "Set a location-specific base price. Leave blank to use the default ($15.00)." to "Set a location-specific price. Leave blank if no location-specific price applies."
+- Change input placeholder from the base price value to a neutral "0.00"
 
-- The row `div` gets `onClick={() => { setEditorService(svc); setEditorDialogOpen(true); }}`
-- Add `cursor-pointer` to the row class
-- Trash button gets `onClick={(e) => { e.stopPropagation(); deleteService.mutate(svc.id); }}`
-- Remove the Pencil `Button` entirely since the row itself is the click target
+### 3. `src/components/dashboard/settings/LevelPricingDialog.tsx` (backward compat wrapper)
+
+- Same changes: remove base price from description text and input placeholder
+
+## No structural or data changes -- copy and placeholder only.
 
