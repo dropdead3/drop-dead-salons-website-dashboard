@@ -7711,9 +7711,14 @@ export type Database = {
           current_period_end: string | null
           current_period_start: string | null
           email_accent_color: string | null
+          email_button_radius: string | null
+          email_footer_text: string | null
+          email_header_style: string | null
           email_logo_url: string | null
           email_reply_to: string | null
           email_sender_name: string | null
+          email_show_attribution: boolean | null
+          email_social_links: Json | null
           go_live_date: string | null
           id: string
           is_internal: boolean
@@ -7754,9 +7759,14 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           email_accent_color?: string | null
+          email_button_radius?: string | null
+          email_footer_text?: string | null
+          email_header_style?: string | null
           email_logo_url?: string | null
           email_reply_to?: string | null
           email_sender_name?: string | null
+          email_show_attribution?: boolean | null
+          email_social_links?: Json | null
           go_live_date?: string | null
           id?: string
           is_internal?: boolean
@@ -7797,9 +7807,14 @@ export type Database = {
           current_period_end?: string | null
           current_period_start?: string | null
           email_accent_color?: string | null
+          email_button_radius?: string | null
+          email_footer_text?: string | null
+          email_header_style?: string | null
           email_logo_url?: string | null
           email_reply_to?: string | null
           email_sender_name?: string | null
+          email_show_attribution?: boolean | null
+          email_social_links?: Json | null
           go_live_date?: string | null
           id?: string
           is_internal?: boolean
