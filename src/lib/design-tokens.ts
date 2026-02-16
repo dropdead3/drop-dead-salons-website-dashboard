@@ -97,6 +97,49 @@ export const tokens = {
   },
 } as const;
 
+// ============================================================
+// APPOINTMENT STATUS COLOR MAPS
+// ============================================================
+// Canonical status color definitions — import these instead of
+// defining local STATUS_COLORS / STATUS_CONFIG in view components.
+
+type AppointmentStatusKey = 'booked' | 'confirmed' | 'checked_in' | 'completed' | 'cancelled' | 'no_show';
+
+/** Day / Week view appointment card colors (saturated for calendar cells) */
+export const APPOINTMENT_STATUS_COLORS: Record<AppointmentStatusKey, { bg: string; border: string; text: string }> = {
+  booked:     { bg: 'bg-muted',        border: 'border-muted-foreground/30', text: 'text-foreground' },
+  confirmed:  { bg: 'bg-green-500',    border: 'border-green-600',           text: 'text-white' },
+  checked_in: { bg: 'bg-blue-500',     border: 'border-blue-600',            text: 'text-white' },
+  completed:  { bg: 'bg-purple-500',   border: 'border-purple-600',          text: 'text-white' },
+  cancelled:  { bg: 'bg-muted/50',     border: 'border-muted',               text: 'text-muted-foreground' },
+  no_show:    { bg: 'bg-destructive',  border: 'border-destructive',         text: 'text-destructive-foreground' },
+};
+
+/** Agenda / badge / pastel variant colors */
+export const APPOINTMENT_STATUS_BADGE: Record<AppointmentStatusKey, { bg: string; text: string; label: string }> = {
+  booked:     { bg: 'bg-slate-100',  text: 'text-slate-700',  label: 'Booked' },
+  confirmed:  { bg: 'bg-green-100',  text: 'text-green-800',  label: 'Confirmed' },
+  checked_in: { bg: 'bg-blue-100',   text: 'text-blue-800',   label: 'Checked In' },
+  completed:  { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Completed' },
+  cancelled:  { bg: 'bg-gray-100',   text: 'text-gray-600',   label: 'Cancelled' },
+  no_show:    { bg: 'bg-red-100',    text: 'text-red-800',    label: 'No Show' },
+};
+
+/** Full status config used by usePhorestCalendar (includes border + label) */
+export const APPOINTMENT_STATUS_CONFIG: Record<AppointmentStatusKey, {
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  label: string;
+}> = {
+  booked:     { color: 'text-slate-900',  bgColor: 'bg-slate-200',  borderColor: 'border-slate-400',  label: 'Booked' },
+  confirmed:  { color: 'text-green-900',  bgColor: 'bg-green-200',  borderColor: 'border-green-500',  label: 'Confirmed' },
+  checked_in: { color: 'text-blue-900',   bgColor: 'bg-blue-200',   borderColor: 'border-blue-500',   label: 'Checked In' },
+  completed:  { color: 'text-purple-900', bgColor: 'bg-purple-200', borderColor: 'border-purple-500', label: 'Completed' },
+  cancelled:  { color: 'text-gray-600',   bgColor: 'bg-gray-100',   borderColor: 'border-gray-300',   label: 'Cancelled' },
+  no_show:    { color: 'text-red-900',    bgColor: 'bg-red-200',    borderColor: 'border-red-500',     label: 'No Show' },
+};
+
 /**
  * Helper to get the right token for a common UI context.
  * 

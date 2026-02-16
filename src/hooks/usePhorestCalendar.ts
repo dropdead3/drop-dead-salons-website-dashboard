@@ -48,49 +48,7 @@ export interface CalendarFilters {
   showCancelled: boolean;
 }
 
-export const STATUS_CONFIG: Record<AppointmentStatus, { 
-  color: string; 
-  bgColor: string;
-  borderColor: string;
-  label: string;
-}> = {
-  booked: { 
-    color: 'text-slate-900', 
-    bgColor: 'bg-slate-200', 
-    borderColor: 'border-slate-400',
-    label: 'Booked' 
-  },
-  confirmed: { 
-    color: 'text-green-900', 
-    bgColor: 'bg-green-200', 
-    borderColor: 'border-green-500',
-    label: 'Confirmed' 
-  },
-  checked_in: { 
-    color: 'text-blue-900', 
-    bgColor: 'bg-blue-200', 
-    borderColor: 'border-blue-500',
-    label: 'Checked In' 
-  },
-  completed: { 
-    color: 'text-purple-900', 
-    bgColor: 'bg-purple-200', 
-    borderColor: 'border-purple-500',
-    label: 'Completed' 
-  },
-  cancelled: { 
-    color: 'text-gray-600', 
-    bgColor: 'bg-gray-100', 
-    borderColor: 'border-gray-300',
-    label: 'Cancelled' 
-  },
-  no_show: { 
-    color: 'text-red-900', 
-    bgColor: 'bg-red-200', 
-    borderColor: 'border-red-500',
-    label: 'No Show' 
-  },
-};
+export { APPOINTMENT_STATUS_CONFIG as STATUS_CONFIG } from '@/lib/design-tokens';
 
 export function usePhorestCalendar() {
   const { hasPermission } = useAuth();

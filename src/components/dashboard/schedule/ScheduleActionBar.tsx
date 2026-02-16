@@ -6,9 +6,11 @@ import {
   CheckCircle,
   Undo2,
   Calendar,
+  Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 
 interface ScheduleActionBarProps {
@@ -19,6 +21,7 @@ interface ScheduleActionBarProps {
   onNotes?: () => void;
   onConfirm?: () => void;
   onUndo?: () => void;
+  onViewDetails?: () => void;
   isUpdating?: boolean;
   todayAppointmentCount?: number;
 }
@@ -31,6 +34,7 @@ export function ScheduleActionBar({
   onNotes,
   onConfirm,
   onUndo,
+  onViewDetails,
   isUpdating = false,
   todayAppointmentCount = 0,
 }: ScheduleActionBarProps) {
@@ -44,7 +48,12 @@ export function ScheduleActionBar({
   const canRemove = hasSelection && !['completed', 'cancelled'].includes(status || '');
 
   return (
-    <div className="bg-card border-t border-border px-4 py-2.5 flex items-center justify-between">
+    <div
+      className={cn(
+        'bg-card border-t border-border px-4 py-2.5 flex items-center justify-between transition-all duration-300',
+        hasSelection && 'border-t-2 border-t-primary/60'
+      )}
+    >
       {/* Left: Undo */}
       <div className="flex items-center gap-4">
         <Button
@@ -59,13 +68,36 @@ export function ScheduleActionBar({
         </Button>
       </div>
 
-      {/* Center: Today's Appointment Count */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Calendar className="h-4 w-4" />
-        <span>
-          <span className="font-medium text-foreground">{todayAppointmentCount}</span>
-          {' '}appointment{todayAppointmentCount !== 1 ? 's' : ''} today
-        </span>
+      {/* Center: Selection info or appointment count */}
+      <div className={cn('flex items-center gap-2', tokens.body.muted)}>
+        {hasSelection ? (
+          <div className="flex items-center gap-3">
+            <span className="font-medium text-foreground">
+              {selectedAppointment.client_name}
+            </span>
+            <span className="text-muted-foreground">·</span>
+            <span className="text-muted-foreground truncate max-w-[200px]">
+              {selectedAppointment.service_name}
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onViewDetails}
+              className="gap-1.5 text-primary"
+            >
+              <Eye className="h-4 w-4" />
+              Details
+            </Button>
+          </div>
+        ) : (
+          <>
+            <Calendar className="h-4 w-4" />
+            <span>
+              <span className="font-medium text-foreground">{todayAppointmentCount}</span>
+              {' '}appointment{todayAppointmentCount !== 1 ? 's' : ''} today
+            </span>
+          </>
+        )}
       </div>
 
       {/* Right: Action Buttons */}

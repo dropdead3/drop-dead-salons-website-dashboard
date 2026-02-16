@@ -13,6 +13,7 @@ import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCa
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { useRescheduleAppointment } from '@/hooks/useRescheduleAppointment';
+import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 
 interface DayViewProps {
   date: Date;
@@ -30,15 +31,8 @@ interface DayViewProps {
   selectedAppointmentId?: string | null;
 }
 
-// Phorest-style status colors
-const STATUS_COLORS: Record<AppointmentStatus, { bg: string; border: string; text: string }> = {
-  booked: { bg: 'bg-muted', border: 'border-muted-foreground/30', text: 'text-foreground' },
-  confirmed: { bg: 'bg-green-500', border: 'border-green-600', text: 'text-white' },
-  checked_in: { bg: 'bg-blue-500', border: 'border-blue-600', text: 'text-white' },
-  completed: { bg: 'bg-purple-500', border: 'border-purple-600', text: 'text-white' },
-  cancelled: { bg: 'bg-muted/50', border: 'border-muted', text: 'text-muted-foreground' },
-  no_show: { bg: 'bg-destructive', border: 'border-destructive', text: 'text-destructive-foreground' },
-};
+// Use consolidated status colors from design tokens
+const STATUS_COLORS = APPOINTMENT_STATUS_COLORS;
 
 function parseTimeToMinutes(time: string): number {
   const [hours, minutes] = time.split(':').map(Number);

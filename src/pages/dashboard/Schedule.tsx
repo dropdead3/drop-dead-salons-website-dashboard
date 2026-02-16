@@ -380,6 +380,7 @@ export default function Schedule() {
             onRemove={handleRemove}
             onNotes={handleNotes}
             onConfirm={handleConfirm}
+            onViewDetails={() => setDetailOpen(true)}
             isUpdating={isUpdating}
             todayAppointmentCount={todayAppointmentCount}
           />
