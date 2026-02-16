@@ -136,6 +136,28 @@ function formatTime(time: string): string {
   return minutes === 0 ? `${displayHours}${period}` : `${displayHours}:${minutes.toString().padStart(2, '0')}${period}`;
 }
 
+// Check if a location is closed on a specific date (holiday or regular hours)
+export function isClosedOnDate(
+  hoursJson: HoursJson | null,
+  holidayClosures: HolidayClosure[] | null,
+  date: Date
+): { isClosed: boolean; reason?: string } {
+  // Check holiday first
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const dateStr = `${year}-${month}-${day}`;
+  const holiday = holidayClosures?.find(h => h.date === dateStr);
+  if (holiday) return { isClosed: true, reason: holiday.name };
+
+  // Check regular hours
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+  const dayKey = dayNames[date.getDay()];
+  if (hoursJson?.[dayKey]?.closed) return { isClosed: true, reason: 'Regular hours' };
+
+  return { isClosed: false };
+}
+
 // Check if location is currently closed for holiday
 export function isClosedForHoliday(holidayClosures: HolidayClosure[] | null): HolidayClosure | null {
   if (!holidayClosures || holidayClosures.length === 0) return null;

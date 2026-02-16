@@ -9,6 +9,8 @@ import { TrendingUp, TrendingDown, Target, ChevronRight, ChevronDown } from 'luc
 import { useNavigate } from 'react-router-dom';
 import { differenceInDays } from 'date-fns';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useActiveLocations, isClosedOnDate } from '@/hooks/useLocations';
+import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 
 const MAX_VISIBLE = 5;
 
@@ -17,11 +19,12 @@ interface GoalLocationsDrilldownProps {
   period: 'weekly' | 'monthly';
 }
 
-function LocationMiniRow({ locationId, locationName, target, period }: {
+function LocationMiniRow({ locationId, locationName, target, period, closedReason }: {
   locationId: string;
   locationName: string;
   target: number;
   period: 'weekly' | 'monthly';
+  closedReason?: string;
 }) {
   const { data: revenue = 0 } = useGoalPeriodRevenue(period, locationId);
   const { computePaceStatus, getPeriodRange } = useGoalTrackerData(period);
@@ -39,7 +42,10 @@ function LocationMiniRow({ locationId, locationName, target, period }: {
     <div className="flex items-center gap-3 py-2">
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium truncate">{locationName}</span>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-medium truncate">{locationName}</span>
+            {closedReason && <ClosedBadge reason={closedReason} />}
+          </div>
           <div className="flex items-center gap-2">
             <BlurredAmount className="text-xs tabular-nums">
               {percentage.toFixed(0)}%
@@ -74,6 +80,8 @@ export function GoalLocationsDrilldown({ isOpen, period }: GoalLocationsDrilldow
   const navigate = useNavigate();
   const [showAll, setShowAll] = useState(false);
   const { locationScaffold } = useGoalTrackerData(period);
+  const { data: allLocations } = useActiveLocations();
+  const today = useMemo(() => new Date(), []);
 
   const sortedLocations = useMemo(() => {
     if (!locationScaffold) return [];
@@ -98,15 +106,20 @@ export function GoalLocationsDrilldown({ isOpen, period }: GoalLocationsDrilldow
               By Location
             </p>
             <ScrollArea className={cn(showAll && sortedLocations.length > 8 && 'max-h-[280px]')}>
-              {visibleLocations.map(loc => (
-                <LocationMiniRow
-                  key={loc.locationId}
-                  locationId={loc.locationId}
-                  locationName={loc.locationName}
-                  target={loc.target}
-                  period={period}
-                />
-              ))}
+              {visibleLocations.map(loc => {
+                const locObj = allLocations?.find(l => l.id === loc.locationId);
+                const closed = locObj ? isClosedOnDate(locObj.hours_json, locObj.holiday_closures, today) : null;
+                return (
+                  <LocationMiniRow
+                    key={loc.locationId}
+                    locationId={loc.locationId}
+                    locationName={loc.locationName}
+                    target={loc.target}
+                    period={period}
+                    closedReason={closed?.isClosed ? closed.reason : undefined}
+                  />
+                );
+              })}
             </ScrollArea>
             {hasMore && (
               <button

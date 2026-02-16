@@ -23,11 +23,13 @@ import {
   ArrowUp,
   ArrowDown,
   Check,
+  Moon,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { useSalesMetrics, useSalesByStylist, useSalesByLocation, useSalesTrend } from '@/hooks/useSalesData';
-import { useActiveLocations } from '@/hooks/useLocations';
+import { useActiveLocations, isClosedOnDate } from '@/hooks/useLocations';
+import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { useTomorrowRevenue } from '@/hooks/useTomorrowRevenue';
 import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { useTodayActualRevenue } from '@/hooks/useTodayActualRevenue';
@@ -532,9 +534,26 @@ export function AggregateSalesCard({
         <div className="xl:col-span-2">
           {/* Hero: Total Revenue with Breakdown */}
           <div className="bg-muted/30 dark:bg-card rounded-xl p-4 sm:p-6 border border-border/40">
-            <p className="text-xs text-muted-foreground mb-2">
+            <p className="text-xs text-muted-foreground mb-1">
               {isAllLocations ? t('sales.all_locations') : selectedLocationName || tc('loading')}
             </p>
+            {/* Closed locations summary — single-day views only */}
+            {isAllLocations && (dateRange === 'today' || dateRange === 'yesterday') && (() => {
+              const viewDate = dateRange === 'yesterday' ? subDays(new Date(), 1) : new Date();
+              const closedCount = (locations ?? []).filter(loc =>
+                isClosedOnDate(loc.hours_json, loc.holiday_closures, viewDate).isClosed
+              ).length;
+              const totalCount = locations?.length ?? 0;
+              if (closedCount === 0 || totalCount === 0) return null;
+              return (
+                <p className="text-[11px] text-muted-foreground/70 mb-2 flex items-center gap-1">
+                  <Moon className="w-3 h-3" />
+                  {closedCount === totalCount
+                    ? `All ${totalCount} locations closed ${dateRange === 'yesterday' ? 'yesterday' : 'today'}`
+                    : `${closedCount} of ${totalCount} locations closed ${dateRange === 'yesterday' ? 'yesterday' : 'today'}`}
+                </p>
+              );
+            })()}
             {/* Total Revenue - Hero */}
             <div
               className={cn(
@@ -1015,6 +1034,14 @@ export function AggregateSalesCard({
                         <div className="flex items-center gap-2.5 min-w-0">
                           <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                           <span className="text-sm font-medium truncate">{location.name}</span>
+                          {(dateRange === 'today' || dateRange === 'yesterday') && (() => {
+                            const viewDate = dateRange === 'yesterday' ? subDays(new Date(), 1) : new Date();
+                            const locObj = locations?.find(l => l.id === location.location_id);
+                            if (!locObj) return null;
+                            const closed = isClosedOnDate(locObj.hours_json, locObj.holiday_closures, viewDate);
+                            if (!closed.isClosed) return null;
+                            return <ClosedBadge reason={closed.reason} />;
+                          })()}
                         </div>
                         <div className="flex items-center gap-3 shrink-0">
                           <span className="text-sm font-display tabular-nums">

@@ -8,6 +8,8 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { LocationDrilldownPanel } from './LocationDrilldownPanel';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
+import { useActiveLocations, isClosedOnDate } from '@/hooks/useLocations';
+import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 
 export interface LocationCardData {
   location_id: string;
@@ -41,6 +43,8 @@ export function LocationComparisonCard({
 }: LocationComparisonCardProps) {
   const { formatCurrencyWhole } = useFormatCurrency();
   const [expanded, setExpanded] = useState(false);
+  const { data: allLocations } = useActiveLocations();
+  const isSingleDay = dateFrom === dateTo;
 
   const avgTicket = location.totalTransactions > 0
     ? Math.round(location.totalRevenue / location.totalTransactions)
@@ -51,6 +55,14 @@ export function LocationComparisonCard({
     dateTo,
     locationId: location.location_id,
   });
+
+  // Closed status for single-day views
+  const closedInfo = isSingleDay ? (() => {
+    const locObj = allLocations?.find(l => l.id === location.location_id);
+    if (!locObj) return null;
+    const viewDate = new Date(dateFrom + 'T12:00:00');
+    return isClosedOnDate(locObj.hours_json, locObj.holiday_closures, viewDate);
+  })() : null;
 
   return (
     <div
@@ -75,6 +87,7 @@ export function LocationComparisonCard({
           <div className="flex items-center gap-2">
             <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
             <span className="text-sm font-medium truncate">{location.name}</span>
+            {closedInfo?.isClosed && <ClosedBadge reason={closedInfo.reason} />}
           </div>
           <div className="flex items-center gap-1.5">
             {location.isLeader ? (
