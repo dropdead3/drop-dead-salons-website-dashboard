@@ -1,14 +1,15 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Loader2, Calendar, Palette, Eye, Info, Clock, ArrowRight } from 'lucide-react';
+import { Loader2, Calendar, Palette, Eye, Info, Clock, ArrowRight, GripVertical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { 
   useServiceCategoryColors, 
   useUpdateCategoryColor,
   useSyncServiceCategories,
+  useReorderCategories,
   getCategoryAbbreviation,
   ServiceCategoryColor,
 } from '@/hooks/useServiceCategoryColors';
@@ -21,6 +22,23 @@ import {
   isGradientMarker, 
   getGradientFromMarker 
 } from '@/utils/categoryColors';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 // Non-service category types (scheduling entries)
 const NON_SERVICE_CATEGORIES = ['Block', 'Break'];
@@ -61,6 +79,35 @@ const CATEGORY_PALETTE = [
   '#d1fae5', '#a7f3d0', '#6ee7b7', '#f3e8ff', '#e9d5ff', '#c4b5fd',
 ];
 
+function SortableCategoryCard({ category, renderContent }: { 
+  category: ServiceCategoryColor; 
+  renderContent: (cat: ServiceCategoryColor) => React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: category.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+    opacity: isDragging ? 0.9 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        'flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors',
+        isDragging && 'shadow-lg'
+      )}
+    >
+      <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground touch-none">
+        <GripVertical className="w-4 h-4" />
+      </div>
+      {renderContent(category)}
+    </div>
+  );
+}
+
 export function ScheduleSettingsContent() {
   const { data: categories, isLoading, error } = useServiceCategoryColors();
   const updateColor = useUpdateCategoryColor();
@@ -74,6 +121,36 @@ export function ScheduleSettingsContent() {
       schedulingCategories: categories.filter(c => NON_SERVICE_CATEGORIES.includes(c.category_name)),
     };
   }, [categories]);
+
+  const reorderCategories = useReorderCategories();
+  const [localServiceOrder, setLocalServiceOrder] = useState<ServiceCategoryColor[]>([]);
+
+  // Keep local order in sync with server data
+  useEffect(() => {
+    if (serviceCategories.length > 0) {
+      setLocalServiceOrder(serviceCategories);
+    }
+  }, [serviceCategories]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    
+    const oldIndex = localServiceOrder.findIndex(c => c.id === active.id);
+    const newIndex = localServiceOrder.findIndex(c => c.id === over.id);
+    const newOrder = arrayMove(localServiceOrder, oldIndex, newIndex);
+    setLocalServiceOrder(newOrder);
+    
+    reorderCategories.mutate(newOrder.map(c => c.id), {
+      onSuccess: () => toast.success('Category order saved'),
+      onError: () => toast.error('Failed to save order'),
+    });
+  };
 
   // Build color map for preview
   const colorMap = useMemo(() => {
@@ -129,10 +206,7 @@ export function ScheduleSettingsContent() {
     const displayGradient = appliedGradient || (isConsult ? defaultConsultGradient : null);
     
     return (
-      <div
-        key={category.id}
-        className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors"
-      >
+      <>
         {/* Color badge */}
         <Popover>
           <PopoverTrigger asChild>
@@ -151,7 +225,6 @@ export function ScheduleSettingsContent() {
                 color: category.text_color_hex,
               }}
             >
-              {/* Glass stroke for gradient badge */}
               {displayGradient && (
                 <span 
                   className="absolute inset-0 rounded-full pointer-events-none"
@@ -226,7 +299,6 @@ export function ScheduleSettingsContent() {
                             onClick={() => handleColorChange(category.id, `gradient:${gradient.id}`)}
                             disabled={updateColor.isPending}
                           >
-                            {/* Glass stroke overlay */}
                             <span 
                               className="absolute inset-0 rounded-full pointer-events-none"
                               style={{
@@ -294,7 +366,7 @@ export function ScheduleSettingsContent() {
           </div>
           <p className="text-xs text-muted-foreground uppercase">{category.color_hex}</p>
         </div>
-      </div>
+      </>
     );
   };
 
@@ -344,9 +416,15 @@ export function ScheduleSettingsContent() {
           
           <div className="h-px bg-border" />
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {serviceCategories.map(renderCategoryCard)}
-          </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={localServiceOrder.map(c => c.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-2">
+                {localServiceOrder.map((category) => (
+                  <SortableCategoryCard key={category.id} category={category} renderContent={renderCategoryCard} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
 
           {serviceCategories.length === 0 && (
             <div className="text-center py-8">
@@ -373,8 +451,12 @@ export function ScheduleSettingsContent() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {schedulingCategories.map(renderCategoryCard)}
+            <div className="space-y-2">
+              {schedulingCategories.map((cat) => (
+                <div key={cat.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-muted/30 transition-colors">
+                  {renderCategoryCard(cat)}
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

@@ -12650,6 +12650,7 @@ export type Database = {
           category_name: string
           color_hex: string
           created_at: string
+          display_order: number
           id: string
           text_color_hex: string
           updated_at: string
@@ -12658,6 +12659,7 @@ export type Database = {
           category_name: string
           color_hex?: string
           created_at?: string
+          display_order?: number
           id?: string
           text_color_hex?: string
           updated_at?: string
@@ -12666,6 +12668,7 @@ export type Database = {
           category_name?: string
           color_hex?: string
           created_at?: string
+          display_order?: number
           id?: string
           text_color_hex?: string
           updated_at?: string

@@ -6,6 +6,7 @@ export interface ServiceCategoryColor {
   category_name: string;
   color_hex: string;
   text_color_hex: string;
+  display_order: number;
   created_at: string;
   updated_at: string;
 }
@@ -44,6 +45,7 @@ export function useServiceCategoryColors() {
       const { data, error } = await supabase
         .from('service_category_colors')
         .select('*')
+        .order('display_order')
         .order('category_name');
       
       if (error) throw error;
@@ -84,6 +86,30 @@ export function useUpdateCategoryColor() {
         .eq('id', categoryId);
       
       if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-category-colors'] });
+    },
+  });
+}
+
+// Reorder categories by updating display_order values
+export function useReorderCategories() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (orderedIds: string[]) => {
+      // Update each category's display_order based on array position
+      const updates = orderedIds.map((id, index) =>
+        supabase
+          .from('service_category_colors')
+          .update({ display_order: index + 1, updated_at: new Date().toISOString() })
+          .eq('id', id)
+      );
+      
+      const results = await Promise.all(updates);
+      const failed = results.find(r => r.error);
+      if (failed?.error) throw failed.error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-category-colors'] });

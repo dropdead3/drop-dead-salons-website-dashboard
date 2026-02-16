@@ -57,6 +57,18 @@ export function usePhorestServices(locationId?: string) {
 
 export function useServicesByCategory(branchId?: string) {
   const { data: services, ...rest } = usePhorestServices(branchId);
+  const { data: categoryColors } = useQuery({
+    queryKey: ['service-category-colors-order'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('service_category_colors')
+        .select('category_name, display_order')
+        .order('display_order')
+        .order('category_name');
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const grouped = services?.reduce((acc, service) => {
     const category = service.category || 'Other';
@@ -64,6 +76,18 @@ export function useServicesByCategory(branchId?: string) {
     acc[category].push(service);
     return acc;
   }, {} as Record<string, PhorestService[]>);
+
+  // Sort grouped keys by display_order
+  if (grouped && categoryColors) {
+    const orderMap = new Map(categoryColors.map(c => [c.category_name, c.display_order]));
+    const sortedEntries = Object.entries(grouped).sort(([a], [b]) => {
+      const oa = orderMap.get(a) ?? 9999;
+      const ob = orderMap.get(b) ?? 9999;
+      return oa - ob || a.localeCompare(b);
+    });
+    const sorted = Object.fromEntries(sortedEntries);
+    return { data: sorted, services, ...rest };
+  }
 
   return { data: grouped, services, ...rest };
 }
@@ -88,6 +112,18 @@ export function useAllServices() {
 
 export function useAllServicesByCategory() {
   const { data: services, ...rest } = useAllServices();
+  const { data: categoryColors } = useQuery({
+    queryKey: ['service-category-colors-order'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('service_category_colors')
+        .select('category_name, display_order')
+        .order('display_order')
+        .order('category_name');
+      if (error) throw error;
+      return data;
+    },
+  });
 
   // Group by category, and for duplicate service names across locations,
   // keep unique services by name (we'll validate location compatibility later)
@@ -103,6 +139,18 @@ export function useAllServicesByCategory() {
     
     return acc;
   }, {} as Record<string, PhorestService[]>);
+
+  // Sort grouped keys by display_order
+  if (grouped && categoryColors) {
+    const orderMap = new Map(categoryColors.map(c => [c.category_name, c.display_order]));
+    const sortedEntries = Object.entries(grouped).sort(([a], [b]) => {
+      const oa = orderMap.get(a) ?? 9999;
+      const ob = orderMap.get(b) ?? 9999;
+      return oa - ob || a.localeCompare(b);
+    });
+    const sorted = Object.fromEntries(sortedEntries);
+    return { data: sorted, services, ...rest };
+  }
 
   return { data: grouped, services, ...rest };
 }
