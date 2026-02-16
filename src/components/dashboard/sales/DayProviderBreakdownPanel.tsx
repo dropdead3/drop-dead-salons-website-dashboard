@@ -72,7 +72,7 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
     return Object.values(map).sort((a, b) => b.revenue - a.revenue);
   }, [filteredAppointments]);
 
-  const maxRevenue = groups[0]?.revenue || 1;
+  const totalRevenue = groups.reduce((sum, g) => sum + g.revenue, 0) || 1;
   const visibleGroups = showAll ? groups : groups.slice(0, 5);
   const needsShowAll = groups.length > 5;
 
@@ -139,7 +139,7 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
                         <motion.div
                           className="h-full rounded-full bg-primary/60"
                           initial={{ width: 0 }}
-                          animate={{ width: `${(group.revenue / maxRevenue) * 100}%` }}
+                          animate={{ width: `${(group.revenue / totalRevenue) * 100}%` }}
                           transition={{ duration: 0.5, ease: 'easeOut' }}
                         />
                       </div>
