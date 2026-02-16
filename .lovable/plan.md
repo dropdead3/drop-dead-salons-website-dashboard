@@ -1,80 +1,109 @@
 
 
-# Redesign ErrorBoundary to Match Zura Brand
+# Enhanced Email Branding Configurator
 
 ## Overview
 
-Rebuild the ErrorBoundary screen to feel like a Zura-branded, advisory-tone experience instead of a generic "Something broke" page. It will mirror the existing 404 page's visual language (PixelZMark, dark-ready theming, font-display typography) and use calm, structured copy aligned with the brand voice.
+Upgrade the email branding settings from a basic 4-field form into a professional, sectioned configurator with additional customization options, a better layout, and always-visible live preview. This brings the email branding experience in line with Zura's premium design language.
 
-## What Changes
+## New Features
 
-### File: `src/components/ErrorBoundary.tsx`
+### 1. Footer Customization
+- **Footer text**: Editable line (e.g., business address, tagline)
+- **Social links**: Up to 4 social media URLs (Instagram, Facebook, TikTok, Website) rendered as icons in the email footer
+- **"Powered by" toggle**: Option to show/hide the "Sent via Zura" attribution
 
-1. **Replace the DD75 logo** with the `PixelZMark` component (the animated pixel "Z" grid already used on the 404 page). Since ErrorBoundary is a class component and PixelZMark uses hooks (framer-motion), we'll extract the render into a functional `ErrorFallback` component and keep the class component as a thin wrapper.
+### 2. Button Style Customization
+- **Button corner radius**: Selector (sharp / rounded / pill) controlling CTA button border-radius in emails
+- **Button text color**: Auto-calculated from accent (white or dark) with manual override option
 
-2. **Update the copy** from generic "Something broke" to advisory Zura tone:
-   - Headline: "Unexpected interruption" (not shame language, not hype)
-   - Subtext: "Zura encountered a rendering issue. Your data is safe. Reload to resume, or return to your dashboard."
-   - Error detail label: small "DETAIL" tracking text above the error message
+### 3. Header Layout Options
+- **Header style**: Choose between "centered" (current), "left-aligned", or "minimal" (thin accent bar, no logo block)
+- **Header padding**: Compact vs standard vs spacious
 
-3. **Match the 404 page's visual structure**:
-   - Same layout: centered column, `max-w-3xl`, rounded card housing the PixelZMark
-   - Same typography: `font-display`, `tracking-[0.16em]`, uppercase headlines
-   - Same button pattern: outline "Go back" + primary "Reload"
-   - Dev-only stack trace stays, styled consistently
+### 4. Always-Visible Side-by-Side Preview
+- Replace the toggle-based preview with a persistent side-by-side layout on desktop (stacked on mobile)
+- Left column: settings form. Right column: live preview
+- Desktop/mobile preview toggle stays in the preview panel header
 
-4. **Component architecture**:
-   - `ErrorBoundary` class component stays (React requires class for error boundaries)
-   - New inner `ErrorFallback` functional component receives `error` and action handlers as props
-   - `PixelZMark` is extracted to a shared file (`src/components/ui/PixelZMark.tsx`) so both the 404 page and ErrorBoundary can import it without duplication
+### 5. Unsaved Changes Indicator
+- Visual badge on the Save button area when changes are pending
+- Confirmation prompt if navigating away with unsaved changes
 
-### New File: `src/components/ui/PixelZMark.tsx`
+## Database Changes
 
-Extract the existing `PixelZMark` component from `src/pages/NotFound.tsx` into its own shared file. Both `NotFound.tsx` and `ErrorBoundary.tsx` will import from here.
+Add new columns to `organizations` table to persist the additional settings:
 
-### File: `src/pages/NotFound.tsx`
-
-Update to import `PixelZMark` from the new shared location instead of defining it inline. No visual changes.
-
-## Visual Layout
-
-```text
-+------------------------------------------+
-|                                          |
-|          [  Pixel Z Mark card  ]         |
-|                                          |
-|         UNEXPECTED INTERRUPTION          |
-|                                          |
-|   Zura encountered a rendering issue.    |
-|   Your data is safe.                     |
-|                                          |
-|   DETAIL                                 |
-|   A rendering error occurred.            |
-|                                          |
-|       [ Go home ]   [ Reload ]           |
-|                                          |
-|   (dev only: stack trace below)          |
-+------------------------------------------+
+```sql
+ALTER TABLE public.organizations
+  ADD COLUMN IF NOT EXISTS email_footer_text text,
+  ADD COLUMN IF NOT EXISTS email_social_links jsonb DEFAULT '{}',
+  ADD COLUMN IF NOT EXISTS email_show_attribution boolean DEFAULT true,
+  ADD COLUMN IF NOT EXISTS email_button_radius text DEFAULT 'rounded',
+  ADD COLUMN IF NOT EXISTS email_header_style text DEFAULT 'centered';
 ```
+
+## File Changes
+
+### Modified: `src/components/dashboard/settings/EmailBrandingSettings.tsx`
+
+Complete restructure into a two-column layout with organized sections:
+
+**Layout:**
+```text
++---------------------------+----------------------------+
+| SETTINGS (scrollable)     | LIVE PREVIEW (sticky)      |
+|                           |                            |
+| -- Identity --            |  [Desktop] [Mobile]        |
+| Sender Name | Reply-To    |  [Template selector]       |
+|                           |                            |
+| -- Visual --              |  +--------------------+    |
+| Logo Source  | Accent      |  | [Header w/ logo]   |    |
+|              | Color       |  | [Accent bar]       |    |
+| Header Style | Btn Radius  |  | [Content area]     |    |
+|                           |  | [Footer w/ social] |    |
+| -- Footer --              |  +--------------------+    |
+| Footer Text               |                            |
+| Social Links (IG/FB/TT/W) |                            |
+| Show "Sent via Zura" [x]  |                            |
+|                           |                            |
+| [Send Test] [Save]        |                            |
++---------------------------+----------------------------+
+```
+
+**Sections:**
+1. **Identity** -- Sender name, reply-to (existing, cleaned up)
+2. **Visual** -- Logo source, accent color, header style, button radius
+3. **Footer** -- Footer text, social links, attribution toggle
+4. **Actions** -- Send test + save (pinned at bottom of settings column)
+
+### Modified: `supabase/functions/_shared/email-sender.ts`
+
+Update `buildBrandedTemplate` to consume the new fields:
+- Render social link icons in the footer
+- Apply custom footer text
+- Respect header style setting
+- Apply button radius to CTA buttons
+- Conditionally show/hide "Sent via Zura"
 
 ## Technical Details
 
-### Files to Create
+### State Management
+- All new fields follow the same pattern as existing ones: local state seeded from fetched data, `hasChanges` comparison, single save mutation
+- Social links stored as `{ instagram?: string, facebook?: string, tiktok?: string, website?: string }`
 
-| File | Purpose |
-|---|---|
-| `src/components/ui/PixelZMark.tsx` | Shared animated pixel Z mark component extracted from NotFound |
+### Preview Sync
+- All settings reflect instantly in the preview (no save required to see changes)
+- The preview mirrors `buildBrandedTemplate` output exactly so what you see is what recipients get
 
-### Files to Modify
+### Design Rules
+- `font-display` for section headers, uppercase, wide tracking
+- `font-medium` max weight (no bold/semibold)
+- Semantic theme colors throughout
+- Sections separated by subtle borders, not heavy cards
 
-| File | Change |
-|---|---|
-| `src/components/ErrorBoundary.tsx` | Full redesign: use PixelZMark, advisory copy, font-display typography, functional ErrorFallback inner component |
-| `src/pages/NotFound.tsx` | Import PixelZMark from shared location, remove inline definition |
+### Edge Function Update
+- `buildBrandedTemplate` reads the new columns from `OrgBranding` type
+- Social icons rendered as small linked images or Unicode symbols (no external image dependencies)
+- Button radius maps: `sharp` = 0, `rounded` = 8px, `pill` = 100px
 
-### Design Rules Followed
-- No `font-bold` or `font-semibold` (max `font-medium`)
-- `font-display` for headlines with uppercase + wide tracking
-- `font-sans` for body text, normal case
-- Advisory tone: no shame, explains what happened and what to do
-- Semantic theme colors (`bg-background`, `text-foreground`, `text-muted-foreground`)
