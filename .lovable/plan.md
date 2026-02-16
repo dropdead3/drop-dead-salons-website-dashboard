@@ -1,26 +1,42 @@
 
 
-# Remove Base Price References from Pricing Tabs
+# Add Time Allotments and Consultation Fields to Services
 
-## Problem
+## Overview
 
-The Level Pricing and Location Pricing tabs show the base price as placeholder text in every input field and reference it in the helper copy ("Leave blank to use the base price ($15.00)"). This creates a misleading impression that there is a standard default price pre-set, when there is not.
+Add four new fields to the service configuration: **Styling & Finishing Time**, **Content Creation Time**, **Processing Time**, and **Requires New-Client Consultation**. The first three are additional time allotments (in minutes) added on top of the service duration for scheduling purposes. The fourth is a toggle that flags whether a new client (no past visit history) must complete a consultation before booking online.
 
-## Changes
+## Database Migration
 
-### 1. `src/components/dashboard/settings/LevelPricingContent.tsx`
+Add 4 new columns to the `services` table:
 
-- Change helper text from "Set pricing by stylist level. Leave blank to use the base price ($15.00)." to "Set pricing by stylist level. Leave blank if no level-specific price applies."
-- Change input placeholder from the base price value (e.g. "15.00") to a neutral "0.00"
+| Column | Type | Default | Purpose |
+|--------|------|---------|---------|
+| `finishing_time_minutes` | INTEGER | 0 | Styling and finishing time added to schedule |
+| `content_creation_time_minutes` | INTEGER | 0 | Photo/video time added to schedule |
+| `processing_time_minutes` | INTEGER | 0 | Chemical processing time added to schedule |
+| `requires_new_client_consultation` | BOOLEAN | false | Require consultation for clients with no visit history |
 
-### 2. `src/components/dashboard/settings/LocationPricingContent.tsx`
+## Code Changes
 
-- Change helper text from "Set a location-specific base price. Leave blank to use the default ($15.00)." to "Set a location-specific price. Leave blank if no location-specific price applies."
-- Change input placeholder from the base price value to a neutral "0.00"
+### 1. Service Type (`src/hooks/useServicesData.ts`)
+- Add the 4 new fields to the `Service` interface
+- Add them to the `useCreateService` insert map
 
-### 3. `src/components/dashboard/settings/LevelPricingDialog.tsx` (backward compat wrapper)
+### 2. Service Form Dialog (`src/components/dashboard/settings/ServiceFormDialog.tsx`)
+- Add state variables for the 4 new fields
+- Populate from `initialData` on edit, reset on create
+- Include in `handleSubmit` payload
+- Add to the form UI:
+  - Three time inputs (finishing, content creation, processing) in a row below the existing Duration/Price row, each with a "(min)" label
+  - A "Requires New-Client Consultation" toggle at the bottom of the toggles section, with description: "Clients without past visit history must complete a consultation before booking online"
 
-- Same changes: remove base price from description text and input placeholder
+### 3. Service Editor Dialog (if it also has a Details tab with the same form)
+- Verify the `ServiceEditorDialog.tsx` Details tab delegates to `ServiceFormDialog` or has its own fields, and update accordingly
 
-## No structural or data changes -- copy and placeholder only.
+## Build Order
+
+1. Database migration -- add 4 columns
+2. Update `Service` interface and create/update hooks
+3. Update `ServiceFormDialog.tsx` with new fields in the form
 
