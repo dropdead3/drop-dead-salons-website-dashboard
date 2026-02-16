@@ -5,6 +5,7 @@ import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard
 import { XCircle, CalendarX, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAppointmentSummary } from '@/hooks/useOperationalAnalytics';
 import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 export interface OperationalHealthCardProps {
   filterContext: FilterContext;
@@ -71,9 +72,12 @@ export function OperationalHealthCard({
             >
               <CheckCircle className="w-5 h-5 text-primary" />
             </div>
-            <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
-              Operational Health
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
+                Operational Health
+              </h3>
+              <MetricInfoTooltip description="Tracks no-show rate, cancellation rate, and completion rate for appointments in the selected period. Rates are calculated as a percentage of total scheduled appointments." />
+            </div>
           </div>
           <AnalyticsFilterBadge
             locationId={filterContext.locationId}

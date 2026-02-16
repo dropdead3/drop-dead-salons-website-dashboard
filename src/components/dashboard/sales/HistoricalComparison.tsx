@@ -15,6 +15,7 @@ import { useSalesComparison } from '@/hooks/useSalesComparison';
 import { format, subMonths, subYears, startOfMonth, endOfMonth } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface HistoricalComparisonProps {
@@ -115,7 +116,10 @@ export function HistoricalComparison({
             <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
               <Calendar className="w-5 h-5 text-primary" />
             </div>
-            <CardTitle className="font-display text-base tracking-wide">PERIOD COMPARISON</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="font-display text-base tracking-wide">PERIOD COMPARISON</CardTitle>
+              <MetricInfoTooltip description="Side-by-side comparison of key metrics (revenue, services, products, transactions) between the current period and a prior period (last month or last year). Percentage changes highlight growth or decline." />
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {filterContext && (

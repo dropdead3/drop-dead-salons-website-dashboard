@@ -23,6 +23,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, getGradientFromMarker, isGradientMarker } from '@/utils/categoryColors';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { formatCurrencyWhole as formatCurrencyWholeUtil, formatCurrency as formatCurrencyUtil } from '@/lib/formatCurrency';
 
 let barIdCounter = 0;
@@ -396,7 +397,10 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
             <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
               <Scissors className="w-5 h-5 text-primary" />
             </div>
-            <CardTitle className="font-display text-base tracking-wide">SERVICE POPULARITY</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="font-display text-base tracking-wide">SERVICE POPULARITY</CardTitle>
+              <MetricInfoTooltip description="Ranks services by revenue or appointment count. Use this to identify your highest-demand and highest-revenue services. Data is sourced from completed appointment line items." />
+            </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {filterContext && (

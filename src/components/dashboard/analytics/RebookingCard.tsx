@@ -5,6 +5,7 @@ import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard
 import { Repeat, AlertCircle } from 'lucide-react';
 import { useRebookingRate } from '@/hooks/useRebookingRate';
 import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 export interface RebookingCardProps {
   filterContext: FilterContext;
@@ -62,9 +63,12 @@ export function RebookingCard({ filterContext, dateFrom, dateTo, locationId }: R
             >
               <Repeat className="w-5 h-5 text-primary" />
             </div>
-            <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
-              Rebooking Rate
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
+                Rebooking Rate
+              </h3>
+              <MetricInfoTooltip description="Percentage of completed appointments where the client booked a future appointment. Calculated as rebooked clients / total completed appointments x 100." />
+            </div>
           </div>
           <AnalyticsFilterBadge
             locationId={filterContext.locationId}

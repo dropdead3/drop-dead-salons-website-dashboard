@@ -6,6 +6,7 @@ import { SilenceState } from '@/components/executive-brief/SilenceState';
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { useActiveRecommendation, useGenerateRecommendation } from '@/hooks/useLeverRecommendations';
 import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 export function WeeklyLeverSection() {
   const { data: recommendation, isLoading } = useActiveRecommendation();
@@ -19,9 +20,12 @@ export function WeeklyLeverSection() {
             <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
               <Target className="w-5 h-5 text-primary" />
             </div>
-            <CardTitle className="font-display text-base font-medium tracking-wide uppercase">
-              WEEKLY LEVER
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="font-display text-base font-medium tracking-wide uppercase">
+                WEEKLY LEVER
+              </CardTitle>
+              <MetricInfoTooltip description="The single highest-confidence action recommended by Zura this week. Generated from performance data, benchmarks, and operational signals. Only surfaces when confidence is high." />
+            </div>
           </div>
           <Button
             variant="ghost"

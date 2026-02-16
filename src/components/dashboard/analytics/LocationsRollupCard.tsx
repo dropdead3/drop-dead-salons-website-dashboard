@@ -10,6 +10,7 @@ import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import { useActiveLocations, isClosedOnDate } from '@/hooks/useLocations';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 export interface LocationsRollupCardProps {
   filterContext: FilterContext;
@@ -86,9 +87,12 @@ export function LocationsRollupCard({ filterContext, dateFrom, dateTo }: Locatio
             >
               <MapPin className="w-5 h-5 text-primary" />
             </div>
-            <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
-              Location Performance
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
+                Location Performance
+              </h3>
+              <MetricInfoTooltip description="Revenue breakdown across all your locations for the selected period. Only locations with activity are shown. Use this to compare location productivity at a glance." />
+            </div>
           </div>
           <AnalyticsFilterBadge
             locationId={filterContext.locationId}

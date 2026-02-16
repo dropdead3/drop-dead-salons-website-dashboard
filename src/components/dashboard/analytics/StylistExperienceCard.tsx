@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useStylistExperienceScore, type StylistExperienceScore } from '@/hooks/useStylistExperienceScore';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 interface StylistExperienceCardProps {
   locationId?: string;
@@ -198,7 +199,10 @@ export function StylistExperienceCard({ locationId, dateRange = '30days' }: Styl
               <Users className="h-5 w-5 text-chart-4" />
             </div>
             <div>
-              <CardTitle className="font-display text-base tracking-wide">CLIENT EXPERIENCE SCORECARD</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="font-display text-base tracking-wide">CLIENT EXPERIENCE SCORECARD</CardTitle>
+                <MetricInfoTooltip description="Flags stylists with lower client retention or rebooking patterns who may benefit from coaching. Scores are based on repeat visit rates and average client tenure per stylist." />
+              </div>
               <CardDescription>
                 Identifies stylists who may need coaching on customer connection
               </CardDescription>
