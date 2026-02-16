@@ -78,7 +78,7 @@ export function ScheduleUtilizationBar({
   }, [appointments, dateStr, stylistCount, hoursStart, hoursEnd, averageServicePrice]);
 
   return (
-    <div className="bg-card border border-border rounded-lg px-4 py-2.5 flex items-center gap-6">
+    <div className="bg-muted/40 border border-border/50 rounded-lg px-4 py-2.5 flex items-center gap-6">
       {/* Fill Rate */}
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <div className="flex-1 max-w-[180px]">
