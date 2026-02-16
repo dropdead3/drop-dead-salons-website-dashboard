@@ -1,59 +1,69 @@
 
-# Kiosk Settings -- Per-Location Features + UX Cleanup
+# Kiosk Location Status Overview Card
 
-## Problem
+## What This Adds
 
-The Kiosk Features card sits above the Location Selector, so an admin toggles features without knowing which location they're configuring. "Apply to All Locations" is buried at the bottom of the page. Several small UI redundancies exist.
+A new "Location Status" card at the very top of the Kiosk Settings page -- above the Location Selector -- that gives an at-a-glance matrix of every location, whether it has kiosk settings configured, and which features are enabled.
 
-## Changes
+## Layout
 
-### 1. Move Location Selector to the Top
+```text
++----------------------------------------------------------+
+| KIOSK STATUS BY LOCATION                                 |
+| Overview of kiosk configuration across all locations     |
++----------------------------------------------------------+
+| Location         | Check-In | Walk-In | Booking | Status |
+|------------------|----------|---------|---------|--------|
+| Downtown Salon   |   [ON]   |  [ON]   |  [OFF]  |  Live  |
+| West Side Studio |   [ON]   |  [OFF]  |  [ON]   |  Live  |
+| Midtown Branch   |    --    |   --    |   --    | No Config |
++----------------------------------------------------------+
+|              [Apply Defaults to All Locations]            |
++----------------------------------------------------------+
+```
 
-The location selector card (currently the second card, lines 616-663) moves to become the FIRST card on the page -- above Kiosk Features. This establishes context before any configuration happens.
+### Row Logic
 
-Add an "Apply to All Locations" button directly in the location selector card header (right-aligned). This makes the propagation action immediately visible without scrolling to the bottom.
+For each active location:
+- If a row exists in `organization_kiosk_settings` for that `location_id`, show the feature flags from that row. Status = "Customized".
+- If no row exists but org-level defaults exist (`location_id IS NULL`), show the org default values. Status = "Using Defaults".
+- If no settings exist at all, show dashes. Status = "Not Configured".
 
-When a specific location is selected, show an inline badge: "Editing: [Location Name]" with a "Customized" or "Using Defaults" indicator.
+### Feature Columns
 
-### 2. Add Location Context to Features Card
+| Column | Setting Field | Icon |
+|--------|--------------|------|
+| Check-In | Always on (core feature) | `UserCheck` |
+| Walk-In | `enable_walk_ins` | `ClipboardCheck` |
+| Self-Booking | `enable_self_booking` | `CalendarPlus` |
+| Forms | `require_form_signing` | `FileSignature` |
 
-Add a subtle banner at the top of the Kiosk Features card showing which location is being configured:
-- "Organization Defaults" when editing defaults
-- "[Location Name]" when editing a specific location
-- Include a small "Using org defaults" or "Custom overrides" indicator
+Each cell shows a small colored dot: green for enabled, muted/gray for disabled.
 
-This prevents the admin from accidentally toggling features for the wrong location.
+### Row Click Action
 
-### 3. Move "Apply to All" Into Location Selector
+Clicking a location row sets the Location Selector below to that location, scrolling the admin directly into editing that location's settings. This is a convenience shortcut.
 
-Remove the "Push Defaults to All Locations" and "Push Location Settings to All" buttons from the save section at the bottom. Instead, place them in the location selector card:
-- When on "Organization Defaults": show "Apply Defaults to All Locations" button (replaces overrides)
-- When on a specific location: show "Apply This Location's Settings to All" button
+### "Apply to All" Button
 
-Keep "Reset to Organization Defaults" in the save section since it's a per-location action.
-
-### 4. Fix Button Style Placement
-
-Move the "Button Style" dropdown out of the color pickers grid (where it gets incorrectly dimmed when using a theme preset). Place it as a standalone control in the Appearance tab, below the color section.
-
-### 5. Consolidate Behavior Tab
-
-The Behavior tab currently has only Idle Timeout and Exit PIN. Move Exit PIN into a "Security" sub-section and add a descriptive note about where feature-specific behavior is configured (the Features card above).
+A single "Apply Defaults to All Locations" button at the bottom of the card. This reuses the existing `usePushDefaultsToAllLocations` hook with a confirmation dialog.
 
 ## Technical Details
 
-**File modified:** `src/components/dashboard/settings/KioskSettingsContent.tsx`
+**New file:** `src/components/dashboard/settings/KioskLocationStatusCard.tsx`
+- A standalone card component that takes `orgId` as a prop
+- Fetches all active locations via `useLocations()`
+- Fetches all kiosk settings rows for the org (one query: `organization_kiosk_settings` where `organization_id = orgId`)
+- Merges: for each location, finds its specific row or falls back to the org default row
+- Renders a table with feature status dots and a status badge
+- Accepts an `onLocationSelect` callback to wire up the row-click behavior
 
-### Specific changes:
+**Modified file:** `src/components/dashboard/settings/KioskSettingsContent.tsx`
+- Import and render `KioskLocationStatusCard` as the first card on the page (above the Location Selector card)
+- Pass `onLocationSelect` that sets the `locationId` state and scrolls to the settings section
+- No other changes to existing logic
 
-1. **Reorder cards** -- Move the location selector JSX block (lines 616-663) above the Kiosk Features card (lines 411-614). Add a right-aligned "Apply to All Locations" button with confirmation dialog in the card header.
+**New hook (inside existing file):** `src/hooks/useKioskSettings.ts`
+- Add `useAllOrgKioskSettings(organizationId)` -- fetches ALL rows from `organization_kiosk_settings` for the given org in one query (both org-level defaults and all location overrides). Returns the full array for the status card to merge against the locations list.
 
-2. **Add location context banner** inside the Kiosk Features CardHeader -- a small `<p>` tag showing "Configuring: [Organization Defaults | Location Name]" with a badge indicating override status.
-
-3. **Remove duplicate "Push" buttons** from the save section (lines 1244-1312). The "Push Defaults to All" and "Push Location to All" actions move into the location selector card. Only "Reset to Org Defaults" remains in the save section.
-
-4. **Fix button style placement** -- Move the Button Style `<Select>` (lines 882-896) out of the `grid grid-cols-2` color picker container. Place it as standalone control below the color grid, outside the opacity wrapper so it's not affected by theme preset dimming.
-
-5. **Behavior tab cleanup** -- Add a brief info note: "Feature-specific settings are configured in the Kiosk Features section above." This prevents confusion about why the tab is sparse.
-
-No database changes, no hook changes, no new files. The `usePushDefaultsToAllLocations` and `usePushLocationSettingsToAll` hooks remain unchanged -- only the UI location of their trigger buttons moves.
+No database changes required. All data already exists.
