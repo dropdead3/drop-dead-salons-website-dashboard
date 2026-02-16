@@ -1,55 +1,30 @@
 
+# Two-Column Layout: Settings + Sticky Preview
 
-# Embed Live Preview Inside Each Location Drill-Down
+## Change
 
-## Current State
+Restructure the `KioskLocationSettingsForm` return block from a single-column `space-y-6` layout into a two-column grid where:
 
-The preview works but requires clicking a "Preview" button to open a side Sheet. This means you can't see changes in real-time as you adjust settings.
+- **Left column**: Features, Settings Tabs, Action Buttons, Deploy QR (all existing content)
+- **Right column**: Live Preview panel, sticky on scroll so it stays visible while scrolling through settings
 
-## Proposed Change
-
-Embed a compact, always-visible `KioskPreviewPanel` directly inside each expanded location row, positioned below the settings tabs and above the action buttons. This gives immediate visual feedback as settings are adjusted.
-
-### Layout Change (inside each expanded drill-down)
-
-```text
-+--------------------------------------------------------------+
-| FEATURES                                                      |
-| [x] Walk-In   [x] Self-Booking   [ ] Forms   [ ] Feedback    |
-+--------------------------------------------------------------+
-| [Appearance] [Content] [Behavior]                             |
-|   ... settings fields ...                                     |
-+--------------------------------------------------------------+
-| LIVE PREVIEW                              [Expand in Sheet]   |
-| +----------------------------------------------------------+ |
-| |  (compact KioskPreviewPanel, always visible)              | |
-| |  Updates in real-time as you change settings above        | |
-| +----------------------------------------------------------+ |
-+--------------------------------------------------------------+
-| [Save]  [Apply to All]  [Reset to Defaults]                  |
-+--------------------------------------------------------------+
-| Deploy QR Code                                                |
-+--------------------------------------------------------------+
-```
-
-### Technical Changes
+## Technical Details
 
 **File: `src/components/dashboard/settings/KioskLocationSettingsForm.tsx`**
 
-1. Import `KioskPreviewPanel` and `useBusinessSettings`
-2. Add an always-visible preview section between the tabs content and the action buttons
-3. Keep the "Preview" button but relabel it "Expand Preview" -- it still opens the full-size Sheet for a closer look
-4. Pass `localSettings` directly to the embedded `KioskPreviewPanel` so it reacts to every field change in real-time
+1. Replace the outer `<div className="space-y-6">` wrapper (line 346) with a two-column grid:
+   ```
+   <div className="grid grid-cols-1 lg:grid-cols-[1fr,minmax(320px,1fr)] gap-6">
+   ```
 
-The embedded preview will be wrapped in a collapsible section (default open) so users can collapse it if they want more vertical space for the form.
+2. Wrap Features + Tabs + Action Buttons + Deploy QR in a `<div className="space-y-6">` (left column)
 
-### What stays the same
+3. Move the Live Preview out of the left column flow and into the right column wrapped in:
+   ```
+   <div className="sticky top-4 self-start">
+   ```
+   Remove the `Collapsible` wrapper since the preview is now always visible in its own column. Keep the "Expand" button for opening the full Sheet.
 
-- The Sheet-based full preview still works via "Expand Preview" button
-- The `KioskPreviewPanel` component is unchanged
-- The drill-down accordion layout is unchanged
-- Organization Defaults preview Sheet is unchanged
+4. On smaller screens (`< lg`), it collapses back to single column with the preview below the settings (natural stacking).
 
-### Benefit
-
-Real-time visual feedback without any extra clicks. The preview is always contextually tied to the location being edited because it lives inside the drill-down.
+This is a layout-only change within the return statement -- no logic, state, or props change.
