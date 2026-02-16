@@ -60,6 +60,7 @@ function TrendArrow({ value }: { value: number }) {
 
 type SortKey = 'revenue' | 'unitsSold' | 'avgPrice' | 'discount' | 'revenueTrend';
 type SortDir = 'asc' | 'desc';
+type StaffSortKey = 'name' | 'productRevenue' | 'unitsSold' | 'attachmentRate' | 'avgTicket';
 
 const getInitials = (name: string) =>
   name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -108,10 +109,18 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId }: RetailA
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('revenue');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [staffSearch, setStaffSearch] = useState('');
+  const [staffSortKey, setStaffSortKey] = useState<StaffSortKey>('productRevenue');
+  const [staffSortDir, setStaffSortDir] = useState<SortDir>('desc');
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => (d === 'desc' ? 'asc' : 'desc'));
     else { setSortKey(key); setSortDir('desc'); }
+  };
+
+  const toggleStaffSort = (key: StaffSortKey) => {
+    if (staffSortKey === key) setStaffSortDir(d => (d === 'desc' ? 'asc' : 'desc'));
+    else { setStaffSortKey(key); setStaffSortDir('desc'); }
   };
 
   const filteredProducts = useMemo(() => {
@@ -124,6 +133,20 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId }: RetailA
     const dir = sortDir === 'desc' ? -1 : 1;
     return [...list].sort((a, b) => (a[sortKey] - b[sortKey]) * dir);
   }, [data, search, sortKey, sortDir]);
+
+  const filteredStaff = useMemo(() => {
+    if (!data) return [];
+    let list = data.staffRetail;
+    if (staffSearch) {
+      const q = staffSearch.toLowerCase();
+      list = list.filter(s => s.name.toLowerCase().includes(q));
+    }
+    const dir = staffSortDir === 'desc' ? -1 : 1;
+    return [...list].sort((a, b) => {
+      if (staffSortKey === 'name') return a.name.localeCompare(b.name) * dir;
+      return (a[staffSortKey] - b[staffSortKey]) * dir;
+    });
+  }, [data, staffSearch, staffSortKey, staffSortDir]);
 
   const summary = data?.summary;
 
@@ -421,39 +444,59 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId }: RetailA
       </PinnableCard>
 
       {/* Section 6: Staff Retail Performance */}
-      {data.staffRetail.length > 0 && (
-        <PinnableCard elementKey="retail_staff_performance" elementName="Staff Retail Performance" category="Analytics Hub - Retail">
-          <Card>
-            <CardHeader className="pb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                  <Users className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="font-display text-base tracking-wide">STAFF RETAIL PERFORMANCE</CardTitle>
-                    <MetricInfoTooltip description="Per-stylist retail sales metrics. Attachment rate is the percentage of each stylist's service transactions that included a product sale. Avg ticket is average revenue per unit sold." />
-                  </div>
-                  <CardDescription className="text-xs">Retail sales by team member</CardDescription>
-                </div>
+      <PinnableCard elementKey="retail_staff_performance" elementName="Staff Retail Performance" category="Analytics Hub - Retail">
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                <Users className="w-5 h-5 text-primary" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-base tracking-wide">STAFF RETAIL PERFORMANCE</CardTitle>
+                  <MetricInfoTooltip description="Per-stylist retail sales metrics. Attachment rate is the percentage of each stylist's service transactions that included a product sale. Avg ticket is average revenue per unit sold." />
+                </div>
+                <CardDescription className="text-xs">Retail sales by team member</CardDescription>
+              </div>
+              <div className="relative w-56">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Input placeholder="Search staff..." value={staffSearch} onChange={(e) => setStaffSearch(e.target.value)} className="pl-8 h-8 text-sm" />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-10">#</TableHead>
+                    <TableHead className="cursor-pointer select-none" onClick={() => toggleStaffSort('name')}>
+                      <span className="inline-flex items-center gap-1">Stylist <ArrowUpDown className="w-3 h-3" /></span>
+                    </TableHead>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('productRevenue')}>
+                      <span className="inline-flex items-center gap-1">Product Revenue <ArrowUpDown className="w-3 h-3" /></span>
+                    </TableHead>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('unitsSold')}>
+                      <span className="inline-flex items-center gap-1">Units Sold <ArrowUpDown className="w-3 h-3" /></span>
+                    </TableHead>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('attachmentRate')}>
+                      <span className="inline-flex items-center gap-1">Attachment Rate <ArrowUpDown className="w-3 h-3" /></span>
+                    </TableHead>
+                    <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleStaffSort('avgTicket')}>
+                      <span className="inline-flex items-center gap-1">Avg Ticket <ArrowUpDown className="w-3 h-3" /></span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredStaff.length === 0 ? (
                     <TableRow>
-                      <TableHead className="w-10">#</TableHead>
-                      <TableHead>Stylist</TableHead>
-                      <TableHead className="text-right">Product Revenue</TableHead>
-                      <TableHead className="text-right">Units Sold</TableHead>
-                      <TableHead className="text-right">Attachment Rate</TableHead>
-                      <TableHead className="text-right">Avg Ticket</TableHead>
+                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                        {staffSearch ? 'No staff match your search' : 'No staff retail data in this period'}
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {data.staffRetail.map((s, idx) => {
-                      const isTop = idx === 0;
+                  ) : (
+                    filteredStaff.map((s, idx) => {
+                      const isTop = idx === 0 && staffSortKey === 'productRevenue' && staffSortDir === 'desc';
                       return (
                         <TableRow key={s.userId || s.name} className={cn(isTop && 'bg-chart-2/[0.03]')}>
                           <TableCell className="text-muted-foreground tabular-nums">{idx + 1}</TableCell>
@@ -473,8 +516,10 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId }: RetailA
                           <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(s.avgTicket)}</BlurredAmount></TableCell>
                         </TableRow>
                       );
-                    })}
-                  </TableBody>
+                    })
+                  )}
+                </TableBody>
+                {filteredStaff.length > 0 && (
                   <TableFooter>
                     <TableRow>
                       <TableCell />
@@ -485,12 +530,12 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId }: RetailA
                       <TableCell />
                     </TableRow>
                   </TableFooter>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </PinnableCard>
-      )}
+                )}
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </PinnableCard>
 
       {/* Section 7: Margin Analysis (conditional) */}
       {data.marginData ? (
