@@ -1,7 +1,7 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
+import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Target, TrendingUp, TrendingDown, ChevronDown, Loader2, ChevronsUpDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -77,24 +77,12 @@ export function GoalTrackerCard() {
               <CardTitle className="font-display text-base tracking-wide">GOAL TRACKER</CardTitle>
               <MetricInfoTooltip description="Tracks whether you're on pace to hit your revenue targets for the current period." />
             </div>
-            <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-0.5">
-              <Button
-                variant={period === 'weekly' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="h-7 px-3 text-xs"
-                onClick={() => setPeriod('weekly')}
-              >
-                Weekly
-              </Button>
-              <Button
-                variant={period === 'monthly' ? 'secondary' : 'ghost'}
-                size="sm"
-                className="h-7 px-3 text-xs"
-                onClick={() => setPeriod('monthly')}
-              >
-                Monthly
-              </Button>
-            </div>
+            <Tabs value={period} onValueChange={(v) => v && setPeriod(v as 'weekly' | 'monthly')}>
+              <FilterTabsList>
+                <FilterTabsTrigger value="weekly">Weekly</FilterTabsTrigger>
+                <FilterTabsTrigger value="monthly">Monthly</FilterTabsTrigger>
+              </FilterTabsList>
+            </Tabs>
           </div>
         </CardHeader>
 
