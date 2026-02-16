@@ -1,99 +1,60 @@
 
 
-## Unified Executive Intelligence Surface
+## Add Weekly Lever to Zura Business Insights (Role-Gated)
 
 ### What Changes
 
-Combine the Executive Brief (lever recommendations) and Zura AI Insights into the Executive Summary (leadership) tab in the Analytics Hub, creating a single strategic cockpit.
+Embed the Weekly Lever (Executive Brief) directly inside the **Zura Business Insights** drawer and card on the dashboard home page. The lever section will only be visible to users with `super_admin` or account owner roles. All other users see the existing insights without the lever.
 
-### Current State
+### Layout
 
-| Feature | Location | Purpose |
-|---|---|---|
-| Executive Summary | Analytics > Leadership tab | KPI snapshot tiles + trend chart |
-| Executive Brief | /dashboard/admin/executive-brief (standalone) | Weekly lever recommendation |
-| AI Insights Card | Command Center dashboard | AI-generated business insights |
-
-### Proposed Layout (Leadership Tab)
+The Weekly Lever will appear as a distinct section **above** the insights tabs inside the expanded drawer/card, creating a natural hierarchy: strategic lever first, then supporting insights below.
 
 ```text
 +--------------------------------------------------+
-|  INFOTAINER: Executive Intelligence               |
-|  "Your strategic cockpit..."              [X]     |
-+--------------------------------------------------+
+|  ZURA BUSINESS INSIGHTS              [Refresh] [X]|
 |                                                    |
-|  EXECUTIVE SUMMARY (existing KPI tiles)           |
-|  Revenue | Rent | Commission | Staff | Clients    |
-|  + Trend Chart                                     |
+|  [Sentiment summary + timestamp]                  |
 |                                                    |
-+--------------------------------------------------+
-|                                                    |
-|  WEEKLY LEVER (from Executive Brief)              |
-|  [High confidence] Increase rebooking rate        |
-|  What to do: ...                                   |
-|  Why now: ...                                      |
+|  --- WEEKLY LEVER (super_admin only) ------------ |
+|  [Lever recommendation or Silence State]          |
 |  [Approve] [Modify] [Decline] [Snooze]            |
+|  ------------------------------------------------ |
 |                                                    |
-|  --- OR if no lever ---                            |
-|  Operations within thresholds (Silence State)     |
+|  [Key Insights] [Action Items] [More suggestions]  |
+|  ... existing insight cards ...                    |
 |                                                    |
-+--------------------------------------------------+
-|                                                    |
-|  ZURA INSIGHTS (from AI Insights)                 |
-|  Revenue Pulse | Capacity | Staffing | ...        |
-|  Action Items | Feature Suggestions               |
-|                                                    |
+|  Powered by Zura AI                               |
 +--------------------------------------------------+
 ```
 
-### Implementation Steps
+### Role Gating
 
-**1. Create a Leadership Tab wrapper component**
-- File: `src/components/dashboard/analytics/LeadershipTabContent.tsx`
-- Composes the existing ExecutiveSummaryCard, ExecutiveTrendChart, a new inline WeeklyLeverSection, and an inline AIInsightsSection
-- Each section wrapped in PinnableCard for consistency
+- Uses `useEffectiveRoles()` from `src/hooks/useEffectiveUser.ts`
+- Visible when roles include `super_admin` (account owners always have this role)
+- Consistent with the existing pattern used throughout the app (e.g., `isCoach` checks)
 
-**2. Add Weekly Lever Section**
-- File: `src/components/dashboard/analytics/WeeklyLeverSection.tsx`
-- Reuses the existing `WeeklyLeverBrief` and `SilenceState` components from `src/components/executive-brief/`
-- Reuses the existing `useActiveRecommendation` hook
-- Wrapped in a card with the standard analytics header pattern (icon + uppercase title)
-- Includes a "Generate New" button (reuses `useGenerateRecommendation`)
+### Technical Details
 
-**3. Add AI Insights Section**
-- File: `src/components/dashboard/analytics/AIInsightsSection.tsx`
-- Adapts the core rendering logic from `AIInsightsCard.tsx` (insight cards, action items, feature suggestions)
-- Uses the existing `useAIInsights` hook
-- Styled to match the analytics card pattern rather than the command center drawer style
+**Files to Modify:**
 
-**4. Add Infotainer to Leadership Tab**
-- Add an Infotainer at the top explaining: "Your strategic cockpit -- KPI snapshot, weekly lever recommendation, and AI-powered insights in one view."
+1. **`src/components/dashboard/AIInsightsDrawer.tsx`** (the expandable drawer on dashboard)
+   - Import `useEffectiveRoles`, `useActiveRecommendation`, `WeeklyLeverBrief`, `SilenceState`, `EnforcementGateBanner`
+   - Add a `isLeadership` check: `roles.includes('super_admin')`
+   - Render the lever section between the sentiment summary and the tabs, wrapped in a conditional
+   - Styled with a subtle top/bottom border separator to visually distinguish it from insights
+   - Loading state uses the existing `Loader2` spinner pattern
 
-**5. Update Analytics Hub**
-- File: `src/pages/dashboard/admin/AnalyticsHub.tsx`
-- Replace the inline leadership tab content (lines 367-386) with the new `LeadershipTabContent` component
+2. **`src/components/dashboard/AIInsightsCard.tsx`** (the pinnable card variant)
+   - Same integration: import lever hooks and components
+   - Add lever section between the sentiment summary and the section headers
+   - Same role gate with `useEffectiveRoles()`
 
-**6. Redirect the standalone Executive Brief page**
-- File: `src/pages/dashboard/admin/ExecutiveBriefPage.tsx`
-- Replace with a redirect to `/dashboard/admin/analytics?tab=leadership`
-- Keep the route working so bookmarks and sidebar links don't break
+### What Stays the Same
 
-### Files to Create
-- `src/components/dashboard/analytics/LeadershipTabContent.tsx`
-- `src/components/dashboard/analytics/WeeklyLeverSection.tsx`
-- `src/components/dashboard/analytics/AIInsightsSection.tsx`
+- The lever components (`WeeklyLeverBrief`, `SilenceState`, `EnforcementGateBanner`) are reused unchanged
+- The `useActiveRecommendation` hook handles all data fetching
+- No "Generate New" button here (that stays on the Analytics leadership tab) -- this is a read/act surface only
+- No database changes needed
+- The lever also remains on the Analytics Hub leadership tab as the full management surface
 
-### Files to Modify
-- `src/pages/dashboard/admin/AnalyticsHub.tsx` -- Use new LeadershipTabContent
-- `src/pages/dashboard/admin/ExecutiveBriefPage.tsx` -- Redirect to analytics leadership tab
-
-### No Changes Needed
-- No database changes (all data sources already exist)
-- No new hooks (reuses useActiveRecommendation, useAIInsights, useGenerateRecommendation)
-- Executive brief components (WeeklyLeverBrief, DecisionActions, SilenceState, LeverDetailPanel) remain intact and are reused
-
-### Design Considerations
-- The lever section uses the existing WeeklyLeverBrief component unchanged, so Approve/Modify/Decline/Snooze all work identically
-- AI Insights refresh button and cooldown logic carry over from the existing hook
-- All sections are individually pinnable to the command center dashboard
-- Visibility gates remain in place for role-based access control
