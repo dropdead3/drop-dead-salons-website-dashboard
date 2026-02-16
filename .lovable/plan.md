@@ -1,57 +1,32 @@
 
 
-## Compact Weekly Lever in Business Insights
+## Remove Executive Brief from Sidebar Navigation
 
-### Problem
-The Weekly Lever section inside the Zura Business Insights card/drawer is too large. The `SilenceState` component uses `py-16` padding with a big icon, creating a massive vertical block that dominates the card (as shown in the screenshot). When there IS a recommendation, `WeeklyLeverBrief` is similarly tall.
-
-### Solution
-Replace the inline lever rendering with a compact, collapsible row:
-- **Collapsed (default):** A single-line row showing a green checkmark + "Operations within thresholds" (or the lever title if one exists), with a chevron to expand
-- **Expanded:** Shows the full `SilenceState` or `WeeklyLeverBrief` content, but with reduced padding
+Since the Executive Brief is now consolidated into the Leadership tab of the Analytics Hub and embedded in the Zura Business Insights card, the standalone sidebar entry is redundant.
 
 ### Changes
 
-**1. `src/components/executive-brief/SilenceState.tsx`**
-- Add an optional `compact` prop
-- When `compact=true`: render a single-line row (icon + text + timestamp) instead of the large centered card with `py-16`
-- When `compact=false` (default): keep current behavior for the Analytics Hub leadership tab
+**1. Remove from sidebar nav registry**
+- File: `src/config/dashboardNav.ts` (line 99)
+- Delete the `executive-brief` entry from the nav items array
 
-**2. `src/components/dashboard/AIInsightsDrawer.tsx`** (lines 390-408)
-- Replace the inline lever section with a collapsible button row
-- Collapsed: compact single line with chevron toggle
-- Expanded: shows the full lever content with modest padding
-- Uses `Collapsible` from radix for smooth open/close
+**2. Remove from default sidebar layout**
+- File: `src/hooks/useSidebarLayout.ts` (line 86)
+- Remove `/dashboard/admin/executive-brief` from the default link order
 
-**3. `src/components/dashboard/AIInsightsCard.tsx`** (lines 346-362)
-- Same collapsible pattern as the drawer
-- Compact row that expands on click
+**3. Remove from guidance routes**
+- File: `src/utils/guidanceRoutes.ts` (line 37)
+- Remove `/dashboard/admin/executive-brief` from the guided routes list
 
-### Visual (Collapsed State)
-```text
-|---------------------------------------------------------|
-| [checkmark] Operations within thresholds    [chevron v] |
-|---------------------------------------------------------|
-```
+**4. Keep the route in App.tsx**
+- The route at `/dashboard/admin/executive-brief` already redirects to `/dashboard/admin/analytics?tab=leadership`, so it stays for backward compatibility (bookmarks, shared links)
 
-### Visual (Expanded State)
-```text
-|---------------------------------------------------------|
-| [checkmark] Operations within thresholds    [chevron ^] |
-|                                                         |
-|   No high-confidence lever detected this period.        |
-|   Last reviewed: Monday, February 16                    |
-|---------------------------------------------------------|
-```
+**5. Update Decision History empty state text**
+- File: `src/pages/dashboard/admin/DecisionHistoryPage.tsx` (line 49)
+- Change "Visit the Executive Brief" to "Visit the Leadership tab in Analytics" since the standalone page no longer exists in nav
 
-### Technical Details
+### What stays unchanged
+- The `ExecutiveBriefPage.tsx` file (redirect logic)
+- All executive-brief components (WeeklyLeverBrief, SilenceState, etc.) -- still used by the Analytics leadership tab and Business Insights card
+- The route definition in App.tsx (backward-compatible redirect)
 
-- `SilenceState` gets a `compact?: boolean` prop. Compact renders: `h-10` row with inline icon, text, and timestamp.
-- Both `AIInsightsDrawer` and `AIInsightsCard` wrap the lever section in a `Collapsible` (already installed via radix). Default state is collapsed.
-- When a lever recommendation exists (not silence), the collapsed row shows the lever title and confidence badge instead, making it clear there is an action to review. In that case, default to expanded so the user sees it.
-- The full `WeeklyLeverBrief` component is unchanged for the Analytics Hub leadership tab.
-
-### Files to Modify
-- `src/components/executive-brief/SilenceState.tsx` -- add compact variant
-- `src/components/dashboard/AIInsightsDrawer.tsx` -- collapsible lever row
-- `src/components/dashboard/AIInsightsCard.tsx` -- collapsible lever row
