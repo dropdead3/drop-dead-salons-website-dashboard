@@ -7,6 +7,8 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { MapPin, AlertCircle } from 'lucide-react';
 import { useSalesByLocation } from '@/hooks/useSalesData';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
+import { useActiveLocations, isClosedOnDate } from '@/hooks/useLocations';
+import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { cn } from '@/lib/utils';
 
 export interface LocationsRollupCardProps {
@@ -19,6 +21,8 @@ export function LocationsRollupCard({ filterContext, dateFrom, dateTo }: Locatio
   const { accessibleLocations } = useUserLocationAccess();
   const { data: locationData, isLoading, isError, refetch } = useSalesByLocation(dateFrom, dateTo);
   const { formatCurrencyWhole } = useFormatCurrency();
+  const { data: allLocations } = useActiveLocations();
+  const isSingleDay = dateFrom === dateTo;
 
   const showCard = accessibleLocations.length > 1;
   const locations = (locationData ?? []).filter((l) => (l.totalRevenue ?? 0) > 0);
@@ -101,6 +105,14 @@ export function LocationsRollupCard({ filterContext, dateFrom, dateTo }: Locatio
               )}
             >
               <span className="text-sm truncate">{loc.name}</span>
+              {isSingleDay && (loc.totalRevenue ?? 0) === 0 && (() => {
+                const locObj = allLocations?.find(l => l.id === loc.location_id);
+                if (!locObj) return null;
+                const viewDate = new Date(dateFrom + 'T12:00:00');
+                const closed = isClosedOnDate(locObj.hours_json, locObj.holiday_closures, viewDate);
+                if (!closed.isClosed) return null;
+                return <ClosedBadge reason={closed.reason} />;
+              })()}
               <span className="tabular-nums text-sm shrink-0 ml-2">
                 <BlurredAmount>
                   {formatCurrencyWhole(loc.totalRevenue ?? 0)}

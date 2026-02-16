@@ -2,6 +2,8 @@ import { MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrencyWhole } from '@/lib/formatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
+import { useActiveLocations, isClosedOnDate } from '@/hooks/useLocations';
+import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 
 export interface LocationBreakdownItem {
   locationId: string;
@@ -14,6 +16,8 @@ interface LocationBreakdownSectionProps {
   format: 'currency' | 'number' | 'percent';
   isAllLocations: boolean;
   className?: string;
+  /** Pass the viewed date for single-day views to show closed badges */
+  viewDate?: Date;
 }
 
 export function LocationBreakdownSection({
@@ -21,8 +25,10 @@ export function LocationBreakdownSection({
   format,
   isAllLocations,
   className,
+  viewDate,
 }: LocationBreakdownSectionProps) {
   const { formatNumber } = useFormatNumber();
+  const { data: allLocations } = useActiveLocations();
 
   // Only show when viewing "All Locations" and when multiple locations have data
   if (!isAllLocations || data.length <= 1) {
@@ -58,7 +64,16 @@ export function LocationBreakdownSection({
             key={loc.locationId}
             className="flex items-center justify-between p-2 bg-muted/20 rounded-md border border-border/30"
           >
-            <span className="text-sm truncate max-w-[150px]">{loc.locationName}</span>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-sm truncate max-w-[150px]">{loc.locationName}</span>
+              {viewDate && (() => {
+                const locObj = allLocations?.find(l => l.id === loc.locationId);
+                if (!locObj) return null;
+                const closed = isClosedOnDate(locObj.hours_json, locObj.holiday_closures, viewDate);
+                if (!closed.isClosed) return null;
+                return <ClosedBadge reason={closed.reason} />;
+              })()}
+            </div>
             <span className="font-display tabular-nums text-sm">{formatValue(loc.value)}</span>
           </div>
         ))}
