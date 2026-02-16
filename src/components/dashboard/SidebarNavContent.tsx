@@ -278,7 +278,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
         <Icon className="w-4 h-4 shrink-0" />
         {!isCollapsed && <span className="flex-1">{displayLabel}</span>}
         {!isCollapsed && badgeCount !== undefined && badgeCount > 0 && (
-          <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-[10px] font-medium rounded-md border bg-red-100 text-red-700 border-red-300 shadow-sm dark:bg-red-500/20 dark:text-red-200 dark:border-red-400/50 dark:shadow-[0_0_8px_rgba(220,38,38,0.2)]">
+          <span className="inline-flex items-center justify-center h-5 min-w-5 px-1.5 text-[10px] font-medium rounded-md border bg-red-600 text-white border-red-700 shadow-sm dark:bg-red-500/20 dark:text-red-200 dark:border-red-400/50 dark:shadow-[0_0_8px_rgba(220,38,38,0.2)]">
             {badgeCount > 9 ? '9+' : badgeCount}
           </span>
         )}
