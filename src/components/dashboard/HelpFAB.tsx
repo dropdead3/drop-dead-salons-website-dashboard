@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
-import { MessageCircleQuestion, X } from 'lucide-react';
+import { CalendarClock, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -30,7 +30,7 @@ export function HelpFAB() {
           <Button
             size="icon"
             className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow"
-            aria-label="Help & Support"
+            aria-label="Scheduling Co-Pilot"
           >
             <AnimatePresence mode="wait">
               {isOpen ? (
@@ -51,7 +51,7 @@ export function HelpFAB() {
                   exit={{ rotate: -90, opacity: 0 }}
                   transition={{ duration: 0.15 }}
                 >
-                  <MessageCircleQuestion className="h-6 w-6" />
+                  <CalendarClock className="h-6 w-6" />
                 </motion.div>
               )}
             </AnimatePresence>
