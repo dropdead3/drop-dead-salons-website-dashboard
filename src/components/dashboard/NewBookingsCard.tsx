@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { CalendarPlus, UserPlus, RefreshCw, TrendingUp, TrendingDown, Minus, MapPin, CalendarCheck } from 'lucide-react';
 import { useNewBookings } from '@/hooks/useNewBookings';
 import { useBookingPipeline } from '@/hooks/useBookingPipeline';
+import { useBookingPipelineByLocation } from '@/hooks/useBookingPipelineByLocation';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { NewBookingsDrilldown } from './NewBookingsDrilldown';
 import { cn } from '@/lib/utils';
@@ -34,6 +35,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
   const locationIdForPipeline = filterContext?.locationId === 'all' ? undefined : filterContext?.locationId;
   const { data, isLoading } = useNewBookings(filterContext?.locationId, dateRange);
   const pipeline = useBookingPipeline(locationIdForPipeline);
+  const { locations: pipelineLocations } = useBookingPipelineByLocation(locationIdForPipeline);
   const [drilldown, setDrilldown] = useState<'new' | 'returning' | null>(null);
 
   const showLocationBreakdown = !filterContext?.locationId || filterContext.locationId === 'all';
@@ -203,7 +205,24 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
                 key={loc.locationId}
                 className="flex items-center justify-between p-2 bg-muted/20 rounded-md border border-border/30"
               >
-                <span className="text-sm">{loc.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">{loc.name}</span>
+                  {(() => {
+                    const ploc = pipelineLocations?.find(p => p.locationId === loc.locationId);
+                    if (!ploc || ploc.status === 'no_data') return null;
+                    const badgeConfig = {
+                      healthy: { dot: 'bg-emerald-500', label: 'Healthy' },
+                      slowing: { dot: 'bg-amber-500', label: 'Slowing' },
+                      critical: { dot: 'bg-destructive', label: 'Critical' },
+                    }[ploc.status];
+                    return (
+                      <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground px-1.5 py-0.5 rounded bg-muted/50 border border-border/30">
+                        <span className={cn('w-1.5 h-1.5 rounded-full', badgeConfig.dot)} />
+                        {badgeConfig.label}
+                      </span>
+                    );
+                  })()}
+                </div>
                 <span className="font-display tabular-nums">{loc.count}</span>
               </div>
             ))}
