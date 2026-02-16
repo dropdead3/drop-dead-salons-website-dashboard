@@ -251,7 +251,7 @@ export function ServicesSettingsContent() {
                           <Popover>
                             <PopoverTrigger asChild>
                               <button
-                                className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-sans font-medium shrink-0 transition-transform hover:scale-105 ring-2 ring-offset-2 ring-offset-background ring-transparent hover:ring-primary/50"
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-[11px] font-sans font-medium tracking-normal shrink-0 transition-transform hover:scale-105 ring-2 ring-offset-2 ring-offset-background ring-transparent hover:ring-primary/50"
                                 style={gradient ? { background: gradient.background, color: gradient.textColor } : { backgroundColor: cat.color_hex, color: cat.text_color_hex }}
                               >
                                 {abbr}
@@ -366,7 +366,7 @@ export function ServicesSettingsContent() {
                       <AccordionTrigger className="hover:no-underline py-4">
                         <div className="flex items-center gap-3">
                           <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-sans font-medium shrink-0"
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-sans font-medium tracking-normal shrink-0"
                             style={gradient ? { background: gradient.background, color: gradient.textColor } : { backgroundColor: cat.color_hex, color: cat.text_color_hex }}
                           >
                             {abbr}
