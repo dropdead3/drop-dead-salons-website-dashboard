@@ -289,6 +289,214 @@ export function useDeleteFlowStep() {
   });
 }
 
+// ============= Step Overrides =============
+
+export function useStepOverrides(stepId: string | null) {
+  return useQuery({
+    queryKey: ['step-overrides', stepId],
+    queryFn: async () => {
+      if (!stepId) return [];
+      const { data, error } = await supabase
+        .from('service_email_flow_step_overrides')
+        .select('*')
+        .eq('step_id', stepId);
+      if (error) throw error;
+      return data as ServiceEmailFlowStepOverride[];
+    },
+    enabled: !!stepId,
+  });
+}
+
+export function useUpsertStepOverride() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ stepId, locationId, subject, htmlBody }: {
+      stepId: string;
+      locationId: string;
+      subject: string | null;
+      htmlBody: string | null;
+    }) => {
+      const { data: existing } = await supabase
+        .from('service_email_flow_step_overrides')
+        .select('id')
+        .eq('step_id', stepId)
+        .eq('location_id', locationId)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('service_email_flow_step_overrides')
+          .update({ subject, html_body: htmlBody })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('service_email_flow_step_overrides')
+          .insert({ step_id: stepId, location_id: locationId, subject, html_body: htmlBody });
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['step-overrides', vars.stepId] });
+      toast.success('Location override saved');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+export function useDeleteStepOverride() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, stepId }: { id: string; stepId: string }) => {
+      const { error } = await supabase.from('service_email_flow_step_overrides').delete().eq('id', id);
+      if (error) throw error;
+      return stepId;
+    },
+    onSuccess: (stepId) => {
+      queryClient.invalidateQueries({ queryKey: ['step-overrides', stepId] });
+      toast.success('Override removed');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ============= Reminder Overrides =============
+
+export function useReminderOverrides(configId: string | null) {
+  return useQuery({
+    queryKey: ['reminder-overrides', configId],
+    queryFn: async () => {
+      if (!configId) return [];
+      const { data, error } = await supabase
+        .from('appointment_reminder_overrides')
+        .select('*')
+        .eq('config_id', configId);
+      if (error) throw error;
+      return data as AppointmentReminderOverride[];
+    },
+    enabled: !!configId,
+  });
+}
+
+export function useUpsertReminderOverride() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ configId, locationId, subject, htmlBody }: {
+      configId: string;
+      locationId: string;
+      subject: string | null;
+      htmlBody: string | null;
+    }) => {
+      const { data: existing } = await supabase
+        .from('appointment_reminder_overrides')
+        .select('id')
+        .eq('config_id', configId)
+        .eq('location_id', locationId)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('appointment_reminder_overrides')
+          .update({ subject, html_body: htmlBody })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('appointment_reminder_overrides')
+          .insert({ config_id: configId, location_id: locationId, subject, html_body: htmlBody });
+        if (error) throw error;
+      }
+    },
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['reminder-overrides', vars.configId] });
+      toast.success('Reminder override saved');
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+}
+
+// ============= Email Queue Monitoring =============
+
+export interface ServiceEmailQueueItem {
+  id: string;
+  organization_id: string;
+  appointment_id: string;
+  client_id: string | null;
+  step_id: string;
+  scheduled_at: string;
+  status: string;
+  merged_into_id: string | null;
+  sent_at: string | null;
+  message_id: string | null;
+  error_message: string | null;
+  created_at: string;
+  appointments?: {
+    client_name: string | null;
+    client_email: string | null;
+    service_name: string | null;
+    appointment_date: string;
+    start_time: string;
+  };
+  service_email_flow_steps?: {
+    subject: string;
+    timing_type: string;
+    timing_value: number;
+  };
+}
+
+export function useServiceEmailQueue(filters?: { status?: string; limit?: number }) {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+  const status = filters?.status;
+  const limit = filters?.limit || 50;
+
+  return useQuery({
+    queryKey: ['service-email-queue', orgId, status, limit],
+    queryFn: async () => {
+      if (!orgId) return [];
+      let query = supabase
+        .from('service_email_queue')
+        .select(`
+          *,
+          appointments(client_name, client_email, service_name, appointment_date, start_time),
+          service_email_flow_steps(subject, timing_type, timing_value)
+        `)
+        .eq('organization_id', orgId)
+        .order('scheduled_at', { ascending: false })
+        .limit(limit);
+
+      if (status && status !== 'all') {
+        query = query.eq('status', status);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as ServiceEmailQueueItem[];
+    },
+    enabled: !!orgId,
+    refetchInterval: 60000, // refresh every minute
+  });
+}
+
+// ============= Test Send =============
+
+export function useTestSendFlowStep() {
+  return useMutation({
+    mutationFn: async ({ stepId, testEmail }: { stepId: string; testEmail: string }) => {
+      const { data, error } = await supabase.functions.invoke('send-test-service-email', {
+        body: { stepId, testEmail },
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => toast.success('Test email sent! Check your inbox.'),
+    onError: (e: Error) => toast.error(`Failed to send test: ${e.message}`),
+  });
+}
+
 // ============= Appointment Reminders =============
 
 export function useAppointmentRemindersConfig() {
