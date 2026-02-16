@@ -1,102 +1,65 @@
 
 
-## Booking Pipeline Drill-Down (Operations Sub-Tab) — Refined
+## Booking Pipeline Visualization Drill-Down
 
-### What We're Building
+### What We're Adding
 
-A new **"Booking Pipeline"** sub-tab under Analytics > Operations that gives enterprise operators an at-a-glance view of which locations need attention. It answers: "Where should I focus marketing or outreach to fill the pipeline?"
+An expandable visualization section above the location cards in `BookingPipelineContent` that gives enterprise operators an instant visual read on pipeline health across all locations -- without needing to scan each card individually.
 
-### Enhancements Over Original Plan
+### Visualization: Horizontal Bar Chart
 
-1. **Single-pass data fetching** -- one forward query + one trailing query, grouped client-side by location. No N+1 problem.
-2. **Zero-data guard** -- locations with 0 forward AND 0 trailing show "No Data" status (gray dot) instead of a misleading "Healthy."
-3. **Clickable pipeline strip** -- the health indicator in `NewBookingsCard` becomes a `Link` to the drill-down page.
-4. **Actionable next step for critical locations** -- each critical/slowing card gets a subtle "Boost Bookings" link pointing to the marketing module for that location, aligning with Zura's "what lever to pull" doctrine.
+A horizontal bar chart (matching the `StaffRevenueLeaderboard` pattern) where each bar represents a location's pipeline ratio. This is the most effective choice because:
 
-### UI Layout
+- Locations are labeled on the Y-axis (readable even at 20+ locations)
+- Bar length = ratio percentage (capped at 100% visually, label shows actual)
+- Bar color = status color (red/amber/green/gray) per location
+- A vertical reference line at 90% marks the "healthy" threshold
+- A second subtle reference line at 70% marks the "slowing" threshold
+- Sorted to match the current sort setting (severity default = worst at top)
 
 ```text
-  BOOKING PIPELINE
-  ─────────────────────────────────────────────────────────────
-  [3 Critical]  [2 Slowing]  [8 Healthy]       Sort: [Severity v]
+BOOKING PIPELINE
+[2 Critical]  [0 Slowing]  [0 Healthy]       Sort: [Severity v]
 
-  ┌──────────────────────────────────────────────────────────┐
-  │ [RED]  Downtown Dallas                        ratio: 43% │
-  │ Critical · 12 next 14d vs 28 trailing                    │
-  │ ████████░░░░░░░░░░░░░░░░░░░░░  43%                      │
-  │                                    [Boost Bookings >]    │
-  └──────────────────────────────────────────────────────────┘
-  ┌──────────────────────────────────────────────────────────┐
-  │ [AMBER]  Uptown                               ratio: 75% │
-  │ Slowing · 18 next 14d vs 24 trailing                     │
-  │ ██████████████████░░░░░░░░░░░  75%                       │
-  │                                    [Boost Bookings >]    │
-  └──────────────────────────────────────────────────────────┘
-  ┌──────────────────────────────────────────────────────────┐
-  │ [GREEN]  Frisco                              ratio: 110%  │
-  │ Healthy · 22 next 14d vs 20 trailing                     │
-  │ ██████████████████████████████ 110%                      │
-  └──────────────────────────────────────────────────────────┘
+  ┌─ Pipeline Health by Location ──────────────────────────────────┐
+  │                         70%   90%                              │
+  │  North Mesa      ██░░░░░│░░░░░│░░░░░░░░░░░░░░  0%            │
+  │  Val Vista Lakes ██░░░░░│░░░░░│░░░░░░░░░░░░░░  0%            │
+  │  Scottsdale      ███████│█████│██████░░░░░░░░  85%            │
+  │  Frisco          ███████│█████│█████████████░  110%           │
+  └────────────────────────────────────────────────────────────────┘
 
-  [Show all 13 locations]
+  [Location cards below...]
 ```
 
-### Key Design Decisions
+### Design Details
 
-- **Summary scoreboard** at top: colored chip counts (e.g., "3 Critical") act as toggle filters
-- **Default sort**: Critical first (severity), with options for ratio ascending/descending and alphabetical
-- **List capping**: Top 5 visible by default, "Show all X locations" toggle per existing standards
-- **Progress bar**: Visually capped at 100%, label shows actual ratio percentage
-- **Single-location orgs**: Shows just one card without ranking UI or filters
-- **When a specific location is filtered** in the Analytics Hub filter bar, shows that single location's detailed view
-- **"Boost Bookings"** link on critical/slowing locations routes to the marketing module (future-proofed; links to marketing tab or a placeholder)
+- Uses Recharts `BarChart` with `layout="vertical"` (same as StaffRevenueLeaderboard)
+- Bar fills use the status color with luxury glass gradient opacity (0.85 to 0.5)
+- Two `ReferenceLine` components at x=70 and x=90 with dashed strokes (matching forecasting chart conventions: 1px dashed, 0.5 opacity)
+- Reference line labels: "Slowing" at 70, "Healthy" at 90 as small text annotations
+- Custom tooltip showing location name, forward count, trailing count, ratio
+- Chart height scales dynamically: `Math.max(180, locations.length * 36)` px
+- Wrapped in a `Collapsible` (matching `CapacityBreakdown` pattern) so users can collapse it when they want to focus on the cards
+- Default state: expanded
+- Uses `framer-motion` for entrance animation
 
-### Zero-Data Guard
+### Implementation
 
-When both `forwardCount` and `baselineCount` are 0 for a location:
-- Status: `no_data` (not "Healthy")
-- Dot color: gray (`bg-muted-foreground/40`)
-- Label: "No Data"
-- Sorted last (after Healthy)
+**File: `src/components/dashboard/analytics/BookingPipelineContent.tsx`**
 
-### Files to Create
-
-| File | Purpose |
-|------|---------|
-| `src/hooks/useBookingPipelineByLocation.ts` | Single-pass hook: two Supabase queries (forward 14d + trailing 14d), joins with locations list, computes ratio/status per location, returns sorted array + summary counts |
-| `src/components/dashboard/analytics/BookingPipelineContent.tsx` | Sub-tab UI: summary scoreboard, sortable/filterable location cards with progress bars, list capping, empty state |
+1. Add Recharts imports (`BarChart`, `Bar`, `XAxis`, `YAxis`, `ReferenceLine`, `Tooltip`, `ResponsiveContainer`, `Cell`)
+2. Add `Collapsible` imports
+3. Add a `PipelineChart` section between the scoreboard/sort controls and the location cards
+4. Chart data is derived from the same `sorted` array (already filtered and sorted)
+5. Each bar's fill color is determined by status: `hsl(var(--destructive))` for critical, amber for slowing, emerald for healthy, muted for no_data
+6. Custom tooltip with `bg-popover border border-border rounded-lg` styling
 
 ### Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/analytics/OperationsTabContent.tsx` | Add "Booking Pipeline" `SubTabsTrigger` wrapped in `VisibilityGate`, add `TabsContent` rendering `BookingPipelineContent` |
-| `src/components/dashboard/analytics/ExecutiveSummaryCard.tsx` | Change Booking Pipeline KPI `drillDown` from `staff-utilization` to `booking-pipeline` (line 376) |
-| `src/components/dashboard/NewBookingsCard.tsx` | Wrap the pipeline health strip in a `Link` to `/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline` |
+| `src/components/dashboard/analytics/BookingPipelineContent.tsx` | Add horizontal bar chart visualization in a collapsible section above the location cards |
 
-### Technical Details
-
-**`useBookingPipelineByLocation` hook:**
-- Two Supabase queries: forward (tomorrow to +14d) and trailing (-14d to today)
-- Both select `id, location_id` without `head: true` so we get the actual rows (or use `.select('location_id')` for lighter payload)
-- Group results by `location_id` client-side using a Map
-- Join with the locations list (from `useLocations`) for names
-- Compute ratio and status per location using the same thresholds as `useBookingPipeline` (healthy >= 0.9, slowing >= 0.7, critical < 0.7)
-- Add `no_data` status when both counts are 0
-- Return: `{ locations: LocationPipeline[], summary: { critical: number, slowing: number, healthy: number, noData: number }, isLoading: boolean }`
-
-**`BookingPipelineContent` component props:**
-- `locationId?: string` (from OperationsTabContent filter)
-- `dateRange: string` (passed through for context, though pipeline is always 14d fixed)
-
-**State:**
-- `sortBy`: `'severity'` (default) | `'ratio-asc'` | `'ratio-desc'` | `'name'`
-- `activeFilters`: `Set<'critical' | 'slowing' | 'healthy' | 'no_data'>` (all active by default, chips toggle)
-- `showAll`: boolean for list capping
-
-**Styling:**
-- Location cards: `bg-muted/30 rounded-lg border border-border/50 p-4`
-- Progress bar: existing `Progress` component with `indicatorClassName` set to status color
-- Summary chips: `px-2 py-1 rounded-full text-xs font-display` with status-colored backgrounds
-- "Boost Bookings" link: `text-xs text-muted-foreground hover:text-foreground` anchored bottom-right (same pattern as KpiTile "View" links)
+Single file change. No new hooks or data sources needed -- the visualization uses the same `useBookingPipelineByLocation` data already being fetched.
 
