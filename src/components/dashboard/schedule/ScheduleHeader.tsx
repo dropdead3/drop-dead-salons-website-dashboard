@@ -253,27 +253,6 @@ export function ScheduleHeader({
           </div>
 
 
-          {/* AI Copilot Toggle */}
-          {onCopilotToggle && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={cn(
-                    "text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10",
-                    copilotOpen && "text-[hsl(40,20%,92%)] bg-[hsl(40,20%,92%)]/15"
-                  )}
-                  onClick={onCopilotToggle}
-                >
-                  <Sparkles className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                <p>AI Copilot</p>
-              </TooltipContent>
-            </Tooltip>
-          )}
 
           {/* Settings Icon */}
           <Tooltip>
