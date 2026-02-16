@@ -273,7 +273,16 @@ export function WeekAheadForecast() {
           <div className="h-[200px]" ref={chartRef}>
             {isInView ? (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: 35, left: 10 }}>
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 25, right: 5, bottom: 35, left: 10 }}
+                  onClick={(state) => {
+                    if (state?.activeLabel) {
+                      handleBarClick(state.activeLabel as string);
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
                   <XAxis 
                     dataKey="name" 
                     tick={<CustomXAxisTick days={days} peakDate={peakDay?.date} onDayClick={handleDayClick} />}
@@ -318,8 +327,6 @@ export function WeekAheadForecast() {
                           fillOpacity={isSelected ? 0.8 : (entry.isPeak ? 0.6 : 0.5)}
                           stroke={isSelected ? 'hsl(var(--foreground))' : 'none'}
                           strokeWidth={isSelected ? 1.5 : 0}
-                          cursor="pointer"
-                          onClick={() => handleBarClick(entry.name)}
                         />
                       );
                     })}
@@ -346,8 +353,6 @@ export function WeekAheadForecast() {
                           fillOpacity={isSelected ? 1 : (entry.isPeak ? 1 : 0.9)}
                           stroke={isSelected ? 'hsl(var(--foreground))' : 'none'}
                           strokeWidth={isSelected ? 1.5 : 0}
-                          cursor="pointer"
-                          onClick={() => handleBarClick(entry.name)}
                         />
                       );
                     })}
