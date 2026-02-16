@@ -29,10 +29,10 @@ interface Stylist {
 interface StylistSalesRowProps {
   stylist: Stylist;
   rank: number;
-  maxRevenue: number;
+  totalRevenue: number;
 }
 
-export function StylistSalesRow({ stylist, rank, maxRevenue }: StylistSalesRowProps) {
+export function StylistSalesRow({ stylist, rank, totalRevenue }: StylistSalesRowProps) {
   const navigate = useNavigate();
   const { formatCurrencyWhole } = useFormatCurrency();
   
@@ -46,8 +46,8 @@ export function StylistSalesRow({ stylist, rank, maxRevenue }: StylistSalesRowPr
     ? stylist.totalRevenue / stylist.totalTransactions 
     : 0;
 
-  const revenuePercent = maxRevenue > 0 
-    ? (stylist.totalRevenue / maxRevenue) * 100 
+  const revenuePercent = totalRevenue > 0 
+    ? (stylist.totalRevenue / totalRevenue) * 100 
     : 0;
 
   const handleClick = () => {

@@ -479,8 +479,8 @@ export function ExecutiveSummaryCard() {
             </div>
             <div className="space-y-0">
               {locations.slice(0, 5).map((loc, idx, arr) => {
-                const maxRevenue = locations[0]?.totalRevenue || 1;
-                const pct = (loc.totalRevenue / maxRevenue) * 100;
+                const totalLocRevenue = locations.reduce((sum, l) => sum + l.totalRevenue, 0) || 1;
+                const pct = (loc.totalRevenue / totalLocRevenue) * 100;
                 return (
                   <div
                     key={loc.location_id}
