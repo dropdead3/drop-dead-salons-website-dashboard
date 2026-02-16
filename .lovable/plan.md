@@ -1,19 +1,18 @@
 
-# Restore Zura/Chat Icon on Non-Schedule Pages
+# Move Non-Schedule FAB Back to Original Position
 
-## Problem
-When the FAB icon was changed to `CalendarClock` for the scheduling copilot, it was applied globally. The non-schedule pages (Dashboard, Clients, etc.) should still show the original help/chat icon with the Zura/Chat popover -- only the Schedule page should use the `CalendarClock` icon.
+## What Changed Previously
+When we moved the FAB up (`bottom-20`) to avoid covering the bottom nav on the Schedule page, that same positioning was applied to all pages. The non-schedule pages should use the original `bottom-6 right-6` position (equal padding on bottom and side).
 
-## Changes
+## Change
 
 ### File: `src/components/dashboard/HelpFAB.tsx`
+- **Line 55**: Change `bottom-20 right-6` to `bottom-6 right-6` on the non-schedule popover trigger
 
-1. **Re-add the original icon import** -- Add `MessageCircleQuestion` back from `lucide-react` (the original help icon)
-2. **Line 63**: Change `aria-label` from `"Scheduling Co-Pilot"` to `"Help & Support"` for the non-schedule popover button
-3. **Line 84**: Replace `<CalendarClock>` with `<MessageCircleQuestion>` inside the non-schedule popover (the closed-state icon)
+The schedule-page FAB (line 33) stays at `bottom-20 right-6` to clear the bottom nav.
 
-The schedule-page branch (lines 30-48) stays exactly as-is with `CalendarClock` and "Scheduling Co-Pilot."
-
-### Result
-- **Schedule page**: `CalendarClock` icon, toggles copilot panel
-- **All other pages**: `MessageCircleQuestion` icon, opens Zura/Chat popover
+### Summary
+| Page | Position |
+|------|----------|
+| Schedule | `bottom-20 right-6` (above bottom nav) |
+| All other dashboard pages | `bottom-6 right-6` (equal padding, original) |
