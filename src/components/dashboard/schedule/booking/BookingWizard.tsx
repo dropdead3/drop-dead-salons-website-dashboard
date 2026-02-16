@@ -269,6 +269,7 @@ export function BookingWizard({
                 selectedLocation={selectedLocation}
                 onLocationChange={setSelectedLocation}
                 servicesByCategory={servicesByCategory}
+                allServices={services}
                 selectedServices={selectedServices}
                 onToggleService={(serviceId) => {
                   setSelectedServices(prev =>

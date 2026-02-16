@@ -30,6 +30,7 @@ interface ServiceStepProps {
   selectedLocation: string;
   onLocationChange: (locationId: string) => void;
   servicesByCategory: Record<string, Service[]> | undefined;
+  allServices: Service[];
   selectedServices: string[];
   onToggleService: (serviceId: string) => void;
   totalDuration: number;
@@ -44,6 +45,7 @@ export function ServiceStep({
   selectedLocation,
   onLocationChange,
   servicesByCategory,
+  allServices,
   selectedServices,
   onToggleService,
   totalDuration,
@@ -155,14 +157,25 @@ export function ServiceStep({
       {/* Footer summary */}
       <div className="p-4 border-t border-border bg-card space-y-3">
         {selectedServices.length > 0 && (
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="rounded-full">
-                {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
-              </Badge>
-              <span className="text-muted-foreground">{totalDuration} min</span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="rounded-full">
+                  {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                </Badge>
+                <span className="text-muted-foreground">{totalDuration} min</span>
+              </div>
+              <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
             </div>
-            <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
+            <div className="flex flex-wrap gap-1">
+              {allServices
+                .filter(s => selectedServices.includes(s.phorest_service_id))
+                .map(s => (
+                  <Badge key={s.id} variant="outline" className="text-xs font-normal">
+                    {s.name}
+                  </Badge>
+                ))}
+            </div>
           </div>
         )}
         {selectedServices.length > 0 && (
