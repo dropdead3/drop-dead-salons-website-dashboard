@@ -8,6 +8,7 @@ import { useBookingPipeline } from '@/hooks/useBookingPipeline';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { NewBookingsDrilldown } from './NewBookingsDrilldown';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
@@ -82,7 +83,10 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
       </div>
 
       {/* Booking Pipeline Health */}
-      <div className="p-3 bg-muted/30 rounded-lg border border-border/50 mb-4">
+      <Link
+        to="/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline"
+        className="block p-3 bg-muted/30 rounded-lg border border-border/50 mb-4 hover:bg-muted/50 transition-colors"
+      >
         {pipeline.isLoading ? (
           <Skeleton className="h-5 w-full" />
         ) : (
@@ -102,7 +106,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
             </span>
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Breakdown: New vs Returning */}
       <div className="grid grid-cols-2 gap-4 mb-4">

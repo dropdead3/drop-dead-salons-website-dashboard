@@ -373,7 +373,7 @@ export function ExecutiveSummaryCard() {
       label: 'Booking Pipeline',
       value: pipeline.label,
       valueColor: pipeline.status === 'healthy' ? 'text-chart-2' : pipeline.status === 'slowing' ? 'text-amber-500' : 'text-destructive',
-      drillDown: '/dashboard/admin/analytics?tab=operations&subtab=staff-utilization',
+      drillDown: '/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline',
       drillLabel: 'View Pipeline',
       change: null,
       subtitle: `${pipeline.forwardCount} appts next 14d vs ${pipeline.baselineCount} avg`,
