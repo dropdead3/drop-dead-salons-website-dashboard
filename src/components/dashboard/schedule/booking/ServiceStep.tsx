@@ -165,6 +165,18 @@ export function ServiceStep({
             <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
           </div>
         )}
+        {selectedServices.length > 0 && (
+          <Button
+            variant="outline"
+            className="w-full h-10"
+            onClick={() => {
+              const scrollArea = document.querySelector('[data-radix-scroll-area-viewport]');
+              scrollArea?.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            + Add Another Service
+          </Button>
+        )}
         <Button
           className="w-full h-11"
           disabled={!canContinue}
