@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save, Palette, Sun, Moon, Monitor, Image, Smartphone, Tablet, Upload, RotateCcw, Pencil, ImageIcon, MapPin as MapPinIcon } from 'lucide-react';
+import { Loader2, Save, Palette, Sun, Moon, Monitor, Image, Smartphone, Tablet, Upload, RotateCcw, Pencil, ImageIcon, MapPin as MapPinIcon, UserCheck, CalendarPlus } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -405,8 +405,75 @@ export function KioskSettingsContent() {
     });
   };
 
+  // Derived kiosk mode
+  const kioskMode = localSettings.enable_self_booking ? 'self-service' : 'check-in';
+
+  const handleKioskModeChange = (mode: 'check-in' | 'self-service') => {
+    if (mode === 'self-service') {
+      setLocalSettings(prev => ({ ...prev, enable_self_booking: true, enable_walk_ins: true }));
+    } else {
+      setLocalSettings(prev => ({ ...prev, enable_self_booking: false }));
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Kiosk Mode Selector */}
+      <Card>
+        <CardHeader className="pb-4">
+          <CardTitle className="font-display text-lg">KIOSK MODE</CardTitle>
+          <CardDescription>
+            Choose the primary function of your kiosk devices
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              className={cn(
+                "flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all text-center",
+                kioskMode === 'check-in'
+                  ? "border-primary bg-primary/5 shadow-sm"
+                  : "border-border hover:border-primary/40 hover:bg-muted/30"
+              )}
+              onClick={() => handleKioskModeChange('check-in')}
+            >
+              <div className={cn(
+                "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
+                kioskMode === 'check-in' ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+              )}>
+                <UserCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">Check-In</p>
+                <p className="text-xs text-muted-foreground mt-1">Clients look up appointments and check in</p>
+              </div>
+            </button>
+            <button
+              type="button"
+              className={cn(
+                "flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all text-center",
+                kioskMode === 'self-service'
+                  ? "border-primary bg-primary/5 shadow-sm"
+                  : "border-border hover:border-primary/40 hover:bg-muted/30"
+              )}
+              onClick={() => handleKioskModeChange('self-service')}
+            >
+              <div className={cn(
+                "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
+                kioskMode === 'self-service' ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
+              )}>
+                <CalendarPlus className="w-6 h-6" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">Self-Service Booking</p>
+                <p className="text-xs text-muted-foreground mt-1">Walk-in clients can also book their own appointments</p>
+              </div>
+            </button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Location Selector */}
       <Card>
         <CardHeader className="pb-4">
@@ -1010,45 +1077,33 @@ export function KioskSettingsContent() {
                     />
                   </div>
 
-                  {/* Self-Service Booking Section */}
-                  {localSettings.enable_walk_ins && (
-                    <div className="ml-4 pl-4 border-l-2 border-muted space-y-4">
+                  {/* Booking Options - shown when Self-Service mode is active */}
+                  {localSettings.enable_self_booking && (
+                    <div className="bg-muted/30 rounded-xl p-4 space-y-4 border">
+                      <div className="flex items-center gap-2">
+                        <CalendarPlus className="w-4 h-4 text-muted-foreground" />
+                        <p className="text-sm font-semibold">Booking Options</p>
+                      </div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-medium">Enable Self-Service Booking</p>
-                          <p className="text-xs text-muted-foreground">Let walk-in clients book their own appointment from the kiosk</p>
+                          <p className="text-sm font-medium">Allow Future Bookings</p>
+                          <p className="text-xs text-muted-foreground">Clients can book up to 14 days ahead (otherwise same-day only)</p>
                         </div>
                         <Switch
-                          checked={localSettings.enable_self_booking}
-                          onCheckedChange={(v) => updateField('enable_self_booking', v)}
+                          checked={localSettings.self_booking_allow_future}
+                          onCheckedChange={(v) => updateField('self_booking_allow_future', v)}
                         />
                       </div>
-
-                      {localSettings.enable_self_booking && (
-                        <div className="ml-4 pl-4 border-l-2 border-muted/50 space-y-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium">Allow Future Bookings</p>
-                              <p className="text-xs text-muted-foreground">Clients can book up to 14 days ahead (otherwise same-day only)</p>
-                            </div>
-                            <Switch
-                              checked={localSettings.self_booking_allow_future}
-                              onCheckedChange={(v) => updateField('self_booking_allow_future', v)}
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium">Show Stylist Selection</p>
-                              <p className="text-xs text-muted-foreground">Let clients choose their stylist (otherwise first available is assigned)</p>
-                            </div>
-                            <Switch
-                              checked={localSettings.self_booking_show_stylists}
-                              onCheckedChange={(v) => updateField('self_booking_show_stylists', v)}
-                            />
-                          </div>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">Show Stylist Selection</p>
+                          <p className="text-xs text-muted-foreground">Let clients choose their stylist (otherwise first available is assigned)</p>
                         </div>
-                      )}
+                        <Switch
+                          checked={localSettings.self_booking_show_stylists}
+                          onCheckedChange={(v) => updateField('self_booking_show_stylists', v)}
+                        />
+                      </div>
                     </div>
                   )}
 

@@ -845,8 +845,8 @@ export default function Settings() {
     },
     kiosk: {
       id: 'kiosk',
-      label: 'Check-In Kiosk',
-      description: 'Device appearance, branding & behavior',
+      label: 'Kiosks',
+      description: 'Check-in, self-service booking & device configuration',
       icon: TabletSmartphone,
     },
     services: {
