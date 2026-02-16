@@ -94,7 +94,7 @@ export function ScheduleHeader({
   return (
     <div className="flex flex-col">
       {/* Dark Header Bar */}
-      <div className="bg-[hsl(0,0%,8%)] text-[hsl(40,20%,92%)] px-4 py-3 flex items-center justify-between rounded-t-lg">
+      <div className="bg-[hsl(0,0%,8%)] text-[hsl(40,20%,92%)] border border-[hsl(40,20%,92%)]/10 px-4 py-3 flex items-center justify-between rounded-t-lg">
         {/* Left: View Toggle & Date Picker */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -295,7 +295,7 @@ export function ScheduleHeader({
       </div>
 
       {/* Secondary Navigation Bar */}
-      <div className="bg-card border-x border-b border-border/50 px-4 py-2 flex items-center justify-between rounded-b-lg">
+      <div className="bg-card border border-t-0 border-border/50 px-4 py-2 flex items-center justify-between rounded-b-lg">
         {/* Left: Week/Day Navigation */}
         <div className="flex items-center gap-1">
           <Button variant="outline" size="sm" onClick={goToPrevWeek} className="gap-1">
