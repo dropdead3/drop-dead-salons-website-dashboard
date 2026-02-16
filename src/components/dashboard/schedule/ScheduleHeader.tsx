@@ -94,16 +94,16 @@ export function ScheduleHeader({
   return (
     <div className="flex flex-col">
       {/* Dark Header Bar */}
-      <div className="bg-foreground text-background px-4 py-3 flex items-center justify-between rounded-t-lg">
+      <div className="bg-[hsl(0,0%,8%)] text-[hsl(40,20%,92%)] px-4 py-3 flex items-center justify-between rounded-t-lg">
         {/* Left: View Toggle & Date Picker */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
-            <LayoutGrid className="h-4 w-4 text-background/60" />
-            <div className="relative flex rounded-full overflow-hidden bg-background/10 p-[2px]">
+            <LayoutGrid className="h-4 w-4 text-[hsl(40,20%,92%)]/60" />
+            <div className="relative flex rounded-full overflow-hidden bg-[hsl(40,20%,92%)]/10 p-[2px]">
               {/* Animated sliding pill */}
               <div 
                 className={cn(
-                  "absolute top-[2px] bottom-[2px] bg-background rounded-full transition-all duration-300 ease-out",
+                  "absolute top-[2px] bottom-[2px] bg-[hsl(40,20%,92%)] rounded-full transition-all duration-300 ease-out",
                   view === 'week' ? 'left-[2px] w-[calc(50%-2px)]' : 'left-[50%] w-[calc(50%-2px)]'
                 )}
               />
@@ -111,8 +111,8 @@ export function ScheduleHeader({
                 className={cn(
                   'relative z-10 px-5 py-1 text-sm rounded-full transition-colors duration-300 min-w-[60px] text-center',
                   view === 'week' 
-                    ? 'text-foreground font-medium' 
-                    : 'text-background/50 hover:text-background/80'
+                    ? 'text-[hsl(0,0%,8%)] font-medium' 
+                    : 'text-[hsl(40,20%,92%)]/50 hover:text-[hsl(40,20%,92%)]/80'
                 )}
                 onClick={() => setView('week')}
               >
@@ -122,8 +122,8 @@ export function ScheduleHeader({
                 className={cn(
                   'relative z-10 px-5 py-1 text-sm rounded-full transition-colors duration-300 min-w-[60px] text-center',
                   view === 'day' 
-                    ? 'text-foreground font-medium' 
-                    : 'text-background/50 hover:text-background/80'
+                    ? 'text-[hsl(0,0%,8%)] font-medium' 
+                    : 'text-[hsl(40,20%,92%)]/50 hover:text-[hsl(40,20%,92%)]/80'
                 )}
                 onClick={() => setView('day')}
               >
@@ -137,7 +137,7 @@ export function ScheduleHeader({
               <Button 
                 variant="ghost" 
                 size="sm"
-                className="text-background/70 hover:text-background hover:bg-background/10"
+                className="text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10"
               >
                 <CalendarIcon className="h-4 w-4 mr-1.5" />
                 Date
@@ -165,7 +165,7 @@ export function ScheduleHeader({
           {formatDate(currentDate, 'EEEE, MMMM d, yyyy')}
         </div>
           {isToday(currentDate) && (
-            <div className="text-xs text-background/70">Today</div>
+            <div className="text-xs text-[hsl(40,20%,92%)]/70">Today</div>
           )}
         </div>
 
@@ -180,7 +180,7 @@ export function ScheduleHeader({
           <div className="flex flex-col gap-1.5">
             {/* Location Selector */}
             <Select value={selectedLocation} onValueChange={onLocationChange}>
-              <SelectTrigger className="h-7 w-[160px] text-xs bg-background/10 border-background/20 text-background hover:bg-background/20">
+              <SelectTrigger className="h-7 w-[160px] text-xs bg-[hsl(40,20%,92%)]/10 border-[hsl(40,20%,92%)]/20 text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/20">
                 <SelectValue placeholder="Select Location" />
               </SelectTrigger>
               <SelectContent>
@@ -207,7 +207,7 @@ export function ScheduleHeader({
               <PopoverTrigger asChild>
                 <Button 
                   variant="outline" 
-                  className="h-7 w-[160px] text-xs justify-between bg-background/10 border-background/20 text-background hover:bg-background/20 hover:text-background"
+                  className="h-7 w-[160px] text-xs justify-between bg-[hsl(40,20%,92%)]/10 border-[hsl(40,20%,92%)]/20 text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/20 hover:text-[hsl(40,20%,92%)]"
                 >
                   {selectedStaffIds.length === 0 
                     ? 'All Staff' 
@@ -261,8 +261,8 @@ export function ScheduleHeader({
                   variant="ghost"
                   size="icon"
                   className={cn(
-                    "text-background/70 hover:text-background hover:bg-background/10",
-                    copilotOpen && "text-background bg-background/15"
+                    "text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10",
+                    copilotOpen && "text-[hsl(40,20%,92%)] bg-[hsl(40,20%,92%)]/15"
                   )}
                   onClick={onCopilotToggle}
                 >
@@ -281,7 +281,7 @@ export function ScheduleHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-background/70 hover:text-background hover:bg-background/10"
+                className="text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10"
                 onClick={() => navigate('/dashboard/admin/settings?category=schedule')}
               >
                 <Settings className="h-4 w-4" />
