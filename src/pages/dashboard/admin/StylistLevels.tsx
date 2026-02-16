@@ -593,7 +593,7 @@ export default function StylistLevels() {
               <div className="bg-card border rounded-xl p-4 space-y-3">
                 <div className="flex items-center justify-between pb-3 border-b">
                   <span className="text-sm text-muted-foreground">Total Assigned</span>
-                  <span className="text-lg font-semibold">
+                  <span className="text-lg font-medium">
                     {Object.values(stylistsByLevel || {}).reduce((a, b) => a + b, 0)}
                   </span>
                 </div>

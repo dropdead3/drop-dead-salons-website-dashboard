@@ -60,7 +60,7 @@ export function PlatformIntegrationCard({
               <Icon className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="font-semibold text-white">{integration.name}</h3>
+              <h3 className="font-medium text-white">{integration.name}</h3>
             </div>
           </div>
           <PlatformBadge variant={statusConfig[status].variant}>

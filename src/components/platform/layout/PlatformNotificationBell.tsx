@@ -87,7 +87,7 @@ export function PlatformNotificationBell() {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50">
-          <h3 className="font-semibold text-white">Notifications</h3>
+          <h3 className="font-medium text-white">Notifications</h3>
           {(unreadCount || 0) > 0 && (
             <Button
               variant="ghost"

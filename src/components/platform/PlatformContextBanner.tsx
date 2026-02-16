@@ -24,7 +24,7 @@ export function PlatformContextBanner() {
             <Building2 className="h-4 w-4 text-violet-400" />
           </div>
           <span className="text-sm font-medium text-slate-300">
-            Viewing as: <span className="text-violet-300 font-semibold">{selectedOrganization.name}</span>
+            Viewing as: <span className="text-violet-300 font-medium">{selectedOrganization.name}</span>
           </span>
           <span className="text-xs text-slate-500">
             ({selectedOrganization.slug})

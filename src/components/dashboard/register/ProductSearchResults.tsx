@@ -33,7 +33,7 @@ export function ProductSearchResults({ results, onSelect, onClose }: ProductSear
                 {product.brand && <span>• {product.brand}</span>}
               </div>
             </div>
-            <span className="font-semibold">
+            <span className="font-medium">
               {formatCurrency(product.retail_price ?? 0)}
             </span>
           </button>

@@ -65,7 +65,7 @@ export default function RenterPaymentMethods() {
     <div className="container py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Payment Methods</h1>
+          <h1 className="text-2xl font-medium">Payment Methods</h1>
           <p className="text-muted-foreground">Manage your cards and autopay settings</p>
         </div>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
@@ -172,7 +172,7 @@ export default function RenterPaymentMethods() {
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-12">
               <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="font-semibold mb-2">No payment methods</h3>
+              <h3 className="font-medium mb-2">No payment methods</h3>
               <p className="text-muted-foreground text-center mb-4">
                 Add a payment method to enable automatic rent payments
               </p>

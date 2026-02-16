@@ -382,7 +382,7 @@ function ForecastAccuracyTracker({ history, average }: { history: AccuracyDataPo
                       </div>
                       <div className="flex justify-between gap-4 pt-1 border-t border-border/50">
                         <span className="text-muted-foreground">Accuracy</span>
-                        <span className={cn('tabular-nums font-semibold', getAccuracyColor(d.accuracy))}>
+                        <span className={cn('tabular-nums font-medium', getAccuracyColor(d.accuracy))}>
                           {d.accuracy.toFixed(1)}%
                         </span>
                       </div>

@@ -93,7 +93,7 @@ export function CorrelationMatrix({ locationId, days = 90 }: CorrelationMatrixPr
                               )}
                             >
                               <span className={cn(
-                                'text-xs font-semibold',
+                                'text-xs font-medium',
                                 isDiagonal ? 'text-muted-foreground' : 'text-white'
                               )}>
                                 {isDiagonal ? '—' : coefficient.toFixed(2)}

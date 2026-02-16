@@ -93,7 +93,7 @@ export default function StripeHealthPage() {
             <TrendingDown className="h-5 w-5 text-amber-400" />
             <div>
               <p className="text-xs text-amber-400 font-medium">Revenue at risk</p>
-              <p className="text-lg font-semibold text-white">
+              <p className="text-lg font-medium text-white">
                 ${((data?.revenueAtRisk || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </p>
             </div>

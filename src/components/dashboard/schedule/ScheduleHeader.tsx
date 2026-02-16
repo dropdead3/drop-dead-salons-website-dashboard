@@ -307,7 +307,7 @@ export function ScheduleHeader({
                 }}
                 className={cn(
                   'min-w-[50px]',
-                  isSelected && 'font-semibold',
+                  isSelected && 'font-medium',
                   isTodayDate && !isSelected && 'text-primary'
                 )}
               >

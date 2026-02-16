@@ -176,19 +176,19 @@ export function CapacityReport({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">Total Appointments</p>
-          <p className="text-2xl font-semibold">{formatNumber(capacityData.totalAppointments)}</p>
+          <p className="text-2xl font-medium">{formatNumber(capacityData.totalAppointments)}</p>
         </div>
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">Avg Utilization</p>
-          <p className="text-2xl font-semibold">{capacityData.avgUtilization.toFixed(1)}%</p>
+          <p className="text-2xl font-medium">{capacityData.avgUtilization.toFixed(1)}%</p>
         </div>
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">Peak Hour</p>
-          <p className="text-2xl font-semibold">{capacityData.peakHour}</p>
+          <p className="text-2xl font-medium">{capacityData.peakHour}</p>
         </div>
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">Busiest Day</p>
-          <p className="text-2xl font-semibold">{capacityData.busiestDay}</p>
+          <p className="text-2xl font-medium">{capacityData.busiestDay}</p>
         </div>
       </div>
 

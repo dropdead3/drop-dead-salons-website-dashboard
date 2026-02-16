@@ -92,9 +92,9 @@ export function AgreementStep({ bookingData, onAccept }: AgreementStepProps) {
   // Simple markdown to HTML conversion
   const formatContent = (content: string) => {
     return content
-      .replace(/^### (.*$)/gim, '<h3 class="text-base font-semibold mt-4 mb-2">$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2 class="text-lg font-semibold mt-6 mb-3">$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1 class="text-xl font-bold mt-6 mb-4">$1</h1>')
+      .replace(/^### (.*$)/gim, '<h3 class="text-base font-medium mt-4 mb-2">$1</h3>')
+      .replace(/^## (.*$)/gim, '<h2 class="text-lg font-medium mt-6 mb-3">$1</h2>')
+      .replace(/^# (.*$)/gim, '<h1 class="text-xl font-medium mt-6 mb-4">$1</h1>')
       .replace(/^\- (.*$)/gim, '<li class="ml-4 mb-1">$1</li>')
       .replace(/\n/g, '<br />');
   };
@@ -169,7 +169,7 @@ export function AgreementStep({ bookingData, onAccept }: AgreementStepProps) {
         </div>
         <div className="flex justify-between border-t pt-2 mt-2">
           <span className="font-medium">Total Due</span>
-          <span className="font-bold text-primary">${bookingData.daily_rate}</span>
+          <span className="font-medium text-primary">${bookingData.daily_rate}</span>
         </div>
       </div>
 

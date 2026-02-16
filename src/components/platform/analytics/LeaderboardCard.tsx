@@ -58,7 +58,7 @@ export function LeaderboardCard({ title, icon, entries, valueLabel, emptyMessage
     }
     return (
       <span className={cn(
-        'h-5 w-5 flex items-center justify-center text-sm font-bold rounded-full',
+        'h-5 w-5 flex items-center justify-center text-sm font-medium rounded-full',
         isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-200 text-slate-600'
       )}>
         {rank}
@@ -87,7 +87,7 @@ export function LeaderboardCard({ title, icon, entries, valueLabel, emptyMessage
         </div>
         <div>
           <h3 className={cn(
-            'font-semibold',
+            'font-medium',
             isDark ? 'text-white' : 'text-slate-900'
           )}>
             {title}
@@ -139,7 +139,7 @@ export function LeaderboardCard({ title, icon, entries, valueLabel, emptyMessage
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <span className={cn(
-                  'font-bold',
+                  'font-medium',
                   isDark ? 'text-violet-400' : 'text-violet-600'
                 )}>
                   {entry.formattedValue}

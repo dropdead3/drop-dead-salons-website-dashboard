@@ -105,7 +105,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
               <Users className="h-4 w-4" />
               <span className="text-xs uppercase tracking-wider">Active Renters</span>
             </div>
-            <p className="text-2xl font-bold">{metrics.activeRenterCount}</p>
+            <p className="text-2xl font-medium">{metrics.activeRenterCount}</p>
           </CardContent>
         </Card>
       </div>

@@ -157,7 +157,7 @@ export function ClientEngineOverview() {
           <div className="flex items-center justify-center mb-1">
             <Users className="w-4 h-4 text-muted-foreground" />
           </div>
-          <p className="text-lg font-semibold">{stats.enrolled}</p>
+          <p className="text-lg font-medium">{stats.enrolled}</p>
           <div className="flex items-center gap-0.5 justify-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Enrolled</p>
             <MetricInfoTooltip description="Total number of team members currently enrolled in the Client Engine." />
@@ -167,7 +167,7 @@ export function ClientEngineOverview() {
           <div className="flex items-center justify-center mb-1">
             <Play className="w-4 h-4 text-green-600" />
           </div>
-          <p className="text-lg font-semibold text-green-600">{stats.active}</p>
+          <p className="text-lg font-medium text-green-600">{stats.active}</p>
           <div className="flex items-center gap-0.5 justify-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Active</p>
             <MetricInfoTooltip description="Members who have started but not yet completed the program." />
@@ -177,7 +177,7 @@ export function ClientEngineOverview() {
           <div className="flex items-center justify-center mb-1">
             <Trophy className="w-4 h-4 text-blue-600" />
           </div>
-          <p className="text-lg font-semibold text-blue-600">{stats.completed}</p>
+          <p className="text-lg font-medium text-blue-600">{stats.completed}</p>
           <div className="flex items-center gap-0.5 justify-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Done</p>
             <MetricInfoTooltip description="Members who have finished all 75 days of the Client Engine." />
@@ -187,7 +187,7 @@ export function ClientEngineOverview() {
           <div className="flex items-center justify-center mb-1">
             <Pause className="w-4 h-4 text-yellow-600" />
           </div>
-          <p className="text-lg font-semibold text-yellow-600">{stats.paused}</p>
+          <p className="text-lg font-medium text-yellow-600">{stats.paused}</p>
           <div className="flex items-center gap-0.5 justify-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Paused</p>
             <MetricInfoTooltip description="Members with enrollment temporarily on hold." />

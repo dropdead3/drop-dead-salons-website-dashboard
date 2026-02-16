@@ -90,15 +90,15 @@ export function ProductLeaderboard({ locationId, className }: ProductLeaderboard
         {/* Summary Stats */}
         <div className="grid grid-cols-3 gap-3 mb-4 p-3 bg-muted/50 rounded-lg">
           <div className="text-center">
-            <p className="text-lg font-semibold">{formatCurrency(data.summary.totalProductRevenue)}</p>
+            <p className="text-lg font-medium">{formatCurrency(data.summary.totalProductRevenue)}</p>
             <p className="text-xs text-muted-foreground">Product Revenue</p>
           </div>
           <div className="text-center">
-            <p className="text-lg font-semibold">{data.summary.uniqueProducts}</p>
+            <p className="text-lg font-medium">{data.summary.uniqueProducts}</p>
             <p className="text-xs text-muted-foreground">Products Sold</p>
           </div>
           <div className="text-center">
-            <p className="text-lg font-semibold">{data.summary.productPercentage.toFixed(1)}%</p>
+            <p className="text-lg font-medium">{data.summary.productPercentage.toFixed(1)}%</p>
             <p className="text-xs text-muted-foreground">Retail Mix</p>
           </div>
         </div>
@@ -144,7 +144,7 @@ export function ProductLeaderboard({ locationId, className }: ProductLeaderboard
                         </p>
                       </div>
                     </div>
-                    <p className="text-sm font-semibold">{formatCurrency(product.totalRevenue)}</p>
+                    <p className="text-sm font-medium">{formatCurrency(product.totalRevenue)}</p>
                   </div>
                 ))
               )}
@@ -189,7 +189,7 @@ export function ProductLeaderboard({ locationId, className }: ProductLeaderboard
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold">{formatCurrency(staff.productRevenue)}</p>
+                      <p className="text-sm font-medium">{formatCurrency(staff.productRevenue)}</p>
                       <p className="text-xs text-muted-foreground">{staff.productQuantity} items</p>
                     </div>
                   </div>

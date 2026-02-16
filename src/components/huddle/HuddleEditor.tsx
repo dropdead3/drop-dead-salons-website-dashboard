@@ -117,7 +117,7 @@ export function HuddleEditor({
         {/* AI Generator */}
         <div className="flex items-center justify-between pb-4 border-b">
           <div>
-            <h3 className="font-semibold">Huddle Content</h3>
+            <h3 className="font-medium">Huddle Content</h3>
             <p className="text-sm text-muted-foreground">Fill in manually or generate with AI</p>
           </div>
           <AIHuddleGenerator

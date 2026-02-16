@@ -65,7 +65,7 @@ function SchedulingCopilotPanelComponent({
               <div className="p-1.5 rounded-lg bg-primary/10">
                 <Sparkles className="w-4 h-4 text-primary" />
               </div>
-              <CardTitle className="text-base font-semibold">AI Scheduling Copilot</CardTitle>
+              <CardTitle className="text-base font-medium">AI Scheduling Copilot</CardTitle>
             </div>
             <div className="flex items-center gap-2">
               <Button

@@ -105,17 +105,17 @@ export function TierProgressionCard({ opportunities, impactAnalysis, isLoading }
             <div className="mt-6 p-4 rounded-lg bg-primary/5 border border-primary/20">
               <div className="flex items-center gap-2 mb-3">
                 <DollarSign className="h-5 w-5 text-primary" />
-                <h4 className="font-semibold">Commission Impact Analysis</h4>
+                <h4 className="font-medium">Commission Impact Analysis</h4>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">Current Period</p>
-                  <p className="text-lg font-bold">{formatCurrency(impactAnalysis.currentPeriodCommissions)}</p>
+                  <p className="text-lg font-medium">{formatCurrency(impactAnalysis.currentPeriodCommissions)}</p>
                   <p className="text-xs text-muted-foreground">in commissions</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">If All Hit Next Tier</p>
-                  <p className="text-lg font-bold text-emerald-600">
+                  <p className="text-lg font-medium text-emerald-600">
                     +{formatCurrency(impactAnalysis.potentialAdditional)}
                   </p>
                   <p className="text-xs text-muted-foreground">

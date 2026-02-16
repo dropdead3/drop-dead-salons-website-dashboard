@@ -61,7 +61,7 @@ export function NPSScoreCard({ organizationId }: NPSScoreCardProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-baseline gap-2">
-          <span className={cn('text-4xl font-bold', getNPSColor(stats.currentNPS))}>
+          <span className={cn('text-4xl font-medium', getNPSColor(stats.currentNPS))}>
             {stats.currentNPS}
           </span>
           <span className="text-muted-foreground text-sm">/ 100</span>
@@ -71,21 +71,21 @@ export function NPSScoreCard({ organizationId }: NPSScoreCardProps) {
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-1 text-green-600">
               <ThumbsUp className="h-3 w-3" />
-              <span className="text-lg font-semibold">{stats.promoters}</span>
+              <span className="text-lg font-medium">{stats.promoters}</span>
             </div>
             <p className="text-xs text-muted-foreground">Promoters</p>
           </div>
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-1 text-amber-600">
               <Meh className="h-3 w-3" />
-              <span className="text-lg font-semibold">{stats.passives}</span>
+              <span className="text-lg font-medium">{stats.passives}</span>
             </div>
             <p className="text-xs text-muted-foreground">Passives</p>
           </div>
           <div className="space-y-1">
             <div className="flex items-center justify-center gap-1 text-red-600">
               <ThumbsDown className="h-3 w-3" />
-              <span className="text-lg font-semibold">{stats.detractors}</span>
+              <span className="text-lg font-medium">{stats.detractors}</span>
             </div>
             <p className="text-xs text-muted-foreground">Detractors</p>
           </div>

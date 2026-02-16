@@ -163,7 +163,7 @@ export default function RenterPayRent() {
                   <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
                     <div>
                       <p className="text-sm text-muted-foreground">Total Outstanding</p>
-                      <p className="text-2xl font-bold">{formatCurrency(totalOutstanding)}</p>
+                      <p className="text-2xl font-medium">{formatCurrency(totalOutstanding)}</p>
                     </div>
                     <Button 
                       onClick={handlePayAll}

@@ -43,7 +43,7 @@ export function PayrollProviderSelector() {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-2xl font-bold text-foreground">Choose Your Payroll Provider</h2>
+        <h2 className="text-2xl font-medium text-foreground">Choose Your Payroll Provider</h2>
         <p className="text-muted-foreground mt-2">
           Connect your preferred payroll service to manage employee payments, taxes, and compliance.
         </p>
@@ -69,7 +69,7 @@ export function PayrollProviderSelector() {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-semibold">{provider.name}</h3>
+                      <h3 className="text-lg font-medium">{provider.name}</h3>
                       {isConfigured ? (
                         <Badge variant="outline" className="text-green-600 border-green-600/30">
                           <CheckCircle className="h-3 w-3 mr-1" />

@@ -92,7 +92,7 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
             >
               <div className="text-xs font-medium text-muted-foreground">{day}</div>
               <div className={cn(
-                'text-sm font-semibold',
+                'text-sm font-medium',
                 index === 0 && 'text-primary'
               )}>
                 {20 + index}
@@ -216,7 +216,7 @@ export function CalendarColorPreview({ colorMap }: CalendarColorPreviewProps) {
                     <div className="p-1 h-full flex flex-col relative z-10">
                       <div className="flex items-center gap-1">
                         <span
-                          className="text-[9px] font-bold px-1 py-0.5 rounded"
+                          className="text-[9px] font-medium px-1 py-0.5 rounded"
                           style={{
                             backgroundColor: isConsultation 
                               ? 'rgba(31, 41, 55, 0.15)' 

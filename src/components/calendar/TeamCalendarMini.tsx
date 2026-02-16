@@ -93,7 +93,7 @@ export function TeamCalendarMini({ onEventClick, showCreateButton = true }: Team
                 className={cn(
                   "aspect-square p-1 text-sm rounded-md relative transition-colors",
                   !isCurrentMonth && "text-muted-foreground/50",
-                  isToday && "bg-primary/10 font-semibold",
+                  isToday && "bg-primary/10 font-medium",
                   isSelected && "ring-2 ring-primary",
                   "hover:bg-muted"
                 )}

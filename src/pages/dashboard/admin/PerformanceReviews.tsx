@@ -164,9 +164,9 @@ export default function PerformanceReviews() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <Card><CardContent className="p-4 flex items-center gap-3"><FileCheck className="w-8 h-8 text-primary" /><div><p className="text-2xl font-bold">{reviewList.length}</p><p className="text-sm text-muted-foreground">Total Reviews</p></div></CardContent></Card>
-          <Card><CardContent className="p-4 flex items-center gap-3"><Clock className="w-8 h-8 text-amber-500" /><div><p className="text-2xl font-bold">{draftCount}</p><p className="text-sm text-muted-foreground">Drafts</p></div></CardContent></Card>
-          <Card><CardContent className="p-4 flex items-center gap-3"><CheckCircle className="w-8 h-8 text-emerald-500" /><div><p className="text-2xl font-bold">{submittedCount}</p><p className="text-sm text-muted-foreground">Pending Acknowledgment</p></div></CardContent></Card>
+          <Card><CardContent className="p-4 flex items-center gap-3"><FileCheck className="w-8 h-8 text-primary" /><div><p className="text-2xl font-medium">{reviewList.length}</p><p className="text-sm text-muted-foreground">Total Reviews</p></div></CardContent></Card>
+          <Card><CardContent className="p-4 flex items-center gap-3"><Clock className="w-8 h-8 text-amber-500" /><div><p className="text-2xl font-medium">{draftCount}</p><p className="text-sm text-muted-foreground">Drafts</p></div></CardContent></Card>
+          <Card><CardContent className="p-4 flex items-center gap-3"><CheckCircle className="w-8 h-8 text-emerald-500" /><div><p className="text-2xl font-medium">{submittedCount}</p><p className="text-sm text-muted-foreground">Pending Acknowledgment</p></div></CardContent></Card>
         </div>
 
         <Card>

@@ -308,7 +308,7 @@ export default function UnifiedLogin() {
                 <Sparkles className="w-7 h-7 text-white" />
               </div>
             </div>
-            <h1 className="text-3xl font-semibold text-white tracking-tight">
+            <h1 className="text-3xl font-medium text-white tracking-tight">
               {isForgotPassword
                 ? 'Reset Password'
                 : isPlatformInviteSignup

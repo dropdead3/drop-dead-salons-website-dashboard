@@ -76,7 +76,7 @@ export default function RewardShop() {
               {balanceLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <p className="text-xl font-bold">{formatNumber(balance)}</p>
+                <p className="text-xl font-medium">{formatNumber(balance)}</p>
               )}
             </div>
           </Card>

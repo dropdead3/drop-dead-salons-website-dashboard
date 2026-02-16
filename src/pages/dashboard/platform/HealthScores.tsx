@@ -101,7 +101,7 @@ export default function HealthScores() {
               </div>
               <div>
                 <p className="text-sm text-slate-500">Healthy</p>
-                <p className="text-2xl font-semibold text-white">{stats.healthy}</p>
+                <p className="text-2xl font-medium text-white">{stats.healthy}</p>
               </div>
             </div>
           </PlatformCardContent>
@@ -115,7 +115,7 @@ export default function HealthScores() {
               </div>
               <div>
                 <p className="text-sm text-slate-500">At Risk</p>
-                <p className="text-2xl font-semibold text-white">{stats.atRisk}</p>
+                <p className="text-2xl font-medium text-white">{stats.atRisk}</p>
               </div>
             </div>
           </PlatformCardContent>
@@ -129,7 +129,7 @@ export default function HealthScores() {
               </div>
               <div>
                 <p className="text-sm text-slate-500">Critical</p>
-                <p className="text-2xl font-semibold text-white">{stats.critical}</p>
+                <p className="text-2xl font-medium text-white">{stats.critical}</p>
               </div>
             </div>
           </PlatformCardContent>
@@ -143,7 +143,7 @@ export default function HealthScores() {
               </div>
               <div>
                 <p className="text-sm text-slate-500">Avg Score</p>
-                <p className="text-2xl font-semibold text-white">{stats.avgScore}</p>
+                <p className="text-2xl font-medium text-white">{stats.avgScore}</p>
               </div>
             </div>
           </PlatformCardContent>
@@ -269,7 +269,7 @@ export default function HealthScores() {
                     </TableCell>
                     <TableCell className="text-center">
                       <span className={cn(
-                        'font-semibold px-2 py-1 rounded',
+                        'font-medium px-2 py-1 rounded',
                         score.risk_level === 'healthy' && 'bg-emerald-500/10 text-emerald-400',
                         score.risk_level === 'at_risk' && 'bg-amber-500/10 text-amber-400',
                         score.risk_level === 'critical' && 'bg-red-500/10 text-red-400',
