@@ -12,6 +12,7 @@ import {
   LayoutGrid,
   Check,
   Settings,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -52,6 +53,8 @@ interface ScheduleHeaderProps {
   canCreate?: boolean;
   calendarFilters: CalendarFilterState;
   onCalendarFiltersChange: (filters: CalendarFilterState) => void;
+  copilotOpen?: boolean;
+  onCopilotToggle?: () => void;
 }
 
 export function ScheduleHeader({
@@ -69,6 +72,8 @@ export function ScheduleHeader({
   canCreate = false,
   calendarFilters,
   onCalendarFiltersChange,
+  copilotOpen,
+  onCopilotToggle,
 }: ScheduleHeaderProps) {
   const { formatDate } = useFormatDate();
   const navigate = useNavigate();
@@ -247,6 +252,28 @@ export function ScheduleHeader({
             </Popover>
           </div>
 
+
+          {/* AI Copilot Toggle */}
+          {onCopilotToggle && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className={cn(
+                    "text-background/70 hover:text-background hover:bg-background/10",
+                    copilotOpen && "text-background bg-background/15"
+                  )}
+                  onClick={onCopilotToggle}
+                >
+                  <Sparkles className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                <p>AI Copilot</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           {/* Settings Icon */}
           <Tooltip>
