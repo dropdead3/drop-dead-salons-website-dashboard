@@ -785,26 +785,17 @@ export function QuickBookingPopover({
                         <div className="space-y-1">
                           {Object.keys(servicesByCategory).map((category) => {
                             const catColor = getCategoryColor(category, categoryColors);
-                            const isConsultation = category.toLowerCase().includes('consult');
                             const selectedCount = (servicesByCategory[category] || []).filter(
                               s => selectedServices.includes(s.phorest_service_id)
                             ).length;
                             return (
                               <button
                                 key={category}
-                                className={cn(
-                                  "w-full flex items-center gap-3 text-left transition-all -mx-3 w-[calc(100%+1.5rem)] px-4",
-                                  isConsultation 
-                                    ? "group relative overflow-hidden py-3.5 bg-gradient-to-r from-[hsl(38,25%,91%)] via-[hsl(38,22%,94%)] to-[hsl(38,25%,91%)] border-y border-[hsl(38,30%,82%)] hover:from-[hsl(38,28%,89%)] hover:to-[hsl(38,28%,89%)] mb-1"
-                                    : "py-3 hover:bg-muted/60"
-                                )}
+                                className="w-full flex items-center gap-3 text-left transition-all -mx-3 w-[calc(100%+1.5rem)] px-4 py-3 hover:bg-muted/60"
                                 onClick={() => setSelectedCategory(category)}
                               >
                                 <div 
-                                  className={cn(
-                                    'w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium shrink-0',
-                                    isConsultation && 'shadow-sm ring-2 ring-[hsl(38,28%,85%)]'
-                                  )}
+                                  className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium shrink-0"
                                   style={{
                                     backgroundColor: catColor.bg,
                                     color: catColor.text,
@@ -813,15 +804,7 @@ export function QuickBookingPopover({
                                   {catColor.abbr}
                                 </div>
                                 <div className="flex flex-col min-w-0 flex-1">
-                                  <span className={cn(
-                                    "text-sm truncate",
-                                    isConsultation ? "font-medium text-[hsl(38,15%,25%)]" : "font-medium"
-                                  )}>{category}</span>
-                                  {isConsultation && (
-                                    <span className="text-[10px] text-[hsl(38,15%,50%)] tracking-wide uppercase">
-                                      Required for new guests
-                                    </span>
-                                  )}
+                                  <span className="text-sm font-medium truncate">{category}</span>
                                 </div>
                                 {selectedCount > 0 && (
                                   <span className="shrink-0 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-medium">
