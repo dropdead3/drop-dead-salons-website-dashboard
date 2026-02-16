@@ -12,7 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Plus, Trash2, Clock, ArrowDown, ArrowUp, Mail, Loader2, Pencil, MailCheck,
-  ChevronDown, ChevronUp, Sparkles, AlertCircle, Bell,
+  ChevronDown, ChevronUp, Sparkles, AlertCircle, Bell, MapPin, Send, Eye,
+  CheckCircle2, XCircle, Timer, Merge, Activity,
 } from 'lucide-react';
 import {
   useServiceEmailFlows,
@@ -25,12 +26,23 @@ import {
   useDeleteFlowStep,
   useAppointmentRemindersConfig,
   useUpsertReminderConfig,
+  useStepOverrides,
+  useUpsertStepOverride,
+  useDeleteStepOverride,
+  useReminderOverrides,
+  useUpsertReminderOverride,
+  useServiceEmailQueue,
+  useTestSendFlowStep,
   type ServiceEmailFlow,
   type ServiceEmailFlowStep,
   type AppointmentReminderConfig,
+  type ServiceEmailQueueItem,
 } from '@/hooks/useServiceEmailFlows';
 import { useServices } from '@/hooks/useBookingSystem';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';
 
 const SERVICE_CATEGORIES = ['Blonding', 'Color', 'Extensions', 'Extras', 'Haircut', 'Consultation', 'Styling'];
 
@@ -70,6 +82,14 @@ function formatTimingLabel(hours: number, type: 'before_appointment' | 'after_ap
   return `${days}d ${remaining}h ${direction}`;
 }
 
+const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle2; color: string; label: string }> = {
+  pending: { icon: Timer, color: 'text-amber-500', label: 'Pending' },
+  sent: { icon: CheckCircle2, color: 'text-green-500', label: 'Sent' },
+  merged: { icon: Merge, color: 'text-blue-500', label: 'Merged' },
+  cancelled: { icon: XCircle, color: 'text-muted-foreground', label: 'Cancelled' },
+  skipped: { icon: XCircle, color: 'text-orange-500', label: 'Skipped' },
+};
+
 export function ServiceEmailFlowsManager() {
   const [activeTab, setActiveTab] = useState('flows');
 
@@ -92,6 +112,10 @@ export function ServiceEmailFlowsManager() {
             <Bell className="h-3.5 w-3.5" />
             Appointment Reminders
           </TabsTrigger>
+          <TabsTrigger value="queue" className="flex items-center gap-1.5">
+            <Activity className="h-3.5 w-3.5" />
+            Email Queue
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="flows" className="mt-4">
@@ -100,6 +124,10 @@ export function ServiceEmailFlowsManager() {
 
         <TabsContent value="reminders" className="mt-4">
           <AppointmentRemindersManager />
+        </TabsContent>
+
+        <TabsContent value="queue" className="mt-4">
+          <EmailQueueMonitor />
         </TabsContent>
       </Tabs>
     </div>
@@ -150,7 +178,6 @@ function ServiceFlowsList() {
         </Card>
       ) : (
         <div className="grid gap-3">
-          {/* Group by category */}
           {groupFlowsByCategory(flows).map(([category, categoryFlows]) => (
             <div key={category}>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
@@ -411,6 +438,7 @@ function StepTimelineItem({
   const [expanded, setExpanded] = useState(false);
   const [editSubject, setEditSubject] = useState(step.subject);
   const [editBody, setEditBody] = useState(step.html_body);
+  const [activeSubTab, setActiveSubTab] = useState('content');
 
   const timingLabel = formatTimingLabel(step.timing_value, step.timing_type);
   const icon = step.timing_type === 'before_appointment' ? ArrowUp : ArrowDown;
@@ -460,46 +488,368 @@ function StepTimelineItem({
 
           {expanded && (
             <div className="mt-3 space-y-3 pl-1">
-              <div className="space-y-1.5">
-                <Label className="text-xs">Subject Line</Label>
-                <Input
-                  value={editSubject}
-                  onChange={e => setEditSubject(e.target.value)}
-                  className="text-sm"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">Email Body (HTML)</Label>
-                <Textarea
-                  value={editBody}
-                  onChange={e => setEditBody(e.target.value)}
-                  rows={6}
-                  className="text-sm font-mono"
-                  placeholder="<p>Hi {{first_name}},</p>"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => onUpdate({ subject: editSubject, html_body: editBody })}
-                  disabled={editSubject === step.subject && editBody === step.html_body}
-                >
-                  Save Changes
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={onDelete}
-                >
-                  <Trash2 className="w-3.5 h-3.5 mr-1" />
-                  Remove
-                </Button>
-              </div>
+              <Tabs value={activeSubTab} onValueChange={setActiveSubTab}>
+                <TabsList className="h-8">
+                  <TabsTrigger value="content" className="text-xs h-7">Content</TabsTrigger>
+                  <TabsTrigger value="locations" className="text-xs h-7">
+                    <MapPin className="w-3 h-3 mr-1" />
+                    Location Overrides
+                  </TabsTrigger>
+                  <TabsTrigger value="test" className="text-xs h-7">
+                    <Send className="w-3 h-3 mr-1" />
+                    Test Send
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="content" className="mt-3 space-y-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Subject Line</Label>
+                    <Input
+                      value={editSubject}
+                      onChange={e => setEditSubject(e.target.value)}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">Email Body (HTML)</Label>
+                    <Textarea
+                      value={editBody}
+                      onChange={e => setEditBody(e.target.value)}
+                      rows={6}
+                      className="text-sm font-mono"
+                      placeholder="<p>Hi {{first_name}},</p>"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => onUpdate({ subject: editSubject, html_body: editBody })}
+                      disabled={editSubject === step.subject && editBody === step.html_body}
+                    >
+                      Save Changes
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={onDelete}
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1" />
+                      Remove
+                    </Button>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="locations" className="mt-3">
+                  <StepLocationOverrides stepId={step.id} />
+                </TabsContent>
+
+                <TabsContent value="test" className="mt-3">
+                  <TestSendPanel stepId={step.id} />
+                </TabsContent>
+              </Tabs>
             </div>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+// ============= Location Overrides for Steps =============
+
+function StepLocationOverrides({ stepId }: { stepId: string }) {
+  const { data: locations } = useActiveLocations();
+  const { data: overrides, isLoading } = useStepOverrides(stepId);
+  const upsertOverride = useUpsertStepOverride();
+  const deleteOverride = useDeleteStepOverride();
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('');
+  const [overrideSubject, setOverrideSubject] = useState('');
+  const [overrideBody, setOverrideBody] = useState('');
+
+  const existingLocationIds = overrides?.map(o => o.location_id) || [];
+  const availableLocations = locations?.filter(l => !existingLocationIds.includes(l.id)) || [];
+
+  const handleAdd = () => {
+    if (!selectedLocationId) return;
+    upsertOverride.mutate({
+      stepId,
+      locationId: selectedLocationId,
+      subject: overrideSubject || null,
+      htmlBody: overrideBody || null,
+    }, {
+      onSuccess: () => {
+        setSelectedLocationId('');
+        setOverrideSubject('');
+        setOverrideBody('');
+      },
+    });
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin" /></div>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        Override subject or body for specific locations. Leave fields empty to use the default content.
+      </p>
+
+      {/* Existing overrides */}
+      {overrides && overrides.length > 0 && (
+        <div className="space-y-2">
+          {overrides.map(override => {
+            const loc = locations?.find(l => l.id === override.location_id);
+            return (
+              <Card key={override.id} className="border-dashed">
+                <CardContent className="py-3 px-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-sm font-medium">{loc?.name || override.location_id}</span>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive"
+                      onClick={() => deleteOverride.mutate({ id: override.id, stepId })}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                  <LocationOverrideEditor
+                    override={override}
+                    onSave={(subject, htmlBody) => upsertOverride.mutate({
+                      stepId,
+                      locationId: override.location_id,
+                      subject,
+                      htmlBody,
+                    })}
+                    isSaving={upsertOverride.isPending}
+                  />
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Add new override */}
+      {availableLocations.length > 0 && (
+        <Card>
+          <CardContent className="py-3 px-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Plus className="w-3.5 h-3.5 text-muted-foreground" />
+              <span className="text-sm font-medium">Add Location Override</span>
+            </div>
+            <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+              <SelectTrigger className="text-sm">
+                <SelectValue placeholder="Select location..." />
+              </SelectTrigger>
+              <SelectContent>
+                {availableLocations.map(l => (
+                  <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedLocationId && (
+              <>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Override Subject (optional)</Label>
+                  <Input value={overrideSubject} onChange={e => setOverrideSubject(e.target.value)} className="text-sm" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Override Body (optional)</Label>
+                  <Textarea value={overrideBody} onChange={e => setOverrideBody(e.target.value)} rows={4} className="text-sm font-mono" />
+                </div>
+                <Button size="sm" onClick={handleAdd} disabled={upsertOverride.isPending}>
+                  {upsertOverride.isPending && <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />}
+                  Save Override
+                </Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {availableLocations.length === 0 && (!overrides || overrides.length === 0) && (
+        <p className="text-xs text-muted-foreground text-center py-4">No locations configured. Add locations first.</p>
+      )}
+    </div>
+  );
+}
+
+function LocationOverrideEditor({
+  override,
+  onSave,
+  isSaving,
+}: {
+  override: { subject: string | null; html_body: string | null };
+  onSave: (subject: string | null, htmlBody: string | null) => void;
+  isSaving: boolean;
+}) {
+  const [subject, setSubject] = useState(override.subject || '');
+  const [body, setBody] = useState(override.html_body || '');
+
+  const hasChanges = subject !== (override.subject || '') || body !== (override.html_body || '');
+
+  return (
+    <div className="space-y-2">
+      <div className="space-y-1">
+        <Label className="text-xs">Subject Override</Label>
+        <Input value={subject} onChange={e => setSubject(e.target.value)} className="text-sm" placeholder="(use default)" />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">Body Override</Label>
+        <Textarea value={body} onChange={e => setBody(e.target.value)} rows={3} className="text-sm font-mono" placeholder="(use default)" />
+      </div>
+      {hasChanges && (
+        <Button size="sm" onClick={() => onSave(subject || null, body || null)} disabled={isSaving}>
+          {isSaving && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
+          Update
+        </Button>
+      )}
+    </div>
+  );
+}
+
+// ============= Test Send Panel =============
+
+function TestSendPanel({ stepId }: { stepId: string }) {
+  const { user } = useAuth();
+  const [testEmail, setTestEmail] = useState(user?.email || '');
+  const testSend = useTestSendFlowStep();
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        Send a test email with sample data to preview how this step looks in the inbox.
+      </p>
+      <div className="flex gap-2">
+        <Input
+          value={testEmail}
+          onChange={e => setTestEmail(e.target.value)}
+          placeholder="test@example.com"
+          className="text-sm"
+          type="email"
+        />
+        <Button
+          size="sm"
+          onClick={() => testSend.mutate({ stepId, testEmail })}
+          disabled={!testEmail || testSend.isPending}
+        >
+          {testSend.isPending ? (
+            <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+          ) : (
+            <Send className="w-4 h-4 mr-1.5" />
+          )}
+          Send Test
+        </Button>
+      </div>
+      <div className="flex items-start gap-2 text-xs text-muted-foreground">
+        <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+        <p>Test emails use sample data (Jane Smith, Downtown Studio, etc.) and are prefixed with [TEST].</p>
+      </div>
+    </div>
+  );
+}
+
+// ============= Email Queue Monitor =============
+
+function EmailQueueMonitor() {
+  const [statusFilter, setStatusFilter] = useState('all');
+  const { data: queueItems, isLoading } = useServiceEmailQueue({ status: statusFilter, limit: 50 });
+
+  const counts = {
+    all: queueItems?.length || 0,
+    pending: queueItems?.filter(i => i.status === 'pending').length || 0,
+    sent: queueItems?.filter(i => i.status === 'sent').length || 0,
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          Monitor queued and sent service communication emails. Refreshes every minute.
+        </p>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[140px] text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="sent">Sent</SelectItem>
+            <SelectItem value="merged">Merged</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+            <SelectItem value="skipped">Skipped</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+        </div>
+      ) : !queueItems || queueItems.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <MailCheck className="w-10 h-10 mx-auto mb-3 text-muted-foreground/50" />
+            <p className="font-medium">No emails in queue</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              Emails will appear here when appointments are booked with active service flows.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-1">
+          {queueItems.map(item => (
+            <QueueItemRow key={item.id} item={item} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QueueItemRow({ item }: { item: ServiceEmailQueueItem }) {
+  const config = STATUS_CONFIG[item.status] || STATUS_CONFIG.pending;
+  const StatusIcon = config.icon;
+  const appt = item.appointments as any;
+  const step = item.service_email_flow_steps as any;
+
+  return (
+    <Card>
+      <CardContent className="py-2.5 px-4 flex items-center justify-between">
+        <div className="flex items-center gap-3 min-w-0">
+          <StatusIcon className={cn('w-4 h-4 shrink-0', config.color)} />
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-medium truncate">{appt?.client_name || 'Unknown'}</span>
+              <span className="text-muted-foreground">·</span>
+              <span className="text-muted-foreground truncate">{appt?.service_name || 'Service'}</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>{step?.subject || 'Email'}</span>
+              {item.error_message && (
+                <>
+                  <span>·</span>
+                  <span className="text-orange-500">{item.error_message}</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="text-right shrink-0 ml-3">
+          <Badge variant="outline" className="text-xs">
+            {config.label}
+          </Badge>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {format(new Date(item.scheduled_at), 'MMM d, h:mm a')}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -686,6 +1036,7 @@ function ReminderConfigCard({
   const [isActive, setIsActive] = useState(config?.is_active ?? true);
   const [subject, setSubject] = useState(config?.subject || '');
   const [htmlBody, setHtmlBody] = useState(config?.html_body || '');
+  const [showOverrides, setShowOverrides] = useState(false);
 
   const hasChanges = isActive !== (config?.is_active ?? true) ||
     subject !== (config?.subject || '') ||
@@ -726,15 +1077,134 @@ function ReminderConfigCard({
                 placeholder="<p>Hi {{first_name}},</p>"
               />
             </div>
-            {hasChanges && (
-              <Button size="sm" onClick={() => onSave({ is_active: isActive, subject, html_body: htmlBody })} disabled={isSaving}>
-                {isSaving && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
-                Save
-              </Button>
+            <div className="flex gap-2">
+              {hasChanges && (
+                <Button size="sm" onClick={() => onSave({ is_active: isActive, subject, html_body: htmlBody })} disabled={isSaving}>
+                  {isSaving && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
+                  Save
+                </Button>
+              )}
+              {config?.id && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowOverrides(!showOverrides)}
+                >
+                  <MapPin className="w-3.5 h-3.5 mr-1" />
+                  Location Overrides
+                </Button>
+              )}
+            </div>
+
+            {showOverrides && config?.id && (
+              <ReminderLocationOverrides configId={config.id} />
             )}
           </div>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// ============= Reminder Location Overrides =============
+
+function ReminderLocationOverrides({ configId }: { configId: string }) {
+  const { data: locations } = useActiveLocations();
+  const { data: overrides, isLoading } = useReminderOverrides(configId);
+  const upsertOverride = useUpsertReminderOverride();
+  const [selectedLocationId, setSelectedLocationId] = useState('');
+  const [overrideSubject, setOverrideSubject] = useState('');
+  const [overrideBody, setOverrideBody] = useState('');
+
+  const existingLocationIds = overrides?.map(o => o.location_id) || [];
+  const availableLocations = locations?.filter(l => !existingLocationIds.includes(l.id)) || [];
+
+  if (isLoading) {
+    return <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin" /></div>;
+  }
+
+  return (
+    <div className="space-y-3 pl-2 border-l-2 border-primary/20 ml-2">
+      <p className="text-xs text-muted-foreground">
+        Override reminder content for specific locations (e.g., different parking instructions).
+      </p>
+
+      {overrides && overrides.length > 0 && overrides.map(override => {
+        const loc = locations?.find(l => l.id === override.location_id);
+        return (
+          <Card key={override.id} className="border-dashed">
+            <CardContent className="py-2.5 px-3">
+              <div className="flex items-center gap-2 mb-2">
+                <MapPin className="w-3 h-3 text-muted-foreground" />
+                <span className="text-xs font-medium">{loc?.name || override.location_id}</span>
+              </div>
+              <LocationOverrideEditor
+                override={override}
+                onSave={(subject, htmlBody) => upsertOverride.mutate({
+                  configId,
+                  locationId: override.location_id,
+                  subject,
+                  htmlBody,
+                })}
+                isSaving={upsertOverride.isPending}
+              />
+            </CardContent>
+          </Card>
+        );
+      })}
+
+      {availableLocations.length > 0 && (
+        <div className="space-y-2">
+          <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+            <SelectTrigger className="text-xs">
+              <SelectValue placeholder="Add location override..." />
+            </SelectTrigger>
+            <SelectContent>
+              {availableLocations.map(l => (
+                <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {selectedLocationId && (
+            <div className="space-y-2">
+              <Input
+                value={overrideSubject}
+                onChange={e => setOverrideSubject(e.target.value)}
+                className="text-xs"
+                placeholder="Override subject (optional)"
+              />
+              <Textarea
+                value={overrideBody}
+                onChange={e => setOverrideBody(e.target.value)}
+                rows={3}
+                className="text-xs font-mono"
+                placeholder="Override body (optional)"
+              />
+              <Button
+                size="sm"
+                onClick={() => {
+                  upsertOverride.mutate({
+                    configId,
+                    locationId: selectedLocationId,
+                    subject: overrideSubject || null,
+                    htmlBody: overrideBody || null,
+                  }, {
+                    onSuccess: () => {
+                      setSelectedLocationId('');
+                      setOverrideSubject('');
+                      setOverrideBody('');
+                    },
+                  });
+                }}
+                disabled={upsertOverride.isPending}
+              >
+                {upsertOverride.isPending && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
+                Save Override
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
