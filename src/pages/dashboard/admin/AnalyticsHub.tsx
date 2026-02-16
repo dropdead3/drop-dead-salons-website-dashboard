@@ -35,9 +35,8 @@ import { RentRevenueTab } from '@/components/dashboard/analytics/RentRevenueTab'
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { ReportsTabContent } from '@/components/dashboard/analytics/ReportsTabContent';
 import { CampaignsTabContent } from '@/components/dashboard/analytics/CampaignsTabContent';
-import { ExecutiveSummaryCard } from '@/components/dashboard/analytics/ExecutiveSummaryCard';
-import { ExecutiveTrendChart } from '@/components/dashboard/analytics/ExecutiveTrendChart';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
+import { LeadershipTabContent } from '@/components/dashboard/analytics/LeadershipTabContent';
 
 
 const baseCategories = [
@@ -366,23 +365,7 @@ export default function AnalyticsHub() {
 
           <VisibilityGate elementKey="analytics_leadership_tab">
             <TabsContent value="leadership" className="mt-6">
-              <div className="space-y-6">
-                <PinnableCard
-                  elementKey="executive_summary"
-                  elementName="Executive Summary"
-                  category="Analytics Hub - Leadership"
-                >
-                  <ExecutiveSummaryCard />
-                </PinnableCard>
-
-                <PinnableCard
-                  elementKey="executive_trend"
-                  elementName="Trend Analysis"
-                  category="Analytics Hub - Executive Summary"
-                >
-                  <ExecutiveTrendChart />
-                </PinnableCard>
-              </div>
+              <LeadershipTabContent />
             </TabsContent>
           </VisibilityGate>
 
