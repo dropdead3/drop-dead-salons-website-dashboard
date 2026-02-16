@@ -1,17 +1,35 @@
 
+# Update All Revenue Bars to Show Share of Total
 
-# Fix: Provider Revenue Bar to Show Share of Total
+## Why This Matters
+Across the platform, revenue progress bars divide by the top earner's value, making the leader always appear at 100%. This misrepresents contribution -- a provider earning half the total should show a 50% bar, not 75%.
 
-## Problem
-The progress bar currently divides each provider's revenue by `maxRevenue` (the top provider), so the top provider always shows a full-width bar. This is misleading — it doesn't convey how much of the day's total revenue each provider represents.
+## Files to Update
 
-## Solution
-Change the bar width calculation from `group.revenue / maxRevenue` to `group.revenue / totalRevenue`, where `totalRevenue` is the sum of all filtered appointments for the day.
+### 1. StylistSalesRow.tsx
+- Rename prop from `maxRevenue` to `totalRevenue`
+- Update bar width calculation from `stylist.totalRevenue / maxRevenue` to `stylist.totalRevenue / totalRevenue`
 
-## File Changed
-**`src/components/dashboard/sales/DayProviderBreakdownPanel.tsx`**
-- Replace `const maxRevenue = groups[0]?.revenue || 1;` with `const totalRevenue = groups.reduce((sum, g) => sum + g.revenue, 0) || 1;`
-- Update the bar width from `(group.revenue / maxRevenue) * 100%` to `(group.revenue / totalRevenue) * 100%`
+### 2. PhorestStaffRow.tsx
+- Same change: rename prop `maxRevenue` to `totalRevenue`
+- Update bar width calculation accordingly
 
-This means a provider earning half the day's revenue will show a 50% bar, which is immediately intuitive.
+### 3. SalesDashboard.tsx
+- Change `maxStylistRevenue` to `totalStylistRevenue` using `.reduce((sum, s) => sum + s.totalRevenue, 0)` instead of `Math.max(...)`
+- Change `maxPhorestStaffRevenue` to `totalPhorestStaffRevenue` using the same sum approach
+- Pass as `totalRevenue` prop instead of `maxRevenue`
 
+### 4. SalesTabContent.tsx
+- Change `maxStylistRevenue` to `totalStylistRevenue` using `.reduce()` sum
+- Pass as `totalRevenue` prop
+
+### 5. ExecutiveSummaryCard.tsx
+- Replace `const maxRevenue = locations[0]?.totalRevenue || 1` with `const totalRevenue = locations.reduce((sum, l) => sum + l.totalRevenue, 0) || 1`
+- Update bar width to use `totalRevenue`
+
+## What Stays Unchanged
+- TicketDistributionPanel, TransactionsByHourPanel (histograms -- relative to max is correct)
+- RevPerHourByStylistPanel (efficiency metric with salon average marker -- comparison is the intent)
+- AssistantWorkloadChart, StylistWorkloadCard (workload distribution comparisons)
+- CategoryComparisonTable (growth visualization, not revenue share)
+- DayProviderBreakdownPanel (already fixed in previous change)
