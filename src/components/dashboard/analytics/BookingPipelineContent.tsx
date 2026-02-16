@@ -262,7 +262,7 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <span className={cn(
-                    'inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full border backdrop-blur-sm w-[4.5rem] justify-center transition-all',
+                    'inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-md border backdrop-blur-sm w-[4.5rem] justify-center transition-all',
                     config.chip
                   )}>
                     <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', config.dot)} />
