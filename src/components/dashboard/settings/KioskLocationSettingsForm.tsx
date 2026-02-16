@@ -343,7 +343,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr,minmax(320px,1fr)] gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(280px,400px),1fr] gap-6">
       {/* Left Column: Settings */}
       <div className="space-y-6">
         {/* Features Section */}
