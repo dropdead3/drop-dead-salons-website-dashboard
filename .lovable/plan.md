@@ -1,52 +1,17 @@
 
 
-# Fix: Clickable Bars + Popup Drill-Down
+# Fix: Provider Revenue Bar to Show Share of Total
 
-## Problems
-1. **Bars not clickable**: The Recharts `<Tooltip>` component intercepts pointer events on the bars, preventing the `BarChart onClick` from firing reliably when clicking directly on a bar.
-2. **Drawer vs Popup**: The provider breakdown currently renders as an inline expanding panel. The user wants a popup dialog instead.
+## Problem
+The progress bar currently divides each provider's revenue by `maxRevenue` (the top provider), so the top provider always shows a full-width bar. This is misleading — it doesn't convey how much of the day's total revenue each provider represents.
 
 ## Solution
+Change the bar width calculation from `group.revenue / maxRevenue` to `group.revenue / totalRevenue`, where `totalRevenue` is the sum of all filtered appointments for the day.
 
-### 1. Fix Bar Click: Use `onClick` on each `<Bar>` component
-Instead of relying on the `BarChart`-level `onClick` (which competes with Tooltip), attach `onClick` directly to each `<Bar>` component. Recharts `<Bar>` supports an `onClick` prop that receives the bar data payload -- this fires reliably even with Tooltip active.
+## File Changed
+**`src/components/dashboard/sales/DayProviderBreakdownPanel.tsx`**
+- Replace `const maxRevenue = groups[0]?.revenue || 1;` with `const totalRevenue = groups.reduce((sum, g) => sum + g.revenue, 0) || 1;`
+- Update the bar width from `(group.revenue / maxRevenue) * 100%` to `(group.revenue / totalRevenue) * 100%`
 
-**File: `WeekAheadForecast.tsx`**
-- Remove `onClick` and `style={{ cursor: 'pointer' }}` from `<BarChart>`
-- Add `onClick` and `cursor="pointer"` to both `<Bar>` components (confirmed and unconfirmed):
-  ```tsx
-  <Bar
-    dataKey="confirmedRevenue"
-    stackId="revenue"
-    onClick={(data) => handleBarClick(data.name)}
-    cursor="pointer"
-    ...
-  >
-  ```
-- Same for the `unconfirmedRevenue` Bar
+This means a provider earning half the day's revenue will show a 50% bar, which is immediately intuitive.
 
-### 2. Replace Inline Panel with Dialog Popup
-Convert `DayProviderBreakdownPanel` from an inline `motion.div` to a `Dialog` using the existing `DRILLDOWN_DIALOG_CONTENT_CLASS` for consistent styling.
-
-**File: `WeekAheadForecast.tsx`**
-- Replace `<DayProviderBreakdownPanel day={selectedBarDay} isOpen={...} />` with a `<Dialog>` wrapper:
-  ```tsx
-  <DayProviderBreakdownPanel
-    day={selectedBarDay}
-    open={selectedBarDay !== null}
-    onOpenChange={(open) => !open && setSelectedBarDay(null)}
-  />
-  ```
-
-**File: `DayProviderBreakdownPanel.tsx`**
-- Change props from `{ day, isOpen }` to `{ day, open, onOpenChange }`
-- Replace the outer `AnimatePresence` / `motion.div` with `Dialog` / `DialogContent` using `DRILLDOWN_DIALOG_CONTENT_CLASS`
-- Add a `DialogHeader` with the day name and appointment count
-- Keep all the inner content (stylist rows, expandable appointments) as-is inside a `ScrollArea`
-
-### 3. Fix "appts" abbreviation
-The memory notes say the system uses full words. Line 92 of `DayProviderBreakdownPanel` says "appt/appts" -- change to "appointment/appointments".
-
-## Files Changed
-- `src/components/dashboard/sales/WeekAheadForecast.tsx` -- bar click handler + dialog integration
-- `src/components/dashboard/sales/DayProviderBreakdownPanel.tsx` -- refactor from inline panel to dialog popup
