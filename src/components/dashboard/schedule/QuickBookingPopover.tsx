@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -111,6 +112,8 @@ export function QuickBookingPopover({
   const [autoSelectReason, setAutoSelectReason] = useState<'previous' | 'self' | 'highest' | null>(null);
   const [viewingClientProfile, setViewingClientProfile] = useState<PhorestClient | null>(null);
   const [pendingBannedClient, setPendingBannedClient] = useState<PhorestClient | null>(null);
+  const [bookingNotes, setBookingNotes] = useState('');
+  const [showNotes, setShowNotes] = useState(false);
 
   // Check if a step has valid input (for forward navigation)
   const isStepCompleted = (stepName: Step): boolean => {
@@ -333,6 +336,7 @@ export function QuickBookingPopover({
           staff_id: stylistMapping.phorest_staff_id,
           service_ids: selectedServices,
           start_time: startDateTime,
+          notes: bookingNotes || undefined,
         },
       });
 
@@ -363,6 +367,8 @@ export function QuickBookingPopover({
     setServiceSearch('');
     setAutoSelectReason(null);
     setViewingClientProfile(null);
+    setBookingNotes('');
+    setShowNotes(false);
     onOpenChange(false);
   };
 
@@ -1249,6 +1255,31 @@ export function QuickBookingPopover({
                         <span className="font-medium text-sm">{getStylistName()}</span>
                       </div>
                     </div>
+                  </div>
+
+                  {/* Notes */}
+                  <div>
+                    {!showNotes ? (
+                      <button
+                        type="button"
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                        onClick={() => setShowNotes(true)}
+                      >
+                        + Add special notes
+                      </button>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                          Notes
+                        </h4>
+                        <Textarea
+                          placeholder="Special instructions, pricing notes, promo codes..."
+                          value={bookingNotes}
+                          onChange={(e) => setBookingNotes(e.target.value)}
+                          className="min-h-[60px] text-xs resize-none"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </ScrollArea>
