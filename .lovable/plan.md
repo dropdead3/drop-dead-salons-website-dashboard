@@ -1,85 +1,59 @@
 
-
-# Kiosk Features -- Independent Feature Toggles
+# Kiosk Settings -- Per-Location Features + UX Cleanup
 
 ## Problem
 
-The current "Kiosk Mode" selector forces a choice between Check-In and Self-Service Booking. In reality, a salon kiosk should support both simultaneously -- a client walks up, checks in for their existing appointment OR books a new one. These are independent capabilities, not exclusive modes.
+The Kiosk Features card sits above the Location Selector, so an admin toggles features without knowing which location they're configuring. "Apply to All Locations" is buried at the bottom of the page. Several small UI redundancies exist.
 
-## Solution
+## Changes
 
-Replace the exclusive radio-style mode selector with independent feature toggles. Each feature gets its own card with an enable/disable switch and contextual sub-settings that appear when the feature is active.
+### 1. Move Location Selector to the Top
 
-### New Layout
+The location selector card (currently the second card, lines 616-663) moves to become the FIRST card on the page -- above Kiosk Features. This establishes context before any configuration happens.
 
-```text
-+------------------------------------------+
-| KIOSK FEATURES                           |
-| Enable the capabilities your kiosk offers|
-|                                          |
-| +--------------------------------------+ |
-| | [ON] Check-In                        | |
-| |   Clients look up and check in for   | |
-| |   existing appointments              | |
-| |   > Require Confirmation Tap  [ON]   | |
-| |   > Show Wait Time Estimate  [OFF]   | |
-| |   > Show Stylist Photo       [ON]    | |
-| +--------------------------------------+ |
-|                                          |
-| +--------------------------------------+ |
-| | [ON] Walk-In Registration            | |
-| |   Let clients register without an    | |
-| |   appointment                        | |
-| +--------------------------------------+ |
-|                                          |
-| +--------------------------------------+ |
-| | [OFF] Self-Service Booking           | |
-| |   Walk-in clients can browse         | |
-| |   services and book appointments     | |
-| |   > Allow Future Bookings    [OFF]   | |
-| |   > Show Stylist Selection   [ON]    | |
-| +--------------------------------------+ |
-|                                          |
-| +--------------------------------------+ |
-| | [OFF] Form Signing                   | |
-| |   Prompt new clients to sign intake  | |
-| |   forms during check-in              | |
-| +--------------------------------------+ |
-+------------------------------------------+
-```
+Add an "Apply to All Locations" button directly in the location selector card header (right-aligned). This makes the propagation action immediately visible without scrolling to the bottom.
 
-### What Changes
+When a specific location is selected, show an inline badge: "Editing: [Location Name]" with a "Customized" or "Using Defaults" indicator.
 
-1. **Remove** the "Kiosk Mode" card (the exclusive radio selector at lines 421-475)
-2. **Replace** it with a "Kiosk Features" card containing independent feature toggles:
-   - **Check-In** (always on, not toggleable -- this is the core kiosk purpose) with its sub-settings: Require Confirmation Tap, Show Wait Time Estimate, Show Stylist Photo
-   - **Walk-In Registration** (`enable_walk_ins`) -- standalone toggle
-   - **Self-Service Booking** (`enable_self_booking`) with sub-settings: Allow Future Bookings, Show Stylist Selection
-   - **Form Signing** (`require_form_signing`) -- standalone toggle
-   - **Feedback Prompt** (`enable_feedback_prompt`) -- standalone toggle
+### 2. Add Location Context to Features Card
 
-3. **Simplify the Behavior tab** -- Move feature-specific toggles out of the Behavior tab and into the Features card. The Behavior tab will retain only general device behavior: Idle Timeout and Exit PIN.
+Add a subtle banner at the top of the Kiosk Features card showing which location is being configured:
+- "Organization Defaults" when editing defaults
+- "[Location Name]" when editing a specific location
+- Include a small "Using org defaults" or "Custom overrides" indicator
 
-4. **Remove** `handleKioskModeChange` and the derived `kioskMode` variable -- no longer needed since features are independent.
+This prevents the admin from accidentally toggling features for the wrong location.
 
-5. **Validation guard**: If both Check-In and Self-Service Booking are disabled (edge case), show a subtle warning: "At least one feature should be enabled for the kiosk to be useful."
+### 3. Move "Apply to All" Into Location Selector
 
-### Gap Analysis and Enhancements
+Remove the "Push Defaults to All Locations" and "Push Location Settings to All" buttons from the save section at the bottom. Instead, place them in the location selector card:
+- When on "Organization Defaults": show "Apply Defaults to All Locations" button (replaces overrides)
+- When on a specific location: show "Apply This Location's Settings to All" button
 
-- **Feature Feedback Loop**: When Self-Service Booking is enabled, the idle screen CTA text should hint at booking capability (e.g., "Tap to check in or book"). This is a follow-up enhancement in the kiosk idle screen, not part of this settings change.
-- **Per-Feature Analytics**: The kiosk_analytics table already logs event types. No schema change needed, but a future enhancement could surface feature-specific usage stats in this settings card (e.g., "42 check-ins, 8 bookings this week").
-- **Feature Dependencies**: If "Form Signing" is on but no forms exist, a warning could be shown. This is a future enhancement.
+Keep "Reset to Organization Defaults" in the save section since it's a per-location action.
+
+### 4. Fix Button Style Placement
+
+Move the "Button Style" dropdown out of the color pickers grid (where it gets incorrectly dimmed when using a theme preset). Place it as a standalone control in the Appearance tab, below the color section.
+
+### 5. Consolidate Behavior Tab
+
+The Behavior tab currently has only Idle Timeout and Exit PIN. Move Exit PIN into a "Security" sub-section and add a descriptive note about where feature-specific behavior is configured (the Features card above).
 
 ## Technical Details
 
 **File modified:** `src/components/dashboard/settings/KioskSettingsContent.tsx`
 
-1. Remove the Kiosk Mode card (lines 421-475) and replace with a "Kiosk Features" card containing grouped feature switches
-2. Remove `kioskMode` derived variable and `handleKioskModeChange` handler (lines 408-417)
-3. Move check-in-specific toggles (Require Confirmation, Show Wait Time, Show Stylist Photo) from the Behavior tab into the Check-In feature group
-4. Move self-booking sub-settings (Allow Future Bookings, Show Stylist Selection) into the Self-Service Booking feature group
-5. Move Form Signing and Feedback Prompt toggles from the Behavior tab into standalone feature toggles
-6. Behavior tab retains only: Idle Timeout, Exit PIN, and Allow Walk-Ins
-7. Each feature group uses a collapsible pattern: switch header with sub-settings revealed via `AnimatePresence` when enabled
+### Specific changes:
 
-No database changes, no hook changes, no new files.
+1. **Reorder cards** -- Move the location selector JSX block (lines 616-663) above the Kiosk Features card (lines 411-614). Add a right-aligned "Apply to All Locations" button with confirmation dialog in the card header.
+
+2. **Add location context banner** inside the Kiosk Features CardHeader -- a small `<p>` tag showing "Configuring: [Organization Defaults | Location Name]" with a badge indicating override status.
+
+3. **Remove duplicate "Push" buttons** from the save section (lines 1244-1312). The "Push Defaults to All" and "Push Location to All" actions move into the location selector card. Only "Reset to Org Defaults" remains in the save section.
+
+4. **Fix button style placement** -- Move the Button Style `<Select>` (lines 882-896) out of the `grid grid-cols-2` color picker container. Place it as standalone control below the color grid, outside the opacity wrapper so it's not affected by theme preset dimming.
+
+5. **Behavior tab cleanup** -- Add a brief info note: "Feature-specific settings are configured in the Kiosk Features section above." This prevents confusion about why the tab is sparse.
+
+No database changes, no hook changes, no new files. The `usePushDefaultsToAllLocations` and `usePushLocationSettingsToAll` hooks remain unchanged -- only the UI location of their trigger buttons moves.
