@@ -1,6 +1,6 @@
 import { memo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Sparkles, RefreshCw, Calendar, Clock, ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
+import { Sparkles, RefreshCw, Calendar, Clock, ChevronDown, ChevronUp, TrendingUp, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -16,6 +16,7 @@ interface SchedulingCopilotPanelProps {
   serviceDurationMinutes?: number;
   staffUserId?: string;
   onSelectSlot?: (time: string, staffUserId: string) => void;
+  onClose?: () => void;
   className?: string;
 }
 
@@ -25,6 +26,7 @@ function SchedulingCopilotPanelComponent({
   serviceDurationMinutes = 60,
   staffUserId,
   onSelectSlot,
+  onClose,
   className,
 }: SchedulingCopilotPanelProps) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -86,6 +88,11 @@ function SchedulingCopilotPanelComponent({
                   )}
                 </Button>
               </CollapsibleTrigger>
+              {onClose && (
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+                  <X className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </div>
 
