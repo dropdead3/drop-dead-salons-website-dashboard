@@ -37,6 +37,7 @@ import { ExecutiveSummaryReport } from '@/components/dashboard/reports/Executive
 import { IndividualStaffReport } from '@/components/dashboard/reports/IndividualStaffReport';
 import { PayrollSummaryReport } from '@/components/dashboard/reports/PayrollSummaryReport';
 import { RetailProductReport } from '@/components/dashboard/reports/RetailProductReport';
+import { RetailStaffReport } from '@/components/dashboard/reports/RetailStaffReport';
 import { EndOfMonthReport } from '@/components/dashboard/reports/EndOfMonthReport';
 import { ReportBuilderPage } from '@/components/dashboard/reports/builder/ReportBuilderPage';
 import { ScheduledReportsSubTab } from '@/components/dashboard/reports/scheduled/ScheduledReportsSubTab';
@@ -58,6 +59,7 @@ const salesReports = [
   { id: 'location-sales', name: 'Sales by Location', description: 'Multi-location comparison', icon: Building2 },
   { id: 'product-sales', name: 'Product Sales Report', description: 'Top products and attachment rates', icon: DollarSign },
   { id: 'retail-products', name: 'Retail Product Report', description: 'Full product performance with red flags and categories', icon: ShoppingBag },
+  { id: 'retail-staff', name: 'Retail Sales by Staff', description: 'Per-stylist retail revenue, units, and attachment rates', icon: Users },
 ];
 
 const staffReports = [
@@ -215,7 +217,7 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
   );
 
   // Reports that manage their own back button
-  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'end-of-month'];
+  const selfContainedReports = ['individual-staff', 'payroll-summary', 'retail-products', 'retail-staff', 'end-of-month'];
 
   const renderSelectedReport = () => {
     const location = filters.locationId === 'all' ? undefined : filters.locationId;
@@ -243,6 +245,15 @@ export function ReportsTabContent({ filters }: ReportsTabContentProps) {
       case 'retail-products':
         return (
           <RetailProductReport
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            locationId={location}
+            onClose={handleCloseReport}
+          />
+        );
+      case 'retail-staff':
+        return (
+          <RetailStaffReport
             dateFrom={filters.dateFrom}
             dateTo={filters.dateTo}
             locationId={location}

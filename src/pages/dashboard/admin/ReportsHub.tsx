@@ -33,6 +33,7 @@ import { StaffKPIReport } from '@/components/dashboard/reports/StaffKPIReport';
 import { ClientRetentionReport } from '@/components/dashboard/reports/ClientRetentionReport';
 import { NoShowReport } from '@/components/dashboard/reports/NoShowReport';
 import { CapacityReport } from '@/components/dashboard/reports/CapacityReport';
+import { RetailStaffReport } from '@/components/dashboard/reports/RetailStaffReport';
 
 const reportCategories = [
   { id: 'sales', label: 'Sales', icon: DollarSign },
@@ -47,6 +48,7 @@ const salesReports = [
   { id: 'stylist-sales', name: 'Sales by Stylist', description: 'Individual performance rankings', icon: Users },
   { id: 'location-sales', name: 'Sales by Location', description: 'Multi-location comparison', icon: Building2 },
   { id: 'product-sales', name: 'Product Sales Report', description: 'Top products and attachment rates', icon: DollarSign },
+  { id: 'retail-staff', name: 'Retail Sales by Staff', description: 'Per-stylist retail revenue, units, and attachment rates', icon: Users },
 ];
 
 const staffReports = [
@@ -174,6 +176,15 @@ export default function ReportsHub() {
       case 'capacity':
         return (
           <CapacityReport
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            locationId={location}
+            onClose={handleCloseReport}
+          />
+        );
+      case 'retail-staff':
+        return (
+          <RetailStaffReport
             dateFrom={dateFrom}
             dateTo={dateTo}
             locationId={location}
