@@ -100,7 +100,7 @@ export default function Transactions() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="font-display text-2xl font-semibold">Transactions</h1>
+            <h1 className="font-display text-2xl font-medium">Transactions</h1>
             <p className="text-muted-foreground text-sm">
               View and manage client transaction history
             </p>
@@ -135,19 +135,19 @@ export default function Transactions() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-display font-semibold">{formatCurrency(totalRevenue)}</p>
+                <p className="text-2xl font-display font-medium">{formatCurrency(totalRevenue)}</p>
               </Card>
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">Services</p>
-                <p className="text-2xl font-display font-semibold">{serviceCount}</p>
+                <p className="text-2xl font-display font-medium">{serviceCount}</p>
               </Card>
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">Products</p>
-                <p className="text-2xl font-display font-semibold">{productCount}</p>
+                <p className="text-2xl font-display font-medium">{productCount}</p>
               </Card>
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">Refunded</p>
-                <p className={cn("text-2xl font-display font-semibold", refundedCount > 0 && "text-amber-600")}>
+                <p className={cn("text-2xl font-display font-medium", refundedCount > 0 && "text-amber-600")}>
                   {refundedCount}
                 </p>
               </Card>

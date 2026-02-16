@@ -98,7 +98,7 @@ export function HighFiveButton({
               </span>
               {count > 0 && (
                 <span className={cn(
-                  'ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold',
+                  'ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-medium',
                   hasHighFived 
                     ? 'bg-white/20 text-white' 
                     : 'bg-amber-200 text-amber-800'

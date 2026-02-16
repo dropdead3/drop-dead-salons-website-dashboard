@@ -74,7 +74,7 @@ export function AIHelpTab() {
           {isEmpty ? (
             <div className="flex flex-col items-center justify-center h-[280px] text-center">
               <ZuraAvatar size="lg" className="mb-4" />
-              <h3 className="font-semibold text-lg mb-2">Zura</h3>
+              <h3 className="font-medium text-lg mb-2">Zura</h3>
               <p className="text-sm text-muted-foreground mb-6 max-w-[280px]">
                 I'm Zura, your AI assistant. Ask me anything about using the platform.
               </p>

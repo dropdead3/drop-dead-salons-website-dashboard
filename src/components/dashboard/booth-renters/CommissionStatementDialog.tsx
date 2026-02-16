@@ -214,7 +214,7 @@ export function CommissionStatementDialog({
                 <span>-{formatCurrency(deductions)}</span>
               </div>
             )}
-            <div className="border-t pt-2 flex justify-between font-semibold">
+            <div className="border-t pt-2 flex justify-between font-medium">
               <span>Net Payout</span>
               <span className="flex items-center gap-1">
                 {formatCurrency(netPayout)}

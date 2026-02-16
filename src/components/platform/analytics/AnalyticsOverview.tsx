@@ -107,7 +107,7 @@ export function AnalyticsOverview({ analytics }: AnalyticsOverviewProps) {
                     {stat.label}
                   </p>
                   <p className={cn(
-                    'text-xl font-bold',
+                    'text-xl font-medium',
                     isDark ? 'text-white' : 'text-slate-900'
                   )}>
                     {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
@@ -125,7 +125,7 @@ export function AnalyticsOverview({ analytics }: AnalyticsOverviewProps) {
         isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
       )}>
         <h3 className={cn(
-          'font-semibold mb-4',
+          'font-medium mb-4',
           isDark ? 'text-white' : 'text-slate-900'
         )}>
           Platform-Wide Averages
@@ -134,7 +134,7 @@ export function AnalyticsOverview({ analytics }: AnalyticsOverviewProps) {
           {performanceStats.map((stat) => (
             <div key={stat.label} className="text-center">
               <p className={cn(
-                'text-2xl font-bold',
+                'text-2xl font-medium',
                 stat.color === 'violet' && 'text-violet-500',
                 stat.color === 'emerald' && 'text-emerald-500',
                 stat.color === 'blue' && 'text-blue-500',
@@ -163,7 +163,7 @@ export function AnalyticsOverview({ analytics }: AnalyticsOverviewProps) {
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
           <h3 className={cn(
-            'font-semibold mb-4',
+            'font-medium mb-4',
             isDark ? 'text-white' : 'text-slate-900'
           )}>
             Account Status Distribution
@@ -203,7 +203,7 @@ export function AnalyticsOverview({ analytics }: AnalyticsOverviewProps) {
           isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
         )}>
           <h3 className={cn(
-            'font-semibold mb-4',
+            'font-medium mb-4',
             isDark ? 'text-white' : 'text-slate-900'
           )}>
             Subscription Tier Distribution
@@ -248,7 +248,7 @@ export function AnalyticsOverview({ analytics }: AnalyticsOverviewProps) {
         isDark ? 'bg-slate-800/50 border-slate-700/50' : 'bg-white border-slate-200 shadow-sm'
       )}>
         <h3 className={cn(
-          'font-semibold mb-4',
+          'font-medium mb-4',
           isDark ? 'text-white' : 'text-slate-900'
         )}>
           Geographic Distribution
@@ -263,7 +263,7 @@ export function AnalyticsOverview({ analytics }: AnalyticsOverviewProps) {
               )}
             >
               <p className={cn(
-                'text-lg font-bold',
+                'text-lg font-medium',
                 isDark ? 'text-white' : 'text-slate-900'
               )}>
                 {item.count}

@@ -152,9 +152,9 @@ export default function IncidentReports() {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-3">
-          <Card><CardContent className="p-4 flex items-center gap-3"><ShieldAlert className="w-8 h-8 text-primary" /><div><p className="text-2xl font-bold">{incidentList.length}</p><p className="text-sm text-muted-foreground">Total Incidents</p></div></CardContent></Card>
-          <Card><CardContent className="p-4 flex items-center gap-3"><AlertTriangle className="w-8 h-8 text-destructive" /><div><p className="text-2xl font-bold">{openCount}</p><p className="text-sm text-muted-foreground">Open</p></div></CardContent></Card>
-          <Card><CardContent className="p-4 flex items-center gap-3"><Clock className="w-8 h-8 text-amber-500" /><div><p className="text-2xl font-bold">{investigatingCount}</p><p className="text-sm text-muted-foreground">Investigating</p></div></CardContent></Card>
+          <Card><CardContent className="p-4 flex items-center gap-3"><ShieldAlert className="w-8 h-8 text-primary" /><div><p className="text-2xl font-medium">{incidentList.length}</p><p className="text-sm text-muted-foreground">Total Incidents</p></div></CardContent></Card>
+          <Card><CardContent className="p-4 flex items-center gap-3"><AlertTriangle className="w-8 h-8 text-destructive" /><div><p className="text-2xl font-medium">{openCount}</p><p className="text-sm text-muted-foreground">Open</p></div></CardContent></Card>
+          <Card><CardContent className="p-4 flex items-center gap-3"><Clock className="w-8 h-8 text-amber-500" /><div><p className="text-2xl font-medium">{investigatingCount}</p><p className="text-sm text-muted-foreground">Investigating</p></div></CardContent></Card>
         </div>
 
         <Card>

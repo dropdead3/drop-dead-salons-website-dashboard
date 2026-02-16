@@ -71,7 +71,7 @@ export default function RenterTaxDocuments() {
     <div className="container py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Tax Documents</h1>
+          <h1 className="text-2xl font-medium">Tax Documents</h1>
           <p className="text-muted-foreground">Access your 1099 forms and earnings summaries</p>
         </div>
       </div>
@@ -109,11 +109,11 @@ export default function RenterTaxDocuments() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-lg bg-muted">
                   <p className="text-sm text-muted-foreground">Total Commissions Earned</p>
-                  <p className="text-3xl font-bold">{formatCurrency(selectedYearData.total_earnings)}</p>
+                  <p className="text-3xl font-medium">{formatCurrency(selectedYearData.total_earnings)}</p>
                 </div>
                 <div className="p-4 rounded-lg bg-muted">
                   <p className="text-sm text-muted-foreground">Total Payments Received</p>
-                  <p className="text-3xl font-bold">{formatCurrency(selectedYearData.total_payments)}</p>
+                  <p className="text-3xl font-medium">{formatCurrency(selectedYearData.total_payments)}</p>
                 </div>
               </div>
 

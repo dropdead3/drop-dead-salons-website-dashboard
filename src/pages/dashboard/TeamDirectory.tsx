@@ -816,7 +816,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
           <div className="relative shrink-0">
             <Avatar className="w-20 h-20 ring-2 ring-background shadow-md">
               <AvatarImage src={member.photo_url || undefined} alt={member.full_name} className="object-cover" />
-              <AvatarFallback className="bg-gradient-to-br from-muted to-muted/50 text-xl font-semibold">
+              <AvatarFallback className="bg-gradient-to-br from-muted to-muted/50 text-xl font-medium">
                 {member.full_name?.charAt(0) || <User className="w-6 h-6" />}
               </AvatarFallback>
             </Avatar>
@@ -911,7 +911,7 @@ function TeamMemberCard({ member, locations, isSuperAdmin, canViewStrikes, strik
                       </button>
                     </HoverCardTrigger>
                     <HoverCardContent side="left" align="start" className="w-56 p-3 z-50">
-                      <p className="text-xs font-semibold mb-2">Schedule</p>
+                      <p className="text-xs font-medium mb-2">Schedule</p>
                       <div className="space-y-2">
                         {memberLocations.map(locId => {
                           const schedule = member.location_schedules[locId] || [];

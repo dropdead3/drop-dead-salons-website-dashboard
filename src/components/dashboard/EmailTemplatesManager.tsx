@@ -718,7 +718,7 @@ export function EmailTemplatesManager() {
                 <Mail className="w-5 h-5" style={{ color: '#8e8e93' }} />
               </div>
               <div>
-                <div className="font-semibold text-[15px] tracking-[-0.01em]" style={{ color: '#000000' }}>Drop Dead Salons</div>
+                <div className="font-medium text-[15px] tracking-[-0.01em]" style={{ color: '#000000' }}>Drop Dead Salons</div>
                 <div className="text-[13px]" style={{ color: '#8e8e93' }}>noreply@dropdeadsalon.com</div>
               </div>
             </div>

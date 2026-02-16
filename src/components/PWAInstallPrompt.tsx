@@ -57,7 +57,7 @@ export function PWAInstallPrompt({ className }: PWAInstallPromptProps) {
             <Smartphone className="h-5 w-5 text-primary" />
           </div>
           <div className="space-y-2">
-            <h3 className="font-semibold text-sm">Install App</h3>
+            <h3 className="font-medium text-sm">Install App</h3>
             <p className="text-xs text-muted-foreground">
               Install this app on your iPhone for quick access:
             </p>
@@ -97,7 +97,7 @@ export function PWAInstallPrompt({ className }: PWAInstallPromptProps) {
         </div>
         <div className="space-y-3">
           <div>
-            <h3 className="font-semibold text-sm">Install App</h3>
+            <h3 className="font-medium text-sm">Install App</h3>
             <p className="text-xs text-muted-foreground">
               Add to your home screen for quick access and offline support.
             </p>

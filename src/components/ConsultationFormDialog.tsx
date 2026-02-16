@@ -156,7 +156,7 @@ export function ConsultationFormDialog({ open, onOpenChange }: ConsultationFormD
                 <p className="text-xs text-muted-foreground font-sans font-light leading-relaxed">
                   First-time clients are typically required to complete a consultation before any services are booked. This helps ensure we're all on the same page and can achieve your desired result.
                 </p>
-                <p className="text-xs text-foreground font-sans font-semibold leading-relaxed mt-2 ml-2">
+                <p className="text-xs text-foreground font-sans font-medium leading-relaxed mt-2 ml-2">
                   We can often get you in within 1 business day.
                 </p>
               </div>

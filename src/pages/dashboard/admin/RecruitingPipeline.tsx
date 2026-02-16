@@ -156,7 +156,7 @@ export default function RecruitingPipeline() {
                   <Users className="h-4 w-4 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold">{stats.total}</p>
+                  <p className="text-2xl font-medium">{stats.total}</p>
                   <p className="text-xs text-muted-foreground">Total</p>
                 </div>
               </div>
@@ -169,7 +169,7 @@ export default function RecruitingPipeline() {
                   <Clock className="h-4 w-4 text-indigo-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold">{stats.newCount}</p>
+                  <p className="text-2xl font-medium">{stats.newCount}</p>
                   <p className="text-xs text-muted-foreground">New</p>
                 </div>
               </div>
@@ -182,7 +182,7 @@ export default function RecruitingPipeline() {
                   <Briefcase className="h-4 w-4 text-amber-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold">{stats.inProgress}</p>
+                  <p className="text-2xl font-medium">{stats.inProgress}</p>
                   <p className="text-xs text-muted-foreground">In Progress</p>
                 </div>
               </div>
@@ -195,7 +195,7 @@ export default function RecruitingPipeline() {
                   <UserCheck className="h-4 w-4 text-green-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold">{stats.hired}</p>
+                  <p className="text-2xl font-medium">{stats.hired}</p>
                   <p className="text-xs text-muted-foreground">Hired</p>
                 </div>
               </div>
@@ -208,7 +208,7 @@ export default function RecruitingPipeline() {
                   <Calendar className="h-4 w-4 text-blue-500" />
                 </div>
                 <div>
-                  <p className="text-2xl font-semibold">{stats.thisWeek}</p>
+                  <p className="text-2xl font-medium">{stats.thisWeek}</p>
                   <p className="text-xs text-muted-foreground">This Week</p>
                 </div>
               </div>
