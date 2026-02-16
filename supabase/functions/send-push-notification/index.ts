@@ -318,7 +318,7 @@ serve(async (req: Request) => {
           payload,
           vapidPrivateKey,
           vapidPublicKey,
-          "mailto:support@dropdeadhair.com"
+          "mailto:support@getzura.com"
         );
 
         if (response.ok || response.status === 201) {

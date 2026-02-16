@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+import { sendOrgEmail } from "../_shared/email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,12 +15,14 @@ interface InactiveParticipant {
   streak_count: number;
   last_completion_date: string | null;
   days_inactive: number;
+  organization_id: string | null;
 }
 
 interface LeadershipUser {
   user_id: string;
   email: string;
   full_name: string;
+  organization_id: string | null;
 }
 
 interface EmailTemplate {
@@ -45,7 +46,6 @@ function replaceTemplateVariables(template: string, variables: Record<string, st
 }
 
 serve(async (req: Request): Promise<Response> => {
-  // Handle CORS
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -70,12 +70,10 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Checking for participants inactive for ${inactivityThreshold}+ days...`);
 
-    // Get the date threshold
     const thresholdDate = new Date();
     thresholdDate.setDate(thresholdDate.getDate() - inactivityThreshold);
     const thresholdDateStr = thresholdDate.toISOString().split("T")[0];
 
-    // Find active enrollments with last_completion_date older than threshold
     const { data: enrollments, error: enrollmentError } = await supabase
       .from("stylist_program_enrollment")
       .select(`
@@ -96,13 +94,12 @@ serve(async (req: Request): Promise<Response> => {
 
     console.log(`Found ${enrollments?.length || 0} potentially inactive enrollments`);
 
-    // Get participant details
     const inactiveParticipants: InactiveParticipant[] = [];
     
     for (const enrollment of enrollments || []) {
       const { data: profile } = await supabase
         .from("employee_profiles")
-        .select("full_name, display_name")
+        .select("full_name, display_name, organization_id")
         .eq("user_id", enrollment.user_id)
         .single();
 
@@ -114,7 +111,6 @@ serve(async (req: Request): Promise<Response> => {
           daysInactive = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
         }
 
-        // Only include if actually inactive for threshold days
         if (daysInactive >= inactivityThreshold) {
           inactiveParticipants.push({
             user_id: enrollment.user_id,
@@ -124,6 +120,7 @@ serve(async (req: Request): Promise<Response> => {
             streak_count: enrollment.streak_count,
             last_completion_date: enrollment.last_completion_date,
             days_inactive: daysInactive,
+            organization_id: profile.organization_id,
           });
         }
       }
@@ -138,10 +135,7 @@ serve(async (req: Request): Promise<Response> => {
           threshold_days: inactivityThreshold,
           inactive_count: 0,
         }),
-        {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        }
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
@@ -157,14 +151,12 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     const leadershipUserIds = [...new Set(leadershipRoles?.map(r => r.user_id) || [])];
-    console.log(`Found ${leadershipUserIds.length} leadership users`);
 
-    // Get leadership profiles with emails
     const leadershipUsers: LeadershipUser[] = [];
     for (const userId of leadershipUserIds) {
       const { data: profile } = await supabase
         .from("employee_profiles")
-        .select("user_id, email, full_name")
+        .select("user_id, email, full_name, organization_id")
         .eq("user_id", userId)
         .eq("is_active", true)
         .single();
@@ -174,6 +166,7 @@ serve(async (req: Request): Promise<Response> => {
           user_id: profile.user_id,
           email: profile.email,
           full_name: profile.full_name,
+          organization_id: profile.organization_id,
         });
       }
     }
@@ -209,12 +202,11 @@ serve(async (req: Request): Promise<Response> => {
       `)
       .join('');
 
-    const siteUrl = Deno.env.get("SITE_URL") || "https://dropdeadsalon.com";
+    const siteUrl = Deno.env.get("SITE_URL") || supabaseUrl.replace('.supabase.co', '.lovable.app');
     const emailResults = [];
 
     for (const leader of leadershipUsers) {
       try {
-        // Prepare template variables
         const templateVariables: Record<string, string> = {
           leader_name: leader.full_name,
           inactive_count: inactiveParticipants.length.toString(),
@@ -224,27 +216,30 @@ serve(async (req: Request): Promise<Response> => {
           dashboard_url: `${siteUrl}/dashboard`,
         };
 
-        // Replace variables in template
         const emailSubject = replaceTemplateVariables(template.subject, templateVariables);
         const emailHtml = replaceTemplateVariables(template.html_body, templateVariables);
 
-        const emailRes = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "Drop Dead Gorgeous <onboarding@resend.dev>",
+        // Use sendOrgEmail if we have an org context, otherwise fall back
+        const orgId = leader.organization_id;
+        let result;
+        if (orgId) {
+          result = await sendOrgEmail(supabase, orgId, {
             to: [leader.email],
             subject: emailSubject,
             html: emailHtml,
-          }),
-        });
+          });
+        } else {
+          // Fallback: import sendEmail for platform-level
+          const { sendEmail } = await import("../_shared/email-sender.ts");
+          result = await sendEmail({
+            to: [leader.email],
+            subject: emailSubject,
+            html: emailHtml,
+          });
+        }
 
-        const result = await emailRes.json();
         console.log(`Email sent to ${leader.email}:`, result);
-        emailResults.push({ email: leader.email, success: emailRes.ok, result });
+        emailResults.push({ email: leader.email, success: result.success, result });
       } catch (emailError) {
         console.error(`Failed to send email to ${leader.email}:`, emailError);
         emailResults.push({ email: leader.email, success: false, error: String(emailError) });
@@ -264,20 +259,14 @@ serve(async (req: Request): Promise<Response> => {
         })),
         email_results: emailResults,
       }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error in send-inactivity-alerts:", error);
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 });
