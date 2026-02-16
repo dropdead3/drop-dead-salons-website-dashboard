@@ -602,8 +602,8 @@ export function KioskPreviewPanel({ settings, businessSettings, className, locat
 
         {/* Tablet frame mockup */}
         <div className={cn(
-          "relative mx-auto",
-          settings.display_orientation === 'landscape' ? "max-w-[560px]" : "max-w-[420px]"
+          "relative mx-auto w-full",
+          settings.display_orientation === 'landscape' ? "max-w-full" : "max-w-[75%]"
         )}>
           {/* Device frame */}
           <div className="rounded-[2rem] border-[8px] border-slate-800 bg-slate-800 p-1 shadow-xl">
