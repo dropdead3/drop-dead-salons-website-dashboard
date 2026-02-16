@@ -472,6 +472,7 @@ export default function Schedule() {
                     date={currentDate}
                     locationId={selectedLocation}
                     onSelectSlot={handleCopilotSlotSelect}
+                    onClose={() => setCopilotOpen(false)}
                   />
                 </div>
               </ResizablePanel>
