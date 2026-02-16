@@ -835,7 +835,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
 
       {/* Content wrapper - flex column when hideFooter for proper height chain */}
       <div className={cn(
-        "w-full transition-[padding-left] duration-200 ease-in-out min-w-0 overflow-x-hidden",
+        "w-full transition-[padding-left] duration-200 ease-in-out min-w-0 overflow-x-clip",
         sidebarCollapsed ? "lg:pl-16" : "lg:pl-72",
         hideFooter && "h-screen flex flex-col"
       )}>
