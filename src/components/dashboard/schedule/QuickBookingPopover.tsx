@@ -923,7 +923,7 @@ export function QuickBookingPopover({
                 )}
                 {selectedCategory && selectedServices.length > 0 && (
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     className="w-full h-9 text-xs"
                     onClick={() => setSelectedCategory(null)}
                   >
