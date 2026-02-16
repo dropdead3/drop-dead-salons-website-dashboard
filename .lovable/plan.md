@@ -1,95 +1,63 @@
 
+# Refine & Polish Services Settings
 
-# Native Services & Categories Settings Dashboard
+## Issues Identified
+1. Raw `font-medium` classes instead of design tokens throughout
+2. Card headers not using `tokens.heading.section` 
+3. ServiceFormDialog toggle labels using raw `font-medium` (violates token system)
+4. Accordion items have tight padding (`px-1`), needs more breathing room
+5. Service rows inside accordion use raw classes instead of tokens
+6. Empty states don't use `tokens.empty.*` pattern
+7. Category name display and service count text not tokenized
 
-## Overview
-Build a full Services Settings dashboard that lets salon owners manage their service categories and individual services natively, while migrating the remaining `phorest_services` references to the Zura-owned `services` table.
+## Changes
 
-## Phase 1: Add "Services" Settings Category
+### File: `src/components/dashboard/settings/ServicesSettingsContent.tsx`
 
-Add a new `services` entry to the Settings page sidebar (in `Settings.tsx`) with icon `Scissors` and description "Categories, services & pricing". This becomes the central hub for service management.
+**1. Import design tokens**
+Add `import { tokens } from '@/lib/design-tokens';` at the top.
 
-## Phase 2: Service Categories Configurator
+**2. Card headers -- use token system**
+- Line 220: Replace `CardTitle className="font-display text-lg"` with `CardTitle className={tokens.heading.section}`
+- Line 335: Same change for SERVICES header
 
-**New component: `ServicesSettingsContent.tsx`**
+**3. Category row text -- use tokens**
+- Line 301: Replace `className="font-medium text-sm truncate"` with `className={cn(tokens.body.emphasis, 'truncate')}`
+- Line 302: Replace `className="text-xs text-muted-foreground"` with `className={tokens.body.muted}` (adjust text-xs if needed)
 
-A two-section layout:
+**4. Accordion items -- improve padding**
+- Line 360: Change `className="border rounded-lg mb-2 px-1"` to `className="border rounded-lg mb-2 px-4"`
+- Line 361: Adjust trigger padding `py-3` to `py-4` for breathing room
 
-### Section A: Category Manager
-- List all categories from `service_category_colors` with drag-and-drop reordering (already built in `ScheduleSettingsContent` -- we'll move/share this logic)
-- Add ability to **create**, **rename**, and **delete** categories
-- Creating a category adds a row to `service_category_colors`
-- Deleting a category shows a warning if services are assigned to it, and optionally reassigns them to another category
-- Color picker stays as-is (already functional)
+**5. Service category name in accordion trigger -- use tokens**
+- Line 369: Replace `className="font-medium text-sm"` with `className={tokens.body.emphasis}`
+- Line 370: Replace `className="text-xs text-muted-foreground"` with `className={tokens.body.muted}`
 
-### Section B: Services List (per category)
-- Expandable accordion per category showing all services in that category
-- Each service row shows: name, duration, price, active/inactive toggle
-- "Add Service" button per category opens a service form
-- Edit button per service opens the same form pre-filled
-- Delete (soft-delete via `is_active = false`)
+**6. Service row inside accordion -- use tokens**
+- Line 381: Replace `className="text-sm font-medium truncate"` with `className={cn(tokens.body.emphasis, 'truncate')}`
+- Line 382: Replace `className="flex items-center gap-3 text-xs text-muted-foreground"` with token-aware version
 
-### Service Form (Dialog)
-Fields:
-- Name (required)
-- Category (dropdown from `service_category_colors`)
-- Duration (minutes, required)
-- Price (currency, optional)
-- Description (optional textarea)
-- Requires Qualification toggle
-- Same-Day Booking toggle + lead time days
-- Location assignment (multi-select or "All locations")
+**7. Empty states -- use token pattern**
+- Lines 232-236: Replace with `tokens.empty.container`, `tokens.empty.icon`, `tokens.empty.heading`, `tokens.empty.description`
+- Line 376: Empty category message should use `tokens.empty.description`
 
-Uses existing `useCreateService` and `useUpdateService` hooks from `useServicesData.ts`.
+**8. Color picker labels -- use tokens**
+- Lines 264, 283: Replace `className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider"` with `className={tokens.label.tiny}`
 
-## Phase 3: Database Changes
+### File: `src/components/dashboard/settings/ServiceFormDialog.tsx`
 
-### Migration 1: Add `organization_id` to `service_category_colors`
-The category colors table currently has no org scoping. Add `organization_id UUID REFERENCES organizations(id)` and backfill existing rows with the default organization. Add RLS policies.
+**9. Toggle labels -- use tokens instead of raw font-medium**
+- Replace `className="text-sm font-medium"` on "Requires Qualification" and "Same-Day Booking" with `className={tokens.body.emphasis}`
+- Replace `className="text-xs text-muted-foreground"` descriptions with `className={tokens.body.muted}`
 
-### Migration 2: Ensure `services` table has RLS
-Verify and add proper RLS policies on the `services` table for authenticated users scoped by `organization_id`.
+### File: `src/components/dashboard/settings/CategoryFormDialog.tsx`
 
-## Phase 4: Migrate Phorest References
+No major issues -- dialog is minimal and mostly uses shadcn defaults.
 
-Update the following files to read from `services` instead of `phorest_services`:
-
-| File | Current | Change |
-|------|---------|--------|
-| `usePhorestServices.ts` | Reads `phorest_services` | Redirect to `useServicesData` hooks, deprecate |
-| `useServiceCategoryColors.ts` | Syncs from `phorest_services` | Sync from `services` table |
-| `WalkInDialog.tsx` | Direct `phorest_services` query | Use `useServicesData` |
-| `ServiceLinksTab.tsx` | Direct `phorest_services` query | Use `useServicesData` |
-| `ServiceFormLinkDialog.tsx` | Direct `phorest_services` query | Use `useServicesData` |
-| `PublicBooking.tsx` | Direct `phorest_services` query | Use `useServicesData` |
-| `useSalesAnalytics.ts` | Category mapping from `phorest_services` | Use `services` |
-| `useServiceCommunicationFlows.ts` | Direct `phorest_services` query | Use `services` |
-
-Edge functions (`sync-phorest-services`, `check-phorest-availability`, `create-phorest-booking`) will remain as-is since they are Phorest-specific sync/API functions that write into the system.
-
-## Phase 5: Update Schedule Settings
-
-The existing `ScheduleSettingsContent.tsx` currently contains the category color/ordering UI. After Phase 2:
-- Move the category management into the new Services settings section
-- Keep `ScheduleSettingsContent` focused on calendar display preferences (theme, scheduling blocks like Break/Block)
-- Update the empty-state text that currently says "Categories will appear here once services are synced from Phorest" to reference the new Services settings
-
-## Technical Summary
-
-**New files:**
-- `src/components/dashboard/settings/ServicesSettingsContent.tsx` -- main services settings page
-- `src/components/dashboard/settings/ServiceFormDialog.tsx` -- create/edit service dialog
-- `src/components/dashboard/settings/CategoryFormDialog.tsx` -- create/rename category dialog
-
-**Modified files:**
-- `src/pages/dashboard/admin/Settings.tsx` -- add "services" category
-- `src/hooks/useServiceCategoryColors.ts` -- add create/rename/delete mutations, org scoping
-- `src/hooks/useServicesData.ts` -- minor enhancements (org-scoped category sync)
-- `src/components/dashboard/settings/ScheduleSettingsContent.tsx` -- simplify, remove category management
-- 6-8 files migrated from `phorest_services` to `services`
-
-**Database migrations:**
-- Add `organization_id` to `service_category_colors` with backfill
-- RLS policies on `service_category_colors` and `services`
-
-**No breaking changes** -- existing data is preserved, Phorest sync edge functions continue to populate the `services` table as an import source.
+## Summary
+- 2 files modified
+- All raw `font-medium` / `text-sm font-medium` replaced with design tokens
+- Accordion padding improved from `px-1` to `px-4`
+- Empty states aligned to `tokens.empty.*` pattern
+- Color picker sub-labels use `tokens.label.tiny`
+- No new dependencies
