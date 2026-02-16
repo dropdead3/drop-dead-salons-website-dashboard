@@ -70,49 +70,51 @@ function KpiTile({ kpi }: { kpi: KpiData }) {
   return (
     <Link
       to={kpi.drillDown}
-      className="group p-4 rounded-lg border border-border/50 bg-muted/30 transition-colors duration-200 hover:bg-muted/60 hover:border-border"
+      className="group h-full flex flex-col p-4 rounded-lg border border-border/50 bg-muted/30 transition-colors duration-200 hover:bg-muted/60 hover:border-border"
     >
-      <div className="flex items-center gap-1 mb-2">
-        <kpi.icon className="w-4 h-4 text-primary shrink-0" />
-        <span className="font-display text-[11px] tracking-wide text-muted-foreground uppercase">
-          {kpi.label}
-        </span>
-        <MetricInfoTooltip description={kpi.tooltip} />
+      <div className="flex-1">
+        <div className="flex items-center gap-1 mb-2">
+          <kpi.icon className="w-4 h-4 text-primary shrink-0" />
+          <span className="font-display text-[11px] tracking-wide text-muted-foreground uppercase">
+            {kpi.label}
+          </span>
+          <MetricInfoTooltip description={kpi.tooltip} />
+        </div>
+        <div className="flex flex-col gap-1 mb-2">
+          <p className={cn("font-display text-xl tabular-nums", kpi.valueColor)}>
+            {kpi.value}
+          </p>
+          {kpi.change !== null && (
+            <span
+              className={cn(
+                'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-display tabular-nums w-fit',
+                kpi.change >= 0
+                  ? 'bg-chart-2/10 text-chart-2'
+                  : 'bg-destructive/10 text-destructive'
+              )}
+            >
+              {kpi.change >= 0 ? (
+                <TrendingUp className="w-3 h-3" />
+              ) : (
+                <TrendingDown className="w-3 h-3" />
+              )}
+              {kpi.change >= 0 ? '+' : ''}
+              {kpi.change.toFixed(1)}%
+            </span>
+          )}
+          {kpi.badge && (
+            <span className={cn('inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-display w-fit', kpi.badge.color)}>
+              {kpi.badge.label}
+            </span>
+          )}
+          {kpi.subtitle && (
+            <span className="text-[10px] text-muted-foreground/70 mt-0.5">
+              {kpi.subtitle}
+            </span>
+          )}
+        </div>
       </div>
-      <div className="flex flex-col gap-1 mb-2">
-        <p className={cn("font-display text-xl tabular-nums", kpi.valueColor)}>
-          {kpi.value}
-        </p>
-        {kpi.change !== null && (
-          <span
-            className={cn(
-              'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-display tabular-nums w-fit',
-              kpi.change >= 0
-                ? 'bg-chart-2/10 text-chart-2'
-                : 'bg-destructive/10 text-destructive'
-            )}
-          >
-            {kpi.change >= 0 ? (
-              <TrendingUp className="w-3 h-3" />
-            ) : (
-              <TrendingDown className="w-3 h-3" />
-            )}
-            {kpi.change >= 0 ? '+' : ''}
-            {kpi.change.toFixed(1)}%
-          </span>
-        )}
-        {kpi.badge && (
-          <span className={cn('inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-display w-fit', kpi.badge.color)}>
-            {kpi.badge.label}
-          </span>
-        )}
-        {kpi.subtitle && (
-          <span className="text-[10px] text-muted-foreground/70 mt-0.5">
-            {kpi.subtitle}
-          </span>
-        )}
-      </div>
-      <div className="flex items-center gap-1 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+      <div className="mt-auto self-end flex items-center gap-1 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
         <span>{kpi.drillLabel}</span>
         <ChevronRight className="w-3 h-3" />
       </div>
