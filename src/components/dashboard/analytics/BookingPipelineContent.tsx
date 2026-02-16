@@ -1,14 +1,13 @@
 import { useState, useMemo } from 'react';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronDown, ChevronRight, ArrowRight, BarChart3 } from 'lucide-react';
+import { ChevronDown, ChevronRight, ArrowRight } from 'lucide-react';
 import { useBookingPipelineByLocation, type LocationPipelineStatus, type LocationPipeline } from '@/hooks/useBookingPipelineByLocation';
 import { useLocationPipelineTimeline } from '@/hooks/useLocationPipelineTimeline';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { BarChart, Bar, XAxis, YAxis, ReferenceLine, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
+import { XAxis, YAxis, ReferenceLine, Tooltip as RechartsTooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 
@@ -29,65 +28,6 @@ const STATUS_FILL: Record<LocationPipelineStatus, string> = {
   healthy: 'hsl(152, 69%, 41%)',
   no_data: 'hsl(var(--muted-foreground) / 0.4)',
 };
-
-function PipelineChartTooltip({ active, payload }: any) {
-  if (!active || !payload?.[0]) return null;
-  const d = payload[0].payload;
-  return (
-    <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-md text-sm space-y-1">
-      <p className="font-display text-xs tracking-wide">{d.locationName}</p>
-      <p className="text-muted-foreground text-xs">
-        {d.forwardCount} next 14d vs {d.baselineCount} trailing
-      </p>
-      <p className="text-xs tabular-nums">Ratio: {Math.round(d.ratio * 100)}%</p>
-    </div>
-  );
-}
-
-function PipelineChart({ locations }: { locations: LocationPipeline[] }) {
-  const [isOpen, setIsOpen] = useState(true);
-
-  const chartData = locations.map(loc => ({
-    ...loc,
-    displayRatio: Math.min(Math.round(loc.ratio * 100), 120),
-    ratioLabel: `${Math.round(loc.ratio * 100)}%`,
-  }));
-
-  const chartHeight = Math.max(180, locations.length * 36);
-
-  return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-      <CollapsibleTrigger className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full">
-        <BarChart3 className="w-3.5 h-3.5" />
-        <span className="font-display tracking-wide">PIPELINE HEALTH BY LOCATION</span>
-        <ChevronDown className={cn('w-3.5 h-3.5 ml-auto transition-transform', isOpen && 'rotate-180')} />
-      </CollapsibleTrigger>
-      <CollapsibleContent>
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mt-3 bg-muted/30 rounded-lg border border-border/50 p-4"
-        >
-          <ResponsiveContainer width="100%" height={chartHeight}>
-            <BarChart data={chartData} layout="vertical" margin={{ top: 0, right: 40, left: 0, bottom: 0 }}>
-              <XAxis type="number" domain={[0, 120]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} axisLine={false} tickLine={false} />
-              <YAxis type="category" dataKey="locationName" width={120} tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} axisLine={false} tickLine={false} />
-              <ReferenceLine x={70} stroke="hsl(var(--border))" strokeDasharray="3 3" strokeOpacity={0.5} label={{ value: '70%', position: 'top', fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} />
-              <ReferenceLine x={90} stroke="hsl(var(--border))" strokeDasharray="3 3" strokeOpacity={0.5} label={{ value: '90%', position: 'top', fontSize: 9, fill: 'hsl(var(--muted-foreground))' }} />
-              <RechartsTooltip content={<PipelineChartTooltip />} cursor={{ fill: 'hsl(var(--muted) / 0.3)' }} />
-              <Bar dataKey="displayRatio" radius={[0, 4, 4, 0]} barSize={18}>
-                {chartData.map((entry, index) => (
-                  <Cell key={index} fill={STATUS_FILL[entry.status]} fillOpacity={0.8} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </motion.div>
-      </CollapsibleContent>
-    </Collapsible>
-  );
-}
 
 function TimelineTooltip({ active, payload }: any) {
   if (!active || !payload?.[0]) return null;
@@ -299,10 +239,8 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
         </div>
       )}
 
-      {/* Pipeline Chart Visualization */}
-      {!isSingleLocation && sorted.length > 1 && (
-        <PipelineChart locations={sorted} />
-      )}
+
+
 
       {/* Location Cards */}
       <div className="space-y-3">
