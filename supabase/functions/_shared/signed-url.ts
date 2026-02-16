@@ -38,12 +38,14 @@ export async function buildSignedUrl(
 
 /**
  * Verify an HMAC-signed payload from a URL.
+ * @param maxAgeMs - Optional max age in milliseconds. If provided, checks the `ts` field in the payload.
  * @returns decoded payload object
- * @throws Error if signature is invalid
+ * @throws Error if signature is invalid or token is expired
  */
 export async function verifySignedPayload(
   encodedPayload: string,
   sig: string,
+  maxAgeMs?: number,
 ): Promise<Record<string, unknown>> {
   const encoder = new TextEncoder();
   const key = await getHmacKey();
@@ -60,5 +62,15 @@ export async function verifySignedPayload(
     throw new Error("Invalid signature");
   }
 
-  return JSON.parse(atob(decodeURIComponent(encodedPayload)));
+  const decoded = JSON.parse(atob(decodeURIComponent(encodedPayload)));
+
+  // Optional token expiration check
+  if (maxAgeMs && typeof decoded.ts === "number") {
+    const age = Date.now() - decoded.ts;
+    if (age > maxAgeMs) {
+      throw new Error("Token expired");
+    }
+  }
+
+  return decoded;
 }

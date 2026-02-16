@@ -102,6 +102,7 @@ export function EmailBrandingSettings() {
 
   // Footer
   const [footerText, setFooterText] = useState('');
+  const [physicalAddress, setPhysicalAddress] = useState('');
   const [socialLinks, setSocialLinks] = useState<SocialLinks>({});
   const [showAttribution, setShowAttribution] = useState(true);
 
@@ -136,7 +137,7 @@ export function EmailBrandingSettings() {
       if (!orgId) return null;
       const { data, error } = await supabase
         .from('organizations')
-        .select('email_sender_name, email_reply_to, email_logo_url, email_accent_color, email_footer_text, email_social_links, email_show_attribution, email_button_radius, email_header_style')
+        .select('email_sender_name, email_reply_to, email_logo_url, email_accent_color, email_footer_text, email_social_links, email_show_attribution, email_button_radius, email_header_style, email_physical_address')
         .eq('id', orgId)
         .single();
       if (error) throw error;
@@ -151,6 +152,7 @@ export function EmailBrandingSettings() {
       setReplyTo(branding.email_reply_to || '');
       setAccentColor(branding.email_accent_color || themeDefault);
       setFooterText((branding.email_footer_text as string) || '');
+      setPhysicalAddress((branding as any).email_physical_address || '');
       setSocialLinks((branding.email_social_links as SocialLinks) || {});
       setShowAttribution(branding.email_show_attribution !== false);
       setButtonRadius((branding.email_button_radius as string) || 'rounded');
@@ -187,6 +189,7 @@ export function EmailBrandingSettings() {
           email_accent_color: accentColor,
           email_logo_url: logoUrl,
           email_footer_text: footerText || null,
+          email_physical_address: physicalAddress || null,
           email_social_links: socialLinks,
           email_show_attribution: showAttribution,
           email_button_radius: buttonRadius,
@@ -210,6 +213,7 @@ export function EmailBrandingSettings() {
     accentColor !== (branding?.email_accent_color || themeDefault) ||
     logoUrl !== (branding?.email_logo_url || null) ||
     footerText !== ((branding?.email_footer_text as string) || '') ||
+    physicalAddress !== ((branding as any)?.email_physical_address || '') ||
     JSON.stringify(socialLinks) !== JSON.stringify((branding?.email_social_links as SocialLinks) || {}) ||
     showAttribution !== (branding?.email_show_attribution !== false) ||
     buttonRadius !== ((branding?.email_button_radius as string) || 'rounded') ||
@@ -415,16 +419,33 @@ export function EmailBrandingSettings() {
         {/* Footer Section */}
         <div className="space-y-4">
           <Eyebrow className="text-muted-foreground">Footer</Eyebrow>
+          
+          <div className="space-y-2">
+            <Label htmlFor="physical-address" className="flex items-center gap-1.5">
+              Business Address
+              <span className="text-xs font-normal text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">Required</span>
+            </Label>
+            <Input
+              id="physical-address"
+              placeholder="123 Main St, Suite 100, Your City, ST 12345"
+              value={physicalAddress}
+              onChange={(e) => setPhysicalAddress(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Required by CAN-SPAM for all commercial emails. Your physical mailing address.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="footer-text">Footer Text</Label>
             <Textarea
               id="footer-text"
-              placeholder="123 Main St, Suite 100 · Your City, ST 12345"
+              placeholder="Additional footer text or tagline"
               value={footerText}
               onChange={(e) => setFooterText(e.target.value)}
               className="min-h-[60px] resize-none"
             />
-            <p className="text-xs text-muted-foreground">Business address or tagline shown in the email footer.</p>
+            <p className="text-xs text-muted-foreground">Optional tagline or additional text shown in the email footer.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

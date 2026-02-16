@@ -50,9 +50,12 @@ const handler = async (req: Request): Promise<Response> => {
 
     const feedbackUrl = `${baseUrl}/feedback?token=${token}`;
 
+    // Gap 1: Pass clientId so opt-out is respected and unsubscribe link is injected
     const emailResult = await sendOrgEmail(supabase, organizationId, {
       to: [clientEmail],
       subject: "We'd love your feedback!",
+      clientId: clientId,
+      emailType: "feedback",
       html: `
         <p>Hi ${clientName},</p>
         <p>Thank you for visiting us${staffName ? ` and seeing ${staffName}` : ''}${serviceName ? ` for your ${serviceName}` : ''}!</p>

@@ -24,6 +24,7 @@ export interface EmailResult {
   messageId?: string;
   error?: string;
   skipped?: boolean;
+  skipReason?: string;
 }
 
 export interface OrgEmailPayload {
@@ -32,6 +33,7 @@ export interface OrgEmailPayload {
   html: string;
   replyTo?: string;
   clientId?: string;
+  emailType?: string; // 'marketing' | 'feedback' | 'transactional'
 }
 
 interface SocialLinks {
@@ -52,6 +54,7 @@ interface OrgBranding {
   email_show_attribution: boolean | null;
   email_button_radius: string | null;
   email_header_style: string | null;
+  email_physical_address: string | null;
   logo_url: string | null;
   primary_contact_email: string | null;
 }
@@ -64,6 +67,8 @@ const BUTTON_RADIUS_MAP: Record<string, string> = {
   rounded: '8px',
   pill: '100px',
 };
+
+const RATE_LIMIT_HOURS = 48;
 
 /**
  * Send a platform-level email (Zura branding).
@@ -117,8 +122,10 @@ export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
  * Send an org-branded email.
  * When clientId is provided:
  *  1. Checks marketing opt-out status → skips if opted out
- *  2. Generates signed unsubscribe URL → injected into footer
- *  3. Adds List-Unsubscribe headers for Gmail/Yahoo compliance
+ *  2. Checks 48-hour rate limit → skips if recently emailed
+ *  3. Generates signed unsubscribe URL → injected into footer
+ *  4. Adds List-Unsubscribe headers for Gmail/Yahoo compliance
+ *  5. Logs the send to email_send_log for audit trail
  */
 export async function sendOrgEmail(
   supabase: any,
@@ -137,6 +144,8 @@ export async function sendOrgEmail(
     return { success: false, error: "No recipients provided" };
   }
 
+  const emailType = payload.emailType || "marketing";
+
   // Check opt-out status when clientId is provided
   let unsubscribeUrl: string | null = null;
   if (payload.clientId) {
@@ -150,10 +159,29 @@ export async function sendOrgEmail(
 
       if (prefs?.marketing_opt_out) {
         console.log(`[email-sender] Client ${payload.clientId} opted out - email skipped`);
-        return { success: true, skipped: true };
+        return { success: true, skipped: true, skipReason: "opted_out" };
       }
     } catch (e) {
       console.warn("[email-sender] Error checking opt-out status:", e);
+    }
+
+    // Gap 6: Rate limiting — check if client received an email in the last 48 hours
+    try {
+      const cutoff = new Date(Date.now() - RATE_LIMIT_HOURS * 60 * 60 * 1000).toISOString();
+      const { data: recentSends } = await supabase
+        .from("email_send_log")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("client_id", payload.clientId)
+        .gte("sent_at", cutoff)
+        .limit(1);
+
+      if (recentSends && recentSends.length > 0) {
+        console.log(`[email-sender] Client ${payload.clientId} received email within ${RATE_LIMIT_HOURS}h - skipping`);
+        return { success: true, skipped: true, skipReason: "rate_limited" };
+      }
+    } catch (e) {
+      console.warn("[email-sender] Error checking rate limit:", e);
       // Continue sending if check fails
     }
 
@@ -175,7 +203,7 @@ export async function sendOrgEmail(
     try {
       const { data, error } = await supabase
         .from("organizations")
-        .select("name, email_sender_name, email_reply_to, email_logo_url, email_accent_color, email_footer_text, email_social_links, email_show_attribution, email_button_radius, email_header_style, logo_url, primary_contact_email")
+        .select("name, email_sender_name, email_reply_to, email_logo_url, email_accent_color, email_footer_text, email_social_links, email_show_attribution, email_button_radius, email_header_style, email_physical_address, logo_url, primary_contact_email")
         .eq("id", organizationId)
         .single();
       
@@ -229,6 +257,21 @@ export async function sendOrgEmail(
 
     const result = await response.json();
     console.log("[email-sender] Org email sent successfully:", result.id);
+
+    // Gap 5: Log the send for audit trail
+    if (payload.clientId) {
+      try {
+        await supabase.from("email_send_log").insert({
+          organization_id: organizationId,
+          client_id: payload.clientId,
+          email_type: emailType,
+          message_id: result.id,
+        });
+      } catch (e) {
+        console.warn("[email-sender] Error logging email send:", e);
+      }
+    }
+
     return { success: true, messageId: result.id };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -263,6 +306,7 @@ function buildBrandedTemplate(branding: OrgBranding | null, innerHtml: string, u
   const footerText = branding?.email_footer_text || null;
   const socialLinks = branding?.email_social_links || null;
   const showAttribution = branding?.email_show_attribution !== false;
+  const physicalAddress = branding?.email_physical_address || null;
 
   const logoHtml = logoUrl
     ? `<img src="${logoUrl}" alt="${orgName}" style="max-height: 48px; max-width: 200px; margin-bottom: 8px;" />`
@@ -283,6 +327,10 @@ function buildBrandedTemplate(branding: OrgBranding | null, innerHtml: string, u
   const socialIconsHtml = buildSocialIconsHtml(socialLinks);
   const footerTextHtml = footerText
     ? `<p style="margin: 0 0 8px; font-size: 11px; color: #a1a1aa; line-height: 1.5;">${footerText}</p>`
+    : '';
+  // Gap 4: Physical address in footer (CAN-SPAM requirement)
+  const physicalAddressHtml = physicalAddress
+    ? `<p style="margin: 0 0 8px; font-size: 11px; color: #a1a1aa; line-height: 1.5;">${physicalAddress}</p>`
     : '';
   const attributionHtml = showAttribution
     ? `<p style="margin: 0; font-size: 12px; color: #a1a1aa;">Sent via <a href="https://getzura.com" style="color: #a1a1aa; text-decoration: underline;">Zura</a></p>`
@@ -320,6 +368,7 @@ function buildBrandedTemplate(branding: OrgBranding | null, innerHtml: string, u
     <div style="background-color: #fafafa; padding: 20px 24px; border-radius: 0 0 12px 12px; border: 1px solid #e4e4e7; border-top: none; text-align: center;">
       ${socialIconsHtml}
       ${footerTextHtml}
+      ${physicalAddressHtml}
       ${attributionHtml}
       ${unsubscribeHtml}
     </div>
