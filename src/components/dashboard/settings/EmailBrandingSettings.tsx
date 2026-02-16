@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEmailTemplates } from '@/hooks/useEmailTemplates';
-import { Loader2, Upload, X, Eye, EyeOff, Save, Mail, Send, Monitor, Smartphone, Info } from 'lucide-react';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { Loader2, Eye, EyeOff, Save, Mail, Send, Monitor, Smartphone, Info } from 'lucide-react';
 
 const SAMPLE_VARIABLES: Record<string, string> = {
   stylist_name: 'Sarah Johnson',
@@ -54,19 +55,34 @@ export function EmailBrandingSettings() {
   const orgName = effectiveOrganization?.name || 'Your Organization';
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { data: businessSettings } = useBusinessSettings();
 
   const [senderName, setSenderName] = useState('');
   const [replyTo, setReplyTo] = useState('');
   const [accentColor, setAccentColor] = useState('#6366F1');
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoSource, setLogoSource] = useState<'auto' | 'light' | 'dark' | 'custom' | 'none'>('auto');
+  const [customLogoUrl, setCustomLogoUrl] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
-  const [uploading, setUploading] = useState(false);
   const [testEmail, setTestEmail] = useState(user?.email || '');
   const [sendingTest, setSendingTest] = useState(false);
   const [testPopoverOpen, setTestPopoverOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState('sample');
+
+  // Resolve the logo URL from the selected source
+  const logoUrl = useMemo(() => {
+    switch (logoSource) {
+      case 'auto':
+      case 'light':
+        return businessSettings?.logo_light_url || null;
+      case 'dark':
+        return businessSettings?.logo_dark_url || null;
+      case 'custom':
+        return customLogoUrl || null;
+      case 'none':
+        return null;
+    }
+  }, [logoSource, customLogoUrl, businessSettings?.logo_light_url, businessSettings?.logo_dark_url]);
 
   // Fetch email templates for preview selector
   const { data: emailTemplates } = useEmailTemplates();
@@ -93,9 +109,20 @@ export function EmailBrandingSettings() {
       setSenderName(branding.email_sender_name || '');
       setReplyTo(branding.email_reply_to || '');
       setAccentColor(branding.email_accent_color || '#6366F1');
-      setLogoUrl(branding.email_logo_url || null);
+      // Determine logo source from saved URL
+      const savedUrl = branding.email_logo_url || null;
+      if (!savedUrl) {
+        setLogoSource('none');
+      } else if (savedUrl === businessSettings?.logo_light_url) {
+        setLogoSource('auto');
+      } else if (savedUrl === businessSettings?.logo_dark_url) {
+        setLogoSource('dark');
+      } else {
+        setLogoSource('custom');
+        setCustomLogoUrl(savedUrl);
+      }
     }
-  }, [branding]);
+  }, [branding, businessSettings]);
 
   useEffect(() => {
     if (user?.email && !testEmail) {
@@ -127,41 +154,10 @@ export function EmailBrandingSettings() {
     },
   });
 
-  // Logo upload
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !orgId) return;
-
-    if (file.size > 2 * 1024 * 1024) {
-      toast({ title: 'File too large', description: 'Maximum 2MB', variant: 'destructive' });
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const ext = file.name.split('.').pop();
-      const path = `${orgId}/email-logo.${ext}`;
-
-      const { error: uploadError } = await supabase.storage
-        .from('business-logos')
-        .upload(path, file, { upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: publicData } = supabase.storage
-        .from('business-logos')
-        .getPublicUrl(path);
-
-      setLogoUrl(`${publicData.publicUrl}?t=${Date.now()}`);
-    } catch {
-      toast({ title: 'Upload failed', variant: 'destructive' });
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
+  const removeLogo = () => {
+    setLogoSource('none');
+    setCustomLogoUrl('');
   };
-
-  const removeLogo = () => setLogoUrl(null);
 
   const hasChanges =
     senderName !== (branding?.email_sender_name || '') ||
@@ -256,58 +252,53 @@ export function EmailBrandingSettings() {
 
         {/* Logo & Accent Color */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Logo Upload */}
+          {/* Logo Source Selector */}
           <div className="space-y-2">
             <Label>Email Logo</Label>
-            {logoUrl ? (
-              <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30">
+            <Select value={logoSource} onValueChange={(v) => setLogoSource(v as typeof logoSource)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Auto (Light Logo)</SelectItem>
+                <SelectItem value="light">Light Logo</SelectItem>
+                <SelectItem value="dark">Dark Logo</SelectItem>
+                <SelectItem value="custom">Custom URL</SelectItem>
+                <SelectItem value="none">None</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {logoSource === 'custom' && (
+              <Input
+                placeholder="https://example.com/logo.png"
+                value={customLogoUrl}
+                onChange={(e) => setCustomLogoUrl(e.target.value)}
+                className="mt-2"
+              />
+            )}
+
+            {logoUrl && (
+              <div className="flex items-center gap-3 p-3 rounded-lg border bg-muted/30 mt-2">
                 <img
                   src={logoUrl}
                   alt="Email logo"
-                  className="h-10 w-auto max-w-[120px] object-contain rounded"
+                  className="h-10 w-auto max-w-[160px] object-contain rounded"
                 />
-                <div className="flex gap-1 ml-auto">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                  >
-                    Replace
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9"
-                    onClick={removeLogo}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
               </div>
-            ) : (
-              <Button
-                variant="outline"
-                className="w-full justify-start gap-2"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-              >
-                {uploading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Upload className="w-4 h-4" />
-                )}
-                {uploading ? 'Uploading...' : 'Upload logo'}
-              </Button>
             )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/png,image/jpeg,image/svg+xml,image/webp"
-              className="hidden"
-              onChange={handleLogoUpload}
-            />
-            <p className="text-xs text-muted-foreground">PNG, JPG, SVG, or WebP. Max 2MB.</p>
+
+            {!businessSettings?.logo_light_url && !businessSettings?.logo_dark_url && logoSource !== 'custom' && logoSource !== 'none' && (
+              <p className="text-xs text-amber-600 dark:text-amber-400">
+                No logos uploaded yet. Add them in Business Settings.
+              </p>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              Manage your logos in{' '}
+              <a href="/dashboard/admin/settings" className="underline hover:text-foreground">
+                Business Settings
+              </a>.
+            </p>
           </div>
 
           {/* Accent Color */}
