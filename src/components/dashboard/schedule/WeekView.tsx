@@ -5,6 +5,7 @@ import {
   format, 
   addDays, 
   isToday,
+  isTomorrow,
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { 
@@ -325,6 +326,7 @@ export function WeekView({
               <div className="p-2" /> {/* Time column spacer */}
               {weekDays.map((day) => {
                 const dayIsToday = isToday(day);
+                const dayIsTomorrow = isTomorrow(day);
                 
                 const dateKey = format(day, 'yyyy-MM-dd');
                 const apptCount = appointmentsByDate.get(dateKey)?.length || 0;
@@ -344,7 +346,7 @@ export function WeekView({
                       'text-[10px] uppercase tracking-wider font-medium',
                       dayIsToday ? 'text-primary' : 'text-muted-foreground'
                     )}>
-                      {format(day, 'EEE')}
+                      {format(day, 'EEE')}{dayIsToday ? ' · Today' : dayIsTomorrow ? ' · Tomorrow' : ''}
                     </div>
                     <div className="flex items-center justify-center mt-1">
                       <span className={cn(
