@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+import { sendOrgEmail } from "../_shared/email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,6 +12,7 @@ interface EmployeeWithPending {
   email: string;
   full_name: string;
   pending_handbooks: string[];
+  organization_id: string;
 }
 
 interface EmailTemplate {
@@ -29,8 +29,7 @@ interface EmailTemplate {
 function replaceTemplateVariables(template: string, variables: Record<string, string>): string {
   let result = template;
   for (const [key, value] of Object.entries(variables)) {
-    const regex = new RegExp(`{{${key}}}`, 'g');
-    result = result.replace(regex, value);
+    result = result.replace(new RegExp(`{{${key}}}`, 'g'), value);
   }
   return result;
 }
@@ -84,7 +83,7 @@ serve(async (req: Request): Promise<Response> => {
     // Get all employee profiles with their user IDs
     const { data: employees, error: employeesError } = await supabase
       .from("employee_profiles")
-      .select("user_id, email, full_name")
+      .select("user_id, email, full_name, organization_id")
       .eq("is_active", true);
 
     if (employeesError) {
@@ -150,6 +149,7 @@ serve(async (req: Request): Promise<Response> => {
           email: employee.email,
           full_name: employee.full_name,
           pending_handbooks: pendingHandbooks.map(h => h.title),
+          organization_id: employee.organization_id,
         });
       }
     }
@@ -157,7 +157,7 @@ serve(async (req: Request): Promise<Response> => {
     console.log(`Found ${employeesToRemind.length} employees with pending handbooks`);
 
     const emailResults = [];
-    const siteUrl = Deno.env.get("SITE_URL") || "https://dropdeadsalon.com";
+    const siteUrl = Deno.env.get("SITE_URL") || "https://getzura.com";
 
     for (const employee of employeesToRemind) {
       try {
@@ -178,30 +178,18 @@ serve(async (req: Request): Promise<Response> => {
         const emailSubject = replaceTemplateVariables(template.subject, templateVariables);
         const emailHtml = replaceTemplateVariables(template.html_body, templateVariables);
 
-        const emailRes = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "Drop Dead Gorgeous <onboarding@resend.dev>",
-            to: [employee.email],
-            subject: emailSubject,
-            html: emailHtml,
-          }),
+        const result = await sendOrgEmail(supabase, employee.organization_id, {
+          to: [employee.email],
+          subject: emailSubject,
+          html: emailHtml,
         });
 
-        const result = await emailRes.json();
-        console.log(`Email sent to ${employee.email}:`, result);
         emailResults.push({ 
           email: employee.email, 
-          success: emailRes.ok, 
-          pendingCount: employee.pending_handbooks.length,
-          result 
+          success: result.success, 
+          pendingCount: employee.pending_handbooks.length 
         });
       } catch (emailError) {
-        console.error(`Failed to send email to ${employee.email}:`, emailError);
         emailResults.push({ 
           email: employee.email, 
           success: false, 
