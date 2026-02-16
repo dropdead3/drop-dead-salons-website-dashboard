@@ -1,89 +1,52 @@
 
 
-# Template-Specific Preview Mode for Email Branding
+# Wire Email Logo to Business Settings Logos
 
 ## Overview
 
-Add a template selector dropdown to the Email Branding preview so admins can see how real email templates (birthday reminder, strike alert, welcome email, etc.) look when wrapped in their current branding -- not just the generic sample content.
+Replace the standalone email logo upload in the Email Branding tab with a selector that pulls from the logos already uploaded in Business Settings (`logo_light_url`, `logo_dark_url`). This eliminates duplicate uploads and ensures brand consistency across the platform and emails.
 
 ## What Changes
 
-### 1. Template Selector in Preview Header (in `EmailBrandingSettings.tsx`)
+### File: `src/components/dashboard/settings/EmailBrandingSettings.tsx`
 
-Add a `Select` dropdown next to the Desktop/Mobile toggle in the preview header area. Options:
+1. **Import `useBusinessSettings`** hook to access the existing business logos.
 
-- **Sample Content** (default) -- the current generic preview
-- **Birthday Reminder** -- renders the `birthday_reminder` template with placeholder variables filled
-- **Strike Notification** -- renders `strike_notification` template
-- **Welcome Email** -- renders `welcome_email` template
-- **Handbook Reminder** -- renders `handbook_reminder` template
-- **Training Reminder** -- renders `training_reminder` template
-- Plus any other active templates found in the DB
+2. **Replace the logo upload section** (lines 259-311) with a logo source selector offering these options:
+   - **Auto (from Business Settings)** -- uses `logo_light_url` (light/white logo, ideal for dark email headers) by default
+   - **Light Logo** -- explicitly picks `logo_light_url`
+   - **Dark Logo** -- explicitly picks `logo_dark_url`
+   - **Custom URL** -- allows pasting a URL manually (keeps flexibility)
+   - **None** -- no logo, falls back to text name in header
 
-The dropdown fetches templates via the existing `useEmailTemplates()` hook from `src/hooks/useEmailTemplates.ts`.
+3. **Remove the file upload input and upload handler** (`handleLogoUpload`, `fileInputRef`, `uploading` state) since logos are now sourced from Business Settings.
 
-### 2. Variable Substitution for Preview
+4. **Update the preview** to resolve the logo URL from the selected source. The preview header already handles `logoUrl` -- this just changes where the URL comes from.
 
-Each template uses `{{variable}}` placeholders. For preview purposes, these get replaced with realistic sample data:
+5. **Update the save mutation** to continue saving `email_logo_url` on the `organizations` table (stores the resolved URL so the backend email sender still works without needing to look up business settings).
 
-| Variable | Sample Value |
-|---|---|
-| `{{stylist_name}}` / `{{employee_name}}` | "Sarah Johnson" |
-| `{{birthday_date}}` / `{{date}}` | "Monday, March 15" |
-| `{{birthday_count}}` / `{{count}}` | "2" |
-| `{{birthday_list}}` | Sample HTML list with 2 names |
-| `{{birthday_names}}` | "Emma Wilson, Alex Chen" |
-| `{{days_until}}` | "3" |
-| `{{handbook_title}}` / `{{training_title}}` | "Employee Handbook 2026" |
-| `{{dashboard_url}}` / `{{link}}` | "#" |
-| `{{plural}}` | "s" |
-| `{{inactive_count}}` | "3" |
-| `{{day_number}}` / `{{current_day}}` | "5" |
+6. **Add a helper note** below the selector: "Manage your logos in Business Settings" as a small link/text, so admins know where to update the actual logo files.
 
-A helper function `fillSampleVariables()` maps known variable names to realistic preview values. Any unmatched `{{var}}` gets replaced with a styled placeholder badge so admins see what is dynamic.
-
-### 3. Preview Content Swap
-
-When a template is selected from the dropdown, the preview area renders the template's `html_body` (with variables filled) inside the same branded wrapper (header, accent bar, footer). This is the same content flow as the backend: `buildBrandedTemplate(branding, templateHtml)`.
-
-When "Sample Content" is selected, it shows the current generic preview (greeting + paragraph + CTA button).
-
-### 4. Updated Preview Layout
+### UI Layout Change
 
 ```text
-EMAIL PREVIEW          [Template: v] [Desktop|Mobile]
-+--------------------------------------------------+
-|        [accent-color header with logo]            |
-|        ==================================         |
-|                                                   |
-|  (selected template content with sample data)     |
-|                                                   |
-|        -------- footer --------                   |
-|        Sent via Zura                              |
-+--------------------------------------------------+
+Before:
+  Email Logo
+  [Upload logo] button / [logo preview + Replace + X]
+  PNG, JPG, SVG, or WebP. Max 2MB.
+
+After:
+  Email Logo
+  [Select: Auto | Light Logo | Dark Logo | Custom | None]
+  [Preview of selected logo if available]
+  Manage your logos in Business Settings.
 ```
 
 ## Technical Details
 
-### Files to Modify
-
-| File | Change |
-|---|---|
-| `src/components/dashboard/settings/EmailBrandingSettings.tsx` | Add template selector dropdown using `Select` component, `useEmailTemplates()` hook, sample variable map, and conditional content rendering inside the preview |
-
-### No New Files Needed
-
-This is entirely a frontend preview enhancement. No edge functions or database changes required.
-
-### Dependencies Used
-- Existing `useEmailTemplates()` hook for fetching active templates
-- Existing `Select`, `SelectContent`, `SelectItem`, `SelectTrigger`, `SelectValue` UI components
-- No new packages or migrations
-
-### Key Implementation Details
-
-1. The `useEmailTemplates()` query only fires when the preview is visible (`enabled: showPreview`) to avoid unnecessary DB calls.
-2. The sample variable replacement is client-side only -- it never touches the real email sending flow.
-3. Template HTML is rendered via `dangerouslySetInnerHTML` inside the branded wrapper, same as the current preview approach.
-4. The template dropdown defaults to "sample" (generic content) so existing behavior is unchanged.
+- No new files, no database changes, no edge function changes
+- Uses existing `useBusinessSettings()` hook already in the codebase
+- The `email_logo_url` column on `organizations` continues to store the resolved URL for backend use
+- When "Auto" is selected, it picks `logo_light_url` (white/light logo works best against the colored accent header background)
+- The `hasChanges` detection updates to compare against the resolved URL
 
