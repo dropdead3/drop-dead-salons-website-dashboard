@@ -20,6 +20,10 @@ export interface Service {
   imported_at: string | null;
   created_at: string | null;
   updated_at: string | null;
+  finishing_time_minutes: number;
+  content_creation_time_minutes: number;
+  processing_time_minutes: number;
+  requires_new_client_consultation: boolean;
 }
 
 /**
@@ -156,6 +160,10 @@ export function useCreateService() {
           requires_qualification: service.requires_qualification ?? false,
           allow_same_day_booking: service.allow_same_day_booking ?? true,
           lead_time_days: service.lead_time_days ?? 0,
+          finishing_time_minutes: service.finishing_time_minutes ?? 0,
+          content_creation_time_minutes: service.content_creation_time_minutes ?? 0,
+          processing_time_minutes: service.processing_time_minutes ?? 0,
+          requires_new_client_consultation: service.requires_new_client_consultation ?? false,
           location_id: service.location_id,
           import_source: 'manual',
         })
