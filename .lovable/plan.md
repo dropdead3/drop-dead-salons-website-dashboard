@@ -1,84 +1,118 @@
 
+# Location Pricing + Seasonal Adjustments
 
-# Unified Service Editor with Tabbed Navigation
+## The Design Challenge
 
-## Overview
+You currently have a 3-tier pricing resolution:
+1. Stylist override (per service + employee)
+2. Level price (per service + stylist level)
+3. Base price (on the service itself)
 
-Combine the three separate service dialogs (Edit Service, Level Pricing, Stylist Overrides) into a single unified "Service Editor" dialog with tab navigation. The service row will have a single edit button (pencil icon) instead of three separate icons, and the dialog opens as a wizard-style editor with three tabs.
+Adding location and seasonal dimensions could create a combinatorial nightmare (service x level x location x season = hundreds of cells). The key is keeping it manageable.
 
-## UI Design
+## Recommended Approach
 
-The unified dialog will have:
-- A header showing the service name
-- Three tabs using the existing `SubTabsList` / `SubTabsTrigger` (underline-style tabs): **Details** | **Level Pricing** | **Stylist Overrides**
-- Each tab renders its respective content inline
-- Footer with Cancel/Save that adapts per tab
+### Location Pricing: Per-Location Base Price Override
 
-## Changes
+Instead of creating location x level x stylist matrices, use a simple **location price override** on the base price. The level and stylist tiers then calculate relative to whichever base applies.
 
-### 1. New File: `src/components/dashboard/settings/ServiceEditorDialog.tsx`
+**New table: `service_location_prices`**
 
-A wrapper dialog that:
-- Accepts service data (for edit mode) or null (for create mode)
-- Uses `Tabs` with `SubTabsList` / `SubTabsTrigger` for the three sections
-- **Details tab**: Embeds the existing service form fields (name, category, duration, price, description, toggles) -- extracted inline, not importing `ServiceFormDialog`
-- **Level Pricing tab**: Embeds the `LevelPricingDialog` content (level list with price inputs) directly, without wrapping it in its own Dialog
-- **Stylist Overrides tab**: Embeds the `StylistPriceOverridesDialog` content (override list, search, add) directly
-- In create mode, only the Details tab is visible (pricing tabs appear after first save)
-- Footer: "Cancel" always visible; "Save" submits current tab's data
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID PK | |
+| service_id | UUID FK -> services(id) | |
+| location_id | TEXT FK -> locations(id) | |
+| price | NUMERIC NOT NULL | Location-specific base price |
+| organization_id | UUID FK -> organizations(id) | |
 
-### 2. Refactor: `LevelPricingDialog.tsx` -> extract inner content
+Unique constraint: `(service_id, location_id)`
 
-Extract the inner content (the level list + price inputs) into a `LevelPricingContent` component that can be rendered both standalone and inside the unified editor. The dialog wrapper remains for backward compatibility but delegates to the content component.
+**How it works**: If a service has a base price of $100 but location "Downtown" has a location override of $120, then all level pricing and stylist overrides at Downtown reference $120 as the base. This avoids duplicating the entire level/stylist matrix per location.
 
-### 3. Refactor: `StylistPriceOverridesDialog.tsx` -> extract inner content
+### Seasonal Adjustments: Percentage or Fixed Modifier with Date Ranges
 
-Same pattern: extract `StylistOverridesContent` from the dialog wrapper.
+Rather than hard-coding seasonal prices per service, use **named adjustment rules** that apply a percentage or fixed-amount modifier during a date window.
 
-### 4. Modify: `ServicesSettingsContent.tsx`
+**New table: `service_seasonal_adjustments`**
 
-- Remove the three separate icon buttons (Layers, UserPlus, Pencil) per service row
-- Replace with a single Pencil (edit) icon button that opens the unified `ServiceEditorDialog`
-- Remove the separate `LevelPricingDialog` and `StylistPriceOverridesDialog` instances
-- Remove `levelPricingService` and `overrideService` state variables
-- Keep the `ServiceFormDialog` for create mode only (or unify create into the new editor too)
-- The "Add service" button still opens in create mode (Details tab only)
+| Column | Type | Notes |
+|--------|------|-------|
+| id | UUID PK | |
+| service_id | UUID FK -> services(id) | Nullable -- null means "all services" |
+| name | TEXT NOT NULL | e.g. "Holiday Premium", "Summer Special" |
+| adjustment_type | TEXT NOT NULL | 'percentage' or 'fixed' |
+| adjustment_value | NUMERIC NOT NULL | e.g. 10 for +10% or -5 for -$5 |
+| start_date | DATE NOT NULL | |
+| end_date | DATE NOT NULL | |
+| location_id | TEXT FK -> locations(id) | Nullable -- null means "all locations" |
+| is_active | BOOLEAN DEFAULT true | |
+| organization_id | UUID FK -> organizations(id) | |
 
-### 5. Remove: `ServiceFormDialog.tsx` usage for edit mode
+**How it works**: After resolving the price through the normal chain (override -> level -> base/location base), any active seasonal adjustment for today's date is applied on top. Percentage adjustments stack multiplicatively. This lets owners do things like "+15% holiday pricing Dec 15-Jan 5" or "-$10 summer promo for Balayage" without touching the core price matrix.
 
-Edit mode is now handled by `ServiceEditorDialog`. Create mode can either stay as `ServiceFormDialog` or be folded into the new editor (Details tab only, pricing tabs disabled).
+### Updated Price Resolution Order
 
-## Technical Details
-
-### ServiceEditorDialog structure
-
-```
-Dialog
-  DialogContent (max-w-lg)
-    DialogHeader
-      DialogTitle: "Edit {serviceName}" or "Add Service"
-    Tabs defaultValue="details"
-      SubTabsList
-        SubTabsTrigger value="details" -- "Details"
-        SubTabsTrigger value="levels" disabled={isCreateMode} -- "Level Pricing"
-        SubTabsTrigger value="overrides" disabled={isCreateMode} -- "Stylist Overrides"
-      TabsContent value="details"
-        [service form fields inline]
-      TabsContent value="levels"
-        LevelPricingContent serviceId={...} basePrice={...}
-      TabsContent value="overrides"
-        StylistOverridesContent serviceId={...} basePrice={...}
-    DialogFooter (per-tab save buttons)
+```text
+1. Start with base price (services.price)
+2. If location override exists -> use location base instead
+3. If stylist level price exists -> use that
+4. If individual stylist override exists -> use that
+5. Apply any active seasonal adjustments (% or fixed)
 ```
 
-### Service row simplification
+## UI Changes: Two New Tabs in the Service Editor
 
-Before (4 icons): Layers | UserPlus | Pencil | Trash
-After (2 icons): Pencil (opens unified editor) | Trash
+The Service Editor dialog gets two additional tabs:
+
+**Details | Level Pricing | Stylist Overrides | Location Pricing | Seasonal**
+
+### Location Pricing Tab
+- Lists all active locations with a price input next to each
+- Placeholder shows the base price
+- Leave blank = use base price at that location
+- Same pattern as the Level Pricing tab (simple list of inputs)
+
+### Seasonal Adjustments Tab
+- Shows a list of active/upcoming adjustments for this service
+- "Add Adjustment" button opens an inline form:
+  - Name (text)
+  - Type toggle: Percentage / Fixed Amount
+  - Value input (e.g. +10% or -$5)
+  - Start date / End date (date pickers)
+  - Location scope (optional -- "All Locations" or pick one)
+  - Active toggle
+- Each row shows name, date range, value, and a delete button
+- Past adjustments shown dimmed with an "Expired" badge
+
+## New Files
+
+| File | Purpose |
+|------|---------|
+| `src/hooks/useServiceLocationPricing.ts` | CRUD hooks for `service_location_prices` |
+| `src/hooks/useServiceSeasonalAdjustments.ts` | CRUD hooks for `service_seasonal_adjustments` |
+| `src/components/dashboard/settings/LocationPricingContent.tsx` | Tab content for per-location pricing |
+| `src/components/dashboard/settings/SeasonalAdjustmentsContent.tsx` | Tab content for seasonal rules |
+
+## Modified Files
+
+| File | Change |
+|------|--------|
+| `ServiceEditorDialog.tsx` | Add two new tabs (Location Pricing, Seasonal) |
+| Migration SQL | Two new tables with RLS, indexes, unique constraints |
 
 ## Build Order
 
-1. Extract `LevelPricingContent` from `LevelPricingDialog.tsx`
-2. Extract `StylistOverridesContent` from `StylistPriceOverridesDialog.tsx`
-3. Create `ServiceEditorDialog.tsx` with tabbed layout
-4. Update `ServicesSettingsContent.tsx` to use the unified dialog and simplify service row icons
+1. Database migration (two new tables + RLS)
+2. `useServiceLocationPricing.ts` hooks
+3. `useServiceSeasonalAdjustments.ts` hooks
+4. `LocationPricingContent.tsx` component
+5. `SeasonalAdjustmentsContent.tsx` component
+6. Wire into `ServiceEditorDialog.tsx` as two new tabs
+
+## Why This Design
+
+- **No combinatorial explosion**: Location modifies the base, not every cell in the level/stylist matrix
+- **Seasonal is additive**: Applied after price resolution, so it works regardless of which tier determined the price
+- **Familiar UI pattern**: Location pricing tab looks identical to level pricing (list of inputs). Seasonal is a simple CRUD list with date pickers
+- **Scoped flexibility**: Seasonal adjustments can target all services or one, all locations or one -- without needing a separate table for every combination
