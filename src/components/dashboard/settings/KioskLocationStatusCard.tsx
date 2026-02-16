@@ -286,10 +286,10 @@ export function KioskLocationStatusCard({ orgId }: KioskLocationStatusCardProps)
                       {isExpanded && (
                         <motion.div
                           initial={{ height: 0, opacity: 0 }}
-                          animate={{ height: 'auto', opacity: 1 }}
-                          exit={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1, overflow: 'visible' }}
+                          exit={{ height: 0, opacity: 0, overflow: 'hidden' }}
                           transition={{ duration: 0.3, ease: 'easeInOut' }}
-                          className="overflow-hidden"
+                          style={{ overflow: 'hidden' }}
                         >
                           <div className="border-l-2 border-l-primary bg-muted/20 px-6 py-6">
                             <KioskLocationSettingsForm
