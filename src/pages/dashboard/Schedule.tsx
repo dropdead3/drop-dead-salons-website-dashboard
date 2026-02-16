@@ -445,8 +445,6 @@ export default function Schedule() {
                 canCreate={canCreate}
                 calendarFilters={calendarFilters}
                 onCalendarFiltersChange={setCalendarFilters}
-                copilotOpen={copilotOpen}
-                onCopilotToggle={() => setCopilotOpen(!copilotOpen)}
               />
         </div>
 

@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { CalendarClock, MessageCircleQuestion, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AIHelpTab } from './help-fab/AIHelpTab';
 import { ChatLeadershipTab } from './help-fab/ChatLeadershipTab';
@@ -35,14 +36,21 @@ export function HelpFAB() {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.5 }}
       >
-        <Button
-          size="icon"
-          className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow"
-          aria-label="Scheduling Co-Pilot"
-          onClick={handleCopilotToggle}
-        >
-          <CalendarClock className="h-6 w-6" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              size="icon"
+              className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow"
+              aria-label="AI Copilot"
+              onClick={handleCopilotToggle}
+            >
+              <CalendarClock className="h-6 w-6" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            <p>AI Copilot</p>
+          </TooltipContent>
+        </Tooltip>
       </motion.div>
     );
   }
