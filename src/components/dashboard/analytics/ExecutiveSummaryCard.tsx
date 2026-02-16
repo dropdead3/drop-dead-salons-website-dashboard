@@ -34,6 +34,7 @@ import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useClientStats } from '@/hooks/useClientsData';
 import { useCapacityUtilization } from '@/hooks/useCapacityUtilization';
 import { useExpectedRentRevenue } from '@/hooks/useExpectedRentRevenue';
+import { useHasRenters } from '@/hooks/useHasRenters';
 import { useBookingPipeline } from '@/hooks/useBookingPipeline';
 import { usePaySchedule } from '@/hooks/usePaySchedule';
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
@@ -124,6 +125,7 @@ function KpiTile({ kpi }: { kpi: KpiData }) {
 
 export function ExecutiveSummaryCard() {
   const { formatCurrencyWhole } = useFormatCurrency();
+  const { data: hasRenters = false } = useHasRenters();
 
   // Internal date range state with persistence
   const [range, setRange] = useState<SummaryRange>(() => {
@@ -306,7 +308,7 @@ export function ExecutiveSummaryCard() {
   // Pay period label
   const payPeriodLabel = `${format(currentPeriod.periodStart, 'MMM d')} - ${format(currentPeriod.periodEnd, 'MMM d')}`;
 
-  const kpis: KpiData[] = [
+  const allKpis: KpiData[] = [
     {
       icon: DollarSign,
       label: 'Sales Revenue',
@@ -316,7 +318,7 @@ export function ExecutiveSummaryCard() {
       change: revenueChange,
       tooltip: 'Total service and product revenue from completed appointments in the selected date range.',
     },
-    {
+    ...(hasRenters ? [{
       icon: Building2,
       label: 'Rent Revenue',
       value: <BlurredAmount>{formatCurrencyWhole(expectedRent)}</BlurredAmount>,
@@ -329,7 +331,7 @@ export function ExecutiveSummaryCard() {
         label: `${collectionRate}% collected`,
         color: collectionRate >= 90 ? 'bg-chart-2/10 text-chart-2' : collectionRate >= 50 ? 'bg-amber-500/10 text-amber-500' : 'bg-destructive/10 text-destructive',
       } : undefined,
-    },
+    } as KpiData] : []),
     {
       icon: Wallet,
       label: 'Commission Liability',
@@ -380,6 +382,10 @@ export function ExecutiveSummaryCard() {
       tooltip: 'Compares appointments booked for the next 14 days against your trailing 14-day average. Flags slowdowns before they impact revenue.',
     },
   ];
+
+  // Split into revenue/liability (first group) and operations (rest)
+  const revenueKpis = allKpis.filter(k => ['Sales Revenue', 'Rent Revenue', 'Commission Liability'].includes(k.label));
+  const operationsKpis = allKpis.filter(k => !['Sales Revenue', 'Rent Revenue', 'Commission Liability'].includes(k.label));
 
   return (
     <Card className="border-border/50">
@@ -438,8 +444,8 @@ export function ExecutiveSummaryCard() {
             <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="font-display text-[10px] tracking-widest text-muted-foreground/60 uppercase">Revenue & Liability</span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {kpis.slice(0, 3).map((kpi) => (
+          <div className={cn("grid grid-cols-1 gap-4", revenueKpis.length === 2 ? "md:grid-cols-2" : "md:grid-cols-3")}>
+            {revenueKpis.map((kpi) => (
               <KpiTile key={kpi.label} kpi={kpi} />
             ))}
           </div>
@@ -452,7 +458,7 @@ export function ExecutiveSummaryCard() {
             <span className="font-display text-[10px] tracking-widest text-muted-foreground/60 uppercase">Operations</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {kpis.slice(3).map((kpi) => (
+            {operationsKpis.map((kpi) => (
               <KpiTile key={kpi.label} kpi={kpi} />
             ))}
           </div>
