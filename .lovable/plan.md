@@ -1,34 +1,47 @@
 
 
-# Fix: Main Schedule Header Bar White in Dark Mode
+# Add Time Tooltip on Hover for Schedule Time Slots
 
-## Problem
-The main header bar (containing the Week/Day toggle, date display, location filters, and settings icon) uses `bg-foreground text-background`. In light mode, `foreground` is dark (8% lightness) so this looks like a sleek dark bar. But in dark mode, `foreground` flips to light cream (92% lightness), making the bar appear bright white -- the opposite of what you want.
+## What This Does
+When you hover over any time slot in the Day or Week views, a small floating label will appear showing the exact time (e.g., "12:15 PM") for that slot. This gives clear visual feedback about which time you're pointing at, similar to how the current time indicator works.
 
-## Root Cause
-The `bg-foreground` / `text-background` pattern is an "inverted" design that only works correctly in light mode. In dark mode the values swap, so the bar becomes light instead of dark.
+## Approach
+Use a lightweight CSS-only tooltip (no external library) that appears on hover, styled to match the existing current-time indicator (blue pill with white text). The tooltip will show the formatted 12-hour time for the slot being hovered.
 
-## Solution
-Replace the inverted color pattern with one that stays dark in both modes. Use `bg-[hsl(0,0%,8%)]` (a fixed near-black) with `text-[hsl(40,20%,92%)]` (fixed cream text). This ensures the header bar always appears as a dark, premium-feeling strip regardless of theme mode.
+## Changes
 
-Alternatively, a more theme-token-friendly approach: use `dark:bg-card` combined with light-mode `bg-foreground` so the bar picks up the 7%-lightness card color in dark mode. However, the fixed-color approach is simpler and guarantees consistency.
+### 1. DayView.tsx -- DroppableSlot component
+- Add a `title` attribute for native browser tooltip as a baseline
+- Add a styled hover tooltip using a `group` class and an absolutely-positioned child element
+- The tooltip shows the time formatted as "h:mm AM/PM" (e.g., "12:15 PM")
+- Only show on available (non-past) slots
 
-### Recommended approach
-In `src/components/dashboard/schedule/ScheduleHeader.tsx` (line 97), change:
-- From: `bg-foreground text-background`
-- To: `bg-[hsl(0,0%,8%)] text-[hsl(40,20%,92%)]`
+### 2. WeekView.tsx -- Time slot divs
+- Apply the same hover tooltip pattern to the slot `div` elements inside the day columns
+- Both the past-slot (disabled) divs skip the tooltip; bookable slots get it
 
-This keeps the bar permanently dark with cream text in both light and dark modes.
+## Technical Details
 
-### Cascading text color references
-Several child elements inside this header use `text-background/70`, `text-background`, `hover:text-background`, `bg-background/10`, etc. These will also need updating to use the fixed cream color references so buttons and icons remain visible. Specifically:
-- Replace `text-background` references with `text-[hsl(40,20%,92%)]`
-- Replace `text-background/70` with `text-[hsl(40,20%,92%)]/70`
-- Replace `bg-background/10` with `bg-[hsl(40,20%,92%)]/10`
-- Replace `bg-background/15` with `bg-[hsl(40,20%,92%)]/15`
-- Replace `bg-background/20` with `bg-[hsl(40,20%,92%)]/20`
-- Replace `border-background/20` with `border-[hsl(40,20%,92%)]/20`
+The tooltip implementation uses Tailwind's `group-hover` pattern:
+
+```tsx
+// Wrap the slot div with group class, add a child tooltip element
+<div className="group relative ...existing classes...">
+  {/* Existing slot content */}
+  {isAvailable && (
+    <div className="absolute left-1/2 -translate-x-1/2 -top-7 
+      bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded 
+      font-medium shadow opacity-0 group-hover:opacity-100 
+      transition-opacity pointer-events-none z-40 whitespace-nowrap">
+      {formatTime(hour, minute)}
+    </div>
+  )}
+</div>
+```
+
+A small helper function `formatTime(hour, minute)` converts 24h values to "12:15 PM" format, reusing the pattern already present in WeekView.
 
 ### Files Changed
-- `src/components/dashboard/schedule/ScheduleHeader.tsx` -- lines 97 and all child element color references within the header bar (approximately lines 97-294)
+- `src/components/dashboard/schedule/DayView.tsx` -- Update `DroppableSlot` component
+- `src/components/dashboard/schedule/WeekView.tsx` -- Update time slot hover divs
 
