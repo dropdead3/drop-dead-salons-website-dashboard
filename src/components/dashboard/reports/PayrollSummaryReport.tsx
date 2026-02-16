@@ -22,6 +22,7 @@ import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTabl
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
 import { useSalesByStylist } from '@/hooks/useSalesData';
 import { useExpectedRentRevenue } from '@/hooks/useExpectedRentRevenue';
+import { useHasRenters } from '@/hooks/useHasRenters';
 import { usePaySchedule } from '@/hooks/usePaySchedule';
 import { format } from 'date-fns';
 
@@ -46,6 +47,7 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
 
   const { data: stylistData, isLoading: stylistLoading } = useSalesByStylist(payFrom, payTo);
   const { data: rentData, isLoading: rentLoading } = useExpectedRentRevenue(payFrom, payTo);
+  const { data: hasRenters } = useHasRenters();
 
   const isLoading = tiersLoading || stylistLoading || rentLoading;
 
@@ -70,7 +72,12 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
 
       // Summary line
       doc.setFontSize(10); doc.setTextColor(100);
-      doc.text(`Total Commission: ${formatCurrencyWhole(totalCommission)}  |  Expected Rent: ${formatCurrencyWhole(rentData?.expectedRent || 0)}  |  Collected Rent: ${formatCurrencyWhole(rentData?.collectedRent || 0)}`, 14, y);
+      const summaryParts = [`Total Commission: ${formatCurrencyWhole(totalCommission)}`];
+      if (hasRenters) {
+        summaryParts.push(`Expected Rent: ${formatCurrencyWhole(rentData?.expectedRent || 0)}`);
+        summaryParts.push(`Collected Rent: ${formatCurrencyWhole(rentData?.collectedRent || 0)}`);
+      }
+      doc.text(summaryParts.join('  |  '), 14, y);
       y += 8;
 
       // Commission table
@@ -124,7 +131,7 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
     let csv = 'Staff,Service Revenue,Product Revenue,Tier,Commission\n';
     commissionRows.forEach(r => { csv += `"${r.name}",${r.serviceRevenue},${r.productRevenue},"${r.tier}",${Math.round(r.commission)}\n`; });
     csv += `\nTotal,${totalServiceRev},${totalProductRev},,${Math.round(totalCommission)}\n`;
-    if (rentData) {
+    if (hasRenters && rentData && rentData.activeRenterCount > 0) {
       csv += `\nRent Summary\nActive Renters,${rentData.activeRenterCount}\nExpected Rent,${rentData.expectedRent}\nCollected Rent,${rentData.collectedRent}\nCollection Rate,${rentData.collectionRate}%\n`;
     }
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -152,7 +159,7 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
       </div>
 
       {/* Summary KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className={cn("grid grid-cols-2 gap-4", hasRenters ? "md:grid-cols-4" : "md:grid-cols-2")}>
         <Card><CardContent className="p-4">
           <div className="flex items-center gap-1.5 mb-1"><Wallet className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground uppercase tracking-wider">Commission Liability</p></div>
           <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(totalCommission)}</BlurredAmount></p>
@@ -161,15 +168,19 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
           <div className="flex items-center gap-1.5 mb-1"><Users className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground uppercase tracking-wider">Staff Count</p></div>
           <p className="text-xl font-display tabular-nums">{commissionRows.length}</p>
         </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <div className="flex items-center gap-1.5 mb-1"><Building2 className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground uppercase tracking-wider">Expected Rent</p></div>
-          <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(rentData?.expectedRent || 0)}</BlurredAmount></p>
-        </CardContent></Card>
-        <Card><CardContent className="p-4">
-          <div className="flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground uppercase tracking-wider">Collected Rent</p></div>
-          <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(rentData?.collectedRent || 0)}</BlurredAmount></p>
-          {rentData && rentData.collectionRate < 100 && <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">{rentData.collectionRate}% collected</p>}
-        </CardContent></Card>
+        {hasRenters && (
+          <>
+            <Card><CardContent className="p-4">
+              <div className="flex items-center gap-1.5 mb-1"><Building2 className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground uppercase tracking-wider">Expected Rent</p></div>
+              <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(rentData?.expectedRent || 0)}</BlurredAmount></p>
+            </CardContent></Card>
+            <Card><CardContent className="p-4">
+              <div className="flex items-center gap-1.5 mb-1"><DollarSign className="w-3.5 h-3.5 text-muted-foreground" /><p className="text-[11px] text-muted-foreground uppercase tracking-wider">Collected Rent</p></div>
+              <p className="text-xl font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(rentData?.collectedRent || 0)}</BlurredAmount></p>
+              {rentData && rentData.collectionRate < 100 && <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">{rentData.collectionRate}% collected</p>}
+            </CardContent></Card>
+          </>
+        )}
       </div>
 
       {/* Commission Table */}
