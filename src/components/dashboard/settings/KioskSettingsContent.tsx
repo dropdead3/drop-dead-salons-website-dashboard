@@ -776,9 +776,9 @@ export function KioskSettingsContent() {
       </Card>
 
       {/* Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr,500px] gap-6">
         {/* Left: Settings Form */}
-        <Card>
+        <Card className="min-w-0">
           <CardHeader>
             <CardTitle className="font-display text-lg">
               {selectedLocation === 'all' ? 'DEFAULT SETTINGS' : 'LOCATION SETTINGS'}
@@ -1415,11 +1415,13 @@ export function KioskSettingsContent() {
         </Card>
 
         {/* Right: Preview (sticky) */}
-        <div className="lg:self-start lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
-          <KioskPreviewPanel 
-            settings={localSettings} 
-            businessSettings={businessSettings}
-          />
+        <div className="hidden lg:block">
+          <div className="sticky top-20">
+            <KioskPreviewPanel 
+              settings={localSettings} 
+              businessSettings={businessSettings}
+            />
+          </div>
         </div>
       </div>
 
