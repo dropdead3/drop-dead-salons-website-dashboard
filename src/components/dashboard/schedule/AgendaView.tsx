@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Phone, Clock, MapPin, User, ChevronRight } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
+import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 
 interface AgendaViewProps {
   currentDate: Date;
@@ -15,14 +16,7 @@ interface AgendaViewProps {
   onAppointmentClick: (appointment: PhorestAppointment) => void;
 }
 
-const STATUS_CONFIG: Record<AppointmentStatus, { bg: string; text: string; label: string }> = {
-  booked: { bg: 'bg-slate-100', text: 'text-slate-700', label: 'Booked' },
-  confirmed: { bg: 'bg-green-100', text: 'text-green-800', label: 'Confirmed' },
-  checked_in: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Checked In' },
-  completed: { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Completed' },
-  cancelled: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Cancelled' },
-  no_show: { bg: 'bg-red-100', text: 'text-red-800', label: 'No Show' },
-};
+const STATUS_CONFIG = APPOINTMENT_STATUS_BADGE;
 
 function formatTime12h(time: string): string {
   const [hours, minutes] = time.split(':');

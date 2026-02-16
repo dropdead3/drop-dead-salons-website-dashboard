@@ -17,6 +17,7 @@ import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCa
 import { QuickBookingPopover } from './QuickBookingPopover';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
+import { APPOINTMENT_STATUS_COLORS } from '@/lib/design-tokens';
 
 interface WeekViewProps {
   currentDate: Date;
@@ -29,15 +30,8 @@ interface WeekViewProps {
   onDayDoubleClick?: (date: Date) => void;
 }
 
-// Phorest-style status colors
-const STATUS_COLORS: Record<AppointmentStatus, { bg: string; border: string; text: string }> = {
-  booked: { bg: 'bg-slate-200', border: 'border-slate-400', text: 'text-slate-800' },
-  confirmed: { bg: 'bg-green-500', border: 'border-green-600', text: 'text-white' },
-  checked_in: { bg: 'bg-blue-500', border: 'border-blue-600', text: 'text-white' },
-  completed: { bg: 'bg-purple-500', border: 'border-purple-600', text: 'text-white' },
-  cancelled: { bg: 'bg-gray-300', border: 'border-gray-400', text: 'text-gray-600' },
-  no_show: { bg: 'bg-red-500', border: 'border-red-600', text: 'text-white' },
-};
+// Use consolidated status colors from design tokens
+const STATUS_COLORS = APPOINTMENT_STATUS_COLORS;
 
 const ROW_HEIGHT = 20; // Height per 15-minute slot
 const SLOTS_PER_HOUR = 4;
