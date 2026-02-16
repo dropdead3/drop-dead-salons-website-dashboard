@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+import { sendOrgEmail } from "../_shared/email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,6 +12,7 @@ interface StylistWithIncomplete {
   current_day: number;
   email: string;
   full_name: string;
+  organization_id: string;
 }
 
 interface EmailTemplate {
@@ -25,7 +25,6 @@ interface EmailTemplate {
   is_active: boolean;
 }
 
-// Replace template variables with actual values
 function replaceTemplateVariables(template: string, variables: Record<string, string>): string {
   let result = template;
   for (const [key, value] of Object.entries(variables)) {
@@ -36,20 +35,16 @@ function replaceTemplateVariables(template: string, variables: Record<string, st
 }
 
 serve(async (req: Request): Promise<Response> => {
-  // Handle CORS
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Check if this is the late (urgent) reminder
     let isLateReminder = false;
     try {
       const body = await req.json();
       isLateReminder = body?.isLateReminder === true;
-    } catch {
-      // No body or invalid JSON, default to regular reminder
-    }
+    } catch { /* default */ }
 
     console.log(`Starting ${isLateReminder ? 'LATE' : 'regular'} daily reminder check...`);
 
@@ -57,70 +52,34 @@ serve(async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch the appropriate email template from the database
     const templateKey = isLateReminder ? "daily_program_reminder_urgent" : "daily_program_reminder";
     const { data: templateData, error: templateError } = await supabase
-      .from("email_templates")
-      .select("*")
-      .eq("template_key", templateKey)
-      .eq("is_active", true)
-      .single();
+      .from("email_templates").select("*").eq("template_key", templateKey).eq("is_active", true).single();
 
     if (templateError || !templateData) {
-      console.error("Error fetching email template:", templateError);
       throw new Error(`Daily program reminder email template (${templateKey}) not found or inactive`);
     }
 
     const template = templateData as EmailTemplate;
-    console.log(`Using email template: ${template.name}`);
-
-    // Get today's date
-    const today = new Date().toISOString().split("T")[0];
-
-    // Find active enrollments without today's completion
     const { data: enrollments, error: enrollmentError } = await supabase
-      .from("stylist_program_enrollment")
-      .select(`
-        id,
-        user_id,
-        current_day,
-        status
-      `)
-      .eq("status", "active");
+      .from("stylist_program_enrollment").select("id, user_id, current_day, status").eq("status", "active");
 
-    if (enrollmentError) {
-      console.error("Error fetching enrollments:", enrollmentError);
-      throw enrollmentError;
-    }
-
-    console.log(`Found ${enrollments?.length || 0} active enrollments`);
+    if (enrollmentError) throw enrollmentError;
 
     const stylistsToRemind: StylistWithIncomplete[] = [];
 
     for (const enrollment of enrollments || []) {
-      // Check if today's completion exists and is complete
       const { data: completion } = await supabase
-        .from("daily_completions")
-        .select("is_complete")
-        .eq("enrollment_id", enrollment.id)
-        .eq("day_number", enrollment.current_day)
-        .maybeSingle();
+        .from("daily_completions").select("is_complete").eq("enrollment_id", enrollment.id).eq("day_number", enrollment.current_day).maybeSingle();
 
-      // If no completion or not complete, add to remind list
       if (!completion?.is_complete) {
-        // Get user email from employee_profiles
         const { data: profile } = await supabase
-          .from("employee_profiles")
-          .select("email, full_name")
-          .eq("user_id", enrollment.user_id)
-          .single();
+          .from("employee_profiles").select("email, full_name, organization_id").eq("user_id", enrollment.user_id).single();
 
         if (profile?.email) {
           stylistsToRemind.push({
-            user_id: enrollment.user_id,
-            current_day: enrollment.current_day,
-            email: profile.email,
-            full_name: profile.full_name,
+            user_id: enrollment.user_id, current_day: enrollment.current_day,
+            email: profile.email, full_name: profile.full_name, organization_id: profile.organization_id,
           });
         }
       }
@@ -129,39 +88,24 @@ serve(async (req: Request): Promise<Response> => {
     console.log(`Sending reminders to ${stylistsToRemind.length} stylists`);
 
     const emailResults = [];
-    const siteUrl = Deno.env.get("SITE_URL") || "https://dropdeadsalon.com";
+    const siteUrl = Deno.env.get("SITE_URL") || "https://getzura.com";
 
     for (const stylist of stylistsToRemind) {
       try {
-        // Prepare template variables
         const templateVariables: Record<string, string> = {
-          stylist_name: stylist.full_name,
-          current_day: stylist.current_day.toString(),
-          dashboard_url: `${siteUrl}/dashboard`,
-          is_urgent: isLateReminder ? "true" : "false",
+          stylist_name: stylist.full_name, current_day: stylist.current_day.toString(),
+          dashboard_url: `${siteUrl}/dashboard`, is_urgent: isLateReminder ? "true" : "false",
         };
 
-        // Replace variables in template
         const emailSubject = replaceTemplateVariables(template.subject, templateVariables);
         const emailHtml = replaceTemplateVariables(template.html_body, templateVariables);
 
-        const emailRes = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "Drop Dead Gorgeous <onboarding@resend.dev>",
-            to: [stylist.email],
-            subject: emailSubject,
-            html: emailHtml,
-          }),
+        const result = await sendOrgEmail(supabase, stylist.organization_id, {
+          to: [stylist.email], subject: emailSubject, html: emailHtml,
         });
 
-        const result = await emailRes.json();
         console.log(`Email sent to ${stylist.email}:`, result);
-        emailResults.push({ email: stylist.email, success: emailRes.ok, result });
+        emailResults.push({ email: stylist.email, success: result.success, result });
       } catch (emailError) {
         console.error(`Failed to send email to ${stylist.email}:`, emailError);
         emailResults.push({ email: stylist.email, success: false, error: String(emailError) });
@@ -170,26 +114,15 @@ serve(async (req: Request): Promise<Response> => {
 
     return new Response(
       JSON.stringify({
-        message: "Daily reminders processed",
-        totalChecked: enrollments?.length || 0,
-        remindersNeeded: stylistsToRemind.length,
-        template_used: template.name,
-        results: emailResults,
+        message: "Daily reminders processed", totalChecked: enrollments?.length || 0,
+        remindersNeeded: stylistsToRemind.length, template_used: template.name, results: emailResults,
       }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error in send-daily-reminders:", error);
-    return new Response(
-      JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return new Response(JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } });
   }
 });
