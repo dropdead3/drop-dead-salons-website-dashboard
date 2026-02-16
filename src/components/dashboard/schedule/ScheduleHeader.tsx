@@ -80,9 +80,9 @@ export function ScheduleHeader({
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [staffPopoverOpen, setStaffPopoverOpen] = useState(false);
 
-  // Get quick day buttons - show all 7 days of the currently viewed week (contextual navigation)
-  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 }); // Sunday
-  const quickDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  // Get quick day buttons - show the next 7 days after today (tomorrow through +7)
+  const today = new Date();
+  const quickDays = Array.from({ length: 7 }, (_, i) => addDays(today, i + 1));
 
   const goToToday = () => setCurrentDate(new Date());
   
