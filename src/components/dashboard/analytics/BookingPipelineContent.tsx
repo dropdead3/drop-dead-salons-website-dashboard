@@ -3,12 +3,14 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChevronDown, ChevronRight, ArrowRight, BarChart3 } from 'lucide-react';
 import { useBookingPipelineByLocation, type LocationPipelineStatus, type LocationPipeline } from '@/hooks/useBookingPipelineByLocation';
+import { useLocationPipelineTimeline } from '@/hooks/useLocationPipelineTimeline';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { BarChart, Bar, XAxis, YAxis, ReferenceLine, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from 'recharts';
-import { motion } from 'framer-motion';
+import { BarChart, Bar, XAxis, YAxis, ReferenceLine, Tooltip as RechartsTooltip, ResponsiveContainer, Cell, AreaChart, Area } from 'recharts';
+import { motion, AnimatePresence } from 'framer-motion';
+import { format, parseISO } from 'date-fns';
 
 const MAX_VISIBLE = 5;
 
@@ -87,6 +89,109 @@ function PipelineChart({ locations }: { locations: LocationPipeline[] }) {
   );
 }
 
+function TimelineTooltip({ active, payload }: any) {
+  if (!active || !payload?.[0]) return null;
+  const d = payload[0].payload;
+  return (
+    <div className="bg-popover border border-border rounded-lg px-3 py-2 shadow-md text-sm">
+      <p className="font-display text-xs tracking-wide">{format(parseISO(d.date), 'EEE, MMM d')}</p>
+      <p className="text-muted-foreground text-xs tabular-nums">{d.trailingCount ?? d.forwardCount ?? 0} appointments</p>
+    </div>
+  );
+}
+
+function PipelineTimelineChart({ locationId, status }: { locationId: string; status: LocationPipelineStatus }) {
+  const { dailyCounts, isLoading, todayIso } = useLocationPipelineTimeline(locationId, true);
+
+  const chartData = useMemo(() =>
+    dailyCounts.map(d => ({
+      date: d.date,
+      trailingCount: d.period === 'trailing' ? d.count : null,
+      forwardCount: d.period === 'forward' ? d.count : null,
+    })),
+    [dailyCounts]
+  );
+
+  const trailingDays = dailyCounts.filter(d => d.period === 'trailing');
+  const forwardDays = dailyCounts.filter(d => d.period === 'forward');
+  const trailingAvg = trailingDays.length ? (trailingDays.reduce((s, d) => s + d.count, 0) / trailingDays.length) : 0;
+  const forwardAvg = forwardDays.length ? (forwardDays.reduce((s, d) => s + d.count, 0) / forwardDays.length) : 0;
+  const emptyDays = forwardDays.filter(d => d.count === 0).length;
+
+  const forwardColor = STATUS_FILL[status] || STATUS_FILL.no_data;
+
+  if (isLoading) {
+    return <Skeleton className="h-[200px] w-full mt-3" />;
+  }
+
+  return (
+    <div className="mt-3 space-y-3">
+      <div className="h-[160px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <XAxis
+              dataKey="date"
+              tickFormatter={(v) => format(parseISO(v), 'MMM d')}
+              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+              axisLine={false}
+              tickLine={false}
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+              axisLine={false}
+              tickLine={false}
+              allowDecimals={false}
+              width={28}
+            />
+            <RechartsTooltip content={<TimelineTooltip />} />
+            <ReferenceLine
+              x={todayIso}
+              stroke="hsl(var(--foreground))"
+              strokeDasharray="3 3"
+              strokeOpacity={0.5}
+              label={{ value: 'Today', position: 'top', fontSize: 9, fill: 'hsl(var(--muted-foreground))' }}
+            />
+            <Area
+              type="monotone"
+              dataKey="trailingCount"
+              stroke="hsl(var(--muted-foreground))"
+              fill="hsl(var(--muted-foreground))"
+              strokeWidth={1.5}
+              strokeDasharray="5 5"
+              fillOpacity={0.15}
+              connectNulls={false}
+            />
+            <Area
+              type="monotone"
+              dataKey="forwardCount"
+              stroke={forwardColor}
+              fill={forwardColor}
+              strokeWidth={2}
+              fillOpacity={0.2}
+              connectNulls={false}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="grid grid-cols-3 gap-3 pt-2 border-t border-border/50">
+        <div className="text-center">
+          <p className="text-[10px] text-muted-foreground tracking-wide uppercase">Trailing Avg</p>
+          <p className="text-sm font-display tabular-nums">{trailingAvg.toFixed(1)}/day</p>
+        </div>
+        <div className="text-center">
+          <p className="text-[10px] text-muted-foreground tracking-wide uppercase">Forward Avg</p>
+          <p className="text-sm font-display tabular-nums">{forwardAvg.toFixed(1)}/day</p>
+        </div>
+        <div className="text-center">
+          <p className="text-[10px] text-muted-foreground tracking-wide uppercase">Empty Days</p>
+          <p className="text-sm font-display tabular-nums">{emptyDays}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface BookingPipelineContentProps {
   locationId?: string;
   dateRange: string;
@@ -99,6 +204,8 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
     new Set(['critical', 'slowing', 'healthy', 'no_data'])
   );
   const [showAll, setShowAll] = useState(false);
+
+  const [expandedLocationId, setExpandedLocationId] = useState<string | null>(null);
 
   const isSingleLocation = !!locationId || locations.length <= 1;
 
@@ -202,17 +309,23 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
         {visible.map(loc => {
           const config = STATUS_CONFIG[loc.status];
           const ratioPercent = Math.round(loc.ratio * 100);
+          const isExpanded = expandedLocationId === loc.locationId;
 
           return (
             <div
               key={loc.locationId}
-              className="bg-muted/30 rounded-lg border border-border/50 p-4 space-y-3"
+              className={cn(
+                'bg-muted/30 rounded-lg border p-4 space-y-3 transition-colors cursor-pointer',
+                isExpanded ? 'border-primary/30' : 'border-border/50 hover:border-border'
+              )}
+              onClick={() => setExpandedLocationId(isExpanded ? null : loc.locationId)}
             >
               {/* Header row */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className={cn('w-2.5 h-2.5 rounded-full shrink-0', config.dot)} />
                   <span className="font-display text-sm tracking-wide">{loc.locationName}</span>
+                  <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
                 </div>
                 {loc.status !== 'no_data' && (
                   <span className="text-xs text-muted-foreground tabular-nums">
@@ -238,12 +351,29 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
                 </div>
               )}
 
+              {/* Timeline drill-down */}
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <PipelineTimelineChart locationId={loc.locationId} status={loc.status} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {/* Boost Bookings CTA for critical/slowing */}
               {(loc.status === 'critical' || loc.status === 'slowing') && (
                 <div className="flex justify-end">
                   <Link
                     to={`/dashboard/admin/analytics?tab=marketing`}
                     className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
+                    onClick={(e) => e.stopPropagation()}
                   >
                     Boost Bookings <ArrowRight className="w-3 h-3" />
                   </Link>
