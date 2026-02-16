@@ -31,10 +31,10 @@ Deno.serve(async (req) => {
       throw new Error("appointmentId is required");
     }
 
-    // Fetch appointment details
+    // Fetch appointment details with org timezone
     const { data: appointment, error: apptError } = await supabase
       .from("appointments")
-      .select("id, organization_id, service_id, service_category, client_id, appointment_date, start_time, location_id, status")
+      .select("id, organization_id, service_id, service_category, client_id, appointment_date, start_time, location_id, status, organizations!inner(timezone)")
       .eq("id", appointmentId)
       .single();
 
@@ -112,7 +112,12 @@ Deno.serve(async (req) => {
     }
 
     // Calculate scheduled_at for each step relative to appointment datetime
-    const appointmentDatetime = new Date(`${appointment.appointment_date}T${appointment.start_time}`);
+    // Use org timezone to correctly interpret the appointment date/time
+    const orgTimezone = (appointment as any).organizations?.timezone || "America/New_York";
+    // Build a timezone-aware datetime string
+    const appointmentDatetime = new Date(
+      new Date(`${appointment.appointment_date}T${appointment.start_time}`).toLocaleString("en-US", { timeZone: orgTimezone })
+    );
     
     // Remove any existing pending queue items for this appointment (idempotent)
     await supabase

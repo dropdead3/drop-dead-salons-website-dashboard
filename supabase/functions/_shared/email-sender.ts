@@ -165,24 +165,25 @@ export async function sendOrgEmail(
       console.warn("[email-sender] Error checking opt-out status:", e);
     }
 
-    // Gap 6: Rate limiting — check if client received an email in the last 48 hours
-    try {
-      const cutoff = new Date(Date.now() - RATE_LIMIT_HOURS * 60 * 60 * 1000).toISOString();
-      const { data: recentSends } = await supabase
-        .from("email_send_log")
-        .select("id")
-        .eq("organization_id", organizationId)
-        .eq("client_id", payload.clientId)
-        .gte("sent_at", cutoff)
-        .limit(1);
+    // Rate limiting — skip for service_flow and transactional emails (they follow their own schedule)
+    if (emailType === "marketing") {
+      try {
+        const cutoff = new Date(Date.now() - RATE_LIMIT_HOURS * 60 * 60 * 1000).toISOString();
+        const { data: recentSends } = await supabase
+          .from("email_send_log")
+          .select("id")
+          .eq("organization_id", organizationId)
+          .eq("client_id", payload.clientId)
+          .gte("sent_at", cutoff)
+          .limit(1);
 
-      if (recentSends && recentSends.length > 0) {
-        console.log(`[email-sender] Client ${payload.clientId} received email within ${RATE_LIMIT_HOURS}h - skipping`);
-        return { success: true, skipped: true, skipReason: "rate_limited" };
+        if (recentSends && recentSends.length > 0) {
+          console.log(`[email-sender] Client ${payload.clientId} received email within ${RATE_LIMIT_HOURS}h - skipping`);
+          return { success: true, skipped: true, skipReason: "rate_limited" };
+        }
+      } catch (e) {
+        console.warn("[email-sender] Error checking rate limit:", e);
       }
-    } catch (e) {
-      console.warn("[email-sender] Error checking rate limit:", e);
-      // Continue sending if check fails
     }
 
     // Build signed unsubscribe URL

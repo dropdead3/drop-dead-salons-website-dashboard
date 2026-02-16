@@ -93,6 +93,27 @@ serve(async (req) => {
 
     console.log("Booking updated successfully");
 
+    // Trigger email flow updates on status change or reschedule
+    try {
+      const fnUrl = `${supabaseUrl}/functions/v1/enqueue-service-emails`;
+      const emailAction = updateData.action === 'status' && (updateData as any).status === 'cancelled'
+        ? 'cancel'
+        : updateData.action === 'reschedule' ? 'book' : null;
+      
+      if (emailAction) {
+        await fetch(fnUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({ appointmentId: updateData.appointment_id, action: emailAction }),
+        });
+      }
+    } catch (e) {
+      console.warn("Failed to update service email queue:", e);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,

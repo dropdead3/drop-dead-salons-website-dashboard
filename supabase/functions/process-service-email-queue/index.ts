@@ -179,13 +179,13 @@ Deno.serve(async (req) => {
 
       const finalHtml = sections.join("\n");
 
-      // Send via sendOrgEmail
+      // Send via sendOrgEmail — use "service_flow" type to bypass 48h rate limit
       const result = await sendOrgEmail(supabase, first.organization_id, {
         to: [appt.client_email],
         subject: consolidatedSubject,
         html: finalHtml,
         clientId: first.client_id || undefined,
-        emailType: "marketing",
+        emailType: "service_flow",
       });
 
       if (result.success && !result.skipped) {
