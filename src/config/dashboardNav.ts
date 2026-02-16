@@ -96,7 +96,7 @@ export const managerNavItems: DashboardNavItem[] = [
   { href: '/dashboard/admin/team', label: 'Program Team Overview', labelKey: 'program_team_overview', icon: Users, permission: 'view_team_overview', managerGroup: 'teamTools' },
   { href: '/dashboard/admin/analytics', label: 'Analytics Hub', labelKey: 'analytics_hub', icon: TrendingUp, permission: 'view_team_overview', managerGroup: 'analytics' },
   { href: '/dashboard/campaigns', label: 'Campaigns', labelKey: 'campaigns', icon: Rocket, permission: 'view_team_overview', managerGroup: 'analytics' },
-  { href: '/dashboard/admin/executive-brief', label: 'Executive Brief', labelKey: 'executive_brief', icon: TrendingUp, permission: 'manage_settings', managerGroup: 'analytics' },
+  
   { href: '/dashboard/admin/kpi-builder', label: 'KPI Architecture', labelKey: 'kpi_architecture', icon: Target, permission: 'manage_settings', managerGroup: 'analytics' },
   { href: '/dashboard/admin/decision-history', label: 'Decision History', labelKey: 'decision_history', icon: BarChart3, permission: 'manage_settings', managerGroup: 'analytics' },
   { href: '/dashboard/stats', label: 'Team Stats', labelKey: 'team_stats', icon: BarChart3, permission: 'view_all_stats', managerGroup: 'analytics' },
