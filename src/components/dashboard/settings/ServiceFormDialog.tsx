@@ -30,6 +30,10 @@ export function ServiceFormDialog({ open, onOpenChange, onSubmit, isPending, cat
   const [requiresQualification, setRequiresQualification] = useState(false);
   const [allowSameDayBooking, setAllowSameDayBooking] = useState(true);
   const [leadTimeDays, setLeadTimeDays] = useState('0');
+  const [finishingTime, setFinishingTime] = useState('0');
+  const [contentCreationTime, setContentCreationTime] = useState('0');
+  const [processingTime, setProcessingTime] = useState('0');
+  const [requiresNewClientConsultation, setRequiresNewClientConsultation] = useState(false);
 
   useEffect(() => {
     if (open && initialData) {
@@ -41,6 +45,10 @@ export function ServiceFormDialog({ open, onOpenChange, onSubmit, isPending, cat
       setRequiresQualification(initialData.requires_qualification ?? false);
       setAllowSameDayBooking(initialData.allow_same_day_booking ?? true);
       setLeadTimeDays(String(initialData.lead_time_days || 0));
+      setFinishingTime(String(initialData.finishing_time_minutes || 0));
+      setContentCreationTime(String(initialData.content_creation_time_minutes || 0));
+      setProcessingTime(String(initialData.processing_time_minutes || 0));
+      setRequiresNewClientConsultation(initialData.requires_new_client_consultation ?? false);
     } else if (open) {
       setName('');
       setCategory(categories[0]?.category_name || '');
@@ -50,6 +58,10 @@ export function ServiceFormDialog({ open, onOpenChange, onSubmit, isPending, cat
       setRequiresQualification(false);
       setAllowSameDayBooking(true);
       setLeadTimeDays('0');
+      setFinishingTime('0');
+      setContentCreationTime('0');
+      setProcessingTime('0');
+      setRequiresNewClientConsultation(false);
     }
   }, [open, initialData, categories]);
 
@@ -65,6 +77,10 @@ export function ServiceFormDialog({ open, onOpenChange, onSubmit, isPending, cat
       requires_qualification: requiresQualification,
       allow_same_day_booking: allowSameDayBooking,
       lead_time_days: parseInt(leadTimeDays) || 0,
+      finishing_time_minutes: parseInt(finishingTime) || 0,
+      content_creation_time_minutes: parseInt(contentCreationTime) || 0,
+      processing_time_minutes: parseInt(processingTime) || 0,
+      requires_new_client_consultation: requiresNewClientConsultation,
     });
   };
 
@@ -106,6 +122,21 @@ export function ServiceFormDialog({ open, onOpenChange, onSubmit, isPending, cat
             </div>
           </div>
 
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="finishing-time">Finishing (min)</Label>
+              <Input id="finishing-time" type="number" min="0" step="5" value={finishingTime} onChange={(e) => setFinishingTime(e.target.value)} placeholder="0" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="content-creation-time">Content (min)</Label>
+              <Input id="content-creation-time" type="number" min="0" step="5" value={contentCreationTime} onChange={(e) => setContentCreationTime(e.target.value)} placeholder="0" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="processing-time">Processing (min)</Label>
+              <Input id="processing-time" type="number" min="0" step="5" value={processingTime} onChange={(e) => setProcessingTime(e.target.value)} placeholder="0" />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="service-description">Description</Label>
             <Textarea id="service-description" value={description} onChange={(e) => setDescription(e.target.value)} rows={2} placeholder="Optional description" />
@@ -134,6 +165,14 @@ export function ServiceFormDialog({ open, onOpenChange, onSubmit, isPending, cat
                 <Input id="lead-time" type="number" min="1" value={leadTimeDays} onChange={(e) => setLeadTimeDays(e.target.value)} />
               </div>
             )}
+
+            <div className="flex items-center justify-between">
+              <div>
+                <p className={tokens.body.emphasis}>Requires New-Client Consultation</p>
+                <p className={tokens.body.muted}>Clients without past visit history must complete a consultation before booking online</p>
+              </div>
+              <Switch checked={requiresNewClientConsultation} onCheckedChange={setRequiresNewClientConsultation} />
+            </div>
           </div>
 
           <DialogFooter>

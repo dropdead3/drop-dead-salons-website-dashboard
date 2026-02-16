@@ -13277,11 +13277,13 @@ export type Database = {
         Row: {
           allow_same_day_booking: boolean | null
           category: string | null
+          content_creation_time_minutes: number
           created_at: string | null
           description: string | null
           display_order: number | null
           duration_minutes: number
           external_id: string | null
+          finishing_time_minutes: number
           id: string
           import_job_id: string | null
           import_source: string | null
@@ -13292,6 +13294,8 @@ export type Database = {
           name: string
           organization_id: string | null
           price: number | null
+          processing_time_minutes: number
+          requires_new_client_consultation: boolean
           requires_qualification: boolean | null
           same_day_restriction_reason: string | null
           updated_at: string | null
@@ -13299,11 +13303,13 @@ export type Database = {
         Insert: {
           allow_same_day_booking?: boolean | null
           category?: string | null
+          content_creation_time_minutes?: number
           created_at?: string | null
           description?: string | null
           display_order?: number | null
           duration_minutes?: number
           external_id?: string | null
+          finishing_time_minutes?: number
           id?: string
           import_job_id?: string | null
           import_source?: string | null
@@ -13314,6 +13320,8 @@ export type Database = {
           name: string
           organization_id?: string | null
           price?: number | null
+          processing_time_minutes?: number
+          requires_new_client_consultation?: boolean
           requires_qualification?: boolean | null
           same_day_restriction_reason?: string | null
           updated_at?: string | null
@@ -13321,11 +13329,13 @@ export type Database = {
         Update: {
           allow_same_day_booking?: boolean | null
           category?: string | null
+          content_creation_time_minutes?: number
           created_at?: string | null
           description?: string | null
           display_order?: number | null
           duration_minutes?: number
           external_id?: string | null
+          finishing_time_minutes?: number
           id?: string
           import_job_id?: string | null
           import_source?: string | null
@@ -13336,6 +13346,8 @@ export type Database = {
           name?: string
           organization_id?: string | null
           price?: number | null
+          processing_time_minutes?: number
+          requires_new_client_consultation?: boolean
           requires_qualification?: boolean | null
           same_day_restriction_reason?: string | null
           updated_at?: string | null
