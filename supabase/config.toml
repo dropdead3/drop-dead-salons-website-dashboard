@@ -188,3 +188,6 @@ verify_jwt = false
 
 [functions.check-payroll-deadline]
 verify_jwt = false
+
+[functions.send-branding-test-email]
+verify_jwt = false

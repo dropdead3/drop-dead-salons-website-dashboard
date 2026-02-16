@@ -1,16 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Loader2, Upload, X, Eye, EyeOff, Save, Mail } from 'lucide-react';
+import { Loader2, Upload, X, Eye, EyeOff, Save, Mail, Send, Monitor, Smartphone, Info } from 'lucide-react';
 
 export function EmailBrandingSettings() {
   const { effectiveOrganization } = useOrganizationContext();
+  const { user } = useAuth();
   const orgId = effectiveOrganization?.id;
   const orgName = effectiveOrganization?.name || 'Your Organization';
   const { toast } = useToast();
@@ -22,7 +25,11 @@ export function EmailBrandingSettings() {
   const [accentColor, setAccentColor] = useState('#6366F1');
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
+  const [previewMode, setPreviewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [uploading, setUploading] = useState(false);
+  const [testEmail, setTestEmail] = useState(user?.email || '');
+  const [sendingTest, setSendingTest] = useState(false);
+  const [testPopoverOpen, setTestPopoverOpen] = useState(false);
 
   // Fetch current branding from org
   const { data: branding, isLoading } = useQuery({
@@ -49,6 +56,12 @@ export function EmailBrandingSettings() {
       setLogoUrl(branding.email_logo_url || null);
     }
   }, [branding]);
+
+  useEffect(() => {
+    if (user?.email && !testEmail) {
+      setTestEmail(user.email);
+    }
+  }, [user?.email]);
 
   // Save mutation
   const saveMutation = useMutation({
@@ -115,6 +128,37 @@ export function EmailBrandingSettings() {
     replyTo !== (branding?.email_reply_to || '') ||
     accentColor !== (branding?.email_accent_color || '#6366F1') ||
     logoUrl !== (branding?.email_logo_url || null);
+
+  // Send test email
+  const handleSendTestEmail = async () => {
+    if (!testEmail) return;
+    setSendingTest(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Not authenticated');
+
+      const res = await supabase.functions.invoke('send-branding-test-email', {
+        body: { recipient_email: testEmail },
+      });
+
+      if (res.error) throw res.error;
+      const result = res.data;
+      if (result?.success) {
+        toast({ title: 'Test email sent', description: `Check ${testEmail}` });
+        setTestPopoverOpen(false);
+      } else {
+        throw new Error(result?.error || 'Failed to send');
+      }
+    } catch (err: any) {
+      toast({ title: 'Failed to send test email', description: err.message, variant: 'destructive' });
+    } finally {
+      setSendingTest(false);
+    }
+  };
+
+  // Build preview HTML that mirrors buildBrandedTemplate exactly
+  const displayName = senderName || orgName;
+  const previewAccent = accentColor || '#6366F1';
 
   if (isLoading) {
     return (
@@ -242,7 +286,7 @@ export function EmailBrandingSettings() {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex items-center justify-between pt-2 flex-wrap gap-2">
           <Button
             variant="ghost"
             size="sm"
@@ -252,57 +296,205 @@ export function EmailBrandingSettings() {
             {showPreview ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             {showPreview ? 'Hide Preview' : 'Show Preview'}
           </Button>
-          <Button
-            onClick={() => saveMutation.mutate()}
-            disabled={!hasChanges || saveMutation.isPending}
-            size="sm"
-            className="gap-2"
-          >
-            {saveMutation.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
-            Save Branding
-          </Button>
+
+          <div className="flex items-center gap-2">
+            {/* Send Test Email */}
+            <Popover open={testPopoverOpen} onOpenChange={setTestPopoverOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Send className="w-4 h-4" />
+                  Send Test
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm font-medium">Send Test Email</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Sends a real email using your <span className="font-medium">saved</span> branding.
+                    </p>
+                  </div>
+                  {hasChanges && (
+                    <div className="flex items-start gap-2 p-2 rounded-md bg-amber-500/10 border border-amber-500/20">
+                      <Info className="w-3.5 h-3.5 mt-0.5 text-amber-500 shrink-0" />
+                      <p className="text-xs text-amber-600 dark:text-amber-400">
+                        You have unsaved changes. Save first to include them in the test email.
+                      </p>
+                    </div>
+                  )}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="test-email" className="text-xs">Recipient</Label>
+                    <Input
+                      id="test-email"
+                      type="email"
+                      value={testEmail}
+                      onChange={(e) => setTestEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      className="h-9 text-sm"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    className="w-full gap-2"
+                    onClick={handleSendTestEmail}
+                    disabled={sendingTest || !testEmail}
+                  >
+                    {sendingTest ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    {sendingTest ? 'Sending...' : 'Send Test Email'}
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            <Button
+              onClick={() => saveMutation.mutate()}
+              disabled={!hasChanges || saveMutation.isPending}
+              size="sm"
+              className="gap-2"
+            >
+              {saveMutation.isPending ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Save Branding
+            </Button>
+          </div>
         </div>
 
         {/* Live Preview */}
         {showPreview && (
           <div className="rounded-lg border overflow-hidden bg-muted/20">
-            <p className="text-xs font-medium text-muted-foreground px-4 pt-3 pb-2">EMAIL PREVIEW</p>
-
-            {/* Simulated email */}
-            <div className="mx-4 mb-4 rounded-lg overflow-hidden border bg-background shadow-sm">
-              {/* Header */}
-              <div
-                className="px-6 py-5 flex items-center gap-3"
-                style={{ backgroundColor: accentColor }}
-              >
-                {logoUrl ? (
-                  <img src={logoUrl} alt="Logo" className="h-8 w-auto max-w-[100px] object-contain" />
-                ) : (
-                  <div className="h-8 w-8 rounded bg-white/20" />
-                )}
-                <span className="text-sm font-medium" style={{ color: '#FFFFFF' }}>
-                  {senderName || orgName}
-                </span>
+            <div className="flex items-center justify-between px-4 pt-3 pb-2">
+              <p className="text-xs font-medium text-muted-foreground tracking-wide">EMAIL PREVIEW</p>
+              <div className="flex items-center gap-1 border rounded-full p-0.5">
+                <button
+                  onClick={() => setPreviewMode('desktop')}
+                  className={`p-1.5 rounded-full transition-colors ${previewMode === 'desktop' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                  title="Desktop (600px)"
+                >
+                  <Monitor className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => setPreviewMode('mobile')}
+                  className={`p-1.5 rounded-full transition-colors ${previewMode === 'mobile' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                  title="Mobile (360px)"
+                >
+                  <Smartphone className="w-3.5 h-3.5" />
+                </button>
               </div>
+            </div>
 
-              {/* Accent bar */}
-              <div className="h-1" style={{ backgroundColor: accentColor, opacity: 0.5 }} />
+            {/* Email preview container */}
+            <div
+              className="mx-auto mb-4 transition-all duration-300"
+              style={{
+                maxWidth: previewMode === 'desktop' ? 600 : 360,
+                padding: '0 16px',
+              }}
+            >
+              {/* Outer email body bg */}
+              <div style={{ backgroundColor: '#f4f4f5', padding: '20px 16px', borderRadius: 8 }}>
+                <div style={{ maxWidth: 600, margin: '0 auto' }}>
+                  {/* Header */}
+                  <div
+                    style={{
+                      backgroundColor: previewAccent,
+                      padding: '24px',
+                      borderRadius: '12px 12px 0 0',
+                      textAlign: 'center' as const,
+                    }}
+                  >
+                    {logoUrl ? (
+                      <img
+                        src={logoUrl}
+                        alt={displayName}
+                        style={{ maxHeight: 48, maxWidth: 200, marginBottom: 8 }}
+                      />
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: 22,
+                          fontWeight: 700,
+                          color: '#ffffff',
+                          letterSpacing: '-0.025em',
+                        }}
+                      >
+                        {displayName}
+                      </span>
+                    )}
+                  </div>
 
-              {/* Body placeholder */}
-              <div className="px-6 py-6 space-y-3">
-                <div className="h-3 rounded-full bg-muted w-3/4" />
-                <div className="h-3 rounded-full bg-muted w-full" />
-                <div className="h-3 rounded-full bg-muted w-5/6" />
-                <div className="h-3 rounded-full bg-muted w-2/3" />
-              </div>
+                  {/* Accent bar */}
+                  <div
+                    style={{
+                      height: 4,
+                      background: `linear-gradient(90deg, ${previewAccent}, ${previewAccent}88)`,
+                    }}
+                  />
 
-              {/* Footer */}
-              <div className="px-6 py-3 border-t text-center">
-                <span className="text-[10px] text-muted-foreground">Sent via Zura</span>
+                  {/* Content */}
+                  <div
+                    style={{
+                      backgroundColor: '#ffffff',
+                      padding: '32px 24px',
+                      borderLeft: '1px solid #e4e4e7',
+                      borderRight: '1px solid #e4e4e7',
+                      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+                    }}
+                  >
+                    <p style={{ fontSize: 16, color: '#18181b', margin: '0 0 16px' }}>
+                      Hi there 👋
+                    </p>
+                    <p style={{ fontSize: 14, color: '#3f3f46', lineHeight: 1.6, margin: '0 0 16px' }}>
+                      This is a preview of how your branded emails will appear to recipients.
+                      The header, accent color, and footer below match the real template used
+                      for all outbound emails from your organization.
+                    </p>
+                    <p style={{ fontSize: 14, color: '#3f3f46', lineHeight: 1.6, margin: '0 0 24px' }}>
+                      You can adjust the sender name, reply-to address, logo, and accent color
+                      above to see changes reflected here instantly.
+                    </p>
+                    {/* CTA Button */}
+                    <div style={{ textAlign: 'center' as const }}>
+                      <a
+                        href="#"
+                        onClick={(e) => e.preventDefault()}
+                        style={{
+                          display: 'inline-block',
+                          backgroundColor: previewAccent,
+                          color: '#ffffff',
+                          padding: '12px 32px',
+                          borderRadius: '8px',
+                          textDecoration: 'none',
+                          fontSize: 14,
+                          fontWeight: 600,
+                        }}
+                      >
+                        View Dashboard
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div
+                    style={{
+                      backgroundColor: '#fafafa',
+                      padding: '20px 24px',
+                      borderRadius: '0 0 12px 12px',
+                      border: '1px solid #e4e4e7',
+                      borderTop: 'none',
+                      textAlign: 'center' as const,
+                    }}
+                  >
+                    <p style={{ margin: 0, fontSize: 12, color: '#a1a1aa' }}>
+                      Sent via{' '}
+                      <a href="https://getzura.com" style={{ color: '#a1a1aa', textDecoration: 'underline' }} onClick={(e) => e.preventDefault()}>
+                        Zura
+                      </a>
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
