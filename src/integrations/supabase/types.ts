@@ -13102,6 +13102,125 @@ export type Database = {
           },
         ]
       }
+      service_location_prices: {
+        Row: {
+          created_at: string
+          id: string
+          location_id: string
+          organization_id: string
+          price: number
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_id: string
+          organization_id: string
+          price: number
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_id?: string
+          organization_id?: string
+          price?: number
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_location_prices_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_location_prices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_location_prices_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_seasonal_adjustments: {
+        Row: {
+          adjustment_type: string
+          adjustment_value: number
+          created_at: string
+          end_date: string
+          id: string
+          is_active: boolean
+          location_id: string | null
+          name: string
+          organization_id: string
+          service_id: string | null
+          start_date: string
+          updated_at: string
+        }
+        Insert: {
+          adjustment_type: string
+          adjustment_value: number
+          created_at?: string
+          end_date: string
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          name: string
+          organization_id: string
+          service_id?: string | null
+          start_date: string
+          updated_at?: string
+        }
+        Update: {
+          adjustment_type?: string
+          adjustment_value?: number
+          created_at?: string
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          location_id?: string | null
+          name?: string
+          organization_id?: string
+          service_id?: string | null
+          start_date?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_seasonal_adjustments_location_id_fkey"
+            columns: ["location_id"]
+            isOneToOne: false
+            referencedRelation: "locations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_seasonal_adjustments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_seasonal_adjustments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_stylist_price_overrides: {
         Row: {
           created_at: string

@@ -15,6 +15,8 @@ import type { Service } from '@/hooks/useServicesData';
 import type { ServiceCategoryColor } from '@/hooks/useServiceCategoryColors';
 import { LevelPricingContent } from './LevelPricingContent';
 import { StylistOverridesContent } from './StylistOverridesContent';
+import { LocationPricingContent } from './LocationPricingContent';
+import { SeasonalAdjustmentsContent } from './SeasonalAdjustmentsContent';
 
 interface ServiceEditorDialogProps {
   open: boolean;
@@ -106,6 +108,12 @@ export function ServiceEditorDialog({
             <SubTabsTrigger value="overrides" disabled={isCreateMode}>
               Stylist Overrides
             </SubTabsTrigger>
+            <SubTabsTrigger value="locations" disabled={isCreateMode}>
+              Location Pricing
+            </SubTabsTrigger>
+            <SubTabsTrigger value="seasonal" disabled={isCreateMode}>
+              Seasonal
+            </SubTabsTrigger>
           </SubTabsList>
 
           <div className="flex-1 overflow-y-auto mt-4 p-1">
@@ -185,6 +193,23 @@ export function ServiceEditorDialog({
                 <StylistOverridesContent
                   serviceId={serviceId}
                   basePrice={initialData?.price ?? null}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="locations" className="mt-0 p-px">
+              {serviceId && (
+                <LocationPricingContent
+                  serviceId={serviceId}
+                  basePrice={initialData?.price ?? null}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="seasonal" className="mt-0 p-px">
+              {serviceId && (
+                <SeasonalAdjustmentsContent
+                  serviceId={serviceId}
                 />
               )}
             </TabsContent>
