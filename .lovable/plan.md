@@ -1,26 +1,23 @@
 
 
-# Fix Category Avatar Kerning/Tracking Mismatch
+# Fix Category Name Kerning in Services Accordion
 
 ## Problem
-The category avatar badges have `font-sans` applied (correct typeface) but they still visually differ between the two sections because:
-1. They inherit `tracking-wide` or `tracking-wider` from parent elements that use `font-display` headings
-2. The two badge locations use different font sizes (`text-xs` vs `text-[10px]`), compounding the visual mismatch
+The service category names ("New Client Consultation", "Haircuts", "Blonding", etc.) in the SERVICES accordion section display with wide letter-spacing. While `tokens.body.emphasis` correctly sets `font-sans`, it does not explicitly reset `tracking`, so the text inherits wider tracking from parent elements in the card/accordion hierarchy.
 
 ## Fix
-Add `tracking-normal` to both avatar badge elements to reset any inherited letter-spacing, and unify them to the same font size (`text-[11px]`) for consistency.
+Add `tracking-normal` to the category name span (line 374) and the service count span (line 375) to explicitly reset any inherited letter-spacing.
 
 ## Technical Changes
 
 ### File: `src/components/dashboard/settings/ServicesSettingsContent.tsx`
 
-**Line 254 (Category Manager badge):**
-- Add `tracking-normal` to reset inherited kerning
-- Change `text-xs` to `text-[11px]` for visual match
+**Line 374** -- Category name span:
+- Current: `<span className={tokens.body.emphasis}>`
+- Updated: `<span className={cn(tokens.body.emphasis, 'tracking-normal')}>`
 
-**Line 369 (Services Accordion badge):**
-- Add `tracking-normal` to reset inherited kerning
-- Change `text-[10px]` to `text-[11px]` to match the category manager badges
+**Line 375** -- Service count span:
+- Current: `<span className={tokens.body.muted}>`
+- Updated: `<span className={cn(tokens.body.muted, 'tracking-normal')}>`
 
-Both badges will now render identically: Aeonik Pro, 11px, normal tracking, medium weight.
-
+This ensures both text elements explicitly use normal letter-spacing regardless of inherited tracking from the Card, CardHeader, or AccordionTrigger ancestors.
