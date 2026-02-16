@@ -46,7 +46,7 @@ export default function DecisionHistoryPage() {
           <Card className="rounded-2xl shadow-2xl">
             <CardContent className="py-12 text-center">
               <p className="text-sm text-[hsl(var(--platform-foreground-muted))]">
-                No recommendations have been generated yet. Visit the Executive Brief to generate your first analysis.
+                No recommendations have been generated yet. Visit the Leadership tab in Analytics to generate your first analysis.
               </p>
             </CardContent>
           </Card>
