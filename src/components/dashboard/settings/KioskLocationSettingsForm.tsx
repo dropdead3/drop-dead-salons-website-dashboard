@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save, Image, RotateCcw, Upload, MapPin as MapPinIcon, Info, Shield, Eye, Maximize2, ChevronDown } from 'lucide-react';
+import { Loader2, Save, Image, RotateCcw, Upload, MapPin as MapPinIcon, Info, Shield, Eye, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +11,7 @@ import { KioskMediaUploader } from './KioskMediaUploader';
 import { KioskFeatureToggles } from './KioskFeatureToggles';
 import { KioskDeployCard } from './KioskDeployCard';
 import { KioskPreviewPanel } from './KioskPreviewPanel';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+
 import { useLocations } from '@/hooks/useLocations';
 import { 
   useKioskSettings, 
@@ -343,12 +343,14 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
   }
 
   return (
-    <div className="space-y-6">
-      {/* Features Section */}
-      <div>
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Features</h4>
-        <KioskFeatureToggles localSettings={localSettings} updateField={updateField} />
-      </div>
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr,minmax(320px,1fr)] gap-6">
+      {/* Left Column: Settings */}
+      <div className="space-y-6">
+        {/* Features Section */}
+        <div>
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Features</h4>
+          <KioskFeatureToggles localSettings={localSettings} updateField={updateField} />
+        </div>
 
       {/* Settings Tabs */}
       <div>
@@ -673,46 +675,6 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
         </Tabs>
       </div>
 
-      {/* Inline Live Preview */}
-      <Collapsible defaultOpen>
-        <div className="border rounded-lg">
-          <CollapsibleTrigger asChild>
-            <div className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-muted/30 transition-colors">
-              <div className="flex items-center gap-2">
-                <Eye className="w-4 h-4 text-muted-foreground" />
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Live Preview</h4>
-              </div>
-              <div className="flex items-center gap-2">
-                {onPreviewOpen && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onPreviewOpen(localSettings);
-                    }}
-                  >
-                    <Maximize2 className="w-3 h-3 mr-1" />
-                    Expand
-                  </Button>
-                )}
-                <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform duration-200 [[data-state=open]>&]:rotate-180" />
-              </div>
-            </div>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="px-4 pb-4">
-              <KioskPreviewPanel
-                settings={localSettings}
-                businessSettings={businessSettings}
-                locationName={locationName}
-              />
-            </div>
-          </CollapsibleContent>
-        </div>
-      </Collapsible>
-
       {/* Action Buttons */}
       <div className="flex flex-wrap items-center gap-2 pt-4 border-t">
         <Button onClick={handleSave} disabled={updateSettings.isPending}>
@@ -767,10 +729,41 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
         )}
       </div>
 
-      {/* Deploy QR — only for specific locations */}
-      {locationId && (
-        <KioskDeployCard locationId={locationId} locationName={locationName} />
-      )}
+        {/* Deploy QR — only for specific locations */}
+        {locationId && (
+          <KioskDeployCard locationId={locationId} locationName={locationName} />
+        )}
+      </div>
+
+      {/* Right Column: Sticky Live Preview */}
+      <div className="sticky top-4 self-start">
+        <div className="border rounded-lg">
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Eye className="w-4 h-4 text-muted-foreground" />
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Live Preview</h4>
+            </div>
+            {onPreviewOpen && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => onPreviewOpen(localSettings)}
+              >
+                <Maximize2 className="w-3 h-3 mr-1" />
+                Expand
+              </Button>
+            )}
+          </div>
+          <div className="px-4 pb-4">
+            <KioskPreviewPanel
+              settings={localSettings}
+              businessSettings={businessSettings}
+              locationName={locationName}
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
