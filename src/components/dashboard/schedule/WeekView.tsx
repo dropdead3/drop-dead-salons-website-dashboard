@@ -5,7 +5,6 @@ import {
   format, 
   addDays, 
   isToday,
-  isYesterday,
 } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { 
@@ -256,13 +255,12 @@ export function WeekView({
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   
-  // Week starts with yesterday, today is in second column, followed by 5 future days
+  // Week starts with today, followed by 6 future days
   const today = new Date();
-  const yesterday = addDays(today, -1);
   
   const weekDays = useMemo(() => 
-    Array.from({ length: 7 }, (_, i) => addDays(yesterday, i)),
-    [yesterday.toDateString()]
+    Array.from({ length: 7 }, (_, i) => addDays(today, i)),
+    [today.toDateString()]
   );
   
   // Generate all 15-minute time slots
@@ -327,7 +325,7 @@ export function WeekView({
               <div className="p-2" /> {/* Time column spacer */}
               {weekDays.map((day) => {
                 const dayIsToday = isToday(day);
-                const dayIsYesterday = isYesterday(day);
+                
                 const dateKey = format(day, 'yyyy-MM-dd');
                 const apptCount = appointmentsByDate.get(dateKey)?.length || 0;
                 const dayHoursInfo = getLocationHoursForDate(locationHoursJson ?? null, locationHolidayClosures ?? null, day);
@@ -364,7 +362,7 @@ export function WeekView({
                     )}>
                       {dayHoursInfo.isClosed ? (
                         <ClosedBadge reason={dayHoursInfo.closureReason} />
-                      ) : dayIsToday ? 'Today' : dayIsYesterday ? 'Yesterday' : `${apptCount} appts`}
+                      ) : dayIsToday ? 'Today' : `${apptCount} appts`}
                     </div>
                   </div>
                 );
