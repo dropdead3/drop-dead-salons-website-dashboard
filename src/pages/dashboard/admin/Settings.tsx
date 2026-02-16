@@ -922,38 +922,54 @@ export default function Settings() {
 
           {/* Category Content */}
           {activeCategory === 'email' && (
-            <div className="space-y-6">
-              <EmailBrandingSettings />
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-display text-lg">EMAIL TEMPLATES</CardTitle>
-                  <CardDescription>Customize email templates for automated notifications.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <EmailTemplatesManager />
-                </CardContent>
-              </Card>
+            <Tabs defaultValue="branding" className="w-full">
+              <TabsList>
+                <TabsTrigger value="branding">Branding</TabsTrigger>
+                <TabsTrigger value="templates">Templates</TabsTrigger>
+                <TabsTrigger value="variables">Variables</TabsTrigger>
+                <TabsTrigger value="signatures">Signatures</TabsTrigger>
+              </TabsList>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-display text-lg">EMAIL VARIABLES</CardTitle>
-                  <CardDescription>Manage available template variables.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <EmailVariablesManager />
-                </CardContent>
-              </Card>
+              <TabsContent value="branding">
+                <EmailBrandingSettings />
+              </TabsContent>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="font-display text-lg">SIGNATURE PRESETS</CardTitle>
-                  <CardDescription>Reusable email signature blocks.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <SignaturePresetsManager />
-                </CardContent>
-              </Card>
-            </div>
+              <TabsContent value="templates">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="font-display text-lg">EMAIL TEMPLATES</CardTitle>
+                    <CardDescription>Customize email templates for automated notifications.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <EmailTemplatesManager />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="variables">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="font-display text-lg">EMAIL VARIABLES</CardTitle>
+                    <CardDescription>Manage available template variables.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <EmailVariablesManager />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="signatures">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="font-display text-lg">SIGNATURE PRESETS</CardTitle>
+                    <CardDescription>Reusable email signature blocks.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <SignaturePresetsManager />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           )}
 
           {activeCategory === 'sms' && (
