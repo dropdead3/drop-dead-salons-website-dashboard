@@ -14,9 +14,9 @@ import { format, parseISO } from 'date-fns';
 const MAX_VISIBLE = 5;
 
 const STATUS_CONFIG: Record<LocationPipelineStatus, { dot: string; chip: string; bar: string; order: number }> = {
-  critical: { dot: 'bg-destructive', chip: 'bg-destructive/15 text-destructive', bar: 'bg-destructive', order: 0 },
-  slowing: { dot: 'bg-amber-500', chip: 'bg-amber-500/15 text-amber-600', bar: 'bg-amber-500', order: 1 },
-  healthy: { dot: 'bg-emerald-500', chip: 'bg-emerald-500/15 text-emerald-600', bar: 'bg-emerald-500', order: 2 },
+  critical: { dot: 'bg-red-400', chip: 'bg-red-950/60 text-red-300 border-red-500/40 shadow-[0_0_8px_rgba(220,38,38,0.15)]', bar: 'bg-destructive', order: 0 },
+  slowing: { dot: 'bg-amber-400', chip: 'bg-amber-950/50 text-amber-300 border-amber-500/30 shadow-[0_0_8px_rgba(245,158,11,0.1)]', bar: 'bg-amber-500', order: 1 },
+  healthy: { dot: 'bg-emerald-400', chip: 'bg-emerald-950/50 text-emerald-300 border-emerald-500/30 shadow-[0_0_8px_rgba(16,185,129,0.1)]', bar: 'bg-emerald-500', order: 2 },
   no_data: { dot: 'bg-muted-foreground/40', chip: 'bg-muted-foreground/15 text-muted-foreground', bar: 'bg-muted-foreground/40', order: 3 },
 };
 
@@ -262,9 +262,10 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <span className={cn(
-                    'inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border border-border/30 w-[4.5rem] justify-center',
+                    'inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full border backdrop-blur-sm w-[4.5rem] justify-center transition-all',
                     config.chip
                   )}>
+                    <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', config.dot)} />
                     {loc.label}
                   </span>
                   <span className="font-display text-sm tracking-wide">{loc.locationName}</span>
