@@ -371,8 +371,8 @@ export function ServicesSettingsContent() {
                           >
                             {abbr}
                           </div>
-                          <span className={tokens.body.emphasis}>{cat.category_name}</span>
-                          <span className={tokens.body.muted}>({services.length})</span>
+                          <span className={cn(tokens.body.emphasis, 'tracking-normal')}>{cat.category_name}</span>
+                          <span className={cn(tokens.body.muted, 'tracking-normal')}>({services.length})</span>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
