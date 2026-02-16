@@ -276,8 +276,8 @@ export function ExecutiveSummaryCard() {
             <Skeleton className="h-5 w-40" />
             <Skeleton className="h-6 w-24" />
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
               <Skeleton key={i} className="h-28 rounded-lg" />
             ))}
           </div>
@@ -436,7 +436,7 @@ export function ExecutiveSummaryCard() {
             <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="font-display text-[10px] tracking-widest text-muted-foreground/60 uppercase">Revenue & Liability</span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {kpis.slice(0, 3).map((kpi) => (
               <KpiTile key={kpi.label} kpi={kpi} />
             ))}
@@ -449,7 +449,7 @@ export function ExecutiveSummaryCard() {
             <Activity className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="font-display text-[10px] tracking-widest text-muted-foreground/60 uppercase">Operations</span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {kpis.slice(3).map((kpi) => (
               <KpiTile key={kpi.label} kpi={kpi} />
             ))}
