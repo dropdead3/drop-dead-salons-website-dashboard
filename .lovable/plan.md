@@ -1,56 +1,65 @@
 
-# Retail Sales by Staff Card -- Enhancement
 
-## Current State
+# Rename "Check-In Kiosk" to "Kiosks" + Add Kiosk Mode Selector
 
-The "Staff Retail Performance" table already exists inside `RetailAnalyticsContent.tsx` (lines 423-493). It displays: Rank, Stylist (avatar + name), Product Revenue, Units Sold, Attachment Rate, and Avg Ticket. Data comes from the `useRetailAnalytics` hook which aggregates `phorest_transaction_items`.
+## What Changes
 
-**What it lacks:**
-- No column sorting (revenue, units, name, attachment rate, avg ticket)
-- No search/filter within the card
-- No ability to sort alphabetically or toggle high-to-low / low-to-high
-- Location and date range are inherited from the parent filter bar (which is fine, but the card has no internal filter controls)
+### 1. Rename the Settings Card
 
-## Plan
+In `Settings.tsx`, update the kiosk category definition:
+- **Label**: "Check-In Kiosk" becomes **"Kiosks"**
+- **Description**: "Device appearance, branding & behavior" becomes **"Check-in, self-service booking & device configuration"**
 
-### 1. Add Interactive Column Sorting
+### 2. Add a Kiosk Mode Selector (Top of KioskSettingsContent)
 
-Add `ArrowUpDown` sort toggles to every column header in the Staff Retail Performance table:
-- **Stylist** (alphabetical A-Z / Z-A via `localeCompare`)
-- **Product Revenue** (highest to lowest / lowest to highest) -- default sort
-- **Units Sold**
-- **Attachment Rate**
-- **Avg Ticket**
+Replace the deeply nested self-booking toggles in the Behavior tab with a prominent **Kiosk Mode** card at the top of the settings content (above the Appearance/Content/Behavior tabs). This gives immediate visibility into what type of kiosk is being configured.
 
-Use local state (`sortKey` / `sortDir`) with a `useMemo` to sort the `staffRetail` array, matching the exact pattern already used in the Product Performance table above it (lines 61-62, 112-126).
+The mode selector will be a styled toggle group with two options:
 
-### 2. Add Staff Search
+| Mode | Icon | Label | Description |
+|------|------|-------|-------------|
+| Check-In Only | `UserCheck` | Check-In | Clients look up appointments and check in |
+| Self-Service Booking | `CalendarPlus` | Self-Service Booking | Walk-in clients can also book their own appointments |
 
-Add a search input in the card header (same pattern as the Product Performance card, line 195-198) that filters by stylist name.
+- Selecting "Self-Service Booking" automatically enables both `enable_walk_ins` and `enable_self_booking`
+- Selecting "Check-In Only" sets `enable_self_booking` to false (preserves `enable_walk_ins` state independently)
+- The mode selector is a visual radio group with large touch-friendly cards, consistent with the existing appearance mode selector pattern already in the file
 
-### 3. Ensure Card Always Renders
+### 3. Restructure the Behavior Tab
 
-Currently the card is wrapped in `{data.staffRetail.length > 0 && ...}` which hides it entirely when empty. Change this to always render, showing an empty state message ("No staff retail data in this period") when there are no results, consistent with the Product Performance table pattern.
+- Remove the nested self-booking toggles from inside the "Allow Walk-Ins" section
+- Keep the "Allow Walk-Ins" toggle as a standalone toggle (still relevant for check-in mode)
+- When "Self-Service Booking" mode is selected, show the two sub-settings (**Allow Future Bookings** and **Show Stylist Selection**) as a dedicated "Booking Options" section in the Behavior tab -- no longer nested 2 levels deep
+- This makes the configuration hierarchy flatter and easier to understand
 
-### 4. Gap Analysis and Suggested Enhancements
+### Summary of Visual Layout
 
-After building sorting and search, here are additional enhancements worth considering:
+```text
++------------------------------------------+
+| KIOSK MODE                               |
+|  [Check-In]    [Self-Service Booking]     |
++------------------------------------------+
 
-- **Drill-down per stylist**: Clicking a staff row could expand (framer-motion) to show their top products sold, matching the nested breakdown pattern used elsewhere
-- **"Coaching Opportunity" flag**: Highlight the stylist with the lowest attachment rate (minimum volume threshold) so managers can identify coaching targets
-- **Export**: The parent page already has CSV/PDF export, so this is covered
-- **Trend column**: Add a prior-period comparison for each stylist's retail revenue (the prior period data is already fetched in `useRetailAnalytics` but not broken down by staff -- would require extending the hook)
++------------------------------------------+
+| Location Selector | Save | Reset         |
++------------------------------------------+
+| Tabs: Appearance | Content | Behavior    |
+|                                          |
+| (Behavior tab when Self-Service active): |
+|   Idle Timeout: [60]                     |
+|   [x] Allow Walk-Ins                     |
+|   --- Booking Options ---                |
+|   [x] Allow Future Bookings             |
+|   [x] Show Stylist Selection            |
+|   [x] Require Confirmation Tap          |
+|   ...remaining toggles...               |
++------------------------------------------+
+```
 
 ## Technical Details
 
-**File modified:** `src/components/dashboard/analytics/RetailAnalyticsContent.tsx`
+**Files modified:**
+- `src/pages/dashboard/admin/Settings.tsx` -- Update label and description for kiosk category (2 lines)
+- `src/components/dashboard/settings/KioskSettingsContent.tsx` -- Add kiosk mode selector card above tabs; restructure Behavior tab to flatten self-booking options
 
-1. Add state variables for staff sort: `staffSortKey` (type: `'name' | 'productRevenue' | 'unitsSold' | 'attachmentRate' | 'avgTicket'`) and `staffSortDir` (`'asc' | 'desc'`), default to `productRevenue` / `desc`
-2. Add `staffSearch` state
-3. Add `useMemo` that filters by search and sorts `data.staffRetail` using the selected key/direction
-4. Add `toggleStaffSort` handler (same pattern as existing `toggleSort`)
-5. Update table headers to include `ArrowUpDown` icons and `onClick` handlers
-6. Add search input in the card header
-7. Remove the `data.staffRetail.length > 0` conditional wrapper; show empty state inside the table body instead
-
-No hook changes, no database changes, no new files.
+**No database changes, no new files, no hook changes.** The underlying settings fields (`enable_self_booking`, `self_booking_allow_future`, `self_booking_show_stylists`) remain the same -- this is purely a UI reorganization for clarity.
