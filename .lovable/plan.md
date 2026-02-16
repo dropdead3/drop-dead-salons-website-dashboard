@@ -1,109 +1,41 @@
 
 
-# Enhanced Email Branding Configurator
+# Default Email Accent Color from Organization Theme
 
-## Overview
+## Problem
+The email branding accent color defaults to a hardcoded `#6366F1` (indigo) regardless of the organization's selected color palette. It should instead reflect the active theme.
 
-Upgrade the email branding settings from a basic 4-field form into a professional, sectioned configurator with additional customization options, a better layout, and always-visible live preview. This brings the email branding experience in line with Zura's premium design language.
+## Solution
 
-## New Features
+Read the organization's active color theme (cream, rose, sage, ocean) and derive a sensible default accent color from it, so new organizations see a branded-feeling email configurator immediately.
 
-### 1. Footer Customization
-- **Footer text**: Editable line (e.g., business address, tagline)
-- **Social links**: Up to 4 social media URLs (Instagram, Facebook, TikTok, Website) rendered as icons in the email footer
-- **"Powered by" toggle**: Option to show/hide the "Sent via Zura" attribution
+## How It Works
 
-### 2. Button Style Customization
-- **Button corner radius**: Selector (sharp / rounded / pill) controlling CTA button border-radius in emails
-- **Button text color**: Auto-calculated from accent (white or dark) with manual override option
+The app stores the active color theme in `localStorage` under `dd-color-theme`. Each theme has a `--primary` CSS variable defined in `index.css` and preview colors defined in the `colorThemes` array in `useColorTheme.ts`.
 
-### 3. Header Layout Options
-- **Header style**: Choose between "centered" (current), "left-aligned", or "minimal" (thin accent bar, no logo block)
-- **Header padding**: Compact vs standard vs spacious
+We will:
+1. Create a small mapping of theme-to-hex-accent-color (using each theme's characteristic color)
+2. In `EmailBrandingSettings`, when no `email_accent_color` is saved yet, default to the theme-derived color instead of `#6366F1`
 
-### 4. Always-Visible Side-by-Side Preview
-- Replace the toggle-based preview with a persistent side-by-side layout on desktop (stacked on mobile)
-- Left column: settings form. Right column: live preview
-- Desktop/mobile preview toggle stays in the preview panel header
+## Theme-to-Accent Mapping
 
-### 5. Unsaved Changes Indicator
-- Visual badge on the Save button area when changes are pending
-- Confirmation prompt if navigating away with unsaved changes
-
-## Database Changes
-
-Add new columns to `organizations` table to persist the additional settings:
-
-```sql
-ALTER TABLE public.organizations
-  ADD COLUMN IF NOT EXISTS email_footer_text text,
-  ADD COLUMN IF NOT EXISTS email_social_links jsonb DEFAULT '{}',
-  ADD COLUMN IF NOT EXISTS email_show_attribution boolean DEFAULT true,
-  ADD COLUMN IF NOT EXISTS email_button_radius text DEFAULT 'rounded',
-  ADD COLUMN IF NOT EXISTS email_header_style text DEFAULT 'centered';
-```
+| Theme | Accent Default | Rationale |
+|-------|---------------|-----------|
+| Cream | `#1A1A1A` (near-black) | Cream's primary is charcoal/black |
+| Rose | `#DB5A6E` (blush pink) | Rose primary hue |
+| Sage | `#4A9C6D` (sage green) | Sage primary hue |
+| Ocean | `#3B82F6` (blue) | Ocean primary hue |
 
 ## File Changes
 
-### Modified: `src/components/dashboard/settings/EmailBrandingSettings.tsx`
+### `src/components/dashboard/settings/EmailBrandingSettings.tsx`
 
-Complete restructure into a two-column layout with organized sections:
+- Import `useColorTheme` or read `localStorage` for `dd-color-theme`
+- Add a `THEME_ACCENT_DEFAULTS` map
+- Change the fallback from `'#6366F1'` to `THEME_ACCENT_DEFAULTS[activeTheme]` when the org has no saved accent color
+- This affects the initial `useState`, the `useEffect` seed, and the `hasChanges` comparison
 
-**Layout:**
-```text
-+---------------------------+----------------------------+
-| SETTINGS (scrollable)     | LIVE PREVIEW (sticky)      |
-|                           |                            |
-| -- Identity --            |  [Desktop] [Mobile]        |
-| Sender Name | Reply-To    |  [Template selector]       |
-|                           |                            |
-| -- Visual --              |  +--------------------+    |
-| Logo Source  | Accent      |  | [Header w/ logo]   |    |
-|              | Color       |  | [Accent bar]       |    |
-| Header Style | Btn Radius  |  | [Content area]     |    |
-|                           |  | [Footer w/ social] |    |
-| -- Footer --              |  +--------------------+    |
-| Footer Text               |                            |
-| Social Links (IG/FB/TT/W) |                            |
-| Show "Sent via Zura" [x]  |                            |
-|                           |                            |
-| [Send Test] [Save]        |                            |
-+---------------------------+----------------------------+
-```
+### Technical Detail
 
-**Sections:**
-1. **Identity** -- Sender name, reply-to (existing, cleaned up)
-2. **Visual** -- Logo source, accent color, header style, button radius
-3. **Footer** -- Footer text, social links, attribution toggle
-4. **Actions** -- Send test + save (pinned at bottom of settings column)
-
-### Modified: `supabase/functions/_shared/email-sender.ts`
-
-Update `buildBrandedTemplate` to consume the new fields:
-- Render social link icons in the footer
-- Apply custom footer text
-- Respect header style setting
-- Apply button radius to CTA buttons
-- Conditionally show/hide "Sent via Zura"
-
-## Technical Details
-
-### State Management
-- All new fields follow the same pattern as existing ones: local state seeded from fetched data, `hasChanges` comparison, single save mutation
-- Social links stored as `{ instagram?: string, facebook?: string, tiktok?: string, website?: string }`
-
-### Preview Sync
-- All settings reflect instantly in the preview (no save required to see changes)
-- The preview mirrors `buildBrandedTemplate` output exactly so what you see is what recipients get
-
-### Design Rules
-- `font-display` for section headers, uppercase, wide tracking
-- `font-medium` max weight (no bold/semibold)
-- Semantic theme colors throughout
-- Sections separated by subtle borders, not heavy cards
-
-### Edge Function Update
-- `buildBrandedTemplate` reads the new columns from `OrgBranding` type
-- Social icons rendered as small linked images or Unicode symbols (no external image dependencies)
-- Button radius maps: `sharp` = 0, `rounded` = 8px, `pill` = 100px
+The default only applies when `branding.email_accent_color` is `null` (no saved value). Once a user saves a custom accent, it persists as-is. The theme-derived default is purely for the initial experience before any explicit save.
 
