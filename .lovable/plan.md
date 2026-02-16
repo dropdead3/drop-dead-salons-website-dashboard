@@ -1,52 +1,80 @@
 
 
-# Wire Email Logo to Business Settings Logos
+# Redesign ErrorBoundary to Match Zura Brand
 
 ## Overview
 
-Replace the standalone email logo upload in the Email Branding tab with a selector that pulls from the logos already uploaded in Business Settings (`logo_light_url`, `logo_dark_url`). This eliminates duplicate uploads and ensures brand consistency across the platform and emails.
+Rebuild the ErrorBoundary screen to feel like a Zura-branded, advisory-tone experience instead of a generic "Something broke" page. It will mirror the existing 404 page's visual language (PixelZMark, dark-ready theming, font-display typography) and use calm, structured copy aligned with the brand voice.
 
 ## What Changes
 
-### File: `src/components/dashboard/settings/EmailBrandingSettings.tsx`
+### File: `src/components/ErrorBoundary.tsx`
 
-1. **Import `useBusinessSettings`** hook to access the existing business logos.
+1. **Replace the DD75 logo** with the `PixelZMark` component (the animated pixel "Z" grid already used on the 404 page). Since ErrorBoundary is a class component and PixelZMark uses hooks (framer-motion), we'll extract the render into a functional `ErrorFallback` component and keep the class component as a thin wrapper.
 
-2. **Replace the logo upload section** (lines 259-311) with a logo source selector offering these options:
-   - **Auto (from Business Settings)** -- uses `logo_light_url` (light/white logo, ideal for dark email headers) by default
-   - **Light Logo** -- explicitly picks `logo_light_url`
-   - **Dark Logo** -- explicitly picks `logo_dark_url`
-   - **Custom URL** -- allows pasting a URL manually (keeps flexibility)
-   - **None** -- no logo, falls back to text name in header
+2. **Update the copy** from generic "Something broke" to advisory Zura tone:
+   - Headline: "Unexpected interruption" (not shame language, not hype)
+   - Subtext: "Zura encountered a rendering issue. Your data is safe. Reload to resume, or return to your dashboard."
+   - Error detail label: small "DETAIL" tracking text above the error message
 
-3. **Remove the file upload input and upload handler** (`handleLogoUpload`, `fileInputRef`, `uploading` state) since logos are now sourced from Business Settings.
+3. **Match the 404 page's visual structure**:
+   - Same layout: centered column, `max-w-3xl`, rounded card housing the PixelZMark
+   - Same typography: `font-display`, `tracking-[0.16em]`, uppercase headlines
+   - Same button pattern: outline "Go back" + primary "Reload"
+   - Dev-only stack trace stays, styled consistently
 
-4. **Update the preview** to resolve the logo URL from the selected source. The preview header already handles `logoUrl` -- this just changes where the URL comes from.
+4. **Component architecture**:
+   - `ErrorBoundary` class component stays (React requires class for error boundaries)
+   - New inner `ErrorFallback` functional component receives `error` and action handlers as props
+   - `PixelZMark` is extracted to a shared file (`src/components/ui/PixelZMark.tsx`) so both the 404 page and ErrorBoundary can import it without duplication
 
-5. **Update the save mutation** to continue saving `email_logo_url` on the `organizations` table (stores the resolved URL so the backend email sender still works without needing to look up business settings).
+### New File: `src/components/ui/PixelZMark.tsx`
 
-6. **Add a helper note** below the selector: "Manage your logos in Business Settings" as a small link/text, so admins know where to update the actual logo files.
+Extract the existing `PixelZMark` component from `src/pages/NotFound.tsx` into its own shared file. Both `NotFound.tsx` and `ErrorBoundary.tsx` will import from here.
 
-### UI Layout Change
+### File: `src/pages/NotFound.tsx`
+
+Update to import `PixelZMark` from the new shared location instead of defining it inline. No visual changes.
+
+## Visual Layout
 
 ```text
-Before:
-  Email Logo
-  [Upload logo] button / [logo preview + Replace + X]
-  PNG, JPG, SVG, or WebP. Max 2MB.
-
-After:
-  Email Logo
-  [Select: Auto | Light Logo | Dark Logo | Custom | None]
-  [Preview of selected logo if available]
-  Manage your logos in Business Settings.
++------------------------------------------+
+|                                          |
+|          [  Pixel Z Mark card  ]         |
+|                                          |
+|         UNEXPECTED INTERRUPTION          |
+|                                          |
+|   Zura encountered a rendering issue.    |
+|   Your data is safe.                     |
+|                                          |
+|   DETAIL                                 |
+|   A rendering error occurred.            |
+|                                          |
+|       [ Go home ]   [ Reload ]           |
+|                                          |
+|   (dev only: stack trace below)          |
++------------------------------------------+
 ```
 
 ## Technical Details
 
-- No new files, no database changes, no edge function changes
-- Uses existing `useBusinessSettings()` hook already in the codebase
-- The `email_logo_url` column on `organizations` continues to store the resolved URL for backend use
-- When "Auto" is selected, it picks `logo_light_url` (white/light logo works best against the colored accent header background)
-- The `hasChanges` detection updates to compare against the resolved URL
+### Files to Create
 
+| File | Purpose |
+|---|---|
+| `src/components/ui/PixelZMark.tsx` | Shared animated pixel Z mark component extracted from NotFound |
+
+### Files to Modify
+
+| File | Change |
+|---|---|
+| `src/components/ErrorBoundary.tsx` | Full redesign: use PixelZMark, advisory copy, font-display typography, functional ErrorFallback inner component |
+| `src/pages/NotFound.tsx` | Import PixelZMark from shared location, remove inline definition |
+
+### Design Rules Followed
+- No `font-bold` or `font-semibold` (max `font-medium`)
+- `font-display` for headlines with uppercase + wide tracking
+- `font-sans` for body text, normal case
+- Advisory tone: no shame, explains what happened and what to do
+- Semantic theme colors (`bg-background`, `text-foreground`, `text-muted-foreground`)
