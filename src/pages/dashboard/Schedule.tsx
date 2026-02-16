@@ -20,7 +20,8 @@ import { usePhorestCalendar, type PhorestAppointment, type CalendarView } from '
 import { useCalendarPreferences } from '@/hooks/useCalendarPreferences';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
-import { useActiveLocations } from '@/hooks/useLocations';
+import { useActiveLocations, isClosedOnDate, getLocationHoursForDate } from '@/hooks/useLocations';
+import { ClosedDayWarningDialog } from '@/components/dashboard/schedule/ClosedDayWarningDialog';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, Sparkles } from 'lucide-react';
@@ -72,7 +73,13 @@ export default function Schedule() {
   const [bookingOpen, setBookingOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [copilotOpen, setCopilotOpen] = useState(false);
-
+  const [closedDayWarning, setClosedDayWarning] = useState<{
+    open: boolean;
+    date: Date;
+    reason?: string;
+    isOutsideHours?: boolean;
+    pendingAction?: () => void;
+  }>({ open: false, date: new Date() });
   // Listen for FAB toggle event
   useEffect(() => {
     const handleToggle = () => setCopilotOpen(prev => !prev);
@@ -241,6 +248,39 @@ export default function Schedule() {
   };
 
   const handleSlotClick = (dateOrStylistId: Date | string, time: string) => {
+    const slotDate = typeof dateOrStylistId === 'string' ? currentDate : dateOrStylistId;
+    const stylistId = typeof dateOrStylistId === 'string' ? dateOrStylistId : undefined;
+
+    // Check if location is closed or slot is outside hours
+    if (selectedLocationData) {
+      const hoursInfo = getLocationHoursForDate(
+        selectedLocationData.hours_json,
+        selectedLocationData.holiday_closures,
+        slotDate
+      );
+
+      const isOutsideHours = !hoursInfo.isClosed && hoursInfo.openTime && hoursInfo.closeTime &&
+        (time < hoursInfo.openTime || time >= hoursInfo.closeTime);
+
+      if (hoursInfo.isClosed || isOutsideHours) {
+        setClosedDayWarning({
+          open: true,
+          date: slotDate,
+          reason: hoursInfo.closureReason,
+          isOutsideHours: !!isOutsideHours,
+          pendingAction: () => {
+            if (stylistId) {
+              setBookingDefaults({ date: slotDate, stylistId, time });
+            } else {
+              setBookingDefaults({ date: slotDate, time });
+            }
+            setBookingOpen(true);
+          },
+        });
+        return;
+      }
+    }
+
     if (typeof dateOrStylistId === 'string') {
       setBookingDefaults({ date: currentDate, stylistId: dateOrStylistId, time });
     } else {
@@ -312,7 +352,29 @@ export default function Schedule() {
         </div>
       ) : (
         <>
-          {view === 'day' && (
+          {view === 'day' && selectedLocationData && (() => {
+            const hoursInfo = getLocationHoursForDate(
+              selectedLocationData.hours_json,
+              selectedLocationData.holiday_closures,
+              currentDate
+            );
+            return (
+              <DayView
+                date={currentDate}
+                appointments={appointments}
+                stylists={displayedStylists}
+                hoursStart={preferences.hours_start}
+                hoursEnd={preferences.hours_end}
+                onAppointmentClick={handleAppointmentClick}
+                onSlotClick={handleSlotClick}
+                selectedAppointmentId={selectedAppointment?.id}
+                locationHours={hoursInfo.openTime && hoursInfo.closeTime ? { open: hoursInfo.openTime, close: hoursInfo.closeTime } : null}
+                isLocationClosed={hoursInfo.isClosed}
+                closureReason={hoursInfo.closureReason}
+              />
+            );
+          })()}
+          {view === 'day' && !selectedLocationData && (
             <DayView
               date={currentDate}
               appointments={appointments}
@@ -335,6 +397,8 @@ export default function Schedule() {
               onSlotClick={handleSlotClick}
               selectedLocationId={selectedLocation}
               onDayDoubleClick={handleDayDoubleClick}
+              locationHoursJson={selectedLocationData?.hours_json}
+              locationHolidayClosures={selectedLocationData?.holiday_closures}
             />
           )}
           
@@ -344,6 +408,8 @@ export default function Schedule() {
               appointments={appointments}
               onDayClick={handleDayClick}
               onAppointmentClick={handleAppointmentClick}
+              locationHoursJson={selectedLocationData?.hours_json}
+              locationHolidayClosures={selectedLocationData?.holiday_closures}
             />
           )}
           
@@ -451,6 +517,19 @@ export default function Schedule() {
         defaultDate={bookingDefaults.date}
         defaultStylistId={bookingDefaults.stylistId}
         defaultTime={bookingDefaults.time}
+      />
+
+      <ClosedDayWarningDialog
+        open={closedDayWarning.open}
+        onOpenChange={(open) => setClosedDayWarning(prev => ({ ...prev, open }))}
+        onConfirm={() => {
+          setClosedDayWarning(prev => ({ ...prev, open: false }));
+          closedDayWarning.pendingAction?.();
+        }}
+        date={closedDayWarning.date}
+        locationName={selectedLocationData?.name || 'This location'}
+        reason={closedDayWarning.reason}
+        isOutsideHours={closedDayWarning.isOutsideHours}
       />
     </DashboardLayout>
   );

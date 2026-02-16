@@ -1,5 +1,6 @@
 import { useMemo, useState, useCallback } from 'react';
 import { format, isToday, getWeek } from 'date-fns';
+import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -41,6 +42,9 @@ interface DayViewProps {
   onAppointmentClick: (appointment: PhorestAppointment) => void;
   onSlotClick?: (stylistId: string, time: string) => void;
   selectedAppointmentId?: string | null;
+  locationHours?: { open: string; close: string } | null;
+  isLocationClosed?: boolean;
+  closureReason?: string;
 }
 
 // Use consolidated status colors from design tokens
@@ -103,6 +107,7 @@ function DroppableSlot({
   minute,
   isAvailable,
   isPastSlot,
+  isOutsideHours,
   showCurrentTime,
   onClick,
   isOver,
@@ -112,6 +117,7 @@ function DroppableSlot({
   minute: number;
   isAvailable: boolean;
   isPastSlot: boolean;
+  isOutsideHours: boolean;
   showCurrentTime: boolean;
   onClick: () => void;
   isOver: boolean;
@@ -128,16 +134,21 @@ function DroppableSlot({
         minute !== 0 && 'border-t border-dashed border-border/30',
         isPastSlot
           ? 'bg-muted/40 cursor-not-allowed'
-          : isAvailable
-            ? 'bg-background hover:bg-muted/30 cursor-pointer'
-            : 'bg-muted/50',
+          : isOutsideHours
+            ? 'cursor-pointer'
+            : isAvailable
+              ? 'bg-background hover:bg-muted/30 cursor-pointer'
+              : 'bg-muted/50',
         highlight && isAvailable && 'bg-primary/20 ring-1 ring-primary/40'
       )}
+      style={isOutsideHours && !isPastSlot ? {
+        background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
+      } : undefined}
       onClick={() => {
-        if (isAvailable) onClick();
+        if (isAvailable || isOutsideHours) onClick();
       }}
     >
-      {isAvailable && !isPastSlot && (
+      {(isAvailable || isOutsideHours) && !isPastSlot && (
         <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
           {formatSlotTime(hour, minute)}
         </div>
@@ -382,6 +393,9 @@ export function DayView({
   onAppointmentClick,
   onSlotClick,
   selectedAppointmentId,
+  locationHours,
+  isLocationClosed,
+  closureReason,
 }: DayViewProps) {
   const ROW_HEIGHT = 16; // 16px per 15-min slot
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -524,6 +538,13 @@ export function DayView({
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex flex-col h-full bg-card rounded-lg border border-border overflow-hidden">
+        {/* Closed day banner */}
+        {isLocationClosed && (
+          <div className="px-3 py-2 bg-muted/60 border-b border-border flex items-center gap-2">
+            <ClosedBadge reason={closureReason} />
+            <span className="text-xs text-muted-foreground">All time slots are outside regular hours</span>
+          </div>
+        )}
         {/* Calendar Grid */}
         <div className="flex-1 overflow-auto">
           <div className="min-w-[600px]">
@@ -591,8 +612,15 @@ export function DayView({
                         return slotDate < now;
                       })();
                       
-                      const isAvailable = (hour >= 9 && hour < 18) && !isPastSlot;
                       const slotTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                      
+                      // Determine if slot is outside operating hours
+                      const isOutsideHours = isLocationClosed || (
+                        locationHours != null &&
+                        (slotTime < locationHours.open || slotTime >= locationHours.close)
+                      );
+                      
+                      const isAvailable = !isOutsideHours && !isPastSlot;
                       const slotId = `slot-${stylist.user_id}-${slotTime}`;
                       
                       return (
@@ -603,6 +631,7 @@ export function DayView({
                           minute={minute}
                           isAvailable={isAvailable}
                           isPastSlot={!!isPastSlot}
+                          isOutsideHours={!!isOutsideHours}
                           showCurrentTime={showCurrentTime}
                           isOver={false}
                           onClick={() => {

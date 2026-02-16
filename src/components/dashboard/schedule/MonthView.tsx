@@ -11,6 +11,8 @@ import {
   isSameDay
 } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
+import { isClosedOnDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 
 interface MonthViewProps {
@@ -18,6 +20,8 @@ interface MonthViewProps {
   appointments: PhorestAppointment[];
   onDayClick: (date: Date) => void;
   onAppointmentClick: (appointment: PhorestAppointment) => void;
+  locationHoursJson?: HoursJson | null;
+  locationHolidayClosures?: HolidayClosure[] | null;
 }
 
 const STATUS_DOT_COLORS: Record<AppointmentStatus, string> = {
@@ -34,6 +38,8 @@ export function MonthView({
   appointments,
   onDayClick,
   onAppointmentClick,
+  locationHoursJson,
+  locationHolidayClosures,
 }: MonthViewProps) {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -93,6 +99,7 @@ export function MonthView({
               const dayAppointments = appointmentsByDate.get(dateKey) || [];
               const isCurrentMonth = isSameMonth(day, currentDate);
               const isCurrentDay = isToday(day);
+              const closureInfo = isClosedOnDate(locationHoursJson ?? null, locationHolidayClosures ?? null, day);
               
               // Count by status for the dots
               const statusCounts = dayAppointments.reduce((acc, apt) => {
@@ -106,16 +113,25 @@ export function MonthView({
                   className={cn(
                     'min-h-[100px] p-1.5 border-r last:border-r-0 cursor-pointer hover:bg-muted/50 transition-colors',
                     !isCurrentMonth && 'bg-muted/30 text-muted-foreground',
-                    isCurrentDay && 'bg-primary/5'
+                    isCurrentDay && 'bg-primary/5',
+                    closureInfo.isClosed && isCurrentMonth && 'bg-muted/40'
                   )}
+                  style={closureInfo.isClosed && isCurrentMonth ? {
+                    background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.06) 4px, hsl(var(--muted-foreground) / 0.06) 5px)`,
+                  } : undefined}
                   onClick={() => onDayClick(day)}
                 >
                   {/* Day Number */}
-                  <div className={cn(
-                    'text-sm font-medium mb-1 w-7 h-7 flex items-center justify-center rounded-full',
-                    isCurrentDay && 'bg-primary text-primary-foreground'
-                  )}>
-                    {format(day, 'd')}
+                  <div className="flex items-center gap-1">
+                    <div className={cn(
+                      'text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full',
+                      isCurrentDay && 'bg-primary text-primary-foreground'
+                    )}>
+                      {format(day, 'd')}
+                    </div>
+                    {closureInfo.isClosed && isCurrentMonth && (
+                      <ClosedBadge reason={closureInfo.reason} />
+                    )}
                   </div>
 
                   {/* Appointment Indicators */}

@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
+import { isClosedOnDate, getLocationHoursForDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 import { 
   format, 
   addDays, 
@@ -28,6 +30,8 @@ interface WeekViewProps {
   onSlotClick?: (date: Date, time: string) => void;
   selectedLocationId?: string;
   onDayDoubleClick?: (date: Date) => void;
+  locationHoursJson?: HoursJson | null;
+  locationHolidayClosures?: HolidayClosure[] | null;
 }
 
 // Use consolidated status colors from design tokens
@@ -245,6 +249,8 @@ export function WeekView({
   onAppointmentClick,
   selectedLocationId,
   onDayDoubleClick,
+  locationHoursJson,
+  locationHolidayClosures,
 }: WeekViewProps) {
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -323,13 +329,15 @@ export function WeekView({
                 const dayIsYesterday = isYesterday(day);
                 const dateKey = format(day, 'yyyy-MM-dd');
                 const apptCount = appointmentsByDate.get(dateKey)?.length || 0;
+                const dayHoursInfo = getLocationHoursForDate(locationHoursJson ?? null, locationHolidayClosures ?? null, day);
                 
                 return (
                   <div 
                     key={day.toISOString()} 
                     className={cn(
                       'py-3 px-2 text-center border-l border-border/50 cursor-pointer select-none',
-                      dayIsToday && 'bg-primary/10'
+                      dayIsToday && 'bg-primary/10',
+                      dayHoursInfo.isClosed && 'bg-muted/40'
                     )}
                     onDoubleClick={() => onDayDoubleClick?.(day)}
                   >
@@ -353,7 +361,9 @@ export function WeekView({
                       'text-[10px] mt-1',
                       dayIsToday ? 'text-primary font-medium' : 'text-muted-foreground'
                     )}>
-                      {dayIsToday ? 'Today' : dayIsYesterday ? 'Yesterday' : `${apptCount} appts`}
+                      {dayHoursInfo.isClosed ? (
+                        <ClosedBadge reason={dayHoursInfo.closureReason} />
+                      ) : dayIsToday ? 'Today' : dayIsYesterday ? 'Yesterday' : `${apptCount} appts`}
                     </div>
                   </div>
                 );
@@ -400,13 +410,15 @@ export function WeekView({
               const dateKey = format(day, 'yyyy-MM-dd');
               const dayAppointments = appointmentsByDate.get(dateKey) || [];
               const isCurrentDay = isToday(day);
+              const dayHoursInfo = getLocationHoursForDate(locationHoursJson ?? null, locationHolidayClosures ?? null, day);
               
               return (
                 <div 
                   key={day.toISOString()} 
                   className={cn(
                     'relative border-l border-border',
-                    isCurrentDay && 'bg-primary/5'
+                    isCurrentDay && 'bg-primary/5',
+                    dayHoursInfo.isClosed && 'bg-muted/20'
                   )}
                 >
                   {/* Time slot rows */}
@@ -420,6 +432,12 @@ export function WeekView({
                       slotDate.setHours(slot.hour, slot.minute, 0, 0);
                       return slotDate < now;
                     })();
+
+                    // Check if slot is outside operating hours
+                    const isOutsideHours = dayHoursInfo.isClosed || (
+                      dayHoursInfo.openTime && dayHoursInfo.closeTime &&
+                      (slotTime < dayHoursInfo.openTime || slotTime >= dayHoursInfo.closeTime)
+                    );
                     
                     // Past slots on current day are not bookable
                     if (isPastSlot) {
@@ -462,6 +480,9 @@ export function WeekView({
                                 ? 'border-t border-dotted border-border/40'
                                 : 'border-t border-dotted border-border/20'
                           )}
+                          style={isOutsideHours ? {
+                            background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
+                          } : undefined}
                         >
                           <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
                             {(() => {

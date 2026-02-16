@@ -187,6 +187,37 @@ export function getTodayHours(hoursJson: HoursJson | null): { open: string; clos
   return { open: dayHours.open, close: dayHours.close };
 }
 
+// Get location hours for a specific date (consolidates closure check + operating hours)
+export function getLocationHoursForDate(
+  hoursJson: HoursJson | null,
+  holidayClosures: HolidayClosure[] | null,
+  date: Date
+): {
+  isClosed: boolean;
+  closureReason?: string;
+  openTime?: string;
+  closeTime?: string;
+} {
+  const closure = isClosedOnDate(hoursJson, holidayClosures, date);
+  if (closure.isClosed) {
+    return { isClosed: true, closureReason: closure.reason };
+  }
+
+  if (!hoursJson) return { isClosed: false };
+
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+  const dayKey = dayNames[date.getDay()];
+  const dayHours = hoursJson[dayKey];
+
+  if (!dayHours?.open || !dayHours?.close) return { isClosed: false };
+
+  return {
+    isClosed: false,
+    openTime: dayHours.open,
+    closeTime: dayHours.close,
+  };
+}
+
 export function useLocations(organizationId?: string) {
   return useQuery({
     queryKey: ['locations', organizationId],
