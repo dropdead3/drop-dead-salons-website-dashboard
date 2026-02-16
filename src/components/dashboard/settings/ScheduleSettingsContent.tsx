@@ -431,7 +431,7 @@ export function ScheduleSettingsContent() {
               <Calendar className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
               <p className="text-muted-foreground">No service categories found.</p>
               <p className="text-sm text-muted-foreground">
-                Categories will appear here once services are synced from Phorest.
+                Manage your categories in <Link to="/dashboard/admin/settings" className="text-primary hover:underline">Services Settings</Link>.
               </p>
             </div>
           )}

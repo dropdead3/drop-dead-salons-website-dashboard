@@ -117,15 +117,15 @@ export function useReorderCategories() {
   });
 }
 
-// Sync new categories from phorest_services table
+// Sync new categories from services table (native)
 export function useSyncServiceCategories() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
-      // Get unique categories from phorest_services
+      // Get unique categories from native services table
       const { data: services, error: servicesError } = await supabase
-        .from('phorest_services')
+        .from('services')
         .select('category')
         .eq('is_active', true);
       
@@ -145,7 +145,6 @@ export function useSyncServiceCategories() {
       const newCategories = uniqueCategories.filter(cat => cat && !existingNames.has(cat));
       
       if (newCategories.length > 0) {
-        // Default color palette for new categories
         const defaultColors = [
           '#60a5fa', '#f472b6', '#facc15', '#10b981', '#a78bfa',
           '#f97316', '#06b6d4', '#ec4899', '#84cc16', '#8b5cf6',
@@ -168,6 +167,70 @@ export function useSyncServiceCategories() {
       }
       
       return { added: newCategories.length };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-category-colors'] });
+    },
+  });
+}
+
+// Create a new category
+export function useCreateCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ name, organizationId }: { name: string; organizationId?: string }) => {
+      const defaultColors = ['#60a5fa', '#f472b6', '#facc15', '#10b981', '#a78bfa'];
+      const colorHex = defaultColors[Math.floor(Math.random() * defaultColors.length)];
+      
+      const { error } = await supabase
+        .from('service_category_colors')
+        .insert({
+          category_name: name,
+          color_hex: colorHex,
+          text_color_hex: getContrastingTextColor(colorHex),
+          organization_id: organizationId,
+        });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-category-colors'] });
+    },
+  });
+}
+
+// Rename a category
+export function useRenameCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ categoryId, newName }: { categoryId: string; newName: string }) => {
+      const { error } = await supabase
+        .from('service_category_colors')
+        .update({ category_name: newName, updated_at: new Date().toISOString() })
+        .eq('id', categoryId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-category-colors'] });
+    },
+  });
+}
+
+// Delete a category
+export function useDeleteCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (categoryId: string) => {
+      const { error } = await supabase
+        .from('service_category_colors')
+        .delete()
+        .eq('id', categoryId);
+      
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service-category-colors'] });

@@ -4,27 +4,28 @@ import { useAuth } from '@/contexts/AuthContext';
 
 // Default icon colors for each category
 export const DEFAULT_ICON_COLORS: Record<string, string> = {
-  business: '#D946EF',   // Fuchsia
-  email: '#8B5CF6',      // Purple
-  sms: '#22C55E',        // Green for text messages
-  'service-flows': '#A855F7', // Purple (for service communication flows)
-  users: '#3B82F6',      // Blue
-  onboarding: '#F97316', // Orange
-  integrations: '#10B981', // Emerald
-  system: '#6B7280',     // Gray
-  program: '#EC4899',    // Pink
-  levels: '#14B8A6',     // Teal
-  handbooks: '#EAB308',  // Yellow
-  schedule: '#0EA5E9',   // Sky blue
-  locations: '#EF4444',  // Red
-  dayrate: '#F97316',    // Orange (chair rental)
-  forms: '#0EA5E9',      // Sky blue (Forms & Agreements)
-  loyalty: '#F59E0B',    // Amber/Gold (Loyalty & Rewards)
-  feedback: '#10B981',   // Emerald (Client Feedback)
-  'access-hub': '#8B5CF6', // Purple (Shield theme)
-  leaderboard: '#EAB308', // Gold/Trophy color
-  'team-rewards': '#F59E0B', // Amber/Gold (Staff Rewards)
-  kiosk: '#8B5CF6',      // Purple (Check-In Kiosk)
+  business: '#D946EF',
+  email: '#8B5CF6',
+  sms: '#22C55E',
+  'service-flows': '#A855F7',
+  users: '#3B82F6',
+  onboarding: '#F97316',
+  integrations: '#10B981',
+  system: '#6B7280',
+  program: '#EC4899',
+  levels: '#14B8A6',
+  handbooks: '#EAB308',
+  schedule: '#0EA5E9',
+  locations: '#EF4444',
+  dayrate: '#F97316',
+  forms: '#0EA5E9',
+  loyalty: '#F59E0B',
+  feedback: '#10B981',
+  'access-hub': '#8B5CF6',
+  leaderboard: '#EAB308',
+  'team-rewards': '#F59E0B',
+  kiosk: '#8B5CF6',
+  services: '#14B8A6',
 };
 
 // Section groups for organized layout
@@ -32,7 +33,7 @@ export const SECTION_GROUPS = [
   {
     id: 'operations',
     label: 'Business Operations',
-    categories: ['business', 'locations', 'schedule', 'kiosk', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'handbooks', 'loyalty', 'team-rewards', 'feedback'],
+    categories: ['business', 'locations', 'services', 'schedule', 'kiosk', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'handbooks', 'loyalty', 'team-rewards', 'feedback'],
   },
   {
     id: 'team',
