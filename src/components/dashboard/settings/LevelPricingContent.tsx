@@ -66,7 +66,7 @@ export function LevelPricingContent({ serviceId, basePrice, onSaved }: LevelPric
   return (
     <div className="space-y-4">
       <p className={tokens.body.muted}>
-        Set pricing by stylist level. Leave blank to use the base price{basePrice != null ? ` ($${basePrice.toFixed(2)})` : ''}.
+        Set pricing by stylist level. Leave blank if no level-specific price applies.
       </p>
       <div className="space-y-3 max-h-[40vh] overflow-y-auto p-1">
         {activeLevels.map(level => (
@@ -81,7 +81,7 @@ export function LevelPricingContent({ serviceId, basePrice, onSaved }: LevelPric
                 step="0.01"
                 min="0"
                 className="pl-7 rounded-lg"
-                placeholder={basePrice != null ? basePrice.toFixed(2) : '0.00'}
+                placeholder="0.00"
                 value={prices[level.id] || ''}
                 onChange={e => setPrices(prev => ({ ...prev, [level.id]: e.target.value }))}
                 autoCapitalize="off"

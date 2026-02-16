@@ -73,7 +73,7 @@ export function LevelPricingDialog({
             <Layers className="w-4 h-4" /> Price by Stylist Level
           </DialogTitle>
           <DialogDescription className={tokens.body.muted}>
-            Set pricing for <span className="font-medium text-foreground">{serviceName}</span> by level. Leave blank to use the base price{basePrice != null ? ` ($${basePrice.toFixed(2)})` : ''}.
+            Set pricing for <span className="font-medium text-foreground">{serviceName}</span> by level. Leave blank if no level-specific price applies.
           </DialogDescription>
         </DialogHeader>
 
@@ -95,7 +95,7 @@ export function LevelPricingDialog({
                     step="0.01"
                     min="0"
                     className="pl-7 rounded-lg"
-                    placeholder={basePrice != null ? basePrice.toFixed(2) : '0.00'}
+                    placeholder="0.00"
                     value={prices[level.id] || ''}
                     onChange={e => setPrices(prev => ({ ...prev, [level.id]: e.target.value }))}
                     autoCapitalize="off"

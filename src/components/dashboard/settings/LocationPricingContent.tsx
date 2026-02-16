@@ -66,7 +66,7 @@ export function LocationPricingContent({ serviceId, basePrice, onSaved }: Locati
   return (
     <div className="space-y-4">
       <p className={tokens.body.muted}>
-        Set a location-specific base price. Leave blank to use the default{basePrice != null ? ` ($${basePrice.toFixed(2)})` : ''}.
+        Set a location-specific price. Leave blank if no location-specific price applies.
       </p>
       <div className="space-y-3 max-h-[40vh] overflow-y-auto p-1">
         {activeLocations.map(loc => (
@@ -81,7 +81,7 @@ export function LocationPricingContent({ serviceId, basePrice, onSaved }: Locati
                 step="0.01"
                 min="0"
                 className="pl-7 rounded-lg"
-                placeholder={basePrice != null ? basePrice.toFixed(2) : '0.00'}
+                placeholder="0.00"
                 value={prices[loc.id] || ''}
                 onChange={e => setPrices(prev => ({ ...prev, [loc.id]: e.target.value }))}
                 autoCapitalize="off"
