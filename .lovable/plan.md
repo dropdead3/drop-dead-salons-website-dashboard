@@ -1,103 +1,256 @@
 
 
-# Email Compliance and Preference Center -- Gaps and Enhancements
+# Service Communication Flows System
 
-## Gaps Found
+## The Core Design Decision: Independent Flows, Consolidated Delivery
 
-### Gap 1: `send-feedback-request` Sends Client Emails Without Unsubscribe Check
+After reviewing the appointments table (one service per row), the services table (7 categories: Blonding, Color, Extensions, Extras, Haircut, Consultation, Styling), and the existing automation infrastructure, here is the recommended approach:
 
-This function emails clients directly (feedback requests after appointments) but does NOT pass `clientId` to `sendOrgEmail`. If a client has opted out of marketing, they would still receive this email. Feedback requests are borderline -- they are triggered by a specific transaction (appointment), which makes them closer to transactional, but they are technically optional solicitations. Best practice: check opt-out and include an unsubscribe link.
+**Each service defines its own communication flow independently, but emails scheduled for the same client on the same day are merged into a single combined email at send time.**
 
-**Fix:** Pass `clientId` to `sendOrgEmail` in this function, same as the re-engagement and automation callers.
+This is the best approach because:
 
-### Gap 2: No Re-Subscribe Path
+- A client who gets Blonding + Extensions in one visit needs BOTH color aftercare AND extension maintenance instructions -- these are genuinely different content
+- Blonding might need a "How's your color holding up?" check-in at 3 weeks, while Extensions need a "Time for a maintenance appointment" at 6 weeks -- these SHOULD be separate emails because they fire on different days
+- The only real consolidation problem is same-day sends (e.g., day-of prep emails for 2 services, or day-after care instructions for 2 services booked together)
+- Appointment reminders ("Your appointment is tomorrow at 2pm") are NOT service-specific and belong to a separate, simpler system
 
-The current unsubscribe page is a dead end. Once a client clicks unsubscribe, there is no way for them to re-opt-in. CAN-SPAM does not require a re-subscribe mechanism, but from a business perspective it is a missed opportunity.
+## How It Works
 
-**Fix:** Add a "Changed your mind?" link on the unsubscribe confirmation page that re-opts the client in using the same signed token (a second endpoint or a query parameter like `?action=resubscribe`).
+### Service Communication Flows
 
-### Gap 3: No Token Expiration
+Salon owners/super admins configure flows per service (or per service category as a default). Each flow has ordered steps:
 
-The signed unsubscribe URLs have a `ts` (timestamp) in the payload but nothing validates it. Links generated years ago will still work. This is fine for unsubscribe (CAN-SPAM requires links to work for 30 days minimum), but it means there's no replay protection or link rotation.
+```text
+Example: "Blonding" Flow
+  Step 1: 2 days before  | "Prep for your color appointment"
+  Step 2: 2 hours before | "See you soon! Quick reminders..."
+  Step 3: 1 day after    | "Color aftercare instructions"
+  Step 4: 21 days after  | "How's your color? Time for a refresh?"
 
-**Fix:** Add optional expiration validation in `verifySignedPayload` -- accept links up to 365 days old, reject older ones with a "link expired" message and instructions to contact the salon.
+Example: "Extensions" Flow
+  Step 1: 3 days before  | "Prepare for your extension appointment"
+  Step 2: 1 day after    | "Extension care guide"
+  Step 3: 42 days after  | "Extension maintenance reminder"
+```
 
-### Gap 4: No Physical Address in Footer
+### Same-Day Consolidation
 
-CAN-SPAM requires a physical mailing address in every commercial email. The current `buildBrandedTemplate` footer has social links and attribution but no postal address field.
+When the processor runs, it groups all pending step emails for the same client + same day into one combined email:
 
-**Fix:** Add an `email_physical_address` field to the organizations table (or use an existing address field) and render it in the email footer. This is a legal requirement.
+```text
+Subject: "Getting ready for your visit tomorrow"
+Body:
+  Section 1: "For your Blonding appointment..."
+  Section 2: "For your Extensions appointment..."
+```
 
-### Gap 5: No Email Send Logging for Client Emails
+If the steps fire on different days (e.g., 21-day color check-in vs 42-day extension reminder), they send as separate emails -- which is correct because they are genuinely different communications.
 
-Staff insights emails update `insights_email_last_sent` and `insights_email_next_at`. Client marketing emails have `reengagement_outreach` logging, but there is no unified email log. If a client disputes receiving emails, there is no audit trail.
+### Appointment Reminders (Separate System)
 
-**Fix:** Create a lightweight `email_send_log` table that records every client-facing email: `(organization_id, client_id, email_type, sent_at, message_id, status)`. The `sendOrgEmail` function writes to it after successful sends.
+Appointment reminders are NOT part of service flows. They are a simple time-based system:
 
-### Gap 6: No Rate Limiting on Client Emails
+- 24 hours before: reminder with date, time, stylist, location, all services listed
+- 2 hours before: "See you soon" with parking/directions (location-specific)
 
-A client could receive a re-engagement email, an automation email, and a feedback request all on the same day. There is no frequency cap to prevent email fatigue.
+These always consolidate all services for that visit into one reminder. They pull location-specific content (address, parking notes, directions) automatically.
 
-**Fix:** Before sending any client email, check the `email_send_log` for recent sends to the same client. If they received an email within the last 48 hours, skip or queue the new one.
+### Location-Specific Content
 
-### Gap 7: Unsubscribe Confirmation Page Has No Branding Context
+Each flow step can have location-specific overrides. For example, "Prep for your color appointment" might include different parking instructions or arrival procedures per location. The system uses a fallback chain:
 
-The current `unsubscribe-client-email` page shows the salon name but does not pull the salon's logo or accent color. The insights unsubscribe page also lacks branding. Both should feel like they belong to the salon, not a generic page.
+1. Location-specific step content (if configured)
+2. Organization-level step content (default)
 
-**Fix:** Fetch `email_logo_url` and `email_accent_color` from the organizations table (already queried) and apply them to the confirmation page header.
+## Database Schema
 
-## Recommended Changes
+### Table: `service_email_flows`
 
-### Database
+Defines which services have communication flows.
 
-1. Add `email_physical_address TEXT` column to the `organizations` table
-2. Create `email_send_log` table:
-   - `id UUID PK`
-   - `organization_id UUID`
-   - `client_id UUID`
-   - `email_type TEXT` (marketing, feedback, transactional)
-   - `message_id TEXT` (from Resend)
-   - `sent_at TIMESTAMPTZ DEFAULT now()`
-   - Index on `(organization_id, client_id, sent_at)`
+```
+service_email_flows
+  id                UUID (PK)
+  organization_id   UUID (FK -> organizations)
+  service_id        UUID (FK -> services, nullable)
+  service_category  TEXT (nullable) -- fallback: applies to all services in category
+  name              TEXT -- e.g., "Blonding Care Flow"
+  description       TEXT
+  is_active         BOOLEAN DEFAULT true
+  created_at        TIMESTAMPTZ
+  updated_at        TIMESTAMPTZ
+  UNIQUE(organization_id, service_id)
+```
 
-### Edge Functions
+Logic: If a service has a direct flow (service_id match), use it. Otherwise fall back to a category-level flow (service_category match). This prevents owners from having to configure 30 individual services when most in a category share the same flow.
 
-1. **`_shared/email-sender.ts`**
-   - After successful Resend send with `clientId`, insert into `email_send_log`
-   - Add physical address to `buildBrandedTemplate` footer
-   - Add 48-hour rate limit check before sending client emails
+### Table: `service_email_flow_steps`
 
-2. **`send-feedback-request/index.ts`**
-   - Pass `clientId` to `sendOrgEmail` so opt-out is respected and unsubscribe link is injected
+Individual communication steps within a flow.
 
-3. **`unsubscribe-client-email/index.ts`**
-   - Add re-subscribe support via `?action=resubscribe` query parameter
-   - Add token age validation (reject links older than 365 days)
-   - Pull org logo and accent color for branded confirmation page
+```
+service_email_flow_steps
+  id                UUID (PK)
+  flow_id           UUID (FK -> service_email_flows)
+  step_order        INTEGER
+  timing_type       TEXT -- 'before_appointment' | 'after_appointment'
+  timing_value      INTEGER -- number of hours (e.g., 48 = 2 days before, 504 = 3 weeks after)
+  subject           TEXT
+  html_body         TEXT -- supports {{first_name}}, {{service_name}}, {{stylist_name}}, {{appointment_date}}, {{location_name}}
+  email_template_id UUID (FK -> email_templates, nullable) -- optional: use managed template instead of inline
+  is_active         BOOLEAN DEFAULT true
+  created_at        TIMESTAMPTZ
+  updated_at        TIMESTAMPTZ
+```
 
-4. **`_shared/signed-url.ts`**
-   - Add optional `maxAgeMs` parameter to `verifySignedPayload` for token expiration
+### Table: `service_email_flow_step_overrides`
 
-### Frontend
+Location-specific content overrides for individual steps.
 
-5. **Organization Settings (Email Branding section)**
-   - Add a "Business Address" field for CAN-SPAM compliance
-   - This goes in the existing email branding settings area on the admin settings page
+```
+service_email_flow_step_overrides
+  id           UUID (PK)
+  step_id      UUID (FK -> service_email_flow_steps)
+  location_id  TEXT (FK -> locations)
+  subject      TEXT (nullable) -- override subject for this location
+  html_body    TEXT (nullable) -- override body for this location
+  created_at   TIMESTAMPTZ
+  UNIQUE(step_id, location_id)
+```
 
-## Priority Order
+### Table: `service_email_queue`
 
-1. Physical address in footer (legal requirement)
-2. `send-feedback-request` opt-out check (compliance gap)
-3. Email send logging (audit trail)
-4. Rate limiting (client experience)
-5. Token expiration (security hardening)
-6. Re-subscribe path (business value)
-7. Branded unsubscribe page (polish)
+Tracks scheduled and sent communications per appointment.
+
+```
+service_email_queue
+  id               UUID (PK)
+  organization_id  UUID (FK -> organizations)
+  appointment_id   UUID (FK -> appointments)
+  client_id        UUID (FK -> phorest_clients)
+  step_id          UUID (FK -> service_email_flow_steps)
+  scheduled_at     TIMESTAMPTZ -- when this email should fire
+  status           TEXT -- 'pending' | 'sent' | 'skipped' | 'merged' | 'cancelled'
+  merged_into_id   UUID (nullable, FK -> service_email_queue) -- if consolidated into another send
+  sent_at          TIMESTAMPTZ
+  message_id       TEXT -- from Resend
+  created_at       TIMESTAMPTZ
+  INDEX(organization_id, status, scheduled_at)
+  INDEX(client_id, scheduled_at)
+```
+
+### Table: `appointment_reminders_config`
+
+Simple org-level config for appointment reminders (separate from service flows).
+
+```
+appointment_reminders_config
+  id               UUID (PK)
+  organization_id  UUID (FK -> organizations)
+  reminder_type    TEXT -- '24_hours' | '2_hours' | '48_hours'
+  is_active        BOOLEAN DEFAULT true
+  subject          TEXT
+  html_body        TEXT
+  created_at       TIMESTAMPTZ
+  updated_at       TIMESTAMPTZ
+  UNIQUE(organization_id, reminder_type)
+```
+
+### Table: `appointment_reminder_overrides`
+
+Location-specific reminder content.
+
+```
+appointment_reminder_overrides
+  id               UUID (PK)
+  config_id        UUID (FK -> appointment_reminders_config)
+  location_id      TEXT (FK -> locations)
+  subject          TEXT
+  html_body        TEXT
+  created_at       TIMESTAMPTZ
+  UNIQUE(config_id, location_id)
+```
+
+## Edge Functions
+
+### 1. `enqueue-service-emails` (triggered when appointment is created/confirmed)
+
+When an appointment is booked or confirmed:
+- Look up the service's flow (direct match, then category fallback)
+- Calculate all step send times relative to the appointment date/time
+- Insert rows into `service_email_queue` with status 'pending'
+- If appointment is cancelled, mark all pending queue entries as 'cancelled'
+
+### 2. `process-service-email-queue` (runs on cron, e.g., every 15 minutes)
+
+- Query `service_email_queue` for rows where `scheduled_at <= now()` and `status = 'pending'`
+- Group by (client_id, DATE(scheduled_at)) to find same-day sends
+- For groups with multiple items: merge content into a single email, mark extras as 'merged'
+- For singles: send as-is
+- Resolve location overrides for each step
+- Use `sendOrgEmail` with `clientId` (respects opt-out, rate limiting, unsubscribe link)
+- Update status to 'sent' with message_id
+
+### 3. `process-appointment-reminders` (runs on cron, e.g., every 15 minutes)
+
+- Separate from service flows
+- Find appointments in the next 24h / 2h that haven't had reminders sent
+- Group all services for that client's visit into one reminder email
+- Include location-specific details (address, parking, arrival notes)
+- These are transactional emails (no unsubscribe required, but still respect global email preferences)
+
+## Frontend: Admin Configuration UI
+
+### New Page: Service Communication Flows (under Settings or a dedicated section)
+
+**Flow List View:**
+- Shows all configured service flows
+- Grouped by service category
+- Toggle active/inactive
+- Services without a flow show "No flow configured" with a quick-setup button
+
+**Flow Editor:**
+- Select a service (or "All services in [Category]" for category-level defaults)
+- Add/remove/reorder steps on a visual timeline
+- Each step shows: timing (e.g., "2 days before"), subject, preview of body
+- Rich text editor for step content with variable insertion ({{first_name}}, {{service_name}}, etc.)
+- Location override tab: per-location content variants
+
+**Appointment Reminders Tab:**
+- Configure 24-hour and 2-hour reminder templates
+- Per-location overrides for directions/parking
+- Toggle each reminder type on/off
+
+### Where It Lives
+
+Add a new "Service Emails" or "Client Communication Flows" section to the admin settings area, accessible to owners and super admins. This is separate from the existing "Automated Client Follow-ups" (re-engagement/win-back rules) since those are behavior-based, while these are appointment/service-based.
+
+## Implementation Priority
+
+1. Database tables and migration (all 6 tables)
+2. `enqueue-service-emails` edge function (queue population on booking)
+3. `process-service-email-queue` edge function (send processor with consolidation)
+4. Admin UI: Flow list and step editor
+5. `process-appointment-reminders` edge function
+6. Admin UI: Appointment reminder config
+7. Location override UI
+8. Cron job setup for both processors
+
+## How the Consolidation Prevents "Poor Flow"
+
+To address the concern directly: a client who books Blonding + Extensions will experience:
+
+- **Same-day sends consolidate**: Pre-visit prep, day-after care -- these merge into one email with sections per service
+- **Different-day sends stay separate**: 3-week color check-in and 6-week extension reminder are genuinely different moments, different calls to action, and different rebooking timelines -- they SHOULD be separate emails
+- **Appointment reminders are always one email**: "Your appointment tomorrow at 2pm includes: Blonding, Extensions" with one set of location directions
+
+This means no client ever gets 3 emails on the same day for the same visit, but they do get appropriately timed follow-ups that match each service's actual care timeline.
 
 ## Technical Notes
 
-- The `email_send_log` table should use RLS with service-role-only access (same as `client_email_preferences`)
-- Rate limiting logic goes in `sendOrgEmail` before the Resend API call, after the opt-out check
-- The physical address field should be presented in the settings UI with helper text explaining "Required by CAN-SPAM for all commercial emails"
-- Re-subscribe uses the same HMAC verification, just toggles `marketing_opt_out` back to `false` and clears `opt_out_at`
-
+- The `service_email_queue` table allows full visibility into what was sent, when, and whether it was merged -- useful for debugging and client dispute resolution
+- Timing is stored in hours rather than days to support "2 hours before" type steps alongside "3 weeks after" steps (504 hours = 21 days)
+- Category-level flows with service-level overrides follows the same inheritance pattern used elsewhere in the platform (e.g., location settings fallback to org settings)
+- The queue-based architecture decouples "what should be sent" from "when it actually sends," making it resilient to downtime and easy to audit
+- All client emails route through `sendOrgEmail`, inheriting opt-out checks, rate limiting, unsubscribe links, and send logging automatically
