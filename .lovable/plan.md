@@ -1,129 +1,56 @@
 
-# Client-Facing Kiosk Booking Wizard
+# Retail Sales by Staff Card -- Enhancement
 
-## Overview
+## Current State
 
-Add a self-service booking wizard to the kiosk tablet check-in system. When "Enable Walk-Ins" is active and a client taps "Continue as Walk-In," they will be guided through a touch-friendly booking flow: select services, optionally pick a stylist, choose a date/time, enter their name and phone, and confirm. All behavioral options (same-day vs. future booking, stylist selection visibility) are configurable per location in the dashboard settings.
+The "Staff Retail Performance" table already exists inside `RetailAnalyticsContent.tsx` (lines 423-493). It displays: Rank, Stylist (avatar + name), Product Revenue, Units Sold, Attachment Rate, and Avg Ticket. Data comes from the `useRetailAnalytics` hook which aggregates `phorest_transaction_items`.
 
-## New Settings (Configurable per Location)
+**What it lacks:**
+- No column sorting (revenue, units, name, attachment rate, avg ticket)
+- No search/filter within the card
+- No ability to sort alphabetically or toggle high-to-low / low-to-high
+- Location and date range are inherited from the parent filter bar (which is fine, but the card has no internal filter controls)
 
-Three new settings added to the kiosk configuration, both in the dashboard settings panel and the on-device kiosk settings dialog:
+## Plan
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| `enable_self_booking` | Master toggle -- when ON, walk-in clients see the booking wizard instead of a simple walk-in notification | `false` |
-| `self_booking_allow_future` | When ON, clients can book up to 14 days ahead. When OFF, same-day only. | `false` |
-| `self_booking_show_stylists` | When ON, clients see stylist photos and can choose. When OFF, auto-assigns first available. | `true` |
+### 1. Add Interactive Column Sorting
 
-## User Flow (Kiosk)
+Add `ArrowUpDown` sort toggles to every column header in the Staff Retail Performance table:
+- **Stylist** (alphabetical A-Z / Z-A via `localeCompare`)
+- **Product Revenue** (highest to lowest / lowest to highest) -- default sort
+- **Units Sold**
+- **Attachment Rate**
+- **Avg Ticket**
 
-```text
-Idle -> Lookup -> No Appointment Found -> "Continue as Walk-In"
-                                              |
-                                    +--------------------+
-                                    | KioskBookingWizard |
-                                    +--------------------+
-                                              |
-                             1. Select Service Category
-                                              |
-                             2. Select Services
-                                              |
-                      3. Select Stylist (if setting enabled)
-                                              |
-                      4. Select Date + Time (date picker
-                         shows today-only or 14-day range
-                         based on setting)
-                                              |
-                             5. Enter Name + Phone
-                                              |
-                             6. Confirm + Book
-                                              |
-                                        Success Screen
-```
+Use local state (`sortKey` / `sortDir`) with a `useMemo` to sort the `staffRetail` array, matching the exact pattern already used in the Product Performance table above it (lines 61-62, 112-126).
 
-## What Gets Built
+### 2. Add Staff Search
 
-### 1. Database Migration
-Add three new columns to `organization_kiosk_settings`:
-- `enable_self_booking` (boolean, default false)
-- `self_booking_allow_future` (boolean, default false)
-- `self_booking_show_stylists` (boolean, default true)
+Add a search input in the card header (same pattern as the Product Performance card, line 195-198) that filters by stylist name.
 
-### 2. Update KioskSettings Type and Defaults
-Add the three new fields to:
-- `KioskSettings` interface in `useKioskSettings.ts`
-- `DEFAULT_KIOSK_SETTINGS` constant
-- `LocalSettings` type in `KioskSettingsContent.tsx`
+### 3. Ensure Card Always Renders
 
-### 3. Dashboard Settings UI (KioskSettingsContent.tsx)
-In the "Behavior" tab, add a new "Self-Service Booking" section (below the existing "Allow Walk-Ins" toggle):
-- **Enable Self-Service Booking** toggle -- with description: "Let walk-in clients book their own appointment from the kiosk"
-- When enabled, show two sub-settings:
-  - **Allow Future Bookings** toggle -- "Clients can book up to 14 days ahead (otherwise same-day only)"
-  - **Show Stylist Selection** toggle -- "Let clients choose their stylist (otherwise first available is assigned)"
-- These sub-settings are visually indented and only visible when `enable_self_booking` is ON
+Currently the card is wrapped in `{data.staffRetail.length > 0 && ...}` which hides it entirely when empty. Change this to always render, showing an empty state message ("No staff retail data in this period") when there are no results, consistent with the Product Performance table pattern.
 
-### 4. On-Device Kiosk Settings (KioskSettingsDialog.tsx)
-Mirror the same three toggles in the on-device settings dialog's "Behavior" tab, so admins can configure directly from the tablet.
+### 4. Gap Analysis and Suggested Enhancements
 
-### 5. KioskBookingWizard Component (New)
-Create `src/components/kiosk/KioskBookingWizard.tsx` -- a full-screen, touch-optimized, multi-step booking wizard that matches the existing kiosk glass aesthetic (backdrop blur, accent color borders, large touch targets).
+After building sorting and search, here are additional enhancements worth considering:
 
-**Steps:**
-1. **Service Selection** -- Category-first navigation (like WalkInDialog), large touch targets, shows service name + duration + price
-2. **Stylist Selection** (conditional) -- Grid of stylist cards with photos, "First Available" option always present. Only shown if `self_booking_show_stylists` is enabled
-3. **Date + Time** -- If `self_booking_allow_future` is ON, show a horizontal scrollable date picker (next 14 days, skip Sundays). If OFF, date is auto-set to today. Time slots shown as a grid of large buttons (30-min intervals within operating hours)
-4. **Client Info** -- Name (required) and phone number (required) with kiosk-style large input fields and the existing KioskNumberPad
-5. **Review + Confirm** -- Summary card showing all selections, large "Book Appointment" button
-
-**Data sources (all public/no-auth, using existing patterns):**
-- Services: Query `phorest_services` filtered by `is_active` and the kiosk location's `phorest_branch_id`
-- Stylists: Query `phorest_staff_mapping` + `employee_profiles` filtered by branch and `show_on_calendar`
-- Booking: Insert into `phorest_appointments` with `status: 'checked_in'` and a `phorest_id` prefixed with `kiosk-walkin-`
-
-### 6. Update KioskProvider + useKioskCheckin
-- Add `'booking'` to the `KioskState` union type
-- Add a `startBooking` action that transitions to the booking state
-- Modify `startWalkIn` -- when `enable_self_booking` is ON, transition to `'booking'` state instead of `'walk_in'`
-- Expose booking-related settings (allow_future, show_stylists) through the provider
-
-### 7. Wire Up in Kiosk.tsx
-Add the new state to the `AnimatePresence` block:
-```
-{state === 'booking' && <KioskBookingWizard key="booking" />}
-```
-
-### 8. Analytics
-Log kiosk self-bookings to `kiosk_analytics` with `is_walk_in: true` and `check_in_method: 'self_booking'`
+- **Drill-down per stylist**: Clicking a staff row could expand (framer-motion) to show their top products sold, matching the nested breakdown pattern used elsewhere
+- **"Coaching Opportunity" flag**: Highlight the stylist with the lowest attachment rate (minimum volume threshold) so managers can identify coaching targets
+- **Export**: The parent page already has CSV/PDF export, so this is covered
+- **Trend column**: Add a prior-period comparison for each stylist's retail revenue (the prior period data is already fetched in `useRetailAnalytics` but not broken down by staff -- would require extending the hook)
 
 ## Technical Details
 
-### Files Modified:
-- `src/hooks/useKioskSettings.ts` -- Add 3 new fields to interface + defaults
-- `src/hooks/useKioskCheckin.ts` -- Add `'booking'` state, `startBooking` action
-- `src/components/kiosk/KioskProvider.tsx` -- Expose new settings and `startBooking`
-- `src/components/kiosk/KioskConfirmScreen.tsx` -- Route "Continue as Walk-In" to booking wizard when `enable_self_booking` is ON
-- `src/components/dashboard/settings/KioskSettingsContent.tsx` -- Add 3 toggles in Behavior tab
-- `src/components/kiosk/KioskSettingsDialog.tsx` -- Add 3 toggles in Behavior tab
-- `src/pages/Kiosk.tsx` -- Add `booking` state rendering
+**File modified:** `src/components/dashboard/analytics/RetailAnalyticsContent.tsx`
 
-### Files Created:
-- `src/components/kiosk/KioskBookingWizard.tsx` -- The multi-step booking wizard component
+1. Add state variables for staff sort: `staffSortKey` (type: `'name' | 'productRevenue' | 'unitsSold' | 'attachmentRate' | 'avgTicket'`) and `staffSortDir` (`'asc' | 'desc'`), default to `productRevenue` / `desc`
+2. Add `staffSearch` state
+3. Add `useMemo` that filters by search and sorts `data.staffRetail` using the selected key/direction
+4. Add `toggleStaffSort` handler (same pattern as existing `toggleSort`)
+5. Update table headers to include `ArrowUpDown` icons and `onClick` handlers
+6. Add search input in the card header
+7. Remove the `data.staffRetail.length > 0` conditional wrapper; show empty state inside the table body instead
 
-### Database Migration:
-```sql
-ALTER TABLE organization_kiosk_settings
-  ADD COLUMN enable_self_booking boolean DEFAULT false,
-  ADD COLUMN self_booking_allow_future boolean DEFAULT false,
-  ADD COLUMN self_booking_show_stylists boolean DEFAULT true;
-```
-
-### No Edge Function Changes
-The kiosk booking wizard will insert directly into `phorest_appointments` using existing public RLS policies (same pattern as the browse/walk-in flow already uses). If the existing RLS doesn't allow anonymous inserts, we'll add a policy for kiosk walk-in bookings matching the existing kiosk insert patterns.
-
-### Design Principles
-- All UI follows existing kiosk glass aesthetic (backdrop blur, accent borders, large rounded corners)
-- Touch targets are minimum 48x48px, most are 60px+
-- Uses the kiosk's configured colors (background, text, accent) for consistency
-- Back button on every step to allow corrections
-- Idle timer continues during booking flow (auto-resets if abandoned)
+No hook changes, no database changes, no new files.
