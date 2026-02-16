@@ -777,7 +777,7 @@ export function QuickBookingPopover({
                       ) : servicesByCategory && Object.keys(servicesByCategory).length > 0 ? (
                         // Category list
                         <div className="space-y-1">
-                          {sortCategories(Object.keys(servicesByCategory)).map((category) => {
+                          {Object.keys(servicesByCategory).map((category) => {
                             const catColor = getCategoryColor(category, categoryColors);
                             const isConsultation = category.toLowerCase().includes('consult');
                             const selectedCount = (servicesByCategory[category] || []).filter(
