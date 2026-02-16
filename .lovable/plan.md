@@ -1,129 +1,84 @@
 
 
-# Service Pricing by Stylist Level + Stylist Overrides
+# Unified Service Editor with Tabbed Navigation
 
 ## Overview
 
-Add two pricing layers to the service management system:
-1. **Level-based pricing** -- each service gets a price per stylist level (New Talent, Studio Artist, Core Artist, etc.)
-2. **Stylist overrides** -- individual stylists can have custom pricing that supersedes their level's default
+Combine the three separate service dialogs (Edit Service, Level Pricing, Stylist Overrides) into a single unified "Service Editor" dialog with tab navigation. The service row will have a single edit button (pencil icon) instead of three separate icons, and the dialog opens as a wizard-style editor with three tabs.
 
-This mirrors the screenshot reference (Phorest's "Price Levels Per Category" dialog) but adapted to Zura's existing level system and UI patterns.
+## UI Design
 
-## Data Model
+The unified dialog will have:
+- A header showing the service name
+- Three tabs using the existing `SubTabsList` / `SubTabsTrigger` (underline-style tabs): **Details** | **Level Pricing** | **Stylist Overrides**
+- Each tab renders its respective content inline
+- Footer with Cancel/Save that adapts per tab
 
-Two new database tables:
+## Changes
 
-### `service_level_prices`
-Stores the default price for each service at each stylist level.
+### 1. New File: `src/components/dashboard/settings/ServiceEditorDialog.tsx`
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID PK | |
-| service_id | UUID FK -> services(id) ON DELETE CASCADE | |
-| stylist_level_id | UUID FK -> stylist_levels(id) ON DELETE CASCADE | |
-| price | NUMERIC NOT NULL | |
-| organization_id | UUID FK -> organizations(id) ON DELETE CASCADE | |
-| created_at | TIMESTAMPTZ | |
-| updated_at | TIMESTAMPTZ | |
+A wrapper dialog that:
+- Accepts service data (for edit mode) or null (for create mode)
+- Uses `Tabs` with `SubTabsList` / `SubTabsTrigger` for the three sections
+- **Details tab**: Embeds the existing service form fields (name, category, duration, price, description, toggles) -- extracted inline, not importing `ServiceFormDialog`
+- **Level Pricing tab**: Embeds the `LevelPricingDialog` content (level list with price inputs) directly, without wrapping it in its own Dialog
+- **Stylist Overrides tab**: Embeds the `StylistPriceOverridesDialog` content (override list, search, add) directly
+- In create mode, only the Details tab is visible (pricing tabs appear after first save)
+- Footer: "Cancel" always visible; "Save" submits current tab's data
 
-Unique constraint: `(service_id, stylist_level_id)`
+### 2. Refactor: `LevelPricingDialog.tsx` -> extract inner content
 
-### `service_stylist_price_overrides`
-Stores per-stylist price overrides that supersede the level default.
+Extract the inner content (the level list + price inputs) into a `LevelPricingContent` component that can be rendered both standalone and inside the unified editor. The dialog wrapper remains for backward compatibility but delegates to the content component.
 
-| Column | Type | Notes |
-|--------|------|-------|
-| id | UUID PK | |
-| service_id | UUID FK -> services(id) ON DELETE CASCADE | |
-| employee_id | UUID FK -> employee_profiles(id) ON DELETE CASCADE | |
-| price | NUMERIC NOT NULL | |
-| organization_id | UUID FK -> organizations(id) ON DELETE CASCADE | |
-| created_at | TIMESTAMPTZ | |
-| updated_at | TIMESTAMPTZ | |
+### 3. Refactor: `StylistPriceOverridesDialog.tsx` -> extract inner content
 
-Unique constraint: `(service_id, employee_id)`
+Same pattern: extract `StylistOverridesContent` from the dialog wrapper.
 
-### Price Resolution Order
-1. Check `service_stylist_price_overrides` for (service, stylist) -- if found, use it
-2. Check `service_level_prices` for (service, stylist's level) -- if found, use it
-3. Fall back to `services.price` (the default base price)
+### 4. Modify: `ServicesSettingsContent.tsx`
 
-### RLS Policies
-Both tables: org-member SELECT, org-admin INSERT/UPDATE/DELETE (same pattern as existing tables).
+- Remove the three separate icon buttons (Layers, UserPlus, Pencil) per service row
+- Replace with a single Pencil (edit) icon button that opens the unified `ServiceEditorDialog`
+- Remove the separate `LevelPricingDialog` and `StylistPriceOverridesDialog` instances
+- Remove `levelPricingService` and `overrideService` state variables
+- Keep the `ServiceFormDialog` for create mode only (or unify create into the new editor too)
+- The "Add service" button still opens in create mode (Details tab only)
 
-## UI Changes
+### 5. Remove: `ServiceFormDialog.tsx` usage for edit mode
 
-### 1. Level Pricing Dialog (accessed from service edit/detail)
-
-A dialog similar to the Phorest screenshot:
-- Title: "Price by Stylist Level"
-- Lists all active stylist levels (from `stylist_levels` table) with a `$` input field next to each
-- Pre-populated with existing level prices or the service's base price as placeholder
-- Cancel / Save buttons
-
-**Entry point**: A "Set Level Prices" button added to the `ServiceFormDialog` (or as an action on each service row in the accordion).
-
-### 2. Stylist Override Dialog
-
-A secondary dialog or expandable section:
-- Title: "Stylist Price Overrides"
-- Search/filter for stylists
-- Shows stylist name, their level, the level price (for reference), and an override price input
-- Only shows stylists who have overrides, plus an "Add Override" action
-- Cancel / Save buttons
-
-**Entry point**: A "Stylist Overrides" button within the Level Pricing Dialog or on the service row.
-
-### 3. Service Row Display Enhancement
-
-In the services accordion, show a small indicator on service rows that have level pricing or stylist overrides configured (e.g., a layered-pricing icon or badge like "7 levels" or "2 overrides").
-
-## New Files
-
-| File | Purpose |
-|------|---------|
-| `src/hooks/useServiceLevelPricing.ts` | CRUD hooks for `service_level_prices` and `service_stylist_price_overrides` |
-| `src/components/dashboard/settings/LevelPricingDialog.tsx` | Dialog listing all levels with price inputs |
-| `src/components/dashboard/settings/StylistPriceOverridesDialog.tsx` | Dialog for per-stylist overrides |
-
-## Modified Files
-
-| File | Change |
-|------|--------|
-| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Add "Level Prices" button/icon on each service row; state management for dialogs |
-| `src/components/dashboard/settings/ServiceFormDialog.tsx` | Optionally add "Set Level Prices" link within the form |
+Edit mode is now handled by `ServiceEditorDialog`. Create mode can either stay as `ServiceFormDialog` or be folded into the new editor (Details tab only, pricing tabs disabled).
 
 ## Technical Details
 
-### Migration SQL (single migration)
-- CREATE TABLE `service_level_prices` with RLS, unique constraint, org scoping, updated_at trigger
-- CREATE TABLE `service_stylist_price_overrides` with RLS, unique constraint, org scoping, updated_at trigger
-- Indexes on `service_id`, `organization_id`, `employee_id`
+### ServiceEditorDialog structure
 
-### Hooks (`useServiceLevelPricing.ts`)
-- `useServiceLevelPrices(serviceId)` -- fetch all level prices for a service
-- `useUpsertServiceLevelPrices()` -- bulk upsert level prices (uses ON CONFLICT)
-- `useStylistPriceOverrides(serviceId)` -- fetch all stylist overrides for a service
-- `useUpsertStylistPriceOverride()` -- create/update single override
-- `useDeleteStylistPriceOverride()` -- remove an override
-- `useResolveServicePrice(serviceId, employeeId)` -- resolve the effective price using the 3-tier fallback
+```
+Dialog
+  DialogContent (max-w-lg)
+    DialogHeader
+      DialogTitle: "Edit {serviceName}" or "Add Service"
+    Tabs defaultValue="details"
+      SubTabsList
+        SubTabsTrigger value="details" -- "Details"
+        SubTabsTrigger value="levels" disabled={isCreateMode} -- "Level Pricing"
+        SubTabsTrigger value="overrides" disabled={isCreateMode} -- "Stylist Overrides"
+      TabsContent value="details"
+        [service form fields inline]
+      TabsContent value="levels"
+        LevelPricingContent serviceId={...} basePrice={...}
+      TabsContent value="overrides"
+        StylistOverridesContent serviceId={...} basePrice={...}
+    DialogFooter (per-tab save buttons)
+```
 
-### LevelPricingDialog
-- Fetches `stylist_levels` (already queryable) and `service_level_prices` for the selected service
-- Renders a row per level: level label + `$` input
-- On save: bulk upserts all prices
+### Service row simplification
 
-### StylistPriceOverridesDialog
-- Fetches employees (with their level info) and existing overrides
-- Shows each override as: stylist name | level | level price (read-only reference) | override price (editable)
-- "Add" button to pick a stylist and set their override price
-- Delete button to remove an override (reverts to level pricing)
+Before (4 icons): Layers | UserPlus | Pencil | Trash
+After (2 icons): Pencil (opens unified editor) | Trash
 
 ## Build Order
-1. Database migration (two tables + RLS + indexes)
-2. `useServiceLevelPricing.ts` hooks
-3. `LevelPricingDialog.tsx` component
-4. `StylistPriceOverridesDialog.tsx` component
-5. Wire into `ServicesSettingsContent.tsx` (add buttons/icons per service row)
 
+1. Extract `LevelPricingContent` from `LevelPricingDialog.tsx`
+2. Extract `StylistOverridesContent` from `StylistPriceOverridesDialog.tsx`
+3. Create `ServiceEditorDialog.tsx` with tabbed layout
+4. Update `ServicesSettingsContent.tsx` to use the unified dialog and simplify service row icons
