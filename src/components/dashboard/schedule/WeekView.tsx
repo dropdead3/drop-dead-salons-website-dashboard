@@ -247,6 +247,7 @@ export function WeekView({
   hoursStart = 8,
   hoursEnd = 20,
   onAppointmentClick,
+  onSlotClick,
   selectedLocationId,
   onDayDoubleClick,
   locationHoursJson,
@@ -439,19 +440,27 @@ export function WeekView({
                       (slotTime < dayHoursInfo.openTime || slotTime >= dayHoursInfo.closeTime)
                     );
                     
-                    // Past slots on current day are not bookable
-                    if (isPastSlot) {
+                    // Determine if this is a "special" slot that should route through onSlotClick
+                    const isSpecialSlot = isPastSlot || dayHoursInfo.isClosed || isOutsideHours;
+
+                    // Special slots (past, closed, outside hours) route through onSlotClick for warnings
+                    if (isSpecialSlot) {
                       return (
                         <div 
                           key={slotTime}
                           className={cn(
-                            'h-[20px] bg-muted/40 cursor-not-allowed',
+                            'h-[20px] cursor-pointer transition-colors group relative',
+                            isPastSlot && 'bg-muted/40',
                             slot.isHour 
                               ? 'border-t border-border/60' 
                               : slot.isHalf 
                                 ? 'border-t border-dotted border-border/40'
                                 : 'border-t border-dotted border-border/20'
                           )}
+                          style={!isPastSlot && isOutsideHours ? {
+                            background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
+                          } : undefined}
+                          onClick={() => onSlotClick?.(day, slotTime)}
                         />
                       );
                     }
@@ -480,9 +489,6 @@ export function WeekView({
                                 ? 'border-t border-dotted border-border/40'
                                 : 'border-t border-dotted border-border/20'
                           )}
-                          style={isOutsideHours ? {
-                            background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
-                          } : undefined}
                         >
                           <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
                             {(() => {

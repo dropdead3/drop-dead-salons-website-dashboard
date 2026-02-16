@@ -145,7 +145,7 @@ function DroppableSlot({
         background: `repeating-linear-gradient(-45deg, transparent, transparent 4px, hsl(var(--muted-foreground) / 0.08) 4px, hsl(var(--muted-foreground) / 0.08) 5px)`,
       } : undefined}
       onClick={() => {
-        if (isAvailable || isOutsideHours) onClick();
+        if (isPastSlot || isAvailable || isOutsideHours) onClick();
       }}
     >
       {(isAvailable || isOutsideHours) && !isPastSlot && (

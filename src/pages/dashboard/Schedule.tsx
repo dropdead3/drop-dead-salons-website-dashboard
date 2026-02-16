@@ -251,6 +251,15 @@ export default function Schedule() {
     const slotDate = typeof dateOrStylistId === 'string' ? currentDate : dateOrStylistId;
     const stylistId = typeof dateOrStylistId === 'string' ? dateOrStylistId : undefined;
 
+    // Check if the slot is in the past
+    const slotDateTime = new Date(slotDate);
+    const [slotH, slotM] = time.split(':').map(Number);
+    slotDateTime.setHours(slotH, slotM, 0, 0);
+    if (slotDateTime < new Date()) {
+      toast.error('Cannot schedule in the past');
+      return;
+    }
+
     // Check if location is closed or slot is outside hours
     if (selectedLocationData) {
       const hoursInfo = getLocationHoursForDate(
