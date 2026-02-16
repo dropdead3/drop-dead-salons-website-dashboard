@@ -902,14 +902,23 @@ export function QuickBookingPopover({
               {/* Footer */}
               <div className="p-3 border-t border-border bg-card space-y-2">
                 {selectedServices.length > 0 && (
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
-                        {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
-                      </Badge>
-                      <span className="text-muted-foreground">{totalDuration}m</span>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
+                          {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                        </Badge>
+                        <span className="text-muted-foreground">{totalDuration}m</span>
+                      </div>
+                      <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
                     </div>
-                    <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedServiceDetails.map(s => (
+                        <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0">
+                          {s.name}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 )}
                 <Button
@@ -972,14 +981,23 @@ export function QuickBookingPopover({
               {/* Footer */}
               <div className="p-3 border-t border-border bg-card space-y-2">
                 {selectedServices.length > 0 && (
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
-                        {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
-                      </Badge>
-                      <span className="text-muted-foreground">{totalDuration}m</span>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
+                          {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                        </Badge>
+                        <span className="text-muted-foreground">{totalDuration}m</span>
+                      </div>
+                      <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
                     </div>
-                    <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedServiceDetails.map(s => (
+                        <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0">
+                          {s.name}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
                 )}
                 <Button
@@ -1095,16 +1113,25 @@ export function QuickBookingPopover({
               {/* Footer */}
               <div className="p-3 border-t border-border bg-card space-y-2">
                 {selectedServices.length > 0 && selectedStylist && selectedLevelNumber && (
-                  <div className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
-                        {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
-                      </Badge>
-                      <span className="text-muted-foreground">{totalDuration}m</span>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
+                          {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                        </Badge>
+                        <span className="text-muted-foreground">{totalDuration}m</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="font-medium">{formatCurrencyWhole(levelBasedTotalPrice)}</span>
+                        <span className="text-muted-foreground ml-1.5">• Level {selectedLevelNumber}</span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="font-medium">{formatCurrencyWhole(levelBasedTotalPrice)}</span>
-                      <span className="text-muted-foreground ml-1.5">• Level {selectedLevelNumber}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedServiceDetails.map(s => (
+                        <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0">
+                          {s.name}
+                        </Badge>
+                      ))}
                     </div>
                   </div>
                 )}
