@@ -37,7 +37,7 @@ import { useLocations } from '@/hooks/useLocations';
 import { NewClientDialog } from './NewClientDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
-import { getCategoryColor } from '@/utils/categoryColors';
+import { getCategoryColor, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { getLevelSlug, getLevelNumber, findLevelBasedPrice } from '@/utils/levelPricing';
 import { useQualifiedStaffForServices } from '@/hooks/useStaffServiceQualifications';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
@@ -785,6 +785,8 @@ export function QuickBookingPopover({
                         <div className="space-y-1">
                           {Object.keys(servicesByCategory).map((category) => {
                             const catColor = getCategoryColor(category, categoryColors);
+                            const isGradient = isGradientMarker(catColor.bg);
+                            const gradient = isGradient ? getGradientFromMarker(catColor.bg) : null;
                             const selectedCount = (servicesByCategory[category] || []).filter(
                               s => selectedServices.includes(s.phorest_service_id)
                             ).length;
@@ -797,8 +799,8 @@ export function QuickBookingPopover({
                                 <div 
                                   className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-medium shrink-0"
                                   style={{
-                                    backgroundColor: catColor.bg,
-                                    color: catColor.text,
+                                    background: gradient ? gradient.background : catColor.bg,
+                                    color: gradient ? gradient.textColor : catColor.text,
                                   }}
                                 >
                                   {catColor.abbr}
