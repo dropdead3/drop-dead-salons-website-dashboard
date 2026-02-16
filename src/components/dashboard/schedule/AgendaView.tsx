@@ -51,7 +51,7 @@ function AppointmentCard({
       )}
       onClick={onClick}
     >
-      <CardContent className="p-4">
+      <CardContent className="p-4 min-h-[56px]">
         <div className="flex items-start gap-4">
           {/* Time Column */}
           <div className="text-center shrink-0 w-16">
