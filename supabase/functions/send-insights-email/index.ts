@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { sendOrgEmail } from "../_shared/email-sender.ts";
-import { sendEmail } from "../_shared/email-sender.ts";
+import { sendOrgEmail, sendEmail } from "../_shared/email-sender.ts";
+import { buildSignedUrl } from "../_shared/signed-url.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -246,20 +246,8 @@ serve(async (req: Request): Promise<Response> => {
           continue;
         }
 
-        // Build unsubscribe URL
-        const jwtSecret = Deno.env.get("SUPABASE_JWT_SECRET") || Deno.env.get("JWT_SECRET") || "fallback";
-        const encoder = new TextEncoder();
-        const key = await crypto.subtle.importKey(
-          "raw",
-          encoder.encode(jwtSecret),
-          { name: "HMAC", hash: "SHA-256" },
-          false,
-          ["sign"]
-        );
-        const tokenPayload = btoa(JSON.stringify({ uid, ts: Date.now() }));
-        const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(tokenPayload));
-        const sig = btoa(String.fromCharCode(...new Uint8Array(signature)));
-        const unsubscribeUrl = `${supabaseUrl}/functions/v1/unsubscribe-insights-email?payload=${encodeURIComponent(tokenPayload)}&sig=${encodeURIComponent(sig)}`;
+        // Build unsubscribe URL using shared utility
+        const unsubscribeUrl = await buildSignedUrl("unsubscribe-insights-email", { uid, ts: Date.now() });
 
         const dashboardUrl = `${siteUrl}/dashboard`;
         const frequency = prefs.insights_email_frequency || "weekly";

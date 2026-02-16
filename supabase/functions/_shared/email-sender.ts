@@ -9,6 +9,8 @@
  * Organizations never need their own Resend account.
  */
 
+import { buildSignedUrl } from "./signed-url.ts";
+
 export interface EmailPayload {
   to: string[];
   subject: string;
@@ -21,6 +23,7 @@ export interface EmailResult {
   success: boolean;
   messageId?: string;
   error?: string;
+  skipped?: boolean;
 }
 
 export interface OrgEmailPayload {
@@ -28,6 +31,7 @@ export interface OrgEmailPayload {
   subject: string;
   html: string;
   replyTo?: string;
+  clientId?: string;
 }
 
 interface SocialLinks {
@@ -111,6 +115,10 @@ export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
 
 /**
  * Send an org-branded email.
+ * When clientId is provided:
+ *  1. Checks marketing opt-out status → skips if opted out
+ *  2. Generates signed unsubscribe URL → injected into footer
+ *  3. Adds List-Unsubscribe headers for Gmail/Yahoo compliance
  */
 export async function sendOrgEmail(
   supabase: any,
@@ -127,6 +135,38 @@ export async function sendOrgEmail(
   if (!payload.to || payload.to.length === 0) {
     console.log("[email-sender] No recipients provided - email skipped");
     return { success: false, error: "No recipients provided" };
+  }
+
+  // Check opt-out status when clientId is provided
+  let unsubscribeUrl: string | null = null;
+  if (payload.clientId) {
+    try {
+      const { data: prefs } = await supabase
+        .from("client_email_preferences")
+        .select("marketing_opt_out")
+        .eq("organization_id", organizationId)
+        .eq("client_id", payload.clientId)
+        .maybeSingle();
+
+      if (prefs?.marketing_opt_out) {
+        console.log(`[email-sender] Client ${payload.clientId} opted out - email skipped`);
+        return { success: true, skipped: true };
+      }
+    } catch (e) {
+      console.warn("[email-sender] Error checking opt-out status:", e);
+      // Continue sending if check fails
+    }
+
+    // Build signed unsubscribe URL
+    try {
+      unsubscribeUrl = await buildSignedUrl("unsubscribe-client-email", {
+        cid: payload.clientId,
+        oid: organizationId,
+        ts: Date.now(),
+      });
+    } catch (e) {
+      console.warn("[email-sender] Error building unsubscribe URL:", e);
+    }
   }
 
   // Fetch org branding
@@ -152,7 +192,24 @@ export async function sendOrgEmail(
   const senderName = branding?.email_sender_name || branding?.name || "Zura";
   const fromAddress = `${senderName} <notifications@${PLATFORM_DOMAIN}>`;
   const replyTo = payload.replyTo || branding?.email_reply_to || branding?.primary_contact_email || undefined;
-  const brandedHtml = buildBrandedTemplate(branding, payload.html);
+  const brandedHtml = buildBrandedTemplate(branding, payload.html, unsubscribeUrl);
+
+  // Build headers for Resend API
+  const resendBody: Record<string, unknown> = {
+    from: fromAddress,
+    to: payload.to,
+    subject: payload.subject,
+    html: brandedHtml,
+    reply_to: replyTo,
+  };
+
+  // Add List-Unsubscribe headers for Gmail/Yahoo compliance
+  if (unsubscribeUrl) {
+    resendBody.headers = {
+      "List-Unsubscribe": `<${unsubscribeUrl}>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    };
+  }
 
   try {
     const response = await fetch("https://api.resend.com/emails", {
@@ -161,13 +218,7 @@ export async function sendOrgEmail(
         "Content-Type": "application/json",
         Authorization: `Bearer ${resendApiKey}`,
       },
-      body: JSON.stringify({
-        from: fromAddress,
-        to: payload.to,
-        subject: payload.subject,
-        html: brandedHtml,
-        reply_to: replyTo,
-      }),
+      body: JSON.stringify(resendBody),
     });
 
     if (!response.ok) {
@@ -203,7 +254,7 @@ function buildSocialIconsHtml(links: SocialLinks | null): string {
 /**
  * Wrap inner HTML content in a branded email template.
  */
-function buildBrandedTemplate(branding: OrgBranding | null, innerHtml: string): string {
+function buildBrandedTemplate(branding: OrgBranding | null, innerHtml: string, unsubscribeUrl?: string | null): string {
   const orgName = branding?.name || "Zura";
   const accentColor = branding?.email_accent_color || "#000000";
   const logoUrl = branding?.email_logo_url || branding?.logo_url || null;
@@ -236,6 +287,9 @@ function buildBrandedTemplate(branding: OrgBranding | null, innerHtml: string): 
   const attributionHtml = showAttribution
     ? `<p style="margin: 0; font-size: 12px; color: #a1a1aa;">Sent via <a href="https://getzura.com" style="color: #a1a1aa; text-decoration: underline;">Zura</a></p>`
     : '';
+  const unsubscribeHtml = unsubscribeUrl
+    ? `<p style="margin: 8px 0 0; font-size: 11px; color: #a1a1aa;"><a href="${unsubscribeUrl}" style="color: #a1a1aa; text-decoration: underline;">Unsubscribe from marketing emails</a></p>`
+    : '';
 
   // Replace button border-radius in inner HTML (for templates that use inline styles)
   const processedInnerHtml = innerHtml.replace(
@@ -267,6 +321,7 @@ function buildBrandedTemplate(branding: OrgBranding | null, innerHtml: string): 
       ${socialIconsHtml}
       ${footerTextHtml}
       ${attributionHtml}
+      ${unsubscribeHtml}
     </div>
   </div>
 </body>
