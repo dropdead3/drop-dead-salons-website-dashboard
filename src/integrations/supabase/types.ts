@@ -7694,6 +7694,7 @@ export type Database = {
           display_orientation: string
           enable_feedback_prompt: boolean | null
           enable_glow_effects: boolean | null
+          enable_self_booking: boolean | null
           enable_walk_ins: boolean | null
           exit_pin: string | null
           font_family: string | null
@@ -7710,6 +7711,8 @@ export type Database = {
           organization_id: string | null
           require_confirmation_tap: boolean | null
           require_form_signing: boolean | null
+          self_booking_allow_future: boolean | null
+          self_booking_show_stylists: boolean | null
           show_location_badge: boolean | null
           show_stylist_photo: boolean | null
           show_wait_time_estimate: boolean | null
@@ -7731,6 +7734,7 @@ export type Database = {
           display_orientation?: string
           enable_feedback_prompt?: boolean | null
           enable_glow_effects?: boolean | null
+          enable_self_booking?: boolean | null
           enable_walk_ins?: boolean | null
           exit_pin?: string | null
           font_family?: string | null
@@ -7747,6 +7751,8 @@ export type Database = {
           organization_id?: string | null
           require_confirmation_tap?: boolean | null
           require_form_signing?: boolean | null
+          self_booking_allow_future?: boolean | null
+          self_booking_show_stylists?: boolean | null
           show_location_badge?: boolean | null
           show_stylist_photo?: boolean | null
           show_wait_time_estimate?: boolean | null
@@ -7768,6 +7774,7 @@ export type Database = {
           display_orientation?: string
           enable_feedback_prompt?: boolean | null
           enable_glow_effects?: boolean | null
+          enable_self_booking?: boolean | null
           enable_walk_ins?: boolean | null
           exit_pin?: string | null
           font_family?: string | null
@@ -7784,6 +7791,8 @@ export type Database = {
           organization_id?: string | null
           require_confirmation_tap?: boolean | null
           require_form_signing?: boolean | null
+          self_booking_allow_future?: boolean | null
+          self_booking_show_stylists?: boolean | null
           show_location_badge?: boolean | null
           show_stylist_photo?: boolean | null
           show_wait_time_estimate?: boolean | null
@@ -16065,6 +16074,7 @@ export type Database = {
           display_orientation: string
           enable_feedback_prompt: boolean | null
           enable_glow_effects: boolean | null
+          enable_self_booking: boolean | null
           enable_walk_ins: boolean | null
           exit_pin: string | null
           font_family: string | null
@@ -16081,6 +16091,8 @@ export type Database = {
           organization_id: string | null
           require_confirmation_tap: boolean | null
           require_form_signing: boolean | null
+          self_booking_allow_future: boolean | null
+          self_booking_show_stylists: boolean | null
           show_location_badge: boolean | null
           show_stylist_photo: boolean | null
           show_wait_time_estimate: boolean | null

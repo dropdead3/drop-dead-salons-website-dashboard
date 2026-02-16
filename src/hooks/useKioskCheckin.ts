@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
-export type KioskState = 'idle' | 'lookup' | 'confirm' | 'browse' | 'wrong_location' | 'signing' | 'success' | 'walk_in' | 'error';
+export type KioskState = 'idle' | 'lookup' | 'confirm' | 'browse' | 'wrong_location' | 'signing' | 'success' | 'walk_in' | 'booking' | 'error';
 
 export interface KioskAppointment {
   id: string;
@@ -329,6 +329,15 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
     setState('walk_in');
   }, []);
 
+  // Start booking wizard flow
+  const startBooking = useCallback(() => {
+    setSession(prev => prev ? {
+      ...prev,
+      isWalkIn: true,
+    } : null);
+    setState('booking');
+  }, []);
+
   // Fetch upcoming appointments for browse mode
   const fetchUpcomingAppointments = useMutation({
     mutationFn: async () => {
@@ -416,6 +425,7 @@ export function useKioskCheckin(locationId: string, organizationId: string) {
     completeCheckin: completeCheckin.mutate,
     isCheckingIn: completeCheckin.isPending,
     startWalkIn,
+    startBooking,
     startBrowse,
     isBrowsing: fetchUpcomingAppointments.isPending,
   };

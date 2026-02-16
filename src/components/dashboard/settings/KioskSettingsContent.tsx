@@ -64,6 +64,9 @@ interface LocalSettings {
   display_orientation: 'portrait' | 'landscape';
   idle_timeout_seconds: number;
   enable_walk_ins: boolean;
+  enable_self_booking: boolean;
+  self_booking_allow_future: boolean;
+  self_booking_show_stylists: boolean;
   require_confirmation_tap: boolean;
   show_wait_time_estimate: boolean;
   show_stylist_photo: boolean;
@@ -200,6 +203,9 @@ export function KioskSettingsContent() {
     display_orientation: DEFAULT_KIOSK_SETTINGS.display_orientation,
     idle_timeout_seconds: DEFAULT_KIOSK_SETTINGS.idle_timeout_seconds,
     enable_walk_ins: DEFAULT_KIOSK_SETTINGS.enable_walk_ins,
+    enable_self_booking: DEFAULT_KIOSK_SETTINGS.enable_self_booking,
+    self_booking_allow_future: DEFAULT_KIOSK_SETTINGS.self_booking_allow_future,
+    self_booking_show_stylists: DEFAULT_KIOSK_SETTINGS.self_booking_show_stylists,
     require_confirmation_tap: DEFAULT_KIOSK_SETTINGS.require_confirmation_tap,
     show_wait_time_estimate: DEFAULT_KIOSK_SETTINGS.show_wait_time_estimate,
     show_stylist_photo: DEFAULT_KIOSK_SETTINGS.show_stylist_photo,
@@ -262,6 +268,9 @@ export function KioskSettingsContent() {
         display_orientation: kioskSettings.display_orientation,
         idle_timeout_seconds: kioskSettings.idle_timeout_seconds,
         enable_walk_ins: kioskSettings.enable_walk_ins,
+        enable_self_booking: kioskSettings.enable_self_booking ?? DEFAULT_KIOSK_SETTINGS.enable_self_booking,
+        self_booking_allow_future: kioskSettings.self_booking_allow_future ?? DEFAULT_KIOSK_SETTINGS.self_booking_allow_future,
+        self_booking_show_stylists: kioskSettings.self_booking_show_stylists ?? DEFAULT_KIOSK_SETTINGS.self_booking_show_stylists,
         require_confirmation_tap: kioskSettings.require_confirmation_tap,
         show_wait_time_estimate: kioskSettings.show_wait_time_estimate,
         show_stylist_photo: kioskSettings.show_stylist_photo,
@@ -306,6 +315,9 @@ export function KioskSettingsContent() {
         display_orientation: DEFAULT_KIOSK_SETTINGS.display_orientation,
         idle_timeout_seconds: DEFAULT_KIOSK_SETTINGS.idle_timeout_seconds,
         enable_walk_ins: DEFAULT_KIOSK_SETTINGS.enable_walk_ins,
+        enable_self_booking: DEFAULT_KIOSK_SETTINGS.enable_self_booking,
+        self_booking_allow_future: DEFAULT_KIOSK_SETTINGS.self_booking_allow_future,
+        self_booking_show_stylists: DEFAULT_KIOSK_SETTINGS.self_booking_show_stylists,
         require_confirmation_tap: DEFAULT_KIOSK_SETTINGS.require_confirmation_tap,
         show_wait_time_estimate: DEFAULT_KIOSK_SETTINGS.show_wait_time_estimate,
         show_stylist_photo: DEFAULT_KIOSK_SETTINGS.show_stylist_photo,
@@ -997,6 +1009,48 @@ export function KioskSettingsContent() {
                       onCheckedChange={(v) => updateField('enable_walk_ins', v)}
                     />
                   </div>
+
+                  {/* Self-Service Booking Section */}
+                  {localSettings.enable_walk_ins && (
+                    <div className="ml-4 pl-4 border-l-2 border-muted space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium">Enable Self-Service Booking</p>
+                          <p className="text-xs text-muted-foreground">Let walk-in clients book their own appointment from the kiosk</p>
+                        </div>
+                        <Switch
+                          checked={localSettings.enable_self_booking}
+                          onCheckedChange={(v) => updateField('enable_self_booking', v)}
+                        />
+                      </div>
+
+                      {localSettings.enable_self_booking && (
+                        <div className="ml-4 pl-4 border-l-2 border-muted/50 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium">Allow Future Bookings</p>
+                              <p className="text-xs text-muted-foreground">Clients can book up to 14 days ahead (otherwise same-day only)</p>
+                            </div>
+                            <Switch
+                              checked={localSettings.self_booking_allow_future}
+                              onCheckedChange={(v) => updateField('self_booking_allow_future', v)}
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium">Show Stylist Selection</p>
+                              <p className="text-xs text-muted-foreground">Let clients choose their stylist (otherwise first available is assigned)</p>
+                            </div>
+                            <Switch
+                              checked={localSettings.self_booking_show_stylists}
+                              onCheckedChange={(v) => updateField('self_booking_show_stylists', v)}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between">
                     <div>

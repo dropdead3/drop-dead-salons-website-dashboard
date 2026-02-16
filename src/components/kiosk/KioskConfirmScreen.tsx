@@ -15,6 +15,7 @@ export function KioskConfirmScreen() {
     resetToIdle, 
     selectAppointment,
     startWalkIn,
+    startBooking,
     startBrowse,
     isBrowsing,
     idleTimeRemaining,
@@ -29,6 +30,7 @@ export function KioskConfirmScreen() {
   const logoUrl = settings?.logo_url;
   const showStylistPhoto = settings?.show_stylist_photo ?? DEFAULT_KIOSK_SETTINGS.show_stylist_photo;
   const enableWalkIns = settings?.enable_walk_ins ?? DEFAULT_KIOSK_SETTINGS.enable_walk_ins;
+  const enableSelfBooking = settings?.enable_self_booking ?? DEFAULT_KIOSK_SETTINGS.enable_self_booking;
 
   // Location badge settings
   const showLocationBadge = settings?.show_location_badge ?? DEFAULT_KIOSK_SETTINGS.show_location_badge;
@@ -333,7 +335,7 @@ export function KioskConfirmScreen() {
                     border: `1.5px solid ${accentColor}40`,
                     color: textColor,
                   }}
-                  onClick={startWalkIn}
+                  onClick={enableSelfBooking ? startBooking : startWalkIn}
                   whileHover={{ 
                     scale: 1.02, 
                     y: -2,

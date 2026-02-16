@@ -39,6 +39,11 @@ export interface KioskSettings {
   enable_glow_effects: boolean;
   require_form_signing: boolean;
   
+  // Self-Service Booking
+  enable_self_booking: boolean;
+  self_booking_allow_future: boolean;
+  self_booking_show_stylists: boolean;
+  
   // Media
   idle_slideshow_images: string[];
   idle_video_url: string | null;
@@ -85,6 +90,9 @@ export const DEFAULT_KIOSK_SETTINGS: Omit<KioskSettings, 'id' | 'organization_id
   enable_feedback_prompt: false,
   enable_glow_effects: false,
   require_form_signing: true,
+  enable_self_booking: false,
+  self_booking_allow_future: false,
+  self_booking_show_stylists: true,
   idle_slideshow_images: [],
   idle_video_url: null,
   show_location_badge: false,
