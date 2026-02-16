@@ -1,27 +1,34 @@
 
 
-# Fix: Secondary Navigation Bar Dark Mode Appearance
+# Fix: Main Schedule Header Bar White in Dark Mode
 
 ## Problem
-The secondary navigation bar (containing "Week", "Day", "Today", "Sun", "Mon", etc.) still appears too bright in dark mode. Even with `bg-muted` applied, the bar doesn't blend well with the dark header above it.
+The main header bar (containing the Week/Day toggle, date display, location filters, and settings icon) uses `bg-foreground text-background`. In light mode, `foreground` is dark (8% lightness) so this looks like a sleek dark bar. But in dark mode, `foreground` flips to light cream (92% lightness), making the bar appear bright white -- the opposite of what you want.
 
 ## Root Cause
-The `bg-muted` class resolves to `hsl(0 0% 22%)` in dark cream mode, which should appear as dark gray. However, it creates a visible contrast gap between the nearly-black header bar above (`bg-foreground`, ~4-8% lightness) and this bar at 22% lightness. The result feels "bright" relative to its surroundings.
+The `bg-foreground` / `text-background` pattern is an "inverted" design that only works correctly in light mode. In dark mode the values swap, so the bar becomes light instead of dark.
 
 ## Solution
-Replace `bg-muted` with a darker background that visually continues the header bar. Use `bg-card` (which is `0 0% 7%` in dark mode -- very close to the header) combined with a subtle bottom border. This makes the secondary nav feel like a natural extension of the header rather than a separate, lighter strip.
+Replace the inverted color pattern with one that stays dark in both modes. Use `bg-[hsl(0,0%,8%)]` (a fixed near-black) with `text-[hsl(40,20%,92%)]` (fixed cream text). This ensures the header bar always appears as a dark, premium-feeling strip regardless of theme mode.
 
-Alternatively, use `bg-background` (0 0% 4%) or `bg-foreground/10` for an even tighter match.
+Alternatively, a more theme-token-friendly approach: use `dark:bg-card` combined with light-mode `bg-foreground` so the bar picks up the 7%-lightness card color in dark mode. However, the fixed-color approach is simpler and guarantees consistency.
 
 ### Recommended approach
-Change line 298 in `ScheduleHeader.tsx`:
-- From: `bg-muted border-x border-b border-border/50`
-- To: `bg-card border-x border-b border-border/50`
+In `src/components/dashboard/schedule/ScheduleHeader.tsx` (line 97), change:
+- From: `bg-foreground text-background`
+- To: `bg-[hsl(0,0%,8%)] text-[hsl(40,20%,92%)]`
 
-This uses `bg-card` which is:
-- Light mode: `hsl(0 0% 100%)` -- white (matches current light mode look)
-- Dark mode: `hsl(0 0% 7%)` -- near-black (matches the dark header aesthetic)
+This keeps the bar permanently dark with cream text in both light and dark modes.
 
-### File Changed
-- `src/components/dashboard/schedule/ScheduleHeader.tsx` (line 298)
+### Cascading text color references
+Several child elements inside this header use `text-background/70`, `text-background`, `hover:text-background`, `bg-background/10`, etc. These will also need updating to use the fixed cream color references so buttons and icons remain visible. Specifically:
+- Replace `text-background` references with `text-[hsl(40,20%,92%)]`
+- Replace `text-background/70` with `text-[hsl(40,20%,92%)]/70`
+- Replace `bg-background/10` with `bg-[hsl(40,20%,92%)]/10`
+- Replace `bg-background/15` with `bg-[hsl(40,20%,92%)]/15`
+- Replace `bg-background/20` with `bg-[hsl(40,20%,92%)]/20`
+- Replace `border-background/20` with `border-[hsl(40,20%,92%)]/20`
+
+### Files Changed
+- `src/components/dashboard/schedule/ScheduleHeader.tsx` -- lines 97 and all child element color references within the header bar (approximately lines 97-294)
 
