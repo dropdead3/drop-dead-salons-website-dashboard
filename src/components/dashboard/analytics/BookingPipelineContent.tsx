@@ -261,13 +261,13 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
               {/* Header row */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <span className="font-display text-sm tracking-wide">{loc.locationName}</span>
                   <span className={cn(
-                    'inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border border-border/30',
+                    'inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border border-border/30 w-[4.5rem] justify-center',
                     config.chip
                   )}>
                     {loc.label}
                   </span>
+                  <span className="font-display text-sm tracking-wide">{loc.locationName}</span>
                 </div>
                 <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
               </div>
