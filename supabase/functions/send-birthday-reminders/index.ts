@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+import { sendOrgEmail } from "../_shared/email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,12 +15,7 @@ interface EmployeeProfile {
   email: string | null;
   birthday: string | null;
   photo_url: string | null;
-}
-
-interface LeadershipMember {
-  user_id: string;
-  email: string;
-  full_name: string;
+  organization_id: string | null;
 }
 
 interface EmailTemplate {
@@ -34,7 +28,6 @@ interface EmailTemplate {
   is_active: boolean;
 }
 
-// Replace template variables with actual values
 function replaceTemplateVariables(template: string, variables: Record<string, string>): string {
   let result = template;
   for (const [key, value] of Object.entries(variables)) {
@@ -45,7 +38,6 @@ function replaceTemplateVariables(template: string, variables: Record<string, st
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -55,28 +47,24 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Parse request body for configuration (optional)
-    let daysBeforeBirthday = 3; // Default to 3 days before
+    let daysBeforeBirthday = 3;
     try {
       const body = await req.json();
       if (body.days_before) {
         daysBeforeBirthday = parseInt(body.days_before, 10);
       }
     } catch {
-      // No body provided, use defaults
+      // No body provided
     }
 
-    // Get today's date components
     const today = new Date();
     const targetDate = new Date(today);
     targetDate.setDate(today.getDate() + daysBeforeBirthday);
-    
-    const targetMonth = targetDate.getMonth() + 1; // 1-12
+    const targetMonth = targetDate.getMonth() + 1;
     const targetDay = targetDate.getDate();
 
-    console.log(`Checking for birthdays on ${targetMonth}/${targetDay} (${daysBeforeBirthday} days from now)`);
+    console.log(`Checking for birthdays on ${targetMonth}/${targetDay}`);
 
-    // Fetch the email template from the database
     const { data: templateData, error: templateError } = await supabase
       .from("email_templates")
       .select("*")
@@ -85,159 +73,114 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (templateError || !templateData) {
-      console.error("Error fetching email template:", templateError);
       throw new Error("Birthday reminder email template not found or inactive");
     }
 
     const template = templateData as EmailTemplate;
-    console.log(`Using email template: ${template.name}`);
 
-    // Find employees with birthdays on the target date
     const { data: employees, error: employeesError } = await supabase
       .from("employee_profiles")
-      .select("id, user_id, full_name, display_name, email, birthday, photo_url")
+      .select("id, user_id, full_name, display_name, email, birthday, photo_url, organization_id")
       .eq("is_active", true)
       .not("birthday", "is", null);
 
-    if (employeesError) {
-      console.error("Error fetching employees:", employeesError);
-      throw employeesError;
-    }
+    if (employeesError) throw employeesError;
 
-    // Filter employees whose birthday matches the target date
     const upcomingBirthdays = (employees || []).filter((emp: EmployeeProfile) => {
       if (!emp.birthday) return false;
-      const [year, month, day] = emp.birthday.split("-").map(Number);
+      const [, month, day] = emp.birthday.split("-").map(Number);
       return month === targetMonth && day === targetDay;
     });
 
     if (upcomingBirthdays.length === 0) {
-      console.log("No upcoming birthdays found for the target date");
       return new Response(
         JSON.stringify({ message: "No upcoming birthdays", date: `${targetMonth}/${targetDay}` }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
-    console.log(`Found ${upcomingBirthdays.length} upcoming birthday(s)`);
-
-    // Get leadership team members (admin and manager roles)
-    const { data: leadershipRoles, error: rolesError } = await supabase
-      .from("user_roles")
-      .select("user_id, role")
-      .in("role", ["admin", "manager"]);
-
-    if (rolesError) {
-      console.error("Error fetching leadership roles:", rolesError);
-      throw rolesError;
+    // Group birthdays by organization
+    const birthdaysByOrg = new Map<string, EmployeeProfile[]>();
+    for (const emp of upcomingBirthdays) {
+      const orgId = emp.organization_id || "unknown";
+      if (!birthdaysByOrg.has(orgId)) birthdaysByOrg.set(orgId, []);
+      birthdaysByOrg.get(orgId)!.push(emp);
     }
 
-    const leadershipUserIds = [...new Set((leadershipRoles || []).map(r => r.user_id))];
+    let totalSent = 0;
 
-    if (leadershipUserIds.length === 0) {
-      console.log("No leadership team members found");
-      return new Response(
-        JSON.stringify({ message: "No leadership members to notify" }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
+    for (const [orgId, orgBirthdays] of birthdaysByOrg) {
+      // Get leadership for this org
+      const { data: leadershipRoles } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["admin", "manager"]);
+
+      const leadershipUserIds = [...new Set((leadershipRoles || []).map(r => r.user_id))];
+      if (leadershipUserIds.length === 0) continue;
+
+      const { data: leadershipProfiles } = await supabase
+        .from("employee_profiles")
+        .select("user_id, full_name, email")
+        .in("user_id", leadershipUserIds)
+        .eq("is_active", true)
+        .not("email", "is", null);
+
+      const leadershipEmails = (leadershipProfiles || []).map(p => p.email).filter(Boolean);
+      if (leadershipEmails.length === 0) continue;
+
+      const birthdayList = orgBirthdays
+        .map(emp => `<li style="margin-bottom: 8px;">🎂 <strong>${emp.display_name || emp.full_name}</strong></li>`)
+        .join("");
+
+      const birthdayNames = orgBirthdays.map(emp => emp.display_name || emp.full_name).join(", ");
+
+      const dateFormatted = targetDate.toLocaleDateString("en-US", {
+        weekday: "long", month: "long", day: "numeric",
+      });
+
+      const templateVariables: Record<string, string> = {
+        birthday_date: dateFormatted,
+        birthday_count: orgBirthdays.length.toString(),
+        birthday_list: birthdayList,
+        birthday_names: birthdayNames,
+        days_until: daysBeforeBirthday.toString(),
+      };
+
+      const emailSubject = replaceTemplateVariables(template.subject, templateVariables);
+      const emailHtml = replaceTemplateVariables(template.html_body, templateVariables);
+
+      if (orgId !== "unknown") {
+        await sendOrgEmail(supabase, orgId, {
+          to: leadershipEmails,
+          subject: emailSubject,
+          html: emailHtml,
+        });
+      } else {
+        // Fallback: send without org branding
+        const { sendEmail } = await import("../_shared/email-sender.ts");
+        await sendEmail({
+          to: leadershipEmails,
+          subject: emailSubject,
+          html: emailHtml,
+        });
+      }
+
+      totalSent += leadershipEmails.length;
     }
-
-    // Get leadership profiles with emails
-    const { data: leadershipProfiles, error: profilesError } = await supabase
-      .from("employee_profiles")
-      .select("user_id, full_name, email")
-      .in("user_id", leadershipUserIds)
-      .eq("is_active", true)
-      .not("email", "is", null);
-
-    if (profilesError) {
-      console.error("Error fetching leadership profiles:", profilesError);
-      throw profilesError;
-    }
-
-    const leadershipEmails = (leadershipProfiles || [])
-      .filter((p: LeadershipMember) => p.email)
-      .map((p: LeadershipMember) => p.email);
-
-    if (leadershipEmails.length === 0) {
-      console.log("No leadership emails found");
-      return new Response(
-        JSON.stringify({ message: "No leadership emails configured" }),
-        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
-      );
-    }
-
-    console.log(`Sending reminders to ${leadershipEmails.length} leadership member(s)`);
-
-    // Build birthday list for template
-    const birthdayList = upcomingBirthdays
-      .map((emp: EmployeeProfile) => {
-        const name = emp.display_name || emp.full_name;
-        return `<li style="margin-bottom: 8px;">🎂 <strong>${name}</strong></li>`;
-      })
-      .join("");
-
-    const birthdayNames = upcomingBirthdays
-      .map((emp: EmployeeProfile) => emp.display_name || emp.full_name)
-      .join(", ");
-
-    const dateFormatted = targetDate.toLocaleDateString("en-US", {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-    });
-
-    // Prepare template variables
-    const templateVariables: Record<string, string> = {
-      birthday_date: dateFormatted,
-      birthday_count: upcomingBirthdays.length.toString(),
-      birthday_list: birthdayList,
-      birthday_names: birthdayNames,
-      days_until: daysBeforeBirthday.toString(),
-    };
-
-    // Replace variables in template
-    const emailSubject = replaceTemplateVariables(template.subject, templateVariables);
-    const emailHtml = replaceTemplateVariables(template.html_body, templateVariables);
-
-    console.log(`Email subject: ${emailSubject}`);
-
-    // Send email to all leadership members using Resend API directly
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "Drop Dead Gorgeous <onboarding@resend.dev>",
-        to: leadershipEmails,
-        subject: emailSubject,
-        html: emailHtml,
-      }),
-    });
-
-    if (!emailResponse.ok) {
-      const errorData = await emailResponse.text();
-      console.error("Resend API error:", errorData);
-      throw new Error(`Failed to send email: ${errorData}`);
-    }
-
-    const emailResult = await emailResponse.json();
-    console.log("Email sent successfully:", emailResult);
 
     return new Response(
       JSON.stringify({
         success: true,
         message: `Birthday reminders sent for ${upcomingBirthdays.length} team member(s)`,
-        recipients: leadershipEmails.length,
+        recipients: totalSent,
         birthdays: upcomingBirthdays.map((e: EmployeeProfile) => e.display_name || e.full_name),
         template_used: template.name,
       }),
       { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: any) {
-    console.error("Error in send-birthday-reminders function:", error);
+    console.error("Error in send-birthday-reminders:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }

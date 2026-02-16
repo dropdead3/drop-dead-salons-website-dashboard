@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "npm:resend@2.0.0";
+import { sendOrgEmail } from "../_shared/email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,19 +13,11 @@ interface NotifyRequest {
 }
 
 serve(async (req: Request): Promise<Response> => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
-    if (!resendApiKey) {
-      throw new Error("RESEND_API_KEY not configured");
-    }
-
-    const resend = new Resend(resendApiKey);
-    
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -42,7 +34,7 @@ serve(async (req: Request): Promise<Response> => {
       .select(`
         *,
         client:phorest_clients(first_name, last_name, email, mobile),
-        organization:organizations(name)
+        organization:organizations(id, name)
       `)
       .eq("token", token)
       .single();
@@ -66,7 +58,6 @@ serve(async (req: Request): Promise<Response> => {
       .in("role", ["admin", "manager", "super_admin"]);
 
     if (!managers || managers.length === 0) {
-      console.log("No managers to notify");
       return new Response(
         JSON.stringify({ message: "No managers to notify" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -84,7 +75,6 @@ serve(async (req: Request): Promise<Response> => {
     const managerEmails = profiles?.map(p => p.email).filter(Boolean) || [];
 
     if (managerEmails.length === 0) {
-      console.log("No manager emails found");
       return new Response(
         JSON.stringify({ message: "No manager emails found" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -95,55 +85,45 @@ serve(async (req: Request): Promise<Response> => {
       ? `${feedback.client.first_name || ''} ${feedback.client.last_name || ''}`.trim() || 'Anonymous'
       : 'Anonymous';
 
+    const organizationId = feedback.organization?.id || feedback.organization_id;
+
     const emailHtml = `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #dc2626;">⚠️ Low Score Feedback Alert</h2>
-        
-        <p>A client has submitted feedback that requires attention:</p>
-        
-        <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; margin: 20px 0;">
-          <p style="margin: 0;"><strong>Client:</strong> ${clientName}</p>
-          <p style="margin: 8px 0 0;"><strong>Overall Rating:</strong> ${'★'.repeat(feedback.overall_rating || 0)}${'☆'.repeat(5 - (feedback.overall_rating || 0))} (${feedback.overall_rating || 'N/A'}/5)</p>
-          <p style="margin: 8px 0 0;"><strong>NPS Score:</strong> ${feedback.nps_score ?? 'N/A'}/10</p>
-        </div>
-        
-        ${feedback.comments ? `
-          <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0; font-style: italic;">"${feedback.comments}"</p>
-          </div>
-        ` : ''}
-        
-        <h3>Rating Breakdown</h3>
-        <ul>
-          <li>Service Quality: ${feedback.service_quality || 'N/A'}/5</li>
-          <li>Staff Friendliness: ${feedback.staff_friendliness || 'N/A'}/5</li>
-          <li>Cleanliness: ${feedback.cleanliness || 'N/A'}/5</li>
-          <li>Would Return: ${feedback.would_recommend === true ? 'Yes' : feedback.would_recommend === false ? 'No' : 'N/A'}</li>
-        </ul>
-        
-        ${feedback.client?.email || feedback.client?.mobile ? `
-          <h3>Contact Information</h3>
-          <p>
-            ${feedback.client?.email ? `Email: ${feedback.client.email}<br>` : ''}
-            ${feedback.client?.mobile ? `Phone: ${feedback.client.mobile}` : ''}
-          </p>
-        ` : ''}
-        
-        <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
-          This is an automated alert from your feedback system.
-        </p>
+      <h2 style="color: #dc2626;">⚠️ Low Score Feedback Alert</h2>
+      <p>A client has submitted feedback that requires attention:</p>
+      <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 16px; margin: 20px 0;">
+        <p style="margin: 0;"><strong>Client:</strong> ${clientName}</p>
+        <p style="margin: 8px 0 0;"><strong>Overall Rating:</strong> ${'★'.repeat(feedback.overall_rating || 0)}${'☆'.repeat(5 - (feedback.overall_rating || 0))} (${feedback.overall_rating || 'N/A'}/5)</p>
+        <p style="margin: 8px 0 0;"><strong>NPS Score:</strong> ${feedback.nps_score ?? 'N/A'}/10</p>
       </div>
+      ${feedback.comments ? `
+        <div style="background: #f3f4f6; padding: 16px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 0; font-style: italic;">"${feedback.comments}"</p>
+        </div>
+      ` : ''}
+      <h3>Rating Breakdown</h3>
+      <ul>
+        <li>Service Quality: ${feedback.service_quality || 'N/A'}/5</li>
+        <li>Staff Friendliness: ${feedback.staff_friendliness || 'N/A'}/5</li>
+        <li>Cleanliness: ${feedback.cleanliness || 'N/A'}/5</li>
+        <li>Would Return: ${feedback.would_recommend === true ? 'Yes' : feedback.would_recommend === false ? 'No' : 'N/A'}</li>
+      </ul>
+      ${feedback.client?.email || feedback.client?.mobile ? `
+        <h3>Contact Information</h3>
+        <p>
+          ${feedback.client?.email ? `Email: ${feedback.client.email}<br>` : ''}
+          ${feedback.client?.mobile ? `Phone: ${feedback.client.mobile}` : ''}
+        </p>
+      ` : ''}
+      <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+        This is an automated alert from your feedback system.
+      </p>
     `;
 
-    // Send email
-    const emailResponse = await resend.emails.send({
-      from: "Feedback Alert <noreply@dropdeadsalons.com>",
+    await sendOrgEmail(supabase, organizationId, {
       to: managerEmails,
       subject: `⚠️ Low Score Alert: ${clientName} rated ${feedback.overall_rating || 'N/A'}/5`,
       html: emailHtml,
     });
-
-    console.log("Email sent:", emailResponse);
 
     // Mark as notified
     await supabase

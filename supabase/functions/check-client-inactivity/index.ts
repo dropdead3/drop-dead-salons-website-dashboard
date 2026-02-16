@@ -1,8 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "@supabase/supabase-js";
-import { Resend } from "npm:resend@2.0.0";
+import { sendOrgEmail } from "../_shared/email-sender.ts";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -28,7 +27,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get active re-engagement campaigns
     let campaignsQuery = supabase
       .from('reengagement_campaigns')
       .select('*')
@@ -58,7 +56,6 @@ const handler = async (req: Request): Promise<Response> => {
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - campaign.inactivity_days);
 
-      // Find inactive clients for this campaign
       const { data: inactiveClients, error: clientsError } = await supabase
         .from('phorest_clients')
         .select('id, name, email, last_visit')
@@ -77,7 +74,6 @@ const handler = async (req: Request): Promise<Response> => {
         continue;
       }
 
-      // Filter out clients already contacted for this campaign
       const { data: existingOutreach } = await supabase
         .from('reengagement_outreach')
         .select('client_id')
@@ -91,7 +87,6 @@ const handler = async (req: Request): Promise<Response> => {
         continue;
       }
 
-      // Get email template if configured
       let emailSubject = "We Miss You!";
       let emailBody = "";
 
@@ -117,7 +112,6 @@ const handler = async (req: Request): Promise<Response> => {
           (new Date().getTime() - new Date(client.last_visit).getTime()) / (1000 * 60 * 60 * 24)
         );
 
-        // Create outreach record
         if (!dryRun) {
           const { error: outreachError } = await supabase
             .from('reengagement_outreach')
@@ -135,7 +129,6 @@ const handler = async (req: Request): Promise<Response> => {
             continue;
           }
 
-          // Build email content
           let finalBody = emailBody || `
             <p>Hi ${client.name},</p>
             <p>It's been a while since we've seen you, and we wanted to let you know we miss you!</p>
@@ -145,29 +138,21 @@ const handler = async (req: Request): Promise<Response> => {
             <p>We'd love to welcome you back. Book your next appointment today!</p>
           `;
 
-          // Replace variables
           finalBody = finalBody
             .replace(/{{client_name}}/g, client.name)
             .replace(/{{days_inactive}}/g, String(daysInactive))
             .replace(/{{offer_value}}/g, campaign.offer_value || '');
 
-          // Send email
           try {
-            await resend.emails.send({
-              from: "Salon <noreply@dropdead.salon>",
+            await sendOrgEmail(supabase, campaign.organization_id, {
               to: [client.email],
               subject: emailSubject.replace(/{{client_name}}/g, client.name),
               html: `
-                <!DOCTYPE html>
-                <html>
-                <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-                  ${finalBody}
-                  <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-                  <p style="color: #999; font-size: 12px; text-align: center;">
-                    If you no longer wish to receive these emails, please let us know.
-                  </p>
-                </body>
-                </html>
+                ${finalBody}
+                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+                <p style="color: #999; font-size: 12px; text-align: center;">
+                  If you no longer wish to receive these emails, please let us know.
+                </p>
               `,
             });
             clientsContacted++;
@@ -184,26 +169,15 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        dryRun,
-        totalProcessed,
-        results,
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      JSON.stringify({ success: true, dryRun, totalProcessed, results }),
+      { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error("Error in check-client-inactivity:", errorMessage);
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      {
-        status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
+      { status: 500, headers: { "Content-Type": "application/json", ...corsHeaders } }
     );
   }
 };
