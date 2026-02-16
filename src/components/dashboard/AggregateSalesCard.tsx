@@ -541,26 +541,29 @@ export function AggregateSalesCard({
         <div className="xl:col-span-2">
           {/* Hero: Total Revenue with Breakdown */}
           <div className="bg-muted/30 dark:bg-card rounded-xl p-4 sm:p-6 border border-border/40">
-            <p className="text-xs text-muted-foreground mb-1">
-              {isAllLocations ? t('sales.all_locations') : selectedLocationName || tc('loading')}
+            <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
+              <span>{isAllLocations ? t('sales.all_locations') : selectedLocationName || tc('loading')}</span>
+              {/* Closed locations summary — single-day views only */}
+              {isAllLocations && (dateRange === 'today' || dateRange === 'yesterday') && (() => {
+                const viewDate = dateRange === 'yesterday' ? subDays(new Date(), 1) : new Date();
+                const closedCount = (locations ?? []).filter(loc =>
+                  isClosedOnDate(loc.hours_json, loc.holiday_closures, viewDate).isClosed
+                ).length;
+                const totalCount = locations?.length ?? 0;
+                if (closedCount === 0 || totalCount === 0) return null;
+                return (
+                  <>
+                    <span className="text-muted-foreground/40">·</span>
+                    <span className="flex items-center gap-1 text-muted-foreground/70">
+                      <Moon className="w-3 h-3" />
+                      {closedCount === totalCount
+                        ? `All ${totalCount} locations closed ${dateRange === 'yesterday' ? 'yesterday' : 'today'}`
+                        : `${closedCount} of ${totalCount} locations closed ${dateRange === 'yesterday' ? 'yesterday' : 'today'}`}
+                    </span>
+                  </>
+                );
+              })()}
             </p>
-            {/* Closed locations summary — single-day views only */}
-            {isAllLocations && (dateRange === 'today' || dateRange === 'yesterday') && (() => {
-              const viewDate = dateRange === 'yesterday' ? subDays(new Date(), 1) : new Date();
-              const closedCount = (locations ?? []).filter(loc =>
-                isClosedOnDate(loc.hours_json, loc.holiday_closures, viewDate).isClosed
-              ).length;
-              const totalCount = locations?.length ?? 0;
-              if (closedCount === 0 || totalCount === 0) return null;
-              return (
-                <p className="text-[11px] text-muted-foreground/70 mb-2 flex items-center gap-1">
-                  <Moon className="w-3 h-3" />
-                  {closedCount === totalCount
-                    ? `All ${totalCount} locations closed ${dateRange === 'yesterday' ? 'yesterday' : 'today'}`
-                    : `${closedCount} of ${totalCount} locations closed ${dateRange === 'yesterday' ? 'yesterday' : 'today'}`}
-                </p>
-              );
-            })()}
             {/* Total Revenue - Hero */}
             <div
               className={cn(
