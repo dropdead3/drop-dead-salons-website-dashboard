@@ -9,6 +9,7 @@ import {
   Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import {
   useServiceCategoryColors,
   useUpdateCategoryColor,
@@ -217,7 +218,7 @@ export function ServicesSettingsContent() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Palette className="w-5 h-5 text-primary" />
-                <CardTitle className="font-display text-lg">SERVICE CATEGORIES</CardTitle>
+                <CardTitle className={tokens.heading.section}>SERVICE CATEGORIES</CardTitle>
               </div>
               <Button size="sm" onClick={() => { setCategoryDialogMode('create'); setEditingCategory(null); setCategoryDialogOpen(true); }}>
                 <Plus className="w-4 h-4 mr-1" /> Add Category
@@ -229,10 +230,10 @@ export function ServicesSettingsContent() {
           </CardHeader>
           <CardContent>
             {localOrder.length === 0 ? (
-              <div className="text-center py-8">
-                <Scissors className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground">No categories yet.</p>
-                <p className="text-sm text-muted-foreground">Create your first service category to get started.</p>
+              <div className={tokens.empty.container}>
+                <Scissors className={tokens.empty.icon} />
+                <h3 className={tokens.empty.heading}>No categories yet</h3>
+                <p className={tokens.empty.description}>Create your first service category to get started.</p>
               </div>
             ) : (
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -258,10 +259,10 @@ export function ServicesSettingsContent() {
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-4" align="start">
                               <div className="space-y-3">
-                                <p className="text-sm font-medium">{cat.category_name}</p>
+                                <p className={tokens.body.emphasis}>{cat.category_name}</p>
                                 {/* Gradients */}
                                 <div className="space-y-1">
-                                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Special Styles</p>
+                                  <p className={tokens.label.tiny}>Special Styles</p>
                                   <div className="flex gap-2 flex-wrap">
                                     {GRADIENT_OPTIONS.map(g => (
                                       <Tooltip key={g.id}>
@@ -280,7 +281,7 @@ export function ServicesSettingsContent() {
                                 <div className="h-px bg-border" />
                                 {/* Solid colors */}
                                 <div className="space-y-1">
-                                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Solid Colors</p>
+                                  <p className={tokens.label.tiny}>Solid Colors</p>
                                   <div className="grid grid-cols-6 gap-1.5">
                                     {CATEGORY_PALETTE.map(c => (
                                       <button
@@ -298,8 +299,8 @@ export function ServicesSettingsContent() {
 
                           {/* Name & controls */}
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{cat.category_name}</p>
-                            <p className="text-xs text-muted-foreground">{serviceCount} service{serviceCount !== 1 ? 's' : ''}</p>
+                            <p className={cn(tokens.body.emphasis, 'truncate')}>{cat.category_name}</p>
+                            <p className={tokens.body.muted}>{serviceCount} service{serviceCount !== 1 ? 's' : ''}</p>
                           </div>
                           <div className="flex items-center gap-1">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
@@ -332,7 +333,7 @@ export function ServicesSettingsContent() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Scissors className="w-5 h-5 text-primary" />
-                <CardTitle className="font-display text-lg">SERVICES</CardTitle>
+                <CardTitle className={tokens.heading.section}>SERVICES</CardTitle>
               </div>
               <Button size="sm" onClick={() => {
                 setServiceDialogMode('create');
@@ -347,7 +348,11 @@ export function ServicesSettingsContent() {
           </CardHeader>
           <CardContent>
             {localOrder.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-6">Create categories first, then add services.</p>
+              <div className={tokens.empty.container}>
+                <Scissors className={tokens.empty.icon} />
+                <h3 className={tokens.empty.heading}>No services yet</h3>
+                <p className={tokens.empty.description}>Create categories first, then add services.</p>
+              </div>
             ) : (
               <Accordion type="multiple" className="w-full">
                 {localOrder.map((cat) => {
@@ -357,8 +362,8 @@ export function ServicesSettingsContent() {
                   const gradient = hasGradient ? getGradientFromMarker(cat.color_hex) : null;
 
                   return (
-                    <AccordionItem key={cat.id} value={cat.id} className="border rounded-lg mb-2 px-1">
-                      <AccordionTrigger className="hover:no-underline py-3">
+                    <AccordionItem key={cat.id} value={cat.id} className="border rounded-lg mb-2 px-4">
+                      <AccordionTrigger className="hover:no-underline py-4">
                         <div className="flex items-center gap-3">
                           <div
                             className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-medium shrink-0"
@@ -366,20 +371,20 @@ export function ServicesSettingsContent() {
                           >
                             {abbr}
                           </div>
-                          <span className="font-medium text-sm">{cat.category_name}</span>
-                          <span className="text-xs text-muted-foreground">({services.length})</span>
+                          <span className={tokens.body.emphasis}>{cat.category_name}</span>
+                          <span className={tokens.body.muted}>({services.length})</span>
                         </div>
                       </AccordionTrigger>
                       <AccordionContent>
                         <div className="space-y-1 pb-2">
                           {services.length === 0 ? (
-                            <p className="text-xs text-muted-foreground text-center py-4">No services in this category</p>
+                            <p className={cn(tokens.empty.description, 'text-center py-4')}>No services in this category</p>
                           ) : (
                             services.map(svc => (
                               <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group">
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium truncate">{svc.name}</p>
-                                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                                  <p className={cn(tokens.body.emphasis, 'truncate')}>{svc.name}</p>
+                                  <div className={cn('flex items-center gap-3', tokens.body.muted)}>
                                     <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{svc.duration_minutes}min</span>
                                     {svc.price != null && <span className="flex items-center gap-1"><DollarSign className="w-3 h-3" />{svc.price.toFixed(2)}</span>}
                                   </div>
