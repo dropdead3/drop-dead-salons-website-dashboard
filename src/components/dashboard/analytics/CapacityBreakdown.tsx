@@ -92,7 +92,7 @@ export function CapacityBreakdown({
         <div className="bg-muted/30 rounded-xl p-4 space-y-4 text-sm">
           {/* Header */}
           <div className="flex items-center justify-between pb-2 border-b border-border/50">
-            <div className="font-semibold text-foreground">Daily Capacity Calculator</div>
+            <div className="font-medium text-foreground">Daily Capacity Calculator</div>
             {hasChanges && (
               <Button
                 variant="ghost"
@@ -117,7 +117,7 @@ export function CapacityBreakdown({
                   <span className="text-muted-foreground text-xs">×</span>
                   <span className="tabular-nums text-sm">{initialStylistCount}</span>
                   <span className="text-muted-foreground text-xs">=</span>
-                  <span className="font-semibold tabular-nums w-14 text-right">{grossHoursPerDay}h</span>
+                  <span className="font-medium tabular-nums w-14 text-right">{grossHoursPerDay}h</span>
                 </div>
               </div>
               <div className="flex items-center justify-between">
@@ -190,7 +190,7 @@ export function CapacityBreakdown({
             {daysInPeriod > 1 && (
               <div className="grid grid-cols-[1fr,auto] items-center gap-4 mt-2">
                 <span className="text-muted-foreground text-xs">Total for {daysInPeriod} days</span>
-                <span className="tabular-nums font-semibold text-sm">{Math.round(totalNetHours)}h</span>
+                <span className="tabular-nums font-medium text-sm">{Math.round(totalNetHours)}h</span>
               </div>
             )}
           </div>

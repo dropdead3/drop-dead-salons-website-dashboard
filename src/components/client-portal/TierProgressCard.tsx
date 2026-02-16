@@ -67,7 +67,7 @@ export function TierProgressCard({ currentTier, currentPoints, lifetimePoints, t
               Current Tier
             </p>
             <h2 
-              className="text-2xl font-bold"
+              className="text-2xl font-medium"
               style={{ color: currentTierData?.color }}
             >
               {currentTierData?.tier_name || 'Member'}
@@ -77,11 +77,11 @@ export function TierProgressCard({ currentTier, currentPoints, lifetimePoints, t
 
         <div className="grid grid-cols-2 gap-4 py-4 border-y">
           <div className="text-center">
-            <p className="text-3xl font-bold">{currentPoints.toLocaleString()}</p>
+            <p className="text-3xl font-medium">{currentPoints.toLocaleString()}</p>
             <p className="text-sm text-muted-foreground">Available Points</p>
           </div>
           <div className="text-center">
-            <p className="text-3xl font-bold">{lifetimePoints.toLocaleString()}</p>
+            <p className="text-3xl font-medium">{lifetimePoints.toLocaleString()}</p>
             <p className="text-sm text-muted-foreground">Lifetime Points</p>
           </div>
         </div>

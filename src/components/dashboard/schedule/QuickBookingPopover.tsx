@@ -1199,7 +1199,7 @@ export function QuickBookingPopover({
 
                   {/* Stylist */}
                   <div>
-                    <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+                    <h4 className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">
                       Stylist
                     </h4>
                     <div className="bg-card border border-border rounded-lg p-2.5">
@@ -1221,10 +1221,10 @@ export function QuickBookingPopover({
               <div className="p-3 border-t border-border bg-card space-y-2">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Total</span>
-                  <span className="text-lg font-bold">{formatCurrency(totalPrice)}</span>
+                  <span className="text-lg font-medium">{formatCurrency(totalPrice)}</span>
                 </div>
                 <Button
-                  className="w-full h-10 font-semibold"
+                  className="w-full h-10 font-medium"
                   disabled={!canBook || createBooking.isPending}
                   onClick={() => createBooking.mutate()}
                 >

@@ -89,7 +89,7 @@ export function SortableChannelItem({
           'hover:bg-accent/50',
           isActive && 'bg-accent text-accent-foreground',
           !isMember && 'opacity-60',
-          unreadCount > 0 && !isActive && 'font-semibold',
+          unreadCount > 0 && !isActive && 'font-medium',
           !isDragEnabled && 'px-3'
         )}
       >

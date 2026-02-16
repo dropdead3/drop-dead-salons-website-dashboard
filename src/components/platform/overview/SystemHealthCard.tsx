@@ -60,7 +60,7 @@ export function SystemHealthCard() {
           <div className={cn("p-2 rounded-xl", overallConfig.bg)}>
             <OverallIcon className={cn("h-4 w-4", overallConfig.color)} />
           </div>
-          <h2 className="text-lg font-semibold text-white">System Health</h2>
+          <h2 className="text-lg font-medium text-white">System Health</h2>
         </div>
         <Badge className={cn(overallConfig.bg, overallConfig.color, "text-xs")}>
           {overallConfig.label}

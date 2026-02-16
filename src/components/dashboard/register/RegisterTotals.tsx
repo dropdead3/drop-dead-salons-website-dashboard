@@ -41,7 +41,7 @@ export function RegisterTotals({ subtotal, taxAmount, taxRate, appliedCredit, to
 
         <Separator />
 
-        <div className="flex justify-between font-semibold text-lg">
+        <div className="flex justify-between font-medium text-lg">
           <span>Total</span>
           <span>{formatCurrency(total)}</span>
         </div>

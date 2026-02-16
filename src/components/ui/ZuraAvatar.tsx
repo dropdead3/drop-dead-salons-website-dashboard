@@ -20,7 +20,7 @@ export function ZuraAvatar({ size = 'md', className }: ZuraAvatarProps) {
         className
       )}
     >
-      <span className="font-bold text-primary leading-none">Z</span>
+      <span className="font-medium text-primary leading-none">Z</span>
     </div>
   );
 }

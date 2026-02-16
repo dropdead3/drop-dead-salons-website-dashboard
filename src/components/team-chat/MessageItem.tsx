@@ -103,7 +103,7 @@ export function MessageItem({
         <div className="flex-1 min-w-0">
           {!isConsecutive && (
             <div className="flex items-baseline gap-2 mb-1.5">
-              <span className="font-semibold text-base">{senderName}</span>
+              <span className="font-medium text-base">{senderName}</span>
               <span className="text-xs text-muted-foreground">{timestamp}</span>
               {message.is_edited && (
                 <span className="text-xs text-muted-foreground">(edited)</span>

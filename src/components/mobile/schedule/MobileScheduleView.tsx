@@ -114,7 +114,7 @@ export function MobileScheduleView({ locationId, userId }: MobileScheduleViewPro
           </Button>
           
           <div className="text-center">
-            <h1 className="text-lg font-semibold">{getDateLabel()}</h1>
+            <h1 className="text-lg font-medium">{getDateLabel()}</h1>
             <p className="text-xs text-muted-foreground">
               {formatDate(selectedDate, 'MMMM d, yyyy')}
             </p>

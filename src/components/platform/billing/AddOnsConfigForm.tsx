@@ -52,7 +52,7 @@ function QuantityAdjuster({
         <Minus className="h-4 w-4" />
       </PlatformButton>
       <div className="w-16 text-center">
-        <span className="text-lg font-semibold text-white">{value}</span>
+        <span className="text-lg font-medium text-white">{value}</span>
         <span className="text-xs text-slate-500 block">{label}</span>
       </div>
       <PlatformButton
@@ -225,7 +225,7 @@ export function AddOnsConfigForm({
             <DollarSign className="h-5 w-5 text-violet-400" />
             <span className="text-sm font-medium text-white">Total Add-On Fees</span>
           </div>
-          <span className="text-lg font-bold text-white">
+          <span className="text-lg font-medium text-white">
             {formatCurrency(totalCost)}/mo
           </span>
         </div>

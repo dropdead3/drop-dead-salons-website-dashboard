@@ -183,7 +183,7 @@ export function BirthdayCalendarCard() {
                       key={day.toISOString()}
                       className={cn(
                         "aspect-square rounded flex items-center justify-center relative text-xs transition-colors",
-                        isCurrentDay && "bg-primary text-primary-foreground font-bold",
+                        isCurrentDay && "bg-primary text-primary-foreground font-medium",
                         hasBirthday && !isCurrentDay && "bg-pink-500/20 text-pink-600 font-medium",
                         !hasBirthday && !isCurrentDay && "hover:bg-muted/50"
                       )}

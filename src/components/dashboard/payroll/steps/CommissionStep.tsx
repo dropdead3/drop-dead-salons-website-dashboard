@@ -114,7 +114,7 @@ export function CommissionStep({
             <TrendingUp className="h-4 w-4" />
             <span className="text-sm">Service Revenue</span>
           </div>
-          <p className="text-2xl font-bold">
+          <p className="text-2xl font-medium">
             {formatCurrency(totalServiceRevenue)}
           </p>
         </div>
@@ -123,7 +123,7 @@ export function CommissionStep({
             <TrendingUp className="h-4 w-4" />
             <span className="text-sm">Product Revenue</span>
           </div>
-          <p className="text-2xl font-bold">
+          <p className="text-2xl font-medium">
             {formatCurrency(totalProductRevenue)}
           </p>
         </div>
@@ -132,7 +132,7 @@ export function CommissionStep({
             <DollarSign className="h-4 w-4" />
             <span className="text-sm">Total Commissions</span>
           </div>
-          <p className="text-2xl font-bold text-primary">
+          <p className="text-2xl font-medium text-primary">
             {formatCurrency(totalCommissions)}
           </p>
         </div>

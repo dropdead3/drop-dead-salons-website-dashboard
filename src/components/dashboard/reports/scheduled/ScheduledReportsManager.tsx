@@ -101,7 +101,7 @@ export function ScheduledReportsManager({ onScheduleNew }: ScheduledReportsManag
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Scheduled Reports</h2>
+          <h2 className="text-lg font-medium">Scheduled Reports</h2>
           <p className="text-sm text-muted-foreground">
             Automate report delivery on a recurring schedule
           </p>

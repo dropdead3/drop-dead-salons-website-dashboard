@@ -157,7 +157,7 @@ export function MobileAgendaCard({
               </AvatarFallback>
             </Avatar>
             <div>
-              <p className="font-semibold">{appointment.client_name || 'Unknown'}</p>
+              <p className="font-medium">{appointment.client_name || 'Unknown'}</p>
               <Badge className={cn('mt-1', statusConfig.color)}>
                 <StatusIcon className="h-3 w-3 mr-1" />
                 {statusConfig.label}

@@ -70,19 +70,19 @@ export function BillingStatusCard({
           {/* Current Plan */}
           <div>
             <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Current Plan</p>
-            <p className="text-lg font-semibold text-white">{planName || 'No Plan'}</p>
+            <p className="text-lg font-medium text-white">{planName || 'No Plan'}</p>
           </div>
 
           {/* Billing Cycle */}
           <div>
             <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Billing Cycle</p>
-            <p className="text-lg font-semibold text-white">{getBillingCycleLabel(billingCycle)}</p>
+            <p className="text-lg font-medium text-white">{getBillingCycleLabel(billingCycle)}</p>
           </div>
 
           {/* Effective Rate */}
           <div>
             <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Effective Rate</p>
-            <p className="text-lg font-semibold text-white">
+            <p className="text-lg font-medium text-white">
               {formatCurrency(calculation.effectiveMonthlyAmount)}
               <span className="text-sm text-slate-400">/mo</span>
             </p>
@@ -92,15 +92,15 @@ export function BillingStatusCard({
           <div>
             <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Next Invoice</p>
             {calculation.isInTrial ? (
-              <p className="text-lg font-semibold text-violet-400">
+              <p className="text-lg font-medium text-violet-400">
                 {calculation.daysUntilTrialEnds} days left
               </p>
             ) : nextInvoiceDate ? (
-              <p className="text-lg font-semibold text-white">
+              <p className="text-lg font-medium text-white">
                 {formatDate(new Date(nextInvoiceDate), 'MMM d, yyyy')}
               </p>
             ) : (
-              <p className="text-lg font-semibold text-slate-500">Not scheduled</p>
+              <p className="text-lg font-medium text-slate-500">Not scheduled</p>
             )}
           </div>
         </div>

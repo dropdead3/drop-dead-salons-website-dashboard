@@ -241,7 +241,7 @@ export function OnboardingTrackerOverview() {
           <div className="flex items-center justify-center mb-1">
             <Users className="w-4 h-4 text-muted-foreground" />
           </div>
-          <p className="text-lg font-semibold">{stats.total}</p>
+          <p className="text-lg font-medium">{stats.total}</p>
           <div className="flex items-center gap-0.5 justify-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Total</p>
             <MetricInfoTooltip description="Count of all active employees in the onboarding process." />
@@ -251,7 +251,7 @@ export function OnboardingTrackerOverview() {
           <div className="flex items-center justify-center mb-1">
             <CheckCircle2 className="w-4 h-4 text-green-600" />
           </div>
-          <p className="text-lg font-semibold text-green-600">{stats.complete}</p>
+          <p className="text-lg font-medium text-green-600">{stats.complete}</p>
           <div className="flex items-center gap-0.5 justify-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Done</p>
             <MetricInfoTooltip description="Employees who have completed 100% of their onboarding items." />
@@ -261,7 +261,7 @@ export function OnboardingTrackerOverview() {
           <div className="flex items-center justify-center mb-1">
             <Clock className="w-4 h-4 text-yellow-600" />
           </div>
-          <p className="text-lg font-semibold text-yellow-600">{stats.inProgress}</p>
+          <p className="text-lg font-medium text-yellow-600">{stats.inProgress}</p>
           <div className="flex items-center gap-0.5 justify-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Active</p>
             <MetricInfoTooltip description="Employees currently working through their onboarding checklist." />
@@ -271,7 +271,7 @@ export function OnboardingTrackerOverview() {
           <div className="flex items-center justify-center mb-1">
             <AlertCircle className="w-4 h-4 text-red-600" />
           </div>
-          <p className="text-lg font-semibold text-red-600">{stats.notStarted}</p>
+          <p className="text-lg font-medium text-red-600">{stats.notStarted}</p>
           <div className="flex items-center gap-0.5 justify-center">
             <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Pending</p>
             <MetricInfoTooltip description="Employees who haven't started any onboarding items yet." />

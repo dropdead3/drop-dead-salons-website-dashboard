@@ -52,7 +52,7 @@ export function ChannelHeader() {
 
           <div className="flex items-center gap-2">
             <Icon className="h-5 w-5 text-muted-foreground" />
-            <h1 className="font-semibold">{getChannelDisplayName(activeChannel)}</h1>
+            <h1 className="font-medium">{getChannelDisplayName(activeChannel)}</h1>
           </div>
 
           {activeChannel.description && !isSearchExpanded && (

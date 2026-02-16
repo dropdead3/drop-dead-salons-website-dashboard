@@ -106,7 +106,7 @@ export function PlanUpgradeDialog({
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <h4 className="font-medium text-white">{plan.name}</h4>
-                        <p className="text-lg font-bold text-violet-400">
+                        <p className="text-lg font-medium text-violet-400">
                           {formatCurrency(plan.price_monthly)}/mo
                         </p>
                       </div>

@@ -96,7 +96,7 @@ export function ServiceEmailFlowsManager() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-xl font-semibold tracking-tight">Client Communication Flows</h2>
+        <h2 className="text-xl font-medium tracking-tight">Client Communication Flows</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Configure automated email sequences for services and appointment reminders.
         </p>
@@ -349,7 +349,7 @@ function FlowStepEditor({ flowId, onBack }: { flowId: string; onBack: () => void
       <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={onBack}>← Back</Button>
         <div>
-          <h3 className="font-semibold">{flow?.name || 'Flow'}</h3>
+          <h3 className="font-medium">{flow?.name || 'Flow'}</h3>
           <p className="text-xs text-muted-foreground">
             {flow?.service?.name || `All ${flow?.service_category} services`}
           </p>

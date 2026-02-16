@@ -215,7 +215,7 @@ export function GalleryContent() {
               <ImageIcon className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{galleryImages.length}</p>
+              <p className="text-2xl font-medium">{galleryImages.length}</p>
               <p className="text-sm text-muted-foreground">Gallery Images ({visibleImages} visible)</p>
             </div>
           </CardContent>

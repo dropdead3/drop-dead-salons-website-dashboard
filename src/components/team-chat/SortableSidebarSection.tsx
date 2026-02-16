@@ -64,7 +64,7 @@ export function SortableSidebarSection({
                 <GripVertical className="h-3 w-3 text-muted-foreground" />
               </button>
             )}
-            <CollapsibleTrigger className="flex items-center gap-1 text-xs font-semibold text-muted-foreground uppercase tracking-wider hover:text-foreground">
+            <CollapsibleTrigger className="flex items-center gap-1 text-xs font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground">
               {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
               {icon}
               {title}

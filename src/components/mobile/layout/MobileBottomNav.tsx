@@ -64,7 +64,7 @@ export function MobileBottomNav({ className }: MobileBottomNavProps) {
               )} />
               <span className={cn(
                 'text-[10px] font-medium',
-                active && 'font-semibold'
+                active && 'font-medium'
               )}>
                 {item.label}
               </span>

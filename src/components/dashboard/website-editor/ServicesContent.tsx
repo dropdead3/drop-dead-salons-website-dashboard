@@ -250,7 +250,7 @@ export function ServicesContent() {
               <Scissors className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{totalServices}</p>
+              <p className="text-2xl font-medium">{totalServices}</p>
               <p className="text-sm text-muted-foreground">Total Services</p>
             </div>
           </CardContent>

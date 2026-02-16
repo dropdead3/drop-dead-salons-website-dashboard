@@ -97,7 +97,7 @@ export function ThreadPanel() {
       {/* Header */}
       <div className="border-b px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="font-semibold">Thread</div>
+          <div className="font-medium">Thread</div>
           <Button variant="ghost" size="icon" onClick={closeThread} className="h-8 w-8">
             <X className="h-4 w-4" />
           </Button>

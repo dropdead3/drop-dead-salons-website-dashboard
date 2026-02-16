@@ -99,7 +99,7 @@ function CalendarEvent({
             </div>
           ) : (
             <>
-              <div className="text-xs font-semibold truncate">{request.client_name}</div>
+              <div className="text-xs font-medium truncate">{request.client_name}</div>
               <div className="text-xs opacity-80 truncate">{request.salon_services?.name}</div>
               {duration > 45 && (
                 <div className="text-xs opacity-70">
@@ -112,7 +112,7 @@ function CalendarEvent({
       </TooltipTrigger>
       <TooltipContent side="right" className="max-w-xs">
         <div className="space-y-1">
-          <div className="font-semibold">{request.client_name}</div>
+          <div className="font-medium">{request.client_name}</div>
           <div className="text-sm">{request.salon_services?.name}</div>
           <div className="text-sm text-muted-foreground">
             {formatTime(request.start_time)} - {formatTime(request.end_time)}
@@ -220,7 +220,7 @@ export function ScheduleCalendar({ requests, isStylistView }: ScheduleCalendarPr
                   {format(day, 'EEE')}
                 </div>
                 <div className={cn(
-                  'text-lg font-semibold',
+                  'text-lg font-medium',
                   isToday(day) && 'text-primary'
                 )}>
                   {format(day, 'd')}
