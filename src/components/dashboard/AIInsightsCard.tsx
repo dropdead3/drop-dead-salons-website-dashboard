@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
+import { useActiveRecommendation } from '@/hooks/useLeverRecommendations';
+import { WeeklyLeverBrief } from '@/components/executive-brief/WeeklyLeverBrief';
+import { SilenceState } from '@/components/executive-brief/SilenceState';
+import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
+import { Loader2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
@@ -221,6 +227,9 @@ export function AIInsightsCard() {
   const { dismissedKeys, dismiss } = useDismissedSuggestions();
   const { createTask } = useTasks();
   const [cooldown, setCooldown] = useState(0);
+  const roles = useEffectiveRoles();
+  const isLeadership = roles.includes('super_admin');
+  const { data: leverRecommendation, isLoading: isLeverLoading } = useActiveRecommendation();
   const [activeGuidance, setActiveGuidance] = useState<GuidanceRequest | null>(null);
   const [guidanceText, setGuidanceText] = useState<string | null>(null);
   const [isLoadingGuidance, setIsLoadingGuidance] = useState(false);
@@ -331,8 +340,27 @@ export function AIInsightsCard() {
                             </p>
                           )}
                         </div>
+                    </div>
+                    )}
+
+                    {/* Weekly Lever — leadership only */}
+                    {isLeadership && (
+                      <div className="border-y border-border/50 py-4 mb-4">
+                        <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground font-display mb-3">Weekly Lever</p>
+                        <EnforcementGateBanner gateKey="gate_kpi_architecture">
+                          {isLeverLoading ? (
+                            <div className="flex items-center justify-center py-6">
+                              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                            </div>
+                          ) : leverRecommendation ? (
+                            <WeeklyLeverBrief recommendation={leverRecommendation} />
+                          ) : (
+                            <SilenceState />
+                          )}
+                        </EnforcementGateBanner>
                       </div>
                     )}
+
                     {!data ? (
                       <div className="text-center py-8">
                         <ZuraAvatar size="md" className="mx-auto mb-3 opacity-40" />
