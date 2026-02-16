@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { 
   Search, 
@@ -1537,6 +1538,24 @@ export function QuickBookingPopover({
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Total</span>
                   <span className="text-lg font-medium">{formatCurrency(totalPrice)}</span>
+                </div>
+                <div className="space-y-0.5">
+                  <p className="text-[10px] text-muted-foreground/70">
+                    Any discounts or promotions will be calculated at checkout.
+                  </p>
+                  <div className="flex items-center gap-1">
+                    <p className="text-[10px] text-muted-foreground/70">
+                      Exact price may vary after overages & adjustments.
+                    </p>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Info className="w-3 h-3 text-muted-foreground/50 cursor-help hover:text-muted-foreground transition-colors shrink-0" />
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-[220px] text-xs">
+                        <p>Price may change due to product overages, timing adjustments, or additional services added during the appointment.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 </div>
                 <Button
                   className="w-full h-10 font-medium"
