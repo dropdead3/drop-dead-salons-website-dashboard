@@ -37,6 +37,7 @@ import { ReportsTabContent } from '@/components/dashboard/analytics/ReportsTabCo
 import { CampaignsTabContent } from '@/components/dashboard/analytics/CampaignsTabContent';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { LeadershipTabContent } from '@/components/dashboard/analytics/LeadershipTabContent';
+import { useHasRenters } from '@/hooks/useHasRenters';
 
 
 const baseCategories = [
@@ -71,7 +72,8 @@ export default function AnalyticsHub() {
 
   // Add rent tab only for super admins
   const isSuperAdmin = roles?.includes('super_admin') || roles?.includes('admin');
-  const analyticsCategories = isSuperAdmin 
+  const { data: hasRenters = false } = useHasRenters();
+  const analyticsCategories = (isSuperAdmin && hasRenters)
     ? [...baseCategories, rentCategory] 
     : baseCategories;
   
@@ -413,7 +415,7 @@ export default function AnalyticsHub() {
             </TabsContent>
           </VisibilityGate>
 
-          {isSuperAdmin && effectiveOrganization?.id && (
+          {isSuperAdmin && hasRenters && effectiveOrganization?.id && (
             <VisibilityGate elementKey="analytics_rent_tab">
               <TabsContent value="rent" className="mt-6">
                 <RentRevenueTab organizationId={effectiveOrganization.id} />
