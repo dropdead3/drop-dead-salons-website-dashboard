@@ -81,8 +81,8 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
       <DialogContent className={DRILLDOWN_DIALOG_CONTENT_CLASS} overlayClassName={DRILLDOWN_OVERLAY_CLASS}>
         {day && (
           <>
-            <DialogHeader className="px-5 pt-5 pb-3">
-              <div className="flex items-center justify-between gap-3">
+            <DialogHeader className="px-6 pt-6 pb-4">
+              <div className="flex items-center justify-between gap-4">
                 <div className="min-w-0">
                   <DialogTitle className="text-base font-display">
                     {(() => {
@@ -92,7 +92,7 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
                       } catch { return day.dayName || day.date; }
                     })()}
                   </DialogTitle>
-                  <DialogDescription className={tokens.body.muted}>
+                  <DialogDescription className={cn(tokens.body.muted, 'mt-1')}>
                     {filteredCount} appointment{filteredCount !== 1 ? 's' : ''} · By Provider
                   </DialogDescription>
                 </div>
@@ -101,20 +101,20 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
                   onValueChange={setSelectedLocation}
                   includeAll={true}
                   allLabel="All Locations"
-                  triggerClassName="h-7 w-[160px] text-xs"
+                  triggerClassName="h-8 w-[170px] text-xs"
                 />
               </div>
             </DialogHeader>
 
             <ScrollArea className="flex-1 overflow-auto">
-              <div className="px-5 pb-5 space-y-1">
+              <div className="px-6 pb-6 space-y-2">
                 {groups.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-6">No appointments for this location</p>
                 )}
                 {visibleGroups.map(group => (
                   <div key={group.name}>
                     <button
-                      className="w-full text-left p-2 rounded-md hover:bg-muted/50 transition-colors"
+                      className="w-full text-left p-3 rounded-lg hover:bg-muted/50 transition-colors"
                       onClick={() => setExpandedStylist(prev => prev === group.name ? null : group.name)}
                     >
                       <div className="flex items-center justify-between mb-1">
