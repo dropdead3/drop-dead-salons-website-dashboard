@@ -737,32 +737,28 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
 
       {/* Right Column: Sticky Live Preview */}
       <div className="sticky top-4 self-start">
-        <div className="border rounded-lg">
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-2">
-              <Eye className="w-4 h-4 text-muted-foreground" />
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Live Preview</h4>
-            </div>
-            {onPreviewOpen && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 text-xs"
-                onClick={() => onPreviewOpen(localSettings)}
-              >
-                <Maximize2 className="w-3 h-3 mr-1" />
-                Expand
-              </Button>
-            )}
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Eye className="w-4 h-4 text-muted-foreground" />
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Live Preview</h4>
           </div>
-          <div className="px-4 pb-4">
-            <KioskPreviewPanel
-              settings={localSettings}
-              businessSettings={businessSettings}
-              locationName={locationName}
-            />
-          </div>
+          {onPreviewOpen && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => onPreviewOpen(localSettings)}
+            >
+              <Maximize2 className="w-3 h-3 mr-1" />
+              Expand
+            </Button>
+          )}
         </div>
+        <KioskPreviewPanel
+          settings={localSettings}
+          businessSettings={businessSettings}
+          locationName={locationName}
+        />
       </div>
     </div>
   );
