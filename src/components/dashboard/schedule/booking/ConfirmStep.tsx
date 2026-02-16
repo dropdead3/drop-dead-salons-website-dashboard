@@ -3,6 +3,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { 
   User, 
   Scissors, 
@@ -11,7 +12,8 @@ import {
   MapPin, 
   DollarSign,
   Loader2,
-  StickyNote
+  StickyNote,
+  Info
 } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -192,6 +194,24 @@ export function ConfirmStep({
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">Estimated Total</span>
           <span className="text-xl font-medium">{formatCurrency(totalPrice)}</span>
+        </div>
+        <div className="space-y-1">
+          <p className="text-[10px] text-muted-foreground/70">
+            Any discounts or promotions will be calculated at checkout.
+          </p>
+          <div className="flex items-center gap-1">
+            <p className="text-[10px] text-muted-foreground/70">
+              Exact price may vary after overages & adjustments.
+            </p>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info className="w-3 h-3 text-muted-foreground/50 cursor-help hover:text-muted-foreground transition-colors shrink-0" />
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-[220px] text-xs">
+                <p>Price may change due to product overages, timing adjustments, or additional services added during the appointment.</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
         <Button
           className="w-full h-12 text-base font-medium"
