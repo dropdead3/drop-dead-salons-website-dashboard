@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { CalendarClock, X } from 'lucide-react';
@@ -13,11 +13,41 @@ export function HelpFAB() {
   const [activeTab, setActiveTab] = useState('ai-help');
   const location = useLocation();
   
+  const isSchedulePage = location.pathname === '/dashboard/schedule';
+
+  const handleCopilotToggle = useCallback(() => {
+    if (isSchedulePage) {
+      window.dispatchEvent(new CustomEvent('toggle-scheduling-copilot'));
+    }
+  }, [isSchedulePage]);
+  
   // Hide on Team Chat page since it has its own AI panel
   if (location.pathname === '/dashboard/team-chat') {
     return null;
   }
 
+  // On the schedule page, render a simple button that toggles the copilot panel
+  if (isSchedulePage) {
+    return (
+      <motion.div
+        className="fixed bottom-20 right-6 z-50"
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.5 }}
+      >
+        <Button
+          size="icon"
+          className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow"
+          aria-label="Scheduling Co-Pilot"
+          onClick={handleCopilotToggle}
+        >
+          <CalendarClock className="h-6 w-6" />
+        </Button>
+      </motion.div>
+    );
+  }
+
+  // On other pages, keep the existing popover behavior
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <PopoverTrigger asChild>
