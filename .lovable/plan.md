@@ -1,122 +1,55 @@
 
 
-# Redesign: Location-Centric Kiosk Settings with Expandable Drill-Downs
+# Embed Live Preview Inside Each Location Drill-Down
 
-## The Problem
+## Current State
 
-The current layout has three disconnected sections:
-1. A status table listing all locations
-2. A separate "Configure Location" card with a dropdown selector
-3. A "Kiosk Features" card and then a settings form + preview grid below
+The preview works but requires clicking a "Preview" button to open a side Sheet. This means you can't see changes in real-time as you adjust settings.
 
-You have to mentally carry which location you picked in the dropdown through all of these sections. The editing context is buried in small text badges ("Editing: Location Name") that are easy to miss.
+## Proposed Change
 
-## The Solution: Accordion-Style Location Rows
+Embed a compact, always-visible `KioskPreviewPanel` directly inside each expanded location row, positioned below the settings tabs and above the action buttons. This gives immediate visual feedback as settings are adjusted.
 
-Replace the dropdown-based flow with the location status table becoming the primary navigation. Each location row expands inline to reveal its settings, features, and preview -- so the editing context is always visually obvious.
-
-### New Page Layout (top to bottom)
-
-1. **Organization Defaults Card** -- A single card at the top for editing org-wide defaults (the "all locations" case). Contains the same Appearance/Content/Behavior tabs, but clearly labeled as the baseline. Collapsible so it stays out of the way when editing a specific location.
-
-2. **Locations Table with Expandable Rows** -- The existing `KioskLocationStatusCard` table becomes the primary interface. Each row shows: Location Name, Device Status, Feature Dots, Config Status (same as today). Clicking a row expands it inline (using framer-motion or Accordion) to reveal:
-   - A horizontal feature toggles strip (Walk-In, Self-Booking, Forms, Feedback)
-   - The tabbed settings form (Appearance / Content / Behavior)
-   - A "Preview" button that opens the live preview in a side sheet or dialog
-   - Deploy QR code section
-   - "Reset to Defaults" and "Apply to All" action buttons
-
-3. **Only one row can be expanded at a time** -- clicking a different location collapses the current one and expands the new one. This enforces clarity about which location is being edited.
-
-## Detailed Changes
-
-### 1. Refactor KioskLocationStatusCard into an expandable component
-
-**File: `src/components/dashboard/settings/KioskLocationStatusCard.tsx`**
-
-- Add state: `expandedLocationId: string | null`
-- When a row is clicked, toggle its expansion instead of calling `onLocationSelect`
-- Below the table row, render an animated expandable panel containing:
-  - Feature toggle strip (the toggle cards currently in "Kiosk Features" card)
-  - Tabbed settings form (extracted from KioskSettingsContent)
-  - Preview button (opens KioskPreviewPanel in a Sheet/Dialog)
-  - Deploy + action buttons
-- The expanded section gets a clear visual indicator: left border accent, slightly indented, with the location name prominently displayed at the top
-
-### 2. Extract settings form into a reusable component
-
-**New file: `src/components/dashboard/settings/KioskLocationSettingsForm.tsx`**
-
-Extract lines ~780-1415 from KioskSettingsContent (the settings Card with tabs + save/reset/push buttons) into a standalone component that accepts:
-- `locationId: string`
-- `orgId: string`
-- `onPreviewOpen: () => void` (to trigger preview sheet)
-
-This keeps the form logic self-contained and reusable for both the org defaults card and each location's expandable row.
-
-### 3. Extract feature toggles into a reusable component
-
-**New file: `src/components/dashboard/settings/KioskFeatureToggles.tsx`**
-
-Extract lines ~556-776 (the "Kiosk Features" card content) into a component that accepts `localSettings` and `updateField` -- so it can be rendered inside each expanded location row.
-
-### 4. Simplify KioskSettingsContent as the page orchestrator
-
-**File: `src/components/dashboard/settings/KioskSettingsContent.tsx`**
-
-- Remove the "Configure Location" dropdown card entirely
-- Remove the "Kiosk Features" standalone card
-- Remove the settings form + preview grid
-- Replace with:
-  1. An "Organization Defaults" collapsible card using `KioskLocationSettingsForm` with `locationId=null`
-  2. The enhanced `KioskLocationStatusCard` which now handles everything per-location
-
-### 5. Preview becomes a Sheet or Dialog triggered from each row
-
-Instead of a sticky side panel (which only makes sense for a single editing context), the preview opens on demand via a button inside each expanded location row. This keeps the page layout simple and single-column friendly.
-
-**Reuse existing pattern**: The `KioskPreviewPanel` stays as-is but gets rendered inside a `Sheet` (side panel) when the user clicks "Preview" on a location row.
-
-## Visual Structure (Expanded Row)
+### Layout Change (inside each expanded drill-down)
 
 ```text
-+------------------------------------------------------------------+
-| Downtown Salon        [Online]  * * * *    Customized             |
-+------------------------------------------------------------------+
-|  +--------------------------------------------------------------+|
-|  | FEATURES                                                      ||
-|  | [x] Walk-In   [x] Self-Booking   [ ] Forms   [ ] Feedback    ||
-|  +--------------------------------------------------------------+|
-|  |                                                                ||
-|  | [Appearance] [Content] [Behavior]     <- tabs                  ||
-|  |                                                                ||
-|  |  Display Mode: [Light] [Dark] [Auto]                           ||
-|  |  Orientation:  [Portrait] [Landscape]                          ||
-|  |  Colors...                                                     ||
-|  |  ...                                                           ||
-|  |                                                                ||
-|  |  [Save Changes]  [Reset to Defaults]  [Preview ->]  [Deploy]  ||
-|  +--------------------------------------------------------------+|
-+------------------------------------------------------------------+
-| Uptown Studio         [Offline]  * * - -   Using Defaults         |
-+------------------------------------------------------------------+
-| Westside Location     [Online]   * - - -   Not Configured         |
-+------------------------------------------------------------------+
++--------------------------------------------------------------+
+| FEATURES                                                      |
+| [x] Walk-In   [x] Self-Booking   [ ] Forms   [ ] Feedback    |
++--------------------------------------------------------------+
+| [Appearance] [Content] [Behavior]                             |
+|   ... settings fields ...                                     |
++--------------------------------------------------------------+
+| LIVE PREVIEW                              [Expand in Sheet]   |
+| +----------------------------------------------------------+ |
+| |  (compact KioskPreviewPanel, always visible)              | |
+| |  Updates in real-time as you change settings above        | |
+| +----------------------------------------------------------+ |
++--------------------------------------------------------------+
+| [Save]  [Apply to All]  [Reset to Defaults]                  |
++--------------------------------------------------------------+
+| Deploy QR Code                                                |
++--------------------------------------------------------------+
 ```
 
-## Benefits
+### Technical Changes
 
-- **Zero ambiguity**: The settings are physically nested inside the location row
-- **Familiar pattern**: Matches the expandable location interface already used in analytics cards
-- **Cleaner page**: No separate dropdown card, features card, or two-column grid needed
-- **Mobile-friendly**: Single column that expands inline works on all screen sizes
-- **Consistent with Zura patterns**: Matches the accordion/drill-down pattern from the analytics location breakdowns
+**File: `src/components/dashboard/settings/KioskLocationSettingsForm.tsx`**
 
-## Implementation Sequence
+1. Import `KioskPreviewPanel` and `useBusinessSettings`
+2. Add an always-visible preview section between the tabs content and the action buttons
+3. Keep the "Preview" button but relabel it "Expand Preview" -- it still opens the full-size Sheet for a closer look
+4. Pass `localSettings` directly to the embedded `KioskPreviewPanel` so it reacts to every field change in real-time
 
-1. Create `KioskFeatureToggles.tsx` (extract from KioskSettingsContent)
-2. Create `KioskLocationSettingsForm.tsx` (extract from KioskSettingsContent)
-3. Refactor `KioskLocationStatusCard.tsx` to support expandable rows with embedded settings
-4. Simplify `KioskSettingsContent.tsx` to orchestrate the new layout
-5. Wire up preview as a Sheet/Dialog triggered per-location
+The embedded preview will be wrapped in a collapsible section (default open) so users can collapse it if they want more vertical space for the form.
 
+### What stays the same
+
+- The Sheet-based full preview still works via "Expand Preview" button
+- The `KioskPreviewPanel` component is unchanged
+- The drill-down accordion layout is unchanged
+- Organization Defaults preview Sheet is unchanged
+
+### Benefit
+
+Real-time visual feedback without any extra clicks. The preview is always contextually tied to the location being edited because it lives inside the drill-down.
