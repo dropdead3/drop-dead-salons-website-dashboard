@@ -1,120 +1,103 @@
 
 
-# Universal Client Email Unsubscribe System
+# Email Compliance and Preference Center -- Gaps and Enhancements
 
-## Overview
+## Gaps Found
 
-Add a CAN-SPAM/GDPR-compliant unsubscribe mechanism to all client-facing marketing emails (re-engagement, bulk outreach). The unsubscribe confirmation page will include a clear reminder that appointment-related notifications remain active, encouraging clients to stay connected for booking updates.
+### Gap 1: `send-feedback-request` Sends Client Emails Without Unsubscribe Check
 
-## Current State
+This function emails clients directly (feedback requests after appointments) but does NOT pass `clientId` to `sendOrgEmail`. If a client has opted out of marketing, they would still receive this email. Feedback requests are borderline -- they are triggered by a specific transaction (appointment), which makes them closer to transactional, but they are technically optional solicitations. Best practice: check opt-out and include an unsubscribe link.
 
-- **Insights emails** (internal/staff): Already have their own unsubscribe flow via `unsubscribe-insights-email` edge function. No changes needed.
-- **Client marketing emails** (re-engagement, bulk outreach via `sendOrgEmail`): No unsubscribe mechanism. This is the gap.
+**Fix:** Pass `clientId` to `sendOrgEmail` in this function, same as the re-engagement and automation callers.
 
-## What Gets Built
+### Gap 2: No Re-Subscribe Path
 
-### 1. Database: `client_email_preferences` Table
+The current unsubscribe page is a dead end. Once a client clicks unsubscribe, there is no way for them to re-opt-in. CAN-SPAM does not require a re-subscribe mechanism, but from a business perspective it is a missed opportunity.
 
-Tracks per-client, per-organization marketing email opt-out status.
+**Fix:** Add a "Changed your mind?" link on the unsubscribe confirmation page that re-opts the client in using the same signed token (a second endpoint or a query parameter like `?action=resubscribe`).
 
-```
-client_email_preferences
-  id               UUID (PK)
-  organization_id  UUID (FK -> organizations)
-  client_id        UUID (FK -> phorest_clients)
-  marketing_opt_out BOOLEAN DEFAULT false
-  opt_out_at       TIMESTAMPTZ
-  created_at       TIMESTAMPTZ
-  UNIQUE(organization_id, client_id)
-```
+### Gap 3: No Token Expiration
 
-RLS: Service role only (edge functions manage this, not browser clients).
+The signed unsubscribe URLs have a `ts` (timestamp) in the payload but nothing validates it. Links generated years ago will still work. This is fine for unsubscribe (CAN-SPAM requires links to work for 30 days minimum), but it means there's no replay protection or link rotation.
 
-### 2. Edge Function: `unsubscribe-client-email`
+**Fix:** Add optional expiration validation in `verifySignedPayload` -- accept links up to 365 days old, reject older ones with a "link expired" message and instructions to contact the salon.
 
-A new edge function that handles GET requests with signed tokens (same HMAC pattern as the existing insights unsubscribe). Renders a branded HTML confirmation page with:
+### Gap 4: No Physical Address in Footer
 
-- Confirmation message: "You've been unsubscribed from marketing emails."
-- Reassurance callout: "You'll still receive appointment confirmations, reminders, and booking updates -- no action needed."
-- A subtle link back to the salon's website (if configured in social links).
+CAN-SPAM requires a physical mailing address in every commercial email. The current `buildBrandedTemplate` footer has social links and attribution but no postal address field.
 
-### 3. Shared Utility: Signed URL Builder
+**Fix:** Add an `email_physical_address` field to the organizations table (or use an existing address field) and render it in the email footer. This is a legal requirement.
 
-Extract the HMAC token-signing logic (currently duplicated in `send-insights-email`) into a shared helper in `_shared/`, so both the insights and client unsubscribe flows use the same pattern.
+### Gap 5: No Email Send Logging for Client Emails
 
-New file: `supabase/functions/_shared/signed-url.ts`
-- `buildSignedUrl(functionName, payload)` -- returns a full signed URL
-- `verifySignedPayload(payload, sig)` -- returns decoded payload or throws
+Staff insights emails update `insights_email_last_sent` and `insights_email_next_at`. Client marketing emails have `reengagement_outreach` logging, but there is no unified email log. If a client disputes receiving emails, there is no audit trail.
 
-### 4. Email Sender Integration
+**Fix:** Create a lightweight `email_send_log` table that records every client-facing email: `(organization_id, client_id, email_type, sent_at, message_id, status)`. The `sendOrgEmail` function writes to it after successful sends.
 
-Modify `sendOrgEmail` to accept an optional `clientId` parameter. When provided:
+### Gap 6: No Rate Limiting on Client Emails
 
-1. Check `client_email_preferences` -- skip sending if opted out
-2. Generate a signed unsubscribe URL
-3. Inject the unsubscribe link into the email footer (inside `buildBrandedTemplate`)
-4. Add `List-Unsubscribe` and `List-Unsubscribe-Post` headers to the Resend API call (required by Gmail/Yahoo 2024+ sender guidelines)
+A client could receive a re-engagement email, an automation email, and a feedback request all on the same day. There is no frequency cap to prevent email fatigue.
 
-### 5. Callers Updated
+**Fix:** Before sending any client email, check the `email_send_log` for recent sends to the same client. If they received an email within the last 48 hours, skip or queue the new one.
 
-- `check-client-inactivity`: Pass `client_id` to `sendOrgEmail`, check opt-out before sending
-- `process-client-automations`: Same treatment for bulk outreach
+### Gap 7: Unsubscribe Confirmation Page Has No Branding Context
 
-## File Changes
+The current `unsubscribe-client-email` page shows the salon name but does not pull the salon's logo or accent color. The insights unsubscribe page also lacks branding. Both should feel like they belong to the salon, not a generic page.
 
-### New: `supabase/migrations/...add_client_email_preferences.sql`
-- Create `client_email_preferences` table with unique constraint and RLS enabled (no browser policies -- service role only)
+**Fix:** Fetch `email_logo_url` and `email_accent_color` from the organizations table (already queried) and apply them to the confirmation page header.
 
-### New: `supabase/functions/_shared/signed-url.ts`
-- `buildSignedUrl(baseUrl, functionName, payload)` -- HMAC-signs and returns URL
-- `verifySignedPayload(payload, sig)` -- verifies and decodes
+## Recommended Changes
 
-### New: `supabase/functions/unsubscribe-client-email/index.ts`
-- GET handler: verify signature, set `marketing_opt_out = true`, render confirmation page
-- Confirmation page includes appointment notification reassurance message
-- Styled consistently with the existing insights unsubscribe page (purple gradient icon, clean layout)
+### Database
 
-### Modified: `supabase/functions/_shared/email-sender.ts`
-- `OrgEmailPayload` gains optional `clientId?: string`
-- `sendOrgEmail` checks opt-out status when `clientId` is provided
-- `buildBrandedTemplate` accepts optional `unsubscribeUrl` and renders it in the footer
-- Resend API call includes `List-Unsubscribe` header when URL is present
+1. Add `email_physical_address TEXT` column to the `organizations` table
+2. Create `email_send_log` table:
+   - `id UUID PK`
+   - `organization_id UUID`
+   - `client_id UUID`
+   - `email_type TEXT` (marketing, feedback, transactional)
+   - `message_id TEXT` (from Resend)
+   - `sent_at TIMESTAMPTZ DEFAULT now()`
+   - Index on `(organization_id, client_id, sent_at)`
 
-### Modified: `supabase/functions/check-client-inactivity/index.ts`
-- Pass `client_id` when calling `sendOrgEmail`
+### Edge Functions
 
-### Modified: `supabase/functions/send-insights-email/index.ts`
-- Refactor to use shared `buildSignedUrl` utility (removes duplicated HMAC logic)
+1. **`_shared/email-sender.ts`**
+   - After successful Resend send with `clientId`, insert into `email_send_log`
+   - Add physical address to `buildBrandedTemplate` footer
+   - Add 48-hour rate limit check before sending client emails
 
-## Unsubscribe Confirmation Page Copy
+2. **`send-feedback-request/index.ts`**
+   - Pass `clientId` to `sendOrgEmail` so opt-out is respected and unsubscribe link is injected
 
-```
-Title: "Unsubscribed"
-Body: "You've been removed from marketing emails from [Salon Name]."
+3. **`unsubscribe-client-email/index.ts`**
+   - Add re-subscribe support via `?action=resubscribe` query parameter
+   - Add token age validation (reject links older than 365 days)
+   - Pull org logo and accent color for branded confirmation page
 
-Callout box:
-"Your appointment reminders and booking confirmations are not affected.
-You'll continue to receive notifications about your upcoming visits."
-```
+4. **`_shared/signed-url.ts`**
+   - Add optional `maxAgeMs` parameter to `verifySignedPayload` for token expiration
 
-## Technical Details
+### Frontend
 
-### Token Payload Structure
-```json
-{ "cid": "<client_id>", "oid": "<org_id>", "ts": 1234567890 }
-```
+5. **Organization Settings (Email Branding section)**
+   - Add a "Business Address" field for CAN-SPAM compliance
+   - This goes in the existing email branding settings area on the admin settings page
 
-### Opt-Out Check Flow
-```
-sendOrgEmail called with clientId
-  -> query client_email_preferences for (org_id, client_id)
-  -> if marketing_opt_out = true, skip send, return { success: true, skipped: true }
-  -> else proceed with send, inject unsubscribe footer
-```
+## Priority Order
 
-### List-Unsubscribe Headers (Gmail/Yahoo compliance)
-```
-List-Unsubscribe: <https://...functions/v1/unsubscribe-client-email?payload=...&sig=...>
-List-Unsubscribe-Post: List-Unsubscribe=One-Click
-```
+1. Physical address in footer (legal requirement)
+2. `send-feedback-request` opt-out check (compliance gap)
+3. Email send logging (audit trail)
+4. Rate limiting (client experience)
+5. Token expiration (security hardening)
+6. Re-subscribe path (business value)
+7. Branded unsubscribe page (polish)
+
+## Technical Notes
+
+- The `email_send_log` table should use RLS with service-role-only access (same as `client_email_preferences`)
+- Rate limiting logic goes in `sendOrgEmail` before the Resend API call, after the opt-out check
+- The physical address field should be presented in the settings UI with helper text explaining "Required by CAN-SPAM for all commercial emails"
+- Re-subscribe uses the same HMAC verification, just toggles `marketing_opt_out` back to `false` and clears `opt_out_at`
 
