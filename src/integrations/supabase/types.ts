@@ -2601,6 +2601,48 @@ export type Database = {
           },
         ]
       }
+      client_email_preferences: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          marketing_opt_out: boolean
+          opt_out_at: string | null
+          organization_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          marketing_opt_out?: boolean
+          opt_out_at?: string | null
+          organization_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          marketing_opt_out?: boolean
+          opt_out_at?: string | null
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_email_preferences_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_email_preferences_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_feedback_responses: {
         Row: {
           appointment_id: string | null

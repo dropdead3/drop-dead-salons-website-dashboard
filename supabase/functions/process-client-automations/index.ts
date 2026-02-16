@@ -192,6 +192,7 @@ async function sendAutomationEmail(supabase: any, rule: AutomationRule, client: 
       to: [client.email],
       subject,
       html: body,
+      clientId: client.id,
     });
 
     return { success: result.success, error: result.error };

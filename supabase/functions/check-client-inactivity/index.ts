@@ -147,13 +147,8 @@ const handler = async (req: Request): Promise<Response> => {
             await sendOrgEmail(supabase, campaign.organization_id, {
               to: [client.email],
               subject: emailSubject.replace(/{{client_name}}/g, client.name),
-              html: `
-                ${finalBody}
-                <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-                <p style="color: #999; font-size: 12px; text-align: center;">
-                  If you no longer wish to receive these emails, please let us know.
-                </p>
-              `,
+              html: finalBody,
+              clientId: client.id,
             });
             clientsContacted++;
           } catch (emailError) {
