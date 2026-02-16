@@ -1,43 +1,45 @@
 
 
-# Fix Kiosk Settings Layout: Sticky Preview + Column Sizing
+# Fix Sticky Preview and Enlarge Preview Screen
 
-## Problems Identified
+## Root Cause: Why Sticky Doesn't Work
 
-1. **Preview column too small**: The grid is set to `lg:grid-cols-[1fr,500px]`, giving the settings form ALL the flexible space while the preview is fixed at only 500px.
-
-2. **Sticky not working**: The parent grid container (`space-y-6`) doesn't use `items-start` on the grid, so the right column stretches to match the left column's height -- making sticky have no scrollable track to stick within. The outer wrapper is `space-y-6` (a flex-free block layout), and the grid itself needs `items-start` so the right column doesn't stretch.
+The `DashboardLayout.tsx` content wrapper (line 838) has `overflow-x-hidden`, which creates a new scroll container and **breaks `position: sticky`** on all descendants. This is a well-known CSS limitation -- sticky positioning only works when no ancestor between the sticky element and the scroll root has `overflow: hidden`, `auto`, or `scroll`.
 
 ## Changes
 
-**File: `src/components/dashboard/settings/KioskSettingsContent.tsx`**
+### 1. Fix the overflow ancestor in DashboardLayout
 
-Two targeted edits:
+**File: `src/components/dashboard/DashboardLayout.tsx` (line 838)**
 
-### 1. Flip the column ratio and add `items-start`
-
-Change line 779 from:
-```
-grid grid-cols-1 lg:grid-cols-[1fr,500px] gap-6
-```
-to:
-```
-grid grid-cols-1 lg:grid-cols-[minmax(0,420px),1fr] gap-6 items-start
-```
-
-This gives the settings form a max width of 420px (compact, form-appropriate) and lets the preview panel take all remaining space. `items-start` prevents the right column from stretching to match the left column's height, which is what enables sticky positioning to work.
-
-### 2. Add max-height constraint to sticky preview
-
-Change the sticky wrapper (lines 1418-1424) to include a viewport-height constraint so the preview doesn't overflow when it's taller than the viewport:
+Replace `overflow-x-hidden` with `overflow-x-clip`. The `clip` value prevents horizontal overflow visually (same effect) but does **not** create a scroll container, so sticky positioning works normally.
 
 ```
-<div className="hidden lg:block">
-  <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
-    <KioskPreviewPanel ... />
-  </div>
-</div>
+Before: "w-full transition-[padding-left] duration-200 ease-in-out min-w-0 overflow-x-hidden"
+After:  "w-full transition-[padding-left] duration-200 ease-in-out min-w-0 overflow-x-clip"
 ```
 
-This ensures the preview stays pinned as you scroll through settings, and if the preview itself is tall, it scrolls independently.
+This is a safe, backward-compatible change. `overflow-x: clip` is supported in all modern browsers (Chrome 90+, Firefox 81+, Safari 16+).
+
+### 2. Make the preview screen much bigger
+
+**File: `src/components/dashboard/settings/KioskPreviewPanel.tsx` (lines 604-606)**
+
+Increase the `max-w` constraints on the tablet frame so the preview fills more of the available space:
+
+```
+Before:
+  settings.display_orientation === 'landscape' ? "max-w-[400px]" : "max-w-[320px]"
+
+After:
+  settings.display_orientation === 'landscape' ? "max-w-[560px]" : "max-w-[420px]"
+```
+
+This makes the preview tablet ~30% larger, taking advantage of the wider right column from the previous layout change.
+
+### Summary
+
+Two small, targeted edits:
+1. One class swap in DashboardLayout (`overflow-x-hidden` to `overflow-x-clip`) -- fixes sticky
+2. Two max-width values bumped in KioskPreviewPanel -- makes the preview screen bigger
 
