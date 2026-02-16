@@ -1,13 +1,29 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle2 } from 'lucide-react';
 
+interface SilenceStateProps {
+  compact?: boolean;
+}
+
 /**
  * SilenceState — Designed silence.
  * 
  * When no high-confidence lever exists, this is not an empty state.
  * It is a deliberate, calm confirmation that operations are within thresholds.
  */
-export function SilenceState() {
+export function SilenceState({ compact = false }: SilenceStateProps) {
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2">
+        <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500" />
+        <span className="text-sm text-[hsl(var(--platform-foreground))]">Operations within thresholds</span>
+        <span className="ml-auto text-[10px] text-muted-foreground whitespace-nowrap">
+          {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+        </span>
+      </div>
+    );
+  }
+
   return (
     <Card className="rounded-2xl shadow-2xl">
       <CardContent className="flex flex-col items-center justify-center py-16 text-center">

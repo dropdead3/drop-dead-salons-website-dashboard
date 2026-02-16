@@ -15,6 +15,7 @@ import { useActiveRecommendation } from '@/hooks/useLeverRecommendations';
 import { WeeklyLeverBrief } from '@/components/executive-brief/WeeklyLeverBrief';
 import { SilenceState } from '@/components/executive-brief/SilenceState';
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Loader2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -213,6 +214,7 @@ function ActionItemCard({ item, index, onRequestGuidance }: { item: ActionItem; 
 export function AIInsightsDrawer() {
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<InsightTab>('insights');
+  const [leverOpen, setLeverOpen] = useState(false);
   const { data, generatedAt, isLoading, isRefreshing, isStale, refresh, cooldownRemaining } = useAIInsights();
   const { dismissedKeys, dismiss } = useDismissedSuggestions();
   const roles = useEffectiveRoles();
@@ -387,23 +389,38 @@ export function AIInsightsDrawer() {
                           </div>
                         )}
 
-                        {/* Weekly Lever — leadership only */}
+                        {/* Weekly Lever — leadership only, collapsible */}
                         {isLeadership && (
                           <div className="px-4 pb-3">
-                            <div className="border-y border-border/50 py-4">
-                              <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground font-display mb-3">Weekly Lever</p>
-                              <EnforcementGateBanner gateKey="gate_kpi_architecture">
+                            <Collapsible open={leverOpen} onOpenChange={setLeverOpen}>
+                              <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg border border-border/50 px-3 py-2.5 text-left hover:bg-accent/50 transition-colors">
                                 {isLeverLoading ? (
-                                  <div className="flex items-center justify-center py-6">
-                                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                                  </div>
+                                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                                 ) : leverRecommendation ? (
-                                  <WeeklyLeverBrief recommendation={leverRecommendation} />
+                                  <>
+                                    <Zap className="h-4 w-4 shrink-0 text-amber-500" />
+                                    <span className="text-sm font-medium truncate">{leverRecommendation.title}</span>
+                                  </>
                                 ) : (
-                                  <SilenceState />
+                                  <SilenceState compact />
                                 )}
-                              </EnforcementGateBanner>
-                            </div>
+                                <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform', leverOpen && 'rotate-180')} />
+                              </CollapsibleTrigger>
+                              <CollapsibleContent>
+                                <div className="pt-3">
+                                  <EnforcementGateBanner gateKey="gate_kpi_architecture">
+                                    {leverRecommendation ? (
+                                      <WeeklyLeverBrief recommendation={leverRecommendation} />
+                                    ) : (
+                                      <div className="text-sm text-muted-foreground space-y-1 px-1">
+                                        <p>No high-confidence lever detected this period.</p>
+                                        <p className="text-xs">Last reviewed: {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                                      </div>
+                                    )}
+                                  </EnforcementGateBanner>
+                                </div>
+                              </CollapsibleContent>
+                            </Collapsible>
                           </div>
                         )}
 
