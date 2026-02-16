@@ -1,38 +1,42 @@
 
-# Conditionally Show Rent Revenue and Renter Analytics
 
-## Problem
-The Rent Revenue KPI card in the Executive Summary and the Rent tab in Analytics Hub are always visible, even for organizations that have no renters and do not offer booth rentals. This creates noise for pure commission-based salons.
+# Close Remaining Renter Visibility Gaps
 
-## Solution
-Create a lightweight `useHasRenters` hook that checks two signals:
-1. Whether the organization has at least 1 `booth_renter_profiles` record (any status)
-2. Whether any of the organization's locations have a `rental_model` that is not "none" (i.e., they offer booths)
+## What Was Found
 
-If either signal is true, renter-related UI is shown. If both are false, it is hidden.
+The `useHasRenters` hook was added to the Executive Summary and Analytics Hub, but three other areas still show rent-related content unconditionally.
 
-## Changes
+## Gaps to Fix
 
-### 1. New hook: `src/hooks/useHasRenters.ts`
-A simple React Query hook that runs two fast count queries against `booth_renter_profiles` and `locations.rental_model`, returning `{ hasRenters: boolean, isLoading: boolean }`. Cached aggressively (5-minute stale time) since renter presence rarely changes mid-session.
+### 1. Payroll Summary Report - On-Screen KPI Cards
+**File:** `src/components/dashboard/reports/PayrollSummaryReport.tsx` (lines 164-172)
 
-### 2. Executive Summary Card (`src/components/dashboard/analytics/ExecutiveSummaryCard.tsx`)
-- Import `useHasRenters`
-- Conditionally exclude the "Rent Revenue" KPI object from the `kpis` array when `hasRenters` is false
-- The card layout auto-adjusts since KPIs are rendered from a dynamic array
+The "Expected Rent" and "Collected Rent" cards are always rendered in the 4-column KPI grid. When there are no renters, these show "$0" which is confusing.
 
-### 3. Analytics Hub (`src/pages/dashboard/admin/AnalyticsHub.tsx`)
-- Import `useHasRenters`
-- Only include `rentCategory` in the tabs list when `hasRenters` is true (in addition to the existing `isSuperAdmin` check)
-- The Rent tab trigger and content are already wrapped in `VisibilityGate`, so this adds a data-driven gate on top
+**Fix:** Import `useHasRenters`, conditionally render the two rent cards only when `hasRenters` is true, and adjust the grid from `grid-cols-4` to `grid-cols-2` when rent cards are hidden.
+
+### 2. Payroll Summary Report - PDF Summary Line
+**File:** `src/components/dashboard/reports/PayrollSummaryReport.tsx` (line 73)
+
+The PDF header always prints `"Total Commission: $X | Expected Rent: $0 | Collected Rent: $0"`. The rent section in the PDF body is already guarded by `activeRenterCount > 0`, but the summary line is not.
+
+**Fix:** Conditionally omit the rent portions of the summary string when `hasRenters` is false.
+
+### 3. Payroll Summary Report - CSV Export
+**File:** `src/components/dashboard/reports/PayrollSummaryReport.tsx` (lines 127-129)
+
+The CSV always appends a "Rent Summary" block. It checks `if (rentData)` but `rentData` is always truthy (it returns an object with zeros).
+
+**Fix:** Change the guard to `if (rentData && rentData.activeRenterCount > 0)` to match the PDF logic, or use `hasRenters`.
 
 ## What This Does NOT Change
-- No data is deleted; this is purely a UI visibility change
-- If a salon later onboards their first renter, the UI appears automatically on next page load
-- The `VisibilityGate` / role-based access controls remain in place as an additional layer
-- Payroll reports that reference rent data already guard with `if (rentData.activeRenterCount > 0)`, so those are unaffected
 
-## Files Changed
-1. **`src/hooks/useHasRenters.ts`** (new) -- lightweight hook
-2. **`src/components/dashboard/analytics/ExecutiveSummaryCard.tsx`** -- filter out Rent Revenue KPI when no renters
-3. **`src/pages/dashboard/admin/AnalyticsHub.tsx`** -- hide Rent tab when no renters
+- The "Renter Hub" sidebar link and Management Hub card are navigation items, not analytics. They are already behind the `manage_booth_renters` permission gate. These are intentionally left visible so owners who want to start onboarding renters can discover the feature.
+- The Renter Portal routes (for booth_renter role users) are unaffected since those users would not exist in a non-rental org.
+
+## Technical Details
+
+- Only 1 file changes: `PayrollSummaryReport.tsx`
+- Adds the `useHasRenters` import (same hook already used elsewhere)
+- Three small conditional checks: KPI grid rendering, PDF summary string, CSV export block
+- Grid adjusts from `md:grid-cols-4` to `md:grid-cols-2` when rent cards are hidden
