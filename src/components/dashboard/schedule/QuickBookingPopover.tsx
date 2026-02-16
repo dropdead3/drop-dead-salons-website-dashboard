@@ -468,7 +468,7 @@ export function QuickBookingPopover({
       {/* Centered modal content - rendered independently */}
       {open && (
         <div 
-          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[380px] p-0 shadow-xl border border-border rounded-xl overflow-hidden bg-popover animate-enter"
+          className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[440px] p-0 shadow-xl border border-border rounded-xl overflow-hidden bg-popover animate-enter"
         >
           {/* Header */}
           <div className="bg-card border-b border-border">
@@ -591,7 +591,7 @@ export function QuickBookingPopover({
                 }}
               />
             ) : (
-              <div className="flex flex-col" style={{ height: '400px' }}>
+              <div className="flex flex-col" style={{ height: '550px' }}>
                 {/* Search bar */}
                 <div className="p-3 border-b border-border">
                   <div className="flex gap-2">
@@ -681,7 +681,7 @@ export function QuickBookingPopover({
 
           {/* Step 1: Service Selection (Category → Services) */}
           {step === 'service' && (
-            <div className="flex flex-col" style={{ height: '400px' }}>
+            <div className="flex flex-col" style={{ height: '550px' }}>
               {/* Sticky Back to Categories Header */}
               {selectedCategory && (
                 <div className="sticky top-0 z-10 bg-popover border-b border-border px-3 py-2">
@@ -933,7 +933,7 @@ export function QuickBookingPopover({
 
           {/* Step 2: Location Selection */}
           {step === 'location' && (
-            <div className="flex flex-col" style={{ height: '400px' }}>
+            <div className="flex flex-col" style={{ height: '550px' }}>
               <ScrollArea className="flex-1">
                 <div className="p-3">
                   <div className="flex items-center gap-2 mb-3">
@@ -1013,7 +1013,7 @@ export function QuickBookingPopover({
 
           {/* Step 4: Stylist Selection */}
           {step === 'stylist' && (
-            <div className="flex flex-col" style={{ height: '400px' }}>
+            <div className="flex flex-col" style={{ height: '550px' }}>
               <ScrollArea className="flex-1">
                 <div className="p-4">
                   {/* Previous stylist notice */}
@@ -1148,7 +1148,7 @@ export function QuickBookingPopover({
 
           {/* Step 4: Confirmation */}
           {step === 'confirm' && (
-            <div className="flex flex-col" style={{ height: '400px' }}>
+            <div className="flex flex-col" style={{ height: '550px' }}>
               <ScrollArea className="flex-1">
                 <div className="p-3 space-y-3">
                   {/* Client */}
