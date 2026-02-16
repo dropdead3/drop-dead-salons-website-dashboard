@@ -27,7 +27,7 @@ const sampleVariables: Record<string, string> = {
   handbook_count: "2",
   handbook_list: '<li style="margin-bottom: 8px;">Employee Handbook v2.0</li><li style="margin-bottom: 8px;">Safety Guidelines</li>',
   handbook_names: "Employee Handbook v2.0, Safety Guidelines",
-  dashboard_url: "https://dropdeadgorgeous.com/dashboard",
+  dashboard_url: "https://dropdeadsalon.com/dashboard",
   
   // Daily program reminder variables
   stylist_name: "Test Stylist",
@@ -36,7 +36,7 @@ const sampleVariables: Record<string, string> = {
   
   // Welcome email variables
   user_name: "New Team Member",
-  login_url: "https://dropdeadgorgeous.com/staff-login",
+  login_url: "https://dropdeadsalon.com/staff-login",
   
   // Strike notification variables
   staff_name: "Staff Member",
