@@ -455,14 +455,22 @@ export function WeekView({
                       >
                         <div 
                           className={cn(
-                            'h-[20px] hover:bg-primary/10 cursor-pointer transition-colors',
+                            'h-[20px] hover:bg-primary/10 cursor-pointer transition-colors group relative',
                             slot.isHour 
                               ? 'border-t border-border/60' 
                               : slot.isHalf 
                                 ? 'border-t border-dotted border-border/40'
                                 : 'border-t border-dotted border-border/20'
                           )}
-                        />
+                        >
+                          <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
+                            {(() => {
+                              const ampm = slot.hour >= 12 ? 'PM' : 'AM';
+                              const hour12 = slot.hour % 12 || 12;
+                              return `${hour12}:${slot.minute.toString().padStart(2, '0')} ${ampm}`;
+                            })()}
+                          </div>
+                        </div>
                       </QuickBookingPopover>
                     );
                   })}

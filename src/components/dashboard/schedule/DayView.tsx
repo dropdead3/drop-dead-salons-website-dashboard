@@ -91,6 +91,12 @@ const isConsultationCategory = (category: string | null | undefined) => {
 const DEFAULT_CONSULTATION_GRADIENT = SPECIAL_GRADIENTS['teal-lime'];
 
 // ─── Droppable Time Slot ───────────────────────────────────────────
+function formatSlotTime(hour: number, minute: number): string {
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = hour % 12 || 12;
+  return `${hour12}:${minute.toString().padStart(2, '0')} ${ampm}`;
+}
+
 function DroppableSlot({
   id,
   hour,
@@ -117,7 +123,7 @@ function DroppableSlot({
     <div
       ref={setNodeRef}
       className={cn(
-        'h-4',
+        'h-4 group relative',
         minute === 0 && 'border-t border-border',
         minute !== 0 && 'border-t border-dashed border-border/30',
         isPastSlot
@@ -130,7 +136,13 @@ function DroppableSlot({
       onClick={() => {
         if (isAvailable) onClick();
       }}
-    />
+    >
+      {isAvailable && !isPastSlot && (
+        <div className="absolute left-1/2 -translate-x-1/2 -top-7 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded font-medium shadow opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-40 whitespace-nowrap">
+          {formatSlotTime(hour, minute)}
+        </div>
+      )}
+    </div>
   );
 }
 
