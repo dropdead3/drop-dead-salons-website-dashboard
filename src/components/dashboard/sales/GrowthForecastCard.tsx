@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
@@ -513,23 +513,13 @@ export function GrowthForecastCard() {
           {/* Scenario Toggle */}
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Scenario</span>
-            <ToggleGroup
-              type="single"
-              value={scenario}
-              onValueChange={(v) => v && setScenario(v as Scenario)}
-              size="sm"
-              className="bg-muted/30 rounded-lg p-0.5"
-            >
-              <ToggleGroupItem value="conservative" className="text-xs px-3 h-7 rounded-md data-[state=on]:bg-background data-[state=on]:shadow-sm">
-                Conservative
-              </ToggleGroupItem>
-              <ToggleGroupItem value="baseline" className="text-xs px-3 h-7 rounded-md data-[state=on]:bg-background data-[state=on]:shadow-sm">
-                Baseline
-              </ToggleGroupItem>
-              <ToggleGroupItem value="optimistic" className="text-xs px-3 h-7 rounded-md data-[state=on]:bg-background data-[state=on]:shadow-sm">
-                Optimistic
-              </ToggleGroupItem>
-            </ToggleGroup>
+            <Tabs value={scenario} onValueChange={(v) => v && setScenario(v as Scenario)}>
+              <FilterTabsList>
+                <FilterTabsTrigger value="conservative">Conservative</FilterTabsTrigger>
+                <FilterTabsTrigger value="baseline">Baseline</FilterTabsTrigger>
+                <FilterTabsTrigger value="optimistic">Optimistic</FilterTabsTrigger>
+              </FilterTabsList>
+            </Tabs>
           </div>
 
           {/* Chart */}

@@ -84,5 +84,30 @@ const SubTabsTrigger = React.forwardRef<
 ));
 SubTabsTrigger.displayName = "SubTabsTrigger";
 
-export { Tabs, TabsList, TabsTrigger, TabsContent, SubTabsList, SubTabsTrigger };
+// Compact filter variants for analytics card inline toggles
+const FilterTabsList = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.List>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.List
+    ref={ref}
+    className={cn(TABS_CLASSES.filterList, className)}
+    {...props}
+  />
+));
+FilterTabsList.displayName = "FilterTabsList";
+
+const FilterTabsTrigger = React.forwardRef<
+  React.ElementRef<typeof TabsPrimitive.Trigger>,
+  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
+>(({ className, ...props }, ref) => (
+  <TabsPrimitive.Trigger
+    ref={ref}
+    className={cn(TABS_CLASSES.filterTrigger, className)}
+    {...props}
+  />
+));
+FilterTabsTrigger.displayName = "FilterTabsTrigger";
+
+export { Tabs, TabsList, TabsTrigger, TabsContent, SubTabsList, SubTabsTrigger, FilterTabsList, FilterTabsTrigger };
 export { ResponsiveTabsList } from '@/components/ui/responsive-tabs-list';

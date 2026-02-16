@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Scissors, TrendingUp, DollarSign, ChevronDown, User } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 import {
   BarChart,
   Bar,
@@ -413,16 +413,16 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
       </CardHeader>
       <CardContent>
         <Tabs value={sortBy} onValueChange={(v) => setSortBy(v as 'frequency' | 'revenue')}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="revenue" className="flex items-center gap-1">
+          <FilterTabsList className="mb-4">
+            <FilterTabsTrigger value="revenue" className="flex items-center gap-1">
               <DollarSign className="w-3 h-3" />
               By Revenue
-            </TabsTrigger>
-            <TabsTrigger value="frequency" className="flex items-center gap-1">
+            </FilterTabsTrigger>
+            <FilterTabsTrigger value="frequency" className="flex items-center gap-1">
               <TrendingUp className="w-3 h-3" />
               By Frequency
-            </TabsTrigger>
-          </TabsList>
+            </FilterTabsTrigger>
+          </FilterTabsList>
 
           <TabsContent value="frequency" className="mt-0">
             {renderBarChart('frequency', false)}

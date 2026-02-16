@@ -12,7 +12,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { LocationSelect } from '@/components/ui/location-select';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CapacityBreakdown } from '@/components/dashboard/analytics/CapacityBreakdown';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 import { Gauge, Clock, DollarSign, TrendingDown, Calendar, PieChart, Info } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -223,22 +223,13 @@ export function CapacityUtilizationCard() {
           </div>
           <div className="flex items-center justify-between">
             <CardDescription>How much of your salon's capacity is booked</CardDescription>
-            <ToggleGroup 
-              type="single" 
-              value={period} 
-              onValueChange={(v) => v && setPeriod(v as CapacityPeriod)}
-              className="bg-muted/50 p-1 rounded-lg"
-            >
-              <ToggleGroupItem value="tomorrow" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:shadow-sm">
-                Tomorrow
-              </ToggleGroupItem>
-              <ToggleGroupItem value="7days" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:shadow-sm">
-                7 Days
-              </ToggleGroupItem>
-              <ToggleGroupItem value="30days" className="text-xs px-2.5 py-1 h-7 data-[state=on]:bg-background data-[state=on]:shadow-sm">
-                30 Days
-              </ToggleGroupItem>
-            </ToggleGroup>
+            <Tabs value={period} onValueChange={(v) => v && setPeriod(v as CapacityPeriod)}>
+              <FilterTabsList>
+                <FilterTabsTrigger value="tomorrow">Tomorrow</FilterTabsTrigger>
+                <FilterTabsTrigger value="7days">7 Days</FilterTabsTrigger>
+                <FilterTabsTrigger value="30days">30 Days</FilterTabsTrigger>
+              </FilterTabsList>
+            </Tabs>
           </div>
         </div>
       </CardHeader>

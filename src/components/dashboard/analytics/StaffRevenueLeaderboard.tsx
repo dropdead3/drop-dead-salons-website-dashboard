@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartSkeleton } from '@/components/ui/chart-skeleton';
 import { Settings, TrendingUp, AlertTriangle, Trophy, Users } from 'lucide-react';
@@ -102,13 +102,13 @@ export function StaffRevenueLeaderboard({ locationId }: StaffRevenueLeaderboardP
             </div>
             <div className="flex items-center gap-2">
               <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as RevenueTimeRange)}>
-                <TabsList className="h-8">
+                <FilterTabsList>
                   {TIME_RANGE_OPTIONS.map(opt => (
-                    <TabsTrigger key={opt.value} value={opt.value} className="text-xs px-2">
+                    <FilterTabsTrigger key={opt.value} value={opt.value}>
                       {opt.label}
-                    </TabsTrigger>
+                    </FilterTabsTrigger>
                   ))}
-                </TabsList>
+                </FilterTabsList>
               </Tabs>
               <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => setSettingsOpen(true)}>
                 <Settings className="w-4 h-4" />
