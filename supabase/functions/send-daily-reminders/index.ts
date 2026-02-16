@@ -129,7 +129,7 @@ serve(async (req: Request): Promise<Response> => {
     console.log(`Sending reminders to ${stylistsToRemind.length} stylists`);
 
     const emailResults = [];
-    const siteUrl = Deno.env.get("SITE_URL") || "https://dropdeadgorgeous.com";
+    const siteUrl = Deno.env.get("SITE_URL") || "https://dropdeadsalon.com";
 
     for (const stylist of stylistsToRemind) {
       try {

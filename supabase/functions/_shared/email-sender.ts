@@ -19,7 +19,7 @@ export interface EmailResult {
   error?: string;
 }
 
-const DEFAULT_FROM = "Drop Dead Gorgeous <noreply@dropdeadsalons.com>";
+const DEFAULT_FROM = "Drop Dead <noreply@dropdeadsalon.com>";
 
 /**
  * Send an email using the Resend API

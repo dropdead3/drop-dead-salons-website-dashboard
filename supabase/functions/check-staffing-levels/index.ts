@@ -177,14 +177,14 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: "Drop Dead Gorgeous <notifications@dropdeadgorgeous.salon>",
+          from: "Drop Dead <notifications@dropdeadsalon.com>",
           to: adminEmails,
           subject: `⚠️ Staffing Alert: ${alertLocations.length} location(s) below ${settings.percentage}% capacity`,
           html: `
             <h2>Staffing Capacity Alert</h2>
             <p>The following locations are below your configured threshold of ${settings.percentage}%:</p>
             <p>${locationList}</p>
-            <p><a href="https://dropdeadgorgeous.salon/dashboard/admin/operational-analytics">View Hiring Capacity Dashboard</a></p>
+            <p><a href="https://dropdeadsalon.com/dashboard/admin/operational-analytics">View Hiring Capacity Dashboard</a></p>
           `,
         }),
       });

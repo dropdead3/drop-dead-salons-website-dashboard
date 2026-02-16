@@ -209,7 +209,7 @@ serve(async (req: Request): Promise<Response> => {
       `)
       .join('');
 
-    const siteUrl = Deno.env.get("SITE_URL") || "https://dropdeadgorgeous.com";
+    const siteUrl = Deno.env.get("SITE_URL") || "https://dropdeadsalon.com";
     const emailResults = [];
 
     for (const leader of leadershipUsers) {

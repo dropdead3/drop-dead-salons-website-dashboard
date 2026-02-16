@@ -76,7 +76,7 @@ serve(async (req: Request) => {
     const emailPromises = admins.map(async (admin) => {
       try {
         const result = await resend.emails.send({
-          from: "Drop Dead Alerts <alerts@dropdeadgorgeous.salon>",
+          from: "Drop Dead Alerts <alerts@dropdeadsalon.com>",
           to: [admin.email],
           subject: `⚠️ Phorest Sync Failure: ${sync_type}`,
           html: `
@@ -111,7 +111,7 @@ serve(async (req: Request) => {
                 </ul>
                 
                 <div style="text-align: center; margin-top: 30px;">
-                  <a href="https://dropdeadgorgeous.salon/dashboard/admin/phorest-settings" 
+                  <a href="https://dropdeadsalon.com/dashboard/admin/phorest-settings" 
                      style="display: inline-block; background: #0f172a; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 500;">
                     Go to Phorest Settings
                   </a>

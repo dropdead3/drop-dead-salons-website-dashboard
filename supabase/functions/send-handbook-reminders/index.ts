@@ -157,7 +157,7 @@ serve(async (req: Request): Promise<Response> => {
     console.log(`Found ${employeesToRemind.length} employees with pending handbooks`);
 
     const emailResults = [];
-    const siteUrl = Deno.env.get("SITE_URL") || "https://dropdeadgorgeous.com";
+    const siteUrl = Deno.env.get("SITE_URL") || "https://dropdeadsalon.com";
 
     for (const employee of employeesToRemind) {
       try {

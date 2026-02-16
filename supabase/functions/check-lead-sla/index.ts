@@ -198,7 +198,7 @@ serve(async (req) => {
             </table>
             
             <p style="margin-top: 24px;">
-              <a href="https://dropdeadgorgeous.salon/dashboard/admin/operational-analytics" 
+              <a href="https://dropdeadsalon.com/dashboard/admin/operational-analytics" 
                  style="display: inline-block; background: #1a1a1a; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">
                 View Lead Inbox
               </a>
@@ -212,7 +212,7 @@ serve(async (req) => {
 
         try {
           await resend.emails.send({
-            from: "Drop Dead Alerts <notifications@dropdeadgorgeous.salon>",
+            from: "Drop Dead Alerts <notifications@dropdeadsalon.com>",
             to: managerEmails,
             subject: `⚠️ ${newOverdueLeads.length} Lead${newOverdueLeads.length > 1 ? "s" : ""} Waiting ${slaHours}+ Hours`,
             html: emailHtml,

@@ -293,7 +293,7 @@ serve(async (req: Request): Promise<Response> => {
         const sig = btoa(String.fromCharCode(...new Uint8Array(signature)));
         const unsubscribeUrl = `${supabaseUrl}/functions/v1/unsubscribe-insights-email?payload=${encodeURIComponent(tokenPayload)}&sig=${encodeURIComponent(sig)}`;
 
-        const dashboardUrl = "https://dropdeadgorgeous.com/dashboard";
+        const dashboardUrl = "https://dropdeadsalon.com/dashboard";
         const frequency = prefs.insights_email_frequency || "weekly";
         const subjectPrefix = isTestSend ? "[TEST] " : "";
         const subject = `${subjectPrefix}Your ${frequency === "daily" ? "Daily" : frequency === "monday" ? "Monday" : "Weekly"} Zura Insights`;

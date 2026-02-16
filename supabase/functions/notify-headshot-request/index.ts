@@ -121,13 +121,13 @@ const handler = async (req: Request): Promise<Response> => {
             <p>Please schedule their headshot session at your earliest convenience.</p>
             
             <center>
-              <a href="https://dropdeadgorgeoussalon.lovable.app/dashboard/admin/headshot-requests" class="cta-button">
+              <a href="https://dropdeadsalon.com/dashboard/admin/headshot-requests" class="cta-button">
                 VIEW REQUEST
               </a>
             </center>
           </div>
           <div class="footer">
-            <p>This is an automated notification from Drop Dead Gorgeous Salon.</p>
+            <p>This is an automated notification from Drop Dead Salon.</p>
           </div>
         </div>
       </body>
@@ -141,7 +141,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Drop Dead Gorgeous <notifications@dropdeadgorgeous.salon>",
+        from: "Drop Dead <notifications@dropdeadsalon.com>",
         to: adminEmails,
         subject: `📸 New Headshot Request from ${requester_name}`,
         html: emailHtml,
