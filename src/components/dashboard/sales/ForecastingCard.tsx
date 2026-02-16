@@ -541,7 +541,7 @@ export function ForecastingCard() {
                 </Badge>
               </div>
             </div>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-6">
               <CardDescription>{PERIOD_DESCRIPTIONS[period]}</CardDescription>
               <Tabs value={period} onValueChange={(v) => v && setPeriod(v as ForecastPeriod)}>
                 <TabsList>
