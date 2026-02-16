@@ -81,6 +81,21 @@ serve(async (req) => {
 
     console.log("Booking created successfully:", result.appointment_id);
 
+    // Enqueue service-specific email flow for this appointment
+    try {
+      const fnUrl = `${supabaseUrl}/functions/v1/enqueue-service-emails`;
+      await fetch(fnUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({ appointmentId: result.appointment_id, action: "book" }),
+      });
+    } catch (e) {
+      console.warn("Failed to enqueue service emails:", e);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
