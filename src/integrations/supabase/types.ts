@@ -13050,6 +13050,110 @@ export type Database = {
           },
         ]
       }
+      service_level_prices: {
+        Row: {
+          created_at: string
+          id: string
+          organization_id: string
+          price: number
+          service_id: string
+          stylist_level_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_id: string
+          price: number
+          service_id: string
+          stylist_level_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_id?: string
+          price?: number
+          service_id?: string
+          stylist_level_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_level_prices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_level_prices_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_level_prices_stylist_level_id_fkey"
+            columns: ["stylist_level_id"]
+            isOneToOne: false
+            referencedRelation: "stylist_levels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_stylist_price_overrides: {
+        Row: {
+          created_at: string
+          employee_id: string
+          id: string
+          organization_id: string
+          price: number
+          service_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          id?: string
+          organization_id: string
+          price: number
+          service_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          id?: string
+          organization_id?: string
+          price?: number
+          service_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_stylist_price_overrides_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employee_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_stylist_price_overrides_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_stylist_price_overrides_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           allow_same_day_booking: boolean | null
