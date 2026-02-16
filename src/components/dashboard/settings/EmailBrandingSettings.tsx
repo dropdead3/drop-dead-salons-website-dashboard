@@ -16,6 +16,14 @@ import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { Eyebrow } from '@/components/ui/Eyebrow';
 import { Loader2, Save, Send, Monitor, Smartphone, Info, Instagram, Globe, Facebook } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useColorTheme, ColorTheme } from '@/hooks/useColorTheme';
+
+const THEME_ACCENT_DEFAULTS: Record<ColorTheme, string> = {
+  cream: '#1A1A1A',
+  rose: '#DB5A6E',
+  sage: '#4A9C6D',
+  ocean: '#3B82F6',
+};
 
 const SAMPLE_VARIABLES: Record<string, string> = {
   stylist_name: 'Sarah Johnson',
@@ -73,7 +81,9 @@ const HEADER_STYLE_OPTIONS = [
 export function EmailBrandingSettings() {
   const { effectiveOrganization } = useOrganizationContext();
   const { user } = useAuth();
+  const { colorTheme } = useColorTheme();
   const orgId = effectiveOrganization?.id;
+  const themeDefault = THEME_ACCENT_DEFAULTS[colorTheme] || '#1A1A1A';
   const orgName = effectiveOrganization?.name || 'Your Organization';
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -84,7 +94,7 @@ export function EmailBrandingSettings() {
   const [replyTo, setReplyTo] = useState('');
 
   // Visual
-  const [accentColor, setAccentColor] = useState('#6366F1');
+  const [accentColor, setAccentColor] = useState(themeDefault);
   const [logoSource, setLogoSource] = useState<'auto' | 'light' | 'dark' | 'custom' | 'none'>('auto');
   const [customLogoUrl, setCustomLogoUrl] = useState('');
   const [headerStyle, setHeaderStyle] = useState<string>('centered');
@@ -139,7 +149,7 @@ export function EmailBrandingSettings() {
     if (branding) {
       setSenderName(branding.email_sender_name || '');
       setReplyTo(branding.email_reply_to || '');
-      setAccentColor(branding.email_accent_color || '#6366F1');
+      setAccentColor(branding.email_accent_color || themeDefault);
       setFooterText((branding.email_footer_text as string) || '');
       setSocialLinks((branding.email_social_links as SocialLinks) || {});
       setShowAttribution(branding.email_show_attribution !== false);
@@ -197,7 +207,7 @@ export function EmailBrandingSettings() {
   const hasChanges =
     senderName !== (branding?.email_sender_name || '') ||
     replyTo !== (branding?.email_reply_to || '') ||
-    accentColor !== (branding?.email_accent_color || '#6366F1') ||
+    accentColor !== (branding?.email_accent_color || themeDefault) ||
     logoUrl !== (branding?.email_logo_url || null) ||
     footerText !== ((branding?.email_footer_text as string) || '') ||
     JSON.stringify(socialLinks) !== JSON.stringify((branding?.email_social_links as SocialLinks) || {}) ||
@@ -230,7 +240,7 @@ export function EmailBrandingSettings() {
   };
 
   const displayName = senderName || orgName;
-  const previewAccent = accentColor || '#6366F1';
+  const previewAccent = accentColor || themeDefault;
   const previewButtonRadius = BUTTON_RADIUS_OPTIONS.find(o => o.value === buttonRadius)?.css || '8px';
 
   const templatePreviewHtml = useMemo(() => {
