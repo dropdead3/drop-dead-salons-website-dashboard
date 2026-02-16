@@ -84,7 +84,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <Megaphone className="h-5 w-5 text-muted-foreground mb-2" />
-                <span className="text-2xl font-bold tabular-nums">
+                <span className="text-2xl font-medium tabular-nums">
                   {analytics?.summary.totalCampaigns ?? 0}
                 </span>
                 <span className="text-xs text-muted-foreground">Active Campaigns</span>
@@ -96,7 +96,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <Users className="h-5 w-5 text-muted-foreground mb-2" />
-                <span className="text-2xl font-bold tabular-nums">
+                <span className="text-2xl font-medium tabular-nums">
                   {analytics?.summary.totalLeads ?? 0}
                 </span>
                 <span className="text-xs text-muted-foreground">Marketing Leads</span>
@@ -108,7 +108,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <DollarSign className="h-5 w-5 text-muted-foreground mb-2" />
-                <span className="text-2xl font-bold tabular-nums">
+                <span className="text-2xl font-medium tabular-nums">
                   {formatCurrency(analytics?.summary.totalRevenue ?? 0)}
                 </span>
                 <span className="text-xs text-muted-foreground">Attributed Revenue</span>
@@ -120,7 +120,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <TrendingUp className="h-5 w-5 text-muted-foreground mb-2" />
-                <span className="text-2xl font-bold tabular-nums">
+                <span className="text-2xl font-medium tabular-nums">
                   {(analytics?.summary.overallConversionRate ?? 0).toFixed(1)}%
                 </span>
                 <span className="text-xs text-muted-foreground">Conversion Rate</span>
@@ -132,7 +132,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <Award className="h-5 w-5 text-muted-foreground mb-2" />
-                <span className="text-lg font-bold truncate max-w-full px-2">
+                <span className="text-lg font-medium truncate max-w-full px-2">
                   {analytics?.summary.topCampaign || '—'}
                 </span>
                 <span className="text-xs text-muted-foreground">Top Campaign</span>
@@ -150,7 +150,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
                   <DollarSign className="h-5 w-5 text-muted-foreground mb-2" />
-                  <span className="text-2xl font-bold tabular-nums">
+                  <span className="text-2xl font-medium tabular-nums">
                     {formatCurrency(analytics?.summary.totalBudget ?? 0)}
                   </span>
                   <span className="text-xs text-muted-foreground">Total Budget</span>
@@ -162,7 +162,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
                   <CircleDollarSign className="h-5 w-5 text-muted-foreground mb-2" />
-                  <span className="text-2xl font-bold tabular-nums">
+                  <span className="text-2xl font-medium tabular-nums">
                     {formatCurrency(analytics?.summary.totalSpend ?? 0)}
                   </span>
                   <span className="text-xs text-muted-foreground">Total Spend</span>
@@ -174,7 +174,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
                   <Target className="h-5 w-5 text-muted-foreground mb-2" />
-                  <span className="text-2xl font-bold tabular-nums">
+                  <span className="text-2xl font-medium tabular-nums">
                     {analytics?.summary.avgCPL !== null 
                       ? formatCurrency(analytics.summary.avgCPL) 
                       : '—'}
@@ -188,7 +188,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
                   <TrendingUp className="h-5 w-5 text-muted-foreground mb-2" />
-                  <span className={`text-2xl font-bold tabular-nums ${
+                  <span className={`text-2xl font-medium tabular-nums ${
                     analytics?.summary.overallROAS !== null 
                       ? analytics.summary.overallROAS >= 3 
                         ? 'text-green-600 dark:text-green-400'

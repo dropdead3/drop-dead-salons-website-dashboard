@@ -4099,6 +4099,57 @@ export type Database = {
         }
         Relationships: []
       }
+      email_tracking_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          link_url: string | null
+          message_id: string | null
+          organization_id: string | null
+          queue_item_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          link_url?: string | null
+          message_id?: string | null
+          organization_id?: string | null
+          queue_item_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          link_url?: string | null
+          message_id?: string | null
+          organization_id?: string | null
+          queue_item_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_tracking_events_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_tracking_events_queue_item_id_fkey"
+            columns: ["queue_item_id"]
+            isOneToOne: false
+            referencedRelation: "service_email_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_variables: {
         Row: {
           category: string
@@ -7910,6 +7961,9 @@ export type Database = {
           subscription_tier: string | null
           timezone: string | null
           trial_ends_at: string | null
+          twilio_account_sid: string | null
+          twilio_auth_token: string | null
+          twilio_phone_number: string | null
           updated_at: string | null
           website_url: string | null
         }
@@ -7959,6 +8013,9 @@ export type Database = {
           subscription_tier?: string | null
           timezone?: string | null
           trial_ends_at?: string | null
+          twilio_account_sid?: string | null
+          twilio_auth_token?: string | null
+          twilio_phone_number?: string | null
           updated_at?: string | null
           website_url?: string | null
         }
@@ -8008,6 +8065,9 @@ export type Database = {
           subscription_tier?: string | null
           timezone?: string | null
           trial_ends_at?: string | null
+          twilio_account_sid?: string | null
+          twilio_auth_token?: string | null
+          twilio_phone_number?: string | null
           updated_at?: string | null
           website_url?: string | null
         }
