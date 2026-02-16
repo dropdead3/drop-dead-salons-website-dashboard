@@ -13,6 +13,9 @@ import { AgendaView } from '@/components/dashboard/schedule/AgendaView';
 import { AppointmentDetailSheet } from '@/components/dashboard/schedule/AppointmentDetailSheet';
 import { CheckoutSummarySheet } from '@/components/dashboard/schedule/CheckoutSummarySheet';
 import { BookingWizard } from '@/components/dashboard/schedule/booking';
+import { ScheduleUtilizationBar } from '@/components/dashboard/schedule/ScheduleUtilizationBar';
+import { SchedulingCopilotPanel } from '@/components/scheduling/SchedulingCopilotPanel';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
 import { usePhorestCalendar, type PhorestAppointment, type CalendarView } from '@/hooks/usePhorestCalendar';
 import { useCalendarPreferences } from '@/hooks/useCalendarPreferences';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -20,8 +23,10 @@ import { useEffectiveUserId } from '@/hooks/useEffectiveUser';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import type { CalendarFilterState } from '@/components/dashboard/schedule/CalendarFiltersPopover';
 
 interface QuickLoginState {
@@ -66,6 +71,7 @@ export default function Schedule() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [copilotOpen, setCopilotOpen] = useState(false);
   const [bookingDefaults, setBookingDefaults] = useState<{ date?: Date; stylistId?: string; time?: string }>({});
   const [calendarFilters, setCalendarFilters] = useState<CalendarFilterState>({
     clientTypes: [],
@@ -141,10 +147,6 @@ export default function Schedule() {
         return false;
       });
     }
-
-    // Note: Lead source filtering requires client data which would need a join query
-    // For now, the infrastructure is in place; actual filtering will work once
-    // appointment sync populates phorest_client_id and client lead_source is set
     
     return filtered;
   }, [allAppointments, selectedLocation, selectedStaffIds, calendarFilters]);
@@ -229,17 +231,19 @@ export default function Schedule() {
 
   const handleAppointmentClick = (apt: PhorestAppointment) => {
     setSelectedAppointment(apt);
-    // Don't auto-open detail sheet - just select it
   };
 
   const handleSlotClick = (dateOrStylistId: Date | string, time: string) => {
     if (typeof dateOrStylistId === 'string') {
-      // From DayView - stylistId
       setBookingDefaults({ date: currentDate, stylistId: dateOrStylistId, time });
     } else {
-      // From WeekView - date
       setBookingDefaults({ date: dateOrStylistId, time });
     }
+    setBookingOpen(true);
+  };
+
+  const handleCopilotSlotSelect = (time: string, staffUserId: string) => {
+    setBookingDefaults({ date: currentDate, stylistId: staffUserId, time });
     setBookingOpen(true);
   };
 
@@ -248,7 +252,6 @@ export default function Schedule() {
     setView('day');
   };
 
-  // Handler for double-clicking a day in week view
   const handleDayDoubleClick = (date: Date) => {
     setCurrentDate(date);
     setView('day');
@@ -283,7 +286,6 @@ export default function Schedule() {
   };
   const handleRemove = () => {
     if (selectedAppointment) {
-      // For now, cancel the appointment
       handleStatusChange('cancelled');
       toast.success('Appointment cancelled');
     }
@@ -294,80 +296,133 @@ export default function Schedule() {
     }
   };
 
+  // ─── Calendar Content ─────────────────────────────────────────
+  const calendarContent = (
+    <>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-full">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <>
+          {view === 'day' && (
+            <DayView
+              date={currentDate}
+              appointments={appointments}
+              stylists={displayedStylists}
+              hoursStart={preferences.hours_start}
+              hoursEnd={preferences.hours_end}
+              onAppointmentClick={handleAppointmentClick}
+              onSlotClick={handleSlotClick}
+              selectedAppointmentId={selectedAppointment?.id}
+            />
+          )}
+          
+          {view === 'week' && (
+            <WeekView
+              currentDate={currentDate}
+              appointments={appointments}
+              hoursStart={preferences.hours_start}
+              hoursEnd={preferences.hours_end}
+              onAppointmentClick={handleAppointmentClick}
+              onSlotClick={handleSlotClick}
+              selectedLocationId={selectedLocation}
+              onDayDoubleClick={handleDayDoubleClick}
+            />
+          )}
+          
+          {view === 'month' && (
+            <MonthView
+              currentDate={currentDate}
+              appointments={appointments}
+              onDayClick={handleDayClick}
+              onAppointmentClick={handleAppointmentClick}
+            />
+          )}
+          
+          {view === 'agenda' && (
+            <AgendaView
+              currentDate={currentDate}
+              appointments={appointments}
+              onAppointmentClick={handleAppointmentClick}
+            />
+          )}
+        </>
+      )}
+    </>
+  );
+
   return (
     <DashboardLayout>
       <div className="flex flex-col h-[calc(100vh-4rem)]">
         {/* Header */}
         <div className="px-4 pt-4">
-          <ScheduleHeader
-            currentDate={currentDate}
-            setCurrentDate={setCurrentDate}
-            view={view}
-            setView={setView}
-            selectedStaffIds={selectedStaffIds}
-            onStaffToggle={handleStaffToggle}
-            stylists={allStylists}
-            selectedLocation={selectedLocation}
-            onLocationChange={setSelectedLocation}
-            locations={locations}
-            onNewBooking={handleNewBooking}
-            canCreate={canCreate}
-            calendarFilters={calendarFilters}
-            onCalendarFiltersChange={setCalendarFilters}
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <ScheduleHeader
+                currentDate={currentDate}
+                setCurrentDate={setCurrentDate}
+                view={view}
+                setView={setView}
+                selectedStaffIds={selectedStaffIds}
+                onStaffToggle={handleStaffToggle}
+                stylists={allStylists}
+                selectedLocation={selectedLocation}
+                onLocationChange={setSelectedLocation}
+                locations={locations}
+                onNewBooking={handleNewBooking}
+                canCreate={canCreate}
+                calendarFilters={calendarFilters}
+                onCalendarFiltersChange={setCalendarFilters}
+              />
+            </div>
+            {/* Copilot Toggle */}
+            {!isMobile && (
+              <Button
+                variant={copilotOpen ? 'default' : 'outline'}
+                size="icon"
+                className="shrink-0 h-9 w-9"
+                onClick={() => setCopilotOpen(!copilotOpen)}
+              >
+                <Sparkles className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* Calendar View */}
+        {/* Utilization Bar (Day/Week views only) */}
+        {(view === 'day' || view === 'week') && !isLoading && (
+          <div className="px-4 pt-2">
+            <ScheduleUtilizationBar
+              date={currentDate}
+              appointments={appointments}
+              stylistCount={displayedStylists.length}
+              hoursStart={preferences.hours_start}
+              hoursEnd={preferences.hours_end}
+            />
+          </div>
+        )}
+
+        {/* Calendar View (with optional copilot panel) */}
         <div className="flex-1 p-4 overflow-hidden">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-full">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            </div>
+          {copilotOpen && !isMobile ? (
+            <ResizablePanelGroup direction="horizontal" className="h-full">
+              <ResizablePanel defaultSize={75} minSize={50}>
+                {calendarContent}
+              </ResizablePanel>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={25} minSize={20} maxSize={40}>
+                <div className="h-full overflow-auto pl-2">
+                  <SchedulingCopilotPanel
+                    date={currentDate}
+                    locationId={selectedLocation}
+                    onSelectSlot={handleCopilotSlotSelect}
+                  />
+                </div>
+              </ResizablePanel>
+            </ResizablePanelGroup>
           ) : (
-            <>
-              {view === 'day' && (
-                <DayView
-                  date={currentDate}
-                  appointments={appointments}
-                  stylists={displayedStylists}
-                  hoursStart={preferences.hours_start}
-                  hoursEnd={preferences.hours_end}
-                  onAppointmentClick={handleAppointmentClick}
-                  onSlotClick={handleSlotClick}
-                  selectedAppointmentId={selectedAppointment?.id}
-                />
-              )}
-              
-              {view === 'week' && (
-                <WeekView
-                  currentDate={currentDate}
-                  appointments={appointments}
-                  hoursStart={preferences.hours_start}
-                  hoursEnd={preferences.hours_end}
-                  onAppointmentClick={handleAppointmentClick}
-                  onSlotClick={handleSlotClick}
-                  selectedLocationId={selectedLocation}
-                  onDayDoubleClick={handleDayDoubleClick}
-                />
-              )}
-              
-              {view === 'month' && (
-                <MonthView
-                  currentDate={currentDate}
-                  appointments={appointments}
-                  onDayClick={handleDayClick}
-                  onAppointmentClick={handleAppointmentClick}
-                />
-              )}
-              
-              {view === 'agenda' && (
-                <AgendaView
-                  currentDate={currentDate}
-                  appointments={appointments}
-                  onAppointmentClick={handleAppointmentClick}
-                />
-              )}
-            </>
+            calendarContent
           )}
         </div>
 
