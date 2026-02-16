@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save, Palette, Sun, Moon, Monitor, Image, Smartphone, Tablet, Upload, RotateCcw, Pencil, ImageIcon, MapPin as MapPinIcon, UserCheck, CalendarPlus, ClipboardCheck, FileSignature, MessageSquare, Lock, ChevronDown } from 'lucide-react';
+import { Loader2, Save, Palette, Sun, Moon, Monitor, Image, Smartphone, Tablet, Upload, RotateCcw, Pencil, ImageIcon, MapPin as MapPinIcon, UserCheck, CalendarPlus, ClipboardCheck, FileSignature, MessageSquare, Lock, ChevronDown, Info, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -408,13 +408,164 @@ export function KioskSettingsContent() {
 
   return (
     <div className="space-y-6">
-      {/* Kiosk Features - Independent Toggles */}
+      {/* 1. Location Selector — First card, establishes context */}
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="font-display text-lg">CONFIGURE LOCATION</CardTitle>
+              <CardDescription>
+                Select a location to customize its kiosk, or set organization-wide defaults
+              </CardDescription>
+            </div>
+            {/* Apply to All button — right-aligned in header */}
+            {selectedLocation === 'all' && locationOverrides.length > 0 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={pushToAll.isPending}
+                  >
+                    {pushToAll.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
+                    Apply Defaults to All
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Apply Defaults to All Locations?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will remove all {locationOverrides.length} location-specific customization{locationOverrides.length > 1 ? 's' : ''}. 
+                      All locations will inherit from the organization defaults.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handlePushToAll}>
+                      Yes, Apply to All
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+            {locationId && locations.length > 1 && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    disabled={pushLocationToAll.isPending}
+                  >
+                    {pushLocationToAll.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
+                    Apply to All Locations
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Apply to All Locations?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will copy "{selectedLocationData?.name}" settings to all other {locations.length - 1} location{locations.length > 2 ? 's' : ''}.
+                      Existing settings at other locations will be overwritten.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handlePushLocationToAll}>
+                      Yes, Apply to All
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+            <SelectTrigger className="max-w-sm">
+              <MapPin className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
+              <SelectValue placeholder="Select location" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">
+                <span className="flex items-center gap-2">
+                  <span>Organization Defaults</span>
+                </span>
+              </SelectItem>
+              {locations.map(loc => {
+                const hasOverride = locationOverrides.includes(loc.id);
+                return (
+                  <SelectItem key={loc.id} value={loc.id}>
+                    <span className="flex items-center gap-2">
+                      <span>{loc.name}</span>
+                      {hasOverride && (
+                        <span className="inline-flex items-center gap-1 text-xs text-warning">
+                          <Pencil className="w-3 h-3" />
+                          Customized
+                        </span>
+                      )}
+                    </span>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          
+          {/* Editing context badge */}
+          {locationId && selectedLocationData && (
+            <div className="flex items-center gap-2 mt-3">
+              <span className="text-xs text-muted-foreground">Editing:</span>
+              <span className="text-xs font-medium">{selectedLocationData.name}</span>
+              <span className={cn(
+                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                hasCustomOverride
+                  ? "bg-warning/10 text-warning border border-warning/20"
+                  : "bg-muted text-muted-foreground border border-border"
+              )}>
+                {hasCustomOverride ? 'Custom Overrides' : 'Using Defaults'}
+              </span>
+            </div>
+          )}
+
+          {locationOverrides.length > 0 && !locationId && (
+            <p className="text-xs text-muted-foreground mt-2">
+              {locationOverrides.length} location{locationOverrides.length > 1 ? 's have' : ' has'} custom settings
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* 2. Kiosk Features - Independent Toggles */}
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="font-display text-lg">KIOSK FEATURES</CardTitle>
           <CardDescription>
             Enable the capabilities your kiosk offers — features work independently
           </CardDescription>
+          {/* Location context banner */}
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-xs text-muted-foreground">Configuring:</span>
+            <span className="text-xs font-medium">
+              {locationId ? selectedLocationData?.name : 'Organization Defaults'}
+            </span>
+            {locationId && (
+              <span className={cn(
+                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                hasCustomOverride
+                  ? "bg-warning/10 text-warning border border-warning/20"
+                  : "bg-muted text-muted-foreground border border-border"
+              )}>
+                {hasCustomOverride ? 'Custom overrides' : 'Using org defaults'}
+              </span>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-3">
           {/* Check-In — Core, always on */}
@@ -610,55 +761,6 @@ export function KioskSettingsContent() {
               />
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Location Selector */}
-      <Card>
-        <CardHeader className="pb-4">
-          <CardTitle className="font-display text-lg">CONFIGURE LOCATION</CardTitle>
-          <CardDescription>
-            Select a location to customize its kiosk, or set organization-wide defaults
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* Custom location selector with override indicators */}
-          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-            <SelectTrigger className="max-w-sm">
-              <MapPin className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
-              <SelectValue placeholder="Select location" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">
-                <span className="flex items-center gap-2">
-                  <span>Organization Defaults</span>
-                </span>
-              </SelectItem>
-              {locations.map(loc => {
-                const hasOverride = locationOverrides.includes(loc.id);
-                return (
-                  <SelectItem key={loc.id} value={loc.id}>
-                    <span className="flex items-center gap-2">
-                      <span>{loc.name}</span>
-                      {hasOverride && (
-                        <span className="inline-flex items-center gap-1 text-xs text-warning">
-                          <Pencil className="w-3 h-3" />
-                          Customized
-                        </span>
-                      )}
-                    </span>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-          
-          {/* Show override count info */}
-          {locationOverrides.length > 0 && (
-            <p className="text-xs text-muted-foreground mt-2">
-              {locationOverrides.length} location{locationOverrides.length > 1 ? 's have' : ' has'} custom settings
-            </p>
-          )}
         </CardContent>
       </Card>
 
@@ -878,22 +980,27 @@ export function KioskSettingsContent() {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="button-style">Button Style</Label>
-                    <Select 
-                      value={localSettings.button_style} 
-                      onValueChange={(v) => updateField('button_style', v as 'rounded' | 'pill' | 'square')}
-                    >
-                      <SelectTrigger id="button-style">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="rounded">Rounded</SelectItem>
-                        <SelectItem value="pill">Pill</SelectItem>
-                        <SelectItem value="square">Square</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                </div>
+
+                {/* Button Style — standalone, outside color grid */}
+                <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+                  <Label htmlFor="button-style" className="text-sm font-medium">Button Style</Label>
+                  <Select 
+                    value={localSettings.button_style} 
+                    onValueChange={(v) => updateField('button_style', v as 'rounded' | 'pill' | 'square')}
+                  >
+                    <SelectTrigger id="button-style" className="max-w-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="rounded">Rounded</SelectItem>
+                      <SelectItem value="pill">Pill</SelectItem>
+                      <SelectItem value="square">Square</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Controls the shape of all buttons on the kiosk
+                  </p>
 
                   {/* Glow Effects Toggle */}
                   <div className="flex items-center justify-between py-2">
@@ -1192,6 +1299,14 @@ export function KioskSettingsContent() {
 
               {/* Behavior Tab */}
               <TabsContent value="behavior" className="space-y-4">
+                {/* Info note */}
+                <div className="flex items-start gap-2 rounded-lg bg-muted/50 border border-border p-3">
+                  <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                  <p className="text-xs text-muted-foreground">
+                    Feature-specific settings (check-in, booking, forms) are configured in the <strong>Kiosk Features</strong> section above.
+                  </p>
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="idle-timeout">Idle Timeout (seconds)</Label>
                   <Input
@@ -1207,21 +1322,28 @@ export function KioskSettingsContent() {
                   </p>
                 </div>
 
-                <div className="pt-4 border-t space-y-2">
-                  <Label htmlFor="exit-pin">Exit PIN (4 digits)</Label>
-                  <Input
-                    id="exit-pin"
-                    value={localSettings.exit_pin}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '').slice(0, 4);
-                      updateField('exit_pin', val);
-                    }}
-                    maxLength={4}
-                    className="font-mono max-w-24"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Required to access settings from the kiosk device
-                  </p>
+                {/* Security sub-section */}
+                <div className="pt-4 border-t space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-muted-foreground" />
+                    <Label className="text-sm font-medium">Security</Label>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="exit-pin">Exit PIN (4 digits)</Label>
+                    <Input
+                      id="exit-pin"
+                      value={localSettings.exit_pin}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                        updateField('exit_pin', val);
+                      }}
+                      maxLength={4}
+                      className="font-mono max-w-24"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Required to access settings from the kiosk device
+                    </p>
+                  </div>
                 </div>
               </TabsContent>
             </Tabs>
@@ -1241,75 +1363,7 @@ export function KioskSettingsContent() {
                 Save {selectedLocation === 'all' ? 'Organization Defaults' : 'Location Settings'}
               </Button>
 
-              {/* Push to All Locations - only show when editing org defaults */}
-              {selectedLocation === 'all' && locationOverrides.length > 0 && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      disabled={pushToAll.isPending}
-                    >
-                      {pushToAll.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      ) : (
-                        <Upload className="w-4 h-4 mr-2" />
-                      )}
-                      Push Defaults to All Locations
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Push to All Locations?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will remove all {locationOverrides.length} location-specific customization{locationOverrides.length > 1 ? 's' : ''}. 
-                        All locations will inherit from the organization defaults.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handlePushToAll}>
-                        Yes, Push to All
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
-
-              {/* Push Location Settings to All - only show when editing a specific location */}
-              {locationId && locations.length > 1 && (
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button 
-                      variant="outline" 
-                      className="w-full"
-                      disabled={pushLocationToAll.isPending}
-                    >
-                      {pushLocationToAll.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                      ) : (
-                        <Upload className="w-4 h-4 mr-2" />
-                      )}
-                      Push to All Locations
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Push to All Locations?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will copy "{selectedLocationData?.name}" settings to all other {locations.length - 1} location{locations.length > 2 ? 's' : ''}.
-                        Existing settings at other locations will be overwritten.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handlePushLocationToAll}>
-                        Yes, Push to All
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              )}
+              {/* "Apply to All" buttons moved to Location Selector card header */}
 
               {/* Reset to Defaults - only show when editing a specific location with overrides */}
               {locationId && hasCustomOverride && (
