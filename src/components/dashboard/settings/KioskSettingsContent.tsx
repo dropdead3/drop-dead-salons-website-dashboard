@@ -12,6 +12,7 @@ import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { KioskPreviewPanel } from './KioskPreviewPanel';
 import { KioskDeployCard } from './KioskDeployCard';
+import { KioskLocationStatusCard } from './KioskLocationStatusCard';
 import { KioskMediaUploader } from './KioskMediaUploader';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLocations } from '@/hooks/useLocations';
@@ -408,6 +409,16 @@ export function KioskSettingsContent() {
 
   return (
     <div className="space-y-6">
+      {/* 0. Kiosk Location Status Overview */}
+      {orgId && (
+        <KioskLocationStatusCard
+          orgId={orgId}
+          onLocationSelect={(locId) => {
+            setSelectedLocation(locId || 'all');
+          }}
+        />
+      )}
+
       {/* 1. Location Selector — First card, establishes context */}
       <Card>
         <CardHeader className="pb-4">
