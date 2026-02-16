@@ -26,7 +26,8 @@ import {
   ChevronRight,
   MapPin,
   Scissors,
-  Info
+  Info,
+  User
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -40,6 +41,7 @@ import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { getLevelSlug, getLevelNumber, findLevelBasedPrice } from '@/utils/levelPricing';
 import { useQualifiedStaffForServices } from '@/hooks/useStaffServiceQualifications';
+import { useStaffQualifiedServices } from '@/hooks/useStaffServiceQualifications';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { BannedClientWarningDialog } from '@/components/dashboard/clients/BannedClientWarningDialog';
 
@@ -115,6 +117,14 @@ export function QuickBookingPopover({
   const [bookingNotes, setBookingNotes] = useState('');
   const [showNotes, setShowNotes] = useState(false);
 
+  // Stylist-first mode state
+  const [stylistFirstMode, setStylistFirstMode] = useState(false);
+  const [preSelectedStylistId, setPreSelectedStylistId] = useState<string | null>(null);
+  const [preSelectedStylistPhorestId, setPreSelectedStylistPhorestId] = useState<string | null>(null);
+  const [preSelectedStylistName, setPreSelectedStylistName] = useState('');
+  const [preSelectedStylistPhoto, setPreSelectedStylistPhoto] = useState<string | null>(null);
+  const [preSelectedStylistLevel, setPreSelectedStylistLevel] = useState<string | null>(null);
+
   // Check if a step has valid input (for forward navigation)
   const isStepCompleted = (stepName: Step): boolean => {
     switch (stepName) {
@@ -125,7 +135,7 @@ export function QuickBookingPopover({
       case 'client':
         return !!selectedClient;
       case 'stylist':
-        return !!selectedStylist;
+        return !!selectedStylist || !!preSelectedStylistId;
       case 'confirm':
         return false; // Final step, no forward from here
       default:
@@ -149,7 +159,7 @@ export function QuickBookingPopover({
     return nextIndex <= highestStepReached && 
            nextIndex < STEPS.length && 
            isStepCompleted(step);
-  }, [step, highestStepReached, selectedLocation, selectedClient, selectedStylist]);
+  }, [step, highestStepReached, selectedLocation, selectedClient, selectedStylist, preSelectedStylistId]);
 
   // Sync location when popover opens with a new default
   useEffect(() => {
@@ -193,11 +203,10 @@ export function QuickBookingPopover({
     enabled: !!user?.id && open,
   });
 
-  // Fetch stylists filtered by selected location
+  // Fetch stylists filtered by selected location (normal mode)
   const { data: stylists = [] } = useQuery({
     queryKey: ['booking-stylists', selectedLocation],
     queryFn: async () => {
-      // First, get the phorest_branch_id for the selected location
       const { data: locationData } = await supabase
         .from('locations')
         .select('phorest_branch_id')
@@ -228,7 +237,65 @@ export function QuickBookingPopover({
     enabled: open && !!selectedLocation,
   });
 
-  // Fetch qualification data for selected services
+  // Fetch ALL stylists across all locations (stylist-first mode)
+  const { data: allStylists = [] } = useQuery({
+    queryKey: ['booking-stylists-all'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('phorest_staff_mapping')
+        .select(`
+          phorest_staff_id,
+          user_id,
+          phorest_branch_id,
+          employee_profiles!phorest_staff_mapping_user_id_fkey(
+            display_name,
+            full_name,
+            photo_url,
+            stylist_level
+          )
+        `)
+        .eq('is_active', true)
+        .eq('show_on_calendar', true);
+      
+      return data || [];
+    },
+    enabled: open && stylistFirstMode,
+  });
+
+  // Deduplicate all-location stylists by user_id (a stylist may appear in multiple branches)
+  const uniqueAllStylists = useMemo(() => {
+    const seen = new Set<string>();
+    return allStylists.filter(s => {
+      if (seen.has(s.user_id)) return false;
+      seen.add(s.user_id);
+      return true;
+    });
+  }, [allStylists]);
+
+  // Get the pre-selected stylist's locations (branches they work at)
+  const preSelectedStylistLocations = useMemo(() => {
+    if (!preSelectedStylistId) return [];
+    // Get all branch IDs this stylist works at
+    const branchIds = allStylists
+      .filter(s => s.user_id === preSelectedStylistId)
+      .map(s => s.phorest_branch_id);
+    // Match to locations
+    return locations.filter(loc => branchIds.includes(loc.phorest_branch_id));
+  }, [preSelectedStylistId, allStylists, locations]);
+
+  // Get the phorest_branch_id for the selected location
+  const selectedLocationBranchId = useMemo(() => {
+    const loc = locations.find(l => l.id === selectedLocation);
+    return loc?.phorest_branch_id || null;
+  }, [locations, selectedLocation]);
+
+  // Fetch qualified services for pre-selected stylist (stylist-first mode)
+  const { data: preSelectedStylistQualifiedServices = [] } = useStaffQualifiedServices(
+    preSelectedStylistPhorestId || undefined,
+    selectedLocationBranchId || undefined
+  );
+
+  // Fetch qualification data for selected services (normal mode)
   const { data: qualificationData } = useQualifiedStaffForServices(selectedServices, selectedLocation);
 
   // Filter stylists by qualification and sort by level (highest first)
@@ -236,13 +303,11 @@ export function QuickBookingPopover({
     let list = stylists;
     
     if (qualificationData?.hasQualificationData) {
-      // Filter to only show qualified stylists
       list = stylists.filter(stylist => 
         qualificationData.qualifiedStaffIds.includes(stylist.phorest_staff_id)
       );
     }
     
-    // Sort by level number descending (highest level first)
     return [...list].sort((a, b) => {
       const levelA = getLevelNumber(a.employee_profiles?.stylist_level) ?? 0;
       const levelB = getLevelNumber(b.employee_profiles?.stylist_level) ?? 0;
@@ -251,16 +316,16 @@ export function QuickBookingPopover({
   }, [stylists, qualificationData]);
 
   // Auto-select stylist when entering stylist step for the first time
-  // Priority: logged-in stylist/stylist_assistant > client's previous stylist > highest level stylist
   useEffect(() => {
+    // Don't auto-select in stylist-first mode (user picks manually)
+    if (stylistFirstMode) return;
+
     const stylistStepIndex = STEPS.indexOf('stylist');
-    // Only auto-select on first visit to this step
     const isFirstVisit = step === 'stylist' && 
                          highestStepReached === stylistStepIndex &&
                          !selectedStylist;
     
     if (isFirstVisit && filteredStylists.length > 0) {
-      // Priority 1: If logged-in user is stylist/stylist_assistant, select themselves
       const isStylistRole = roles.some(r => ['stylist', 'stylist_assistant'].includes(r));
       if (isStylistRole && user?.id) {
         const selfStylist = filteredStylists.find(s => s.user_id === user.id);
@@ -271,7 +336,6 @@ export function QuickBookingPopover({
         }
       }
       
-      // Priority 2: If client has a preferred/previous stylist who is qualified
       if (selectedClient?.preferred_stylist_id) {
         const preferredStylist = filteredStylists.find(
           s => s.user_id === selectedClient.preferred_stylist_id
@@ -283,13 +347,10 @@ export function QuickBookingPopover({
         }
       }
       
-      // Priority 3: Fallback to highest level stylist (first in sorted list)
       setSelectedStylist(filteredStylists[0].user_id);
       setAutoSelectReason('highest');
     }
-  }, [step, filteredStylists, selectedStylist, roles, user?.id, selectedClient, highestStepReached]);
-
-  // totalDuration and totalPrice use selectedServiceDetails defined above
+  }, [step, filteredStylists, selectedStylist, roles, user?.id, selectedClient, highestStepReached, stylistFirstMode]);
 
   const totalDuration = useMemo(() => {
     return selectedServiceDetails.reduce((sum, s) => sum + s.duration_minutes, 0);
@@ -299,7 +360,6 @@ export function QuickBookingPopover({
     return selectedServiceDetails.reduce((sum, s) => sum + (s.price || 0), 0);
   }, [selectedServiceDetails]);
 
-  // Calculate level-based pricing when a stylist is selected
   const selectedStylistData = useMemo(() => {
     return stylists.find(s => s.user_id === selectedStylist);
   }, [stylists, selectedStylist]);
@@ -324,7 +384,9 @@ export function QuickBookingPopover({
   // Create booking mutation
   const createBooking = useMutation({
     mutationFn: async () => {
-      const stylistMapping = stylists.find(s => s.user_id === selectedStylist);
+      const effectiveStylistId = preSelectedStylistId || selectedStylist;
+      const stylistMapping = stylists.find(s => s.user_id === effectiveStylistId) 
+        || allStylists.find(s => s.user_id === effectiveStylistId && s.phorest_branch_id === selectedLocationBranchId);
       if (!stylistMapping || !selectedClient) throw new Error('Missing required data');
 
       const startDateTime = `${format(date, 'yyyy-MM-dd')}T${time}:00Z`;
@@ -369,11 +431,17 @@ export function QuickBookingPopover({
     setViewingClientProfile(null);
     setBookingNotes('');
     setShowNotes(false);
+    // Reset stylist-first mode
+    setStylistFirstMode(false);
+    setPreSelectedStylistId(null);
+    setPreSelectedStylistPhorestId(null);
+    setPreSelectedStylistName('');
+    setPreSelectedStylistPhoto(null);
+    setPreSelectedStylistLevel(null);
     onOpenChange(false);
   };
 
   const handleSelectClient = (client: PhorestClient) => {
-    // Check if client is banned
     if (client.is_banned) {
       setPendingBannedClient(client);
       return;
@@ -383,12 +451,19 @@ export function QuickBookingPopover({
 
   const proceedWithClient = (client: PhorestClient) => {
     setSelectedClient(client);
-    // Only reset stylist if this is a different client
     if (client.id !== selectedClient?.id) {
-      setSelectedStylist('');
-      setAutoSelectReason(null);
+      if (!stylistFirstMode) {
+        setSelectedStylist('');
+        setAutoSelectReason(null);
+      }
     }
-    navigateToStep('stylist');
+    // In stylist-first mode, skip the stylist step (already selected)
+    if (stylistFirstMode && preSelectedStylistId) {
+      setSelectedStylist(preSelectedStylistId);
+      navigateToStep('confirm');
+    } else {
+      navigateToStep('stylist');
+    }
   };
 
   const handleProceedWithBannedClient = () => {
@@ -399,11 +474,47 @@ export function QuickBookingPopover({
   };
 
   const handleServicesComplete = () => {
-    navigateToStep('location');
+    // In stylist-first mode, skip to client (location + stylist already done)
+    if (stylistFirstMode && preSelectedStylistId && selectedLocation) {
+      navigateToStep('client');
+    } else {
+      navigateToStep('location');
+    }
   };
 
   const handleBack = () => {
     const currentIndex = STEPS.indexOf(step);
+    if (stylistFirstMode) {
+      // Custom back navigation for stylist-first mode
+      if (step === 'confirm') {
+        setStep('client');
+        return;
+      }
+      if (step === 'client') {
+        setStep('service');
+        return;
+      }
+      if (step === 'service' && preSelectedStylistId) {
+        // Go back to location (which may go back to stylist)
+        setStep('location');
+        return;
+      }
+      if (step === 'location') {
+        setStep('stylist');
+        return;
+      }
+      if (step === 'stylist') {
+        // Back to service, clear stylist-first mode
+        setStylistFirstMode(false);
+        setPreSelectedStylistId(null);
+        setPreSelectedStylistPhorestId(null);
+        setPreSelectedStylistName('');
+        setPreSelectedStylistPhoto(null);
+        setPreSelectedStylistLevel(null);
+        setStep('service');
+        return;
+      }
+    }
     if (currentIndex > 0) {
       setStep(STEPS[currentIndex - 1]);
     }
@@ -415,6 +526,72 @@ export function QuickBookingPopover({
     if (nextIndex <= highestStepReached && nextIndex < STEPS.length) {
       setStep(STEPS[nextIndex]);
     }
+  };
+
+  // Handle stylist selection in stylist-first mode
+  const handleStylistFirstSelect = (stylist: typeof allStylists[0]) => {
+    const fullName = stylist.employee_profiles?.display_name || stylist.employee_profiles?.full_name || 'Unknown';
+    setPreSelectedStylistId(stylist.user_id);
+    setPreSelectedStylistPhorestId(stylist.phorest_staff_id);
+    setPreSelectedStylistName(fullName);
+    setPreSelectedStylistPhoto(stylist.employee_profiles?.photo_url || null);
+    setPreSelectedStylistLevel(stylist.employee_profiles?.stylist_level || null);
+    setSelectedStylist(stylist.user_id);
+  };
+
+  // After selecting a stylist in stylist-first mode, navigate to location
+  const handleStylistFirstContinue = () => {
+    if (!preSelectedStylistId) return;
+    
+    // Get locations for this stylist
+    const branchIds = allStylists
+      .filter(s => s.user_id === preSelectedStylistId)
+      .map(s => s.phorest_branch_id);
+    const stylistLocations = locations.filter(loc => branchIds.includes(loc.phorest_branch_id));
+    
+    if (stylistLocations.length === 1) {
+      // Auto-select and skip location step
+      setSelectedLocation(stylistLocations[0].id);
+      navigateToStep('service');
+    } else {
+      navigateToStep('location');
+    }
+  };
+
+  // Clear pre-selected stylist
+  const clearPreSelectedStylist = () => {
+    setStylistFirstMode(false);
+    setPreSelectedStylistId(null);
+    setPreSelectedStylistPhorestId(null);
+    setPreSelectedStylistName('');
+    setPreSelectedStylistPhoto(null);
+    setPreSelectedStylistLevel(null);
+    setSelectedStylist('');
+    setSelectedLocation('');
+  };
+
+  // Check if a service is qualified for the pre-selected stylist
+  const isServiceQualifiedForPreSelected = (phorestServiceId: string): boolean => {
+    if (!preSelectedStylistPhorestId) return true;
+    if (preSelectedStylistQualifiedServices.length === 0) return true; // No qualification data
+    return preSelectedStylistQualifiedServices.includes(phorestServiceId);
+  };
+
+  // Handle selecting a service that's unqualified for the pre-selected stylist
+  const handleServiceToggle = (phorestServiceId: string) => {
+    const isQualified = isServiceQualifiedForPreSelected(phorestServiceId);
+    
+    if (!isQualified && !selectedServices.includes(phorestServiceId)) {
+      // Selecting an unqualified service — warn and clear pre-selected stylist
+      toast.warning(`This service is not offered by ${preSelectedStylistName}. Stylist selection has been cleared.`);
+      clearPreSelectedStylist();
+    }
+    
+    setSelectedServices(prev =>
+      prev.includes(phorestServiceId)
+        ? prev.filter(id => id !== phorestServiceId)
+        : [...prev, phorestServiceId]
+    );
   };
 
   const formatTime12h = (t: string) => {
@@ -446,9 +623,11 @@ export function QuickBookingPopover({
   };
 
   const currentStepIndex = STEPS.indexOf(step);
-  const canBook = selectedClient && selectedServices.length > 0 && selectedStylist && selectedLocation;
+  const effectiveStylistSelected = !!selectedStylist || !!preSelectedStylistId;
+  const canBook = selectedClient && selectedServices.length > 0 && effectiveStylistSelected && selectedLocation;
 
   const getStylistName = () => {
+    if (preSelectedStylistName) return preSelectedStylistName;
     const stylist = stylists.find(s => s.user_id === selectedStylist);
     return stylist?.employee_profiles?.display_name || stylist?.employee_profiles?.full_name || '';
   };
@@ -480,7 +659,7 @@ export function QuickBookingPopover({
           <div className="bg-card border-b border-border">
             <div className="flex items-center justify-between px-4 py-3">
               <div className="flex items-center gap-2">
-                {step !== 'service' || viewingClientProfile ? (
+                {step !== 'service' || viewingClientProfile || (stylistFirstMode && step === 'service') ? (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -544,13 +723,15 @@ export function QuickBookingPopover({
                 const isClickable = i <= highestStepReached && i !== currentStepIndex;
                 const stepLabel = s.charAt(0).toUpperCase() + s.slice(1);
                 
-                // Determine the visual state of this segment
                 const isCurrent = i === currentStepIndex;
                 const isCompleted = isStepCompleted(s);
                 const isVisited = i <= highestStepReached;
                 
-                // Determine background color based on state
+                // In stylist-first mode, mark the stylist segment as pre-filled
+                const isStylistPreFilled = stylistFirstMode && s === 'stylist' && preSelectedStylistId;
+                
                 const getSegmentStyle = () => {
+                  if (isStylistPreFilled && !isCurrent) return 'bg-primary/50';
                   if (isCurrent) return 'bg-primary';
                   if (i < currentStepIndex && isCompleted) return 'bg-primary';
                   if (i > currentStepIndex && isVisited && isCompleted) return 'bg-primary/50';
@@ -570,11 +751,11 @@ export function QuickBookingPopover({
                         !isClickable && 'cursor-default'
                       )}
                     />
-                    {/* Hover label with completion indicator */}
                     <div className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
                       <span className="text-[10px] font-medium text-muted-foreground bg-popover px-1.5 py-0.5 rounded shadow-sm border border-border whitespace-nowrap flex items-center gap-1">
                         {stepLabel}
-                        {isVisited && isCompleted && (
+                        {isStylistPreFilled && <Check className="h-2.5 w-2.5 text-green-500" />}
+                        {isVisited && isCompleted && !isStylistPreFilled && (
                           <Check className="h-2.5 w-2.5 text-green-500" />
                         )}
                       </span>
@@ -585,7 +766,7 @@ export function QuickBookingPopover({
             </div>
           </div>
 
-          {/* Step 1: Client Selection */}
+          {/* Step: Client Selection */}
           {step === 'client' && (
             viewingClientProfile ? (
               <ClientProfileView
@@ -685,9 +866,37 @@ export function QuickBookingPopover({
             )
           )}
 
-          {/* Step 1: Service Selection (Category → Services) */}
+          {/* Step: Service Selection (Category → Services) */}
           {step === 'service' && (
             <div className="flex flex-col" style={{ height: '550px' }}>
+              {/* Pre-selected stylist indicator */}
+              {stylistFirstMode && preSelectedStylistId && !selectedCategory && (
+                <div className="px-3 pt-3 pb-0">
+                  <div className="flex items-center gap-2.5 p-2 rounded-lg bg-accent/50 border border-accent">
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarImage src={preSelectedStylistPhoto || undefined} />
+                      <AvatarFallback className="bg-muted text-xs font-medium">
+                        {preSelectedStylistName.slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">{preSelectedStylistName}</div>
+                      {preSelectedStylistLevel && (
+                        <div className="text-[10px] text-muted-foreground">{preSelectedStylistLevel}</div>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+                      onClick={clearPreSelectedStylist}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Sticky Back to Categories Header */}
               {selectedCategory && (
                 <div className="sticky top-0 z-10 bg-popover border-b border-border px-3 py-2">
@@ -721,6 +930,20 @@ export function QuickBookingPopover({
                           className="pl-9 h-9 bg-muted/50 border border-border"
                         />
                       </div>
+
+                      {/* "Know your stylist?" link — only in normal mode */}
+                      {!stylistFirstMode && !serviceSearch && (
+                        <button
+                          className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-3"
+                          onClick={() => {
+                            setStylistFirstMode(true);
+                            navigateToStep('stylist');
+                          }}
+                        >
+                          <User className="h-3.5 w-3.5" />
+                          <span>Know your stylist? Select first</span>
+                        </button>
+                      )}
                       
                       {serviceSearch ? (
                         // Show filtered services across all categories
@@ -730,6 +953,7 @@ export function QuickBookingPopover({
                             .slice(0, 15)
                             .map((service) => {
                               const isSelected = selectedServices.includes(service.phorest_service_id);
+                              const isQualified = isServiceQualifiedForPreSelected(service.phorest_service_id);
                               return (
                                 <button
                                   key={service.id}
@@ -737,15 +961,10 @@ export function QuickBookingPopover({
                                     'w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-all',
                                     isSelected
                                       ? 'bg-primary/10 ring-1 ring-primary/30'
-                                      : 'hover:bg-muted/70'
+                                      : 'hover:bg-muted/70',
+                                    !isQualified && !isSelected && 'opacity-40'
                                   )}
-                                  onClick={() => {
-                                    setSelectedServices(prev =>
-                                      prev.includes(service.phorest_service_id)
-                                        ? prev.filter(id => id !== service.phorest_service_id)
-                                        : [...prev, service.phorest_service_id]
-                                    );
-                                  }}
+                                  onClick={() => handleServiceToggle(service.phorest_service_id)}
                                 >
                                   <div className="flex-1 min-w-0 mr-2">
                                     <div className="font-medium text-sm truncate">{service.name}</div>
@@ -757,6 +976,11 @@ export function QuickBookingPopover({
                                       {service.price !== null && (
                                         <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
                                           {formatCurrencyWhole(service.price)}
+                                        </span>
+                                      )}
+                                      {!isQualified && (
+                                        <span className="text-[10px] text-destructive">
+                                          Not offered by {preSelectedStylistName.split(' ')[0]}
                                         </span>
                                       )}
                                     </div>
@@ -840,6 +1064,7 @@ export function QuickBookingPopover({
                       <div className="space-y-1">
                         {servicesByCategory?.[selectedCategory]?.map((service) => {
                           const isSelected = selectedServices.includes(service.phorest_service_id);
+                          const isQualified = isServiceQualifiedForPreSelected(service.phorest_service_id);
                           return (
                             <button
                               key={service.id}
@@ -847,15 +1072,10 @@ export function QuickBookingPopover({
                                 'w-full flex items-center justify-between p-2.5 rounded-lg text-left transition-all',
                                 isSelected
                                   ? 'bg-primary/10 ring-1 ring-primary/30'
-                                  : 'hover:bg-muted/70'
+                                  : 'hover:bg-muted/70',
+                                !isQualified && !isSelected && 'opacity-40'
                               )}
-                              onClick={() => {
-                                setSelectedServices(prev =>
-                                  prev.includes(service.phorest_service_id)
-                                    ? prev.filter(id => id !== service.phorest_service_id)
-                                    : [...prev, service.phorest_service_id]
-                                );
-                              }}
+                              onClick={() => handleServiceToggle(service.phorest_service_id)}
                             >
                               <div className="flex-1 min-w-0 mr-2">
                                 <div className="font-medium text-sm truncate">{service.name}</div>
@@ -867,6 +1087,11 @@ export function QuickBookingPopover({
                                   {service.price !== null && (
                                     <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
                                       {formatCurrencyWhole(service.price)}
+                                    </span>
+                                  )}
+                                  {!isQualified && (
+                                    <span className="text-[10px] text-destructive">
+                                      Not offered by {preSelectedStylistName.split(' ')[0]}
                                     </span>
                                   )}
                                 </div>
@@ -923,7 +1148,7 @@ export function QuickBookingPopover({
                 )}
                 <Button
                   className="w-full h-9"
-                  onClick={() => navigateToStep('location')}
+                  onClick={handleServicesComplete}
                 >
                   {selectedServices.length === 0 ? 'Skip Services' : 'Continue'}
                 </Button>
@@ -931,7 +1156,7 @@ export function QuickBookingPopover({
             </div>
           )}
 
-          {/* Step 2: Location Selection */}
+          {/* Step: Location Selection */}
           {step === 'location' && (
             <div className="flex flex-col" style={{ height: '550px' }}>
               <ScrollArea className="flex-1">
@@ -942,7 +1167,11 @@ export function QuickBookingPopover({
                   </div>
                   
                   <div className="space-y-1">
-                    {locations.map((loc) => {
+                    {/* Filter locations if stylist-first mode and stylist is pre-selected */}
+                    {(stylistFirstMode && preSelectedStylistLocations.length > 0
+                      ? preSelectedStylistLocations
+                      : locations
+                    ).map((loc) => {
                       const isSelected = selectedLocation === loc.id;
                       return (
                         <button
@@ -1003,7 +1232,14 @@ export function QuickBookingPopover({
                 <Button
                   className="w-full h-9"
                   disabled={!selectedLocation}
-                  onClick={() => navigateToStep('client')}
+                  onClick={() => {
+                    // In stylist-first mode, after location go to services
+                    if (stylistFirstMode && preSelectedStylistId) {
+                      navigateToStep('service');
+                    } else {
+                      navigateToStep('client');
+                    }
+                  }}
                 >
                   Confirm location
                 </Button>
@@ -1011,41 +1247,52 @@ export function QuickBookingPopover({
             </div>
           )}
 
-          {/* Step 4: Stylist Selection */}
+          {/* Step: Stylist Selection */}
           {step === 'stylist' && (
             <div className="flex flex-col" style={{ height: '550px' }}>
               <ScrollArea className="flex-1">
                 <div className="p-4">
-                  {/* Previous stylist notice */}
-                  {autoSelectReason === 'previous' && selectedClient && (
+                  {/* Previous stylist notice (normal mode only) */}
+                  {!stylistFirstMode && autoSelectReason === 'previous' && selectedClient && (
                     <div className="flex items-center gap-2 p-2.5 mb-3 bg-accent/50 text-accent-foreground rounded-lg text-xs border border-accent">
                       <Clock className="h-3.5 w-3.5 shrink-0" />
                       <span>Auto-selected {selectedClient.name.split(' ')[0]}'s previous stylist</span>
                     </div>
                   )}
+
+                  {/* Stylist-first mode hint */}
+                  {stylistFirstMode && (
+                    <div className="flex items-center gap-2 p-2.5 mb-3 bg-accent/50 text-accent-foreground rounded-lg text-xs border border-accent">
+                      <User className="h-3.5 w-3.5 shrink-0" />
+                      <span>Select your stylist first — we'll filter locations and services for you</span>
+                    </div>
+                  )}
                   
                   <h4 className="text-sm font-display font-medium text-foreground uppercase tracking-wider mb-4">
-                    Available Stylists
-                    {qualificationData?.hasQualificationData && selectedServices.length > 0 && (
+                    {stylistFirstMode ? 'All Stylists' : 'Available Stylists'}
+                    {!stylistFirstMode && qualificationData?.hasQualificationData && selectedServices.length > 0 && (
                       <span className="text-xs font-normal text-muted-foreground ml-2">
                         ({filteredStylists.length} qualified)
                       </span>
                     )}
                   </h4>
                   <div className="flex flex-col gap-3">
-                    {filteredStylists.map((stylist) => {
+                    {/* Show all stylists in stylist-first mode, filtered stylists in normal mode */}
+                    {(stylistFirstMode ? uniqueAllStylists : filteredStylists).map((stylist) => {
                       const fullName = stylist.employee_profiles?.display_name || stylist.employee_profiles?.full_name || 'Unknown';
                       const nameParts = fullName.split(' ');
                       const firstName = nameParts[0];
                       const lastInitial = nameParts.length > 1 ? nameParts[nameParts.length - 1].charAt(0) + '.' : '';
                       const displayName = `${firstName} ${lastInitial}`.trim();
-                      const isSelected = selectedStylist === stylist.user_id;
+                      const isSelected = stylistFirstMode 
+                        ? preSelectedStylistId === stylist.user_id 
+                        : selectedStylist === stylist.user_id;
                       const isPreviousStylist = selectedClient?.preferred_stylist_id === stylist.user_id;
                       const stylistLevelNum = getLevelNumber(stylist.employee_profiles?.stylist_level);
                       const stylistLevelSlug = getLevelSlug(stylist.employee_profiles?.stylist_level);
                       
-                      // Calculate this stylist's total price
-                      const stylistTotalPrice = stylistLevelSlug 
+                      // Calculate this stylist's total price (only in normal mode with services)
+                      const stylistTotalPrice = !stylistFirstMode && stylistLevelSlug 
                         ? selectedServiceDetails.reduce((sum, service) => {
                             const levelPrice = findLevelBasedPrice(service.name, stylistLevelSlug);
                             return sum + (levelPrice ?? service.price ?? 0);
@@ -1061,7 +1308,13 @@ export function QuickBookingPopover({
                               ? 'bg-primary/10 ring-2 ring-primary shadow-sm'
                               : 'bg-muted/40 hover:bg-muted/70'
                           )}
-                          onClick={() => setSelectedStylist(stylist.user_id)}
+                          onClick={() => {
+                            if (stylistFirstMode) {
+                              handleStylistFirstSelect(stylist);
+                            } else {
+                              setSelectedStylist(stylist.user_id);
+                            }
+                          }}
                         >
                           <div className="relative flex-shrink-0">
                             <Avatar className="h-12 w-12 ring-2 ring-background shadow-md">
@@ -1081,7 +1334,7 @@ export function QuickBookingPopover({
                               <span className="text-sm font-medium text-foreground truncate">
                                 {displayName}
                               </span>
-                              {isPreviousStylist && (
+                              {!stylistFirstMode && isPreviousStylist && (
                                 <Badge 
                                   variant="outline" 
                                   className="text-[9px] px-1.5 py-0 font-normal bg-accent/50 text-accent-foreground border-accent shrink-0"
@@ -1097,7 +1350,7 @@ export function QuickBookingPopover({
                                 Level {stylistLevelNum}
                               </Badge>
                             )}
-                            {selectedServices.length > 0 && (
+                            {!stylistFirstMode && selectedServices.length > 0 && (
                               <span className="text-sm font-medium text-foreground tabular-nums min-w-[70px] text-right">
                                 {formatCurrency(stylistTotalPrice)}
                               </span>
@@ -1112,7 +1365,7 @@ export function QuickBookingPopover({
 
               {/* Footer */}
               <div className="p-3 border-t border-border bg-card space-y-2">
-                {selectedServices.length > 0 && selectedStylist && selectedLevelNumber && (
+                {!stylistFirstMode && selectedServices.length > 0 && selectedStylist && selectedLevelNumber && (
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
                       <div className="flex items-center gap-2">
@@ -1137,8 +1390,14 @@ export function QuickBookingPopover({
                 )}
                 <Button
                   className="w-full h-10"
-                  disabled={!selectedStylist}
-                  onClick={() => navigateToStep('confirm')}
+                  disabled={stylistFirstMode ? !preSelectedStylistId : !selectedStylist}
+                  onClick={() => {
+                    if (stylistFirstMode) {
+                      handleStylistFirstContinue();
+                    } else {
+                      navigateToStep('confirm');
+                    }
+                  }}
                 >
                   Continue
                 </Button>
@@ -1146,7 +1405,7 @@ export function QuickBookingPopover({
             </div>
           )}
 
-          {/* Step 4: Confirmation */}
+          {/* Step: Confirmation */}
           {step === 'confirm' && (
             <div className="flex flex-col" style={{ height: '550px' }}>
               <ScrollArea className="flex-1">
@@ -1232,7 +1491,11 @@ export function QuickBookingPopover({
                     <div className="bg-card border border-border rounded-lg p-2.5">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={stylists.find(s => s.user_id === selectedStylist)?.employee_profiles?.photo_url || undefined} />
+                          <AvatarImage src={
+                            preSelectedStylistPhoto || 
+                            stylists.find(s => s.user_id === selectedStylist)?.employee_profiles?.photo_url || 
+                            undefined
+                          } />
                           <AvatarFallback className="bg-muted text-xs">
                             {getStylistName().slice(0, 2).toUpperCase()}
                           </AvatarFallback>
