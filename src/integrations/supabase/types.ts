@@ -3882,6 +3882,41 @@ export type Database = {
         }
         Relationships: []
       }
+      email_send_log: {
+        Row: {
+          client_id: string | null
+          email_type: string
+          id: string
+          message_id: string | null
+          organization_id: string
+          sent_at: string
+        }
+        Insert: {
+          client_id?: string | null
+          email_type?: string
+          id?: string
+          message_id?: string | null
+          organization_id: string
+          sent_at?: string
+        }
+        Update: {
+          client_id?: string | null
+          email_type?: string
+          id?: string
+          message_id?: string | null
+          organization_id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_send_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_templates: {
         Row: {
           blocks_json: Json | null
@@ -7757,6 +7792,7 @@ export type Database = {
           email_footer_text: string | null
           email_header_style: string | null
           email_logo_url: string | null
+          email_physical_address: string | null
           email_reply_to: string | null
           email_sender_name: string | null
           email_show_attribution: boolean | null
@@ -7805,6 +7841,7 @@ export type Database = {
           email_footer_text?: string | null
           email_header_style?: string | null
           email_logo_url?: string | null
+          email_physical_address?: string | null
           email_reply_to?: string | null
           email_sender_name?: string | null
           email_show_attribution?: boolean | null
@@ -7853,6 +7890,7 @@ export type Database = {
           email_footer_text?: string | null
           email_header_style?: string | null
           email_logo_url?: string | null
+          email_physical_address?: string | null
           email_reply_to?: string | null
           email_sender_name?: string | null
           email_show_attribution?: boolean | null
