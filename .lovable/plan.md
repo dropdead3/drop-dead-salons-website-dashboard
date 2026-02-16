@@ -1,30 +1,30 @@
 
-# Two-Column Layout: Settings + Sticky Preview
 
-## Change
+# Fix Team Chat Full-Screen Sizing Gaps
 
-Restructure the `KioskLocationSettingsForm` return block from a single-column `space-y-6` layout into a two-column grid where:
+## Problem
+The Team Chat has visible gaps and doesn't fill the full viewport. The root cause is **`App.css`** applying `max-width: 1280px`, `padding: 2rem`, and `text-align: center` to `#root` -- these global styles constrain the entire app layout and add unwanted padding around the chat interface.
 
-- **Left column**: Features, Settings Tabs, Action Buttons, Deploy QR (all existing content)
-- **Right column**: Live Preview panel, sticky on scroll so it stays visible while scrolling through settings
+## Changes
+
+### 1. Clean up `src/App.css`
+Remove the legacy `#root` styles (`max-width`, `padding`, `margin`, `text-align`) that are constraining the layout. These are leftover Vite template defaults and conflict with the full-screen dashboard layout. Other unused styles (`.logo`, `.card`, `.read-the-docs`) can also be cleaned out since the app uses Tailwind exclusively.
+
+### 2. Ensure `TeamChatContainer` fills height properly
+Verify the height chain is unbroken:
+- `DashboardLayout(hideFooter)` sets `h-screen overflow-hidden` and passes `h-full` down through `main`
+- The TeamChat page wrapper `div.h-full.overflow-hidden` connects to...
+- `TeamChatContainer` root `div.flex.h-full` connects to...
+- Main column `div.flex-1.flex.flex-col.min-w-0` where `MessageList(flex-1)` expands and `MessageInput` pins to the bottom
+
+The CSS cleanup in step 1 should resolve the visible gaps. No structural changes needed to the chat components themselves.
 
 ## Technical Details
 
-**File: `src/components/dashboard/settings/KioskLocationSettingsForm.tsx`**
+**File: `src/App.css`**
+- Remove or neutralize the `#root` block that sets `max-width: 1280px`, `margin: 0 auto`, `padding: 2rem`, and `text-align: center`
+- Remove unused `.logo`, `.card`, `.read-the-docs`, and `@keyframes logo-spin` rules (Vite boilerplate)
+- Keep file minimal or empty since Tailwind handles all styling
 
-1. Replace the outer `<div className="space-y-6">` wrapper (line 346) with a two-column grid:
-   ```
-   <div className="grid grid-cols-1 lg:grid-cols-[1fr,minmax(320px,1fr)] gap-6">
-   ```
+This is a single-file CSS-only change with no component modifications required.
 
-2. Wrap Features + Tabs + Action Buttons + Deploy QR in a `<div className="space-y-6">` (left column)
-
-3. Move the Live Preview out of the left column flow and into the right column wrapped in:
-   ```
-   <div className="sticky top-4 self-start">
-   ```
-   Remove the `Collapsible` wrapper since the preview is now always visible in its own column. Keep the "Expand" button for opening the full Sheet.
-
-4. On smaller screens (`< lg`), it collapses back to single column with the preview below the settings (natural stacking).
-
-This is a layout-only change within the return statement -- no logic, state, or props change.
