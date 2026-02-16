@@ -91,7 +91,7 @@ function CustomXAxisTick({ x, y, payload, days, peakDate, onDayClick }: any) {
             onDayClick(day);
           }}
         >
-          {day.appointmentCount} appt{day.appointmentCount !== 1 ? 's' : ''}
+          {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}
         </text>
       </motion.g>
     </g>
@@ -276,12 +276,6 @@ export function WeekAheadForecast() {
                 <BarChart
                   data={chartData}
                   margin={{ top: 25, right: 5, bottom: 35, left: 10 }}
-                  onClick={(state) => {
-                    if (state?.activeLabel) {
-                      handleBarClick(state.activeLabel as string);
-                    }
-                  }}
-                  style={{ cursor: 'pointer' }}
                 >
                   <XAxis 
                     dataKey="name" 
@@ -317,6 +311,8 @@ export function WeekAheadForecast() {
                     isAnimationActive={true}
                     animationDuration={800}
                     animationEasing="ease-out"
+                    onClick={(data: any) => handleBarClick(data.name)}
+                    cursor="pointer"
                   >
                     {chartData.map((entry, index) => {
                       const isSelected = selectedBarDay?.dayName === entry.name;
@@ -339,6 +335,8 @@ export function WeekAheadForecast() {
                     isAnimationActive={true}
                     animationDuration={800}
                     animationEasing="ease-out"
+                    onClick={(data: any) => handleBarClick(data.name)}
+                    cursor="pointer"
                   >
                     <LabelList 
                       dataKey="totalRevenue"
@@ -432,7 +430,8 @@ export function WeekAheadForecast() {
           {/* Provider Breakdown Drill-Down */}
           <DayProviderBreakdownPanel
             day={selectedBarDay}
-            isOpen={selectedBarDay !== null}
+            open={selectedBarDay !== null}
+            onOpenChange={(open) => { if (!open) setSelectedBarDay(null); }}
           />
 
           {/* Peak Day Callout */}

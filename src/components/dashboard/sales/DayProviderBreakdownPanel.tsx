@@ -2,6 +2,8 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Clock, User } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { DRILLDOWN_DIALOG_CONTENT_CLASS, DRILLDOWN_OVERLAY_CLASS } from '@/components/dashboard/drilldownDialogStyles';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -11,7 +13,8 @@ import type { DayForecast, AppointmentSummary } from '@/hooks/useWeekAheadRevenu
 
 interface DayProviderBreakdownPanelProps {
   day: DayForecast | null;
-  isOpen: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 interface StylistGroup {
@@ -21,7 +24,7 @@ interface StylistGroup {
   appointments: AppointmentSummary[];
 }
 
-export function DayProviderBreakdownPanel({ day, isOpen }: DayProviderBreakdownPanelProps) {
+export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProviderBreakdownPanelProps) {
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const [expandedStylist, setExpandedStylist] = useState<string | null>(null);
@@ -46,33 +49,21 @@ export function DayProviderBreakdownPanel({ day, isOpen }: DayProviderBreakdownP
   const needsScroll = showAll && groups.length > 8;
 
   return (
-    <AnimatePresence mode="wait">
-      {isOpen && day && groups.length > 0 && (
-        <motion.div
-          key={day.date}
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="overflow-hidden"
-        >
-          <div className="bg-muted/30 rounded-lg border border-border/30 p-4 space-y-3">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-foreground">
-                  {formatDate(parseISO(day.date), 'EEEE, MMM d')}
-                </p>
-                <p className={tokens.body.muted}>
-                  {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}
-                </p>
-              </div>
-              <span className={tokens.heading.subsection}>By Provider</span>
-            </div>
+    <Dialog open={open && !!day && groups.length > 0} onOpenChange={onOpenChange}>
+      <DialogContent className={DRILLDOWN_DIALOG_CONTENT_CLASS} overlayClassName={DRILLDOWN_OVERLAY_CLASS}>
+        {day && (
+          <>
+            <DialogHeader className="px-5 pt-5 pb-3">
+              <DialogTitle className="text-base font-display">
+                {formatDate(parseISO(day.date), 'EEEE, MMM d')}
+              </DialogTitle>
+              <DialogDescription className={tokens.body.muted}>
+                {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''} · By Provider
+              </DialogDescription>
+            </DialogHeader>
 
-            {/* Stylist rows */}
-            <ConditionalScroll enabled={needsScroll}>
-              <div className="space-y-1">
+            <ScrollArea className="flex-1 overflow-auto">
+              <div className="px-5 pb-5 space-y-1">
                 {visibleGroups.map(group => (
                   <div key={group.name}>
                     <button
@@ -89,7 +80,7 @@ export function DayProviderBreakdownPanel({ day, isOpen }: DayProviderBreakdownP
                           />
                           <span className="text-sm font-medium">{group.name}</span>
                           <span className={tokens.body.muted}>
-                            {group.count} appt{group.count !== 1 ? 's' : ''}
+                            {group.count} appointment{group.count !== 1 ? 's' : ''}
                           </span>
                         </div>
                         <span className="text-sm font-display tabular-nums">
@@ -146,26 +137,21 @@ export function DayProviderBreakdownPanel({ day, isOpen }: DayProviderBreakdownP
                     </AnimatePresence>
                   </div>
                 ))}
+
+                {/* Show all toggle */}
+                {needsShowAll && (
+                  <button
+                    onClick={() => setShowAll(prev => !prev)}
+                    className="text-xs text-primary hover:underline"
+                  >
+                    {showAll ? 'Show less' : `Show all ${groups.length} providers`}
+                  </button>
+                )}
               </div>
-            </ConditionalScroll>
-
-            {/* Show all toggle */}
-            {needsShowAll && (
-              <button
-                onClick={() => setShowAll(prev => !prev)}
-                className="text-xs text-primary hover:underline"
-              >
-                {showAll ? 'Show less' : `Show all ${groups.length} providers`}
-              </button>
-            )}
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            </ScrollArea>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
-}
-
-function ConditionalScroll({ enabled, children }: { enabled: boolean; children: React.ReactNode }) {
-  if (!enabled) return <>{children}</>;
-  return <ScrollArea className="max-h-[280px]">{children}</ScrollArea>;
 }
