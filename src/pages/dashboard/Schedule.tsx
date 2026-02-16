@@ -377,18 +377,6 @@ export default function Schedule() {
               />
         </div>
 
-        {/* Utilization Bar (Day/Week views only) */}
-        {(view === 'day' || view === 'week') && !isLoading && (
-          <div className="px-4 pt-2">
-            <ScheduleUtilizationBar
-              date={currentDate}
-              appointments={appointments}
-              stylistCount={displayedStylists.length}
-              hoursStart={preferences.hours_start}
-              hoursEnd={preferences.hours_end}
-            />
-          </div>
-        )}
 
         {/* Calendar View (with optional copilot panel) */}
         <div className="flex-1 p-4 overflow-hidden">
