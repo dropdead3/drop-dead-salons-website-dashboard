@@ -60,6 +60,7 @@ import {
   Trophy,
   TabletSmartphone,
   Keyboard,
+  Scissors,
   Lightbulb,
 } from 'lucide-react';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
@@ -93,6 +94,7 @@ import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSe
 import { EmailBrandingSettings } from '@/components/dashboard/settings/EmailBrandingSettings';
 import { KioskSettingsContent } from '@/components/dashboard/settings/KioskSettingsContent';
 import { ServiceEmailFlowsManager } from '@/components/dashboard/settings/ServiceEmailFlowsManager';
+import { ServicesSettingsContent } from '@/components/dashboard/settings/ServicesSettingsContent';
 import { MessageSquareHeart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
@@ -130,7 +132,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'access-hub' | 'schedule' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | null;
+type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'access-hub' | 'schedule' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -847,6 +849,12 @@ export default function Settings() {
       description: 'Device appearance, branding & behavior',
       icon: TabletSmartphone,
     },
+    services: {
+      id: 'services',
+      label: 'Services',
+      description: 'Categories, services & pricing',
+      icon: Scissors,
+    },
   };
 
   const orderedCategories = useMemo(() => {
@@ -1381,6 +1389,8 @@ export default function Settings() {
           {activeCategory === 'handbooks' && <HandbooksContent />}
 
           {activeCategory === 'schedule' && <ScheduleSettingsContent />}
+
+          {activeCategory === 'services' && <ServicesSettingsContent />}
 
           {activeCategory === 'locations' && <LocationsSettingsContent />}
 

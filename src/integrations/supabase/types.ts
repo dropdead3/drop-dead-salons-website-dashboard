@@ -12652,6 +12652,7 @@ export type Database = {
           created_at: string
           display_order: number
           id: string
+          organization_id: string | null
           text_color_hex: string
           updated_at: string
         }
@@ -12661,6 +12662,7 @@ export type Database = {
           created_at?: string
           display_order?: number
           id?: string
+          organization_id?: string | null
           text_color_hex?: string
           updated_at?: string
         }
@@ -12670,10 +12672,19 @@ export type Database = {
           created_at?: string
           display_order?: number
           id?: string
+          organization_id?: string | null
           text_color_hex?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "service_category_colors_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       service_category_themes: {
         Row: {
