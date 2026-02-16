@@ -919,7 +919,16 @@ export function QuickBookingPopover({
                         </Badge>
                       ))}
                     </div>
-                  </div>
+                </div>
+                )}
+                {selectedCategory && selectedServices.length > 0 && (
+                  <Button
+                    variant="outline"
+                    className="w-full h-9 text-xs"
+                    onClick={() => setSelectedCategory(null)}
+                  >
+                    + Add service from another category
+                  </Button>
                 )}
                 <Button
                   className="w-full h-9"
