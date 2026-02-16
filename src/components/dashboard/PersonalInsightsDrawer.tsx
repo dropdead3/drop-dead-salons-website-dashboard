@@ -229,7 +229,7 @@ export function PersonalInsightsDrawer() {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span className="font-display text-xs tracking-[0.15em]">ZURA PERSONAL INSIGHTS</span>
+                  <span className="font-display text-sm tracking-[0.15em]">ZURA PERSONAL INSIGHTS</span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0}>
@@ -303,7 +303,7 @@ export function PersonalInsightsDrawer() {
                                 <div>
                                   <div className="flex items-center gap-2 mb-3">
                                     <Brain className="w-3.5 h-3.5 text-emerald-500" />
-                                    <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Personal Insights</span>
+                                    <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Personal Insights</span>
                                     <div className="flex-1 h-px bg-border/40" />
                                   </div>
                                   <div className="space-y-2">
@@ -317,7 +317,7 @@ export function PersonalInsightsDrawer() {
                                 <div>
                                   <div className="flex items-center gap-2 mb-3">
                                     <CheckCircle2 className="w-3.5 h-3.5 text-muted-foreground" />
-                                    <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Your Next Steps</span>
+                                    <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">Your Next Steps</span>
                                     <div className="flex-1 h-px bg-border/40" />
                                   </div>
                                   <div className="space-y-1 rounded-lg border border-border/30 bg-muted/10 px-5 py-3">
