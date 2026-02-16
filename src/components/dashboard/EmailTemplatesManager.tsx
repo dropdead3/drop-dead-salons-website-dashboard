@@ -738,7 +738,7 @@ export function EmailTemplatesManager() {
           <div className="px-5 py-4 border-b bg-white">
             <h2 
               className={cn(
-                "font-bold tracking-[-0.02em] leading-tight mb-3",
+                "font-medium tracking-[-0.02em] leading-tight mb-3",
                 previewMode === 'desktop' ? 'text-[22px]' : 'text-[20px]'
               )}
               style={{ 
