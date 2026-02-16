@@ -82,7 +82,7 @@ export function LevelPricingDialog({
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
           </div>
         ) : (
-          <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1 pb-2">
             {activeLevels.map(level => (
               <div key={level.id} className="flex items-center gap-3">
                 <Label className={cn(tokens.body.emphasis, 'w-36 shrink-0 truncate')}>
