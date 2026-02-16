@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo, useCallback } from 'react';
+import { DayProviderBreakdownPanel } from './DayProviderBreakdownPanel';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -239,7 +240,7 @@ function DailyXAxisTick({ x, y, payload, days, peakDate, onDayClick, isEomPeriod
             onDayClick(day);
           }}
         >
-          {day.appointmentCount} appt{day.appointmentCount !== 1 ? 's' : ''}
+          {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}
         </text>
       </motion.g>
     </g>
@@ -277,7 +278,7 @@ function WeeklyXAxisTick({ x, y, payload, weeks, peakWeekStart }: any) {
           textAnchor="middle" 
           className="fill-muted-foreground text-[10px]"
         >
-          {week.appointmentCount} appts
+          {week.appointmentCount} appointments
         </text>
       </motion.g>
     </g>
@@ -391,6 +392,7 @@ export function ForecastingCard() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [selectedStatCard, setSelectedStatCard] = useState<BreakdownMode | null>(null);
   const [breakdownType, setBreakdownType] = useState<BreakdownType>('category');
+  const [selectedBarDay, setSelectedBarDay] = useState<DayForecast | null>(null);
   const { data, isLoading, error } = useForecastRevenue(period, selectedLocation);
   const forecastDays = getForecastDays(period);
   const { data: predictedData } = useRevenueForecast({
@@ -416,6 +418,13 @@ export function ForecastingCard() {
   const handleStatCardClick = useCallback((mode: BreakdownMode) => {
     setSelectedStatCard(prev => prev === mode ? null : mode);
   }, []);
+
+  const handleBarClick = useCallback((dayDate: string) => {
+    if (!data?.days) return;
+    const day = data.days.find(d => d.date === dayDate);
+    if (!day) return;
+    setSelectedBarDay(prev => prev?.date === day.date ? null : day);
+  }, [data?.days]);
 
   const showWeeklyChart = period === '30days' || period === '60days';
   const showChart = period !== 'tomorrow';
@@ -752,6 +761,8 @@ export function ForecastingCard() {
                     isAnimationActive={true}
                     animationDuration={800}
                     animationEasing="ease-out"
+                    onClick={(data: any) => !showWeeklyChart && handleBarClick(data.name)}
+                    cursor={showWeeklyChart ? undefined : "pointer"}
                   >
                     {chartData.map((entry, index) => {
                       const isToday = 'isToday' in entry && entry.isToday;
@@ -775,6 +786,8 @@ export function ForecastingCard() {
                     isAnimationActive={true}
                     animationDuration={800}
                     animationEasing="ease-out"
+                    onClick={(data: any) => !showWeeklyChart && handleBarClick(data.name)}
+                    cursor={showWeeklyChart ? undefined : "pointer"}
                   >
                     <LabelList 
                       dataKey="totalRevenue"
@@ -875,6 +888,15 @@ export function ForecastingCard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+          )}
+
+          {/* Provider Breakdown Drill-Down (daily view only) */}
+          {!showWeeklyChart && (
+            <DayProviderBreakdownPanel
+              day={selectedBarDay}
+              open={selectedBarDay !== null}
+              onOpenChange={(open) => { if (!open) setSelectedBarDay(null); }}
+            />
           )}
 
           {/* Tomorrow single stat view */}
