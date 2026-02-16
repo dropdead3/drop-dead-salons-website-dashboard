@@ -1,56 +1,62 @@
 
 
-# Show "All Closed" Empty State on Sales Overview
+# Replace ToggleGroup with Tokenized Tab Selectors in ForecastingCard
+
+## Problem
+The ForecastingCard uses `ToggleGroup` / `ToggleGroupItem` with custom inline styles (`bg-muted/50 p-1 rounded-lg`, custom `data-[state=on]:` classes) for its period selector and drill-down type selector. This violates the standardized tab bar design system, which uses `Tabs` / `TabsList` / `TabsTrigger` with tokenized styles (h-11, p-1.5, borderRadius 9px container / 6px triggers, glass active state).
 
 ## What Changes
 
-When viewing a single-day period (Today or Yesterday) and **every** location is closed, replace the entire card body with a calm, centered empty state instead of showing rows of $0 metrics. The header (title, badge, filters, export) remains unchanged.
+**File: `src/components/dashboard/sales/ForecastingCard.tsx`**
 
-## Layout
-
-The current main content grid (hero revenue block, services/products sub-cards, KPI tiles row, sidebar) will be conditionally replaced with:
-
-```text
-+--------------------------------------------------+
-|  [Moon icon, large]                               |
-|                                                   |
-|  All locations closed today                       |
-|  No sales activity — all 2 locations are          |
-|  closed today.                                    |
-+--------------------------------------------------+
-```
-
-- Moon icon: `w-10 h-10`, muted foreground
-- Title: `font-display text-lg`, e.g. "All locations closed today"
-- Subtitle: `text-sm text-muted-foreground`, e.g. "No sales activity -- all X locations are closed today."
-- Centered vertically with generous padding (`py-16`)
-- Contained within the same `bg-muted/30 dark:bg-card rounded-xl border` wrapper used by the hero section, so it feels native
-
-## Logic
-
-Compute an `allLocationsClosed` boolean once (near the existing `hasNoData` logic, around line 466):
+### 1. Period Selector (lines 546-567)
+Replace the `ToggleGroup` with `Tabs` + `TabsList` + `TabsTrigger`:
 
 ```
-const isSingleDay = dateRange === 'today' || dateRange === 'yesterday';
-const allLocationsClosed = isSingleDay && hasNoData 
-  && (locations?.length ?? 0) > 0 
-  && locations!.every(loc => 
-    isClosedOnDate(loc.hours_json, loc.holiday_closures, 
-      dateRange === 'yesterday' ? subDays(new Date(), 1) : new Date()
-    ).isClosed
-  );
+Before:
+<ToggleGroup type="single" value={period} onValueChange={...} className="bg-muted/50 p-1 rounded-lg">
+  <ToggleGroupItem value="tomorrow" className="text-xs px-2.5 py-1 h-7 ...">Tomorrow</ToggleGroupItem>
+  ...
+</ToggleGroup>
+
+After:
+<Tabs value={period} onValueChange={...}>
+  <TabsList>
+    <TabsTrigger value="tomorrow">Tomorrow</TabsTrigger>
+    <TabsTrigger value="todayToEom">EOM</TabsTrigger>
+    <TabsTrigger value="7days">7 Days</TabsTrigger>
+    <TabsTrigger value="30days">30 Days</TabsTrigger>
+    <TabsTrigger value="60days">60 Days</TabsTrigger>
+  </TabsList>
+</Tabs>
 ```
 
-Then wrap the main content grid (lines ~538-900+) in a conditional:
-- If `allLocationsClosed`: render the empty state
-- Otherwise: render the existing content (unchanged)
+This automatically picks up the tokenized styles: h-11 container, p-1.5, rounded-[9px] outer / rounded-[6px] inner, glass active state (`bg-white/[0.08]`, `ring-1 ring-white/[0.12]`, `backdrop-blur-sm`).
 
-## File Changed
+### 2. Drill-Down Type Selector (lines 664-679)
+Same replacement for the "Drill down by" toggle:
 
-**`src/components/dashboard/AggregateSalesCard.tsx`** only.
+```
+Before:
+<ToggleGroup type="single" value={breakdownType} onValueChange={...} className="bg-muted/50 p-1 rounded-lg">
+  <ToggleGroupItem value="category" ...>Category</ToggleGroupItem>
+  ...
+</ToggleGroup>
 
-1. Compute `allLocationsClosed` as a `useMemo` near the top of the render logic
-2. After the header `</div>` (line ~536), add: `{allLocationsClosed ? (<AllClosedEmptyState />) : (<existing main content grid>)}`
-3. The empty state is a simple inline JSX block (no separate component file needed -- it's ~15 lines)
+After:
+<Tabs value={breakdownType} onValueChange={...}>
+  <TabsList>
+    <TabsTrigger value="category">Category</TabsTrigger>
+    <TabsTrigger value="location">Location</TabsTrigger>
+    <TabsTrigger value="stylist">Service Provider</TabsTrigger>
+  </TabsList>
+</Tabs>
+```
 
-The "Closed" badge in the header (line 466-477) already handles this case, so it will still show "Closed" next to the title. The two work together: badge signals status at a glance, empty state replaces the noise of $0 metrics.
+### 3. Import Updates
+- Remove: `ToggleGroup, ToggleGroupItem` import
+- Add: `Tabs, TabsList, TabsTrigger` from `@/components/ui/tabs`
+
+### Key Detail
+Since `Tabs` uses `onValueChange` (same as `ToggleGroup`), the callback signatures are compatible. The `value` prop works identically. No state management changes needed -- this is a pure UI swap.
+
