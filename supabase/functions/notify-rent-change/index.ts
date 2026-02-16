@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { sendEmail, formatEmailDate, formatEmailCurrency } from "../_shared/email-sender.ts";
+import { sendOrgEmail, formatEmailDate, formatEmailCurrency } from "../_shared/email-sender.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,30 +34,19 @@ serve(async (req) => {
       );
     }
 
-    // Get contract details with renter info
     const { data: contract, error: contractError } = await supabase
       .from("booth_rental_contracts")
-      .select(`
-        id,
-        booth_renter_id,
-        booth_renter_profiles!inner(
-          user_id,
-          business_name,
-          billing_email
-        )
-      `)
+      .select(`id, organization_id, booth_renter_id, booth_renter_profiles!inner(user_id, business_name, billing_email)`)
       .eq("id", contract_id)
       .single();
 
     if (contractError || !contract) {
-      console.error("Contract not found:", contractError);
       return new Response(
         JSON.stringify({ error: "Contract not found" }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Get employee profile for renter name
     const { data: employee } = await supabase
       .from("employee_profiles")
       .select("full_name, display_name, email")
@@ -68,7 +57,6 @@ serve(async (req) => {
     const renterEmail = contract.booth_renter_profiles.billing_email || employee?.email;
 
     if (!renterEmail) {
-      console.log("No email found for renter - notification skipped");
       return new Response(
         JSON.stringify({ success: false, message: "No email address for renter" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -78,64 +66,31 @@ serve(async (req) => {
     const effectiveDateFormatted = formatEmailDate(new Date(effective_date));
     const rentDifference = new_rent - current_rent;
     const isIncrease = rentDifference > 0;
-    const changeType = isIncrease ? "increase" : "decrease";
     const percentChange = current_rent > 0 
-      ? ((Math.abs(rentDifference) / current_rent) * 100).toFixed(1) 
-      : "0";
+      ? ((Math.abs(rentDifference) / current_rent) * 100).toFixed(1) : "0";
 
-    const emailResult = await sendEmail({
+    const emailResult = await sendOrgEmail(supabase, contract.organization_id, {
       to: [renterEmail],
       subject: `Upcoming Rent ${isIncrease ? 'Increase' : 'Change'} - Effective ${effectiveDateFormatted}`,
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Rent ${isIncrease ? 'Increase' : 'Change'} Notice</h2>
-          
-          <p>Hi ${renterName},</p>
-          
-          <p>This is to notify you that your booth rental rate will be ${isIncrease ? 'increasing' : 'changing'} effective <strong>${effectiveDateFormatted}</strong>.</p>
-          
-          <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <table style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td style="padding: 8px 0; color: #666;">Current Rent:</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: bold;">${formatEmailCurrency(current_rent)}/month</td>
-              </tr>
-              <tr>
-                <td style="padding: 8px 0; color: #666;">New Rent:</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: bold; color: ${isIncrease ? '#c53030' : '#2f855a'};">
-                  ${formatEmailCurrency(new_rent)}/month
-                </td>
-              </tr>
-              <tr style="border-top: 1px solid #ddd;">
-                <td style="padding: 8px 0; color: #666;">Change:</td>
-                <td style="padding: 8px 0; text-align: right;">
-                  ${isIncrease ? '+' : '-'}${formatEmailCurrency(Math.abs(rentDifference))} (${percentChange}%)
-                </td>
-              </tr>
-            </table>
-          </div>
-          
-          ${reason ? `
-          <p><strong>Reason:</strong> ${reason}</p>
-          ` : ''}
-          
-          <p>Your first payment at the new rate will be due based on your regular billing schedule after the effective date.</p>
-          
-          <p>If you have any questions, please contact salon management.</p>
-          
-          <p style="color: #666; font-size: 12px; margin-top: 30px;">
-            This is an automated notification from your salon management system.
-          </p>
+        <h2>Rent ${isIncrease ? 'Increase' : 'Change'} Notice</h2>
+        <p>Hi ${renterName},</p>
+        <p>This is to notify you that your booth rental rate will be ${isIncrease ? 'increasing' : 'changing'} effective <strong>${effectiveDateFormatted}</strong>.</p>
+        <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr><td style="padding: 8px 0; color: #666;">Current Rent:</td><td style="padding: 8px 0; text-align: right; font-weight: bold;">${formatEmailCurrency(current_rent)}/month</td></tr>
+            <tr><td style="padding: 8px 0; color: #666;">New Rent:</td><td style="padding: 8px 0; text-align: right; font-weight: bold; color: ${isIncrease ? '#c53030' : '#2f855a'};">${formatEmailCurrency(new_rent)}/month</td></tr>
+            <tr style="border-top: 1px solid #ddd;"><td style="padding: 8px 0; color: #666;">Change:</td><td style="padding: 8px 0; text-align: right;">${isIncrease ? '+' : '-'}${formatEmailCurrency(Math.abs(rentDifference))} (${percentChange}%)</td></tr>
+          </table>
         </div>
+        ${reason ? `<p><strong>Reason:</strong> ${reason}</p>` : ''}
+        <p>Your first payment at the new rate will be due based on your regular billing schedule after the effective date.</p>
+        <p>If you have any questions, please contact salon management.</p>
       `,
     });
 
     return new Response(
-      JSON.stringify({ 
-        success: emailResult.success, 
-        message: emailResult.success ? "Notification sent" : "Failed to send notification",
-        email_sent_to: renterEmail,
-      }),
+      JSON.stringify({ success: emailResult.success, message: emailResult.success ? "Notification sent" : "Failed to send", email_sent_to: renterEmail }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
