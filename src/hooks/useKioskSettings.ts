@@ -291,6 +291,23 @@ export function useLocationKioskOverrides(organizationId?: string) {
   });
 }
 
+// Hook to fetch ALL kiosk settings rows for an org (defaults + all location overrides)
+export function useAllOrgKioskSettings(organizationId?: string) {
+  return useQuery({
+    queryKey: ['all-org-kiosk-settings', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return [];
+      const { data, error } = await supabase
+        .from('organization_kiosk_settings')
+        .select('*')
+        .eq('organization_id', organizationId);
+      if (error) throw error;
+      return data as unknown as KioskSettings[];
+    },
+    enabled: !!organizationId,
+  });
+}
+
 // Hook to push organization defaults to all locations (removes all overrides)
 export function usePushDefaultsToAllLocations() {
   const queryClient = useQueryClient();
