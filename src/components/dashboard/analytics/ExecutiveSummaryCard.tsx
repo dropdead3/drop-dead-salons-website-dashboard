@@ -26,6 +26,7 @@ import {
   CalendarIcon,
   Building2,
   Wallet,
+  CalendarCheck2,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSalesMetrics, useSalesByLocation, useSalesByStylist } from '@/hooks/useSalesData';
@@ -33,6 +34,7 @@ import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useClientStats } from '@/hooks/useClientsData';
 import { useCapacityUtilization } from '@/hooks/useCapacityUtilization';
 import { useExpectedRentRevenue } from '@/hooks/useExpectedRentRevenue';
+import { useBookingPipeline } from '@/hooks/useBookingPipeline';
 import { usePaySchedule } from '@/hooks/usePaySchedule';
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
 import { subDays, differenceInDays, parseISO, format, startOfMonth, startOfYear } from 'date-fns';
@@ -234,6 +236,9 @@ export function ExecutiveSummaryCard() {
     }, 0);
   }, [payPeriodStylists, calculateCommission]);
 
+  // Booking pipeline health
+  const pipeline = useBookingPipeline(locFilter);
+
   const isLoading = metricsLoading || teamLoading || clientsLoading || capacityLoading || locationsLoading || rentLoading;
   const isError = metricsError || teamError || clientsError || capacityError;
 
@@ -361,6 +366,17 @@ export function ExecutiveSummaryCard() {
       change: null,
       tooltip: 'Percentage of available appointment capacity that is booked, based on the last 30 days of scheduling data.',
     },
+    {
+      icon: CalendarCheck2,
+      label: 'Booking Pipeline',
+      value: pipeline.label,
+      valueColor: pipeline.status === 'healthy' ? 'text-chart-2' : pipeline.status === 'slowing' ? 'text-amber-500' : 'text-destructive',
+      drillDown: '/dashboard/admin/analytics?tab=operations&subtab=staff-utilization',
+      drillLabel: 'View Pipeline',
+      change: null,
+      subtitle: `${pipeline.forwardCount} appts next 14d vs ${pipeline.baselineCount} avg`,
+      tooltip: 'Compares appointments booked for the next 14 days against your trailing 14-day average. Flags slowdowns before they impact revenue.',
+    },
   ];
 
   return (
@@ -420,7 +436,7 @@ export function ExecutiveSummaryCard() {
             <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
             <span className="font-display text-[10px] tracking-widest text-muted-foreground/60 uppercase">Revenue & Liability</span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {kpis.slice(0, 3).map((kpi) => (
               <KpiTile key={kpi.label} kpi={kpi} />
             ))}
