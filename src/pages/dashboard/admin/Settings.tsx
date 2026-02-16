@@ -90,6 +90,7 @@ import { TeamRewardsConfigurator } from '@/components/dashboard/settings/TeamRew
 import { UserPinSettings } from '@/components/dashboard/settings/UserPinSettings';
 import { SoundSettingsSection } from '@/components/dashboard/settings/SoundSettingsSection';
 import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
+import { EmailBrandingSettings } from '@/components/dashboard/settings/EmailBrandingSettings';
 import { KioskSettingsContent } from '@/components/dashboard/settings/KioskSettingsContent';
 import { MessageSquareHeart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -922,6 +923,7 @@ export default function Settings() {
           {/* Category Content */}
           {activeCategory === 'email' && (
             <div className="space-y-6">
+              <EmailBrandingSettings />
               <Card>
                 <CardHeader>
                   <CardTitle className="font-display text-lg">EMAIL TEMPLATES</CardTitle>
