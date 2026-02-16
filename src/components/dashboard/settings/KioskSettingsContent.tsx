@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save, Palette, Sun, Moon, Monitor, Image, Smartphone, Tablet, Upload, RotateCcw, Pencil, ImageIcon, MapPin as MapPinIcon, UserCheck, CalendarPlus } from 'lucide-react';
+import { Loader2, Save, Palette, Sun, Moon, Monitor, Image, Smartphone, Tablet, Upload, RotateCcw, Pencil, ImageIcon, MapPin as MapPinIcon, UserCheck, CalendarPlus, ClipboardCheck, FileSignature, MessageSquare, Lock, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -405,71 +406,209 @@ export function KioskSettingsContent() {
     });
   };
 
-  // Derived kiosk mode
-  const kioskMode = localSettings.enable_self_booking ? 'self-service' : 'check-in';
-
-  const handleKioskModeChange = (mode: 'check-in' | 'self-service') => {
-    if (mode === 'self-service') {
-      setLocalSettings(prev => ({ ...prev, enable_self_booking: true, enable_walk_ins: true }));
-    } else {
-      setLocalSettings(prev => ({ ...prev, enable_self_booking: false }));
-    }
-  };
-
   return (
     <div className="space-y-6">
-      {/* Kiosk Mode Selector */}
+      {/* Kiosk Features - Independent Toggles */}
       <Card>
         <CardHeader className="pb-4">
-          <CardTitle className="font-display text-lg">KIOSK MODE</CardTitle>
+          <CardTitle className="font-display text-lg">KIOSK FEATURES</CardTitle>
           <CardDescription>
-            Choose the primary function of your kiosk devices
+            Enable the capabilities your kiosk offers — features work independently
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              className={cn(
-                "flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all text-center",
-                kioskMode === 'check-in'
-                  ? "border-primary bg-primary/5 shadow-sm"
-                  : "border-border hover:border-primary/40 hover:bg-muted/30"
+        <CardContent className="space-y-3">
+          {/* Check-In — Core, always on */}
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/15 text-primary flex items-center justify-center">
+                  <UserCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Check-In</p>
+                  <p className="text-xs text-muted-foreground">Clients look up and check in for existing appointments</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Lock className="h-4 w-4" />
+                <span className="hidden sm:inline text-xs">Always on</span>
+              </div>
+            </div>
+            {/* Check-in sub-settings */}
+            <div className="pl-[52px] space-y-3 pt-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm">Require Confirmation Tap</p>
+                  <p className="text-xs text-muted-foreground">Ask client to confirm before check-in</p>
+                </div>
+                <Switch
+                  checked={localSettings.require_confirmation_tap}
+                  onCheckedChange={(v) => updateField('require_confirmation_tap', v)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm">Show Wait Time Estimate</p>
+                  <p className="text-xs text-muted-foreground">Display estimated wait after check-in</p>
+                </div>
+                <Switch
+                  checked={localSettings.show_wait_time_estimate}
+                  onCheckedChange={(v) => updateField('show_wait_time_estimate', v)}
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm">Show Stylist Photo</p>
+                  <p className="text-xs text-muted-foreground">Display stylist avatar on confirmation</p>
+                </div>
+                <Switch
+                  checked={localSettings.show_stylist_photo}
+                  onCheckedChange={(v) => updateField('show_stylist_photo', v)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Walk-In Registration */}
+          <div className={cn(
+            "rounded-xl border p-4 transition-all",
+            localSettings.enable_walk_ins
+              ? "border-border bg-card"
+              : "border-muted bg-muted/30"
+          )}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-10 h-10 rounded-lg flex items-center justify-center",
+                  localSettings.enable_walk_ins ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                )}>
+                  <ClipboardCheck className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Walk-In Registration</p>
+                  <p className="text-xs text-muted-foreground">Let clients register without an appointment</p>
+                </div>
+              </div>
+              <Switch
+                checked={localSettings.enable_walk_ins}
+                onCheckedChange={(v) => updateField('enable_walk_ins', v)}
+              />
+            </div>
+          </div>
+
+          {/* Self-Service Booking */}
+          <div className={cn(
+            "rounded-xl border p-4 transition-all",
+            localSettings.enable_self_booking
+              ? "border-border bg-card"
+              : "border-muted bg-muted/30"
+          )}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-10 h-10 rounded-lg flex items-center justify-center",
+                  localSettings.enable_self_booking ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                )}>
+                  <CalendarPlus className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Self-Service Booking</p>
+                  <p className="text-xs text-muted-foreground">Walk-in clients can browse services and book appointments</p>
+                </div>
+              </div>
+              <Switch
+                checked={localSettings.enable_self_booking}
+                onCheckedChange={(v) => updateField('enable_self_booking', v)}
+              />
+            </div>
+            <AnimatePresence>
+              {localSettings.enable_self_booking && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden"
+                >
+                  <div className="pl-[52px] space-y-3 pt-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm">Allow Future Bookings</p>
+                        <p className="text-xs text-muted-foreground">Let clients book for dates beyond today</p>
+                      </div>
+                      <Switch
+                        checked={localSettings.self_booking_allow_future}
+                        onCheckedChange={(v) => updateField('self_booking_allow_future', v)}
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm">Show Stylist Selection</p>
+                        <p className="text-xs text-muted-foreground">Let clients choose their stylist (otherwise first available)</p>
+                      </div>
+                      <Switch
+                        checked={localSettings.self_booking_show_stylists}
+                        onCheckedChange={(v) => updateField('self_booking_show_stylists', v)}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
               )}
-              onClick={() => handleKioskModeChange('check-in')}
-            >
-              <div className={cn(
-                "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
-                kioskMode === 'check-in' ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
-              )}>
-                <UserCheck className="w-6 h-6" />
+            </AnimatePresence>
+          </div>
+
+          {/* Form Signing */}
+          <div className={cn(
+            "rounded-xl border p-4 transition-all",
+            localSettings.require_form_signing
+              ? "border-border bg-card"
+              : "border-muted bg-muted/30"
+          )}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-10 h-10 rounded-lg flex items-center justify-center",
+                  localSettings.require_form_signing ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                )}>
+                  <FileSignature className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Form Signing</p>
+                  <p className="text-xs text-muted-foreground">Prompt new clients to sign intake forms during check-in</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold">Check-In</p>
-                <p className="text-xs text-muted-foreground mt-1">Clients look up appointments and check in</p>
+              <Switch
+                checked={localSettings.require_form_signing}
+                onCheckedChange={(v) => updateField('require_form_signing', v)}
+              />
+            </div>
+          </div>
+
+          {/* Feedback Prompt */}
+          <div className={cn(
+            "rounded-xl border p-4 transition-all",
+            localSettings.enable_feedback_prompt
+              ? "border-border bg-card"
+              : "border-muted bg-muted/30"
+          )}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-10 h-10 rounded-lg flex items-center justify-center",
+                  localSettings.enable_feedback_prompt ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+                )}>
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Feedback Prompt</p>
+                  <p className="text-xs text-muted-foreground">Ask clients for feedback after check-in</p>
+                </div>
               </div>
-            </button>
-            <button
-              type="button"
-              className={cn(
-                "flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all text-center",
-                kioskMode === 'self-service'
-                  ? "border-primary bg-primary/5 shadow-sm"
-                  : "border-border hover:border-primary/40 hover:bg-muted/30"
-              )}
-              onClick={() => handleKioskModeChange('self-service')}
-            >
-              <div className={cn(
-                "w-12 h-12 rounded-xl flex items-center justify-center transition-colors",
-                kioskMode === 'self-service' ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"
-              )}>
-                <CalendarPlus className="w-6 h-6" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">Self-Service Booking</p>
-                <p className="text-xs text-muted-foreground mt-1">Walk-in clients can also book their own appointments</p>
-              </div>
-            </button>
+              <Switch
+                checked={localSettings.enable_feedback_prompt}
+                onCheckedChange={(v) => updateField('enable_feedback_prompt', v)}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -1063,93 +1202,9 @@ export function KioskSettingsContent() {
                     value={localSettings.idle_timeout_seconds}
                     onChange={(e) => updateField('idle_timeout_seconds', parseInt(e.target.value) || 60)}
                   />
-                </div>
-
-                <div className="space-y-4 pt-2">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Allow Walk-Ins</p>
-                      <p className="text-xs text-muted-foreground">Let clients check in without an appointment</p>
-                    </div>
-                    <Switch
-                      checked={localSettings.enable_walk_ins}
-                      onCheckedChange={(v) => updateField('enable_walk_ins', v)}
-                    />
-                  </div>
-
-                  {/* Booking Options - shown when Self-Service mode is active */}
-                  {localSettings.enable_self_booking && (
-                    <div className="bg-muted/30 rounded-xl p-4 space-y-4 border">
-                      <div className="flex items-center gap-2">
-                        <CalendarPlus className="w-4 h-4 text-muted-foreground" />
-                        <p className="text-sm font-semibold">Booking Options</p>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium">Allow Future Bookings</p>
-                          <p className="text-xs text-muted-foreground">Clients can book up to 14 days ahead (otherwise same-day only)</p>
-                        </div>
-                        <Switch
-                          checked={localSettings.self_booking_allow_future}
-                          onCheckedChange={(v) => updateField('self_booking_allow_future', v)}
-                        />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium">Show Stylist Selection</p>
-                          <p className="text-xs text-muted-foreground">Let clients choose their stylist (otherwise first available is assigned)</p>
-                        </div>
-                        <Switch
-                          checked={localSettings.self_booking_show_stylists}
-                          onCheckedChange={(v) => updateField('self_booking_show_stylists', v)}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Require Confirmation Tap</p>
-                      <p className="text-xs text-muted-foreground">Ask client to confirm before check-in</p>
-                    </div>
-                    <Switch
-                      checked={localSettings.require_confirmation_tap}
-                      onCheckedChange={(v) => updateField('require_confirmation_tap', v)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Show Wait Time Estimate</p>
-                      <p className="text-xs text-muted-foreground">Display estimated wait after check-in</p>
-                    </div>
-                    <Switch
-                      checked={localSettings.show_wait_time_estimate}
-                      onCheckedChange={(v) => updateField('show_wait_time_estimate', v)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Show Stylist Photo</p>
-                      <p className="text-xs text-muted-foreground">Display stylist avatar on confirmation</p>
-                    </div>
-                    <Switch
-                      checked={localSettings.show_stylist_photo}
-                      onCheckedChange={(v) => updateField('show_stylist_photo', v)}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium">Require Form Signing</p>
-                      <p className="text-xs text-muted-foreground">Prompt new clients to sign intake forms</p>
-                    </div>
-                    <Switch
-                      checked={localSettings.require_form_signing}
-                      onCheckedChange={(v) => updateField('require_form_signing', v)}
-                    />
-                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    How long before the kiosk returns to the idle screen
+                  </p>
                 </div>
 
                 <div className="pt-4 border-t space-y-2">
