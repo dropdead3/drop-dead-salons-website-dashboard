@@ -13,6 +13,7 @@ export interface AppointmentSummary {
   status: string;
   total_price: number | null;
   stylist_name: string | null;
+  location_id?: string | null;
 }
 
 export interface DayForecast {
@@ -161,6 +162,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
             status: apt.status,
             total_price: apt.total_price,
             stylist_name: apt.phorest_staff_id ? staffMap[apt.phorest_staff_id] || null : null,
+            location_id: (apt as any).location_id || null,
           });
         }
       });

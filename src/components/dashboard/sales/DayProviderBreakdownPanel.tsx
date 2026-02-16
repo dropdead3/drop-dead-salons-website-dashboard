@@ -1,13 +1,14 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Clock, User } from 'lucide-react';
+import { ChevronRight, Clock, User, MapPin } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { LocationSelect } from '@/components/ui/location-select';
 import { DRILLDOWN_DIALOG_CONTENT_CLASS, DRILLDOWN_OVERLAY_CLASS } from '@/components/dashboard/drilldownDialogStyles';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
-import { parseISO, format, isValid } from 'date-fns';
+import { parseISO, format, isValid, parse } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import type { DayForecast, AppointmentSummary } from '@/hooks/useWeekAheadRevenue';
 
@@ -24,16 +25,44 @@ interface StylistGroup {
   appointments: AppointmentSummary[];
 }
 
+/** Format a time value that could be ISO datetime, HH:mm:ss, or HH:mm */
+function formatTime(timeStr: string | null | undefined): string {
+  if (!timeStr) return '—';
+  try {
+    // Try ISO datetime first
+    const isoDate = parseISO(timeStr);
+    if (isValid(isoDate)) return format(isoDate, 'h:mm a');
+    // Try bare time HH:mm:ss or HH:mm
+    const timeParsed = parse(timeStr, 'HH:mm:ss', new Date());
+    if (isValid(timeParsed)) return format(timeParsed, 'h:mm a');
+    const timeShort = parse(timeStr, 'HH:mm', new Date());
+    if (isValid(timeShort)) return format(timeShort, 'h:mm a');
+    return timeStr;
+  } catch {
+    return timeStr;
+  }
+}
+
 export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProviderBreakdownPanelProps) {
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const [expandedStylist, setExpandedStylist] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<string>('all');
+
+  // Filter appointments by location
+  const filteredAppointments = useMemo(() => {
+    if (!day?.appointments?.length) return [];
+    if (selectedLocation === 'all') return day.appointments;
+    return day.appointments.filter((apt: any) => apt.location_id === selectedLocation);
+  }, [day, selectedLocation]);
+
+  const filteredCount = filteredAppointments.length;
 
   const groups = useMemo(() => {
-    if (!day?.appointments?.length) return [];
+    if (!filteredAppointments.length) return [];
     const map: Record<string, StylistGroup> = {};
-    day.appointments.forEach(apt => {
+    filteredAppointments.forEach(apt => {
       const name = apt.stylist_name || 'Unassigned';
       if (!map[name]) map[name] = { name, revenue: 0, count: 0, appointments: [] };
       map[name].revenue += Number(apt.total_price) || 0;
@@ -41,34 +70,47 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
       map[name].appointments.push(apt);
     });
     return Object.values(map).sort((a, b) => b.revenue - a.revenue);
-  }, [day]);
+  }, [filteredAppointments]);
 
   const maxRevenue = groups[0]?.revenue || 1;
   const visibleGroups = showAll ? groups : groups.slice(0, 5);
   const needsShowAll = groups.length > 5;
-  const needsScroll = showAll && groups.length > 8;
 
   return (
-    <Dialog open={open && !!day && groups.length > 0} onOpenChange={onOpenChange}>
+    <Dialog open={open && !!day} onOpenChange={onOpenChange}>
       <DialogContent className={DRILLDOWN_DIALOG_CONTENT_CLASS} overlayClassName={DRILLDOWN_OVERLAY_CLASS}>
         {day && (
           <>
             <DialogHeader className="px-5 pt-5 pb-3">
-              <DialogTitle className="text-base font-display">
-                {(() => {
-                  try {
-                    const parsed = parseISO(day.date);
-                    return isValid(parsed) ? formatDate(parsed, 'EEEE, MMM d') : day.dayName || day.date;
-                  } catch { return day.dayName || day.date; }
-                })()}
-              </DialogTitle>
-              <DialogDescription className={tokens.body.muted}>
-                {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''} · By Provider
-              </DialogDescription>
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <DialogTitle className="text-base font-display">
+                    {(() => {
+                      try {
+                        const parsed = parseISO(day.date);
+                        return isValid(parsed) ? formatDate(parsed, 'EEEE, MMM d') : day.dayName || day.date;
+                      } catch { return day.dayName || day.date; }
+                    })()}
+                  </DialogTitle>
+                  <DialogDescription className={tokens.body.muted}>
+                    {filteredCount} appointment{filteredCount !== 1 ? 's' : ''} · By Provider
+                  </DialogDescription>
+                </div>
+                <LocationSelect
+                  value={selectedLocation}
+                  onValueChange={setSelectedLocation}
+                  includeAll={true}
+                  allLabel="All Locations"
+                  triggerClassName="h-7 w-[160px] text-xs"
+                />
+              </div>
             </DialogHeader>
 
             <ScrollArea className="flex-1 overflow-auto">
               <div className="px-5 pb-5 space-y-1">
+                {groups.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-6">No appointments for this location</p>
+                )}
                 {visibleGroups.map(group => (
                   <div key={group.name}>
                     <button
@@ -121,13 +163,7 @@ export function DayProviderBreakdownPanel({ day, open, onOpenChange }: DayProvid
                                   <div className="flex items-center gap-2 min-w-0">
                                     <Clock className="w-3 h-3 text-muted-foreground shrink-0" />
                                     <span className="text-muted-foreground">
-                                      {(() => {
-                                        if (!apt.start_time) return '—';
-                                        try {
-                                          const parsed = parseISO(apt.start_time);
-                                          return isValid(parsed) ? format(parsed, 'h:mm a') : apt.start_time;
-                                        } catch { return apt.start_time; }
-                                      })()}
+                                      {formatTime(apt.start_time)}
                                     </span>
                                     <span className="font-medium truncate">{apt.service_name || 'Service'}</span>
                                   </div>
