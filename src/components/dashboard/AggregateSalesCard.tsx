@@ -463,11 +463,18 @@ export function AggregateSalesCard({
           <div>
             <h2 className="font-display text-base tracking-wide">{t('sales.sales_overview')}</h2>
           </div>
-          {hasNoData && (
-            <Badge variant="outline" className="text-muted-foreground">
-              NA
-            </Badge>
-          )}
+          {hasNoData && (() => {
+            const isSingleDay = dateRange === 'today' || dateRange === 'yesterday';
+            const allClosed = isSingleDay && (locations?.length ?? 0) > 0 && locations!.every(loc =>
+              isClosedOnDate(loc.hours_json, loc.holiday_closures, dateRange === 'yesterday' ? subDays(new Date(), 1) : new Date()).isClosed
+            );
+            const label = allClosed ? 'Closed' : isSingleDay ? 'No sales yet' : 'No data';
+            return (
+              <Badge variant="outline" className="text-muted-foreground font-sans">
+                {label}
+              </Badge>
+            );
+          })()}
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* Metadata: filter context + sync */}
