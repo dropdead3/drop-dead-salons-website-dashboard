@@ -5,7 +5,7 @@ import { useActiveRecommendation } from '@/hooks/useLeverRecommendations';
 import { WeeklyLeverBrief } from '@/components/executive-brief/WeeklyLeverBrief';
 import { SilenceState } from '@/components/executive-brief/SilenceState';
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
-import { Loader2 } from 'lucide-react';
+import { Loader2 as Loader2Icon } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
   Brain,
   RefreshCw,
@@ -35,8 +36,9 @@ import {
   Activity,
   HeartPulse,
   CheckCircle2,
-  
+  Loader2,
   Clock,
+  ChevronDown,
   ChevronRight,
   CheckCheck,
   Lightbulb,
@@ -227,6 +229,7 @@ export function AIInsightsCard() {
   const { dismissedKeys, dismiss } = useDismissedSuggestions();
   const { createTask } = useTasks();
   const [cooldown, setCooldown] = useState(0);
+  const [leverOpen, setLeverOpen] = useState(false);
   const roles = useEffectiveRoles();
   const isLeadership = roles.includes('super_admin');
   const { data: leverRecommendation, isLoading: isLeverLoading } = useActiveRecommendation();
@@ -343,21 +346,38 @@ export function AIInsightsCard() {
                     </div>
                     )}
 
-                    {/* Weekly Lever — leadership only */}
+                    {/* Weekly Lever — leadership only, collapsible */}
                     {isLeadership && (
-                      <div className="border-y border-border/50 py-4 mb-4">
-                        <p className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground font-display mb-3">Weekly Lever</p>
-                        <EnforcementGateBanner gateKey="gate_kpi_architecture">
-                          {isLeverLoading ? (
-                            <div className="flex items-center justify-center py-6">
-                              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                      <div className="mb-4">
+                        <Collapsible open={leverOpen} onOpenChange={setLeverOpen}>
+                          <CollapsibleTrigger className="flex w-full items-center gap-2 rounded-lg border border-border/50 px-3 py-2.5 text-left hover:bg-accent/50 transition-colors">
+                            {isLeverLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            ) : leverRecommendation ? (
+                              <>
+                                <Zap className="h-4 w-4 shrink-0 text-amber-500" />
+                                <span className="text-sm font-medium truncate">{leverRecommendation.title}</span>
+                              </>
+                            ) : (
+                              <SilenceState compact />
+                            )}
+                            <ChevronDown className={cn('ml-auto h-4 w-4 shrink-0 text-muted-foreground transition-transform', leverOpen && 'rotate-180')} />
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <div className="pt-3">
+                              <EnforcementGateBanner gateKey="gate_kpi_architecture">
+                                {leverRecommendation ? (
+                                  <WeeklyLeverBrief recommendation={leverRecommendation} />
+                                ) : (
+                                  <div className="text-sm text-muted-foreground space-y-1 px-1">
+                                    <p>No high-confidence lever detected this period.</p>
+                                    <p className="text-xs">Last reviewed: {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</p>
+                                  </div>
+                                )}
+                              </EnforcementGateBanner>
                             </div>
-                          ) : leverRecommendation ? (
-                            <WeeklyLeverBrief recommendation={leverRecommendation} />
-                          ) : (
-                            <SilenceState />
-                          )}
-                        </EnforcementGateBanner>
+                          </CollapsibleContent>
+                        </Collapsible>
                       </div>
                     )}
 
