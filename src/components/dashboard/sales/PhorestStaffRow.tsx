@@ -35,11 +35,11 @@ export interface PhorestStaffData {
 interface PhorestStaffRowProps {
   staff: PhorestStaffData;
   rank: number;
-  maxRevenue: number;
+  totalRevenue: number;
   onLinkClick?: (staff: PhorestStaffData) => void;
 }
 
-export function PhorestStaffRow({ staff, rank, maxRevenue, onLinkClick }: PhorestStaffRowProps) {
+export function PhorestStaffRow({ staff, rank, totalRevenue, onLinkClick }: PhorestStaffRowProps) {
   const navigate = useNavigate();
   const { formatCurrencyWhole } = useFormatCurrency();
   
@@ -54,8 +54,8 @@ export function PhorestStaffRow({ staff, rank, maxRevenue, onLinkClick }: Phores
     ? staff.totalRevenue / staff.totalTransactions 
     : 0;
 
-  const revenuePercent = maxRevenue > 0 
-    ? (staff.totalRevenue / maxRevenue) * 100 
+  const revenuePercent = totalRevenue > 0 
+    ? (staff.totalRevenue / totalRevenue) * 100 
     : 0;
 
   const handleClick = () => {

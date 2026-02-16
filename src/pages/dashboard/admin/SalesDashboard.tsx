@@ -188,12 +188,12 @@ export default function SalesDashboard() {
     ].filter(d => d.value > 0);
   }, [metrics]);
 
-  const maxStylistRevenue = useMemo(() => {
-    return Math.max(...(stylistData || []).map(s => s.totalRevenue), 1);
+  const totalStylistRevenue = useMemo(() => {
+    return (stylistData || []).reduce((sum, s) => sum + s.totalRevenue, 0) || 1;
   }, [stylistData]);
 
-  const maxPhorestStaffRevenue = useMemo(() => {
-    return Math.max(...(phorestStaffData?.allStaff || []).map(s => s.totalRevenue), 1);
+  const totalPhorestStaffRevenue = useMemo(() => {
+    return (phorestStaffData?.allStaff || []).reduce((sum, s) => sum + s.totalRevenue, 0) || 1;
   }, [phorestStaffData]);
 
   // Filter Phorest staff based on filter selection
@@ -636,7 +636,7 @@ export default function SalesDashboard() {
                     key={stylist.user_id}
                     stylist={stylist}
                     rank={idx + 1}
-                    maxRevenue={maxStylistRevenue}
+                    totalRevenue={totalStylistRevenue}
                   />
                 ))}
                 {(!stylistData || stylistData.length === 0) && (
@@ -775,7 +775,7 @@ export default function SalesDashboard() {
                     key={staff.phorestStaffId}
                     staff={staff}
                     rank={idx + 1}
-                    maxRevenue={maxPhorestStaffRevenue}
+                    totalRevenue={totalPhorestStaffRevenue}
                     onLinkClick={handleStaffLink}
                   />
                 ))}

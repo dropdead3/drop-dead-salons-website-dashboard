@@ -132,8 +132,8 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
   }, [trendData]);
 
 
-  const maxStylistRevenue = useMemo(() => {
-    return Math.max(...(stylistData || []).map(s => s.totalRevenue), 1);
+  const totalStylistRevenue = useMemo(() => {
+    return (stylistData || []).reduce((sum, s) => sum + s.totalRevenue, 0) || 1;
   }, [stylistData]);
 
   const handleExportCSV = () => {
@@ -384,7 +384,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
                         key={stylist.staffId}
                         stylist={stylist}
                         rank={index + 1}
-                        maxRevenue={maxStylistRevenue}
+                        totalRevenue={totalStylistRevenue}
                       />
                     ))}
                   </div>
