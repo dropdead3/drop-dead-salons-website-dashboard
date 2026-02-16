@@ -16168,6 +16168,10 @@ export type Database = {
         Returns: boolean
       }
       is_platform_user: { Args: { _user_id: string }; Returns: boolean }
+      kiosk_heartbeat_update: {
+        Args: { p_device_token: string; p_is_active?: boolean }
+        Returns: undefined
+      }
       log_platform_action: {
         Args: {
           _action: string
