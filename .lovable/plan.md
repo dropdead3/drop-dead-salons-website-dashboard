@@ -1,65 +1,85 @@
 
 
-## Booking Pipeline Visualization Drill-Down
+## Location Pipeline Timeline Drill-Down
 
 ### What We're Adding
 
-An expandable visualization section above the location cards in `BookingPipelineContent` that gives enterprise operators an instant visual read on pipeline health across all locations -- without needing to scan each card individually.
+When you click a location card in the Booking Pipeline view, it expands to reveal a **day-by-day area chart** spanning the full 28-day measurement window: 14 trailing days (actual) on the left, a "Today" divider in the center, and 14 forward days (pipeline) on the right. This lets you visually see where bookings are dropping off and which specific days are thin.
 
-### Visualization: Horizontal Bar Chart
-
-A horizontal bar chart (matching the `StaffRevenueLeaderboard` pattern) where each bar represents a location's pipeline ratio. This is the most effective choice because:
-
-- Locations are labeled on the Y-axis (readable even at 20+ locations)
-- Bar length = ratio percentage (capped at 100% visually, label shows actual)
-- Bar color = status color (red/amber/green/gray) per location
-- A vertical reference line at 90% marks the "healthy" threshold
-- A second subtle reference line at 70% marks the "slowing" threshold
-- Sorted to match the current sort setting (severity default = worst at top)
+### Visualization Design
 
 ```text
-BOOKING PIPELINE
-[2 Critical]  [0 Slowing]  [0 Healthy]       Sort: [Severity v]
-
-  ┌─ Pipeline Health by Location ──────────────────────────────────┐
-  │                         70%   90%                              │
-  │  North Mesa      ██░░░░░│░░░░░│░░░░░░░░░░░░░░  0%            │
-  │  Val Vista Lakes ██░░░░░│░░░░░│░░░░░░░░░░░░░░  0%            │
-  │  Scottsdale      ███████│█████│██████░░░░░░░░  85%            │
-  │  Frisco          ███████│█████│█████████████░  110%           │
-  └────────────────────────────────────────────────────────────────┘
-
-  [Location cards below...]
+  [Click "Downtown Dallas" card]
+  ┌──────────────────────────────────────────────────────────────┐
+  │  TRAILING (14d)          │ TODAY │        FORWARD (14d)       │
+  │                          │      │                            │
+  │  ████                    │      │                            │
+  │  ██████████              │      │    ████                    │
+  │  ████████████████        │      │    ██████                  │
+  │  ██████████████████████  │      │    ████████                │
+  │  ────────────────────────│──────│────────────────────────    │
+  │  Feb 2   Feb 5   Feb 9  │Feb 16│  Feb 17  Feb 21  Feb 28   │
+  │                          │      │                            │
+  │  Trailing avg: 4.2/day       Forward avg: 2.1/day           │
+  └──────────────────────────────────────────────────────────────┘
 ```
 
-### Design Details
+### Key Design Decisions
 
-- Uses Recharts `BarChart` with `layout="vertical"` (same as StaffRevenueLeaderboard)
-- Bar fills use the status color with luxury glass gradient opacity (0.85 to 0.5)
-- Two `ReferenceLine` components at x=70 and x=90 with dashed strokes (matching forecasting chart conventions: 1px dashed, 0.5 opacity)
-- Reference line labels: "Slowing" at 70, "Healthy" at 90 as small text annotations
-- Custom tooltip showing location name, forward count, trailing count, ratio
-- Chart height scales dynamically: `Math.max(180, locations.length * 36)` px
-- Wrapped in a `Collapsible` (matching `CapacityBreakdown` pattern) so users can collapse it when they want to focus on the cards
-- Default state: expanded
-- Uses `framer-motion` for entrance animation
+- **Recharts AreaChart** with a vertical `ReferenceLine` at today's date, splitting the view into trailing (muted fill, dashed stroke) and forward (primary fill, solid stroke) -- matching the `DualPeriodOverlay` pattern already in the codebase
+- The trailing area uses `hsl(var(--muted-foreground))` fill; the forward area uses the location's status color (red/amber/green) so you instantly see whether the pipeline is healthy
+- **framer-motion** expand/collapse animation on the card (matching existing drill-down patterns)
+- Summary stats below the chart: Trailing daily avg, Forward daily avg, and the specific days with zero bookings highlighted
+- Uses the `appointments` table, querying `appointment_date` grouped by day for the selected `location_id`
 
-### Implementation
+### New Hook: `useLocationPipelineTimeline`
 
-**File: `src/components/dashboard/analytics/BookingPipelineContent.tsx`**
+A small hook that fetches daily appointment counts for a single location across the 28-day window:
+- Query: `appointments` table, select `appointment_date`, filter by `location_id`, date range -14d to +14d, exclude cancelled/no_show
+- Groups by `appointment_date` client-side and fills in zero-count days
+- Returns: `{ dailyCounts: Array<{ date: string; count: number; period: 'trailing' | 'forward' }>, isLoading }`
+- Only fetches when the card is expanded (enabled by `isOpen` flag)
 
-1. Add Recharts imports (`BarChart`, `Bar`, `XAxis`, `YAxis`, `ReferenceLine`, `Tooltip`, `ResponsiveContainer`, `Cell`)
-2. Add `Collapsible` imports
-3. Add a `PipelineChart` section between the scoreboard/sort controls and the location cards
-4. Chart data is derived from the same `sorted` array (already filtered and sorted)
-5. Each bar's fill color is determined by status: `hsl(var(--destructive))` for critical, amber for slowing, emerald for healthy, muted for no_data
-6. Custom tooltip with `bg-popover border border-border rounded-lg` styling
+### Component: `PipelineTimelineChart`
+
+An inline component rendered inside the expanded location card:
+- Recharts `AreaChart` with two `Area` layers (trailing + forward) split by a `ReferenceLine` at today
+- Custom tooltip showing date and count
+- Below-chart stats: trailing avg, forward avg, empty days count
+- Height: 160px (compact, inline with the card)
+
+### Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/hooks/useLocationPipelineTimeline.ts` | Fetches daily appointment counts for one location over 28-day window |
 
 ### Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/analytics/BookingPipelineContent.tsx` | Add horizontal bar chart visualization in a collapsible section above the location cards |
+| `src/components/dashboard/analytics/BookingPipelineContent.tsx` | Add expand/collapse state to location cards; render `PipelineTimelineChart` inline when expanded; add the chart component within the file |
 
-Single file change. No new hooks or data sources needed -- the visualization uses the same `useBookingPipelineByLocation` data already being fetched.
+### Technical Details
+
+**`useLocationPipelineTimeline` hook:**
+- Parameters: `locationId: string`, `enabled: boolean`
+- Queries `appointments` with `.select('appointment_date')`, filtered by location and date range (-14d to +14d), excluding cancelled/no_show
+- Groups by date using a Map, fills missing dates with 0 using `eachDayOfInterval` from date-fns
+- Tags each day as `'trailing'` or `'forward'` based on whether it's before or after today
+- Returns sorted array of `{ date, count, period }`
+
+**Card expansion in `BookingPipelineContent`:**
+- New state: `expandedLocationId: string | null`
+- Clicking a location card toggles expansion
+- When expanded, renders the timeline chart with `framer-motion` `AnimatePresence` for smooth enter/exit
+- The card gets a subtle border highlight when expanded
+
+**`PipelineTimelineChart` (inline component):**
+- Two `Area` components sharing the same dataKey `count` but split using custom rendering:
+  - Option A: Single Area with gradient that changes color at the midpoint
+  - Option B (simpler): Two data keys -- `trailingCount` and `forwardCount` where one is null when the other has a value
+- `ReferenceLine` at today with label "Today"
+- Tooltip: date formatted as "Mon, Feb 17" + count
+- Summary row: `grid-cols-3` with Trailing Avg, Forward Avg, Empty Days
 
