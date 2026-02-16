@@ -72,7 +72,7 @@ export function MentionNotificationBadge() {
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
         <div className="flex items-center justify-between p-3 border-b">
-          <h4 className="font-semibold">Mentions</h4>
+          <h4 className="font-medium">Mentions</h4>
           {unreadCount > 0 && (
             <Button 
               variant="ghost" 

@@ -138,7 +138,7 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
             <>
               <div className="shrink-0 flex flex-col items-center gap-0.5">
                 <div className="w-px h-3 bg-border" />
-                <div className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
+                <div className="bg-primary/10 text-primary text-[10px] font-medium px-2 py-0.5 rounded-full">
                   VS
                 </div>
                 <div className="w-px h-3 bg-border" />

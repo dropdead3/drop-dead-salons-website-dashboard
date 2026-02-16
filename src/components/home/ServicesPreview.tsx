@@ -396,7 +396,7 @@ export function ServicesPreview() {
                 
                 <p className="text-sm text-muted-foreground font-sans mb-4">
                   {service.price.split(/(\$[\d,]+(?:\s*-\s*\$[\d,]+)?)/g).map((part, i) => 
-                    part.startsWith('$') ? <span key={i} className="font-semibold">{part}</span> : part
+                    part.startsWith('$') ? <span key={i} className="font-medium">{part}</span> : part
                   )}
                 </p>
 
@@ -475,7 +475,7 @@ export function ServicesPreview() {
               
               <p className="text-sm text-muted-foreground font-sans mb-4">
                 {service.price.split(/(\$[\d,]+(?:\s*-\s*\$[\d,]+)?)/g).map((part, i) => 
-                  part.startsWith('$') ? <span key={i} className="font-semibold">{part}</span> : part
+                  part.startsWith('$') ? <span key={i} className="font-medium">{part}</span> : part
                 )}
               </p>
 

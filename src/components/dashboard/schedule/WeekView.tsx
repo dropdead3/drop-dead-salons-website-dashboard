@@ -183,17 +183,17 @@ function AppointmentCard({
           )}
           <div className="relative z-10">
             {isCompact ? (
-              <div className="text-xs font-semibold truncate">{appointment.client_name}</div>
+              <div className="text-xs font-medium truncate">{appointment.client_name}</div>
             ) : isMedium ? (
               <>
-                <div className="text-xs font-bold truncate">
+                <div className="text-xs font-medium truncate">
                   {appointment.client_name} {appointment.client_phone}
                 </div>
                 <div className="text-[11px] opacity-90 truncate">{appointment.service_name}</div>
               </>
             ) : (
               <>
-                <div className="text-xs font-bold truncate">
+                <div className="text-xs font-medium truncate">
                   {appointment.client_name} {appointment.client_phone}
                 </div>
                 <div className="text-[11px] opacity-90 truncate">{appointment.service_name}</div>
@@ -215,7 +215,7 @@ function AppointmentCard({
       </TooltipTrigger>
       <TooltipContent side="right" className="max-w-xs">
         <div className="space-y-1.5">
-          <div className="font-semibold">{appointment.client_name}</div>
+          <div className="font-medium">{appointment.client_name}</div>
           {appointment.client_phone && (
             <div className="text-sm flex items-center gap-1.5">
               <Phone className="h-3 w-3" />
@@ -347,7 +347,7 @@ export function WeekView({
                     </div>
                     <div className="flex items-center justify-center mt-1">
                       <span className={cn(
-                        'text-xl font-semibold flex items-center justify-center transition-colors',
+                        'text-xl font-medium flex items-center justify-center transition-colors',
                         dayIsToday 
                           ? 'bg-foreground text-background min-w-[36px] h-9 px-2 rounded-full' 
                           : 'text-foreground'

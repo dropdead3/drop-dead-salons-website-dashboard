@@ -65,7 +65,7 @@ export function PromoAnalyticsSummary({ organizationId }: PromoAnalyticsSummaryP
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Points Earned</p>
-                <p className="text-2xl font-bold">{formatNumber(loyaltyStats?.totalPointsEarned ?? 0)}</p>
+                <p className="text-2xl font-medium">{formatNumber(loyaltyStats?.totalPointsEarned ?? 0)}</p>
               </div>
               <div className="p-3 bg-primary/10 rounded-full">
                 <TrendingUp className="h-5 w-5 text-primary" />
@@ -79,7 +79,7 @@ export function PromoAnalyticsSummary({ organizationId }: PromoAnalyticsSummaryP
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Points Redeemed</p>
-                <p className="text-2xl font-bold">{formatNumber(loyaltyStats?.totalPointsRedeemed ?? 0)}</p>
+                <p className="text-2xl font-medium">{formatNumber(loyaltyStats?.totalPointsRedeemed ?? 0)}</p>
               </div>
               <div className="p-3 bg-chart-2/10 rounded-full">
                 <Gift className="h-5 w-5 text-chart-2" />

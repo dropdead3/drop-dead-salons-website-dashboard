@@ -198,19 +198,19 @@ export function ClientRetentionReport({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">Total Clients</p>
-          <p className="text-2xl font-semibold">{formatNumber(retentionData.totalClients)}</p>
+          <p className="text-2xl font-medium">{formatNumber(retentionData.totalClients)}</p>
         </div>
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">Retention Rate</p>
-          <p className="text-2xl font-semibold">{retentionData.retentionRate.toFixed(1)}%</p>
+          <p className="text-2xl font-medium">{retentionData.retentionRate.toFixed(1)}%</p>
         </div>
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">New Clients</p>
-          <p className="text-2xl font-semibold">{formatNumber(retentionData.newClients)}</p>
+          <p className="text-2xl font-medium">{formatNumber(retentionData.newClients)}</p>
         </div>
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">Average LTV</p>
-          <p className="text-2xl font-semibold">{formatCurrencyWhole(Math.round(retentionData.averageLTV))}</p>
+          <p className="text-2xl font-medium">{formatCurrencyWhole(Math.round(retentionData.averageLTV))}</p>
         </div>
       </div>
 

@@ -103,7 +103,7 @@ export function StationAssignmentManager({ organizationId, locationId }: Station
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Stations & Chairs</h3>
+        <h3 className="text-lg font-medium">Stations & Chairs</h3>
         <Dialog open={isAddOpen} onOpenChange={(open) => {
           setIsAddOpen(open);
           if (!open) {

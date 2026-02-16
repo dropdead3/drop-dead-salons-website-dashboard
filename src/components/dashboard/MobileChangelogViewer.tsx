@@ -119,7 +119,7 @@ export function MobileChangelogViewer({
                         </div>
 
                         {/* Title */}
-                        <h2 className="text-2xl font-bold mb-4">{entry.title}</h2>
+                        <h2 className="text-2xl font-medium mb-4">{entry.title}</h2>
 
                         {/* Date */}
                         <p className="text-sm text-muted-foreground mb-6">
@@ -146,7 +146,7 @@ export function MobileChangelogViewer({
                               onClick={() => onVote(entry)}
                             >
                               <ChevronUp className="h-5 w-5" />
-                              <span className="font-bold">{entry.vote_count || 0}</span>
+                              <span className="font-medium">{entry.vote_count || 0}</span>
                               <span>{entry.user_voted ? 'Voted!' : 'Vote for this'}</span>
                             </Button>
                           </div>

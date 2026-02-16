@@ -26,7 +26,7 @@ export function PointsBalanceCard() {
             {isLoading ? (
               <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
             ) : (
-              <p className="text-2xl font-bold">{balance.toLocaleString()}</p>
+              <p className="text-2xl font-medium">{balance.toLocaleString()}</p>
             )}
           </div>
         </div>

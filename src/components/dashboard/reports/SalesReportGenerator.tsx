@@ -275,19 +275,19 @@ export function SalesReportGenerator({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Total Revenue</p>
-              <p className="text-2xl font-semibold">{formatCurrencyWhole(metrics.totalRevenue)}</p>
+              <p className="text-2xl font-medium">{formatCurrencyWhole(metrics.totalRevenue)}</p>
             </div>
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Service Revenue</p>
-              <p className="text-2xl font-semibold">{formatCurrencyWhole(metrics.serviceRevenue)}</p>
+              <p className="text-2xl font-medium">{formatCurrencyWhole(metrics.serviceRevenue)}</p>
             </div>
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Total Services</p>
-              <p className="text-2xl font-semibold">{formatNumber(metrics.totalServices)}</p>
+              <p className="text-2xl font-medium">{formatNumber(metrics.totalServices)}</p>
             </div>
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Average Ticket</p>
-              <p className="text-2xl font-semibold">{formatCurrencyWhole(Math.round(metrics.averageTicket))}</p>
+              <p className="text-2xl font-medium">{formatCurrencyWhole(Math.round(metrics.averageTicket))}</p>
             </div>
           </div>
         )}
@@ -363,15 +363,15 @@ export function SalesReportGenerator({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Total Revenue</p>
-              <p className="text-2xl font-semibold">{formatCurrencyWhole(metrics.totalRevenue)}</p>
+              <p className="text-2xl font-medium">{formatCurrencyWhole(metrics.totalRevenue)}</p>
             </div>
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Service Revenue</p>
-              <p className="text-2xl font-semibold">{formatCurrencyWhole(metrics.serviceRevenue)}</p>
+              <p className="text-2xl font-medium">{formatCurrencyWhole(metrics.serviceRevenue)}</p>
             </div>
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Total Services</p>
-              <p className="text-2xl font-semibold">{formatNumber(metrics.totalServices)}</p>
+              <p className="text-2xl font-medium">{formatNumber(metrics.totalServices)}</p>
             </div>
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Average Ticket</p>

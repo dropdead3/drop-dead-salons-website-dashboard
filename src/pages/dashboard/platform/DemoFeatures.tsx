@@ -235,7 +235,7 @@ export default function DemoFeatures() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Demo Features</h1>
+          <h1 className="text-2xl font-medium">Demo Features</h1>
           <p className="text-muted-foreground">
             Manage the product features shown in the AI-powered demo
           </p>

@@ -59,7 +59,7 @@ export function RegisterCart({ items, onRemove, onUpdateQuantity }: RegisterCart
               </Button>
             </div>
 
-            <p className="w-20 text-right font-semibold">
+            <p className="w-20 text-right font-medium">
               {formatCurrency(item.unitPrice * item.quantity - item.discount)}
             </p>
 

@@ -132,19 +132,19 @@ export function DualPeriodOverlay({
         <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t">
           <div className="text-center">
             <p className="text-xs text-muted-foreground">{periodALabel} Avg</p>
-            <p className="font-semibold">
+            <p className="font-medium">
               {formatCurrencyWholeUtil(data.reduce((s, d) => s + d.periodA, 0) / (data.length || 1))}
             </p>
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-foreground">{periodBLabel} Avg</p>
-            <p className="font-semibold">
+            <p className="font-medium">
               {formatCurrencyWholeUtil(data.reduce((s, d) => s + d.periodB, 0) / (data.length || 1))}
             </p>
           </div>
           <div className="text-center">
             <p className="text-xs text-muted-foreground">Days Improved</p>
-            <p className="font-semibold">
+            <p className="font-medium">
               {data.filter(d => d.delta > 0).length} / {data.length}
             </p>
           </div>
