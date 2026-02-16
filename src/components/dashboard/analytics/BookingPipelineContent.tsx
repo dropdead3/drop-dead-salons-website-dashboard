@@ -261,15 +261,20 @@ export function BookingPipelineContent({ locationId, dateRange }: BookingPipelin
               {/* Header row */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className={cn('w-2.5 h-2.5 rounded-full shrink-0', config.dot)} />
                   <span className="font-display text-sm tracking-wide">{loc.locationName}</span>
+                  <span className={cn(
+                    'inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border border-border/30',
+                    config.chip
+                  )}>
+                    {loc.label}
+                  </span>
                 </div>
                 <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground transition-transform', isExpanded && 'rotate-180')} />
               </div>
 
               {/* Detail line */}
               <p className="text-xs text-muted-foreground">
-                {loc.label} · {loc.forwardCount} next 14d vs {loc.baselineCount} trailing
+                {loc.forwardCount} next 14d vs {loc.baselineCount} trailing
               </p>
 
               {/* Progress bar */}
