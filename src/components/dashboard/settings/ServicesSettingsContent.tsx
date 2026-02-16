@@ -6,7 +6,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { 
-  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors, Layers, UserPlus
+  Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -22,8 +22,7 @@ import { useServicesData, useCreateService, useUpdateService, useDeleteService, 
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { CategoryFormDialog } from './CategoryFormDialog';
 import { ServiceFormDialog } from './ServiceFormDialog';
-import { LevelPricingDialog } from './LevelPricingDialog';
-import { StylistPriceOverridesDialog } from './StylistPriceOverridesDialog';
+import { ServiceEditorDialog } from './ServiceEditorDialog';
 import { toast } from 'sonner';
 import {
   getCategoryAbbreviation as getAbbr,
@@ -133,8 +132,8 @@ export function ServicesSettingsContent() {
   const [presetCategory, setPresetCategory] = useState('');
   const [deleteCategoryId, setDeleteCategoryId] = useState<string | null>(null);
   const [deleteCategoryName, setDeleteCategoryName] = useState('');
-  const [levelPricingService, setLevelPricingService] = useState<Service | null>(null);
-  const [overrideService, setOverrideService] = useState<Service | null>(null);
+  const [editorDialogOpen, setEditorDialogOpen] = useState(false);
+  const [editorService, setEditorService] = useState<Service | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -394,26 +393,9 @@ export function ServicesSettingsContent() {
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setLevelPricingService(svc)}>
-                                        <Layers className="w-3 h-3" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p className="text-xs">Level Pricing</p></TooltipContent>
-                                  </Tooltip>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setOverrideService(svc)}>
-                                        <UserPlus className="w-3 h-3" />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent><p className="text-xs">Stylist Overrides</p></TooltipContent>
-                                  </Tooltip>
                                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
-                                    setServiceDialogMode('edit');
-                                    setEditingService(svc);
-                                    setServiceDialogOpen(true);
+                                    setEditorService(svc);
+                                    setEditorDialogOpen(true);
                                   }}>
                                     <Pencil className="w-3 h-3" />
                                   </Button>
@@ -467,20 +449,21 @@ export function ServicesSettingsContent() {
           mode={serviceDialogMode}
         />
 
-        <LevelPricingDialog
-          open={!!levelPricingService}
-          onOpenChange={(open) => { if (!open) setLevelPricingService(null); }}
-          serviceId={levelPricingService?.id || null}
-          serviceName={levelPricingService?.name || ''}
-          basePrice={levelPricingService?.price ?? null}
-        />
-
-        <StylistPriceOverridesDialog
-          open={!!overrideService}
-          onOpenChange={(open) => { if (!open) setOverrideService(null); }}
-          serviceId={overrideService?.id || null}
-          serviceName={overrideService?.name || ''}
-          basePrice={overrideService?.price ?? null}
+        <ServiceEditorDialog
+          open={editorDialogOpen}
+          onOpenChange={setEditorDialogOpen}
+          onSubmit={(service) => {
+            if (editorService?.id) {
+              const { id, ...updates } = { id: editorService.id, ...service };
+              updateService.mutate({ id, ...updates } as any, {
+                onSuccess: () => { setEditorDialogOpen(false); setEditorService(null); },
+              });
+            }
+          }}
+          isPending={updateService.isPending}
+          categories={serviceCategories}
+          initialData={editorService}
+          mode="edit"
         />
 
         {/* Delete category confirmation */}
