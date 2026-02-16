@@ -11,6 +11,7 @@ export interface AppointmentSummary {
   status: string;
   total_price: number | null;
   stylist_name: string | null;
+  location_id?: string | null;
 }
 
 export interface DayForecast {
@@ -57,7 +58,7 @@ export function useWeekAheadRevenue(locationId?: string) {
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('id, appointment_date, total_price, status, client_name, service_name, start_time, end_time, phorest_staff_id, service_category')
+        .select('id, appointment_date, total_price, status, client_name, service_name, start_time, end_time, phorest_staff_id, service_category, location_id')
         .gte('appointment_date', startDate)
         .lte('appointment_date', endDate)
         .not('status', 'in', '("cancelled","no_show")')
@@ -122,6 +123,7 @@ export function useWeekAheadRevenue(locationId?: string) {
             status: apt.status,
             total_price: apt.total_price,
             stylist_name: apt.phorest_staff_id ? staffMap[apt.phorest_staff_id] || null : null,
+            location_id: (apt as any).location_id || null,
           });
         }
       });
