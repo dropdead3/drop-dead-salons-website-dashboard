@@ -17,7 +17,7 @@ import { useYearlyGoalProgress } from '@/hooks/useYearlyGoalProgress';
 import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsSheet } from './DayAppointmentsSheet';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 import { CalendarRange, TrendingUp, TrendingDown, Calendar, Users, Info, Target, ChevronDown } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
@@ -544,13 +544,13 @@ export function ForecastingCard() {
             <div className="flex items-center justify-between gap-6">
               <CardDescription>{PERIOD_DESCRIPTIONS[period]}</CardDescription>
               <Tabs value={period} onValueChange={(v) => v && setPeriod(v as ForecastPeriod)}>
-                <TabsList className="h-8 p-1">
-                  <TabsTrigger value="tomorrow" className="text-xs px-2.5 py-1">Tomorrow</TabsTrigger>
-                  <TabsTrigger value="todayToEom" className="text-xs px-2.5 py-1">EOM</TabsTrigger>
-                  <TabsTrigger value="7days" className="text-xs px-2.5 py-1">7 Days</TabsTrigger>
-                  <TabsTrigger value="30days" className="text-xs px-2.5 py-1">30 Days</TabsTrigger>
-                  <TabsTrigger value="60days" className="text-xs px-2.5 py-1">60 Days</TabsTrigger>
-                </TabsList>
+                <FilterTabsList>
+                  <FilterTabsTrigger value="tomorrow">Tomorrow</FilterTabsTrigger>
+                  <FilterTabsTrigger value="todayToEom">EOM</FilterTabsTrigger>
+                  <FilterTabsTrigger value="7days">7 Days</FilterTabsTrigger>
+                  <FilterTabsTrigger value="30days">30 Days</FilterTabsTrigger>
+                  <FilterTabsTrigger value="60days">60 Days</FilterTabsTrigger>
+                </FilterTabsList>
               </Tabs>
             </div>
           </div>
@@ -649,11 +649,11 @@ export function ForecastingCard() {
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Drill down by:</span>
               <Tabs value={breakdownType} onValueChange={(v) => v && setBreakdownType(v as BreakdownType)}>
-                <TabsList className="h-8 p-1">
-                  <TabsTrigger value="category" className="text-xs px-2.5 py-1">Category</TabsTrigger>
-                  <TabsTrigger value="location" className="text-xs px-2.5 py-1">Location</TabsTrigger>
-                  <TabsTrigger value="stylist" className="text-xs px-2.5 py-1">Service Provider</TabsTrigger>
-                </TabsList>
+                <FilterTabsList>
+                  <FilterTabsTrigger value="category">Category</FilterTabsTrigger>
+                  <FilterTabsTrigger value="location">Location</FilterTabsTrigger>
+                  <FilterTabsTrigger value="stylist">Service Provider</FilterTabsTrigger>
+                </FilterTabsList>
               </Tabs>
             </div>
           )}
