@@ -1415,7 +1415,7 @@ export function KioskSettingsContent() {
         </Card>
 
         {/* Right: Preview (sticky) */}
-        <div className="lg:self-start lg:sticky lg:top-6">
+        <div className="lg:self-start lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
           <KioskPreviewPanel 
             settings={localSettings} 
             businessSettings={businessSettings}
