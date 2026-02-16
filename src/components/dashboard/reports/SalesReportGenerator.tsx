@@ -375,7 +375,7 @@ export function SalesReportGenerator({
             </div>
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Average Ticket</p>
-              <p className="text-2xl font-semibold">{formatCurrencyWhole(Math.round(metrics.averageTicket))}</p>
+              <p className="text-2xl font-medium">{formatCurrencyWhole(Math.round(metrics.averageTicket))}</p>
             </div>
           </div>
         )}

@@ -140,28 +140,28 @@ export function PandaDocStatusCard() {
                   <FileText className="h-4 w-4" />
                   <span className="text-xs">Total</span>
                 </div>
-                <p className="text-2xl font-semibold text-slate-100">{stats?.totalDocuments ?? 0}</p>
+                <p className="text-2xl font-medium text-slate-100">{stats?.totalDocuments ?? 0}</p>
               </div>
               <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
                 <div className="flex items-center gap-2 text-amber-400 mb-1">
                   <Clock className="h-4 w-4" />
                   <span className="text-xs">Pending</span>
                 </div>
-                <p className="text-2xl font-semibold text-slate-100">{stats?.pendingDocuments ?? 0}</p>
+                <p className="text-2xl font-medium text-slate-100">{stats?.pendingDocuments ?? 0}</p>
               </div>
               <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
                 <div className="flex items-center gap-2 text-emerald-400 mb-1">
                   <CheckCircle2 className="h-4 w-4" />
                   <span className="text-xs">Completed</span>
                 </div>
-                <p className="text-2xl font-semibold text-slate-100">{stats?.completedDocuments ?? 0}</p>
+                <p className="text-2xl font-medium text-slate-100">{stats?.completedDocuments ?? 0}</p>
               </div>
               <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700/50">
                 <div className="flex items-center gap-2 text-violet-400 mb-1">
                   <AlertCircle className="h-4 w-4" />
                   <span className="text-xs">Applied</span>
                 </div>
-                <p className="text-2xl font-semibold text-slate-100">{stats?.appliedDocuments ?? 0}</p>
+                <p className="text-2xl font-medium text-slate-100">{stats?.appliedDocuments ?? 0}</p>
               </div>
             </div>
           )}

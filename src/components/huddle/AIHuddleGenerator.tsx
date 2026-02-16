@@ -84,7 +84,7 @@ export function AIHuddleGenerator({ huddleDate, locationId, onContentGenerated }
               {/* Focus of the Day */}
               <div className="p-4 rounded-lg border bg-card">
                 <div className="flex items-center gap-2 mb-2">
-                  <h4 className="font-semibold">🎯 Focus of the Day</h4>
+                  <h4 className="font-medium">🎯 Focus of the Day</h4>
                   <Badge variant="secondary" className="text-xs">
                     AI Generated
                   </Badge>
@@ -95,7 +95,7 @@ export function AIHuddleGenerator({ huddleDate, locationId, onContentGenerated }
               {/* Wins from Yesterday */}
               <div className="p-4 rounded-lg border bg-card">
                 <div className="flex items-center gap-2 mb-2">
-                  <h4 className="font-semibold">🏆 Yesterday's Wins</h4>
+                  <h4 className="font-medium">🏆 Yesterday's Wins</h4>
                   <Badge variant="secondary" className="text-xs">
                     AI Generated
                   </Badge>
@@ -107,7 +107,7 @@ export function AIHuddleGenerator({ huddleDate, locationId, onContentGenerated }
               {previewContent.announcements && (
                 <div className="p-4 rounded-lg border bg-card">
                   <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-semibold">📢 Announcements</h4>
+                    <h4 className="font-medium">📢 Announcements</h4>
                     <Badge variant="secondary" className="text-xs">
                       AI Generated
                     </Badge>
@@ -120,7 +120,7 @@ export function AIHuddleGenerator({ huddleDate, locationId, onContentGenerated }
               {previewContent.birthdays_celebrations && (
                 <div className="p-4 rounded-lg border bg-card">
                   <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-semibold">🎂 Celebrations</h4>
+                    <h4 className="font-medium">🎂 Celebrations</h4>
                     <Badge variant="secondary" className="text-xs">
                       AI Generated
                     </Badge>
@@ -133,7 +133,7 @@ export function AIHuddleGenerator({ huddleDate, locationId, onContentGenerated }
               {previewContent.training_reminders && (
                 <div className="p-4 rounded-lg border bg-card">
                   <div className="flex items-center gap-2 mb-2">
-                    <h4 className="font-semibold">📚 Training Reminders</h4>
+                    <h4 className="font-medium">📚 Training Reminders</h4>
                     <Badge variant="secondary" className="text-xs">
                       AI Generated
                     </Badge>
@@ -145,7 +145,7 @@ export function AIHuddleGenerator({ huddleDate, locationId, onContentGenerated }
               {/* Sales Goals */}
               <div className="p-4 rounded-lg border bg-card">
                 <div className="flex items-center gap-2 mb-2">
-                  <h4 className="font-semibold">💰 Sales Goals</h4>
+                  <h4 className="font-medium">💰 Sales Goals</h4>
                   <Badge variant="secondary" className="text-xs">
                     AI Generated
                   </Badge>

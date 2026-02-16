@@ -100,7 +100,7 @@ function TrendKPICards({ summary, scenario }: { summary: any; scenario: Scenario
             <card.icon className={cn('w-3.5 h-3.5', card.accent)} />
             <span className="text-[11px] text-muted-foreground font-medium truncate">{card.label}</span>
           </div>
-          <div className="text-lg font-semibold tabular-nums">
+          <div className="text-lg font-medium tabular-nums">
             {card.isCurrency ? (
               <BlurredAmount>{formatCurrencyWhole(Math.round(card.value as number))}</BlurredAmount>
             ) : card.isPercent ? (
@@ -134,7 +134,7 @@ function TrajectoryTooltip({ active, payload, label }: any) {
       <div className="space-y-1">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Revenue</span>
-          <span className="font-semibold tabular-nums">{formatCurrencyWholeUtil(Math.round(data.revenue))}</span>
+          <span className="font-medium tabular-nums">{formatCurrencyWholeUtil(Math.round(data.revenue))}</span>
         </div>
         {data.confidenceUpper && (
           <div className="flex justify-between text-xs text-muted-foreground">
@@ -338,7 +338,7 @@ function ForecastAccuracyTracker({ history, average }: { history: AccuracyDataPo
         {average !== null && (
           <div className="flex items-center gap-1.5">
             <CheckCircle2 className={cn('w-3.5 h-3.5', getAccuracyColor(average))} />
-            <span className={cn('text-sm font-semibold tabular-nums', getAccuracyColor(average))}>
+            <span className={cn('text-sm font-medium tabular-nums', getAccuracyColor(average))}>
               {average.toFixed(1)}% avg
             </span>
           </div>

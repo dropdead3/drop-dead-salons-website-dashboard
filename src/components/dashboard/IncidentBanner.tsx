@@ -94,7 +94,7 @@ export function IncidentBanner() {
 
           <div className="flex items-center gap-2 text-sm font-medium">
             {incident.title && (
-              <span className="font-semibold">{incident.title}:</span>
+              <span className="font-medium">{incident.title}:</span>
             )}
             <span>{incident.message}</span>
           </div>

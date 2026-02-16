@@ -162,7 +162,7 @@ export default function DocumentTracker() {
             <CardContent className="p-4 flex items-center gap-3">
               <FileText className="w-8 h-8 text-primary" />
               <div>
-                <p className="text-2xl font-bold">{docs.length}</p>
+                <p className="text-2xl font-medium">{docs.length}</p>
                 <p className="text-sm text-muted-foreground">Total Documents</p>
               </div>
             </CardContent>
@@ -171,7 +171,7 @@ export default function DocumentTracker() {
             <CardContent className="p-4 flex items-center gap-3">
               <AlertTriangle className="w-8 h-8 text-amber-500" />
               <div>
-                <p className="text-2xl font-bold">{expiringCount}</p>
+                <p className="text-2xl font-medium">{expiringCount}</p>
                 <p className="text-sm text-muted-foreground">Expiring Soon</p>
               </div>
             </CardContent>
@@ -180,7 +180,7 @@ export default function DocumentTracker() {
             <CardContent className="p-4 flex items-center gap-3">
               <XCircle className="w-8 h-8 text-destructive" />
               <div>
-                <p className="text-2xl font-bold">{expiredCount}</p>
+                <p className="text-2xl font-medium">{expiredCount}</p>
                 <p className="text-sm text-muted-foreground">Expired</p>
               </div>
             </CardContent>

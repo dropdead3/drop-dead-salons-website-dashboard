@@ -151,7 +151,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
               <Users className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-display font-semibold text-primary">{roleStats.total}</p>
+              <p className="text-2xl font-display font-medium text-primary">{roleStats.total}</p>
               <p className="text-xs text-muted-foreground">Total Members</p>
             </div>
           </CardContent>

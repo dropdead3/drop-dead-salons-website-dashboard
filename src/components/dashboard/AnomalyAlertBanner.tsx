@@ -78,7 +78,7 @@ function AnomalyAlertBannerComponent({ className }: AnomalyAlertBannerProps) {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{getAnomalyIcon(topAnomaly.anomaly_type)}</span>
-                    <span className="font-semibold">
+                    <span className="font-medium">
                       {getAnomalyLabel(topAnomaly.anomaly_type)}
                     </span>
                     <Badge className={severityBadgeStyles[topAnomaly.severity]}>

@@ -81,7 +81,7 @@ function ChangelogEntryCard({
               )}
             >
               <ChevronUp className="h-5 w-5" />
-              <span className="text-sm font-bold">{entry.vote_count || 0}</span>
+              <span className="text-sm font-medium">{entry.vote_count || 0}</span>
             </button>
           )}
           
@@ -102,7 +102,7 @@ function ChangelogEntryCard({
               )}
             </div>
 
-            <h3 className="text-lg font-semibold mb-2">{entry.title}</h3>
+            <h3 className="text-lg font-medium mb-2">{entry.title}</h3>
             
             <div className="prose prose-sm dark:prose-invert max-w-none">
               <p className="text-muted-foreground whitespace-pre-wrap">{entry.content}</p>
@@ -199,7 +199,7 @@ function FeatureRequestCard({
             )}
           >
             <ChevronUp className="h-5 w-5" />
-            <span className="text-sm font-bold">{request.vote_count || 0}</span>
+            <span className="text-sm font-medium">{request.vote_count || 0}</span>
           </button>
           
           <div className="flex-1 min-w-0">
@@ -252,7 +252,7 @@ function MobileFeatureRequestCard({
         )}
       >
         <ChevronUp className="h-4 w-4" />
-        <span className="text-xs font-bold">{request.vote_count || 0}</span>
+        <span className="text-xs font-medium">{request.vote_count || 0}</span>
       </button>
       
       <button onClick={onClick} className="flex-1 min-w-0 text-left">
@@ -384,7 +384,7 @@ export default function Changelog() {
 
             {/* Recent Updates */}
             <section>
-              <h2 className="text-base sm:text-lg font-semibold mb-4 flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-medium mb-4 flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
                 {hasActiveFilters ? 'Search Results' : 'Recent Updates'}
                 {hasActiveFilters && (
@@ -426,7 +426,7 @@ export default function Changelog() {
             {/* Coming Soon - only show if not filtering by types that exclude coming_soon, or if there are results */}
             {(comingSoon.length > 0 || (!hasActiveFilters && !entriesLoading)) && comingSoon.length > 0 && (
               <section>
-                <h2 className="text-base sm:text-lg font-semibold mb-4 flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-medium mb-4 flex items-center gap-2">
                   <Clock className="h-5 w-5 text-purple-500" />
                   Coming Soon
                   <span className="text-xs sm:text-sm font-normal text-muted-foreground ml-2">
@@ -468,7 +468,7 @@ export default function Changelog() {
             {/* Top Feature Requests */}
             <section>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base sm:text-lg font-semibold flex items-center gap-2">
+                <h2 className="text-base sm:text-lg font-medium flex items-center gap-2">
                   <ThumbsUp className="h-5 w-5 text-blue-500" />
                   Top Feature Requests
                 </h2>

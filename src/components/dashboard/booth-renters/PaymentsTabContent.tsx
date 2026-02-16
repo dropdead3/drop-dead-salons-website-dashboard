@@ -103,13 +103,13 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
         <Card className="bg-card/50">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Due</p>
-            <p className="text-2xl font-bold mt-1">{formatCurrency(summary?.totalDue || 0)}</p>
+            <p className="text-2xl font-medium mt-1">{formatCurrency(summary?.totalDue || 0)}</p>
           </CardContent>
         </Card>
         <Card className="bg-card/50">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Collected</p>
-            <p className="text-2xl font-bold mt-1 text-emerald-400">
+            <p className="text-2xl font-medium mt-1 text-emerald-400">
               {formatCurrency(summary?.totalCollected || 0)}
             </p>
           </CardContent>
@@ -117,7 +117,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
         <Card className="bg-card/50">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Outstanding</p>
-            <p className="text-2xl font-bold mt-1 text-amber-400">
+            <p className="text-2xl font-medium mt-1 text-amber-400">
               {formatCurrency(summary?.totalOutstanding || 0)}
             </p>
           </CardContent>
@@ -125,7 +125,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
         <Card className="bg-card/50">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Overdue</p>
-            <p className="text-2xl font-bold mt-1 text-red-400">
+            <p className="text-2xl font-medium mt-1 text-red-400">
               {formatCurrency(summary?.overdueAmount || 0)}
               {(summary?.overdueCount || 0) > 0 && (
                 <span className="text-sm font-normal ml-2">({summary?.overdueCount} renters)</span>

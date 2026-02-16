@@ -127,7 +127,7 @@ export function PromotionROIPanel({ organizationId }: PromotionROIPanelProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Redemptions</p>
-                <p className="text-2xl font-bold">{stats?.totalRedemptions || 0}</p>
+                <p className="text-2xl font-medium">{stats?.totalRedemptions || 0}</p>
               </div>
               <div className="p-3 rounded-full bg-primary/10">
                 <Users className="h-5 w-5 text-primary" />
@@ -141,7 +141,7 @@ export function PromotionROIPanel({ organizationId }: PromotionROIPanelProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Revenue Generated</p>
-                <p className="text-2xl font-bold">{formatCurrencyWhole(stats?.totalRevenue || 0)}</p>
+                <p className="text-2xl font-medium">{formatCurrencyWhole(stats?.totalRevenue || 0)}</p>
               </div>
               <div className="p-3 rounded-full bg-green-500/10">
                 <DollarSign className="h-5 w-5 text-green-500" />
@@ -155,7 +155,7 @@ export function PromotionROIPanel({ organizationId }: PromotionROIPanelProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Discounts Given</p>
-                <p className="text-2xl font-bold">{formatCurrencyWhole(stats?.totalDiscounts || 0)}</p>
+                <p className="text-2xl font-medium">{formatCurrencyWhole(stats?.totalDiscounts || 0)}</p>
               </div>
               <div className="p-3 rounded-full bg-amber-500/10">
                 <Percent className="h-5 w-5 text-amber-500" />
@@ -169,7 +169,7 @@ export function PromotionROIPanel({ organizationId }: PromotionROIPanelProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Overall ROI</p>
-                <p className={`text-2xl font-bold ${(stats?.overallROI || 0) > 0 ? 'text-green-500' : 'text-red-500'}`}>
+                <p className={`text-2xl font-medium ${(stats?.overallROI || 0) > 0 ? 'text-green-500' : 'text-red-500'}`}>
                   {(stats?.overallROI || 0).toFixed(0)}%
                 </p>
               </div>

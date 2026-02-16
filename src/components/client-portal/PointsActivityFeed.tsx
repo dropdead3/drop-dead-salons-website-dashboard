@@ -79,7 +79,7 @@ export function PointsActivityFeed({ transactions }: PointsActivityFeedProps) {
                     </p>
                   </div>
                   <div className={cn(
-                    'font-semibold',
+                    'font-medium',
                     isPositive ? 'text-green-600' : 'text-red-600'
                   )}>
                     {isPositive ? '+' : ''}{tx.points.toLocaleString()}

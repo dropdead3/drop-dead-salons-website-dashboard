@@ -91,7 +91,7 @@ export function ChangelogTimeline({ entries }: ChangelogTimelineProps) {
       <div className="space-y-6">
         {groupedEntries.map(group => (
           <div key={group.key}>
-            <h3 className="text-sm font-semibold text-muted-foreground mb-4 sticky top-0 bg-background py-2 z-10">
+            <h3 className="text-sm font-medium text-muted-foreground mb-4 sticky top-0 bg-background py-2 z-10">
               {group.label}
             </h3>
             <div className="relative">
@@ -183,7 +183,7 @@ export function ChangelogTimeline({ entries }: ChangelogTimelineProps) {
                                     }}
                                   >
                                     <ChevronUp className="h-4 w-4" />
-                                    <span className="font-bold">{entry.vote_count || 0}</span>
+                                    <span className="font-medium">{entry.vote_count || 0}</span>
                                     <span>{entry.user_voted ? 'Voted' : 'Vote'}</span>
                                   </Button>
                                 )}
@@ -289,7 +289,7 @@ export function ChangelogTimeline({ entries }: ChangelogTimelineProps) {
                         <Badge variant="outline">{selectedEntry.version}</Badge>
                       )}
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">{selectedEntry.title}</h3>
+                    <h3 className="text-xl font-medium mb-2">{selectedEntry.title}</h3>
                     <p className="text-muted-foreground whitespace-pre-wrap">{selectedEntry.content}</p>
                     
                     <div className="flex items-center gap-4 mt-4 text-sm text-muted-foreground">

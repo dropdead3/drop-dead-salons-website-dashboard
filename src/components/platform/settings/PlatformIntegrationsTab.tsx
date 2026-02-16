@@ -19,7 +19,7 @@ export function PlatformIntegrationsTab() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h2 className="text-xl font-semibold text-white mb-1">Integrations</h2>
+        <h2 className="text-xl font-medium text-white mb-1">Integrations</h2>
         <p className="text-slate-400">
           Connect and manage third-party services for platform operations
         </p>

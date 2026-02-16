@@ -191,19 +191,19 @@ export function NoShowReport({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">Total Appointments</p>
-          <p className="text-2xl font-semibold">{formatNumber(noShowData.totalAppointments)}</p>
+          <p className="text-2xl font-medium">{formatNumber(noShowData.totalAppointments)}</p>
         </div>
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">No-Show Rate</p>
-          <p className="text-2xl font-semibold text-red-500">{noShowData.noShowRate.toFixed(1)}%</p>
+          <p className="text-2xl font-medium text-red-500">{noShowData.noShowRate.toFixed(1)}%</p>
         </div>
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">Cancellation Rate</p>
-          <p className="text-2xl font-semibold text-amber-500">{noShowData.cancellationRate.toFixed(1)}%</p>
+          <p className="text-2xl font-medium text-amber-500">{noShowData.cancellationRate.toFixed(1)}%</p>
         </div>
         <div className="p-4 rounded-lg bg-muted">
           <p className="text-sm text-muted-foreground">Est. Revenue Lost</p>
-          <p className="text-2xl font-semibold text-red-500">{formatCurrencyWhole(noShowData.revenueLost)}</p>
+          <p className="text-2xl font-medium text-red-500">{formatCurrencyWhole(noShowData.revenueLost)}</p>
         </div>
       </div>
 

@@ -205,7 +205,7 @@ export default function DashboardBuild() {
         {/* Page Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Dashboard Build Status</h1>
+            <h1 className="text-2xl font-medium">Dashboard Build Status</h1>
             <p className="text-muted-foreground">Track pending tasks, API integrations, and enhancement roadmap</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -338,7 +338,7 @@ export default function DashboardBuild() {
                   <BarChart3 className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{completionRate}%</p>
+                  <p className="text-2xl font-medium">{completionRate}%</p>
                   <p className="text-sm text-muted-foreground">Complete</p>
                 </div>
               </div>
@@ -352,7 +352,7 @@ export default function DashboardBuild() {
                   <AlertCircle className="h-5 w-5 text-destructive" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{blockedTasks.length}</p>
+                  <p className="text-2xl font-medium">{blockedTasks.length}</p>
                   <p className="text-sm text-muted-foreground">Blocked</p>
                 </div>
               </div>
@@ -366,7 +366,7 @@ export default function DashboardBuild() {
                   <Zap className="h-5 w-5 text-accent-foreground" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{inProgressTasks.length}</p>
+                  <p className="text-2xl font-medium">{inProgressTasks.length}</p>
                   <p className="text-sm text-muted-foreground">In Progress</p>
                 </div>
               </div>
@@ -380,7 +380,7 @@ export default function DashboardBuild() {
                   <Clock className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{pendingTasks.length}</p>
+                  <p className="text-2xl font-medium">{pendingTasks.length}</p>
                   <p className="text-sm text-muted-foreground">Pending</p>
                 </div>
               </div>
@@ -394,7 +394,7 @@ export default function DashboardBuild() {
                   <Check className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{completeTasks.length}</p>
+                  <p className="text-2xl font-medium">{completeTasks.length}</p>
                   <p className="text-sm text-muted-foreground">Done</p>
                 </div>
               </div>

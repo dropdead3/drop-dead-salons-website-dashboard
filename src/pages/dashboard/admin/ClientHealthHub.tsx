@@ -104,7 +104,7 @@ export default function ClientHealthHub() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-lg font-semibold">{currentSegment.label}</h2>
+                    <h2 className="text-lg font-medium">{currentSegment.label}</h2>
                     <p className="text-sm text-muted-foreground">{currentSegment.description}</p>
                   </div>
                   <Badge variant="secondary" className="text-sm">
