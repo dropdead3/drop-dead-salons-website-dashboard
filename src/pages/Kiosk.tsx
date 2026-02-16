@@ -7,6 +7,7 @@ import { KioskConfirmScreen } from '@/components/kiosk/KioskConfirmScreen';
 import { KioskBrowseScreen } from '@/components/kiosk/KioskBrowseScreen';
 import { KioskSuccessScreen } from '@/components/kiosk/KioskSuccessScreen';
 import { KioskErrorScreen } from '@/components/kiosk/KioskErrorScreen';
+import { KioskBookingWizard } from '@/components/kiosk/KioskBookingWizard';
 import { KioskWrongLocationScreen } from '@/components/kiosk/KioskWrongLocationScreen';
 import { Loader2 } from 'lucide-react';
 
@@ -30,6 +31,7 @@ function KioskContent() {
       {state === 'wrong_location' && <KioskWrongLocationScreen key="wrong_location" />}
       {state === 'success' && <KioskSuccessScreen key="success" />}
       {state === 'error' && <KioskErrorScreen key="error" />}
+      {state === 'booking' && <KioskBookingWizard key="booking" />}
       {/* TODO: Add KioskWalkInScreen for walk_in state */}
       {/* TODO: Add KioskFormSigningScreen for signing state */}
     </AnimatePresence>

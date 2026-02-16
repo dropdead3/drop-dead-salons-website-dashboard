@@ -235,6 +235,9 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
     display_orientation: settings?.display_orientation || DEFAULT_KIOSK_SETTINGS.display_orientation,
     idle_timeout_seconds: settings?.idle_timeout_seconds || DEFAULT_KIOSK_SETTINGS.idle_timeout_seconds,
     enable_walk_ins: settings?.enable_walk_ins ?? DEFAULT_KIOSK_SETTINGS.enable_walk_ins,
+    enable_self_booking: settings?.enable_self_booking ?? DEFAULT_KIOSK_SETTINGS.enable_self_booking,
+    self_booking_allow_future: settings?.self_booking_allow_future ?? DEFAULT_KIOSK_SETTINGS.self_booking_allow_future,
+    self_booking_show_stylists: settings?.self_booking_show_stylists ?? DEFAULT_KIOSK_SETTINGS.self_booking_show_stylists,
     show_stylist_photo: settings?.show_stylist_photo ?? DEFAULT_KIOSK_SETTINGS.show_stylist_photo,
     show_wait_time_estimate: settings?.show_wait_time_estimate ?? DEFAULT_KIOSK_SETTINGS.show_wait_time_estimate,
     // New fields for feature parity with dashboard
@@ -1020,6 +1023,37 @@ export function KioskSettingsDialog({ isOpen, onClose }: KioskSettingsDialogProp
                           onChange={(v) => updateLocalSetting('enable_walk_ins', v)}
                           accentColor={accentColor}
                         />
+                        {localSettings.enable_walk_ins && (
+                          <>
+                            <div className="ml-4 pl-4 border-l-2 border-white/10 space-y-3">
+                              <ToggleSetting
+                                label="Enable Self-Service Booking"
+                                description="Let walk-in clients book their own appointment"
+                                value={localSettings.enable_self_booking}
+                                onChange={(v) => updateLocalSetting('enable_self_booking', v)}
+                                accentColor={accentColor}
+                              />
+                              {localSettings.enable_self_booking && (
+                                <div className="ml-4 pl-4 border-l-2 border-white/5 space-y-3">
+                                  <ToggleSetting
+                                    label="Allow Future Bookings"
+                                    description="Clients can book up to 14 days ahead"
+                                    value={localSettings.self_booking_allow_future}
+                                    onChange={(v) => updateLocalSetting('self_booking_allow_future', v)}
+                                    accentColor={accentColor}
+                                  />
+                                  <ToggleSetting
+                                    label="Show Stylist Selection"
+                                    description="Let clients choose their stylist"
+                                    value={localSettings.self_booking_show_stylists}
+                                    onChange={(v) => updateLocalSetting('self_booking_show_stylists', v)}
+                                    accentColor={accentColor}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
                         <ToggleSetting
                           label="Require Confirmation Tap"
                           description="Ask client to confirm before check-in"
