@@ -78,7 +78,7 @@ function SlotSuggestionCardComponent({
               <div className="flex items-center gap-4 mb-2">
                 <div className="flex items-center gap-1.5">
                   <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span className="font-semibold text-lg">
+                  <span className="font-medium text-lg">
                     {suggestion.time}
                   </span>
                   <span className="text-muted-foreground">

@@ -453,7 +453,7 @@ export function ChannelSidebar() {
   return (
     <div className="flex flex-col h-full bg-sidebar border-r">
       <div className="p-4 border-b flex items-center justify-between">
-        <h2 className="font-semibold text-lg">Team Chat</h2>
+        <h2 className="font-medium text-lg">Team Chat</h2>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"

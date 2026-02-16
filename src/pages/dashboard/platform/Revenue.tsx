@@ -115,7 +115,7 @@ export default function Revenue() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-400">Avg. Revenue / Account</p>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-medium text-white">
                   {formatCurrency(metrics?.averageRevenuePerAccount || 0)}
                 </p>
               </div>
@@ -130,7 +130,7 @@ export default function Revenue() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-400">Churned This Month</p>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-medium text-white">
                   {metrics?.churnedThisMonth || 0}
                 </p>
               </div>
@@ -145,7 +145,7 @@ export default function Revenue() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-slate-400">Available Plans</p>
-                <p className="text-2xl font-bold text-white">
+                <p className="text-2xl font-medium text-white">
                   {plans?.filter(p => p.is_active).length || 0}
                 </p>
               </div>
@@ -217,7 +217,7 @@ export default function Revenue() {
           >
             At Risk
             {atRiskCount > 0 && (
-              <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+              <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-white bg-red-500 rounded-full">
                 {atRiskCount}
               </span>
             )}
@@ -282,7 +282,7 @@ export default function Revenue() {
                     className="rounded-xl border border-slate-700/50 bg-slate-800/30 p-4 hover:bg-slate-800/50 transition-colors"
                   >
                     <div className="flex items-center justify-between mb-3">
-                      <h3 className="font-semibold text-white">{plan.name}</h3>
+                      <h3 className="font-medium text-white">{plan.name}</h3>
                       {plan.tier === 'enterprise' && (
                         <PlatformBadge variant="warning">Custom</PlatformBadge>
                       )}
@@ -290,7 +290,7 @@ export default function Revenue() {
                     <div className="mb-3">
                       {plan.price_monthly > 0 ? (
                         <>
-                          <span className="text-2xl font-bold text-white">
+                          <span className="text-2xl font-medium text-white">
                             ${plan.price_monthly}
                           </span>
                           <span className="text-slate-400">/mo</span>
@@ -347,7 +347,7 @@ function StatCard({ title, value, icon: Icon, description, variant = 'default' }
             <Icon className="h-5 w-5" />
           </div>
         </div>
-        <div className={`text-3xl font-bold ${valueStyles[variant]} mb-1`}>{value}</div>
+        <div className={`text-3xl font-medium ${valueStyles[variant]} mb-1`}>{value}</div>
         <p className="text-sm text-slate-500">{description}</p>
       </PlatformCardContent>
     </PlatformCard>

@@ -98,7 +98,7 @@ function RevenueForecastCardComponent({
             <div className="p-1.5 rounded-lg bg-primary/10">
               <Sparkles className="w-4 h-4 text-primary" />
             </div>
-            <CardTitle className="text-base font-semibold">AI Revenue Forecast</CardTitle>
+            <CardTitle className="text-base font-medium">AI Revenue Forecast</CardTitle>
           </div>
           <Button
             variant="ghost"
@@ -116,7 +116,7 @@ function RevenueForecastCardComponent({
         {/* Hero metric */}
         <div className="mb-4">
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-display">
+            <span className="text-3xl font-medium font-display">
               {formatCurrency(data?.summary.totalPredicted ?? 0)}
             </span>
             <span className="text-sm text-muted-foreground">
@@ -149,7 +149,7 @@ function RevenueForecastCardComponent({
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="font-semibold font-display">
+                <span className="font-medium font-display">
                   {formatCurrency(day.predictedRevenue)}
                 </span>
                 <TooltipProvider>

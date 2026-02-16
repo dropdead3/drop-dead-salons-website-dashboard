@@ -113,13 +113,13 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
         <Card className="bg-card/50">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Total Renters</p>
-            <p className="text-2xl font-bold mt-1">{renters?.length || 0}</p>
+            <p className="text-2xl font-medium mt-1">{renters?.length || 0}</p>
           </CardContent>
         </Card>
         <Card className="bg-card/50">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Active</p>
-            <p className="text-2xl font-bold mt-1 text-emerald-400">
+            <p className="text-2xl font-medium mt-1 text-emerald-400">
               {renters?.filter(r => r.status === 'active').length || 0}
             </p>
           </CardContent>
@@ -127,7 +127,7 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
         <Card className="bg-card/50">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Pending</p>
-            <p className="text-2xl font-bold mt-1 text-amber-400">
+            <p className="text-2xl font-medium mt-1 text-amber-400">
               {renters?.filter(r => r.status === 'pending').length || 0}
             </p>
           </CardContent>
@@ -135,7 +135,7 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
         <Card className="bg-card/50">
           <CardContent className="p-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Monthly Revenue</p>
-            <p className="text-2xl font-bold mt-1 text-primary">
+            <p className="text-2xl font-medium mt-1 text-primary">
               {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(
                 renters?.reduce((sum, r) => sum + (r.active_contract?.rent_amount || 0), 0) || 0
               )}
@@ -170,7 +170,7 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-semibold text-foreground">
+                      <h3 className="font-medium text-foreground">
                         {renter.display_name || renter.full_name || 'Unknown'}
                       </h3>
                       <Badge variant="outline" className={statusColors[renter.status]}>

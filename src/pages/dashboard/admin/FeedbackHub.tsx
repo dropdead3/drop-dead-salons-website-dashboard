@@ -77,7 +77,7 @@ export default function FeedbackHub() {
                   <CardTitle className="text-sm font-medium">Active Surveys</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-3xl font-bold">
+                  <p className="text-3xl font-medium">
                     {surveys?.filter(s => s.is_active).length || 0}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -127,11 +127,11 @@ export default function FeedbackHub() {
                         </div>
                         <div className="flex items-center gap-4 text-sm">
                           <div className="text-center">
-                            <p className="font-semibold">{stats.avgRating.toFixed(1)}</p>
+                            <p className="font-medium">{stats.avgRating.toFixed(1)}</p>
                             <p className="text-xs text-muted-foreground">Rating</p>
                           </div>
                           <div className="text-center">
-                            <p className="font-semibold">{stats.avgFriendliness.toFixed(1)}</p>
+                            <p className="font-medium">{stats.avgFriendliness.toFixed(1)}</p>
                             <p className="text-xs text-muted-foreground">Friendliness</p>
                           </div>
                         </div>

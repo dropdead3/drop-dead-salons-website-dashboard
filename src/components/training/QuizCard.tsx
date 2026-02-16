@@ -132,13 +132,13 @@ export function QuizCard({
             )}
           </div>
 
-          <h3 className="text-2xl font-bold mb-2">
+          <h3 className="text-2xl font-medium mb-2">
             {passed ? 'Congratulations!' : 'Keep Trying!'}
           </h3>
 
           <p className="text-muted-foreground mb-4">
             You scored{' '}
-            <span className="font-bold text-foreground">{score}%</span> ({correctCount}/
+            <span className="font-medium text-foreground">{score}%</span> ({correctCount}/
             {totalQuestions} correct)
           </p>
 

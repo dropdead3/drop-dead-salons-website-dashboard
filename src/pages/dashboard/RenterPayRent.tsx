@@ -202,7 +202,7 @@ export default function RenterPayRent() {
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
-                          <p className="font-semibold">{formatCurrency(invoice.amount_due)}</p>
+                          <p className="font-medium">{formatCurrency(invoice.amount_due)}</p>
                           <Button 
                             size="sm"
                             onClick={() => handlePayNow(invoice.id, invoice.amount_due)}
@@ -302,7 +302,7 @@ export default function RenterPayRent() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <p className="font-semibold">{formatCurrency(payment.amount)}</p>
+                      <p className="font-medium">{formatCurrency(payment.amount)}</p>
                       <Button variant="ghost" size="icon">
                         <Download className="h-4 w-4" />
                       </Button>

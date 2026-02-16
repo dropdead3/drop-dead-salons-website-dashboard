@@ -498,7 +498,7 @@ function LocationSeatsTab({ organizationId }: { organizationId: string }) {
         <div className="grid gap-4 md:grid-cols-3">
           <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
             <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Allocated Seats</p>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-medium text-white">
               {capacity.locations.isUnlimited ? '∞' : totalSeats}
             </p>
             {!capacity.locations.isUnlimited && (
@@ -509,13 +509,13 @@ function LocationSeatsTab({ organizationId }: { organizationId: string }) {
           </div>
           <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
             <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Filled Seats</p>
-            <p className="text-2xl font-bold text-white">
+            <p className="text-2xl font-medium text-white">
               {usedSeats} {!capacity.locations.isUnlimited && <span className="text-lg text-slate-400">of {totalSeats}</span>}
             </p>
           </div>
           <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700/50">
             <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">Available</p>
-            <p className={cn("text-2xl font-bold", capacity.locations.isUnlimited ? 'text-emerald-400' : getUtilizationColor(utilization))}>
+            <p className={cn("text-2xl font-medium", capacity.locations.isUnlimited ? 'text-emerald-400' : getUtilizationColor(utilization))}>
               {capacity.locations.isUnlimited ? '∞' : capacity.locations.remaining}
             </p>
           </div>

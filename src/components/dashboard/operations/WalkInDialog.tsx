@@ -349,7 +349,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
                             {service.duration_minutes}m
                           </span>
                           <span className={cn(
-                            "text-sm font-semibold tabular-nums min-w-[52px]",
+                            "text-sm font-medium tabular-nums min-w-[52px]",
                             isDisabled ? "text-muted-foreground" : "text-foreground"
                           )}>
                             {formatCurrency(price)}
@@ -394,7 +394,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
           {selectedServiceDetails.length > 0 && (
             <div className="border rounded-xl p-4 bg-muted/40 space-y-3">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm font-semibold">
+                <div className="flex items-center gap-2 text-sm font-medium">
                   <DollarSign className="w-4 h-4 text-muted-foreground" />
                   Price Summary
                 </div>
@@ -412,7 +412,7 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between font-semibold pt-2 border-t text-base">
+              <div className="flex justify-between font-medium pt-2 border-t text-base">
                 <span>Total</span>
                 <span className="font-mono tabular-nums">{formatCurrency(calculatedTotalPrice)}</span>
               </div>

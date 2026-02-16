@@ -92,7 +92,7 @@ export default function ClientHealthHub() {
                     <div className={`p-2 rounded-lg w-fit mb-2 ${SEGMENT_COLORS[seg.key]}`}>
                       <Icon className="h-4 w-4" />
                     </div>
-                    <p className="text-2xl font-bold">{count}</p>
+                    <p className="text-2xl font-medium">{count}</p>
                     <p className="text-xs text-muted-foreground truncate">{seg.label}</p>
                   </button>
                 );

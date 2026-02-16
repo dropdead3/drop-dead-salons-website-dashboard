@@ -126,7 +126,7 @@ export function PlatformPermissionsMatrix() {
             <RoleIcon className="w-6 h-6" style={{ color: selectedRoleData.color }} />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-white text-lg">{selectedRoleData.label} Permissions</h3>
+            <h3 className="font-medium text-white text-lg">{selectedRoleData.label} Permissions</h3>
             <p className="text-sm text-slate-400">{selectedRoleData.description}</p>
           </div>
           {selectedRole === 'platform_owner' && (
@@ -155,7 +155,7 @@ export function PlatformPermissionsMatrix() {
                 <div className="p-2 rounded-lg bg-violet-500/20">
                   <CategoryIcon className="w-4 h-4 text-violet-400" />
                 </div>
-                <h4 className="font-semibold text-white">{categoryMeta.label}</h4>
+                <h4 className="font-medium text-white">{categoryMeta.label}</h4>
                 <PlatformBadge variant="secondary" size="sm" className="ml-auto">
                   {grantedCount}/{permissions.length}
                 </PlatformBadge>

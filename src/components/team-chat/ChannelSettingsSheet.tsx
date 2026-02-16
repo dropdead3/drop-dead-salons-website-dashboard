@@ -207,7 +207,7 @@ export function ChannelSettingsSheet({ open, onOpenChange }: ChannelSettingsShee
               <ChannelIcon className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <div className="font-semibold">{displayName}</div>
+              <div className="font-medium">{displayName}</div>
               <div className="text-sm text-muted-foreground capitalize">
                 {isDM ? 'Direct Message' : `${activeChannel.type} channel`}
               </div>

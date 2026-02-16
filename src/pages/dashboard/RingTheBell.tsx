@@ -534,7 +534,7 @@ export default function RingTheBell() {
           <Sparkles className="h-4 w-4 text-primary" />
           <AlertDescription className="text-sm font-sans">
             <span className="font-medium">Ring the Bell</span> is for celebrating high-ticket bookings with your team! 
-            Ring it when you book a service <span className="font-semibold">$500 or more</span> — whether it's extensions, 
+            Ring it when you book a service <span className="font-medium">$500 or more</span> — whether it's extensions, 
             color transformations, or any premium service. Share what closed the deal to inspire others! 🎉
           </AlertDescription>
         </Alert>

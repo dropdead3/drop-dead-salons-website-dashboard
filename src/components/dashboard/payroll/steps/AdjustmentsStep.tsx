@@ -67,7 +67,7 @@ export function AdjustmentsStep({
             <Gift className="h-4 w-4" />
             <span className="text-sm">Total Bonuses</span>
           </div>
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+          <p className="text-2xl font-medium text-green-600 dark:text-green-400">
             {formatCurrency(totalBonuses)}
           </p>
         </div>
@@ -76,7 +76,7 @@ export function AdjustmentsStep({
             <Banknote className="h-4 w-4" />
             <span className="text-sm">Total Tips</span>
           </div>
-          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+          <p className="text-2xl font-medium text-blue-600 dark:text-blue-400">
             {formatCurrency(totalTips)}
           </p>
         </div>
@@ -85,7 +85,7 @@ export function AdjustmentsStep({
             <MinusCircle className="h-4 w-4" />
             <span className="text-sm">Total Deductions</span>
           </div>
-          <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+          <p className="text-2xl font-medium text-red-600 dark:text-red-400">
             {formatCurrency(totalDeductions)}
           </p>
         </div>

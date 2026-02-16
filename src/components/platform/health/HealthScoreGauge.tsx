@@ -78,7 +78,7 @@ export function HealthScoreGauge({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className={cn('font-bold', fontSize, getColor())}>
+          <span className={cn('font-medium', fontSize, getColor())}>
             {Math.round(normalizedScore)}
           </span>
         </div>

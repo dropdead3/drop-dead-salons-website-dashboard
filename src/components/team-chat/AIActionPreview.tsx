@@ -65,7 +65,7 @@ export function AIActionPreview({ action, onConfirm, onCancel, isExecuting }: AI
             <Icon className="h-4 w-4" />
           </div>
           <div className="flex-1">
-            <h3 className="font-semibold text-sm">{preview.title}</h3>
+            <h3 className="font-medium text-sm">{preview.title}</h3>
             <p className="text-xs text-muted-foreground">{preview.description}</p>
           </div>
           <Badge variant="outline" className={config.color}>

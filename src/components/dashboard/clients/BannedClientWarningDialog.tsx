@@ -39,7 +39,7 @@ export function BannedClientWarningDialog({
           </div>
           <AlertDialogDescription className="text-left space-y-2">
             <p>
-              <span className="font-semibold text-foreground">{clientName}</span> has been banned and should not be scheduled for appointments.
+              <span className="font-medium text-foreground">{clientName}</span> has been banned and should not be scheduled for appointments.
             </p>
             {banReason && (
               <p className="p-3 rounded-lg bg-muted text-sm">

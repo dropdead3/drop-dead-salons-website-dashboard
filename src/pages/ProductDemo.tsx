@@ -30,7 +30,7 @@ export default function ProductDemo() {
             </Button>
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              <span className="font-semibold">Drop Dead Salon Software</span>
+              <span className="font-medium">Drop Dead Salon Software</span>
             </div>
           </div>
           
@@ -50,7 +50,7 @@ export default function ProductDemo() {
         <div className="max-w-3xl mx-auto">
           {/* Intro section */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold mb-3">
+            <h1 className="text-3xl md:text-4xl font-medium mb-3">
               See How We Solve Your Challenges
             </h1>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">

@@ -117,7 +117,7 @@ export function AddUserSeatsDialog({
               >
                 <Minus className="h-4 w-4" />
               </Button>
-              <span className="text-3xl font-bold w-16 text-center">{seatsToAdd}</span>
+              <span className="text-3xl font-medium w-16 text-center">{seatsToAdd}</span>
               <Button
                 variant="outline"
                 size="icon"

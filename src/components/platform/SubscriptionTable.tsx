@@ -172,7 +172,7 @@ export function InvoiceTable({ invoices }: InvoiceTableProps) {
                   </div>
                 </TableCell>
                 <TableCell>
-                  <span className="font-semibold text-white">
+                  <span className="font-medium text-white">
                     {formatCurrency(invoice.amount)}
                   </span>
                 </TableCell>

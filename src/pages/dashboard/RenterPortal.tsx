@@ -48,7 +48,7 @@ export default function RenterPortal() {
       {/* Welcome Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-medium">
             Welcome back, {renterProfile?.display_name || renterProfile?.full_name || 'Booth Renter'}
           </h1>
           <p className="text-muted-foreground">
@@ -68,7 +68,7 @@ export default function RenterPortal() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Next Rent Due</p>
-                <p className="text-2xl font-bold">{formatCurrencyWhole(upcomingPayment.amount)}</p>
+                <p className="text-2xl font-medium">{formatCurrencyWhole(upcomingPayment.amount)}</p>
                 <p className="text-xs text-muted-foreground">
                   {formatDate(upcomingPayment.dueDate, 'MMM d, yyyy')}
                 </p>
@@ -85,7 +85,7 @@ export default function RenterPortal() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">YTD Commission</p>
-                <p className="text-2xl font-bold">
+                <p className="text-2xl font-medium">
                   {formatCurrencyWhole(ytdCommissions?.totalPaid || 0)}
                 </p>
                 <p className="text-xs text-muted-foreground">

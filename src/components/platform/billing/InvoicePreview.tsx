@@ -133,12 +133,12 @@ export function InvoicePreview({
           <div className="flex items-center gap-3 text-sm">
             <div className="flex-1 p-3 rounded-lg bg-card/50 text-center">
               <p className="text-muted-foreground text-xs mb-1">Per Cycle</p>
-              <p className="font-semibold text-foreground">{formatCurrency(calculation.cycleAmount)}</p>
+              <p className="font-medium text-foreground">{formatCurrency(calculation.cycleAmount)}</p>
             </div>
             <ArrowRight className="h-4 w-4 text-muted-foreground" />
             <div className="flex-1 p-3 rounded-lg bg-card/50 text-center">
               <p className="text-muted-foreground text-xs mb-1">Annual Total</p>
-              <p className="font-semibold text-foreground">{formatCurrency(calculation.annualAmount)}</p>
+              <p className="font-medium text-foreground">{formatCurrency(calculation.annualAmount)}</p>
             </div>
           </div>
 

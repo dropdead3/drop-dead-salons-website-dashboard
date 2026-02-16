@@ -86,7 +86,7 @@ export function ClientBalanceCard({
             <div>
               <p className="text-xs text-muted-foreground">Salon Credit</p>
               <p className={cn(
-                "font-semibold",
+                "font-medium",
                 salonCredit > 0 ? "text-primary" : "text-muted-foreground"
               )}>
                 {formatCurrency(salonCredit)}
@@ -107,7 +107,7 @@ export function ClientBalanceCard({
             <div>
               <p className="text-xs text-muted-foreground">Gift Card</p>
               <p className={cn(
-                "font-semibold",
+                "font-medium",
                 giftCardBalance > 0 ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"
               )}>
                 {formatCurrency(giftCardBalance)}

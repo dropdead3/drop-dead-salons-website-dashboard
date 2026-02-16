@@ -134,7 +134,7 @@ function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart 
         {/* Total */}
         <div className="flex items-center justify-between gap-4 text-sm">
           <span className="text-muted-foreground">Total</span>
-          <span className="font-semibold tabular-nums text-primary">
+          <span className="font-medium tabular-nums text-primary">
             {formatCurrency(totalRevenue)}
           </span>
         </div>

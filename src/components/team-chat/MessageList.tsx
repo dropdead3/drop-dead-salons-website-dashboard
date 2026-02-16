@@ -74,7 +74,7 @@ export function MessageList() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
         <div className="text-4xl mb-4">{isDM ? '👋' : '💬'}</div>
-        <h3 className="font-semibold text-lg">
+        <h3 className="font-medium text-lg">
           {isDM ? `Start a conversation with ${displayName}` : `Welcome to #${displayName}`}
         </h3>
         <p className="text-muted-foreground text-sm mt-1">

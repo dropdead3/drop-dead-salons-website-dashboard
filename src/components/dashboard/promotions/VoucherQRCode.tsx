@@ -166,7 +166,7 @@ export function VoucherQRCode({
           <div className="flex flex-col items-center space-y-4 py-4">
             <Card className="w-full">
               <CardContent className="p-6 flex flex-col items-center">
-                <p className="text-3xl font-bold mb-4">{formatCurrency(voucherValue)}</p>
+                <p className="text-3xl font-medium mb-4">{formatCurrency(voucherValue)}</p>
                 
                 <div className="bg-white p-4 rounded-lg">
                   <QRCodeSVG
