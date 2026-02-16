@@ -923,8 +923,8 @@ export function QuickBookingPopover({
                 )}
                 {selectedCategory && selectedServices.length > 0 && (
                   <Button
-                    variant="secondary"
-                    className="w-full h-9 text-xs"
+                    variant="ghost"
+                    className="w-full h-9 text-xs text-muted-foreground border border-dashed border-border hover:text-foreground"
                     onClick={() => setSelectedCategory(null)}
                   >
                     + Add service from another category
