@@ -108,7 +108,7 @@ function SectionHeader({ icon: Icon, label, iconColor }: { icon: typeof Trending
   return (
     <div className="flex items-center gap-2 mb-3">
       <Icon className={cn("w-3.5 h-3.5", iconColor || "text-muted-foreground")} />
-      <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">{label}</span>
+      <span className="text-xs uppercase tracking-[0.15em] text-muted-foreground font-display font-medium">{label}</span>
       <div className="flex-1 h-px bg-border/40" />
     </div>
   );
