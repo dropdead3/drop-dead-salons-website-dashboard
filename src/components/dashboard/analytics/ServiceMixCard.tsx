@@ -7,6 +7,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Layers, AlertCircle } from 'lucide-react';
 import { useServiceMix } from '@/hooks/useSalesData';
 import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 export interface ServiceMixCardProps {
   filterContext: FilterContext;
@@ -67,9 +68,12 @@ export function ServiceMixCard({ filterContext, dateFrom, dateTo, locationId }: 
             >
               <Layers className="w-5 h-5 text-primary" />
             </div>
-            <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
-              Service Mix
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
+                Service Mix
+              </h3>
+              <MetricInfoTooltip description="Revenue distribution across service categories for the selected period. Shows each category's share of total service revenue to highlight your most profitable service lines." />
+            </div>
           </div>
           <AnalyticsFilterBadge
             locationId={filterContext.locationId}

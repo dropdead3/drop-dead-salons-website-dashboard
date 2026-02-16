@@ -7,6 +7,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { ShoppingBag, AlertCircle } from 'lucide-react';
 import { useDailySalesSummary } from '@/hooks/useSalesData';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 
 export interface RetailEffectivenessCardProps {
@@ -95,9 +96,12 @@ export function RetailEffectivenessCard({
             >
               <ShoppingBag className="w-5 h-5 text-primary" />
             </div>
-            <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
-              Retail Effectiveness
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
+                Retail Effectiveness
+              </h3>
+              <MetricInfoTooltip description="Measures retail sales performance: product revenue as a share of total revenue and the attachment rate (percentage of service transactions that included a product sale)." />
+            </div>
           </div>
           <AnalyticsFilterBadge
             locationId={filterContext.locationId}

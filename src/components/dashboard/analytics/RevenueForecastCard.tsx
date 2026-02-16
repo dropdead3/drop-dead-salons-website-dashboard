@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useRevenueForecast } from '@/hooks/useRevenueForecast';
 import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -98,7 +99,10 @@ function RevenueForecastCardComponent({
             <div className="p-1.5 rounded-lg bg-primary/10">
               <Sparkles className="w-4 h-4 text-primary" />
             </div>
-            <CardTitle className="text-base font-medium">AI Revenue Forecast</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-base font-medium">AI Revenue Forecast</CardTitle>
+              <MetricInfoTooltip description="AI-generated revenue projection based on historical patterns, seasonal trends, and current booking pipeline. Confidence level reflects how much historical data is available." />
+            </div>
           </div>
           <Button
             variant="ghost"

@@ -9,6 +9,7 @@ import { Calendar, DollarSign, XCircle, CheckCircle, AlertCircle } from 'lucide-
 import { useSalesMetrics } from '@/hooks/useSalesData';
 import { useAppointmentSummary } from '@/hooks/useOperationalAnalytics';
 import { cn } from '@/lib/utils';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 export interface DailyBriefCardProps {
   filterContext: FilterContext;
@@ -85,9 +86,12 @@ export function DailyBriefCard({ filterContext, locationId }: DailyBriefCardProp
             >
               <Calendar className="w-5 h-5 text-primary" />
             </div>
-            <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
-              Daily Brief
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-display text-sm tracking-wide text-muted-foreground uppercase truncate">
+                Daily Brief
+              </h3>
+              <MetricInfoTooltip description="Today's real-time snapshot: total revenue, scheduled vs completed appointments, and no-show rate. Revenue is from completed transactions only." />
+            </div>
           </div>
           <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange="today" />
         </div>

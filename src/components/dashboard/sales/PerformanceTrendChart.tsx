@@ -9,6 +9,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 import {
   Select,
@@ -167,7 +168,10 @@ export function PerformanceTrendChart({ userId, weeks = 8 }: PerformanceTrendCha
               <TrendingUp className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="font-display text-base tracking-wide">REVENUE TREND</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="font-display text-base tracking-wide">REVENUE TREND</CardTitle>
+                <MetricInfoTooltip description="Weekly revenue trend over the selected timeframe. Each data point represents total service and product revenue for that week. The trend arrow shows the direction of the most recent week vs the prior week." />
+              </div>
               <p className="text-sm text-muted-foreground">Last {weeks} weeks performance</p>
             </div>
           </div>

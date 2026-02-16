@@ -5,6 +5,7 @@ import { usePeakHoursAnalysis } from '@/hooks/useSalesAnalytics';
 import { cn } from '@/lib/utils';
 import { useHideNumbers } from '@/contexts/HideNumbersContext';
 import { AnalyticsFilterBadge, FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { formatCurrencyWhole } from '@/lib/formatCurrency';
 
 interface PeakHoursHeatmapProps {
@@ -70,7 +71,10 @@ export function PeakHoursHeatmap({ dateFrom, dateTo, locationId, filterContext }
             <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
               <Clock className="w-5 h-5 text-primary" />
             </div>
-            <CardTitle className="font-display text-base tracking-wide">PEAK HOURS</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="font-display text-base tracking-wide">PEAK HOURS</CardTitle>
+              <MetricInfoTooltip description="Heatmap of appointment volume by hour and day of week. Darker cells indicate higher booking density. Data is aggregated from completed appointments in the selected period." />
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {filterContext && (
