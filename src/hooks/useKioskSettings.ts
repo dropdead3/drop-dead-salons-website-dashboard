@@ -308,6 +308,44 @@ export function useAllOrgKioskSettings(organizationId?: string) {
   });
 }
 
+// Device status for heartbeat monitoring
+export interface KioskDeviceStatus {
+  isOnline: boolean;
+  lastSeen: Date | null;
+  deviceName: string | null;
+}
+
+export function useKioskDeviceStatus(organizationId?: string) {
+  return useQuery({
+    queryKey: ['kiosk-device-status', organizationId],
+    queryFn: async (): Promise<Map<string, KioskDeviceStatus>> => {
+      if (!organizationId) return new Map();
+      const { data, error } = await supabase
+        .from('kiosk_devices')
+        .select('location_id, device_name, last_heartbeat_at, is_active')
+        .eq('organization_id', organizationId);
+      if (error) throw error;
+
+      const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
+      const map = new Map<string, KioskDeviceStatus>();
+
+      for (const device of data || []) {
+        if (!device.location_id) continue;
+        const lastSeen = device.last_heartbeat_at ? new Date(device.last_heartbeat_at) : null;
+        const isOnline = !!lastSeen && lastSeen > threeMinutesAgo && device.is_active === true;
+        // Keep the most recent device per location
+        const existing = map.get(device.location_id);
+        if (!existing || (lastSeen && (!existing.lastSeen || lastSeen > existing.lastSeen))) {
+          map.set(device.location_id, { isOnline, lastSeen, deviceName: device.device_name });
+        }
+      }
+      return map;
+    },
+    enabled: !!organizationId,
+    refetchInterval: 60_000,
+  });
+}
+
 // Hook to push organization defaults to all locations (removes all overrides)
 export function usePushDefaultsToAllLocations() {
   const queryClient = useQueryClient();

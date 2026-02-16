@@ -1,10 +1,13 @@
-import { UserCheck, ClipboardCheck, CalendarPlus, FileSignature, Upload, Loader2 } from 'lucide-react';
+import { UserCheck, ClipboardCheck, CalendarPlus, FileSignature, Upload, Loader2, Tablet } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
 import { useLocations } from '@/hooks/useLocations';
-import { useAllOrgKioskSettings, usePushDefaultsToAllLocations, KioskSettings } from '@/hooks/useKioskSettings';
+import { useAllOrgKioskSettings, usePushDefaultsToAllLocations, useKioskDeviceStatus, KioskSettings, KioskDeviceStatus } from '@/hooks/useKioskSettings';
+import { OnlineIndicator } from '@/components/platform/ui/OnlineIndicator';
+import { formatDistanceToNow } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,9 +61,38 @@ function StatusBadge({ status }: { status: LocationStatus }) {
   return <Badge variant={variant} className="text-[10px] px-2 py-0.5">{label}</Badge>;
 }
 
+function DeviceStatusCell({ status }: { status?: KioskDeviceStatus }) {
+  if (!status) {
+    return <span className="text-muted-foreground text-xs">—</span>;
+  }
+
+  const label = status.isOnline ? 'Online' : 'Offline';
+  const lastSeenText = status.lastSeen
+    ? formatDistanceToNow(status.lastSeen, { addSuffix: true })
+    : 'Never';
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex items-center gap-1.5">
+            <OnlineIndicator isOnline={status.isOnline} size="sm" />
+            <span className="text-[10px] text-muted-foreground">{label}</span>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          <p className="font-medium">{status.deviceName || 'Unknown Device'}</p>
+          <p className="text-muted-foreground">Last seen: {lastSeenText}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 export function KioskLocationStatusCard({ orgId, onLocationSelect }: KioskLocationStatusCardProps) {
   const { data: locations = [] } = useLocations();
   const { data: allSettings = [], isLoading } = useAllOrgKioskSettings(orgId);
+  const { data: deviceStatusMap = new Map() } = useKioskDeviceStatus(orgId);
   const pushToAll = usePushDefaultsToAllLocations();
 
   // Only active locations
@@ -159,6 +191,12 @@ export function KioskLocationStatusCard({ orgId, onLocationSelect }: KioskLocati
             <TableHeader>
               <TableRow>
                 <TableHead>Location</TableHead>
+                <TableHead className="text-center w-24">
+                  <div className="flex flex-col items-center gap-0.5">
+                    <Tablet className="h-3.5 w-3.5" />
+                    <span className="text-[10px]">Device</span>
+                  </div>
+                </TableHead>
                 <TableHead className="text-center w-20">
                   <div className="flex flex-col items-center gap-0.5">
                     <UserCheck className="h-3.5 w-3.5" />
@@ -194,6 +232,9 @@ export function KioskLocationStatusCard({ orgId, onLocationSelect }: KioskLocati
                   onClick={() => onLocationSelect(row.locationId)}
                 >
                   <TableCell className="font-medium">{row.locationName}</TableCell>
+                  <TableCell className="text-center">
+                    <DeviceStatusCell status={deviceStatusMap instanceof Map ? deviceStatusMap.get(row.locationId) : undefined} />
+                  </TableCell>
                   <TableCell className="text-center">
                     <FeatureDot enabled={row.status === 'Not Configured' ? null : true} />
                   </TableCell>

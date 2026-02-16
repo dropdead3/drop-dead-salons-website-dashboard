@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
+import { createContext, useContext, ReactNode, useState, useEffect, useRef, useCallback } from 'react';
 import { useKioskSettingsByLocation, KioskSettings, DEFAULT_KIOSK_SETTINGS } from '@/hooks/useKioskSettings';
 import { useKioskCheckin, KioskState, KioskSession } from '@/hooks/useKioskCheckin';
 import { useBusinessSettings, BusinessSettings } from '@/hooks/useBusinessSettings';
@@ -70,6 +70,101 @@ export function KioskProvider({ children, locationId }: KioskProviderProps) {
   
   const [idleTimeRemaining, setIdleTimeRemaining] = useState(0);
   const [lastActivity, setLastActivity] = useState(Date.now());
+  const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // --- Heartbeat logic ---
+  useEffect(() => {
+    if (!organizationId || !locationId) return;
+
+    // Generate or retrieve stable device token
+    const STORAGE_KEY = 'zura-kiosk-device-token';
+    let deviceToken = localStorage.getItem(STORAGE_KEY);
+    if (!deviceToken) {
+      deviceToken = crypto.randomUUID();
+      localStorage.setItem(STORAGE_KEY, deviceToken);
+    }
+
+    // Derive device name from User-Agent
+    const ua = navigator.userAgent;
+    const deviceName = ua.includes('iPad') ? 'iPad' 
+      : ua.includes('iPhone') ? 'iPhone'
+      : ua.includes('Android') ? 'Android Tablet'
+      : 'Browser';
+    const browserMatch = ua.match(/(Safari|Chrome|Firefox|Edge)\//);
+    const browser = browserMatch ? browserMatch[1] : '';
+    const fullDeviceName = browser ? `${deviceName} - ${browser}` : deviceName;
+
+    // Upsert device registration
+    const registerDevice = async () => {
+      // Try to find existing device
+      const { data: existing } = await supabase
+        .from('kiosk_devices')
+        .select('id')
+        .eq('device_token', deviceToken!)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from('kiosk_devices')
+          .update({
+            location_id: locationId,
+            organization_id: organizationId,
+            device_name: fullDeviceName,
+            last_heartbeat_at: new Date().toISOString(),
+            is_active: true,
+          })
+          .eq('device_token', deviceToken!);
+      } else {
+        await supabase
+          .from('kiosk_devices')
+          .insert({
+            device_token: deviceToken!,
+            location_id: locationId,
+            organization_id: organizationId,
+            device_name: fullDeviceName,
+            last_heartbeat_at: new Date().toISOString(),
+            is_active: true,
+          });
+      }
+    };
+
+    registerDevice();
+
+    // Send heartbeat every 60 seconds
+    const sendHeartbeat = async (active = true) => {
+      await supabase.rpc('kiosk_heartbeat_update', {
+        p_device_token: deviceToken!,
+        p_is_active: active,
+      });
+    };
+
+    heartbeatIntervalRef.current = setInterval(() => sendHeartbeat(true), 60_000);
+
+    // Visibility change handler
+    const handleVisibility = () => {
+      if (document.hidden) {
+        sendHeartbeat(false);
+        if (heartbeatIntervalRef.current) {
+          clearInterval(heartbeatIntervalRef.current);
+          heartbeatIntervalRef.current = null;
+        }
+      } else {
+        sendHeartbeat(true);
+        heartbeatIntervalRef.current = setInterval(() => sendHeartbeat(true), 60_000);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+      }
+      // Final heartbeat marking inactive
+      sendHeartbeat(false);
+    };
+  }, [organizationId, locationId]);
 
   const settings = settingsData?.settings || null;
   const idleTimeout = settings?.idle_timeout_seconds || DEFAULT_KIOSK_SETTINGS.idle_timeout_seconds;
