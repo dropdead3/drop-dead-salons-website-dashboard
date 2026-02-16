@@ -544,12 +544,12 @@ export function ForecastingCard() {
             <div className="flex items-center justify-between gap-6">
               <CardDescription>{PERIOD_DESCRIPTIONS[period]}</CardDescription>
               <Tabs value={period} onValueChange={(v) => v && setPeriod(v as ForecastPeriod)}>
-                <TabsList>
-                  <TabsTrigger value="tomorrow">Tomorrow</TabsTrigger>
-                  <TabsTrigger value="todayToEom">EOM</TabsTrigger>
-                  <TabsTrigger value="7days">7 Days</TabsTrigger>
-                  <TabsTrigger value="30days">30 Days</TabsTrigger>
-                  <TabsTrigger value="60days">60 Days</TabsTrigger>
+                <TabsList className="h-8 p-1">
+                  <TabsTrigger value="tomorrow" className="text-xs px-2.5 py-1">Tomorrow</TabsTrigger>
+                  <TabsTrigger value="todayToEom" className="text-xs px-2.5 py-1">EOM</TabsTrigger>
+                  <TabsTrigger value="7days" className="text-xs px-2.5 py-1">7 Days</TabsTrigger>
+                  <TabsTrigger value="30days" className="text-xs px-2.5 py-1">30 Days</TabsTrigger>
+                  <TabsTrigger value="60days" className="text-xs px-2.5 py-1">60 Days</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
@@ -649,10 +649,10 @@ export function ForecastingCard() {
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Drill down by:</span>
               <Tabs value={breakdownType} onValueChange={(v) => v && setBreakdownType(v as BreakdownType)}>
-                <TabsList>
-                  <TabsTrigger value="category">Category</TabsTrigger>
-                  <TabsTrigger value="location">Location</TabsTrigger>
-                  <TabsTrigger value="stylist">Service Provider</TabsTrigger>
+                <TabsList className="h-8 p-1">
+                  <TabsTrigger value="category" className="text-xs px-2.5 py-1">Category</TabsTrigger>
+                  <TabsTrigger value="location" className="text-xs px-2.5 py-1">Location</TabsTrigger>
+                  <TabsTrigger value="stylist" className="text-xs px-2.5 py-1">Service Provider</TabsTrigger>
                 </TabsList>
               </Tabs>
             </div>
