@@ -384,7 +384,7 @@ export function ServicesSettingsContent() {
                             <p className={cn(tokens.empty.description, 'text-center py-4')}>No services in this category</p>
                           ) : (
                             services.map(svc => (
-                              <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group">
+                              <div key={svc.id} className="flex items-center gap-3 p-2.5 rounded-md hover:bg-muted/40 transition-colors group cursor-pointer" onClick={() => { setEditorService(svc); setEditorDialogOpen(true); }}>
                                 <div className="flex-1 min-w-0">
                                   <p className={cn(tokens.body.emphasis, 'truncate')}>{svc.name}</p>
                                   <div className={cn('flex items-center gap-3', tokens.body.muted)}>
@@ -393,13 +393,7 @@ export function ServicesSettingsContent() {
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => {
-                                    setEditorService(svc);
-                                    setEditorDialogOpen(true);
-                                  }}>
-                                    <Pencil className="w-3 h-3" />
-                                  </Button>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => deleteService.mutate(svc.id)}>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={(e) => { e.stopPropagation(); deleteService.mutate(svc.id); }}>
                                     <Trash2 className="w-3 h-3" />
                                   </Button>
                                 </div>
