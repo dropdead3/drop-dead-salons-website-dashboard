@@ -30,12 +30,24 @@ export interface OrgEmailPayload {
   replyTo?: string;
 }
 
+interface SocialLinks {
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
+  website?: string;
+}
+
 interface OrgBranding {
   name: string;
   email_sender_name: string | null;
   email_reply_to: string | null;
   email_logo_url: string | null;
   email_accent_color: string | null;
+  email_footer_text: string | null;
+  email_social_links: SocialLinks | null;
+  email_show_attribution: boolean | null;
+  email_button_radius: string | null;
+  email_header_style: string | null;
   logo_url: string | null;
   primary_contact_email: string | null;
 }
@@ -43,9 +55,14 @@ interface OrgBranding {
 const PLATFORM_DOMAIN = "mail.getzura.com";
 const PLATFORM_FROM = `Zura <notifications@${PLATFORM_DOMAIN}>`;
 
+const BUTTON_RADIUS_MAP: Record<string, string> = {
+  sharp: '0',
+  rounded: '8px',
+  pill: '100px',
+};
+
 /**
  * Send a platform-level email (Zura branding).
- * Use for billing, trials, platform invitations, weekly digests, etc.
  */
 export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
   const resendApiKey = Deno.env.get("RESEND_API_KEY");
@@ -94,8 +111,6 @@ export async function sendEmail(payload: EmailPayload): Promise<EmailResult> {
 
 /**
  * Send an org-branded email.
- * Fetches org branding, wraps content in branded template, and sends.
- * Use for all staff/client notifications within an organization.
  */
 export async function sendOrgEmail(
   supabase: any,
@@ -120,7 +135,7 @@ export async function sendOrgEmail(
     try {
       const { data, error } = await supabase
         .from("organizations")
-        .select("name, email_sender_name, email_reply_to, email_logo_url, email_accent_color, logo_url, primary_contact_email")
+        .select("name, email_sender_name, email_reply_to, email_logo_url, email_accent_color, email_footer_text, email_social_links, email_show_attribution, email_button_radius, email_header_style, logo_url, primary_contact_email")
         .eq("id", organizationId)
         .single();
       
@@ -172,16 +187,61 @@ export async function sendOrgEmail(
 }
 
 /**
+ * Build social icons HTML for the email footer.
+ */
+function buildSocialIconsHtml(links: SocialLinks | null): string {
+  if (!links) return '';
+  const icons: string[] = [];
+  if (links.instagram) icons.push(`<a href="${links.instagram}" style="display:inline-block;margin:0 8px;font-size:18px;text-decoration:none;" title="Instagram">📷</a>`);
+  if (links.facebook) icons.push(`<a href="${links.facebook}" style="display:inline-block;margin:0 8px;font-size:18px;text-decoration:none;" title="Facebook">📘</a>`);
+  if (links.tiktok) icons.push(`<a href="${links.tiktok}" style="display:inline-block;margin:0 8px;font-size:18px;text-decoration:none;" title="TikTok">🎵</a>`);
+  if (links.website) icons.push(`<a href="${links.website}" style="display:inline-block;margin:0 8px;font-size:18px;text-decoration:none;" title="Website">🌐</a>`);
+  if (icons.length === 0) return '';
+  return `<div style="margin-bottom:12px;">${icons.join('')}</div>`;
+}
+
+/**
  * Wrap inner HTML content in a branded email template.
  */
 function buildBrandedTemplate(branding: OrgBranding | null, innerHtml: string): string {
   const orgName = branding?.name || "Zura";
   const accentColor = branding?.email_accent_color || "#000000";
   const logoUrl = branding?.email_logo_url || branding?.logo_url || null;
+  const headerStyle = branding?.email_header_style || "centered";
+  const buttonRadius = BUTTON_RADIUS_MAP[branding?.email_button_radius || 'rounded'] || '8px';
+  const footerText = branding?.email_footer_text || null;
+  const socialLinks = branding?.email_social_links || null;
+  const showAttribution = branding?.email_show_attribution !== false;
 
   const logoHtml = logoUrl
     ? `<img src="${logoUrl}" alt="${orgName}" style="max-height: 48px; max-width: 200px; margin-bottom: 8px;" />`
     : `<span style="font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: -0.025em;">${orgName}</span>`;
+
+  const headerAlign = headerStyle === 'left-aligned' ? 'left' : 'center';
+
+  let headerHtml: string;
+  if (headerStyle === 'minimal') {
+    headerHtml = `<div style="height: 6px; background-color: ${accentColor}; border-radius: 12px 12px 0 0;"></div>`;
+  } else {
+    headerHtml = `<div style="background-color: ${accentColor}; padding: 24px; border-radius: 12px 12px 0 0; text-align: ${headerAlign};">
+      ${logoHtml}
+    </div>`;
+  }
+
+  // Footer parts
+  const socialIconsHtml = buildSocialIconsHtml(socialLinks);
+  const footerTextHtml = footerText
+    ? `<p style="margin: 0 0 8px; font-size: 11px; color: #a1a1aa; line-height: 1.5;">${footerText}</p>`
+    : '';
+  const attributionHtml = showAttribution
+    ? `<p style="margin: 0; font-size: 12px; color: #a1a1aa;">Sent via <a href="https://getzura.com" style="color: #a1a1aa; text-decoration: underline;">Zura</a></p>`
+    : '';
+
+  // Replace button border-radius in inner HTML (for templates that use inline styles)
+  const processedInnerHtml = innerHtml.replace(
+    /border-radius:\s*8px/g,
+    `border-radius: ${buttonRadius}`
+  );
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -192,23 +252,21 @@ function buildBrandedTemplate(branding: OrgBranding | null, innerHtml: string): 
 <body style="margin: 0; padding: 0; background-color: #f4f4f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px 16px;">
     <!-- Header -->
-    <div style="background-color: ${accentColor}; padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
-      ${logoHtml}
-    </div>
+    ${headerHtml}
 
     <!-- Accent bar -->
     <div style="height: 4px; background: linear-gradient(90deg, ${accentColor}, ${accentColor}88);"></div>
 
     <!-- Content -->
     <div style="background-color: #ffffff; padding: 32px 24px; border-left: 1px solid #e4e4e7; border-right: 1px solid #e4e4e7;">
-      ${innerHtml}
+      ${processedInnerHtml}
     </div>
 
     <!-- Footer -->
     <div style="background-color: #fafafa; padding: 20px 24px; border-radius: 0 0 12px 12px; border: 1px solid #e4e4e7; border-top: none; text-align: center;">
-      <p style="margin: 0; font-size: 12px; color: #a1a1aa;">
-        Sent via <a href="https://getzura.com" style="color: #a1a1aa; text-decoration: underline;">Zura</a>
-      </p>
+      ${socialIconsHtml}
+      ${footerTextHtml}
+      ${attributionHtml}
     </div>
   </div>
 </body>
