@@ -1,41 +1,94 @@
 
 
-# Default Email Accent Color from Organization Theme
+# Fix Synthetic Bolding Across the Platform
 
-## Problem
-The email branding accent color defaults to a hardcoded `#6366F1` (indigo) regardless of the organization's selected color palette. It should instead reflect the active theme.
+## The Problem
 
-## Solution
+Aeonik Pro is only loaded at weights 400 (Regular) and 500 (Medium). Any element using `font-semibold` (600), `font-bold` (700), or higher triggers the browser's synthetic bold algorithm -- producing ugly, inconsistent thickening that breaks the visual identity.
 
-Read the organization's active color theme (cream, rose, sage, ocean) and derive a sensible default accent color from it, so new organizations see a branded-feeling email configurator immediately.
+There are currently **1,975 instances** of prohibited weight classes across **164 files**. This is a systemic issue.
 
-## How It Works
+## The Fix (Two-Part Strategy)
 
-The app stores the active color theme in `localStorage` under `dd-color-theme`. Each theme has a `--primary` CSS variable defined in `index.css` and preview colors defined in the `colorThemes` array in `useColorTheme.ts`.
+### Part 1: CSS-Level Guardrail (Immediate Protection)
 
-We will:
-1. Create a small mapping of theme-to-hex-accent-color (using each theme's characteristic color)
-2. In `EmailBrandingSettings`, when no `email_accent_color` is saved yet, default to the theme-derived color instead of `#6366F1`
+Add a max font-weight override for `.font-sans` in `index.css`, identical to the existing Termina protection:
 
-## Theme-to-Accent Mapping
+```css
+.font-sans {
+  font-weight: 500 !important;
+}
+```
 
-| Theme | Accent Default | Rationale |
-|-------|---------------|-----------|
-| Cream | `#1A1A1A` (near-black) | Cream's primary is charcoal/black |
-| Rose | `#DB5A6E` (blush pink) | Rose primary hue |
-| Sage | `#4A9C6D` (sage green) | Sage primary hue |
-| Ocean | `#3B82F6` (blue) | Ocean primary hue |
+Wait -- this would prevent `font-normal` (400) from working. Instead, a smarter approach: cap only the prohibited weights by intercepting the Tailwind utility classes themselves:
+
+```css
+/* Prevent synthetic bolding for Aeonik Pro */
+.font-sans .font-semibold,
+.font-sans.font-semibold,
+.font-semibold:where(.font-sans, [class*="font-sans"]) {
+  font-weight: 500 !important;
+}
+```
+
+Actually, the cleanest approach: override the Tailwind weight utilities globally for the two fonts that lack bold weights:
+
+```css
+/* Global synthetic bold prevention */
+/* Aeonik Pro and Termina max out at 500 */
+:root {
+  /* These utilities get capped to 500 globally */
+}
+.font-semibold { font-weight: 500 !important; }
+.font-bold { font-weight: 500 !important; }
+.font-extrabold { font-weight: 500 !important; }
+.font-black { font-weight: 500 !important; }
+```
+
+This is safe because:
+- Laguna (font-serif) has a bold weight file and uses its own `font-serif` class
+- Sloop Script is decorative and never uses bold
+- Any future font with bold weights would need its own scoped override, which is the correct pattern
+
+### Part 2: Codebase Cleanup (Phased)
+
+Systematically replace all prohibited classes. This is a large sweep best done in batches:
+
+**Batch 1 -- Dashboard Home and visible components** (what the user sees first):
+- `DashboardHome.tsx` -- already clean
+- `InsightsNudgeBanner.tsx` -- line 92: `font-semibold` to `font-medium`
+- `AIInsightsDrawer.tsx` -- clean
+- `AnnouncementsDrawer.tsx` -- clean
+
+**Batch 2 -- High-traffic pages** (settings, analytics, schedule):
+- All files in `src/components/dashboard/` with violations
+- All files in `src/pages/dashboard/` with violations
+
+**Batch 3 -- Remaining files** across components, pages, and UI
+
+Given the scale (164 files), Part 2 and 3 will be done as a comprehensive sweep, replacing:
+- `font-bold` with `font-medium`
+- `font-semibold` with `font-medium`
+- `font-extrabold` with `font-medium`
+- `font-black` with `font-medium`
+
+Exception: `font-bold` inside Laguna (`font-serif`) contexts is allowed and will be preserved.
 
 ## File Changes
 
-### `src/components/dashboard/settings/EmailBrandingSettings.tsx`
+### Modified: `src/index.css`
+Add global CSS overrides that cap `font-semibold`, `font-bold`, `font-extrabold`, and `font-black` to weight 500. This acts as a safety net even if code violations remain.
 
-- Import `useColorTheme` or read `localStorage` for `dd-color-theme`
-- Add a `THEME_ACCENT_DEFAULTS` map
-- Change the fallback from `'#6366F1'` to `THEME_ACCENT_DEFAULTS[activeTheme]` when the org has no saved accent color
-- This affects the initial `useState`, the `useEffect` seed, and the `hasChanges` comparison
+### Modified: 164 component/page files
+Replace all prohibited weight classes with `font-medium`. Laguna/serif contexts excluded.
 
-### Technical Detail
+### Modified: `src/components/dashboard/InsightsNudgeBanner.tsx`
+Specific fix: line 92 `font-semibold` to `font-medium` (visible in the screenshot area).
 
-The default only applies when `branding.email_accent_color` is `null` (no saved value). Once a user saves a custom accent, it persists as-is. The theme-derived default is purely for the initial experience before any explicit save.
+## Why This Approach
 
+The CSS guardrail (Part 1) provides **immediate, universal protection**. Even if a developer accidentally uses `font-bold` in the future, the browser will render weight 500 instead of synthesizing. The codebase cleanup (Part 2) ensures the code itself is correct and doesn't rely on overrides.
+
+## Risk
+
+The global override means if Laguna's `font-bold` is applied without also having `font-serif`, it would get capped. Review will verify Laguna contexts always pair `font-bold` with `font-serif`.
