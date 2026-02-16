@@ -776,7 +776,7 @@ export function KioskSettingsContent() {
       </Card>
 
       {/* Main content grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,420px),1fr] gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,420px),1fr] gap-6">
         {/* Left: Settings Form */}
         <Card className="min-w-0">
           <CardHeader>
@@ -1415,7 +1415,7 @@ export function KioskSettingsContent() {
         </Card>
 
         {/* Right: Preview (sticky) */}
-        <div className="hidden lg:block">
+        <div className="hidden lg:block self-stretch">
           <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto">
             <KioskPreviewPanel 
               settings={localSettings} 
