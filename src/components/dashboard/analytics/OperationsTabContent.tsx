@@ -13,6 +13,7 @@ import { AppointmentsContent } from '@/components/dashboard/analytics/Appointmen
 import { ClientsContent } from '@/components/dashboard/analytics/ClientsContent';
 import { StaffingContent } from '@/components/dashboard/analytics/StaffingContent';
 import { StaffUtilizationContent } from '@/components/dashboard/analytics/StaffUtilizationContent';
+import { BookingPipelineContent } from '@/components/dashboard/analytics/BookingPipelineContent';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface OperationsTabContentProps {
@@ -95,6 +96,9 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
             <VisibilityGate elementKey="operations_staff_utilization_subtab" elementName="Staff Utilization" elementCategory="Page Tabs">
               <SubTabsTrigger value="staff-utilization">Staff Utilization</SubTabsTrigger>
             </VisibilityGate>
+            <VisibilityGate elementKey="operations_booking_pipeline_subtab" elementName="Booking Pipeline" elementCategory="Page Tabs">
+              <SubTabsTrigger value="booking-pipeline">Booking Pipeline</SubTabsTrigger>
+            </VisibilityGate>
           </SubTabsList>
 
         <TabsContent value="overview" className="mt-6">
@@ -146,6 +150,13 @@ export function OperationsTabContent({ filters, subTab = 'overview', onSubTabCha
 
         <TabsContent value="staff-utilization" className="mt-6">
           <StaffUtilizationContent 
+            locationId={locationFilter}
+            dateRange={operationalDateRange}
+          />
+        </TabsContent>
+
+        <TabsContent value="booking-pipeline" className="mt-6">
+          <BookingPipelineContent
             locationId={locationFilter}
             dateRange={operationalDateRange}
           />
