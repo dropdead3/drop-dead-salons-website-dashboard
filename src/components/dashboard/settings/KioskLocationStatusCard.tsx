@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UserCheck, ClipboardCheck, CalendarPlus, FileSignature, Upload, Loader2, Tablet, ChevronDown } from 'lucide-react';
+import { UserCheck, ClipboardCheck, CalendarPlus, FileSignature, Upload, Loader2, Tablet, ChevronDown, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -204,7 +204,7 @@ export function KioskLocationStatusCard({ orgId }: KioskLocationStatusCardProps)
           ) : (
             <div className="divide-y divide-border/50">
               {/* Table Header */}
-              <div className="grid grid-cols-[1fr_80px_56px_56px_56px_56px_80px] items-center px-4 py-2 text-xs text-muted-foreground font-medium">
+              <div className="grid grid-cols-[1fr_80px_56px_56px_56px_56px_80px_40px] items-center px-4 py-2 text-xs text-muted-foreground font-medium">
                 <span>Location</span>
                 <span className="text-center">
                   <div className="flex flex-col items-center gap-0.5">
@@ -237,6 +237,7 @@ export function KioskLocationStatusCard({ orgId }: KioskLocationStatusCardProps)
                   </div>
                 </span>
                 <span className="text-center">Status</span>
+                <span></span>
               </div>
 
               {/* Location Rows */}
@@ -247,7 +248,7 @@ export function KioskLocationStatusCard({ orgId }: KioskLocationStatusCardProps)
                     {/* Summary Row */}
                     <div
                       className={cn(
-                        "grid grid-cols-[1fr_80px_56px_56px_56px_56px_80px] items-center px-4 py-3 cursor-pointer transition-colors",
+                        "grid grid-cols-[1fr_80px_56px_56px_56px_56px_80px_40px] items-center px-4 py-3 cursor-pointer transition-colors",
                         isExpanded 
                           ? "bg-primary/5 border-l-2 border-l-primary" 
                           : "hover:bg-muted/50"
@@ -278,6 +279,24 @@ export function KioskLocationStatusCard({ orgId }: KioskLocationStatusCardProps)
                       </span>
                       <span className="text-center">
                         <StatusBadge status={row.status} />
+                      </span>
+                      <span className="text-center" onClick={(e) => e.stopPropagation()}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={() => {
+                                const locSettings = allSettings.find(s => s.location_id === row.locationId) || orgDefault;
+                                if (locSettings) handlePreviewOpen(locSettings, row.locationName);
+                              }}
+                            >
+                              <Eye className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Quick Preview</TooltipContent>
+                        </Tooltip>
                       </span>
                     </div>
 
