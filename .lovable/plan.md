@@ -1,44 +1,52 @@
 
 
-## Add Executive Brief Button to Leadership Tab
+## Restyle Executive Brief as Inline Expandable Button
 
-### What changes
+### Problem
+The Executive Brief currently opens a side drawer (Sheet), but it should match the Zura Insights pattern: a compact pill button that expands into an inline card on the page.
 
-**1. Remove the Infotainer banner**
-- File: `src/components/dashboard/analytics/LeadershipTabContent.tsx`
-- Remove the "EXECUTIVE INTELLIGENCE" Infotainer component entirely
+### Solution
+Replace the Sheet-based approach in `LeadershipTabContent.tsx` with a toggle button that expands/collapses the `WeeklyLeverSection` content inline, using the same visual pattern as `AIInsightsDrawer`:
+- **Collapsed**: A compact pill button with icon + label + chevron (matching the Zura Insights button style)
+- **Expanded**: An inline card below the button showing the full `WeeklyLeverSection` content with a close button
 
-**2. Add an "Executive Brief" button to the Leadership tab**
-- Add a button (e.g., "View Executive Brief") at the top of the Leadership tab that opens a dialog/drawer containing the Weekly Lever content
-- When clicked, it opens a Sheet (slide-over drawer) showing:
-  - The `WeeklyLeverSection` content (lever recommendation or SilenceState/KPI setup prompt)
-  - Generate New button for refreshing the lever
-- This keeps the Leadership tab clean (Executive Summary + Trend Chart) while making the AI brief one click away
+### Changes
 
-**3. Implementation in `LeadershipTabContent.tsx`**
-- Import `Sheet`, `SheetContent`, `SheetHeader`, `SheetTitle`, `SheetTrigger` from the existing UI components
-- Import `WeeklyLeverSection` (already exists at `src/components/dashboard/analytics/WeeklyLeverSection.tsx`)
-- Add a row at the top with a styled button: "Executive Brief" with a `Brain` or `Target` icon
-- Clicking opens a Sheet from the right containing `WeeklyLeverSection`
+**File: `src/components/dashboard/analytics/LeadershipTabContent.tsx`**
 
-### Visual layout
+1. Remove all Sheet-related imports and markup
+2. Add local `expanded` state toggle
+3. Collapsed state: render a compact pill button matching the Zura Insights style:
+   - `inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background`
+   - Target icon in a small rounded container
+   - "Executive Brief" label
+   - ChevronDown that rotates when expanded
+4. Expanded state: render the `WeeklyLeverSection` inside an animated card (using framer-motion `AnimatePresence` for smooth open/close, matching the Zura Insights expand animation)
+   - Card header with "EXECUTIVE BRIEF" title and close (X) button
+   - `WeeklyLeverSection` content inside
+5. Use framer-motion for the same transition feel as Zura Insights
 
+### Visual
+
+Collapsed:
 ```text
-|-------------------------------------------------------|
-| [Target] Executive Brief  ............  [View Brief >] |
-|-------------------------------------------------------|
-|                                                       |
-|  [Executive Summary Card]                             |
-|                                                       |
-|  [Executive Trend Chart]                              |
-|                                                       |
-|-------------------------------------------------------|
+[Target] Executive Brief  [v]
 ```
 
-When the button is clicked, a right-side drawer slides open with the full Weekly Lever content (recommendation, silence state, or KPI setup prompt).
+Expanded:
+```text
+|-------------------------------------------------|
+| EXECUTIVE BRIEF                           [X]   |
+|-------------------------------------------------|
+| [WeeklyLeverSection content]                    |
+|-------------------------------------------------|
+```
 
 ### Technical details
-- File to modify: `src/components/dashboard/analytics/LeadershipTabContent.tsx`
-- No new files needed -- reuses existing `WeeklyLeverSection` and shadcn `Sheet` components
-- The Infotainer import can be removed since it will no longer be used here
+- Import `useState` from React, `AnimatePresence` and `motion` from framer-motion
+- Remove `Sheet`, `SheetContent`, `SheetHeader`, `SheetTitle`, `SheetTrigger` imports
+- Replace `ChevronRight` with `ChevronDown` and add `X` icon
+- Button classes match `AIInsightsDrawer` line 309: `inline-flex items-center gap-2 h-9 px-4 rounded-md border border-border bg-background text-sm font-sans hover:bg-muted/50 transition-colors cursor-pointer`
+- Expanded card classes match `AIInsightsDrawer` line 329: `w-full rounded-2xl shadow-lg border border-border/40 bg-card overflow-hidden`
+- Single file change only
 
