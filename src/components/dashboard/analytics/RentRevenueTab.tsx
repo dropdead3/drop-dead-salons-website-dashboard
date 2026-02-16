@@ -136,7 +136,7 @@ export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">MTD Collected</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-2xl font-medium">
                     {formatCurrencyWhole(stats?.currentMonthCollected || 0)}
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -161,7 +161,7 @@ export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Collection Rate</p>
-                  <p className="text-2xl font-bold">
+                  <p className="text-2xl font-medium">
                     {(stats?.collectionRate || 0).toFixed(1)}%
                   </p>
                   <Progress value={stats?.collectionRate || 0} className="h-2 mt-2" />
@@ -184,7 +184,7 @@ export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Overdue</p>
-                  <p className="text-2xl font-bold text-red-500">
+                  <p className="text-2xl font-medium text-red-500">
                     {formatCurrencyWhole(stats?.overdueAmount || 0)}
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -209,7 +209,7 @@ export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Active Renters</p>
-                  <p className="text-2xl font-bold">{stats?.activeRenters || 0}</p>
+                  <p className="text-2xl font-medium">{stats?.activeRenters || 0}</p>
                   <p className="text-xs text-muted-foreground">
                     {formatCurrencyWhole(stats?.lateFees || 0)} in late fees
                   </p>
@@ -287,15 +287,15 @@ export function RentRevenueTab({ organizationId }: RentRevenueTabProps) {
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center p-4 rounded-lg bg-muted">
                 <p className="text-sm text-muted-foreground">Total Collected</p>
-                <p className="text-3xl font-bold">{formatCurrencyWhole(stats?.totalCollected || 0)}</p>
+                <p className="text-3xl font-medium">{formatCurrencyWhole(stats?.totalCollected || 0)}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-muted">
                 <p className="text-sm text-muted-foreground">Total Expected</p>
-                <p className="text-3xl font-bold">{formatCurrencyWhole(stats?.totalExpected || 0)}</p>
+                <p className="text-3xl font-medium">{formatCurrencyWhole(stats?.totalExpected || 0)}</p>
               </div>
               <div className="text-center p-4 rounded-lg bg-muted">
                 <p className="text-sm text-muted-foreground">Late Fees Collected</p>
-                <p className="text-3xl font-bold">{formatCurrencyWhole(stats?.lateFees || 0)}</p>
+                <p className="text-3xl font-medium">{formatCurrencyWhole(stats?.lateFees || 0)}</p>
               </div>
             </div>
           </CardContent>

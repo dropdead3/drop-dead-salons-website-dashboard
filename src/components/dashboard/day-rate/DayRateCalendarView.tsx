@@ -158,7 +158,7 @@ export function DayRateCalendarView() {
                   <div className={cn(
                     "text-sm mb-2",
                     !isCurrentMonth && "text-muted-foreground",
-                    isToday && "font-bold text-primary"
+                    isToday && "font-medium text-primary"
                   )}>
                     {format(day, 'd')}
                   </div>

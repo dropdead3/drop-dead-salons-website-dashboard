@@ -986,7 +986,7 @@ export function ExecutiveTrendChart() {
                       return (
                         <div className="rounded-lg border border-border bg-popover px-3 py-2.5 shadow-lg min-w-[160px]">
                           <p className="font-medium text-sm mb-1">{d.label}</p>
-                          <p className="text-sm tabular-nums font-semibold">{formatForecastValue(val)}</p>
+                          <p className="text-sm tabular-nums font-medium">{formatForecastValue(val)}</p>
                           {isProjected && d.confLower != null && (
                             <p className="text-[10px] text-muted-foreground mt-1">
                               Range: {formatForecastValue(d.confLower)} &ndash; {formatForecastValue(d.confUpper)}

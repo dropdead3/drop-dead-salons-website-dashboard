@@ -102,7 +102,7 @@ export function MobileFeatureRequestViewer({
                             )}
                           >
                             <ChevronUp className="h-8 w-8" />
-                            <span className="text-4xl font-bold">{request.vote_count || 0}</span>
+                            <span className="text-4xl font-medium">{request.vote_count || 0}</span>
                             <span className="text-sm">
                               {request.user_voted ? 'You voted!' : 'votes'}
                             </span>
@@ -110,7 +110,7 @@ export function MobileFeatureRequestViewer({
                         </motion.div>
 
                         {/* Title */}
-                        <h2 className="text-2xl font-bold text-center mb-4">{request.title}</h2>
+                        <h2 className="text-2xl font-medium text-center mb-4">{request.title}</h2>
 
                         {/* Badges */}
                         <div className="flex flex-wrap justify-center gap-2 mb-6">

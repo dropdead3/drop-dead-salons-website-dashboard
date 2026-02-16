@@ -66,7 +66,7 @@ export function TemplateLibrary({ onSelectTemplate, onCreateNew }: TemplateLibra
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Report Templates</h2>
+          <h2 className="text-lg font-medium">Report Templates</h2>
           <p className="text-sm text-muted-foreground">
             Create custom reports or use saved templates
           </p>

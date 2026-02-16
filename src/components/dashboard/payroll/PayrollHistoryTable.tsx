@@ -136,23 +136,23 @@ function PayrollRow({ run, isExpanded, onToggle }: PayrollRowProps) {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
                     <div>
                       <p className="text-muted-foreground">Gross Pay</p>
-                      <p className="font-semibold text-lg">{formatCurrency(run.total_gross_pay)}</p>
+                      <p className="font-medium text-lg">{formatCurrency(run.total_gross_pay)}</p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Employer Taxes</p>
-                      <p className="font-semibold text-lg text-amber-600">
+                      <p className="font-medium text-lg text-amber-600">
                         {formatCurrency(run.total_employer_taxes)}
                       </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Employee Deductions</p>
-                      <p className="font-semibold text-lg text-red-600">
+                      <p className="font-medium text-lg text-red-600">
                         {formatCurrency(run.total_employee_deductions)}
                       </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Net Pay</p>
-                      <p className="font-semibold text-lg text-green-600">
+                      <p className="font-medium text-lg text-green-600">
                         {formatCurrency(run.total_net_pay)}
                       </p>
                     </div>

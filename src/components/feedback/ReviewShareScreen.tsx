@@ -109,7 +109,7 @@ export function ReviewShareScreen({
                 <Star className="h-8 w-8 text-amber-500 fill-amber-500" />
               </div>
             </div>
-            <h2 className="text-2xl font-semibold">
+            <h2 className="text-2xl font-medium">
               {settings.publicReviewPromptTitle || "We're Thrilled You Loved Your Visit!"}
             </h2>
             <p className="text-muted-foreground">

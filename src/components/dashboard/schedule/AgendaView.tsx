@@ -79,7 +79,7 @@ function AppointmentCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h4 className="font-semibold text-base">{appointment.client_name}</h4>
+                <h4 className="font-medium text-base">{appointment.client_name}</h4>
                 <p className="text-sm text-muted-foreground">{appointment.service_name}</p>
               </div>
               <Badge className={cn('shrink-0', statusConfig.bg, statusConfig.text)}>
@@ -180,7 +180,7 @@ export function AgendaView({
               'sticky top-0 z-10 py-2 px-1 mb-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60',
               isToday(date) && 'border-l-4 border-l-primary pl-3'
             )}>
-              <h3 className="font-semibold text-lg">{dateLabel}</h3>
+              <h3 className="font-medium text-lg">{dateLabel}</h3>
               <p className="text-sm text-muted-foreground">
                 {dayAppointments.length} appointment{dayAppointments.length !== 1 ? 's' : ''}
               </p>

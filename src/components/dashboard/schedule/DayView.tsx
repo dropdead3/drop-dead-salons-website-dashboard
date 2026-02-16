@@ -230,7 +230,7 @@ function AppointmentCard({
               </div>
             ) : (
               <>
-                <div className="text-xs font-semibold truncate flex items-center gap-1">
+                <div className="text-xs font-medium truncate flex items-center gap-1">
                   {appointment.status === 'confirmed' && (
                     <span className="w-1.5 h-1.5 rounded-full bg-white/80 shrink-0" />
                   )}
@@ -256,7 +256,7 @@ function AppointmentCard({
       </TooltipTrigger>
       <TooltipContent side="right" className="max-w-xs">
         <div className="space-y-1.5">
-          <div className="font-semibold">{appointment.client_name}</div>
+          <div className="font-medium">{appointment.client_name}</div>
           {appointment.client_phone && (
             <div className="text-sm flex items-center gap-1.5">
               <Phone className="h-3 w-3" />

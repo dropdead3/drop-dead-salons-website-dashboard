@@ -66,7 +66,7 @@ export function RewardCard({
           {/* Points cost */}
           <div className="flex items-center gap-1 text-amber-600">
             <Coins className="w-4 h-4" />
-            <span className="font-bold">{reward.points_cost.toLocaleString()}</span>
+            <span className="font-medium">{reward.points_cost.toLocaleString()}</span>
           </div>
 
           {/* Stock indicator */}

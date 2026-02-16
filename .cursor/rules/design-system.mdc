@@ -6,6 +6,44 @@ alwaysApply: false
 
 # Design System
 
+## Design Token System (MANDATORY FOR NEW COMPONENTS)
+
+Always import and use design tokens instead of raw class strings:
+
+```tsx
+import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
+
+// Page title
+<h1 className={tokens.heading.page}>Revenue</h1>
+
+// Section header
+<h2 className={tokens.heading.section}>Overview</h2>
+
+// Card title
+<h3 className={tokens.heading.card}>Top Performers</h3>
+
+// Stat value
+<p className={tokens.stat.large}>$12,400</p>
+
+// Body text
+<p className={tokens.body.muted}>Last updated 2 hours ago</p>
+
+// Conditional layering with cn()
+<h3 className={cn(tokens.heading.card, isActive && 'text-primary')}>
+
+// Empty states
+<div className={tokens.empty.container}>
+  <Package className={tokens.empty.icon} />
+  <h3 className={tokens.empty.heading}>No items found</h3>
+  <p className={tokens.empty.description}>Try adjusting your filters</p>
+</div>
+```
+
+Available token groups: `heading`, `body`, `label`, `stat`, `layout`, `status`, `empty`, `loading`.
+
+Use `getTokenFor('page-title')` helper when unsure which token to use.
+
 ## Typography Rules (HARD RULES)
 
 ### BANNED Classes (cause synthetic bolding)
@@ -38,18 +76,6 @@ When you need visual hierarchy:
 - Add letter-spacing (`tracking-wide`, `tracking-wider`)
 - Use borders or backgrounds for visual separation
 
-### Quick Reference
-```
-BAD:  className="text-2xl font-bold"
-GOOD: className="text-2xl font-medium"
-
-BAD:  className="font-semibold text-foreground"
-GOOD: className="font-medium text-foreground"
-
-Headlines:  className="font-display text-2xl"
-Body emphasis: className="font-medium text-foreground"
-```
-
 ## Theme System
 
 HSL CSS variables. Available themes:
@@ -72,24 +98,23 @@ Semantic colors: `primary`, `secondary`, `accent`, `destructive`, `success`, `oa
 Spinner (full page):
 ```tsx
 <div className="flex items-center justify-center h-64">
-  <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+  <Loader2 className={tokens.loading.spinner} />
 </div>
 ```
 
 Skeleton (tables/cards):
 ```tsx
 {[1, 2, 3, 4, 5].map((i) => (
-  <Skeleton key={i} className="h-14 w-full" />
+  <Skeleton key={i} className={tokens.loading.skeleton} />
 ))}
 ```
 
 ## Empty States
 
-Centered icon + heading + description:
 ```tsx
-<div className="text-center py-12 text-muted-foreground">
-  <Package className="w-12 h-12 mx-auto mb-4" />
-  <h3 className="font-medium text-lg mb-2">No items found</h3>
-  <p className="text-sm">Try adjusting your filters</p>
+<div className={tokens.empty.container}>
+  <Package className={tokens.empty.icon} />
+  <h3 className={tokens.empty.heading}>No items found</h3>
+  <p className={tokens.empty.description}>Try adjusting your filters</p>
 </div>
 ```

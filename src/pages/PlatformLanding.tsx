@@ -27,7 +27,7 @@ export default function PlatformLanding() {
           <div className="p-2 bg-gradient-to-br from-violet-600 to-purple-600 rounded-xl">
             <Sparkles className="w-5 h-5 text-white" />
           </div>
-          <span className="text-xl font-semibold tracking-tight">Zura</span>
+          <span className="text-xl font-medium tracking-tight">Zura</span>
         </div>
         <nav className="flex items-center gap-6">
           {user ? (
@@ -65,7 +65,7 @@ export default function PlatformLanding() {
           Salon Management Platform
         </div>
 
-        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-semibold tracking-tight leading-[1.1] mb-6">
+        <h1 className="text-5xl sm:text-6xl lg:text-7xl font-medium tracking-tight leading-[1.1] mb-6">
           Run your salon{' '}
           <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
             smarter

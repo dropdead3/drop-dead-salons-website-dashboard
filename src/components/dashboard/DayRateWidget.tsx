@@ -75,7 +75,7 @@ export function DayRateWidget() {
             <Calendar className="w-4 h-4 text-primary" />
           </div>
           <div>
-            <p className="text-xl font-bold">{stats.today}</p>
+            <p className="text-xl font-medium">{stats.today}</p>
             <p className="text-xs text-muted-foreground">Today</p>
           </div>
         </div>
@@ -85,7 +85,7 @@ export function DayRateWidget() {
             <Clock className="w-4 h-4 text-muted-foreground" />
           </div>
           <div>
-            <p className="text-xl font-bold">{stats.thisWeek}</p>
+            <p className="text-xl font-medium">{stats.thisWeek}</p>
             <p className="text-xs text-muted-foreground">This Week</p>
           </div>
         </div>

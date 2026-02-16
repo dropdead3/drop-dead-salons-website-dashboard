@@ -53,7 +53,7 @@ export default function RenterCommissions() {
     <div className="container py-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Commission Statements</h1>
+          <h1 className="text-2xl font-medium">Commission Statements</h1>
           <p className="text-muted-foreground">View your retail commission earnings</p>
         </div>
       </div>
@@ -68,7 +68,7 @@ export default function RenterCommissions() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">{selectedYear} Total Earned</p>
-                <p className="text-2xl font-bold">{formatCurrency(totalEarned)}</p>
+                <p className="text-2xl font-medium">{formatCurrency(totalEarned)}</p>
               </div>
             </div>
           </CardContent>
@@ -82,7 +82,7 @@ export default function RenterCommissions() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total Paid</p>
-                <p className="text-2xl font-bold">{formatCurrency(totalPaid)}</p>
+                <p className="text-2xl font-medium">{formatCurrency(totalPaid)}</p>
               </div>
             </div>
           </CardContent>
@@ -96,7 +96,7 @@ export default function RenterCommissions() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Pending Payout</p>
-                <p className="text-2xl font-bold">{formatCurrency(totalPending)}</p>
+                <p className="text-2xl font-medium">{formatCurrency(totalPending)}</p>
               </div>
             </div>
           </CardContent>

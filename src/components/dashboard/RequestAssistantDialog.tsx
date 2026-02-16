@@ -248,7 +248,7 @@ export function RequestAssistantDialog({ children }: RequestAssistantDialogProps
               <SelectContent>
                 {Object.entries(groupedServices).map(([category, categoryServices]) => (
                   <div key={category}>
-                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                    <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
                       {category}
                     </div>
                     {categoryServices.map((service) => (
