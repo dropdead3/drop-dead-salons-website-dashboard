@@ -1444,3 +1444,13 @@ body.dashboard-cursor {
   background: hsl(var(--card));
   transform: translateX(100%);
 }
+
+/* ===== SYNTHETIC BOLD PREVENTION =====
+   Aeonik Pro (font-sans) and Termina (font-display) only ship weights 400 & 500.
+   Any weight ≥600 triggers ugly browser-synthesized bold.
+   Cap all prohibited Tailwind weight utilities to 500.
+   Laguna (font-serif) has a true bold file, so it's excluded via specificity below. */
+.font-semibold:not(.font-serif) { font-weight: 500 !important; }
+.font-bold:not(.font-serif) { font-weight: 500 !important; }
+.font-extrabold:not(.font-serif) { font-weight: 500 !important; }
+.font-black:not(.font-serif) { font-weight: 500 !important; }
