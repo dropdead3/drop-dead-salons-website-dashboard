@@ -1,32 +1,64 @@
 
 
-## Remove Executive Brief from Sidebar Navigation
+## Make SilenceState KPI-Aware
 
-Since the Executive Brief is now consolidated into the Leadership tab of the Analytics Hub and embedded in the Zura Business Insights card, the standalone sidebar entry is redundant.
+### Problem
+The "Operations within thresholds" message is misleading when no KPIs have been defined. The lever engine cannot generate recommendations without KPI definitions, so the silence is not because everything is healthy — it is because the system has nothing to monitor.
+
+### Solution
+Update `SilenceState` to check whether KPI definitions exist. If none are defined, show an explanatory state with a CTA to the KPI Builder instead of the false-positive green checkmark.
 
 ### Changes
 
-**1. Remove from sidebar nav registry**
-- File: `src/config/dashboardNav.ts` (line 99)
-- Delete the `executive-brief` entry from the nav items array
+**1. `src/components/executive-brief/SilenceState.tsx`**
+- Import and call `useKpiDefinitions()` to check if any KPIs exist
+- When KPIs count is 0: render a distinct "setup needed" state with:
+  - A neutral icon (e.g., `Settings` or `Target`) instead of the green checkmark
+  - Title: "No KPIs configured yet"
+  - Description: "Before Zura can surface levers, define the metrics you want monitored — targets, thresholds, and review cadence."
+  - CTA button: "Build KPI Architecture" linking to `/dashboard/admin/kpi-builder`
+- When KPIs exist but no recommendation: keep the current green "Operations within thresholds" state
+- The compact variant should also reflect this: show "No KPIs configured" with a setup icon instead of the green check
 
-**2. Remove from default sidebar layout**
-- File: `src/hooks/useSidebarLayout.ts` (line 86)
-- Remove `/dashboard/admin/executive-brief` from the default link order
+**2. No other files need changes**
+The `SilenceState` is already used in `WeeklyLeverSection`, `AIInsightsDrawer`, and `AIInsightsCard` — all will automatically inherit the improved behavior.
 
-**3. Remove from guidance routes**
-- File: `src/utils/guidanceRoutes.ts` (line 37)
-- Remove `/dashboard/admin/executive-brief` from the guided routes list
+### Visual (No KPIs — Full)
+```text
+|-------------------------------------------------------|
+|                    [Target icon]                       |
+|                                                       |
+|            No KPIs configured yet                     |
+|                                                       |
+|   Before Zura can surface levers, define the          |
+|   metrics you want monitored -- targets,              |
+|   thresholds, and review cadence.                     |
+|                                                       |
+|          [ Build KPI Architecture ]                   |
+|-------------------------------------------------------|
+```
 
-**4. Keep the route in App.tsx**
-- The route at `/dashboard/admin/executive-brief` already redirects to `/dashboard/admin/analytics?tab=leadership`, so it stays for backward compatibility (bookmarks, shared links)
+### Visual (No KPIs — Compact)
+```text
+|-------------------------------------------------------|
+| [target] No KPIs configured    [Build KPIs ->]        |
+|-------------------------------------------------------|
+```
 
-**5. Update Decision History empty state text**
-- File: `src/pages/dashboard/admin/DecisionHistoryPage.tsx` (line 49)
-- Change "Visit the Executive Brief" to "Visit the Leadership tab in Analytics" since the standalone page no longer exists in nav
+### Visual (KPIs exist, no lever — unchanged)
+```text
+|-------------------------------------------------------|
+|            [green check]                               |
+|     Operations within thresholds                       |
+|-------------------------------------------------------|
+```
 
-### What stays unchanged
-- The `ExecutiveBriefPage.tsx` file (redirect logic)
-- All executive-brief components (WeeklyLeverBrief, SilenceState, etc.) -- still used by the Analytics leadership tab and Business Insights card
-- The route definition in App.tsx (backward-compatible redirect)
+### Technical Details
+- `useKpiDefinitions()` from `src/hooks/useKpiDefinitions.ts` returns the list scoped to the org via `useOrganizationContext`
+- Use `useNavigate()` for the CTA button to route to `/dashboard/admin/kpi-builder`
+- Advisory-first copy: no shame language, framed as "before monitoring begins"
+- The loading state of KPI definitions is handled gracefully (show nothing extra while loading)
+
+### File to modify
+- `src/components/executive-brief/SilenceState.tsx`
 
