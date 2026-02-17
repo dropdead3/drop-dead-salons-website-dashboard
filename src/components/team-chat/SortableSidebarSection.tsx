@@ -81,7 +81,7 @@ export function SortableSidebarSection({
             </Button>
           )}
         </div>
-        <CollapsibleContent className="mt-0.5">
+        <CollapsibleContent className="mt-0.5 pl-4">
           {children}
         </CollapsibleContent>
       </Collapsible>
