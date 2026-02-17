@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,6 +13,7 @@ import { DayProviderBreakdownPanel } from './DayProviderBreakdownPanel';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CalendarRange, TrendingUp, Calendar, Users, ChevronDown } from 'lucide-react';
 import { CategoryBreakdownPanel, BreakdownMode } from './CategoryBreakdownPanel';
+import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { cn } from '@/lib/utils';
 import { parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -98,8 +99,47 @@ function CustomXAxisTick({ x, y, payload, days, peakDate, onDayClick }: any) {
   );
 }
 
+// Custom tooltip showing category breakdown
+function WeekAheadTooltip({ active, payload, label, days, colorMap, formatCurrency }: any) {
+  const { formatDate } = useFormatDate();
+  if (!active || !payload?.length) return null;
+  const data = payload[0]?.payload;
+  if (!data) return null;
+
+  const day = days?.find((d: DayForecast) => d.dayName === label);
+  const displayLabel = day ? formatDate(day.date, 'EEEE, MMM d') : label;
+  const categoryBreakdown: Record<string, number> = data._categoryBreakdown || {};
+  const sorted = Object.entries(categoryBreakdown).sort(([, a], [, b]) => b - a);
+
+  return (
+    <div className="rounded-lg border bg-background p-3 shadow-lg min-w-[180px]">
+      <p className="font-medium text-sm mb-2">{displayLabel}</p>
+      <div className="space-y-1.5">
+        {sorted.map(([cat, rev]) => (
+          <div key={cat} className="flex items-center justify-between gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colorMap[cat.toLowerCase()]?.bg || '#888888' }} />
+              <span className="text-muted-foreground">{cat}</span>
+            </div>
+            <span className="font-medium tabular-nums">{formatCurrency(rev)}</span>
+          </div>
+        ))}
+        <div className="border-t border-border/50 my-1.5" />
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <span className="text-muted-foreground">Total</span>
+          <span className="font-medium tabular-nums text-primary">{formatCurrency(data.totalRevenue || 0)}</span>
+        </div>
+        <div className="flex items-center justify-between gap-4 text-xs">
+          <span className="text-muted-foreground">Appointments</span>
+          <span className="font-medium tabular-nums">{data.appointments || 0}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function WeekAheadForecast() {
-  const { formatCurrencyWhole, currency } = useFormatCurrency();
+  const { formatCurrencyWhole, formatCurrency, currency } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [selectedDay, setSelectedDay] = useState<DayForecast | null>(null);
@@ -107,6 +147,7 @@ export function WeekAheadForecast() {
   const [selectedStatCard, setSelectedStatCard] = useState<BreakdownMode | null>(null);
   const [selectedBarDay, setSelectedBarDay] = useState<DayForecast | null>(null);
   const { data, isLoading, error } = useWeekAheadRevenue(selectedLocation);
+  const { colorMap } = useServiceCategoryColorsMap();
   
   const chartRef = useRef<HTMLDivElement>(null);
   const isInView = useInView(chartRef, { once: true, amount: 0.3 });
@@ -126,6 +167,34 @@ export function WeekAheadForecast() {
     if (!day) return;
     setSelectedBarDay(prev => prev?.date === day.date ? null : day);
   }, [data?.days]);
+
+  const days = data?.days || [];
+  const { totalRevenue = 0, totalAppointments = 0, averageDaily = 0, peakDay = null, byCategory } = data || {};
+
+  // Compute all unique categories across days (must be before early returns)
+  const allCategories = useMemo(() => {
+    const cats = new Set<string>();
+    days.forEach(day => {
+      Object.keys(day.categoryBreakdown).forEach(c => cats.add(c));
+    });
+    return Array.from(cats).sort();
+  }, [days]);
+
+  // Chart data with category breakdown flattened (must be before early returns)
+  const chartData = useMemo(() => days.map(day => {
+    const entry: Record<string, any> = {
+      name: day.dayName,
+      totalRevenue: day.revenue,
+      appointments: day.appointmentCount,
+      isPeak: peakDay?.date === day.date,
+      date: day.date,
+      _categoryBreakdown: day.categoryBreakdown,
+    };
+    allCategories.forEach(cat => {
+      entry[cat] = day.categoryBreakdown[cat] || 0;
+    });
+    return entry;
+  }), [days, peakDay, allCategories]);
 
   if (isLoading) {
     return (
@@ -155,19 +224,6 @@ export function WeekAheadForecast() {
       </Card>
     );
   }
-
-  const { days, totalRevenue, totalAppointments, averageDaily, peakDay, byCategory } = data;
-
-  // Chart data with confirmed/unconfirmed split
-  const chartData = days.map(day => ({
-    name: day.dayName,
-    confirmedRevenue: day.confirmedRevenue,
-    unconfirmedRevenue: day.unconfirmedRevenue,
-    totalRevenue: day.revenue,
-    appointments: day.appointmentCount,
-    isPeak: peakDay?.date === day.date,
-    date: day.date,
-  }));
 
 
   return (
@@ -269,7 +325,7 @@ export function WeekAheadForecast() {
           )}
 
 
-          {/* Bar Chart with stacked confirmed/unconfirmed and labels above */}
+          {/* Bar Chart with stacked category bars */}
           <div className="h-[200px]" ref={chartRef}>
             {isInView ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -277,6 +333,18 @@ export function WeekAheadForecast() {
                   data={chartData}
                   margin={{ top: 25, right: 5, bottom: 35, left: 10 }}
                 >
+                  <defs>
+                    {allCategories.map(cat => {
+                      const color = colorMap[cat.toLowerCase()]?.bg || '#888888';
+                      return (
+                        <linearGradient key={cat} id={`glass-wa-${cat.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={color} stopOpacity={0.75} />
+                          <stop offset="40%" stopColor={color} stopOpacity={0.55} />
+                          <stop offset="100%" stopColor={color} stopOpacity={0.35} />
+                        </linearGradient>
+                      );
+                    })}
+                  </defs>
                   <XAxis 
                     dataKey="name" 
                     tick={<CustomXAxisTick days={days} peakDate={peakDay?.date} onDayClick={handleDayClick} />}
@@ -287,74 +355,47 @@ export function WeekAheadForecast() {
                   />
                   <YAxis hide domain={[0, 'auto']} />
                   <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--background))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                    }}
-                    formatter={(value: number, name: string) => {
-                      if (name === 'confirmedRevenue') return [formatCurrencyWhole(value), 'Confirmed'];
-                      if (name === 'unconfirmedRevenue') return [formatCurrencyWhole(value), 'Unconfirmed'];
-                      return [value, name];
-                    }}
-                    labelFormatter={(label) => {
-                      const day = days.find(d => d.dayName === label);
-                      return day ? formatDate(parseISO(day.date), 'EEEE, MMM d') : label;
-                    }}
+                    content={<WeekAheadTooltip days={days} colorMap={colorMap} formatCurrency={formatCurrency} />}
+                    cursor={{ fill: 'hsl(var(--muted))', fillOpacity: 0.3 }}
                   />
-                  {/* Unconfirmed revenue - bottom of stack */}
-                  <Bar 
-                    dataKey="unconfirmedRevenue" 
-                    stackId="revenue"
-                    radius={[0, 0, 0, 0]}
-                    isAnimationActive={true}
-                    animationDuration={800}
-                    animationEasing="ease-out"
-                    onClick={(data: any) => handleBarClick(data.name)}
-                    cursor="pointer"
-                  >
-                    {chartData.map((entry, index) => {
-                      const isSelected = selectedBarDay?.dayName === entry.name;
-                      return (
-                        <Cell 
-                          key={`unconfirmed-${index}`}
-                          fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
-                          fillOpacity={isSelected ? 0.8 : (entry.isPeak ? 0.6 : 0.5)}
-                          stroke={isSelected ? 'hsl(var(--foreground))' : 'none'}
-                          strokeWidth={isSelected ? 1.5 : 0}
-                        />
-                      );
-                    })}
-                  </Bar>
-                  {/* Confirmed revenue - top of stack, solid */}
-                  <Bar 
-                    dataKey="confirmedRevenue" 
-                    stackId="revenue"
-                    radius={[4, 4, 0, 0]}
-                    isAnimationActive={true}
-                    animationDuration={800}
-                    animationEasing="ease-out"
-                    onClick={(data: any) => handleBarClick(data.name)}
-                    cursor="pointer"
-                  >
-                    <LabelList 
-                      dataKey="totalRevenue"
-                      content={AboveBarLabel}
-                    />
-                    {chartData.map((entry, index) => {
-                      const isSelected = selectedBarDay?.dayName === entry.name;
-                      return (
-                        <Cell 
-                          key={`confirmed-${index}`}
-                          fill={entry.isPeak ? 'hsl(var(--chart-2))' : 'hsl(var(--primary))'}
-                          fillOpacity={isSelected ? 1 : (entry.isPeak ? 1 : 0.9)}
-                          stroke={isSelected ? 'hsl(var(--foreground))' : 'none'}
-                          strokeWidth={isSelected ? 1.5 : 0}
-                        />
-                      );
-                    })}
-                  </Bar>
+                  {/* Dynamic category bars */}
+                  {allCategories.map((cat, catIndex) => {
+                    const isTopBar = catIndex === allCategories.length - 1;
+                    const gradientId = `glass-wa-${cat.replace(/\s+/g, '-')}`;
+                    return (
+                      <Bar
+                        key={cat}
+                        dataKey={cat}
+                        stackId="revenue"
+                        radius={isTopBar ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                        isAnimationActive={true}
+                        animationDuration={800}
+                        animationEasing="ease-out"
+                        onClick={(data: any) => handleBarClick(data.name)}
+                        cursor="pointer"
+                        fill={`url(#${gradientId})`}
+                      >
+                        {isTopBar && (
+                          <LabelList 
+                            dataKey="totalRevenue"
+                            content={AboveBarLabel}
+                          />
+                        )}
+                        {chartData.map((entry, index) => {
+                          const isSelected = selectedBarDay?.dayName === entry.name;
+                          return (
+                            <Cell
+                              key={`${cat}-${index}`}
+                              fill={`url(#${gradientId})`}
+                              stroke={isSelected ? 'hsl(var(--foreground))' : (colorMap[cat.toLowerCase()]?.bg || '#888888')}
+                              strokeOpacity={isSelected ? 1 : 0.3}
+                              strokeWidth={isSelected ? 1.5 : 0.5}
+                            />
+                          );
+                        })}
+                      </Bar>
+                    );
+                  })}
                   {averageDaily > 0 && (
                     <Customized component={(props: any) => {
                       const { yAxisMap, xAxisMap } = props;

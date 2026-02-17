@@ -24,6 +24,7 @@ export interface DayForecast {
   unconfirmedRevenue: number;
   appointmentCount: number;
   appointments: AppointmentSummary[];
+  categoryBreakdown: Record<string, number>;
 }
 
 export interface WeekForecast {
@@ -35,6 +36,7 @@ export interface WeekForecast {
   unconfirmedRevenue: number;
   appointmentCount: number;
   days: DayForecast[];
+  categoryBreakdown: Record<string, number>;
 }
 
 export interface CategoryBreakdown {
@@ -134,9 +136,9 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
       }
       
       // Group by date
-      const byDate: Record<string, { revenue: number; confirmedRevenue: number; unconfirmedRevenue: number; count: number; appointments: AppointmentSummary[] }> = {};
+      const byDate: Record<string, { revenue: number; confirmedRevenue: number; unconfirmedRevenue: number; count: number; appointments: AppointmentSummary[]; categoryBreakdown: Record<string, number> }> = {};
       dates.forEach(d => {
-        byDate[d.date] = { revenue: 0, confirmedRevenue: 0, unconfirmedRevenue: 0, count: 0, appointments: [] };
+        byDate[d.date] = { revenue: 0, confirmedRevenue: 0, unconfirmedRevenue: 0, count: 0, appointments: [], categoryBreakdown: {} };
       });
 
       appointments.forEach(apt => {
@@ -152,6 +154,10 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
           } else {
             byDate[dateKey].confirmedRevenue += price;
           }
+          // Accumulate per-day category breakdown
+          const category = (apt as any).service_category || 'Uncategorized';
+          byDate[dateKey].categoryBreakdown[category] = (byDate[dateKey].categoryBreakdown[category] || 0) + price;
+          
           byDate[dateKey].count += 1;
           byDate[dateKey].appointments.push({
             id: apt.id,
@@ -227,6 +233,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
         unconfirmedRevenue: byDate[d.date].unconfirmedRevenue,
         appointmentCount: byDate[d.date].count,
         appointments: byDate[d.date].appointments,
+        categoryBreakdown: byDate[d.date].categoryBreakdown,
       }));
 
       // Group days into weeks for 30/60 day views
@@ -252,6 +259,14 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
             const weekStartDate = new Date(weekStartStr + 'T00:00:00');
             const weekEndDate = endOfWeek(weekStartDate, { weekStartsOn: 1 });
             
+            // Aggregate category breakdowns across days in this week
+            const weekCategoryBreakdown: Record<string, number> = {};
+            weekDays.forEach(d => {
+              Object.entries(d.categoryBreakdown).forEach(([cat, rev]) => {
+                weekCategoryBreakdown[cat] = (weekCategoryBreakdown[cat] || 0) + rev;
+              });
+            });
+
             weeks.push({
               weekStart: weekStartStr,
               weekEnd: format(weekEndDate, 'yyyy-MM-dd'),
@@ -261,6 +276,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
               unconfirmedRevenue: weekDays.reduce((sum, d) => sum + d.unconfirmedRevenue, 0),
               appointmentCount: weekDays.reduce((sum, d) => sum + d.appointmentCount, 0),
               days: weekDays,
+              categoryBreakdown: weekCategoryBreakdown,
             });
           });
       }

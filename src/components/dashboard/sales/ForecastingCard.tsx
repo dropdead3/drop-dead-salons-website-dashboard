@@ -22,6 +22,7 @@ import { CalendarRange, TrendingUp, TrendingDown, Calendar, Users, Info, Target,
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { cn } from '@/lib/utils';
+import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { tokens } from '@/lib/design-tokens';
 import { parseISO, differenceInDays, endOfMonth } from 'date-fns';
 import { useRevenueForecast } from '@/hooks/useRevenueForecast';
@@ -77,8 +78,8 @@ const PERIOD_DESCRIPTIONS: Record<ForecastPeriod, string> = {
   '60days': 'Projected revenue from scheduled appointments over the next 60 days',
 };
 
-// Custom tooltip for forecast chart
-function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart }: any) {
+// Custom tooltip for forecast chart - shows category breakdown
+function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart, colorMap }: any) {
   const { formatCurrency } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   if (!active || !payload?.length) return null;
@@ -96,8 +97,8 @@ function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart 
     displayLabel = day ? formatDate(day.date, 'EEEE, MMM d') : label;
   }
   
-  const confirmedRevenue = data.confirmedRevenue || 0;
-  const unconfirmedRevenue = data.unconfirmedRevenue || 0;
+  const categoryBreakdown: Record<string, number> = data._categoryBreakdown || {};
+  const sorted = Object.entries(categoryBreakdown).sort(([, a], [, b]) => b - a);
   const totalRevenue = data.totalRevenue || 0;
   const appointments = data.appointments || 0;
 
@@ -106,29 +107,17 @@ function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart 
       <p className="font-medium text-sm mb-2">{displayLabel}</p>
       
       <div className="space-y-1.5">
-        {/* Confirmed Revenue */}
-        <div className="flex items-center justify-between gap-4 text-sm">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-primary" />
-            <span className="text-muted-foreground">Confirmed</span>
-          </div>
-          <span className="font-medium tabular-nums">
-            {formatCurrency(confirmedRevenue)}
-          </span>
-        </div>
-        
-        {/* Unconfirmed Revenue - only show if > 0 */}
-        {unconfirmedRevenue > 0 && (
-          <div className="flex items-center justify-between gap-4 text-sm">
+        {sorted.map(([cat, rev]) => (
+          <div key={cat} className="flex items-center justify-between gap-4 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary/40" />
-              <span className="text-muted-foreground">Unconfirmed</span>
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colorMap?.[cat.toLowerCase()]?.bg || '#888888' }} />
+              <span className="text-muted-foreground">{cat}</span>
             </div>
-            <span className="font-medium tabular-nums text-muted-foreground">
-              {formatCurrency(unconfirmedRevenue)}
+            <span className="font-medium tabular-nums">
+              {formatCurrency(rev)}
             </span>
           </div>
-        )}
+        ))}
         
         {/* Divider */}
         <div className="border-t border-border/50 my-1.5" />
@@ -403,6 +392,7 @@ export function ForecastingCard() {
   const { hideNumbers, requestUnhide } = useHideNumbers();
   const { formatCurrency, currency } = useFormatCurrency();
   const { formatDate } = useFormatDate();
+  const { colorMap } = useServiceCategoryColorsMap();
   
   const chartRef = useRef<HTMLDivElement>(null);
   const isChartInView = useInView(chartRef, { once: true, amount: 0.3 });
@@ -432,6 +422,54 @@ export function ForecastingCard() {
   const isEomPeriod = period === 'todayToEom';
   const is7DaysPeriod = period === '7days';
 
+  const days = data?.days || [];
+  const weeks = data?.weeks || [];
+  const { totalRevenue = 0, totalAppointments = 0, averageDaily = 0, averageWeekly = 0, peakDay = null, peakWeek = null, byCategory = {}, byLocation = {}, byStylist = {} } = data || {};
+  const dayCount = days.length;
+
+  // Compute all unique categories across days/weeks (before early returns)
+  const allCategories = useMemo(() => {
+    const cats = new Set<string>();
+    const source = showWeeklyChart ? weeks : days;
+    source.forEach((item: any) => {
+      Object.keys(item.categoryBreakdown || {}).forEach(c => cats.add(c));
+    });
+    return Array.from(cats).sort();
+  }, [days, weeks, showWeeklyChart]);
+
+  // Chart data for daily view with category breakdown flattened
+  const dailyChartData = useMemo(() => days.map((day) => {
+    const entry: Record<string, any> = {
+      name: day.date,
+      totalRevenue: day.revenue,
+      appointments: day.appointmentCount,
+      isPeak: peakDay?.date === day.date,
+      isToday: day.date === toLocalDateStr(new Date()),
+      _categoryBreakdown: day.categoryBreakdown,
+    };
+    allCategories.forEach(cat => {
+      entry[cat] = day.categoryBreakdown[cat] || 0;
+    });
+    return entry;
+  }), [days, peakDay, allCategories]);
+
+  // Chart data for weekly view with category breakdown flattened
+  const weeklyChartData = useMemo(() => weeks.map(week => {
+    const entry: Record<string, any> = {
+      name: week.weekLabel,
+      totalRevenue: week.revenue,
+      appointments: week.appointmentCount,
+      isPeak: peakWeek?.weekStart === week.weekStart,
+      _categoryBreakdown: week.categoryBreakdown,
+    };
+    allCategories.forEach(cat => {
+      entry[cat] = (week.categoryBreakdown || {})[cat] || 0;
+    });
+    return entry;
+  }), [weeks, peakWeek, allCategories]);
+
+  const chartData = showWeeklyChart ? weeklyChartData : dailyChartData;
+
   if (isLoading) {
     return (
       <Card className={tokens.card.wrapper}>
@@ -460,33 +498,6 @@ export function ForecastingCard() {
       </Card>
     );
   }
-
-  const { days, weeks, totalRevenue, totalAppointments, averageDaily, averageWeekly, peakDay, peakWeek, byCategory = {}, byLocation = {}, byStylist = {} } = data;
-  const dayCount = days.length;
-
-
-  // Chart data for daily view
-  const dailyChartData = days.map((day, index) => ({
-    name: day.date,
-    confirmedRevenue: day.confirmedRevenue,
-    unconfirmedRevenue: day.unconfirmedRevenue,
-    totalRevenue: day.revenue,
-    appointments: day.appointmentCount,
-    isPeak: peakDay?.date === day.date,
-    isToday: day.date === toLocalDateStr(new Date()),
-  }));
-
-  // Chart data for weekly view
-  const weeklyChartData = weeks.map(week => ({
-    name: week.weekLabel,
-    confirmedRevenue: week.confirmedRevenue,
-    unconfirmedRevenue: week.unconfirmedRevenue,
-    totalRevenue: week.revenue,
-    appointments: week.appointmentCount,
-    isPeak: peakWeek?.weekStart === week.weekStart,
-  }));
-
-  const chartData = showWeeklyChart ? weeklyChartData : dailyChartData;
 
   // Determine average value to show
   const avgValue = (period === '30days' || period === '60days') 
@@ -681,33 +692,16 @@ export function ForecastingCard() {
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: showWeeklyChart ? 40 : 48, left: 10 }}>
                   <defs>
-                    <linearGradient id="glassPrimary" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
-                      <stop offset="40%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
-                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
-                    </linearGradient>
-                    <linearGradient id="glassPeak" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.7} />
-                      <stop offset="40%" stopColor="hsl(var(--chart-2))" stopOpacity={0.5} />
-                      <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.35} />
-                    </linearGradient>
-                    <linearGradient id="glassToday" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.7} />
-                      <stop offset="40%" stopColor="hsl(var(--chart-3))" stopOpacity={0.5} />
-                      <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.35} />
-                    </linearGradient>
-                    <linearGradient id="glassPrimaryLight" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.15} />
-                    </linearGradient>
-                    <linearGradient id="glassPeakLight" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--chart-2))" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="hsl(var(--chart-2))" stopOpacity={0.15} />
-                    </linearGradient>
-                    <linearGradient id="glassTodayLight" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(var(--chart-3))" stopOpacity={0.35} />
-                      <stop offset="100%" stopColor="hsl(var(--chart-3))" stopOpacity={0.15} />
-                    </linearGradient>
+                    {allCategories.map(cat => {
+                      const color = colorMap[cat.toLowerCase()]?.bg || '#888888';
+                      return (
+                        <linearGradient key={cat} id={`glass-fc-${cat.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor={color} stopOpacity={0.75} />
+                          <stop offset="40%" stopColor={color} stopOpacity={0.55} />
+                          <stop offset="100%" stopColor={color} stopOpacity={0.35} />
+                        </linearGradient>
+                      );
+                    })}
                   </defs>
                   <XAxis
                     dataKey="name" 
@@ -727,65 +721,50 @@ export function ForecastingCard() {
                       <ForecastTooltip 
                         days={days} 
                         weeks={weeks} 
-                        showWeeklyChart={showWeeklyChart} 
+                        showWeeklyChart={showWeeklyChart}
+                        colorMap={colorMap}
                       />
                     }
                     cursor={{ fill: 'hsl(var(--muted))', fillOpacity: 0.3 }}
                   />
-                  {/* Unconfirmed revenue - bottom of stack */}
-                  <Bar 
-                    dataKey="unconfirmedRevenue" 
-                    stackId="revenue"
-                    radius={[0, 0, 0, 0]}
-                    isAnimationActive={true}
-                    animationDuration={800}
-                    animationEasing="ease-out"
-                    onClick={(data: any) => !showWeeklyChart && handleBarClick(data.name)}
-                    cursor={showWeeklyChart ? undefined : "pointer"}
-                  >
-                    {chartData.map((entry, index) => {
-                      const isToday = 'isToday' in entry && entry.isToday;
-                      return (
-                        <Cell 
-                          key={`unconfirmed-${index}`}
-                          fill={entry.isPeak ? 'url(#glassPeakLight)' : (isToday ? 'url(#glassTodayLight)' : 'url(#glassPrimaryLight)')}
-                          fillOpacity={1}
-                          stroke={entry.isPeak ? 'hsl(var(--chart-2))' : (isToday ? 'hsl(var(--chart-3))' : 'hsl(var(--primary))')}
-                          strokeOpacity={0.4}
-                          strokeWidth={1}
-                        />
-                      );
-                    })}
-                  </Bar>
-                  {/* Confirmed revenue - top of stack, solid */}
-                  <Bar 
-                    dataKey="confirmedRevenue" 
-                    stackId="revenue"
-                    radius={[4, 4, 0, 0]}
-                    isAnimationActive={true}
-                    animationDuration={800}
-                    animationEasing="ease-out"
-                    onClick={(data: any) => !showWeeklyChart && handleBarClick(data.name)}
-                    cursor={showWeeklyChart ? undefined : "pointer"}
-                  >
-                    <LabelList 
-                      dataKey="totalRevenue"
-                      content={(props: any) => <AboveBarLabel {...props} isBlurred={hideNumbers} onReveal={requestUnhide} />}
-                    />
-                    {chartData.map((entry, index) => {
-                      const isToday = 'isToday' in entry && entry.isToday;
-                      return (
-                        <Cell 
-                          key={`confirmed-${index}`}
-                          fill={entry.isPeak ? 'url(#glassPeak)' : (isToday ? 'url(#glassToday)' : 'url(#glassPrimary)')}
-                          fillOpacity={1}
-                          stroke={entry.isPeak ? 'hsl(var(--chart-2))' : (isToday ? 'hsl(var(--chart-3))' : 'hsl(var(--primary))')}
-                          strokeOpacity={0.5}
-                          strokeWidth={1}
-                        />
-                      );
-                    })}
-                  </Bar>
+                  {/* Dynamic category-stacked bars */}
+                  {allCategories.map((cat, catIndex) => {
+                    const isTopBar = catIndex === allCategories.length - 1;
+                    const gradientId = `glass-fc-${cat.replace(/\s+/g, '-')}`;
+                    return (
+                      <Bar
+                        key={cat}
+                        dataKey={cat}
+                        stackId="revenue"
+                        radius={isTopBar ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                        isAnimationActive={true}
+                        animationDuration={800}
+                        animationEasing="ease-out"
+                        onClick={(data: any) => !showWeeklyChart && handleBarClick(data.name)}
+                        cursor={showWeeklyChart ? undefined : "pointer"}
+                        fill={`url(#${gradientId})`}
+                      >
+                        {isTopBar && (
+                          <LabelList 
+                            dataKey="totalRevenue"
+                            content={(props: any) => <AboveBarLabel {...props} isBlurred={hideNumbers} onReveal={requestUnhide} />}
+                          />
+                        )}
+                        {chartData.map((entry, index) => {
+                          const isSelected = !showWeeklyChart && selectedBarDay && days.find(d => d.date === selectedBarDay.date)?.date === (entry as any).name;
+                          return (
+                            <Cell
+                              key={`${cat}-${index}`}
+                              fill={`url(#${gradientId})`}
+                              stroke={isSelected ? 'hsl(var(--foreground))' : (colorMap[cat.toLowerCase()]?.bg || '#888888')}
+                              strokeOpacity={isSelected ? 1 : 0.3}
+                              strokeWidth={isSelected ? 1.5 : 0.5}
+                            />
+                          );
+                        })}
+                      </Bar>
+                    );
+                  })}
                   {/* Daily average reference line - only for daily views */}
                   {!showWeeklyChart && averageDaily > 0 && (
                     <Customized component={(props: any) => {
