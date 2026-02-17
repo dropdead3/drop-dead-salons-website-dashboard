@@ -48,7 +48,7 @@ import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } fro
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useSalesMetrics, useSalesTrend, useSalesByStylist, useSalesByLocation, useSalesByPhorestStaff } from '@/hooks/useSalesData';
 import { useTriggerPhorestSync, usePhorestConnection, useCreateStaffMapping } from '@/hooks/usePhorestSync';
-import { useLocations } from '@/hooks/useLocations';
+import { useLocations, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 import { useSalesGoals } from '@/hooks/useSalesGoals';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -375,6 +375,34 @@ export default function SalesDashboard() {
           const selectedLoc = locationFilter !== 'all'
             ? locations?.find(l => l.id === locationFilter)
             : null;
+
+          // Merged hours for "All Locations": a day is closed only if ALL locations are closed
+          const mergedHoursJson = locationFilter === 'all' && locations?.length
+            ? (() => {
+                const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+                const merged: any = {};
+                for (const day of days) {
+                  const allClosed = locations.every(loc => {
+                    const hj = loc.hours_json as Record<string, any> | null;
+                    return hj?.[day]?.closed === true;
+                  });
+                  merged[day] = allClosed ? { closed: true } : { closed: false };
+                }
+                return merged as HoursJson;
+              })()
+            : undefined;
+
+          const mergedHolidays = locationFilter === 'all' && locations?.length
+            ? (() => {
+                const allSets = locations.map(loc =>
+                  new Set((loc.holiday_closures as Array<{ date: string }> || []).map(h => h.date))
+                );
+                if (allSets.length === 0) return undefined;
+                const intersection = [...allSets[0]].filter(d => allSets.every(s => s.has(d)));
+                return intersection.map(date => ({ date, name: '' })) as HolidayClosure[];
+              })()
+            : undefined;
+
           return (
             <SalesGoalProgress 
               current={metrics?.totalRevenue || 0} 
@@ -387,8 +415,8 @@ export default function SalesDashboard() {
                     : 'Weekly Goal'
               }
               goalPeriod={dateRange === 'thisWeek' || dateRange === '7d' ? 'weekly' : 'monthly'}
-              hoursJson={selectedLoc?.hours_json}
-              holidayClosures={selectedLoc?.holiday_closures}
+              hoursJson={selectedLoc?.hours_json ?? mergedHoursJson}
+              holidayClosures={selectedLoc?.holiday_closures ?? mergedHolidays}
             />
           );
         })()}

@@ -959,6 +959,35 @@ export function AggregateSalesCard({
               const selectedLoc = !isAllLocations
                 ? locations?.find(loc => loc.id === filterContext?.locationId)
                 : null;
+
+              // Merged hours for "All Locations": a day is closed only if ALL locations are closed
+              const mergedHoursJson = isAllLocations && locations?.length
+                ? (() => {
+                    const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const;
+                    const merged: Record<string, { closed?: boolean; open?: string; close?: string }> = {};
+                    for (const day of days) {
+                      const allClosed = locations.every(loc => {
+                        const hj = loc.hours_json as Record<string, any> | null;
+                        return hj?.[day]?.closed === true;
+                      });
+                      merged[day] = allClosed ? { closed: true } : { closed: false };
+                    }
+                    return merged;
+                  })()
+                : undefined;
+
+              // Merged holidays: a date is a holiday only if ALL locations list it
+              const mergedHolidays = isAllLocations && locations?.length
+                ? (() => {
+                    const allSets = locations.map(loc =>
+                      new Set((loc.holiday_closures as Array<{ date: string }> || []).map(h => h.date))
+                    );
+                    if (allSets.length === 0) return undefined;
+                    const intersection = [...allSets[0]].filter(d => allSets.every(s => s.has(d)));
+                    return intersection.map(date => ({ date }));
+                  })()
+                : undefined;
+
               return (
                 <>
                   <GoalProgressWithOwnRevenue
@@ -966,8 +995,8 @@ export function AggregateSalesCard({
                     locationId={filterContext?.locationId}
                     target={currentGoal}
                     label={goalLabel}
-                    hoursJson={selectedLoc?.hours_json}
-                    holidayClosures={selectedLoc?.holiday_closures}
+                    hoursJson={selectedLoc?.hours_json ?? mergedHoursJson}
+                    holidayClosures={selectedLoc?.holiday_closures ?? mergedHolidays}
                     onClick={() => toggleDrilldown('goals')}
                     isExpanded={activeDrilldown === 'goals'}
                   />
