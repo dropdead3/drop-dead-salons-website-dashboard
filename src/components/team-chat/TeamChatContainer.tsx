@@ -15,7 +15,7 @@ function TeamChatLayout() {
       {/* Sidebar */}
       <div
         className={cn(
-          'w-64 shrink-0 transition-all duration-200',
+          'w-64 shrink-0 transition-all duration-200 border-r border-border/50',
           'hidden lg:block',
           !isSidebarOpen && 'lg:hidden'
         )}
