@@ -14,6 +14,15 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CalendarRange, TrendingUp, Calendar, Users, ChevronDown } from 'lucide-react';
 import { CategoryBreakdownPanel, BreakdownMode } from './CategoryBreakdownPanel';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
+import { isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
+
+function resolveHexColor(colorHex: string): string {
+  if (!isGradientMarker(colorHex)) return colorHex;
+  const grad = getGradientFromMarker(colorHex);
+  if (!grad) return '#888888';
+  const match = grad.background.match(/#[0-9a-fA-F]{6}/);
+  return match ? match[0] : '#888888';
+}
 import { cn } from '@/lib/utils';
 import { parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -118,7 +127,7 @@ function WeekAheadTooltip({ active, payload, label, days, colorMap, formatCurren
         {sorted.map(([cat, rev]) => (
           <div key={cat} className="flex items-center justify-between gap-4 text-sm">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colorMap[cat.toLowerCase()]?.bg || '#888888' }} />
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: resolveHexColor(colorMap[cat.toLowerCase()]?.bg || '#888888') }} />
               <span className="text-muted-foreground">{cat}</span>
             </div>
             <span className="font-medium tabular-nums">{formatCurrency(rev)}</span>
@@ -339,7 +348,7 @@ export function WeekAheadForecast() {
                 >
                   <defs>
                     {allCategories.map(cat => {
-                      const color = colorMap[cat.toLowerCase()]?.bg || '#888888';
+                      const color = resolveHexColor(colorMap[cat.toLowerCase()]?.bg || '#888888');
                       return (
                         <linearGradient key={cat} id={`glass-wa-${cat.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor={color} stopOpacity={0.75} />
@@ -391,7 +400,7 @@ export function WeekAheadForecast() {
                             <Cell
                               key={`${cat}-${index}`}
                               fill={`url(#${gradientId})`}
-                              stroke={isSelected ? 'hsl(var(--foreground))' : (colorMap[cat.toLowerCase()]?.bg || '#888888')}
+                              stroke={isSelected ? 'hsl(var(--foreground))' : resolveHexColor(colorMap[cat.toLowerCase()]?.bg || '#888888')}
                               strokeOpacity={isSelected ? 1 : 0.3}
                               strokeWidth={isSelected ? 1.5 : 0.5}
                             />
