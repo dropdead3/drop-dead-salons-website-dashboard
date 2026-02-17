@@ -264,7 +264,11 @@ export function WeekAheadForecast() {
   }, [data?.days]);
 
   const days = data?.days || [];
-  const { totalRevenue = 0, totalAppointments = 0, averageDaily = 0, peakDay = null, byCategory } = data || {};
+  const { totalRevenue = 0, totalAppointments = 0, peakDay = null, byCategory } = data || {};
+
+  // Compute operating-day average (exclude closed days)
+  const operatingDayCount = Math.max(days.length - closedDates.size, 1);
+  const operatingDailyAvg = totalRevenue / operatingDayCount;
 
   // Compute all unique categories across days (must be before early returns)
   const allCategories = useMemo(() => {
@@ -384,13 +388,13 @@ export function WeekAheadForecast() {
                 <Calendar className="w-4 h-4 text-chart-2" />
               </div>
               <AnimatedBlurredAmount 
-                value={Math.round(averageDaily)}
+                value={Math.round(operatingDailyAvg)}
                 currency={currency}
                 className="text-lg font-display tabular-nums"
               />
               <div className="flex items-center gap-1 justify-center">
-                <p className="text-xs text-muted-foreground">Daily Avg</p>
-                <MetricInfoTooltip description="7-Day Total ÷ 7. Average projected daily revenue for the upcoming week." />
+                <p className="text-xs text-muted-foreground">Daily Operating Avg</p>
+                <MetricInfoTooltip description={`7-Day Total ÷ ${operatingDayCount} operating days. Average projected daily revenue excluding closed days.`} />
               </div>
               <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'dailyAvg' && 'rotate-180 text-primary')} />
             </div>
@@ -521,15 +525,15 @@ export function WeekAheadForecast() {
                       );
                     })
                   )}
-                  {averageDaily > 0 && (
+                  {operatingDailyAvg > 0 && (
                     <Customized component={(props: any) => {
                       const { yAxisMap, xAxisMap } = props;
                       if (!yAxisMap?.[0]?.scale || !xAxisMap?.[0]) return null;
-                      const yPos = yAxisMap[0].scale(averageDaily);
+                      const yPos = yAxisMap[0].scale(operatingDailyAvg);
                       const chartLeft = xAxisMap[0].x;
                       const chartRight = chartLeft + xAxisMap[0].width;
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      const badgeWidth = 140;
+                      const badgeWidth = 180;
                       return (
                       <g style={{ pointerEvents: 'none' }}>
                           <style>{`
@@ -549,7 +553,7 @@ export function WeekAheadForecast() {
                               whiteSpace: 'nowrap',
                               width: 'fit-content',
                             }}>
-                              Daily Avg: {formatCurrencyWhole(Math.round(averageDaily))}
+                              Daily Operating Avg: {formatCurrencyWhole(Math.round(operatingDailyAvg))}
                             </div>
                           </foreignObject>
                           {(() => {

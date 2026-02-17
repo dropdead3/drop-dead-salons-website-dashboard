@@ -75,8 +75,8 @@ const PERIOD_TOTAL_LABELS: Record<ForecastPeriod, string> = {
 
 const PERIOD_AVG_LABELS: Record<ForecastPeriod, string> = {
   'tomorrow': 'Projected',
-  'todayToEom': 'Daily Avg',
-  '7days': 'Daily Avg',
+  'todayToEom': 'Daily Operating Avg',
+  '7days': 'Daily Operating Avg',
   '30days': 'Weekly Avg',
   '60days': 'Weekly Avg',
 };
@@ -515,8 +515,12 @@ export function ForecastingCard() {
 
   const days = data?.days || [];
   const weeks = data?.weeks || [];
-  const { totalRevenue = 0, totalAppointments = 0, averageDaily = 0, averageWeekly = 0, peakDay = null, peakWeek = null, byCategory = {}, byLocation = {}, byStylist = {} } = data || {};
+  const { totalRevenue = 0, totalAppointments = 0, averageWeekly = 0, peakDay = null, peakWeek = null, byCategory = {}, byLocation = {}, byStylist = {} } = data || {};
   const dayCount = days.length;
+
+  // Compute operating-day average (exclude closed days)
+  const operatingDayCount = Math.max(days.length - closedDates.size, 1);
+  const operatingDailyAvg = totalRevenue / operatingDayCount;
 
   // Compute all unique categories across days/weeks (before early returns)
   const allCategories = useMemo(() => {
@@ -597,14 +601,14 @@ export function ForecastingCard() {
   // Determine average value to show
   const avgValue = (period === '30days' || period === '60days') 
     ? Math.round(averageWeekly) 
-    : Math.round(averageDaily);
+    : Math.round(operatingDailyAvg);
 
   // Tooltip descriptions based on period
   const totalTooltip = `Sum of projected revenue from all scheduled appointments over the ${PERIOD_LABELS[period].toLowerCase()}.`;
   const avgTooltip = period === 'tomorrow' 
     ? 'Total projected revenue for tomorrow.'
     : (period === '7days' || period === 'todayToEom'
-      ? `${PERIOD_TOTAL_LABELS[period]} ÷ ${days.length}. Average projected daily revenue.`
+      ? `${PERIOD_TOTAL_LABELS[period]} ÷ ${operatingDayCount} operating days. Average projected daily revenue excluding closed days.`
       : `${PERIOD_TOTAL_LABELS[period]} ÷ ${weeks.length || 1}. Average projected weekly revenue.`);
   const apptTooltip = `Total count of scheduled appointments for the ${PERIOD_LABELS[period].toLowerCase()}.`;
 
@@ -890,15 +894,15 @@ export function ForecastingCard() {
                     })
                   )}
                   {/* Daily average reference line - only for daily views */}
-                  {!showWeeklyChart && averageDaily > 0 && (
+                  {!showWeeklyChart && operatingDailyAvg > 0 && (
                     <Customized component={(props: any) => {
                       const { yAxisMap, xAxisMap } = props;
                       if (!yAxisMap?.[0]?.scale || !xAxisMap?.[0]) return null;
-                      const yPos = yAxisMap[0].scale(averageDaily);
+                      const yPos = yAxisMap[0].scale(operatingDailyAvg);
                       const chartLeft = xAxisMap[0].x;
                       const chartRight = chartLeft + xAxisMap[0].width;
                       if (typeof yPos !== 'number' || isNaN(yPos)) return null;
-                      const avgText = `Daily Avg: ${formatCurrency(Math.round(averageDaily))}`;
+                      const avgText = `Daily Operating Avg: ${formatCurrency(Math.round(operatingDailyAvg))}`;
                       const padX = 8;
                       const padY = 4;
                       const fontSize = 12;
