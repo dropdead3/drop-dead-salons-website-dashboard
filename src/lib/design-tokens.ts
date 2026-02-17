@@ -53,7 +53,7 @@ export const tokens = {
   // ========================================
   card: {
     /** Standard dashboard card wrapper */
-    wrapper: 'rounded-2xl shadow-2xl',
+    wrapper: 'rounded-2xl',
     /** Standard icon container (10×10, muted bg, rounded) */
     iconBox: 'w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0',
     /** Standard icon inside the icon box */
@@ -69,7 +69,7 @@ export const tokens = {
     /** Standard page container with responsive padding */
     pageContainer: 'px-6 lg:px-8 py-8 max-w-[1600px] mx-auto',
     /** Card base styling */
-    cardBase: 'rounded-2xl shadow-2xl',
+    cardBase: 'rounded-2xl',
     /** Standard card padding */
     cardPadding: 'p-6',
   },

@@ -72,7 +72,7 @@ export function PayrollDeadlineCard() {
         elementName="Payroll Deadline Countdown"
         elementCategory="Payroll"
       >
-        <Card className="shadow-md border-amber-500/20 bg-amber-500/5 dark:bg-amber-500/5">
+        <Card className="border-amber-500/20 bg-amber-500/5 dark:bg-amber-500/5">
           <CardContent className="p-5">
             <div className="flex items-center gap-3 text-muted-foreground">
               <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
@@ -129,7 +129,7 @@ export function PayrollDeadlineCard() {
       elementName="Payroll Deadline Countdown"
       elementCategory="Payroll"
     >
-      <Card className={cn('shadow-md', styles.card)}>
+      <Card className={cn(styles.card)}>
         <CardHeader className="pb-2 pt-4 px-5">
           <div className="flex items-center gap-2">
             <div className={cn('w-8 h-8 rounded-full flex items-center justify-center', styles.iconBg)}>

@@ -216,7 +216,7 @@ export function AIInsightsSection() {
 
   if (isLoading) {
     return (
-      <Card className="rounded-2xl shadow-2xl">
+      <Card className="rounded-2xl">
         <CardHeader className="pb-3">
           <Skeleton className="w-48 h-5 rounded" />
         </CardHeader>
@@ -237,7 +237,7 @@ export function AIInsightsSection() {
   const SentimentIcon = sentiment?.icon || Activity;
 
   return (
-    <Card className="rounded-2xl shadow-2xl">
+    <Card className="rounded-2xl">
       {!activeGuidance && (
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
