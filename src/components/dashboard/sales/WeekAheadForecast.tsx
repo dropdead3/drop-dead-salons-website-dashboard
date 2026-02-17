@@ -455,6 +455,15 @@ export function WeekAheadForecast() {
                     content={<WeekAheadTooltip days={days} colorMap={colorMap} formatCurrency={formatCurrency} chartMode={chartMode} />}
                     cursor={{ fill: 'hsl(var(--muted))', fillOpacity: 0.3 }}
                   />
+                  {/* SVG gradient defs for solid glass bars */}
+                  <Customized component={() => (
+                    <defs>
+                      <linearGradient id="solid-glass-week" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.85} />
+                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
+                      </linearGradient>
+                    </defs>
+                  )} />
                   {/* Conditional: solid single bar or stacked category bars */}
                   {chartMode === 'solid' ? (
                     <Bar
@@ -465,7 +474,7 @@ export function WeekAheadForecast() {
                       animationEasing="ease-out"
                       onClick={(data: any) => handleBarClick(data.name)}
                       cursor="pointer"
-                      fill="hsl(var(--primary))"
+                      fill="url(#solid-glass-week)"
                     >
                       <LabelList 
                         dataKey="totalRevenue"
@@ -476,10 +485,10 @@ export function WeekAheadForecast() {
                         return (
                           <Cell
                             key={`solid-${index}`}
-                            fill="hsl(var(--primary))"
-                            stroke={isSelected ? 'hsl(var(--foreground))' : 'hsl(var(--primary))'}
-                            strokeOpacity={isSelected ? 1 : 0.2}
-                            strokeWidth={isSelected ? 1.5 : 0.5}
+                            fill="url(#solid-glass-week)"
+                            stroke={isSelected ? 'hsl(var(--foreground))' : 'hsl(var(--foreground) / 0.12)'}
+                            strokeOpacity={isSelected ? 1 : 1}
+                            strokeWidth={isSelected ? 1.5 : 1}
                           />
                         );
                       })}
