@@ -1,53 +1,48 @@
 
-## Sort Stacked Bar Segments by Revenue (Largest to Smallest)
 
-### What Changes
+## Fix: Handle Gradient Markers in Forecast Bar Colors
 
-The stacked bar segments will be ordered from largest revenue contribution (bottom of stack) to smallest (top of stack), instead of the current alphabetical order. This makes the dominant service categories visually prominent at the base of every bar.
+### Root Cause
 
-**Important note:** Recharts renders stacked bars in a fixed order across all bars in the chart. Per-bar reordering is not possible with stacked `<Bar>` components. The sort will be based on **total revenue across all days/weeks**, so the category that generates the most overall revenue sits at the bottom of every stack.
+Some service categories (e.g., "New Client Consultation") have their `color_hex` stored as a gradient marker string like `gradient:teal-lime` instead of a plain hex color like `#f5f5dc`. SVG `linearGradient` `stopColor` attributes only accept valid CSS color values, not these custom marker strings. When a gradient marker is passed as `stopColor`, the browser ignores it, resulting in a transparent or missing fill on that bar segment.
 
-### Changes
+### Fix
 
-**`src/components/dashboard/sales/WeekAheadForecast.tsx`** (line ~180)
-- Replace `.sort()` with a sort by total revenue descending:
-```typescript
-const allCategories = useMemo(() => {
-  const catTotals: Record<string, number> = {};
-  days.forEach(day => {
-    Object.entries(day.categoryBreakdown).forEach(([c, v]) => {
-      catTotals[c] = (catTotals[c] || 0) + v;
-    });
-  });
-  return Object.entries(catTotals)
-    .sort(([, a], [, b]) => b - a)
-    .map(([cat]) => cat);
-}, [days]);
-```
+Add a helper function that resolves a `color_hex` value to a usable hex color for SVG contexts:
 
-**`src/components/dashboard/sales/ForecastingCard.tsx`** (line ~431)
-- Same logic, using the appropriate source (days or weeks):
-```typescript
-const allCategories = useMemo(() => {
-  const catTotals: Record<string, number> = {};
-  const source = showWeeklyChart ? weeks : days;
-  source.forEach((item: any) => {
-    Object.entries(item.categoryBreakdown || {}).forEach(([c, v]) => {
-      catTotals[c] = (catTotals[c] || 0) + (v as number);
-    });
-  });
-  return Object.entries(catTotals)
-    .sort(([, a], [, b]) => b - a)
-    .map(([cat]) => cat);
-}, [days, weeks, showWeeklyChart]);
-```
+- If the value is a plain hex (e.g., `#fbcfe8`), use it directly.
+- If the value is a gradient marker (e.g., `gradient:teal-lime`), extract the first color stop from the corresponding `SPECIAL_GRADIENTS` entry in `categoryColors.ts`.
 
-### Result
-- Bottom of stack = highest revenue category (e.g., "Blonding" or "Color")
-- Top of stack = smallest category
-- The topmost bar segment keeps its rounded corners and label
-- Tooltip category list also inherits this order naturally since it reads from `_categoryBreakdown` sorted by value
+Apply this resolver in both `WeekAheadForecast.tsx` and `ForecastingCard.tsx` wherever `colorMap[cat.toLowerCase()]?.bg` is used to derive SVG gradient stops and stroke colors.
 
 ### Files Modified
-- `src/components/dashboard/sales/WeekAheadForecast.tsx` (1 line block)
-- `src/components/dashboard/sales/ForecastingCard.tsx` (1 line block)
+
+**`src/components/dashboard/sales/WeekAheadForecast.tsx`**
+- Import `isGradientMarker` and `getGradientFromMarker` from `@/utils/categoryColors`
+- Add a small helper: `resolveHexColor(colorHex)` that returns plain hex or extracts the first gradient stop color
+- Use this helper at line ~342 (gradient defs) and line ~394 (stroke color)
+
+**`src/components/dashboard/sales/ForecastingCard.tsx`**
+- Same imports and helper
+- Use at line ~700 (gradient defs) and line ~763 (stroke color)
+
+### What the Helper Looks Like
+
+```typescript
+function resolveHexColor(colorHex: string): string {
+  if (!isGradientMarker(colorHex)) return colorHex;
+  const grad = getGradientFromMarker(colorHex);
+  if (!grad) return '#888888';
+  // Extract first hex from gradient background string
+  const match = grad.background.match(/#[0-9a-fA-F]{6}/);
+  return match ? match[0] : '#888888';
+}
+```
+
+### Also Update: Tooltip Color Dots
+
+The tooltip category breakdown also shows color dots. These will also need the same resolver so the dot colors match the bar segments.
+
+### Result
+
+All bar segments will have consistent, visible solid-color glass fills regardless of whether the category uses a plain hex or a gradient marker in settings.
