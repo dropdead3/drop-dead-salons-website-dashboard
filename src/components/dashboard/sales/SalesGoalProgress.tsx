@@ -312,7 +312,7 @@ export function SalesGoalProgress({
           {paceStatus === 'behind' && (
             <>
               <TrendingDown className="w-3 h-3" />
-              <span>Behind pace · <BlurredAmount>{formatCurrencyWhole(Math.round(neededPerDay))}/day</BlurredAmount> needed{isLocationAware ? ` (${daysLeft} open day${daysLeft !== 1 ? 's' : ''} left)` : ''}</span>
+              <span>Behind pace · <BlurredAmount>{formatCurrencyWhole(Math.round(neededPerDay))}/day</BlurredAmount> needed ({daysLeft} open day{daysLeft !== 1 ? 's' : ''} left)</span>
               <Button
                 variant="ghost"
                 size="sm"
