@@ -908,11 +908,13 @@ export function ForecastingCard() {
                       const fontSize = 12;
                       const gap = 4;
                       return (
-                        <g style={{ pointerEvents: hideNumbers ? 'auto' : 'none', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
+                        <g style={{ pointerEvents: 'auto', cursor: hideNumbers ? 'pointer' : 'default' }} onClick={hideNumbers ? requestUnhide : undefined}>
                           {hideNumbers && <title>Click to reveal</title>}
                           <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgb(202 138 4)" strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
                           <foreignObject x={chartLeft} y={yPos - 12} width={200} height={24} style={{ overflow: 'visible' }}>
-                            <div style={{
+                            <div
+                              title="Average daily revenue calculated using only days your business is open. Closed days are excluded so the number reflects your actual daily earning pace."
+                              style={{
                               fontSize: 12, fontWeight: 500,
                               color: 'rgb(254 240 138)',
                               backdropFilter: 'blur(6px)',
@@ -924,6 +926,7 @@ export function ForecastingCard() {
                               whiteSpace: 'nowrap' as const,
                               width: 'fit-content',
                               filter: hideNumbers ? 'blur(8px)' : 'none',
+                              cursor: 'help',
                             }}>
                               {avgText}
                             </div>
