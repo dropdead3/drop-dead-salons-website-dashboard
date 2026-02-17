@@ -1,25 +1,37 @@
 
 
-# Fix Chat Window to Fill Entire Viewport
+## Improve Subcard Border Visibility in Light Mode
 
-## Problem
-The chat window doesn't fill the full available height. The message input bar floats in the middle of the screen with empty space below it. This happens because the height chain from the layout root down to the chat container has gaps — specifically, the content wrapper duplicates `h-screen` without subtracting the top bar height, and intermediate `<main>` and wrapper divs don't properly propagate flex sizing.
+### Problem
+The nested subcards within dashboard cards (Services, Products, Transactions, Avg Ticket, etc.) use `border-border/30` which renders nearly invisible against the light cream background. This hurts visual hierarchy and makes it hard to distinguish card boundaries.
 
-## Solution
-Ensure the full height chain flows correctly from the DashboardLayout down to the TeamChatContainer by making `<main>` and its inner wrappers proper flex participants.
+### Solution
+Increase the default border opacity on all subcards in the AggregateSalesCard from `border-border/30` to `border-border/60` for light mode, while preserving the softer dark mode appearance using a dual-class approach: `border-border/60 dark:border-border/30`.
 
-## Technical Changes
+This keeps the dark mode aesthetic intact (where contrast is already sufficient at 30% opacity) while making borders clearly visible on light backgrounds.
 
-### File: `src/components/dashboard/DashboardLayout.tsx`
+### Scope of Changes
 
-1. **`<main>` element (~line 1207-1208)**: Add `h-full` alongside the existing `flex-1 min-h-0 overflow-hidden` when `hideFooter` is true, so it fills its flex parent.
+**File: `src/components/dashboard/AggregateSalesCard.tsx`**
 
-2. **Inner content wrapper (~line 1210-1211)**: Ensure the div wrapping children uses `h-full flex flex-col` when `hideFooter` is true, so it stretches and passes height down.
+All subcard border classes will be updated:
 
-3. **Content div (~line 1215)**: Confirm `h-full` is applied and remove any conflicting `flex-1` that might cause sizing ambiguity. Ensure it has `overflow-hidden` when `hideFooter` to prevent content from overflowing rather than scrolling internally.
+1. **Services and Products subcards** (lines ~681, ~699) -- the two cards visible in your screenshot
+   - From: `border-border/30`
+   - To: `border-border/60 dark:border-border/30`
 
-### File: `src/components/team-chat/TeamChatContainer.tsx`
+2. **Secondary KPI subcards** (Transactions, Avg Ticket, Rev/Hour, Tips -- lines ~740, ~759, ~778, ~797)
+   - Same update on the inactive state border
 
-4. **Chat layout root**: Confirm the chat container uses `h-full` (already present) so it inherits the full height from the layout.
+3. **5-card layout variant** (lines ~824, ~843, and remaining KPI cards in the alternate grid)
+   - Same update for consistency
 
-These changes create an unbroken height chain: `h-screen` (root) -> `flex flex-col` (wrapper) -> `shrink-0` (top bar) -> `flex-1 min-h-0 h-full` (main) -> `h-full` (inner divs) -> `h-full` (chat container) -> `flex-1` (message list) + auto (message input at bottom).
+The hover state (`hover:border-border/60`) will be adjusted to `hover:border-border/80` so there is still a visible lift on hover in light mode.
+
+### Technical Details
+
+- Approximately 12-15 class string replacements in one file
+- No logic changes, no new dependencies
+- Dark mode remains unchanged via the `dark:` prefix override
+- Hover states scale proportionally (60% base to 80% hover in light; 30% base to 60% hover in dark)
+
