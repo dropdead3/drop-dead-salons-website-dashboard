@@ -3,6 +3,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Brain } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 export function AITasksWidget() {
   const { tasks, toggleTask } = useTasks();
@@ -13,12 +14,12 @@ export function AITasksWidget() {
   );
 
   return (
-    <Card className="p-4 rounded-2xl shadow-md">
+    <Card className={cn("p-4", tokens.card.wrapper)}>
       <div className="flex items-center gap-2 mb-3">
-        <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center">
-          <Brain className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400" />
+        <div className={tokens.card.iconBox}>
+          <Brain className={tokens.card.icon} />
         </div>
-        <h3 className="font-display text-xs tracking-[0.15em]">AI SUGGESTED TASKS</h3>
+        <h3 className={tokens.card.title}>AI SUGGESTED TASKS</h3>
       </div>
       {aiTasks.length === 0 ? (
         <p className="text-xs text-muted-foreground py-2">No pending AI tasks</p>

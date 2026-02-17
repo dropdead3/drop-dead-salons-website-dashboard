@@ -12,6 +12,7 @@ import {
   CircleDollarSign
 } from 'lucide-react';
 import { useMarketingAnalytics } from '@/hooks/useMarketingAnalytics';
+import { tokens } from '@/lib/design-tokens';
 import { useLocations } from '@/hooks/useLocations';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { CampaignPerformanceTable } from '@/components/dashboard/marketing/CampaignPerformanceTable';
@@ -80,7 +81,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
       {/* Summary KPI Cards - Row 1: Main Metrics */}
       <PinnableCard elementKey="marketing_kpis" elementName="Marketing KPIs" category="Analytics Hub - Marketing" dateRange={filters.dateRange} locationName={selectedLocationName}>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <Card className="premium-card">
+          <Card className={tokens.card.wrapper}>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <Megaphone className="h-5 w-5 text-muted-foreground mb-2" />
@@ -92,7 +93,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
             </CardContent>
           </Card>
 
-          <Card className="premium-card">
+          <Card className={tokens.card.wrapper}>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <Users className="h-5 w-5 text-muted-foreground mb-2" />
@@ -104,7 +105,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
             </CardContent>
           </Card>
 
-          <Card className="premium-card">
+          <Card className={tokens.card.wrapper}>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <DollarSign className="h-5 w-5 text-muted-foreground mb-2" />
@@ -116,7 +117,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
             </CardContent>
           </Card>
 
-          <Card className="premium-card">
+          <Card className={tokens.card.wrapper}>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <TrendingUp className="h-5 w-5 text-muted-foreground mb-2" />
@@ -128,7 +129,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
             </CardContent>
           </Card>
 
-          <Card className="premium-card col-span-2 md:col-span-1">
+          <Card className={`${tokens.card.wrapper} col-span-2 md:col-span-1`}>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <Award className="h-5 w-5 text-muted-foreground mb-2" />
@@ -146,7 +147,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
       {hasSpendData && (
         <PinnableCard elementKey="marketing_roi_metrics" elementName="ROI Metrics" category="Analytics Hub - Marketing" dateRange={filters.dateRange} locationName={selectedLocationName}>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="premium-card">
+            <Card className={tokens.card.wrapper}>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
                   <DollarSign className="h-5 w-5 text-muted-foreground mb-2" />
@@ -158,7 +159,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
               </CardContent>
             </Card>
 
-            <Card className="premium-card">
+            <Card className={tokens.card.wrapper}>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
                   <CircleDollarSign className="h-5 w-5 text-muted-foreground mb-2" />
@@ -170,7 +171,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
               </CardContent>
             </Card>
 
-            <Card className="premium-card">
+            <Card className={tokens.card.wrapper}>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
                   <Target className="h-5 w-5 text-muted-foreground mb-2" />
@@ -184,7 +185,7 @@ export function MarketingTabContent({ filters }: MarketingTabContentProps) {
               </CardContent>
             </Card>
 
-            <Card className="premium-card">
+            <Card className={tokens.card.wrapper}>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
                   <TrendingUp className="h-5 w-5 text-muted-foreground mb-2" />

@@ -245,7 +245,7 @@ export function AIInsightsSection() {
               <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                 <Brain className="w-5 h-5 text-violet-600 dark:text-violet-400" />
               </div>
-              <CardTitle className="font-display text-base font-medium tracking-wide uppercase">
+              <CardTitle className="font-display text-base tracking-wide">
                 ZURA INSIGHTS
               </CardTitle>
             </div>

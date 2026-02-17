@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Link } from 'react-router-dom';
 import { GenerateTestAccountsButton } from '@/components/dashboard/GenerateTestAccountsButton';
 import { CreateAdminAccountDialog } from '@/components/dashboard/CreateAdminAccountDialog';
@@ -229,7 +230,7 @@ function QRCodeCard() {
   };
 
   return (
-    <Card className="premium-card overflow-hidden">
+    <Card className={`${tokens.card.wrapper} overflow-hidden`}>
       <CardHeader className="pb-2">
         <CardTitle className="text-base flex items-center gap-2">
           <QrCode className="w-4 h-4" />

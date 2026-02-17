@@ -7,6 +7,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { tokens } from '@/lib/design-tokens';
 
 interface ClientFunnelCardProps {
   dateFrom: string;
@@ -29,7 +30,7 @@ export function ClientFunnelCard({ dateFrom, dateTo, locationId, filterContext }
 
   if (isLoading) {
     return (
-      <Card>
+       <Card className={tokens.card.wrapper}>
         <CardContent className="p-6 flex items-center justify-center h-[350px]">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </CardContent>
@@ -38,7 +39,7 @@ export function ClientFunnelCard({ dateFrom, dateTo, locationId, filterContext }
   }
 
   return (
-    <Card>
+    <Card className={tokens.card.wrapper}>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

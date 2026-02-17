@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { ArrowUpDown, Download, TrendingUp, Clock, DollarSign, Target, BarChart3 } from 'lucide-react';
 import { CampaignPerformance, formatSourceName, formatMediumName } from '@/hooks/useMarketingAnalytics';
+import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface CampaignPerformanceTableProps {
@@ -95,7 +96,7 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
 
   if (isLoading) {
     return (
-      <Card className="premium-card">
+      <Card className={tokens.card.wrapper}>
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
@@ -115,7 +116,7 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
 
   if (campaigns.length === 0) {
     return (
-      <Card className="premium-card">
+      <Card className={tokens.card.wrapper}>
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
@@ -139,7 +140,7 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
   const hasSpendData = campaigns.some(c => c.spendToDate !== null && c.spendToDate > 0);
 
   return (
-    <Card className="premium-card">
+    <Card className={tokens.card.wrapper}>
       <CardHeader className="flex flex-row items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">

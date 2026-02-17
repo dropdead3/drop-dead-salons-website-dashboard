@@ -8,6 +8,7 @@ import { useHiringCapacity, LocationCapacity } from '@/hooks/useHiringCapacity';
 import { useHiringForecast } from '@/hooks/useHiringForecast';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { ChartSkeleton } from '@/components/ui/chart-skeleton';
 
@@ -156,7 +157,7 @@ export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
 
   if (isLoading) {
     return (
-      <Card className={cn("premium-card", className)}>
+      <Card className={cn(tokens.card.wrapper, className)}>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-3">
             <Skeleton className="w-10 h-10 rounded-lg" />
@@ -187,7 +188,7 @@ export function HiringCapacityCard({ className }: HiringCapacityCardProps) {
   };
 
   return (
-    <Card className={cn("premium-card", className)}>
+    <Card className={cn(tokens.card.wrapper, className)}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

@@ -49,6 +49,20 @@ export const tokens = {
   },
 
   // ========================================
+  // CARD TOKENS
+  // ========================================
+  card: {
+    /** Standard dashboard card wrapper */
+    wrapper: 'rounded-2xl shadow-2xl',
+    /** Standard icon container (10×10, muted bg, rounded) */
+    iconBox: 'w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0',
+    /** Standard icon inside the icon box */
+    icon: 'w-5 h-5 text-primary',
+    /** Standard card title (Termina, base, tracked) */
+    title: 'font-display text-base tracking-wide',
+  },
+
+  // ========================================
   // LAYOUT TOKENS
   // ========================================
   layout: {

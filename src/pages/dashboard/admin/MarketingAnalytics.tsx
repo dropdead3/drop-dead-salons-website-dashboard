@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useMarketingAnalytics } from '@/hooks/useMarketingAnalytics';
+import { tokens } from '@/lib/design-tokens';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { CampaignPerformanceTable } from '@/components/dashboard/marketing/CampaignPerformanceTable';
 import { SourceBreakdownChart } from '@/components/dashboard/marketing/SourceBreakdownChart';
@@ -89,7 +90,7 @@ export default function MarketingAnalytics() {
 
         {/* Summary KPI Cards - Row 1: Main Metrics */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
-          <Card className="premium-card">
+          <Card className={tokens.card.wrapper}>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <Megaphone className="h-5 w-5 text-muted-foreground mb-2" />
@@ -101,7 +102,7 @@ export default function MarketingAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="premium-card">
+          <Card className={tokens.card.wrapper}>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <Users className="h-5 w-5 text-muted-foreground mb-2" />
@@ -113,7 +114,7 @@ export default function MarketingAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="premium-card">
+          <Card className={tokens.card.wrapper}>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <DollarSign className="h-5 w-5 text-muted-foreground mb-2" />
@@ -125,7 +126,7 @@ export default function MarketingAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="premium-card">
+          <Card className={tokens.card.wrapper}>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <TrendingUp className="h-5 w-5 text-muted-foreground mb-2" />
@@ -137,7 +138,7 @@ export default function MarketingAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="premium-card col-span-2 md:col-span-1">
+          <Card className={`${tokens.card.wrapper} col-span-2 md:col-span-1`}>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <Award className="h-5 w-5 text-muted-foreground mb-2" />
@@ -153,7 +154,7 @@ export default function MarketingAnalytics() {
         {/* Summary KPI Cards - Row 2: ROI Metrics (only show if spend data exists) */}
         {hasSpendData && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <Card className="premium-card">
+            <Card className={tokens.card.wrapper}>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
                   <DollarSign className="h-5 w-5 text-muted-foreground mb-2" />
@@ -165,7 +166,7 @@ export default function MarketingAnalytics() {
               </CardContent>
             </Card>
 
-            <Card className="premium-card">
+            <Card className={tokens.card.wrapper}>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
                   <CircleDollarSign className="h-5 w-5 text-muted-foreground mb-2" />
@@ -177,7 +178,7 @@ export default function MarketingAnalytics() {
               </CardContent>
             </Card>
 
-            <Card className="premium-card">
+            <Card className={tokens.card.wrapper}>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
                   <Target className="h-5 w-5 text-muted-foreground mb-2" />
@@ -191,7 +192,7 @@ export default function MarketingAnalytics() {
               </CardContent>
             </Card>
 
-            <Card className="premium-card">
+            <Card className={tokens.card.wrapper}>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
                   <TrendingUp className="h-5 w-5 text-muted-foreground mb-2" />

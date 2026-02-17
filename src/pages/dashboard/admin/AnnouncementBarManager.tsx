@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -86,7 +87,7 @@ export default function AnnouncementBarManager() {
         </div>
 
         {/* Live Preview */}
-        <Card className="premium-card">
+        <Card className={tokens.card.wrapper}>
           <CardHeader>
             <CardTitle className="text-lg">Live Preview</CardTitle>
             <CardDescription>
@@ -116,7 +117,7 @@ export default function AnnouncementBarManager() {
         </Card>
 
         {/* Settings Form */}
-        <Card className="premium-card">
+        <Card className={tokens.card.wrapper}>
           <CardHeader>
             <CardTitle className="text-lg">Settings</CardTitle>
             <CardDescription>

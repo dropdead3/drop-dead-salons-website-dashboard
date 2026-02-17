@@ -22,6 +22,7 @@ import { CalendarRange, TrendingUp, TrendingDown, Calendar, Users, Info, Target,
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { parseISO, differenceInDays, endOfMonth } from 'date-fns';
 import { useRevenueForecast } from '@/hooks/useRevenueForecast';
 import { motion, useInView } from 'framer-motion';
@@ -433,7 +434,7 @@ export function ForecastingCard() {
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className={tokens.card.wrapper}>
         <CardHeader className="pb-3">
           <Skeleton className="h-5 w-40" />
           <Skeleton className="h-4 w-56 mt-1" />
@@ -452,7 +453,7 @@ export function ForecastingCard() {
 
   if (error || !data) {
     return (
-      <Card>
+      <Card className={tokens.card.wrapper}>
         <CardContent className="p-6 text-center text-muted-foreground">
           Unable to load forecast
         </CardContent>
@@ -503,7 +504,7 @@ export function ForecastingCard() {
 
   return (
     <>
-      <Card>
+      <Card className={tokens.card.wrapper}>
       <CardHeader className="pb-3">
         <div className="flex flex-col gap-3">
           <div className="flex items-center justify-between">
