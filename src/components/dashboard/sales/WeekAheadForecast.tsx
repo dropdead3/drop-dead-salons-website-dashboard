@@ -541,7 +541,9 @@ export function WeekAheadForecast() {
                             @keyframes fadeInBadge { from { opacity: 0; } to { opacity: 1; } }
                           `}</style>
                           <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
-                            <div style={{ 
+                            <div
+                              title="Average daily revenue calculated using only days your business is open. Closed days are excluded so the number reflects your actual daily earning pace."
+                              style={{ 
                               fontSize: 11, fontWeight: 500, 
                               color: 'rgb(254 240 138)',
                               backdropFilter: 'blur(6px)',
@@ -552,6 +554,7 @@ export function WeekAheadForecast() {
                               padding: '1px 8px',
                               whiteSpace: 'nowrap',
                               width: 'fit-content',
+                              cursor: 'help',
                             }}>
                               Daily Operating Avg: {formatCurrencyWhole(Math.round(operatingDailyAvg))}
                             </div>
