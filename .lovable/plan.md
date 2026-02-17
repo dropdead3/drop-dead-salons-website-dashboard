@@ -1,91 +1,63 @@
 
 
-## Standardize Card Header Styling Across Command Center and Analytics
+## Remove All Card Shadows Across the Dashboard
 
 ### Problem
 
-Card headers across the dashboard are inconsistent in multiple ways:
+Cards throughout the dashboard have visible shadows from multiple sources:
+1. The base `Card` component (`src/components/ui/card.tsx` line 31) applies `shadow-sm` to every card globally
+2. The design token `tokens.card.wrapper` adds `shadow-2xl` on top
+3. Many cards also add `shadow-2xl`, `shadow-md`, or `shadow-lg` directly in their className
 
-1. **Icon containers vary in size and style**
-   - Most cards: `w-10 h-10 bg-muted rounded-lg` (correct standard)
-   - AIInsightsCard (dashboard): `w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20` (smaller, custom gradient)
-   - AITasksWidget: `w-6 h-6 rounded-lg bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20` (even smaller, gradient)
-   - NewBookingsCard: `w-10 h-10 bg-blue-500/10 rounded-lg` (custom color instead of `bg-muted`)
-
-2. **Card wrapper classes differ**
-   - GoalTrackerCard: `Card className="shadow-2xl rounded-2xl"` (explicit)
-   - AIInsightsCard: `Card className="rounded-2xl shadow-2xl"` (explicit)
-   - ForecastingCard, ClientFunnelCard: `Card` (bare, no shadow/radius)
-   - HiringCapacityCard: `Card className="premium-card"` (`premium-card` is undefined -- does nothing)
-   - NewBookingsCard: `Card className="p-6"` (padding only, no CardHeader)
-
-3. **Header structure varies**
-   - Some use `CardHeader` + `CardTitle`
-   - Some use raw `div` with manual padding
-   - Title text is sometimes `CardTitle`, sometimes raw `h2` or `h3`
-
-4. **Title text patterns differ**
-   - Most: `font-display text-base tracking-wide` with text already uppercase in JSX
-   - Some add `font-medium uppercase` redundantly
-   - AIInsightsSection adds `font-medium uppercase` on CardTitle
-
-5. **`premium-card` is a ghost class** -- used in 7 files but not defined anywhere in CSS. It has zero effect.
+This creates a heavy, inconsistent look -- especially visible in light mode on the Goal Tracker, My Tasks, and widget cards.
 
 ### Solution
 
-Create standardized card tokens in the design token system and systematically update all Command Center / Analytics cards to use them.
+Remove shadows at every layer:
 
-### Changes
+**1. Base Card component -- remove default shadow**
 
-**1. Add card tokens to `src/lib/design-tokens.ts`**
+File: `src/components/ui/card.tsx`
+- Change `"rounded-xl border bg-card text-card-foreground shadow-sm"` to `"rounded-xl border bg-card text-card-foreground"`
 
-Add a new `card` token group:
+This is the single most impactful change -- it eliminates shadows from every card in the app at once.
 
-```text
-card: {
-  /** Standard dashboard card wrapper */
-  wrapper: 'rounded-2xl shadow-2xl',
-  /** Standard icon container (10x10, muted bg, rounded) */
-  iconBox: 'w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0',
-  /** Standard icon inside the icon box */
-  icon: 'w-5 h-5 text-primary',
-  /** Standard card title (Termina, base, tracked) */
-  title: 'font-display text-base tracking-wide',
-}
-```
+**2. Design tokens -- remove shadow from card wrapper**
 
-**2. Update inconsistent cards (approximately 8 files)**
+File: `src/lib/design-tokens.ts`
+- `card.wrapper`: from `'rounded-2xl shadow-2xl'` to `'rounded-2xl'`
+- `layout.cardBase`: from `'rounded-2xl shadow-2xl'` to `'rounded-2xl'`
 
-| File | What Changes |
-|------|-------------|
-| `AIInsightsCard.tsx` | Icon box from `w-7 h-7 gradient` to standard `w-10 h-10 bg-muted` |
-| `AITasksWidget.tsx` | Icon box from `w-6 h-6 gradient` to standard token |
-| `NewBookingsCard.tsx` | Icon box from `bg-blue-500/10` to `bg-muted`; wrap in `CardHeader`/`CardTitle` structure |
-| `HiringCapacityCard.tsx` | Replace `premium-card` with `tokens.card.wrapper` |
-| `StaffingTrendChart.tsx` | Replace `premium-card` with `tokens.card.wrapper` |
-| `AIInsightsSection.tsx` | Remove redundant `font-medium uppercase` from CardTitle |
-| Marketing cards (4 files) | Replace `premium-card` with `tokens.card.wrapper` |
-| `ClientFunnelCard.tsx` | Add `rounded-2xl shadow-2xl` to bare `Card` |
-| `ForecastingCard.tsx` | Add `rounded-2xl shadow-2xl` to bare `Card` |
-| `GoalTrackerCard.tsx` | Use token instead of inline classes |
+**3. Inline shadow classes on dashboard cards**
 
-**3. Ensure PinnableCard icon detection still works**
+Remove `shadow-2xl` from all dashboard card components that add it explicitly:
 
-PinnableCard finds the icon box via `querySelector('[class*="bg-muted"][class*="rounded-lg"][class*="w-10"]')`. All cards will now use the standard `w-10 h-10 bg-muted rounded-lg` pattern, so this selector will work universally. Cards that previously used different icon sizes or gradients were invisible to the PinnableCard hover swap -- this fix resolves that too.
+| File | Current | After |
+|------|---------|-------|
+| `WeeklyLeverSection.tsx` | `rounded-2xl shadow-2xl` | `rounded-2xl` |
+| `AIInsightsCard.tsx` (2 instances) | `rounded-2xl shadow-2xl` | `rounded-2xl` |
+| `AIInsightsSection.tsx` (2 instances) | `rounded-2xl shadow-2xl` | `rounded-2xl` |
+| `SilenceState.tsx` (2 instances) | `rounded-2xl shadow-2xl` | `rounded-2xl` |
+| `WeeklyLeverBrief.tsx` | `rounded-2xl shadow-2xl` | `rounded-2xl` |
+| `PayrollDeadlineCard.tsx` (2 instances) | `shadow-md` | remove shadow class |
+| `CampaignsTabContent.tsx` | `rounded-2xl shadow-md` | `rounded-2xl` |
+| `PaydayCountdownBanner.tsx` | `shadow-md` references | remove shadow class |
 
-**4. Remove `premium-card` references**
+**4. Non-dashboard shadows are left alone**
 
-Since `premium-card` is not defined in any CSS file, all 7 files using it will be updated to use `tokens.card.wrapper` instead.
+These are intentional and contextually appropriate:
+- Dialogs/modals (`MissedDayDialog`, `UsePassConfirmDialog`) -- overlays need depth
+- Tooltips and popovers (Recharts tooltips, dropdowns) -- floating UI needs shadow
+- Drag-and-drop overlay states (`isDragging && 'shadow-lg'`) -- visual feedback
+- QR code display (`QRCodeFullScreen`) -- presentation context
+- Login pages (`PlatformLogin`, `UnifiedLogin`) -- standalone pages, not dashboard cards
+- Sticky navigation elements (`StickyBookButton`, `ZuraReturnPill`) -- floating UI
+- Hover-only shadows (`hover:shadow-md`) on interactive list items -- these are interactive feedback, not resting shadows
 
-### What Does NOT Change
+### Technical Details
 
-- Card content, data logic, and functionality remain untouched
-- Dark mode behavior unchanged
-- No new dependencies
-- Hover effects on chart elements (inside Recharts) stay as-is -- those are chart-internal interactions, not card-level styling
-
-### File Count
-
-- 1 token file updated
-- ~12 card component files updated (class string replacements only)
-
+- ~15 files modified (class string replacements only)
+- No logic, layout, or functionality changes
+- The base Card component change handles the majority of cards automatically
+- Token update ensures all future cards using `tokens.card.wrapper` are shadow-free
+- Dark mode unaffected (shadows were equally unwanted there)
