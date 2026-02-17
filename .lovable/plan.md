@@ -1,48 +1,70 @@
 
 
-## Fix: Handle Gradient Markers in Forecast Bar Colors
+## Remove "Luxury Glass" Gradient from Forecast Bar Charts
 
-### Root Cause
+### What Changes
 
-Some service categories (e.g., "New Client Consultation") have their `color_hex` stored as a gradient marker string like `gradient:teal-lime` instead of a plain hex color like `#f5f5dc`. SVG `linearGradient` `stopColor` attributes only accept valid CSS color values, not these custom marker strings. When a gradient marker is passed as `stopColor`, the browser ignores it, resulting in a transparent or missing fill on that bar segment.
+Replace the translucent gradient fills with solid, flat category colors on the stacked bar segments in both forecast charts. This eliminates the fading opacity effect that washes out lighter colors (like Haircuts' beige).
 
-### Fix
-
-Add a helper function that resolves a `color_hex` value to a usable hex color for SVG contexts:
-
-- If the value is a plain hex (e.g., `#fbcfe8`), use it directly.
-- If the value is a gradient marker (e.g., `gradient:teal-lime`), extract the first color stop from the corresponding `SPECIAL_GRADIENTS` entry in `categoryColors.ts`.
-
-Apply this resolver in both `WeekAheadForecast.tsx` and `ForecastingCard.tsx` wherever `colorMap[cat.toLowerCase()]?.bg` is used to derive SVG gradient stops and stroke colors.
-
-### Files Modified
+### Changes
 
 **`src/components/dashboard/sales/WeekAheadForecast.tsx`**
-- Import `isGradientMarker` and `getGradientFromMarker` from `@/utils/categoryColors`
-- Add a small helper: `resolveHexColor(colorHex)` that returns plain hex or extracts the first gradient stop color
-- Use this helper at line ~342 (gradient defs) and line ~394 (stroke color)
+
+1. **Remove the `<defs>` block** (lines ~349-360) containing the `linearGradient` definitions entirely.
+2. **Update `<Bar>` fill** (line ~389): Change from `url(#${gradientId})` to the resolved solid color directly.
+3. **Update `<Cell>` fill** (line ~402): Same -- use the solid color instead of the gradient URL.
+4. **Update `<Cell>` stroke** (line ~403): Keep the selection logic but use a lighter opacity of the solid color for the default (non-selected) state, or remove the stroke entirely for unselected bars.
 
 **`src/components/dashboard/sales/ForecastingCard.tsx`**
-- Same imports and helper
-- Use at line ~700 (gradient defs) and line ~763 (stroke color)
 
-### What the Helper Looks Like
+1. **Remove the `<defs>` block** (lines ~707-717) with gradient definitions.
+2. **Update `<Bar>` fill** (line ~758): Solid color.
+3. **Update `<Cell>` fill** (line ~771): Solid color.
+4. **Update `<Cell>` stroke** (line ~772): Same selection logic, solid color.
+
+### What the Bar Rendering Looks Like After
 
 ```typescript
-function resolveHexColor(colorHex: string): string {
-  if (!isGradientMarker(colorHex)) return colorHex;
-  const grad = getGradientFromMarker(colorHex);
-  if (!grad) return '#888888';
-  // Extract first hex from gradient background string
-  const match = grad.background.match(/#[0-9a-fA-F]{6}/);
-  return match ? match[0] : '#888888';
-}
+{allCategories.map((cat, catIndex) => {
+  const isTopBar = catIndex === allCategories.length - 1;
+  const solidColor = resolveHexColor(colorMap[cat.toLowerCase()]?.bg || '#888888');
+  return (
+    <Bar
+      key={cat}
+      dataKey={cat}
+      stackId="revenue"
+      radius={isTopBar ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+      isAnimationActive={true}
+      animationDuration={800}
+      animationEasing="ease-out"
+      fill={solidColor}
+      // ...onClick, cursor props unchanged
+    >
+      {/* LabelList unchanged for topBar */}
+      {chartData.map((entry, index) => {
+        const isSelected = /* ...existing selection logic... */;
+        return (
+          <Cell
+            key={`${cat}-${index}`}
+            fill={solidColor}
+            stroke={isSelected ? 'hsl(var(--foreground))' : solidColor}
+            strokeOpacity={isSelected ? 1 : 0.2}
+            strokeWidth={isSelected ? 1.5 : 0.5}
+          />
+        );
+      })}
+    </Bar>
+  );
+})}
 ```
-
-### Also Update: Tooltip Color Dots
-
-The tooltip category breakdown also shows color dots. These will also need the same resolver so the dot colors match the bar segments.
 
 ### Result
 
-All bar segments will have consistent, visible solid-color glass fills regardless of whether the category uses a plain hex or a gradient marker in settings.
+- All bar segments render as solid, opaque category colors
+- Light/muted colors like Haircuts' beige will be clearly visible
+- Selected bar highlight (thicker stroke) still works
+- No more washed-out or invisible segments
+
+### Files Modified
+- `src/components/dashboard/sales/WeekAheadForecast.tsx`
+- `src/components/dashboard/sales/ForecastingCard.tsx`
