@@ -1,39 +1,73 @@
 
 
-## Improve Tab Toggle Visibility in Light Mode
+## Add "By Category / Solid" Bar Display Toggle with Persistence
 
-### Problem
+### What Changes
 
-The active tab state uses `bg-white/[0.08]` and `ring-white/[0.12]` -- white at 8% and 12% opacity. On the light cream background, this is nearly invisible. The selected tab ("Tomorrow" in your screenshot) looks almost identical to unselected tabs.
+A small toggle will be added to the forecast chart header area, allowing users to switch between two bar display modes:
 
-### Solution
+1. **By Category** (current default): Stacked bars colored by service category (Haircuts, Color, etc.)
+2. **Solid**: A single solid-color bar per day showing total revenue only (using the primary brand color)
 
-Replace the single-mode white overlay with a dual-mode approach:
-- **Light mode**: Use `bg-black/[0.07]` background + `ring-black/[0.10]` ring -- a subtle dark tint that creates clear contrast on cream
-- **Dark mode**: Keep `dark:bg-white/[0.08]` + `dark:ring-white/[0.12]` -- the existing glass look that works well on dark backgrounds
+The user's selection persists across sessions via the existing `dashboard_layout` JSON in `user_preferences`.
 
-This same fix applies to all three tab variants (standard, filter, responsive) and their hover states.
+### UI Design
+
+- A small segmented toggle (using the existing `FilterTabsList` / `FilterTabsTrigger` pattern) placed near the location selector in the card header
+- Two options: "By Category" and "Solid"
+- Compact, matches the existing filter tab aesthetic (the same tokens just updated for light mode visibility)
 
 ### Technical Details
 
-**Files Modified**
+**1. New Hook: `src/hooks/useForecastChartMode.ts`**
 
-1. **`src/components/ui/tabs.tokens.ts`** -- Single source of truth for all tab classes
-   - `trigger` active state: replace `bg-white/[0.08]` with `bg-black/[0.07] dark:bg-white/[0.08]`, and `ring-white/[0.12]` with `ring-black/[0.10] dark:ring-white/[0.12]`
-   - `filterTrigger` active state: same dual-mode swap
-   - `overflowTrigger` hover: `hover:bg-black/[0.05] dark:hover:bg-white/[0.08]`
-   - `overflowMenuItem` hover: same pattern
+A lightweight hook that:
+- Reads the current mode from `dashboard_layout.forecastChartMode` in `user_preferences` (defaults to `'category'`)
+- Provides a `setMode` function that updates the JSONB field
+- Uses the same read/write pattern as `useDashboardLayout` (check existing row, update or insert)
+- Query key: `['user-preferences']` to stay in sync with other dashboard prefs
 
-2. **`src/components/ui/tabs.tsx`** -- The `TabsTrigger` component has inline classes that duplicate the tokens (not using `TABS_CLASSES.trigger`). Update its inline active-state classes to match the new dual-mode pattern.
+```
+type ForecastChartMode = 'category' | 'solid';
+```
 
-3. **`src/components/ui/responsive-tabs-list.tsx`** -- The overflow dropdown button at line ~142 has an inline `hover:bg-white/[0.08]`. Update to the dual-mode pattern.
+**2. Update: `src/components/dashboard/sales/WeekAheadForecast.tsx`**
 
-### Before/After
+- Import the new hook and `FilterTabsList` / `FilterTabsTrigger`
+- Add the toggle in the header area (next to location select and bookings badge)
+- When mode is `'solid'`:
+  - Render a single `<Bar dataKey="totalRevenue">` with `fill="hsl(var(--primary))"` instead of the category-stacked bars
+  - Tooltip shows just total revenue (no category breakdown)
+- When mode is `'category'`:
+  - Keep existing stacked category bars (current behavior)
 
-| State | Before (light mode) | After (light mode) |
-|-------|---------------------|---------------------|
-| Active bg | `bg-white/[0.08]` (invisible) | `bg-black/[0.07]` (subtle dark tint) |
-| Active ring | `ring-white/[0.12]` (invisible) | `ring-black/[0.10]` (visible border) |
-| Hover bg | `hover:bg-white/[0.08]` | `hover:bg-black/[0.05]` |
+**3. Update: `src/components/dashboard/sales/ForecastingCard.tsx`**
 
-Dark mode remains unchanged with the existing white overlay values.
+- Same toggle and logic as WeekAheadForecast
+- Same conditional rendering: single bar for solid mode, stacked bars for category mode
+
+### Data Flow
+
+```text
+user_preferences.dashboard_layout (JSONB)
+  └── forecastChartMode: 'category' | 'solid'
+         │
+         ▼
+  useForecastChartMode() hook
+         │
+         ├── WeekAheadForecast.tsx  →  toggle + conditional bar rendering
+         └── ForecastingCard.tsx    →  toggle + conditional bar rendering
+```
+
+### Files
+
+| File | Action |
+|------|--------|
+| `src/hooks/useForecastChartMode.ts` | New -- read/write preference |
+| `src/components/dashboard/sales/WeekAheadForecast.tsx` | Add toggle + conditional rendering |
+| `src/components/dashboard/sales/ForecastingCard.tsx` | Add toggle + conditional rendering |
+
+### No Database Migration Needed
+
+The `dashboard_layout` column is already a JSONB field. Adding a new key (`forecastChartMode`) requires no schema changes.
+
