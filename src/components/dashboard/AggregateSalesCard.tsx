@@ -678,7 +678,7 @@ export function AggregateSalesCard({
             <div className="grid grid-cols-2 gap-6">
               {/* Services */}
               <div 
-                className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/30 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/60"
+                className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/60 dark:border-border/30 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/80 dark:hover:border-border/60"
                 onClick={() => setDrilldownMode('services')}
               >
                 <div className="flex items-center justify-center gap-1.5 mb-2">
@@ -696,7 +696,7 @@ export function AggregateSalesCard({
               
               {/* Products */}
               <div 
-                className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/30 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/60"
+                className="text-center p-3 sm:p-4 bg-background/50 dark:bg-muted/20 rounded-lg border border-border/60 dark:border-border/30 cursor-pointer transition-all hover:-translate-y-0.5 hover:border-border/80 dark:hover:border-border/60"
                 onClick={() => setDrilldownMode('products')}
               >
                 <div className="flex items-center justify-center gap-1.5 mb-2">
@@ -737,7 +737,7 @@ export function AggregateSalesCard({
                         "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
                         activeDrilldown === 'transactions'
                           ? "border-primary/50 ring-1 ring-primary/20"
-                          : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                          : "border-border/60 dark:border-border/30 hover:border-primary/30 hover:bg-muted/50"
                       )}
                       onClick={() => toggleDrilldown('transactions')}
                     >
@@ -756,7 +756,7 @@ export function AggregateSalesCard({
                         "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
                         activeDrilldown === 'avgTicket'
                           ? "border-primary/50 ring-1 ring-primary/20"
-                          : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                          : "border-border/60 dark:border-border/30 hover:border-primary/30 hover:bg-muted/50"
                       )}
                       onClick={() => toggleDrilldown('avgTicket')}
                     >
@@ -775,7 +775,7 @@ export function AggregateSalesCard({
                         "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
                         activeDrilldown === 'revPerHour'
                           ? "border-primary/50 ring-1 ring-primary/20"
-                          : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                          : "border-border/60 dark:border-border/30 hover:border-primary/30 hover:bg-muted/50"
                       )}
                       onClick={() => toggleDrilldown('revPerHour')}
                     >
@@ -794,7 +794,7 @@ export function AggregateSalesCard({
                         "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
                         tipsDrilldownOpen 
                           ? "border-primary/50 ring-1 ring-primary/20" 
-                          : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                          : "border-border/60 dark:border-border/30 hover:border-primary/30 hover:bg-muted/50"
                       )}
                       onClick={handleTipsToggle}
                     >
@@ -821,7 +821,7 @@ export function AggregateSalesCard({
                       "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
                       activeDrilldown === 'transactions'
                         ? "border-primary/50 ring-1 ring-primary/20"
-                        : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+: "border-border/60 dark:border-border/30 hover:border-primary/30 hover:bg-muted/50"
                     )}
                     onClick={() => toggleDrilldown('transactions')}
                   >
@@ -840,7 +840,7 @@ export function AggregateSalesCard({
                       "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
                       activeDrilldown === 'avgTicket'
                         ? "border-primary/50 ring-1 ring-primary/20"
-                        : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                        : "border-border/60 dark:border-border/30 hover:border-primary/30 hover:bg-muted/50"
                     )}
                     onClick={() => toggleDrilldown('avgTicket')}
                   >
@@ -859,7 +859,7 @@ export function AggregateSalesCard({
                       "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group col-span-2 sm:col-span-1",
                       activeDrilldown === 'revPerHour'
                         ? "border-primary/50 ring-1 ring-primary/20"
-                        : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+                        : "border-border/60 dark:border-border/30 hover:border-primary/30 hover:bg-muted/50"
                     )}
                     onClick={() => toggleDrilldown('revPerHour')}
                   >
@@ -875,7 +875,7 @@ export function AggregateSalesCard({
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/30">
+                  <div className="text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border border-border/60 dark:border-border/30">
                     <div className="flex justify-center mb-2">
                       <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                     </div>
@@ -890,7 +890,7 @@ export function AggregateSalesCard({
                       "text-center p-3 sm:p-4 bg-muted/30 dark:bg-card rounded-lg border transition-all cursor-pointer group",
                       tipsDrilldownOpen 
                         ? "border-primary/50 ring-1 ring-primary/20" 
-                        : "border-border/30 hover:border-primary/30 hover:bg-muted/50"
+: "border-border/60 dark:border-border/30 hover:border-primary/30 hover:bg-muted/50"
                     )}
                     onClick={handleTipsToggle}
                   >
