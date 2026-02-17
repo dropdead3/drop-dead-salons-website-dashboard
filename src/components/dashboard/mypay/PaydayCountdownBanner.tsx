@@ -34,7 +34,7 @@ export function PaydayCountdownBanner() {
       elementCategory="My Pay"
     >
       <Link to="/dashboard/my-pay" className="block group">
-        <Card className={`shadow-md border-border/40 transition-all duration-200 hover:shadow-lg ${isNear ? 'ring-1 ring-primary/20' : ''}`}>
+        <Card className={`border-border/40 transition-all duration-200 ${isNear ? 'ring-1 ring-primary/20' : ''}`}>
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${isNear ? 'bg-primary/15' : 'bg-muted'}`}>

@@ -26,7 +26,7 @@ export function WeeklyLeverBrief({ recommendation }: WeeklyLeverBriefProps) {
   const whyNow = Array.isArray(recommendation.why_now) ? recommendation.why_now : [];
 
   return (
-    <Card className="rounded-2xl shadow-2xl">
+    <Card className="rounded-2xl">
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
           <div className="space-y-2">

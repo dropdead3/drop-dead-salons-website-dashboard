@@ -90,7 +90,7 @@ export function CampaignsTabContent() {
       </div>
 
       {/* Campaign List */}
-      <Card className="rounded-2xl shadow-md">
+      <Card className="rounded-2xl">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="font-display text-base">All Campaigns</CardTitle>

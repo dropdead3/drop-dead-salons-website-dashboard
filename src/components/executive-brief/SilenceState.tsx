@@ -63,7 +63,7 @@ export function SilenceState({ compact = false }: SilenceStateProps) {
 
   if (hasNoKpis) {
     return (
-      <Card className="rounded-2xl shadow-2xl">
+      <Card className="rounded-2xl">
         <CardContent className="flex flex-col items-center justify-center py-16 text-center">
           <div className="relative mb-6">
             <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-muted">
@@ -88,7 +88,7 @@ export function SilenceState({ compact = false }: SilenceStateProps) {
   }
 
   return (
-    <Card className="rounded-2xl shadow-2xl">
+    <Card className="rounded-2xl">
       <CardContent className="flex flex-col items-center justify-center py-16 text-center">
         <div className="relative mb-6">
           <div className="absolute inset-0 animate-ping rounded-full bg-green-500/20" />
