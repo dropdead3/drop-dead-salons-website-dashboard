@@ -24,14 +24,14 @@ const BREAKDOWN_TYPE_LABELS: Record<BreakdownType, string> = {
 
 const MODE_LABELS: Record<BreakdownMode, string> = {
   revenue: 'Revenue by Category',
-  dailyAvg: 'Daily Avg by Category',
+  dailyAvg: 'Daily Operating Avg by Category',
   count: 'Appointments by Category',
 };
 
 function getSectionLabel(mode: BreakdownMode, breakdownType?: BreakdownType): string {
   const typeLabel = breakdownType ? BREAKDOWN_TYPE_LABELS[breakdownType] : 'Category';
   if (mode === 'revenue') return `Revenue by ${typeLabel}`;
-  if (mode === 'dailyAvg') return `Daily Avg by ${typeLabel}`;
+  if (mode === 'dailyAvg') return `Daily Operating Avg by ${typeLabel}`;
   return `Appointments by ${typeLabel}`;
 }
 
