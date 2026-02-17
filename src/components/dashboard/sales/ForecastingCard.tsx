@@ -24,6 +24,7 @@ import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCen
 import { cn } from '@/lib/utils';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
+import { useForecastChartMode } from '@/hooks/useForecastChartMode';
 
 function resolveHexColor(colorHex: string): string {
   if (!isGradientMarker(colorHex)) return colorHex;
@@ -88,7 +89,7 @@ const PERIOD_DESCRIPTIONS: Record<ForecastPeriod, string> = {
 };
 
 // Custom tooltip for forecast chart - shows category breakdown
-function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart, colorMap }: any) {
+function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart, colorMap, chartMode }: any) {
   const { formatCurrency } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   if (!active || !payload?.length) return null;
@@ -110,6 +111,22 @@ function ForecastTooltip({ active, payload, label, days, weeks, showWeeklyChart,
   const sorted = Object.entries(categoryBreakdown).sort(([, a], [, b]) => b - a);
   const totalRevenue = data.totalRevenue || 0;
   const appointments = data.appointments || 0;
+
+  if (chartMode === 'solid') {
+    return (
+      <div className="rounded-lg border bg-background p-3 shadow-lg min-w-[150px]">
+        <p className="font-medium text-sm mb-2">{displayLabel}</p>
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <span className="text-muted-foreground">Total</span>
+          <span className="font-medium tabular-nums text-primary">{formatCurrency(totalRevenue)}</span>
+        </div>
+        <div className="flex items-center justify-between gap-4 text-xs mt-1">
+          <span className="text-muted-foreground">Appointments</span>
+          <span className="font-medium tabular-nums">{appointments}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg border bg-background p-3 shadow-lg min-w-[180px]">
@@ -402,6 +419,7 @@ export function ForecastingCard() {
   const { formatCurrency, currency } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const { colorMap } = useServiceCategoryColorsMap();
+  const { mode: chartMode, setMode: setChartMode } = useForecastChartMode();
   
   const chartRef = useRef<HTMLDivElement>(null);
   const isChartInView = useInView(chartRef, { once: true, amount: 0.3 });
@@ -564,6 +582,12 @@ export function ForecastingCard() {
                 <Badge variant="outline" className="text-xs whitespace-nowrap">
                   {totalAppointments} bookings
                 </Badge>
+                <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid')}>
+                  <FilterTabsList>
+                    <FilterTabsTrigger value="category">By Category</FilterTabsTrigger>
+                    <FilterTabsTrigger value="solid">Solid</FilterTabsTrigger>
+                  </FilterTabsList>
+                </Tabs>
               </div>
             </div>
             <div className="flex items-center justify-between gap-6">
@@ -724,48 +748,79 @@ export function ForecastingCard() {
                         weeks={weeks} 
                         showWeeklyChart={showWeeklyChart}
                         colorMap={colorMap}
+                        chartMode={chartMode}
                       />
                     }
                     cursor={{ fill: 'hsl(var(--muted))', fillOpacity: 0.3 }}
                   />
-                  {/* Dynamic category-stacked bars */}
-                  {allCategories.map((cat, catIndex) => {
-                    const isTopBar = catIndex === allCategories.length - 1;
-                    const solidColor = resolveHexColor(colorMap[cat.toLowerCase()]?.bg || '#888888');
-                    return (
-                      <Bar
-                        key={cat}
-                        dataKey={cat}
-                        stackId="revenue"
-                        radius={isTopBar ? [4, 4, 0, 0] : [0, 0, 0, 0]}
-                        isAnimationActive={true}
-                        animationDuration={800}
-                        animationEasing="ease-out"
-                        onClick={(data: any) => !showWeeklyChart && handleBarClick(data.name)}
-                        cursor={showWeeklyChart ? undefined : "pointer"}
-                        fill={solidColor}
-                      >
-                        {isTopBar && (
-                          <LabelList 
-                            dataKey="totalRevenue"
-                            content={(props: any) => <AboveBarLabel {...props} isBlurred={hideNumbers} onReveal={requestUnhide} />}
+                  {/* Conditional: solid single bar or stacked category bars */}
+                  {chartMode === 'solid' ? (
+                    <Bar
+                      dataKey="totalRevenue"
+                      radius={[4, 4, 0, 0]}
+                      isAnimationActive={true}
+                      animationDuration={800}
+                      animationEasing="ease-out"
+                      onClick={(data: any) => !showWeeklyChart && handleBarClick(data.name)}
+                      cursor={showWeeklyChart ? undefined : "pointer"}
+                      fill="hsl(var(--primary))"
+                    >
+                      <LabelList 
+                        dataKey="totalRevenue"
+                        content={(props: any) => <AboveBarLabel {...props} isBlurred={hideNumbers} onReveal={requestUnhide} />}
+                      />
+                      {chartData.map((entry, index) => {
+                        const isSelected = !showWeeklyChart && selectedBarDay && days.find(d => d.date === selectedBarDay.date)?.date === (entry as any).name;
+                        return (
+                          <Cell
+                            key={`solid-${index}`}
+                            fill="hsl(var(--primary))"
+                            stroke={isSelected ? 'hsl(var(--foreground))' : 'hsl(var(--primary))'}
+                            strokeOpacity={isSelected ? 1 : 0.2}
+                            strokeWidth={isSelected ? 1.5 : 0.5}
                           />
-                        )}
-                        {chartData.map((entry, index) => {
-                          const isSelected = !showWeeklyChart && selectedBarDay && days.find(d => d.date === selectedBarDay.date)?.date === (entry as any).name;
-                          return (
-                            <Cell
-                              key={`${cat}-${index}`}
-                              fill={solidColor}
-                              stroke={isSelected ? 'hsl(var(--foreground))' : solidColor}
-                              strokeOpacity={isSelected ? 1 : 0.2}
-                              strokeWidth={isSelected ? 1.5 : 0.5}
+                        );
+                      })}
+                    </Bar>
+                  ) : (
+                    allCategories.map((cat, catIndex) => {
+                      const isTopBar = catIndex === allCategories.length - 1;
+                      const solidColor = resolveHexColor(colorMap[cat.toLowerCase()]?.bg || '#888888');
+                      return (
+                        <Bar
+                          key={cat}
+                          dataKey={cat}
+                          stackId="revenue"
+                          radius={isTopBar ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                          isAnimationActive={true}
+                          animationDuration={800}
+                          animationEasing="ease-out"
+                          onClick={(data: any) => !showWeeklyChart && handleBarClick(data.name)}
+                          cursor={showWeeklyChart ? undefined : "pointer"}
+                          fill={solidColor}
+                        >
+                          {isTopBar && (
+                            <LabelList 
+                              dataKey="totalRevenue"
+                              content={(props: any) => <AboveBarLabel {...props} isBlurred={hideNumbers} onReveal={requestUnhide} />}
                             />
-                          );
-                        })}
-                      </Bar>
-                    );
-                  })}
+                          )}
+                          {chartData.map((entry, index) => {
+                            const isSelected = !showWeeklyChart && selectedBarDay && days.find(d => d.date === selectedBarDay.date)?.date === (entry as any).name;
+                            return (
+                              <Cell
+                                key={`${cat}-${index}`}
+                                fill={solidColor}
+                                stroke={isSelected ? 'hsl(var(--foreground))' : solidColor}
+                                strokeOpacity={isSelected ? 1 : 0.2}
+                                strokeWidth={isSelected ? 1.5 : 0.5}
+                              />
+                            );
+                          })}
+                        </Bar>
+                      );
+                    })
+                  )}
                   {/* Daily average reference line - only for daily views */}
                   {!showWeeklyChart && averageDaily > 0 && (
                     <Customized component={(props: any) => {
