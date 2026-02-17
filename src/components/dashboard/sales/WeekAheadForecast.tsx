@@ -614,6 +614,9 @@ export function WeekAheadForecast() {
               </span>
             </div>
           )}
+          <p className="text-[11px] text-muted-foreground/40 italic pt-2">
+            *Daily Operating Average only counts days open
+          </p>
         </CardContent>
       </Card>
 
