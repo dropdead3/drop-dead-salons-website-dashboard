@@ -959,7 +959,7 @@ export function ForecastingCard() {
           {showWeeklyChart && peakWeek && peakWeek.revenue > 0 && (
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
               <span className="text-muted-foreground">
-                Busiest week: <span className="font-medium text-foreground">{peakWeek.weekLabel}</span>
+                {period === '60days' ? 'Peak week (next 60 days)' : 'Peak week (next 30 days)'}: <span className="font-medium text-foreground">{peakWeek.weekLabel}</span>
               </span>
               <span className="font-display text-chart-2">
                 <BlurredAmount>{formatCurrency(peakWeek.revenue)}</BlurredAmount>
@@ -970,7 +970,7 @@ export function ForecastingCard() {
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
               <span className="text-muted-foreground flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-chart-2" />
-                Busiest day: <span className="font-medium text-foreground">{formatDate(peakDay.date, 'EEEE')}</span>
+                Peak day (next 7 days): <span className="font-medium text-foreground">{formatDate(peakDay.date, 'EEEE, MMM d')}</span>
               </span>
               <span className="font-display text-chart-2">
                 <BlurredAmount>{formatCurrency(peakDay.revenue)}</BlurredAmount>
