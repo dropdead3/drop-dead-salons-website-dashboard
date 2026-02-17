@@ -173,11 +173,15 @@ export function WeekAheadForecast() {
 
   // Compute all unique categories across days (must be before early returns)
   const allCategories = useMemo(() => {
-    const cats = new Set<string>();
+    const catTotals: Record<string, number> = {};
     days.forEach(day => {
-      Object.keys(day.categoryBreakdown).forEach(c => cats.add(c));
+      Object.entries(day.categoryBreakdown).forEach(([c, v]) => {
+        catTotals[c] = (catTotals[c] || 0) + v;
+      });
     });
-    return Array.from(cats).sort();
+    return Object.entries(catTotals)
+      .sort(([, a], [, b]) => b - a)
+      .map(([cat]) => cat);
   }, [days]);
 
   // Chart data with category breakdown flattened (must be before early returns)
