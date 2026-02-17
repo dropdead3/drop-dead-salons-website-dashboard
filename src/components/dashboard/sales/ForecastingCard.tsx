@@ -1023,6 +1023,11 @@ export function ForecastingCard() {
             <YearlyGoalProgressSection locationId={selectedLocation} />
           )}
 
+          {period !== 'tomorrow' && (
+            <p className="text-[11px] text-muted-foreground/40 italic pt-2">
+              *Daily Operating Average only counts days open
+            </p>
+          )}
           {/* Peak Day/Week Callout */}
           {showWeeklyChart && peakWeek && peakWeek.revenue > 0 && (
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
@@ -1044,11 +1049,6 @@ export function ForecastingCard() {
                 <BlurredAmount>{formatCurrency(peakDay.revenue)}</BlurredAmount>
               </span>
             </div>
-          )}
-          {period !== 'tomorrow' && (
-            <p className="text-[11px] text-muted-foreground/40 italic pt-2">
-              *Daily Operating Average only counts days open
-            </p>
           )}
         </CardContent>
       </Card>
