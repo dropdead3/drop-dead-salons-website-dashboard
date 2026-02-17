@@ -608,7 +608,7 @@ export function ForecastingCard() {
   const avgTooltip = period === 'tomorrow' 
     ? 'Total projected revenue for tomorrow.'
     : (period === '7days' || period === 'todayToEom'
-      ? `${PERIOD_TOTAL_LABELS[period]} ÷ ${operatingDayCount} operating days. Average projected daily revenue excluding closed days.`
+      ? `Average daily revenue calculated using only days your business is open. Closed days are excluded so the number reflects your actual daily earning pace.`
       : `${PERIOD_TOTAL_LABELS[period]} ÷ ${weeks.length || 1}. Average projected weekly revenue.`);
   const apptTooltip = `Total count of scheduled appointments for the ${PERIOD_LABELS[period].toLowerCase()}.`;
 
