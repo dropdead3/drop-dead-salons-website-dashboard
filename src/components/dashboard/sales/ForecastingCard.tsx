@@ -704,18 +704,6 @@ export function ForecastingCard() {
             <div className={cn("h-[220px]", showWeeklyChart && "h-[240px]")} ref={chartRef}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 25, right: 5, bottom: showWeeklyChart ? 40 : 48, left: 10 }}>
-                  <defs>
-                    {allCategories.map(cat => {
-                      const color = resolveHexColor(colorMap[cat.toLowerCase()]?.bg || '#888888');
-                      return (
-                        <linearGradient key={cat} id={`glass-fc-${cat.replace(/\s+/g, '-')}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={color} stopOpacity={0.75} />
-                          <stop offset="40%" stopColor={color} stopOpacity={0.55} />
-                          <stop offset="100%" stopColor={color} stopOpacity={0.35} />
-                        </linearGradient>
-                      );
-                    })}
-                  </defs>
                   <XAxis
                     dataKey="name" 
                     tick={showWeeklyChart 
@@ -743,7 +731,7 @@ export function ForecastingCard() {
                   {/* Dynamic category-stacked bars */}
                   {allCategories.map((cat, catIndex) => {
                     const isTopBar = catIndex === allCategories.length - 1;
-                    const gradientId = `glass-fc-${cat.replace(/\s+/g, '-')}`;
+                    const solidColor = resolveHexColor(colorMap[cat.toLowerCase()]?.bg || '#888888');
                     return (
                       <Bar
                         key={cat}
@@ -755,7 +743,7 @@ export function ForecastingCard() {
                         animationEasing="ease-out"
                         onClick={(data: any) => !showWeeklyChart && handleBarClick(data.name)}
                         cursor={showWeeklyChart ? undefined : "pointer"}
-                        fill={`url(#${gradientId})`}
+                        fill={solidColor}
                       >
                         {isTopBar && (
                           <LabelList 
@@ -768,9 +756,9 @@ export function ForecastingCard() {
                           return (
                             <Cell
                               key={`${cat}-${index}`}
-                              fill={`url(#${gradientId})`}
-                              stroke={isSelected ? 'hsl(var(--foreground))' : resolveHexColor(colorMap[cat.toLowerCase()]?.bg || '#888888')}
-                              strokeOpacity={isSelected ? 1 : 0.3}
+                              fill={solidColor}
+                              stroke={isSelected ? 'hsl(var(--foreground))' : solidColor}
+                              strokeOpacity={isSelected ? 1 : 0.2}
                               strokeWidth={isSelected ? 1.5 : 0.5}
                             />
                           );
