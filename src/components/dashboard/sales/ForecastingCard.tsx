@@ -912,23 +912,38 @@ export function ForecastingCard() {
                           {hideNumbers && <title>Click to reveal</title>}
                           <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgb(202 138 4)" strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
                           <foreignObject x={chartLeft} y={yPos - 12} width={200} height={24} style={{ overflow: 'visible' }}>
-                            <div
-                              title="Average daily revenue calculated using only days your business is open. Closed days are excluded so the number reflects your actual daily earning pace."
-                              style={{
-                              fontSize: 12, fontWeight: 500,
-                              color: 'rgb(254 240 138)',
-                              backdropFilter: 'blur(6px)',
-                              WebkitBackdropFilter: 'blur(6px)',
-                              background: 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))',
-                              border: '1px solid rgb(202 138 4 / 0.6)',
-                              borderRadius: 9999,
-                              padding: '2px 8px',
-                              whiteSpace: 'nowrap' as const,
-                              width: 'fit-content',
-                              filter: hideNumbers ? 'blur(8px)' : 'none',
-                              cursor: 'help',
-                            }}>
-                              {avgText}
+                            <div className="operating-avg-badge-fc" style={{ position: 'relative' }}>
+                              <style>{`
+                                .operating-avg-badge-fc:hover .operating-avg-tip-fc { opacity: 1; pointer-events: auto; }
+                              `}</style>
+                              <div style={{
+                                fontSize: 12, fontWeight: 500,
+                                color: 'rgb(254 240 138)',
+                                backdropFilter: 'blur(6px)',
+                                WebkitBackdropFilter: 'blur(6px)',
+                                background: 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))',
+                                border: '1px solid rgb(202 138 4 / 0.6)',
+                                borderRadius: 9999,
+                                padding: '2px 8px',
+                                whiteSpace: 'nowrap' as const,
+                                width: 'fit-content',
+                                filter: hideNumbers ? 'blur(8px)' : 'none',
+                                cursor: 'help',
+                              }}>
+                                {avgText}
+                              </div>
+                              <div className="operating-avg-tip-fc" style={{
+                                position: 'absolute', bottom: '100%', left: 0, marginBottom: 6,
+                                background: 'hsl(var(--popover))', color: 'hsl(var(--popover-foreground))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: 8, padding: '6px 10px',
+                                fontSize: 11, lineHeight: 1.4, maxWidth: 260,
+                                whiteSpace: 'normal', opacity: 0, pointerEvents: 'none',
+                                transition: 'opacity 0.1s ease', zIndex: 50,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                              }}>
+                                Average daily revenue calculated using only days your business is open. Closed days are excluded so the number reflects your actual daily earning pace.
+                              </div>
                             </div>
                           </foreignObject>
                         </g>
