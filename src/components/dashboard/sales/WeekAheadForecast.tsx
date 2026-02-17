@@ -28,6 +28,7 @@ function resolveHexColor(colorHex: string): string {
 import { cn } from '@/lib/utils';
 import { parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { useLocations, isClosedOnDate } from '@/hooks/useLocations';
 import { motion, useInView } from 'framer-motion';
 import { 
   BarChart, 
@@ -65,10 +66,12 @@ function AboveBarLabel({ x, y, width, value, ...rest }: any) {
 }
 
 // Custom X-axis tick to show day name and appointments under each bar
-function CustomXAxisTick({ x, y, payload, days, peakDate, onDayClick }: any) {
+function CustomXAxisTick({ x, y, payload, days, peakDate, onDayClick, closedDates }: any) {
   const [isHovered, setIsHovered] = useState(false);
   const day = days.find((d: DayForecast) => d.dayName === payload.value);
   if (!day) return null;
+
+  const isClosed = closedDates?.has(day.date);
   
   return (
     <g 
@@ -90,21 +93,58 @@ function CustomXAxisTick({ x, y, payload, days, peakDate, onDayClick }: any) {
         >
           {day.dayName}
         </text>
-        <text 
-          x={0} y={0} dy={26} 
-          textAnchor="middle" 
-          className="fill-primary text-[11px] cursor-pointer"
-          style={{ 
-            fontWeight: 500,
-            textDecoration: isHovered ? 'underline' : 'none',
-          }}
-          onClick={(e) => {
-            e.stopPropagation();
-            onDayClick(day);
-          }}
-        >
-          {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}
-        </text>
+        {day.appointmentCount > 0 ? (
+          <>
+            <text 
+              x={0} y={0} dy={26} 
+              textAnchor="middle" 
+              className="fill-primary text-[11px] cursor-pointer"
+              style={{ 
+                fontWeight: 500,
+                textDecoration: isHovered ? 'underline' : 'none',
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDayClick(day);
+              }}
+            >
+              {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}
+            </text>
+            {isClosed && (
+              <text
+                x={0} y={0} dy={39}
+                textAnchor="middle"
+                className="fill-muted-foreground text-[9px]"
+              >
+                ☽ Closed
+              </text>
+            )}
+          </>
+        ) : isClosed ? (
+          <text
+            x={0} y={0} dy={26}
+            textAnchor="middle"
+            className="fill-muted-foreground text-[9px]"
+          >
+            ☽ Closed
+          </text>
+        ) : (
+          <text 
+            x={0} y={0} dy={26} 
+            textAnchor="middle" 
+            className="fill-primary text-[11px] cursor-pointer"
+            style={{ 
+              fontWeight: 500,
+              textDecoration: isHovered ? 'underline' : 'none',
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDayClick(day);
+            }}
+          >
+            0 appointments
+          </text>
+        )}
       </motion.g>
     </g>
   );
@@ -175,7 +215,21 @@ export function WeekAheadForecast() {
   const [selectedStatCard, setSelectedStatCard] = useState<BreakdownMode | null>(null);
   const [selectedBarDay, setSelectedBarDay] = useState<DayForecast | null>(null);
   const { data, isLoading, error } = useWeekAheadRevenue(selectedLocation);
+  const { data: locations = [] } = useLocations();
   const { colorMap } = useServiceCategoryColorsMap();
+
+  // Compute closed dates for the selected location
+  const closedDates = useMemo(() => {
+    if (selectedLocation === 'all') return new Set<string>();
+    const loc = locations.find(l => l.id === selectedLocation);
+    if (!loc) return new Set<string>();
+    const closed = new Set<string>();
+    (data?.days || []).forEach(day => {
+      const result = isClosedOnDate(loc.hours_json, loc.holiday_closures, parseISO(day.date));
+      if (result.isClosed) closed.add(day.date);
+    });
+    return closed;
+  }, [selectedLocation, locations, data?.days]);
   const { mode: chartMode, setMode: setChartMode } = useForecastChartMode();
   
   const chartRef = useRef<HTMLDivElement>(null);
@@ -376,7 +430,7 @@ export function WeekAheadForecast() {
                 >
                   <XAxis 
                     dataKey="name" 
-                    tick={<CustomXAxisTick days={days} peakDate={peakDay?.date} onDayClick={handleDayClick} />}
+                    tick={<CustomXAxisTick days={days} peakDate={peakDay?.date} onDayClick={handleDayClick} closedDates={closedDates} />}
                     tickLine={false}
                     axisLine={false}
                     interval={0}
