@@ -1205,14 +1205,14 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
 
       {/* Main Content */}
       <main className={cn(
-        hideFooter ? "flex-1 min-h-0 overflow-hidden" : ""
+        hideFooter ? "flex-1 min-h-0 overflow-hidden h-full" : ""
       )}>
         <div className={cn(
-          hideFooter ? "h-full" : "min-h-screen flex flex-col",
+          hideFooter ? "h-full flex flex-col" : "min-h-screen flex flex-col",
           isAdmin && "lg:pt-0",
           hasZuraGuidance && !hideFooter && "pb-64"
         )}>
-          <div className={cn("w-full max-w-none flex-1 min-w-0", hideFooter && "h-full")}>
+          <div className={cn("w-full max-w-none flex-1 min-w-0", hideFooter && "h-full overflow-hidden")}>
             {!hideFooter && (() => {
               const parts = location.pathname.split('/').filter(Boolean);
               if (parts[0] !== 'dashboard' || parts.length <= 2) return null;
