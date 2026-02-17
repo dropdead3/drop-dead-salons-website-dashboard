@@ -22,6 +22,7 @@ export interface DayForecast {
   unconfirmedRevenue: number;
   appointmentCount: number;
   appointments: AppointmentSummary[];
+  categoryBreakdown: Record<string, number>;
 }
 
 export interface CategoryBreakdown {
@@ -95,9 +96,9 @@ export function useWeekAheadRevenue(locationId?: string) {
       }
       
       // Group by date
-      const byDate: Record<string, { revenue: number; confirmedRevenue: number; unconfirmedRevenue: number; count: number; appointments: AppointmentSummary[] }> = {};
+      const byDate: Record<string, { revenue: number; confirmedRevenue: number; unconfirmedRevenue: number; count: number; appointments: AppointmentSummary[]; categoryBreakdown: Record<string, number> }> = {};
       dates.forEach(d => {
-        byDate[d.date] = { revenue: 0, confirmedRevenue: 0, unconfirmedRevenue: 0, count: 0, appointments: [] };
+        byDate[d.date] = { revenue: 0, confirmedRevenue: 0, unconfirmedRevenue: 0, count: 0, appointments: [], categoryBreakdown: {} };
       });
 
       appointments.forEach(apt => {
@@ -113,6 +114,10 @@ export function useWeekAheadRevenue(locationId?: string) {
           } else {
             byDate[dateKey].confirmedRevenue += price;
           }
+          // Accumulate per-day category breakdown
+          const category = (apt as any).service_category || 'Uncategorized';
+          byDate[dateKey].categoryBreakdown[category] = (byDate[dateKey].categoryBreakdown[category] || 0) + price;
+
           byDate[dateKey].count += 1;
           byDate[dateKey].appointments.push({
             id: apt.id,
@@ -149,6 +154,7 @@ export function useWeekAheadRevenue(locationId?: string) {
         unconfirmedRevenue: byDate[d.date].unconfirmedRevenue,
         appointmentCount: byDate[d.date].count,
         appointments: byDate[d.date].appointments,
+        categoryBreakdown: byDate[d.date].categoryBreakdown,
       }));
 
       // Calculate totals
