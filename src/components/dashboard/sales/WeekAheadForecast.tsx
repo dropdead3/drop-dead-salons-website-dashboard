@@ -220,14 +220,26 @@ export function WeekAheadForecast() {
 
   // Compute closed dates for the selected location
   const closedDates = useMemo(() => {
-    if (selectedLocation === 'all') return new Set<string>();
-    const loc = locations.find(l => l.id === selectedLocation);
-    if (!loc) return new Set<string>();
+    const days = data?.days || [];
+    if (!days.length || !locations.length) return new Set<string>();
     const closed = new Set<string>();
-    (data?.days || []).forEach(day => {
-      const result = isClosedOnDate(loc.hours_json, loc.holiday_closures, parseISO(day.date));
-      if (result.isClosed) closed.add(day.date);
-    });
+    if (selectedLocation === 'all') {
+      // Mark closed only if EVERY location is closed on that day
+      days.forEach(day => {
+        const allClosed = locations.every(loc => 
+          isClosedOnDate(loc.hours_json, loc.holiday_closures, parseISO(day.date)).isClosed
+        );
+        if (allClosed) closed.add(day.date);
+      });
+    } else {
+      const loc = locations.find(l => l.id === selectedLocation);
+      if (!loc) return closed;
+      days.forEach(day => {
+        if (isClosedOnDate(loc.hours_json, loc.holiday_closures, parseISO(day.date)).isClosed) {
+          closed.add(day.date);
+        }
+      });
+    }
     return closed;
   }, [selectedLocation, locations, data?.days]);
   const { mode: chartMode, setMode: setChartMode } = useForecastChartMode();
