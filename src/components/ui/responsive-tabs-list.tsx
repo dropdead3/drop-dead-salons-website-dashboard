@@ -139,7 +139,7 @@ export const ResponsiveTabsList = React.forwardRef<
                 return (
                   <button
                     key={value || childEl.key}
-                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left font-medium text-muted-foreground hover:text-foreground hover:bg-white/[0.08] transition-colors"
+                    className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left font-medium text-muted-foreground hover:text-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors"
                     style={{ borderRadius: 6 }}
                     type="button"
                     onClick={() => {
