@@ -78,7 +78,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
   const totalCount = filteredAnnouncements.length;
 
   return (
-    <Card className="p-6 rounded-2xl shadow-lg backdrop-blur-sm">
+    <Card className="p-6 rounded-2xl backdrop-blur-sm">
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
