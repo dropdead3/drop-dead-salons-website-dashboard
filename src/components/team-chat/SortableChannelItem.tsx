@@ -76,41 +76,41 @@ export function SortableChannelItem({
         <button
           {...attributes}
           {...listeners}
-          className="p-1 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity touch-none"
+          className="p-0.5 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity touch-none ml-1"
           onClick={(e) => e.stopPropagation()}
         >
-          <GripVertical className="h-3 w-3 text-muted-foreground" />
+          <GripVertical className="h-3 w-3 text-sidebar-foreground/30" />
         </button>
       )}
       <button
         onClick={onClick}
         className={cn(
-          'flex-1 flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors',
-          'hover:bg-accent/50',
-          isActive && 'bg-accent text-accent-foreground',
-          !isMember && 'opacity-60',
-          unreadCount > 0 && !isActive && 'font-medium',
-          !isDragEnabled && 'px-3'
+          'flex-1 flex items-center gap-2 px-2 py-1 rounded text-[13px] transition-colors mx-1',
+          'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent',
+          isActive && 'bg-sidebar-accent text-sidebar-foreground',
+          !isMember && 'opacity-50',
+          unreadCount > 0 && !isActive && 'text-sidebar-foreground font-medium',
+          !isDragEnabled && 'ml-2'
         )}
       >
         {isDM ? (
           <Avatar className="h-5 w-5 shrink-0">
             <AvatarImage src={avatarUrl || undefined} alt={displayName} />
-            <AvatarFallback className="text-[10px] bg-muted">
+            <AvatarFallback className="text-[9px] bg-sidebar-accent text-sidebar-foreground/60">
               {getInitials(displayName)}
             </AvatarFallback>
           </Avatar>
         ) : (
-          <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <Icon className="h-4 w-4 shrink-0 text-sidebar-foreground/40" />
         )}
         <span className="truncate flex-1 text-left">{displayName}</span>
         {unreadCount > 0 && !isActive && (
-          <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-[10px]">
+          <Badge variant="destructive" className="h-4 min-w-4 px-1 text-[10px] leading-none rounded-full">
             {unreadCount > 99 ? '99+' : unreadCount}
           </Badge>
         )}
         {channel.membership?.is_muted && unreadCount === 0 && (
-          <span className="text-xs text-muted-foreground">muted</span>
+          <span className="text-[10px] text-sidebar-foreground/30 italic">muted</span>
         )}
       </button>
     </div>
