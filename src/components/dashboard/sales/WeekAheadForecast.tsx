@@ -394,7 +394,7 @@ export function WeekAheadForecast() {
               />
               <div className="flex items-center gap-1 justify-center">
                 <p className="text-xs text-muted-foreground">Daily Operating Avg</p>
-                <MetricInfoTooltip description={`7-Day Total ÷ ${operatingDayCount} operating days. Average projected daily revenue excluding closed days.`} />
+                <MetricInfoTooltip description="Average daily revenue calculated using only days your business is open. Closed days (like Sundays and Mondays) are excluded so the number reflects your actual daily earning pace." />
               </div>
               <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'dailyAvg' && 'rotate-180 text-primary')} />
             </div>
