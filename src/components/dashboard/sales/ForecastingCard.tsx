@@ -706,10 +706,10 @@ export function ForecastingCard() {
                   currency={currency}
                   className="text-lg font-display tabular-nums"
                 />
-                <div className="flex items-center gap-1 justify-center">
-                  <p className="text-xs text-muted-foreground">{PERIOD_AVG_LABELS[period]}</p>
-                  <MetricInfoTooltip description={avgTooltip} />
-                </div>
+                <p className="text-xs text-muted-foreground">{PERIOD_AVG_LABELS[period]}</p>
+                {(period === '7days' || period === 'todayToEom') && (
+                  <p className="text-[10px] text-muted-foreground/50 mt-0.5 leading-tight">Only counts days open</p>
+                )}
                 <ChevronDown className={cn('w-3 h-3 mx-auto mt-1 text-muted-foreground transition-transform', selectedStatCard === 'dailyAvg' && 'rotate-180 text-primary')} />
               </div>
             )}
@@ -912,38 +912,20 @@ export function ForecastingCard() {
                           {hideNumbers && <title>Click to reveal</title>}
                           <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgb(202 138 4)" strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
                           <foreignObject x={chartLeft} y={yPos - 12} width={200} height={24} style={{ overflow: 'visible' }}>
-                            <div className="operating-avg-badge-fc" style={{ position: 'relative' }}>
-                              <style>{`
-                                .operating-avg-badge-fc:hover .operating-avg-tip-fc { opacity: 1; pointer-events: auto; }
-                              `}</style>
-                              <div style={{
-                                fontSize: 12, fontWeight: 500,
-                                color: 'rgb(254 240 138)',
-                                backdropFilter: 'blur(6px)',
-                                WebkitBackdropFilter: 'blur(6px)',
-                                background: 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))',
-                                border: '1px solid rgb(202 138 4 / 0.6)',
-                                borderRadius: 9999,
-                                padding: '2px 8px',
-                                whiteSpace: 'nowrap' as const,
-                                width: 'fit-content',
-                                filter: hideNumbers ? 'blur(8px)' : 'none',
-                                cursor: 'help',
-                              }}>
-                                {avgText}
-                              </div>
-                              <div className="operating-avg-tip-fc" style={{
-                                position: 'absolute', bottom: '100%', left: 0, marginBottom: 6,
-                                background: 'hsl(var(--popover))', color: 'hsl(var(--popover-foreground))',
-                                border: '1px solid hsl(var(--border))',
-                                borderRadius: 8, padding: '6px 10px',
-                                fontSize: 11, lineHeight: 1.4, maxWidth: 260,
-                                whiteSpace: 'normal', opacity: 0, pointerEvents: 'none',
-                                transition: 'opacity 0.1s ease', zIndex: 50,
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                              }}>
-                                Average daily revenue calculated using only days your business is open. Closed days are excluded so the number reflects your actual daily earning pace.
-                              </div>
+                            <div style={{
+                              fontSize: 12, fontWeight: 500,
+                              color: 'rgb(254 240 138)',
+                              backdropFilter: 'blur(6px)',
+                              WebkitBackdropFilter: 'blur(6px)',
+                              background: 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))',
+                              border: '1px solid rgb(202 138 4 / 0.6)',
+                              borderRadius: 9999,
+                              padding: '2px 8px',
+                              whiteSpace: 'nowrap' as const,
+                              width: 'fit-content',
+                              filter: hideNumbers ? 'blur(8px)' : 'none',
+                            }}>
+                              {avgText}
                             </div>
                           </foreignObject>
                         </g>
