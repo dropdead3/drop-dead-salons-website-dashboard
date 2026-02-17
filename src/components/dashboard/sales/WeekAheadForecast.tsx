@@ -602,6 +602,9 @@ export function WeekAheadForecast() {
             onOpenChange={(open) => { if (!open) setSelectedBarDay(null); }}
           />
 
+          <p className="text-[11px] text-muted-foreground/40 italic pt-2">
+            *Daily Operating Average only counts days open
+          </p>
           {/* Peak Day Callout */}
           {peakDay && peakDay.revenue > 0 && (
             <div className="flex items-center justify-between p-2 bg-chart-2/10 rounded-lg text-sm">
@@ -614,9 +617,6 @@ export function WeekAheadForecast() {
               </span>
             </div>
           )}
-          <p className="text-[11px] text-muted-foreground/40 italic pt-2">
-            *Daily Operating Average only counts days open
-          </p>
         </CardContent>
       </Card>
 
