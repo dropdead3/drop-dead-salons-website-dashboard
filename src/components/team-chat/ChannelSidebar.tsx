@@ -455,15 +455,6 @@ export function ChannelSidebar() {
       <div className="px-4 py-3 border-b border-sidebar-border flex items-center justify-between">
         <h2 className="font-display text-sm uppercase tracking-wider text-sidebar-foreground">Team Chat</h2>
         <div className="flex items-center gap-0.5">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-            onClick={() => setIsAIChatOpen(true)}
-            title="AI Assistant"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-          </Button>
           {canAccessSettings && (
             <Button
               variant="ghost"
