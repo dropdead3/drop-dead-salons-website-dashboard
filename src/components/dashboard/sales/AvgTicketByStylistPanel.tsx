@@ -9,7 +9,9 @@ import { ZuraAvatar } from '@/components/ui/ZuraAvatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useAvgTicketByStylist, type StylistTicketData, type StylistCategoryBreakdown } from '@/hooks/useAvgTicketByStylist';
-import { CATEGORY_COLORS } from '@/utils/serviceCategorization';
+import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
+
+const FALLBACK_COLOR = '#888888';
 
 interface AvgTicketByStylistPanelProps {
   isOpen: boolean;
@@ -23,6 +25,7 @@ const MAX_VISIBLE = 5;
 /** Level 2: Service category breakdown for a stylist */
 function ServiceMixPanel({ categories }: { categories: StylistCategoryBreakdown[] }) {
   const { formatCurrencyWhole } = useFormatCurrency();
+  const { colorMap } = useServiceCategoryColorsMap();
   return (
     <motion.div
       initial={{ height: 0, opacity: 0 }}
@@ -37,7 +40,7 @@ function ServiceMixPanel({ categories }: { categories: StylistCategoryBreakdown[
           <span>Service Mix</span>
         </div>
         {categories.map((cat, i) => {
-          const color = CATEGORY_COLORS[cat.category] || 'hsl(var(--muted-foreground))';
+          const color = colorMap[cat.category.toLowerCase()]?.bg || FALLBACK_COLOR;
           return (
             <motion.div
               key={cat.category}

@@ -7,6 +7,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { format, subDays } from 'date-fns';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
+
+const FALLBACK_COLOR = '#888888';
 
 interface ServiceMixChartProps {
   userId: string;
@@ -20,17 +23,9 @@ interface ServiceData {
   revenue: number;
 }
 
-const COLORS = [
-  'hsl(var(--primary))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-  'hsl(var(--muted-foreground))',
-];
-
 export function ServiceMixChart({ userId, days = 30 }: ServiceMixChartProps) {
   const { formatCurrencyWhole } = useFormatCurrency();
+  const { colorMap } = useServiceCategoryColorsMap();
   const today = new Date();
   const startDate = format(subDays(today, days), 'yyyy-MM-dd');
 
@@ -141,7 +136,7 @@ export function ServiceMixChart({ userId, days = 30 }: ServiceMixChartProps) {
                   {data.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
-                      fill={COLORS[index % COLORS.length]}
+                      fill={colorMap[entry.name.toLowerCase()]?.bg || FALLBACK_COLOR}
                       strokeWidth={0}
                     />
                   ))}
@@ -165,7 +160,7 @@ export function ServiceMixChart({ userId, days = 30 }: ServiceMixChartProps) {
                 <div className="flex items-center gap-2">
                   <div 
                     className="w-3 h-3 rounded-full" 
-                    style={{ backgroundColor: COLORS[idx % COLORS.length] }}
+                    style={{ backgroundColor: colorMap[item.name.toLowerCase()]?.bg || FALLBACK_COLOR }}
                   />
                   <span className="truncate max-w-[120px]">{item.name}</span>
                 </div>

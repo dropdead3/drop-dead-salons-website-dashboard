@@ -9,7 +9,9 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useRevenueByCategoryDrilldown, type CategoryBreakdownData, type CategoryStylistData } from '@/hooks/useRevenueByCategoryDrilldown';
-import { CATEGORY_COLORS } from '@/utils/serviceCategorization';
+import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
+
+const FALLBACK_COLOR = '#888888';
 
 interface RevenueByCategoryPanelProps {
   isOpen: boolean;
@@ -112,8 +114,9 @@ function CategoryRow({ category, index }: { category: CategoryBreakdownData; ind
   const [expanded, setExpanded] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const { formatCurrencyWhole: fmtWhole } = useFormatCurrency();
+  const { colorMap } = useServiceCategoryColorsMap();
 
-  const color = CATEGORY_COLORS[category.category] || 'hsl(var(--muted-foreground))';
+  const color = colorMap[category.category.toLowerCase()]?.bg || FALLBACK_COLOR;
   const visibleStylists = showAll ? category.stylists : category.stylists.slice(0, MAX_VISIBLE);
   const hasMore = category.stylists.length > MAX_VISIBLE;
 

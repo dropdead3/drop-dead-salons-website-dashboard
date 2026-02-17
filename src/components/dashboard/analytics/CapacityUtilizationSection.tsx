@@ -21,25 +21,18 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import type { CapacityData, DayCapacity } from '@/hooks/useHistoricalCapacityUtilization';
 
 export type CapacityDateRangeType = 'tomorrow' | '7days' | '30days' | '90days';
+
+const FALLBACK_COLOR = '#888888';
 
 interface CapacityUtilizationSectionProps {
   capacityData: CapacityData | null;
   isLoading: boolean;
   dateRange: CapacityDateRangeType;
 }
-
-const PIE_COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-  'hsl(var(--primary))',
-  'hsl(var(--muted-foreground))',
-];
 
 const DATE_RANGE_LABELS: Record<string, string> = {
   'tomorrow': 'tomorrow',
@@ -109,6 +102,7 @@ export function CapacityUtilizationSection({
 }: CapacityUtilizationSectionProps) {
   const { formatCurrencyWhole, currency } = useFormatCurrency();
   const { formatDate } = useFormatDate();
+  const { colorMap } = useServiceCategoryColorsMap();
 
   if (isLoading) {
     return (
@@ -184,7 +178,7 @@ export function CapacityUtilizationSection({
     name: item.category,
     value: item.hours,
     percentage: item.percentage,
-    fill: PIE_COLORS[index % PIE_COLORS.length],
+    fill: colorMap[item.category.toLowerCase()]?.bg || FALLBACK_COLOR,
   }));
 
   const showChart = chartData.length > 1;
@@ -394,7 +388,7 @@ export function CapacityUtilizationSection({
                     <div className="flex items-center gap-2">
                       <div 
                         className="w-2 h-2 rounded-full shrink-0"
-                        style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+                        style={{ backgroundColor: colorMap[item.category.toLowerCase()]?.bg || FALLBACK_COLOR }}
                       />
                       <span className="text-muted-foreground truncate max-w-[100px]">
                         {item.category}

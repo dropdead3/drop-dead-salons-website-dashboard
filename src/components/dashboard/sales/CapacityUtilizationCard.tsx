@@ -18,6 +18,7 @@ import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/componen
 
 import { cn } from '@/lib/utils';
 import { analyticsHubUrl } from '@/config/dashboardNav';
+import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { 
   BarChart, 
   Bar, 
@@ -92,16 +93,7 @@ function DayXAxisTick({ x, y, payload, days }: any) {
   );
 }
 
-// Category colors for pie chart
-const PIE_COLORS = [
-  'hsl(var(--chart-1))',
-  'hsl(var(--chart-2))',
-  'hsl(var(--chart-3))',
-  'hsl(var(--chart-4))',
-  'hsl(var(--chart-5))',
-  'hsl(var(--primary))',
-  'hsl(var(--muted-foreground))',
-];
+const FALLBACK_COLOR = '#888888';
 
 export function CapacityUtilizationCard() {
   const navigate = useNavigate();
@@ -110,6 +102,7 @@ export function CapacityUtilizationCard() {
   const { data, isLoading, error } = useCapacityUtilization(period, selectedLocation);
   const { formatCurrency, currency } = useFormatCurrency();
   const { formatDate } = useFormatDate();
+  const { colorMap } = useServiceCategoryColorsMap();
 
   const handleViewDetails = () => {
     navigate(analyticsHubUrl('operations', 'appointments'));
@@ -173,7 +166,7 @@ export function CapacityUtilizationCard() {
     name: item.category,
     value: item.hours,
     percentage: item.percentage,
-    fill: PIE_COLORS[index % PIE_COLORS.length],
+    fill: colorMap[item.category.toLowerCase()]?.bg || FALLBACK_COLOR,
   }));
 
   const showChart = period !== 'tomorrow' && days.length > 1;
@@ -412,7 +405,7 @@ export function CapacityUtilizationCard() {
                     <div className="flex items-center gap-2">
                       <div 
                         className="w-2 h-2 rounded-full" 
-                        style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }}
+                        style={{ backgroundColor: colorMap[item.category.toLowerCase()]?.bg || FALLBACK_COLOR }}
                       />
                       <span className="text-muted-foreground truncate max-w-[100px]">
                         {item.category}
