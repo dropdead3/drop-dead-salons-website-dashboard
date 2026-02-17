@@ -66,16 +66,16 @@ function ChannelItemOverlay({ channel }: { channel: ChannelWithMembership }) {
   const displayName = getChannelDisplayName(channel);
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm bg-accent shadow-lg">
+    <div className="flex items-center gap-2 px-3 py-1 rounded text-[13px] bg-sidebar-accent shadow-lg text-sidebar-foreground">
       {isDM ? (
         <Avatar className="h-5 w-5 shrink-0">
           <AvatarImage src={avatarUrl || undefined} alt={displayName} />
-          <AvatarFallback className="text-[10px] bg-muted">
+          <AvatarFallback className="text-[9px] bg-sidebar-accent text-sidebar-foreground/60">
             {getInitials(displayName)}
           </AvatarFallback>
         </Avatar>
       ) : (
-        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <Icon className="h-4 w-4 shrink-0 text-sidebar-foreground/40" />
       )}
       <span className="truncate flex-1 text-left">{displayName}</span>
     </div>
@@ -399,14 +399,14 @@ export function ChannelSidebar() {
     if (sectionChannels.length === 0) {
       if (config.id === 'direct') {
         return (
-          <p className="text-xs text-muted-foreground px-3 py-2">
+          <p className="text-[11px] text-sidebar-foreground/30 px-4 py-1.5">
             Click + to start a conversation
           </p>
         );
       }
       if (config.type === 'custom') {
         return (
-          <p className="text-xs text-muted-foreground px-3 py-2">
+          <p className="text-[11px] text-sidebar-foreground/30 px-4 py-1.5">
             No channels in this section
           </p>
         );
@@ -451,35 +451,35 @@ export function ChannelSidebar() {
   const sectionIds = visibleSections.map(s => s.id);
 
   return (
-    <div className="flex flex-col h-full bg-sidebar border-r">
-      <div className="p-4 border-b flex items-center justify-between">
-        <h2 className="font-medium text-lg">Team Chat</h2>
-        <div className="flex items-center gap-1">
+    <div className="flex flex-col h-full bg-sidebar">
+      <div className="px-4 py-3 border-b border-sidebar-border flex items-center justify-between">
+        <h2 className="font-display text-sm uppercase tracking-wider text-sidebar-foreground">Team Chat</h2>
+        <div className="flex items-center gap-0.5">
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-7 w-7 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
             onClick={() => setIsAIChatOpen(true)}
             title="AI Assistant"
           >
-            <Sparkles className="h-4 w-4" />
+            <Sparkles className="h-3.5 w-3.5" />
           </Button>
           {canAccessSettings && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7 text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent"
               onClick={() => setIsSettingsOpen(true)}
               title="Team Chat Settings"
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-3.5 w-3.5" />
             </Button>
           )}
         </div>
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-2 space-y-4">
+        <div className="py-2 space-y-1">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}

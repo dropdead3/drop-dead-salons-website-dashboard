@@ -52,7 +52,7 @@ export function SortableSidebarSection({
       className={cn(isDragging && 'opacity-50 z-50')}
     >
       <Collapsible open={isOpen} onOpenChange={onToggle}>
-        <div className="group flex items-center justify-between px-2">
+        <div className="group flex items-center justify-between px-3 py-1">
           <div className="flex items-center gap-1">
             {isDragEnabled && (
               <button
@@ -61,22 +61,27 @@ export function SortableSidebarSection({
                 className="p-0.5 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity touch-none"
                 onClick={(e) => e.stopPropagation()}
               >
-                <GripVertical className="h-3 w-3 text-muted-foreground" />
+                <GripVertical className="h-3 w-3 text-sidebar-foreground/30" />
               </button>
             )}
-            <CollapsibleTrigger className="flex items-center gap-1 text-xs font-medium text-muted-foreground uppercase tracking-wider hover:text-foreground">
+            <CollapsibleTrigger className="flex items-center gap-1 text-[11px] font-medium text-sidebar-foreground/50 uppercase tracking-widest hover:text-sidebar-foreground transition-colors">
               {isOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
               {icon}
               {title}
             </CollapsibleTrigger>
           </div>
           {showAddButton && onAddClick && (
-            <Button variant="ghost" size="icon" className="h-5 w-5" onClick={onAddClick}>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent" 
+              onClick={onAddClick}
+            >
               <Plus className="h-3 w-3" />
             </Button>
           )}
         </div>
-        <CollapsibleContent className="mt-1 space-y-0.5">
+        <CollapsibleContent className="mt-0.5">
           {children}
         </CollapsibleContent>
       </Collapsible>
