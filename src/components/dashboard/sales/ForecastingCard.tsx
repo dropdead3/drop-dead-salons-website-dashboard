@@ -582,12 +582,6 @@ export function ForecastingCard() {
                 <Badge variant="outline" className="text-xs whitespace-nowrap">
                   {totalAppointments} bookings
                 </Badge>
-                <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid')}>
-                  <FilterTabsList>
-                    <FilterTabsTrigger value="category">By Category</FilterTabsTrigger>
-                    <FilterTabsTrigger value="solid">Solid</FilterTabsTrigger>
-                  </FilterTabsList>
-                </Tabs>
               </div>
             </div>
             <div className="flex items-center justify-between gap-6">
@@ -723,7 +717,17 @@ export function ForecastingCard() {
             );
           })()}
 
-          {/* Bar Chart - only show if not tomorrow */}
+          {/* Chart mode toggle + Bar Chart - only show if not tomorrow */}
+          {showChart && chartData.length > 0 && (
+            <div className="flex justify-end">
+              <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid')}>
+                <FilterTabsList>
+                  <FilterTabsTrigger value="category">By Category</FilterTabsTrigger>
+                  <FilterTabsTrigger value="solid">Solid</FilterTabsTrigger>
+                </FilterTabsList>
+              </Tabs>
+            </div>
+          )}
           {showChart && chartData.length > 0 && (
             <div className={cn("h-[220px]", showWeeklyChart && "h-[240px]")} ref={chartRef}>
               <ResponsiveContainer width="100%" height="100%">

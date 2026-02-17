@@ -279,12 +279,6 @@ export function WeekAheadForecast() {
               <Badge variant="outline" className="text-xs whitespace-nowrap">
                 {totalAppointments} bookings
               </Badge>
-              <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid')}>
-                <FilterTabsList>
-                  <FilterTabsTrigger value="category">By Category</FilterTabsTrigger>
-                  <FilterTabsTrigger value="solid">Solid</FilterTabsTrigger>
-                </FilterTabsList>
-              </Tabs>
             </div>
           </div>
           <CardDescription>Projected revenue from scheduled appointments</CardDescription>
@@ -364,7 +358,15 @@ export function WeekAheadForecast() {
           )}
 
 
-          {/* Bar Chart with stacked category bars */}
+          {/* Chart mode toggle + Bar Chart */}
+          <div className="flex justify-end">
+            <Tabs value={chartMode} onValueChange={(v) => v && setChartMode(v as 'category' | 'solid')}>
+              <FilterTabsList>
+                <FilterTabsTrigger value="category">By Category</FilterTabsTrigger>
+                <FilterTabsTrigger value="solid">Solid</FilterTabsTrigger>
+              </FilterTabsList>
+            </Tabs>
+          </div>
           <div className="h-[200px]" ref={chartRef}>
             {isInView ? (
               <ResponsiveContainer width="100%" height="100%">
