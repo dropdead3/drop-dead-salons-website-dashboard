@@ -90,7 +90,7 @@ export function SortableChannelItem({
           isActive && 'bg-sidebar-accent text-sidebar-foreground',
           !isMember && 'opacity-50',
           unreadCount > 0 && !isActive && 'text-sidebar-foreground font-medium',
-          !isDragEnabled && 'ml-5'
+          !isDragEnabled && 'ml-7'
         )}
       >
         {isDM ? (
