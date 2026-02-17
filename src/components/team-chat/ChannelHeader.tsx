@@ -44,7 +44,7 @@ export function ChannelHeader() {
 
   return (
     <>
-      <div className="h-14 border-b flex items-center justify-between px-4 relative">
+      <div className="h-14 border-b border-border/50 flex items-center justify-between px-4 relative">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" className="lg:hidden" onClick={toggleSidebar}>
             <Menu className="h-5 w-5" />
