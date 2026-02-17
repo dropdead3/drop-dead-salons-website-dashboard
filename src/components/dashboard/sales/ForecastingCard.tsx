@@ -429,12 +429,16 @@ export function ForecastingCard() {
 
   // Compute all unique categories across days/weeks (before early returns)
   const allCategories = useMemo(() => {
-    const cats = new Set<string>();
+    const catTotals: Record<string, number> = {};
     const source = showWeeklyChart ? weeks : days;
     source.forEach((item: any) => {
-      Object.keys(item.categoryBreakdown || {}).forEach(c => cats.add(c));
+      Object.entries(item.categoryBreakdown || {}).forEach(([c, v]) => {
+        catTotals[c] = (catTotals[c] || 0) + (v as number);
+      });
     });
-    return Array.from(cats).sort();
+    return Object.entries(catTotals)
+      .sort(([, a], [, b]) => b - a)
+      .map(([cat]) => cat);
   }, [days, weeks, showWeeklyChart]);
 
   // Chart data for daily view with category breakdown flattened
