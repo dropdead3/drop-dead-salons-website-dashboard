@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, addDays, startOfWeek, endOfWeek, endOfMonth, differenceInDays } from 'date-fns';
+import { getServiceCategory } from '@/utils/serviceCategorization';
 
 export type ForecastPeriod = 'tomorrow' | '7days' | '30days' | '60days' | 'todayToEom';
 
@@ -155,7 +156,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
             byDate[dateKey].confirmedRevenue += price;
           }
           // Accumulate per-day category breakdown
-          const category = (apt as any).service_category || 'Uncategorized';
+          const category = (apt as any).service_category || getServiceCategory(apt.service_name);
           byDate[dateKey].categoryBreakdown[category] = (byDate[dateKey].categoryBreakdown[category] || 0) + price;
           
           byDate[dateKey].count += 1;
@@ -176,7 +177,7 @@ export function useForecastRevenue(period: ForecastPeriod, locationId?: string) 
       // Aggregate by service category
       const byCategory: Record<string, CategoryBreakdown> = {};
       appointments.forEach(apt => {
-        const category = (apt as any).service_category || 'Uncategorized';
+        const category = (apt as any).service_category || getServiceCategory(apt.service_name);
         const price = Number(apt.total_price) || 0;
         if (!byCategory[category]) {
           byCategory[category] = { revenue: 0, count: 0 };
