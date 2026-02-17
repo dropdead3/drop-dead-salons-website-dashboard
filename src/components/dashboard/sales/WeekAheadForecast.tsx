@@ -540,23 +540,38 @@ export function WeekAheadForecast() {
                             @keyframes drawLine { to { stroke-dashoffset: 0; } }
                             @keyframes fadeInBadge { from { opacity: 0; } to { opacity: 1; } }
                           `}</style>
-                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0 }}>
-                            <div
-                              title="Average daily revenue calculated using only days your business is open. Closed days are excluded so the number reflects your actual daily earning pace."
-                              style={{ 
-                              fontSize: 11, fontWeight: 500, 
-                              color: 'rgb(254 240 138)',
-                              backdropFilter: 'blur(6px)',
-                              WebkitBackdropFilter: 'blur(6px)',
-                              background: 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))',
-                              border: '1px solid rgb(202 138 4 / 0.6)',
-                              borderRadius: 9999,
-                              padding: '1px 8px',
-                              whiteSpace: 'nowrap',
-                              width: 'fit-content',
-                              cursor: 'help',
-                            }}>
-                              Daily Operating Avg: {formatCurrencyWhole(Math.round(operatingDailyAvg))}
+                          <foreignObject x={chartLeft} y={yPos - 14} width={badgeWidth} height={24} style={{ animation: 'fadeInBadge 0.5s ease-out 0.6s forwards', opacity: 0, overflow: 'visible' }}>
+                            <div className="operating-avg-badge" style={{ position: 'relative' }}>
+                              <style>{`
+                                .operating-avg-badge:hover .operating-avg-tip { opacity: 1; pointer-events: auto; }
+                              `}</style>
+                              <div style={{ 
+                                fontSize: 11, fontWeight: 500, 
+                                color: 'rgb(254 240 138)',
+                                backdropFilter: 'blur(6px)',
+                                WebkitBackdropFilter: 'blur(6px)',
+                                background: 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))',
+                                border: '1px solid rgb(202 138 4 / 0.6)',
+                                borderRadius: 9999,
+                                padding: '1px 8px',
+                                whiteSpace: 'nowrap',
+                                width: 'fit-content',
+                                cursor: 'help',
+                              }}>
+                                Daily Operating Avg: {formatCurrencyWhole(Math.round(operatingDailyAvg))}
+                              </div>
+                              <div className="operating-avg-tip" style={{
+                                position: 'absolute', bottom: '100%', left: 0, marginBottom: 6,
+                                background: 'hsl(var(--popover))', color: 'hsl(var(--popover-foreground))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: 8, padding: '6px 10px',
+                                fontSize: 11, lineHeight: 1.4, maxWidth: 260,
+                                whiteSpace: 'normal', opacity: 0, pointerEvents: 'none',
+                                transition: 'opacity 0.1s ease', zIndex: 50,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                              }}>
+                                Average daily revenue calculated using only days your business is open. Closed days are excluded so the number reflects your actual daily earning pace.
+                              </div>
                             </div>
                           </foreignObject>
                           {(() => {
