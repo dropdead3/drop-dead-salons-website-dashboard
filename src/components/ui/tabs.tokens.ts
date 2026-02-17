@@ -2,7 +2,7 @@ export const TABS_CLASSES = {
   list: "inline-flex h-11 items-center justify-center p-1.5 text-muted-foreground gap-0.5 bg-muted/70 rounded-[9px]",
   trigger: [
     "inline-flex items-center justify-center whitespace-nowrap rounded-[6px] px-3.5 py-1.5 text-sm font-medium ring-offset-background transition-all",
-    "data-[state=active]:bg-white/[0.08] data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-white/[0.12] data-[state=active]:backdrop-blur-sm",
+    "data-[state=active]:bg-black/[0.07] dark:data-[state=active]:bg-white/[0.08] data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-black/[0.10] dark:data-[state=active]:ring-white/[0.12] data-[state=active]:backdrop-blur-sm",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   ].join(" "),
   content:
@@ -15,7 +15,7 @@ export const TABS_CLASSES = {
   filterList: "inline-flex h-8 items-center justify-center p-1 text-muted-foreground gap-0.5 bg-muted/70 rounded-[7px]",
   filterTrigger: [
     "inline-flex items-center justify-center whitespace-nowrap rounded-[5px] px-2.5 py-1 text-xs font-medium ring-offset-background transition-all",
-    "data-[state=active]:bg-white/[0.08] data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-white/[0.12] data-[state=active]:backdrop-blur-sm",
+    "data-[state=active]:bg-black/[0.07] dark:data-[state=active]:bg-white/[0.08] data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-black/[0.10] dark:data-[state=active]:ring-white/[0.12] data-[state=active]:backdrop-blur-sm",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
   ].join(" "),
 } as const;
@@ -32,9 +32,9 @@ export const RESPONSIVE_TABS_CLASSES = {
   list: "w-auto max-w-full min-w-0 justify-start overflow-hidden",
   overflowTrigger: [
     "inline-flex h-9 w-9 items-center justify-center rounded-[6px] ring-offset-background transition-colors",
-    "text-muted-foreground hover:bg-white/[0.08] hover:text-foreground",
+    "text-muted-foreground hover:bg-black/[0.05] dark:hover:bg-white/[0.08] hover:text-foreground",
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
   ].join(" "),
   overflowMenuItem:
-    "w-full px-3 py-2 text-sm text-left rounded-[6px] hover:bg-white/[0.08] transition-colors",
+    "w-full px-3 py-2 text-sm text-left rounded-[6px] hover:bg-black/[0.05] dark:hover:bg-white/[0.08] transition-colors",
 } as const;
