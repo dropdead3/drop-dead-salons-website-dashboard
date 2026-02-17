@@ -21,6 +21,7 @@ import { GuidancePanel } from './GuidancePanel';
 import { InsightDescriptionWithLinks } from './InsightDescriptionWithLinks';
 
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -303,8 +304,8 @@ export function AIInsightsCard() {
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500/20 to-fuchsia-500/20 flex items-center justify-center">
-                    <Brain className="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                  <div className={tokens.card.iconBox}>
+                    <Brain className={tokens.card.icon} />
                   </div>
                   <CardTitle className="text-base font-display tracking-wide">ZURA BUSINESS INSIGHTS</CardTitle>
                 </div>

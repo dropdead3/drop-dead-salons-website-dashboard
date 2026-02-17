@@ -9,6 +9,7 @@ import { useBookingPipelineByLocation } from '@/hooks/useBookingPipelineByLocati
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { NewBookingsDrilldown } from './NewBookingsDrilldown';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { Link } from 'react-router-dom';
 
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
@@ -49,12 +50,12 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
     : 'text-muted-foreground';
 
   return (
-    <Card className="p-6">
+    <Card className={cn("p-6", tokens.card.wrapper)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-500/10 flex items-center justify-center rounded-lg">
-            <CalendarPlus className="w-5 h-5 text-blue-600" />
+          <div className={tokens.card.iconBox}>
+            <CalendarPlus className={tokens.card.icon} />
           </div>
           <div className="flex items-center gap-2">
             <div>

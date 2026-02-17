@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -120,7 +121,7 @@ export function OverviewTab() {
 
   return (
     <div className="space-y-6">
-      <Card className="premium-card">
+      <Card className={tokens.card.wrapper}>
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
             <div>

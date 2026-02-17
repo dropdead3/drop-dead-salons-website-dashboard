@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ChartSkeleton } from '@/components/ui/chart-skeleton';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 
 interface StaffingTrendChartProps {
@@ -56,7 +57,7 @@ export function StaffingTrendChart({ className }: StaffingTrendChartProps) {
     : 0;
 
   return (
-    <Card className={cn("premium-card", className)}>
+    <Card className={cn(tokens.card.wrapper, className)}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3">

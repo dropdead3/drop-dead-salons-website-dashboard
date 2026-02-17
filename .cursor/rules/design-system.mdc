@@ -40,7 +40,23 @@ import { cn } from '@/lib/utils';
 </div>
 ```
 
-Available token groups: `heading`, `body`, `label`, `stat`, `layout`, `status`, `empty`, `loading`.
+Available token groups: `heading`, `body`, `label`, `stat`, `card`, `layout`, `status`, `empty`, `loading`.
+
+### Card Tokens (MANDATORY)
+```tsx
+import { tokens } from '@/lib/design-tokens';
+
+// Card wrapper (rounded + shadow)
+<Card className={tokens.card.wrapper}>
+
+// Icon box in card header
+<div className={tokens.card.iconBox}>
+  <Brain className={tokens.card.icon} />
+</div>
+
+// Card title
+<CardTitle className={tokens.card.title}>CARD NAME</CardTitle>
+```
 
 Use `getTokenFor('page-title')` helper when unsure which token to use.
 

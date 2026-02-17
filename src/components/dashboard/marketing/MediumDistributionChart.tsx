@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Layers } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { MediumPerformance, formatMediumName, getMediumColor } from '@/hooks/useMarketingAnalytics';
+import { tokens } from '@/lib/design-tokens';
 
 interface MediumDistributionChartProps {
   mediums: MediumPerformance[];
@@ -21,7 +22,7 @@ export function MediumDistributionChart({ mediums, isLoading }: MediumDistributi
 
   if (isLoading) {
     return (
-      <Card className="premium-card">
+      <Card className={tokens.card.wrapper}>
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
@@ -41,7 +42,7 @@ export function MediumDistributionChart({ mediums, isLoading }: MediumDistributi
 
   if (mediums.length === 0) {
     return (
-      <Card className="premium-card">
+      <Card className={tokens.card.wrapper}>
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
@@ -81,7 +82,7 @@ export function MediumDistributionChart({ mediums, isLoading }: MediumDistributi
   };
 
   return (
-    <Card className="premium-card">
+    <Card className={tokens.card.wrapper}>
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">

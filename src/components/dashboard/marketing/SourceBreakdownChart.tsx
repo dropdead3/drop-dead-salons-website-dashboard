@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Share2 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { SourcePerformance, formatSourceName, getSourceColor } from '@/hooks/useMarketingAnalytics';
+import { tokens } from '@/lib/design-tokens';
 
 interface SourceBreakdownChartProps {
   sources: SourcePerformance[];
@@ -21,7 +22,7 @@ export function SourceBreakdownChart({ sources, isLoading }: SourceBreakdownChar
 
   if (isLoading) {
     return (
-      <Card className="premium-card">
+      <Card className={tokens.card.wrapper}>
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
@@ -41,7 +42,7 @@ export function SourceBreakdownChart({ sources, isLoading }: SourceBreakdownChar
 
   if (sources.length === 0) {
     return (
-      <Card className="premium-card">
+      <Card className={tokens.card.wrapper}>
         <CardHeader>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
@@ -60,7 +61,7 @@ export function SourceBreakdownChart({ sources, isLoading }: SourceBreakdownChar
   }
 
   return (
-    <Card className="premium-card">
+    <Card className={tokens.card.wrapper}>
       <CardHeader>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
