@@ -1,51 +1,61 @@
 
 
-## Wire Service Mix Colors to Service Category Settings
+## Stacked Category-Colored Forecast Bars
 
-### Problem
-The Service Mix donut charts (on the Capacity Utilization card and the Analytics section) use hardcoded `PIE_COLORS` arrays based on generic CSS chart variables (`--chart-1`, `--chart-2`, etc.). These colors don't match the admin-configured service category colors visible in Services Settings. The same issue affects `ServiceMixChart`, `AvgTicketByStylistPanel`, and `RevenueByCategoryPanel` which use the static `CATEGORY_COLORS` map from `serviceCategorization.ts`.
+### What Changes
 
-### Solution
-Replace all hardcoded color arrays and static `CATEGORY_COLORS` lookups with the `useServiceCategoryColors()` hook, which fetches the actual `color_hex` values from the `service_category_colors` table. Build a name-based lookup map so each category gets its configured color.
+Each bar in the Revenue Forecast charts (both ForecastingCard and WeekAheadForecast) will become a stacked bar where each segment represents a service category, colored using the admin-configured service category colors from Settings.
 
-### Changes
+Instead of the current confirmed/unconfirmed split, the bar will show: "How much of today's revenue is Color, Cut, Texture, etc." -- proportionally, using the exact colors configured in service settings.
 
-**1. `src/components/dashboard/sales/CapacityUtilizationCard.tsx`**
-- Import `useServiceCategoryColors` hook
-- Remove `PIE_COLORS` constant
-- Build a `colorMap` from the hook data (keyed by lowercase category name)
-- Replace `PIE_COLORS[index % PIE_COLORS.length]` with `colorMap[item.category.toLowerCase()] || fallbackColor` in both the pie data construction (~line 176) and the legend dots (~line 415)
+### Data Layer Changes
 
-**2. `src/components/dashboard/analytics/CapacityUtilizationSection.tsx`**
-- Same changes as above: import hook, remove `PIE_COLORS`, use color map for pie data (~line 187) and legend dots (~line 397)
-- Since this is a presentational component that receives data as props, it will accept a `categoryColorMap` prop passed from its parent, or call the hook directly
+**`src/hooks/useForecastRevenue.ts`**
+- Add a `byCategory` field to `DayForecast` interface: `categoryBreakdown: Record<string, number>` (category name to revenue)
+- During the per-appointment loop, also accumulate revenue by category per day
+- For `WeekForecast`, aggregate the daily category breakdowns into weekly totals
+- Keep the existing top-level `byCategory` intact (used by CategoryBreakdownPanel)
 
-**3. `src/components/dashboard/sales/ServiceMixChart.tsx`**
-- Import `useServiceCategoryColors` hook
-- Remove hardcoded `COLORS` array
-- Use category name lookup for pie cell fills
+**`src/hooks/useWeekAheadRevenue.ts`**
+- Same change: add `categoryBreakdown: Record<string, number>` to `DayForecast`
+- Accumulate per-day category revenue during the existing appointment loop
 
-**4. `src/components/dashboard/sales/AvgTicketByStylistPanel.tsx`**
-- Replace `import { CATEGORY_COLORS }` with `useServiceCategoryColors` hook
-- Look up `color_hex` by category name instead of using the static map
+### Chart Layer Changes
 
-**5. `src/components/dashboard/sales/RevenueByCategoryPanel.tsx`**
-- Same as above: replace `CATEGORY_COLORS` with dynamic lookup from the hook
+**Both `ForecastingCard.tsx` and `WeekAheadForecast.tsx`**
 
-**6. Shared helper (optional simplification)**
-- The existing `useServiceCategoryColorsMap()` hook already returns a `colorMap` keyed by lowercase category name with `{ bg, text, abbr }`. All five files above can use this directly: `colorMap[category.toLowerCase()]?.bg || '#888888'`
+1. Import `useServiceCategoryColorsMap` hook
+2. Compute a sorted list of all unique categories across all days/weeks in the chart data
+3. For chart data, flatten each day's `categoryBreakdown` into individual keys (e.g., `{ "Color": 1200, "Cut": 800, "Texture": 400 }`)
+4. Replace the two `<Bar>` components (confirmed/unconfirmed) with a dynamic set of `<Bar>` components -- one per category, all sharing `stackId="revenue"`
+5. Each `<Bar>` gets its fill color from `colorMap[category.toLowerCase()]?.bg || '#888888'`
+6. The topmost bar in the stack gets `radius={[4, 4, 0, 0]}` for rounded tops; all others get `[0,0,0,0]`
+7. Only the topmost bar renders the `<LabelList>` with revenue labels above
+8. Replace the glass gradient `<defs>` with per-category SVG gradients for the translucent luxury look (opacity 0.75 to 0.35, matching the existing glass aesthetic)
+9. Click handlers remain on all bars, firing the same `handleBarClick`
 
-### Fallback Strategy
-When a category exists in appointment data but has no matching entry in `service_category_colors` (e.g., uncategorized or "Other"), use `#888888` as the fallback -- a neutral gray that won't be confused with any configured color.
+### Tooltip Update
 
-### What Does NOT Change
-- The `service_category_colors` table and its CRUD operations
-- The Services Settings UI
-- Data fetching logic for service mix metrics
-- Chart structure, animations, or layout
+The custom `ForecastTooltip` will be updated to show the category breakdown:
+- Each category listed with its color dot and revenue amount
+- Sorted by revenue descending
+- Total and appointment count preserved at bottom
 
-### File Count
-- 5 component files updated (color source replacement)
-- 0 new files
-- No new dependencies
+### What Stays the Same
 
+- Daily average reference line (amber badge + dashed line)
+- Peak day/week highlighting and callouts
+- X-axis tick labels (day names, dates, appointment counts)
+- Stat cards and category breakdown panels
+- DayProviderBreakdownPanel drill-down
+- Bar click to expand provider breakdown
+- Weekly chart aggregation logic
+
+### Technical Details
+
+- 2 hook files updated (add `categoryBreakdown` to per-day aggregation)
+- 2 component files updated (replace static 2-bar stack with dynamic N-bar stack)
+- `useServiceCategoryColorsMap` hook reused (already cached, no extra queries)
+- Fallback color `#888888` for uncategorized services
+- SVG gradient definitions generated dynamically per category (one gradient per unique category in view)
+- The "Uncategorized" bucket catches any appointments without a `service_category` value
