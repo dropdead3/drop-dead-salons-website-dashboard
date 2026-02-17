@@ -1,70 +1,39 @@
 
 
-## Remove "Luxury Glass" Gradient from Forecast Bar Charts
+## Improve Tab Toggle Visibility in Light Mode
 
-### What Changes
+### Problem
 
-Replace the translucent gradient fills with solid, flat category colors on the stacked bar segments in both forecast charts. This eliminates the fading opacity effect that washes out lighter colors (like Haircuts' beige).
+The active tab state uses `bg-white/[0.08]` and `ring-white/[0.12]` -- white at 8% and 12% opacity. On the light cream background, this is nearly invisible. The selected tab ("Tomorrow" in your screenshot) looks almost identical to unselected tabs.
 
-### Changes
+### Solution
 
-**`src/components/dashboard/sales/WeekAheadForecast.tsx`**
+Replace the single-mode white overlay with a dual-mode approach:
+- **Light mode**: Use `bg-black/[0.07]` background + `ring-black/[0.10]` ring -- a subtle dark tint that creates clear contrast on cream
+- **Dark mode**: Keep `dark:bg-white/[0.08]` + `dark:ring-white/[0.12]` -- the existing glass look that works well on dark backgrounds
 
-1. **Remove the `<defs>` block** (lines ~349-360) containing the `linearGradient` definitions entirely.
-2. **Update `<Bar>` fill** (line ~389): Change from `url(#${gradientId})` to the resolved solid color directly.
-3. **Update `<Cell>` fill** (line ~402): Same -- use the solid color instead of the gradient URL.
-4. **Update `<Cell>` stroke** (line ~403): Keep the selection logic but use a lighter opacity of the solid color for the default (non-selected) state, or remove the stroke entirely for unselected bars.
+This same fix applies to all three tab variants (standard, filter, responsive) and their hover states.
 
-**`src/components/dashboard/sales/ForecastingCard.tsx`**
+### Technical Details
 
-1. **Remove the `<defs>` block** (lines ~707-717) with gradient definitions.
-2. **Update `<Bar>` fill** (line ~758): Solid color.
-3. **Update `<Cell>` fill** (line ~771): Solid color.
-4. **Update `<Cell>` stroke** (line ~772): Same selection logic, solid color.
+**Files Modified**
 
-### What the Bar Rendering Looks Like After
+1. **`src/components/ui/tabs.tokens.ts`** -- Single source of truth for all tab classes
+   - `trigger` active state: replace `bg-white/[0.08]` with `bg-black/[0.07] dark:bg-white/[0.08]`, and `ring-white/[0.12]` with `ring-black/[0.10] dark:ring-white/[0.12]`
+   - `filterTrigger` active state: same dual-mode swap
+   - `overflowTrigger` hover: `hover:bg-black/[0.05] dark:hover:bg-white/[0.08]`
+   - `overflowMenuItem` hover: same pattern
 
-```typescript
-{allCategories.map((cat, catIndex) => {
-  const isTopBar = catIndex === allCategories.length - 1;
-  const solidColor = resolveHexColor(colorMap[cat.toLowerCase()]?.bg || '#888888');
-  return (
-    <Bar
-      key={cat}
-      dataKey={cat}
-      stackId="revenue"
-      radius={isTopBar ? [4, 4, 0, 0] : [0, 0, 0, 0]}
-      isAnimationActive={true}
-      animationDuration={800}
-      animationEasing="ease-out"
-      fill={solidColor}
-      // ...onClick, cursor props unchanged
-    >
-      {/* LabelList unchanged for topBar */}
-      {chartData.map((entry, index) => {
-        const isSelected = /* ...existing selection logic... */;
-        return (
-          <Cell
-            key={`${cat}-${index}`}
-            fill={solidColor}
-            stroke={isSelected ? 'hsl(var(--foreground))' : solidColor}
-            strokeOpacity={isSelected ? 1 : 0.2}
-            strokeWidth={isSelected ? 1.5 : 0.5}
-          />
-        );
-      })}
-    </Bar>
-  );
-})}
-```
+2. **`src/components/ui/tabs.tsx`** -- The `TabsTrigger` component has inline classes that duplicate the tokens (not using `TABS_CLASSES.trigger`). Update its inline active-state classes to match the new dual-mode pattern.
 
-### Result
+3. **`src/components/ui/responsive-tabs-list.tsx`** -- The overflow dropdown button at line ~142 has an inline `hover:bg-white/[0.08]`. Update to the dual-mode pattern.
 
-- All bar segments render as solid, opaque category colors
-- Light/muted colors like Haircuts' beige will be clearly visible
-- Selected bar highlight (thicker stroke) still works
-- No more washed-out or invisible segments
+### Before/After
 
-### Files Modified
-- `src/components/dashboard/sales/WeekAheadForecast.tsx`
-- `src/components/dashboard/sales/ForecastingCard.tsx`
+| State | Before (light mode) | After (light mode) |
+|-------|---------------------|---------------------|
+| Active bg | `bg-white/[0.08]` (invisible) | `bg-black/[0.07]` (subtle dark tint) |
+| Active ring | `ring-white/[0.12]` (invisible) | `ring-black/[0.10]` (visible border) |
+| Hover bg | `hover:bg-white/[0.08]` | `hover:bg-black/[0.05]` |
+
+Dark mode remains unchanged with the existing white overlay values.
