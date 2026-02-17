@@ -1,26 +1,18 @@
 
 
-## Add Bottom Footnote: "Daily Operating Average only counts days open"
+## Beautify Solid Bars with Luxury Glass Gradient + Glass Stroke
 
 ### What's Changing
 
-Add a subtle footnote line at the very bottom of both forecasting cards (after the Peak Day callout, before the card closes) that reads:
+The flat black solid bars in "Solid" mode will get the same luxury glass treatment used throughout other charts -- a subtle gray gradient fill (top-to-bottom opacity fade) with a translucent glass-style stroke outline.
 
-> *Daily Operating Average only counts days open*
-
-This gives persistent clarity without requiring hover or interaction.
-
-### Visual Placement
+### Visual Effect
 
 ```text
-+-----------------------------------------------+
-| FORECASTING                                    |
-| [stat cards]                                   |
-| [chart]                                        |
-| Peak day: Wednesday, Feb 18         $3,703.00  |
-|                                                |
-| * Daily Operating Average only counts days open|
-+-----------------------------------------------+
+Before:  Flat solid black bars, no depth
+After:   Subtle gray gradient (0.85 opacity at top fading to 0.45 at bottom)
+         + 1px translucent white/border stroke for glass edge
+         + slightly increased border radius for polish
 ```
 
 ### Technical Details
@@ -29,10 +21,21 @@ This gives persistent clarity without requiring hover or interaction.
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/sales/WeekAheadForecast.tsx` | Add footnote text after the Peak Day callout, just before `</CardContent>` (~line 616) |
-| `src/components/dashboard/sales/ForecastingCard.tsx` | Add footnote text after the Peak Day/Week callout, just before `</CardContent>` (~line 1047) |
+| `src/components/dashboard/sales/WeekAheadForecast.tsx` | Add SVG `<defs>` with a vertical linear gradient for the solid bar, update `<Cell>` fill to reference the gradient, add glass stroke styling |
+| `src/components/dashboard/sales/ForecastingCard.tsx` | Same treatment -- SVG gradient defs + glass stroke on solid bars |
 
-The footnote will be styled as:
-- `text-[11px] text-muted-foreground/40 italic pt-2` -- small, muted, italic, with a little top spacing
-- Prefixed with `*` to match the user's formatting preference
-- Only shown when the period uses operating-day logic (7 Days, EOM periods -- not Tomorrow)
+**Implementation per file:**
+
+1. Inside the `<BarChart>` (via Recharts `<Customized>` or injected before the `<Bar>`), add SVG `<defs>`:
+   - A `linearGradient` id `"solid-glass"` going top-to-bottom with the primary color at ~0.85 opacity fading to ~0.45
+   - A secondary lighter gradient for the glass sheen highlight
+
+2. Update each `<Cell>` in solid mode:
+   - `fill` changes from `"hsl(var(--primary))"` to `"url(#solid-glass)"`
+   - `stroke` changes to a subtle white/border translucent stroke: `"hsl(var(--foreground) / 0.12)"` (glass edge)
+   - `strokeWidth` set to `1` for the glass outline effect
+   - Selected state keeps the stronger foreground stroke
+
+3. Bar `radius` stays `[4, 4, 0, 0]` (already correct for the rounded-top, flat-bottom pattern)
+
+This matches the existing luxury glass language: translucent gradient fills (0.85 to 0.45 opacity), subtle 1px glass outline strokes, and consistent with the ServicePopularityChart and other chart patterns already in the codebase.
