@@ -1,58 +1,52 @@
 
 
-## Make Pace Tracker Always Use Operating Days (Not Calendar Days)
+## Update Daily Average to "Daily Operating Average"
 
 ### The Problem
 
-The "$2,107/day needed" calculation on the Monthly Goal currently divides the remaining revenue by **total calendar days** remaining when viewing "All Locations." This includes Sundays and Mondays (when all locations are closed), inflating the number of days and producing an artificially low daily rate. It also omits the "(X open days left)" context label, so there's no way to tell what the number is based on.
+The "Daily Avg" reference line and stat card divides total revenue by **all calendar days** (including closed days like Sunday and Monday). This produces an artificially low average since closed days with $0 revenue drag the number down.
 
 ### The Fix
 
-When "All Locations" is selected, compute operating days the same way we did for the forecast closed-day indicators: a day counts as "closed" only if **every** active location is closed. Then pass the resulting `hoursJson`-equivalent data down so the pace calculation uses open business days.
+Recalculate the daily average in the component layer using the already-computed `closedDates` set to divide total revenue by only **operating days**. Rename the label from "Daily Avg" to "Daily Operating Avg" for clarity.
 
-### What Changes
+### Example
 
-**1. `src/components/dashboard/AggregateSalesCard.tsx`**
+| Metric | Before | After |
+|--------|--------|-------|
+| Total Revenue | $9,170 | $9,170 (unchanged) |
+| Days in denominator | 7 | 5 (excluding Sun + Mon) |
+| Daily Average | $1,310 | $1,834 |
+| Label | "Daily Avg" | "Daily Operating Avg" |
 
-When `isAllLocations` is true, compute a merged/synthetic `hoursJson` where a day is marked closed only if all locations are closed on that day. Pass this merged schedule to `GoalProgressWithOwnRevenue` so the pace tracker always gets operating-day awareness.
+### Changes
 
-```text
-Before:  hoursJson={selectedLoc?.hours_json}          // undefined for "all"
-After:   hoursJson={selectedLoc?.hours_json ?? mergedHoursJson}  // fallback to merged
-```
+**1. `src/components/dashboard/sales/WeekAheadForecast.tsx`**
 
-The merged `hoursJson` will be computed in a `useMemo`:
-- For each weekday (sunday-saturday), check if every location has `closed: true`
-- If all locations are closed on that day, mark it closed in the merged object
+- Compute `operatingDailyAvg` using `closedDates`: `totalRevenue / (days.length - closedDates.size)` (with fallback to standard calculation if all days are somehow closed)
+- Use `operatingDailyAvg` instead of `averageDaily` for the stat card value and the chart reference line position
+- Rename label from "Daily Avg" to "Daily Operating Avg"
+- Update the reference line badge text from "Daily Avg: $X" to "Daily Operating Avg: $X"
+- Update tooltip from "7-Day Total / 7" to "7-Day Total / X operating days"
 
-Similarly, merge `holidayClosures`: a date is a holiday only if every location lists it.
+**2. `src/components/dashboard/sales/ForecastingCard.tsx`**
 
-**2. `src/components/dashboard/sales/SalesGoalProgress.tsx`**
+- Same operating-day-aware average calculation using `closedDates`
+- Update `PERIOD_AVG_LABELS` entries from "Daily Avg" to "Daily Operating Avg" (for 'todayToEom' and '7days' periods)
+- Update the chart reference line badge text
+- Update tooltip descriptions to reflect operating days denominator
 
-Update the "Behind pace" display to **always** show the open days context -- not just when `isLocationAware` is true. This ensures clarity regardless of how the data arrives.
+**3. `src/components/dashboard/sales/CategoryBreakdownPanel.tsx`**
 
-```text
-Before:  Behind pace . $2,107/day needed (11 open days left)   // only when single location
-After:   Behind pace . $2,107/day needed (11 open days left)   // always shown
-```
-
-**3. `src/pages/dashboard/admin/SalesDashboard.tsx`**
-
-Apply the same merged hours logic for the SalesDashboard page's goal progress component (same pattern as AggregateSalesCard).
-
-### Result
-
-| View | Before | After |
-|------|--------|-------|
-| All Locations | Behind pace . $2,107/day needed | Behind pace . $2,904/day needed (8 open days left) |
-| Single Location | Behind pace . $2,107/day needed (8 open days left) | No change (already correct) |
-
-The daily rate will increase (correctly) because the denominator shrinks from ~11 calendar days to ~8 open business days, giving a more realistic and actionable target.
+- Update `MODE_LABELS.dailyAvg` from "Daily Avg by Category" to "Daily Operating Avg by Category"
+- Update the corresponding dynamic label function
 
 ### Files Modified
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/AggregateSalesCard.tsx` | Add merged hoursJson/holidayClosures useMemo for "All Locations" |
-| `src/pages/dashboard/admin/SalesDashboard.tsx` | Same merged hours logic |
-| `src/components/dashboard/sales/SalesGoalProgress.tsx` | Always show "(X open days left)" in pace indicator |
+| `src/components/dashboard/sales/WeekAheadForecast.tsx` | Compute operating-day avg, update labels and reference line |
+| `src/components/dashboard/sales/ForecastingCard.tsx` | Compute operating-day avg, update labels and reference line |
+| `src/components/dashboard/sales/CategoryBreakdownPanel.tsx` | Update "Daily Avg" labels |
+
+No hook or database changes needed -- the calculation is done at the component level using the existing `closedDates` set.
