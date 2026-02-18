@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -57,19 +57,52 @@ import {
   CalendarX,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { services as initialServices, type ServiceCategory, type ServiceItem } from '@/data/servicePricing';
+import { useNativeServicesForWebsite, useToggleServicePopular, type NativeServiceCategory, type NativeServiceItem } from '@/hooks/useNativeServicesForWebsite';
 import { StylistLevelsEditor } from '@/components/dashboard/StylistLevelsEditor';
 import { useStylistLevelsSimple } from '@/hooks/useStylistLevels';
 import { ServiceCommunicationFlowEditor } from '@/components/dashboard/ServiceCommunicationFlowEditor';
 import { useAllServiceCommunicationFlows } from '@/hooks/useServiceCommunicationFlows';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+// Local type extending native with backward-compat aliases
+interface LocalCategory {
+  id: string;
+  categoryName: string;
+  category: string;
+  description: string | null;
+  colorHex: string;
+  textColorHex: string;
+  displayOrder: number;
+  isAddOn: boolean;
+  items: NativeServiceItem[];
+}
+
 export default function ServicesManager() {
   const { data: stylistLevels } = useStylistLevelsSimple();
   const { data: allFlows } = useAllServiceCommunicationFlows();
-  const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>(initialServices);
+  const { categories: nativeCategories, levels, isLoading: servicesLoading } = useNativeServicesForWebsite();
+  const togglePopularMutation = useToggleServicePopular();
+
+  // Map native categories to local shape with backward-compat aliases
+  const mappedCategories: LocalCategory[] = useMemo(() =>
+    nativeCategories.map(cat => ({
+      ...cat,
+      category: cat.categoryName,
+      isAddOn: false,
+    }))
+  , [nativeCategories]);
+
+  const [serviceCategories, setServiceCategories] = useState<LocalCategory[]>([]);
+
+  // Sync from DB when data loads/changes
+  useEffect(() => {
+    if (mappedCategories.length > 0) {
+      setServiceCategories(mappedCategories);
+    }
+  }, [mappedCategories]);
+
   const [searchQuery, setSearchQuery] = useState('');
-  const [editingService, setEditingService] = useState<{ categoryIndex: number; itemIndex: number; item: ServiceItem } | null>(null);
+  const [editingService, setEditingService] = useState<{ categoryIndex: number; itemIndex: number; item: NativeServiceItem } | null>(null);
   const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState('');
   const [draggedCategoryIndex, setDraggedCategoryIndex] = useState<number | null>(null);
@@ -79,6 +112,16 @@ export default function ServicesManager() {
   const [newCategoryIsAddOn, setNewCategoryIsAddOn] = useState(false);
   const [deletingCategoryIndex, setDeletingCategoryIndex] = useState<number | null>(null);
   const [configureFlowsServiceName, setConfigureFlowsServiceName] = useState<string | null>(null);
+
+  // Price helpers
+  const getLowestPrice = (item: NativeServiceItem) => {
+    if (levels.length === 0) return item.basePrice;
+    return item.levelPrices[levels[0].id] ?? item.basePrice;
+  };
+  const getHighestPrice = (item: NativeServiceItem) => {
+    if (levels.length === 0) return item.basePrice;
+    return item.levelPrices[levels[levels.length - 1].id] ?? item.basePrice;
+  };
 
   // Get set of service names that have active flows
   const servicesWithFlows = new Set(
@@ -95,16 +138,10 @@ export default function ServicesManager() {
   );
 
   const handleTogglePopular = (categoryIndex: number, itemIndex: number) => {
-    setServiceCategories(prev => {
-      const updated = [...prev];
-      updated[categoryIndex] = {
-        ...updated[categoryIndex],
-        items: updated[categoryIndex].items.map((item, idx) => 
-          idx === itemIndex ? { ...item, isPopular: !item.isPopular } : item
-        ),
-      };
-      return updated;
-    });
+    const item = serviceCategories[categoryIndex]?.items[itemIndex];
+    if (item) {
+      togglePopularMutation.mutate({ serviceId: item.id, isPopular: !item.isPopular });
+    }
   };
 
   const handleUpdateService = () => {
@@ -136,9 +173,14 @@ export default function ServicesManager() {
 
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) return;
-    const newCategory: ServiceCategory = {
+    const newCategory: LocalCategory = {
+      id: crypto.randomUUID(),
+      categoryName: newCategoryName.trim(),
       category: newCategoryName.trim(),
       description: '',
+      colorHex: '#6B7280',
+      textColorHex: '#FFFFFF',
+      displayOrder: serviceCategories.length,
       isAddOn: newCategoryIsAddOn,
       items: [],
     };
@@ -511,11 +553,11 @@ export default function ServicesManager() {
                             <div className="flex items-center gap-2 mt-2 flex-wrap">
                               <span className="text-xs text-muted-foreground">Starts at:</span>
                               <Badge variant="secondary" className="font-mono">
-                                {item.prices['new-talent']}
+                                ${getLowestPrice(item)}
                               </Badge>
                               <ChevronRight className="w-3 h-3 text-muted-foreground" />
                               <Badge variant="secondary" className="font-mono">
-                                {item.prices['icon']}
+                                ${getHighestPrice(item)}
                               </Badge>
                             </div>
                           </div>
@@ -601,16 +643,16 @@ export default function ServicesManager() {
                                     <div className="space-y-3">
                                       <Label>Pricing by Level</Label>
                                       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                        {(stylistLevels || []).map((level, index) => (
+                                        {levels.map((level, index) => (
                                           <div key={level.id} className="space-y-1">
                                             <Label className="text-xs text-muted-foreground">
-                                              Level {index + 1} - {level.label}
+                                              {level.clientLabel} - {level.label}
                                             </Label>
                                             <div className="relative">
                                               <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                                               <Input 
                                                 className="pl-7 font-mono"
-                                                value={editingService.item.prices[level.id]?.replace('$', '') || ''}
+                                                value={editingService.item.levelPrices[level.id]?.toString() || ''}
                                                 onChange={(e) => {
                                                   const value = e.target.value;
                                                   setEditingService(prev => 
@@ -618,9 +660,9 @@ export default function ServicesManager() {
                                                       ...prev, 
                                                       item: { 
                                                         ...prev.item, 
-                                                        prices: { 
-                                                          ...prev.item.prices, 
-                                                          [level.id]: value ? `$${value}` : null 
+                                                        levelPrices: { 
+                                                          ...prev.item.levelPrices, 
+                                                          [level.id]: value ? parseFloat(value) : 0 
                                                         } 
                                                       } 
                                                     } : null
@@ -644,18 +686,18 @@ export default function ServicesManager() {
                                         <div className="space-y-0.5">
                                           <Label>Allow Same-Day Booking</Label>
                                           <p className="text-xs text-muted-foreground">
-                                            Enable for services that can be booked on the same day
+                                            Enable for services that can be booked same-day
                                           </p>
                                         </div>
                                         <Switch 
-                                          checked={editingService.item.allowSameDayBooking !== false}
-                                          onCheckedChange={(checked) => setEditingService(prev => 
+                                          checked={(editingService.item as any).allowSameDayBooking !== false}
+                                          onCheckedChange={(checked: boolean) => setEditingService(prev => 
                                             prev ? { ...prev, item: { ...prev.item, allowSameDayBooking: checked } } : null
                                           )}
                                         />
                                       </div>
 
-                                      {editingService.item.allowSameDayBooking === false && (
+                                      {(editingService.item as any).allowSameDayBooking === false && (
                                         <>
                                           <div className="space-y-2">
                                             <Label className="flex items-center gap-2">
@@ -665,7 +707,7 @@ export default function ServicesManager() {
                                             <Input 
                                               type="number" 
                                               min="1"
-                                              value={editingService.item.leadTimeDays || 1}
+                                              value={(editingService.item as any).leadTimeDays || 1}
                                               onChange={(e) => setEditingService(prev => 
                                                 prev ? { ...prev, item: { ...prev.item, leadTimeDays: parseInt(e.target.value) || 1 } } : null
                                               )}
@@ -679,7 +721,7 @@ export default function ServicesManager() {
                                             <Label>Restriction Reason</Label>
                                             <Textarea 
                                               placeholder="e.g., Extensions require 7-day custom order"
-                                              value={editingService.item.restrictionReason || ''}
+                                              value={(editingService.item as any).restrictionReason || ''}
                                               onChange={(e) => setEditingService(prev => 
                                                 prev ? { ...prev, item: { ...prev.item, restrictionReason: e.target.value } } : null
                                               )}
@@ -731,7 +773,7 @@ export default function ServicesManager() {
               <strong className="text-foreground">Popular Flag:</strong> Toggle to feature services prominently on the website.
             </p>
             <p>
-              <strong className="text-foreground">Note:</strong> Changes made here are currently local only. Database integration coming soon.
+              <strong className="text-foreground">Note:</strong> Popular toggles save to the database automatically. Category reordering and renaming are session-only.
             </p>
           </CardContent>
         </Card>

@@ -253,9 +253,7 @@ export interface LocationsDisplayConfig {
   layout: 'cards' | 'list';
 }
 
-export interface WebsiteServicesData {
-  categories: import('@/data/servicePricing').ServiceCategory[];
-}
+// WebsiteServicesData removed — services are now managed via useNativeServicesForWebsite hook
 
 // ============================================
 // Default Values
@@ -440,9 +438,7 @@ export const DEFAULT_LOCATIONS_DISPLAY: LocationsDisplayConfig = {
   layout: 'cards',
 };
 
-export const DEFAULT_WEBSITE_SERVICES: WebsiteServicesData = {
-  categories: [],
-};
+// DEFAULT_WEBSITE_SERVICES removed — services are now managed via useNativeServicesForWebsite hook
 
 // ============================================
 // Typed Hooks
@@ -508,6 +504,4 @@ export function useLocationsDisplayConfig() {
   return useSectionConfig<LocationsDisplayConfig>('section_locations_display', DEFAULT_LOCATIONS_DISPLAY);
 }
 
-export function useWebsiteServicesData() {
-  return useSectionConfig<WebsiteServicesData>('website_services_data', DEFAULT_WEBSITE_SERVICES);
-}
+// useWebsiteServicesData removed — services are now managed via useNativeServicesForWebsite hook
