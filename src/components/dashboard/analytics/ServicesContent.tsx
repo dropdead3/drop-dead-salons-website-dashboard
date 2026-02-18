@@ -363,8 +363,8 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
           ) : categoryMix.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-8">No service data for this period</p>
           ) : (
-            <div className="grid lg:grid-cols-2 gap-6">
-              <div className="h-64">
+            <div className="grid lg:grid-cols-[minmax(180px,1fr)_3fr] gap-6 items-start">
+              <div className="aspect-square w-full max-w-[280px] mx-auto">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={categoryMix} dataKey="revenue" nameKey="category" cx="50%" cy="50%" innerRadius="55%" outerRadius="85%" paddingAngle={2} strokeWidth={0}>
@@ -374,7 +374,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div>
+              <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                      <TableRow>
