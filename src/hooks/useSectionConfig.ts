@@ -212,6 +212,51 @@ export interface LocationsSectionConfig {
   show_tap_hint: boolean;
 }
 
+// Section Display Configs (for homepage section editors)
+export interface ServicesPreviewConfig {
+  section_eyebrow: string;
+  section_title: string;
+  section_description: string;
+  layout: 'grid' | 'list' | 'accordion';
+  max_categories_visible: number;
+}
+
+export interface PopularServicesConfig {
+  section_eyebrow: string;
+  section_title: string;
+  section_description: string;
+  max_featured: number;
+  layout: 'grid' | 'carousel';
+}
+
+export interface GalleryDisplayConfig {
+  section_eyebrow: string;
+  section_title: string;
+  section_description: string;
+  grid_columns: number;
+  max_images: number;
+}
+
+export interface StylistsDisplayConfig {
+  section_eyebrow: string;
+  section_title: string;
+  section_description: string;
+  card_style: 'minimal' | 'detailed';
+  max_visible: number;
+}
+
+export interface LocationsDisplayConfig {
+  section_eyebrow: string;
+  section_title: string;
+  section_description: string;
+  show_map: boolean;
+  layout: 'cards' | 'list';
+}
+
+export interface WebsiteServicesData {
+  categories: import('@/data/servicePricing').ServiceCategory[];
+}
+
 // ============================================
 // Default Values
 // ============================================
@@ -355,6 +400,50 @@ export const DEFAULT_LOCATIONS_SECTION: LocationsSectionConfig = {
   show_tap_hint: true,
 };
 
+export const DEFAULT_SERVICES_PREVIEW: ServicesPreviewConfig = {
+  section_eyebrow: "What We Do",
+  section_title: "Our Services",
+  section_description: "From cuts to color, extensions to styling — explore everything we offer.",
+  layout: 'accordion',
+  max_categories_visible: 10,
+};
+
+export const DEFAULT_POPULAR_SERVICES: PopularServicesConfig = {
+  section_eyebrow: "Most Loved",
+  section_title: "Popular Services",
+  section_description: "Our most booked services by clients who know what they want.",
+  max_featured: 6,
+  layout: 'grid',
+};
+
+export const DEFAULT_GALLERY_DISPLAY: GalleryDisplayConfig = {
+  section_eyebrow: "Our Work",
+  section_title: "Gallery",
+  section_description: "See the artistry behind every transformation.",
+  grid_columns: 3,
+  max_images: 12,
+};
+
+export const DEFAULT_STYLISTS_DISPLAY: StylistsDisplayConfig = {
+  section_eyebrow: "Meet The Team",
+  section_title: "Our Stylists",
+  section_description: "Talented artists dedicated to your perfect look.",
+  card_style: 'detailed',
+  max_visible: 8,
+};
+
+export const DEFAULT_LOCATIONS_DISPLAY: LocationsDisplayConfig = {
+  section_eyebrow: "Visit Us",
+  section_title: "Our Locations",
+  section_description: "Find a salon near you.",
+  show_map: true,
+  layout: 'cards',
+};
+
+export const DEFAULT_WEBSITE_SERVICES: WebsiteServicesData = {
+  categories: [],
+};
+
 // ============================================
 // Typed Hooks
 // ============================================
@@ -397,4 +486,28 @@ export function useFooterCTAConfig() {
 
 export function useLocationsSectionConfig() {
   return useSectionConfig<LocationsSectionConfig>('section_locations', DEFAULT_LOCATIONS_SECTION);
+}
+
+export function useServicesPreviewConfig() {
+  return useSectionConfig<ServicesPreviewConfig>('section_services_preview', DEFAULT_SERVICES_PREVIEW);
+}
+
+export function usePopularServicesConfig() {
+  return useSectionConfig<PopularServicesConfig>('section_popular_services', DEFAULT_POPULAR_SERVICES);
+}
+
+export function useGalleryDisplayConfig() {
+  return useSectionConfig<GalleryDisplayConfig>('section_gallery_display', DEFAULT_GALLERY_DISPLAY);
+}
+
+export function useStylistsDisplayConfig() {
+  return useSectionConfig<StylistsDisplayConfig>('section_stylists_display', DEFAULT_STYLISTS_DISPLAY);
+}
+
+export function useLocationsDisplayConfig() {
+  return useSectionConfig<LocationsDisplayConfig>('section_locations_display', DEFAULT_LOCATIONS_DISPLAY);
+}
+
+export function useWebsiteServicesData() {
+  return useSectionConfig<WebsiteServicesData>('website_services_data', DEFAULT_WEBSITE_SERVICES);
 }

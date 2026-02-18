@@ -58,6 +58,11 @@ import { FAQEditor } from '@/components/dashboard/website-editor/FAQEditor';
 import { BrandsManager } from '@/components/dashboard/website-editor/BrandsManager';
 import { DrinksManager } from '@/components/dashboard/website-editor/DrinksManager';
 import { FooterCTAEditor } from '@/components/dashboard/website-editor/FooterCTAEditor';
+import { ServicesPreviewEditor } from '@/components/dashboard/website-editor/ServicesPreviewEditor';
+import { PopularServicesEditor } from '@/components/dashboard/website-editor/PopularServicesEditor';
+import { GalleryDisplayEditor } from '@/components/dashboard/website-editor/GalleryDisplayEditor';
+import { StylistsDisplayEditor } from '@/components/dashboard/website-editor/StylistsDisplayEditor';
+import { LocationsDisplayEditor } from '@/components/dashboard/website-editor/LocationsDisplayEditor';
 import { TestimonialsContent } from '@/components/dashboard/website-editor/TestimonialsContent';
 import { GalleryContent } from '@/components/dashboard/website-editor/GalleryContent';
 import { StylistsContent } from '@/components/dashboard/website-editor/StylistsContent';
@@ -389,12 +394,12 @@ const EDITOR_COMPONENTS: Record<string, React.ComponentType> = {
   'hero': HeroEditor,
   'brand': BrandStatementEditor,
   'testimonials-section': TestimonialsEditor,
-  'services-preview': ServicesContent,
-  'popular-services': ServicesContent,
-  'gallery-section': GalleryContent,
+  'services-preview': ServicesPreviewEditor,
+  'popular-services': PopularServicesEditor,
+  'gallery-section': GalleryDisplayEditor,
   'new-client': NewClientEditor,
-  'stylists-section': StylistsContent,
-  'locations-section': LocationsContent,
+  'stylists-section': StylistsDisplayEditor,
+  'locations-section': LocationsDisplayEditor,
   'extensions': ExtensionsEditor,
   'faq': FAQEditor,
   'brands': BrandsManager,
