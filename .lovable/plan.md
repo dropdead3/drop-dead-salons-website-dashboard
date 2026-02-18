@@ -1,28 +1,30 @@
 
-
-## Dynamic Y-Axis Domain for Capacity Utilization Charts
+## Make Hours-Open Labels Bold on Capacity Utilization X-Axis
 
 ### Problem
-The Y-axis is hardcoded to `[0, 100]`, so if the highest utilization bar is, say, 40%, there's a large empty gap above it wasting vertical space and making bars look short.
-
-### Solution
-Compute a dynamic Y-axis max based on the actual peak utilization value, rounded up to the nearest clean increment (e.g., nearest 10 or 20), with a small buffer. This keeps bars visually tall while preserving readable axis context.
+The "Xh open" labels on the Capacity Utilization x-axis use muted, lightweight styling (`fill-muted-foreground text-[10px]`, no font-weight), while the Forecasting card's equivalent third line (appointment count) is bold. The "Closed" label is already bold but the hours-open label is not.
 
 ### Changes
 
 **Both files: `CapacityUtilizationCard.tsx` and `CapacityUtilizationSection.tsx`**
 
-1. Before the chart render, compute `yMax`:
-   - Find the highest `utilization` value from `chartData`
-   - Add a ~20% buffer, then round up to the nearest 10
-   - Clamp to a minimum of 20 (so the chart never looks weird with very low data) and a max of 100
-   - Example: peak is 38% -> 38 * 1.2 = 45.6 -> round up to 50 -> `yMax = 50`
+Update the hours-open text element in the `DayXAxisTick` open-day branch:
 
-2. Update `<YAxis>`:
-   - Change `domain={[0, 100]}` to `domain={[0, yMax]}`
+Before:
+```tsx
+<text x={0} y={0} dy={38} textAnchor="middle" className="fill-muted-foreground text-[10px]">
+  {day.gapHours > 0 ? `${day.gapHours}h open` : 'Full'}
+</text>
+```
 
-### Result
-Bars fill more of the vertical space regardless of actual utilization values, while the axis ceiling stays a clean round number above the peak. If utilization is already high (80%+), the domain stays near 100 naturally.
+After:
+```tsx
+<text x={0} y={0} dy={38} textAnchor="middle" className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}>
+  {day.gapHours > 0 ? `${day.gapHours}h open` : 'Full'}
+</text>
+```
+
+This matches the "Closed" label styling (`fill-foreground text-[11px]`, `fontWeight: 500`) and aligns with the Forecasting card's appointment count typography.
 
 ### Files Modified
 - `src/components/dashboard/sales/CapacityUtilizationCard.tsx`
