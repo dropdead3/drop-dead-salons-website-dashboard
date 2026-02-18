@@ -13,6 +13,7 @@ import { DayProviderBreakdownPanel } from './DayProviderBreakdownPanel';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CalendarRange, TrendingUp, Calendar, Users, ChevronDown } from 'lucide-react';
 import { CategoryBreakdownPanel, BreakdownMode } from './CategoryBreakdownPanel';
+import { ServiceMixLegend } from '@/components/dashboard/analytics/ServiceMixLegend';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { useForecastChartMode } from '@/hooks/useForecastChartMode';
@@ -624,6 +625,11 @@ export function WeekAheadForecast() {
               <div className="w-full h-full" />
             )}
           </div>
+
+          {/* Service Mix Legend - shown in category mode */}
+          {chartMode === 'category' && byCategory && Object.keys(byCategory).length > 0 && (
+            <ServiceMixLegend byCategory={byCategory} />
+          )}
 
           {/* Provider Breakdown Drill-Down */}
           <DayProviderBreakdownPanel

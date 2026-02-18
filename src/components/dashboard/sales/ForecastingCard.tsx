@@ -13,6 +13,7 @@ import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurr
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useForecastRevenue, ForecastPeriod, DayForecast, WeekForecast, CategoryBreakdown } from '@/hooks/useForecastRevenue';
 import { CategoryBreakdownPanel, BreakdownMode, BreakdownType } from './CategoryBreakdownPanel';
+import { ServiceMixLegend } from '@/components/dashboard/analytics/ServiceMixLegend';
 import { useYearlyGoalProgress } from '@/hooks/useYearlyGoalProgress';
 import { LocationSelect } from '@/components/ui/location-select';
 import { DayAppointmentsSheet } from './DayAppointmentsSheet';
@@ -1006,6 +1007,11 @@ export function ForecastingCard() {
                 </BarChart>
               </ResponsiveContainer>
             </div>
+          )}
+
+          {/* Service Mix Legend - shown in category mode */}
+          {chartMode === 'category' && showChart && byCategory && Object.keys(byCategory).length > 0 && (
+            <ServiceMixLegend byCategory={byCategory} />
           )}
 
           {/* Provider Breakdown Drill-Down (daily view only) */}
