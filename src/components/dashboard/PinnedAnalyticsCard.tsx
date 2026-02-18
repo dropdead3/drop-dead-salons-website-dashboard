@@ -57,6 +57,7 @@ const CARD_TO_TAB_MAP: Record<string, string> = {
   'service_mix': 'analytics_sales_tab',
   'retail_effectiveness': 'analytics_sales_tab',
   'rebooking': 'analytics_operations_tab',
+  'client_experience_staff': 'analytics_sales_tab',
 };
 
 // Map dashboard date range to Sales Overview date range
