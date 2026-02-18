@@ -308,7 +308,6 @@ export function ServiceCostsProfitsCard({
               {CARD_HEADER}
             </div>
             <div className="flex items-center gap-2">
-              {viewToggle}
               {missingCostCount > 0 && (
                 <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1 rounded-md">
                   <AlertCircle className="w-3 h-3" />
@@ -347,6 +346,8 @@ export function ServiceCostsProfitsCard({
               </p>
             </div>
           </div>
+
+          <div className="mb-4">{viewToggle}</div>
 
           {/* Table */}
           <div className="overflow-x-auto">
