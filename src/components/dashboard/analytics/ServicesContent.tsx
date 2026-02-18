@@ -175,25 +175,32 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
   // Category mix data for donut
   const categoryMix = useMemo(() => {
     if (!data?.services) return [];
-    const cats = new Map<string, { revenue: number; count: number; services: ServiceEfficiencyRow[] }>();
+    const cats = new Map<string, { revenue: number; count: number; totalDurationMin: number; services: ServiceEfficiencyRow[] }>();
     for (const s of data.services) {
       const cat = s.category;
-      const existing = cats.get(cat) || { revenue: 0, count: 0, services: [] };
+      const existing = cats.get(cat) || { revenue: 0, count: 0, totalDurationMin: 0, services: [] };
       existing.revenue += s.totalRevenue;
       existing.count += s.bookings;
+      existing.totalDurationMin += s.bookings * s.avgDuration;
       existing.services.push(s);
       cats.set(cat, existing);
     }
+    const totalBookings = [...cats.values()].reduce((sum, c) => sum + c.count, 0);
     return [...cats.entries()]
-      .map(([category, { revenue, count, services }]) => ({
-        category,
-        revenue,
-        count,
-        pct: data.totalServiceRevenue > 0 ? (revenue / data.totalServiceRevenue) * 100 : 0,
-        avgTicket: count > 0 ? revenue / count : 0,
-        color: resolveHexColor(colorMap[category.toLowerCase()]?.bg || '#888888'),
-        services: services.sort((a, b) => b.totalRevenue - a.totalRevenue),
-      }))
+      .map(([category, { revenue, count, totalDurationMin, services }]) => {
+        const totalHours = totalDurationMin / 60;
+        return {
+          category,
+          revenue,
+          count,
+          pct: data.totalServiceRevenue > 0 ? (revenue / data.totalServiceRevenue) * 100 : 0,
+          pctBooked: totalBookings > 0 ? (count / totalBookings) * 100 : 0,
+          revPerHour: totalHours > 0 ? revenue / totalHours : 0,
+          avgTicket: count > 0 ? revenue / count : 0,
+          color: resolveHexColor(colorMap[category.toLowerCase()]?.bg || '#888888'),
+          services: services.sort((a, b) => b.totalRevenue - a.totalRevenue),
+        };
+      })
       .sort((a, b) => b.revenue - a.revenue);
   }, [data, colorMap]);
 
@@ -370,11 +377,13 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
               <div>
                 <Table>
                   <TableHeader>
-                    <TableRow>
+                     <TableRow>
                       <TableHead>Category</TableHead>
                       <TableHead className="text-right">Revenue</TableHead>
+                      <TableHead className="text-right">Avg Rev/Hr</TableHead>
                       <TableHead className="text-right">Count</TableHead>
-                      <TableHead className="text-right">%</TableHead>
+                      <TableHead className="text-right">% Rev</TableHead>
+                      <TableHead className="text-right">% Booked</TableHead>
                       <TableHead className="text-right">Avg Ticket</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -393,13 +402,15 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                               </div>
                             </TableCell>
                             <TableCell className="text-right tabular-nums text-sm"><BlurredAmount>{formatCurrencyWhole(cat.revenue)}</BlurredAmount></TableCell>
+                            <TableCell className="text-right tabular-nums text-sm"><BlurredAmount>{formatCurrency(cat.revPerHour)}</BlurredAmount><span className="text-muted-foreground">/hr</span></TableCell>
                             <TableCell className="text-right tabular-nums text-sm">{formatNumber(cat.count)}</TableCell>
                             <TableCell className="text-right tabular-nums text-sm">{Math.round(cat.pct)}%</TableCell>
+                            <TableCell className="text-right tabular-nums text-sm">{Math.round(cat.pctBooked)}%</TableCell>
                             <TableCell className="text-right tabular-nums text-sm"><BlurredAmount>{formatCurrency(cat.avgTicket)}</BlurredAmount></TableCell>
                           </TableRow>
                           {isExpanded && (
                             <TableRow key={`${cat.category}-detail`}>
-                              <TableCell colSpan={5} className="p-0">
+                              <TableCell colSpan={7} className="p-0">
                                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
                                   <div className="p-4 bg-muted/20 space-y-3">
                                     <div className="flex gap-4 text-xs">
