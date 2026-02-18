@@ -1,36 +1,25 @@
 
 
-## Enhance Service Category Mix Table with New Columns
+## Improve Service Category Mix Card Layout
 
 ### What Changes
 
-Add three new data columns to the existing Service Category Mix table (the donut + table card):
+The current card uses `grid lg:grid-cols-2` which splits the donut chart and the table 50/50. The table has 7 columns and needs more horizontal space while the donut chart only needs enough room to render clearly.
 
-| Column | Description | Data Source |
-|---|---|---|
-| **Avg Rev/Hr** | Average revenue per hour of chair time for the category | Computed from service durations already in `useServiceEfficiency` data |
-| **% Rev** | Percentage of total revenue (already exists as the `%` column -- will be relabeled for clarity) |  Already computed as `cat.pct` |
-| **% Booked** | Percentage of total bookings this category represents | `cat.count / totalBookings * 100` |
+### Layout Update
 
-### Current Table Columns
-`Category | Revenue | Count | % | Avg Ticket`
+1. **Change grid ratio** from equal `lg:grid-cols-2` to weighted columns: `lg:grid-cols-[minmax(180px,1fr)_3fr]` -- giving roughly 25% to the donut and 75% to the table
 
-### New Table Columns
-`Category | Revenue | Avg Rev/Hr | Count | % Rev | % Booked | Avg Ticket`
+2. **Make donut responsive** -- remove the fixed `h-64` and instead use `aspect-square w-full max-w-[280px] mx-auto` so it scales naturally within its column and stays centered
+
+3. **Ensure mobile stacking** -- on small screens the grid collapses to a single column (donut on top, table below) which already works with the `lg:` prefix
 
 ### Technical Details
 
-**Modified: `src/components/dashboard/analytics/ServicesContent.tsx`**
+**File: `src/components/dashboard/analytics/ServicesContent.tsx`**
 
-1. **Extend `categoryMix` memo** -- compute `totalDurationMin` per category by summing `s.bookings * s.avgDuration` for each service in the category, then derive `revPerHour = revenue / (totalDurationMin / 60)`
+- Line 366: Change `grid lg:grid-cols-2 gap-6` to `grid lg:grid-cols-[minmax(180px,1fr)_3fr] gap-6 items-start`
+- Line 367: Change `h-64` to `aspect-square w-full max-w-[280px] mx-auto` for a responsive donut that fills its column
+- Add `overflow-x-auto` wrapper on the table column so on mid-size screens the table can scroll horizontally if needed
 
-2. **Compute `totalBookings`** -- sum all category counts to calculate each category's booking share percentage
-
-3. **Add table columns:**
-   - `Avg Rev/Hr` column after Revenue -- displays `formatCurrency(cat.revPerHour)` with `/hr` suffix
-   - Rename existing `%` header to `% Rev` for clarity
-   - Add `% Booked` column showing `Math.round(cat.count / totalBookings * 100)%`
-
-4. **Update drill-down `colSpan`** from 5 to 7 to account for the two new columns
-
-No new components or hooks needed. All data is already available from the existing `useServiceEfficiency` hook that powers this section.
+No data or logic changes -- purely a layout/sizing adjustment.
