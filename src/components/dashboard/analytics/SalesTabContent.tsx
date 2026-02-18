@@ -50,6 +50,7 @@ import { LastSyncIndicator } from '@/components/dashboard/sales/LastSyncIndicato
 import { ProductCategoryChart } from '@/components/dashboard/sales/ProductCategoryChart';
 
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
+import { ClientVisitsCard } from '@/components/dashboard/sales/ClientVisitsCard';
 import { PeakHoursHeatmap } from '@/components/dashboard/sales/PeakHoursHeatmap';
 import { CommissionSummaryCard } from '@/components/dashboard/sales/CommissionSummaryCard';
 import { StaffCommissionTable } from '@/components/dashboard/sales/StaffCommissionTable';
@@ -374,6 +375,16 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         </TabsContent>
 
         <TabsContent value="staff" className="mt-6 space-y-6">
+          {/* Client Visits Card */}
+          <PinnableCard elementKey="client_visits_staff" elementName="Client Visits" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <ClientVisitsCard
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={locationFilter}
+              filterContext={filterContext}
+            />
+          </PinnableCard>
+
           {/* Stylist Leaderboard */}
           <PinnableCard elementKey="staff_leaderboard" elementName="Staff Performance" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <Card>
