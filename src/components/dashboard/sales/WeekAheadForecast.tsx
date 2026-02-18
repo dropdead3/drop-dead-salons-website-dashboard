@@ -111,23 +111,29 @@ function CustomXAxisTick({ x, y, payload, days, peakDate, onDayClick, closedDate
               {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}
             </text>
             {isClosed && (
-              <text
-                x={0} y={0} dy={39}
-                textAnchor="middle"
-                className="fill-muted-foreground text-[9px]"
-              >
-                ☽ Closed
-              </text>
+              <g>
+                <g transform={`translate(-18, ${39 - 9}) scale(0.42)`}>
+                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" 
+                        fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                        className="stroke-muted-foreground" />
+                </g>
+                <text x={4} dy={39} textAnchor="middle" className="fill-muted-foreground text-[9px]">
+                  Closed
+                </text>
+              </g>
             )}
           </>
         ) : isClosed ? (
-          <text
-            x={0} y={0} dy={26}
-            textAnchor="middle"
-            className="fill-muted-foreground text-[9px]"
-          >
-            ☽ Closed
-          </text>
+          <g>
+            <g transform={`translate(-18, ${26 - 9}) scale(0.42)`}>
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" 
+                    fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                    className="stroke-muted-foreground" />
+            </g>
+            <text x={4} dy={26} textAnchor="middle" className="fill-muted-foreground text-[9px]">
+              Closed
+            </text>
+          </g>
         ) : (
           <text 
             x={0} y={0} dy={26} 
@@ -481,16 +487,14 @@ export function WeekAheadForecast() {
                           const cx = xAxis.x + bandWidth * index + bandWidth / 2;
                           const cy = bottomY - 40;
                           return (
-                            <text
+                            <g
                               key={`moon-${index}`}
-                              x={cx}
-                              y={cy}
-                              textAnchor="middle"
-                              className="fill-muted-foreground"
-                              style={{ fontSize: 18, opacity: 0.5 }}
+                              transform={`translate(${cx - 8}, ${cy - 8}) scale(0.67)`}
                             >
-                              🌙
-                            </text>
+                              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" 
+                                    fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                                    className="stroke-muted-foreground" style={{ opacity: 0.5 }} />
+                            </g>
                           );
                         })}
                       </g>
