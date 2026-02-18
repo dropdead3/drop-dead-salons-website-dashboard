@@ -167,105 +167,98 @@ function GeneralTab() {
           <CardTitle className="font-display text-lg">ANNOUNCEMENT BANNER</CardTitle>
           <CardDescription>Control the banner displayed at the top of your public website.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            {/* Form fields */}
-            <div className="lg:col-span-3 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium text-sm">Show announcement banner</p>
-                  <p className="text-xs text-muted-foreground">Displays a dismissable banner at the top of every page</p>
-                </div>
-                <Switch
-                  checked={annLocal.enabled}
-                  onCheckedChange={(v) => setAnnLocal(prev => ({ ...prev, enabled: v }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Message prefix</Label>
-                <Input
-                  placeholder="Are you a salon"
-                  value={annLocal.message_prefix}
-                  onChange={(e) => setAnnLocal(prev => ({ ...prev, message_prefix: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Highlighted text</Label>
-                <Input
-                  placeholder="professional"
-                  value={annLocal.message_highlight}
-                  onChange={(e) => setAnnLocal(prev => ({ ...prev, message_highlight: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Message suffix</Label>
-                <Input
-                  placeholder="looking for our extensions?"
-                  value={annLocal.message_suffix}
-                  onChange={(e) => setAnnLocal(prev => ({ ...prev, message_suffix: e.target.value }))}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>CTA button text</Label>
-                  <Input
-                    placeholder="Shop Now"
-                    value={annLocal.cta_text}
-                    onChange={(e) => setAnnLocal(prev => ({ ...prev, cta_text: e.target.value }))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>CTA link URL</Label>
-                  <Input
-                    placeholder="https://..."
-                    value={annLocal.cta_url}
-                    onChange={(e) => setAnnLocal(prev => ({ ...prev, cta_url: e.target.value }))}
-                    autoCapitalize="off"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="text-sm">Open link in new tab</p>
-                <Switch
-                  checked={annLocal.open_in_new_tab}
-                  onCheckedChange={(v) => setAnnLocal(prev => ({ ...prev, open_in_new_tab: v }))}
-                />
-              </div>
-              {annHasChanges && (
-                <Button onClick={handleSaveAnnouncement} disabled={updateAnnouncement.isPending} className="w-full">
-                  {updateAnnouncement.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                  Save Announcement
-                </Button>
-              )}
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-sm">Show announcement banner</p>
+              <p className="text-xs text-muted-foreground">Displays a dismissable banner at the top of every page</p>
             </div>
+            <Switch
+              checked={annLocal.enabled}
+              onCheckedChange={(v) => setAnnLocal(prev => ({ ...prev, enabled: v }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Message prefix</Label>
+            <Input
+              placeholder="Are you a salon"
+              value={annLocal.message_prefix}
+              onChange={(e) => setAnnLocal(prev => ({ ...prev, message_prefix: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Highlighted text</Label>
+            <Input
+              placeholder="professional"
+              value={annLocal.message_highlight}
+              onChange={(e) => setAnnLocal(prev => ({ ...prev, message_highlight: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Message suffix</Label>
+            <Input
+              placeholder="looking for our extensions?"
+              value={annLocal.message_suffix}
+              onChange={(e) => setAnnLocal(prev => ({ ...prev, message_suffix: e.target.value }))}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>CTA button text</Label>
+              <Input
+                placeholder="Shop Now"
+                value={annLocal.cta_text}
+                onChange={(e) => setAnnLocal(prev => ({ ...prev, cta_text: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>CTA link URL</Label>
+              <Input
+                placeholder="https://..."
+                value={annLocal.cta_url}
+                onChange={(e) => setAnnLocal(prev => ({ ...prev, cta_url: e.target.value }))}
+                autoCapitalize="off"
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-sm">Open link in new tab</p>
+            <Switch
+              checked={annLocal.open_in_new_tab}
+              onCheckedChange={(v) => setAnnLocal(prev => ({ ...prev, open_in_new_tab: v }))}
+            />
+          </div>
+          {annHasChanges && (
+            <Button onClick={handleSaveAnnouncement} disabled={updateAnnouncement.isPending} className="w-full">
+              {updateAnnouncement.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Save Announcement
+            </Button>
+          )}
 
-            {/* Live Preview */}
-            <div className="lg:col-span-2">
-              <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Live Preview</p>
-                <div className={cn(
-                  "rounded-md overflow-hidden transition-opacity",
-                  !annLocal.enabled && "opacity-40"
-                )}>
-                  <div className="bg-secondary text-secondary-foreground py-2 px-3 flex items-center justify-center gap-1.5 text-xs">
-                    <span>{annLocal.message_prefix || 'Are you a salon'}</span>
-                    <span className="font-semibold underline decoration-primary underline-offset-2">
-                      {annLocal.message_highlight || 'professional'}
-                    </span>
-                    <span>{annLocal.message_suffix || 'looking for our extensions?'}</span>
-                    {annLocal.cta_text && (
-                      <span className="inline-flex items-center gap-1 ml-1.5 font-medium text-primary">
-                        {annLocal.cta_text}
-                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-                      </span>
-                    )}
-                  </div>
-                </div>
-                {!annLocal.enabled && (
-                  <p className="text-xs text-muted-foreground text-center mt-2">Banner is currently disabled</p>
+          {/* Live Preview */}
+          <div className="rounded-lg border bg-muted/30 p-4 space-y-3 mt-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Live Preview</p>
+            <div className={cn(
+              "rounded-md overflow-hidden transition-opacity",
+              !annLocal.enabled && "opacity-40"
+            )}>
+              <div className="bg-secondary text-secondary-foreground py-2 px-3 flex items-center justify-center gap-1.5 text-xs">
+                <span>{annLocal.message_prefix || 'Are you a salon'}</span>
+                <span className="font-semibold underline decoration-primary underline-offset-2">
+                  {annLocal.message_highlight || 'professional'}
+                </span>
+                <span>{annLocal.message_suffix || 'looking for our extensions?'}</span>
+                {annLocal.cta_text && (
+                  <span className="inline-flex items-center gap-1 ml-1.5 font-medium text-primary">
+                    {annLocal.cta_text}
+                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                  </span>
                 )}
               </div>
             </div>
+            {!annLocal.enabled && (
+              <p className="text-xs text-muted-foreground text-center mt-2">Banner is currently disabled</p>
+            )}
           </div>
         </CardContent>
       </Card>
