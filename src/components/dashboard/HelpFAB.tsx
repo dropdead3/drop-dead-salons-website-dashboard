@@ -39,8 +39,9 @@ export function HelpFAB() {
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
+              variant="ghost"
               size="icon"
-              className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow"
+              className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-card/50 backdrop-blur-2xl border border-border/15 text-foreground hover:bg-card/60"
               aria-label="AI Copilot"
               onClick={handleCopilotToggle}
             >
@@ -66,8 +67,9 @@ export function HelpFAB() {
           transition={{ type: 'spring', stiffness: 260, damping: 20, delay: 0.5 }}
         >
           <Button
+            variant="ghost"
             size="icon"
-            className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow"
+            className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-card/50 backdrop-blur-2xl border border-border/15 text-foreground hover:bg-card/60"
             aria-label="Help & Support"
           >
             <AnimatePresence mode="wait">
