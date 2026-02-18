@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -47,10 +47,10 @@ function getUtilizationColor(percent: number): string {
   return 'hsl(0 72% 51%)';
 }
 
-function getUtilizationBadgeVariant(percent: number): 'default' | 'secondary' | 'destructive' {
-  if (percent >= 70) return 'default';
-  if (percent >= 50) return 'secondary';
-  return 'destructive';
+function getUtilizationPillClasses(percent: number): string {
+  if (percent >= 70) return 'bg-chart-2/10 text-chart-2';
+  if (percent >= 50) return 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
+  return 'bg-destructive/10 text-destructive';
 }
 
 // Custom bar label showing percentage above each bar
@@ -196,12 +196,9 @@ export function CapacityUtilizationSection({
                 description="Compares booked chair-hours against available capacity (Operating Hours × Stylist Count)"
               />
             </div>
-            <Badge 
-              variant={getUtilizationBadgeVariant(overallUtilization)}
-              className="text-xs whitespace-nowrap"
-            >
+            <span className={cn('inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap', getUtilizationPillClasses(overallUtilization))}>
               {overallUtilization}% utilized
-            </Badge>
+            </span>
           </div>
           <CardDescription>How much of your salon's capacity is booked for {DATE_RANGE_LABELS[dateRange]}</CardDescription>
         </div>
