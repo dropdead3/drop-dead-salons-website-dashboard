@@ -1,92 +1,106 @@
 
 
-## Service Bundling Intelligence
+## Five Drill-Down Enhancements for Services Analytics
 
-### Overview
+### Enhancement 1: Bundling Intelligence Drill-Downs
 
-Transform the existing Service Pairings card into a comprehensive **Service Bundling Intelligence** section with three connected analytics cards. All data comes from the same `phorest_appointments` query already used by `useServicePairings` — no new database queries needed.
+Make the three bundling cards interactive:
 
----
+**Standalone vs. Grouped card** -- clicking a category bar expands a panel showing:
+- Top 5 services within that category by standalone rate
+- Top 3 pairings this category appears in (from `categoryPairings` data)
+- A one-liner: "Haircut is booked alone 78% of the time -- consider bundling with Extras or Styling"
 
-### Card 1: Standalone vs. Grouped Ratio (by Category)
+**Revenue Lift table** -- clicking a row expands to show:
+- The specific service-level pairings driving the lift (from `pairings` data, filtered to services in that category)
+- Sample size context: "Based on X solo visits and Y grouped visits"
 
-**What it shows:** For each service category, the percentage of bookings where it was the only service vs. part of a multi-service visit.
-
-- Horizontal stacked bar per category (two segments: standalone %, grouped %)
-- Sorted by standalone % descending (highest standalone = biggest upsell opportunity)
-- Badge on each bar showing total booking count
-- Insight line at the bottom: "Services with high standalone rates represent upsell opportunities"
-
-**Data logic:**
-- Reuse the visits map from `useServicePairings` (client + date grouping)
-- For each appointment, check if the visit had 1 service or multiple
-- Aggregate by category using `getServiceCategory()`
-- Compute: `standaloneRate = singleServiceBookings / totalBookings * 100`
+**Technical:** Add `expandedStandalone` and `expandedLift` state variables to `ServiceBundlingIntelligence.tsx`. All data is already available from `useServicePairings` -- the `pairings` array has service-level pairs, `categoryPairings` has category-level pairs. Filter and display within the drill-down panels.
 
 ---
 
-### Card 2: Revenue Lift from Grouping
+### Enhancement 2: Price Realization by Stylist
 
-**What it shows:** For each category, the average visit ticket when the category is booked alone vs. when it's part of a grouped visit.
+Click a service bar in the Price Realization chart to expand a stylist-level breakdown showing who is discounting most.
 
-- Table with columns: Category, Avg Ticket (Solo), Avg Ticket (Grouped), Revenue Lift ($), Revenue Lift (%)
-- Sorted by revenue lift descending
-- Highlight rows where lift exceeds 50% (strong bundling signal)
+**Drill-down shows:**
+- Each stylist's average collected price vs. the menu price
+- Realization rate per stylist (color-coded: red < 85%, green > 105%)
+- Booking count per stylist for that service
 
-**Data logic:**
-- Same visit grouping as above
-- For solo visits: average of `total_price` where visit has 1 service
-- For grouped visits: sum all `total_price` in the visit, average across grouped visits containing that category
-- Lift = grouped avg - solo avg
-
-**Requires:** Adding `total_price` to the query in `useServicePairings` (currently only fetches `service_name`)
-
----
-
-### Card 3: Category Pairing Heatmap
-
-**What it shows:** A matrix showing how often service categories are booked together, replacing the noisy raw-service-name pairs.
-
-- Grid/matrix layout with categories on both axes
-- Cell values show pairing count and % of multi-service visits
-- Color intensity based on frequency (darker = more common)
-- Diagonal cells show total bookings for that category (for context)
-
-**Data logic:**
-- Same visit grouping
-- Map each service to its category
-- Count co-occurrences at the category level
-- Compute percentage relative to total multi-service visits
+**Technical:**
+- Add `expandedRealization` state to `ServicesContent.tsx`
+- The `useServiceEfficiency` hook already tracks `stylistBreakdown` per service with `totalRevenue` and `bookings` -- derive per-stylist avg price from `totalRevenue / bookings`
+- Render a `DrillDown` panel below the chart grid items for the selected service
+- Match the existing drill-down pattern (framer-motion expand, muted background)
 
 ---
 
-### Technical Implementation
+### Enhancement 3: Efficiency Matrix -- Time Patterns
 
-**Modified hook: `src/hooks/useServicePairings.ts`**
+Add day-of-week and peak hour data to the Efficiency Matrix drill-down rows.
 
-Extend the query to also fetch `total_price` alongside `service_name`. Expand the returned data to include:
-- `pairings` (existing, unchanged)
-- `standalonRates`: array of `{ category, totalBookings, standaloneCount, standaloneRate, groupedCount, groupedRate }`
-- `revenueLift`: array of `{ category, avgTicketSolo, avgTicketGrouped, liftDollars, liftPct }`
-- `categoryPairings`: array of `{ categoryA, categoryB, count, pctOfMultiVisits }`
+**Currently the drill-down shows:** New client %, rebook rate, tip %, stylist breakdown
+**Add:** A compact day-of-week mini-bar showing booking distribution (Mon-Sun) and a "Peak hours" line
 
-All computed in `useMemo` from the same raw appointment data.
-
-**New component: `src/components/dashboard/sales/ServiceBundlingIntelligence.tsx`**
-
-A single compound component that renders all three cards (standalone ratio, revenue lift table, category heatmap). Accepts `dateFrom`, `dateTo`, `locationId`, `filterContext` props.
-
-**Modified: `src/components/dashboard/analytics/ServicesContent.tsx`**
-
-- Replace the current simple `service_pairings` section with the new `ServiceBundlingIntelligence` component
-- Keep the same section ID (`service_pairings`) and reorder position so existing user preferences are preserved
-- Update section label to "Service Bundling Intelligence"
+**Technical:**
+- Extend `useServiceEfficiency` to also fetch `appointment_date` (already fetched) -- extract day-of-week from it
+- Add a `dayOfWeekMap` per service in the aggregation: `Map<number, number>` (0=Sun..6=Sat)
+- Also fetch `start_time` (already fetched) and bucket into morning/afternoon/evening slots
+- Add to `ServiceEfficiencyRow`: `dayDistribution: number[]` (7 values) and `peakHour: string`
+- In the drill-down panel, render 7 tiny bars (Mon-Sun) showing relative booking density
+- Show "Peak: Tue & Thu afternoons" text summary
 
 ---
 
-### Why This Matters
+### Enhancement 4: Rev/Hr in Category Mix Drill-Down
 
-- **Standalone ratio** reveals which services are undertapped for upselling — if Haircut is 85% standalone, there is a clear opportunity to attach Extras or Styling
-- **Revenue lift** quantifies the dollar impact of bundling, giving owners a concrete reason to create packages
-- **Category heatmap** shows natural affinities at a glance — much more actionable than individual service name pairs which are noisy and hard to act on
-- Together, these three views answer: "What should we bundle? What's the revenue upside? And where are we leaving money on the table?"
+Enhance the existing Category Mix drill-down (which shows services within a category) to include per-service Rev/Hr.
+
+**Currently shows:** Service name, bookings, avg revenue, % of category revenue
+**Add:** Rev/Hr column with color coding (green if above salon average, red if below)
+
+**Technical:**
+- The `cat.services` array already contains `ServiceEfficiencyRow` objects which have `revPerHour`
+- Simply add a `revPerHour` display in the drill-down row items, color-coded against `data.avgRevPerHour`
+- Minimal change -- about 5 lines added to the drill-down template at line ~424
+
+---
+
+### Enhancement 5: Lost Rebooking Revenue
+
+Add a "lost revenue" estimate to the Service Rebooking Rates card showing the dollar impact if rebooking reached a target (e.g., 70%).
+
+**Shows:** For each service with a rebook rate below 70%, calculate:
+`lostRevenue = (targetRate - actualRate) * totalCount * avgTicket`
+
+**Drill-down addition:** Below the per-stylist rebook breakdown, add a line:
+"If rebooking reached 70%, this service would generate an estimated +$X,XXX in additional revenue"
+
+Also add a **summary stat at the top** of the Rebooking Rates card:
+"Total estimated lost rebooking revenue: $XX,XXX" across all under-target services
+
+**Technical:**
+- Need the average ticket per service -- cross-reference `useServiceEfficiency` data (already loaded in `ServicesContent`)
+- Build a `rebookLostRevenue` map in a `useMemo`: for each service in `rebookData` where `rebookRate < 70`, compute `(0.70 - rebookRate/100) * totalCount * avgTicketForService`
+- Display the per-service estimate in the existing `DrillDown` panel
+- Display the aggregate total as a `Badge` or subtitle in the card header
+
+---
+
+### Files Modified
+
+| File | Changes |
+|---|---|
+| `src/components/dashboard/sales/ServiceBundlingIntelligence.tsx` | Add drill-down state + expandable panels for standalone bars and revenue lift rows |
+| `src/components/dashboard/analytics/ServicesContent.tsx` | Add price realization drill-down, rev/hr in category drill-down, lost rebook revenue estimate |
+| `src/hooks/useServiceEfficiency.ts` | Add `dayDistribution` and `peakHour` fields to `ServiceEfficiencyRow` |
+
+### Implementation Order
+
+1. Enhancement 4 (Rev/Hr in category drill-down) -- smallest, ~5 lines
+2. Enhancement 5 (Lost rebooking revenue) -- moderate, uses existing data
+3. Enhancement 1 (Bundling drill-downs) -- moderate, all data available
+4. Enhancement 2 (Price realization by stylist) -- moderate, needs drill-down wiring
+5. Enhancement 3 (Time patterns) -- largest, requires hook extension
+
