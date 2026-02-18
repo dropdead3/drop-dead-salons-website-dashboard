@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter,
 } from '@/components/ui/table';
@@ -15,6 +17,7 @@ import {
 import {
   DollarSign, Package, TrendingUp, TrendingDown, AlertTriangle,
   ShoppingBag, Users, Search, ArrowUpDown, BarChart3, Loader2, Info, Percent, Tag, Scissors,
+  ChevronDown, ChevronUp, Settings2, Archive,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -22,7 +25,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
-import { useRetailAnalytics, type ProductRow, type RedFlag } from '@/hooks/useRetailAnalytics';
+import { useRetailAnalytics, type ProductRow, type RedFlag, type BrandRow } from '@/hooks/useRetailAnalytics';
 import { useServiceRetailAttachment } from '@/hooks/useServiceRetailAttachment';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
@@ -105,6 +108,245 @@ function RedFlagRow({ flag }: { flag: RedFlag }) {
     </div>
   );
 }
+
+// ─── Brand Performance Card ───
+function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole }: { brands: BrandRow[]; totalRevenue: number; formatCurrencyWhole: (n: number) => string }) {
+  const [expandedBrand, setExpandedBrand] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  return (
+    <PinnableCard elementKey="retail_brand_performance" elementName="Brand Performance" category="Analytics Hub - Retail">
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                <ShoppingBag className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-base tracking-wide">SALES BY BRAND</CardTitle>
+                  <MetricInfoTooltip description="Revenue breakdown by product brand. Click a row to see product-level drill-down. Brands are resolved from the product catalog." />
+                </div>
+                <CardDescription className="text-xs">{brands.length} brand{brands.length !== 1 ? 's' : ''} with sales</CardDescription>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+              <Settings2 className="w-3.5 h-3.5" /> Manage Products
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {/* Bar chart */}
+            <div className="h-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={brands.slice(0, 10)} layout="vertical" margin={{ left: 4, right: 16, top: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
+                  <XAxis type="number" tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                  <YAxis type="category" dataKey="brand" width={120} tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
+                  <Tooltip formatter={(value: number) => [formatCurrencyWhole(value), 'Revenue']} contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />
+                  <Bar dataKey="revenue" radius={[0, 4, 4, 0]}>
+                    {brands.slice(0, 10).map((_, i) => (
+                      <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Table */}
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Brand</TableHead>
+                    <TableHead className="text-right">Revenue</TableHead>
+                    <TableHead className="text-right">Units</TableHead>
+                    <TableHead className="text-right">Products</TableHead>
+                    <TableHead className="text-right">Avg Price</TableHead>
+                    {brands.some(b => b.margin > 0) && <TableHead className="text-right">Margin</TableHead>}
+                    <TableHead className="text-right">Trend</TableHead>
+                    <TableHead className="text-right">Share</TableHead>
+                    <TableHead className="w-8" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {brands.map(b => (
+                    <>
+                      <TableRow key={b.brand} className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedBrand(expandedBrand === b.brand ? null : b.brand)}>
+                        <TableCell className="font-medium text-sm">{b.brand}</TableCell>
+                        <TableCell className="text-right tabular-nums font-medium"><BlurredAmount>{formatCurrencyWhole(b.revenue)}</BlurredAmount></TableCell>
+                        <TableCell className="text-right tabular-nums">{b.unitsSold}</TableCell>
+                        <TableCell className="text-right tabular-nums">{b.productCount}</TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(b.avgPrice)}</BlurredAmount></TableCell>
+                        {brands.some(br => br.margin > 0) && (
+                          <TableCell className="text-right">
+                            {b.margin > 0 ? (
+                              <Badge variant="outline" className={cn('text-xs tabular-nums', b.margin >= 50 ? 'text-emerald-600 border-emerald-200 dark:text-emerald-400' : b.margin >= 30 ? 'text-amber-600 border-amber-200 dark:text-amber-400' : 'text-red-500 border-red-200 dark:text-red-400')}>
+                                {b.margin.toFixed(0)}%
+                              </Badge>
+                            ) : '—'}
+                          </TableCell>
+                        )}
+                        <TableCell className="text-right"><TrendArrow value={b.revenueTrend} /></TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <Progress value={totalRevenue > 0 ? (b.revenue / totalRevenue) * 100 : 0} className="w-12 h-1.5" />
+                            <span className="text-xs tabular-nums text-muted-foreground w-8 text-right">{totalRevenue > 0 ? Math.round((b.revenue / totalRevenue) * 100) : 0}%</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{expandedBrand === b.brand ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}</TableCell>
+                      </TableRow>
+                      {expandedBrand === b.brand && (
+                        <TableRow key={`${b.brand}-detail`}>
+                          <TableCell colSpan={9} className="bg-muted/30 p-4">
+                            <p className="text-xs font-medium text-muted-foreground mb-2">Top product: <span className="text-foreground">{b.topProduct || '—'}</span></p>
+                            {b.staleProducts.length > 0 && (
+                              <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
+                                <AlertTriangle className="w-3 h-3" />
+                                {b.staleProducts.length} catalog product(s) with zero sales this period
+                              </div>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </PinnableCard>
+  );
+}
+
+// ─── Dead Stock Card ───
+function DeadStockCard({ deadStock, formatCurrencyWhole }: { deadStock: { name: string; brand: string; category: string; retailPrice: number; quantityOnHand: number; capitalTiedUp: number }[]; formatCurrencyWhole: (n: number) => string }) {
+  const navigate = useNavigate();
+  const totalCapital = deadStock.reduce((s, d) => s + d.capitalTiedUp, 0);
+
+  return (
+    <PinnableCard elementKey="retail_dead_stock" elementName="Dead Stock" category="Analytics Hub - Retail">
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-amber-500/10 flex items-center justify-center rounded-lg">
+                <Archive className="w-5 h-5 text-amber-500" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-base tracking-wide">DEAD STOCK</CardTitle>
+                  <MetricInfoTooltip description="Products in your catalog with zero sales in the selected period but inventory on hand. Capital tied up = retail price × quantity on hand." />
+                </div>
+                <CardDescription className="text-xs"><BlurredAmount>{formatCurrencyWhole(totalCapital)}</BlurredAmount> capital tied up in {deadStock.length} product(s)</CardDescription>
+              </div>
+            </div>
+            <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+              <Settings2 className="w-3.5 h-3.5" /> Manage Products
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Brand</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-right">Retail Price</TableHead>
+                  <TableHead className="text-right">Stock</TableHead>
+                  <TableHead className="text-right">Capital Tied Up</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {deadStock.slice(0, 20).map(d => (
+                  <TableRow key={d.name}>
+                    <TableCell className="font-medium text-sm">{d.name}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{d.brand}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{d.category}</TableCell>
+                    <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(d.retailPrice)}</BlurredAmount></TableCell>
+                    <TableCell className="text-right tabular-nums">{d.quantityOnHand}</TableCell>
+                    <TableCell className="text-right tabular-nums font-medium"><BlurredAmount>{formatCurrencyWhole(d.capitalTiedUp)}</BlurredAmount></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </PinnableCard>
+  );
+}
+
+// ─── Inventory Turnover Card ───
+function InventoryTurnoverCard({ brands }: { brands: BrandRow[] }) {
+  const turnoverData = brands.filter(b => b.unitsSold > 0).map(b => {
+    // Simple proxy: unitsSold relative to productCount as rough turnover
+    const turnover = b.productCount > 0 ? b.unitsSold / b.productCount : 0;
+    const classification = turnover >= 10 ? 'Fast' : turnover >= 3 ? 'Normal' : 'Slow';
+    return { brand: b.brand, unitsSold: b.unitsSold, productCount: b.productCount, turnover: Math.round(turnover * 10) / 10, classification };
+  }).sort((a, b) => b.turnover - a.turnover);
+
+  if (turnoverData.length === 0) return null;
+
+  return (
+    <PinnableCard elementKey="retail_inventory_turnover" elementName="Inventory Turnover" category="Analytics Hub - Retail">
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <Package className="w-5 h-5 text-primary" />
+            </div>
+            <div className="flex items-center gap-2">
+              <CardTitle className="font-display text-base tracking-wide">INVENTORY TURNOVER BY BRAND</CardTitle>
+              <MetricInfoTooltip description="Units sold per product in the period, grouped by brand. Fast = 10+ units/product, Normal = 3-9, Slow = under 3. Low turnover with high stock = capital risk." />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Brand</TableHead>
+                  <TableHead className="text-right">Units Sold</TableHead>
+                  <TableHead className="text-right">Products</TableHead>
+                  <TableHead className="text-right">Units/Product</TableHead>
+                  <TableHead className="text-right">Speed</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {turnoverData.map(t => (
+                  <TableRow key={t.brand}>
+                    <TableCell className="font-medium text-sm">{t.brand}</TableCell>
+                    <TableCell className="text-right tabular-nums">{t.unitsSold}</TableCell>
+                    <TableCell className="text-right tabular-nums">{t.productCount}</TableCell>
+                    <TableCell className="text-right tabular-nums font-medium">{t.turnover}</TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant="outline" className={cn('text-[10px]',
+                        t.classification === 'Fast' ? 'text-emerald-600 border-emerald-200 dark:text-emerald-400' :
+                        t.classification === 'Normal' ? 'text-amber-600 border-amber-200 dark:text-amber-400' :
+                        'text-red-500 border-red-200 dark:text-red-400'
+                      )}>
+                        {t.classification}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </PinnableCard>
+  );
+}
+
 
 export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterContext }: RetailAnalyticsContentProps) {
   const { data, isLoading } = useRetailAnalytics(dateFrom, dateTo, locationId);
@@ -404,6 +646,21 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
           </CardContent>
         </Card>
       </PinnableCard>
+
+      {/* Section 4.5: Brand Performance */}
+      {data.brandPerformance.length > 0 && (
+        <BrandPerformanceCard brands={data.brandPerformance} totalRevenue={summary.totalRevenue} formatCurrencyWhole={formatCurrencyWhole} />
+      )}
+
+      {/* Section 4.6: Dead Stock */}
+      {data.deadStock.length > 0 && (
+        <DeadStockCard deadStock={data.deadStock} formatCurrencyWhole={formatCurrencyWhole} />
+      )}
+
+      {/* Section 4.7: Inventory Turnover by Brand */}
+      {data.brandPerformance.length > 0 && (
+        <InventoryTurnoverCard brands={data.brandPerformance} />
+      )}
 
       {/* Section 5: Product Trend Chart */}
       <PinnableCard elementKey="retail_product_trend" elementName="Product Revenue Trend" category="Analytics Hub - Retail">

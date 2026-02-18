@@ -62,6 +62,7 @@ import {
   Keyboard,
   Scissors,
   Lightbulb,
+  ShoppingBag,
 } from 'lucide-react';
 import { useBusinessCapacity } from '@/hooks/useBusinessCapacity';
 import { UserCapacityBar } from '@/components/dashboard/settings/UserCapacityBar';
@@ -95,6 +96,7 @@ import { EmailBrandingSettings } from '@/components/dashboard/settings/EmailBran
 import { KioskSettingsContent } from '@/components/dashboard/settings/KioskSettingsContent';
 import { ServiceEmailFlowsManager } from '@/components/dashboard/settings/ServiceEmailFlowsManager';
 import { ServicesSettingsContent } from '@/components/dashboard/settings/ServicesSettingsContent';
+import { RetailProductsSettingsContent } from '@/components/dashboard/settings/RetailProductsSettingsContent';
 import { MessageSquareHeart } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useServicesWithFlowsCount } from '@/hooks/useServiceCommunicationFlows';
@@ -132,7 +134,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'access-hub' | 'schedule' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | null;
+type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'access-hub' | 'schedule' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -855,6 +857,12 @@ export default function Settings() {
       description: 'Categories, services & pricing',
       icon: Scissors,
     },
+    'retail-products': {
+      id: 'retail-products',
+      label: 'Retail Products',
+      description: 'Brands, categories, inventory & pricing',
+      icon: ShoppingBag,
+    },
   };
 
   const orderedCategories = useMemo(() => {
@@ -1413,6 +1421,8 @@ export default function Settings() {
           )}
 
           {activeCategory === 'kiosk' && <KioskSettingsContent />}
+
+          {activeCategory === 'retail-products' && <RetailProductsSettingsContent />}
         </div>
       </DashboardLayout>
     );

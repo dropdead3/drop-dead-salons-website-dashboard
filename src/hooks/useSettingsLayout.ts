@@ -26,6 +26,7 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   'team-rewards': '#F59E0B',
   kiosk: '#8B5CF6',
   services: '#14B8A6',
+  'retail-products': '#F97316',
 };
 
 // Section groups for organized layout
@@ -33,7 +34,7 @@ export const SECTION_GROUPS = [
   {
     id: 'operations',
     label: 'Business Operations',
-    categories: ['business', 'locations', 'services', 'schedule', 'kiosk', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'handbooks', 'loyalty', 'team-rewards', 'feedback'],
+    categories: ['business', 'locations', 'services', 'retail-products', 'schedule', 'kiosk', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'handbooks', 'loyalty', 'team-rewards', 'feedback'],
   },
   {
     id: 'team',
