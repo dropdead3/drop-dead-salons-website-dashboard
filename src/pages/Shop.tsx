@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { usePublicOrg } from '@/contexts/PublicOrgContext';
 import { usePublicProducts, usePublicProductCategories, usePublicProductBrands } from '@/hooks/usePublicProducts';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
@@ -9,24 +10,59 @@ import { ProductDetailModal } from '@/components/shop/ProductDetailModal';
 import { Layout } from '@/components/layout/Layout';
 import { Loader2, ShoppingBag, StoreIcon } from 'lucide-react';
 import type { Product } from '@/hooks/useProducts';
+import type { WebsiteRetailThemeSettings } from '@/hooks/useWebsiteSettings';
 
 interface RetailSettings {
   enabled: boolean;
   [key: string]: unknown;
 }
 
+// Google Fonts that aren't loaded by default
+const GOOGLE_FONTS = ['Inter', 'Playfair Display', 'DM Sans', 'Cormorant Garamond', 'Montserrat', 'Lora'];
+
+function useRetailTheme() {
+  const [searchParams] = useSearchParams();
+  const { data: savedTheme } = useSiteSettings<WebsiteRetailThemeSettings>('website_retail_theme');
+
+  return useMemo(() => {
+    // Check for preview override first
+    const previewParam = searchParams.get('preview_theme');
+    if (previewParam) {
+      try {
+        return JSON.parse(atob(previewParam)) as WebsiteRetailThemeSettings;
+      } catch { /* fall through */ }
+    }
+    return savedTheme ?? null;
+  }, [searchParams, savedTheme]);
+}
+
+function useLoadGoogleFont(fontName: string | undefined) {
+  useEffect(() => {
+    if (!fontName || !GOOGLE_FONTS.includes(fontName)) return;
+    const id = `gfont-${fontName.replace(/\s+/g, '-')}`;
+    if (document.getElementById(id)) return;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:wght@300;400;500;600;700&display=swap`;
+    document.head.appendChild(link);
+  }, [fontName]);
+}
+
 export default function Shop() {
   const { organization } = usePublicOrg();
   const { data: retailSettings, isLoading: loadingSettings } = useSiteSettings<RetailSettings>('website_retail');
-  
-  // TODO: detect full website enabled. For now check if homepage sections exist.
-  // Simple heuristic: if the org has a website_url or site settings homepage enabled
-  const [fullWebsiteEnabled] = useState(false); // Phase 1: always standalone mode
-  
+  const theme = useRetailTheme();
+
+  const [fullWebsiteEnabled] = useState(false);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [brand, setBrand] = useState('all');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  // Load Google Fonts if needed
+  useLoadGoogleFont(theme?.heading_font);
+  useLoadGoogleFont(theme?.body_font);
 
   const { data: products, isLoading: loadingProducts } = usePublicProducts({
     organizationId: organization.id,
@@ -40,8 +76,25 @@ export default function Shop() {
   const isLoading = loadingSettings || loadingProducts;
   const storeEnabled = retailSettings?.enabled ?? false;
 
+  // Build CSS variable overrides from theme
+  const themeStyle = useMemo(() => {
+    if (!theme?.custom_colors) return undefined;
+    const style: Record<string, string> = {};
+    const c = theme.custom_colors;
+    if (c.primary) style['--primary'] = c.primary;
+    if (c.background) style['--background'] = c.background;
+    if (c.card) style['--card'] = c.card;
+    if (c.foreground) style['--foreground'] = c.foreground;
+    if (theme.heading_font) style['--font-display'] = `"${theme.heading_font}", sans-serif`;
+    if (theme.body_font) style['--font-sans'] = `"${theme.body_font}", sans-serif`;
+    return style;
+  }, [theme]);
+
   const content = (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+    <div
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12"
+      style={themeStyle as React.CSSProperties}
+    >
       {/* Store header */}
       <div className="text-center mb-8 sm:mb-12">
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 text-primary text-xs font-medium mb-4">
@@ -75,7 +128,6 @@ export default function Shop() {
       {/* Store content */}
       {!isLoading && storeEnabled && (
         <>
-          {/* Filters */}
           <ProductFilters
             search={search}
             onSearchChange={setSearch}
@@ -87,15 +139,14 @@ export default function Shop() {
             onBrandChange={setBrand}
           />
 
-          {/* Product grid */}
           {products && products.length > 0 ? (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 mt-6">
                 {products.map((product) => (
-                  <ProductCard 
-                    key={product.id} 
-                    product={product} 
-                    onClick={setSelectedProduct} 
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onClick={setSelectedProduct}
                   />
                 ))}
               </div>
@@ -115,7 +166,6 @@ export default function Shop() {
             </div>
           )}
 
-          {/* Detail modal */}
           <ProductDetailModal
             product={selectedProduct}
             open={!!selectedProduct}
@@ -126,10 +176,13 @@ export default function Shop() {
     </div>
   );
 
-  // If full website is enabled, wrap with full Layout; otherwise use standalone ShopLayout
   if (fullWebsiteEnabled) {
     return <Layout>{content}</Layout>;
   }
 
-  return <ShopLayout fullWebsiteEnabled={false}>{content}</ShopLayout>;
+  return (
+    <ShopLayout fullWebsiteEnabled={false} theme={theme}>
+      {content}
+    </ShopLayout>
+  );
 }

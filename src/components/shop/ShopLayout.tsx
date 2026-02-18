@@ -1,30 +1,45 @@
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { usePublicOrg } from '@/contexts/PublicOrgContext';
 import { Link } from 'react-router-dom';
-import { Store, ArrowLeft } from 'lucide-react';
+import { Store } from 'lucide-react';
+import type { WebsiteRetailThemeSettings } from '@/hooks/useWebsiteSettings';
 
 interface ShopLayoutProps {
   children: ReactNode;
   fullWebsiteEnabled?: boolean;
+  theme?: WebsiteRetailThemeSettings | null;
 }
 
-/**
- * Minimal standalone layout for the shop page when the full website is not enabled.
- * When fullWebsiteEnabled is true, the shop renders inside the full Layout via the parent page.
- */
-export function ShopLayout({ children, fullWebsiteEnabled }: ShopLayoutProps) {
+export function ShopLayout({ children, fullWebsiteEnabled, theme }: ShopLayoutProps) {
   const { organization, orgPath } = usePublicOrg();
 
-  // If full website is enabled, just render children — the parent Shop page wraps with Layout
+  // Build CSS variable overrides from theme (must be before any returns)
+  const themeStyle = useMemo(() => {
+    if (!theme?.custom_colors) return undefined;
+    const style: Record<string, string> = {};
+    const c = theme.custom_colors;
+    if (c.primary) style['--primary'] = c.primary;
+    if (c.background) style['--background'] = c.background;
+    if (c.card) style['--card'] = c.card;
+    if (c.foreground) style['--foreground'] = c.foreground;
+    if (theme.heading_font) style['--font-display'] = `"${theme.heading_font}", sans-serif`;
+    if (theme.body_font) style['--font-sans'] = `"${theme.body_font}", sans-serif`;
+    return style;
+  }, [theme]);
+
+  const showLogo = theme?.show_logo !== false;
+
   if (fullWebsiteEnabled) return <>{children}</>;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col" style={{ colorScheme: 'light' }}>
-      {/* Minimal header */}
+    <div
+      className="min-h-screen bg-background flex flex-col"
+      style={{ colorScheme: 'light', ...themeStyle } as React.CSSProperties}
+    >
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <Link to={orgPath()} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-            {organization.logo_url ? (
+            {showLogo && organization.logo_url ? (
               <img src={organization.logo_url} alt={organization.name} className="h-8 w-auto object-contain" />
             ) : (
               <Store className="w-6 h-6 text-primary" />
@@ -34,12 +49,8 @@ export function ShopLayout({ children, fullWebsiteEnabled }: ShopLayoutProps) {
         </div>
       </header>
 
-      {/* Content */}
-      <main className="flex-1">
-        {children}
-      </main>
+      <main className="flex-1">{children}</main>
 
-      {/* Minimal footer */}
       <footer className="border-t border-border/50 bg-card/50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <p className="text-xs text-muted-foreground">
