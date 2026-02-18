@@ -253,7 +253,10 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
                   : 'hover:bg-muted/30',
               )}
             >
-              <span className={tokens.kpi.label}>{heroKpi.label}</span>
+              <div className="flex items-center gap-1.5">
+                <span className={tokens.kpi.label}>{heroKpi.label}</span>
+                <MetricInfoTooltip description="Weighted composite of all four metrics below (Rebook 35%, Tip Rate 30%, Feedback 20%, Avg Tip 15%). Higher is better." />
+              </div>
               <span className="font-display text-3xl tracking-wide text-foreground">{heroKpi.value}</span>
               <ChangeBadge value={heroKpi.change} />
             </button>
@@ -281,7 +284,15 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
                   : 'hover:bg-muted/30',
               )}
             >
-              <span className={tokens.kpi.label}>{kpi.label}</span>
+              <div className="flex items-center gap-1.5">
+                <span className={tokens.kpi.label}>{kpi.label}</span>
+                <MetricInfoTooltip description={
+                  kpi.metric === 'avgTip' ? 'Average tip amount per completed appointment in the selected period.' :
+                  kpi.metric === 'tipRate' ? 'Percentage of completed appointments that received any tip amount greater than zero.' :
+                  kpi.metric === 'feedbackRate' ? 'Percentage of appointments where a client feedback response was collected, based on staff assignment.' :
+                  'Percentage of completed appointments where the client rebooked at checkout.'
+                } />
+              </div>
               <span className={tokens.kpi.value}>{kpi.value}</span>
               <ChangeBadge value={kpi.change} />
             </button>
