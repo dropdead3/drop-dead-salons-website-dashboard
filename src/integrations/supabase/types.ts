@@ -15828,6 +15828,48 @@ export type Database = {
         }
         Relationships: []
       }
+      website_themes: {
+        Row: {
+          color_scheme: string
+          created_at: string
+          default_sections: Json
+          description: string | null
+          id: string
+          is_available: boolean
+          is_builtin: boolean
+          layout_config: Json
+          name: string
+          thumbnail_url: string | null
+          typography_preset: Json
+        }
+        Insert: {
+          color_scheme?: string
+          created_at?: string
+          default_sections?: Json
+          description?: string | null
+          id: string
+          is_available?: boolean
+          is_builtin?: boolean
+          layout_config?: Json
+          name: string
+          thumbnail_url?: string | null
+          typography_preset?: Json
+        }
+        Update: {
+          color_scheme?: string
+          created_at?: string
+          default_sections?: Json
+          description?: string | null
+          id?: string
+          is_available?: boolean
+          is_builtin?: boolean
+          layout_config?: Json
+          name?: string
+          thumbnail_url?: string | null
+          typography_preset?: Json
+        }
+        Relationships: []
+      }
       weekly_assignment_completions: {
         Row: {
           assignment_id: string
