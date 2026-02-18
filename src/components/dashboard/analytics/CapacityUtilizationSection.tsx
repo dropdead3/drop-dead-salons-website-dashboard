@@ -211,6 +211,10 @@ export function CapacityUtilizationSection({
     fill: colorMap[item.category.toLowerCase()]?.bg || FALLBACK_COLOR,
   }));
 
+  // Dynamic Y-axis max: peak + 20% buffer, rounded to nearest 10, clamped [20, 100]
+  const peakUtil = Math.max(...chartData.map(d => d.utilization), 0);
+  const yMax = Math.min(100, Math.max(20, Math.ceil((peakUtil * 1.2) / 10) * 10));
+
   const showChart = chartData.length > 1;
   const showPieChart = serviceMix.length > 0;
 
@@ -345,7 +349,7 @@ export function CapacityUtilizationSection({
                     interval={0}
                     height={dateRange === '7days' ? 40 : 20}
                   />
-                  <YAxis hide domain={[0, 100]} />
+                  <YAxis hide domain={[0, yMax]} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: 'hsl(var(--background))',
