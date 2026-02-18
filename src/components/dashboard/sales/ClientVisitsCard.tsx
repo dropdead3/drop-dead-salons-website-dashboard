@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useClientVisitsByStaff } from '@/hooks/useClientVisitsByStaff';
 import { cn } from '@/lib/utils';
+import { Link } from 'react-router-dom';
 
 interface ClientVisitsCardProps {
   dateFrom: string;
@@ -22,10 +23,11 @@ interface ClientVisitsCardProps {
 export function ClientVisitsCard({ dateFrom, dateTo, locationId, filterContext }: ClientVisitsCardProps) {
   const { data, isLoading } = useClientVisitsByStaff(dateFrom, dateTo, locationId);
   const [expandedStaff, setExpandedStaff] = useState<string | null>(null);
+  const [hasInteracted, setHasInteracted] = useState(false);
 
   if (isLoading) {
     return (
-      <Card>
+      <Card className={tokens.card.wrapper}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -60,7 +62,7 @@ export function ClientVisitsCard({ dateFrom, dateTo, locationId, filterContext }
 
   if (!data || data.staffBreakdown.length === 0) {
     return (
-      <Card>
+      <Card className={tokens.card.wrapper}>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -103,6 +105,7 @@ export function ClientVisitsCard({ dateFrom, dateTo, locationId, filterContext }
 
   const handleBarClick = (staffId: string) => {
     setExpandedStaff(prev => (prev === staffId ? null : staffId));
+    if (!hasInteracted) setHasInteracted(true);
   };
 
   const expandedDetail = expandedStaff
@@ -110,7 +113,7 @@ export function ClientVisitsCard({ dateFrom, dateTo, locationId, filterContext }
     : null;
 
   return (
-    <Card>
+    <Card className={tokens.card.wrapper}>
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -166,6 +169,10 @@ export function ClientVisitsCard({ dateFrom, dateTo, locationId, filterContext }
                   <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
                   <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.18} />
                 </linearGradient>
+                <linearGradient id="clientVisitsBarGradientActive" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
+                </linearGradient>
               </defs>
             </svg>
 
@@ -188,7 +195,6 @@ export function ClientVisitsCard({ dateFrom, dateTo, locationId, filterContext }
                   dataKey="visits"
                   radius={[0, 4, 4, 0]}
                   cursor="pointer"
-                  fill="url(#clientVisitsBarGradient)"
                   stroke="hsl(var(--primary) / 0.3)"
                   strokeWidth={1}
                   onClick={(_: any, index: number) => {
@@ -196,6 +202,12 @@ export function ClientVisitsCard({ dateFrom, dateTo, locationId, filterContext }
                     if (item) handleBarClick(item.staffId);
                   }}
                 >
+                  {chartData.map((entry) => (
+                    <Cell
+                      key={entry.staffId}
+                      fill={expandedStaff === entry.staffId ? 'url(#clientVisitsBarGradientActive)' : 'url(#clientVisitsBarGradient)'}
+                    />
+                  ))}
                   <LabelList
                     dataKey="visits"
                     position="right"
@@ -204,6 +216,21 @@ export function ClientVisitsCard({ dateFrom, dateTo, locationId, filterContext }
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+
+            {/* Click affordance hint */}
+            <AnimatePresence>
+              {!hasInteracted && (
+                <motion.p
+                  initial={{ opacity: 0.6 }}
+                  animate={{ opacity: 0.6 }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className={cn(tokens.body.muted, 'text-xs text-center mt-1 opacity-60')}
+                >
+                  Click a bar to explore
+                </motion.p>
+              )}
+            </AnimatePresence>
 
             {/* Drill-down Panel */}
             <AnimatePresence>
@@ -222,27 +249,27 @@ export function ClientVisitsCard({ dateFrom, dateTo, locationId, filterContext }
                         {expandedDetail.staffName}
                       </h4>
                       {expandedDetail.userId && (
-                        <a
-                          href={`/dashboard/admin/team/${expandedDetail.userId}`}
+                        <Link
+                          to={`/dashboard/admin/team/${expandedDetail.userId}`}
                           className="text-xs text-primary hover:underline flex items-center gap-1"
                         >
                           View Profile <ChevronRight className="w-3 h-3" />
-                        </a>
+                        </Link>
                       )}
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
                       <div>
-                        <p className="text-xs text-muted-foreground">New Clients</p>
-                        <p className="text-sm font-medium">{expandedDetail.newClientVisits}</p>
+                        <p className={tokens.body.muted}>New Clients</p>
+                        <p className={tokens.body.emphasis}>{expandedDetail.newClientVisits}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Returning</p>
-                        <p className="text-sm font-medium">{expandedDetail.returningClientVisits}</p>
+                        <p className={tokens.body.muted}>Returning</p>
+                        <p className={tokens.body.emphasis}>{expandedDetail.returningClientVisits}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground">Average Ticket</p>
-                        <p className="text-sm font-medium">
+                        <p className={tokens.body.muted}>Average Ticket</p>
+                        <p className={tokens.body.emphasis}>
                           <AnimatedBlurredAmount value={expandedDetail.avgTicket} currency="USD" />
                         </p>
                       </div>
@@ -250,7 +277,7 @@ export function ClientVisitsCard({ dateFrom, dateTo, locationId, filterContext }
 
                     {expandedDetail.topServices.length > 0 && (
                       <div>
-                        <p className="text-xs text-muted-foreground mb-2">Top Services</p>
+                        <p className={cn(tokens.body.muted, 'mb-2')}>Top Services</p>
                         <div className="space-y-1">
                           {expandedDetail.topServices.map(svc => (
                             <div key={svc.name} className="flex items-center justify-between text-xs">
