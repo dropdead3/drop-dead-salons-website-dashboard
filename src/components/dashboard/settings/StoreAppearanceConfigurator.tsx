@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -71,6 +71,20 @@ export function StoreAppearanceConfigurator({ storeUrl }: StoreAppearanceConfigu
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [refreshKey, setRefreshKey] = useState(0);
   const [iframeLoading, setIframeLoading] = useState(true);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(600);
+
+  useEffect(() => {
+    const el = previewContainerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (savedTheme) setLocal(savedTheme);
@@ -287,24 +301,37 @@ export function StoreAppearanceConfigurator({ storeUrl }: StoreAppearanceConfigu
           </CardHeader>
           <CardContent>
             <div
+              ref={previewContainerRef}
               className={cn(
                 'mx-auto rounded-lg overflow-hidden border border-border bg-muted/30 transition-all duration-300 relative',
-                viewMode === 'mobile' ? 'max-w-[390px]' : 'w-full'
+                viewMode === 'mobile' ? 'max-w-[280px]' : 'w-full'
               )}
               style={{
-                // Use aspect-ratio to maintain proportions instead of fixed height
-                aspectRatio: viewMode === 'mobile' ? '390 / 844' : '16 / 9',
-                maxHeight: viewMode === 'mobile' ? '600px' : '500px',
+                height: viewMode === 'mobile'
+                  ? `${280 * (844 / 390)}px`
+                  : `${containerWidth * (900 / 1440)}px`,
+                maxHeight: viewMode === 'mobile' ? '500px' : '450px',
               }}
             >
-              <iframe
-                key={refreshKey}
-                src={previewUrl}
-                className="absolute top-0 left-0 border-0 w-full h-full"
-                title="Store Preview"
-                onLoad={() => setIframeLoading(false)}
-                sandbox="allow-scripts allow-same-origin"
-              />
+              <div
+                className="absolute top-0 left-0 origin-top-left"
+                style={{
+                  width: viewMode === 'mobile' ? '390px' : '1440px',
+                  height: viewMode === 'mobile' ? '844px' : '900px',
+                  transform: viewMode === 'mobile'
+                    ? `scale(${280 / 390})`
+                    : `scale(${containerWidth / 1440})`,
+                }}
+              >
+                <iframe
+                  key={refreshKey}
+                  src={previewUrl}
+                  className="w-full h-full border-0"
+                  title="Store Preview"
+                  onLoad={() => setIframeLoading(false)}
+                  sandbox="allow-scripts allow-same-origin"
+                />
+              </div>
             </div>
           </CardContent>
         </Card>
