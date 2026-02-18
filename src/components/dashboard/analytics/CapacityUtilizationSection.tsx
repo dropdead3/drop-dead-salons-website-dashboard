@@ -5,7 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { CapacityBreakdown } from '@/components/dashboard/analytics/CapacityBreakdown';
-import { Gauge, Clock, TrendingDown, Calendar, PieChart as PieChartIcon } from 'lucide-react';
+import { Gauge, Clock, TrendingDown, Calendar, PieChart as PieChartIcon, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -54,8 +54,9 @@ function getUtilizationPillClasses(percent: number): string {
 }
 
 // Custom bar label showing percentage above each bar
-function UtilizationBarLabel({ x, y, width, value }: any) {
+function UtilizationBarLabel({ x, y, width, value, index, days }: any) {
   if (value === undefined || value === null) return null;
+  if (days && days[index]?.isClosed) return null;
   
   return (
     <text
@@ -73,6 +74,28 @@ function UtilizationBarLabel({ x, y, width, value }: any) {
 function DayXAxisTick({ x, y, payload, days }: any) {
   const day = days.find((d: DayCapacity) => d.dayName === payload.value);
   if (!day) return null;
+
+  if (day.isClosed) {
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text 
+          x={0} y={0} dy={12} 
+          textAnchor="middle" 
+          className="fill-foreground text-[11px]"
+          style={{ fontWeight: 500 }}
+        >
+          {day.dayName}
+        </text>
+        <text 
+          x={0} y={0} dy={24} 
+          textAnchor="middle" 
+          className="fill-muted-foreground text-[10px]"
+        >
+          🌙 Closed
+        </text>
+      </g>
+    );
+  }
   
   return (
     <g transform={`translate(${x},${y})`}>
@@ -165,6 +188,7 @@ export function CapacityUtilizationSection({
         gapHours: day.gapHours,
         bookedHours: day.bookedHours,
         date: day.date,
+        isClosed: day.isClosed,
       }))
     : dailyCapacity.map(day => ({
         name: day.dayName,
@@ -172,6 +196,7 @@ export function CapacityUtilizationSection({
         gapHours: day.gapHours,
         bookedHours: day.bookedHours,
         date: day.date,
+        isClosed: day.isClosed,
       }));
 
   const pieData = serviceMix.slice(0, 6).map((item, index) => ({
@@ -352,8 +377,16 @@ export function CapacityUtilizationSection({
                     fill="url(#capacity-glass-analytics)"
                     stroke="hsl(var(--foreground) / 0.12)"
                     strokeWidth={1}
-                    label={<UtilizationBarLabel />}
-                  />
+                    label={<UtilizationBarLabel days={chartData} />}
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={entry.isClosed ? 'transparent' : 'url(#capacity-glass-analytics)'}
+                        stroke={entry.isClosed ? 'none' : 'hsl(var(--foreground) / 0.12)'}
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
