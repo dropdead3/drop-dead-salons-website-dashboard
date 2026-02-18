@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     // Authenticate the caller
     const authHeader = req.headers.get("Authorization");
@@ -25,8 +25,13 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Validate the JWT using anon client with user's token
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
     if (claimsError || !claimsData?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -34,11 +39,28 @@ Deno.serve(async (req) => {
       });
     }
 
+    const userId = claimsData.claims.sub;
+
     const { organization_id } = await req.json();
     if (!organization_id) {
       return new Response(
         JSON.stringify({ error: "organization_id is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Authorization: verify caller is an org admin or platform user
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: isAdmin } = await supabase.rpc("is_org_admin", {
+      _user_id: userId,
+      _org_id: organization_id,
+    });
+
+    if (!isAdmin) {
+      return new Response(
+        JSON.stringify({ error: "You do not have permission to verify this domain" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -73,7 +95,6 @@ Deno.serve(async (req) => {
 
       if (dnsData.Answer && Array.isArray(dnsData.Answer)) {
         for (const answer of dnsData.Answer) {
-          // TXT records come with quotes, strip them
           const txtValue = (answer.data || "").replace(/"/g, "").trim();
           if (txtValue.includes(domainRecord.verification_token)) {
             verified = true;
