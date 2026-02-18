@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
@@ -45,10 +45,10 @@ function getUtilizationColor(percent: number): string {
   return 'hsl(0 72% 51%)'; // Red
 }
 
-function getUtilizationBadgeVariant(percent: number): 'default' | 'secondary' | 'destructive' {
-  if (percent >= 70) return 'default';
-  if (percent >= 50) return 'secondary';
-  return 'destructive';
+function getUtilizationPillClasses(percent: number): string {
+  if (percent >= 70) return 'bg-chart-2/10 text-chart-2';
+  if (percent >= 50) return 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
+  return 'bg-destructive/10 text-destructive';
 }
 
 // Custom bar label
@@ -206,12 +206,9 @@ export function CapacityUtilizationCard() {
                 allLabel="All Locations"
                 triggerClassName="h-8 w-[180px] text-xs border border-border"
               />
-              <Badge 
-                variant={getUtilizationBadgeVariant(overallUtilization)}
-                className="text-xs whitespace-nowrap"
-              >
+              <span className={cn('inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap', getUtilizationPillClasses(overallUtilization))}>
                 {overallUtilization}% utilized
-              </Badge>
+              </span>
             </div>
           </div>
           <div className="flex items-center justify-between">
@@ -369,12 +366,9 @@ export function CapacityUtilizationCard() {
                 </p>
               </div>
               <div className="text-right">
-                <Badge 
-                  variant={getUtilizationBadgeVariant(days[0].utilizationPercent)}
-                  className="text-sm"
-                >
+                <span className={cn('inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium', getUtilizationPillClasses(days[0].utilizationPercent))}>
                   {days[0].utilizationPercent}% capacity
-                </Badge>
+                </span>
               </div>
             </div>
           </div>
