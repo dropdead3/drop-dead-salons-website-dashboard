@@ -244,7 +244,7 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
           {/* Hero KPI */}
           <div className="flex flex-col items-center md:items-start justify-center gap-1.5 bg-muted/20 rounded-xl p-5 border border-border/30">
             <span className={tokens.stat.xlarge}>{heroValue}</span>
-            <span className="text-xs text-muted-foreground uppercase tracking-wider">{config.heroLabel}</span>
+            <span className={tokens.kpi.label}>{config.heroLabel}</span>
             {percentChange !== null && (
               <div className={cn(
                 'flex items-center gap-1 mt-1 text-xs font-medium',
