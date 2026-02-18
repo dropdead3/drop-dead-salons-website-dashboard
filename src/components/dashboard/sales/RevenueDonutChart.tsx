@@ -81,7 +81,9 @@ export function RevenueDonutChart({
                   cy="50%"
                   innerRadius={size * 0.35}
                   outerRadius={size * 0.45}
-                  paddingAngle={2}
+                  paddingAngle={0}
+                  stroke="hsl(var(--border) / 0.4)"
+                  strokeWidth={1}
                   dataKey="value"
                 >
                   {data.map((entry, index) => (

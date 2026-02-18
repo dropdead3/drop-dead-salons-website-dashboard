@@ -130,14 +130,15 @@ export function ServiceMixChart({ userId, days = 30 }: ServiceMixChartProps) {
                   cy="50%"
                   innerRadius={40}
                   outerRadius={70}
-                  paddingAngle={2}
+                  paddingAngle={0}
+                  stroke="hsl(var(--border) / 0.4)"
+                  strokeWidth={1}
                   dataKey="revenue"
                 >
                   {data.map((entry, index) => (
                     <Cell 
                       key={`cell-${index}`} 
                       fill={colorMap[entry.name.toLowerCase()]?.bg || FALLBACK_COLOR}
-                      strokeWidth={0}
                     />
                   ))}
                 </Pie>

@@ -74,6 +74,16 @@ Every analytics card in the dashboard **must** follow this header structure:
 ❌ Use different icon container sizes across cards  
 ❌ Omit `MetricInfoTooltip` from card titles  
 
+## Donut / Pie Chart Standard
+
+All `<Pie>` components must use:
+- `paddingAngle={0}` — no visible gaps between segments
+- `stroke="hsl(var(--border) / 0.4)"` — thin separator matching the app's border color
+- `strokeWidth={1}` — clean, minimal divider
+
+❌ Never use `paddingAngle={2}` or `paddingAngle={5}` — these create distracting gaps  
+❌ Never use `strokeWidth={0}` — segments need a subtle divider for readability
+
 ## Reference Cards (Correct Implementation)
 
 - `ServicesContent.tsx` → `efficiency_matrix`, `rebook_rates`, `price_realization`, `demand_trends`, `category_mix`, `client_type`

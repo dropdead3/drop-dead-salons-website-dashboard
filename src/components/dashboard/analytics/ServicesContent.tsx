@@ -388,7 +388,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
               <div className="aspect-square w-full max-w-[280px] mx-auto">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={categoryMix} dataKey="revenue" nameKey="category" cx="50%" cy="50%" innerRadius="55%" outerRadius="85%" paddingAngle={2} strokeWidth={0}>
+                    <Pie data={categoryMix} dataKey="revenue" nameKey="category" cx="50%" cy="50%" innerRadius="55%" outerRadius="85%" paddingAngle={0} stroke="hsl(var(--border) / 0.4)" strokeWidth={1}>
                       {categoryMix.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     </Pie>
                     <Tooltip formatter={(value: number) => [formatCurrencyWhole(value), 'Revenue']} contentStyle={{ backgroundColor: 'hsl(var(--background))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }} />

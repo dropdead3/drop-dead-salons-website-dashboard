@@ -187,7 +187,9 @@ export function RevenueIntelligence({ analytics }: RevenueIntelligenceProps) {
                   cy="50%"
                   innerRadius={50}
                   outerRadius={80}
-                  paddingAngle={2}
+                  paddingAngle={0}
+                  stroke="hsl(var(--border) / 0.4)"
+                  strokeWidth={1}
                   dataKey="value"
                   label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                 >

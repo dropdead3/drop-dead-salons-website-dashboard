@@ -104,7 +104,9 @@ export function MediumDistributionChart({ mediums, isLoading }: MediumDistributi
                 outerRadius={80}
                 innerRadius={40}
                 dataKey="value"
-                paddingAngle={2}
+                paddingAngle={0}
+                stroke="hsl(var(--border) / 0.4)"
+                strokeWidth={1}
               >
                 {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />

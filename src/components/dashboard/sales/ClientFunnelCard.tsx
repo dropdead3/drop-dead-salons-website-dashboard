@@ -79,7 +79,9 @@ export function ClientFunnelCard({ dateFrom, dateTo, locationId, filterContext }
                     cy="50%"
                     innerRadius={50}
                     outerRadius={75}
-                    paddingAngle={5}
+                    paddingAngle={0}
+                    stroke="hsl(var(--border) / 0.4)"
+                    strokeWidth={1}
                     dataKey="value"
                   >
                     {chartData.map((entry, index) => (
