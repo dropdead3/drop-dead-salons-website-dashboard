@@ -1,51 +1,70 @@
 
-# Bento-Style Settings Detail Pages
+# Bento-Style Layout for Website Settings Tabs
 
 ## Problem
-When clicking into a settings category (e.g., System), all cards stack in a single full-width column. Small cards like "Help & Guidance" (one toggle), "Security" (two toggles), and "Sounds" (one toggle + 2 buttons) waste vertical space by stretching edge-to-edge.
+All five Website Settings tabs (General, Theme, Booking, Retail, SEO & Legal) stack their cards in a single full-width column (`space-y-6`). Smaller cards like "Cookie Consent" (one toggle), "Social Links" (5 inputs), and "Legal Pages" (2 inputs) waste horizontal space on wide screens.
 
 ## Solution
-Apply a responsive 2-column bento grid to the category detail views where cards can sit side-by-side. Larger cards (like Appearance with its theme grid, or Notifications with its many controls) span the full width, while smaller cards share a row.
+Apply the same responsive 2-column bento grid used in the System settings tab. Large or content-heavy cards span full width; smaller cards sit side-by-side.
 
-### Approach
+---
 
-For each category detail view in `Settings.tsx`, wrap the cards in a CSS grid layout:
+## Tab-by-Tab Layout
 
-```text
-grid grid-cols-1 lg:grid-cols-2 gap-6
-```
+### General Tab (lines 158-281)
+Change the wrapper from `space-y-6` to `grid grid-cols-1 lg:grid-cols-2 gap-6`.
 
-Cards that need full width get `lg:col-span-2`. Small cards naturally fill one column cell.
+| Card | Width | Reason |
+|------|-------|--------|
+| Custom Domain | Full (`lg:col-span-2`) | Wide input + button layout |
+| Announcement Banner | Full (`lg:col-span-2`) | Many fields, long form |
+| Social Links | Half | Just 5 input rows |
+| Quick Actions (Editor/Preview buttons) | Half | Two buttons only |
 
-### Categories to Update
+### Booking Tab (lines 532-608)
+Change wrapper to grid.
 
-**System tab** (inline in Settings.tsx, lines 1192-1385):
-- Appearance card: full width (has theme grid with 4 columns)
-- Keyboard Shortcuts: half width
-- Sounds: half width
-- Help & Guidance: half width
-- Security: half width
-- Quick Login PIN: half width
+| Card | Width | Reason |
+|------|-------|--------|
+| Online Booking | Full (`lg:col-span-2`) | Multiple controls + select dropdown |
+| Stylist & Service Visibility | Full (`lg:col-span-2`) | Coming Soon placeholder, fine at full width |
 
-**Notifications card** (rendered inside System, or standalone): full width due to staffing alerts section
+Since there are only 2 cards and both are reasonably sized, this tab benefits less but stays consistent. Both cards go full-width.
 
-**Email tab** (lines 954-1001): Already uses Tabs -- no change needed, each tab shows one card
+### Retail Tab (lines 658-792)
+Change wrapper to grid.
 
-**Other category pages** that render inline cards will get the same treatment where multiple cards exist:
-- Service Flows (lines 1018-1023): 2 cards, can go side-by-side
-- Feedback (lines 1423-1433): single card, no change
+| Card | Width | Reason |
+|------|-------|--------|
+| Online Shop | Half | Toggle + fulfillment options |
+| Store Link + QR | Half | URL + QR code -- pairs nicely beside Online Shop |
+| Store Products | Full (`lg:col-span-2`) | Data table needs full width |
+| Store Appearance Configurator | Full (`lg:col-span-2`) | Color pickers + iframe preview |
 
-### Implementation Detail
+### SEO & Legal Tab (lines 830-937)
+Change wrapper to grid.
 
-The primary change is in `Settings.tsx`:
+| Card | Width | Reason |
+|------|-------|--------|
+| Analytics & Tracking | Half | 4 ID inputs |
+| Cookie Consent | Half | Single toggle -- tiny card |
+| Legal Pages | Half | 2 URL inputs |
 
-1. **System > Settings tab**: Change `className="space-y-6 mt-0"` to `className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-0"` and add `lg:col-span-2` to the Appearance card
-2. **Service Flows section**: Wrap in a grid similarly
+The save button at the bottom gets `lg:col-span-2` so it spans full width.
 
-For external content components that render their own card stacks (like `ScheduleSettingsContent`, `LocationsSettingsContent`, etc.), those already have their own internal layouts and would be addressed separately if needed -- this change focuses on the inline-rendered detail views in Settings.tsx.
+### Theme Tab
+No changes -- it uses a dedicated editor layout with resizable panels, not a card stack.
 
-### Files Modified
+---
+
+## File Changes
 
 | File | Change |
 |------|--------|
-| `src/pages/dashboard/admin/Settings.tsx` | Convert System tab and Service Flows section to 2-column bento grid; add col-span-2 to large cards |
+| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | Replace `space-y-6` with `grid grid-cols-1 lg:grid-cols-2 gap-6` in GeneralTab, BookingTab, RetailTab, and SeoLegalTab; add `lg:col-span-2` to wide cards |
+
+## Technical Detail
+
+Each tab function's outermost `<div className="space-y-6">` becomes `<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">`. Cards that should remain full-width get `className="lg:col-span-2"` added. Cards with `self-stretch` behavior from CSS grid will automatically align their tops, creating the bento effect.
+
+For the Retail tab, the conditionally rendered Store Link and Store Products cards already have the right conditional wrappers -- no logic changes needed, just className additions.
