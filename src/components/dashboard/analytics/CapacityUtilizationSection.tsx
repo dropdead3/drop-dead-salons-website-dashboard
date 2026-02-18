@@ -73,8 +73,10 @@ function UtilizationBarLabel({ x, y, width, value, index, days }: any) {
 
 // Custom X-axis tick showing day name and hours open
 function DayXAxisTick({ x, y, payload, days }: any) {
+  const { formatDate } = useFormatDate();
   const day = days.find((d: DayCapacity) => d.dayName === payload.value);
   if (!day) return null;
+  const dateLabel = formatDate(day.date, 'MMM d');
 
   if (day.isClosed) {
     return (
@@ -87,7 +89,10 @@ function DayXAxisTick({ x, y, payload, days }: any) {
         >
           {day.dayName}
         </text>
-        <text x={0} dy={24} textAnchor="middle" className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}>
+        <text x={0} y={0} dy={25} textAnchor="middle" className="fill-muted-foreground text-[10px]">
+          {dateLabel}
+        </text>
+        <text x={0} y={0} dy={38} textAnchor="middle" className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}>
           Closed
         </text>
       </g>
@@ -104,8 +109,11 @@ function DayXAxisTick({ x, y, payload, days }: any) {
       >
         {day.dayName}
       </text>
+      <text x={0} y={0} dy={25} textAnchor="middle" className="fill-muted-foreground text-[10px]">
+        {dateLabel}
+      </text>
       <text 
-        x={0} y={0} dy={24} 
+        x={0} y={0} dy={38} 
         textAnchor="middle" 
         className="fill-muted-foreground text-[10px]"
       >
