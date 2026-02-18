@@ -21,6 +21,8 @@ interface ClientEngagementCardProps {
   dateTo: string;
   locationId?: string;
   filterContext?: FilterContext;
+  activeView?: EngagementView;
+  onViewChange?: (view: EngagementView) => void;
 }
 
 const VIEW_CONFIG: Record<EngagementView, {
@@ -97,9 +99,14 @@ function getChartData(data: ClientEngagementData, view: EngagementView): ChartIt
   }
 }
 
-export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterContext }: ClientEngagementCardProps) {
+export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterContext, activeView, onViewChange }: ClientEngagementCardProps) {
   const { data, isLoading } = useClientEngagement(dateFrom, dateTo, locationId);
-  const [view, setView] = useState<EngagementView>('visits');
+  const [internalView, setInternalView] = useState<EngagementView>('visits');
+  const view = activeView ?? internalView;
+  const setView = (v: EngagementView) => {
+    setInternalView(v);
+    onViewChange?.(v);
+  };
   const [expandedStaff, setExpandedStaff] = useState<string | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
 

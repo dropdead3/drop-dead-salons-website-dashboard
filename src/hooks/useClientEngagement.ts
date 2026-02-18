@@ -55,6 +55,11 @@ export interface ClientEngagementData {
     percentChange: number | null;
     staffBreakdown: StaffRebookingDetail[];
   };
+  avgTicket: {
+    current: number;
+    prior: number;
+    percentChange: number | null;
+  };
 }
 
 // ── Paginated fetch ────────────────────────────────────────────
@@ -140,7 +145,7 @@ export function useClientEngagement(
       // Fetch current and prior data in ONE pass each (all fields combined)
       const [currentAppts, priorAppts] = await Promise.all([
         fetchAppointments(dateFrom, dateTo, locationId),
-        fetchAppointments(priorFromStr, priorToStr, locationId, 'phorest_staff_id, is_new_client, rebooked_at_checkout, status'),
+        fetchAppointments(priorFromStr, priorToStr, locationId, 'phorest_staff_id, is_new_client, rebooked_at_checkout, total_price, status'),
       ]);
 
       const resolveName = (staffId: string) => {
@@ -257,6 +262,15 @@ export function useClientEngagement(
         }))
         .sort((a, b) => b.rebookingRate - a.rebookingRate);
 
+      // ── AVG TICKET ──
+      const totalRevenueCurrent = currentAppts.reduce((sum, a) => sum + (Number(a.total_price) || 0), 0);
+      const avgTicketCurrent = totalVisits > 0 ? totalRevenueCurrent / totalVisits : 0;
+      const totalRevenuePrior = priorAppts.reduce((sum, a) => sum + (Number(a.total_price) || 0), 0);
+      const avgTicketPrior = priorTotalVisits > 0 ? totalRevenuePrior / priorTotalVisits : 0;
+      const avgTicketPercentChange = avgTicketPrior > 0
+        ? ((avgTicketCurrent - avgTicketPrior) / avgTicketPrior) * 100
+        : null;
+
       return {
         visits: {
           total: totalVisits,
@@ -275,6 +289,11 @@ export function useClientEngagement(
           priorRate: priorRebookingRate,
           percentChange: rebookingPercentChange,
           staffBreakdown: rebookingBreakdown,
+        },
+        avgTicket: {
+          current: avgTicketCurrent,
+          prior: avgTicketPrior,
+          percentChange: avgTicketPercentChange,
         },
       };
     },

@@ -4,10 +4,13 @@ import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
+type EngagementView = 'visits' | 'retention' | 'rebooking';
+
 interface StaffKPISummaryProps {
   dateFrom: string;
   dateTo: string;
   locationId?: string;
+  onTileClick?: (view: EngagementView) => void;
 }
 
 function ChangeBadge({ value }: { value: number | null }) {
@@ -26,7 +29,7 @@ function ChangeBadge({ value }: { value: number | null }) {
   );
 }
 
-export function StaffKPISummary({ dateFrom, dateTo, locationId }: StaffKPISummaryProps) {
+export function StaffKPISummary({ dateFrom, dateTo, locationId, onTileClick }: StaffKPISummaryProps) {
   const { data, isLoading } = useClientEngagement(dateFrom, dateTo, locationId);
 
   if (isLoading) {
@@ -44,34 +47,40 @@ export function StaffKPISummary({ dateFrom, dateTo, locationId }: StaffKPISummar
 
   if (!data) return null;
 
-  const avgTicket = data.visits.total > 0
-    ? data.visits.staffBreakdown.reduce((sum, s) => sum + s.avgTicket * s.totalVisits, 0) / data.visits.total
-    : 0;
-
-  const tiles = [
+  const tiles: {
+    icon: typeof Users;
+    label: string;
+    value: React.ReactNode;
+    change: number | null;
+    viewKey: EngagementView;
+  }[] = [
     {
       icon: Users,
       label: 'Total Visits',
       value: data.visits.total.toLocaleString(),
       change: data.visits.percentChange,
+      viewKey: 'visits',
     },
     {
       icon: UserCheck,
       label: 'Returning %',
       value: `${Math.round(data.retention.overallRate)}%`,
       change: data.retention.percentChange,
+      viewKey: 'retention',
     },
     {
       icon: RefreshCw,
       label: 'Rebooking %',
       value: `${Math.round(data.rebooking.overallRate)}%`,
       change: data.rebooking.percentChange,
+      viewKey: 'rebooking',
     },
     {
       icon: Receipt,
       label: 'Avg Ticket',
-      value: <AnimatedBlurredAmount value={avgTicket} currency="USD" />,
-      change: null,
+      value: <AnimatedBlurredAmount value={data.avgTicket.current} currency="USD" />,
+      change: data.avgTicket.percentChange,
+      viewKey: 'visits',
     },
   ];
 
@@ -80,7 +89,11 @@ export function StaffKPISummary({ dateFrom, dateTo, locationId }: StaffKPISummar
       {tiles.map((tile) => (
         <div
           key={tile.label}
-          className="rounded-xl border border-border/50 bg-card p-4 flex flex-col gap-1"
+          onClick={() => onTileClick?.(tile.viewKey)}
+          className={cn(
+            "rounded-xl border border-border/50 bg-card p-4 flex flex-col gap-1",
+            onTileClick && "cursor-pointer hover:border-primary/30 transition-colors"
+          )}
         >
           <div className="flex items-center gap-1.5">
             <tile.icon className="w-3.5 h-3.5 text-muted-foreground" />
