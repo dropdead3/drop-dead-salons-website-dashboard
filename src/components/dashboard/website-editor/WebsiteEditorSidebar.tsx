@@ -47,12 +47,12 @@ interface SectionItem {
 
 // Site Content items (data managers - not part of homepage ordering)
 const SITE_CONTENT_ITEMS = [
+  { tab: 'banner', label: 'Announcement Bar', description: 'Site-wide banner', icon: Megaphone },
   { tab: 'services', label: 'Services', description: 'Manage service catalog', icon: Scissors },
   { tab: 'testimonials', label: 'Testimonials', description: 'Manage client reviews', icon: MessageSquareQuote },
   { tab: 'gallery', label: 'Gallery', description: 'Manage portfolio images', icon: Images },
   { tab: 'stylists', label: 'Stylists', description: 'Manage team profiles', icon: Users },
   { tab: 'locations', label: 'Locations', description: 'Manage salon locations', icon: MapPin },
-  { tab: 'banner', label: 'Announcement Bar', description: 'Site-wide banner', icon: Megaphone },
 ];
 
 // Homepage section groupings for logical organization
