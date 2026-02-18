@@ -126,6 +126,7 @@ export function useServices(locationId?: string) {
         .from('services')
         .select('*')
         .eq('is_active', true)
+        .eq('bookable_online', true)
         .order('category')
         .order('display_order')
         .order('name');

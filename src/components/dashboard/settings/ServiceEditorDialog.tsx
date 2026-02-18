@@ -40,6 +40,7 @@ export function ServiceEditorDialog({
   const [description, setDescription] = useState('');
   const [requiresQualification, setRequiresQualification] = useState(false);
   const [allowSameDayBooking, setAllowSameDayBooking] = useState(true);
+  const [bookableOnline, setBookableOnline] = useState(true);
   const [leadTimeDays, setLeadTimeDays] = useState('0');
 
   useEffect(() => {
@@ -54,6 +55,7 @@ export function ServiceEditorDialog({
         setDescription(initialData.description || '');
         setRequiresQualification(initialData.requires_qualification ?? false);
         setAllowSameDayBooking(initialData.allow_same_day_booking ?? true);
+        setBookableOnline((initialData as any).bookable_online ?? true);
         setLeadTimeDays(String(initialData.lead_time_days || 0));
       } else {
         setName('');
@@ -64,6 +66,7 @@ export function ServiceEditorDialog({
         setDescription('');
         setRequiresQualification(false);
         setAllowSameDayBooking(true);
+        setBookableOnline(true);
         setLeadTimeDays('0');
       }
     }
@@ -81,6 +84,7 @@ export function ServiceEditorDialog({
       description: description.trim() || null,
       requires_qualification: requiresQualification,
       allow_same_day_booking: allowSameDayBooking,
+      bookable_online: bookableOnline,
       lead_time_days: parseInt(leadTimeDays) || 0,
     });
   };
@@ -167,6 +171,14 @@ export function ServiceEditorDialog({
                       <p className={tokens.body.muted}>Only qualified stylists can book this service</p>
                     </div>
                     <Switch checked={requiresQualification} onCheckedChange={setRequiresQualification} />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className={tokens.body.emphasis}>Bookable Online</p>
+                      <p className={tokens.body.muted}>Show on website and allow online booking</p>
+                    </div>
+                    <Switch checked={bookableOnline} onCheckedChange={setBookableOnline} />
                   </div>
 
                   <div className="flex items-center justify-between">

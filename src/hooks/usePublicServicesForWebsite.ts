@@ -34,6 +34,7 @@ export function usePublicServicesForWebsite(orgId: string | undefined) {
         .from('services')
         .select('id, name, description, website_description, is_popular, price, category, display_order')
         .eq('is_active', true)
+        .eq('bookable_online', true)
         .eq('organization_id', orgId!);
       if (error) throw error;
       return data;

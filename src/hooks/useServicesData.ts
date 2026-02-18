@@ -13,6 +13,7 @@ export interface Service {
   price: number | null;
   cost: number | null;
   is_active: boolean | null;
+  bookable_online: boolean | null;
   requires_qualification: boolean | null;
   allow_same_day_booking: boolean | null;
   lead_time_days: number | null;
