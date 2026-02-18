@@ -609,7 +609,7 @@ function BookingTab() {
 // ─── Retail Tab ───
 function RetailTab() {
   const { data: settings, isLoading } = useWebsiteRetailSettings();
-  const { effectiveOrganization } = useOrganizationContext();
+  const { effectiveOrganization, currentOrganization } = useOrganizationContext();
   const updateRetail = useUpdateWebsiteRetailSettings();
   const { toast } = useToast();
   const [local, setLocal] = useState<WebsiteRetailSettings>({
@@ -637,8 +637,9 @@ function RetailTab() {
     );
   };
 
-  const storeUrl = effectiveOrganization?.slug
-    ? `${window.location.origin}/org/${effectiveOrganization.slug}/shop`
+  const orgForLink = effectiveOrganization || currentOrganization;
+  const storeUrl = orgForLink?.slug
+    ? `${window.location.origin}/org/${orgForLink.slug}/shop`
     : '';
 
   const handleCopyLink = () => {
