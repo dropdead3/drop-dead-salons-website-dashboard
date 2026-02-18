@@ -102,7 +102,7 @@ function StatusBadge({ status }: { status: ExperienceStatus }) {
 export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterContext }: ClientExperienceCardProps) {
   const { data, isLoading } = useClientExperience(dateFrom, dateTo, locationId);
   const { formatCurrency } = useFormatCurrency();
-  const [activeMetric, setActiveMetric] = useState<ExperienceMetric>('avgTip');
+  const [activeMetric, setActiveMetric] = useState<ExperienceMetric>('composite');
   const [showAll, setShowAll] = useState(false);
   const DEFAULT_BAR_COUNT = 5;
 
@@ -120,11 +120,23 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-            {Array.from({ length: 5 }).map((_, i) => (
+          {/* Hero skeleton */}
+          <div className={cn(tokens.kpi.tile, 'mb-3')}>
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-8 w-28 mt-2" />
+          </div>
+          {/* Connector skeleton */}
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex-1 h-px bg-border/40" />
+            <Skeleton className="h-2 w-16" />
+            <div className="flex-1 h-px bg-border/40" />
+          </div>
+          {/* 2x2 grid skeleton */}
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className={tokens.kpi.tile}>
                 <Skeleton className="h-3 w-16" />
-                <Skeleton className="h-6 w-20 mt-1" />
+                <Skeleton className="h-5 w-20 mt-1" />
               </div>
             ))}
           </div>
@@ -227,28 +239,37 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
         </div>
       </CardHeader>
       <CardContent>
-        {/* KPI Row — 3+2 bento layout for 5 tiles */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-2">
-          {kpis.slice(0, 3).map(kpi => (
+        {/* ── Hero KPI: Experience Score ── */}
+        {(() => {
+          const heroKpi = kpis.find(k => k.metric === 'composite')!;
+          return (
             <button
-              key={kpi.metric}
-              onClick={() => { setActiveMetric(kpi.metric); setShowAll(false); }}
+              onClick={() => { setActiveMetric('composite'); setShowAll(false); }}
               className={cn(
                 tokens.kpi.tile,
-                'text-left transition-colors cursor-pointer',
-                activeMetric === kpi.metric
+                'text-left transition-colors cursor-pointer w-full mb-0',
+                activeMetric === 'composite'
                   ? 'ring-1 ring-primary/40 bg-primary/5'
                   : 'hover:bg-muted/30',
               )}
             >
-              <span className={tokens.kpi.label}>{kpi.label}</span>
-              <span className={tokens.kpi.value}>{kpi.value}</span>
-              <ChangeBadge value={kpi.change} />
+              <span className={tokens.kpi.label}>{heroKpi.label}</span>
+              <span className="font-display text-3xl tracking-wide text-foreground">{heroKpi.value}</span>
+              <ChangeBadge value={heroKpi.change} />
             </button>
-          ))}
+          );
+        })()}
+
+        {/* ── Connecting element ── */}
+        <div className="flex items-center gap-3 my-3">
+          <div className="flex-1 h-px bg-border/40" />
+          <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-display">Based on</span>
+          <div className="flex-1 h-px bg-border/40" />
         </div>
+
+        {/* ── Component KPIs: 2×2 grid ── */}
         <div className="grid grid-cols-2 gap-3 mb-6">
-          {kpis.slice(3).map(kpi => (
+          {kpis.filter(k => k.metric !== 'composite').map(kpi => (
             <button
               key={kpi.metric}
               onClick={() => { setActiveMetric(kpi.metric); setShowAll(false); }}
@@ -256,7 +277,7 @@ export function ClientExperienceCard({ dateFrom, dateTo, locationId, filterConte
                 tokens.kpi.tile,
                 'text-left transition-colors cursor-pointer',
                 activeMetric === kpi.metric
-                  ? 'ring-1 ring-primary/40 bg-primary/5'
+                  ? 'ring-1 ring-primary/40 bg-muted/20'
                   : 'hover:bg-muted/30',
               )}
             >
