@@ -5,7 +5,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { GripVertical, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { GripVertical, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, Reorder } from 'framer-motion';
 import {
@@ -191,11 +191,6 @@ export function OverviewTab() {
                   </div>
 
                   <div className="flex items-center gap-3">
-                    {item.config.enabled ? (
-                      <Eye className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
-                    )}
 
                     <Switch
                       checked={item.config.enabled}
