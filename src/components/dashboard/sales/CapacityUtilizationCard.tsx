@@ -13,7 +13,7 @@ import { LocationSelect } from '@/components/ui/location-select';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CapacityBreakdown } from '@/components/dashboard/analytics/CapacityBreakdown';
 import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
-import { Gauge, Clock, DollarSign, TrendingDown, Calendar, PieChart, Info, Moon } from 'lucide-react';
+import { Gauge, Clock, DollarSign, TrendingDown, Calendar, Info, Moon } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { cn } from '@/lib/utils';
@@ -27,9 +27,6 @@ import {
   Tooltip, 
   ResponsiveContainer, 
   Cell,
-  PieChart as RePieChart,
-  Pie,
-  Legend,
   Customized,
 } from 'recharts';
 
@@ -190,20 +187,11 @@ export function CapacityUtilizationCard() {
     bookedHours: day.bookedHours,
   }));
 
-  // Pie chart data for service mix
-  const pieData = serviceMix.slice(0, 6).map((item, index) => ({
-    name: item.category,
-    value: item.hours,
-    percentage: item.percentage,
-    fill: colorMap[item.category.toLowerCase()]?.bg || FALLBACK_COLOR,
-  }));
-
   // Dynamic Y-axis max: peak + 20% buffer, rounded to nearest 10, clamped [20, 100]
   const peakUtil = Math.max(...chartData.map(d => d.utilization), 0);
   const yMax = Math.min(100, Math.max(20, Math.ceil((peakUtil * 1.2) / 10) * 10));
 
   const showChart = period !== 'tomorrow' && days.length > 1;
-  const showPieChart = serviceMix.length > 0;
 
   return (
     <Card>
@@ -487,55 +475,6 @@ export function CapacityUtilizationCard() {
               </div>
             </div>
           )
-        )}
-
-        {/* Service Mix Breakdown */}
-        {showPieChart && (
-          <div className="pt-3">
-            <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent mb-4" />
-            <div className="flex items-center gap-2 mb-3">
-              <PieChart className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium">Service Mix</span>
-              <MetricInfoTooltip description="Breakdown of booked time by service category. Shows how salon capacity is being used." />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="h-[140px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <RePieChart>
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={30}
-                      outerRadius={52}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                  </RePieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="space-y-1.5">
-                {serviceMix.slice(0, 5).map((item, index) => (
-                  <div key={item.category} className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-2 h-2 rounded-full" 
-                        style={{ backgroundColor: colorMap[item.category.toLowerCase()]?.bg || FALLBACK_COLOR }}
-                      />
-                      <span className="text-muted-foreground truncate max-w-[100px]">
-                        {item.category}
-                      </span>
-                    </div>
-                    <span className="font-medium tabular-nums">{item.percentage}%</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
         )}
 
         {/* Opportunity Callout */}
