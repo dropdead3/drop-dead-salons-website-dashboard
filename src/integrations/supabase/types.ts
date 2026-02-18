@@ -12899,6 +12899,7 @@ export type Database = {
           category_name: string
           color_hex: string
           created_at: string
+          description: string | null
           display_order: number
           id: string
           organization_id: string | null
@@ -12909,6 +12910,7 @@ export type Database = {
           category_name: string
           color_hex?: string
           created_at?: string
+          description?: string | null
           display_order?: number
           id?: string
           organization_id?: string | null
@@ -12919,6 +12921,7 @@ export type Database = {
           category_name?: string
           color_hex?: string
           created_at?: string
+          description?: string | null
           display_order?: number
           id?: string
           organization_id?: string | null
@@ -13539,6 +13542,7 @@ export type Database = {
           import_source: string | null
           imported_at: string | null
           is_active: boolean | null
+          is_popular: boolean
           lead_time_days: number | null
           location_id: string | null
           name: string
@@ -13549,6 +13553,7 @@ export type Database = {
           requires_qualification: boolean | null
           same_day_restriction_reason: string | null
           updated_at: string | null
+          website_description: string | null
         }
         Insert: {
           allow_same_day_booking?: boolean | null
@@ -13566,6 +13571,7 @@ export type Database = {
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
+          is_popular?: boolean
           lead_time_days?: number | null
           location_id?: string | null
           name: string
@@ -13576,6 +13582,7 @@ export type Database = {
           requires_qualification?: boolean | null
           same_day_restriction_reason?: string | null
           updated_at?: string | null
+          website_description?: string | null
         }
         Update: {
           allow_same_day_booking?: boolean | null
@@ -13593,6 +13600,7 @@ export type Database = {
           import_source?: string | null
           imported_at?: string | null
           is_active?: boolean | null
+          is_popular?: boolean
           lead_time_days?: number | null
           location_id?: string | null
           name?: string
@@ -13603,6 +13611,7 @@ export type Database = {
           requires_qualification?: boolean | null
           same_day_restriction_reason?: string | null
           updated_at?: string | null
+          website_description?: string | null
         }
         Relationships: [
           {
