@@ -1,4 +1,6 @@
 import React, { useMemo, useState, type ReactNode } from 'react';
+import { EmptyState } from '@/components/ui/empty-state';
+import { CalendarRange } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -505,7 +507,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
           {clientLoading ? (
             <div className="h-48 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
           ) : clientSorted.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Not enough data (services need 3+ bookings)</p>
+            <EmptyState icon={CalendarRange} title="Not enough data" description="Fewer than 3 services found. Try widening your date range (e.g. Last 30 Days) for more meaningful insights." />
           ) : (
             <div className="space-y-2">
               {clientSorted.map(s => (
@@ -717,7 +719,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
           {clientLoading ? (
             <div className="h-48 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
           ) : rebookData.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Not enough data (services need 5+ bookings)</p>
+            <EmptyState icon={CalendarRange} title="Not enough data" description="Fewer than 5 qualifying services found. Try widening your date range (e.g. Last 30 Days) for more meaningful insights." />
           ) : (
             <div className="space-y-1">
               {rebookData.slice(0, 15).map(s => {
@@ -784,7 +786,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
           {isLoading ? (
             <div className="h-64 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
           ) : priceRealizationData.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">Not enough data — services need a menu price set and at least 3 bookings</p>
+            <EmptyState icon={CalendarRange} title="Not enough data" description="Services need a menu price and at least 3 bookings. Try widening your date range (e.g. Last 30 Days) for more meaningful insights." />
           ) : (
             <>
               <div className="h-[300px]">
