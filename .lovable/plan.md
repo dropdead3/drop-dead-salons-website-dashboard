@@ -1,106 +1,117 @@
 
 
-## Five Drill-Down Enhancements for Services Analytics
+## Review: Gaps and Enhancements for Recent Services Analytics Build
 
-### Enhancement 1: Bundling Intelligence Drill-Downs
-
-Make the three bundling cards interactive:
-
-**Standalone vs. Grouped card** -- clicking a category bar expands a panel showing:
-- Top 5 services within that category by standalone rate
-- Top 3 pairings this category appears in (from `categoryPairings` data)
-- A one-liner: "Haircut is booked alone 78% of the time -- consider bundling with Extras or Styling"
-
-**Revenue Lift table** -- clicking a row expands to show:
-- The specific service-level pairings driving the lift (from `pairings` data, filtered to services in that category)
-- Sample size context: "Based on X solo visits and Y grouped visits"
-
-**Technical:** Add `expandedStandalone` and `expandedLift` state variables to `ServiceBundlingIntelligence.tsx`. All data is already available from `useServicePairings` -- the `pairings` array has service-level pairs, `categoryPairings` has category-level pairs. Filter and display within the drill-down panels.
+After reviewing all three modified files (`ServiceBundlingIntelligence.tsx`, `ServicesContent.tsx`, `useServiceEfficiency.ts`), here are the issues and improvements grouped by priority.
 
 ---
 
-### Enhancement 2: Price Realization by Stylist
+### Gap 1: Stylist Names Show Raw IDs Instead of Real Names
 
-Click a service bar in the Price Realization chart to expand a stylist-level breakdown showing who is discounting most.
+**Problem:** In the `useServiceEfficiency` hook (line 183), `staffName` is set to the raw `phorest_staff_id` string. Every drill-down that shows "Stylist Breakdown" — Efficiency Matrix, Price Realization by Stylist, Rebooking by Stylist — displays cryptic IDs instead of human names.
 
-**Drill-down shows:**
-- Each stylist's average collected price vs. the menu price
-- Realization rate per stylist (color-coded: red < 85%, green > 105%)
-- Booking count per stylist for that service
+**Fix:** Fetch `phorest_staff_mapping` joined to `employee_profiles` (the same pattern used in `useNewBookings.ts` and `useStylistExperienceScore.ts`) and resolve IDs to display names before returning `stylistBreakdown`.
 
-**Technical:**
-- Add `expandedRealization` state to `ServicesContent.tsx`
-- The `useServiceEfficiency` hook already tracks `stylistBreakdown` per service with `totalRevenue` and `bookings` -- derive per-stylist avg price from `totalRevenue / bookings`
-- Render a `DrillDown` panel below the chart grid items for the selected service
-- Match the existing drill-down pattern (framer-motion expand, muted background)
+**Files:** `src/hooks/useServiceEfficiency.ts`
 
 ---
 
-### Enhancement 3: Efficiency Matrix -- Time Patterns
+### Gap 2: Prohibited Font Weights (Design System Violation)
 
-Add day-of-week and peak hour data to the Efficiency Matrix drill-down rows.
+The design rules cap font weight at `font-medium` (500) in analytics components. Multiple violations exist:
 
-**Currently the drill-down shows:** New client %, rebook rate, tip %, stylist breakdown
-**Add:** A compact day-of-week mini-bar showing booking distribution (Mon-Sun) and a "Peak hours" line
+| File | Lines | Current | Fix |
+|---|---|---|---|
+| `ServiceBundlingIntelligence.tsx` | 137, 143 | `font-semibold` | `font-medium` |
+| `ServiceBundlingIntelligence.tsx` | 356 | `font-bold` | `font-medium` |
+| `ServicesContent.tsx` | 105 | `font-bold` (KPI value) | `font-medium` |
+| `ServicesContent.tsx` | 129 | `font-semibold` (RebookBar) | `font-medium` |
+| `ServicesContent.tsx` | 593 | `font-semibold` (Rev/Hr cell) | `font-medium` |
+| `ServicesContent.tsx` | 811, 826 | `font-semibold` (realization rates) | `font-medium` |
 
-**Technical:**
-- Extend `useServiceEfficiency` to also fetch `appointment_date` (already fetched) -- extract day-of-week from it
-- Add a `dayOfWeekMap` per service in the aggregation: `Map<number, number>` (0=Sun..6=Sat)
-- Also fetch `start_time` (already fetched) and bucket into morning/afternoon/evening slots
-- Add to `ServiceEfficiencyRow`: `dayDistribution: number[]` (7 values) and `peakHour: string`
-- In the drill-down panel, render 7 tiny bars (Mon-Sun) showing relative booking density
-- Show "Peak: Tue & Thu afternoons" text summary
-
----
-
-### Enhancement 4: Rev/Hr in Category Mix Drill-Down
-
-Enhance the existing Category Mix drill-down (which shows services within a category) to include per-service Rev/Hr.
-
-**Currently shows:** Service name, bookings, avg revenue, % of category revenue
-**Add:** Rev/Hr column with color coding (green if above salon average, red if below)
-
-**Technical:**
-- The `cat.services` array already contains `ServiceEfficiencyRow` objects which have `revPerHour`
-- Simply add a `revPerHour` display in the drill-down row items, color-coded against `data.avgRevPerHour`
-- Minimal change -- about 5 lines added to the drill-down template at line ~424
+**Files:** `ServiceBundlingIntelligence.tsx`, `ServicesContent.tsx`
 
 ---
 
-### Enhancement 5: Lost Rebooking Revenue
+### Gap 3: Abbreviation "appts" Violates Terminology Rule
 
-Add a "lost revenue" estimate to the Service Rebooking Rates card showing the dollar impact if rebooking reached a target (e.g., 70%).
+Line 727 of `ServicesContent.tsx` uses `"appts"` in the Rebooking Rates rows. The project rule requires full words ("appointments") for professional clarity.
 
-**Shows:** For each service with a rebook rate below 70%, calculate:
-`lostRevenue = (targetRate - actualRate) * totalCount * avgTicket`
+Also appears on line 737 in the stylist rebook drill-down.
 
-**Drill-down addition:** Below the per-stylist rebook breakdown, add a line:
-"If rebooking reached 70%, this service would generate an estimated +$X,XXX in additional revenue"
+**Fix:** Replace `appts` with `appointments` in both places.
 
-Also add a **summary stat at the top** of the Rebooking Rates card:
-"Total estimated lost rebooking revenue: $XX,XXX" across all under-target services
-
-**Technical:**
-- Need the average ticket per service -- cross-reference `useServiceEfficiency` data (already loaded in `ServicesContent`)
-- Build a `rebookLostRevenue` map in a `useMemo`: for each service in `rebookData` where `rebookRate < 70`, compute `(0.70 - rebookRate/100) * totalCount * avgTicketForService`
-- Display the per-service estimate in the existing `DrillDown` panel
-- Display the aggregate total as a `Badge` or subtitle in the card header
+**File:** `ServicesContent.tsx`
 
 ---
 
-### Files Modified
+### Gap 4: Missing MetricInfoTooltips on Several Cards
 
-| File | Changes |
-|---|---|
-| `src/components/dashboard/sales/ServiceBundlingIntelligence.tsx` | Add drill-down state + expandable panels for standalone bars and revenue lift rows |
-| `src/components/dashboard/analytics/ServicesContent.tsx` | Add price realization drill-down, rev/hr in category drill-down, lost rebook revenue estimate |
-| `src/hooks/useServiceEfficiency.ts` | Add `dayDistribution` and `peakHour` fields to `ServiceEfficiencyRow` |
+The analytics tooltip rule requires every card to have a `MetricInfoTooltip` next to its title. These cards are missing one:
 
-### Implementation Order
+- **Service Category Mix** card (line 371)
+- **Client Type Analysis** card (line 490)
+- **Service Efficiency Matrix** card (line 549)
+- **Price Realization** card (line 767)
+- **Service Demand Trends** card (line 856)
 
-1. Enhancement 4 (Rev/Hr in category drill-down) -- smallest, ~5 lines
-2. Enhancement 5 (Lost rebooking revenue) -- moderate, uses existing data
-3. Enhancement 1 (Bundling drill-downs) -- moderate, all data available
-4. Enhancement 2 (Price realization by stylist) -- moderate, needs drill-down wiring
-5. Enhancement 3 (Time patterns) -- largest, requires hook extension
+The Rebooking Rates and Bundling Intelligence cards already have tooltips.
+
+**File:** `ServicesContent.tsx`
+
+---
+
+### Gap 5: React Key Warnings on Fragments
+
+Multiple `.map()` calls wrap rows in bare `<>...</>` fragments without a `key` prop. While the inner `<TableRow>` has a key, the fragment wrapper does not, which can cause React console warnings:
+
+- Category Mix table (line 413)
+- Efficiency Matrix table (line 581)
+- Revenue Lift table in Bundling Intelligence (line 222)
+
+**Fix:** Replace `<>` with `<Fragment key={...}>` or `<React.Fragment key={...}>`.
+
+**Files:** `ServicesContent.tsx`, `ServiceBundlingIntelligence.tsx`
+
+---
+
+### Gap 6: Supabase 1000-Row Query Limit
+
+The `useServiceEfficiency` hook fetches from `phorest_appointments` without pagination. For busy salons over longer date ranges, this can silently truncate data at 1000 rows, producing inaccurate metrics with no indication to the user.
+
+The `useServicePairings` hook has the same issue.
+
+**Fix:** Add `.limit(10000)` or implement pagination (fetch in batches until no more rows), and add a data-quality note if results hit the limit.
+
+**Files:** `useServiceEfficiency.ts`, `useServicePairings.ts`
+
+---
+
+### Enhancement: Heatmap Readability in Dark Mode
+
+The heatmap cell text in `ServiceBundlingIntelligence.tsx` (line 356) uses default foreground color on a dynamically-colored background (`hsl(var(--primary) / opacity)`). In some themes, high-intensity cells can have poor contrast. Adding explicit text color that adapts to intensity would improve readability.
+
+**File:** `ServiceBundlingIntelligence.tsx`
+
+---
+
+### Summary
+
+| # | Issue | Severity | Effort |
+|---|---|---|---|
+| 1 | Stylist names show raw IDs | High -- user-facing data is unreadable | Moderate (add staff lookup query) |
+| 2 | Prohibited font weights | Medium -- design rule violation | Small (find-replace) |
+| 3 | "appts" abbreviation | Low -- terminology rule | Trivial |
+| 4 | Missing MetricInfoTooltips | Medium -- analytics rule violation | Small (5 additions) |
+| 5 | Fragment key warnings | Low -- console noise | Trivial |
+| 6 | 1000-row query limit | High -- silent data truncation | Moderate (pagination logic) |
+| 7 | Heatmap dark mode contrast | Low -- cosmetic | Small |
+
+### Recommended Implementation Order
+
+1. Stylist name resolution (most impactful user-facing fix)
+2. Query limit fix (data integrity)
+3. Missing tooltips (rule compliance)
+4. Font weight fixes (design compliance)
+5. Abbreviation + fragment keys + heatmap contrast (quick cleanup)
 
