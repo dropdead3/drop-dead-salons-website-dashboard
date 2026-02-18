@@ -34,6 +34,7 @@ import { useCommissionConfig, useCommissionOverrides, calculateStaffCommissions 
 import { useProducts } from '@/hooks/useProducts';
 import { calculateInventoryAlerts } from '@/hooks/useInventoryAlerts';
 import { EmptyState } from '@/components/ui/empty-state';
+import { useAggregatedRetailGoals } from '@/hooks/useAggregatedRetailGoals';
 
 interface RetailAnalyticsContentProps {
   dateFrom: string;
@@ -520,7 +521,6 @@ function InventoryTurnoverCard({ brands, filterContext }: { brands: BrandRow[]; 
   );
 }
 
-
 export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterContext }: RetailAnalyticsContentProps) {
   const { data, isLoading } = useRetailAnalytics(dateFrom, dateTo, locationId);
   const { data: retailAttachment, isLoading: retailAttachmentLoading } = useServiceRetailAttachment({ dateFrom, dateTo, locationId });
@@ -540,6 +540,8 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
   const { data: commissionOverrides } = useCommissionOverrides(commissionConfig?.id);
   // Inventory Alerts - respect location filter
   const { data: allProducts } = useProducts(locationId ? { locationId } : {});
+  // Aggregated staff retail goals
+  const { data: aggregatedRetailGoals } = useAggregatedRetailGoals(data?.summary?.totalRevenue ?? 0);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => (d === 'desc' ? 'asc' : 'desc'));
@@ -588,12 +590,17 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
     return calculateInventoryAlerts(allProducts, data.salesVelocity);
   }, [allProducts, data]);
 
-  // Goal progress
+  // Goal progress — prefer aggregated staff commitments, fall back to top-down org goal
   const goalProgress = useMemo(() => {
-    if (!currentGoals?.monthly?.length || !data) return null;
-    const orgGoal = currentGoals.monthly.find((g: any) => !g.location_id);
-    if (!orgGoal) return null;
-    const target = orgGoal.target_revenue;
+    if (!data) return null;
+    const agg = aggregatedRetailGoals;
+    const hasStaffGoals = agg && agg.totalMonthlyCommitment > 0;
+    const orgGoal = currentGoals?.monthly?.find((g: any) => !g.location_id);
+    const hasOrgGoal = !!orgGoal;
+    if (!hasStaffGoals && !hasOrgGoal) return null;
+
+    // Primary target: staff aggregate if available, otherwise org top-down
+    const target = hasStaffGoals ? agg.totalMonthlyCommitment : (orgGoal as any).target_revenue;
     const current = data.summary.totalRevenue;
     const now = new Date();
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
@@ -601,8 +608,26 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
     const progressPct = target > 0 ? Math.min(100, (current / target) * 100) : 0;
     const idealPace = (dayOfMonth / daysInMonth) * 100;
     const onTrack = progressPct >= idealPace * 0.9;
-    return { target, current, progressPct, idealPace, onTrack, dayOfMonth, daysInMonth, targetAttachmentRate: orgGoal.target_attachment_rate };
-  }, [currentGoals, data]);
+    const targetAttachmentRate = hasOrgGoal ? (orgGoal as any).target_attachment_rate : null;
+    return {
+      target,
+      current,
+      progressPct,
+      idealPace,
+      onTrack,
+      dayOfMonth,
+      daysInMonth,
+      targetAttachmentRate,
+      // Dual-target info
+      staffCommitted: hasStaffGoals ? agg.totalMonthlyCommitment : null,
+      orgTopDown: hasOrgGoal ? (orgGoal as any).target_revenue : null,
+      gap: agg?.gap ?? null,
+      staffBreakdown: agg?.staffBreakdown ?? [],
+      staffWithoutGoals: agg?.staffWithoutGoals ?? 0,
+      totalStaff: agg?.totalStaff ?? 0,
+      isStaffDriven: hasStaffGoals,
+    };
+  }, [currentGoals, data, aggregatedRetailGoals]);
 
   const summary = data?.summary;
 
@@ -1278,9 +1303,12 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   <div>
                     <div className="flex items-center gap-2">
                       <CardTitle className="font-display text-base tracking-wide">RETAIL GOAL TRACKER</CardTitle>
-                      <MetricInfoTooltip description="Monthly retail revenue target progress. Set goals in Settings → Retail Products. Pace line shows where you should be based on days elapsed." />
+                      <MetricInfoTooltip description="Retail revenue target built from staff commitments. Each team member sets their own retail goal, and the org target is the sum of all staff commitments." />
                     </div>
-                    <CardDescription className="text-xs">Day {goalProgress.dayOfMonth} of {goalProgress.daysInMonth}</CardDescription>
+                    <CardDescription className="text-xs">
+                      Day {goalProgress.dayOfMonth} of {goalProgress.daysInMonth}
+                      {goalProgress.isStaffDriven && <span className="ml-1 text-primary">· Staff-driven target</span>}
+                    </CardDescription>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1291,7 +1319,20 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              {/* Dual-target banner */}
+              {goalProgress.staffCommitted !== null && goalProgress.orgTopDown !== null && goalProgress.gap !== null && goalProgress.gap > 0 && (
+                <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20 p-3 text-xs">
+                  <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="font-medium text-foreground">Staff commitments are {formatCurrencyWhole(goalProgress.gap)} below the organizational target</p>
+                    <p className="text-muted-foreground mt-0.5">
+                      Staff committed: {formatCurrencyWhole(goalProgress.staffCommitted)} vs Org target: {formatCurrencyWhole(goalProgress.orgTopDown)} — consider reviewing with your team.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-3">
                   <div className="space-y-1">
@@ -1343,7 +1384,9 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   )}
                   <div className="p-2 rounded-lg bg-muted/50 text-xs text-muted-foreground">
                     <p className="font-medium text-foreground mb-0.5">Lever Recommendation</p>
-                    {!goalProgress.onTrack ? (
+                    {goalProgress.staffWithoutGoals > 0 ? (
+                      <p>{goalProgress.staffWithoutGoals} of {goalProgress.totalStaff} team members haven't set retail goals yet. Encourage them to commit targets on their Stats page.</p>
+                    ) : !goalProgress.onTrack ? (
                       <p>Need <BlurredAmount>{formatCurrencyWhole((goalProgress.target - goalProgress.current) / Math.max(1, goalProgress.daysInMonth - goalProgress.dayOfMonth))}</BlurredAmount>/day to hit target. Focus on attachment rate with top-performing services.</p>
                     ) : (
                       <p>On pace. Maintain current retail recommendations during checkout.</p>
@@ -1351,6 +1394,76 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   </div>
                 </div>
               </div>
+
+              {/* Staff Breakdown Table */}
+              {goalProgress.staffBreakdown.length > 0 && goalProgress.isStaffDriven && (
+                <div className="pt-2 border-t">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Staff Retail Commitments</p>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Team Member</TableHead>
+                          <TableHead className="text-right">Monthly Target</TableHead>
+                          <TableHead className="text-right">Weekly Target</TableHead>
+                          <TableHead className="text-right">Status</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {goalProgress.staffBreakdown
+                          .filter(s => s.retailMonthlyTarget > 0)
+                          .map(staff => (
+                            <TableRow key={staff.userId}>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="w-6 h-6">
+                                    {staff.photoUrl && <AvatarImage src={staff.photoUrl} />}
+                                    <AvatarFallback className="text-[10px]">{getInitials(staff.name)}</AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-sm font-medium">{staff.name}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums text-sm">
+                                {formatCurrencyWhole(staff.retailMonthlyTarget)}
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums text-sm">
+                                {formatCurrencyWhole(staff.retailWeeklyTarget)}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Badge variant="outline" className="text-[10px]">
+                                  <CheckCircle className="w-3 h-3 mr-1 text-emerald-500" /> Set
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        {goalProgress.staffBreakdown
+                          .filter(s => s.retailMonthlyTarget === 0)
+                          .slice(0, 5)
+                          .map(staff => (
+                            <TableRow key={staff.userId} className="opacity-60">
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="w-6 h-6">
+                                    {staff.photoUrl && <AvatarImage src={staff.photoUrl} />}
+                                    <AvatarFallback className="text-[10px]">{getInitials(staff.name)}</AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-sm">{staff.name}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-right text-sm text-muted-foreground">—</TableCell>
+                              <TableCell className="text-right text-sm text-muted-foreground">—</TableCell>
+                              <TableCell className="text-right">
+                                <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                                  Not set
+                                </Badge>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </PinnableCard>

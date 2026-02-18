@@ -14131,6 +14131,8 @@ export type Database = {
           id: string
           monthly_target: number
           notes: string | null
+          retail_monthly_target: number
+          retail_weekly_target: number
           updated_at: string
           user_id: string
           weekly_target: number
@@ -14140,6 +14142,8 @@ export type Database = {
           id?: string
           monthly_target?: number
           notes?: string | null
+          retail_monthly_target?: number
+          retail_weekly_target?: number
           updated_at?: string
           user_id: string
           weekly_target?: number
@@ -14149,6 +14153,8 @@ export type Database = {
           id?: string
           monthly_target?: number
           notes?: string | null
+          retail_monthly_target?: number
+          retail_weekly_target?: number
           updated_at?: string
           user_id?: string
           weekly_target?: number
