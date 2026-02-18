@@ -77,7 +77,7 @@ import { LeaderboardConfigurator } from '@/components/dashboard/settings/Leaderb
 import { LeaderboardWeightsManager } from '@/components/dashboard/LeaderboardWeightsManager';
 import { IntegrationsTab } from '@/components/dashboard/IntegrationsTab';
 import { StylistLevelsContent } from '@/components/dashboard/settings/StylistLevelsContent';
-import { HandbooksContent } from '@/components/dashboard/settings/HandbooksContent';
+
 import { CommandCenterContent } from '@/components/dashboard/settings/CommandCenterContent';
 import { BusinessSettingsDialog } from '@/components/dashboard/settings/BusinessSettingsDialog';
 import { ScheduleSettingsContent } from '@/components/dashboard/settings/ScheduleSettingsContent';
@@ -134,7 +134,7 @@ interface UserWithRole {
 }
 
 
-type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'handbooks' | 'access-hub' | 'schedule' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | null;
+type SettingsCategory = 'business' | 'email' | 'sms' | 'service-flows' | 'users' | 'onboarding' | 'integrations' | 'system' | 'program' | 'levels' | 'access-hub' | 'schedule' | 'locations' | 'dayrate' | 'forms' | 'loyalty' | 'feedback' | 'leaderboard' | 'team-rewards' | 'kiosk' | 'services' | 'retail-products' | null;
 
 // Preset colors for icon customization
 const PRESET_COLORS = [
@@ -746,7 +746,7 @@ export default function Settings() {
     onboarding: {
       id: 'onboarding',
       label: 'Onboarding',
-      description: 'Tasks & role configuration',
+      description: 'Tasks, handbooks & role configuration',
       icon: Rocket,
     },
     leaderboard: {
@@ -778,12 +778,6 @@ export default function Settings() {
       label: 'Stylist Levels',
       description: 'Experience tiers & pricing',
       icon: Layers,
-    },
-    handbooks: {
-      id: 'handbooks',
-      label: 'Handbooks',
-      description: 'Team documents & training',
-      icon: BookOpen,
     },
     'access-hub': {
       id: 'access-hub',
@@ -1394,7 +1388,7 @@ export default function Settings() {
 
           {activeCategory === 'levels' && <StylistLevelsContent />}
 
-          {activeCategory === 'handbooks' && <HandbooksContent />}
+
 
           {activeCategory === 'schedule' && <ScheduleSettingsContent />}
 
