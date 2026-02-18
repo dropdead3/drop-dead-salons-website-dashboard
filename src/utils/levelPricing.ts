@@ -59,15 +59,6 @@ export function findLevelPrice(
 }
 
 /**
- * @deprecated Use findLevelPrice with pre-fetched data instead.
- * This shim returns null — callers fall back to service.price (base price).
- * Booking components should be migrated to use service_level_prices via hooks.
- */
-export function findLevelBasedPrice(_serviceName: string, _levelSlug: string): number | null {
-  return null;
-}
-
-/**
  * Gets a display label for a level number (e.g. "Level 3").
  */
 export function getLevelLabel(levelNumber: number): string {

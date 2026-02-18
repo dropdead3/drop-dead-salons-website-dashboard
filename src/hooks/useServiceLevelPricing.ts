@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { toast } from 'sonner';
+import { useMemo, useCallback } from 'react';
 
 // ─── Types ───────────────────────────────────────────────────────
 export interface ServiceLevelPrice {
@@ -120,4 +121,81 @@ export function useDeleteStylistPriceOverride() {
     },
     onError: (e) => toast.error('Failed to remove override: ' + e.message),
   });
+}
+
+// ─── Booking Lookup ──────────────────────────────────────────────
+
+/**
+ * Hook for booking components to look up level-based pricing.
+ * Fetches all service_level_prices + stylist_levels for the org once,
+ * then exposes a `getLevelPrice(serviceId, levelSlug)` function.
+ */
+export function useBookingLevelPricing() {
+  const { effectiveOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id;
+
+  const { data: allLevelPrices } = useQuery({
+    queryKey: ['service-level-prices-all', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('service_level_prices')
+        .select('service_id, stylist_level_id, price')
+        .eq('organization_id', orgId!);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!orgId,
+  });
+
+  const { data: levels } = useQuery({
+    queryKey: ['stylist-levels-active'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stylist_levels')
+        .select('id, slug')
+        .eq('is_active', true);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // serviceId → { levelId → price }
+  const priceMap = useMemo(() => {
+    const map = new Map<string, Record<string, number>>();
+    for (const lp of allLevelPrices ?? []) {
+      if (!map.has(lp.service_id)) map.set(lp.service_id, {});
+      map.get(lp.service_id)![lp.stylist_level_id] = Number(lp.price);
+    }
+    return map;
+  }, [allLevelPrices]);
+
+  // slug → levelId
+  const slugToId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const l of levels ?? []) {
+      map.set(l.slug, l.id);
+    }
+    return map;
+  }, [levels]);
+
+  /**
+   * Look up the level-based price for a service.
+   * @param serviceId - The service UUID
+   * @param levelSlug - The stylist level slug (e.g. 'emerging', 'senior')
+   * @returns The numeric price, or null if no level price exists
+   */
+  const getLevelPrice = useCallback(
+    (serviceId: string, levelSlug: string | null): number | null => {
+      if (!levelSlug) return null;
+      const levelId = slugToId.get(levelSlug);
+      if (!levelId) return null;
+      const servicePrices = priceMap.get(serviceId);
+      if (!servicePrices) return null;
+      const price = servicePrices[levelId];
+      return price !== undefined ? price : null;
+    },
+    [priceMap, slugToId]
+  );
+
+  return { getLevelPrice };
 }
