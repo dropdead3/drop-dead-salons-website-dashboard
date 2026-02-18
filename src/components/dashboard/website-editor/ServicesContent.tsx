@@ -54,6 +54,8 @@ import { StylistLevelsEditor } from '@/components/dashboard/StylistLevelsEditor'
 import { useStylistLevelsSimple } from '@/hooks/useStylistLevels';
 import { useWebsiteServicesData } from '@/hooks/useSectionConfig';
 import { toast } from 'sonner';
+import { triggerPreviewRefresh } from './LivePreviewPanel';
+import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 
 export function ServicesContent() {
   const { data: stylistLevels } = useStylistLevelsSimple();
@@ -62,6 +64,7 @@ export function ServicesContent() {
   // Initialize from DB if available, otherwise from static file
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>(staticServices);
   const [isDirty, setIsDirty] = useState(false);
+  useEditorDirtyState(isDirty);
 
   useEffect(() => {
     if (savedServicesData?.categories && savedServicesData.categories.length > 0) {
@@ -76,6 +79,7 @@ export function ServicesContent() {
       await saveServicesData({ categories: serviceCategories });
       setIsDirty(false);
       toast.success('Services saved & published');
+      triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save services');
     }

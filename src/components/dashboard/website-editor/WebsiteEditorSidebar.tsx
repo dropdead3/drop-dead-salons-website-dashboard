@@ -24,6 +24,8 @@ import {
   Users,
   MapPin,
   Megaphone,
+  MousePointerClick,
+  PanelBottom,
 } from 'lucide-react';
 import {
   useWebsiteSections,
@@ -53,8 +55,8 @@ const SITE_CONTENT_ITEMS = [
   { tab: 'gallery', label: 'Gallery', description: 'Manage portfolio images', icon: Images },
   { tab: 'stylists', label: 'Stylists', description: 'Manage team profiles', icon: Users },
   { tab: 'locations', label: 'Locations', description: 'Manage salon locations', icon: MapPin },
-  { tab: 'footer-cta', label: 'Footer CTA', description: 'Pre-footer call to action', icon: Megaphone },
-  { tab: 'footer', label: 'Footer', description: 'Footer links, social & copyright', icon: Megaphone },
+  { tab: 'footer-cta', label: 'Footer CTA', description: 'Pre-footer call to action', icon: MousePointerClick },
+  { tab: 'footer', label: 'Footer', description: 'Footer links, social & copyright', icon: PanelBottom },
 ];
 
 // Homepage section groupings for logical organization

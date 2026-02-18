@@ -9,6 +9,7 @@ import { useTestimonialsConfig, type TestimonialsConfig, DEFAULT_TESTIMONIALS } 
 import { useDebounce } from '@/hooks/use-debounce';
 import { SectionPreviewWrapper } from './SectionPreviewWrapper';
 import { TestimonialsPreview } from './previews/TestimonialsPreview';
+import { triggerPreviewRefresh } from './LivePreviewPanel';
 
 export function TestimonialsEditor() {
   const { data, isLoading, isSaving, update } = useTestimonialsConfig();
@@ -25,6 +26,7 @@ export function TestimonialsEditor() {
     try {
       await update(localConfig);
       toast.success('Testimonials section saved');
+      triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }

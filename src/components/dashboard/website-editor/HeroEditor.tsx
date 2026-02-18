@@ -14,6 +14,7 @@ import { UrlInput } from './inputs/UrlInput';
 import { ToggleInput } from './inputs/ToggleInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { triggerPreviewRefresh } from './LivePreviewPanel';
 
 export function HeroEditor() {
   const { data, isLoading, isSaving, update } = useHeroConfig();
@@ -32,6 +33,7 @@ export function HeroEditor() {
     try {
       await update(localConfig);
       toast.success('Hero section saved');
+      triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }

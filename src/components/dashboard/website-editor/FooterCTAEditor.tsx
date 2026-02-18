@@ -12,6 +12,7 @@ import { ToggleInput } from './inputs/ToggleInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { SectionPreviewWrapper } from './SectionPreviewWrapper';
 import { FooterCTAPreview } from './previews/FooterCTAPreview';
+import { triggerPreviewRefresh } from './LivePreviewPanel';
 
 export function FooterCTAEditor() {
   const { data, isLoading, isSaving, update } = useFooterCTAConfig();
@@ -28,6 +29,7 @@ export function FooterCTAEditor() {
     try {
       await update(localConfig);
       toast.success('Footer CTA section saved');
+      triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }

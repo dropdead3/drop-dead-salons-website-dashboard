@@ -4,10 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Save, Link2, Instagram, Facebook, Twitter, Youtube, Linkedin, Music2, Plus, Trash2, GripVertical } from 'lucide-react';
+import { Save, Link2, Instagram, Facebook, Twitter, Youtube, Linkedin, Plus, Trash2 } from 'lucide-react';
+import { triggerPreviewRefresh } from './LivePreviewPanel';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
 
 interface FooterLink {
   href: string;
@@ -24,8 +26,12 @@ interface FooterConfig {
   tagline: string;
   copyright_text: string;
   contact_email: string;
-  instagram_handle: string;
   instagram_url: string;
+  facebook_url: string;
+  twitter_url: string;
+  youtube_url: string;
+  linkedin_url: string;
+  tiktok_url: string;
   nav_links: FooterLink[];
   bottom_links: FooterBottomLink[];
   powered_by_text: string;
@@ -35,8 +41,12 @@ const DEFAULT_FOOTER: FooterConfig = {
   tagline: 'Death to bad hair.',
   copyright_text: '© {year} Drop Dead Salon. All rights reserved.',
   contact_email: 'contact@dropdeadsalon.com',
-  instagram_handle: '@dropdeadsalon',
-  instagram_url: 'https://instagram.com',
+  instagram_url: '',
+  facebook_url: '',
+  twitter_url: '',
+  youtube_url: '',
+  linkedin_url: '',
+  tiktok_url: '',
   nav_links: [
     { href: '/services', label: 'Services' },
     { href: '/booking', label: 'Book' },
@@ -47,6 +57,15 @@ const DEFAULT_FOOTER: FooterConfig = {
   ],
   powered_by_text: 'Powered by Drop Dead Salon Software',
 };
+
+const SOCIAL_PLATFORMS = [
+  { key: 'instagram_url' as const, icon: Instagram, label: 'Instagram', placeholder: 'https://instagram.com/yoursalon' },
+  { key: 'facebook_url' as const, icon: Facebook, label: 'Facebook', placeholder: 'https://facebook.com/yoursalon' },
+  { key: 'twitter_url' as const, icon: Twitter, label: 'X / Twitter', placeholder: 'https://x.com/yoursalon' },
+  { key: 'youtube_url' as const, icon: Youtube, label: 'YouTube', placeholder: 'https://youtube.com/@yoursalon' },
+  { key: 'linkedin_url' as const, icon: Linkedin, label: 'LinkedIn', placeholder: 'https://linkedin.com/company/yoursalon' },
+  { key: 'tiktok_url' as const, icon: () => <span className="text-xs font-bold">TT</span>, label: 'TikTok', placeholder: 'https://tiktok.com/@yoursalon' },
+];
 
 export function FooterEditor() {
   const queryClient = useQueryClient();
@@ -93,6 +112,7 @@ export function FooterEditor() {
 
   const [config, setConfig] = useState<FooterConfig>(DEFAULT_FOOTER);
   const [isDirty, setIsDirty] = useState(false);
+  useEditorDirtyState(isDirty);
 
   useEffect(() => {
     if (savedConfig) {
@@ -110,6 +130,7 @@ export function FooterEditor() {
       await saveMutation.mutateAsync(config);
       setIsDirty(false);
       toast.success('Footer settings saved & published');
+      triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save footer settings');
     }
@@ -196,15 +217,20 @@ export function FooterEditor() {
           </CardTitle>
           <CardDescription>Social media links displayed in the footer</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Instagram Handle</Label>
-            <Input value={config.instagram_handle} onChange={e => handleChange('instagram_handle', e.target.value)} placeholder="@yoursalon" />
-          </div>
-          <div className="space-y-2">
-            <Label>Instagram URL</Label>
-            <Input value={config.instagram_url} onChange={e => handleChange('instagram_url', e.target.value)} placeholder="https://instagram.com/yoursalon" />
-          </div>
+        <CardContent className="space-y-3">
+          {SOCIAL_PLATFORMS.map(({ key, icon: Icon, label, placeholder }) => (
+            <div key={key} className="flex items-center gap-3">
+              <div className="w-5 h-5 flex items-center justify-center text-muted-foreground shrink-0">
+                <Icon className="w-4 h-4" />
+              </div>
+              <Input
+                value={(config[key] as string) || ''}
+                onChange={e => handleChange(key, e.target.value)}
+                placeholder={placeholder}
+                autoCapitalize="off"
+              />
+            </div>
+          ))}
         </CardContent>
       </Card>
 
