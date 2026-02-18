@@ -250,7 +250,7 @@ function SortableCard({ category, isEditMode, iconColor, onColorChange, onClick 
         </CardHeader>
         <CardContent>
           <CardTitle className="font-display text-lg mb-1">{category.label}</CardTitle>
-          <CardDescription>{category.description}</CardDescription>
+          <CardDescription className="min-h-[2.5rem]">{category.description}</CardDescription>
         </CardContent>
       </Card>
     </DragFeedback>
