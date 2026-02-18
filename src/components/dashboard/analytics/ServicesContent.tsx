@@ -29,6 +29,7 @@ import { useServicePairings } from '@/hooks/useServicePairings';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { AnalyticsFilterBadge } from '@/components/dashboard/AnalyticsFilterBadge';
 
 interface ServicesContentProps {
   dateFrom: string;
@@ -409,14 +410,17 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
       <PinnableCard elementKey="service_category_mix" elementName="Service Category Mix" category="Analytics Hub - Sales" dateRange={dateRange} locationName={locationName}>
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                <BarChart3 className="w-5 h-5 text-primary" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                  <BarChart3 className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="font-display text-base tracking-wide">SERVICE CATEGORY MIX</CardTitle>
+                  <CardDescription>Revenue distribution — click a category to drill down</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="font-display text-base tracking-wide">SERVICE CATEGORY MIX</CardTitle>
-                <CardDescription>Revenue distribution — click a category to drill down</CardDescription>
-              </div>
+              <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
             </div>
           </CardHeader>
           <CardContent>
@@ -551,7 +555,9 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                   </CardDescription>
                 </div>
               </div>
-              <div className="flex gap-1">
+              <div className="flex items-center gap-2">
+                <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
+                <div className="flex gap-1">
                 <button
                   className={cn('px-3 py-1.5 text-xs rounded-md transition-colors', clientView === 'magnets' ? 'bg-primary text-primary-foreground' : 'bg-muted hover:bg-muted/80')}
                   onClick={() => setClientView('magnets')}
@@ -564,6 +570,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                 >
                   Retention
                 </button>
+              </div>
               </div>
             </div>
           </CardHeader>
@@ -613,14 +620,17 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
       <PinnableCard elementKey="service_efficiency_matrix" elementName="Service Efficiency Matrix" category="Analytics Hub - Sales" dateRange={dateRange} locationName={locationName}>
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                <Target className="w-5 h-5 text-primary" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                  <Target className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="font-display text-base tracking-wide">SERVICE EFFICIENCY MATRIX</CardTitle>
+                  <CardDescription>Click any row for stylist breakdown, rebook rate & client mix</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="font-display text-base tracking-wide">SERVICE EFFICIENCY MATRIX</CardTitle>
-                <CardDescription>Click any row for stylist breakdown, rebook rate & client mix</CardDescription>
-              </div>
+              <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
             </div>
           </CardHeader>
           <CardContent>
@@ -771,15 +781,18 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
       <PinnableCard elementKey="service_rebook_rates" elementName="Service Rebooking Rates" category="Analytics Hub - Sales" dateRange={dateRange} locationName={locationName}>
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                <RefreshCw className="w-5 h-5 text-primary" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                  <RefreshCw className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="font-display text-base tracking-wide">SERVICE REBOOKING RATES</CardTitle>
+                  <CardDescription>Quality signal — low rebook rate means clients aren't coming back for this service</CardDescription>
+                </div>
+                <MetricInfoTooltip description="Percentage of appointments where the client rebooked at checkout. Green (>70%) = strong retention. Amber (40-70%) = needs attention. Red (<40%) = investigate." />
               </div>
-              <div>
-                <CardTitle className="font-display text-base tracking-wide">SERVICE REBOOKING RATES</CardTitle>
-                <CardDescription>Quality signal — low rebook rate means clients aren't coming back for this service</CardDescription>
-              </div>
-              <MetricInfoTooltip description="Percentage of appointments where the client rebooked at checkout. Green (>70%) = strong retention. Amber (40-70%) = needs attention. Red (<40%) = investigate." className="ml-auto" />
+              <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
             </div>
           </CardHeader>
           <CardContent>
@@ -833,14 +846,17 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
       <PinnableCard elementKey="price_realization" elementName="Price Realization" category="Analytics Hub - Sales" dateRange={dateRange} locationName={locationName}>
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                <DollarSign className="w-5 h-5 text-primary" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="font-display text-base tracking-wide">PRICE REALIZATION</CardTitle>
+                  <CardDescription>Menu price vs. actual collected — where is discounting eroding margin?</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="font-display text-base tracking-wide">PRICE REALIZATION</CardTitle>
-                <CardDescription>Menu price vs. actual collected — where is discounting eroding margin?</CardDescription>
-              </div>
+              <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
             </div>
           </CardHeader>
           <CardContent>
@@ -891,14 +907,17 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
       <PinnableCard elementKey="service_demand_trends" elementName="Service Demand Trends" category="Analytics Hub - Sales" dateRange={dateRange} locationName={locationName}>
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                <TrendingUp className="w-5 h-5 text-primary" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                  <TrendingUp className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="font-display text-base tracking-wide">SERVICE DEMAND TRENDS</CardTitle>
+                  <CardDescription>12-week booking trends — click to expand</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="font-display text-base tracking-wide">SERVICE DEMAND TRENDS</CardTitle>
-                <CardDescription>12-week booking trends — click to expand</CardDescription>
-              </div>
+              <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
             </div>
           </CardHeader>
           <CardContent>
@@ -984,14 +1003,17 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
       <PinnableCard elementKey="service_pairings" elementName="Service Pairings" category="Analytics Hub - Sales" dateRange={dateRange} locationName={locationName}>
         <Card>
           <CardHeader>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                <Layers className="w-5 h-5 text-primary" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                  <Layers className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="font-display text-base tracking-wide">SERVICE PAIRINGS</CardTitle>
+                  <CardDescription>Most common service combinations — bundle & upsell opportunities</CardDescription>
+                </div>
               </div>
-              <div>
-                <CardTitle className="font-display text-base tracking-wide">SERVICE PAIRINGS</CardTitle>
-                <CardDescription>Most common service combinations — bundle & upsell opportunities</CardDescription>
-              </div>
+              <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
             </div>
           </CardHeader>
           <CardContent>
