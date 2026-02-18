@@ -1008,17 +1008,20 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
     <PinnableCard key="retail_pairing" elementKey="services_retail_pairing" elementName="Retail Pairing Strength" category="Analytics Hub - Services">
       <Card>
         <CardHeader className="pb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-              <ShoppingBag className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <CardTitle className="font-display text-base tracking-wide">RETAIL PAIRING STRENGTH</CardTitle>
-                <MetricInfoTooltip description="Shows which services naturally lead to retail product sales. Attachment rate is the percentage of service transactions that also included a retail purchase. Higher rates suggest strong recommendation opportunities." />
+           <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                <ShoppingBag className="w-5 h-5 text-primary" />
               </div>
-              <CardDescription className="text-xs mt-0.5">Which services naturally lead to product sales?</CardDescription>
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-base tracking-wide">RETAIL PAIRING STRENGTH</CardTitle>
+                  <MetricInfoTooltip description="Shows which services naturally lead to retail product sales. Attachment rate is the percentage of service transactions that also included a retail purchase. Higher rates suggest strong recommendation opportunities." />
+                </div>
+                <CardDescription className="text-xs mt-0.5">Which services naturally lead to product sales?</CardDescription>
+              </div>
             </div>
+            <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
           </div>
         </CardHeader>
         <CardContent>
