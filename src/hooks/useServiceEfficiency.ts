@@ -2,6 +2,16 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useMemo } from 'react';
 
+export interface StylistBreakdown {
+  staffId: string;
+  staffName: string;
+  bookings: number;
+  totalRevenue: number;
+  totalDurationMin: number;
+  revPerHour: number;
+  revShare: number; // % of this service's revenue from this stylist
+}
+
 export interface ServiceEfficiencyRow {
   serviceName: string;
   category: string;
@@ -12,6 +22,11 @@ export interface ServiceEfficiencyRow {
   totalRevenue: number;
   menuPrice: number | null;
   realizationRate: number | null; // actual / menu * 100
+  newClientPct: number;
+  rebookRate: number;
+  avgTipPct: number;
+  stylistBreakdown: StylistBreakdown[];
+  concentrationRisk: boolean; // true if top stylist > 70% of service revenue
 }
 
 export interface ServiceEfficiencyData {
@@ -35,7 +50,7 @@ export function useServiceEfficiency(
     queryFn: async () => {
       let query = supabase
         .from('phorest_appointments')
-        .select('service_name, total_price, start_time, end_time, appointment_date')
+        .select('service_name, total_price, start_time, end_time, appointment_date, is_new_client, rebooked_at_checkout, tip_amount, phorest_staff_id')
         .neq('status', 'cancelled')
         .gte('appointment_date', dateFrom)
         .lte('appointment_date', dateTo);
@@ -82,7 +97,11 @@ export function useServiceEfficiency(
     }
 
     // Aggregate by service_name
-    const agg = new Map<string, { totalRevenue: number; count: number; totalDurationMin: number }>();
+    const agg = new Map<string, {
+      totalRevenue: number; count: number; totalDurationMin: number;
+      newClients: number; rebooked: number; totalTips: number;
+      stylistMap: Map<string, { rev: number; dur: number; count: number }>;
+    }>();
     let overallRevenue = 0;
     let overallDurationMin = 0;
 
@@ -102,10 +121,26 @@ export function useServiceEfficiency(
         durationMin = catalogMap.get(a.service_name)?.duration || 0;
       }
 
-      const existing = agg.get(a.service_name) || { totalRevenue: 0, count: 0, totalDurationMin: 0 };
+      const existing = agg.get(a.service_name) || {
+        totalRevenue: 0, count: 0, totalDurationMin: 0,
+        newClients: 0, rebooked: 0, totalTips: 0,
+        stylistMap: new Map(),
+      };
       existing.totalRevenue += rev;
       existing.count += 1;
       existing.totalDurationMin += durationMin;
+      if (a.is_new_client) existing.newClients += 1;
+      if (a.rebooked_at_checkout) existing.rebooked += 1;
+      existing.totalTips += Number(a.tip_amount) || 0;
+
+      // Stylist tracking
+      const staffId = a.phorest_staff_id || 'unknown';
+      const stylistEntry = existing.stylistMap.get(staffId) || { rev: 0, dur: 0, count: 0 };
+      stylistEntry.rev += rev;
+      stylistEntry.dur += durationMin;
+      stylistEntry.count += 1;
+      existing.stylistMap.set(staffId, stylistEntry);
+
       agg.set(a.service_name, existing);
 
       overallRevenue += rev;
@@ -121,6 +156,20 @@ export function useServiceEfficiency(
       const menuPrice = catInfo?.price ?? null;
       const realizationRate = menuPrice && menuPrice > 0 ? (avgRev / menuPrice) * 100 : null;
 
+      const stylistBreakdown: StylistBreakdown[] = [...data.stylistMap.entries()]
+        .map(([staffId, s]) => ({
+          staffId,
+          staffName: staffId,
+          bookings: s.count,
+          totalRevenue: s.rev,
+          totalDurationMin: s.dur,
+          revPerHour: s.dur > 0 ? (s.rev / s.dur) * 60 : 0,
+          revShare: data.totalRevenue > 0 ? (s.rev / data.totalRevenue) * 100 : 0,
+        }))
+        .sort((a, b) => b.totalRevenue - a.totalRevenue);
+
+      const topShare = stylistBreakdown.length > 0 ? stylistBreakdown[0].revShare : 0;
+
       services.push({
         serviceName: name,
         category: catInfo?.category || 'Other',
@@ -131,6 +180,11 @@ export function useServiceEfficiency(
         totalRevenue: data.totalRevenue,
         menuPrice,
         realizationRate,
+        newClientPct: data.count > 0 ? (data.newClients / data.count) * 100 : 0,
+        rebookRate: data.count > 0 ? (data.rebooked / data.count) * 100 : 0,
+        avgTipPct: data.totalRevenue > 0 ? (data.totalTips / data.totalRevenue) * 100 : 0,
+        stylistBreakdown,
+        concentrationRisk: topShare > 70 && stylistBreakdown.length > 1,
       });
     }
 
