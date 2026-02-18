@@ -54,6 +54,7 @@ import { ProductCategoryChart } from '@/components/dashboard/sales/ProductCatego
 
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
 import { ClientEngagementCard } from '@/components/dashboard/sales/ClientEngagementCard';
+import { ClientExperienceCard } from '@/components/dashboard/sales/ClientExperienceCard';
 import { StaffKPISummary } from '@/components/dashboard/sales/StaffKPISummary';
 import { PeakHoursHeatmap } from '@/components/dashboard/sales/PeakHoursHeatmap';
 import { CommissionSummaryCard } from '@/components/dashboard/sales/CommissionSummaryCard';
@@ -448,6 +449,16 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
               />
             </PinnableCard>
           </div>
+
+          {/* Client Experience Card */}
+          <PinnableCard elementKey="client_experience_staff" elementName="Client Experience" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <ClientExperienceCard
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={locationFilter}
+              filterContext={filterContext}
+            />
+          </PinnableCard>
 
           <div className="grid lg:grid-cols-2 gap-6">
             <PinnableCard elementKey="peak_hours_heatmap" elementName="Peak Hours Heatmap" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
