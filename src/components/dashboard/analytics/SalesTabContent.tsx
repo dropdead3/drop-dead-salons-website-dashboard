@@ -51,6 +51,8 @@ import { ProductCategoryChart } from '@/components/dashboard/sales/ProductCatego
 
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
 import { ClientVisitsCard } from '@/components/dashboard/sales/ClientVisitsCard';
+import { ReturningClientsCard } from '@/components/dashboard/sales/ReturningClientsCard';
+import { RebookingOverviewCard } from '@/components/dashboard/sales/RebookingOverviewCard';
 import { PeakHoursHeatmap } from '@/components/dashboard/sales/PeakHoursHeatmap';
 import { CommissionSummaryCard } from '@/components/dashboard/sales/CommissionSummaryCard';
 import { StaffCommissionTable } from '@/components/dashboard/sales/StaffCommissionTable';
@@ -378,6 +380,26 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
           {/* Client Visits Card */}
           <PinnableCard elementKey="client_visits_staff" elementName="Client Visits" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <ClientVisitsCard
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={locationFilter}
+              filterContext={filterContext}
+            />
+          </PinnableCard>
+
+          {/* Returning Clients Card */}
+          <PinnableCard elementKey="returning_clients_staff" elementName="Returning Clients" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <ReturningClientsCard
+              dateFrom={filters.dateFrom}
+              dateTo={filters.dateTo}
+              locationId={locationFilter}
+              filterContext={filterContext}
+            />
+          </PinnableCard>
+
+          {/* Rebooking Overview Card */}
+          <PinnableCard elementKey="rebooking_overview_staff" elementName="Rebooking Overview" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
+            <RebookingOverviewCard
               dateFrom={filters.dateFrom}
               dateTo={filters.dateTo}
               locationId={locationFilter}

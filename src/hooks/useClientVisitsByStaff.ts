@@ -16,6 +16,9 @@ interface ClientVisitsData {
   totalVisits: number;
   priorTotalVisits: number;
   percentChange: number | null;
+  overallReturningRate: number;
+  priorReturningRate: number;
+  returningPercentChange: number | null;
   staffBreakdown: StaffVisitDetail[];
 }
 
@@ -97,7 +100,7 @@ export function useClientVisitsByStaff(
       // Fetch current and prior period in parallel
       const [currentAppointments, priorAppointments] = await Promise.all([
         fetchAllAppointments(dateFrom, dateTo, locationId),
-        fetchAllAppointments(priorFromStr, priorToStr, locationId, 'phorest_staff_id, status'),
+        fetchAllAppointments(priorFromStr, priorToStr, locationId, 'phorest_staff_id, is_new_client, status'),
       ]);
 
       const totalVisits = currentAppointments.length;
@@ -154,10 +157,24 @@ export function useClientVisitsByStaff(
         })
         .sort((a, b) => b.totalVisits - a.totalVisits);
 
+      // Returning client rates
+      const totalReturning = currentAppointments.filter(a => a.is_new_client !== true).length;
+      const overallReturningRate = totalVisits > 0 ? (totalReturning / totalVisits) * 100 : 0;
+
+      const priorReturning = priorAppointments.filter(a => a.is_new_client !== true).length;
+      const priorReturningRate = priorTotalVisits > 0 ? (priorReturning / priorTotalVisits) * 100 : 0;
+
+      const returningPercentChange = priorReturningRate > 0
+        ? ((overallReturningRate - priorReturningRate) / priorReturningRate) * 100
+        : null;
+
       return {
         totalVisits,
         priorTotalVisits,
         percentChange,
+        overallReturningRate,
+        priorReturningRate,
+        returningPercentChange,
         staffBreakdown,
       };
     },
