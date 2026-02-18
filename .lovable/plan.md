@@ -1,70 +1,56 @@
 
-# Bento-Style Layout for Website Settings Tabs
 
-## Problem
-All five Website Settings tabs (General, Theme, Booking, Retail, SEO & Legal) stack their cards in a single full-width column (`space-y-6`). Smaller cards like "Cookie Consent" (one toggle), "Social Links" (5 inputs), and "Legal Pages" (2 inputs) waste horizontal space on wide screens.
+# Live Preview Panels for Website Settings Cards
 
-## Solution
-Apply the same responsive 2-column bento grid used in the System settings tab. Large or content-heavy cards span full width; smaller cards sit side-by-side.
+## What This Does
+Adds a real-time mini preview beside each settings card so you can see exactly how your changes will look on the live website as you type. Each card gets a compact preview panel showing the corresponding website component.
 
----
+## Cards Getting Previews
 
-## Tab-by-Tab Layout
+### General Tab
+- **Announcement Banner card** -- shows the actual announcement bar strip (background, prefix text, highlighted text, suffix, CTA button) updating live as you type
+- **Social Links card** -- shows a mini footer "Connect" section with the social icons/links you've entered, reflecting which platforms have URLs
 
-### General Tab (lines 158-281)
-Change the wrapper from `space-y-6` to `grid grid-cols-1 lg:grid-cols-2 gap-6`.
+### Booking Tab
+- No previews needed -- these are functional settings (toggles/dropdowns), not visual components
 
-| Card | Width | Reason |
-|------|-------|--------|
-| Custom Domain | Full (`lg:col-span-2`) | Wide input + button layout |
-| Announcement Banner | Full (`lg:col-span-2`) | Many fields, long form |
-| Social Links | Half | Just 5 input rows |
-| Quick Actions (Editor/Preview buttons) | Half | Two buttons only |
+### SEO & Legal Tab  
+- No previews needed -- these are IDs, URLs, and toggles with no visual website representation
 
-### Booking Tab (lines 532-608)
-Change wrapper to grid.
+### Retail Tab
+- Already has the Store Appearance Configurator with a live iframe preview -- no changes needed
 
-| Card | Width | Reason |
-|------|-------|--------|
-| Online Booking | Full (`lg:col-span-2`) | Multiple controls + select dropdown |
-| Stylist & Service Visibility | Full (`lg:col-span-2`) | Coming Soon placeholder, fine at full width |
+## Layout Approach
 
-Since there are only 2 cards and both are reasonably sized, this tab benefits less but stays consistent. Both cards go full-width.
+Each card that gets a preview will switch from a simple `<Card>` to a side-by-side layout:
 
-### Retail Tab (lines 658-792)
-Change wrapper to grid.
+```text
++-----------------------------+-------------------+
+|  Card (form fields)         |  Live Preview     |
+|  [inputs, toggles, etc.]    |  [mini component] |
++-----------------------------+-------------------+
+```
 
-| Card | Width | Reason |
-|------|-------|--------|
-| Online Shop | Half | Toggle + fulfillment options |
-| Store Link + QR | Half | URL + QR code -- pairs nicely beside Online Shop |
-| Store Products | Full (`lg:col-span-2`) | Data table needs full width |
-| Store Appearance Configurator | Full (`lg:col-span-2`) | Color pickers + iframe preview |
-
-### SEO & Legal Tab (lines 830-937)
-Change wrapper to grid.
-
-| Card | Width | Reason |
-|------|-------|--------|
-| Analytics & Tracking | Half | 4 ID inputs |
-| Cookie Consent | Half | Single toggle -- tiny card |
-| Legal Pages | Half | 2 URL inputs |
-
-The save button at the bottom gets `lg:col-span-2` so it spans full width.
-
-### Theme Tab
-No changes -- it uses a dedicated editor layout with resizable panels, not a card stack.
-
----
-
-## File Changes
-
-| File | Change |
-|------|--------|
-| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | Replace `space-y-6` with `grid grid-cols-1 lg:grid-cols-2 gap-6` in GeneralTab, BookingTab, RetailTab, and SeoLegalTab; add `lg:col-span-2` to wide cards |
+On the General tab, the Announcement Banner card (currently `lg:col-span-2`) stays full-width but internally splits into a 2-column layout: left side is the form, right side is a contained preview of the announcement bar. The Social Links card stays half-width but gets a small preview strip below it showing which icons are active.
 
 ## Technical Detail
 
-Each tab function's outermost `<div className="space-y-6">` becomes `<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">`. Cards that should remain full-width get `className="lg:col-span-2"` added. Cards with `self-stretch` behavior from CSS grid will automatically align their tops, creating the bento effect.
+### Announcement Banner Preview
+Render a self-contained mini version of the announcement bar inside the card, using the local `annLocal` state so it updates on every keystroke. The preview mirrors the markup from `Header.tsx` (lines 203-218): a `bg-secondary` strip with prefix, highlighted text, suffix, and CTA arrow link.
 
-For the Retail tab, the conditionally rendered Store Link and Store Products cards already have the right conditional wrappers -- no logic changes needed, just className additions.
+### Social Links Preview  
+Render a compact footer-style "Connect" section below the inputs showing the social icons that have URLs filled in. Icons without URLs are shown as dimmed/disabled.
+
+### Implementation
+All changes are in `WebsiteSettingsContent.tsx`:
+
+1. **Announcement Banner card** (lines 165-238): Wrap `CardContent` in a grid with the form on the left and a preview panel on the right. The preview panel renders a scaled-down announcement bar using `annLocal` values.
+
+2. **Social Links card** (lines 241-266): Add a preview strip below the inputs showing active social platform icons with a mini visual representation.
+
+### File Changes
+
+| File | Change |
+|------|--------|
+| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | Add inline live preview panels to Announcement Banner and Social Links cards using local state for real-time updates |
+
