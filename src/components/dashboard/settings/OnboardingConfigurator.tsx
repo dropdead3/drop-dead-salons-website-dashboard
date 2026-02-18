@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Settings, ClipboardCheck, BookOpen, CreditCard } from 'lucide-react';
+import { HandbooksContent } from '@/components/dashboard/settings/HandbooksContent';
 import { useRoles } from '@/hooks/useRoles';
 import { OnboardingTasksManager } from '@/components/dashboard/OnboardingTasksManager';
 import { OnboardingTasksConfigPanel } from './OnboardingTasksConfigPanel';
@@ -113,7 +114,7 @@ export function OnboardingConfigurator() {
 
               {/* Tabs for Tasks vs Sections */}
               <Tabs defaultValue="tasks" className="w-full">
-                <TabsList className="grid grid-cols-2">
+                <TabsList className="grid grid-cols-3">
                   <TabsTrigger value="tasks" className="gap-2">
                     <ClipboardCheck className="w-4 h-4" />
                     Tasks
@@ -121,6 +122,10 @@ export function OnboardingConfigurator() {
                   <TabsTrigger value="sections" className="gap-2">
                     <CreditCard className="w-4 h-4" />
                     Requests & Docs
+                  </TabsTrigger>
+                  <TabsTrigger value="handbooks" className="gap-2">
+                    <BookOpen className="w-4 h-4" />
+                    Handbooks
                   </TabsTrigger>
                 </TabsList>
                 
@@ -133,6 +138,10 @@ export function OnboardingConfigurator() {
                     selectedRole={selectedRole} 
                     organizationId={organizationId || undefined}
                   />
+                </TabsContent>
+
+                <TabsContent value="handbooks" className="mt-4">
+                  <HandbooksContent />
                 </TabsContent>
               </Tabs>
             </>

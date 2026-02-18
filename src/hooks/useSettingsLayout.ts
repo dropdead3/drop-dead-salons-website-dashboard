@@ -14,7 +14,7 @@ export const DEFAULT_ICON_COLORS: Record<string, string> = {
   system: '#6B7280',
   program: '#EC4899',
   levels: '#14B8A6',
-  handbooks: '#EAB308',
+  
   schedule: '#0EA5E9',
   locations: '#EF4444',
   dayrate: '#F97316',
@@ -34,7 +34,7 @@ export const SECTION_GROUPS = [
   {
     id: 'operations',
     label: 'Business Operations',
-    categories: ['business', 'locations', 'services', 'retail-products', 'schedule', 'kiosk', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'handbooks', 'loyalty', 'team-rewards', 'feedback'],
+    categories: ['business', 'locations', 'services', 'retail-products', 'schedule', 'kiosk', 'dayrate', 'forms', 'levels', 'leaderboard', 'onboarding', 'loyalty', 'team-rewards', 'feedback'],
   },
   {
     id: 'team',
