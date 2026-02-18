@@ -1,49 +1,15 @@
 
+## Increase Bar Chart Height in Capacity Utilization
 
-## Add Date Labels to Capacity Utilization X-Axis Ticks
-
-### What's Changing
-
-The Forecasting chart shows three lines in its x-axis: day name, date (e.g. "Feb 17"), and appointment count. The Capacity Utilization chart is missing the date line. This adds it to match.
-
-### Approach
-
-In both `DayXAxisTick` functions, insert a date line (`formatDate(day.date, 'MMM d')`) between the day name and the utilization/closed info. Shift the third line's `dy` down to accommodate.
-
-Since `DayXAxisTick` is a standalone function component (not inside the main component), it needs to call `useFormatDate()` directly (same pattern as the Forecasting card's `DailyXAxisTick`).
+### Problem
+The Capacity Utilization bar charts are noticeably shorter than the Forecasting chart, making the bars look compressed. The Forecasting card uses 220-240px height while the Capacity Utilization cards use only 160-180px.
 
 ### Changes
 
-**Both files: `CapacityUtilizationCard.tsx` and `CapacityUtilizationSection.tsx`**
+**1. `src/components/dashboard/sales/CapacityUtilizationCard.tsx`**
+- Increase chart container from `h-[160px]` to `h-[220px]` to match the Forecasting card
 
-Import `useFormatDate` in the tick component, then update both branches (closed and open):
+**2. `src/components/dashboard/analytics/CapacityUtilizationSection.tsx`**
+- Increase chart container from `h-[180px]` to `h-[220px]` to match the Forecasting card
 
-Before (closed branch):
-```
-Line 1: Day name     (dy=12, bold)
-Line 2: "Closed"     (dy=24, bold)
-```
-
-After (closed branch):
-```
-Line 1: Day name     (dy=12, bold)
-Line 2: "Feb 17"     (dy=25, muted, 10px)
-Line 3: "Closed"     (dy=38, bold)
-```
-
-Before (open branch):
-```
-Line 1: Day name     (dy=12, bold)
-Line 2: "Xh open"   (dy=24, muted)
-```
-
-After (open branch):
-```
-Line 1: Day name     (dy=12, bold)
-Line 2: "Feb 17"     (dy=25, muted, 10px)
-Line 3: "Xh open"   (dy=38, muted)
-```
-
-### Files Modified
-- `src/components/dashboard/sales/CapacityUtilizationCard.tsx`
-- `src/components/dashboard/analytics/CapacityUtilizationSection.tsx`
+Both changes are single-line edits to the container div class. No other modifications needed -- the chart content (bars, labels, average line, moon icons) will automatically scale to fill the taller space.
