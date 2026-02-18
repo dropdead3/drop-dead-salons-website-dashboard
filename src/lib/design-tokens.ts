@@ -49,6 +49,20 @@ export const tokens = {
   },
 
   // ========================================
+  // KPI TILE TOKENS
+  // ========================================
+  kpi: {
+    /** KPI tile container (rounded, bordered, padded) */
+    tile: 'rounded-xl border border-border/50 bg-card p-4 flex flex-col gap-1',
+    /** KPI tile label: Termina, 11px, uppercase, tracked, muted */
+    label: 'font-display text-[11px] font-medium text-muted-foreground uppercase tracking-wider',
+    /** KPI tile value: Termina, xl, medium */
+    value: 'font-display text-xl font-medium',
+    /** KPI trend badge: 10px, medium */
+    change: 'text-[10px] font-medium',
+  },
+
+  // ========================================
   // CARD TOKENS
   // ========================================
   card: {
@@ -173,6 +187,8 @@ export function getTokenFor(context:
   | 'label-tiny'
   | 'stat'
   | 'stat-xl'
+  | 'kpi-label'
+  | 'kpi-value'
   | 'empty-heading'
   | 'empty-description'
 ): string {
@@ -188,6 +204,8 @@ export function getTokenFor(context:
     'label-tiny': tokens.label.tiny,
     'stat': tokens.stat.large,
     'stat-xl': tokens.stat.xlarge,
+    'kpi-label': tokens.kpi.label,
+    'kpi-value': tokens.kpi.value,
     'empty-heading': tokens.empty.heading,
     'empty-description': tokens.empty.description,
   };

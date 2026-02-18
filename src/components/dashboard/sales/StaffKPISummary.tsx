@@ -3,6 +3,7 @@ import { useClientEngagement } from '@/hooks/useClientEngagement';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 type EngagementView = 'visits' | 'retention' | 'rebooking';
 
@@ -20,7 +21,7 @@ function ChangeBadge({ value }: { value: number | null }) {
   const Icon = isPositive ? TrendingUp : isNeutral ? Minus : TrendingDown;
   return (
     <span className={cn(
-      'inline-flex items-center gap-0.5 text-[10px] font-medium',
+      'inline-flex items-center gap-0.5', tokens.kpi.change,
       isPositive ? 'text-green-500' : isNeutral ? 'text-muted-foreground' : 'text-red-500'
     )}>
       <Icon className="w-3 h-3" />
@@ -36,7 +37,7 @@ export function StaffKPISummary({ dateFrom, dateTo, locationId, onTileClick }: S
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-xl border border-border/50 bg-card p-4 space-y-2">
+          <div key={i} className={cn(tokens.kpi.tile, 'space-y-2')}>
             <Skeleton className="h-3 w-20" />
             <Skeleton className="h-7 w-16" />
           </div>
@@ -91,18 +92,18 @@ export function StaffKPISummary({ dateFrom, dateTo, locationId, onTileClick }: S
           key={tile.label}
           onClick={() => onTileClick?.(tile.viewKey)}
           className={cn(
-            "rounded-xl border border-border/50 bg-card p-4 flex flex-col gap-1",
+            tokens.kpi.tile,
             onTileClick && "cursor-pointer hover:border-primary/30 transition-colors"
           )}
         >
           <div className="flex items-center gap-1.5">
             <tile.icon className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+            <span className={tokens.kpi.label}>
               {tile.label}
             </span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="font-display text-xl font-medium">{tile.value}</span>
+            <span className={tokens.kpi.value}>{tile.value}</span>
             <ChangeBadge value={tile.change} />
           </div>
         </div>
