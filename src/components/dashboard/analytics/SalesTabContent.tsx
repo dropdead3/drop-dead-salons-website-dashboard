@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -38,6 +38,9 @@ import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCen
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { AnalyticsFilterBadge } from '@/components/dashboard/AnalyticsFilterBadge';
+import { EmptyState } from '@/components/ui/empty-state';
+import { tokens } from '@/lib/design-tokens';
 import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
 
 // Sub-components
@@ -78,6 +81,8 @@ interface SalesTabContentProps {
 export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }: SalesTabContentProps) {
   const navigate = useNavigate();
   const { formatDate } = useFormatDate();
+  const engagementRef = useRef<HTMLDivElement>(null);
+  const [engagementView, setEngagementView] = useState<'visits' | 'retention' | 'rebooking'>('visits');
   const { data: locations } = useLocations();
   const { goals } = useSalesGoals();
   const { data: tomorrowData } = useTomorrowRevenue();
@@ -381,30 +386,44 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             dateFrom={filters.dateFrom}
             dateTo={filters.dateTo}
             locationId={locationFilter}
+            onTileClick={(view) => {
+              setEngagementView(view);
+              engagementRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }}
           />
 
           {/* Client Engagement Card (Visits / Retention / Rebooking) */}
-          <PinnableCard elementKey="client_engagement_staff" elementName="Client Engagement" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
-            <ClientEngagementCard
-              dateFrom={filters.dateFrom}
-              dateTo={filters.dateTo}
-              locationId={locationFilter}
-              filterContext={filterContext}
-            />
-          </PinnableCard>
+          <div ref={engagementRef}>
+            <PinnableCard elementKey="client_engagement_staff" elementName="Client Engagement" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
+              <ClientEngagementCard
+                dateFrom={filters.dateFrom}
+                dateTo={filters.dateTo}
+                locationId={locationFilter}
+                filterContext={filterContext}
+                activeView={engagementView}
+                onViewChange={setEngagementView}
+              />
+            </PinnableCard>
+          </div>
 
           {/* Stylist Leaderboard */}
           <PinnableCard elementKey="staff_leaderboard" elementName="Staff Performance" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
-            <Card>
+            <Card className={tokens.card.wrapper}>
               <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                    <CreditCard className="w-5 h-5 text-primary" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={tokens.card.iconBox}>
+                      <CreditCard className={tokens.card.icon} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <CardTitle className={tokens.card.title}>STAFF PERFORMANCE</CardTitle>
+                        <MetricInfoTooltip description="Ranks team members by total revenue from completed appointments. Staff below the configurable performance threshold are flagged for attention." />
+                      </div>
+                      <CardDescription>Revenue by team member</CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="font-display text-base tracking-wide">STAFF PERFORMANCE</CardTitle>
-                    <CardDescription>Revenue by team member</CardDescription>
-                  </div>
+                  <AnalyticsFilterBadge locationId={filters.locationId} dateRange={filters.dateRange} />
                 </div>
               </CardHeader>
               <CardContent>
@@ -412,9 +431,11 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
                   <div className="h-48 flex items-center justify-center">
                     <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                   </div>
+                ) : !stylistData || stylistData.length === 0 ? (
+                  <EmptyState icon={CreditCard} title="No staff data" description="No revenue data found for the selected period." />
                 ) : (
                   <div className="space-y-3">
-                    {stylistData?.slice(0, 10).map((stylist, index) => (
+                    {stylistData.slice(0, 10).map((stylist, index) => (
                       <StylistSalesRow
                         key={stylist.staffId}
                         stylist={stylist}
