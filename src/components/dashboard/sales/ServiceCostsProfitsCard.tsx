@@ -12,6 +12,7 @@ import { useServiceCostsProfits, type ServiceCostProfitRow } from '@/hooks/useSe
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { tokens } from '@/lib/design-tokens';
+import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 
 interface ServiceCostsProfitsCardProps {
   dateFrom: string;
@@ -23,6 +24,7 @@ interface ServiceCostsProfitsCardProps {
 }
 
 type SortKey = 'locationName' | 'serviceCategory' | 'serviceName' | 'totalServices' | 'costPerService' | 'totalSales' | 'totalCost' | 'profit' | 'profitPct';
+type CategorySortKey = 'category' | 'count' | 'totalSales' | 'totalCost' | 'profit' | 'marginPct';
 
 const CHART_COLORS = [
   'hsl(var(--chart-1))',
@@ -54,11 +56,17 @@ export function ServiceCostsProfitsCard({
   const { data, isLoading } = useServiceCostsProfits(dateFrom, dateTo, locationId);
   const { formatCurrency } = useFormatCurrency();
   const { formatNumber, formatPercent } = useFormatNumber();
+  const [view, setView] = useState<'category' | 'service'>('category');
   const [sort, setSort] = useState<{ key: SortKey; desc: boolean }>({ key: 'totalSales', desc: true });
+  const [catSort, setCatSort] = useState<{ key: CategorySortKey; desc: boolean }>({ key: 'totalSales', desc: true });
   const [collapsedCategories, setCollapsedCategories] = useState<Set<string>>(new Set());
 
   const toggleSort = (key: SortKey) => {
     setSort(prev => prev.key === key ? { key, desc: !prev.desc } : { key, desc: true });
+  };
+
+  const toggleCatSort = (key: CategorySortKey) => {
+    setCatSort(prev => prev.key === key ? { key, desc: !prev.desc } : { key, desc: true });
   };
 
   const toggleCategory = (cat: string) => {
@@ -97,6 +105,28 @@ export function ServiceCostsProfitsCard({
     return [...groups.entries()].sort((a, b) => b[1].totalSales - a[1].totalSales);
   }, [sortedRows]);
 
+  // Category summary rows for the "By Category" view
+  const categoryRows = useMemo(() => {
+    const rows = groupedByCategory.map(([category, group]) => ({
+      category,
+      count: group.count,
+      totalSales: group.totalSales,
+      totalCost: group.totalCost,
+      profit: group.profit,
+      marginPct: group.totalSales > 0 ? (group.profit / group.totalSales) * 100 : 0,
+      serviceCount: group.rows.length,
+    }));
+
+    return [...rows].sort((a, b) => {
+      const aVal = a[catSort.key];
+      const bVal = b[catSort.key];
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return catSort.desc ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+      }
+      return catSort.desc ? (bVal as number) - (aVal as number) : (aVal as number) - (bVal as number);
+    });
+  }, [groupedByCategory, catSort]);
+
   const SortHeader = ({ label, sortKey, className }: { label: string; sortKey: SortKey; className?: string }) => (
     <TableHead
       className={cn('cursor-pointer select-none hover:text-foreground transition-colors', className)}
@@ -109,7 +139,28 @@ export function ServiceCostsProfitsCard({
     </TableHead>
   );
 
+  const CatSortHeader = ({ label, sortKey, className }: { label: string; sortKey: CategorySortKey; className?: string }) => (
+    <TableHead
+      className={cn('cursor-pointer select-none hover:text-foreground transition-colors', className)}
+      onClick={() => toggleCatSort(sortKey)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        <ArrowUpDown className={cn('w-3 h-3', catSort.key === sortKey ? 'text-primary' : 'text-muted-foreground/50')} />
+      </div>
+    </TableHead>
+  );
+
   const missingCostCount = data?.rows.filter(r => !r.hasCostDefined).length ?? 0;
+
+  const viewToggle = (
+    <Tabs value={view} onValueChange={(v) => setView(v as 'category' | 'service')}>
+      <FilterTabsList>
+        <FilterTabsTrigger value="category">By Category</FilterTabsTrigger>
+        <FilterTabsTrigger value="service">By Service</FilterTabsTrigger>
+      </FilterTabsList>
+    </Tabs>
+  );
 
   // Loading state
   if (isLoading) {
@@ -157,7 +208,7 @@ export function ServiceCostsProfitsCard({
     );
   }
 
-  // Build flat row list with category headers
+  // Build flat row list with category headers for "By Service" view
   let colorIndex = 0;
   const tableRows: JSX.Element[] = [];
   for (const [category, group] of groupedByCategory) {
@@ -257,6 +308,7 @@ export function ServiceCostsProfitsCard({
               {CARD_HEADER}
             </div>
             <div className="flex items-center gap-2">
+              {viewToggle}
               {missingCostCount > 0 && (
                 <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-1 rounded-md">
                   <AlertCircle className="w-3 h-3" />
@@ -298,42 +350,114 @@ export function ServiceCostsProfitsCard({
 
           {/* Table */}
           <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <SortHeader label="Location" sortKey="locationName" />
-                  <SortHeader label="Service" sortKey="serviceName" />
-      <SortHeader label="# Services" sortKey="totalServices" />
-                  <SortHeader label="Unit Cost" sortKey="costPerService" />
-                  <SortHeader label="Total Sales" sortKey="totalSales" />
-                  <SortHeader label="Total Cost" sortKey="totalCost" />
-                  <SortHeader label="Profit" sortKey="profit" />
-                  <SortHeader label="Margin" sortKey="profitPct" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tableRows}
+            {view === 'category' ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <CatSortHeader label="Category" sortKey="category" />
+                    <CatSortHeader label="# Services" sortKey="count" />
+                    <CatSortHeader label="Total Sales" sortKey="totalSales" />
+                    <CatSortHeader label="Total Cost" sortKey="totalCost" />
+                    <CatSortHeader label="Profit" sortKey="profit" />
+                    <CatSortHeader label="Margin" sortKey="marginPct" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {categoryRows.map((row, i) => {
+                    const shareOfRevenue = data.totals.totalSales > 0 ? (row.totalSales / data.totals.totalSales) * 100 : 0;
+                    const barColor = CHART_COLORS[i % CHART_COLORS.length];
+                    return (
+                      <TableRow key={row.category}>
+                        <TableCell className="text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{row.category}</span>
+                            <span className="text-xs text-muted-foreground/60">({row.serviceCount} services)</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="tabular-nums text-sm">{formatNumber(row.count)}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-20 h-2 bg-muted rounded-full overflow-hidden flex-shrink-0">
+                              <div
+                                className="h-full rounded-full"
+                                style={{ width: `${Math.max(shareOfRevenue, 1)}%`, backgroundColor: barColor }}
+                              />
+                            </div>
+                            <span className="text-sm tabular-nums min-w-[5.5rem] text-left">
+                              <BlurredAmount>{formatCurrency(row.totalSales)}</BlurredAmount>
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm tabular-nums">
+                          <BlurredAmount>{formatCurrency(row.totalCost)}</BlurredAmount>
+                        </TableCell>
+                        <TableCell className={cn('text-sm tabular-nums', row.profit >= 0 ? 'text-success-foreground' : 'text-destructive')}>
+                          <BlurredAmount>{formatCurrency(row.profit)}</BlurredAmount>
+                        </TableCell>
+                        <TableCell className={cn('text-sm tabular-nums', row.marginPct >= 50 ? 'text-success-foreground' : row.marginPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
+                          {formatPercent(row.marginPct)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
 
-                {/* Totals row */}
-                <TableRow className="bg-muted/30 border-t-2 border-border">
-                  <TableCell colSpan={2} className="text-sm font-display uppercase tracking-wide text-muted-foreground">Totals</TableCell>
-                  <TableCell className="tabular-nums text-sm">{formatNumber(data.totals.totalServices)}</TableCell>
-                  <TableCell />
-                  <TableCell className="text-sm tabular-nums">
-                    <BlurredAmount>{formatCurrency(data.totals.totalSales)}</BlurredAmount>
-                  </TableCell>
-                  <TableCell className="text-sm tabular-nums">
-                    <BlurredAmount>{formatCurrency(data.totals.totalCost)}</BlurredAmount>
-                  </TableCell>
-                  <TableCell className={cn('text-sm tabular-nums', data.totals.profit >= 0 ? 'text-success-foreground' : 'text-destructive')}>
-                    <BlurredAmount>{formatCurrency(data.totals.profit)}</BlurredAmount>
-                  </TableCell>
-                  <TableCell className={cn('text-sm tabular-nums', data.totals.profitPct >= 50 ? 'text-success-foreground' : data.totals.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
-                    {formatPercent(data.totals.profitPct)}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
+                  {/* Totals row */}
+                  <TableRow className="bg-muted/30 border-t-2 border-border">
+                    <TableCell className="text-sm font-display uppercase tracking-wide text-muted-foreground">Totals</TableCell>
+                    <TableCell className="tabular-nums text-sm">{formatNumber(data.totals.totalServices)}</TableCell>
+                    <TableCell className="text-sm tabular-nums">
+                      <BlurredAmount>{formatCurrency(data.totals.totalSales)}</BlurredAmount>
+                    </TableCell>
+                    <TableCell className="text-sm tabular-nums">
+                      <BlurredAmount>{formatCurrency(data.totals.totalCost)}</BlurredAmount>
+                    </TableCell>
+                    <TableCell className={cn('text-sm tabular-nums', data.totals.profit >= 0 ? 'text-success-foreground' : 'text-destructive')}>
+                      <BlurredAmount>{formatCurrency(data.totals.profit)}</BlurredAmount>
+                    </TableCell>
+                    <TableCell className={cn('text-sm tabular-nums', data.totals.profitPct >= 50 ? 'text-success-foreground' : data.totals.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
+                      {formatPercent(data.totals.profitPct)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <SortHeader label="Location" sortKey="locationName" />
+                    <SortHeader label="Service" sortKey="serviceName" />
+                    <SortHeader label="# Services" sortKey="totalServices" />
+                    <SortHeader label="Unit Cost" sortKey="costPerService" />
+                    <SortHeader label="Total Sales" sortKey="totalSales" />
+                    <SortHeader label="Total Cost" sortKey="totalCost" />
+                    <SortHeader label="Profit" sortKey="profit" />
+                    <SortHeader label="Margin" sortKey="profitPct" />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tableRows}
+
+                  {/* Totals row */}
+                  <TableRow className="bg-muted/30 border-t-2 border-border">
+                    <TableCell colSpan={2} className="text-sm font-display uppercase tracking-wide text-muted-foreground">Totals</TableCell>
+                    <TableCell className="tabular-nums text-sm">{formatNumber(data.totals.totalServices)}</TableCell>
+                    <TableCell />
+                    <TableCell className="text-sm tabular-nums">
+                      <BlurredAmount>{formatCurrency(data.totals.totalSales)}</BlurredAmount>
+                    </TableCell>
+                    <TableCell className="text-sm tabular-nums">
+                      <BlurredAmount>{formatCurrency(data.totals.totalCost)}</BlurredAmount>
+                    </TableCell>
+                    <TableCell className={cn('text-sm tabular-nums', data.totals.profit >= 0 ? 'text-success-foreground' : 'text-destructive')}>
+                      <BlurredAmount>{formatCurrency(data.totals.profit)}</BlurredAmount>
+                    </TableCell>
+                    <TableCell className={cn('text-sm tabular-nums', data.totals.profitPct >= 50 ? 'text-success-foreground' : data.totals.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
+                      {formatPercent(data.totals.profitPct)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            )}
           </div>
         </CardContent>
       </Card>
