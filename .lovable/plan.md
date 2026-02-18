@@ -1,81 +1,87 @@
 
 
-## Returning Clients Overview and Rebooking Overview Cards
+## Consolidate Three Staff Cards into One "Client Engagement" Card
 
-Two new analytics cards for the Staff Performance subtab, inspired by the reference screenshot and built to the Zura luxury aesthetic with drill-down intelligence.
+### Why Consolidate
 
-### Card 1: Returning Clients Overview
+The three cards (Client Visits, Returning Clients, Rebooking Overview) are closely related:
+- All query the same `phorest_appointments` table
+- All group by stylist with the same bar chart layout
+- All use the same two-panel (hero KPI + bar chart) structure
+- Client Visits and Returning Clients already share the same data hook, meaning the same query runs twice
+- They occupy three full-width card slots on the page when they could be one powerful card with three "lenses"
 
-Answers: "What percentage of each stylist's clients are returning, and how does the team compare?"
+Consolidating them reduces page scroll, eliminates redundant data fetching, and creates a richer, more interactive single card that tells a complete client engagement story.
 
-**Layout**: Same two-panel pattern as Client Visits card.
-- Left panel: Hero KPI showing overall "% Returning" with period-over-period change badge and MetricInfoTooltip
-- Right panel: Vertical bar chart showing "% Returning Breakdown" per stylist, sorted highest to lowest
+### New Design: Single "Client Engagement" Card
 
-**Drill-down**: Clicking a bar expands an inline panel showing:
-- Total appointments for that stylist
-- New vs returning count split
-- Average ticket for returning clients vs new clients (comparison)
+```text
++----------------------------------------------------------------------+
+| [Users icon]  CLIENT ENGAGEMENT  (i)     [Visits|Retention|Rebooking] |
+|               Client behavior by stylist       All Locations | Today  |
++----------------------------------------------------------------------+
+|                         |                                             |
+|     148                 |  VISITS BY STYLIST  (when Visits selected)  |
+|   TOTAL VISITS          |  Alexis H.   |██████████████| 40           |
+|   ▲ 8.2% vs prior      |  Cienna R.   |████████████  | 38           |
+|                         |  Jamie V.    |███████████   | 36           |
+|                         |  ...                                       |
++-------------------------+---------------------------------------------+
+|  [Drill-down panel when bar clicked]                                  |
++----------------------------------------------------------------------+
+```
 
-**Data source**: Extends `useClientVisitsByStaff` -- the hook already calculates `newClientVisits` and `returningClientVisits` per stylist. The component will derive `% returning = returningClientVisits / totalVisits * 100` and compute the overall team average. For period-over-period, a small enhancement to the hook adds prior-period returning counts.
+The header right column contains a `FilterTabsList` toggle with three options:
+- **Visits**: Shows total visit count per stylist (current Client Visits)
+- **Retention**: Shows % returning per stylist (current Returning Clients)
+- **Rebooking**: Shows % rebooked per stylist (current Rebooking Overview)
 
-### Card 2: Rebooking Overview
+The hero KPI on the left dynamically changes based on the active view:
+- Visits: "148 TOTAL VISITS" with PoP change
+- Retention: "72% RETURNING" with PoP change
+- Rebooking: "45% REBOOKED" with PoP change
 
-Answers: "What percentage of each stylist's completed appointments result in a rebooking, and how is that trending?"
+The drill-down panel adapts its content to the active view:
+- Visits: New vs Returning split, Average Ticket, Top 5 Services
+- Retention: Total Appointments, New/Returning counts, Average Ticket, Returning Rate
+- Rebooking: Total Appointments, Rebooked Count/Rate, Avg Ticket Rebooked vs Not
 
-**Layout**: Same two-panel pattern.
-- Left panel: Hero KPI showing overall "% Rebooked" with period-over-period change badge and MetricInfoTooltip
-- Right panel: Vertical bar chart showing "% Rebooked Breakdown" per stylist, sorted highest to lowest
+### Data Hook: Combined `useClientEngagement`
 
-**Drill-down**: Clicking a bar expands an inline panel showing:
-- Total completed appointments
-- Rebooked count and rate
-- Average ticket for rebooked vs not-rebooked appointments
+A single hook that fetches all three datasets in one query pass. Instead of two separate hooks making redundant calls, this hook queries `phorest_appointments` once with all needed fields (`phorest_staff_id, is_new_client, rebooked_at_checkout, total_price, service_name, status`) and computes all three views from the same dataset. This halves the number of database round-trips.
 
-**Data source**: New hook `useRebookingByStaff` querying `phorest_appointments` for the `rebooked_at_checkout` boolean field (already used extensively in the codebase). Groups by `phorest_staff_id`, calculates per-stylist rebooking rate and team average, plus prior-period comparison.
+Returns a unified structure:
+- `visits`: total count, PoP change, per-staff breakdown with top services and avg ticket
+- `retention`: overall returning rate, PoP change, per-staff returning percentage
+- `rebooking`: overall rebooked rate, PoP change, per-staff rebooking rate and ticket comparison
 
 ### Technical Details
 
-**New files:**
-- `src/hooks/useRebookingByStaff.ts` -- Queries `phorest_appointments` with fields `phorest_staff_id, rebooked_at_checkout, total_price, status`, filters out cancelled/no-show, groups by staff. Uses manual pagination via `.range()`. Calculates per-stylist and aggregate rebooking rates with prior-period comparison.
-- `src/components/dashboard/sales/ReturningClientsCard.tsx` -- Two-panel card using data from `useClientVisitsByStaff`. Derives returning percentages client-side. Standard header with icon (UserCheck) + AnalyticsFilterBadge. Recharts vertical BarChart with glass gradient fills, percentage labels on bars. Active-bar highlighting and framer-motion drill-down.
-- `src/components/dashboard/sales/RebookingOverviewCard.tsx` -- Two-panel card using `useRebookingByStaff`. Standard header with icon (RefreshCw) + AnalyticsFilterBadge. Same chart and drill-down patterns.
+**Files created:**
+- `src/hooks/useClientEngagement.ts` -- Combined hook fetching all fields in one paginated pass, computing visits, retention, and rebooking data from the same result set
+- `src/components/dashboard/sales/ClientEngagementCard.tsx` -- Unified card with view toggle, dynamic hero KPI, and view-aware drill-down
 
-**Modified files:**
-- `src/hooks/useClientVisitsByStaff.ts` -- Add prior-period returning client counts to enable period-over-period change on the Returning Clients card. The current hook already fetches prior-period data but only returns `priorTotalVisits`; it needs to also return `priorReturningCount`.
-- `src/components/dashboard/analytics/SalesTabContent.tsx` -- Add both cards to the `staff` TabsContent, positioned after the Client Visits card and before the Staff Performance leaderboard. Each wrapped in PinnableCard.
+**Files deleted:**
+- `src/components/dashboard/sales/ClientVisitsCard.tsx`
+- `src/components/dashboard/sales/ReturningClientsCard.tsx`
+- `src/components/dashboard/sales/RebookingOverviewCard.tsx`
+- `src/hooks/useClientVisitsByStaff.ts` (only if no other consumers)
+- `src/hooks/useRebookingByStaff.ts`
+
+**Files modified:**
+- `src/components/dashboard/analytics/SalesTabContent.tsx` -- Replace three card imports/instances with one `ClientEngagementCard`
 
 **Design compliance:**
-- `tokens.card.wrapper` on all Card states
-- Two-column `justify-between` header with AnalyticsFilterBadge
-- `tokens.stat.large` for hero percentage
-- Glass gradient bars with `hsl(var(--primary))` and active-bar highlighting
+- View toggle uses `FilterTabsList` / `FilterTabsTrigger` in the header right column (this is a view-level toggle per card header rules, not a sort toggle)
+- Single `AnalyticsFilterBadge` in header right column
+- `tokens.card.wrapper`, `tokens.card.iconBox`, `tokens.card.title` on header
+- Glass gradient bars with active-bar highlighting (reused gradient pattern)
 - `framer-motion` drill-down with "Click a bar to explore" hint
-- `tokens.body.emphasis` and `tokens.body.muted` for drill-down labels
-- React Router `Link` for any profile navigation
-- BlurredAmount for currency values in drill-down
-- Skeleton loading states matching two-panel layout
-- Empty state using `tokens.empty` pattern
-- Bar percentage labels at bar tops (e.g., "67%", "20%")
+- Bar labels show counts for Visits view, percentages for Retention/Rebooking views
+- `XAxis domain` adjusts: unbounded for Visits, `[0, 100]` for percentage views
+- Skeleton and empty states match the two-panel layout
+- All design tokens, React Router `Link`, `AnimatedBlurredAmount` patterns preserved
 
-**Hook data structure (useRebookingByStaff):**
-```text
-Returns:
-  overallRate: number (aggregate % rebooked)
-  priorOverallRate: number
-  percentChange: number | null
-  staffBreakdown: Array of {
-    staffId, staffName, userId,
-    totalAppointments, rebookedCount, rebookingRate,
-    avgTicketRebooked, avgTicketNotRebooked
-  }
-```
+**Additional fix -- staff name resolution:**
+The staff name fallback currently shows raw Phorest IDs when no mapping exists. The new hook will add a secondary fallback: if neither mapping nor `phorest_staff_name` exists, it will query the appointment's own `staff_name` field (if available) before falling back to a truncated ID with an ellipsis, so the chart is more readable even with incomplete mapping data.
 
-**Hook enhancement (useClientVisitsByStaff):**
-```text
-Adds to return object:
-  overallReturningRate: number
-  priorReturningRate: number
-  returningPercentChange: number | null
-```
-The prior-period fetch already exists; the enhancement extracts `is_new_client` from the prior data (currently only fetches `phorest_staff_id, status`).
