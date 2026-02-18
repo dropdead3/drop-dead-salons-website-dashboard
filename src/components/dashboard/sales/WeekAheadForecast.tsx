@@ -465,6 +465,37 @@ export function WeekAheadForecast() {
                     </defs>
                   )} />
                   {/* Conditional: solid single bar or stacked category bars */}
+                  {/* Moon icons for closed days */}
+                  <Customized component={(props: any) => {
+                    const { xAxisMap, yAxisMap } = props;
+                    if (!xAxisMap?.[0] || !yAxisMap?.[0]) return null;
+                    const xAxis = xAxisMap[0];
+                    const yAxis = yAxisMap[0];
+                    const bottomY = yAxis.y + yAxis.height;
+                    return (
+                      <g>
+                        {chartData.map((entry, index) => {
+                          const day = days.find((d: DayForecast) => d.dayName === entry.name);
+                          if (!day || !closedDates.has(day.date)) return null;
+                          const bandWidth = xAxis.width / chartData.length;
+                          const cx = xAxis.x + bandWidth * index + bandWidth / 2;
+                          const cy = bottomY - 40;
+                          return (
+                            <text
+                              key={`moon-${index}`}
+                              x={cx}
+                              y={cy}
+                              textAnchor="middle"
+                              className="fill-muted-foreground"
+                              style={{ fontSize: 18, opacity: 0.5 }}
+                            >
+                              🌙
+                            </text>
+                          );
+                        })}
+                      </g>
+                    );
+                  }} />
                   {chartMode === 'solid' ? (
                     <Bar
                       dataKey="totalRevenue"

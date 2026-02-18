@@ -834,6 +834,39 @@ export function ForecastingCard() {
                       </linearGradient>
                     </defs>
                   )} />
+                  {/* Moon icons for closed days */}
+                  {!showWeeklyChart && (
+                    <Customized component={(props: any) => {
+                      const { xAxisMap, yAxisMap } = props;
+                      if (!xAxisMap?.[0] || !yAxisMap?.[0]) return null;
+                      const xAxis = xAxisMap[0];
+                      const yAxis = yAxisMap[0];
+                      const bottomY = yAxis.y + yAxis.height;
+                      return (
+                        <g>
+                          {chartData.map((entry, index) => {
+                            const dayDate = (entry as any).name;
+                            if (!closedDates.has(dayDate)) return null;
+                            const bandWidth = xAxis.width / chartData.length;
+                            const cx = xAxis.x + bandWidth * index + bandWidth / 2;
+                            const cy = bottomY - 40;
+                            return (
+                              <text
+                                key={`moon-${index}`}
+                                x={cx}
+                                y={cy}
+                                textAnchor="middle"
+                                className="fill-muted-foreground"
+                                style={{ fontSize: 18, opacity: 0.5 }}
+                              >
+                                🌙
+                              </text>
+                            );
+                          })}
+                        </g>
+                      );
+                    }} />
+                  )}
                   {/* Conditional: solid single bar or stacked category bars */}
                   {chartMode === 'solid' ? (
                     <Bar
