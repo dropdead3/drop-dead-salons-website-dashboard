@@ -1,95 +1,51 @@
 
 
-## New "Category Popularity" Card for Services Analytics
+## Reorganize Cards Feature for Analytics Pages
 
-### Gap Identified
-The Services tab has a **Service Popularity** card that ranks individual services with animated horizontal bars, Revenue/Frequency tabs, and stylist drill-downs. But there is no equivalent visual for **categories** (Blonding, Color, Haircut, Extensions, etc.). The existing "Service Category Mix" section is a donut + table — useful but visually flat and lacking the interactive depth of the Popularity card.
+### What This Adds
+A "Reorganize Cards" button on every analytics subtab page that opens a drag-and-drop drawer, letting users reorder the card sections to match their preferred viewing order. The order persists per user, per analytics page.
 
-A **Category Popularity** card would mirror the Service Popularity pattern but at the category level, giving owners an instant visual ranking of which service lines dominate their business.
+### How It Works
 
----
+1. A small "Reorganize" button (using the existing `Settings2` or `ArrowUpDown` icon pattern) appears in the header area of each analytics subtab (Services, Overview, Retail, Correlations, Staffing, Appointments, Clients, Booking Pipeline, Marketing, etc.)
 
-### What It Shows
+2. Clicking it opens a `Sheet` (side drawer) -- matching the existing `DashboardCustomizeMenu` pattern -- showing all card sections as a draggable list with grip handles using `@dnd-kit/sortable` (already installed and used throughout the app)
 
-**Revenue Tab (default)**
-- Horizontal bar chart ranking categories by total revenue
-- Animated bars using category-specific colors from the settings-driven color map
-- Luxury glass gradient treatment matching Service Popularity
-- Badge labels on bars showing revenue amount
-- Summary badges: total categories count + total revenue
+3. Users drag cards into their preferred order. The order saves automatically to the `user_preferences.dashboard_layout` JSONB column under a new key: `analyticsCardOrder` (a map of `pageId -> cardId[]`)
 
-**Frequency Tab**
-- Same bars ranked by appointment count instead of revenue
+4. Each analytics content component renders its sections in the user's saved order instead of hardcoded order
 
-**Category Drill-Downs**
-Clicking any category bar/row expands to show:
-- **Top 5 services** within that category (name, bookings, revenue, avg ticket)
-- **Stylist breakdown** for the category: who performs the most, revenue share per stylist (uses existing `useRevenueByCategoryDrilldown` hook which already provides this data)
-- **Client mix**: New vs. Returning percentage for the category
-- **Rebook rate**: Category-level checkout rebooking rate
-- **Concentration risk flag**: If one stylist accounts for more than 70% of category revenue
+### Technical Details
 
----
+**New Hook: `src/hooks/useAnalyticsCardOrder.ts`**
+- Reads/writes `analyticsCardOrder` from `user_preferences.dashboard_layout` JSONB
+- Provides: `getCardOrder(pageId)` returns ordered card IDs, `saveCardOrder(pageId, cardIds[])` persists new order
+- Follows the exact same read/write pattern as `useDashboardLayout.ts` and `useSettingsLayout.ts` (check for existing row, upsert)
+- Includes a `resetOrder(pageId)` function
 
-### Technical Implementation
+**New Component: `src/components/dashboard/analytics/AnalyticsCardReorderDrawer.tsx`**
+- Generic reusable drawer component that accepts a `pageId` and list of `{ id, label, icon }` card definitions
+- Uses `Sheet` + `DndContext` + `SortableContext` + `verticalListSortingStrategy` (same as `DashboardCustomizeMenu`)
+- Renders `SortableSectionItem` (or a simpler variant without the toggle switch -- just grip handle + icon + label)
+- "Reset to Default" button at the bottom
+- Auto-saves on every drag-end event
 
-**New Component: `src/components/dashboard/sales/CategoryPopularityChart.tsx`**
-- Mirrors the architecture of `ServicePopularityChart.tsx`
-- Uses `useRevenueByCategoryDrilldown` hook (already exists with stylist + client data per category)
-- Renders horizontal `BarChart` with `AnimatedBar` shape, glass gradients, and `LabelList` badges
-- Revenue/Frequency tab switcher
-- Expandable rows per category with stylist breakdown, client mix, rebook stats
-- Filter badge integration
-- Category colors from `useServiceCategoryColorsMap`
+**Modified Content Components** (each gets the reorder button + ordered rendering):
+- `ServicesContent.tsx` -- 9 card sections (KPI tiles, Category Mix, Category Popularity, Client Type, Service Popularity, Efficiency Matrix, Rebooking Rates, Price Realization, Demand Trends, Service Pairings)
+- `SalesTabContent.tsx` overview subtab -- Sales Overview, Revenue Trend, Location Comparison, Product Categories
+- `MarketingTabContent.tsx` -- KPI tiles, Campaign Performance, Source Breakdown, Medium Distribution
+- `OperationsTabContent.tsx` subtabs -- delegates to child content components
+- Other subtab content components (Retail, Correlations, Staffing, etc.) as applicable
 
-**Modified: `src/components/dashboard/analytics/ServicesContent.tsx`**
-- Add the new `CategoryPopularityChart` as a new section between the existing Category Mix (Section 2) and Client Type Analysis (Section 3)
-- Wrapped in `PinnableCard` for dashboard pinning support
+**Implementation Pattern per Page:**
+1. Define a `SECTION_DEFINITIONS` array with `id`, `label`, `icon` for each card
+2. Map each card's JSX into a `Record<string, ReactNode>` keyed by section ID
+3. Use `useAnalyticsCardOrder(pageId)` to get the ordered IDs
+4. Render sections by iterating the ordered IDs and looking up the component map
+5. Add the `AnalyticsCardReorderDrawer` trigger button in the page header
 
-**No new hooks needed** — `useRevenueByCategoryDrilldown` already provides:
-- Category-level revenue + count
-- Per-stylist revenue, count, share percentage
-- New vs. returning client counts per stylist per category
-- All the data needed for drill-downs
+This approach keeps each content component's card JSX untouched -- only the rendering order changes. No database migration needed since `dashboard_layout` is already a JSONB column that accepts arbitrary keys.
 
-**No database changes required.**
+### No Database Changes Required
+The `user_preferences.dashboard_layout` JSONB column already exists and can store the new `analyticsCardOrder` key without any schema migration.
 
----
-
-### Layout Position
-
-```text
-KPI Tiles
-Service Category Mix (donut + table)      <-- existing
-Category Popularity (animated bars)       <-- NEW
-Client Type Analysis                      <-- existing
-Service Popularity (individual services)  <-- existing
-... remaining sections
-```
-
----
-
-### Drill-Down Detail
-
-When a category row is expanded:
-
-| Metric | Source |
-|---|---|
-| Top services in category | From `useRevenueByCategoryDrilldown` + service name aggregation |
-| Stylist revenue breakdown | `CategoryStylistData[]` from existing hook |
-| Stylist revenue share % | Already computed in hook |
-| New client count | `CategoryStylistData.newClients` |
-| Returning client count | `CategoryStylistData.returningClients` |
-| Concentration risk | Computed: top stylist share > 70% |
-
----
-
-### Why This Matters
-
-1. **Visual hierarchy**: The donut/table shows distribution, but bars show ranking at a glance — owners can instantly see which category leads and by how much.
-
-2. **Category-level stylist risk**: If one stylist does 85% of all Extensions revenue and they leave, that category collapses. This drill-down makes that risk visible.
-
-3. **Consistency**: Matches the Service Popularity card's visual language, creating a natural pair — categories above, individual services below.
-
-4. **Actionable**: Category-level new client percentages reveal which service lines are growth engines vs. retention engines, informing marketing spend allocation.
