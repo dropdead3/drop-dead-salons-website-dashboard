@@ -459,8 +459,8 @@ export function WeekAheadForecast() {
                   <Customized component={() => (
                     <defs>
                       <linearGradient id="solid-glass-week" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.85} />
-                        <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
+                        <stop offset="0%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.45} />
+                        <stop offset="100%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.18} />
                       </linearGradient>
                     </defs>
                   )} />
