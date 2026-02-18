@@ -7,8 +7,13 @@ import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateB
 import { useActiveRecommendation, useGenerateRecommendation } from '@/hooks/useLeverRecommendations';
 import { cn } from '@/lib/utils';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { X } from 'lucide-react';
 
-export function WeeklyLeverSection() {
+interface WeeklyLeverSectionProps {
+  onClose?: () => void;
+}
+
+export function WeeklyLeverSection({ onClose }: WeeklyLeverSectionProps) {
   const { data: recommendation, isLoading } = useActiveRecommendation();
   const generateMutation = useGenerateRecommendation();
 
@@ -27,16 +32,26 @@ export function WeeklyLeverSection() {
               <MetricInfoTooltip description="The single highest-confidence action recommended by Zura this week. Generated from performance data, benchmarks, and operational signals. Only surfaces when confidence is high." />
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => generateMutation.mutate()}
-            disabled={generateMutation.isPending}
-            className="gap-1.5 text-xs h-8"
-          >
-            <RefreshCw className={cn('w-3.5 h-3.5', generateMutation.isPending && 'animate-spin')} />
-            {generateMutation.isPending ? 'Generating...' : 'Generate New'}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => generateMutation.mutate()}
+              disabled={generateMutation.isPending}
+              className="gap-1.5 text-xs h-8"
+            >
+              <RefreshCw className={cn('w-3.5 h-3.5', generateMutation.isPending && 'animate-spin')} />
+              {generateMutation.isPending ? 'Generating...' : 'Generate New'}
+            </Button>
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-muted transition-colors"
+              >
+                <X className="w-3.5 h-3.5 text-muted-foreground" />
+              </button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
