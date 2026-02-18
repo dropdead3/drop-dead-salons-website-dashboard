@@ -42,20 +42,32 @@ export function useServicePairings(
   const query = useQuery({
     queryKey: ['service-pairings', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      let q = supabase
-        .from('phorest_appointments')
-        .select('phorest_client_id, appointment_date, service_name, total_price')
-        .neq('status', 'cancelled')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo);
+      const allData: any[] = [];
+      const PAGE_SIZE = 1000;
+      let offset = 0;
+      let hasMore = true;
 
-      if (locationId) {
-        q = q.eq('location_id', locationId);
+      while (hasMore) {
+        let q = supabase
+          .from('phorest_appointments')
+          .select('phorest_client_id, appointment_date, service_name, total_price')
+          .neq('status', 'cancelled')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .range(offset, offset + PAGE_SIZE - 1);
+
+        if (locationId) {
+          q = q.eq('location_id', locationId);
+        }
+
+        const { data, error } = await q;
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === PAGE_SIZE;
+        offset += PAGE_SIZE;
       }
 
-      const { data, error } = await q;
-      if (error) throw error;
-      return data || [];
+      return allData;
     },
   });
 

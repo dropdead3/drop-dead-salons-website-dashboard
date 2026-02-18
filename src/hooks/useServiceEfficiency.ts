@@ -46,24 +46,55 @@ export function useServiceEfficiency(
   dateTo: string,
   locationId?: string
 ) {
-  // Fetch appointment aggregates
+  // Fetch staff name mapping
+  const staffQuery = useQuery({
+    queryKey: ['staff-name-mapping'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('phorest_staff_mapping')
+        .select('phorest_staff_id, user_id, employee_profiles(display_name, full_name)');
+      if (error) throw error;
+      const map = new Map<string, string>();
+      for (const s of data || []) {
+        const ep = s.employee_profiles as any;
+        const name = ep?.display_name || ep?.full_name || s.phorest_staff_id;
+        map.set(s.phorest_staff_id, name);
+      }
+      return map;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Fetch appointment aggregates with pagination to avoid 1000-row limit
   const appointmentsQuery = useQuery({
     queryKey: ['service-efficiency-appointments', dateFrom, dateTo, locationId],
     queryFn: async () => {
-      let query = supabase
-        .from('phorest_appointments')
-        .select('service_name, total_price, start_time, end_time, appointment_date, is_new_client, rebooked_at_checkout, tip_amount, phorest_staff_id')
-        .neq('status', 'cancelled')
-        .gte('appointment_date', dateFrom)
-        .lte('appointment_date', dateTo);
+      const allData: any[] = [];
+      const PAGE_SIZE = 1000;
+      let offset = 0;
+      let hasMore = true;
 
-      if (locationId) {
-        query = query.eq('location_id', locationId);
+      while (hasMore) {
+        let query = supabase
+          .from('phorest_appointments')
+          .select('service_name, total_price, start_time, end_time, appointment_date, is_new_client, rebooked_at_checkout, tip_amount, phorest_staff_id')
+          .neq('status', 'cancelled')
+          .gte('appointment_date', dateFrom)
+          .lte('appointment_date', dateTo)
+          .range(offset, offset + PAGE_SIZE - 1);
+
+        if (locationId) {
+          query = query.eq('location_id', locationId);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+        allData.push(...(data || []));
+        hasMore = (data?.length || 0) === PAGE_SIZE;
+        offset += PAGE_SIZE;
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data || [];
+      return allData;
     },
   });
 
@@ -82,6 +113,7 @@ export function useServiceEfficiency(
 
   const result = useMemo<ServiceEfficiencyData | undefined>(() => {
     if (!appointmentsQuery.data) return undefined;
+    const staffNames = staffQuery.data || new Map<string, string>();
 
     const appointments = appointmentsQuery.data;
     const catalog = servicesQuery.data || [];
@@ -180,7 +212,7 @@ export function useServiceEfficiency(
       const stylistBreakdown: StylistBreakdown[] = [...data.stylistMap.entries()]
         .map(([staffId, s]) => ({
           staffId,
-          staffName: staffId,
+          staffName: staffNames.get(staffId) || staffId,
           bookings: s.count,
           totalRevenue: s.rev,
           totalDurationMin: s.dur,
@@ -243,10 +275,10 @@ export function useServiceEfficiency(
       totalBookedHours,
       overallRevPerHour,
     };
-  }, [appointmentsQuery.data, servicesQuery.data]);
+  }, [appointmentsQuery.data, servicesQuery.data, staffQuery.data]);
 
   return {
     data: result,
-    isLoading: appointmentsQuery.isLoading || servicesQuery.isLoading,
+    isLoading: appointmentsQuery.isLoading || servicesQuery.isLoading || staffQuery.isLoading,
   };
 }
