@@ -1,37 +1,57 @@
 
 
-## Add MetricInfoTooltip to Each KPI Tile
+## Add Session Navigation History (Back / Forward Arrows)
 
 ### What Changes
 
-Add a small circle-i info tooltip next to each KPI label inside the Client Experience card -- both the hero Experience Score tile and the four component tiles (Avg Tip, Tip Rate, Feedback Rate, Rebook Rate).
+Add browser-style back and forward navigation arrows to the dashboard top bar, placed between the sidebar toggle button and the center search bar. These use an in-memory navigation history stack (session-only, not persisted) so users can quickly retrace their steps through the dashboard.
 
-### Implementation
+### Layout
 
-**File modified:** `src/components/dashboard/sales/ClientExperienceCard.tsx`
+```text
+[ Sidebar Toggle ] [ < ] [ > ]        [ Search... ]        [ controls... ]
+```
 
-1. Define a `KPI_DESCRIPTIONS` map with plain-language explanations for each metric:
-   - **Experience Score**: "Weighted composite of all four metrics below (Rebook 35%, Tip Rate 30%, Feedback 20%, Avg Tip 15%). Higher is better."
-   - **Avg Tip**: "Average tip amount per completed appointment in the selected period."
-   - **Tip Rate**: "Percentage of completed appointments that received any tip amount greater than zero."
-   - **Feedback Rate**: "Percentage of appointments where a client feedback response was collected, based on staff assignment."
-   - **Rebook Rate**: "Percentage of completed appointments where the client rebooked at checkout."
+The arrows sit to the right of the sidebar collapse button in the left section of the header bar, directly beside the existing controls. They mirror the browser back/forward paradigm that users already understand.
 
-2. In the hero tile (Experience Score, ~line 256), wrap the label span and add a `MetricInfoTooltip` beside it:
-   ```tsx
-   <div className="flex items-center gap-1.5">
-     <span className={tokens.kpi.label}>{heroKpi.label}</span>
-     <MetricInfoTooltip description={KPI_DESCRIPTIONS.composite} />
-   </div>
-   ```
+### How It Works
 
-3. In the 2x2 grid tiles (~line 284), same pattern -- wrap each label with a flex row containing the tooltip:
-   ```tsx
-   <div className="flex items-center gap-1.5">
-     <span className={tokens.kpi.label}>{kpi.label}</span>
-     <MetricInfoTooltip description={KPI_DESCRIPTIONS[kpi.metric]} />
-   </div>
-   ```
+1. **NavigationHistoryContext** -- a new React context that maintains an in-memory stack of visited paths during the current session
+   - Tracks a `history` array and a `currentIndex` pointer
+   - Listens to `react-router-dom` location changes and pushes new entries (deduplicating consecutive duplicates)
+   - Exposes `canGoBack`, `canGoForward`, `goBack()`, `goForward()` 
+   - Ignores navigations triggered by its own `goBack`/`goForward` calls (flag-based) to avoid double-pushing
+   - Session-only: resets on page refresh or logout -- no persistence needed
 
-No new files. No hook changes. `MetricInfoTooltip` is already imported in the file.
+2. **Navigation Arrows in DashboardLayout** -- two small ghost icon buttons (`ArrowLeft`, `ArrowRight`) added to the left section of the top bar
+   - Disabled state (reduced opacity) when `canGoBack` / `canGoForward` is false
+   - Tooltips: "Back" and "Forward"
+   - Same `h-8 w-8` sizing as the sidebar toggle for visual consistency
 
+### Technical Details
+
+**New file: `src/contexts/NavigationHistoryContext.tsx`**
+- Wraps children, listens to `useLocation()` changes
+- Maintains `history: string[]` (pathname + search + hash) and `currentIndex: number`
+- On location change: if not triggered internally, slice history at currentIndex+1 and push new entry
+- `goBack`: decrement index, navigate to `history[currentIndex - 1]` with internal flag
+- `goForward`: increment index, navigate to `history[currentIndex + 1]` with internal flag
+- Cap history at ~50 entries to prevent unbounded growth
+
+**Modified file: `src/components/dashboard/DashboardLayout.tsx`**
+- Import `NavigationHistoryProvider` and `useNavigationHistory`
+- Wrap the layout (or add provider at the DashboardLayout level, inside the Router)
+- Add two `Button variant="ghost" size="icon"` with `ArrowLeft` / `ArrowRight` icons in the left section of the top bar, after the sidebar toggle and before the org switcher
+- Buttons call `goBack()` / `goForward()` and are disabled when `!canGoBack` / `!canGoForward`
+- Wrapped in `Tooltip` for "Back" / "Forward" labels
+
+### Files
+- **New:** `src/contexts/NavigationHistoryContext.tsx`
+- **Modified:** `src/components/dashboard/DashboardLayout.tsx` (provider wrap + arrow buttons in header)
+
+### Edge Cases Handled
+- Consecutive visits to the same URL are deduplicated
+- Internal navigation (from goBack/goForward) does not push to history
+- History capped at 50 entries
+- Query param changes (e.g. tab switches in Analytics Hub) are tracked as separate history entries
+- Works alongside existing breadcrumbs without conflict
