@@ -24,10 +24,13 @@ import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { useRetailAnalytics, type ProductRow, type RedFlag } from '@/hooks/useRetailAnalytics';
 import { useServiceRetailAttachment } from '@/hooks/useServiceRetailAttachment';
+import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+
 interface RetailAnalyticsContentProps {
   dateFrom: string;
   dateTo: string;
   locationId?: string;
+  filterContext?: FilterContext;
 }
 
 function ChangeBadge({ value, suffix = '%' }: { value: number; suffix?: string }) {
@@ -103,7 +106,7 @@ function RedFlagRow({ flag }: { flag: RedFlag }) {
   );
 }
 
-export function RetailAnalyticsContent({ dateFrom, dateTo, locationId }: RetailAnalyticsContentProps) {
+export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterContext }: RetailAnalyticsContentProps) {
   const { data, isLoading } = useRetailAnalytics(dateFrom, dateTo, locationId);
   const { data: retailAttachment, isLoading: retailAttachmentLoading } = useServiceRetailAttachment({ dateFrom, dateTo, locationId });
   const { formatCurrencyWhole } = useFormatCurrency();
@@ -621,17 +624,20 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId }: RetailA
       <PinnableCard elementKey="retail_service_driven" elementName="Service-Driven Retail" category="Analytics Hub - Retail">
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                <Scissors className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <CardTitle className="font-display text-base tracking-wide">SERVICE-DRIVEN RETAIL</CardTitle>
-                  <MetricInfoTooltip description="Which services generate the most retail revenue? Cross-references service and product line items within the same transaction. Focus training on low-attachment, high-volume services to unlock more product sales." />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                  <Scissors className="w-5 h-5 text-primary" />
                 </div>
-                <CardDescription className="text-xs mt-0.5">Which services are the biggest drivers of retail revenue?</CardDescription>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="font-display text-base tracking-wide">SERVICE-DRIVEN RETAIL</CardTitle>
+                    <MetricInfoTooltip description="Which services generate the most retail revenue? Cross-references service and product line items within the same transaction. Focus training on low-attachment, high-volume services to unlock more product sales." />
+                  </div>
+                  <CardDescription className="text-xs mt-0.5">Which services are the biggest drivers of retail revenue?</CardDescription>
+                </div>
               </div>
+              {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
             </div>
           </CardHeader>
           <CardContent>

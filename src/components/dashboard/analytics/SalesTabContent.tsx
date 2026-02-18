@@ -509,6 +509,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             dateFrom={filters.dateFrom}
             dateTo={filters.dateTo}
             locationId={locationFilter}
+            filterContext={filterContext}
           />
         </TabsContent>
 
