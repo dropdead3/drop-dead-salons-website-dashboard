@@ -22,6 +22,7 @@ import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { ServicePopularityChart } from '@/components/dashboard/sales/ServicePopularityChart';
+import { CategoryPopularityChart } from '@/components/dashboard/sales/CategoryPopularityChart';
 import { useServiceEfficiency, type ServiceEfficiencyRow, type StylistBreakdown } from '@/hooks/useServiceEfficiency';
 import { useServiceDemandTrend } from '@/hooks/useServiceDemandTrend';
 import { useServiceClientAnalysis } from '@/hooks/useServiceClientAnalysis';
@@ -533,6 +534,16 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
             )}
           </CardContent>
         </Card>
+      </PinnableCard>
+
+      {/* Section 2b: Category Popularity (animated bars) */}
+      <PinnableCard elementKey="category_popularity" elementName="Category Popularity" category="Analytics Hub - Sales" dateRange={dateRange} locationName={locationName}>
+        <CategoryPopularityChart
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          locationId={locationId}
+          filterContext={filterContext}
+        />
       </PinnableCard>
 
       {/* Section 3: Client Type Analysis (New) */}
