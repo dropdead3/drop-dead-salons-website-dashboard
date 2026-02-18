@@ -97,7 +97,7 @@ function KpiTile({ icon: Icon, label, value, subtitle, isLoading, isExpanded, on
           <div className="w-8 h-8 bg-muted flex items-center justify-center rounded-lg">
             <Icon className="w-4 h-4 text-primary" />
           </div>
-          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+          <span className="text-xs font-display font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
           {onClick && (
             <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground ml-auto transition-transform', isExpanded && 'rotate-180')} />
           )}
