@@ -178,7 +178,7 @@ export default function WebsiteSectionsHub() {
           {/* Sidebar Navigation Panel */}
           {showSidebar && !isMobile && (
             <>
-              <ResizablePanel defaultSize={20} minSize={15} maxSize={30}>
+              <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
                 <WebsiteEditorSidebar
                   activeTab={activeTab}
                   onTabChange={handleTabChange}
@@ -189,7 +189,7 @@ export default function WebsiteSectionsHub() {
           )}
 
           {/* Main Editor Panel */}
-          <ResizablePanel defaultSize={80} minSize={30}>
+          <ResizablePanel defaultSize={75} minSize={30}>
             <div className="h-full flex flex-col overflow-hidden">
               {/* Header */}
               <div className="flex-shrink-0 px-6 py-4 border-b bg-background">
