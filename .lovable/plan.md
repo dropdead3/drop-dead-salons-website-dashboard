@@ -1,40 +1,25 @@
 
 
-## Fix Bar Alignment in Service Costs and Sales Profits Card
+## Fix Profit and Margin Text Color
 
 ### Problem
 
-The "Total Sales" column renders the bar and dollar amount together in a flex row with `justify-end`. Because dollar amounts vary in character width ("$935.00" is narrower than "$2,479.00"), the bar's left edge shifts per row, creating the visual misalignment shown in the screenshot.
+The profit values and margin percentages use `text-success`, which resolves to `hsl(145 40% 85%)` — a very light pastel green designed for backgrounds/badges, not body text. This makes the numbers nearly invisible against the white card background, as shown in the screenshot.
 
 ### Solution
 
-Give the dollar amount a fixed minimum width so all bars start at the same horizontal position, regardless of the number of digits. The amount text will be left-aligned within that fixed space (matching the request to left-align numerical values), and the bar will always occupy the same fixed width to its left.
+Switch all profit/margin text from `text-success` to `text-success-foreground`, which resolves to `hsl(145 50% 30%)` — a rich, readable green that maintains the cohesive color ramp while being clearly legible.
 
-### Technical Change
+### Changes
 
 **File: `src/components/dashboard/sales/ServiceCostsProfitsCard.tsx`**
 
-Update the Total Sales cell (lines 223-235) to use a fixed-width amount span:
+Update every instance of `text-success` to `text-success-foreground`:
 
-```tsx
-<TableCell>
-  <div className="flex items-center gap-2">
-    <div className="w-20 h-2 bg-muted rounded-full overflow-hidden flex-shrink-0">
-      <div
-        className="h-full rounded-full"
-        style={{ width: `${Math.max(barWidth, 1)}%`, backgroundColor: barColor }}
-      />
-    </div>
-    <span className="text-sm tabular-nums min-w-[5.5rem] text-left">
-      <BlurredAmount>{formatCurrency(row.totalSales)}</BlurredAmount>
-    </span>
-  </div>
-</TableCell>
-```
+1. **Summary KPI tiles** — "Total Profit" and "Avg Margin" large stat values
+2. **Category subtotal rows** — profit and margin in collapsed category headers
+3. **Individual service rows** — profit column and margin column conditional classes
+4. **Totals row** — profit and margin in the bottom summary row
 
-Key changes:
-- Remove `text-right` and `justify-end` from the cell and inner flex -- the bar+amount pair will flow naturally left-to-right
-- Add `flex-shrink-0` to the bar container so it never compresses
-- Add `min-w-[5.5rem] text-left` to the amount span so all dollar values occupy the same horizontal space, left-aligned
-- Also left-align the other numeric columns (# Services, Unit Cost, Total Cost, Profit, Margin) by removing `text-right` from their `TableCell` wrappers and using `text-left tabular-nums` instead, per the user's request for all numerical values to be left-aligned
+All conditional logic stays the same (positive = green, negative = destructive). Only the green shade changes from the background-tier pastel to the foreground-tier rich green.
 
