@@ -8,8 +8,6 @@ import { Loader2, Save, Settings2, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useBrandStatementConfig, type BrandStatementConfig, DEFAULT_BRAND_STATEMENT } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
-import { SectionPreviewWrapper } from './SectionPreviewWrapper';
-import { BrandStatementPreview } from './previews/BrandStatementPreview';
 import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -205,12 +203,6 @@ export function BrandStatementEditor() {
         </CardContent>
       </Card>
 
-      {/* Preview Panel */}
-      <div className="hidden xl:block">
-        <SectionPreviewWrapper>
-          <BrandStatementPreview config={debouncedConfig} />
-        </SectionPreviewWrapper>
-      </div>
     </div>
   );
 }

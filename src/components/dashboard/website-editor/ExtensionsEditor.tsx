@@ -8,8 +8,6 @@ import { Loader2, Save, Star, Award, MapPin } from 'lucide-react';
 import { toast } from 'sonner';
 import { useExtensionsConfig, type ExtensionsConfig, DEFAULT_EXTENSIONS } from '@/hooks/useSectionConfig';
 import { useDebounce } from '@/hooks/use-debounce';
-import { SectionPreviewWrapper } from './SectionPreviewWrapper';
-import { ExtensionsPreview } from './previews/ExtensionsPreview';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 
 const ICON_OPTIONS = [
@@ -178,12 +176,6 @@ export function ExtensionsEditor() {
         </CardContent>
       </Card>
 
-      {/* Live Preview */}
-      <div className="hidden xl:block">
-        <SectionPreviewWrapper>
-          <ExtensionsPreview config={debouncedConfig} />
-        </SectionPreviewWrapper>
-      </div>
     </div>
   );
 }

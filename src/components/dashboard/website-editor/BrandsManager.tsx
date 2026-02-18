@@ -10,8 +10,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
 import { useDebounce } from '@/hooks/use-debounce';
-import { SectionPreviewWrapper } from './SectionPreviewWrapper';
-import { BrandsPreview } from './previews/BrandsPreview';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 import {
   DndContext,
@@ -390,12 +388,6 @@ export function BrandsManager() {
       </Card>
       </div>
 
-      {/* Live Preview */}
-      <div className="hidden xl:block">
-        <SectionPreviewWrapper>
-          <BrandsPreview config={debouncedConfig} />
-        </SectionPreviewWrapper>
-      </div>
     </div>
   );
 }

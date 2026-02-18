@@ -9,8 +9,6 @@ import { toast } from 'sonner';
 import { useFAQConfig, type FAQConfig, DEFAULT_FAQ } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
 import { useDebounce } from '@/hooks/use-debounce';
-import { SectionPreviewWrapper } from './SectionPreviewWrapper';
-import { FAQPreview } from './previews/FAQPreview';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 
 export function FAQEditor() {
@@ -115,12 +113,6 @@ export function FAQEditor() {
         </CardContent>
       </Card>
 
-      {/* Live Preview */}
-      <div className="hidden xl:block">
-        <SectionPreviewWrapper>
-          <FAQPreview config={debouncedConfig} />
-        </SectionPreviewWrapper>
-      </div>
     </div>
   );
 }

@@ -584,7 +584,7 @@ function ThemeTab() {
               <>
                 <ResizableHandle withHandle />
                 <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
-                  <LivePreviewPanel onClose={() => setShowPreview(false)} />
+                  <LivePreviewPanel />
                 </ResizablePanel>
               </>
             )}
