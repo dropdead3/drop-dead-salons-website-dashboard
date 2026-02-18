@@ -9888,6 +9888,7 @@ export type Database = {
       }
       products: {
         Row: {
+          available_online: boolean
           barcode: string | null
           brand: string | null
           category: string | null
@@ -9910,6 +9911,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          available_online?: boolean
           barcode?: string | null
           brand?: string | null
           category?: string | null
@@ -9932,6 +9934,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          available_online?: boolean
           barcode?: string | null
           brand?: string | null
           category?: string | null
