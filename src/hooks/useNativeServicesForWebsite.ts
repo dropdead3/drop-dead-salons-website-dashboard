@@ -38,8 +38,8 @@ export interface StylistLevelInfo {
 // ─── Main Hook ──────────────────────────────────────────────────
 
 export function useNativeServicesForWebsite() {
-  const { effectiveOrganization } = useOrganizationContext();
-  const orgId = effectiveOrganization?.id;
+  const { effectiveOrganization, currentOrganization } = useOrganizationContext();
+  const orgId = effectiveOrganization?.id ?? currentOrganization?.id;
 
   const servicesQuery = useQuery({
     queryKey: ['services-website', orgId],
