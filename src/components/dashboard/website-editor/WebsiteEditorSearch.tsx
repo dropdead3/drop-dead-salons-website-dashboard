@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { useLocations } from '@/hooks/useLocations';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { services as serviceCategories } from '@/data/servicePricing';
+import { useNativeServicesForWebsite } from '@/hooks/useNativeServicesForWebsite';
 
 // Mock testimonials (same as TestimonialsContent)
 const testimonials = [
@@ -55,6 +55,9 @@ export function WebsiteEditorSearch({ onSelectResult }: WebsiteEditorSearchProps
     },
   });
 
+  // Fetch services from DB
+  const { categories: nativeCategories = [] } = useNativeServicesForWebsite();
+
   // Build searchable items
   const searchableItems = useMemo(() => {
     const items: SearchResult[] = [];
@@ -70,14 +73,14 @@ export function WebsiteEditorSearch({ onSelectResult }: WebsiteEditorSearchProps
       });
     });
 
-    // Add services
-    serviceCategories.forEach((category) => {
+    // Add services from native DB categories
+    nativeCategories.forEach((category) => {
       category.items.forEach((service) => {
         items.push({
-          id: `service-${category.category}-${service.name}`,
+          id: `service-${category.categoryName}-${service.name}`,
           type: 'service',
           title: service.name,
-          subtitle: category.category,
+          subtitle: category.categoryName,
           tab: 'services',
         });
       });
@@ -106,7 +109,7 @@ export function WebsiteEditorSearch({ onSelectResult }: WebsiteEditorSearchProps
     });
 
     return items;
-  }, [stylists, locations]);
+  }, [stylists, locations, nativeCategories]);
 
   // Filter results based on query
   const results = useMemo(() => {

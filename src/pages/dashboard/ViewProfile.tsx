@@ -21,8 +21,9 @@ import { useLocations, getClosedDaysArray } from '@/hooks/useLocations';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
-import { services } from '@/data/servicePricing';
 import { AssistantRequestHistoryCard } from '@/components/dashboard/AssistantRequestHistoryCard';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const DAYS_OF_WEEK = [
   { key: 'Mon', label: 'Monday' },
@@ -42,7 +43,7 @@ const specialtyOptions = [
   'VIVIDS', 'CORRECTIVE COLOR', 'KERATIN', 'BRIDAL'
 ];
 
-const allServiceNames = services.flatMap(cat => cat.items.map(item => item.name));
+// allServiceNames is now fetched from DB inside the component
 
 const roleLabels: Record<string, string> = {
   super_admin: 'Super Admin',
@@ -82,6 +83,20 @@ export default function ViewProfile() {
   const { data: userRoles = [], isLoading: rolesLoading } = useUserRoles(userId);
   const { data: existingSchedules = [] } = useUserLocationSchedules(userId);
   const { data: locations = [] } = useLocations();
+  
+  // Fetch all service names from DB for highlighted services picker
+  const { data: allServiceNames = [] } = useQuery({
+    queryKey: ['all-service-names'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('services')
+        .select('name')
+        .eq('is_active', true)
+        .order('name');
+      if (error) throw error;
+      return data.map(s => s.name);
+    },
+  });
   
   // Mutations
   const updateProfile = useUpdateUserProfile(userId);
