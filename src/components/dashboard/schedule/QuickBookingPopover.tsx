@@ -40,7 +40,8 @@ import { NewClientDialog } from './NewClientDialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
-import { getLevelSlug, getLevelNumber, findLevelBasedPrice } from '@/utils/levelPricing';
+import { getLevelSlug, getLevelNumber } from '@/utils/levelPricing';
+import { useBookingLevelPricing } from '@/hooks/useServiceLevelPricing';
 import { useQualifiedStaffForServices } from '@/hooks/useStaffServiceQualifications';
 import { useStaffQualifiedServices } from '@/hooks/useStaffServiceQualifications';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
@@ -100,6 +101,7 @@ export function QuickBookingPopover({
   const { user, roles } = useAuth();
   const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
   const { formatDate: formatDateLocale } = useFormatDate();
+  const { getLevelPrice } = useBookingLevelPricing();
   const [step, setStep] = useState<Step>('service');
   const [showNewClientDialog, setShowNewClientDialog] = useState(false);
   const [highestStepReached, setHighestStepReached] = useState<number>(0);
@@ -377,10 +379,10 @@ export function QuickBookingPopover({
     if (!selectedLevelSlug) return totalPrice;
     
     return selectedServiceDetails.reduce((sum, service) => {
-      const levelPrice = findLevelBasedPrice(service.name, selectedLevelSlug);
+      const levelPrice = getLevelPrice(service.id, selectedLevelSlug);
       return sum + (levelPrice ?? service.price ?? 0);
     }, 0);
-  }, [selectedServiceDetails, selectedLevelSlug, totalPrice]);
+  }, [selectedServiceDetails, selectedLevelSlug, totalPrice, getLevelPrice]);
 
   // Create booking mutation
   const createBooking = useMutation({
@@ -1295,7 +1297,7 @@ export function QuickBookingPopover({
                       // Calculate this stylist's total price (only in normal mode with services)
                       const stylistTotalPrice = !stylistFirstMode && stylistLevelSlug 
                         ? selectedServiceDetails.reduce((sum, service) => {
-                            const levelPrice = findLevelBasedPrice(service.name, stylistLevelSlug);
+                            const levelPrice = getLevelPrice(service.id, stylistLevelSlug);
                             return sum + (levelPrice ?? service.price ?? 0);
                           }, 0)
                         : totalPrice;

@@ -26,7 +26,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useStylistAvailability, formatAvailability } from '@/hooks/useStylistAvailability';
-import { getLevelSlug, findLevelBasedPrice, getLevelNumber } from '@/utils/levelPricing';
+import { getLevelSlug, getLevelNumber } from '@/utils/levelPricing';
+import { useBookingLevelPricing } from '@/hooks/useServiceLevelPricing';
 import { cn } from '@/lib/utils';
 
 interface WalkInDialogProps {
@@ -47,6 +48,7 @@ interface ServiceWithRestrictions {
 
 export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
   const { formatCurrency, currency } = useFormatCurrency();
+  const { getLevelPrice } = useBookingLevelPricing();
   const [open, setOpen] = useState(false);
   const [clientName, setClientName] = useState('');
   const [clientPhone, setClientPhone] = useState('');
@@ -117,17 +119,17 @@ export function WalkInDialog({ locationId, onSuccess }: WalkInDialogProps) {
   const calculatedTotalPrice = useMemo(() => {
     return selectedServiceDetails.reduce((sum, service) => {
       if (levelSlug) {
-        const levelPrice = findLevelBasedPrice(service.name, levelSlug);
+        const levelPrice = getLevelPrice(service.id, levelSlug);
         return sum + (levelPrice ?? service.price ?? 0);
       }
       return sum + (service.price ?? 0);
     }, 0);
-  }, [selectedServiceDetails, levelSlug]);
+  }, [selectedServiceDetails, levelSlug, getLevelPrice]);
 
   // Get price for a specific service based on stylist level
   const getServicePrice = (service: ServiceWithRestrictions): number => {
     if (levelSlug) {
-      const levelPrice = findLevelBasedPrice(service.name, levelSlug);
+      const levelPrice = getLevelPrice(service.id, levelSlug);
       return levelPrice ?? service.price ?? 0;
     }
     return service.price ?? 0;
