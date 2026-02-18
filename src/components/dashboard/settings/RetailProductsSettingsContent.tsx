@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import {
   Search, Plus, BarChart3, Package, Edit2, AlertTriangle, Minus,
-  Loader2, Check, X, MapPin, CheckCircle2, Info, ExternalLink,
+  Loader2, Check, X, MapPin, CheckCircle2, Info, ExternalLink, ImagePlus,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -25,7 +25,8 @@ import { useBulkUpdateProducts, useBulkToggleProducts } from '@/hooks/useBulkUpd
 import { useActiveLocations } from '@/hooks/useLocations';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useWebsiteRetailSettings } from '@/hooks/useWebsiteSettings';
-
+import { supabase } from '@/integrations/supabase/client';
+import { toast as sonnerToast } from 'sonner';
 // ─── Products Tab ───
 function ProductsTab() {
   const { formatCurrency } = useFormatCurrency();
@@ -166,6 +167,8 @@ function ProductsTab() {
 
 function ProductFormDialog({ product, onClose, onSave }: { product: Product | null; onClose: () => void; onSave: (data: Partial<Product>) => void }) {
   const { data: locations } = useActiveLocations();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
     name: product?.name || '',
     brand: product?.brand || '',
@@ -178,7 +181,25 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     reorder_level: product?.reorder_level?.toString() || '',
     description: product?.description || '',
     location_id: product?.location_id || '',
+    image_url: product?.image_url || '',
   });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const ext = file.name.split('.').pop();
+    const path = `${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: true });
+    if (error) {
+      sonnerToast.error('Failed to upload image');
+      setUploading(false);
+      return;
+    }
+    const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path);
+    setForm(f => ({ ...f, image_url: publicUrl }));
+    setUploading(false);
+  };
 
   const handleSubmit = () => {
     onSave({
@@ -193,16 +214,49 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
       reorder_level: form.reorder_level ? parseInt(form.reorder_level) : null,
       description: form.description || null,
       location_id: form.location_id || null,
+      image_url: form.image_url || null,
     });
   };
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display">{product ? 'Edit Product' : 'Add Product'}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
+          {/* Image upload */}
+          <div>
+            <Label className="text-xs">Product Image</Label>
+            <div className="mt-1.5">
+              {form.image_url ? (
+                <div className="relative group w-full aspect-video rounded-lg overflow-hidden border border-border bg-muted/30">
+                  <img src={form.image_url} alt="Product" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                    <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>Replace</Button>
+                    <Button variant="secondary" size="sm" onClick={() => setForm(f => ({ ...f, image_url: '' }))}>Remove</Button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full aspect-video rounded-lg border-2 border-dashed border-border/60 bg-muted/20 flex flex-col items-center justify-center gap-1.5 hover:border-primary/40 transition-colors"
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                  ) : (
+                    <>
+                      <ImagePlus className="w-5 h-5 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Upload image</span>
+                    </>
+                  )}
+                </button>
+              )}
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            </div>
+          </div>
           <div><Label className="text-xs">Name *</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
           <div className="grid grid-cols-2 gap-3">
             <div><Label className="text-xs">Brand</Label><Input value={form.brand} onChange={e => setForm(f => ({ ...f, brand: e.target.value }))} /></div>
@@ -220,6 +274,10 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
             <div><Label className="text-xs">Stock Qty</Label><Input type="number" value={form.quantity_on_hand} onChange={e => setForm(f => ({ ...f, quantity_on_hand: e.target.value }))} /></div>
             <div><Label className="text-xs">Reorder Level</Label><Input type="number" value={form.reorder_level} onChange={e => setForm(f => ({ ...f, reorder_level: e.target.value }))} /></div>
           </div>
+          <div>
+            <Label className="text-xs">Description</Label>
+            <Input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief product description" />
+          </div>
           {locations && locations.length > 1 && (
             <div>
               <Label className="text-xs">Location</Label>
@@ -235,7 +293,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={!form.name.trim()}>{product ? 'Save Changes' : 'Add Product'}</Button>
+          <Button onClick={handleSubmit} disabled={!form.name.trim() || uploading}>{product ? 'Save Changes' : 'Add Product'}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

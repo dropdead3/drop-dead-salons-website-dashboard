@@ -9897,6 +9897,7 @@ export type Database = {
           description: string | null
           external_id: string | null
           id: string
+          image_url: string | null
           import_job_id: string | null
           import_source: string | null
           imported_at: string | null
@@ -9920,6 +9921,7 @@ export type Database = {
           description?: string | null
           external_id?: string | null
           id?: string
+          image_url?: string | null
           import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null
@@ -9943,6 +9945,7 @@ export type Database = {
           description?: string | null
           external_id?: string | null
           id?: string
+          image_url?: string | null
           import_job_id?: string | null
           import_source?: string | null
           imported_at?: string | null

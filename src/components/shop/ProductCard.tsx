@@ -16,9 +16,13 @@ export function ProductCard({ product, onClick }: ProductCardProps) {
       onClick={() => onClick?.(product)}
       className="group text-left rounded-2xl border border-border/50 bg-card overflow-hidden transition-all hover:shadow-lg hover:border-border hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-ring"
     >
-      {/* Image placeholder */}
-      <div className="aspect-square bg-muted/30 flex items-center justify-center">
-        <Package className="w-12 h-12 text-muted-foreground/30 group-hover:text-muted-foreground/50 transition-colors" />
+      {/* Product image */}
+      <div className="aspect-square bg-muted/30 flex items-center justify-center overflow-hidden">
+        {product.image_url ? (
+          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+        ) : (
+          <Package className="w-12 h-12 text-muted-foreground/30 group-hover:text-muted-foreground/50 transition-colors" />
+        )}
       </div>
 
       <div className="p-4 space-y-2">

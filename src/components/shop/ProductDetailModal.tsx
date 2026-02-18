@@ -39,9 +39,13 @@ export function ProductDetailModal({ product, open, onOpenChange }: ProductDetai
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Image placeholder */}
-          <div className="aspect-video rounded-xl bg-muted/30 flex items-center justify-center">
-            <Package className="w-16 h-16 text-muted-foreground/20" />
+          {/* Product image */}
+          <div className="aspect-video rounded-xl bg-muted/30 flex items-center justify-center overflow-hidden">
+            {product.image_url ? (
+              <img src={product.image_url} alt={product.name} className="w-full h-full object-cover rounded-xl" />
+            ) : (
+              <Package className="w-16 h-16 text-muted-foreground/20" />
+            )}
           </div>
 
           {/* Price & availability */}
