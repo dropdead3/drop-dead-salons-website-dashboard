@@ -1256,6 +1256,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
             {!hideFooter && (() => {
               const parts = location.pathname.split('/').filter(Boolean);
               if (parts[0] !== 'dashboard' || parts.length <= 2) return null;
+              if (location.pathname.startsWith('/dashboard/admin/website-sections')) return null;
 
               const crumbs: Array<{ label: string; href?: string }> = [{ label: 'Dashboard', href: '/dashboard' }];
               let href = '/dashboard';
