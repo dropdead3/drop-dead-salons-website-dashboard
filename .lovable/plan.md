@@ -1,37 +1,81 @@
 
 
-## Client Visits Card — Gap Analysis and Enhancements
+## Returning Clients Overview and Rebooking Overview Cards
 
-### Issues Found
+Two new analytics cards for the Staff Performance subtab, inspired by the reference screenshot and built to the Zura luxury aesthetic with drill-down intelligence.
 
-**1. Card wrapper missing design token**
-All three `<Card>` instances (loading, empty, main states) use bare `<Card>` without `className={tokens.card.wrapper}` (`rounded-2xl`). Every other analytics card applies this token.
+### Card 1: Returning Clients Overview
 
-**2. Profile link uses `<a>` instead of React Router `<Link>`**
-Line 226 uses a raw `<a href=...>` for the stylist profile navigation. This causes a full page reload instead of a client-side transition. Must use `<Link to=...>` from `react-router-dom`.
+Answers: "What percentage of each stylist's clients are returning, and how does the team compare?"
 
-**3. Drill-down stat values use raw classes instead of tokens**
-The `<p className="text-sm font-medium">` on lines 238, 241, 245 should use `tokens.body.emphasis` (`font-sans text-sm font-medium text-foreground`) for consistency with the design system.
+**Layout**: Same two-panel pattern as Client Visits card.
+- Left panel: Hero KPI showing overall "% Returning" with period-over-period change badge and MetricInfoTooltip
+- Right panel: Vertical bar chart showing "% Returning Breakdown" per stylist, sorted highest to lowest
 
-**4. No click affordance on the bar chart**
-Users have no visual cue that bars are interactive. Add a small hint text below the chart ("Click a bar to explore") that fades out once a bar has been clicked, following the pattern used in other drill-down cards.
+**Drill-down**: Clicking a bar expands an inline panel showing:
+- Total appointments for that stylist
+- New vs returning count split
+- Average ticket for returning clients vs new clients (comparison)
 
-**5. No active-bar highlight**
-When a bar is expanded, there is no visual distinction showing which bar is selected. The expanded bar should use a slightly stronger fill opacity or a different gradient stop to indicate selection.
+**Data source**: Extends `useClientVisitsByStaff` -- the hook already calculates `newClientVisits` and `returningClientVisits` per stylist. The component will derive `% returning = returningClientVisits / totalVisits * 100` and compute the overall team average. For period-over-period, a small enhancement to the hook adds prior-period returning counts.
 
-**6. Drill-down sub-labels use raw classes**
-`<p className="text-xs text-muted-foreground">` labels like "New Clients", "Returning", "Top Services" should use `tokens.label.tiny` or at minimum the muted body token for consistency.
+### Card 2: Rebooking Overview
 
-### Plan
+Answers: "What percentage of each stylist's completed appointments result in a rebooking, and how is that trending?"
 
-**File modified**: `src/components/dashboard/sales/ClientVisitsCard.tsx`
+**Layout**: Same two-panel pattern.
+- Left panel: Hero KPI showing overall "% Rebooked" with period-over-period change badge and MetricInfoTooltip
+- Right panel: Vertical bar chart showing "% Rebooked Breakdown" per stylist, sorted highest to lowest
 
-1. Add `className={tokens.card.wrapper}` to all three `<Card>` elements (loading, empty, main)
-2. Replace the `<a href=...>` profile link with React Router `<Link to=...>` (add import)
-3. Replace raw `text-sm font-medium` on drill-down stat values with `tokens.body.emphasis`
-4. Replace raw `text-xs text-muted-foreground` on drill-down labels with appropriate tokens
-5. Add a subtle "Click a bar to explore" hint below the chart that uses `tokens.body.muted` styling with reduced opacity, hidden once a bar has been clicked (track via a `hasInteracted` state)
-6. Add active-bar highlighting: when `expandedStaff` matches a bar's `staffId`, use a second SVG gradient (`clientVisitsBarGradientActive`) with higher opacity stops (0.7 to 0.35) so the selected bar visually stands out
+**Drill-down**: Clicking a bar expands an inline panel showing:
+- Total completed appointments
+- Rebooked count and rate
+- Average ticket for rebooked vs not-rebooked appointments
 
-### No other files need changes
-The hook (`useClientVisitsByStaff.ts`) and the integration in `SalesTabContent.tsx` are correct. The `PinnableCard` wrapper is applied externally as expected. The `AnalyticsFilterBadge` is correctly placed in the right column of the header.
+**Data source**: New hook `useRebookingByStaff` querying `phorest_appointments` for the `rebooked_at_checkout` boolean field (already used extensively in the codebase). Groups by `phorest_staff_id`, calculates per-stylist rebooking rate and team average, plus prior-period comparison.
+
+### Technical Details
+
+**New files:**
+- `src/hooks/useRebookingByStaff.ts` -- Queries `phorest_appointments` with fields `phorest_staff_id, rebooked_at_checkout, total_price, status`, filters out cancelled/no-show, groups by staff. Uses manual pagination via `.range()`. Calculates per-stylist and aggregate rebooking rates with prior-period comparison.
+- `src/components/dashboard/sales/ReturningClientsCard.tsx` -- Two-panel card using data from `useClientVisitsByStaff`. Derives returning percentages client-side. Standard header with icon (UserCheck) + AnalyticsFilterBadge. Recharts vertical BarChart with glass gradient fills, percentage labels on bars. Active-bar highlighting and framer-motion drill-down.
+- `src/components/dashboard/sales/RebookingOverviewCard.tsx` -- Two-panel card using `useRebookingByStaff`. Standard header with icon (RefreshCw) + AnalyticsFilterBadge. Same chart and drill-down patterns.
+
+**Modified files:**
+- `src/hooks/useClientVisitsByStaff.ts` -- Add prior-period returning client counts to enable period-over-period change on the Returning Clients card. The current hook already fetches prior-period data but only returns `priorTotalVisits`; it needs to also return `priorReturningCount`.
+- `src/components/dashboard/analytics/SalesTabContent.tsx` -- Add both cards to the `staff` TabsContent, positioned after the Client Visits card and before the Staff Performance leaderboard. Each wrapped in PinnableCard.
+
+**Design compliance:**
+- `tokens.card.wrapper` on all Card states
+- Two-column `justify-between` header with AnalyticsFilterBadge
+- `tokens.stat.large` for hero percentage
+- Glass gradient bars with `hsl(var(--primary))` and active-bar highlighting
+- `framer-motion` drill-down with "Click a bar to explore" hint
+- `tokens.body.emphasis` and `tokens.body.muted` for drill-down labels
+- React Router `Link` for any profile navigation
+- BlurredAmount for currency values in drill-down
+- Skeleton loading states matching two-panel layout
+- Empty state using `tokens.empty` pattern
+- Bar percentage labels at bar tops (e.g., "67%", "20%")
+
+**Hook data structure (useRebookingByStaff):**
+```text
+Returns:
+  overallRate: number (aggregate % rebooked)
+  priorOverallRate: number
+  percentChange: number | null
+  staffBreakdown: Array of {
+    staffId, staffName, userId,
+    totalAppointments, rebookedCount, rebookingRate,
+    avgTicketRebooked, avgTicketNotRebooked
+  }
+```
+
+**Hook enhancement (useClientVisitsByStaff):**
+```text
+Adds to return object:
+  overallReturningRate: number
+  priorReturningRate: number
+  returningPercentChange: number | null
+```
+The prior-period fetch already exists; the enhancement extracts `is_new_client` from the prior data (currently only fetches `phorest_staff_id, status`).
