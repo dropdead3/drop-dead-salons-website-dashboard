@@ -1,5 +1,5 @@
 export const TABS_CLASSES = {
-  list: "inline-flex h-11 items-center justify-center p-1.5 text-muted-foreground gap-0.5 bg-muted/70 rounded-[9px]",
+  list: "inline-flex h-11 items-center justify-center p-1.5 text-muted-foreground gap-1 bg-muted/70 rounded-[9px]",
   trigger: [
     "inline-flex items-center justify-center whitespace-nowrap rounded-[6px] px-3.5 py-1.5 text-sm font-medium ring-offset-background transition-all",
     "data-[state=active]:bg-black/[0.07] dark:data-[state=active]:bg-white/[0.08] data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-black/[0.10] dark:data-[state=active]:ring-white/[0.12] data-[state=active]:backdrop-blur-sm",
@@ -13,7 +13,7 @@ export const TABS_CLASSES = {
   subTrigger:
     "inline-flex items-center gap-2 px-2 py-2 text-sm font-medium border-b-2 border-transparent rounded-t-md transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:text-foreground hover:bg-muted/50 data-[state=active]:text-foreground data-[state=active]:border-primary data-[state=active]:bg-transparent",
 
-  filterList: "inline-flex h-8 items-center justify-center p-1 text-muted-foreground gap-0.5 bg-muted/70 rounded-[7px]",
+  filterList: "inline-flex h-8 items-center justify-center p-1 text-muted-foreground gap-1 bg-muted/70 rounded-[7px]",
   filterTrigger: [
     "inline-flex items-center justify-center whitespace-nowrap rounded-[5px] px-2.5 py-1 text-xs font-medium ring-offset-background transition-all",
     "data-[state=active]:bg-black/[0.07] dark:data-[state=active]:bg-white/[0.08] data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=active]:ring-1 data-[state=active]:ring-black/[0.10] dark:data-[state=active]:ring-white/[0.12] data-[state=active]:backdrop-blur-sm",
@@ -24,7 +24,7 @@ export const TABS_CLASSES = {
 
 export const RESPONSIVE_TABS_LAYOUT = {
   overflowButtonWidth: 36, // w-9
-  listToOverflowGapPx: 2, // gap-0.5
+  listToOverflowGapPx: 4, // gap-1
   rightSafeInsetPx: 6,
   epsilonPx: 1,
 } as const;
