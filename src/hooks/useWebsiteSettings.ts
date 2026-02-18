@@ -69,6 +69,29 @@ export function useUpdateWebsiteThemeSettings() {
   return useUpdateSiteSetting<WebsiteThemeSettings>();
 }
 
+// === Retail Theme Settings ===
+export interface WebsiteRetailThemeSettings {
+  [key: string]: unknown;
+  base_theme: string;
+  custom_colors: {
+    primary: string;
+    background: string;
+    card: string;
+    foreground: string;
+  };
+  heading_font: string;
+  body_font: string;
+  show_logo: boolean;
+}
+
+export function useWebsiteRetailThemeSettings() {
+  return useSiteSettings<WebsiteRetailThemeSettings>('website_retail_theme');
+}
+
+export function useUpdateWebsiteRetailThemeSettings() {
+  return useUpdateSiteSetting<WebsiteRetailThemeSettings>();
+}
+
 // === Social Links Settings ===
 export interface WebsiteSocialLinksSettings {
   [key: string]: unknown;

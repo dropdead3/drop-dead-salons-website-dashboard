@@ -70,6 +70,7 @@ import {
 } from '@/components/ui/resizable';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { OnlineStoreProductsTable } from './OnlineStoreProductsTable';
+import { StoreAppearanceConfigurator } from './StoreAppearanceConfigurator';
 import {
   Select,
   SelectContent,
@@ -752,6 +753,11 @@ function RetailTab() {
             <OnlineStoreProductsTable />
           </CardContent>
         </Card>
+      )}
+
+      {/* Store Appearance Configurator with Live Preview */}
+      {local.enabled && storeUrl && (
+        <StoreAppearanceConfigurator storeUrl={storeUrl} />
       )}
     </div>
   );
