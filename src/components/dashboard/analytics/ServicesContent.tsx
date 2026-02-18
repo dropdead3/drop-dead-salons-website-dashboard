@@ -27,7 +27,7 @@ import { useServiceEfficiency, type ServiceEfficiencyRow, type StylistBreakdown 
 import { RevPerHourByCategoryChart } from '@/components/dashboard/sales/RevPerHourByCategoryChart';
 import { useServiceDemandTrend } from '@/hooks/useServiceDemandTrend';
 import { useServiceClientAnalysis } from '@/hooks/useServiceClientAnalysis';
-import { useServicePairings } from '@/hooks/useServicePairings';
+import { ServiceBundlingIntelligence } from '@/components/dashboard/sales/ServiceBundlingIntelligence';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -147,7 +147,7 @@ const SERVICES_SECTION_DEFS: CardDefinition[] = [
   { id: 'rebook_rates', label: 'Service Rebooking Rates', icon: <RefreshCw className="w-4 h-4" /> },
   { id: 'price_realization', label: 'Price Realization', icon: <DollarSign className="w-4 h-4" /> },
   { id: 'demand_trends', label: 'Service Demand Trends', icon: <TrendingUp className="w-4 h-4" /> },
-  { id: 'service_pairings', label: 'Service Pairings', icon: <Layers className="w-4 h-4" /> },
+  { id: 'service_pairings', label: 'Service Bundling Intelligence', icon: <Layers className="w-4 h-4" /> },
 ];
 const SERVICES_DEFAULT_ORDER = SERVICES_SECTION_DEFS.map(s => s.id);
 
@@ -155,7 +155,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
   const { data, isLoading } = useServiceEfficiency(dateFrom, dateTo, locationId);
   const { data: demandTrends, isLoading: trendsLoading } = useServiceDemandTrend(locationId);
   const { data: clientAnalysis, isLoading: clientLoading } = useServiceClientAnalysis(dateFrom, dateTo, locationId);
-  const { data: pairings, isLoading: pairingsLoading } = useServicePairings(dateFrom, dateTo, locationId);
+  
   const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
   const { formatNumber, formatPercent } = useFormatNumber();
   const { colorMap } = useServiceCategoryColorsMap();
@@ -834,49 +834,15 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
   );
 
   sections.service_pairings = (
-    <PinnableCard key="service_pairings" elementKey="service_pairings" elementName="Service Pairings" category="Analytics Hub - Sales" dateRange={dateRange} locationName={locationName}>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg"><Layers className="w-5 h-5 text-primary" /></div>
-              <div>
-                <CardTitle className="font-display text-base tracking-wide">SERVICE PAIRINGS</CardTitle>
-                <CardDescription>Most common service combinations — bundle & upsell opportunities</CardDescription>
-              </div>
-            </div>
-            <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
-          </div>
-        </CardHeader>
-        <CardContent>
-          {pairingsLoading ? (
-            <div className="h-32 flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>
-          ) : pairings.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No multi-service visits found in this period</p>
-          ) : (
-            <div className="space-y-2">
-              {pairings.slice(0, 8).map((p, i) => (
-                <div key={i} className="flex items-center gap-3 py-2 px-3 rounded-lg bg-muted/20">
-                  <span className="text-xs font-bold text-muted-foreground w-5">#{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 text-sm">
-                      <span className="truncate max-w-[180px] font-medium">{p.serviceA}</span>
-                      <span className="text-muted-foreground shrink-0">+</span>
-                      <span className="truncate max-w-[180px] font-medium">{p.serviceB}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <span className="text-xs tabular-nums font-medium">{p.count} times</span>
-                    <Badge variant="secondary" className="text-xs">{Math.round(p.pctOfVisits)}% of visits</Badge>
-                  </div>
-                </div>
-              ))}
-              <p className="text-xs text-muted-foreground mt-2 px-1">Based on services booked by the same client on the same day. Consider bundling top pairs into packages.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </PinnableCard>
+    <ServiceBundlingIntelligence
+      key="service_pairings"
+      dateFrom={dateFrom}
+      dateTo={dateTo}
+      locationId={locationId}
+      filterContext={filterContext}
+      dateRange={dateRange}
+      locationName={locationName}
+    />
   );
 
   return (
