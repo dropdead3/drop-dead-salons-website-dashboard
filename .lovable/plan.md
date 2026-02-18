@@ -1,86 +1,116 @@
 
 
-# Online Store Products Configurator
+# Standalone Online Retail Store Page
 
-## What We're Building
+## The Idea
 
-When the "Enable online shop" toggle is turned ON in the Retail tab, a full product configurator appears below the settings -- similar to the screenshot reference. This lets salon owners control which products are visible on their public storefront, directly from Website Settings.
+Salons should be able to share a direct link to their online retail store (e.g., `/org/drop-dead/shop`) that works independently of whether they have a full salon website enabled. This lets salons with existing websites on other platforms (Wix, Squarespace, etc.) simply link to their retail store without needing to adopt the full Zura website.
 
 ## Current State
 
-- The Retail tab has an "Enable online shop" toggle, fulfillment options, and a featured products toggle -- but no product list
-- The `products` table exists with 8 active products but has **no `available_online` column**
-- Product management exists in the Inventory page, but there's no way to control online visibility per product
+- Public org pages exist at `/org/:orgSlug/` with pages for home, about, services, booking, stylists, extensions, policies
+- **No `/shop` or `/store` public page exists**
+- The `products` table has `available_online` (just added) to control visibility
+- The `website_retail` site setting controls whether the store is enabled
+- No public-facing product browsing or cart experience exists yet
 
-## Changes
+## What This Delivers
 
-### 1. Database: Add `available_online` column to `products`
+### 1. New Public Route: `/org/:orgSlug/shop`
 
-Add a boolean column `available_online` (default `false`) to the existing `products` table. This controls whether each product appears on the public storefront.
+A standalone, client-facing retail store page that:
+- Loads the org context via `OrgPublicRoute` (same as all other public pages)
+- Checks `website_retail.enabled` -- if disabled, shows a "Store unavailable" message
+- Displays only products where `available_online = true` and `is_active = true`
+- Works with the org's color theme (uses existing `Layout` component)
+- Is fully functional whether or not the full website homepage is used
 
-### 2. New Component: `OnlineStoreProductsTable`
+### 2. Store Page Features
 
-A streamlined product table that appears **only when** the online store toggle is enabled. Inspired by the reference screenshot, it shows:
+**Product Grid:**
+- Responsive grid of product cards (image placeholder, name, brand, price)
+- Category/brand filter sidebar or dropdown
+- Search bar
+- "No products available" empty state
 
-| Column | Description |
-|--------|-------------|
-| Product Name | Clickable name (links to edit dialog) |
-| Brand | Brand name |
-| Price | Retail price |
-| Inventory | Stock count with warning icon when low/negative |
-| Available Online | No/Yes toggle buttons per product |
+**Product Detail (inline or modal):**
+- Product name, brand, description, price
+- Stock availability indicator
+- "Add to Cart" button (Phase 1: link to contact/booking; Phase 2: full cart)
 
-Features:
-- Search bar to filter by product name
-- Brand dropdown filter
-- Availability dropdown filter (All / Online / Not Online)
-- Product count footer (e.g., "8 Products")
-- Status banner when online store is disabled ("Your online store is disabled. Clients can't see or buy products.")
-- Inline toggle to flip `available_online` per product with immediate save
-- Bulk actions: "Make all available" / "Make all unavailable"
+**Store Header:**
+- Salon logo + name (from org context)
+- "Back to website" link (if full website is enabled) or standalone branding
+- Minimal navigation (just the store)
 
-### 3. Update Retail Tab
+### 3. Shareable Store Link
 
-When `local.enabled` is `true`, render the `OnlineStoreProductsTable` component below the existing settings card. When `false`, the product table is hidden (only the toggle and settings show).
+In the Retail tab of Website Settings, when the online store is enabled, display:
+- The store URL: `yoursite.lovable.app/org/{slug}/shop`
+- A "Copy Link" button
+- Helper text: "Share this link on your existing website, social media, or anywhere clients can find you."
+- If a custom domain is configured, show that URL instead
 
-### 4. Update `useProducts` hook
+### 4. Standalone Mode Detection
 
-- Add `available_online` to the `Product` interface
-- Add `availableOnline` filter option to `ProductFilters`
-
-### 5. New hook: `useToggleProductOnline`
-
-A lightweight mutation that updates just the `available_online` field for a single product, with optimistic updates for instant UI feedback.
+The store page checks whether the full website is enabled:
+- **Full website ON**: Store uses the full `Layout` with nav (Home, Services, etc.) + a Shop link in the nav
+- **Full website OFF**: Store renders with a minimal layout -- just logo, store content, and footer. No nav links to pages that don't exist.
 
 ## File Summary
 
 | File | Action |
 |------|--------|
-| `products` table | Migration: add `available_online` boolean column |
-| `src/hooks/useProducts.ts` | Update: add `available_online` to interface and filter |
-| `src/components/dashboard/settings/OnlineStoreProductsTable.tsx` | Create: product configurator table |
-| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | Edit: render product table in RetailTab when enabled |
+| `src/pages/Shop.tsx` | Create: public retail store page with product grid |
+| `src/components/shop/ProductCard.tsx` | Create: individual product card component |
+| `src/components/shop/ShopLayout.tsx` | Create: standalone layout wrapper for store-only mode |
+| `src/components/shop/ProductFilters.tsx` | Create: category/brand filter bar |
+| `src/hooks/usePublicProducts.ts` | Create: public query for online-available products (no auth required) |
+| `src/App.tsx` | Update: add `/org/:orgSlug/shop` route |
+| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | Update: add store link display + copy button in RetailTab |
 
 ## Technical Details
 
-### Migration SQL
+### Public Products Hook
+A new hook that fetches products without requiring auth, filtered to `available_online = true` and `is_active = true`. This relies on an RLS policy allowing anonymous/public SELECT on products where `available_online = true`.
+
+### RLS Policy for Public Products
 ```sql
-ALTER TABLE public.products
-ADD COLUMN available_online BOOLEAN NOT NULL DEFAULT false;
+CREATE POLICY "Public can view online products"
+ON public.products FOR SELECT
+USING (is_active = true AND available_online = true);
 ```
 
-### OnlineStoreProductsTable Component
-- Uses existing `useProducts` hook for data
-- Adds a new `useToggleProductOnline` mutation with optimistic cache updates
-- Search input filters by product name (client-side for simplicity with small catalogs, or passed to the hook)
-- Brand filter uses `useProductCategories`-style distinct query
-- The No/Yes toggle is a segmented button pair per row, styled like the reference screenshot
-- Immediate save on toggle -- no "Save" button needed for availability changes
-
-### RetailTab Integration
-The product table renders conditionally:
-```
-{local.enabled && <OnlineStoreProductsTable />}
+### Route Registration
+```tsx
+<Route path="/org/:orgSlug" element={<OrgPublicRoute />}>
+  {/* ...existing routes... */}
+  <Route path="shop" element={<Shop />} />
+</Route>
 ```
 
-If the store is disabled in the database (not just local state), a warning banner shows above the table.
+### Store Link in Settings
+When the store is enabled, the RetailTab shows a card with:
+- The shareable URL
+- Copy-to-clipboard button
+- QR code option (uses existing `qrcode.react` dependency)
+- Embed snippet for iframes (stretch goal)
+
+### ShopLayout Component
+Detects whether the full website is enabled via `website_retail` + checking if the org has homepage sections enabled. If full site is off, renders a minimal chrome: logo, store grid, footer with social links only.
+
+## Phase Boundaries
+
+**This implementation (Phase 1):**
+- Product browsing grid with filters
+- Standalone or integrated layout
+- Shareable link with copy button
+- Product detail modal with description and price
+- "Inquire" / "Contact to purchase" CTA (no cart yet)
+
+**Phase 2 (future):**
+- Full shopping cart with quantity management
+- Checkout flow with payment integration
+- Order confirmation and email receipts
+- Inventory deduction on purchase
+
