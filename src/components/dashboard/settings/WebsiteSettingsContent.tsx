@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Globe, Palette, Calendar, ShoppingBag, Scale, 
   ExternalLink, Check, Loader2, Save, Megaphone,
-  Instagram, Facebook, Twitter, Linkedin, Youtube, Eye
+  Instagram, Facebook, Twitter, Linkedin, Youtube, Eye,
+  ArrowLeft, PanelRightClose, PanelRightOpen, LayoutGrid,
+  PanelLeftClose, PanelLeftOpen,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { colorThemes, type ColorTheme } from '@/hooks/useColorTheme';
@@ -38,6 +41,34 @@ import {
 } from '@/hooks/useAnnouncementBar';
 import { cn } from '@/lib/utils';
 import { DomainConfigCard } from './DomainConfigCard';
+import { ActiveThemeCard } from './ActiveThemeCard';
+import { ThemeLibraryGrid } from './ThemeLibraryGrid';
+import { useWebsiteThemes, useActiveTheme, useActivateTheme } from '@/hooks/useWebsiteThemes';
+import { useColorTheme } from '@/hooks/useColorTheme';
+// Website Editor components for embedded editor
+import { WebsiteEditorSidebar } from '@/components/dashboard/website-editor/WebsiteEditorSidebar';
+import { LivePreviewPanel } from '@/components/dashboard/website-editor/LivePreviewPanel';
+import { HeroEditor } from '@/components/dashboard/website-editor/HeroEditor';
+import { BrandStatementEditor } from '@/components/dashboard/website-editor/BrandStatementEditor';
+import { NewClientEditor } from '@/components/dashboard/website-editor/NewClientEditor';
+import { TestimonialsEditor } from '@/components/dashboard/website-editor/TestimonialsEditor';
+import { ExtensionsEditor } from '@/components/dashboard/website-editor/ExtensionsEditor';
+import { FAQEditor } from '@/components/dashboard/website-editor/FAQEditor';
+import { BrandsManager } from '@/components/dashboard/website-editor/BrandsManager';
+import { DrinksManager } from '@/components/dashboard/website-editor/DrinksManager';
+import { FooterCTAEditor } from '@/components/dashboard/website-editor/FooterCTAEditor';
+import { TestimonialsContent } from '@/components/dashboard/website-editor/TestimonialsContent';
+import { GalleryContent } from '@/components/dashboard/website-editor/GalleryContent';
+import { StylistsContent } from '@/components/dashboard/website-editor/StylistsContent';
+import { LocationsContent } from '@/components/dashboard/website-editor/LocationsContent';
+import { ServicesContent } from '@/components/dashboard/website-editor/ServicesContent';
+import { AnnouncementBarContent } from '@/components/dashboard/website-editor/AnnouncementBarContent';
+import {
+  ResizablePanelGroup,
+  ResizablePanel,
+  ResizableHandle,
+} from '@/components/ui/resizable';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Select,
   SelectContent,
@@ -247,113 +278,218 @@ function GeneralTab() {
   );
 }
 
-// ─── Theme Tab ───
+// Editor component map (same as WebsiteSectionsHub)
+const EDITOR_COMPONENTS: Record<string, React.ComponentType> = {
+  'services': ServicesContent,
+  'testimonials': TestimonialsContent,
+  'gallery': GalleryContent,
+  'stylists': StylistsContent,
+  'locations': LocationsContent,
+  'banner': AnnouncementBarContent,
+  'hero': HeroEditor,
+  'brand': BrandStatementEditor,
+  'testimonials-section': TestimonialsEditor,
+  'services-preview': ServicesContent,
+  'popular-services': ServicesContent,
+  'gallery-section': GalleryContent,
+  'new-client': NewClientEditor,
+  'stylists-section': StylistsContent,
+  'locations-section': LocationsContent,
+  'extensions': ExtensionsEditor,
+  'faq': FAQEditor,
+  'brands': BrandsManager,
+  'drinks': DrinksManager,
+  'footer-cta': FooterCTAEditor,
+};
+
+const TAB_LABELS: Record<string, string> = {
+  'services': 'Services Manager',
+  'testimonials': 'Testimonials Manager',
+  'gallery': 'Gallery Manager',
+  'stylists': 'Stylists Manager',
+  'locations': 'Locations Manager',
+  'banner': 'Announcement Banner',
+  'hero': 'Hero Section',
+  'brand': 'Brand Statement',
+  'testimonials-section': 'Testimonials Display',
+  'services-preview': 'Services Preview',
+  'popular-services': 'Popular Services',
+  'gallery-section': 'Gallery Display',
+  'new-client': 'New Client CTA',
+  'stylists-section': 'Stylists Display',
+  'locations-section': 'Locations Display',
+  'extensions': 'Extensions Spotlight',
+  'faq': 'FAQ',
+  'brands': 'Partner Brands',
+  'drinks': 'Drink Menu',
+  'footer-cta': 'Footer CTA',
+};
+
+// ─── Theme Tab (Full Theme Management System) ───
 function ThemeTab() {
-  const { data: themeSettings, isLoading } = useWebsiteThemeSettings();
-  const updateTheme = useUpdateWebsiteThemeSettings();
+  const { data: themes, isLoading: themesLoading } = useWebsiteThemes();
+  const { data: activeThemeSetting, isLoading: activeLoading } = useActiveTheme();
+  const activateTheme = useActivateTheme();
+  const { setColorTheme } = useColorTheme();
   const { toast } = useToast();
-  const [selectedTheme, setSelectedTheme] = useState<string>('cream');
+  const isMobile = useIsMobile();
 
-  useEffect(() => {
-    if (themeSettings?.color_theme) {
-      setSelectedTheme(themeSettings.color_theme);
-    }
-  }, [themeSettings]);
+  // Editor state
+  const [mode, setMode] = useState<'overview' | 'editor'>('overview');
+  const [editorTab, setEditorTab] = useState('hero');
+  const [showPreview, setShowPreview] = useState(false);
+  const [showSidebar, setShowSidebar] = useState(true);
 
-  const handleSaveTheme = () => {
-    updateTheme.mutate(
-      { key: 'website_theme', value: { color_theme: selectedTheme } as WebsiteThemeSettings },
-      {
-        onSuccess: () => toast({ title: 'Theme saved', description: 'Website theme updated successfully.' }),
-        onError: () => toast({ variant: 'destructive', title: 'Error', description: 'Failed to save theme.' }),
+  const activeThemeId = activeThemeSetting?.theme_id || 'cream_classic';
+  const activeTheme = themes?.find((t) => t.id === activeThemeId);
+
+  const handleActivate = async (themeId: string) => {
+    const theme = themes?.find((t) => t.id === themeId);
+    if (!theme) return;
+
+    try {
+      await activateTheme.mutateAsync(themeId);
+      // Apply color scheme
+      const validSchemes = ['cream', 'rose', 'sage', 'ocean'];
+      if (validSchemes.includes(theme.color_scheme)) {
+        setColorTheme(theme.color_scheme as ColorTheme);
       }
-    );
+      toast({ title: 'Theme activated', description: `"${theme.name}" is now your active theme.` });
+    } catch {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to activate theme.' });
+    }
   };
 
-  const futureThemes = [
-    { name: 'Midnight', description: 'Deep navy & gold' },
-    { name: 'Terracotta', description: 'Warm earth tones' },
-    { name: 'Lavender', description: 'Soft purple pastels' },
-  ];
+  const handlePreview = (themeId?: string) => {
+    window.open('/', '_blank');
+  };
+
+  const isLoading = themesLoading || activeLoading;
 
   if (isLoading) {
-    return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
+  // ── Editor Mode ──
+  if (mode === 'editor') {
+    const EditorComponent = EDITOR_COMPONENTS[editorTab];
+
+    return (
+      <div className="space-y-0 -mx-1">
+        {/* Editor header */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="sm" onClick={() => setMode('overview')} className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Back to Themes
+            </Button>
+            <div className="h-5 w-px bg-border" />
+            <div className="flex items-center gap-2">
+              <LayoutGrid className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium">
+                {TAB_LABELS[editorTab] || 'Website Editor'}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={showPreview ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setShowPreview(!showPreview)}
+            >
+              {showPreview ? (
+                <><PanelRightClose className="h-4 w-4 mr-1" />Hide Preview</>
+              ) : (
+                <><PanelRightOpen className="h-4 w-4 mr-1" />Preview</>
+              )}
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => window.open('/', '_blank')}>
+              <ExternalLink className="h-4 w-4 mr-1" />
+              Open Site
+            </Button>
+          </div>
+        </div>
+
+        {/* Editor content with sidebar + preview */}
+        <div className="border rounded-xl overflow-hidden" style={{ height: 'calc(100vh - 20rem)' }}>
+          <ResizablePanelGroup direction="horizontal" className="h-full">
+            {/* Sidebar */}
+            {showSidebar && !isMobile && (
+              <>
+                <ResizablePanel defaultSize={22} minSize={15} maxSize={30}>
+                  <WebsiteEditorSidebar
+                    activeTab={editorTab}
+                    onTabChange={setEditorTab}
+                  />
+                </ResizablePanel>
+                <ResizableHandle withHandle />
+              </>
+            )}
+
+            {/* Main editor */}
+            <ResizablePanel defaultSize={showPreview ? 48 : 78} minSize={30}>
+              <div className="h-full flex flex-col overflow-hidden">
+                <div className="flex-shrink-0 px-4 py-2 border-b bg-muted/30 flex items-center gap-2">
+                  {!isMobile && (
+                    <Button variant="ghost" size="icon" onClick={() => setShowSidebar(!showSidebar)} className="h-7 w-7">
+                      {showSidebar ? <PanelLeftClose className="h-3.5 w-3.5" /> : <PanelLeftOpen className="h-3.5 w-3.5" />}
+                    </Button>
+                  )}
+                  <span className="text-xs text-muted-foreground">
+                    Editing: {activeTheme?.name ?? 'Theme'}
+                  </span>
+                </div>
+                <div className="flex-1 overflow-auto p-6">
+                  {EditorComponent ? <EditorComponent /> : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
+                      Select a section from the sidebar
+                    </div>
+                  )}
+                </div>
+              </div>
+            </ResizablePanel>
+
+            {/* Preview panel */}
+            {showPreview && (
+              <>
+                <ResizableHandle withHandle />
+                <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+                  <LivePreviewPanel onClose={() => setShowPreview(false)} />
+                </ResizablePanel>
+              </>
+            )}
+          </ResizablePanelGroup>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Overview Mode ──
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display text-lg">COLOR THEME</CardTitle>
-          <CardDescription>Choose the color theme for your public-facing website. This applies globally to all visitors.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {colorThemes.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setSelectedTheme(t.id)}
-                className={cn(
-                  "relative rounded-xl border-2 p-3 text-left transition-all hover:shadow-md",
-                  selectedTheme === t.id 
-                    ? "border-primary ring-2 ring-primary/20" 
-                    : "border-border hover:border-primary/40"
-                )}
-              >
-                <div className="flex gap-1.5 mb-2">
-                  <div className="w-6 h-6 rounded-full border" style={{ backgroundColor: t.lightPreview.bg }} />
-                  <div className="w-6 h-6 rounded-full border" style={{ backgroundColor: t.lightPreview.accent }} />
-                  <div className="w-6 h-6 rounded-full border" style={{ backgroundColor: t.lightPreview.primary }} />
-                </div>
-                <p className="font-medium text-sm">{t.name}</p>
-                <p className="text-xs text-muted-foreground">{t.description}</p>
-                {selectedTheme === t.id && (
-                  <div className="absolute top-2 right-2 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center">
-                    <Check className="w-3 h-3" />
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-          {selectedTheme !== (themeSettings?.color_theme || 'cream') && (
-            <Button onClick={handleSaveTheme} disabled={updateTheme.isPending} className="w-full">
-              {updateTheme.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-              Save Theme
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+      {/* Active Theme */}
+      {activeTheme && (
+        <ActiveThemeCard
+          theme={activeTheme}
+          onCustomize={() => setMode('editor')}
+          onPreview={() => handlePreview()}
+        />
+      )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="font-display text-lg">UPCOMING THEMES</CardTitle>
-          <CardDescription>New themes are in development. Stay tuned!</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {futureThemes.map((ft) => (
-              <div key={ft.name} className="rounded-xl border border-dashed border-border p-4 opacity-60">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="font-medium text-sm">{ft.name}</p>
-                  <Badge variant="secondary" className="text-[10px]">Coming Soon</Badge>
-                </div>
-                <p className="text-xs text-muted-foreground">{ft.description}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="pt-6">
-          <Button variant="outline" className="w-full" asChild>
-            <a href="/dashboard/admin/website-sections">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Manage Homepage Sections
-            </a>
-          </Button>
-        </CardContent>
-      </Card>
+      {/* Theme Library */}
+      {themes && themes.length > 0 && (
+        <ThemeLibraryGrid
+          themes={themes}
+          activeThemeId={activeThemeId}
+          onActivate={handleActivate}
+          onPreview={(id) => handlePreview(id)}
+          isActivating={activateTheme.isPending}
+        />
+      )}
     </div>
   );
 }
