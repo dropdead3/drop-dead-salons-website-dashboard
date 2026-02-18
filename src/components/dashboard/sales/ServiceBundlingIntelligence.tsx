@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -134,13 +134,13 @@ export function ServiceBundlingIntelligence({
                         </div>
                         <div className="flex h-5 rounded-md overflow-hidden bg-muted/30">
                           <div
-                            className="bg-amber-500/80 flex items-center justify-center text-[10px] font-semibold text-amber-950 transition-all"
+                            className="bg-amber-500/80 flex items-center justify-center text-[10px] font-medium text-amber-950 transition-all"
                             style={{ width: `${Math.max(r.standaloneRate, 4)}%` }}
                           >
                             {r.standaloneRate >= 15 ? `${Math.round(r.standaloneRate)}% solo` : ''}
                           </div>
                           <div
-                            className="bg-emerald-500/80 flex items-center justify-center text-[10px] font-semibold text-emerald-950 transition-all"
+                            className="bg-emerald-500/80 flex items-center justify-center text-[10px] font-medium text-emerald-950 transition-all"
                             style={{ width: `${Math.max(r.groupedRate, 4)}%` }}
                           >
                             {r.groupedRate >= 15 ? `${Math.round(r.groupedRate)}% grouped` : ''}
@@ -219,7 +219,7 @@ export function ServiceBundlingIntelligence({
                       // Find standalone rate data for sample sizes
                       const standaloneInfo = standaloneRates.find(s => s.category === r.category);
                       return (
-                        <>
+                        <React.Fragment key={r.category}>
                           <TableRow
                             key={r.category}
                             className={cn('cursor-pointer hover:bg-muted/50', r.liftPct >= 50 && 'bg-emerald-500/5')}
@@ -278,7 +278,7 @@ export function ServiceBundlingIntelligence({
                               </TableCell>
                             </TableRow>
                           )}
-                        </>
+                        </React.Fragment>
                       );
                     })}
                   </TableBody>
@@ -345,16 +345,17 @@ export function ServiceBundlingIntelligence({
                             );
                           }
                           const intensity = Math.min(pair.count / maxCount, 1);
+                          const textColor = intensity > 0.5 ? 'text-primary-foreground' : 'text-foreground';
                           return (
                             <td key={colCat} className="p-2 text-center">
                               <div
-                                className="w-full h-10 rounded flex flex-col items-center justify-center transition-colors"
+                                className={cn('w-full h-10 rounded flex flex-col items-center justify-center transition-colors', textColor)}
                                 style={{
                                   backgroundColor: `hsl(var(--primary) / ${0.08 + intensity * 0.45})`,
                                 }}
                               >
-                                <span className="font-bold text-[11px]">{pair.count}</span>
-                                <span className="text-[9px] text-muted-foreground">{Math.round(pair.pct)}%</span>
+                                <span className="font-medium text-[11px]">{pair.count}</span>
+                                <span className={cn('text-[9px]', intensity > 0.5 ? 'opacity-80' : 'text-muted-foreground')}>{Math.round(pair.pct)}%</span>
                               </div>
                             </td>
                           );

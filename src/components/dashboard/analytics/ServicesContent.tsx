@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react';
+import React, { useMemo, useState, type ReactNode } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -102,7 +102,7 @@ function KpiTile({ icon: Icon, label, value, subtitle, isLoading, isExpanded, on
             <ChevronDown className={cn('w-3.5 h-3.5 text-muted-foreground ml-auto transition-transform', isExpanded && 'rotate-180')} />
           )}
         </div>
-        <div className="text-2xl font-display font-bold tracking-tight">
+        <div className="text-2xl font-display font-medium tracking-tight">
           <BlurredAmount>{value}</BlurredAmount>
         </div>
         {subtitle && (
@@ -126,7 +126,7 @@ function RebookBar({ rate }: { rate: number }) {
       <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
         <div className={cn('h-full rounded-full', color)} style={{ width: `${Math.min(rate, 100)}%` }} />
       </div>
-      <span className={cn('text-xs font-semibold tabular-nums w-10 text-right',
+      <span className={cn('text-xs font-medium tabular-nums w-10 text-right',
         rate >= 70 ? 'text-emerald-600 dark:text-emerald-400' : rate >= 40 ? 'text-amber-600 dark:text-amber-400' : 'text-red-500'
       )}>{Math.round(rate)}%</span>
     </div>
@@ -368,7 +368,10 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg"><BarChart3 className="w-5 h-5 text-primary" /></div>
               <div>
-                <CardTitle className="font-display text-base tracking-wide">SERVICE CATEGORY MIX</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-base tracking-wide">SERVICE CATEGORY MIX</CardTitle>
+                  <MetricInfoTooltip description="Revenue distribution across service categories. Shows each category's total revenue, booking count, average ticket, and revenue per hour. Click a category to see individual services." />
+                </div>
                 <CardDescription>Revenue distribution — click a category to drill down</CardDescription>
               </div>
             </div>
@@ -410,7 +413,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                       const isExpanded = expandedCategory === cat.category;
                       const clientStats = getCategoryClientStats(cat.services);
                       return (
-                        <>
+                        <React.Fragment key={cat.category}>
                           <TableRow key={cat.category} className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedCategory(isExpanded ? null : cat.category)}>
                             <TableCell>
                               <div className="flex items-center gap-2">
@@ -460,7 +463,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                               </TableCell>
                             </TableRow>
                           )}
-                        </>
+                        </React.Fragment>
                       );
                     })}
                   </TableBody>
@@ -487,7 +490,10 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg"><Users className="w-5 h-5 text-primary" /></div>
               <div>
-                <CardTitle className="font-display text-base tracking-wide">{clientView === 'magnets' ? 'NEW CLIENT MAGNETS' : 'RETENTION DRIVERS'}</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-base tracking-wide">{clientView === 'magnets' ? 'NEW CLIENT MAGNETS' : 'RETENTION DRIVERS'}</CardTitle>
+                  <MetricInfoTooltip description="Shows the mix of new vs. returning clients for each service. 'Magnets' ranks by new client volume; 'Retention' ranks by returning client percentage. Services need 3+ bookings to appear." />
+                </div>
                 <CardDescription>{clientView === 'magnets' ? 'Which services attract the most new clients?' : 'Which services have the highest returning client percentage?'}</CardDescription>
               </div>
             </div>
@@ -546,7 +552,10 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg"><Target className="w-5 h-5 text-primary" /></div>
               <div>
-                <CardTitle className="font-display text-base tracking-wide">SERVICE EFFICIENCY MATRIX</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-base tracking-wide">SERVICE EFFICIENCY MATRIX</CardTitle>
+                  <MetricInfoTooltip description="Ranks services by revenue per hour. Click any row to see stylist breakdown, new client percentage, rebook rate, tips, and day-of-week booking patterns." />
+                </div>
                 <CardDescription>Click any row for stylist breakdown, rebook rate & client mix</CardDescription>
               </div>
             </div>
@@ -578,7 +587,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                     const isBelow = s.revPerHour < avgRPH * 0.9;
                     const isExp = expandedEfficiency === s.serviceName;
                     return (
-                      <>
+                      <React.Fragment key={s.serviceName}>
                         <TableRow key={s.serviceName} className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedEfficiency(isExp ? null : s.serviceName)}>
                           <TableCell className="font-medium text-sm max-w-[200px] truncate">
                             <div className="flex items-center gap-1.5">
@@ -590,7 +599,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                           <TableCell><Badge variant="secondary" className="text-xs">{s.category}</Badge></TableCell>
                           <TableCell className="text-right tabular-nums text-sm">{s.avgDuration > 0 ? s.avgDuration : '—'}</TableCell>
                           <TableCell className="text-right tabular-nums text-sm"><BlurredAmount>{formatCurrency(s.avgRevenue)}</BlurredAmount></TableCell>
-                          <TableCell className={cn('text-right tabular-nums text-sm font-semibold', isAbove && 'text-emerald-600 dark:text-emerald-400', isBelow && 'text-red-500 dark:text-red-400')}>
+                          <TableCell className={cn('text-right tabular-nums text-sm font-medium', isAbove && 'text-emerald-600 dark:text-emerald-400', isBelow && 'text-red-500 dark:text-red-400')}>
                             <BlurredAmount>{s.revPerHour > 0 ? formatCurrency(s.revPerHour) : '—'}</BlurredAmount>
                           </TableCell>
                           <TableCell className="text-right tabular-nums text-sm">{formatNumber(s.bookings)}</TableCell>
@@ -654,7 +663,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                             </TableCell>
                           </TableRow>
                         )}
-                      </>
+                      </React.Fragment>
                     );
                   })}
                 </TableBody>
@@ -724,7 +733,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                         <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform shrink-0', isExp && 'rotate-180')} />
                       </span>
                       <div className="flex-1"><RebookBar rate={s.rebookRate} /></div>
-                      <span className="text-xs text-muted-foreground tabular-nums w-16">{s.totalCount} appts</span>
+                      <span className="text-xs text-muted-foreground tabular-nums w-16">{s.totalCount} appointments</span>
                     </div>
                     <DrillDown open={isExp}>
                       <div className="px-4 pb-2">
@@ -734,7 +743,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                             <div key={st.staffId} className="flex items-center gap-3 text-xs">
                               <span className="truncate w-[120px]">{st.staffName}</span>
                               <div className="flex-1"><RebookBar rate={st.rate} /></div>
-                              <span className="text-muted-foreground tabular-nums w-12">{st.total} appts</span>
+                              <span className="text-muted-foreground tabular-nums w-12">{st.total} appointments</span>
                             </div>
                           ))}
                         </div>
@@ -764,7 +773,10 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg"><DollarSign className="w-5 h-5 text-primary" /></div>
               <div>
-                <CardTitle className="font-display text-base tracking-wide">PRICE REALIZATION</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-base tracking-wide">PRICE REALIZATION</CardTitle>
+                  <MetricInfoTooltip description="Compares the menu price to the average price actually collected per service. Rates below 85% indicate heavy discounting; above 105% may indicate upsells or add-ons. Click a service to see per-stylist realization." />
+                </div>
                 <CardDescription>Menu price vs. actual collected — where is discounting eroding margin?</CardDescription>
               </div>
             </div>
@@ -808,7 +820,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                           {s.fullName}
                           <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform shrink-0', isRealExp && 'rotate-180')} />
                         </span>
-                        <span className={cn('font-semibold tabular-nums', s.rate < 85 && 'text-red-500', s.rate > 105 && 'text-emerald-600 dark:text-emerald-400')}>{Math.round(s.rate)}%</span>
+                        <span className={cn('font-medium tabular-nums', s.rate < 85 && 'text-red-500', s.rate > 105 && 'text-emerald-600 dark:text-emerald-400')}>{Math.round(s.rate)}%</span>
                       </div>
                       <DrillDown open={isRealExp}>
                         {serviceData && serviceData.stylistBreakdown.length > 0 && (
@@ -823,7 +835,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                                   <div className="flex items-center gap-3">
                                     <span className="tabular-nums text-muted-foreground">{st.bookings} bookings</span>
                                     <span className="tabular-nums"><BlurredAmount>{formatCurrency(stylistAvgPrice)}</BlurredAmount></span>
-                                    <span className={cn('tabular-nums font-semibold w-12 text-right',
+                                    <span className={cn('tabular-nums font-medium w-12 text-right',
                                       stylistRate < 85 && 'text-red-500',
                                       stylistRate > 105 && 'text-emerald-600 dark:text-emerald-400',
                                       stylistRate >= 85 && stylistRate <= 105 && 'text-foreground'
@@ -854,7 +866,10 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg"><TrendingUp className="w-5 h-5 text-primary" /></div>
               <div>
-                <CardTitle className="font-display text-base tracking-wide">SERVICE DEMAND TRENDS</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-base tracking-wide">SERVICE DEMAND TRENDS</CardTitle>
+                  <MetricInfoTooltip description="Shows 12-week booking trends for top services. Rising, stable, or declining classification is based on the slope of weekly booking counts. Click a service to see the full trend chart." />
+                </div>
                 <CardDescription>12-week booking trends — click to expand</CardDescription>
               </div>
             </div>
