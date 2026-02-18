@@ -52,6 +52,7 @@ export const TYPOGRAPHY_RULES = {
     'Add letter-spacing (tracking-wide, tracking-wider)',
     'Use borders or backgrounds to create visual separation',
     'Import tokens from @/lib/design-tokens for consistent class strings',
+    'KPI tile labels MUST use tokens.kpi.label (Termina) — never font-sans for uppercase metric labels',
   ],
 } as const;
 
