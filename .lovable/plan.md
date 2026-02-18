@@ -1,73 +1,68 @@
 
 
-## Beautify the Capacity Utilization Card
+## Standardize Warning/Status Badges Across the Dashboard
 
-### Analysis of Current State
+### Problem
 
-The card is functional but has several visual gaps compared to the project's luxury design standards:
+Two visually similar badges use completely different styling approaches, creating an inconsistent experience:
 
-1. **Progress bar** uses the default thin Progress component with harsh red -- feels clinical, not premium
-2. **Summary stat tiles** (Unused Hours, Gap Revenue, Appointments) use plain `bg-muted/30` boxes with small icons -- lack the refined glass treatment seen elsewhere
-3. **Daily utilization bars** are solid flat fills with no gradient or glass treatment -- inconsistent with the forecasting card's luxury glass bars
-4. **Service Mix section** has a minimal donut chart that feels cramped (120px height, 45px radius)
-5. **Opportunity callout** uses `bg-warning/10` with an emoji -- does not match the calm, advisory tone of the design system
-6. **Section dividers** are basic `border-t` -- could use the gradient fade treatment seen in the top bar
-7. **Bar chart labels** and typography don't fully leverage the design token system
+| Badge | Current Style | Visual Result |
+|-------|--------------|---------------|
+| "18% utilized" (Capacity) | `Badge variant="destructive"` | Solid red fill, white text, heavy shadow |
+| "Behind Pace" (Goal Tracker) | Custom `div` with `bg-destructive/10 text-destructive` | Soft red tint, red text, no fill |
 
-### Planned Enhancements
+The soft pill style (used by Goal Tracker) better matches the project's calm, luxury aesthetic. The solid `Badge` variant feels clinical and heavy by comparison.
 
-**File:** `src/components/dashboard/sales/CapacityUtilizationCard.tsx`
+### Solution
 
-#### 1. Refined Progress Bar
-- Increase height from `h-3` to `h-2.5` with rounded-full for a sleeker profile
-- Add a subtle background track styling with `bg-muted/50`
-- Use warm, softer utilization colors (muted-foreground tones for low utilization instead of harsh red)
+Replace the `Badge` component usage in both Capacity Utilization cards with the same soft pill pattern used by the Goal Tracker pace badges. This creates a unified "status pill" language across the dashboard.
 
-#### 2. Elevated Summary Stat Tiles
-- Replace `bg-muted/30` with `bg-card border border-border/40 rounded-xl` for a subtle card-within-card glass effect
-- Increase padding from `p-3` to `p-4`
-- Bump stat values from `text-lg` to `text-xl` for more presence
-- Place icons inside a `w-8 h-8 rounded-lg bg-muted` container (matching the card header icon box pattern)
+### Unified Status Pill Pattern
 
-#### 3. Luxury Glass Utilization Bars
-- Add SVG `<defs>` with a vertical linear gradient using `hsl(var(--muted-foreground))` at 0.45/0.18 opacity (matching the forecasting card treatment)
-- Add a glass stroke outline (1px, foreground at 0.12 opacity)
-- Increase bar border radius from `[4,4,0,0]` to `[6,6,0,0]`
+All three states (good / warning / critical) will use the same soft-tint formula:
 
-#### 4. Enhanced Service Mix Section
-- Replace plain `border-t` divider with a gradient fade line (`bg-gradient-to-r from-transparent via-border/40 to-transparent`)
-- Increase donut chart height from 120px to 140px, inner/outer radius from 25/45 to 30/52
-- Add subtle spacing between legend items
+```text
+Good (>=70%):    bg-chart-2/10 text-chart-2      (soft green tint)
+Warning (50-69%): bg-amber-500/10 text-amber-600  (soft amber tint)
+Critical (<50%):  bg-destructive/10 text-destructive (soft red tint)
+```
 
-#### 5. Refined Opportunity Callout
-- Replace `bg-warning/10` with `bg-muted/40 border border-border/40` for a calmer, advisory tone
-- Remove emoji from peak day text
-- Use `text-foreground` for the heading instead of `text-warning` -- keep it calm and confident
-- Softer icon color
+### Files to Modify
 
-#### 6. Section Divider Upgrades
-- Replace `border-t border-border/50` with a 1px gradient line: `h-px bg-gradient-to-r from-transparent via-border/40 to-transparent`
+**1. `src/components/dashboard/sales/CapacityUtilizationCard.tsx`**
+- Replace the `Badge` component at line 209 with a styled `span` using the soft pill pattern
+- Remove the `getUtilizationBadgeVariant` function (no longer needed)
+- Add a new `getUtilizationPillClasses` function returning the appropriate soft-tint classes
+- The badge at line 372 (single-day detail view) gets the same treatment
 
-**File:** `src/components/dashboard/analytics/CapacityUtilizationSection.tsx`
+**2. `src/components/dashboard/analytics/CapacityUtilizationSection.tsx`**
+- Same changes: replace `Badge` at line 199 with the soft pill pattern
+- Remove `getUtilizationBadgeVariant`, add `getUtilizationPillClasses`
 
-Same improvements applied to the Analytics Hub version for consistency:
-- Same stat tile elevation
-- Same gradient bar treatment
-- Same donut chart sizing
-- Same callout refinement
-- Same divider treatment
+### Technical Details
 
-### Technical Summary
+The helper function:
 
-| Element | Before | After |
-|---------|--------|-------|
-| Stat tiles | `bg-muted/30 p-3 rounded-lg` | `bg-card border border-border/40 p-4 rounded-xl` |
-| Stat values | `text-lg` | `text-xl` |
-| Stat icons | Bare 4x4 icon | `w-8 h-8 bg-muted rounded-lg` container |
-| Bar chart | Flat solid fills | SVG gradient (muted-foreground 0.45 to 0.18) + glass stroke |
-| Bar radius | `[4,4,0,0]` | `[6,6,0,0]` |
-| Donut chart | 120px / radius 25-45 | 140px / radius 30-52 |
-| Section divider | `border-t border-border/50` | Gradient fade line |
-| Opportunity callout | `bg-warning/10` + emoji | `bg-muted/40 border-border/40` advisory tone |
-| Progress track | `h-3` | `h-2.5` with `bg-muted/50` track |
+```tsx
+function getUtilizationPillClasses(percent: number): string {
+  if (percent >= 70) return 'bg-chart-2/10 text-chart-2';
+  if (percent >= 50) return 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
+  return 'bg-destructive/10 text-destructive';
+}
+```
 
+The badge markup changes from:
+```tsx
+<Badge variant={getUtilizationBadgeVariant(overallUtilization)} className="text-xs whitespace-nowrap">
+  {overallUtilization}% utilized
+</Badge>
+```
+
+To:
+```tsx
+<span className={cn('inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium', getUtilizationPillClasses(overallUtilization))}>
+  {overallUtilization}% utilized
+</span>
+```
+
+This exactly mirrors the Goal Tracker's pace badge structure, creating visual harmony across both cards.
