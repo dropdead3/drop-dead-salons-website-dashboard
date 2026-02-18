@@ -53,6 +53,7 @@ const SITE_CONTENT_ITEMS = [
   { tab: 'gallery', label: 'Gallery', description: 'Manage portfolio images', icon: Images },
   { tab: 'stylists', label: 'Stylists', description: 'Manage team profiles', icon: Users },
   { tab: 'locations', label: 'Locations', description: 'Manage salon locations', icon: MapPin },
+  { tab: 'footer-cta', label: 'Footer CTA', description: 'Pre-footer call to action', icon: Megaphone },
 ];
 
 // Homepage section groupings for logical organization

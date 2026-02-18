@@ -5,7 +5,8 @@ import {
   LayoutGrid,
   ExternalLink,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Eye
 } from 'lucide-react';
 import { HeroEditor } from '@/components/dashboard/website-editor/HeroEditor';
 import { BrandStatementEditor } from '@/components/dashboard/website-editor/BrandStatementEditor';
@@ -16,6 +17,11 @@ import { FAQEditor } from '@/components/dashboard/website-editor/FAQEditor';
 import { BrandsManager } from '@/components/dashboard/website-editor/BrandsManager';
 import { DrinksManager } from '@/components/dashboard/website-editor/DrinksManager';
 import { FooterCTAEditor } from '@/components/dashboard/website-editor/FooterCTAEditor';
+import { ServicesPreviewEditor } from '@/components/dashboard/website-editor/ServicesPreviewEditor';
+import { PopularServicesEditor } from '@/components/dashboard/website-editor/PopularServicesEditor';
+import { GalleryDisplayEditor } from '@/components/dashboard/website-editor/GalleryDisplayEditor';
+import { StylistsDisplayEditor } from '@/components/dashboard/website-editor/StylistsDisplayEditor';
+import { LocationsDisplayEditor } from '@/components/dashboard/website-editor/LocationsDisplayEditor';
 // Embedded Content Components
 import { TestimonialsContent } from '@/components/dashboard/website-editor/TestimonialsContent';
 import { GalleryContent } from '@/components/dashboard/website-editor/GalleryContent';
@@ -26,6 +32,8 @@ import { AnnouncementBarContent } from '@/components/dashboard/website-editor/An
 
 // Sidebar Navigation
 import { WebsiteEditorSidebar } from '@/components/dashboard/website-editor/WebsiteEditorSidebar';
+// Live Preview
+import { LivePreviewPanel } from '@/components/dashboard/website-editor/LivePreviewPanel';
 
 // Layout Components
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -50,12 +58,12 @@ const EDITOR_COMPONENTS: Record<string, React.ComponentType> = {
   'hero': HeroEditor,
   'brand': BrandStatementEditor,
   'testimonials-section': TestimonialsEditor,
-  'services-preview': ServicesContent, // TODO: Create dedicated editor
-  'popular-services': ServicesContent, // TODO: Create dedicated editor
-  'gallery-section': GalleryContent, // TODO: Create dedicated editor
+  'services-preview': ServicesPreviewEditor,
+  'popular-services': PopularServicesEditor,
+  'gallery-section': GalleryDisplayEditor,
   'new-client': NewClientEditor,
-  'stylists-section': StylistsContent, // TODO: Create dedicated editor
-  'locations-section': LocationsContent, // TODO: Create dedicated editor
+  'stylists-section': StylistsDisplayEditor,
+  'locations-section': LocationsDisplayEditor,
   'extensions': ExtensionsEditor,
   'faq': FAQEditor,
   'brands': BrandsManager,
@@ -160,6 +168,14 @@ export default function WebsiteSectionsHub() {
                     </div>
                   </div>
                     <div className="flex items-center gap-2">
+                    <Button
+                      variant={showPreview ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setShowPreview(!showPreview)}
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      {showPreview ? 'Hide Preview' : 'Preview'}
+                    </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -184,6 +200,16 @@ export default function WebsiteSectionsHub() {
               </div>
             </div>
           </ResizablePanel>
+
+          {/* Live Preview Panel */}
+          {showPreview && !isMobile && (
+            <>
+              <ResizableHandle withHandle />
+              <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
+                <LivePreviewPanel onClose={() => setShowPreview(false)} />
+              </ResizablePanel>
+            </>
+          )}
 
         </ResizablePanelGroup>
       </div>

@@ -61,7 +61,7 @@ export function HeroEditor() {
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            Save Changes
+            Save & Publish Changes
           </Button>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
