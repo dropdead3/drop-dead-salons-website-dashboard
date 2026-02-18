@@ -390,9 +390,9 @@ export function ScheduleSettingsContent() {
 
   return (
     <TooltipProvider>
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Service Categories */}
-      <Card>
+      <Card className="lg:col-span-2">
         <CardHeader>
           <div className="flex items-center gap-2">
             <Palette className="w-5 h-5 text-primary" />
