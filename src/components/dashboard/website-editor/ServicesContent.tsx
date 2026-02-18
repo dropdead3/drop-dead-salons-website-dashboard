@@ -64,6 +64,7 @@ import { useAllServiceCommunicationFlows } from '@/hooks/useServiceCommunication
 import {
   useNativeServicesForWebsite,
   useToggleServicePopular,
+  useToggleBookableOnline,
   useUpdateServiceDescription,
   type NativeServiceCategory,
   type NativeServiceItem,
@@ -86,6 +87,7 @@ export function ServicesContent() {
   const { data: allFlows } = useAllServiceCommunicationFlows();
   const { categories: nativeCategories, levels, isLoading, hasLevelPrices, error } = useNativeServicesForWebsite();
   const togglePopular = useToggleServicePopular();
+  const toggleBookableOnline = useToggleBookableOnline();
   const updateDescription = useUpdateServiceDescription();
 
   // Map native categories to local shape
@@ -133,6 +135,17 @@ export function ServicesContent() {
     (sum, cat) => sum + cat.items.filter(item => item.isPopular).length, 
     0
   );
+  const onlineServices = serviceCategories.reduce(
+    (sum, cat) => sum + cat.items.filter(item => item.bookableOnline).length,
+    0
+  );
+
+  const handleToggleBookableOnline = (categoryIndex: number, itemIndex: number) => {
+    const item = serviceCategories[categoryIndex]?.items[itemIndex];
+    if (item) {
+      toggleBookableOnline.mutate({ serviceId: item.id, bookableOnline: !item.bookableOnline });
+    }
+  };
 
   const handleTogglePopular = (categoryIndex: number, itemIndex: number) => {
     const item = serviceCategories[categoryIndex]?.items[itemIndex];
@@ -286,7 +299,7 @@ export function ServicesContent() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-3">
             <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30">
@@ -329,7 +342,18 @@ export function ServicesContent() {
             </div>
             <div>
               <p className="text-2xl font-medium">{popularServices}</p>
-              <p className="text-sm text-muted-foreground">Popular Services</p>
+              <p className="text-sm text-muted-foreground">Popular</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 flex items-center gap-3">
+            <div className="p-2 rounded-full bg-sky-100 dark:bg-sky-900/30">
+              <Globe className="w-5 h-5 text-sky-600" />
+            </div>
+            <div>
+              <p className="text-2xl font-medium">{onlineServices}</p>
+              <p className="text-sm text-muted-foreground">Online</p>
             </div>
           </CardContent>
         </Card>
@@ -445,7 +469,10 @@ export function ServicesContent() {
                     return (
                       <div 
                         key={item.id}
-                        className="px-4 py-3 flex items-center gap-4 hover:bg-muted/30 transition-colors"
+                        className={cn(
+                          "px-4 py-3 flex items-center gap-4 hover:bg-muted/30 transition-colors",
+                          !item.bookableOnline && "opacity-50"
+                        )}
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
@@ -454,6 +481,11 @@ export function ServicesContent() {
                               <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 gap-1">
                                 <Star className="w-3 h-3 fill-current" />
                                 Popular
+                              </Badge>
+                            )}
+                            {!item.bookableOnline && (
+                              <Badge variant="outline" className="gap-1 text-xs text-muted-foreground">
+                                Hidden from website
                               </Badge>
                             )}
                             {item.websiteDescription && (
@@ -505,6 +537,17 @@ export function ServicesContent() {
                             </Tooltip>
                           </TooltipProvider>
                           
+                          <div className="flex items-center gap-2">
+                            <Label htmlFor={`online-${item.id}`} className="text-xs text-muted-foreground">
+                              Online
+                            </Label>
+                            <Switch
+                              id={`online-${item.id}`}
+                              checked={item.bookableOnline}
+                              onCheckedChange={() => handleToggleBookableOnline(originalCategoryIndex, originalItemIndex)}
+                            />
+                          </div>
+
                           <div className="flex items-center gap-2">
                             <Label htmlFor={`popular-${item.id}`} className="text-xs text-muted-foreground">
                               Popular

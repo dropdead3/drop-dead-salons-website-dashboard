@@ -13528,6 +13528,7 @@ export type Database = {
       services: {
         Row: {
           allow_same_day_booking: boolean | null
+          bookable_online: boolean
           category: string | null
           content_creation_time_minutes: number
           cost: number | null
@@ -13557,6 +13558,7 @@ export type Database = {
         }
         Insert: {
           allow_same_day_booking?: boolean | null
+          bookable_online?: boolean
           category?: string | null
           content_creation_time_minutes?: number
           cost?: number | null
@@ -13586,6 +13588,7 @@ export type Database = {
         }
         Update: {
           allow_same_day_booking?: boolean | null
+          bookable_online?: boolean
           category?: string | null
           content_creation_time_minutes?: number
           cost?: number | null

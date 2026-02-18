@@ -11,6 +11,7 @@ export interface NativeServiceItem {
   description: string | null;
   websiteDescription: string | null;
   isPopular: boolean;
+  bookableOnline: boolean;
   basePrice: number;
   category: string;
   displayOrder: number;
@@ -46,7 +47,7 @@ export function useNativeServicesForWebsite() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('services')
-        .select('id, name, description, website_description, is_popular, price, category, display_order')
+        .select('id, name, description, website_description, is_popular, bookable_online, price, category, display_order')
         .eq('is_active', true)
         .eq('organization_id', orgId!);
       if (error) throw error;
@@ -133,6 +134,7 @@ export function useNativeServicesForWebsite() {
         description: s.description,
         websiteDescription: s.website_description,
         isPopular: s.is_popular ?? false,
+        bookableOnline: s.bookable_online ?? true,
         basePrice: Number(s.price),
         category: s.category!,
         displayOrder: s.display_order ?? 999,
@@ -172,6 +174,25 @@ export function useToggleServicePopular() {
       const { error } = await supabase
         .from('services')
         .update({ is_popular: isPopular })
+        .eq('id', serviceId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['services-website', effectiveOrganization?.id] });
+    },
+    onError: (e) => toast.error('Failed to update: ' + e.message),
+  });
+}
+
+export function useToggleBookableOnline() {
+  const queryClient = useQueryClient();
+  const { effectiveOrganization } = useOrganizationContext();
+
+  return useMutation({
+    mutationFn: async ({ serviceId, bookableOnline }: { serviceId: string; bookableOnline: boolean }) => {
+      const { error } = await supabase
+        .from('services')
+        .update({ bookable_online: bookableOnline })
         .eq('id', serviceId);
       if (error) throw error;
     },
