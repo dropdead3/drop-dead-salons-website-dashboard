@@ -18,6 +18,7 @@ export interface Product {
   reorder_level: number | null;
   is_active: boolean | null;
   available_online: boolean | null;
+  image_url: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -134,6 +135,7 @@ export function useCreateProduct() {
         is_active: product.is_active ?? true,
         organization_id: product.organization_id,
         location_id: product.location_id,
+        image_url: product.image_url,
       };
       
       const { data, error } = await supabase

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -738,6 +739,34 @@ function RetailTab() {
             <p className="text-[11px] text-muted-foreground">
               This link works independently — clients can browse your products even if you don't use the full Zura website.
             </p>
+
+            {/* QR Code */}
+            <div className="pt-3 border-t border-border/50">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <QrCode className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">QR Code</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-xs gap-1.5"
+                  onClick={() => {
+                    const canvas = document.querySelector('#store-qr-code canvas') as HTMLCanvasElement;
+                    if (!canvas) return;
+                    const link = document.createElement('a');
+                    link.download = 'store-qr-code.png';
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                  }}
+                >
+                  Download QR
+                </Button>
+              </div>
+              <div id="store-qr-code" className="flex justify-center p-4 bg-white rounded-lg border border-border/50">
+                <QRCodeCanvas value={storeUrl} size={128} level="M" />
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

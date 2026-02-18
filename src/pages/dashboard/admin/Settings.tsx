@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
@@ -577,10 +577,20 @@ export default function Settings() {
   const { roleOptions: dynamicRoleOptions, isLoading: rolesLoading } = useRoleUtils();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
-  const [activeCategory, setActiveCategory] = useState<SettingsCategory>(null);
+
+  // Initialize activeCategory from query param
+  const initialCategory = (() => {
+    const param = searchParams.get('category');
+    if (param && param in { business: 1, email: 1, sms: 1, 'service-flows': 1, users: 1, onboarding: 1, integrations: 1, system: 1, program: 1, levels: 1, 'access-hub': 1, schedule: 1, locations: 1, dayrate: 1, forms: 1, loyalty: 1, feedback: 1, leaderboard: 1, 'team-rewards': 1, kiosk: 1, services: 1, 'retail-products': 1, website: 1 }) {
+      return param as SettingsCategory;
+    }
+    return null;
+  })();
+  const [activeCategory, setActiveCategory] = useState<SettingsCategory>(initialCategory);
   const [mounted, setMounted] = useState(false);
   const [isAddUserSeatsOpen, setIsAddUserSeatsOpen] = useState(false);
   

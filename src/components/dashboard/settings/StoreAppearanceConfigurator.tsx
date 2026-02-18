@@ -13,6 +13,7 @@ import {
   type WebsiteRetailThemeSettings,
 } from '@/hooks/useWebsiteSettings';
 import { cn } from '@/lib/utils';
+import { hslToHex, hexToHsl } from '@/lib/colorUtils';
 
 // ─── Theme presets ───
 const THEME_PRESETS: Record<string, { label: string; swatch: string; colors: WebsiteRetailThemeSettings['custom_colors'] }> = {
@@ -180,16 +181,21 @@ export function StoreAppearanceConfigurator({ storeUrl }: StoreAppearanceConfigu
                 <div key={key} className="space-y-1.5">
                   <Label className="text-xs">{label}</Label>
                   <div className="flex items-center gap-2">
-                    <div
-                      className="w-8 h-8 rounded-md border border-border shrink-0"
-                      style={{ backgroundColor: `hsl(${local.custom_colors[key]})` }}
-                    />
-                    <Input
-                      value={local.custom_colors[key]}
-                      onChange={(e) => handleColorChange(key, e.target.value)}
-                      placeholder="H S% L%"
-                      className="text-xs font-mono h-8"
-                    />
+                    <label className="relative w-8 h-8 rounded-md border border-border shrink-0 cursor-pointer overflow-hidden">
+                      <div
+                        className="absolute inset-0"
+                        style={{ backgroundColor: `hsl(${local.custom_colors[key]})` }}
+                      />
+                      <input
+                        type="color"
+                        value={hslToHex(local.custom_colors[key])}
+                        onChange={(e) => handleColorChange(key, hexToHsl(e.target.value))}
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      />
+                    </label>
+                    <span className="text-xs font-mono text-muted-foreground select-all">
+                      {local.custom_colors[key]}
+                    </span>
                   </div>
                 </div>
               ))}
