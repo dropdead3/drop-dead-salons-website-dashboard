@@ -17,6 +17,7 @@ import { FAQEditor } from '@/components/dashboard/website-editor/FAQEditor';
 import { BrandsManager } from '@/components/dashboard/website-editor/BrandsManager';
 import { DrinksManager } from '@/components/dashboard/website-editor/DrinksManager';
 import { FooterCTAEditor } from '@/components/dashboard/website-editor/FooterCTAEditor';
+import { FooterEditor } from '@/components/dashboard/website-editor/FooterEditor';
 import { ServicesPreviewEditor } from '@/components/dashboard/website-editor/ServicesPreviewEditor';
 import { PopularServicesEditor } from '@/components/dashboard/website-editor/PopularServicesEditor';
 import { GalleryDisplayEditor } from '@/components/dashboard/website-editor/GalleryDisplayEditor';
@@ -69,6 +70,7 @@ const EDITOR_COMPONENTS: Record<string, React.ComponentType> = {
   'brands': BrandsManager,
   'drinks': DrinksManager,
   'footer-cta': FooterCTAEditor,
+  'footer': FooterEditor,
 };
 
 // Tab labels for breadcrumb display
@@ -96,6 +98,7 @@ const TAB_LABELS: Record<string, string> = {
   'brands': 'Partner Brands',
   'drinks': 'Drink Menu',
   'footer-cta': 'Footer CTA',
+  'footer': 'Footer Settings',
 };
 
 export default function WebsiteSectionsHub() {
