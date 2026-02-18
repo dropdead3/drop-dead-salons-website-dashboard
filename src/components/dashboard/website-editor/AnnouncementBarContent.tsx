@@ -100,7 +100,7 @@ export function AnnouncementBarContent() {
             ) : (
               <Save className="h-4 w-4 mr-2" />
             )}
-            Save Changes
+            Save & Publish Changes
           </Button>
         </div>
       </div>
