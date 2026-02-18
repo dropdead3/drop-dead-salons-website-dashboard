@@ -1,97 +1,126 @@
 
+# Settings Enhancements: Color Picker, QR Code, Deep Linking, Product Images, Social Footer
 
-# Retail Store Configurator with Live Preview
+## Overview
 
-## What This Delivers
+Five improvements to close the gaps identified in the settings and shop pages. These span the Store Appearance Configurator, Retail tab, Retail Products settings navigation, product data model, and standalone shop footer.
 
-A new "Store Appearance" card in the Retail tab that lets salon owners customize how their standalone retail store looks -- picking colors, fonts, and seeing a live preview of the store right in the settings page. This is specifically for salons running the standalone shop (without the full Zura website) who want to match their existing brand.
+---
 
-## How It Works
+## 1. Replace HSL Text Inputs with Native Color Pickers
 
-The Retail tab gets two new sections when the online store is enabled:
+**File:** `src/components/dashboard/settings/StoreAppearanceConfigurator.tsx`
+**File (new):** `src/lib/colorUtils.ts` (already exists -- add `hexToHsl`)
 
-### 1. Store Appearance Configurator
+The current "Custom Brand Colors" section forces users to type raw HSL strings like `40 60% 40%`. Replace each text input with a native HTML `<input type="color">` that shows a visual picker. The hex value is converted to/from HSL behind the scenes.
 
-A card titled "STORE APPEARANCE" with:
+- Add a `hexToHsl` utility to `src/lib/colorUtils.ts` (inverse of existing `hslToHex`)
+- Replace each color row: show the native color picker (styled as a small swatch button) alongside a read-only HSL display
+- When the user picks a color via the native picker, convert hex to HSL and update state
+- The existing HSL swatch preview stays as a visual indicator
 
-- **Color Theme Picker**: Choose from the 4 existing color themes (Cream, Rose, Sage, Ocean) as a base -- shown as selectable swatches
-- **Custom Brand Colors**: Override specific CSS variables for the store:
-  - Primary color (buttons, links, accents)
-  - Background color
-  - Card/surface color
-  - Text color
-- **Font Selection**: Dropdown to choose heading and body fonts from a curated list (the existing Aeonik Pro, Termina, plus web-safe alternatives like Inter, Playfair Display, etc.)
-- **Logo Display**: Toggle whether to show the org logo in the store header
+---
 
-All settings are saved to a new `website_retail_theme` site setting (JSON in the existing `site_settings` table -- no schema migration needed).
+## 2. Add QR Code to Store Link Card
 
-### 2. Live Store Preview
+**File:** `src/components/dashboard/settings/WebsiteSettingsContent.tsx` (RetailTab)
 
-An inline iframe preview below the configurator that:
-- Loads the actual `/org/{slug}/shop` page in a scaled-down iframe
-- Passes theme overrides via URL query params (e.g., `?preview_theme=...`) so the shop page can apply them in real-time
-- Has desktop/mobile toggle buttons (reusing the pattern from `LivePreviewPanel`)
-- Refreshes automatically when colors or fonts change
-- Scaled to fit the settings panel (~50% scale for desktop, ~65% for mobile)
+Add a QR code display and download button to the existing "STORE LINK" card. The project already has `qrcode.react` installed.
 
-### 3. Shop Page Theme Application
+- Import `QRCodeCanvas` from `qrcode.react`
+- Render a small QR code (128x128) below the store URL input
+- Add a "Download QR" button that converts the canvas to PNG and triggers a download
+- Wrap in a collapsible or always-visible section within the existing card
 
-The Shop page (`/org/:orgSlug/shop`) and `ShopLayout` are updated to:
-- Read the `website_retail_theme` site setting (public read via existing RLS)
-- Apply custom colors as CSS variable overrides on the store container
-- Apply font overrides via inline style or class
-- Support `?preview_theme=` query param for the live preview iframe (so changes appear before saving)
+---
 
-## File Summary
+## 3. Handle `?category=website` Deep Link in Settings
 
-| File | Action |
-|------|--------|
-| `src/components/dashboard/settings/StoreAppearanceConfigurator.tsx` | Create: color/font picker + live preview iframe |
-| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | Edit: render StoreAppearanceConfigurator in RetailTab when enabled |
-| `src/hooks/useWebsiteSettings.ts` | Edit: add `WebsiteRetailThemeSettings` interface and hooks |
-| `src/pages/Shop.tsx` | Edit: read retail theme settings and apply CSS overrides |
-| `src/components/shop/ShopLayout.tsx` | Edit: accept and apply theme overrides (colors, fonts) |
+**File:** `src/pages/dashboard/admin/Settings.tsx`
+
+The "Manage Store Settings" / "Activate Online Store" buttons in Retail Products navigate to `/dashboard/admin/settings?category=website`, but the Settings page ignores query params entirely.
+
+- Import `useSearchParams` from `react-router-dom`
+- On mount, read `searchParams.get('category')` -- if it matches a valid `SettingsCategory`, set `activeCategory` to that value
+- This makes the deep link work: clicking the button navigates to Settings and auto-opens the Website category, which then shows the Retail tab
+
+---
+
+## 4. Add Product Image Support
+
+**Database migration:** Add `image_url TEXT` column to `products` table
+**Files modified:**
+- `src/hooks/useProducts.ts` -- add `image_url` to the `Product` interface and queries
+- `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` -- add image upload field in ProductFormDialog
+- `src/components/shop/ProductCard.tsx` -- show actual product image when `image_url` exists, fall back to Package icon
+- `src/components/shop/ProductDetailModal.tsx` -- show image in detail view
+
+Implementation:
+- Use the existing `product-images` or a new public storage bucket for uploads
+- In the ProductFormDialog, add an image upload area (file input + preview)
+- Upload to storage, save the public URL to `image_url`
+- ProductCard renders `<img>` when image_url is present
+
+---
+
+## 5. Add Social Links to Standalone Shop Footer
+
+**File:** `src/components/shop/ShopLayout.tsx`
+
+The standalone shop footer only shows a copyright line. Add social media icons that read from the existing `website_social_links` site setting.
+
+- Import `useSiteSettings` and read `website_social_links`
+- Render social icons (Instagram, Facebook, X, YouTube, LinkedIn, TikTok) in the footer for any non-empty URLs
+- Style them as small muted icon links, consistent with the minimal shop aesthetic
+
+---
 
 ## Technical Details
 
-### Site Setting: `website_retail_theme`
-
-Stored as JSON in the existing `site_settings` table (no migration needed -- just upsert a new row):
-
-```text
-{
-  base_theme: "cream",
-  custom_colors: {
-    primary: "350 60% 55%",
-    background: "350 30% 97%",
-    card: "350 25% 95%",
-    foreground: "350 25% 12%"
-  },
-  heading_font: "Termina",
-  body_font: "Aeonik Pro",
-  show_logo: true
-}
+### Database Migration
+```sql
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS image_url TEXT;
 ```
 
-### StoreAppearanceConfigurator Component
+### Storage Bucket
+```sql
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('product-images', 'product-images', true)
+ON CONFLICT DO NOTHING;
 
-Contains:
-1. A row of 4 theme swatches (Cream/Rose/Sage/Ocean) -- clicking one sets the base and auto-populates colors
-2. Four color inputs for primary, background, card, foreground -- each with a color picker and HSL preview
-3. Two font dropdowns (heading, body) from a curated list
-4. A "Save Appearance" button
-5. Below: a scaled iframe pointing to the store URL with `?preview_theme=<base64-encoded-JSON>` appended
-6. Desktop/Mobile toggle for the iframe
+CREATE POLICY "Authenticated users can upload product images"
+ON storage.objects FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'product-images');
 
-### Preview Mechanism
+CREATE POLICY "Anyone can view product images"
+ON storage.objects FOR SELECT TO public
+USING (bucket_id = 'product-images');
 
-The store page checks for a `preview_theme` URL param. If present, it decodes the JSON and applies those CSS variables to the store container div instead of reading from the database. This gives instant feedback without saving. When the user saves, the settings are persisted and the store reads from the database on normal loads.
+CREATE POLICY "Authenticated users can update product images"
+ON storage.objects FOR UPDATE TO authenticated
+USING (bucket_id = 'product-images');
 
-### Font Loading
+CREATE POLICY "Authenticated users can delete product images"
+ON storage.objects FOR DELETE TO authenticated
+USING (bucket_id = 'product-images');
+```
 
-For fonts beyond the already-loaded Aeonik Pro/Termina, the store page dynamically loads Google Fonts via a link tag injection when a non-default font is selected.
+### Color Conversion (hexToHsl)
+Added to `src/lib/colorUtils.ts`:
+- Input: `#FF6B35` -> Output: `20 100% 60%`
+- Used by the color picker to convert native hex values to the HSL format stored in theme settings
 
-### No Database Migration Needed
+### File Change Summary
 
-The `site_settings` table already supports arbitrary JSON values. We just upsert a new row with `id = 'website_retail_theme'`. The existing RLS policies on `site_settings` handle read/write access.
-
+| File | Action |
+|------|--------|
+| `src/lib/colorUtils.ts` | Edit: add `hexToHsl` function |
+| `src/components/dashboard/settings/StoreAppearanceConfigurator.tsx` | Edit: replace HSL text inputs with native color pickers |
+| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | Edit: add QR code to Store Link card |
+| `src/pages/dashboard/admin/Settings.tsx` | Edit: handle `?category` query param on mount |
+| `src/hooks/useProducts.ts` | Edit: add `image_url` to Product interface |
+| `src/components/dashboard/settings/RetailProductsSettingsContent.tsx` | Edit: add image upload to ProductFormDialog |
+| `src/components/shop/ProductCard.tsx` | Edit: render product image when available |
+| `src/components/shop/ProductDetailModal.tsx` | Edit: show image in modal |
+| `src/components/shop/ShopLayout.tsx` | Edit: add social links to footer |
+| Database migration | Add `image_url` column + `product-images` storage bucket |
