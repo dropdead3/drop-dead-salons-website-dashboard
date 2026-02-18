@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { getServiceCategory } from '@/utils/serviceCategorization';
 
 export interface ServiceCostProfitRow {
   locationId: string | null;
@@ -95,7 +96,7 @@ export function useServiceCostsProfits(dateFrom: string, dateTo: string, locatio
         const existing = grouped.get(key) || {
           locationId: appt.location_id,
           locationName: appt.location_id ? (locationMap.get(appt.location_id) || 'Unknown') : 'All',
-          serviceCategory: appt.service_category || 'Other',
+          serviceCategory: getServiceCategory(appt.service_name),
           serviceName: appt.service_name!,
           count: 0,
           sales: 0,
