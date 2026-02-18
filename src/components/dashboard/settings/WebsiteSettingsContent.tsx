@@ -162,7 +162,7 @@ function GeneralTab() {
       </div>
 
       {/* Announcement Banner */}
-      <Card className="lg:col-span-2">
+      <Card>
         <CardHeader>
           <CardTitle className="font-display text-lg">ANNOUNCEMENT BANNER</CardTitle>
           <CardDescription>Control the banner displayed at the top of your public website.</CardDescription>
