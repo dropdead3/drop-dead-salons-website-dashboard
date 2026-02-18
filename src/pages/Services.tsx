@@ -3,42 +3,27 @@ import { SEO } from "@/components/SEO";
 import { Section } from "@/components/ui/section";
 import { Link } from "react-router-dom";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import { ArrowRight, Sparkles, UserPlus, ChevronDown, Star, CalendarX } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ArrowRight, Sparkles, UserPlus, ChevronDown, Star, CalendarX, Loader2 } from "lucide-react";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { useRef, useState, useEffect } from "react";
-import { services, stylistLevels, type StylistLevel, type ServiceItem, type ServiceCategory } from "@/data/servicePricing";
-import { stylists } from "@/data/stylists";
+import { usePublicOrg } from "@/contexts/PublicOrgContext";
+import { usePublicServicesForWebsite, type PublicStylistLevel, type PublicServiceItem, type PublicServiceCategory } from "@/hooks/usePublicServicesForWebsite";
 
 const editorialEasing: [number, number, number, number] = [0.25, 0.1, 0.25, 1];
-
-// Map stylist levels to their corresponding data level strings
-const levelToDataLevel: Record<StylistLevel, string> = {
-  'new-talent': 'LEVEL 1 STYLIST',
-  'emerging': 'LEVEL 2 STYLIST',
-  'lead': 'LEVEL 3 STYLIST',
-  'senior': 'LEVEL 4 STYLIST',
-  'signature': 'LEVEL 5 STYLIST',
-  'icon': 'LEVEL 6 STYLIST',
-};
-
-// Get stylist avatars for a given level
-const getStylistsForLevel = (level: StylistLevel) => {
-  const dataLevel = levelToDataLevel[level];
-  return stylists.filter(s => s.level === dataLevel).slice(0, 3);
-};
 
 function StylistLevelSelector({ 
   selectedLevel, 
   onLevelChange,
-  isSticky
+  isSticky,
+  levels
 }: { 
-  selectedLevel: StylistLevel; 
-  onLevelChange: (level: StylistLevel) => void;
+  selectedLevel: string; 
+  onLevelChange: (level: string) => void;
   isSticky: boolean;
+  levels: PublicStylistLevel[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const selectedItem = stylistLevels.find(l => l.id === selectedLevel);
+  const selectedItem = levels.find(l => l.slug === selectedLevel);
   const selectedLabel = selectedItem?.label || 'New Talent';
   const selectedClientLabel = selectedItem?.clientLabel || 'Level 1';
 
@@ -71,15 +56,15 @@ function StylistLevelSelector({
               transition={{ duration: 0.2 }}
               className="absolute top-full left-0 mt-2 min-w-full w-max bg-card border border-border rounded-xl shadow-lg overflow-hidden z-50"
             >
-              {stylistLevels.map((level) => (
+              {levels.map((level) => (
                 <button
-                  key={level.id}
+                  key={level.slug}
                   onClick={() => {
-                    onLevelChange(level.id);
+                    onLevelChange(level.slug);
                     setIsOpen(false);
                   }}
                   className={`w-full px-4 py-3 text-left text-sm font-sans transition-colors duration-200 ${
-                    selectedLevel === level.id 
+                    selectedLevel === level.slug 
                       ? 'bg-foreground text-background' 
                       : 'hover:bg-secondary text-foreground'
                   }`}
@@ -95,51 +80,6 @@ function StylistLevelSelector({
   );
 }
 
-function StylistAvatars({ selectedLevel, isSticky }: { selectedLevel: StylistLevel; isSticky: boolean }) {
-  const levelStylists = getStylistsForLevel(selectedLevel);
-  
-  if (levelStylists.length === 0) return null;
-  
-  return (
-    <TooltipProvider delayDuration={100}>
-      <div className="hidden sm:flex items-center gap-3 ml-auto">
-        <span className={`text-xs font-sans transition-colors duration-300 ${isSticky ? 'text-white/60' : 'text-muted-foreground'}`}>
-          {levelStylists.length} stylist{levelStylists.length !== 1 ? 's' : ''} at this level
-        </span>
-        <div className="flex -space-x-2">
-          <AnimatePresence mode="popLayout">
-            {levelStylists.map((stylist, idx) => (
-              <Tooltip key={stylist.id}>
-                <TooltipTrigger asChild>
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8, x: -10 }}
-                    animate={{ opacity: 1, scale: 1, x: 0 }}
-                    exit={{ opacity: 0, scale: 0.8, x: 10 }}
-                    transition={{ duration: 0.2, delay: idx * 0.05 }}
-                    className={`w-9 h-9 rounded-full border-2 overflow-hidden shadow-sm cursor-pointer hover:scale-110 hover:z-20 transition-all duration-300 ${
-                      isSticky ? 'border-[#2a2a2a]' : 'border-background'
-                    }`}
-                    style={{ zIndex: 10 - idx }}
-                  >
-                    <img
-                      src={stylist.imageUrl}
-                      alt={stylist.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </motion.div>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="bg-foreground text-background">
-                  <p className="font-medium">{stylist.name}</p>
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </AnimatePresence>
-        </div>
-      </div>
-    </TooltipProvider>
-  );
-}
-
 function ServiceCard({ 
   service, 
   index, 
@@ -147,9 +87,9 @@ function ServiceCard({
   isAddOn = false,
   isConsultation = false
 }: { 
-  service: ServiceItem; 
+  service: PublicServiceItem; 
   index: number;
-  selectedLevel: StylistLevel;
+  selectedLevel: string;
   isAddOn?: boolean;
   isConsultation?: boolean;
 }) {
@@ -222,9 +162,9 @@ function CategorySection({
   categoryIndex,
   selectedLevel 
 }: { 
-  category: ServiceCategory; 
+  category: PublicServiceCategory; 
   categoryIndex: number;
-  selectedLevel: StylistLevel;
+  selectedLevel: string;
 }) {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
@@ -261,9 +201,11 @@ function CategorySection({
               {category.category === "New-Client Consultations" ? "Consultations" : category.category}
             </h2>
           </div>
-          <p className="text-muted-foreground font-sans font-light max-w-md lg:text-right">
-            {category.description}
-          </p>
+          {category.description && (
+            <p className="text-muted-foreground font-sans font-light max-w-md lg:text-right">
+              {category.description}
+            </p>
+          )}
         </motion.div>
       </div>
 
@@ -287,28 +229,43 @@ function CategorySection({
 export default function Services() {
   const heroRef = useRef(null);
   const heroInView = useInView(heroRef, { once: true });
-  const [selectedLevel, setSelectedLevel] = useState<StylistLevel>('new-talent');
+  const { organization } = usePublicOrg();
+  const { categories, levels, isLoading } = usePublicServicesForWebsite(organization?.id);
+  const [selectedLevel, setSelectedLevel] = useState<string>('');
   const stickyRef = useRef<HTMLDivElement>(null);
   const [isSticky, setIsSticky] = useState(false);
 
-  // Detect when sticky bar is in sticky state
+  // Set default level once loaded
+  useEffect(() => {
+    if (levels.length > 0 && !selectedLevel) {
+      setSelectedLevel(levels[0].slug);
+    }
+  }, [levels, selectedLevel]);
+
   // Detect when sticky bar is in sticky state
   useEffect(() => {
     const handleScroll = () => {
       if (stickyRef.current) {
         const rect = stickyRef.current.getBoundingClientRect();
-        // Element is sticky when its top position matches the sticky offset (120px)
-        // We use a small threshold to account for subpixel rendering
         setIsSticky(rect.top <= 121);
       }
     };
     
-    // Run on mount to set initial state
     handleScroll();
     
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="min-h-screen flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -354,49 +311,50 @@ export default function Services() {
         </div>
       </section>
 
-      {/* Stylist Level Selector + Pricing Note - Sticky */}
-      <div 
-        ref={stickyRef}
-        className={`sticky top-[120px] z-30 py-4 transition-all duration-500 ${
-          isSticky 
-            ? 'bg-[#2a2a2a] shadow-lg' 
-            : 'bg-background/95 backdrop-blur-md'
-        }`}
-      >
-        <div className="container mx-auto px-6 lg:px-12">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={heroInView ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.25, ease: editorialEasing }}
-            className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6"
-          >
-            {/* Animated text on sticky */}
-            <AnimatePresence>
-              {isSticky && (
-                <motion.span
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3, ease: editorialEasing }}
-                  className="hidden lg:block text-sm font-display tracking-wide text-white/90"
-                >
-                  See prices based on the stylist
-                </motion.span>
-              )}
-            </AnimatePresence>
-            
-            <StylistLevelSelector 
-              selectedLevel={selectedLevel}
-              onLevelChange={setSelectedLevel}
-              isSticky={isSticky}
-            />
-            <p className={`text-sm font-sans flex-shrink-0 transition-colors duration-300 ${isSticky ? 'text-white/70' : 'text-muted-foreground'}`}>
-              <span className={`font-medium transition-colors duration-300 ${isSticky ? 'text-white' : 'text-foreground'}`}>Pricing varies by stylist level</span>
-            </p>
-            <StylistAvatars selectedLevel={selectedLevel} isSticky={isSticky} />
-          </motion.div>
+      {/* Stylist Level Selector - Sticky */}
+      {levels.length > 0 && (
+        <div 
+          ref={stickyRef}
+          className={`sticky top-[120px] z-30 py-4 transition-all duration-500 ${
+            isSticky 
+              ? 'bg-[#2a2a2a] shadow-lg' 
+              : 'bg-background/95 backdrop-blur-md'
+          }`}
+        >
+          <div className="container mx-auto px-6 lg:px-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={heroInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 0.6, delay: 0.25, ease: editorialEasing }}
+              className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6"
+            >
+              <AnimatePresence>
+                {isSticky && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3, ease: editorialEasing }}
+                    className="hidden lg:block text-sm font-display tracking-wide text-white/90"
+                  >
+                    See prices based on the stylist
+                  </motion.span>
+                )}
+              </AnimatePresence>
+              
+              <StylistLevelSelector 
+                selectedLevel={selectedLevel}
+                onLevelChange={setSelectedLevel}
+                isSticky={isSticky}
+                levels={levels}
+              />
+              <p className={`text-sm font-sans flex-shrink-0 transition-colors duration-300 ${isSticky ? 'text-white/70' : 'text-muted-foreground'}`}>
+                <span className={`font-medium transition-colors duration-300 ${isSticky ? 'text-white' : 'text-foreground'}`}>Pricing varies by stylist level</span>
+              </p>
+            </motion.div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* New Client Notice */}
       <section className="pb-8 lg:pb-12">
@@ -438,7 +396,7 @@ export default function Services() {
             transition={{ duration: 0.6, delay: 0.4, ease: editorialEasing }}
             className="flex flex-wrap gap-3"
           >
-            {services.map((category, index) => (
+            {categories.map((category, index) => (
               <a
                 key={category.category}
                 href={`#${category.category.toLowerCase().replace(/\s+/g, '-').replace(/&/g, 'and')}`}
@@ -455,7 +413,7 @@ export default function Services() {
       {/* Services List */}
       <Section className="pt-0 pb-24 lg:pb-32" theme="light">
         <div className="space-y-24 lg:space-y-32">
-          {services.map((category, categoryIndex) => (
+          {categories.map((category, categoryIndex) => (
             <CategorySection 
               key={category.category} 
               category={category} 
