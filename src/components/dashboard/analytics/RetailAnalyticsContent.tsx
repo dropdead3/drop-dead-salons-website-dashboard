@@ -12,12 +12,12 @@ import {
 } from '@/components/ui/table';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Cell,
+  Tooltip, ResponsiveContainer, Cell, LineChart, Line,
 } from 'recharts';
 import {
   DollarSign, Package, TrendingUp, TrendingDown, AlertTriangle,
   ShoppingBag, Users, Search, ArrowUpDown, BarChart3, Loader2, Info, Percent, Tag, Scissors,
-  ChevronDown, ChevronUp, Settings2, Archive,
+  ChevronDown, ChevronUp, Settings2, Archive, Download,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -25,7 +25,7 @@ import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
-import { useRetailAnalytics, type ProductRow, type RedFlag, type BrandRow } from '@/hooks/useRetailAnalytics';
+import { useRetailAnalytics, exportRetailCSV, type ProductRow, type RedFlag, type BrandRow, type RetailAnalyticsResult } from '@/hooks/useRetailAnalytics';
 import { useServiceRetailAttachment } from '@/hooks/useServiceRetailAttachment';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 
@@ -109,8 +109,31 @@ function RedFlagRow({ flag }: { flag: RedFlag }) {
   );
 }
 
+// ─── Mini Sparkline ───
+function Sparkline({ data, color = 'hsl(var(--chart-1))' }: { data: { date: string; revenue: number }[]; color?: string }) {
+  if (data.length < 2) return null;
+  return (
+    <div className="w-24 h-6">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <Line type="monotone" dataKey="revenue" stroke={color} strokeWidth={1.5} dot={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+// ─── CSV Export Button ───
+function ExportButton({ data, section }: { data: RetailAnalyticsResult; section: Parameters<typeof exportRetailCSV>[1] }) {
+  return (
+    <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => exportRetailCSV(data, section)}>
+      <Download className="w-3.5 h-3.5" /> Export
+    </Button>
+  );
+}
+
 // ─── Brand Performance Card ───
-function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole }: { brands: BrandRow[]; totalRevenue: number; formatCurrencyWhole: (n: number) => string }) {
+function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data }: { brands: BrandRow[]; totalRevenue: number; formatCurrencyWhole: (n: number) => string; data: RetailAnalyticsResult }) {
   const [expandedBrand, setExpandedBrand] = useState<string | null>(null);
   const navigate = useNavigate();
 
@@ -126,14 +149,17 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole }: { b
               <div>
                 <div className="flex items-center gap-2">
                   <CardTitle className="font-display text-base tracking-wide">SALES BY BRAND</CardTitle>
-                  <MetricInfoTooltip description="Revenue breakdown by product brand. Click a row to see product-level drill-down. Brands are resolved from the product catalog." />
+                  <MetricInfoTooltip description="Revenue breakdown by product brand. Click a row to see full product-level drill-down with margin, stock, and trend data. Brands are resolved from the product catalog." />
                 </div>
                 <CardDescription className="text-xs">{brands.length} brand{brands.length !== 1 ? 's' : ''} with sales</CardDescription>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
-              <Settings2 className="w-3.5 h-3.5" /> Manage Products
-            </Button>
+            <div className="flex items-center gap-1">
+              <ExportButton data={data} section="brands" />
+              <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+                <Settings2 className="w-3.5 h-3.5" /> Manage Products
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -167,6 +193,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole }: { b
                     <TableHead className="text-right">Avg Price</TableHead>
                     {brands.some(b => b.margin > 0) && <TableHead className="text-right">Margin</TableHead>}
                     <TableHead className="text-right">Trend</TableHead>
+                    <TableHead className="text-center">Sparkline</TableHead>
                     <TableHead className="text-right">Share</TableHead>
                     <TableHead className="w-8" />
                   </TableRow>
@@ -190,6 +217,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole }: { b
                           </TableCell>
                         )}
                         <TableCell className="text-right"><TrendArrow value={b.revenueTrend} /></TableCell>
+                        <TableCell className="text-center"><Sparkline data={b.dailyRevenue} color={BAR_COLORS[brands.indexOf(b) % BAR_COLORS.length]} /></TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
                             <Progress value={totalRevenue > 0 ? (b.revenue / totalRevenue) * 100 : 0} className="w-12 h-1.5" />
@@ -200,14 +228,48 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole }: { b
                       </TableRow>
                       {expandedBrand === b.brand && (
                         <TableRow key={`${b.brand}-detail`}>
-                          <TableCell colSpan={9} className="bg-muted/30 p-4">
-                            <p className="text-xs font-medium text-muted-foreground mb-2">Top product: <span className="text-foreground">{b.topProduct || '—'}</span></p>
-                            {b.staleProducts.length > 0 && (
-                              <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400">
-                                <AlertTriangle className="w-3 h-3" />
-                                {b.staleProducts.length} catalog product(s) with zero sales this period
-                              </div>
-                            )}
+                          <TableCell colSpan={10} className="bg-muted/30 p-0">
+                            <div className="p-4 space-y-3">
+                              <p className="text-xs font-medium text-muted-foreground">Products under <span className="text-foreground">{b.brand}</span></p>
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead className="text-xs">Product</TableHead>
+                                    <TableHead className="text-xs text-right">Revenue</TableHead>
+                                    <TableHead className="text-xs text-right">Units</TableHead>
+                                    {b.productBreakdown.some(p => p.margin != null) && <TableHead className="text-xs text-right">Margin</TableHead>}
+                                    <TableHead className="text-xs text-right">Stock</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {b.productBreakdown.map(p => (
+                                    <TableRow key={p.name}>
+                                      <TableCell className="text-sm">{p.name}</TableCell>
+                                      <TableCell className="text-right tabular-nums text-sm"><BlurredAmount>{formatCurrencyWhole(p.revenue)}</BlurredAmount></TableCell>
+                                      <TableCell className="text-right tabular-nums text-sm">{p.unitsSold}</TableCell>
+                                      {b.productBreakdown.some(pp => pp.margin != null) && (
+                                        <TableCell className="text-right">
+                                          {p.margin != null ? (
+                                            <Badge variant="outline" className={cn('text-[10px] tabular-nums',
+                                              p.margin >= 50 ? 'text-emerald-600 border-emerald-200 dark:text-emerald-400' :
+                                              p.margin >= 30 ? 'text-amber-600 border-amber-200 dark:text-amber-400' :
+                                              'text-red-500 border-red-200 dark:text-red-400'
+                                            )}>{p.margin.toFixed(0)}%</Badge>
+                                          ) : '—'}
+                                        </TableCell>
+                                      )}
+                                      <TableCell className="text-right tabular-nums text-sm text-muted-foreground">{p.quantityOnHand ?? '—'}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                              {b.staleProducts.length > 0 && (
+                                <div className="flex items-center gap-1.5 text-xs text-amber-600 dark:text-amber-400 mt-2">
+                                  <AlertTriangle className="w-3 h-3" />
+                                  {b.staleProducts.length} catalog product(s) with zero sales: {b.staleProducts.slice(0, 3).join(', ')}{b.staleProducts.length > 3 ? ` +${b.staleProducts.length - 3} more` : ''}
+                                </div>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       )}
@@ -224,7 +286,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole }: { b
 }
 
 // ─── Dead Stock Card ───
-function DeadStockCard({ deadStock, formatCurrencyWhole }: { deadStock: { name: string; brand: string; category: string; retailPrice: number; quantityOnHand: number; capitalTiedUp: number }[]; formatCurrencyWhole: (n: number) => string }) {
+function DeadStockCard({ deadStock, formatCurrencyWhole, data }: { deadStock: RetailAnalyticsResult['deadStock']; formatCurrencyWhole: (n: number) => string; data: RetailAnalyticsResult }) {
   const navigate = useNavigate();
   const totalCapital = deadStock.reduce((s, d) => s + d.capitalTiedUp, 0);
 
@@ -240,14 +302,17 @@ function DeadStockCard({ deadStock, formatCurrencyWhole }: { deadStock: { name: 
               <div>
                 <div className="flex items-center gap-2">
                   <CardTitle className="font-display text-base tracking-wide">DEAD STOCK</CardTitle>
-                  <MetricInfoTooltip description="Products in your catalog with zero sales in the selected period but inventory on hand. Capital tied up = retail price × quantity on hand." />
+                  <MetricInfoTooltip description="Products in your catalog with zero sales in the selected period but inventory on hand. Capital tied up = retail price × quantity on hand. Last sold date shows the most recent sale across all periods." />
                 </div>
                 <CardDescription className="text-xs"><BlurredAmount>{formatCurrencyWhole(totalCapital)}</BlurredAmount> capital tied up in {deadStock.length} product(s)</CardDescription>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
-              <Settings2 className="w-3.5 h-3.5" /> Manage Products
-            </Button>
+            <div className="flex items-center gap-1">
+              <ExportButton data={data} section="deadstock" />
+              <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+                <Settings2 className="w-3.5 h-3.5" /> Manage Products
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -261,6 +326,8 @@ function DeadStockCard({ deadStock, formatCurrencyWhole }: { deadStock: { name: 
                   <TableHead className="text-right">Retail Price</TableHead>
                   <TableHead className="text-right">Stock</TableHead>
                   <TableHead className="text-right">Capital Tied Up</TableHead>
+                  <TableHead className="text-right">Last Sold</TableHead>
+                  <TableHead className="text-right">Days Stale</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -272,6 +339,16 @@ function DeadStockCard({ deadStock, formatCurrencyWhole }: { deadStock: { name: 
                     <TableCell className="text-right tabular-nums text-muted-foreground"><BlurredAmount>{formatCurrencyWhole(d.retailPrice)}</BlurredAmount></TableCell>
                     <TableCell className="text-right tabular-nums">{d.quantityOnHand}</TableCell>
                     <TableCell className="text-right tabular-nums font-medium"><BlurredAmount>{formatCurrencyWhole(d.capitalTiedUp)}</BlurredAmount></TableCell>
+                    <TableCell className="text-right text-sm text-muted-foreground">{d.lastSoldDate || 'Never'}</TableCell>
+                    <TableCell className="text-right">
+                      <Badge variant="outline" className={cn('text-[10px] tabular-nums',
+                        d.daysStale >= 90 ? 'text-red-500 border-red-200 dark:text-red-400' :
+                        d.daysStale >= 30 ? 'text-amber-600 border-amber-200 dark:text-amber-400' :
+                        'text-muted-foreground border-border'
+                      )}>
+                        {d.daysStale}d
+                      </Badge>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -286,7 +363,6 @@ function DeadStockCard({ deadStock, formatCurrencyWhole }: { deadStock: { name: 
 // ─── Inventory Turnover Card ───
 function InventoryTurnoverCard({ brands }: { brands: BrandRow[] }) {
   const turnoverData = brands.filter(b => b.unitsSold > 0).map(b => {
-    // Simple proxy: unitsSold relative to productCount as rough turnover
     const turnover = b.productCount > 0 ? b.unitsSold / b.productCount : 0;
     const classification = turnover >= 10 ? 'Fast' : turnover >= 3 ? 'Normal' : 'Slow';
     return { brand: b.brand, unitsSold: b.unitsSold, productCount: b.productCount, turnover: Math.round(turnover * 10) / 10, classification };
@@ -374,7 +450,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
     let list = data.products;
     if (search) {
       const q = search.toLowerCase();
-      list = list.filter(p => p.name.toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q));
+      list = list.filter(p => p.name.toLowerCase().includes(q) || (p.category || '').toLowerCase().includes(q) || (p.brand || '').toLowerCase().includes(q));
     }
     const dir = sortDir === 'desc' ? -1 : 1;
     return [...list].sort((a, b) => (a[sortKey] - b[sortKey]) * dir);
@@ -461,9 +537,12 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 </div>
                 <CardDescription className="text-xs">{summary.uniqueProducts} products sold</CardDescription>
               </div>
-              <div className="relative w-56">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-sm" />
+              <div className="flex items-center gap-2">
+                <div className="relative w-56">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                  <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-sm" />
+                </div>
+                <ExportButton data={data} section="products" />
               </div>
             </div>
           </CardHeader>
@@ -474,6 +553,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   <TableRow>
                     <TableHead className="w-10">#</TableHead>
                     <TableHead>Product</TableHead>
+                    <TableHead>Brand</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('unitsSold')}>
                       <span className="inline-flex items-center gap-1">Units <ArrowUpDown className="w-3 h-3" /></span>
@@ -495,7 +575,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 <TableBody>
                   {filteredProducts.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                         {search ? 'No products match your search' : 'No product sales in this period'}
                       </TableCell>
                     </TableRow>
@@ -514,6 +594,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                               )}
                             </div>
                           </TableCell>
+                          <TableCell className="text-muted-foreground text-sm">{p.brand || '\u2014'}</TableCell>
                           <TableCell className="text-muted-foreground text-sm">{p.category || '\u2014'}</TableCell>
                           <TableCell className="text-right tabular-nums">{p.unitsSold}</TableCell>
                           <TableCell className="text-right tabular-nums font-medium"><BlurredAmount>{formatCurrencyWhole(p.revenue)}</BlurredAmount></TableCell>
@@ -532,6 +613,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                     <TableRow>
                       <TableCell />
                       <TableCell className="font-medium">Total</TableCell>
+                      <TableCell />
                       <TableCell />
                       <TableCell className="text-right font-display tabular-nums">{summary.totalUnits}</TableCell>
                       <TableCell className="text-right font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(summary.totalRevenue)}</BlurredAmount></TableCell>
@@ -580,14 +662,17 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
       <PinnableCard elementKey="retail_category_breakdown" elementName="Category Breakdown" category="Analytics Hub - Retail">
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                <ShoppingBag className="w-5 h-5 text-primary" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                  <ShoppingBag className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-base tracking-wide">CATEGORY BREAKDOWN</CardTitle>
+                  <MetricInfoTooltip description="Revenue distribution across product categories. Percentage shows each category's share of total retail revenue." />
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <CardTitle className="font-display text-base tracking-wide">CATEGORY BREAKDOWN</CardTitle>
-                <MetricInfoTooltip description="Revenue distribution across product categories. Percentage shows each category's share of total retail revenue." />
-              </div>
+              <ExportButton data={data} section="categories" />
             </div>
           </CardHeader>
           <CardContent>
@@ -649,12 +734,12 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
 
       {/* Section 4.5: Brand Performance */}
       {data.brandPerformance.length > 0 && (
-        <BrandPerformanceCard brands={data.brandPerformance} totalRevenue={summary.totalRevenue} formatCurrencyWhole={formatCurrencyWhole} />
+        <BrandPerformanceCard brands={data.brandPerformance} totalRevenue={summary.totalRevenue} formatCurrencyWhole={formatCurrencyWhole} data={data} />
       )}
 
       {/* Section 4.6: Dead Stock */}
       {data.deadStock.length > 0 && (
-        <DeadStockCard deadStock={data.deadStock} formatCurrencyWhole={formatCurrencyWhole} />
+        <DeadStockCard deadStock={data.deadStock} formatCurrencyWhole={formatCurrencyWhole} data={data} />
       )}
 
       {/* Section 4.7: Inventory Turnover by Brand */}
@@ -719,9 +804,12 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 </div>
                 <CardDescription className="text-xs">Retail sales by team member</CardDescription>
               </div>
-              <div className="relative w-56">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                <Input placeholder="Search staff..." value={staffSearch} onChange={(e) => setStaffSearch(e.target.value)} className="pl-8 h-8 text-sm" />
+              <div className="flex items-center gap-2">
+                <div className="relative w-56">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                  <Input placeholder="Search staff..." value={staffSearch} onChange={(e) => setStaffSearch(e.target.value)} className="pl-8 h-8 text-sm" />
+                </div>
+                <ExportButton data={data} section="staff" />
               </div>
             </div>
           </CardHeader>
@@ -912,7 +1000,6 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 .sort((a, b) => a.attachmentRate - b.attachmentRate)[0];
               return (
                 <>
-                  {/* Summary insight */}
                   {topDriver && (
                     <div className="mb-4 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground space-y-1">
                       <p>

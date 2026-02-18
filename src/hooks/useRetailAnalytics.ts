@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { differenceInDays, parseISO, subDays, format } from 'date-fns';
+import { isAllLocations, parseLocationIds } from '@/lib/locationFilter';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -23,12 +24,16 @@ export interface RetailSummary {
 export interface ProductRow {
   name: string;
   category: string | null;
+  brand: string | null;
   unitsSold: number;
   revenue: number;
   avgPrice: number;
   discount: number;
   priorRevenue: number;
   revenueTrend: number; // % change vs prior
+  costPrice: number | null;
+  margin: number | null;
+  quantityOnHand: number | null;
 }
 
 export interface RedFlag {
@@ -89,6 +94,10 @@ export interface BrandRow {
   margin: number;
   topProduct: string;
   staleProducts: string[];
+  /** All products sold under this brand with revenue + units */
+  productBreakdown: { name: string; revenue: number; unitsSold: number; margin: number | null; quantityOnHand: number | null }[];
+  /** Daily revenue for sparkline */
+  dailyRevenue: { date: string; revenue: number }[];
 }
 
 export interface DeadStockRow {
@@ -121,6 +130,70 @@ const PRODUCT_TYPES = ['Product', 'product', 'PRODUCT', 'Retail', 'retail', 'RET
 const SERVICE_TYPES = ['Service', 'service', 'SERVICE'];
 
 // ---------------------------------------------------------------------------
+// CSV Export utility
+// ---------------------------------------------------------------------------
+export function exportRetailCSV(data: RetailAnalyticsResult, section: 'products' | 'brands' | 'deadstock' | 'staff' | 'categories') {
+  let csv = '';
+  const escape = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+
+  if (section === 'products') {
+    csv = 'Product,Category,Brand,Units Sold,Revenue,Avg Price,Discount,Trend %,Cost,Margin %,Stock\n';
+    data.products.forEach(p => {
+      csv += [p.name, p.category, p.brand, p.unitsSold, p.revenue.toFixed(2), p.avgPrice.toFixed(2), p.discount.toFixed(2), p.revenueTrend.toFixed(1), p.costPrice?.toFixed(2) ?? '', p.margin?.toFixed(1) ?? '', p.quantityOnHand ?? ''].map(escape).join(',') + '\n';
+    });
+  } else if (section === 'brands') {
+    csv = 'Brand,Revenue,Prior Revenue,Trend %,Units,Products,Avg Price,Margin %\n';
+    data.brandPerformance.forEach(b => {
+      csv += [b.brand, b.revenue.toFixed(2), b.priorRevenue.toFixed(2), b.revenueTrend.toFixed(1), b.unitsSold, b.productCount, b.avgPrice.toFixed(2), b.margin.toFixed(1)].map(escape).join(',') + '\n';
+    });
+  } else if (section === 'deadstock') {
+    csv = 'Product,Brand,Category,Retail Price,Stock,Capital Tied Up,Last Sold,Days Stale\n';
+    data.deadStock.forEach(d => {
+      csv += [d.name, d.brand, d.category, d.retailPrice.toFixed(2), d.quantityOnHand, d.capitalTiedUp.toFixed(2), d.lastSoldDate || 'Never', d.daysStale].map(escape).join(',') + '\n';
+    });
+  } else if (section === 'staff') {
+    csv = 'Staff,Revenue,Units,Attachment Rate %,Avg Ticket\n';
+    data.staffRetail.forEach(s => {
+      csv += [s.name, s.productRevenue.toFixed(2), s.unitsSold, s.attachmentRate, s.avgTicket.toFixed(2)].map(escape).join(',') + '\n';
+    });
+  } else if (section === 'categories') {
+    csv = 'Category,Revenue,Units,Products,Avg Price,% of Total\n';
+    data.categories.forEach(c => {
+      csv += [c.category, c.revenue.toFixed(2), c.units, c.productCount, c.avgPrice.toFixed(2), c.pctOfTotal.toFixed(1)].map(escape).join(',') + '\n';
+    });
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `retail-${section}-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ---------------------------------------------------------------------------
+// Paginated fetch helper (bypasses 1000-row limit)
+// ---------------------------------------------------------------------------
+async function fetchAllRows<T>(
+  queryBuilder: () => ReturnType<ReturnType<typeof supabase.from>['select']>,
+  batchSize = 1000,
+): Promise<T[]> {
+  const all: T[] = [];
+  let offset = 0;
+  let hasMore = true;
+  while (hasMore) {
+    const { data, error } = await (queryBuilder() as any).range(offset, offset + batchSize - 1);
+    if (error) throw error;
+    const rows = (data || []) as T[];
+    all.push(...rows);
+    hasMore = rows.length === batchSize;
+    offset += batchSize;
+  }
+  return all;
+}
+
+// ---------------------------------------------------------------------------
 // Hook
 // ---------------------------------------------------------------------------
 
@@ -138,36 +211,88 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
       const priorFrom = format(subDays(from, span), 'yyyy-MM-dd');
       const priorTo = format(subDays(from, 1), 'yyyy-MM-dd');
 
-      // ── Fetch current period transaction items ──
-      let currentQ = supabase
-        .from('phorest_transaction_items')
-        .select('item_name, item_category, item_type, quantity, unit_price, discount, total_amount, transaction_date, transaction_id, phorest_staff_id')
-        .gte('transaction_date', dateFrom)
-        .lte('transaction_date', dateTo);
-      if (locationId && locationId !== 'all') currentQ = currentQ.eq('location_id', locationId);
+      // ── Fetch current period phorest transaction items (paginated) ──
+      const currentItems = await fetchAllRows<any>(() => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('item_name, item_category, item_type, quantity, unit_price, discount, total_amount, transaction_date, transaction_id, phorest_staff_id')
+          .gte('transaction_date', dateFrom)
+          .lte('transaction_date', dateTo);
+        if (!isAllLocations(locationId)) {
+          const ids = parseLocationIds(locationId);
+          q = ids.length === 1 ? q.eq('location_id', ids[0]) : q.in('location_id', ids);
+        }
+        return q;
+      });
 
-      // ── Fetch prior period transaction items ──
-      let priorQ = supabase
-        .from('phorest_transaction_items')
-        .select('item_name, item_type, quantity, total_amount, transaction_id, phorest_staff_id')
-        .gte('transaction_date', priorFrom)
-        .lte('transaction_date', priorTo);
-      if (locationId && locationId !== 'all') priorQ = priorQ.eq('location_id', locationId);
+      // ── Fetch prior period (paginated) ──
+      const priorItems = await fetchAllRows<any>(() => {
+        let q = supabase
+          .from('phorest_transaction_items')
+          .select('item_name, item_type, quantity, total_amount, transaction_id, phorest_staff_id')
+          .gte('transaction_date', priorFrom)
+          .lte('transaction_date', priorTo);
+        if (!isAllLocations(locationId)) {
+          const ids = parseLocationIds(locationId);
+          q = ids.length === 1 ? q.eq('location_id', ids[0]) : q.in('location_id', ids);
+        }
+        return q;
+      });
+
+      // ── Fetch native Zura retail_sale_items for the period ──
+      let nativeSaleItems: any[] = [];
+      try {
+        const nativeItems = await fetchAllRows<any>(() => {
+          let q = supabase
+            .from('retail_sale_items' as any)
+            .select('product_name, quantity, unit_price, discount, total_amount, sale_id, created_at');
+          return q;
+        });
+        // Filter by date range via created_at and get sale details
+        if (nativeItems.length > 0) {
+          const saleIds = [...new Set(nativeItems.map((i: any) => i.sale_id))];
+          // Fetch sales to get dates and location/staff
+          const batchSize = 200;
+          const allSales: any[] = [];
+          for (let i = 0; i < saleIds.length; i += batchSize) {
+            const batch = saleIds.slice(i, i + batchSize);
+            let salesQ = supabase
+              .from('retail_sales' as any)
+              .select('id, location_id, staff_id, created_at')
+              .in('id', batch);
+            const { data: salesData } = await salesQ;
+            if (salesData) allSales.push(...salesData);
+          }
+          const salesMap = new Map(allSales.map((s: any) => [s.id, s]));
+
+          // Filter items within date range and location
+          nativeSaleItems = nativeItems.filter((item: any) => {
+            const sale = salesMap.get(item.sale_id);
+            if (!sale) return false;
+            const saleDate = (sale.created_at as string).split('T')[0];
+            if (saleDate < dateFrom || saleDate > dateTo) return false;
+            // Location filter
+            if (locationId && locationId !== 'all') {
+              const ids = locationId.split(',').filter(Boolean);
+              if (!ids.includes(sale.location_id)) return false;
+            }
+            // Attach date and staff for downstream use
+            item._saleDate = saleDate;
+            item._staffId = sale.staff_id;
+            return true;
+          });
+        }
+      } catch {
+        // retail_sale_items table may not exist yet – silently skip
+      }
 
       // ── Fetch product catalog for margin + brand data ──
-      const catalogQ = supabase
+      const { data: catalogData } = await supabase
         .from('products')
         .select('name, cost_price, retail_price, brand, category, quantity_on_hand')
         .eq('is_active', true);
 
-      const [currentRes, priorRes, catalogRes] = await Promise.all([currentQ, priorQ, catalogQ]);
-
-      if (currentRes.error) throw currentRes.error;
-      if (priorRes.error) throw priorRes.error;
-
-      const currentItems = currentRes.data || [];
-      const priorItems = priorRes.data || [];
-      const catalog = catalogRes.data || [];
+      const catalog = catalogData || [];
 
       // Build cost lookup and brand/category lookup from products catalog
       const costMap = new Map<string, number>();
@@ -191,7 +316,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
       });
 
       // ── Aggregate current period products ──
-      const prodMap = new Map<string, { name: string; category: string | null; units: number; revenue: number; discount: number; prices: number[] }>();
+      const prodMap = new Map<string, { name: string; category: string | null; units: number; revenue: number; discount: number; prices: number[]; dailyRevenue: Map<string, number> }>();
       const dailyMap = new Map<string, { revenue: number; units: number }>();
       const staffMap = new Map<string, { revenue: number; units: number; serviceTxs: Set<string>; productTxs: Set<string> }>();
       let totalProductRevenue = 0;
@@ -199,22 +324,26 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
       let totalDiscount = 0;
       const allServiceTxs = new Set<string>();
       const allProductTxs = new Set<string>();
+      // Track last sold date per product (lowercase name -> most recent date)
+      const lastSoldMap = new Map<string, string>();
 
-      currentItems.forEach((item: any) => {
-        const isProduct = PRODUCT_TYPES.includes(item.item_type);
-        const isService = SERVICE_TYPES.includes(item.item_type);
-        const txId = item.transaction_id;
+      const processItem = (item: { item_name: string; item_category?: string; item_type: string; quantity: number; unit_price?: number; discount?: number; total_amount: number; transaction_date?: string; transaction_id?: string; phorest_staff_id?: string; _saleDate?: string; _staffId?: string }, source: 'phorest' | 'native') => {
+        const isProduct = source === 'native' || PRODUCT_TYPES.includes(item.item_type);
+        const isService = source === 'phorest' && SERVICE_TYPES.includes(item.item_type);
+        const txId = item.transaction_id || item._saleDate; // native items use sale date as pseudo-tx
+        const staffId = item.phorest_staff_id || item._staffId;
+        const txDate = item.transaction_date || item._saleDate;
 
         // Track all service/product transactions for attachment rate
         if (isService && txId) allServiceTxs.add(txId);
         if (isProduct && txId) allProductTxs.add(txId);
 
-        // Staff tracking (needs both service and product tx sets)
-        if (item.phorest_staff_id) {
-          if (!staffMap.has(item.phorest_staff_id)) {
-            staffMap.set(item.phorest_staff_id, { revenue: 0, units: 0, serviceTxs: new Set(), productTxs: new Set() });
+        // Staff tracking
+        if (staffId) {
+          if (!staffMap.has(staffId)) {
+            staffMap.set(staffId, { revenue: 0, units: 0, serviceTxs: new Set(), productTxs: new Set() });
           }
-          const s = staffMap.get(item.phorest_staff_id)!;
+          const s = staffMap.get(staffId)!;
           if (isService && txId) s.serviceTxs.add(txId);
           if (isProduct) {
             s.revenue += Number(item.total_amount) || 0;
@@ -234,9 +363,16 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
         totalProductUnits += qty;
         totalDiscount += disc;
 
+        // Track last sold date
+        if (txDate) {
+          const lowerName = name.toLowerCase();
+          const existing = lastSoldMap.get(lowerName);
+          if (!existing || txDate > existing) lastSoldMap.set(lowerName, txDate);
+        }
+
         // Product aggregation
         if (!prodMap.has(name)) {
-          prodMap.set(name, { name, category: item.item_category, units: 0, revenue: 0, discount: 0, prices: [] });
+          prodMap.set(name, { name, category: item.item_category || null, units: 0, revenue: 0, discount: 0, prices: [], dailyRevenue: new Map() });
         }
         const p = prodMap.get(name)!;
         p.units += qty;
@@ -245,14 +381,30 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
         p.prices.push(Number(item.unit_price) || rev / qty);
 
         // Daily trend
-        const d = item.transaction_date;
-        if (d) {
-          if (!dailyMap.has(d)) dailyMap.set(d, { revenue: 0, units: 0 });
-          const day = dailyMap.get(d)!;
+        if (txDate) {
+          if (!dailyMap.has(txDate)) dailyMap.set(txDate, { revenue: 0, units: 0 });
+          const day = dailyMap.get(txDate)!;
           day.revenue += rev;
           day.units += qty;
+
+          // Per-product daily (for brand sparklines)
+          p.dailyRevenue.set(txDate, (p.dailyRevenue.get(txDate) || 0) + rev);
         }
-      });
+      };
+
+      // Process phorest items
+      currentItems.forEach((item: any) => processItem(item, 'phorest'));
+      // Process native Zura items
+      nativeSaleItems.forEach((item: any) => processItem({
+        item_name: item.product_name,
+        item_type: 'Product',
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        discount: item.discount,
+        total_amount: item.total_amount,
+        _saleDate: item._saleDate,
+        _staffId: item._staffId,
+      }, 'native'));
 
       // ── Aggregate prior period for comparison ──
       const priorProdMap = new Map<string, { revenue: number; units: number }>();
@@ -277,22 +429,30 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
         const prior = priorProdMap.get(p.name);
         const priorRev = prior?.revenue ?? 0;
         const trend = priorRev > 0 ? ((p.revenue - priorRev) / priorRev) * 100 : (p.revenue > 0 ? 100 : 0);
+        const lowerName = p.name.toLowerCase();
+        const cost = costMap.get(lowerName);
+        const cp = catalogProducts.get(lowerName);
+        const totalCost = cost != null ? cost * p.units : null;
+        const margin = totalCost != null && p.revenue > 0 ? ((p.revenue - totalCost) / p.revenue) * 100 : null;
         return {
           name: p.name,
           category: p.category,
+          brand: brandMap.get(lowerName) || null,
           unitsSold: p.units,
           revenue: p.revenue,
           avgPrice: p.units > 0 ? p.revenue / p.units : 0,
           discount: p.discount,
           priorRevenue: priorRev,
           revenueTrend: trend,
+          costPrice: cost ?? null,
+          margin,
+          quantityOnHand: cp?.quantityOnHand ?? null,
         };
       }).sort((a, b) => b.revenue - a.revenue);
 
       // ── Red flags ──
       const redFlags: RedFlag[] = [];
       products.forEach(p => {
-        // Declining: revenue down > 20% vs prior period
         if (p.priorRevenue > 0 && p.revenueTrend < -20) {
           redFlags.push({
             product: p.name,
@@ -302,7 +462,6 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
             detail: `Revenue down ${Math.abs(Math.round(p.revenueTrend))}% vs prior period`,
           });
         }
-        // Heavy discounting: discount > 15% of revenue + discount
         if (p.discount > 0 && p.revenue > 0) {
           const discPct = (p.discount / (p.revenue + p.discount)) * 100;
           if (discPct > 15) {
@@ -315,7 +474,6 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
             });
           }
         }
-        // Slow mover: fewer than 3 units in the period
         if (p.unitsSold < 3 && span >= 14) {
           redFlags.push({
             product: p.name,
@@ -363,10 +521,12 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
           .in('phorest_staff_id', staffIds);
 
         const userIds = (mappings || []).map((m: any) => m.user_id).filter(Boolean);
-        const { data: profiles } = await supabase
-          .from('employee_profiles')
-          .select('user_id, full_name, display_name, photo_url')
-          .in('user_id', userIds);
+        const { data: profiles } = userIds.length > 0
+          ? await supabase
+              .from('employee_profiles')
+              .select('user_id, full_name, display_name, photo_url')
+              .in('user_id', userIds)
+          : { data: [] };
 
         const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
         const mappingMap = new Map((mappings || []).map((m: any) => [m.phorest_staff_id, m]));
@@ -449,20 +609,32 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
       };
 
       // ── Brand Performance ──
-      const brandAgg = new Map<string, { revenue: number; priorRevenue: number; units: number; products: Set<string>; soldProducts: Map<string, number>; cost: number }>();
+      const brandAgg = new Map<string, {
+        revenue: number; priorRevenue: number; units: number;
+        products: Set<string>; soldProducts: Map<string, { revenue: number; units: number }>;
+        cost: number; dailyRevenue: Map<string, number>;
+      }>();
       const soldProductNames = new Set<string>();
 
       products.forEach(p => {
         const brand = brandMap.get(p.name.toLowerCase()) || 'Uncategorized';
-        if (!brandAgg.has(brand)) brandAgg.set(brand, { revenue: 0, priorRevenue: 0, units: 0, products: new Set(), soldProducts: new Map(), cost: 0 });
+        if (!brandAgg.has(brand)) brandAgg.set(brand, { revenue: 0, priorRevenue: 0, units: 0, products: new Set(), soldProducts: new Map(), cost: 0, dailyRevenue: new Map() });
         const b = brandAgg.get(brand)!;
         b.revenue += p.revenue;
         b.units += p.unitsSold;
         b.products.add(p.name);
-        b.soldProducts.set(p.name, p.revenue);
+        b.soldProducts.set(p.name, { revenue: p.revenue, units: p.unitsSold });
         soldProductNames.add(p.name.toLowerCase());
         const cost = costMap.get(p.name.toLowerCase());
         if (cost != null) b.cost += cost * p.unitsSold;
+
+        // Merge daily revenue into brand
+        const prodEntry = prodMap.get(p.name);
+        if (prodEntry) {
+          prodEntry.dailyRevenue.forEach((rev, date) => {
+            b.dailyRevenue.set(date, (b.dailyRevenue.get(date) || 0) + rev);
+          });
+        }
 
         // Prior period
         const prior = priorProdMap.get(p.name);
@@ -472,17 +644,37 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
       const brandPerformance: BrandRow[] = Array.from(brandAgg.entries()).map(([brand, d]) => {
         const trend = d.priorRevenue > 0 ? ((d.revenue - d.priorRevenue) / d.priorRevenue) * 100 : (d.revenue > 0 ? 100 : 0);
         const margin = d.revenue > 0 && d.cost > 0 ? ((d.revenue - d.cost) / d.revenue) * 100 : 0;
-        // Find top product by revenue
         let topProduct = '';
         let topRev = 0;
-        d.soldProducts.forEach((rev, name) => { if (rev > topRev) { topRev = rev; topProduct = name; } });
-        // Find stale catalog products for this brand
+        const productBreakdown: BrandRow['productBreakdown'] = [];
+        d.soldProducts.forEach((pd, name) => {
+          if (pd.revenue > topRev) { topRev = pd.revenue; topProduct = name; }
+          const lowerName = name.toLowerCase();
+          const cp = catalogProducts.get(lowerName);
+          const cost = costMap.get(lowerName);
+          const totalCost = cost != null ? cost * pd.units : null;
+          const pMargin = totalCost != null && pd.revenue > 0 ? ((pd.revenue - totalCost) / pd.revenue) * 100 : null;
+          productBreakdown.push({
+            name,
+            revenue: pd.revenue,
+            unitsSold: pd.units,
+            margin: pMargin,
+            quantityOnHand: cp?.quantityOnHand ?? null,
+          });
+        });
+        productBreakdown.sort((a, b) => b.revenue - a.revenue);
+
         const staleProducts: string[] = [];
         catalogProducts.forEach((cp, lowerName) => {
           if (cp.brand === brand && !soldProductNames.has(lowerName)) {
-            staleProducts.push(lowerName);
+            staleProducts.push(catalog.find((c: any) => c.name?.toLowerCase() === lowerName)?.name || lowerName);
           }
         });
+
+        // Daily revenue for sparkline
+        const dailyRevenue = Array.from(d.dailyRevenue.entries())
+          .map(([date, revenue]) => ({ date, revenue }))
+          .sort((a, b) => a.date.localeCompare(b.date));
 
         return {
           brand,
@@ -495,22 +687,29 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
           margin,
           topProduct,
           staleProducts,
+          productBreakdown,
+          dailyRevenue,
         };
       }).sort((a, b) => b.revenue - a.revenue);
 
-      // ── Dead Stock ──
+      // ── Dead Stock (with real lastSoldDate) ──
       const today = new Date();
       const deadStock: DeadStockRow[] = [];
       catalogProducts.forEach((cp, lowerName) => {
         if (!soldProductNames.has(lowerName) && cp.quantityOnHand > 0) {
+          const lastSold = lastSoldMap.get(lowerName) || null;
+          // If we have no sale in current period, check if there's a prior-period sale
+          const priorLastSold = !lastSold ? (priorProdMap.has(catalog.find((c: any) => c.name?.toLowerCase() === lowerName)?.name || '') ? priorTo : null) : lastSold;
+          const daysStale = priorLastSold ? differenceInDays(today, parseISO(priorLastSold)) : span;
+
           deadStock.push({
             name: catalog.find((c: any) => c.name?.toLowerCase() === lowerName)?.name || lowerName,
             brand: cp.brand,
             category: cp.category,
             retailPrice: cp.retailPrice,
             quantityOnHand: cp.quantityOnHand,
-            lastSoldDate: null,
-            daysStale: span,
+            lastSoldDate: priorLastSold,
+            daysStale,
             capitalTiedUp: cp.retailPrice * cp.quantityOnHand,
           });
         }
