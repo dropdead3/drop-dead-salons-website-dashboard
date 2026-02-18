@@ -1,51 +1,87 @@
 
 
-# Merge Handbooks into Onboarding Settings
+# Add "Website" Settings Card with Configurator
 
-## What Changes
+## Overview
 
-The standalone "Handbooks" settings card gets absorbed into the "Onboarding" settings card. Handbooks are part of the onboarding process, so they belong together. After this change, clicking "Onboarding" in settings gives you three tabs instead of two: **Tasks**, **Requests & Docs**, and **Handbooks**.
+A new **Website** card in Settings that centralizes all public-facing website configuration. Instead of duplicating the full Website Editor (which already lives at `/dashboard/admin/website-sections`), this configurator focuses on **settings and toggles** that control website behavior, appearance, and features.
 
-The separate "Handbooks" card disappears from the settings grid entirely.
+## What Gets Built
 
-## Changes
+A new `WebsiteSettingsContent` component with **5 tabs**:
 
-### 1. Update OnboardingConfigurator -- add Handbooks tab
+### Tab 1: General
+- **Announcement Banner** -- toggle on/off, edit text (links to existing `useAnnouncementBar` hook)
+- **Social Links** -- quick-access social media URLs (pulls from email branding settings or a new `site_settings` key)
+- **Quick link** to the full Website Editor (`/dashboard/admin/website-sections`)
 
-**File: `src/components/dashboard/settings/OnboardingConfigurator.tsx`**
+### Tab 2: Theme & Appearance
+- **Website Color Theme** selector (Cream, Rose, Sage, Ocean) -- wired to existing `useColorTheme` logic but persisted to `site_settings` so it applies globally, not just per-browser
+- **Future Themes** -- placeholder badges for upcoming themes (e.g., "Midnight", "Terracotta") marked "Coming Soon"
+- **Homepage Section Ordering** -- summary view showing enabled/disabled sections with a link to the full Website Editor for detailed editing
 
-- Import `HandbooksContent`
-- Change the inner `Tabs` from a 2-column grid to a 3-column grid
-- Add a third tab trigger: "Handbooks" with a `BookOpen` icon
-- Add a `TabsContent` for "handbooks" that renders `<HandbooksContent />`
-- Update the card description to: "Tasks, role configuration & team handbooks"
+### Tab 3: Online Booking
+- **Enable Online Booking** toggle (reads/writes `site_settings` key `website_booking`)
+- **Booking Widget Options**: require deposit toggle, buffer time between appointments (minutes), show/hide specific stylists, show/hide specific services
+- **New Client vs Existing Client** mode selector
+- All stored as a single `site_settings` row with key `website_booking`
 
-### 2. Remove handbooks category from Settings.tsx
+### Tab 4: Retail / Shop
+- **Enable Online Shop** toggle
+- **Fulfillment Options**: in-store pickup, local delivery, shipping (toggles)
+- **Featured Products** toggle (show/hide on homepage)
+- Stored as `site_settings` key `website_retail`
+- All toggles are UI-ready but marked as "Coming Soon" badges since the e-commerce backend isn't built yet
 
-**File: `src/pages/dashboard/admin/Settings.tsx`**
+### Tab 5: SEO & Legal
+- **Google Analytics / Tag Manager ID** input fields
+- **Meta Pixel ID** input field
+- **Privacy Policy URL** and **Terms of Service URL** inputs
+- Stored as `site_settings` key `website_seo_legal`
 
-- Remove `handbooks` from the `SettingsCategory` type union
-- Remove the `handbooks` entry from the categories object (~lines 782-787)
-- Remove the `{activeCategory === 'handbooks' && <HandbooksContent />}` render block (~line 1397)
-- Remove the `HandbooksContent` import (line 80) since it moves to OnboardingConfigurator
+## Technical Changes
 
-### 3. Remove handbooks from settings layout defaults
+### 1. New Component: `src/components/dashboard/settings/WebsiteSettingsContent.tsx`
+- Tabbed layout using existing `Tabs`/`TabsList`/`TabsTrigger`/`TabsContent`
+- Icons: `Globe`, `Palette`, `Calendar`, `ShoppingBag`, `Scale`
+- Each tab reads/writes from `site_settings` table using the existing `useSiteSettings` / `useUpdateSiteSetting` hooks (or `useSectionConfig` for upsert pattern)
+- Theme tab imports from `useColorTheme` and `colorThemes` for the theme picker UI
 
-**File: `src/hooks/useSettingsLayout.ts`**
+### 2. Update: `src/pages/dashboard/admin/Settings.tsx`
+- Add `'website'` to the `SettingsCategory` type union
+- Add `website` entry to `categoriesMap` with icon `Globe` and description `"Theme, booking, retail & SEO"`
+- Add conditional render: `{activeCategory === 'website' && <WebsiteSettingsContent />}`
+- Import `WebsiteSettingsContent`
 
-- Remove `'handbooks'` from `DEFAULT_ICON_COLORS`
-- Remove `'handbooks'` from the `operations` group in `SECTION_GROUPS`
-- Remove `'handbooks'` from `DEFAULT_ORDER` (derived automatically)
+### 3. Update: `src/hooks/useSettingsLayout.ts`
+- Add `website: '#0EA5E9'` to `DEFAULT_ICON_COLORS`
+- Add `'website'` to the `operations` group in `SECTION_GROUPS` (after `business`)
 
-### 4. Update Onboarding card description
+### 4. Database: New `site_settings` rows (seeded via insert tool)
+- `website_booking` -- default: `{ "enabled": false, "require_deposit": false, "buffer_minutes": 15, "new_client_mode": "both" }`
+- `website_retail` -- default: `{ "enabled": false, "pickup": true, "delivery": false, "shipping": false, "featured_products": true }`
+- `website_seo_legal` -- default: `{ "ga_id": "", "gtm_id": "", "meta_pixel_id": "", "privacy_url": "", "terms_url": "" }`
+- `website_theme` -- default: `{ "color_theme": "cream" }`
 
-**File: `src/pages/dashboard/admin/Settings.tsx`**
+No schema migration needed -- these are just new rows in the existing `site_settings` table.
 
-- Change the onboarding category description from "Tasks & role configuration" to "Tasks, handbooks & role configuration"
+### 5. New Hook: `src/hooks/useWebsiteSettings.ts`
+- Typed hooks for each settings key (`useWebsiteBookingSettings`, `useWebsiteRetailSettings`, `useWebsiteSeoSettings`, `useWebsiteThemeSettings`)
+- Each wraps the generic `useSiteSettings` with proper TypeScript interfaces
+- Upsert mutation pattern (matching existing `useSectionConfig` approach)
 
-## What Stays the Same
+## What This Does NOT Do
+- Does not replace the full Website Editor (`WebsiteSectionsHub`) -- that remains the detailed content editor
+- Does not build actual e-commerce or booking backends -- those are future phases
+- Does not duplicate section reordering -- just shows a summary with a link to the editor
 
-- `HandbooksContent` component itself is unchanged -- it just renders inside a different parent
-- The `handbooks` database table, RLS policies, and all handbook CRUD logic remain untouched
-- The onboarding card icon (Rocket) stays the same
-- All other settings categories are unaffected
+## File Summary
+
+| File | Action |
+|------|--------|
+| `src/components/dashboard/settings/WebsiteSettingsContent.tsx` | Create |
+| `src/hooks/useWebsiteSettings.ts` | Create |
+| `src/pages/dashboard/admin/Settings.tsx` | Edit (add category + render) |
+| `src/hooks/useSettingsLayout.ts` | Edit (add to defaults) |
+| `site_settings` table | Insert 4 default rows |
+
