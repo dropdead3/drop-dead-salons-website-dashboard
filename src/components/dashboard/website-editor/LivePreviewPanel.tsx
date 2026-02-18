@@ -124,11 +124,11 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
       </div>
 
       {/* Preview Container */}
-      <div className="flex-1 overflow-hidden p-4">
+      <div className="flex-1 overflow-hidden">
         <div 
           className={cn(
-            "mx-auto h-full transition-all duration-300 rounded-lg overflow-hidden border border-border shadow-lg bg-background",
-            viewMode === 'mobile' ? "max-w-[390px]" : "w-full"
+            "mx-auto h-full bg-background",
+            viewMode === 'mobile' ? "max-w-[390px] my-4 rounded-lg overflow-hidden border border-border shadow-lg" : "w-full"
           )}
         >
           <iframe
