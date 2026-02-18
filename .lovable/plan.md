@@ -1,150 +1,110 @@
 
 
-## New "Services" Subtab in Sales Analytics
+## Services Analytics Tab: Enhancements and Drill-Downs
 
-### The Big Picture
-A dedicated **Services** subtab (placed between Commission and Retail) that consolidates all service-level intelligence into one place. This becomes the go-to page for salon owners asking: *"How are my services performing, and which ones should I adjust, promote, or retire?"*
+### Current State
+The Services tab has 6 sections: KPI Tiles, Category Mix donut/table, Service Popularity (relocated), Efficiency Matrix, Price Realization, and Demand Trends. All are flat -- no drill-downs, no interactivity beyond sorting and tab switching.
 
----
+### What's Missing (Gaps)
 
-### What Salon Owners Actually Want to Know
+1. **No drill-downs anywhere** -- KPI tiles, category rows, efficiency rows, and demand trend cards are all static. Salon owners can't click into anything to understand *why* a number looks the way it does.
 
-**Revenue Questions**
-- Which services generate the most revenue? Which are declining?
-- What's my average ticket per service? Is it rising or falling?
-- Which categories drive the business vs. which are dead weight?
+2. **No client-type segmentation** -- The data has `is_new_client` but services aren't analyzed by new vs. returning clients. This matters enormously: services that attract new clients vs. services that retain existing ones require different strategies.
 
-**Demand Questions**
-- Which services are booked most frequently?
-- Are certain services seasonal (e.g., Vivids in summer)?
-- Which services have growing vs. shrinking demand?
+3. **No rebooking analysis by service** -- `rebooked_at_checkout` exists on every appointment. Which services have the highest rebook rates? Low rebook = the client wasn't impressed enough to come back. This is a retention lever.
 
-**Pricing Questions**
-- How does actual collected revenue compare to listed menu price?
-- Where is discounting eroding margin?
-- Which services could support a price increase without demand drop?
+4. **No stylist concentration risk** -- If 80% of Balayage revenue comes from one stylist, that's a business risk. The Popularity chart has stylist breakdown but the Efficiency Matrix doesn't.
 
-**Staff Questions**
-- Who performs which services? Who dominates a category?
-- Are high-revenue services concentrated on one stylist (risk)?
-- Which stylists upsell add-ons most effectively?
+5. **No add-on/upsell visibility** -- Which services get paired together? Which stylists upsell most? This is a revenue growth lever that's completely invisible.
 
-**Operational Questions**
-- Revenue per hour by service (which services are the best use of chair time?)
-- Duration efficiency: do services consistently run over their allocated time?
-- Which services get paired together most often (bundle opportunities)?
+6. **No tip analysis by service** -- `tip_amount` is tracked. Services with higher tip rates indicate higher client satisfaction. This is an indirect quality signal.
 
 ---
 
-### Redundancy Cleanup
+### Plan: 7 Enhancements
 
-| Currently Lives In | What | Action |
-|---|---|---|
-| Sales Overview | Service Popularity chart | **Move** to Services tab; replace with a compact "Top 5 Services" summary card in Overview that links to Services tab |
-| Sales Overview | Service Mix legend (on Popularity card) | **Move** with the chart |
-| Forecasting | Service Mix legend (By Category mode) | **Keep** -- contextually relevant to forecasting |
-| ServiceMixCard (standalone) | Category revenue breakdown | **Absorb** into the Services tab as the "Category Mix" section |
+#### Enhancement 1: KPI Tile Drill-Downs
+Each of the 4 KPI tiles becomes clickable with an expanding panel below (framer-motion, matching existing drill-down patterns):
 
-This declutters the Overview subtab (which should focus on aggregate KPIs) and gives services their own dedicated space.
+- **Service Revenue tile**: Expands to show revenue by category as a mini stacked bar, with period-over-period comparison (current period vs. prior equal-length period)
+- **Active Services tile**: Expands to show services with zero bookings this period (dormant services that are still on the menu -- cleanup candidates)
+- **Avg Service Ticket tile**: Expands to show top 5 and bottom 5 services by avg ticket, highlighting outliers
+- **Rev/Chair Hour tile**: Expands to show the same top 5 / bottom 5 by hourly yield, with the salon average as a reference line
 
----
+#### Enhancement 2: Category Mix Drill-Down
+Clicking a category row in the table expands to show:
+- The individual services within that category, sorted by revenue
+- Each service shows: bookings, avg ticket, % of category revenue
+- New vs. returning client split for the category (pie or simple bar)
+- Category rebook rate (% of appointments in this category where `rebooked_at_checkout = true`)
 
-### Services Tab Layout
+#### Enhancement 3: Efficiency Matrix Row Drill-Down
+Clicking any row in the Service Efficiency Matrix expands to show:
+- **Stylist breakdown**: Who performs this service, their individual rev/hr, and booking count (identifies concentration risk)
+- **Client type split**: New vs. returning client percentage for this service
+- **Rebook rate**: % of clients who rebooked at checkout after this service
+- **Tip indicator**: Average tip % for this service (quality signal)
 
-#### Section 1: Service KPI Tiles (Top Row)
-Four metric tiles following the existing KPI tile pattern:
+#### Enhancement 4: New vs. Returning Client Service Analysis (New Section)
+A new card section between Category Mix and Service Popularity:
+- Horizontal stacked bar chart showing each service's booking split: new clients (one color) vs. returning clients (another color)
+- Top 10 services sorted by new client acquisition count
+- Answers: "Which services are my best new client magnets?"
+- Inverse view toggle: "Which services retain existing clients best?" (sorted by returning %)
 
-| Tile | Metric | Source |
-|---|---|---|
-| Total Service Revenue | Sum of service revenue for period | `phorest_appointments` |
-| Active Services | Count of distinct services booked | `phorest_appointments` |
-| Avg Service Ticket | Revenue / appointment count | Computed |
-| Revenue per Chair Hour | Service revenue / total booked hours | `phorest_appointments` (duration) |
+#### Enhancement 5: Service Rebooking Rates (New Section)
+A new card after the Efficiency Matrix:
+- Table showing each service (min 5 bookings), its rebook rate, and a visual progress bar
+- Color-coded: green (>70%), amber (40-70%), red (<40%)
+- Drill-down per service: which stylists have the highest/lowest rebook rates for that service
+- This is a **quality and retention lever** -- low rebook services need attention (training, pricing, or menu retirement)
 
-#### Section 2: Service Mix Donut + Category Table
-- Full-size donut chart showing category revenue distribution (the one removed from Capacity Utilization, now with its proper home)
-- Category table below with: Category name, Revenue, Count, % of Total, Avg Ticket, color dot
-- Sortable by any column
+#### Enhancement 6: Demand Trend Drill-Down
+Clicking a demand trend sparkline card expands to show:
+- The full 12-week data as a larger line chart with actual values
+- Week-over-week change percentage
+- The service's share of total bookings over time (is it growing as a % of the business?)
 
-#### Section 3: Service Popularity (Relocated)
-- The existing `ServicePopularityChart` moved here with its full Revenue/Frequency tabs, animated bars, and Stylist Breakdown drill-downs
-- No changes to the component itself, just its location
-
-#### Section 4: Service Efficiency Matrix (New)
-A table ranking services by **Revenue per Hour** -- the metric that matters most for chair-time optimization:
-
-| Column | Source |
-|---|---|
-| Service Name | `phorest_appointments.service_name` |
-| Category | `phorest_services.category` |
-| Avg Duration (min) | `phorest_services.duration_minutes` |
-| Avg Revenue | Computed from appointments |
-| Rev/Hour | `(avg_revenue / avg_duration) * 60` |
-| Bookings | Count |
-
-Sorted by Rev/Hour descending. Color-coded: green (above salon avg), amber (near avg), red (below avg). This directly tells owners which services are the best and worst use of chair time.
-
-#### Section 5: Price Realization (New)
-Compares **menu price** (from `phorest_services.price` or the pricing resolution engine) vs. **actual collected average** (from appointments):
-
-- Bar chart: menu price vs. actual avg for top 10 services
-- "Realization Rate" = actual / menu as a percentage
-- Flags services where realization < 85% (heavy discounting)
-- Flags services where actual > menu (opportunity to raise menu price)
-
-This is a **brilliant, rare insight** most salon software doesn't provide. It directly surfaces pricing levers.
-
-#### Section 6: Service Demand Trend (New)
-- Small multiples or sparklines showing booking count trend over the last 12 weeks for the top 8 services
-- Simple "rising / stable / declining" indicators
-- Helps owners spot seasonal shifts and fading services before they become problems
+#### Enhancement 7: Service Pairing Analysis (New Section -- Future-Ready)
+A compact card at the bottom showing the most common service combinations booked by the same client on the same day:
+- Query: group appointments by `phorest_client_id + appointment_date`, find services that co-occur
+- Display top 5 pairs with co-occurrence count
+- This reveals bundle opportunities (e.g., "Balayage + Olaplex Treatment" appear together 73% of the time -- create a package)
 
 ---
 
 ### Technical Implementation
 
-**New File: `src/components/dashboard/analytics/ServicesContent.tsx`**
-- Main content component for the Services subtab
-- Receives `filters` and `filterContext` from `SalesTabContent`
-- Composes the sections above
+**Modified: `src/components/dashboard/analytics/ServicesContent.tsx`**
+- Add expandable drill-down states for KPI tiles, category rows, efficiency rows, and demand trend cards
+- Add new sections: Client Type Analysis, Service Rebooking, Service Pairing
+- All drill-downs use framer-motion AnimatePresence pattern consistent with existing code
 
-**New Hook: `src/hooks/useServiceEfficiency.ts`**
-- Joins `phorest_appointments` (actual revenue, count) with `phorest_services` (duration, menu price)
-- Returns per-service: avgRevenue, avgDuration, revPerHour, menuPrice, realizationRate
+**New Hook: `src/hooks/useServiceClientAnalysis.ts`**
+- Queries `phorest_appointments` with `is_new_client`, `rebooked_at_checkout`, `tip_amount` grouped by `service_name`
+- Returns per-service: newClientCount, returningCount, rebookRate, avgTipPct
 
-**New Hook: `src/hooks/useServiceDemandTrend.ts`**
-- Queries `phorest_appointments` grouped by service + week
-- Returns weekly booking counts for sparkline rendering
+**New Hook: `src/hooks/useServicePairings.ts`**
+- Queries appointments grouped by `phorest_client_id + appointment_date`
+- Identifies co-occurring services and returns top pairs with counts
 
-**Modified: `src/components/dashboard/analytics/SalesTabContent.tsx`**
-- Add "Services" subtab trigger between Commission and Retail
-- Add `TabsContent value="services"` rendering `ServicesContent`
-- Move `ServicePopularityChart` from Overview to Services tab
-- Replace with a compact "Top Services" summary in Overview that links to `?tab=sales&subtab=services`
+**Modified: `src/hooks/useServiceEfficiency.ts`**
+- Add `is_new_client`, `rebooked_at_checkout`, `tip_amount`, `phorest_staff_id` to the appointment query
+- Enrich `ServiceEfficiencyRow` with: `newClientPct`, `rebookRate`, `avgTipPct`
 
-**Modified: `src/config/dashboardNav.ts`**
-- Add `services` subtab entry for the Sales tab nav registry
-
-**Reused Components**
-- `ServiceMixLegend` -- used in the Category Mix section
-- `ServicePopularityChart` -- moved as-is
-- `PinnableCard` wrapper for each section
-- Existing filter system (date range, location)
+**No database changes required** -- all data already exists in `phorest_appointments`.
 
 ---
 
-### What Makes This Tab Brilliant
+### What Makes These Enhancements Brilliant
 
-1. **Revenue per Chair Hour** -- Most salon software ignores this. A $200 balayage that takes 3 hours ($67/hr) is less profitable than a $75 haircut in 45 min ($100/hr). This reframes how owners think about their menu.
+1. **Rebooking by service** is almost never surfaced in salon software. It's the most direct signal of service quality and client satisfaction. A service with great revenue but poor rebook rate is a ticking time bomb.
 
-2. **Price Realization** -- Exposes the gap between what's on the menu and what's actually collected. No other salon platform surfaces this. It's the single most actionable pricing lever.
+2. **New client magnet analysis** tells owners which services to promote in marketing. If "Balayage Consultation" brings in 4x more new clients than anything else, that's your lead-gen service.
 
-3. **Demand Trends** -- Weekly sparklines let owners see which services are gaining or losing traction *before* it shows up in revenue. Early signal for menu adjustments, training investments, or marketing pushes.
+3. **Stylist concentration risk** in the efficiency drill-down protects against the scenario where one stylist leaves and takes 80% of a service category's revenue with them.
 
-4. **Single Source of Truth** -- No more hunting across Overview, Forecasting, and Capacity for service data. One tab, complete picture.
+4. **Service pairing** plants the seed for automated bundle creation in Phase 3, and immediately reveals upsell training opportunities.
 
----
-
-### Phase Consideration
-This aligns with **Phase 1** (structured visibility) since it's organizing existing data into actionable views. The Price Realization and Efficiency Matrix plant seeds for **Phase 3** (simulation engine) -- eventually owners could ask "what if I raise Balayage by $25?" and see projected impact.
+5. **Every section becomes interactive** -- consistent with the drill-down-first philosophy used in Sales Overview and Location Comparison cards. No dead-end data.
 
