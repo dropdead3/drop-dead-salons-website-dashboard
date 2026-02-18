@@ -111,29 +111,15 @@ function CustomXAxisTick({ x, y, payload, days, peakDate, onDayClick, closedDate
               {day.appointmentCount} appointment{day.appointmentCount !== 1 ? 's' : ''}
             </text>
             {isClosed && (
-              <g>
-                <g transform={`translate(-18, ${39 - 9}) scale(0.42)`}>
-                  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" 
-                        fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                        className="stroke-muted-foreground" />
-                </g>
-                <text x={4} dy={39} textAnchor="middle" className="fill-muted-foreground text-[9px]">
-                  Closed
-                </text>
-              </g>
+              <text x={0} dy={39} textAnchor="middle" className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}>
+                Closed
+              </text>
             )}
           </>
         ) : isClosed ? (
-          <g>
-            <g transform={`translate(-18, ${26 - 9}) scale(0.42)`}>
-              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" 
-                    fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                    className="stroke-muted-foreground" />
-            </g>
-            <text x={4} dy={26} textAnchor="middle" className="fill-muted-foreground text-[9px]">
-              Closed
-            </text>
-          </g>
+          <text x={0} dy={26} textAnchor="middle" className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}>
+            Closed
+          </text>
         ) : (
           <text 
             x={0} y={0} dy={26} 

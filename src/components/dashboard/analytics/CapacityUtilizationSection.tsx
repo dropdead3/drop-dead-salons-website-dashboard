@@ -86,12 +86,7 @@ function DayXAxisTick({ x, y, payload, days }: any) {
         >
           {day.dayName}
         </text>
-        <g transform={`translate(-18, ${24 - 9}) scale(0.42)`}>
-          <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" 
-                fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                className="stroke-muted-foreground" />
-        </g>
-        <text x={4} dy={24} textAnchor="middle" className="fill-muted-foreground text-[9px]">
+        <text x={0} dy={24} textAnchor="middle" className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}>
           Closed
         </text>
       </g>
