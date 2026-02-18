@@ -68,7 +68,7 @@ export function BrandStatementEditor() {
   }
 
   return (
-    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 h-full">
+    <div className="space-y-6 h-full">
       {/* Editor Panel */}
       <Card className="overflow-auto">
         <CardHeader className="flex flex-row items-center justify-between pb-4 sticky top-0 bg-card z-10 border-b">

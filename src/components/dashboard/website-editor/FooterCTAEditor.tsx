@@ -46,7 +46,7 @@ export function FooterCTAEditor() {
   }
 
   return (
-    <div className="grid xl:grid-cols-2 gap-6">
+    <div className="space-y-6">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
           <CardTitle className="text-lg">Footer CTA Section</CardTitle>
