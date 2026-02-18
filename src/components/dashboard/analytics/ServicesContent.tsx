@@ -22,7 +22,7 @@ import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { ServicePopularityChart } from '@/components/dashboard/sales/ServicePopularityChart';
-import { CategoryPopularityChart } from '@/components/dashboard/sales/CategoryPopularityChart';
+
 import { useServiceEfficiency, type ServiceEfficiencyRow, type StylistBreakdown } from '@/hooks/useServiceEfficiency';
 import { RevPerHourByCategoryChart } from '@/components/dashboard/sales/RevPerHourByCategoryChart';
 import { useServiceDemandTrend } from '@/hooks/useServiceDemandTrend';
@@ -139,7 +139,7 @@ type SortField = 'serviceName' | 'revPerHour' | 'avgRevenue' | 'bookings' | 'avg
 const SERVICES_SECTION_DEFS: CardDefinition[] = [
   { id: 'kpi_tiles', label: 'KPI Tiles', icon: <DollarSign className="w-4 h-4" /> },
   { id: 'category_mix', label: 'Service Category Mix', icon: <BarChart3 className="w-4 h-4" /> },
-  { id: 'category_popularity', label: 'Category Popularity', icon: <BarChart3 className="w-4 h-4" /> },
+  
   { id: 'client_type', label: 'Client Type Analysis', icon: <Users className="w-4 h-4" /> },
   { id: 'service_popularity', label: 'Service Popularity', icon: <Scissors className="w-4 h-4" /> },
   { id: 'efficiency_matrix', label: 'Service Efficiency Matrix', icon: <Target className="w-4 h-4" /> },
@@ -476,11 +476,6 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
     </PinnableCard>
   );
 
-  sections.category_popularity = (
-    <PinnableCard key="category_popularity" elementKey="category_popularity" elementName="Category Popularity" category="Analytics Hub - Sales" dateRange={dateRange} locationName={locationName}>
-      <CategoryPopularityChart dateFrom={dateFrom} dateTo={dateTo} locationId={locationId} filterContext={filterContext} />
-    </PinnableCard>
-  );
 
   sections.client_type = (
     <PinnableCard key="client_type" elementKey="service_client_analysis" elementName="Client Type by Service" category="Analytics Hub - Sales" dateRange={dateRange} locationName={locationName}>
