@@ -288,29 +288,23 @@ export function StoreAppearanceConfigurator({ storeUrl }: StoreAppearanceConfigu
           <CardContent>
             <div
               className={cn(
-                'mx-auto rounded-lg overflow-hidden border border-border bg-muted/30 transition-all duration-300',
+                'mx-auto rounded-lg overflow-hidden border border-border bg-muted/30 transition-all duration-300 relative',
                 viewMode === 'mobile' ? 'max-w-[390px]' : 'w-full'
               )}
-              style={{ height: viewMode === 'mobile' ? '600px' : '500px' }}
+              style={{
+                // Use aspect-ratio to maintain proportions instead of fixed height
+                aspectRatio: viewMode === 'mobile' ? '390 / 844' : '16 / 9',
+                maxHeight: viewMode === 'mobile' ? '600px' : '500px',
+              }}
             >
-              <div
-                className="origin-top-left"
-                style={{
-                  width: viewMode === 'mobile' ? '390px' : '1280px',
-                  height: viewMode === 'mobile' ? '844px' : '900px',
-                  transform: viewMode === 'mobile' ? 'scale(0.71)' : 'scale(0.5)',
-                  transformOrigin: 'top left',
-                }}
-              >
-                <iframe
-                  key={refreshKey}
-                  src={previewUrl}
-                  className="w-full h-full border-0"
-                  title="Store Preview"
-                  onLoad={() => setIframeLoading(false)}
-                  sandbox="allow-scripts allow-same-origin"
-                />
-              </div>
+              <iframe
+                key={refreshKey}
+                src={previewUrl}
+                className="absolute top-0 left-0 border-0 w-full h-full"
+                title="Store Preview"
+                onLoad={() => setIframeLoading(false)}
+                sandbox="allow-scripts allow-same-origin"
+              />
             </div>
           </CardContent>
         </Card>
