@@ -38,7 +38,7 @@ export function AnalyticsFilterBadge({
   const { data: locations } = useActiveLocations();
   
   // Resolve location name
-  const locationName = locationId === 'all' 
+  const locationName = (!locationId || locationId === 'all') 
     ? 'All Locations'
     : locations?.find(l => l.id === locationId)?.name || 'Unknown';
   
