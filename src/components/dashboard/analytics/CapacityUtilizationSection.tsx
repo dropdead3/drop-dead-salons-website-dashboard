@@ -222,11 +222,12 @@ export function CapacityUtilizationSection({
           </div>
           <Progress 
             value={Math.min(overallUtilization, 100)} 
-            className="h-3"
+            className="h-2.5 bg-muted/50"
             indicatorClassName={cn(
+              'transition-all',
               overallUtilization >= 70 && 'bg-chart-2',
-              overallUtilization >= 50 && overallUtilization < 70 && 'bg-amber-500',
-              overallUtilization < 50 && 'bg-destructive'
+              overallUtilization >= 50 && overallUtilization < 70 && 'bg-amber-500/80',
+              overallUtilization < 50 && 'bg-muted-foreground/60'
             )}
           />
 
@@ -243,36 +244,42 @@ export function CapacityUtilizationSection({
 
         {/* Summary Stats - 3 column centered layout */}
         <div className="grid grid-cols-3 gap-3">
-          <div className="text-center p-3 bg-muted/30 rounded-lg">
-            <div className="flex justify-center mb-1">
-              <Clock className="w-4 h-4 text-chart-3" />
+          <div className="text-center p-4 bg-card border border-border/40 rounded-xl">
+            <div className="flex justify-center mb-2">
+              <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                <Clock className="w-4 h-4 text-chart-3" />
+              </div>
             </div>
-            <span className="text-lg font-display tabular-nums">{gapHours}h</span>
-            <div className="flex items-center gap-1 justify-center">
+            <span className="text-xl font-display tabular-nums">{gapHours}h</span>
+            <div className="flex items-center gap-1 justify-center mt-0.5">
               <p className="text-xs text-muted-foreground">Unused Hours</p>
               <MetricInfoTooltip description="Total chair-hours available but not booked. Each stylist-hour counts as one chair-hour." />
             </div>
           </div>
-          <div className="text-center p-3 bg-muted/30 rounded-lg">
-            <div className="flex justify-center mb-1">
-              <TrendingDown className="w-4 h-4 text-destructive" />
+          <div className="text-center p-4 bg-card border border-border/40 rounded-xl">
+            <div className="flex justify-center mb-2">
+              <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                <TrendingDown className="w-4 h-4 text-muted-foreground" />
+              </div>
             </div>
             <AnimatedBlurredAmount 
               value={gapRevenue}
               currency={currency}
-              className="text-lg font-display tabular-nums"
+              className="text-xl font-display tabular-nums"
             />
-            <div className="flex items-center gap-1 justify-center">
+            <div className="flex items-center gap-1 justify-center mt-0.5">
               <p className="text-xs text-muted-foreground">Gap Revenue</p>
               <MetricInfoTooltip description={`Potential revenue if unused hours were booked. Based on avg hourly revenue of ${formatCurrencyWhole(avgHourlyRevenue)}.`} />
             </div>
           </div>
-          <div className="text-center p-3 bg-muted/30 rounded-lg">
-            <div className="flex justify-center mb-1">
-              <Calendar className="w-4 h-4 text-primary" />
+          <div className="text-center p-4 bg-card border border-border/40 rounded-xl">
+            <div className="flex justify-center mb-2">
+              <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-primary" />
+              </div>
             </div>
-            <span className="text-lg font-display tabular-nums">{totalAppointments}</span>
-            <div className="flex items-center gap-1 justify-center">
+            <span className="text-xl font-display tabular-nums">{totalAppointments}</span>
+            <div className="flex items-center gap-1 justify-center mt-0.5">
               <p className="text-xs text-muted-foreground">Appointments</p>
               <MetricInfoTooltip description={`Total completed appointments ${DATE_RANGE_LABELS[dateRange]}.`} />
             </div>
@@ -336,18 +343,20 @@ export function CapacityUtilizationSection({
                       return label;
                     }}
                   />
+                  <defs>
+                    <linearGradient id="capacity-glass-analytics" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.45} />
+                      <stop offset="100%" stopColor="hsl(var(--muted-foreground))" stopOpacity={0.18} />
+                    </linearGradient>
+                  </defs>
                   <Bar 
                     dataKey="utilization" 
-                    radius={[4, 4, 0, 0]}
+                    radius={[6, 6, 0, 0]}
+                    fill="url(#capacity-glass-analytics)"
+                    stroke="hsl(var(--foreground) / 0.12)"
+                    strokeWidth={1}
                     label={<UtilizationBarLabel />}
-                  >
-                    {chartData.map((entry, index) => (
-                      <Cell 
-                        key={`cell-${index}`}
-                        fill={getUtilizationColor(entry.utilization)}
-                      />
-                    ))}
-                  </Bar>
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -356,22 +365,23 @@ export function CapacityUtilizationSection({
 
         {/* Service Mix Breakdown */}
         {showPieChart && (
-          <div className="pt-3 border-t border-border/50">
+          <div className="pt-3">
+            <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent mb-4" />
             <div className="flex items-center gap-2 mb-3">
               <PieChartIcon className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-medium">Service Mix</span>
               <MetricInfoTooltip description="Breakdown of booked time by service category. Shows how salon capacity is being used." />
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="h-[120px]">
+              <div className="h-[140px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
                       data={pieData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={25}
-                      outerRadius={45}
+                      innerRadius={30}
+                      outerRadius={52}
                       paddingAngle={2}
                       dataKey="value"
                     >
@@ -404,11 +414,11 @@ export function CapacityUtilizationSection({
 
         {/* Opportunity Insights */}
         {overallUtilization < 70 && gapHours > 0 && (
-          <div className="p-3 bg-warning/10 border border-warning/20 rounded-lg">
+          <div className="p-3 bg-muted/40 border border-border/40 rounded-lg">
             <div className="flex items-start gap-2">
-              <TrendingDown className="w-4 h-4 text-warning mt-0.5" />
+              <TrendingDown className="w-4 h-4 text-muted-foreground mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium text-warning">
+                <p className="font-medium text-foreground">
                   Room for ~{Math.round(gapHours / 2)} more bookings
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
@@ -420,7 +430,7 @@ export function CapacityUtilizationSection({
                 </p>
                 {peakDay && peakDay.utilizationPercent >= 80 && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    💪 {formatDate(parseISO(peakDay.date), 'EEEE')} was your strongest day ({peakDay.utilizationPercent}% utilized)
+                    {formatDate(parseISO(peakDay.date), 'EEEE')} was your strongest day ({peakDay.utilizationPercent}% utilized)
                   </p>
                 )}
               </div>
