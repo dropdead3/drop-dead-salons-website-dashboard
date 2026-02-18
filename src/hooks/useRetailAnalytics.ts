@@ -34,6 +34,8 @@ export interface ProductRow {
   costPrice: number | null;
   margin: number | null;
   quantityOnHand: number | null;
+  /** Daily revenue for product-level sparkline */
+  dailyRevenue: { date: string; revenue: number }[];
 }
 
 export interface RedFlag {
@@ -121,6 +123,8 @@ export interface RetailAnalyticsResult {
   marginData: MarginData | null;
   brandPerformance: BrandRow[];
   deadStock: DeadStockRow[];
+  /** Sales velocity: product name (lowercase) -> units per day */
+  salesVelocity: Map<string, number>;
 }
 
 // ---------------------------------------------------------------------------
@@ -434,6 +438,11 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
         const cp = catalogProducts.get(lowerName);
         const totalCost = cost != null ? cost * p.units : null;
         const margin = totalCost != null && p.revenue > 0 ? ((p.revenue - totalCost) / p.revenue) * 100 : null;
+        // Build product-level daily sparkline
+        const prodDailyRevenue = Array.from(p.dailyRevenue.entries())
+          .map(([date, revenue]) => ({ date, revenue }))
+          .sort((a, b) => a.date.localeCompare(b.date));
+
         return {
           name: p.name,
           category: p.category,
@@ -447,6 +456,7 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
           costPrice: cost ?? null,
           margin,
           quantityOnHand: cp?.quantityOnHand ?? null,
+          dailyRevenue: prodDailyRevenue,
         };
       }).sort((a, b) => b.revenue - a.revenue);
 
@@ -714,9 +724,13 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
           });
         }
       });
-      deadStock.sort((a, b) => b.capitalTiedUp - a.capitalTiedUp);
+      // ── Sales velocity (units per day per product) ──
+      const salesVelocity = new Map<string, number>();
+      prodMap.forEach((p, name) => {
+        salesVelocity.set(name.toLowerCase(), span > 0 ? p.units / span : 0);
+      });
 
-      return { summary, products, redFlags, categories, dailyTrend, staffRetail, marginData, brandPerformance, deadStock };
+      return { summary, products, redFlags, categories, dailyTrend, staffRetail, marginData, brandPerformance, deadStock, salesVelocity };
     },
     enabled: !!dateFrom && !!dateTo,
     staleTime: 5 * 60 * 1000,
@@ -734,5 +748,6 @@ function emptyResult(): RetailAnalyticsResult {
     marginData: null,
     brandPerformance: [],
     deadStock: [],
+    salesVelocity: new Map(),
   };
 }

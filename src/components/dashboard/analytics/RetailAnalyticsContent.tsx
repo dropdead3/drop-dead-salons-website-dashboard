@@ -13,11 +13,12 @@ import {
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell, LineChart, Line,
+  PieChart, Pie,
 } from 'recharts';
 import {
   DollarSign, Package, TrendingUp, TrendingDown, AlertTriangle,
   ShoppingBag, Users, Search, ArrowUpDown, BarChart3, Loader2, Info, Percent, Tag, Scissors,
-  ChevronDown, ChevronUp, Settings2, Archive, Download,
+  ChevronDown, ChevronUp, Settings2, Archive, Download, Target, Bell, Banknote,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -28,6 +29,10 @@ import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { useRetailAnalytics, exportRetailCSV, type ProductRow, type RedFlag, type BrandRow, type RetailAnalyticsResult } from '@/hooks/useRetailAnalytics';
 import { useServiceRetailAttachment } from '@/hooks/useServiceRetailAttachment';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { useCurrentRetailGoals } from '@/hooks/useRetailGoals';
+import { useCommissionConfig, useCommissionOverrides, calculateStaffCommissions } from '@/hooks/useRetailCommissions';
+import { useProducts } from '@/hooks/useProducts';
+import { calculateInventoryAlerts } from '@/hooks/useInventoryAlerts';
 
 interface RetailAnalyticsContentProps {
   dateFrom: string;
@@ -434,6 +439,15 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
   const [staffSearch, setStaffSearch] = useState('');
   const [staffSortKey, setStaffSortKey] = useState<StaffSortKey>('productRevenue');
   const [staffSortDir, setStaffSortDir] = useState<SortDir>('desc');
+  const navigate = useNavigate();
+
+  // Retail Goals
+  const { data: currentGoals } = useCurrentRetailGoals();
+  // Commission
+  const { data: commissionConfig } = useCommissionConfig();
+  const { data: commissionOverrides } = useCommissionOverrides(commissionConfig?.id);
+  // Inventory Alerts
+  const { data: allProducts } = useProducts({});
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir(d => (d === 'desc' ? 'asc' : 'desc'));
@@ -469,6 +483,34 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
       return (a[staffSortKey] - b[staffSortKey]) * dir;
     });
   }, [data, staffSearch, staffSortKey, staffSortDir]);
+
+  // Commission calculations
+  const staffCommissions = useMemo(() => {
+    if (!data || !commissionConfig) return [];
+    return calculateStaffCommissions(data.staffRetail, commissionConfig, commissionOverrides || []);
+  }, [data, commissionConfig, commissionOverrides]);
+
+  // Inventory alerts
+  const inventoryAlerts = useMemo(() => {
+    if (!allProducts || !data) return [];
+    return calculateInventoryAlerts(allProducts, data.salesVelocity);
+  }, [allProducts, data]);
+
+  // Goal progress
+  const goalProgress = useMemo(() => {
+    if (!currentGoals?.monthly?.length || !data) return null;
+    const orgGoal = currentGoals.monthly.find((g: any) => !g.location_id);
+    if (!orgGoal) return null;
+    const target = orgGoal.target_revenue;
+    const current = data.summary.totalRevenue;
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const dayOfMonth = now.getDate();
+    const progressPct = target > 0 ? Math.min(100, (current / target) * 100) : 0;
+    const idealPace = (dayOfMonth / daysInMonth) * 100;
+    const onTrack = progressPct >= idealPace * 0.9;
+    return { target, current, progressPct, idealPace, onTrack, dayOfMonth, daysInMonth, targetAttachmentRate: orgGoal.target_attachment_rate };
+  }, [currentGoals, data]);
 
   const summary = data?.summary;
 
@@ -570,6 +612,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                     <TableHead className="text-right cursor-pointer select-none" onClick={() => toggleSort('revenueTrend')}>
                       <span className="inline-flex items-center gap-1">Trend <ArrowUpDown className="w-3 h-3" /></span>
                     </TableHead>
+                    <TableHead className="text-center">Sparkline</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -603,6 +646,11 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                             {p.discount > 0 ? <BlurredAmount>{formatCurrencyWhole(p.discount)}</BlurredAmount> : '\u2014'}
                           </TableCell>
                           <TableCell className="text-right"><TrendArrow value={p.revenueTrend} /></TableCell>
+                          <TableCell className="text-center">
+                            {p.dailyRevenue && p.dailyRevenue.length >= 2 ? (
+                              <Sparkline data={p.dailyRevenue} color="hsl(var(--chart-2))" />
+                            ) : <span className="text-xs text-muted-foreground">—</span>}
+                          </TableCell>
                         </TableRow>
                       );
                     })
@@ -1061,6 +1109,236 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
           </CardContent>
         </Card>
       </PinnableCard>
+
+      {/* Section: Retail Goal Tracker */}
+      {goalProgress && (
+        <PinnableCard elementKey="retail_goal_tracker" elementName="Retail Goal Tracker" category="Analytics Hub - Retail">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                    <Target className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="font-display text-base tracking-wide">RETAIL GOAL TRACKER</CardTitle>
+                      <MetricInfoTooltip description="Monthly retail revenue target progress. Set goals in Settings → Retail Products. Pace line shows where you should be based on days elapsed." />
+                    </div>
+                    <CardDescription className="text-xs">Day {goalProgress.dayOfMonth} of {goalProgress.daysInMonth}</CardDescription>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+                  <Settings2 className="w-3.5 h-3.5" /> Set Goals
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <p className="text-xs text-muted-foreground">Revenue Progress</p>
+                    <p className="text-2xl font-display tabular-nums">
+                      <BlurredAmount>{formatCurrencyWhole(goalProgress.current)}</BlurredAmount>
+                      <span className="text-sm text-muted-foreground font-normal"> / {formatCurrencyWhole(goalProgress.target)}</span>
+                    </p>
+                  </div>
+                  <Progress value={goalProgress.progressPct} className="h-2" />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{Math.round(goalProgress.progressPct)}% complete</span>
+                    <span className={cn(goalProgress.onTrack ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400')}>
+                      {goalProgress.onTrack ? '✓ On track' : '⚠ Behind pace'}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xs text-muted-foreground">Ideal Pace vs Actual</p>
+                  <div className="flex items-end gap-3 h-16">
+                    <div className="flex-1 space-y-1">
+                      <div className="text-xs text-muted-foreground">Ideal</div>
+                      <Progress value={goalProgress.idealPace} className="h-3 bg-muted" />
+                      <div className="text-[10px] tabular-nums text-muted-foreground">{Math.round(goalProgress.idealPace)}%</div>
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <div className="text-xs text-muted-foreground">Actual</div>
+                      <Progress value={goalProgress.progressPct} className={cn('h-3', goalProgress.onTrack ? '' : '[&>div]:bg-amber-500')} />
+                      <div className="text-[10px] tabular-nums text-muted-foreground">{Math.round(goalProgress.progressPct)}%</div>
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {goalProgress.targetAttachmentRate && (
+                    <div>
+                      <p className="text-xs text-muted-foreground">Attachment Rate Target</p>
+                      <div className="flex items-end gap-2 mt-1">
+                        <span className="text-lg font-display tabular-nums">{summary.attachmentRate}%</span>
+                        <span className="text-sm text-muted-foreground">/ {goalProgress.targetAttachmentRate}%</span>
+                      </div>
+                      <Progress value={goalProgress.targetAttachmentRate > 0 ? (summary.attachmentRate / goalProgress.targetAttachmentRate) * 100 : 0} className="h-1.5 mt-1" />
+                    </div>
+                  )}
+                  <div className="p-2 rounded-lg bg-muted/50 text-xs text-muted-foreground">
+                    <p className="font-medium text-foreground mb-0.5">Lever Recommendation</p>
+                    {!goalProgress.onTrack ? (
+                      <p>Need <BlurredAmount>{formatCurrencyWhole((goalProgress.target - goalProgress.current) / Math.max(1, goalProgress.daysInMonth - goalProgress.dayOfMonth))}</BlurredAmount>/day to hit target. Focus on attachment rate with top-performing services.</p>
+                    ) : (
+                      <p>On pace. Maintain current retail recommendations during checkout.</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </PinnableCard>
+      )}
+
+      {/* Section: Inventory Alerts */}
+      {inventoryAlerts.length > 0 && (
+        <PinnableCard elementKey="retail_inventory_alerts" elementName="Inventory Alerts" category="Analytics Hub - Retail">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-amber-500/10 flex items-center justify-center rounded-lg">
+                    <Bell className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="font-display text-base tracking-wide">INVENTORY ALERTS</CardTitle>
+                      <MetricInfoTooltip description="Products below reorder level with estimated stockout timeline based on sales velocity. Suggested reorder quantities factor in 30-day supply." />
+                    </div>
+                    <CardDescription className="text-xs">
+                      {inventoryAlerts.filter(a => a.severity === 'critical').length} critical, {inventoryAlerts.filter(a => a.severity === 'warning').length} warning
+                    </CardDescription>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+                  <Settings2 className="w-3.5 h-3.5" /> Manage Inventory
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Brand</TableHead>
+                      <TableHead className="text-right">Stock</TableHead>
+                      <TableHead className="text-right">Reorder Lvl</TableHead>
+                      <TableHead className="text-right">Velocity</TableHead>
+                      <TableHead className="text-right">Stockout In</TableHead>
+                      <TableHead className="text-right">Suggested Order</TableHead>
+                      <TableHead className="text-right">Severity</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {inventoryAlerts.slice(0, 15).map(a => (
+                      <TableRow key={a.productId} className={cn(a.severity === 'critical' && 'bg-red-50/50 dark:bg-red-950/10')}>
+                        <TableCell className="font-medium text-sm">{a.productName}</TableCell>
+                        <TableCell className="text-sm text-muted-foreground">{a.brand || '—'}</TableCell>
+                        <TableCell className="text-right tabular-nums font-medium">{a.currentStock}</TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">{a.reorderLevel}</TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">{a.salesVelocity.toFixed(1)}/day</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant="outline" className={cn('text-[10px] tabular-nums',
+                            a.daysUntilStockout <= 7 ? 'text-red-500 border-red-200 dark:text-red-400' :
+                            a.daysUntilStockout <= 14 ? 'text-amber-600 border-amber-200 dark:text-amber-400' :
+                            'text-muted-foreground border-border'
+                          )}>
+                            {a.daysUntilStockout >= 999 ? 'N/A' : `${a.daysUntilStockout}d`}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-medium">{a.suggestedReorder}</TableCell>
+                        <TableCell className="text-right">
+                          <Badge variant={a.severity === 'critical' ? 'destructive' : 'outline'} className="text-[10px]">
+                            {a.severity}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </PinnableCard>
+      )}
+
+      {/* Section: Retail Commissions */}
+      {staffCommissions.length > 0 && (
+        <PinnableCard elementKey="retail_commissions" elementName="Retail Commissions" category="Analytics Hub - Retail">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                    <Banknote className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="font-display text-base tracking-wide">RETAIL COMMISSIONS</CardTitle>
+                      <MetricInfoTooltip description="Estimated retail commission payouts based on your commission configuration. Override rates are marked. Configure rates in Settings → Retail Products." />
+                    </div>
+                    <CardDescription className="text-xs">
+                      {commissionConfig?.commission_type === 'tiered' ? 'Tiered' : commissionConfig?.commission_type === 'per_employee' ? 'Per-Employee' : 'Flat Rate'} @ {commissionConfig?.default_rate}% default
+                    </CardDescription>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+                  <Settings2 className="w-3.5 h-3.5" /> Configure
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>#</TableHead>
+                      <TableHead>Stylist</TableHead>
+                      <TableHead className="text-right">Retail Revenue</TableHead>
+                      <TableHead className="text-right">Rate</TableHead>
+                      <TableHead className="text-right">Commission</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {staffCommissions.map((s, idx) => (
+                      <TableRow key={s.userId || s.name}>
+                        <TableCell className="text-muted-foreground tabular-nums">{idx + 1}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Avatar className="w-6 h-6">
+                              {s.photoUrl && <AvatarImage src={s.photoUrl} alt={s.name} />}
+                              <AvatarFallback className="text-[9px]">{s.name.split(' ').map(n => n[0]).join('').slice(0, 2)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium">{s.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrencyWhole(s.retailRevenue)}</BlurredAmount></TableCell>
+                        <TableCell className="text-right">
+                          <span className="tabular-nums text-sm">{s.commissionRate}%</span>
+                          {s.isOverride && <Badge variant="outline" className="ml-1 text-[9px]">Override</Badge>}
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums font-medium"><BlurredAmount>{formatCurrencyWhole(s.commissionEarned)}</BlurredAmount></TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell />
+                      <TableCell className="font-medium">Total</TableCell>
+                      <TableCell className="text-right font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(staffCommissions.reduce((s, c) => s + c.retailRevenue, 0))}</BlurredAmount></TableCell>
+                      <TableCell />
+                      <TableCell className="text-right font-display tabular-nums"><BlurredAmount>{formatCurrencyWhole(staffCommissions.reduce((s, c) => s + c.commissionEarned, 0))}</BlurredAmount></TableCell>
+                    </TableRow>
+                  </TableFooter>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </PinnableCard>
+      )}
     </div>
   );
 }
