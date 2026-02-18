@@ -85,6 +85,23 @@ const EDITOR_COMPONENTS: Record<string, React.ComponentType> = {
   'footer': FooterEditor,
 };
 
+// Map editor tabs to homepage section IDs for scroll-to-section
+const TAB_TO_SECTION: Record<string, string> = {
+  'hero': 'hero',
+  'brand': 'brand_statement',
+  'testimonials-section': 'testimonials',
+  'services-preview': 'services_preview',
+  'popular-services': 'popular_services',
+  'gallery-section': 'gallery',
+  'new-client': 'new_client',
+  'stylists-section': 'stylists',
+  'locations-section': 'locations',
+  'faq': 'faq',
+  'extensions': 'extensions',
+  'brands': 'brands',
+  'drinks': 'drink_menu',
+};
+
 // Tab labels for breadcrumb display
 const TAB_LABELS: Record<string, string> = {
   // Site Content
@@ -260,7 +277,7 @@ export default function WebsiteSectionsHub() {
             <>
               <ResizableHandle withHandle />
               <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
-                <LivePreviewPanel onClose={() => setShowPreview(false)} />
+                <LivePreviewPanel onClose={() => setShowPreview(false)} activeSectionId={TAB_TO_SECTION[activeTab]} />
               </ResizablePanel>
             </>
           )}

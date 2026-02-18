@@ -1,28 +1,67 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Monitor, Smartphone, RefreshCw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface LivePreviewPanelProps {
   onClose: () => void;
+  activeSectionId?: string;
 }
 
-export function LivePreviewPanel({ onClose }: LivePreviewPanelProps) {
+export function LivePreviewPanel({ onClose, activeSectionId }: LivePreviewPanelProps) {
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const iframeReadyRef = useRef(false);
+  const pendingSectionRef = useRef<string | undefined>(undefined);
 
-  // Auto-refresh the preview every time database changes are saved
-  // This is achieved by listening to storage events or using a refresh interval
+  const sendScrollMessage = useCallback((sectionId: string) => {
+    const iframe = iframeRef.current;
+    if (!iframe?.contentWindow) return;
+    const origin = window.location.origin;
+    iframe.contentWindow.postMessage(
+      { type: 'PREVIEW_SCROLL_TO_SECTION', sectionId, behavior: 'smooth' },
+      origin
+    );
+    // Small delay then highlight
+    setTimeout(() => {
+      iframe.contentWindow?.postMessage(
+        { type: 'PREVIEW_HIGHLIGHT_SECTION', sectionId },
+        origin
+      );
+    }, 400);
+  }, []);
+
+  // When activeSectionId changes, scroll (or queue if not ready)
+  useEffect(() => {
+    if (!activeSectionId) return;
+    if (iframeReadyRef.current) {
+      sendScrollMessage(activeSectionId);
+    } else {
+      pendingSectionRef.current = activeSectionId;
+    }
+  }, [activeSectionId, sendScrollMessage]);
+
+  const handleIframeLoad = useCallback(() => {
+    setIsLoading(false);
+    iframeReadyRef.current = true;
+    // Flush pending scroll
+    if (pendingSectionRef.current) {
+      sendScrollMessage(pendingSectionRef.current);
+      pendingSectionRef.current = undefined;
+    }
+  }, [sendScrollMessage]);
+
+  // Auto-refresh on data saves
   useEffect(() => {
     const handleStorageChange = () => {
       setRefreshKey(prev => prev + 1);
       setIsLoading(true);
+      iframeReadyRef.current = false;
     };
 
-    // Listen for custom refresh events
     window.addEventListener('website-preview-refresh', handleStorageChange);
-    
     return () => {
       window.removeEventListener('website-preview-refresh', handleStorageChange);
     };
@@ -31,6 +70,7 @@ export function LivePreviewPanel({ onClose }: LivePreviewPanelProps) {
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
     setIsLoading(true);
+    iframeReadyRef.current = false;
   };
 
   return (
@@ -102,11 +142,12 @@ export function LivePreviewPanel({ onClose }: LivePreviewPanelProps) {
           )}
         >
           <iframe
+            ref={iframeRef}
             key={refreshKey}
             src="/?preview=true"
             className="w-full h-full border-0"
             title="Website Preview"
-            onLoad={() => setIsLoading(false)}
+            onLoad={handleIframeLoad}
           />
         </div>
       </div>
