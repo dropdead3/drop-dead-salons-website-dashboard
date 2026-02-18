@@ -13,7 +13,7 @@ import { LocationSelect } from '@/components/ui/location-select';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { CapacityBreakdown } from '@/components/dashboard/analytics/CapacityBreakdown';
 import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
-import { Gauge, Clock, DollarSign, TrendingDown, Calendar, PieChart, Info } from 'lucide-react';
+import { Gauge, Clock, DollarSign, TrendingDown, Calendar, PieChart, Info, Moon } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 import { cn } from '@/lib/utils';
@@ -52,8 +52,10 @@ function getUtilizationPillClasses(percent: number): string {
 }
 
 // Custom bar label
-function UtilizationBarLabel({ x, y, width, value }: any) {
+function UtilizationBarLabel({ x, y, width, value, index, days }: any) {
   if (value === undefined || value === null) return null;
+  // Suppress label for closed days
+  if (days && days[index]?.isClosed) return null;
   
   return (
     <text
@@ -71,6 +73,28 @@ function UtilizationBarLabel({ x, y, width, value }: any) {
 function DayXAxisTick({ x, y, payload, days }: any) {
   const day = days.find((d: DayCapacity) => d.dayName === payload.value);
   if (!day) return null;
+
+  if (day.isClosed) {
+    return (
+      <g transform={`translate(${x},${y})`}>
+        <text 
+          x={0} y={0} dy={12} 
+          textAnchor="middle" 
+          className="fill-foreground text-[11px]"
+          style={{ fontWeight: 500 }}
+        >
+          {day.dayName}
+        </text>
+        <text 
+          x={0} y={0} dy={24} 
+          textAnchor="middle" 
+          className="fill-muted-foreground text-[10px]"
+        >
+          🌙 Closed
+        </text>
+      </g>
+    );
+  }
   
   return (
     <g transform={`translate(${x},${y})`}>
@@ -346,8 +370,16 @@ export function CapacityUtilizationCard() {
                   fill="url(#capacity-glass-sales)"
                   stroke="hsl(var(--foreground) / 0.12)"
                   strokeWidth={1}
-                  label={<UtilizationBarLabel />}
-                />
+                  label={<UtilizationBarLabel days={days} />}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell 
+                      key={`cell-${index}`} 
+                      fill={days[index]?.isClosed ? 'transparent' : 'url(#capacity-glass-sales)'}
+                      stroke={days[index]?.isClosed ? 'none' : 'hsl(var(--foreground) / 0.12)'}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -355,23 +387,31 @@ export function CapacityUtilizationCard() {
 
         {/* Tomorrow View */}
         {period === 'tomorrow' && days.length > 0 && days[0] && (
-          <div className="p-4 bg-muted/20 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">
-                  {formatDate(days[0].date, 'EEEE, MMMM d')}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {days[0].bookedHours}h booked • {days[0].gapHours}h available
-                </p>
-              </div>
-              <div className="text-right">
-                <span className={cn('inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium', getUtilizationPillClasses(days[0].utilizationPercent))}>
-                  {days[0].utilizationPercent}% capacity
-                </span>
+          days[0].isClosed ? (
+            <div className="p-6 bg-muted/20 rounded-lg flex flex-col items-center justify-center gap-2">
+              <Moon className="w-6 h-6 text-muted-foreground" />
+              <p className="text-sm font-medium text-muted-foreground">Closed Tomorrow</p>
+              <p className="text-xs text-muted-foreground">{formatDate(days[0].date, 'EEEE, MMMM d')}</p>
+            </div>
+          ) : (
+            <div className="p-4 bg-muted/20 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">
+                    {formatDate(days[0].date, 'EEEE, MMMM d')}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {days[0].bookedHours}h booked • {days[0].gapHours}h available
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className={cn('inline-flex items-center px-2.5 py-1 rounded-full text-sm font-medium', getUtilizationPillClasses(days[0].utilizationPercent))}>
+                    {days[0].utilizationPercent}% capacity
+                  </span>
+                </div>
               </div>
             </div>
-          </div>
+          )
         )}
 
         {/* Service Mix Breakdown */}

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, addDays, differenceInMinutes, parseISO } from 'date-fns';
-import { useActiveLocations, type HoursJson } from '@/hooks/useLocations';
+import { useActiveLocations, isClosedOnDate, type HoursJson } from '@/hooks/useLocations';
 import { getServiceCategory } from '@/utils/serviceCategorization';
 
 export type CapacityPeriod = 'tomorrow' | '7days' | '30days';
@@ -24,6 +24,7 @@ export interface DayCapacity {
   appointmentCount: number;
   gapHours: number;
   serviceMix: ServiceMixItem[];
+  isClosed: boolean;
 }
 
 export interface CapacityBreakdownData {
@@ -201,17 +202,28 @@ export function useCapacityUtilization(period: CapacityPeriod, locationId?: stri
         serviceMix: Record<string, { hours: number; revenue: number; count: number }>;
       }> = {};
 
+      // Determine closed dates
+      const closedDates = new Set<string>();
+      dates.forEach(d => {
+        const allClosed = filteredLocations.every(loc =>
+          isClosedOnDate(loc.hours_json, loc.holiday_closures, d.fullDate).isClosed
+        );
+        if (allClosed) closedDates.add(d.date);
+      });
+
       // Initialize each date with available hours
       dates.forEach(d => {
         let totalAvailable = 0;
         
-        filteredLocations.forEach(loc => {
-          const breakMins = loc.break_minutes_per_day ?? 30;
-          const lunchMins = loc.lunch_minutes ?? 45;
-          const effectiveHours = getEffectiveHours(loc.hours_json, d.dayOfWeek, breakMins, lunchMins);
-          const capacity = loc.stylist_capacity || 1; // Default to 1 if not set
-          totalAvailable += effectiveHours * capacity;
-        });
+        if (!closedDates.has(d.date)) {
+          filteredLocations.forEach(loc => {
+            const breakMins = loc.break_minutes_per_day ?? 30;
+            const lunchMins = loc.lunch_minutes ?? 45;
+            const effectiveHours = getEffectiveHours(loc.hours_json, d.dayOfWeek, breakMins, lunchMins);
+            const capacity = loc.stylist_capacity || 1;
+            totalAvailable += effectiveHours * capacity;
+          });
+        }
 
         byDate[d.date] = {
           availableHours: totalAvailable,
@@ -273,12 +285,14 @@ export function useCapacityUtilization(period: CapacityPeriod, locationId?: stri
           appointmentCount: dayData.count,
           gapHours: Math.round((dayData.availableHours - dayData.bookedHours) * 10) / 10,
           serviceMix,
+          isClosed: closedDates.has(d.date),
         };
       });
 
-      // Calculate totals
-      const totalAvailableHours = days.reduce((sum, d) => sum + d.availableHours, 0);
-      const totalBookedHours = days.reduce((sum, d) => sum + d.bookedHours, 0);
+      // Calculate totals (exclude closed days)
+      const openDays = days.filter(d => !d.isClosed);
+      const totalAvailableHours = openDays.reduce((sum, d) => sum + d.availableHours, 0);
+      const totalBookedHours = openDays.reduce((sum, d) => sum + d.bookedHours, 0);
       const totalGapHours = totalAvailableHours - totalBookedHours;
       const totalRevenue = days.reduce((sum, d) => sum + d.revenue, 0);
       const totalAppointments = days.reduce((sum, d) => sum + d.appointmentCount, 0);

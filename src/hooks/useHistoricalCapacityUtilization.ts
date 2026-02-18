@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, startOfWeek, startOfMonth, differenceInMinutes, parseISO, addDays } from 'date-fns';
 import { getServiceCategory } from '@/utils/serviceCategorization';
+import { isClosedOnDate } from '@/hooks/useLocations';
 
 export interface DayCapacity {
   date: string;
@@ -12,6 +13,7 @@ export interface DayCapacity {
   appointmentCount: number;
   revenue: number;
   gapHours: number;
+  isClosed: boolean;
 }
 
 export interface ServiceMix {
@@ -117,7 +119,7 @@ export function useHistoricalCapacityUtilization(
     queryFn: async () => {
       let query = supabase
         .from('locations')
-        .select('id, name, stylist_capacity, hours_json, break_minutes_per_day, lunch_minutes, appointment_padding_minutes')
+        .select('id, name, stylist_capacity, hours_json, holiday_closures, break_minutes_per_day, lunch_minutes, appointment_padding_minutes')
         .eq('is_active', true);
 
       if (locationId) {
@@ -180,22 +182,33 @@ export function useHistoricalCapacityUtilization(
     const dailyMap = new Map<string, DayCapacity>();
     const serviceMixMap = new Map<string, ServiceMix>();
 
+    // Determine closed dates
+    const closedDates = new Set<string>();
+
     // Initialize days in range
     let currentDate = new Date(startDate);
     while (currentDate <= endDate) {
       const dateStr = format(currentDate, 'yyyy-MM-dd');
       const dayOfWeek = currentDate.getDay();
+
+      // Check if all locations are closed on this date
+      const allClosed = locations.every(loc =>
+        isClosedOnDate(loc.hours_json as any, loc.holiday_closures as any, currentDate).isClosed
+      );
+      if (allClosed) closedDates.add(dateStr);
       
       // Calculate available hours for this day across all relevant locations
       let dayAvailableHours = 0;
-      locations.forEach(loc => {
-        const hoursJson = loc.hours_json as Record<string, any> | null;
-        const breakMins = loc.break_minutes_per_day ?? 30;
-        const lunchMins = loc.lunch_minutes ?? 45;
-        const effectiveHours = getEffectiveHoursForDay(hoursJson, dayOfWeek, breakMins, lunchMins);
-        const capacity = loc.stylist_capacity || 4;
-        dayAvailableHours += effectiveHours * capacity;
-      });
+      if (!allClosed) {
+        locations.forEach(loc => {
+          const hoursJson = loc.hours_json as Record<string, any> | null;
+          const breakMins = loc.break_minutes_per_day ?? 30;
+          const lunchMins = loc.lunch_minutes ?? 45;
+          const effectiveHours = getEffectiveHoursForDay(hoursJson, dayOfWeek, breakMins, lunchMins);
+          const capacity = loc.stylist_capacity || 4;
+          dayAvailableHours += effectiveHours * capacity;
+        });
+      }
 
       dailyMap.set(dateStr, {
         date: dateStr,
@@ -206,6 +219,7 @@ export function useHistoricalCapacityUtilization(
         appointmentCount: 0,
         revenue: 0,
         gapHours: dayAvailableHours,
+        isClosed: allClosed,
       });
 
       currentDate.setDate(currentDate.getDate() + 1);
@@ -249,13 +263,14 @@ export function useHistoricalCapacityUtilization(
       day.gapHours = Math.max(0, day.availableHours - day.bookedHours);
     });
 
-    // Aggregate totals
+    // Aggregate totals (exclude closed days)
     let totalAvailableHours = 0;
     let totalBookedHours = 0;
     let totalRevenue = 0;
     let totalAppointments = 0;
 
     dailyMap.forEach((day) => {
+      if (day.isClosed) return;
       totalAvailableHours += day.availableHours;
       totalBookedHours += day.bookedHours;
       totalRevenue += day.revenue;
