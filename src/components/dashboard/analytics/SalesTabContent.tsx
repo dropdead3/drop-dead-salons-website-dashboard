@@ -51,6 +51,7 @@ import { ProductCategoryChart } from '@/components/dashboard/sales/ProductCatego
 
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
 import { ClientEngagementCard } from '@/components/dashboard/sales/ClientEngagementCard';
+import { StaffKPISummary } from '@/components/dashboard/sales/StaffKPISummary';
 import { PeakHoursHeatmap } from '@/components/dashboard/sales/PeakHoursHeatmap';
 import { CommissionSummaryCard } from '@/components/dashboard/sales/CommissionSummaryCard';
 import { StaffCommissionTable } from '@/components/dashboard/sales/StaffCommissionTable';
@@ -375,6 +376,13 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
         </TabsContent>
 
         <TabsContent value="staff" className="mt-6 space-y-6">
+          {/* Staff KPI Summary Row */}
+          <StaffKPISummary
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            locationId={locationFilter}
+          />
+
           {/* Client Engagement Card (Visits / Retention / Rebooking) */}
           <PinnableCard elementKey="client_engagement_staff" elementName="Client Engagement" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <ClientEngagementCard
