@@ -807,6 +807,38 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                   </BarChart>
                 </ResponsiveContainer>
               </div>
+
+              {/* Color Key & Summary */}
+              <div className="pt-3">
+                <div className="h-px bg-gradient-to-r from-transparent via-border/40 to-transparent mb-3" />
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 mb-2">
+                  <span className="text-xs font-medium text-muted-foreground mr-1">Color Key</span>
+                  {[
+                    { label: 'Menu Price', color: 'hsl(var(--muted-foreground) / 0.3)' },
+                    { label: 'Above Menu (>105%)', color: 'hsl(142 76% 36%)' },
+                    { label: 'On Target (85–105%)', color: 'hsl(var(--primary))' },
+                    { label: 'Below Menu (<85%)', color: 'hsl(0 84% 60%)' },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-center gap-1.5 text-xs">
+                      <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: item.color }} />
+                      <span className="text-muted-foreground">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {(() => {
+                    const above = priceRealizationData.filter(e => e.rate > 105).length;
+                    const below = priceRealizationData.filter(e => e.rate < 85).length;
+                    const onTarget = priceRealizationData.length - above - below;
+                    const parts: string[] = [];
+                    if (above > 0) parts.push(`${above} collecting above menu`);
+                    if (onTarget > 0) parts.push(`${onTarget} on target`);
+                    if (below > 0) parts.push(`${below} below menu price`);
+                    return parts.join('  ·  ');
+                  })()}
+                </p>
+              </div>
+
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {priceRealizationData.map((s) => {
                   const isRealExp = expandedRealization === s.fullName;
