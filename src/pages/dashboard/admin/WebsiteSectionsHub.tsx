@@ -3,8 +3,6 @@ import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { 
   LayoutGrid,
-  PanelRightClose,
-  PanelRightOpen,
   ExternalLink,
   PanelLeftClose,
   PanelLeftOpen
@@ -28,9 +26,6 @@ import { AnnouncementBarContent } from '@/components/dashboard/website-editor/An
 
 // Sidebar Navigation
 import { WebsiteEditorSidebar } from '@/components/dashboard/website-editor/WebsiteEditorSidebar';
-
-// Preview Component
-import { LivePreviewPanel } from '@/components/dashboard/website-editor/LivePreviewPanel';
 
 // Layout Components
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -132,7 +127,7 @@ export default function WebsiteSectionsHub() {
           )}
 
           {/* Main Editor Panel */}
-          <ResizablePanel defaultSize={showPreview ? 50 : 80} minSize={30}>
+          <ResizablePanel defaultSize={80} minSize={30}>
             <div className="h-full flex flex-col overflow-hidden">
               {/* Header */}
               <div className="flex-shrink-0 px-6 py-4 border-b bg-background">
@@ -164,24 +159,7 @@ export default function WebsiteSectionsHub() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant={showPreview ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setShowPreview(!showPreview)}
-                    >
-                      {showPreview ? (
-                        <>
-                          <PanelRightClose className="h-4 w-4 mr-2" />
-                          Hide Preview
-                        </>
-                      ) : (
-                        <>
-                          <PanelRightOpen className="h-4 w-4 mr-2" />
-                          Preview
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex items-center gap-2">
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -207,15 +185,6 @@ export default function WebsiteSectionsHub() {
             </div>
           </ResizablePanel>
 
-          {/* Preview Panel (conditionally rendered) */}
-          {showPreview && (
-            <>
-              <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
-                <LivePreviewPanel onClose={() => setShowPreview(false)} />
-              </ResizablePanel>
-            </>
-          )}
         </ResizablePanelGroup>
       </div>
     </DashboardLayout>
