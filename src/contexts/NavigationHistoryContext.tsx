@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useRef, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useRef, useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 interface NavigationHistoryContextType {
@@ -12,55 +12,61 @@ const NavigationHistoryContext = createContext<NavigationHistoryContextType | nu
 
 const MAX_HISTORY = 50;
 
+// Module-level state so it survives component remounts
+const navState = {
+  history: [] as string[],
+  currentIndex: -1,
+  isInternalNav: false,
+};
+
 export function NavigationHistoryProvider({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const [history, setHistory] = useState<string[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(-1);
-  const isInternalNav = useRef(false);
+  const [, forceRender] = React.useState(0);
 
   useEffect(() => {
     const fullPath = location.pathname + location.search + location.hash;
 
-    if (isInternalNav.current) {
-      isInternalNav.current = false;
+    if (navState.isInternalNav) {
+      navState.isInternalNav = false;
       return;
     }
 
-    setHistory(prev => {
-      const newHistory = prev.slice(0, currentIndex + 1);
-      // Deduplicate consecutive
-      if (newHistory[newHistory.length - 1] === fullPath) return newHistory;
-      const updated = [...newHistory, fullPath];
-      // Cap at MAX_HISTORY
-      if (updated.length > MAX_HISTORY) {
-        const trimmed = updated.slice(updated.length - MAX_HISTORY);
-        setCurrentIndex(trimmed.length - 1);
-        return trimmed;
-      }
-      setCurrentIndex(updated.length - 1);
-      return updated;
-    });
+    const { history: h, currentIndex: idx } = navState;
+
+    // Slice forward entries and push new
+    const newHistory = h.slice(0, idx + 1);
+    if (newHistory[newHistory.length - 1] === fullPath) return;
+    newHistory.push(fullPath);
+
+    // Cap
+    if (newHistory.length > MAX_HISTORY) {
+      newHistory.splice(0, newHistory.length - MAX_HISTORY);
+    }
+
+    navState.history = newHistory;
+    navState.currentIndex = newHistory.length - 1;
+    forceRender(c => c + 1);
   }, [location.pathname, location.search, location.hash]);
 
-  const canGoBack = currentIndex > 0;
-  const canGoForward = currentIndex < history.length - 1;
+  const canGoBack = navState.currentIndex > 0;
+  const canGoForward = navState.currentIndex < navState.history.length - 1;
 
   const goBack = useCallback(() => {
-    if (!canGoBack) return;
-    const newIndex = currentIndex - 1;
-    isInternalNav.current = true;
-    setCurrentIndex(newIndex);
-    navigate(history[newIndex]);
-  }, [canGoBack, currentIndex, history, navigate]);
+    if (navState.currentIndex <= 0) return;
+    navState.currentIndex -= 1;
+    navState.isInternalNav = true;
+    navigate(navState.history[navState.currentIndex]);
+    forceRender(c => c + 1);
+  }, [navigate]);
 
   const goForward = useCallback(() => {
-    if (!canGoForward) return;
-    const newIndex = currentIndex + 1;
-    isInternalNav.current = true;
-    setCurrentIndex(newIndex);
-    navigate(history[newIndex]);
-  }, [canGoForward, currentIndex, history, navigate]);
+    if (navState.currentIndex >= navState.history.length - 1) return;
+    navState.currentIndex += 1;
+    navState.isInternalNav = true;
+    navigate(navState.history[navState.currentIndex]);
+    forceRender(c => c + 1);
+  }, [navigate]);
 
   return (
     <NavigationHistoryContext.Provider value={{ canGoBack, canGoForward, goBack, goForward }}>
