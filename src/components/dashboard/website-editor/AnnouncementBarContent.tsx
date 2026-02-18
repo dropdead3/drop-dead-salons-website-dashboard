@@ -6,7 +6,29 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useAnnouncementBarSettings, useUpdateAnnouncementBarSettings, type AnnouncementBarSettings } from '@/hooks/useAnnouncementBar';
 import { toast } from 'sonner';
-import { Megaphone, ExternalLink, ArrowRight, Save, Loader2 } from 'lucide-react';
+import { Megaphone, ExternalLink, ArrowRight, Save, Loader2, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+// Theme-derived color presets for the banner
+const BANNER_COLOR_PRESETS = [
+  { label: 'Default (Secondary)', value: '', color: 'hsl(40, 20%, 92%)' },
+  { label: 'Warm Sand', value: 'hsl(40, 25%, 90%)', color: 'hsl(40, 25%, 90%)' },
+  { label: 'Soft Cream', value: 'hsl(40, 30%, 95%)', color: 'hsl(40, 30%, 95%)' },
+  { label: 'Stone', value: 'hsl(30, 10%, 85%)', color: 'hsl(30, 10%, 85%)' },
+  { label: 'Charcoal', value: 'hsl(0, 0%, 15%)', color: 'hsl(0, 0%, 15%)' },
+  { label: 'Midnight', value: 'hsl(0, 0%, 8%)', color: 'hsl(0, 0%, 8%)' },
+  { label: 'Blush', value: 'hsl(350, 20%, 93%)', color: 'hsl(350, 20%, 93%)' },
+  { label: 'Sage', value: 'hsl(145, 18%, 92%)', color: 'hsl(145, 18%, 92%)' },
+  { label: 'Slate Blue', value: 'hsl(210, 20%, 93%)', color: 'hsl(210, 20%, 93%)' },
+];
+
+// Determine if a color is dark for text contrast
+function isDarkColor(color: string): boolean {
+  if (!color) return false;
+  const match = color.match(/hsl\((\d+),?\s*(\d+)%?,?\s*(\d+)%?\)/);
+  if (!match) return false;
+  return parseInt(match[3]) < 40;
+}
 
 export function AnnouncementBarContent() {
   const { data: settings, isLoading } = useAnnouncementBarSettings();
@@ -20,12 +42,12 @@ export function AnnouncementBarContent() {
     cta_text: '',
     cta_url: '',
     open_in_new_tab: true,
+    bg_color: '',
   });
 
-  // Sync form data with fetched settings
   useEffect(() => {
     if (settings) {
-      setFormData(settings);
+      setFormData({ ...settings, bg_color: settings.bg_color || '' });
     }
   }, [settings]);
 
@@ -49,6 +71,8 @@ export function AnnouncementBarContent() {
       </div>
     );
   }
+
+  const isDark = isDarkColor(formData.bg_color || '');
 
   return (
     <div className="space-y-6">
@@ -90,14 +114,24 @@ export function AnnouncementBarContent() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className={`bg-secondary py-4 md:py-2.5 px-4 md:px-6 rounded-lg ${!formData.enabled ? 'opacity-50' : ''}`}>
+          <div 
+            className={cn(
+              "py-4 md:py-2.5 px-4 md:px-6 rounded-lg transition-colors",
+              !formData.bg_color && "bg-secondary",
+              !formData.enabled && "opacity-50"
+            )}
+            style={formData.bg_color ? { backgroundColor: formData.bg_color } : undefined}
+          >
             <div className="flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
-              <p className="text-sm text-foreground/80 text-center md:text-left">
+              <p className={cn("text-sm text-center md:text-left", isDark ? "text-white/80" : "text-foreground/80")}>
                 {formData.message_prefix}{' '}
                 <span className="font-medium">{formData.message_highlight}</span>{' '}
                 {formData.message_suffix}
               </p>
-              <span className="group inline-flex items-center gap-1.5 text-sm font-sans font-medium text-foreground uppercase tracking-wider">
+              <span className={cn(
+                "group inline-flex items-center gap-1.5 text-sm font-sans font-medium uppercase tracking-wider",
+                isDark ? "text-white" : "text-foreground"
+              )}>
                 {formData.cta_text}
                 <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
               </span>
@@ -133,6 +167,55 @@ export function AnnouncementBarContent() {
               checked={formData.enabled}
               onCheckedChange={(checked) => handleChange('enabled', checked)}
             />
+          </div>
+
+          <div className="elegant-divider" />
+
+          {/* Banner Color */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Banner Color</h3>
+            <div className="flex flex-wrap gap-3">
+              {BANNER_COLOR_PRESETS.map((preset) => {
+                const isSelected = (formData.bg_color || '') === preset.value;
+                const isPresetDark = isDarkColor(preset.value || 'hsl(40, 20%, 92%)');
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => handleChange('bg_color', preset.value)}
+                    className={cn(
+                      "relative w-10 h-10 rounded-lg border-2 transition-all duration-200 hover:scale-110",
+                      isSelected ? "border-primary ring-2 ring-primary/20" : "border-border"
+                    )}
+                    style={{ backgroundColor: preset.color }}
+                    title={preset.label}
+                  >
+                    {isSelected && (
+                      <Check className={cn("absolute inset-0 m-auto h-4 w-4", isPresetDark ? "text-white" : "text-foreground")} />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-3">
+              <Label htmlFor="custom_color" className="text-sm whitespace-nowrap">Custom color</Label>
+              <div className="flex items-center gap-2 flex-1">
+                <input
+                  type="color"
+                  id="custom_color_picker"
+                  value={formData.bg_color || '#ebe6df'}
+                  onChange={(e) => handleChange('bg_color', e.target.value)}
+                  className="w-8 h-8 rounded border border-border cursor-pointer"
+                />
+                <Input
+                  id="custom_color"
+                  value={formData.bg_color || ''}
+                  onChange={(e) => handleChange('bg_color', e.target.value)}
+                  placeholder="e.g. hsl(40, 20%, 92%) or #ebe6df"
+                  className="max-w-xs"
+                />
+              </div>
+            </div>
           </div>
 
           <div className="elegant-divider" />
