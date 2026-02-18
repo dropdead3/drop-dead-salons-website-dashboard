@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { 
@@ -141,6 +141,10 @@ export default function WebsiteSectionsHub() {
   const isDirtyRef = useRef(false);
   const isMobile = useIsMobile();
 
+  // Memoize the activeSectionId so it doesn't cause unnecessary re-renders
+  const activeSectionId = useMemo(() => TAB_TO_SECTION[activeTab], [activeTab]);
+  const handleClosePreview = useCallback(() => setShowPreview(false), []);
+
   // Expose a global way for editors to register dirty state
   useEffect(() => {
     const handleDirtyChange = (e: Event) => {
@@ -277,7 +281,7 @@ export default function WebsiteSectionsHub() {
             <>
               <ResizableHandle withHandle />
               <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
-                <LivePreviewPanel onClose={() => setShowPreview(false)} activeSectionId={TAB_TO_SECTION[activeTab]} />
+                <LivePreviewPanel onClose={handleClosePreview} activeSectionId={activeSectionId} />
               </ResizablePanel>
             </>
           )}
