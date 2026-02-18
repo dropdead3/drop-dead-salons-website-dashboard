@@ -222,8 +222,13 @@ export function useSalesMetrics(filters: SalesFilters = {}) {
       if (filters.dateTo) {
         query = query.lte('appointment_date', filters.dateTo);
       }
-      if (filters.locationId) {
-        query = query.eq('location_id', filters.locationId);
+      if (filters.locationId && filters.locationId !== 'all') {
+        const ids = filters.locationId.split(',').filter(Boolean);
+        if (ids.length === 1) {
+          query = query.eq('location_id', ids[0]);
+        } else if (ids.length > 1) {
+          query = query.in('location_id', ids);
+        }
       }
 
       const { data, error } = await query;

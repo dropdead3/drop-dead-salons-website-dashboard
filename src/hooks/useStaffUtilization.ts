@@ -113,8 +113,13 @@ export function useStaffUtilization(locationId?: string, dateRange: StaffDateRan
         .lte('appointment_date', endDateStr)
         .not('status', 'eq', 'cancelled');
 
-      if (locationId) {
-        aptQuery = aptQuery.eq('location_id', locationId);
+      if (locationId && locationId !== 'all') {
+        const ids = locationId.split(',').filter(Boolean);
+        if (ids.length === 1) {
+          aptQuery = aptQuery.eq('location_id', ids[0]);
+        } else if (ids.length > 1) {
+          aptQuery = aptQuery.in('location_id', ids);
+        }
       }
 
       const { data: appointments, error: aptError } = await aptQuery;

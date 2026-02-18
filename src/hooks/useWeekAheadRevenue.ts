@@ -66,9 +66,14 @@ export function useWeekAheadRevenue(locationId?: string) {
         .not('status', 'in', '("cancelled","no_show")')
         .order('start_time', { ascending: true });
 
-      // Filter by location if specified
+      // Filter by location(s) - supports comma-separated multi-select
       if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
+        const ids = locationId.split(',').filter(Boolean);
+        if (ids.length === 1) {
+          query = query.eq('location_id', ids[0]);
+        } else if (ids.length > 1) {
+          query = query.in('location_id', ids);
+        }
       }
 
       const { data, error } = await query;

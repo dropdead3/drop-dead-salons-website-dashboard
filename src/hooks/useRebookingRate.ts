@@ -23,7 +23,12 @@ export function useRebookingRate(dateFrom: string, dateTo: string, locationId?: 
         .eq('status', 'completed');
 
       if (locationId && locationId !== 'all') {
-        query = query.eq('location_id', locationId);
+        const ids = locationId.split(',').filter(Boolean);
+        if (ids.length === 1) {
+          query = query.eq('location_id', ids[0]);
+        } else if (ids.length > 1) {
+          query = query.in('location_id', ids);
+        }
       }
       const { data: rows, error } = await query;
       if (error) throw error;
