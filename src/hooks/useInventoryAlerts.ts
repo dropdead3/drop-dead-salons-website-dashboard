@@ -162,7 +162,10 @@ export function calculateInventoryAlerts(
       const severity: InventoryAlert['severity'] =
         (p.quantity_on_hand || 0) === 0 ? 'critical' :
         daysUntilStockout <= 7 ? 'critical' :
-        daysUntilStockout <= 14 ? 'warning' : 'info';
+        daysUntilStockout <= 14 ? 'warning' :
+        // Below reorder with no velocity = warning, not info
+        (velocity === 0 && (p.quantity_on_hand || 0) < (p.reorder_level || 0)) ? 'warning' :
+        'info';
 
       return {
         productId: p.id,
