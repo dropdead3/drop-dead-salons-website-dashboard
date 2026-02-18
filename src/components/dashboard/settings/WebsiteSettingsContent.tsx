@@ -156,11 +156,13 @@ function GeneralTab() {
   }
 
   return (
-    <div className="space-y-6">
-      <DomainConfigCard organizationId={effectiveOrganization?.id} />
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="lg:col-span-2">
+        <DomainConfigCard organizationId={effectiveOrganization?.id} />
+      </div>
 
       {/* Announcement Banner */}
-      <Card>
+      <Card className="lg:col-span-2">
         <CardHeader>
           <CardTitle className="font-display text-lg">ANNOUNCEMENT BANNER</CardTitle>
           <CardDescription>Control the banner displayed at the top of your public website.</CardDescription>
@@ -530,8 +532,8 @@ function BookingTab() {
   }
 
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <Card className="lg:col-span-2">
         <CardHeader>
           <CardTitle className="font-display text-lg">ONLINE BOOKING</CardTitle>
           <CardDescription>Allow clients to book appointments directly from your website.</CardDescription>
@@ -588,7 +590,7 @@ function BookingTab() {
       </Card>
 
       {/* Stylist & Service visibility stubs */}
-      <Card>
+      <Card className="lg:col-span-2">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
@@ -656,7 +658,7 @@ function RetailTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -773,7 +775,7 @@ function RetailTab() {
 
       {/* Online Store Products Configurator */}
       {local.enabled && (
-        <Card>
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="font-display text-lg">STORE PRODUCTS</CardTitle>
             <CardDescription>Choose which products are visible on your online store.</CardDescription>
@@ -786,7 +788,9 @@ function RetailTab() {
 
       {/* Store Appearance Configurator with Live Preview */}
       {local.enabled && storeUrl && (
-        <StoreAppearanceConfigurator storeUrl={storeUrl} />
+        <div className="lg:col-span-2">
+          <StoreAppearanceConfigurator storeUrl={storeUrl} />
+        </div>
       )}
     </div>
   );
@@ -828,7 +832,7 @@ function SeoLegalTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <Card>
         <CardHeader>
           <CardTitle className="font-display text-lg">ANALYTICS & TRACKING</CardTitle>
@@ -928,7 +932,7 @@ function SeoLegalTab() {
       </Card>
 
       {hasChanges && (
-        <Button onClick={handleSave} disabled={updateSeo.isPending} className="w-full">
+        <Button onClick={handleSave} disabled={updateSeo.isPending} className="w-full lg:col-span-2">
           {updateSeo.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
           Save SEO & Legal Settings
         </Button>
