@@ -1,14 +1,17 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Layers, TrendingUp, ArrowUpDown } from 'lucide-react';
+import { Loader2, Layers, TrendingUp, ArrowUpDown, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useServicePairings } from '@/hooks/useServicePairings';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge } from '@/components/dashboard/AnalyticsFilterBadge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
+import { getServiceCategory } from '@/utils/serviceCategorization';
 
 interface ServiceBundlingIntelligenceProps {
   dateFrom: string;
@@ -19,11 +22,31 @@ interface ServiceBundlingIntelligenceProps {
   locationName: string;
 }
 
+function DrillDown({ open, children }: { open: boolean; children: React.ReactNode }) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          className="overflow-hidden"
+        >
+          <div className="pt-2 pb-1">{children}</div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 export function ServiceBundlingIntelligence({
   dateFrom, dateTo, locationId, filterContext, dateRange, locationName,
 }: ServiceBundlingIntelligenceProps) {
-  const { standaloneRates, revenueLift, categoryPairings, isLoading } = useServicePairings(dateFrom, dateTo, locationId);
+  const { pairings, standaloneRates, revenueLift, categoryPairings, isLoading } = useServicePairings(dateFrom, dateTo, locationId);
   const { formatCurrency } = useFormatCurrency();
+  const [expandedStandalone, setExpandedStandalone] = useState<string | null>(null);
+  const [expandedLift, setExpandedLift] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -48,6 +71,24 @@ export function ServiceBundlingIntelligence({
   }
   const maxCount = categoryPairings.length > 0 ? Math.max(...categoryPairings.map(p => p.count)) : 1;
 
+  // Helper: get top pairings involving a category
+  const getCategoryPairings = (category: string) =>
+    categoryPairings
+      .filter(p => p.categoryA === category || p.categoryB === category)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3)
+      .map(p => ({
+        partner: p.categoryA === category ? p.categoryB : p.categoryA,
+        count: p.count,
+        pct: p.pctOfMultiVisits,
+      }));
+
+  // Helper: get service-level pairings for a category
+  const getServicePairingsForCategory = (category: string) =>
+    pairings
+      .filter(p => getServiceCategory(p.serviceA) === category || getServiceCategory(p.serviceB) === category)
+      .slice(0, 5);
+
   return (
     <PinnableCard elementKey="service_pairings" elementName="Service Bundling Intelligence" category="Analytics Hub - Sales" dateRange={dateRange} locationName={locationName}>
       <div className="space-y-4">
@@ -62,7 +103,7 @@ export function ServiceBundlingIntelligence({
                 <div>
                   <div className="flex items-center gap-2">
                     <CardTitle className="font-display text-base tracking-wide">STANDALONE VS. GROUPED</CardTitle>
-                    <MetricInfoTooltip description="Shows what percentage of visits containing each service category were single-service (standalone) vs. multi-service (grouped). High standalone rates signal upsell opportunities." />
+                    <MetricInfoTooltip description="Shows what percentage of visits containing each service category were single-service (standalone) vs. multi-service (grouped). High standalone rates signal upsell opportunities. Click a category to drill down." />
                   </div>
                   <CardDescription>How often each category is booked alone vs. with other services</CardDescription>
                 </div>
@@ -74,31 +115,64 @@ export function ServiceBundlingIntelligence({
             {standaloneRates.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">Not enough data for this period</p>
             ) : (
-              <div className="space-y-3">
-                {standaloneRates.map(r => (
-                  <div key={r.category} className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{r.category}</span>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">{r.totalBookings} visits</Badge>
-                      </div>
-                    </div>
-                    <div className="flex h-5 rounded-md overflow-hidden bg-muted/30">
+              <div className="space-y-2">
+                {standaloneRates.map(r => {
+                  const isExp = expandedStandalone === r.category;
+                  const catPairings = getCategoryPairings(r.category);
+                  return (
+                    <div key={r.category}>
                       <div
-                        className="bg-amber-500/80 flex items-center justify-center text-[10px] font-semibold text-amber-950 transition-all"
-                        style={{ width: `${Math.max(r.standaloneRate, 4)}%` }}
+                        className="space-y-1 cursor-pointer hover:bg-muted/20 rounded-md p-1.5 -mx-1.5 transition-colors"
+                        onClick={() => setExpandedStandalone(isExp ? null : r.category)}
                       >
-                        {r.standaloneRate >= 15 ? `${Math.round(r.standaloneRate)}% solo` : ''}
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium flex items-center gap-1">
+                            {r.category}
+                            <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform', isExp && 'rotate-180')} />
+                          </span>
+                          <Badge variant="secondary" className="text-xs">{r.totalBookings} visits</Badge>
+                        </div>
+                        <div className="flex h-5 rounded-md overflow-hidden bg-muted/30">
+                          <div
+                            className="bg-amber-500/80 flex items-center justify-center text-[10px] font-semibold text-amber-950 transition-all"
+                            style={{ width: `${Math.max(r.standaloneRate, 4)}%` }}
+                          >
+                            {r.standaloneRate >= 15 ? `${Math.round(r.standaloneRate)}% solo` : ''}
+                          </div>
+                          <div
+                            className="bg-emerald-500/80 flex items-center justify-center text-[10px] font-semibold text-emerald-950 transition-all"
+                            style={{ width: `${Math.max(r.groupedRate, 4)}%` }}
+                          >
+                            {r.groupedRate >= 15 ? `${Math.round(r.groupedRate)}% grouped` : ''}
+                          </div>
+                        </div>
                       </div>
-                      <div
-                        className="bg-emerald-500/80 flex items-center justify-center text-[10px] font-semibold text-emerald-950 transition-all"
-                        style={{ width: `${Math.max(r.groupedRate, 4)}%` }}
-                      >
-                        {r.groupedRate >= 15 ? `${Math.round(r.groupedRate)}% grouped` : ''}
-                      </div>
+                      <DrillDown open={isExp}>
+                        <div className="px-2 pb-1 space-y-3">
+                          {r.standaloneRate > 50 && (
+                            <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                              {r.category} is booked alone {Math.round(r.standaloneRate)}% of the time — consider bundling
+                              {catPairings.length > 0 ? ` with ${catPairings.map(p => p.partner).join(' or ')}` : ''}.
+                            </p>
+                          )}
+                          {catPairings.length > 0 && (
+                            <div>
+                              <p className="text-[10px] font-medium text-muted-foreground mb-1">Top category pairings</p>
+                              <div className="space-y-0.5">
+                                {catPairings.map(p => (
+                                  <div key={p.partner} className="flex items-center justify-between text-[11px]">
+                                    <span>{r.category} + {p.partner}</span>
+                                    <span className="tabular-nums text-muted-foreground">{p.count} visits ({Math.round(p.pct)}%)</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </DrillDown>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 <p className="text-xs text-muted-foreground mt-3 px-1">
                   Categories with high standalone rates represent your biggest upsell opportunities — consider creating bundles.
                 </p>
@@ -117,7 +191,7 @@ export function ServiceBundlingIntelligence({
               <div>
                 <div className="flex items-center gap-2">
                   <CardTitle className="font-display text-base tracking-wide">REVENUE LIFT FROM GROUPING</CardTitle>
-                  <MetricInfoTooltip description="Compares the average visit ticket when a category is booked alone vs. as part of a multi-service visit. Lift quantifies the dollar impact of bundling." />
+                  <MetricInfoTooltip description="Compares the average visit ticket when a category is booked alone vs. as part of a multi-service visit. Click a row to see the specific service pairings driving the lift." />
                 </div>
                 <CardDescription>Average ticket difference between solo and grouped visits</CardDescription>
               </div>
@@ -139,24 +213,74 @@ export function ServiceBundlingIntelligence({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {revenueLift.map(r => (
-                      <TableRow key={r.category} className={cn(r.liftPct >= 50 && 'bg-emerald-500/5')}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            {r.category}
-                            {r.liftPct >= 50 && <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-600 dark:text-emerald-400">Strong</Badge>}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrency(r.avgTicketSolo)}</BlurredAmount></TableCell>
-                        <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrency(r.avgTicketGrouped)}</BlurredAmount></TableCell>
-                        <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
-                          <BlurredAmount>+{formatCurrency(r.liftDollars)}</BlurredAmount>
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
-                          +{Math.round(r.liftPct)}%
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {revenueLift.map(r => {
+                      const isExp = expandedLift === r.category;
+                      const servicePairs = getServicePairingsForCategory(r.category);
+                      // Find standalone rate data for sample sizes
+                      const standaloneInfo = standaloneRates.find(s => s.category === r.category);
+                      return (
+                        <>
+                          <TableRow
+                            key={r.category}
+                            className={cn('cursor-pointer hover:bg-muted/50', r.liftPct >= 50 && 'bg-emerald-500/5')}
+                            onClick={() => setExpandedLift(isExp ? null : r.category)}
+                          >
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                {r.category}
+                                {r.liftPct >= 50 && <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-600 dark:text-emerald-400">Strong</Badge>}
+                                <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform', isExp && 'rotate-180')} />
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrency(r.avgTicketSolo)}</BlurredAmount></TableCell>
+                            <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrency(r.avgTicketGrouped)}</BlurredAmount></TableCell>
+                            <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
+                              <BlurredAmount>+{formatCurrency(r.liftDollars)}</BlurredAmount>
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums font-medium text-emerald-600 dark:text-emerald-400">
+                              +{Math.round(r.liftPct)}%
+                            </TableCell>
+                          </TableRow>
+                          {isExp && (
+                            <TableRow key={`${r.category}-detail`}>
+                              <TableCell colSpan={5} className="p-0">
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="p-4 bg-muted/20 space-y-3">
+                                    {standaloneInfo && (
+                                      <p className="text-[11px] text-muted-foreground">
+                                        Based on {standaloneInfo.standaloneCount} solo visits and {standaloneInfo.groupedCount} grouped visits
+                                      </p>
+                                    )}
+                                    {servicePairs.length > 0 && (
+                                      <div>
+                                        <p className="text-[10px] font-medium text-muted-foreground mb-1">Top service pairings driving this lift</p>
+                                        <div className="space-y-0.5">
+                                          {servicePairs.map(p => (
+                                            <div key={`${p.serviceA}|${p.serviceB}`} className="flex items-center justify-between text-[11px]">
+                                              <span className="truncate max-w-[250px]">{p.serviceA} + {p.serviceB}</span>
+                                              <span className="tabular-nums text-muted-foreground">{p.count} visits ({Math.round(p.pctOfVisits)}%)</span>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {servicePairs.length === 0 && (
+                                      <p className="text-[11px] text-muted-foreground">No specific service pairings found for this category in the top pairs.</p>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>

@@ -166,6 +166,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
   const [expandedEfficiency, setExpandedEfficiency] = useState<string | null>(null);
   const [expandedDemand, setExpandedDemand] = useState<string | null>(null);
   const [expandedRebook, setExpandedRebook] = useState<string | null>(null);
+  const [expandedRealization, setExpandedRealization] = useState<string | null>(null);
   const [clientView, setClientView] = useState<'magnets' | 'retention'>('magnets');
 
   const { orderedIds, saveOrder, resetOrder } = useAnalyticsCardOrder('services', SERVICES_DEFAULT_ORDER);
@@ -250,6 +251,23 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
       .filter(s => s.totalCount >= 5)
       .sort((a, b) => b.rebookRate - a.rebookRate);
   }, [clientAnalysis]);
+
+  // Enhancement 5: Lost rebooking revenue
+  const rebookLostRevenue = useMemo(() => {
+    if (!rebookData.length || !data?.services) return { total: 0, perService: new Map<string, number>() };
+    const serviceTicket = new Map(data.services.map(s => [s.serviceName, s.avgRevenue]));
+    const perService = new Map<string, number>();
+    let total = 0;
+    for (const s of rebookData) {
+      if (s.rebookRate < 70) {
+        const avgTicket = serviceTicket.get(s.serviceName) || 0;
+        const lost = (0.70 - s.rebookRate / 100) * s.totalCount * avgTicket;
+        perService.set(s.serviceName, lost);
+        total += lost;
+      }
+    }
+    return { total, perService };
+  }, [rebookData, data]);
 
   // Top/bottom services for KPI drill-downs
   const top5ByTicket = useMemo(() => data?.services ? [...data.services].filter(s => s.bookings >= 3).sort((a, b) => b.avgRevenue - a.avgRevenue).slice(0, 5) : [], [data]);
@@ -418,16 +436,24 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                                       <span className="flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Rebook rate: <strong>{Math.round(clientStats.rebookRate)}%</strong></span>
                                     </div>
                                     <div className="space-y-1">
-                                      {cat.services.slice(0, 8).map(svc => (
+                                      {cat.services.slice(0, 8).map(svc => {
+                                        const avgRPH = data?.avgRevPerHour || 0;
+                                        const svcAbove = svc.revPerHour > avgRPH * 1.1;
+                                        const svcBelow = svc.revPerHour < avgRPH * 0.9;
+                                        return (
                                         <div key={svc.serviceName} className="flex items-center justify-between text-xs py-1 border-b border-border/30 last:border-0">
                                           <span className="truncate max-w-[180px]">{svc.serviceName}</span>
                                           <div className="flex items-center gap-4">
                                             <span className="tabular-nums">{svc.bookings} bookings</span>
                                             <span className="tabular-nums font-medium"><BlurredAmount>{formatCurrency(svc.avgRevenue)}</BlurredAmount></span>
+                                            <span className={cn('tabular-nums font-medium', svcAbove && 'text-emerald-600 dark:text-emerald-400', svcBelow && 'text-red-500 dark:text-red-400')}>
+                                              <BlurredAmount>{svc.revPerHour > 0 ? `${formatCurrency(svc.revPerHour)}/hr` : '—'}</BlurredAmount>
+                                            </span>
                                             <span className="tabular-nums text-muted-foreground">{cat.revenue > 0 ? Math.round((svc.totalRevenue / cat.revenue) * 100) : 0}%</span>
                                           </div>
                                         </div>
-                                      ))}
+                                        );
+                                      })}
                                     </div>
                                   </div>
                                 </motion.div>
@@ -600,6 +626,29 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                                       </div>
                                     </div>
                                   )}
+                                  {/* Enhancement 3: Day-of-week mini-bars */}
+                                  {s.dayDistribution && (
+                                    <div>
+                                      <p className="text-xs font-medium text-muted-foreground mb-2">Booking Pattern</p>
+                                      <div className="flex items-end gap-1 h-8">
+                                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => {
+                                          const maxDay = Math.max(...s.dayDistribution, 1);
+                                          const pct = (s.dayDistribution[i] / maxDay) * 100;
+                                          return (
+                                            <div key={day} className="flex-1 flex flex-col items-center gap-0.5">
+                                              <div className="w-full bg-muted rounded-sm overflow-hidden" style={{ height: '24px' }}>
+                                                <div className="w-full bg-primary/50 rounded-sm" style={{ height: `${pct}%`, marginTop: `${100 - pct}%` }} />
+                                              </div>
+                                              <span className="text-[9px] text-muted-foreground">{day}</span>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                      {s.peakHour && s.peakHour !== '—' && (
+                                        <p className="text-[10px] text-muted-foreground mt-1">Peak: <strong>{s.peakHour}</strong></p>
+                                      )}
+                                    </div>
+                                  )}
                                 </div>
                               </motion.div>
                             </TableCell>
@@ -644,7 +693,14 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
               <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg"><RefreshCw className="w-5 h-5 text-primary" /></div>
               <div>
                 <CardTitle className="font-display text-base tracking-wide">SERVICE REBOOKING RATES</CardTitle>
-                <CardDescription>Quality signal — low rebook rate means clients aren't coming back for this service</CardDescription>
+                <CardDescription>
+                  Quality signal — low rebook rate means clients aren't coming back for this service
+                  {rebookLostRevenue.total > 0 && (
+                    <Badge variant="outline" className="ml-2 text-[10px] border-red-500/30 text-red-500">
+                      Est. lost revenue: <BlurredAmount>{formatCurrencyWhole(rebookLostRevenue.total)}</BlurredAmount>
+                    </Badge>
+                  )}
+                </CardDescription>
               </div>
               <MetricInfoTooltip description="Percentage of appointments where the client rebooked at checkout. Green (>70%) = strong retention. Amber (40-70%) = needs attention. Red (<40%) = investigate." />
             </div>
@@ -682,6 +738,12 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                             </div>
                           ))}
                         </div>
+                        {/* Enhancement 5: Lost rebook revenue per service */}
+                        {rebookLostRevenue.perService.has(s.serviceName) && (
+                          <p className="text-[11px] text-red-500/80 mt-2 px-1">
+                            If rebooking reached 70%, this service would generate an estimated <strong>+<BlurredAmount>{formatCurrencyWhole(rebookLostRevenue.perService.get(s.serviceName)!)}</BlurredAmount></strong> in additional revenue
+                          </p>
+                        )}
                       </div>
                     </DrillDown>
                   </div>
@@ -733,16 +795,49 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                 </ResponsiveContainer>
               </div>
               <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {priceRealizationData.map((s) => (
-                  <div key={s.fullName} className="flex items-center justify-between text-xs px-3 py-1.5 rounded-md bg-muted/30">
-                    <span className="truncate max-w-[160px]">{s.fullName}</span>
-                    <span className={cn('font-semibold tabular-nums', s.rate < 85 && 'text-red-500', s.rate > 105 && 'text-emerald-600 dark:text-emerald-400')}>{Math.round(s.rate)}%</span>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3 text-xs text-muted-foreground flex items-center gap-4 px-1">
-                <span className="text-red-500">■ &lt;85% heavy discounting</span>
-                <span className="text-emerald-600 dark:text-emerald-400">■ &gt;105% raise menu price?</span>
+                {priceRealizationData.map((s) => {
+                  const isRealExp = expandedRealization === s.fullName;
+                  const serviceData = data?.services.find(svc => svc.serviceName === s.fullName);
+                  return (
+                    <div key={s.fullName}>
+                      <div
+                        className={cn('flex items-center justify-between text-xs px-3 py-1.5 rounded-md bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors', isRealExp && 'bg-muted/50')}
+                        onClick={() => setExpandedRealization(isRealExp ? null : s.fullName)}
+                      >
+                        <span className="truncate max-w-[160px] flex items-center gap-1">
+                          {s.fullName}
+                          <ChevronDown className={cn('w-3 h-3 text-muted-foreground transition-transform shrink-0', isRealExp && 'rotate-180')} />
+                        </span>
+                        <span className={cn('font-semibold tabular-nums', s.rate < 85 && 'text-red-500', s.rate > 105 && 'text-emerald-600 dark:text-emerald-400')}>{Math.round(s.rate)}%</span>
+                      </div>
+                      <DrillDown open={isRealExp}>
+                        {serviceData && serviceData.stylistBreakdown.length > 0 && (
+                          <div className="px-3 pb-2 space-y-1">
+                            <p className="text-[10px] font-medium text-muted-foreground mb-1">Realization by Stylist</p>
+                            {serviceData.stylistBreakdown.slice(0, 5).map(st => {
+                              const stylistAvgPrice = st.bookings > 0 ? st.totalRevenue / st.bookings : 0;
+                              const stylistRate = s.menuPrice > 0 ? (stylistAvgPrice / s.menuPrice) * 100 : 0;
+                              return (
+                                <div key={st.staffId} className="flex items-center justify-between text-[11px] py-0.5">
+                                  <span className="truncate max-w-[100px]">{st.staffName}</span>
+                                  <div className="flex items-center gap-3">
+                                    <span className="tabular-nums text-muted-foreground">{st.bookings} bookings</span>
+                                    <span className="tabular-nums"><BlurredAmount>{formatCurrency(stylistAvgPrice)}</BlurredAmount></span>
+                                    <span className={cn('tabular-nums font-semibold w-12 text-right',
+                                      stylistRate < 85 && 'text-red-500',
+                                      stylistRate > 105 && 'text-emerald-600 dark:text-emerald-400',
+                                      stylistRate >= 85 && stylistRate <= 105 && 'text-foreground'
+                                    )}>{Math.round(stylistRate)}%</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </DrillDown>
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}
