@@ -15,7 +15,7 @@ import {
 import {
   DollarSign, Scissors, TrendingUp, TrendingDown, Minus, Clock, Receipt,
   ArrowUpDown, BarChart3, Loader2, Target, Users, RefreshCw, ChevronDown,
-  AlertTriangle, Layers, Heart,
+  AlertTriangle, Layers, Heart, ShoppingBag,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,6 +31,7 @@ import { useServiceDemandTrend } from '@/hooks/useServiceDemandTrend';
 import { useServiceClientAnalysis } from '@/hooks/useServiceClientAnalysis';
 import { ServiceBundlingIntelligence } from '@/components/dashboard/sales/ServiceBundlingIntelligence';
 import { ServiceCostsProfitsCard } from '@/components/dashboard/sales/ServiceCostsProfitsCard';
+import { useServiceRetailAttachment } from '@/hooks/useServiceRetailAttachment';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -152,6 +153,7 @@ const SERVICES_SECTION_DEFS: CardDefinition[] = [
   { id: 'demand_trends', label: 'Service Demand Trends', icon: <TrendingUp className="w-4 h-4" /> },
   { id: 'service_pairings', label: 'Service Bundling Intelligence', icon: <Layers className="w-4 h-4" /> },
   { id: 'service_costs_profits', label: 'Service Costs & Sales Profits', icon: <DollarSign className="w-4 h-4" /> },
+  { id: 'retail_pairing', label: 'Retail Pairing Strength', icon: <ShoppingBag className="w-4 h-4" /> },
 ];
 const SERVICES_DEFAULT_ORDER = SERVICES_SECTION_DEFS.map(s => s.id);
 
@@ -159,6 +161,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
   const { data, isLoading } = useServiceEfficiency(dateFrom, dateTo, locationId);
   const { data: demandTrends, isLoading: trendsLoading } = useServiceDemandTrend(locationId);
   const { data: clientAnalysis, isLoading: clientLoading } = useServiceClientAnalysis(dateFrom, dateTo, locationId);
+  const { data: retailAttachment, isLoading: retailAttachmentLoading } = useServiceRetailAttachment({ dateFrom, dateTo, locationId });
   
   const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
   const { formatNumber, formatPercent } = useFormatNumber();
@@ -479,6 +482,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
       </Card>
     </PinnableCard>
   );
+
 
 
   sections.client_type = (
@@ -998,6 +1002,79 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
       dateRange={dateRange}
       locationName={locationName}
     />
+  );
+
+  sections.retail_pairing = (
+    <PinnableCard key="retail_pairing" elementKey="services_retail_pairing" elementName="Retail Pairing Strength" category="Analytics Hub - Services">
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+              <ShoppingBag className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className="font-display text-base tracking-wide">RETAIL PAIRING STRENGTH</CardTitle>
+                <MetricInfoTooltip description="Shows which services naturally lead to retail product sales. Attachment rate is the percentage of service transactions that also included a retail purchase. Higher rates suggest strong recommendation opportunities." />
+              </div>
+              <CardDescription className="text-xs mt-0.5">Which services naturally lead to product sales?</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {retailAttachmentLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-12 w-full" />)}
+            </div>
+          ) : !retailAttachment?.length ? (
+            <p className="text-sm text-muted-foreground text-center py-6">No service-retail data available for this period.</p>
+          ) : (
+            <div className="space-y-2">
+              {retailAttachment.filter(r => r.totalTransactions >= 3).slice(0, 15).map((row, idx) => {
+                const rateColor = row.attachmentRate >= 50
+                  ? 'bg-emerald-500'
+                  : row.attachmentRate >= 25
+                    ? 'bg-amber-500'
+                    : 'bg-red-500';
+                const rateTextColor = row.attachmentRate >= 50
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : row.attachmentRate >= 25
+                    ? 'text-amber-600 dark:text-amber-400'
+                    : 'text-red-500';
+                return (
+                  <div key={row.serviceName} className="flex items-center gap-3 py-2 border-b border-border/30 last:border-0">
+                    <span className="text-xs text-muted-foreground tabular-nums w-5 text-right">{idx + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium truncate">{row.serviceName}</span>
+                        {row.serviceCategory && (
+                          <Badge variant="outline" className="text-[9px] py-0 px-1.5 shrink-0">{row.serviceCategory}</Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden max-w-[180px]">
+                          <div className={cn('h-full rounded-full', rateColor)} style={{ width: `${Math.min(row.attachmentRate, 100)}%` }} />
+                        </div>
+                        <span className={cn('text-xs font-medium tabular-nums w-10 text-right', rateTextColor)}>
+                          {row.attachmentRate}%
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {row.attachedTransactions} of {row.totalTransactions} service visits included retail
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="text-sm font-medium tabular-nums"><BlurredAmount>{formatCurrencyWhole(row.retailRevenue)}</BlurredAmount></span>
+                      <p className="text-[10px] text-muted-foreground">retail revenue</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </PinnableCard>
   );
 
   return (

@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 import {
   DollarSign, Package, TrendingUp, TrendingDown, AlertTriangle,
-  ShoppingBag, Users, Search, ArrowUpDown, BarChart3, Loader2, Info, Percent, Tag,
+  ShoppingBag, Users, Search, ArrowUpDown, BarChart3, Loader2, Info, Percent, Tag, Scissors,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -23,7 +23,7 @@ import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import { useRetailAnalytics, type ProductRow, type RedFlag } from '@/hooks/useRetailAnalytics';
-
+import { useServiceRetailAttachment } from '@/hooks/useServiceRetailAttachment';
 interface RetailAnalyticsContentProps {
   dateFrom: string;
   dateTo: string;
@@ -105,6 +105,7 @@ function RedFlagRow({ flag }: { flag: RedFlag }) {
 
 export function RetailAnalyticsContent({ dateFrom, dateTo, locationId }: RetailAnalyticsContentProps) {
   const { data, isLoading } = useRetailAnalytics(dateFrom, dateTo, locationId);
+  const { data: retailAttachment, isLoading: retailAttachmentLoading } = useServiceRetailAttachment({ dateFrom, dateTo, locationId });
   const { formatCurrencyWhole } = useFormatCurrency();
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<SortKey>('revenue');
@@ -615,6 +616,101 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId }: RetailA
           </CardContent>
         </Card>
       )}
+
+      {/* Service-Driven Retail */}
+      <PinnableCard elementKey="retail_service_driven" elementName="Service-Driven Retail" category="Analytics Hub - Retail">
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                <Scissors className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-base tracking-wide">SERVICE-DRIVEN RETAIL</CardTitle>
+                  <MetricInfoTooltip description="Which services generate the most retail revenue? Cross-references service and product line items within the same transaction. Focus training on low-attachment, high-volume services to unlock more product sales." />
+                </div>
+                <CardDescription className="text-xs mt-0.5">Which services are the biggest drivers of retail revenue?</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {retailAttachmentLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : !retailAttachment?.length ? (
+              <p className="text-sm text-muted-foreground text-center py-6">No service-retail data available for this period.</p>
+            ) : (() => {
+              const filtered = retailAttachment.filter(r => r.totalTransactions >= 3);
+              const topDriver = filtered[0];
+              const highVolumeLowest = [...filtered]
+                .filter(r => r.totalTransactions >= 10)
+                .sort((a, b) => a.attachmentRate - b.attachmentRate)[0];
+              return (
+                <>
+                  {/* Summary insight */}
+                  {topDriver && (
+                    <div className="mb-4 p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground space-y-1">
+                      <p>
+                        <span className="font-medium text-foreground">{topDriver.serviceName}</span> drives the most retail revenue at{' '}
+                        <span className="font-medium text-foreground">{formatCurrencyWhole(topDriver.retailRevenue)}</span> ({topDriver.attachmentRate}% attach rate).
+                      </p>
+                      {highVolumeLowest && highVolumeLowest.serviceName !== topDriver.serviceName && highVolumeLowest.attachmentRate < 40 && (
+                        <p className="flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />
+                          <span><span className="font-medium text-foreground">{highVolumeLowest.serviceName}</span> has {highVolumeLowest.totalTransactions} visits but only {highVolumeLowest.attachmentRate}% attachment — training opportunity.</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Service</TableHead>
+                          <TableHead>Category</TableHead>
+                          <TableHead className="text-right">Retail Revenue</TableHead>
+                          <TableHead className="text-right">Attach Rate</TableHead>
+                          <TableHead className="text-right">Avg Retail Ticket</TableHead>
+                          <TableHead className="text-right">Transactions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filtered.slice(0, 20).map(row => (
+                          <TableRow key={row.serviceName}>
+                            <TableCell className="font-medium text-sm">{row.serviceName}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm">{row.serviceCategory || '\u2014'}</TableCell>
+                            <TableCell className="text-right tabular-nums font-medium">
+                              <BlurredAmount>{formatCurrencyWhole(row.retailRevenue)}</BlurredAmount>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Badge variant="outline" className={cn(
+                                'text-xs tabular-nums',
+                                row.attachmentRate >= 50 ? 'text-emerald-600 border-emerald-200 dark:text-emerald-400 dark:border-emerald-800' :
+                                row.attachmentRate >= 25 ? 'text-amber-600 border-amber-200 dark:text-amber-400 dark:border-amber-800' :
+                                'text-red-500 border-red-200 dark:text-red-400 dark:border-red-800'
+                              )}>
+                                {row.attachmentRate}%
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums text-muted-foreground">
+                              <BlurredAmount>{formatCurrencyWhole(row.avgRetailPerAttached)}</BlurredAmount>
+                            </TableCell>
+                            <TableCell className="text-right tabular-nums text-muted-foreground">
+                              {row.attachedTransactions}/{row.totalTransactions}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </>
+              );
+            })()}
+          </CardContent>
+        </Card>
+      </PinnableCard>
     </div>
   );
 }
