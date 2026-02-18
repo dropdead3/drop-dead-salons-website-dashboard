@@ -7,6 +7,22 @@ import LogoIcon from "@/assets/dd-secondary-logo.svg";
 import { cn } from "@/lib/utils";
 import { useAnnouncementBarSettings } from "@/hooks/useAnnouncementBar";
 import { useOrgPath } from "@/hooks/useOrgPath";
+
+function isColorDark(color: string): boolean {
+  if (!color) return false;
+  // Handle HSL
+  const hslMatch = color.match(/hsl\((\d+),?\s*(\d+)%?,?\s*(\d+)%?\)/);
+  if (hslMatch) return parseInt(hslMatch[3]) < 40;
+  // Handle hex
+  if (color.startsWith('#')) {
+    const hex = color.replace('#', '');
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    return (r * 299 + g * 587 + b * 114) / 1000 < 128;
+  }
+  return false;
+}
 import {
   Tooltip,
   TooltipContent,
@@ -200,9 +216,12 @@ export function Header() {
     <>
       {/* Top Announcement Bar */}
       {announcementSettings?.enabled && (
-        <div className="bg-secondary py-4 md:py-2.5 px-4 md:px-6">
+        <div 
+          className={cn("py-4 md:py-2.5 px-4 md:px-6", !announcementSettings.bg_color && "bg-secondary")}
+          style={announcementSettings.bg_color ? { backgroundColor: announcementSettings.bg_color } : undefined}
+        >
           <div className="container mx-auto flex flex-col md:flex-row items-center justify-center md:justify-between gap-1 md:gap-0">
-            <p className="text-sm text-foreground/80 text-center md:text-left">
+            <p className={cn("text-sm text-center md:text-left", announcementSettings.bg_color && isColorDark(announcementSettings.bg_color) ? "text-white/80" : "text-foreground/80")}>
               {announcementSettings.message_prefix}{' '}
               <span className="font-medium">{announcementSettings.message_highlight}</span>{' '}
               {announcementSettings.message_suffix}
@@ -211,7 +230,7 @@ export function Header() {
               href={announcementSettings.cta_url || '#'} 
               target={announcementSettings.open_in_new_tab ? '_blank' : undefined}
               rel={announcementSettings.open_in_new_tab ? 'noopener noreferrer' : undefined}
-              className="group inline-flex items-center gap-1.5 text-sm font-sans font-medium text-foreground uppercase tracking-wider hover:opacity-70 transition-opacity"
+              className={cn("group inline-flex items-center gap-1.5 text-sm font-sans font-medium uppercase tracking-wider hover:opacity-70 transition-opacity", announcementSettings.bg_color && isColorDark(announcementSettings.bg_color) ? "text-white" : "text-foreground")}
             >
               {announcementSettings.cta_text}
               <ArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />

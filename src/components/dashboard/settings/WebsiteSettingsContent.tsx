@@ -113,6 +113,7 @@ function GeneralTab() {
     cta_text: '',
     cta_url: '',
     open_in_new_tab: true,
+    bg_color: '',
   });
 
   useEffect(() => {
@@ -242,14 +243,17 @@ function GeneralTab() {
               "rounded-md overflow-hidden transition-opacity",
               !annLocal.enabled && "opacity-40"
             )}>
-              <div className="bg-secondary py-2.5 px-4 flex items-center justify-between text-sm">
-                <div className="text-foreground/80 font-sans">
+              <div 
+                className={cn("py-2.5 px-4 flex items-center justify-between text-sm", !annLocal.bg_color && "bg-secondary")}
+                style={annLocal.bg_color ? { backgroundColor: annLocal.bg_color } : undefined}
+              >
+                <div className={cn("font-sans", annLocal.bg_color && /hsl\(\d+,?\s*\d+%?,?\s*(\d+)%?\)/.test(annLocal.bg_color) && parseInt(annLocal.bg_color.match(/(\d+)%?\)$/)?.[1] || '100') < 40 ? "text-white/80" : "text-foreground/80")}>
                   <span>{annLocal.message_prefix || 'Are you a salon'}</span>{' '}
                   <span className="font-medium">{annLocal.message_highlight || 'professional'}</span>{' '}
                   <span>{annLocal.message_suffix || 'looking for our extensions?'}</span>
                 </div>
                 {annLocal.cta_text && (
-                  <div className="flex items-center gap-1 uppercase tracking-wider text-xs font-sans font-medium text-foreground shrink-0 ml-4">
+                  <div className={cn("flex items-center gap-1 uppercase tracking-wider text-xs font-sans font-medium shrink-0 ml-4", annLocal.bg_color && /hsl\(\d+,?\s*\d+%?,?\s*(\d+)%?\)/.test(annLocal.bg_color) && parseInt(annLocal.bg_color.match(/(\d+)%?\)$/)?.[1] || '100') < 40 ? "text-white" : "text-foreground")}>
                     {annLocal.cta_text}
                     <ArrowRight className="w-3 h-3" />
                   </div>

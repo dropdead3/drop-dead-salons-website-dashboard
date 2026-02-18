@@ -9,6 +9,7 @@ export interface AnnouncementBarSettings {
   cta_text: string;
   cta_url: string;
   open_in_new_tab: boolean;
+  bg_color?: string;
 }
 
 const DEFAULT_SETTINGS: AnnouncementBarSettings = {
