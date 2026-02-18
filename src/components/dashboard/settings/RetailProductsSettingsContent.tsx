@@ -1,0 +1,478 @@
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from '@/components/ui/select';
+import {
+  Search, Plus, BarChart3, Package, Edit2, AlertTriangle, Minus,
+  Loader2, Check, X,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useProducts, useCreateProduct, useUpdateProduct, type Product } from '@/hooks/useProducts';
+import { useProductBrands, useProductCategorySummaries } from '@/hooks/useProductBrands';
+import { useProductCategories } from '@/hooks/useProducts';
+import { useBulkUpdateProducts, useBulkToggleProducts } from '@/hooks/useBulkUpdateProducts';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
+
+// ─── Products Tab ───
+function ProductsTab() {
+  const { formatCurrency } = useFormatCurrency();
+  const [search, setSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [lowStockOnly, setLowStockOnly] = useState(false);
+  const { data: products, isLoading } = useProducts({ search, category: categoryFilter, lowStockOnly });
+  const { data: categories } = useProductCategories();
+  const createProduct = useCreateProduct();
+  const updateProduct = useUpdateProduct();
+  const bulkToggle = useBulkToggleProducts();
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    if (selectedIds.size === (products?.length || 0)) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(products?.map(p => p.id)));
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Input placeholder="Search products, SKU, barcode..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-9 text-sm" />
+        </div>
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-[160px] h-9"><SelectValue placeholder="Category" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            {categories?.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <div className="flex items-center gap-2">
+          <Switch checked={lowStockOnly} onCheckedChange={setLowStockOnly} id="low-stock" />
+          <Label htmlFor="low-stock" className="text-sm cursor-pointer">Low Stock</Label>
+        </div>
+        <Button size="sm" onClick={() => setShowAddDialog(true)} className="gap-1.5">
+          <Plus className="w-4 h-4" /> Add Product
+        </Button>
+      </div>
+
+      {selectedIds.size > 0 && (
+        <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border">
+          <span className="text-sm font-medium">{selectedIds.size} selected</span>
+          <Button size="sm" variant="outline" onClick={() => bulkToggle.mutate({ ids: Array.from(selectedIds), isActive: false })}>
+            Deactivate
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>Clear</Button>
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+      ) : (
+        <div className="overflow-x-auto border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10">
+                  <input type="checkbox" checked={selectedIds.size === (products?.length || 0) && (products?.length || 0) > 0} onChange={toggleAll} className="rounded border-border" />
+                </TableHead>
+                <TableHead>Product</TableHead>
+                <TableHead>Brand</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>SKU</TableHead>
+                <TableHead className="text-right">Retail</TableHead>
+                <TableHead className="text-right">Cost</TableHead>
+                <TableHead className="text-right">Stock</TableHead>
+                <TableHead className="text-right">Reorder</TableHead>
+                <TableHead className="w-10" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {!products?.length ? (
+                <TableRow><TableCell colSpan={10} className="text-center py-8 text-muted-foreground">No products found</TableCell></TableRow>
+              ) : products.map(p => {
+                const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
+                return (
+                  <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
+                    <TableCell><input type="checkbox" checked={selectedIds.has(p.id)} onChange={() => toggleSelect(p.id)} className="rounded border-border" /></TableCell>
+                    <TableCell className="font-medium text-sm">{p.name}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{p.brand || '—'}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{p.category || '—'}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground font-mono">{p.sku || '—'}</TableCell>
+                    <TableCell className="text-right tabular-nums text-sm"><BlurredAmount>{p.retail_price != null ? formatCurrency(p.retail_price) : '—'}</BlurredAmount></TableCell>
+                    <TableCell className="text-right tabular-nums text-sm text-muted-foreground"><BlurredAmount>{p.cost_price != null ? formatCurrency(p.cost_price) : '—'}</BlurredAmount></TableCell>
+                    <TableCell className="text-right tabular-nums text-sm">
+                      <span className={cn(isLow && 'text-amber-600 dark:text-amber-400 font-medium')}>
+                        {p.quantity_on_hand ?? '—'}
+                        {isLow && <AlertTriangle className="inline w-3 h-3 ml-1" />}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right tabular-nums text-sm text-muted-foreground">{p.reorder_level ?? '—'}</TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => setEditProduct(p)}>
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+
+      {(showAddDialog || editProduct) && (
+        <ProductFormDialog
+          product={editProduct}
+          onClose={() => { setShowAddDialog(false); setEditProduct(null); }}
+          onSave={(data) => {
+            if (editProduct) {
+              updateProduct.mutate({ id: editProduct.id, updates: data });
+            } else {
+              createProduct.mutate(data);
+            }
+            setShowAddDialog(false);
+            setEditProduct(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ProductFormDialog({ product, onClose, onSave }: { product: Product | null; onClose: () => void; onSave: (data: Partial<Product>) => void }) {
+  const [form, setForm] = useState({
+    name: product?.name || '',
+    brand: product?.brand || '',
+    category: product?.category || '',
+    sku: product?.sku || '',
+    barcode: product?.barcode || '',
+    retail_price: product?.retail_price?.toString() || '',
+    cost_price: product?.cost_price?.toString() || '',
+    quantity_on_hand: product?.quantity_on_hand?.toString() || '',
+    reorder_level: product?.reorder_level?.toString() || '',
+    description: product?.description || '',
+  });
+
+  const handleSubmit = () => {
+    onSave({
+      name: form.name,
+      brand: form.brand || null,
+      category: form.category || null,
+      sku: form.sku || null,
+      barcode: form.barcode || null,
+      retail_price: form.retail_price ? parseFloat(form.retail_price) : null,
+      cost_price: form.cost_price ? parseFloat(form.cost_price) : null,
+      quantity_on_hand: form.quantity_on_hand ? parseInt(form.quantity_on_hand) : null,
+      reorder_level: form.reorder_level ? parseInt(form.reorder_level) : null,
+      description: form.description || null,
+    });
+  };
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="font-display">{product ? 'Edit Product' : 'Add Product'}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div><Label className="text-xs">Name *</Label><Input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} /></div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-xs">Brand</Label><Input value={form.brand} onChange={e => setForm(f => ({ ...f, brand: e.target.value }))} /></div>
+            <div><Label className="text-xs">Category</Label><Input value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-xs">SKU</Label><Input value={form.sku} onChange={e => setForm(f => ({ ...f, sku: e.target.value }))} /></div>
+            <div><Label className="text-xs">Barcode</Label><Input value={form.barcode} onChange={e => setForm(f => ({ ...f, barcode: e.target.value }))} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-xs">Retail Price</Label><Input type="number" step="0.01" value={form.retail_price} onChange={e => setForm(f => ({ ...f, retail_price: e.target.value }))} /></div>
+            <div><Label className="text-xs">Cost Price</Label><Input type="number" step="0.01" value={form.cost_price} onChange={e => setForm(f => ({ ...f, cost_price: e.target.value }))} /></div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div><Label className="text-xs">Stock Qty</Label><Input type="number" value={form.quantity_on_hand} onChange={e => setForm(f => ({ ...f, quantity_on_hand: e.target.value }))} /></div>
+            <div><Label className="text-xs">Reorder Level</Label><Input type="number" value={form.reorder_level} onChange={e => setForm(f => ({ ...f, reorder_level: e.target.value }))} /></div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSubmit} disabled={!form.name.trim()}>{product ? 'Save Changes' : 'Add Product'}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Brands Tab ───
+function BrandsTab() {
+  const { formatCurrency } = useFormatCurrency();
+  const { data: brands, isLoading } = useProductBrands();
+  const bulkUpdate = useBulkUpdateProducts();
+  const [renamingBrand, setRenamingBrand] = useState<string | null>(null);
+  const [newName, setNewName] = useState('');
+
+  const startRename = (brand: string) => {
+    setRenamingBrand(brand);
+    setNewName(brand);
+  };
+
+  const confirmRename = () => {
+    if (renamingBrand && newName.trim() && newName !== renamingBrand) {
+      bulkUpdate.mutate({ field: 'brand', oldValue: renamingBrand, newValue: newName.trim() });
+    }
+    setRenamingBrand(null);
+  };
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+
+  return (
+    <div className="overflow-x-auto border rounded-lg">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Brand</TableHead>
+            <TableHead className="text-right">Products</TableHead>
+            <TableHead className="text-right">Total Stock</TableHead>
+            <TableHead className="text-right">Inventory Value</TableHead>
+            <TableHead className="w-20" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {!brands?.length ? (
+            <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No brands found</TableCell></TableRow>
+          ) : brands.map(b => (
+            <TableRow key={b.brand}>
+              <TableCell>
+                {renamingBrand === b.brand ? (
+                  <div className="flex items-center gap-2">
+                    <Input value={newName} onChange={e => setNewName(e.target.value)} className="h-8 w-48" autoFocus onKeyDown={e => e.key === 'Enter' && confirmRename()} />
+                    <Button size="icon" variant="ghost" className="w-7 h-7" onClick={confirmRename}><Check className="w-3.5 h-3.5" /></Button>
+                    <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => setRenamingBrand(null)}><X className="w-3.5 h-3.5" /></Button>
+                  </div>
+                ) : (
+                  <span className="font-medium text-sm">{b.brand}</span>
+                )}
+              </TableCell>
+              <TableCell className="text-right tabular-nums">{b.productCount}</TableCell>
+              <TableCell className="text-right tabular-nums">{b.totalStock}</TableCell>
+              <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrency(b.totalInventoryValue)}</BlurredAmount></TableCell>
+              <TableCell>
+                {renamingBrand !== b.brand && b.brand !== 'Uncategorized' && (
+                  <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => startRename(b.brand)}>
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+// ─── Categories Tab ───
+function CategoriesTab() {
+  const { formatCurrency } = useFormatCurrency();
+  const { data: categories, isLoading } = useProductCategorySummaries();
+  const bulkUpdate = useBulkUpdateProducts();
+  const [renamingCat, setRenamingCat] = useState<string | null>(null);
+  const [newName, setNewName] = useState('');
+
+  const startRename = (cat: string) => { setRenamingCat(cat); setNewName(cat); };
+  const confirmRename = () => {
+    if (renamingCat && newName.trim() && newName !== renamingCat) {
+      bulkUpdate.mutate({ field: 'category', oldValue: renamingCat, newValue: newName.trim() });
+    }
+    setRenamingCat(null);
+  };
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+
+  return (
+    <div className="overflow-x-auto border rounded-lg">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Category</TableHead>
+            <TableHead className="text-right">Products</TableHead>
+            <TableHead className="text-right">Total Stock</TableHead>
+            <TableHead className="text-right">Inventory Value</TableHead>
+            <TableHead className="w-20" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {!categories?.length ? (
+            <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No categories found</TableCell></TableRow>
+          ) : categories.map(c => (
+            <TableRow key={c.category}>
+              <TableCell>
+                {renamingCat === c.category ? (
+                  <div className="flex items-center gap-2">
+                    <Input value={newName} onChange={e => setNewName(e.target.value)} className="h-8 w-48" autoFocus onKeyDown={e => e.key === 'Enter' && confirmRename()} />
+                    <Button size="icon" variant="ghost" className="w-7 h-7" onClick={confirmRename}><Check className="w-3.5 h-3.5" /></Button>
+                    <Button size="icon" variant="ghost" className="w-7 h-7" onClick={() => setRenamingCat(null)}><X className="w-3.5 h-3.5" /></Button>
+                  </div>
+                ) : (
+                  <span className="font-medium text-sm">{c.category}</span>
+                )}
+              </TableCell>
+              <TableCell className="text-right tabular-nums">{c.productCount}</TableCell>
+              <TableCell className="text-right tabular-nums">{c.totalStock}</TableCell>
+              <TableCell className="text-right tabular-nums"><BlurredAmount>{formatCurrency(c.totalInventoryValue)}</BlurredAmount></TableCell>
+              <TableCell>
+                {renamingCat !== c.category && c.category !== 'Uncategorized' && (
+                  <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => startRename(c.category)}>
+                    <Edit2 className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+// ─── Inventory by Location Tab ───
+function InventoryByLocationTab() {
+  const { formatCurrency } = useFormatCurrency();
+  const { data: products, isLoading } = useProducts({});
+  const updateProduct = useUpdateProduct();
+
+  const lowStockProducts = useMemo(() => {
+    if (!products) return [];
+    return products.filter(p => p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level);
+  }, [products]);
+
+  const adjustStock = (product: Product, delta: number) => {
+    const newQty = Math.max(0, (product.quantity_on_hand || 0) + delta);
+    updateProduct.mutate({ id: product.id, updates: { quantity_on_hand: newQty } });
+  };
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+
+  return (
+    <div className="space-y-4">
+      {lowStockProducts.length > 0 && (
+        <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
+          <div className="flex items-center gap-2 mb-1">
+            <AlertTriangle className="w-4 h-4 text-amber-500" />
+            <span className="text-sm font-medium">{lowStockProducts.length} product(s) below reorder level</span>
+          </div>
+        </div>
+      )}
+      <div className="overflow-x-auto border rounded-lg">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Product</TableHead>
+              <TableHead>Brand</TableHead>
+              <TableHead className="text-right">On Hand</TableHead>
+              <TableHead className="text-right">Reorder Level</TableHead>
+              <TableHead className="text-right">Status</TableHead>
+              <TableHead className="text-center w-32">Adjust</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {!products?.length ? (
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No products</TableCell></TableRow>
+            ) : products.map(p => {
+              const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
+              return (
+                <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
+                  <TableCell className="font-medium text-sm">{p.name}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{p.brand || '—'}</TableCell>
+                  <TableCell className="text-right tabular-nums font-medium">{p.quantity_on_hand ?? '—'}</TableCell>
+                  <TableCell className="text-right tabular-nums text-muted-foreground">{p.reorder_level ?? '—'}</TableCell>
+                  <TableCell className="text-right">
+                    {isLow ? (
+                      <Badge variant="outline" className="text-amber-600 border-amber-300 dark:text-amber-400 text-[10px]">Low</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-emerald-600 border-emerald-300 dark:text-emerald-400 text-[10px]">OK</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <Button variant="outline" size="icon" className="w-7 h-7" onClick={() => adjustStock(p, -1)} disabled={!p.quantity_on_hand}>
+                        <Minus className="w-3 h-3" />
+                      </Button>
+                      <span className="w-8 text-center text-sm tabular-nums">{p.quantity_on_hand ?? 0}</span>
+                      <Button variant="outline" size="icon" className="w-7 h-7" onClick={() => adjustStock(p, 1)}>
+                        <Plus className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Export ───
+export function RetailProductsSettingsContent() {
+  const navigate = useNavigate();
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div />
+        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate('/dashboard/admin/analytics?tab=sales&subtab=retail')}>
+          <BarChart3 className="w-4 h-4" /> View Retail Analytics
+        </Button>
+      </div>
+
+      <Tabs defaultValue="products" className="w-full">
+        <TabsList>
+          <TabsTrigger value="products" className="gap-1.5"><Package className="w-3.5 h-3.5" /> Products</TabsTrigger>
+          <TabsTrigger value="brands">Brands</TabsTrigger>
+          <TabsTrigger value="categories">Categories</TabsTrigger>
+          <TabsTrigger value="inventory">Inventory</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="products" className="mt-4">
+          <ProductsTab />
+        </TabsContent>
+
+        <TabsContent value="brands" className="mt-4">
+          <BrandsTab />
+        </TabsContent>
+
+        <TabsContent value="categories" className="mt-4">
+          <CategoriesTab />
+        </TabsContent>
+
+        <TabsContent value="inventory" className="mt-4">
+          <InventoryByLocationTab />
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

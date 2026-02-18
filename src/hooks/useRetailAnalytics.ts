@@ -78,6 +78,30 @@ export interface MarginData {
   products: MarginRow[];
 }
 
+export interface BrandRow {
+  brand: string;
+  revenue: number;
+  priorRevenue: number;
+  revenueTrend: number;
+  unitsSold: number;
+  productCount: number;
+  avgPrice: number;
+  margin: number;
+  topProduct: string;
+  staleProducts: string[];
+}
+
+export interface DeadStockRow {
+  name: string;
+  brand: string;
+  category: string;
+  retailPrice: number;
+  quantityOnHand: number;
+  lastSoldDate: string | null;
+  daysStale: number;
+  capitalTiedUp: number;
+}
+
 export interface RetailAnalyticsResult {
   summary: RetailSummary;
   products: ProductRow[];
@@ -86,6 +110,8 @@ export interface RetailAnalyticsResult {
   dailyTrend: DailyTrend[];
   staffRetail: StaffRetailRow[];
   marginData: MarginData | null;
+  brandPerformance: BrandRow[];
+  deadStock: DeadStockRow[];
 }
 
 // ---------------------------------------------------------------------------
@@ -128,10 +154,10 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
         .lte('transaction_date', priorTo);
       if (locationId && locationId !== 'all') priorQ = priorQ.eq('location_id', locationId);
 
-      // ── Fetch product catalog for margin data ──
+      // ── Fetch product catalog for margin + brand data ──
       const catalogQ = supabase
         .from('products')
-        .select('name, cost_price, retail_price')
+        .select('name, cost_price, retail_price, brand, category, quantity_on_hand')
         .eq('is_active', true);
 
       const [currentRes, priorRes, catalogRes] = await Promise.all([currentQ, priorQ, catalogQ]);
@@ -143,14 +169,25 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
       const priorItems = priorRes.data || [];
       const catalog = catalogRes.data || [];
 
-      // Build cost lookup from products catalog
+      // Build cost lookup and brand/category lookup from products catalog
       const costMap = new Map<string, number>();
+      const brandMap = new Map<string, string>();
+      const catalogProducts = new Map<string, { brand: string; category: string; retailPrice: number; quantityOnHand: number; costPrice: number }>();
       let hasCostData = false;
       catalog.forEach((p: any) => {
+        const lowerName = p.name?.toLowerCase();
         if (p.cost_price != null && p.cost_price > 0) {
           hasCostData = true;
-          costMap.set(p.name?.toLowerCase(), Number(p.cost_price));
+          costMap.set(lowerName, Number(p.cost_price));
         }
+        brandMap.set(lowerName, p.brand || 'Uncategorized');
+        catalogProducts.set(lowerName, {
+          brand: p.brand || 'Uncategorized',
+          category: p.category || 'Uncategorized',
+          retailPrice: Number(p.retail_price) || 0,
+          quantityOnHand: Number(p.quantity_on_hand) || 0,
+          costPrice: Number(p.cost_price) || 0,
+        });
       });
 
       // ── Aggregate current period products ──
@@ -411,7 +448,76 @@ export function useRetailAnalytics(dateFrom?: string, dateTo?: string, locationI
         attachmentRate,
       };
 
-      return { summary, products, redFlags, categories, dailyTrend, staffRetail, marginData };
+      // ── Brand Performance ──
+      const brandAgg = new Map<string, { revenue: number; priorRevenue: number; units: number; products: Set<string>; soldProducts: Map<string, number>; cost: number }>();
+      const soldProductNames = new Set<string>();
+
+      products.forEach(p => {
+        const brand = brandMap.get(p.name.toLowerCase()) || 'Uncategorized';
+        if (!brandAgg.has(brand)) brandAgg.set(brand, { revenue: 0, priorRevenue: 0, units: 0, products: new Set(), soldProducts: new Map(), cost: 0 });
+        const b = brandAgg.get(brand)!;
+        b.revenue += p.revenue;
+        b.units += p.unitsSold;
+        b.products.add(p.name);
+        b.soldProducts.set(p.name, p.revenue);
+        soldProductNames.add(p.name.toLowerCase());
+        const cost = costMap.get(p.name.toLowerCase());
+        if (cost != null) b.cost += cost * p.unitsSold;
+
+        // Prior period
+        const prior = priorProdMap.get(p.name);
+        if (prior) b.priorRevenue += prior.revenue;
+      });
+
+      const brandPerformance: BrandRow[] = Array.from(brandAgg.entries()).map(([brand, d]) => {
+        const trend = d.priorRevenue > 0 ? ((d.revenue - d.priorRevenue) / d.priorRevenue) * 100 : (d.revenue > 0 ? 100 : 0);
+        const margin = d.revenue > 0 && d.cost > 0 ? ((d.revenue - d.cost) / d.revenue) * 100 : 0;
+        // Find top product by revenue
+        let topProduct = '';
+        let topRev = 0;
+        d.soldProducts.forEach((rev, name) => { if (rev > topRev) { topRev = rev; topProduct = name; } });
+        // Find stale catalog products for this brand
+        const staleProducts: string[] = [];
+        catalogProducts.forEach((cp, lowerName) => {
+          if (cp.brand === brand && !soldProductNames.has(lowerName)) {
+            staleProducts.push(lowerName);
+          }
+        });
+
+        return {
+          brand,
+          revenue: d.revenue,
+          priorRevenue: d.priorRevenue,
+          revenueTrend: trend,
+          unitsSold: d.units,
+          productCount: d.products.size,
+          avgPrice: d.units > 0 ? d.revenue / d.units : 0,
+          margin,
+          topProduct,
+          staleProducts,
+        };
+      }).sort((a, b) => b.revenue - a.revenue);
+
+      // ── Dead Stock ──
+      const today = new Date();
+      const deadStock: DeadStockRow[] = [];
+      catalogProducts.forEach((cp, lowerName) => {
+        if (!soldProductNames.has(lowerName) && cp.quantityOnHand > 0) {
+          deadStock.push({
+            name: catalog.find((c: any) => c.name?.toLowerCase() === lowerName)?.name || lowerName,
+            brand: cp.brand,
+            category: cp.category,
+            retailPrice: cp.retailPrice,
+            quantityOnHand: cp.quantityOnHand,
+            lastSoldDate: null,
+            daysStale: span,
+            capitalTiedUp: cp.retailPrice * cp.quantityOnHand,
+          });
+        }
+      });
+      deadStock.sort((a, b) => b.capitalTiedUp - a.capitalTiedUp);
+
+      return { summary, products, redFlags, categories, dailyTrend, staffRetail, marginData, brandPerformance, deadStock };
     },
     enabled: !!dateFrom && !!dateTo,
     staleTime: 5 * 60 * 1000,
@@ -427,5 +533,7 @@ function emptyResult(): RetailAnalyticsResult {
     dailyTrend: [],
     staffRetail: [],
     marginData: null,
+    brandPerformance: [],
+    deadStock: [],
   };
 }
