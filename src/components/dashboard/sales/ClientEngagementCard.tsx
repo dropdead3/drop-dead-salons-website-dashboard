@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, TrendingUp, TrendingDown, ChevronRight, Minus } from 'lucide-react';
+import { Users, TrendingUp, TrendingDown, ChevronRight, ChevronDown, Minus, Info } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Cell, LabelList } from 'recharts';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
@@ -78,22 +78,33 @@ interface ChartItem {
   staffId: string;
 }
 
+/** Detect hashed/unmapped Phorest IDs — no spaces, contains underscores or >12 chars with no vowel clusters */
+function isHashedId(name: string): boolean {
+  if (!name) return true;
+  if (name.includes(' ')) return false; // Real names have spaces
+  if (name.includes('_') || name.includes('-')) return true;
+  if (name.length > 12) return true;
+  return false;
+}
+
 function getChartData(data: ClientEngagementData, view: EngagementView): ChartItem[] {
-  const truncate = (s: string) => s.length > 12 ? s.slice(0, 11) + '…' : s;
+  const applyLabel = (name: string, idx: number) =>
+    isHashedId(name) ? `Stylist ${idx + 1}` : (name.length > 14 ? name.slice(0, 13) + '…' : name);
+
   switch (view) {
     case 'visits':
-      return data.visits.staffBreakdown.slice(0, 10).map(s => ({
-        name: truncate(s.staffName), fullName: s.staffName,
+      return data.visits.staffBreakdown.map((s, i) => ({
+        name: applyLabel(s.staffName, i), fullName: isHashedId(s.staffName) ? `Stylist ${i + 1}` : s.staffName,
         value: s.totalVisits, staffId: s.staffId,
       }));
     case 'retention':
-      return data.retention.staffBreakdown.slice(0, 10).map(s => ({
-        name: truncate(s.staffName), fullName: s.staffName,
+      return data.retention.staffBreakdown.map((s, i) => ({
+        name: applyLabel(s.staffName, i), fullName: isHashedId(s.staffName) ? `Stylist ${i + 1}` : s.staffName,
         value: Math.round(s.returningRate), staffId: s.staffId,
       }));
     case 'rebooking':
-      return data.rebooking.staffBreakdown.slice(0, 10).map(s => ({
-        name: truncate(s.staffName), fullName: s.staffName,
+      return data.rebooking.staffBreakdown.map((s, i) => ({
+        name: applyLabel(s.staffName, i), fullName: isHashedId(s.staffName) ? `Stylist ${i + 1}` : s.staffName,
         value: Math.round(s.rebookingRate), staffId: s.staffId,
       }));
   }
@@ -109,6 +120,8 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
   };
   const [expandedStaff, setExpandedStaff] = useState<string | null>(null);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [showAll, setShowAll] = useState(false);
+  const DEFAULT_BAR_COUNT = 5;
 
   const config = VIEW_CONFIG[view];
 
@@ -178,7 +191,9 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
     );
   }
 
-  const chartData = getChartData(data!, view);
+  const allChartData = getChartData(data!, view);
+  const chartData = showAll ? allChartData : allChartData.slice(0, DEFAULT_BAR_COUNT);
+  const hasMoreBars = allChartData.length > DEFAULT_BAR_COUNT;
   const heroValue = getHeroValue(data!, view);
   const percentChange = getPercentChange(data!, view);
   const chartHeight = Math.max(200, chartData.length * 36 + 20);
@@ -225,9 +240,9 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid md:grid-cols-[200px_1fr] gap-6">
+        <div className="grid md:grid-cols-[220px_1fr] gap-6">
           {/* Hero KPI */}
-          <div className="flex flex-col items-center md:items-start justify-center gap-1 border-b md:border-b-0 md:border-r border-border/40 pb-4 md:pb-0 md:pr-6">
+          <div className="flex flex-col items-center md:items-start justify-center gap-1 min-h-[200px] bg-muted/20 rounded-xl p-6">
             <span className={tokens.stat.xlarge}>{heroValue}</span>
             <span className="text-xs text-muted-foreground uppercase tracking-wider">{config.heroLabel}</span>
             {percentChange !== null && (
@@ -254,15 +269,28 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
               <h3 className={tokens.heading.subsection}>{config.chartTitle}</h3>
             </div>
 
+            {/* Unmapped staff banner */}
+            {data && !data.hasNames && (
+              <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-muted/30 border border-border/30">
+                <Info className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                <p className="text-xs text-muted-foreground">
+                  Staff names unavailable —{' '}
+                  <Link to="/dashboard/admin/settings/staff-mapping" className="text-primary hover:underline">
+                    connect staff profiles in Settings
+                  </Link>
+                </p>
+              </div>
+            )}
+
             <svg width="0" height="0">
               <defs>
                 <linearGradient id="engagementBarGradient" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.45} />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.18} />
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.5} />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.2} />
                 </linearGradient>
                 <linearGradient id="engagementBarGradientActive" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.7} />
-                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.35} />
+                  <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.75} />
+                  <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
                 </linearGradient>
               </defs>
             </svg>
@@ -313,6 +341,17 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
               </BarChart>
             </ResponsiveContainer>
 
+            {/* Show all / Show less toggle */}
+            {hasMoreBars && (
+              <button
+                onClick={() => setShowAll(prev => !prev)}
+                className="flex items-center gap-1 mt-2 text-xs text-primary hover:underline mx-auto"
+              >
+                <ChevronDown className={cn('w-3.5 h-3.5 transition-transform', showAll && 'rotate-180')} />
+                {showAll ? 'Show less' : `Show all ${allChartData.length} stylists`}
+              </button>
+            )}
+
             {/* Hint */}
             <AnimatePresence>
               {!hasInteracted && (
@@ -336,6 +375,7 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
                   data={data!}
                   view={view}
                   staffId={expandedStaff}
+                  displayName={allChartData.find(c => c.staffId === expandedStaff)?.fullName}
                 />
               )}
             </AnimatePresence>
@@ -348,10 +388,11 @@ export function ClientEngagementCard({ dateFrom, dateTo, locationId, filterConte
 
 // ── Drill-down sub-component ──────────────────────────────────
 
-function DrillDown({ data, view, staffId }: {
+function DrillDown({ data, view, staffId, displayName }: {
   data: ClientEngagementData;
   view: EngagementView;
   staffId: string;
+  displayName?: string;
 }) {
   if (view === 'visits') {
     const detail = data.visits.staffBreakdown.find(s => s.staffId === staffId);
@@ -365,7 +406,7 @@ function DrillDown({ data, view, staffId }: {
         className="overflow-hidden"
       >
         <div className="mt-3 p-4 rounded-xl border border-border/50 bg-muted/20 space-y-4">
-          <DrillHeader name={detail.staffName} userId={detail.userId} />
+          <DrillHeader name={displayName || detail.staffName} userId={detail.userId} />
           <div className="grid grid-cols-3 gap-4">
             <DrillStat label="New Clients" value={detail.newClientVisits} />
             <DrillStat label="Returning" value={detail.returningClientVisits} />
@@ -401,7 +442,7 @@ function DrillDown({ data, view, staffId }: {
         className="overflow-hidden"
       >
         <div className="mt-3 p-4 rounded-xl border border-border/50 bg-muted/20 space-y-4">
-          <DrillHeader name={detail.staffName} userId={detail.userId} />
+          <DrillHeader name={displayName || detail.staffName} userId={detail.userId} />
           <div className="grid grid-cols-3 gap-4">
             <DrillStat label="Total Appointments" value={detail.totalVisits} />
             <DrillStat label="New Clients" value={detail.newClientVisits} />
@@ -428,7 +469,7 @@ function DrillDown({ data, view, staffId }: {
       className="overflow-hidden"
     >
       <div className="mt-3 p-4 rounded-xl border border-border/50 bg-muted/20 space-y-4">
-        <DrillHeader name={detail.staffName} userId={detail.userId} />
+        <DrillHeader name={displayName || detail.staffName} userId={detail.userId} />
         <div className="grid grid-cols-3 gap-4">
           <DrillStat label="Total Appointments" value={detail.totalAppointments} />
           <DrillStat label="Rebooked" value={detail.rebookedCount} />

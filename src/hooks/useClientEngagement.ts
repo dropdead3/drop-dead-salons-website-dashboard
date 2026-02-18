@@ -60,6 +60,7 @@ export interface ClientEngagementData {
     prior: number;
     percentChange: number | null;
   };
+  hasNames: boolean;
 }
 
 // ── Paginated fetch ────────────────────────────────────────────
@@ -130,15 +131,17 @@ export function useClientEngagement(
             full_name
           )
         `)
-        .eq('is_active', true);
+
 
       const mappingLookup: Record<string, { userId: string | null; name: string }> = {};
+      let resolvedNameCount = 0;
       mappings?.forEach(m => {
         const profile = m.employee_profiles as any;
         const name = profile?.display_name || profile?.full_name || m.phorest_staff_name || null;
+        if (name) resolvedNameCount++;
         mappingLookup[m.phorest_staff_id] = {
           userId: m.user_id,
-          name: name || (m.phorest_staff_id.length > 10 ? m.phorest_staff_id.slice(0, 8) + '…' : m.phorest_staff_id),
+          name: name || '',
         };
       });
 
@@ -149,9 +152,13 @@ export function useClientEngagement(
       ]);
 
       const resolveName = (staffId: string) => {
-        if (mappingLookup[staffId]) return mappingLookup[staffId].name;
-        return staffId.length > 10 ? staffId.slice(0, 8) + '…' : staffId;
+        const mapped = mappingLookup[staffId];
+        if (mapped?.name) return mapped.name;
+        // Return raw ID — card component will apply Stylist N fallback
+        return staffId;
       };
+
+      const hasNames = resolvedNameCount > 0;
 
       // ── Build staff aggregates ──
       const staffMap: Record<string, {
@@ -295,6 +302,7 @@ export function useClientEngagement(
           prior: avgTicketPrior,
           percentChange: avgTicketPercentChange,
         },
+        hasNames,
       };
     },
   });
