@@ -574,31 +574,30 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
             )}
             <Badge variant="outline">{badgeCount}</Badge>
             <Badge variant="secondary"><BlurredAmount>{formatCurrencyWhole(badgeRevenue)}</BlurredAmount></Badge>
+            <FilterTabsList>
+              <FilterTabsTrigger
+                value="service"
+                data-state={viewMode === 'service' ? 'active' : 'inactive'}
+                onClick={() => setViewMode('service')}
+                className="flex items-center gap-1"
+              >
+                <Scissors className="w-3 h-3" />
+                By Service
+              </FilterTabsTrigger>
+              <FilterTabsTrigger
+                value="category"
+                data-state={viewMode === 'category' ? 'active' : 'inactive'}
+                onClick={() => setViewMode('category')}
+                className="flex items-center gap-1"
+              >
+                <Users className="w-3 h-3" />
+                By Category
+              </FilterTabsTrigger>
+            </FilterTabsList>
           </div>
         </div>
       </CardHeader>
       <CardContent>
-        {/* View toggle: By Service / By Category */}
-        <FilterTabsList className="mb-4">
-          <FilterTabsTrigger
-            value="service"
-            data-state={viewMode === 'service' ? 'active' : 'inactive'}
-            onClick={() => setViewMode('service')}
-            className="flex items-center gap-1"
-          >
-            <Scissors className="w-3 h-3" />
-            By Service
-          </FilterTabsTrigger>
-          <FilterTabsTrigger
-            value="category"
-            data-state={viewMode === 'category' ? 'active' : 'inactive'}
-            onClick={() => setViewMode('category')}
-            className="flex items-center gap-1"
-          >
-            <Users className="w-3 h-3" />
-            By Category
-          </FilterTabsTrigger>
-        </FilterTabsList>
 
         {/* Service view */}
         {viewMode === 'service' && (
