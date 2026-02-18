@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import {
   Search, Plus, BarChart3, Package, Edit2, AlertTriangle, Minus,
-  Loader2, Check, X, MapPin,
+  Loader2, Check, X, MapPin, CheckCircle2, Info, ExternalLink,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -24,6 +24,7 @@ import { useProductCategories } from '@/hooks/useProducts';
 import { useBulkUpdateProducts, useBulkToggleProducts } from '@/hooks/useBulkUpdateProducts';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
+import { useWebsiteRetailSettings } from '@/hooks/useWebsiteSettings';
 
 // ─── Products Tab ───
 function ProductsTab() {
@@ -480,6 +481,11 @@ function InventoryByLocationTab() {
 // ─── Main Export ───
 export function RetailProductsSettingsContent() {
   const navigate = useNavigate();
+  const { data: retailSettings, isLoading: retailLoading } = useWebsiteRetailSettings();
+  const { data: allProducts } = useProducts({});
+  const onlineCount = allProducts?.filter(p => p.available_online).length ?? 0;
+  const totalCount = allProducts?.length ?? 0;
+  const storeEnabled = retailSettings?.enabled === true;
 
   return (
     <div className="space-y-6">
@@ -489,6 +495,38 @@ export function RetailProductsSettingsContent() {
           <BarChart3 className="w-4 h-4" /> View Retail Analytics
         </Button>
       </div>
+
+      {/* Online Store Status Banner */}
+      {!retailLoading && (
+        storeEnabled ? (
+          <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                Online Store is active
+              </span>
+              <span className="text-sm text-emerald-600/80 dark:text-emerald-400/70">
+                — {onlineCount} of {totalCount} products visible online
+              </span>
+            </div>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 shrink-0" onClick={() => navigate('/dashboard/admin/settings?category=website')}>
+              Manage Store Settings <ExternalLink className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
+            <div className="flex items-center gap-2">
+              <Info className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span className="text-sm text-amber-700 dark:text-amber-300">
+                Online Store is not active. Clients cannot browse or purchase products online.
+              </span>
+            </div>
+            <Button variant="ghost" size="sm" className="gap-1.5 text-amber-700 dark:text-amber-300 hover:text-amber-800 shrink-0" onClick={() => navigate('/dashboard/admin/settings?category=website')}>
+              Activate Online Store <ExternalLink className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        )
+      )}
 
       <Tabs defaultValue="products" className="w-full">
         <TabsList>
