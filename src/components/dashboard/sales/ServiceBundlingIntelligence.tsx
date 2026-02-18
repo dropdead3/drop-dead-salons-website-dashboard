@@ -219,9 +219,8 @@ export function ServiceBundlingIntelligence({
                       // Find standalone rate data for sample sizes
                       const standaloneInfo = standaloneRates.find(s => s.category === r.category);
                       return (
-                        <React.Fragment key={r.category}>
+                         <React.Fragment key={r.category}>
                           <TableRow
-                            key={r.category}
                             className={cn('cursor-pointer hover:bg-muted/50', r.liftPct >= 50 && 'bg-emerald-500/5')}
                             onClick={() => setExpandedLift(isExp ? null : r.category)}
                           >
@@ -254,7 +253,7 @@ export function ServiceBundlingIntelligence({
                                   <div className="p-4 bg-muted/20 space-y-3">
                                     {standaloneInfo && (
                                       <p className="text-[11px] text-muted-foreground">
-                                        Based on {standaloneInfo.standaloneCount} solo visits and {standaloneInfo.groupedCount} grouped visits
+                                        Based on <span className="font-medium">{standaloneInfo.standaloneCount}</span> solo visits and <span className="font-medium">{standaloneInfo.groupedCount}</span> grouped visits
                                       </p>
                                     )}
                                     {servicePairs.length > 0 && (
@@ -355,7 +354,7 @@ export function ServiceBundlingIntelligence({
                                 }}
                               >
                                 <span className="font-medium text-[11px]">{pair.count}</span>
-                                <span className={cn('text-[9px]', intensity > 0.5 ? 'opacity-80' : 'text-muted-foreground')}>{Math.round(pair.pct)}%</span>
+                                <span className={cn('text-[9px] font-normal', intensity > 0.5 ? 'opacity-80' : 'text-muted-foreground')}>{Math.round(pair.pct)}%</span>
                               </div>
                             </td>
                           );
