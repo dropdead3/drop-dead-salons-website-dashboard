@@ -7,6 +7,8 @@ interface StylistPersonalGoal {
   user_id: string;
   monthly_target: number;
   weekly_target: number;
+  retail_monthly_target: number;
+  retail_weekly_target: number;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -34,7 +36,13 @@ export function useStylistPersonalGoals(userId?: string) {
   });
 
   const upsertGoals = useMutation({
-    mutationFn: async (goals: { monthlyTarget: number; weeklyTarget: number; notes?: string }) => {
+    mutationFn: async (goals: {
+      monthlyTarget: number;
+      weeklyTarget: number;
+      retailMonthlyTarget?: number;
+      retailWeeklyTarget?: number;
+      notes?: string;
+    }) => {
       if (!userId) throw new Error('User ID required');
       
       const { data, error } = await supabase
@@ -43,9 +51,11 @@ export function useStylistPersonalGoals(userId?: string) {
           user_id: userId,
           monthly_target: goals.monthlyTarget,
           weekly_target: goals.weeklyTarget,
+          retail_monthly_target: goals.retailMonthlyTarget ?? 0,
+          retail_weekly_target: goals.retailWeeklyTarget ?? 0,
           notes: goals.notes || null,
           updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' })
+        } as any, { onConflict: 'user_id' })
         .select()
         .single();
 
@@ -54,6 +64,7 @@ export function useStylistPersonalGoals(userId?: string) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['stylist-personal-goals', userId] });
+      queryClient.invalidateQueries({ queryKey: ['aggregated-retail-goals'] });
       toast({
         title: 'Goals saved',
         description: 'Your personal sales targets have been updated.',
