@@ -13,7 +13,7 @@ import {
   ExternalLink, Check, Loader2, Save, Megaphone,
   Instagram, Facebook, Twitter, Linkedin, Youtube, Eye,
   ArrowLeft, PanelRightClose, PanelRightOpen, LayoutGrid,
-  PanelLeftClose, PanelLeftOpen,
+  PanelLeftClose, PanelLeftOpen, Copy, Link as LinkIcon, QrCode,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { colorThemes, type ColorTheme } from '@/hooks/useColorTheme';
@@ -609,6 +609,7 @@ function BookingTab() {
 // ─── Retail Tab ───
 function RetailTab() {
   const { data: settings, isLoading } = useWebsiteRetailSettings();
+  const { effectiveOrganization } = useOrganizationContext();
   const updateRetail = useUpdateWebsiteRetailSettings();
   const { toast } = useToast();
   const [local, setLocal] = useState<WebsiteRetailSettings>({
@@ -618,6 +619,7 @@ function RetailTab() {
     shipping: false,
     featured_products: true,
   });
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     if (settings) setLocal(settings);
@@ -633,6 +635,17 @@ function RetailTab() {
         onError: () => toast({ variant: 'destructive', title: 'Error', description: 'Failed to save.' }),
       }
     );
+  };
+
+  const storeUrl = effectiveOrganization?.slug
+    ? `${window.location.origin}/org/${effectiveOrganization.slug}/shop`
+    : '';
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(storeUrl);
+    setLinkCopied(true);
+    toast({ title: 'Copied!', description: 'Store link copied to clipboard.' });
+    setTimeout(() => setLinkCopied(false), 2000);
   };
 
   if (isLoading) {
@@ -693,6 +706,39 @@ function RetailTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Shareable Store Link */}
+      {local.enabled && storeUrl && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-display text-lg flex items-center gap-2">
+              <LinkIcon className="w-4 h-4" />
+              STORE LINK
+            </CardTitle>
+            <CardDescription>Share this link on your existing website, social media, or anywhere clients can find you.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Input
+                value={storeUrl}
+                readOnly
+                className="font-mono text-xs bg-muted/50"
+              />
+              <Button variant="outline" size="icon" onClick={handleCopyLink} className="shrink-0">
+                {linkCopied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+              </Button>
+              <Button variant="outline" size="icon" asChild className="shrink-0">
+                <a href={storeUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              This link works independently — clients can browse your products even if you don't use the full Zura website.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Online Store Products Configurator */}
       {local.enabled && (
