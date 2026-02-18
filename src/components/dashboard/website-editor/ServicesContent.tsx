@@ -1,42 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
 import { 
   Scissors, 
-  Plus, 
-  Pencil, 
-  Trash2, 
   Star,
   Sparkles,
   Search,
@@ -44,166 +19,70 @@ import {
   Layers,
   Settings2,
   GripVertical,
-  Check,
-  X,
-  Save,
+  AlertTriangle,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { services as staticServices, type ServiceCategory, type ServiceItem } from '@/data/servicePricing';
 import { StylistLevelsEditor } from '@/components/dashboard/StylistLevelsEditor';
 import { useStylistLevelsSimple } from '@/hooks/useStylistLevels';
-import { useWebsiteServicesData } from '@/hooks/useSectionConfig';
-import { toast } from 'sonner';
-import { triggerPreviewRefresh } from './LivePreviewPanel';
-import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
+import {
+  useNativeServicesForWebsite,
+  useToggleServicePopular,
+  type NativeServiceCategory,
+} from '@/hooks/useNativeServicesForWebsite';
 
 export function ServicesContent() {
   const { data: stylistLevels } = useStylistLevelsSimple();
-  const { data: savedServicesData, isSaving, update: saveServicesData } = useWebsiteServicesData();
-  
-  // Initialize from DB if available, otherwise from static file
-  const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>(staticServices);
-  const [isDirty, setIsDirty] = useState(false);
-  useEditorDirtyState(isDirty);
-
-  useEffect(() => {
-    if (savedServicesData?.categories && savedServicesData.categories.length > 0) {
-      setServiceCategories(savedServicesData.categories);
-    }
-  }, [savedServicesData]);
-
-  const markDirty = () => setIsDirty(true);
-
-  const handleSave = async () => {
-    try {
-      await saveServicesData({ categories: serviceCategories });
-      setIsDirty(false);
-      toast.success('Services saved & published');
-      triggerPreviewRefresh();
-    } catch {
-      toast.error('Failed to save services');
-    }
-  };
+  const { categories, levels, isLoading, hasLevelPrices, error } = useNativeServicesForWebsite();
+  const togglePopular = useToggleServicePopular();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [editingService, setEditingService] = useState<{ categoryIndex: number; itemIndex: number; item: ServiceItem } | null>(null);
-  const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
-  const [editingCategoryName, setEditingCategoryName] = useState('');
-  const [draggedCategoryIndex, setDraggedCategoryIndex] = useState<number | null>(null);
-  const [dragOverCategoryIndex, setDragOverCategoryIndex] = useState<number | null>(null);
-  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryIsAddOn, setNewCategoryIsAddOn] = useState(false);
 
-  const totalServices = serviceCategories.reduce((sum, cat) => sum + cat.items.length, 0);
-  const popularServices = serviceCategories.reduce(
+  const totalServices = categories.reduce((sum, cat) => sum + cat.items.length, 0);
+  const popularServices = categories.reduce(
     (sum, cat) => sum + cat.items.filter(item => item.isPopular).length, 
     0
   );
 
-  const handleTogglePopular = (categoryIndex: number, itemIndex: number) => {
-    markDirty();
-    setServiceCategories(prev => {
-      const updated = [...prev];
-      updated[categoryIndex] = {
-        ...updated[categoryIndex],
-        items: updated[categoryIndex].items.map((item, idx) => 
-          idx === itemIndex ? { ...item, isPopular: !item.isPopular } : item
-        ),
-      };
-      return updated;
-    });
+  const handleTogglePopular = (serviceId: string, currentValue: boolean) => {
+    togglePopular.mutate({ serviceId, isPopular: !currentValue });
   };
 
-  const handleRenameCategory = (index: number) => {
-    if (!editingCategoryName.trim()) return;
-    markDirty();
-    setServiceCategories(prev => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], category: editingCategoryName.trim() };
-      return updated;
-    });
-    setEditingCategoryIndex(null);
-    setEditingCategoryName('');
-  };
-
-  const handleAddCategory = () => {
-    if (!newCategoryName.trim()) return;
-    const newCategory: ServiceCategory = {
-      category: newCategoryName.trim(),
-      description: '',
-      isAddOn: newCategoryIsAddOn,
-      items: [],
-    };
-    markDirty();
-    setServiceCategories(prev => [...prev, newCategory]);
-    setNewCategoryName('');
-    setNewCategoryIsAddOn(false);
-    setIsAddCategoryOpen(false);
-  };
-
-  const handleDeleteCategory = (index: number) => {
-    markDirty();
-    setServiceCategories(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleCategoryDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedCategoryIndex(index);
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleCategoryDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedCategoryIndex !== null && draggedCategoryIndex !== index) {
-      setDragOverCategoryIndex(index);
-    }
-  };
-
-  const handleCategoryDragLeave = () => {
-    setDragOverCategoryIndex(null);
-  };
-
-  const handleCategoryDrop = (e: React.DragEvent, targetIndex: number) => {
-    e.preventDefault();
-    if (draggedCategoryIndex === null || draggedCategoryIndex === targetIndex) {
-      setDraggedCategoryIndex(null);
-      setDragOverCategoryIndex(null);
-      return;
-    }
-
-    markDirty();
-    setServiceCategories(prev => {
-      const updated = [...prev];
-      const [draggedItem] = updated.splice(draggedCategoryIndex, 1);
-      updated.splice(targetIndex, 0, draggedItem);
-      return updated;
-    });
-
-    setDraggedCategoryIndex(null);
-    setDragOverCategoryIndex(null);
-  };
-
-  const handleCategoryDragEnd = () => {
-    setDraggedCategoryIndex(null);
-    setDragOverCategoryIndex(null);
-  };
-
-  const filteredCategories = searchQuery
-    ? serviceCategories.map(category => ({
+  const filteredCategories: NativeServiceCategory[] = searchQuery
+    ? categories.map(category => ({
         ...category,
         items: category.items.filter(item => 
           item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           item.description?.toLowerCase().includes(searchQuery.toLowerCase())
         ),
       })).filter(category => category.items.length > 0)
-    : serviceCategories;
+    : categories;
 
   const getCategoryIcon = (category: string) => {
-    if (category.includes('Cut') || category.includes('Styling')) return Scissors;
-    if (category.includes('Color') || category.includes('Balayage') || category.includes('Highlight')) return Palette;
+    if (category.includes('Cut') || category.includes('Haircut')) return Scissors;
+    if (category.includes('Color') || category.includes('Blonding') || category.includes('Vivid')) return Palette;
     if (category.includes('Extension')) return Layers;
     return Sparkles;
   };
+
+  const formatPrice = (price: number) => `$${Math.round(price)}`;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-muted-foreground">Loading services...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12 text-destructive">
+        Failed to load services. Please try again.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -214,7 +93,10 @@ export function ServicesContent() {
             Services Manager
           </h2>
           <p className="text-muted-foreground text-sm">
-            Manage your salon services and pricing
+            View and manage your salon services. Edit services in{' '}
+            <Link to="/dashboard/settings/services" className="text-primary underline underline-offset-2">
+              Settings → Services
+            </Link>
           </p>
         </div>
         
@@ -227,65 +109,18 @@ export function ServicesContent() {
               </Button>
             }
           />
-          <Button 
-            size="sm" 
-            variant={isDirty ? "default" : "outline"}
-            className="gap-2"
-            onClick={handleSave}
-            disabled={!isDirty || isSaving}
-          >
-            <Save className="w-4 h-4" />
-            {isSaving ? 'Saving...' : 'Save & Publish Changes'}
-          </Button>
-          <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-2">
-                <Plus className="w-4 h-4" />
-                Add Category
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Category</DialogTitle>
-                <DialogDescription>
-                  Create a new service category
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Category Name</Label>
-                  <Input 
-                    placeholder="e.g. Bridal Services"
-                    value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleAddCategory();
-                    }}
-                  />
-                </div>
-                <div className="flex items-center gap-3">
-                  <Switch
-                    id="add-on-toggle"
-                    checked={newCategoryIsAddOn}
-                    onCheckedChange={setNewCategoryIsAddOn}
-                  />
-                  <Label htmlFor="add-on-toggle" className="cursor-pointer">
-                    This is an Add-On category
-                  </Label>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddCategoryOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAddCategory} disabled={!newCategoryName.trim()}>
-                  Add Category
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
       </div>
+
+      {/* Data health warning */}
+      {!hasLevelPrices && (
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+          <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+          <p className="text-sm text-amber-800 dark:text-amber-200">
+            Level-based pricing has not been configured yet. Services are showing base prices only.
+          </p>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -306,7 +141,7 @@ export function ServicesContent() {
               <Layers className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <p className="text-2xl font-medium">{serviceCategories.length}</p>
+              <p className="text-2xl font-medium">{categories.length}</p>
               <p className="text-sm text-muted-foreground">Categories</p>
             </div>
           </CardContent>
@@ -350,152 +185,50 @@ export function ServicesContent() {
 
       {/* Service Categories */}
       <Accordion type="multiple" className="space-y-3">
-        {filteredCategories.map((category, idx) => {
-          const CategoryIcon = getCategoryIcon(category.category);
-          const originalCategoryIndex = serviceCategories.findIndex(c => c.category === category.category);
-          const isEditing = editingCategoryIndex === originalCategoryIndex;
-          const isDragging = draggedCategoryIndex === originalCategoryIndex;
-          const isDragOver = dragOverCategoryIndex === originalCategoryIndex;
+        {filteredCategories.map((category) => {
+          const CategoryIcon = getCategoryIcon(category.categoryName);
           
           return (
             <AccordionItem 
-              key={category.category} 
-              value={category.category}
-              className={cn(
-                "border rounded-lg overflow-hidden transition-all group",
-                isDragging && "opacity-50",
-                isDragOver && "ring-2 ring-primary ring-offset-2"
-              )}
-              draggable={!searchQuery}
-              onDragStart={(e) => handleCategoryDragStart(e, originalCategoryIndex)}
-              onDragOver={(e) => handleCategoryDragOver(e, originalCategoryIndex)}
-              onDragLeave={handleCategoryDragLeave}
-              onDrop={(e) => handleCategoryDrop(e, originalCategoryIndex)}
-              onDragEnd={handleCategoryDragEnd}
+              key={category.id} 
+              value={category.id}
+              className="border rounded-lg overflow-hidden transition-all group"
             >
               <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50 [&>svg]:shrink-0">
                 <div className="flex items-center gap-3 flex-1">
-                  {!searchQuery && (
-                    <div 
-                      className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
-                      onMouseDown={(e) => e.stopPropagation()}
-                    >
-                      <GripVertical className="w-4 h-4" />
-                    </div>
-                  )}
                   <div className="p-2 rounded-lg bg-muted">
                     <CategoryIcon className="w-4 h-4 text-foreground" />
                   </div>
-                  {isEditing ? (
-                    <div 
-                      className="flex items-center gap-2"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Input
-                        value={editingCategoryName}
-                        onChange={(e) => setEditingCategoryName(e.target.value)}
-                        className="h-8 w-48"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleRenameCategory(originalCategoryIndex);
-                          } else if (e.key === 'Escape') {
-                            setEditingCategoryIndex(null);
-                            setEditingCategoryName('');
-                          }
-                        }}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => handleRenameCategory(originalCategoryIndex)}
-                      >
-                        <Check className="w-4 h-4 text-green-600" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => {
-                          setEditingCategoryIndex(null);
-                          setEditingCategoryName('');
-                        }}
-                      >
-                        <X className="w-4 h-4 text-muted-foreground" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="text-left">
-                        <h3 className="font-display font-medium uppercase tracking-wide">{category.category}</h3>
-                        <p className="text-xs text-muted-foreground font-sans font-normal">
-                          {category.items.length} services
-                        </p>
-                      </div>
-                      <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingCategoryIndex(originalCategoryIndex);
-                            setEditingCategoryName(category.category);
-                          }}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Category?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This will permanently delete "{category.category}" and all {category.items.length} services in it.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                onClick={() => handleDeleteCategory(originalCategoryIndex)}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 mr-2">
-                  {category.isAddOn && (
-                    <Badge variant="outline" className="text-xs">Add-On</Badge>
-                  )}
+                  <div className="text-left">
+                    <h3 className="font-display font-medium uppercase tracking-wide">{category.categoryName}</h3>
+                    <p className="text-xs text-muted-foreground font-sans font-normal">
+                      {category.items.length} services
+                    </p>
+                  </div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
+                {/* Level price header */}
+                {hasLevelPrices && levels.length > 0 && (
+                  <div className="flex items-center gap-2 py-2 px-3 mb-2 bg-muted/30 rounded text-xs text-muted-foreground">
+                    <span className="flex-1">Service</span>
+                    {levels.map((level) => (
+                      <span key={level.id} className="w-16 text-center font-medium">
+                        {level.clientLabel}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="space-y-2 pt-2">
-                  {category.items.map((item, itemIdx) => (
+                  {category.items.map((item) => (
                     <div 
-                      key={item.name}
+                      key={item.id}
                       className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
                     >
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
                         <button
-                          onClick={() => handleTogglePopular(originalCategoryIndex, itemIdx)}
-                          className="p-1"
+                          onClick={() => handleTogglePopular(item.id, item.isPopular)}
+                          className="p-1 shrink-0"
                         >
                           <Star 
                             className={cn(
@@ -506,16 +239,28 @@ export function ServicesContent() {
                             )} 
                           />
                         </button>
-                        <div>
-                          <p className="font-medium text-sm">{item.name}</p>
-                          {item.description && (
-                            <p className="text-xs text-muted-foreground">{item.description}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm truncate">{item.name}</p>
+                          {(item.websiteDescription || item.description) && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {item.websiteDescription || item.description}
+                            </p>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {item.prices && Object.keys(item.prices).length > 0 && (
-                          <span className="text-sm font-medium">{Object.values(item.prices)[0]}</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {hasLevelPrices && levels.length > 0 ? (
+                          levels.map((level) => (
+                            <span key={level.id} className="w-16 text-center text-sm font-medium">
+                              {item.levelPrices[level.id] != null
+                                ? formatPrice(item.levelPrices[level.id])
+                                : '—'}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-sm font-medium">
+                            {formatPrice(item.basePrice)}
+                          </span>
                         )}
                       </div>
                     </div>
