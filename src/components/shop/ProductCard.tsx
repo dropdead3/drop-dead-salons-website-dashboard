@@ -1,0 +1,48 @@
+import type { Product } from '@/hooks/useProducts';
+import { Package, AlertTriangle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+
+interface ProductCardProps {
+  product: Product;
+  onClick?: (product: Product) => void;
+}
+
+export function ProductCard({ product, onClick }: ProductCardProps) {
+  const inStock = product.quantity_on_hand != null && product.quantity_on_hand > 0;
+  const lowStock = product.quantity_on_hand != null && product.reorder_level != null && product.quantity_on_hand <= product.reorder_level && product.quantity_on_hand > 0;
+
+  return (
+    <button
+      onClick={() => onClick?.(product)}
+      className="group text-left rounded-2xl border border-border/50 bg-card overflow-hidden transition-all hover:shadow-lg hover:border-border hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-ring"
+    >
+      {/* Image placeholder */}
+      <div className="aspect-square bg-muted/30 flex items-center justify-center">
+        <Package className="w-12 h-12 text-muted-foreground/30 group-hover:text-muted-foreground/50 transition-colors" />
+      </div>
+
+      <div className="p-4 space-y-2">
+        {product.brand && (
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">{product.brand}</p>
+        )}
+        <h3 className="font-medium text-sm leading-tight line-clamp-2 text-foreground">{product.name}</h3>
+
+        <div className="flex items-center justify-between pt-1">
+          <p className="text-base font-semibold text-foreground">
+            ${(product.retail_price ?? 0).toFixed(2)}
+          </p>
+          {!inStock ? (
+            <Badge variant="secondary" className="text-[10px] bg-destructive/10 text-destructive border-0">
+              Out of stock
+            </Badge>
+          ) : lowStock ? (
+            <Badge variant="secondary" className="text-[10px] bg-yellow-500/10 text-yellow-700 border-0">
+              <AlertTriangle className="w-3 h-3 mr-1" />
+              Low stock
+            </Badge>
+          ) : null}
+        </div>
+      </div>
+    </button>
+  );
+}
