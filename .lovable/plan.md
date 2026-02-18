@@ -1,41 +1,31 @@
 
 
-## Beautify Solid Bars with Luxury Glass Gradient + Glass Stroke
+## Enhance Desktop Top Bar: More Glass + Stronger Bottom Stroke
 
 ### What's Changing
 
-The flat black solid bars in "Solid" mode will get the same luxury glass treatment used throughout other charts -- a subtle gray gradient fill (top-to-bottom opacity fade) with a translucent glass-style stroke outline.
+The desktop top bar (visible in your screenshot) will get a more pronounced glassmorphism treatment and a stronger bottom border stroke for visual definition.
 
-### Visual Effect
+### Changes
 
-```text
-Before:  Flat solid black bars, no depth
-After:   Subtle gray gradient (0.85 opacity at top fading to 0.45 at bottom)
-         + 1px translucent white/border stroke for glass edge
-         + slightly increased border radius for polish
-```
+1. **More Glass Effect**: Increase the translucency and add a subtle border/ring to enhance the frosted glass feel
+   - Change `bg-card/70` to `bg-card/50` (more translucent)
+   - Add `border-b border-border/20` on the outer wrapper for a subtle structural edge
+   - Add a soft top-to-bottom gradient overlay for depth
+
+2. **Stronger Bottom Stroke**: Replace the current very faint gradient line (`via-border/30`) with a more visible one
+   - Change `via-border/30` to `via-border/60` for a crisper, more defined bottom edge
+
+3. **Sticky Stays**: The `sticky top-0 z-30` classes are already in place and will remain untouched
 
 ### Technical Details
 
-**Files to modify:**
+**File:** `src/components/dashboard/DashboardLayout.tsx`
 
-| File | Change |
-|------|--------|
-| `src/components/dashboard/sales/WeekAheadForecast.tsx` | Add SVG `<defs>` with a vertical linear gradient for the solid bar, update `<Cell>` fill to reference the gradient, add glass stroke styling |
-| `src/components/dashboard/sales/ForecastingCard.tsx` | Same treatment -- SVG gradient defs + glass stroke on solid bars |
+| Line | Current | New |
+|------|---------|-----|
+| 1052 | `bg-card/70 backdrop-blur-xl` | `bg-card/50 backdrop-blur-2xl` (more blur, more transparent) |
+| 1053 | `via-border/30` | `via-border/60` (stronger bottom stroke) |
+| 1048-1050 | outer wrapper | Add `border-b border-border/15` for glass edge framing |
 
-**Implementation per file:**
-
-1. Inside the `<BarChart>` (via Recharts `<Customized>` or injected before the `<Bar>`), add SVG `<defs>`:
-   - A `linearGradient` id `"solid-glass"` going top-to-bottom with the primary color at ~0.85 opacity fading to ~0.45
-   - A secondary lighter gradient for the glass sheen highlight
-
-2. Update each `<Cell>` in solid mode:
-   - `fill` changes from `"hsl(var(--primary))"` to `"url(#solid-glass)"`
-   - `stroke` changes to a subtle white/border translucent stroke: `"hsl(var(--foreground) / 0.12)"` (glass edge)
-   - `strokeWidth` set to `1` for the glass outline effect
-   - Selected state keeps the stronger foreground stroke
-
-3. Bar `radius` stays `[4, 4, 0, 0]` (already correct for the rounded-top, flat-bottom pattern)
-
-This matches the existing luxury glass language: translucent gradient fills (0.85 to 0.45 opacity), subtle 1px glass outline strokes, and consistent with the ServicePopularityChart and other chart patterns already in the codebase.
+This keeps the existing sticky behavior intact while giving the bar a more refined, luxury glass appearance consistent with the sidebar's `bg-card/90 backdrop-blur-xl` treatment.
