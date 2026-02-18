@@ -233,6 +233,13 @@ export default function AnalyticsHub() {
     setSearchParams({ tab: activeTab, subtab: value });
   };
 
+  // Auto-switch to 30d when entering services subtab (if still on default 'today')
+  useEffect(() => {
+    if (subTab === 'services' && dateRange === 'today') {
+      setDateRange('30d');
+    }
+  }, [subTab]);
+
   return (
     <DashboardLayout>
       <div className="w-full max-w-none p-4 md:p-6 lg:p-8 space-y-6 overflow-x-hidden">
