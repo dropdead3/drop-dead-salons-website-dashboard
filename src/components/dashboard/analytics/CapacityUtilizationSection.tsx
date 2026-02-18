@@ -20,6 +20,7 @@ import {
   PieChart,
   Pie,
   Cell,
+  Customized,
 } from 'recharts';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import type { CapacityData, DayCapacity } from '@/hooks/useHistoricalCapacityUtilization';
@@ -332,7 +333,7 @@ export function CapacityUtilizationSection({
                       return value;
                     } : undefined}
                     tickLine={false}
-                    axisLine={false}
+                    axisLine={{ stroke: 'hsl(var(--foreground) / 0.15)', strokeWidth: 1 }}
                     interval={0}
                     height={dateRange === '7days' ? 40 : 20}
                   />
@@ -383,6 +384,72 @@ export function CapacityUtilizationSection({
                       />
                     ))}
                   </Bar>
+                  {/* Moon icons for closed days */}
+                  <Customized component={(props: any) => {
+                    const { xAxisMap, yAxisMap } = props;
+                    if (!xAxisMap?.[0] || !yAxisMap?.[0]) return null;
+                    const xAxis = xAxisMap[0];
+                    const yAxis = yAxisMap[0];
+                    const bottomY = yAxis.y + yAxis.height;
+                    return (
+                      <g>
+                        {chartData.map((entry, index) => {
+                          if (!entry.isClosed) return null;
+                          const bandWidth = xAxis.width / chartData.length;
+                          const cx = xAxis.x + bandWidth * index + bandWidth / 2;
+                          const cy = bottomY - 40;
+                          return (
+                            <g
+                              key={`moon-${index}`}
+                              transform={`translate(${cx - 8}, ${cy - 8}) scale(0.67)`}
+                            >
+                              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" 
+                                    fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                                    className="stroke-muted-foreground" style={{ opacity: 0.5 }} />
+                            </g>
+                          );
+                        })}
+                      </g>
+                    );
+                  }} />
+                  {/* Average utilization reference line */}
+                  {(() => {
+                    const openDays = dailyCapacity.filter(d => !d.isClosed);
+                    if (openDays.length === 0) return null;
+                    const avgUtil = Math.round(openDays.reduce((sum, d) => sum + d.utilizationPercent, 0) / openDays.length);
+                    if (avgUtil <= 0) return null;
+                    return (
+                      <Customized component={(props: any) => {
+                        const { yAxisMap, xAxisMap } = props;
+                        if (!yAxisMap?.[0]?.scale || !xAxisMap?.[0]) return null;
+                        const yPos = yAxisMap[0].scale(avgUtil);
+                        const chartLeft = xAxisMap[0].x;
+                        const chartRight = chartLeft + xAxisMap[0].width;
+                        if (typeof yPos !== 'number' || isNaN(yPos)) return null;
+                        return (
+                          <g>
+                            <line x1={chartLeft} y1={yPos} x2={chartRight} y2={yPos} stroke="rgb(202 138 4)" strokeOpacity={0.5} strokeDasharray="4 4" strokeWidth={1} />
+                            <foreignObject x={chartLeft} y={yPos - 12} width={120} height={24} style={{ overflow: 'visible' }}>
+                              <div style={{
+                                fontSize: 11, fontWeight: 500,
+                                color: 'rgb(254 240 138)',
+                                backdropFilter: 'blur(6px)',
+                                WebkitBackdropFilter: 'blur(6px)',
+                                background: 'linear-gradient(to right, rgb(133 77 14 / 0.5), rgb(180 83 9 / 0.3), rgb(133 77 14 / 0.5))',
+                                border: '1px solid rgb(202 138 4 / 0.6)',
+                                borderRadius: 9999,
+                                padding: '2px 8px',
+                                whiteSpace: 'nowrap' as const,
+                                width: 'fit-content',
+                              }}>
+                                Avg: {avgUtil}%
+                              </div>
+                            </foreignObject>
+                          </g>
+                        );
+                      }} />
+                    );
+                  })()}
                 </BarChart>
               </ResponsiveContainer>
             </div>
