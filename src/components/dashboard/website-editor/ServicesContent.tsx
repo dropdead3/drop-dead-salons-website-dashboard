@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,15 +46,41 @@ import {
   GripVertical,
   Check,
   X,
+  Save,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { services as initialServices, type ServiceCategory, type ServiceItem } from '@/data/servicePricing';
+import { services as staticServices, type ServiceCategory, type ServiceItem } from '@/data/servicePricing';
 import { StylistLevelsEditor } from '@/components/dashboard/StylistLevelsEditor';
 import { useStylistLevelsSimple } from '@/hooks/useStylistLevels';
+import { useWebsiteServicesData } from '@/hooks/useSectionConfig';
+import { toast } from 'sonner';
 
 export function ServicesContent() {
   const { data: stylistLevels } = useStylistLevelsSimple();
-  const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>(initialServices);
+  const { data: savedServicesData, isSaving, update: saveServicesData } = useWebsiteServicesData();
+  
+  // Initialize from DB if available, otherwise from static file
+  const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>(staticServices);
+  const [isDirty, setIsDirty] = useState(false);
+
+  useEffect(() => {
+    if (savedServicesData?.categories && savedServicesData.categories.length > 0) {
+      setServiceCategories(savedServicesData.categories);
+    }
+  }, [savedServicesData]);
+
+  const markDirty = () => setIsDirty(true);
+
+  const handleSave = async () => {
+    try {
+      await saveServicesData({ categories: serviceCategories });
+      setIsDirty(false);
+      toast.success('Services saved & published');
+    } catch {
+      toast.error('Failed to save services');
+    }
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
   const [editingService, setEditingService] = useState<{ categoryIndex: number; itemIndex: number; item: ServiceItem } | null>(null);
   const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
@@ -72,6 +98,7 @@ export function ServicesContent() {
   );
 
   const handleTogglePopular = (categoryIndex: number, itemIndex: number) => {
+    markDirty();
     setServiceCategories(prev => {
       const updated = [...prev];
       updated[categoryIndex] = {
@@ -86,6 +113,7 @@ export function ServicesContent() {
 
   const handleRenameCategory = (index: number) => {
     if (!editingCategoryName.trim()) return;
+    markDirty();
     setServiceCategories(prev => {
       const updated = [...prev];
       updated[index] = { ...updated[index], category: editingCategoryName.trim() };
@@ -103,6 +131,7 @@ export function ServicesContent() {
       isAddOn: newCategoryIsAddOn,
       items: [],
     };
+    markDirty();
     setServiceCategories(prev => [...prev, newCategory]);
     setNewCategoryName('');
     setNewCategoryIsAddOn(false);
@@ -110,6 +139,7 @@ export function ServicesContent() {
   };
 
   const handleDeleteCategory = (index: number) => {
+    markDirty();
     setServiceCategories(prev => prev.filter((_, i) => i !== index));
   };
 
@@ -137,6 +167,7 @@ export function ServicesContent() {
       return;
     }
 
+    markDirty();
     setServiceCategories(prev => {
       const updated = [...prev];
       const [draggedItem] = updated.splice(draggedCategoryIndex, 1);
@@ -192,6 +223,16 @@ export function ServicesContent() {
               </Button>
             }
           />
+          <Button 
+            size="sm" 
+            variant={isDirty ? "default" : "outline"}
+            className="gap-2"
+            onClick={handleSave}
+            disabled={!isDirty || isSaving}
+          >
+            <Save className="w-4 h-4" />
+            {isSaving ? 'Saving...' : 'Save & Publish Changes'}
+          </Button>
           <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
             <DialogTrigger asChild>
               <Button size="sm" className="gap-2">
