@@ -7,8 +7,6 @@ import { Loader2, Save, Settings2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useHeroConfig, type HeroConfig, DEFAULT_HERO } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
-import { SectionPreviewWrapper } from './SectionPreviewWrapper';
-import { HeroSectionPreview } from './previews/HeroSectionPreview';
 import { SliderInput } from './inputs/SliderInput';
 import { UrlInput } from './inputs/UrlInput';
 import { ToggleInput } from './inputs/ToggleInput';
@@ -223,12 +221,6 @@ export function HeroEditor() {
         </CardContent>
       </Card>
 
-      {/* Preview Panel */}
-      <div className="hidden xl:block">
-        <SectionPreviewWrapper>
-          <HeroSectionPreview config={debouncedConfig} />
-        </SectionPreviewWrapper>
-      </div>
     </div>
   );
 }

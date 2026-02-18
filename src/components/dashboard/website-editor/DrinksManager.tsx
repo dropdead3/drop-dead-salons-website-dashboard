@@ -10,8 +10,6 @@ import { useDrinkMenuConfig, type DrinkMenuConfig, type Drink, DEFAULT_DRINK_MEN
 import { SliderInput } from './inputs/SliderInput';
 import { supabase } from '@/integrations/supabase/client';
 import { useDebounce } from '@/hooks/use-debounce';
-import { SectionPreviewWrapper } from './SectionPreviewWrapper';
-import { DrinksPreview } from './previews/DrinksPreview';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 import {
   DndContext,
@@ -390,12 +388,6 @@ export function DrinksManager() {
       </Card>
       </div>
 
-      {/* Live Preview */}
-      <div className="hidden xl:block">
-        <SectionPreviewWrapper>
-          <DrinksPreview config={debouncedConfig} />
-        </SectionPreviewWrapper>
-      </div>
     </div>
   );
 }

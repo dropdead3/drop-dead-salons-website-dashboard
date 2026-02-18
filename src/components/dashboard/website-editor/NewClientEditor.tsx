@@ -9,8 +9,6 @@ import { toast } from 'sonner';
 import { useNewClientConfig, type NewClientConfig, DEFAULT_NEW_CLIENT } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
 import { BenefitsListInput } from './BenefitsListInput';
-import { SectionPreviewWrapper } from './SectionPreviewWrapper';
-import { NewClientPreview } from './previews/NewClientPreview';
 import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 
@@ -109,12 +107,6 @@ export function NewClientEditor() {
         </CardContent>
       </Card>
 
-      {/* Preview Panel */}
-      <div className="hidden xl:block">
-        <SectionPreviewWrapper>
-          <NewClientPreview config={debouncedConfig} />
-        </SectionPreviewWrapper>
-      </div>
     </div>
   );
 }

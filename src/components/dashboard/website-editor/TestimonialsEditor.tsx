@@ -7,8 +7,6 @@ import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTestimonialsConfig, type TestimonialsConfig, DEFAULT_TESTIMONIALS } from '@/hooks/useSectionConfig';
 import { useDebounce } from '@/hooks/use-debounce';
-import { SectionPreviewWrapper } from './SectionPreviewWrapper';
-import { TestimonialsPreview } from './previews/TestimonialsPreview';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 
 export function TestimonialsEditor() {
@@ -104,12 +102,6 @@ export function TestimonialsEditor() {
         </CardContent>
       </Card>
 
-      {/* Live Preview */}
-      <div className="hidden xl:block">
-        <SectionPreviewWrapper>
-          <TestimonialsPreview config={debouncedConfig} />
-        </SectionPreviewWrapper>
-      </div>
     </div>
   );
 }

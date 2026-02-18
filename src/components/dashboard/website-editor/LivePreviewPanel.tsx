@@ -1,14 +1,13 @@
 import { useState, useEffect, useRef, useCallback, memo } from 'react';
-import { Monitor, Smartphone, RefreshCw, X } from 'lucide-react';
+import { Monitor, Smartphone, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface LivePreviewPanelProps {
-  onClose: () => void;
   activeSectionId?: string;
 }
 
-export const LivePreviewPanel = memo(function LivePreviewPanel({ onClose, activeSectionId }: LivePreviewPanelProps) {
+export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId }: LivePreviewPanelProps) {
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -121,15 +120,6 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ onClose, active
             <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
           </Button>
 
-          {/* Close Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="h-7 w-7 p-0"
-          >
-            <X className="h-4 w-4" />
-          </Button>
         </div>
       </div>
 

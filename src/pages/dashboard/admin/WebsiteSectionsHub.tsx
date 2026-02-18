@@ -6,7 +6,6 @@ import {
   ExternalLink,
   PanelLeftClose,
   PanelLeftOpen,
-  Eye
 } from 'lucide-react';
 import { HeroEditor } from '@/components/dashboard/website-editor/HeroEditor';
 import { BrandStatementEditor } from '@/components/dashboard/website-editor/BrandStatementEditor';
@@ -134,7 +133,7 @@ export default function WebsiteSectionsHub() {
   const [searchParams, setSearchParams] = useSearchParams();
   const defaultTab = searchParams.get('tab') || 'hero';
   const [activeTab, setActiveTab] = useState(defaultTab);
-  const [showPreview, setShowPreview] = useState(false);
+  // Preview is always visible on desktop
   const [showSidebar, setShowSidebar] = useState(true);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
@@ -143,7 +142,7 @@ export default function WebsiteSectionsHub() {
 
   // Memoize the activeSectionId so it doesn't cause unnecessary re-renders
   const activeSectionId = useMemo(() => TAB_TO_SECTION[activeTab], [activeTab]);
-  const handleClosePreview = useCallback(() => setShowPreview(false), []);
+  // No close handler needed - preview is always visible
 
   // Expose a global way for editors to register dirty state
   useEffect(() => {
@@ -243,14 +242,6 @@ export default function WebsiteSectionsHub() {
                     </div>
                   </div>
                     <div className="flex items-center gap-2">
-                    <Button
-                      variant={showPreview ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setShowPreview(!showPreview)}
-                    >
-                      <Eye className="h-4 w-4 mr-2" />
-                      {showPreview ? 'Hide Preview' : 'Preview'}
-                    </Button>
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -276,12 +267,12 @@ export default function WebsiteSectionsHub() {
             </div>
           </ResizablePanel>
 
-          {/* Live Preview Panel */}
-          {showPreview && !isMobile && (
+          {/* Live Preview Panel - Always visible on desktop */}
+          {!isMobile && (
             <>
               <ResizableHandle withHandle />
               <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
-                <LivePreviewPanel onClose={handleClosePreview} activeSectionId={activeSectionId} />
+                <LivePreviewPanel activeSectionId={activeSectionId} />
               </ResizablePanel>
             </>
           )}

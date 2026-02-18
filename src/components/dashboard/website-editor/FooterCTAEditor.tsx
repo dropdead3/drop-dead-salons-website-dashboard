@@ -10,8 +10,6 @@ import { useFooterCTAConfig, type FooterCTAConfig, DEFAULT_FOOTER_CTA } from '@/
 import { UrlInput } from './inputs/UrlInput';
 import { ToggleInput } from './inputs/ToggleInput';
 import { useDebounce } from '@/hooks/use-debounce';
-import { SectionPreviewWrapper } from './SectionPreviewWrapper';
-import { FooterCTAPreview } from './previews/FooterCTAPreview';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 
 export function FooterCTAEditor() {
@@ -139,12 +137,6 @@ export function FooterCTAEditor() {
         </CardContent>
       </Card>
 
-      {/* Live Preview */}
-      <div className="hidden xl:block">
-        <SectionPreviewWrapper>
-          <FooterCTAPreview config={debouncedConfig} />
-        </SectionPreviewWrapper>
-      </div>
     </div>
   );
 }
