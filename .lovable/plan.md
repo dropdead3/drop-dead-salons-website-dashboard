@@ -1,33 +1,51 @@
 
 
-# Fix Settings Category Card Heights for Uniform Grid
+# Merge Handbooks into Onboarding Settings
 
-## Problem
+## What Changes
 
-The Kiosks card has a longer description ("Check-in, self-service booking & device configuration") that wraps to two lines, making it taller than sibling cards whose descriptions fit on one line. This breaks the visual cohesion of the settings grid.
+The standalone "Handbooks" settings card gets absorbed into the "Onboarding" settings card. Handbooks are part of the onboarding process, so they belong together. After this change, clicking "Onboarding" in settings gives you three tabs instead of two: **Tasks**, **Requests & Docs**, and **Handbooks**.
 
-## Solution
+The separate "Handbooks" card disappears from the settings grid entirely.
 
-Add a minimum height to the `CardDescription` area within the `SettingsCategoryCard` component so all cards reserve space for two lines of description text. This ensures uniform card heights regardless of description length.
+## Changes
 
-## Change
+### 1. Update OnboardingConfigurator -- add Handbooks tab
 
-**File: `src/pages/dashboard/admin/Settings.tsx`** (SettingsCategoryCard component, ~line 251-254)
+**File: `src/components/dashboard/settings/OnboardingConfigurator.tsx`**
 
-Update the `CardContent` section to add a `min-h-[2.5rem]` (40px, enough for two lines of `text-sm`) on the `CardDescription`:
+- Import `HandbooksContent`
+- Change the inner `Tabs` from a 2-column grid to a 3-column grid
+- Add a third tab trigger: "Handbooks" with a `BookOpen` icon
+- Add a `TabsContent` for "handbooks" that renders `<HandbooksContent />`
+- Update the card description to: "Tasks, role configuration & team handbooks"
 
-```tsx
-// Before:
-<CardContent>
-  <CardTitle className="font-display text-lg mb-1">{category.label}</CardTitle>
-  <CardDescription>{category.description}</CardDescription>
-</CardContent>
+### 2. Remove handbooks category from Settings.tsx
 
-// After:
-<CardContent>
-  <CardTitle className="font-display text-lg mb-1">{category.label}</CardTitle>
-  <CardDescription className="min-h-[2.5rem]">{category.description}</CardDescription>
-</CardContent>
-```
+**File: `src/pages/dashboard/admin/Settings.tsx`**
 
-This is a single-line change that forces all description areas to the same minimum height (two lines of small text), so shorter descriptions get bottom padding while longer ones display naturally. No layout, grid, or other component changes needed.
+- Remove `handbooks` from the `SettingsCategory` type union
+- Remove the `handbooks` entry from the categories object (~lines 782-787)
+- Remove the `{activeCategory === 'handbooks' && <HandbooksContent />}` render block (~line 1397)
+- Remove the `HandbooksContent` import (line 80) since it moves to OnboardingConfigurator
+
+### 3. Remove handbooks from settings layout defaults
+
+**File: `src/hooks/useSettingsLayout.ts`**
+
+- Remove `'handbooks'` from `DEFAULT_ICON_COLORS`
+- Remove `'handbooks'` from the `operations` group in `SECTION_GROUPS`
+- Remove `'handbooks'` from `DEFAULT_ORDER` (derived automatically)
+
+### 4. Update Onboarding card description
+
+**File: `src/pages/dashboard/admin/Settings.tsx`**
+
+- Change the onboarding category description from "Tasks & role configuration" to "Tasks, handbooks & role configuration"
+
+## What Stays the Same
+
+- `HandbooksContent` component itself is unchanged -- it just renders inside a different parent
+- The `handbooks` database table, RLS policies, and all handbook CRUD logic remain untouched
+- The onboarding card icon (Rocket) stays the same
+- All other settings categories are unaffected
