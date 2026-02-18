@@ -392,20 +392,6 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             }}
           />
 
-          {/* Client Engagement Card (Visits / Retention / Rebooking) */}
-          <div ref={engagementRef}>
-            <PinnableCard elementKey="client_engagement_staff" elementName="Client Engagement" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
-              <ClientEngagementCard
-                dateFrom={filters.dateFrom}
-                dateTo={filters.dateTo}
-                locationId={locationFilter}
-                filterContext={filterContext}
-                activeView={engagementView}
-                onViewChange={setEngagementView}
-              />
-            </PinnableCard>
-          </div>
-
           {/* Stylist Leaderboard */}
           <PinnableCard elementKey="staff_leaderboard" elementName="Staff Performance" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <Card className={tokens.card.wrapper}>
@@ -448,6 +434,20 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
               </CardContent>
             </Card>
           </PinnableCard>
+
+          {/* Client Engagement Card (Visits / Retention / Rebooking) */}
+          <div ref={engagementRef}>
+            <PinnableCard elementKey="client_engagement_staff" elementName="Client Engagement" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
+              <ClientEngagementCard
+                dateFrom={filters.dateFrom}
+                dateTo={filters.dateTo}
+                locationId={locationFilter}
+                filterContext={filterContext}
+                activeView={engagementView}
+                onViewChange={setEngagementView}
+              />
+            </PinnableCard>
+          </div>
 
           <div className="grid lg:grid-cols-2 gap-6">
             <PinnableCard elementKey="peak_hours_heatmap" elementName="Peak Hours Heatmap" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
