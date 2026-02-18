@@ -58,7 +58,6 @@ import {
   Globe,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { StylistLevelsEditor } from '@/components/dashboard/StylistLevelsEditor';
 import { useStylistLevelsSimple } from '@/hooks/useStylistLevels';
 import { ServiceCommunicationFlowEditor } from '@/components/dashboard/ServiceCommunicationFlowEditor';
 import { useAllServiceCommunicationFlows } from '@/hooks/useServiceCommunicationFlows';
@@ -112,9 +111,6 @@ export function ServicesContent() {
   const [editingCategoryName, setEditingCategoryName] = useState('');
   const [draggedCategoryIndex, setDraggedCategoryIndex] = useState<number | null>(null);
   const [dragOverCategoryIndex, setDragOverCategoryIndex] = useState<number | null>(null);
-  const [isAddCategoryOpen, setIsAddCategoryOpen] = useState(false);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryIsAddOn, setNewCategoryIsAddOn] = useState(false);
   const [configureFlowsServiceName, setConfigureFlowsServiceName] = useState<string | null>(null);
 
   // Price helpers
@@ -180,28 +176,6 @@ export function ServicesContent() {
     setEditingCategoryName('');
   };
 
-  const handleAddCategory = () => {
-    if (!newCategoryName.trim()) return;
-    const newCategory: LocalCategory = {
-      id: crypto.randomUUID(),
-      categoryName: newCategoryName.trim(),
-      category: newCategoryName.trim(),
-      description: '',
-      colorHex: '#6B7280',
-      textColorHex: '#FFFFFF',
-      displayOrder: serviceCategories.length,
-      isAddOn: newCategoryIsAddOn,
-      items: [],
-    };
-    setServiceCategories(prev => [...prev, newCategory]);
-    setNewCategoryName('');
-    setNewCategoryIsAddOn(false);
-    setIsAddCategoryOpen(false);
-  };
-
-  const handleDeleteCategory = (index: number) => {
-    setServiceCategories(prev => prev.filter((_, i) => i !== index));
-  };
 
   const handleCategoryDragStart = (e: React.DragEvent, index: number) => {
     setDraggedCategoryIndex(index);
@@ -277,7 +251,7 @@ export function ServicesContent() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
+      <div className="space-y-4">
         <div>
           <h2 className="text-xl font-display flex items-center gap-2">
             <Scissors className="w-5 h-5" />
@@ -287,63 +261,17 @@ export function ServicesContent() {
             Manage services, pricing, and website display settings
           </p>
         </div>
-        
-        <div className="flex items-center gap-2">
-          <StylistLevelsEditor
-            trigger={
-              <Button variant="outline" size="sm" className="gap-2">
-                <Settings2 className="w-4 h-4" />
-                Manage Levels
-              </Button>
-            }
-          />
-          <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-2">
-                <Plus className="w-4 h-4" />
-                Add Category
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Category</DialogTitle>
-                <DialogDescription>
-                  Create a new service category
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Category Name</Label>
-                  <Input 
-                    placeholder="e.g. Bridal Services"
-                    value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleAddCategory();
-                    }}
-                  />
-                </div>
-                <div className="flex items-center gap-3">
-                  <Switch
-                    id="add-on-toggle"
-                    checked={newCategoryIsAddOn}
-                    onCheckedChange={setNewCategoryIsAddOn}
-                  />
-                  <Label htmlFor="add-on-toggle" className="cursor-pointer">
-                    This is an Add-On category
-                  </Label>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddCategoryOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleAddCategory} disabled={!newCategoryName.trim()}>
-                  Add Category
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+
+        {/* Info notice */}
+        <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/60 border border-border">
+          <Settings2 className="w-5 h-5 text-muted-foreground shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            Services and categories are managed in{' '}
+            <Link to="/dashboard/admin/services" className="underline font-medium text-foreground hover:text-primary">
+              Services Settings
+            </Link>
+            . Use this editor to control website display, descriptions, and popular badges.
+          </p>
         </div>
       </div>
 
@@ -502,54 +430,6 @@ export function ServicesContent() {
                         <p className="text-xs text-muted-foreground font-sans font-normal">
                           {category.items.length} services
                         </p>
-                      </div>
-                      <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingCategoryIndex(originalCategoryIndex);
-                            setEditingCategoryName(category.category);
-                          }}
-                        >
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Delete Category</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                Are you sure you want to delete "{category.category}"? 
-                                {category.items.length > 0 && (
-                                  <span className="block mt-2 text-destructive font-medium">
-                                    This will also delete {category.items.length} service{category.items.length > 1 ? 's' : ''} in this category.
-                                  </span>
-                                )}
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                onClick={() => handleDeleteCategory(originalCategoryIndex)}
-                              >
-                                Delete
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
                       </div>
                     </>
                   )}
