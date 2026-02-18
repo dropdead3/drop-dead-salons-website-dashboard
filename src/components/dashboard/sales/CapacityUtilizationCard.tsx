@@ -334,7 +334,7 @@ export function CapacityUtilizationCard() {
 
         {/* Daily Utilization Chart */}
         {showChart && chartData.length > 0 && (
-          <div className="h-[160px]">
+          <div className="h-[220px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 20, right: 5, bottom: 35, left: 5 }}>
                 <XAxis 
