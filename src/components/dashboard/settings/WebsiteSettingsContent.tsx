@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -28,6 +29,7 @@ import {
   type WebsiteThemeSettings,
 } from '@/hooks/useWebsiteSettings';
 import { cn } from '@/lib/utils';
+import { DomainConfigCard } from './DomainConfigCard';
 import {
   Select,
   SelectContent,
@@ -38,8 +40,10 @@ import {
 
 // ─── General Tab ───
 function GeneralTab() {
+  const { effectiveOrganization } = useOrganizationContext();
   return (
     <div className="space-y-6">
+      <DomainConfigCard organizationId={effectiveOrganization?.id} />
       <Card>
         <CardHeader>
           <CardTitle className="font-display text-lg">ANNOUNCEMENT BANNER</CardTitle>
