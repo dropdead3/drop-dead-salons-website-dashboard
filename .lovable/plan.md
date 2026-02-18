@@ -1,62 +1,49 @@
 
 
-## Client Engagement Card Improvements
+## Fix KPI Tile Typography and Establish Token Rule
 
-### Problem Summary
+### Problem
+The KPI summary tiles use `font-sans` (Aeonik Pro) for labels like "TOTAL VISITS", "RETURNING %". Per design rules, uppercase metric labels in dashboard tiles should use Termina (`font-display`) for consistency with the rest of the analytics system.
 
-The card has three categories of issues visible in the screenshot:
+### Changes
 
-1. **Staff names are unreadable hashes** -- every bar shows truncated Phorest IDs like `sc-q41_Z...` because the staff mapping table has no entries for these staff IDs. This is a data gap, not a code bug, but the card should handle it more gracefully.
-2. **Layout imbalance** -- the Hero KPI sits at the very bottom-left, disconnected from the chart. The two-panel grid doesn't properly center the hero.
-3. **Too many bars with no differentiation** -- 10 identical gray gradient bars with cryptic labels creates visual noise instead of insight.
+#### 1. Add KPI tile tokens to the design token system
 
-### Proposed Changes
+**File:** `src/lib/design-tokens.ts`
 
-#### 1. Graceful staff name fallback with numbered labels
+Add a new `kpi` token group:
+- `kpi.tile` -- tile container classes (rounded-xl, border, bg-card, padding)
+- `kpi.label` -- Termina, 11px, uppercase, tracked, muted (replaces raw classes on line 100 of StaffKPISummary)
+- `kpi.value` -- font-display text-xl font-medium (already used but now tokenized)
+- `kpi.change` -- 10px font-medium for trend badges
 
-Since staff mapping data doesn't exist for these IDs, showing `sc-q41_Z...` is worse than showing nothing. Replace the truncated hash fallback with clean sequential labels: "Stylist 1", "Stylist 2", etc., sorted by the active metric. Add a subtle banner at the top of the chart: "Staff names unavailable -- connect staff profiles in Settings" with a link to the staff mapping page. When real names are available, they display normally.
+Also add `kpi-label`, `kpi-value` to the `getTokenFor` helper.
 
-**File:** `src/hooks/useClientEngagement.ts`
-- Remove the `is_active = true` filter on the mapping query (to catch all mappings, not just active ones)
-- Add a `hasNames` boolean to the return object so the card knows whether to show the unmapped banner
+#### 2. Apply tokens to StaffKPISummary
 
-**File:** `src/components/dashboard/sales/ClientEngagementCard.tsx`
-- In `getChartData`, if the name looks like a hash (no spaces, contains underscores or is longer than 12 chars with no vowel pattern), replace with "Stylist N"
-- Show a small info banner when `data.hasNames === false`
+**File:** `src/components/dashboard/sales/StaffKPISummary.tsx`
 
-#### 2. Fix Hero KPI vertical centering and visual weight
+- Replace the label `span` classes (line 100) with `tokens.kpi.label`
+- Replace the value `span` classes (line 105) with `tokens.kpi.value`
+- Replace the tile container classes (line 94) with `tokens.kpi.tile`
+- Replace the skeleton tile classes (line 39) with `tokens.kpi.tile`
 
-The hero panel needs proper vertical centering and slightly more visual presence so it reads as the primary anchor.
+#### 3. Update design rules documentation
 
-**File:** `src/components/dashboard/sales/ClientEngagementCard.tsx`
-- Change the left panel from `flex flex-col items-center md:items-start justify-center` to include `min-h-[200px]` to ensure it stays vertically centered relative to the chart regardless of chart height
-- Add a subtle `bg-muted/20 rounded-xl p-6` background container to the hero panel so it reads as a distinct visual block (card-within-card pattern per the capacity utilization standard)
+**File:** `src/lib/design-rules.ts`
 
-#### 3. Limit visible bars and add "Show more" expansion
+Add a note in `EMPHASIS_ALTERNATIVES` that KPI tile labels must use `tokens.kpi.label` (Termina, not Aeonik).
 
-Showing 10 bars of unreadable names creates clutter. Cap the default view to 5 bars (the top performers) and add a "Show all N stylists" toggle that expands to reveal the rest.
+### Technical Detail
 
-**File:** `src/components/dashboard/sales/ClientEngagementCard.tsx`
-- Default to showing top 5 bars
-- Add a subtle text link below the chart: "Show all 10 stylists" / "Show less"
-- Animate the expansion with framer-motion
+The key fix is changing the label from:
+```
+text-[11px] font-medium text-muted-foreground uppercase tracking-wider
+```
+to:
+```
+font-display text-[11px] font-medium text-muted-foreground uppercase tracking-wider
+```
 
-#### 4. Add glass gradient stroke and active-bar visual polish
-
-The bars currently all look identical (same gray gradient). Add the standard 1px glass stroke and a slightly warmer gradient so bars feel intentional, not like a gray blob.
-
-**File:** `src/components/dashboard/sales/ClientEngagementCard.tsx`
-- Adjust the SVG gradient to use the warm glass pattern (primary color at 0.5 to 0.2 opacity) matching the luxury glass chart language
-- Ensure active (clicked) bars are visually distinct with higher opacity
-
-### Technical Details
-
-**Files modified:**
-- `src/hooks/useClientEngagement.ts` -- Remove `is_active` filter, add `hasNames` flag
-- `src/components/dashboard/sales/ClientEngagementCard.tsx` -- Hash-to-label fallback, hero centering, bar limit with expand toggle, info banner
-- `src/components/dashboard/sales/StaffKPISummary.tsx` -- No changes needed, it doesn't show staff names
-
-**No new files created. No database changes needed.**
-
-The bar limit, hero centering, and name fallback are all isolated UI changes. The mapping query filter removal is safe -- it just fetches all mappings instead of only active ones, giving more chances to find a name match.
+This ensures Termina renders for the label text, matching the stat values and the rest of the analytics system. Tokenizing it prevents future drift.
 
