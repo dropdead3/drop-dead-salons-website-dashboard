@@ -11,7 +11,7 @@ import {
   PieChart, Pie, Cell, LineChart, Line,
 } from 'recharts';
 import {
-  DollarSign, Scissors, TrendingUp, TrendingDown, Minus, Clock, Hash,
+  DollarSign, Scissors, TrendingUp, TrendingDown, Minus, Clock, Receipt,
   ArrowUpDown, BarChart3, Loader2, Target, Users, RefreshCw, ChevronDown,
   AlertTriangle, Layers, Heart,
 } from 'lucide-react';
@@ -302,8 +302,8 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
     <div className="space-y-2" key="kpi_tiles">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <KpiTile icon={DollarSign} label="Service Revenue" value={formatCurrencyWhole(data?.totalServiceRevenue || 0)} subtitle="Total for period" isLoading={isLoading} isExpanded={expandedKpi === 'revenue'} onClick={() => toggleKpi('revenue')} />
-        <KpiTile icon={Hash} label="Active Services" value={formatNumber(data?.activeServiceCount || 0)} subtitle="Distinct services booked" isLoading={isLoading} isExpanded={expandedKpi === 'active'} onClick={() => toggleKpi('active')} />
-        <KpiTile icon={Scissors} label="Avg Service Ticket" value={formatCurrency(data?.avgServiceTicket || 0)} subtitle="Revenue per appointment" isLoading={isLoading} isExpanded={expandedKpi === 'ticket'} onClick={() => toggleKpi('ticket')} />
+        <KpiTile icon={Scissors} label="Active Services" value={formatNumber(data?.activeServiceCount || 0)} subtitle="Distinct services booked" isLoading={isLoading} isExpanded={expandedKpi === 'active'} onClick={() => toggleKpi('active')} />
+        <KpiTile icon={Receipt} label="Avg Service Ticket" value={formatCurrency(data?.avgServiceTicket || 0)} subtitle="Revenue per appointment" isLoading={isLoading} isExpanded={expandedKpi === 'ticket'} onClick={() => toggleKpi('ticket')} />
         <KpiTile icon={Clock} label="Rev / Chair Hour" value={formatCurrency(data?.overallRevPerHour || 0)} subtitle={`${formatNumber(Math.round(data?.totalBookedHours || 0))} hours booked`} isLoading={isLoading} isExpanded={expandedKpi === 'rph'} onClick={() => toggleKpi('rph')} />
       </div>
       <DrillDown open={expandedKpi === 'revenue'}>
