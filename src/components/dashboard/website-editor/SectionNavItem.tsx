@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Eye, EyeOff } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -86,12 +86,7 @@ export function SectionNavItem({
       </div>
 
       {/* Visibility Toggle */}
-      <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        {enabled ? (
-          <Eye className="h-3.5 w-3.5 text-primary/70" />
-        ) : (
-          <EyeOff className="h-3.5 w-3.5 text-muted-foreground/50" />
-        )}
+      <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
         <Switch
           checked={enabled}
           onCheckedChange={onToggle}
