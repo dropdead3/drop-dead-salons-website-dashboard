@@ -1,26 +1,94 @@
 
 
-## Review: Gaps and Enhancements for Recent Services Analytics Build
+## Services Analytics Tab -- Full Review
 
-All 7 gaps have been resolved. ✅
+After a line-by-line audit of `ServicesContent.tsx` (975 lines), `ServiceBundlingIntelligence.tsx` (377 lines), and `useServiceEfficiency.ts` (284 lines), here are the remaining issues.
 
-### Gap 1: Stylist Names Show Raw IDs — FIXED ✅
-Added `phorest_staff_mapping` → `employee_profiles` lookup in `useServiceEfficiency.ts`. Staff names now display as human-readable names in all drill-downs.
+---
 
-### Gap 2: Prohibited Font Weights — FIXED ✅
-All `font-bold` and `font-semibold` replaced with `font-medium` in `ServicesContent.tsx` and `ServiceBundlingIntelligence.tsx`.
+### Gap 1: `<strong>` Tags Render as Bold (Weight 700)
 
-### Gap 3: "appts" Abbreviation — FIXED ✅
-Replaced with "appointments" in both locations.
+The HTML `<strong>` element renders at `font-weight: 700` by default -- the same weight as the banned `font-bold` class. There are 14+ instances across both component files:
 
-### Gap 4: Missing MetricInfoTooltips — FIXED ✅
-Added tooltips to: Service Category Mix, Client Type Analysis, Service Efficiency Matrix, Price Realization, Service Demand Trends.
+- Line 327: `<strong>{data?.activeServiceCount || 0}</strong>`
+- Line 357: `<strong>{formatCurrency(data?.avgRevPerHour || 0)}</strong>/hr`
+- Lines 438-439: `<strong>{Math.round(clientStats.newPct)}%</strong>`, `<strong>{Math.round(clientStats.rebookRate)}%</strong>`
+- Lines 613-615: New clients, Rebook rate, Avg tip `<strong>` wrappers
+- Lines 657, 753, 921-922, 929: Additional `<strong>` usages
+- `ServiceBundlingIntelligence.tsx` line 257: solo/grouped visit counts
 
-### Gap 5: React Fragment Key Warnings — FIXED ✅
-Replaced bare `<>` with `<React.Fragment key={...}>` in Category Mix, Efficiency Matrix, and Revenue Lift tables.
+**Fix:** Replace `<strong>` with `<span className="font-medium">` throughout. This keeps emphasis at weight 500 (the allowed maximum) instead of 700.
 
-### Gap 6: 1000-Row Query Limit — FIXED ✅
-Both `useServiceEfficiency.ts` and `useServicePairings.ts` now paginate in 1000-row batches until all rows are fetched.
+---
 
-### Gap 7: Heatmap Dark Mode Contrast — FIXED ✅
-Heatmap cells now adapt text color based on intensity (light text on dark cells, dark text on light cells).
+### Gap 2: Rebooking Card Missing `MetricInfoTooltip` in Standard Position
+
+The Rebooking Rates card (line 704) has its `MetricInfoTooltip` placed *after* the `CardDescription` block (line 714), outside the standard `flex items-center gap-2` wrapper around the title. Every other card follows the pattern of tooltip immediately next to `CardTitle`. This inconsistency means the tooltip icon floats separately from the title text.
+
+**Fix:** Move the `MetricInfoTooltip` into a `flex items-center gap-2` wrapper around the `CardTitle` on line 704, matching the pattern used by all other cards.
+
+---
+
+### Gap 3: Duplicate `key` Props on `TableRow` Inside `React.Fragment`
+
+In three locations, a `React.Fragment key={...}` wraps a `<TableRow key={...}>` with the same key value, creating redundant key props:
+
+- Line 416-417: Category Mix table (`React.Fragment key={cat.category}` + `TableRow key={cat.category}`)
+- Line 590-591: Efficiency Matrix table (same pattern with `s.serviceName`)
+- Line 222-224: Revenue Lift table in `ServiceBundlingIntelligence.tsx`
+
+**Fix:** Remove the `key` prop from the inner `<TableRow>` since the `React.Fragment` already provides the key for React's reconciliation.
+
+---
+
+### Gap 4: KPI "Active Services" Drill-Down Uses `<strong>` for Count
+
+Line 327 wraps the count in `<strong>` which renders at 700 weight. Additionally, this drill-down panel is purely text-based with no actionable data -- unlike the other three KPI drill-downs which show ranked lists. It could benefit from showing top 5 most-booked and bottom 5 least-booked services.
+
+**Fix:** Replace `<strong>` with `<span className="font-medium">` and optionally enrich the drill-down with a mini top/bottom list.
+
+---
+
+### Gap 5: Inconsistent Card Wrapper -- Missing `tokens.card.wrapper`
+
+The design token system mandates `tokens.card.wrapper` (which resolves to `rounded-2xl`) on all Card components. However, the cards in `ServicesContent.tsx` and `ServiceBundlingIntelligence.tsx` use bare `<Card>` without the wrapper token class. While this may be inherited from the base Card component, it should be verified for consistency.
+
+---
+
+### Gap 6: Rev/Hour Category Chart Missing Pinnable Wrapper Props
+
+The `RevPerHourByCategoryChart` component (line 686-694) is wrapped in no visible `PinnableCard` in `ServicesContent`. Looking at the section, it passes no `dateRange` or `locationName`. If this chart handles its own pinnable wrapper internally, it may be fine -- but if not, it would lack pin functionality.
+
+**Fix:** Verify the component handles pinning internally or add the wrapper.
+
+---
+
+### Gap 7: Heatmap Font Weight on Count Value
+
+Line 357 of `ServiceBundlingIntelligence.tsx` uses `font-medium` on the heatmap count -- this is correct. However, the heatmap percentage text on line 358 uses no weight class but relies on the small font size (`text-[9px]`) for hierarchy. This is acceptable but could benefit from explicit `font-normal` for clarity.
+
+---
+
+### Summary
+
+| # | Issue | Severity | Effort |
+|---|---|---|---|
+| 1 | `<strong>` tags rendering at weight 700 (14+ instances) | Medium -- design rule violation | Small (find-replace with `<span className="font-medium">`) |
+| 2 | Rebooking card tooltip positioned incorrectly | Low -- inconsistency | Trivial (move tooltip into title wrapper) |
+| 3 | Duplicate key props on TableRow inside Fragment | Low -- unnecessary React noise | Trivial (remove inner keys) |
+| 4 | Active Services drill-down is text-only | Low -- missed opportunity | Small (add top/bottom services) |
+| 5 | Missing `tokens.card.wrapper` on Cards | Low -- verify only | Trivial |
+| 6 | Rev/Hour chart pinnable wrapper verification | Low -- verify only | Trivial |
+| 7 | Heatmap percentage text weight clarity | Negligible | Trivial |
+
+### Recommended Implementation Order
+
+1. Gap 1 (`<strong>` tags) -- highest count, design rule violation
+2. Gap 2 (Rebooking tooltip position) -- quick consistency fix
+3. Gap 3 (Duplicate keys) -- cleanup
+4. Gaps 4-7 -- minor polish items
+
+### Overall Assessment
+
+The previous round of fixes addressed all critical issues (stylist names, pagination, font-bold/semibold, abbreviations, missing tooltips, fragment keys, heatmap contrast). The remaining gaps are lower severity -- primarily the `<strong>` tag weight violation which is a subtle but systematic design rule breach across 14+ locations.
+
