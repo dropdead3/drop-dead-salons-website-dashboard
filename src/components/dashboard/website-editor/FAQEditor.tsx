@@ -11,6 +11,7 @@ import { RotatingWordsInput } from './RotatingWordsInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { SectionPreviewWrapper } from './SectionPreviewWrapper';
 import { FAQPreview } from './previews/FAQPreview';
+import { triggerPreviewRefresh } from './LivePreviewPanel';
 
 export function FAQEditor() {
   const { data, isLoading, isSaving, update } = useFAQConfig();
@@ -27,6 +28,7 @@ export function FAQEditor() {
     try {
       await update(localConfig);
       toast.success('FAQ section saved');
+      triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }

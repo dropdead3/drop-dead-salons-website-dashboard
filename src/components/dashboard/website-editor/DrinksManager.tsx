@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useDebounce } from '@/hooks/use-debounce';
 import { SectionPreviewWrapper } from './SectionPreviewWrapper';
 import { DrinksPreview } from './previews/DrinksPreview';
+import { triggerPreviewRefresh } from './LivePreviewPanel';
 import {
   DndContext,
   closestCenter,
@@ -173,6 +174,7 @@ export function DrinksManager() {
     try {
       await update(localConfig);
       toast.success('Drink Menu saved successfully');
+      triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save drink menu');
     }

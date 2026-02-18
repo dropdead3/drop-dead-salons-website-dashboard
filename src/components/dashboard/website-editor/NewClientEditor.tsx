@@ -12,6 +12,7 @@ import { BenefitsListInput } from './BenefitsListInput';
 import { SectionPreviewWrapper } from './SectionPreviewWrapper';
 import { NewClientPreview } from './previews/NewClientPreview';
 import { useDebounce } from '@/hooks/use-debounce';
+import { triggerPreviewRefresh } from './LivePreviewPanel';
 
 export function NewClientEditor() {
   const { data, isLoading, isSaving, update } = useNewClientConfig();
@@ -28,6 +29,7 @@ export function NewClientEditor() {
     try {
       await update(localConfig);
       toast.success('New Client section saved');
+      triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }

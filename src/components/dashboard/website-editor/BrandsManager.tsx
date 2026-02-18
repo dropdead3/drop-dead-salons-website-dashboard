@@ -12,6 +12,7 @@ import { ToggleInput } from './inputs/ToggleInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { SectionPreviewWrapper } from './SectionPreviewWrapper';
 import { BrandsPreview } from './previews/BrandsPreview';
+import { triggerPreviewRefresh } from './LivePreviewPanel';
 import {
   DndContext,
   closestCenter,
@@ -279,6 +280,7 @@ export function BrandsManager() {
       );
       await update({ ...localConfig, brands: validBrands });
       toast.success('Brands section saved');
+      triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }

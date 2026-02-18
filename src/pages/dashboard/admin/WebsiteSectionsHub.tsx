@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { 
@@ -35,6 +35,18 @@ import { AnnouncementBarContent } from '@/components/dashboard/website-editor/An
 import { WebsiteEditorSidebar } from '@/components/dashboard/website-editor/WebsiteEditorSidebar';
 // Live Preview
 import { LivePreviewPanel } from '@/components/dashboard/website-editor/LivePreviewPanel';
+
+// Unsaved changes dialog
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Layout Components
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -107,15 +119,54 @@ export default function WebsiteSectionsHub() {
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [showPreview, setShowPreview] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
+  const [pendingTab, setPendingTab] = useState<string | null>(null);
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const isDirtyRef = useRef(false);
   const isMobile = useIsMobile();
+
+  // Expose a global way for editors to register dirty state
+  useEffect(() => {
+    const handleDirtyChange = (e: Event) => {
+      isDirtyRef.current = (e as CustomEvent).detail?.dirty ?? false;
+    };
+    window.addEventListener('editor-dirty-state', handleDirtyChange);
+
+    // Also warn on browser close/refresh
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirtyRef.current) {
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('editor-dirty-state', handleDirtyChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, []);
 
   // Sync URL with active tab
   useEffect(() => {
     setSearchParams({ tab: activeTab }, { replace: true });
   }, [activeTab, setSearchParams]);
 
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
+  const handleTabChange = useCallback((tab: string) => {
+    if (isDirtyRef.current) {
+      setPendingTab(tab);
+      setShowUnsavedDialog(true);
+    } else {
+      setActiveTab(tab);
+    }
+  }, []);
+
+  const handleDiscardAndSwitch = () => {
+    isDirtyRef.current = false;
+    window.dispatchEvent(new CustomEvent('editor-dirty-state', { detail: { dirty: false } }));
+    setShowUnsavedDialog(false);
+    if (pendingTab) {
+      setActiveTab(pendingTab);
+      setPendingTab(null);
+    }
   };
 
   const EditorComponent = EDITOR_COMPONENTS[activeTab];
@@ -215,6 +266,26 @@ export default function WebsiteSectionsHub() {
           )}
 
         </ResizablePanelGroup>
+
+        {/* Unsaved Changes Dialog */}
+        <AlertDialog open={showUnsavedDialog} onOpenChange={setShowUnsavedDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+              <AlertDialogDescription>
+                You have unsaved changes that will be lost if you switch sections. Do you want to discard them?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => { setShowUnsavedDialog(false); setPendingTab(null); }}>
+                Stay & Keep Editing
+              </AlertDialogCancel>
+              <AlertDialogAction onClick={handleDiscardAndSwitch}>
+                Discard & Switch
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );

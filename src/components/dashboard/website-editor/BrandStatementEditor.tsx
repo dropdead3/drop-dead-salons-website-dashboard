@@ -14,6 +14,7 @@ import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { triggerPreviewRefresh } from './LivePreviewPanel';
 
 export function BrandStatementEditor() {
   const { data, isLoading, isSaving, update } = useBrandStatementConfig();
@@ -31,6 +32,7 @@ export function BrandStatementEditor() {
     try {
       await update(localConfig);
       toast.success('Brand Statement saved');
+      triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }

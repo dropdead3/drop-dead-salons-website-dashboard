@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Loader2, Save } from 'lucide-react';
 import { toast } from 'sonner';
+import { triggerPreviewRefresh } from './LivePreviewPanel';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
@@ -54,6 +55,7 @@ export function SectionDisplayEditor<T extends object>({
     try {
       await update(localConfig);
       toast.success(`${title} saved`);
+      triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }
@@ -74,7 +76,7 @@ export function SectionDisplayEditor<T extends object>({
   return (
     <div className="max-w-2xl">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
+        <CardHeader className="flex flex-row items-center justify-between pb-4 sticky top-0 bg-card z-10 border-b">
           <CardTitle className="text-lg">{title}</CardTitle>
           <Button onClick={handleSave} disabled={isSaving} size="sm">
             {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}

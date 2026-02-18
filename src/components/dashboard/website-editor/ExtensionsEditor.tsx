@@ -10,6 +10,7 @@ import { useExtensionsConfig, type ExtensionsConfig, DEFAULT_EXTENSIONS } from '
 import { useDebounce } from '@/hooks/use-debounce';
 import { SectionPreviewWrapper } from './SectionPreviewWrapper';
 import { ExtensionsPreview } from './previews/ExtensionsPreview';
+import { triggerPreviewRefresh } from './LivePreviewPanel';
 
 const ICON_OPTIONS = [
   { value: 'Star', icon: Star },
@@ -32,6 +33,7 @@ export function ExtensionsEditor() {
     try {
       await update(localConfig);
       toast.success('Extensions section saved');
+      triggerPreviewRefresh();
     } catch {
       toast.error('Failed to save');
     }
