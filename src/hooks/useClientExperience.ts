@@ -3,7 +3,32 @@ import { supabase } from '@/integrations/supabase/client';
 
 // ── Types ──────────────────────────────────────────────────────
 
-interface StaffExperienceDetail {
+// ── Composite score weights & thresholds ──────────────────────
+const WEIGHT_REBOOK = 0.35;
+const WEIGHT_TIP_RATE = 0.30;
+const WEIGHT_FEEDBACK = 0.20;
+const WEIGHT_AVG_TIP = 0.15;
+const AVG_TIP_EXCELLENT = 15; // $15 avg tip = 100 on normalized scale
+
+export type ExperienceStatus = 'strong' | 'watch' | 'needs-attention';
+
+function getExperienceStatus(score: number): ExperienceStatus {
+  if (score >= 65) return 'strong';
+  if (score >= 50) return 'watch';
+  return 'needs-attention';
+}
+
+function computeComposite(tipRate: number, rebookRate: number, feedbackRate: number, avgTip: number): number {
+  const normalizedTip = Math.min((avgTip / AVG_TIP_EXCELLENT) * 100, 100);
+  return (
+    rebookRate * WEIGHT_REBOOK +
+    tipRate * WEIGHT_TIP_RATE +
+    feedbackRate * WEIGHT_FEEDBACK +
+    normalizedTip * WEIGHT_AVG_TIP
+  );
+}
+
+export interface StaffExperienceDetail {
   staffId: string;
   staffName: string;
   userId: string | null;
@@ -12,6 +37,8 @@ interface StaffExperienceDetail {
   tipRate: number;
   feedbackRate: number;
   rebookRate: number;
+  compositeScore: number;
+  status: ExperienceStatus;
 }
 
 export interface ClientExperienceData {
@@ -19,6 +46,7 @@ export interface ClientExperienceData {
   tipRate: { current: number; prior: number; percentChange: number | null };
   feedbackRate: { current: number; prior: number; percentChange: number | null };
   rebookRate: { current: number; prior: number; percentChange: number | null };
+  compositeScore: { current: number; prior: number; percentChange: number | null };
   staffBreakdown: StaffExperienceDetail[];
   hasNames: boolean;
 }
@@ -193,23 +221,37 @@ export function useClientExperience(
 
       const staffBreakdown: StaffExperienceDetail[] = Object.entries(staffMap)
         .filter(([, d]) => d.total > 0)
-        .map(([id, d]) => ({
-          staffId: id,
-          staffName: resolveName(id),
-          userId: mappingLookup[id]?.userId || null,
-          totalAppointments: d.total,
-          avgTip: d.total > 0 ? d.tipSum / d.total : 0,
-          tipRate: d.total > 0 ? (d.tipped / d.total) * 100 : 0,
-          feedbackRate: d.total > 0 ? ((feedbackByStaff[id] || 0) / d.total) * 100 : 0,
-          rebookRate: d.total > 0 ? (d.rebooked / d.total) * 100 : 0,
-        }))
+        .map(([id, d]) => {
+          const at = d.total > 0 ? d.tipSum / d.total : 0;
+          const tr = d.total > 0 ? (d.tipped / d.total) * 100 : 0;
+          const fr = d.total > 0 ? ((feedbackByStaff[id] || 0) / d.total) * 100 : 0;
+          const rr = d.total > 0 ? (d.rebooked / d.total) * 100 : 0;
+          const cs = computeComposite(tr, rr, fr, at);
+          return {
+            staffId: id,
+            staffName: resolveName(id),
+            userId: mappingLookup[id]?.userId || null,
+            totalAppointments: d.total,
+            avgTip: at,
+            tipRate: tr,
+            feedbackRate: fr,
+            rebookRate: rr,
+            compositeScore: Math.round(cs),
+            status: getExperienceStatus(cs),
+          };
+        })
         .sort((a, b) => b.totalAppointments - a.totalAppointments);
+
+      // Salon-wide composite
+      const compositeCurrent = computeComposite(tipRateCurrent, rebookRateCurrent, feedbackRateCurrent, avgTipCurrent);
+      const compositePrior = computeComposite(tipRatePrior, rebookRatePrior, feedbackRatePrior, avgTipPrior);
 
       return {
         avgTip: { current: avgTipCurrent, prior: avgTipPrior, percentChange: pctChange(avgTipCurrent, avgTipPrior) },
         tipRate: { current: tipRateCurrent, prior: tipRatePrior, percentChange: pctChange(tipRateCurrent, tipRatePrior) },
         feedbackRate: { current: feedbackRateCurrent, prior: feedbackRatePrior, percentChange: pctChange(feedbackRateCurrent, feedbackRatePrior) },
         rebookRate: { current: rebookRateCurrent, prior: rebookRatePrior, percentChange: pctChange(rebookRateCurrent, rebookRatePrior) },
+        compositeScore: { current: Math.round(compositeCurrent), prior: Math.round(compositePrior), percentChange: pctChange(compositeCurrent, compositePrior) },
         staffBreakdown,
         hasNames,
       };
