@@ -2,7 +2,7 @@ import { Users, MapPin } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { stylistLevels } from '@/data/servicePricing';
+import { useStylistLevelsSimple } from '@/hooks/useStylistLevels';
 import { useActiveLocations } from '@/hooks/useLocations';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
@@ -30,7 +30,7 @@ export function StylistsOverviewCard() {
     },
   });
 
-  const levels = stylistLevels;
+  const { data: levels = [] } = useStylistLevelsSimple();
   const totalAssigned = Object.values(stylistsByLevel || {}).reduce((a, b) => a + b, 0);
 
   const getStylistCount = (levelId: string): number => {
