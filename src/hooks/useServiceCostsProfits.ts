@@ -12,6 +12,7 @@ export interface ServiceCostProfitRow {
   totalCost: number;
   profit: number;
   profitPct: number;
+  hasCostDefined: boolean;
 }
 
 export interface ServiceCostsProfitsData {
@@ -23,7 +24,6 @@ export interface ServiceCostsProfitsData {
     profit: number;
     profitPct: number;
   };
-  maxSales: number;
 }
 
 async function fetchAllAppointments(dateFrom: string, dateTo: string, locationId?: string) {
@@ -106,14 +106,13 @@ export function useServiceCostsProfits(dateFrom: string, dateTo: string, locatio
       }
 
       // Calculate profits
-      let maxSales = 0;
       const rows: ServiceCostProfitRow[] = [];
       for (const g of grouped.values()) {
+        const hasCostDefined = costMap.has(g.serviceName);
         const costPerService = costMap.get(g.serviceName) || 0;
         const totalCost = costPerService * g.count;
         const profit = g.sales - totalCost;
         const profitPct = g.sales > 0 ? (profit / g.sales) * 100 : 0;
-        if (g.sales > maxSales) maxSales = g.sales;
 
         rows.push({
           locationId: g.locationId,
@@ -126,6 +125,7 @@ export function useServiceCostsProfits(dateFrom: string, dateTo: string, locatio
           totalCost,
           profit,
           profitPct,
+          hasCostDefined,
         });
       }
 
@@ -148,7 +148,6 @@ export function useServiceCostsProfits(dateFrom: string, dateTo: string, locatio
           profit: totalProfit,
           profitPct: totalProfitPct,
         },
-        maxSales,
       } as ServiceCostsProfitsData;
     },
   });
