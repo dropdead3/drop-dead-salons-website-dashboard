@@ -17,6 +17,7 @@ export interface Product {
   quantity_on_hand: number | null;
   reorder_level: number | null;
   is_active: boolean | null;
+  available_online: boolean | null;
   created_at: string | null;
   updated_at: string | null;
 }

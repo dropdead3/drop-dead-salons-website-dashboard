@@ -69,6 +69,7 @@ import {
   ResizableHandle,
 } from '@/components/ui/resizable';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { OnlineStoreProductsTable } from './OnlineStoreProductsTable';
 import {
   Select,
   SelectContent,
@@ -692,6 +693,19 @@ function RetailTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Online Store Products Configurator */}
+      {local.enabled && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-display text-lg">STORE PRODUCTS</CardTitle>
+            <CardDescription>Choose which products are visible on your online store.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OnlineStoreProductsTable />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
