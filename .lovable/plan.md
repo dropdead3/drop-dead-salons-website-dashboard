@@ -1,66 +1,37 @@
 
-## Replace Emoji/Character Moon Icons with Lucide SVG Moon
 
-### Problem
+## Remove Moon Icons from X-Axis Ticks, Bold "Closed" Text
 
-Four files use either the `🌙` emoji or `☽` Unicode character for closed-day indicators. These render inconsistently across platforms and don't match the clean Lucide icon style used in the `ClosedBadge` component. The reference screenshot shows the proper outlined crescent moon icon.
+### What Changes
 
-### Approach
+In the x-axis tick labels across all four chart files, the inline SVG moon path will be removed. The "Closed" text will be restyled to match the appointment count line: `text-[11px]` with `fontWeight: 500` and `fill-foreground` (dark text, not muted). The moon icons in the bar overlay area (via `<Customized>`) remain untouched.
 
-Since all these moons live inside Recharts SVG elements (`<text>`, `<Customized>`), React components like `<Moon />` cannot be used directly. Instead, render the Lucide Moon SVG path inline as a `<path>` element within a `<g>` group, scaled to the appropriate size.
+### Files and Edits
 
-The Lucide Moon path: `M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z` (24x24 viewBox)
+**1. `src/components/dashboard/sales/CapacityUtilizationCard.tsx` (lines 88-95)**
+- Remove the `<g>` with the moon SVG path (lines 88-92)
+- Change the "Closed" text from `fill-muted-foreground text-[9px]` to `fill-foreground text-[11px]` with `fontWeight: 500`
+- Remove the x-offset (change `x={4}` to `x={0}`) since the moon icon no longer pushes the text right
 
-### Changes by File
-
-**1. `src/components/dashboard/sales/CapacityUtilizationCard.tsx`**
-- X-axis tick: Replace `🌙 Closed` text with a small SVG moon path (scaled to ~10px) followed by "Closed" text
-- Bar overlay in `<Customized>`: Replace `🌙` emoji text element with an SVG moon path (scaled to ~14px)
-
-**2. `src/components/dashboard/analytics/CapacityUtilizationSection.tsx`**
-- Same two replacements as above (x-axis tick and bar overlay)
+**2. `src/components/dashboard/analytics/CapacityUtilizationSection.tsx` (lines 89-95)**
+- Same changes as above
 
 **3. `src/components/dashboard/sales/WeekAheadForecast.tsx`**
-- X-axis tick: Replace `☽ Closed` text with SVG moon path + "Closed" text (2 occurrences)
-- Bar overlay in `<Customized>`: Replace `🌙` emoji text element with SVG moon path
+- Two occurrences:
+  - Lines 114-123: "has appointments + is closed" case — remove moon path, bold "Closed"
+  - Lines 127-136: "no appointments + is closed" case — remove moon path, bold "Closed"
 
 **4. `src/components/dashboard/sales/ForecastingCard.tsx`**
-- X-axis tick: Replace `☽ Closed` text with SVG moon path + "Closed" text (2 occurrences)
-- Bar overlay in `<Customized>`: Replace `🌙` emoji text element with SVG moon path
+- Two occurrences:
+  - Lines 265-276: "has appointments + is closed" case — remove moon path, bold "Closed"
+  - Lines 279-288: "no appointments + is closed" case — remove moon path, bold "Closed"
 
-### Rendering Pattern
+### Before / After
 
-For x-axis ticks (small, beside "Closed" text):
-```xml
-<g transform={`translate(${x},${y})`}>
-  <!-- moon icon scaled to ~10px -->
-  <g transform={`translate(-18, ${dyOffset - 9}) scale(0.42)`}>
-    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" 
-          fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-          className="stroke-muted-foreground" />
-  </g>
-  <text x={4} dy={dyOffset} textAnchor="middle" className="fill-muted-foreground text-[9px]">
-    Closed
-  </text>
-</g>
+```text
+Before:  <moon-svg> + <text class="fill-muted-foreground text-[9px]">Closed</text>
+After:   <text class="fill-foreground text-[11px]" fontWeight={500}>Closed</text>
 ```
 
-For bar overlays (centered in empty bar space, ~16px):
-```xml
-<g transform={`translate(${cx - 8}, ${cy - 8}) scale(0.67)`}>
-  <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" 
-        fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-        className="stroke-muted-foreground" style={{ opacity: 0.5 }} />
-</g>
-```
+No changes to the `<Customized>` bar-area moon overlays in any file.
 
-### Summary
-
-| Location | Before | After |
-|----------|--------|-------|
-| Capacity x-axis ticks | `🌙 Closed` text | SVG path + "Closed" text |
-| Capacity bar overlays | `🌙` emoji | SVG moon path |
-| Forecasting x-axis ticks | `☽ Closed` text | SVG path + "Closed" text |
-| Forecasting bar overlays | `🌙` emoji | SVG moon path |
-
-All four files get the same consistent Lucide Moon outline icon, matching the `ClosedBadge` component's visual language.
