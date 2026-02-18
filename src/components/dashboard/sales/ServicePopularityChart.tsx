@@ -15,6 +15,7 @@ import {
   Cell,
 } from 'recharts';
 import { useServicePopularity } from '@/hooks/useSalesAnalytics';
+import { ServiceMixLegend } from '@/components/dashboard/analytics/ServiceMixLegend';
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -252,6 +253,15 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
   const totalServices = data?.reduce((sum, s) => sum + s.frequency, 0) || 0;
   const totalRevenue = data?.reduce((sum, s) => sum + s.totalRevenue, 0) || 0;
 
+  const byCategory = useMemo(() => {
+    const map: Record<string, number> = {};
+    data?.forEach(svc => {
+      const cat = svc.category || 'Other';
+      map[cat] = (map[cat] || 0) + svc.totalRevenue;
+    });
+    return map;
+  }, [data]);
+
   const avgPriceMap: Record<string, number> = {};
   data?.forEach(s => { avgPriceMap[s.name] = s.avgPrice; });
 
@@ -436,6 +446,8 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
             {renderBarChart('totalRevenue', true)}
           </TabsContent>
         </Tabs>
+
+        <ServiceMixLegend byCategory={byCategory} />
 
         {/* Expandable service detail rows */}
         {sortedData.length > 0 && (
