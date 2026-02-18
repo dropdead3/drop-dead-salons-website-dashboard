@@ -594,7 +594,9 @@ export default function SalesDashboard() {
                             cy="50%"
                             innerRadius={50}
                             outerRadius={80}
-                            paddingAngle={5}
+                            paddingAngle={0}
+                            stroke="hsl(var(--border) / 0.4)"
+                            strokeWidth={1}
                             dataKey="value"
                           >
                             {revenueBreakdown.map((entry, index) => (

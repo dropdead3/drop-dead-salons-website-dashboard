@@ -465,7 +465,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                     <div className="w-[120px] h-[120px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
-                          <Pie data={[{ name: 'Service', value: data.revenue.service }, { name: 'Product', value: data.revenue.product }]} cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={2} dataKey="value">
+                          <Pie data={[{ name: 'Service', value: data.revenue.service }, { name: 'Product', value: data.revenue.product }]} cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={0} stroke="hsl(var(--border) / 0.4)" strokeWidth={1} dataKey="value">
                             <Cell fill={PIE_COLORS[0]} />
                             <Cell fill={PIE_COLORS[1]} />
                           </Pie>
@@ -502,7 +502,7 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
                     <div className="w-[120px] h-[120px]">
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
-                          <Pie data={[{ name: 'Completed', value: data.productivity.completed }, { name: 'No-Show', value: data.productivity.noShows }, { name: 'Cancelled', value: data.productivity.cancelled }]} cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={2} dataKey="value">
+                          <Pie data={[{ name: 'Completed', value: data.productivity.completed }, { name: 'No-Show', value: data.productivity.noShows }, { name: 'Cancelled', value: data.productivity.cancelled }]} cx="50%" cy="50%" innerRadius={30} outerRadius={50} paddingAngle={0} stroke="hsl(var(--border) / 0.4)" strokeWidth={1} dataKey="value">
                             <Cell fill="hsl(var(--chart-2))" />
                             <Cell fill="hsl(var(--destructive))" />
                             <Cell fill="hsl(var(--chart-4))" />

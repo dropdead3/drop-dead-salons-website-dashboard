@@ -144,7 +144,9 @@ export function LeadFunnelCard({ locationId, dateRange }: LeadFunnelCardProps) {
                           cy="50%"
                           innerRadius={35}
                           outerRadius={60}
-                          paddingAngle={2}
+                          paddingAngle={0}
+                          stroke="hsl(var(--border) / 0.4)"
+                          strokeWidth={1}
                           dataKey="count"
                           nameKey="source"
                         >

@@ -87,7 +87,9 @@ export function CompensationBreakdownChart({ breakdown, isLoading }: Compensatio
                 cy="50%"
                 innerRadius={60}
                 outerRadius={90}
-                paddingAngle={2}
+                paddingAngle={0}
+                stroke="hsl(var(--border) / 0.4)"
+                strokeWidth={1}
                 dataKey="value"
                 label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
                 labelLine={false}

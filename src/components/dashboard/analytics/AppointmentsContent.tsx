@@ -336,7 +336,9 @@ export function AppointmentsContent({
                     cy="50%"
                     innerRadius={50}
                     outerRadius={80}
-                    paddingAngle={2}
+                    paddingAngle={0}
+                    stroke="hsl(var(--border) / 0.4)"
+                    strokeWidth={1}
                     dataKey="count"
                     nameKey="status"
                   >
