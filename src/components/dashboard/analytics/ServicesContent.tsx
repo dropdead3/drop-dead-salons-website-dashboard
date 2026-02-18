@@ -24,6 +24,7 @@ import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { ServicePopularityChart } from '@/components/dashboard/sales/ServicePopularityChart';
 import { CategoryPopularityChart } from '@/components/dashboard/sales/CategoryPopularityChart';
 import { useServiceEfficiency, type ServiceEfficiencyRow, type StylistBreakdown } from '@/hooks/useServiceEfficiency';
+import { RevPerHourByCategoryChart } from '@/components/dashboard/sales/RevPerHourByCategoryChart';
 import { useServiceDemandTrend } from '@/hooks/useServiceDemandTrend';
 import { useServiceClientAnalysis } from '@/hooks/useServiceClientAnalysis';
 import { useServicePairings } from '@/hooks/useServicePairings';
@@ -142,6 +143,7 @@ const SERVICES_SECTION_DEFS: CardDefinition[] = [
   { id: 'client_type', label: 'Client Type Analysis', icon: <Users className="w-4 h-4" /> },
   { id: 'service_popularity', label: 'Service Popularity', icon: <Scissors className="w-4 h-4" /> },
   { id: 'efficiency_matrix', label: 'Service Efficiency Matrix', icon: <Target className="w-4 h-4" /> },
+  { id: 'rev_per_hour_category', label: 'Rev/Hour by Category', icon: <Clock className="w-4 h-4" /> },
   { id: 'rebook_rates', label: 'Service Rebooking Rates', icon: <RefreshCw className="w-4 h-4" /> },
   { id: 'price_realization', label: 'Price Realization', icon: <DollarSign className="w-4 h-4" /> },
   { id: 'demand_trends', label: 'Service Demand Trends', icon: <TrendingUp className="w-4 h-4" /> },
@@ -610,6 +612,16 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
         </CardContent>
       </Card>
     </PinnableCard>
+  );
+
+  sections.rev_per_hour_category = (
+    <RevPerHourByCategoryChart
+      key="rev_per_hour_category"
+      dateFrom={dateFrom}
+      dateTo={dateTo}
+      locationId={locationId}
+      filterContext={filterContext}
+    />
   );
 
   sections.rebook_rates = (
