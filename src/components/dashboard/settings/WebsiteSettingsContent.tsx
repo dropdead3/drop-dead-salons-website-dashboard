@@ -13,7 +13,7 @@ import {
   Globe, Palette, Calendar, ShoppingBag, Scale, 
   ExternalLink, Check, Loader2, Save, Megaphone,
   Instagram, Facebook, Twitter, Linkedin, Youtube, Eye,
-  ArrowLeft, PanelRightClose, PanelRightOpen, LayoutGrid,
+  ArrowLeft, ArrowRight, PanelRightClose, PanelRightOpen, LayoutGrid,
   PanelLeftClose, PanelLeftOpen, Copy, Link as LinkIcon, QrCode,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -242,17 +242,17 @@ function GeneralTab() {
               "rounded-md overflow-hidden transition-opacity",
               !annLocal.enabled && "opacity-40"
             )}>
-              <div className="bg-secondary text-secondary-foreground py-2 px-3 flex items-center justify-center gap-1.5 text-xs">
-                <span>{annLocal.message_prefix || 'Are you a salon'}</span>
-                <span className="font-semibold underline decoration-primary underline-offset-2">
-                  {annLocal.message_highlight || 'professional'}
-                </span>
-                <span>{annLocal.message_suffix || 'looking for our extensions?'}</span>
+              <div className="bg-secondary py-2.5 px-4 flex items-center justify-between text-sm">
+                <div className="text-foreground/80 font-sans">
+                  <span>{annLocal.message_prefix || 'Are you a salon'}</span>{' '}
+                  <span className="font-medium">{annLocal.message_highlight || 'professional'}</span>{' '}
+                  <span>{annLocal.message_suffix || 'looking for our extensions?'}</span>
+                </div>
                 {annLocal.cta_text && (
-                  <span className="inline-flex items-center gap-1 ml-1.5 font-medium text-primary">
+                  <div className="flex items-center gap-1 uppercase tracking-wider text-xs font-sans font-medium text-foreground shrink-0 ml-4">
                     {annLocal.cta_text}
-                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-                  </span>
+                    <ArrowRight className="w-3 h-3" />
+                  </div>
                 )}
               </div>
             </div>
@@ -292,23 +292,23 @@ function GeneralTab() {
           {/* Social Links Preview */}
           <div className="rounded-lg border bg-muted/30 p-4 mt-4 space-y-3">
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Live Preview</p>
-            <div className="bg-secondary/50 rounded-md p-3">
-              <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2">Connect</p>
-              <div className="flex items-center gap-3">
+            <div className="rounded-md p-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans mb-3">Connect</p>
+              <div className="space-y-2">
                 {SOCIAL_FIELDS.map(({ key, icon: Icon, label }) => {
                   const hasUrl = !!(socialLocal[key]);
                   return (
                     <div
                       key={key}
                       className={cn(
-                        "w-7 h-7 rounded-full flex items-center justify-center transition-all",
+                        "inline-flex items-center gap-2 text-sm font-sans font-light transition-all",
                         hasUrl
-                          ? "bg-foreground/10 text-foreground"
-                          : "bg-muted text-muted-foreground/30"
+                          ? "text-foreground/50"
+                          : "text-muted-foreground/30"
                       )}
-                      title={hasUrl ? `${label}: ${socialLocal[key]}` : `${label}: not set`}
                     >
-                      <Icon className="w-3.5 h-3.5" />
+                      <Icon size={18} />
+                      <span>{hasUrl ? (socialLocal[key] || '').replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '') : label}</span>
                     </div>
                   );
                 })}
