@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { Layout } from "@/components/layout/Layout";
 import { SEO } from "@/components/SEO";
 import { HeroSection } from "@/components/home/HeroSection";
@@ -16,7 +16,6 @@ import { BrandsSection } from "@/components/home/BrandsSection";
 import { DrinkMenuSection } from "@/components/home/DrinkMenuSection";
 import { useWebsiteSections, getEnabledSections, type HomepageSections } from "@/hooks/useWebsiteSections";
 import React from 'react';
-
 // Map section keys to their components
 const SECTION_COMPONENTS: Record<keyof HomepageSections, React.ReactNode> = {
   hero: <HeroSection />,
@@ -46,6 +45,31 @@ const Index = () => {
     }));
   }, [sectionsConfig]);
 
+  // Listen for postMessage from parent (Website Editor) for scroll & highlight
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      const msg = event.data;
+      if (!msg || typeof msg !== 'object') return;
+
+      if (msg.type === 'PREVIEW_SCROLL_TO_SECTION') {
+        const el = document.getElementById(`section-${msg.sectionId}`);
+        if (el) el.scrollIntoView({ behavior: msg.behavior ?? 'smooth', block: 'start' });
+      }
+
+      if (msg.type === 'PREVIEW_HIGHLIGHT_SECTION') {
+        const el = document.getElementById(`section-${msg.sectionId}`);
+        if (el) {
+          el.classList.add('preview-highlight');
+          setTimeout(() => el.classList.remove('preview-highlight'), 1000);
+        }
+      }
+    };
+
+    window.addEventListener('message', handler);
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
   return (
     <Layout>
       <SEO 
@@ -54,7 +78,7 @@ const Index = () => {
         type="local_business"
       />
       {orderedSections.map(({ key, component }) => (
-        <React.Fragment key={key}>{component}</React.Fragment>
+        <div id={`section-${key}`} key={key}>{component}</div>
       ))}
     </Layout>
   );

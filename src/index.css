@@ -1454,3 +1454,10 @@ body.dashboard-cursor {
 .font-bold:not(.font-serif) { font-weight: 500 !important; }
 .font-extrabold:not(.font-serif) { font-weight: 500 !important; }
 .font-black:not(.font-serif) { font-weight: 500 !important; }
+
+/* ===== PREVIEW HIGHLIGHT ===== */
+.preview-highlight {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: -2px;
+  transition: outline-color 0.3s ease;
+}
