@@ -1,72 +1,38 @@
 
 
-# Enhance Website Editor Services Manager
-
-## Problem
-
-The Website Editor's Services tab (`ServicesContent.tsx`) is a lightweight, read-only view showing stats, search, and accordion categories. Meanwhile, the Settings hub (`ServicesManager.tsx`) has the full suite of editing capabilities. The user wants the Website Editor version to be the primary, full-featured services management interface.
+# Remove Action Buttons and Add Info Notice
 
 ## What Changes
 
-The Website Editor's `ServicesContent.tsx` will be upgraded to include all the rich editing features currently only available in Settings, plus website-specific enhancements.
-
-### Features Being Added
-
-| Feature | Currently in Settings | Adding to Website Editor |
-|---|---|---|
-| Edit service dialog (name, description, level pricing) | Yes | Yes |
-| Toggle popular (switch + badge) | Star icon only | Switch + badge |
-| Category rename (inline edit) | Yes | Yes |
-| Category drag-and-drop reorder | Yes | Yes |
-| Category add/delete | Yes | Yes |
-| Communication flow config button | Yes | Yes |
-| Price range display (Starts at X -> Y) | Yes | Yes |
-| Booking settings (same-day, lead time) | Yes | Yes |
-| Website description field | No | Yes (new) |
-| "About Service Pricing" info card | Yes | Yes |
-
-### Website-Specific Additions
-
-- **Website Description** field in the edit dialog -- separate from the operational description, used for marketing copy on the public site
-- Link to Settings -> Services kept as a secondary reference
-- `ServicesPreviewEditor` (homepage section config) remains separate and unchanged
+1. **Remove "Manage Levels" button** and its `StylistLevelsEditor` wrapper from the header actions
+2. **Remove "Add Category" button** and its entire Dialog (the add category dialog, state, and handler)
+3. **Add an info notice** below the header explaining that services and categories are pulled from Services Settings, with a link to navigate there
 
 ## Technical Details
 
-### Approach: Replace ServicesContent with Enhanced Version
+### File: `src/components/dashboard/website-editor/ServicesContent.tsx`
 
-Rather than maintaining two separate implementations, `ServicesContent.tsx` will be refactored to include the full feature set from `ServicesManager.tsx`, adapted for the Website Editor context (no `DashboardLayout` wrapper, embedded within the existing editor panel).
+**Remove from header (lines 291-347):** Replace the action buttons div with a simple info banner:
 
-### Key imports to add:
-- `Dialog`, `AlertDialog` components for edit/delete flows
-- `Textarea`, `Label`, `Switch` for form fields
-- `ServiceCommunicationFlowEditor` and `useAllServiceCommunicationFlows`
-- Drag-and-drop state management (same pattern as Settings version)
+```tsx
+{/* Info notice */}
+<div className="flex items-center gap-3 p-3 rounded-lg bg-muted/60 border border-border">
+  <Settings2 className="w-5 h-5 text-muted-foreground shrink-0" />
+  <p className="text-sm text-muted-foreground">
+    Services and categories are managed in{' '}
+    <Link to="/dashboard/admin/services" className="underline font-medium text-foreground hover:text-primary">
+      Services Settings
+    </Link>
+    . Use this editor to control website display, descriptions, and popular badges.
+  </p>
+</div>
+```
 
-### State additions:
-- `editingService` -- tracks the service being edited in the dialog
-- `editingCategoryIndex` / `editingCategoryName` -- inline category rename
-- `draggedCategoryIndex` / `dragOverCategoryIndex` -- drag-and-drop reorder
-- `isAddCategoryOpen` / `newCategoryName` -- add category dialog
-- `configureFlowsServiceName` -- communication flow editor trigger
+**Clean up unused code:**
+- Remove `isAddCategoryOpen`, `newCategoryName`, `newCategoryIsAddOn` state variables
+- Remove `handleAddCategory` function
+- Remove `StylistLevelsEditor` import
+- Remove `useStylistLevelsSimple` import (if only used for that)
+- Remove category delete and rename handlers if they exist (since categories are managed in Settings)
 
-### Mutations to wire:
-- `useToggleServicePopular` -- already wired
-- `useUpdateServiceDescription` -- for website description saves
-- `useUpsertServiceLevelPrices` -- for saving level price edits from the dialog
-- Category rename/reorder/add/delete -- write to `service_category_colors` table
-
-### What stays the same:
-- The hook `useNativeServicesForWebsite` remains the data source
-- Stats cards layout unchanged
-- Search functionality unchanged
-- Accordion-based category display unchanged
-
-### Files modified:
-1. **`src/components/dashboard/website-editor/ServicesContent.tsx`** -- Major enhancement with full CRUD capabilities, edit dialogs, category management, drag-and-drop, communication flows, and website description editing
-
-### Files unchanged:
-- `ServicesManager.tsx` (Settings version) -- remains as-is for now
-- `useNativeServicesForWebsite.ts` -- no changes needed
-- `ServicesPreviewEditor.tsx` -- homepage section config stays separate
-
+This keeps the Website Editor focused on **website display controls** (popular toggles, website descriptions, communication flows) while making it clear that structural changes (adding categories, managing levels) happen in Settings.
