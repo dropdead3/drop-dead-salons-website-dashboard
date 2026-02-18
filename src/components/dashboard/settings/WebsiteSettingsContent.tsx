@@ -229,6 +229,58 @@ function GeneralTab() {
               onCheckedChange={(v) => setAnnLocal(prev => ({ ...prev, open_in_new_tab: v }))}
             />
           </div>
+
+          {/* Banner Background Color */}
+          <div className="space-y-3 pt-1">
+            <Label className="text-sm font-medium">Banner Background Color</Label>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'Default', value: '', color: 'hsl(40, 20%, 92%)' },
+                { label: 'Warm Sand', value: 'hsl(40, 25%, 90%)', color: 'hsl(40, 25%, 90%)' },
+                { label: 'Soft Cream', value: 'hsl(45, 30%, 94%)', color: 'hsl(45, 30%, 94%)' },
+                { label: 'Stone', value: 'hsl(30, 10%, 60%)', color: 'hsl(30, 10%, 60%)' },
+                { label: 'Charcoal', value: 'hsl(0, 0%, 25%)', color: 'hsl(0, 0%, 25%)' },
+                { label: 'Midnight', value: 'hsl(220, 20%, 18%)', color: 'hsl(220, 20%, 18%)' },
+                { label: 'Blush', value: 'hsl(350, 30%, 88%)', color: 'hsl(350, 30%, 88%)' },
+                { label: 'Sage', value: 'hsl(140, 15%, 75%)', color: 'hsl(140, 15%, 75%)' },
+                { label: 'Slate Blue', value: 'hsl(210, 15%, 70%)', color: 'hsl(210, 15%, 70%)' },
+              ].map((preset) => {
+                const isSelected = (annLocal.bg_color || '') === preset.value;
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    title={preset.label}
+                    onClick={() => setAnnLocal(prev => ({ ...prev, bg_color: preset.value }))}
+                    className={cn(
+                      "w-8 h-8 rounded-full border border-border flex items-center justify-center transition-transform hover:scale-110",
+                      isSelected && "ring-2 ring-primary ring-offset-2"
+                    )}
+                    style={{ backgroundColor: preset.color }}
+                  >
+                    {isSelected && <Check className="w-3.5 h-3.5" style={{ color: preset.value && parseInt(preset.value.match(/(\d+)%\)$/)?.[1] || '100') < 40 ? '#fff' : '#000' }} />}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                value={annLocal.bg_color || '#e8e3da'}
+                onChange={(e) => setAnnLocal(prev => ({ ...prev, bg_color: e.target.value }))}
+                className="w-8 h-8 rounded-full border border-border cursor-pointer p-0 overflow-hidden"
+                style={{ WebkitAppearance: 'none' }}
+              />
+              <Input
+                placeholder="#hexcolor"
+                autoCapitalize="off"
+                className="flex-1 font-mono text-xs"
+                value={annLocal.bg_color || ''}
+                onChange={(e) => setAnnLocal(prev => ({ ...prev, bg_color: e.target.value }))}
+              />
+            </div>
+          </div>
+
           {annHasChanges && (
             <Button onClick={handleSaveAnnouncement} disabled={updateAnnouncement.isPending} className="w-full">
               {updateAnnouncement.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
