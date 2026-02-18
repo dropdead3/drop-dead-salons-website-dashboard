@@ -41,6 +41,8 @@ export interface WebsiteSeoLegalSettings {
   ga_id: string;
   gtm_id: string;
   meta_pixel_id: string;
+  tiktok_pixel_id: string;
+  cookie_consent_enabled: boolean;
   privacy_url: string;
   terms_url: string;
 }
@@ -65,4 +67,23 @@ export function useWebsiteThemeSettings() {
 
 export function useUpdateWebsiteThemeSettings() {
   return useUpdateSiteSetting<WebsiteThemeSettings>();
+}
+
+// === Social Links Settings ===
+export interface WebsiteSocialLinksSettings {
+  [key: string]: unknown;
+  instagram: string;
+  facebook: string;
+  twitter: string;
+  youtube: string;
+  linkedin: string;
+  tiktok: string;
+}
+
+export function useWebsiteSocialLinksSettings() {
+  return useSiteSettings<WebsiteSocialLinksSettings>('website_social_links');
+}
+
+export function useUpdateWebsiteSocialLinksSettings() {
+  return useUpdateSiteSetting<WebsiteSocialLinksSettings>();
 }

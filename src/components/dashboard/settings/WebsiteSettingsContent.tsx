@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { 
   Globe, Palette, Calendar, ShoppingBag, Scale, 
   ExternalLink, Check, Loader2, Save, Megaphone,
-  Instagram, Facebook, Twitter, Linkedin, Youtube
+  Instagram, Facebook, Twitter, Linkedin, Youtube, Eye
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { colorThemes, type ColorTheme } from '@/hooks/useColorTheme';
@@ -23,11 +23,19 @@ import {
   useUpdateWebsiteSeoLegalSettings,
   useWebsiteThemeSettings,
   useUpdateWebsiteThemeSettings,
+  useWebsiteSocialLinksSettings,
+  useUpdateWebsiteSocialLinksSettings,
   type WebsiteBookingSettings,
   type WebsiteRetailSettings,
   type WebsiteSeoLegalSettings,
   type WebsiteThemeSettings,
+  type WebsiteSocialLinksSettings,
 } from '@/hooks/useWebsiteSettings';
+import {
+  useAnnouncementBarSettings,
+  useUpdateAnnouncementBarSettings,
+  type AnnouncementBarSettings,
+} from '@/hooks/useAnnouncementBar';
 import { cn } from '@/lib/utils';
 import { DomainConfigCard } from './DomainConfigCard';
 import {
@@ -38,12 +46,86 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+const DEFAULT_SOCIAL_LINKS: WebsiteSocialLinksSettings = {
+  instagram: '',
+  facebook: '',
+  twitter: '',
+  youtube: '',
+  linkedin: '',
+  tiktok: '',
+};
+
+const SOCIAL_FIELDS = [
+  { key: 'instagram' as const, icon: Instagram, label: 'Instagram', placeholder: 'https://instagram.com/yoursalon' },
+  { key: 'facebook' as const, icon: Facebook, label: 'Facebook', placeholder: 'https://facebook.com/yoursalon' },
+  { key: 'twitter' as const, icon: Twitter, label: 'X / Twitter', placeholder: 'https://x.com/yoursalon' },
+  { key: 'youtube' as const, icon: Youtube, label: 'YouTube', placeholder: 'https://youtube.com/@yoursalon' },
+  { key: 'linkedin' as const, icon: Linkedin, label: 'LinkedIn', placeholder: 'https://linkedin.com/company/yoursalon' },
+];
+
 // ─── General Tab ───
 function GeneralTab() {
   const { effectiveOrganization } = useOrganizationContext();
+  const { toast } = useToast();
+
+  // Announcement bar
+  const { data: announcementSettings, isLoading: annLoading } = useAnnouncementBarSettings();
+  const updateAnnouncement = useUpdateAnnouncementBarSettings();
+  const [annLocal, setAnnLocal] = useState<AnnouncementBarSettings>({
+    enabled: true,
+    message_prefix: '',
+    message_highlight: '',
+    message_suffix: '',
+    cta_text: '',
+    cta_url: '',
+    open_in_new_tab: true,
+  });
+
+  useEffect(() => {
+    if (announcementSettings) setAnnLocal(announcementSettings);
+  }, [announcementSettings]);
+
+  const annHasChanges = announcementSettings && JSON.stringify(annLocal) !== JSON.stringify(announcementSettings);
+
+  const handleSaveAnnouncement = () => {
+    updateAnnouncement.mutate(annLocal, {
+      onSuccess: () => toast({ title: 'Saved', description: 'Announcement banner updated.' }),
+      onError: () => toast({ variant: 'destructive', title: 'Error', description: 'Failed to save announcement.' }),
+    });
+  };
+
+  // Social links
+  const { data: socialSettings, isLoading: socialLoading } = useWebsiteSocialLinksSettings();
+  const updateSocial = useUpdateWebsiteSocialLinksSettings();
+  const [socialLocal, setSocialLocal] = useState<WebsiteSocialLinksSettings>(DEFAULT_SOCIAL_LINKS);
+
+  useEffect(() => {
+    if (socialSettings) setSocialLocal(socialSettings);
+  }, [socialSettings]);
+
+  const socialHasChanges = socialSettings && JSON.stringify(socialLocal) !== JSON.stringify(socialSettings);
+
+  const handleSaveSocial = () => {
+    updateSocial.mutate(
+      { key: 'website_social_links', value: socialLocal },
+      {
+        onSuccess: () => toast({ title: 'Saved', description: 'Social links updated.' }),
+        onError: () => toast({ variant: 'destructive', title: 'Error', description: 'Failed to save social links.' }),
+      }
+    );
+  };
+
+  const isLoading = annLoading || socialLoading;
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  }
+
   return (
     <div className="space-y-6">
       <DomainConfigCard organizationId={effectiveOrganization?.id} />
+
+      {/* Announcement Banner */}
       <Card>
         <CardHeader>
           <CardTitle className="font-display text-lg">ANNOUNCEMENT BANNER</CardTitle>
@@ -55,43 +137,109 @@ function GeneralTab() {
               <p className="font-medium text-sm">Show announcement banner</p>
               <p className="text-xs text-muted-foreground">Displays a dismissable banner at the top of every page</p>
             </div>
-            <Switch />
+            <Switch
+              checked={annLocal.enabled}
+              onCheckedChange={(v) => setAnnLocal(prev => ({ ...prev, enabled: v }))}
+            />
           </div>
           <div className="space-y-2">
-            <Label>Banner text</Label>
-            <Input placeholder="e.g. Now accepting new clients — Book your first visit today!" />
+            <Label>Message prefix</Label>
+            <Input
+              placeholder="Are you a salon"
+              value={annLocal.message_prefix}
+              onChange={(e) => setAnnLocal(prev => ({ ...prev, message_prefix: e.target.value }))}
+            />
           </div>
+          <div className="space-y-2">
+            <Label>Highlighted text</Label>
+            <Input
+              placeholder="professional"
+              value={annLocal.message_highlight}
+              onChange={(e) => setAnnLocal(prev => ({ ...prev, message_highlight: e.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Message suffix</Label>
+            <Input
+              placeholder="looking for our extensions?"
+              value={annLocal.message_suffix}
+              onChange={(e) => setAnnLocal(prev => ({ ...prev, message_suffix: e.target.value }))}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label>CTA button text</Label>
+              <Input
+                placeholder="Shop Now"
+                value={annLocal.cta_text}
+                onChange={(e) => setAnnLocal(prev => ({ ...prev, cta_text: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>CTA link URL</Label>
+              <Input
+                placeholder="https://..."
+                value={annLocal.cta_url}
+                onChange={(e) => setAnnLocal(prev => ({ ...prev, cta_url: e.target.value }))}
+                autoCapitalize="off"
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-sm">Open link in new tab</p>
+            <Switch
+              checked={annLocal.open_in_new_tab}
+              onCheckedChange={(v) => setAnnLocal(prev => ({ ...prev, open_in_new_tab: v }))}
+            />
+          </div>
+          {annHasChanges && (
+            <Button onClick={handleSaveAnnouncement} disabled={updateAnnouncement.isPending} className="w-full">
+              {updateAnnouncement.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Save Announcement
+            </Button>
+          )}
         </CardContent>
       </Card>
 
+      {/* Social Links */}
       <Card>
         <CardHeader>
           <CardTitle className="font-display text-lg">SOCIAL LINKS</CardTitle>
           <CardDescription>Social media URLs shown in website footer and contact sections.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {[
-            { icon: Instagram, label: 'Instagram', placeholder: 'https://instagram.com/yoursalon' },
-            { icon: Facebook, label: 'Facebook', placeholder: 'https://facebook.com/yoursalon' },
-            { icon: Twitter, label: 'X / Twitter', placeholder: 'https://x.com/yoursalon' },
-            { icon: Youtube, label: 'YouTube', placeholder: 'https://youtube.com/@yoursalon' },
-            { icon: Linkedin, label: 'LinkedIn', placeholder: 'https://linkedin.com/company/yoursalon' },
-          ].map(({ icon: Icon, label, placeholder }) => (
-            <div key={label} className="flex items-center gap-3">
+          {SOCIAL_FIELDS.map(({ key, icon: Icon, label, placeholder }) => (
+            <div key={key} className="flex items-center gap-3">
               <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
-              <Input placeholder={placeholder} autoCapitalize="off" className="flex-1" />
+              <Input
+                placeholder={placeholder}
+                autoCapitalize="off"
+                className="flex-1"
+                value={socialLocal[key] || ''}
+                onChange={(e) => setSocialLocal(prev => ({ ...prev, [key]: e.target.value }))}
+              />
             </div>
           ))}
+          {socialHasChanges && (
+            <Button onClick={handleSaveSocial} disabled={updateSocial.isPending} className="w-full mt-2">
+              {updateSocial.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+              Save Social Links
+            </Button>
+          )}
         </CardContent>
       </Card>
 
       <Card>
-        <CardContent className="pt-6">
+        <CardContent className="pt-6 space-y-3">
           <Button variant="outline" className="w-full" asChild>
             <a href="/dashboard/admin/website-sections">
               <ExternalLink className="w-4 h-4 mr-2" />
               Open Full Website Editor
             </a>
+          </Button>
+          <Button variant="outline" className="w-full" onClick={() => window.open('/', '_blank')}>
+            <Eye className="w-4 h-4 mr-2" />
+            Preview Website
           </Button>
         </CardContent>
       </Card>
@@ -299,6 +447,24 @@ function BookingTab() {
           )}
         </CardContent>
       </Card>
+
+      {/* Stylist & Service visibility stubs */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="font-display text-lg">STYLIST & SERVICE VISIBILITY</CardTitle>
+              <CardDescription>Control which stylists and services appear on your booking widget.</CardDescription>
+            </div>
+            <Badge variant="secondary" className="text-[10px]">Coming Soon</Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            Fine-grained controls for showing or hiding specific stylists and services on your public booking page will be available soon.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -403,6 +569,8 @@ function SeoLegalTab() {
     ga_id: '',
     gtm_id: '',
     meta_pixel_id: '',
+    tiktok_pixel_id: '',
+    cookie_consent_enabled: false,
     privacy_url: '',
     terms_url: '',
   });
@@ -462,6 +630,34 @@ function SeoLegalTab() {
               autoCapitalize="off"
             />
           </div>
+          <div className="space-y-2">
+            <Label>TikTok Pixel ID</Label>
+            <Input 
+              placeholder="CXXXXXXXXXXXXXXXXX" 
+              value={local.tiktok_pixel_id} 
+              onChange={(e) => setLocal(prev => ({ ...prev, tiktok_pixel_id: e.target.value }))}
+              autoCapitalize="off"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="font-display text-lg">COOKIE CONSENT</CardTitle>
+          <CardDescription>Show a cookie consent banner to comply with privacy regulations.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-sm">Show cookie consent banner</p>
+              <p className="text-xs text-muted-foreground">Displays a consent banner for analytics cookies on first visit</p>
+            </div>
+            <Switch
+              checked={local.cookie_consent_enabled}
+              onCheckedChange={(v) => setLocal(prev => ({ ...prev, cookie_consent_enabled: v }))}
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -489,6 +685,13 @@ function SeoLegalTab() {
               autoCapitalize="off"
             />
           </div>
+          <p className="text-xs text-muted-foreground">
+            Don't have legal pages yet? Free generators like{' '}
+            <a href="https://www.termsfeed.com" target="_blank" rel="noopener noreferrer" className="underline">TermsFeed</a>{' '}
+            or{' '}
+            <a href="https://www.freeprivacypolicy.com" target="_blank" rel="noopener noreferrer" className="underline">FreePrivacyPolicy</a>{' '}
+            can help you create them.
+          </p>
         </CardContent>
       </Card>
 
