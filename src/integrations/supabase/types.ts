@@ -13287,6 +13287,7 @@ export type Database = {
           allow_same_day_booking: boolean | null
           category: string | null
           content_creation_time_minutes: number
+          cost: number | null
           created_at: string | null
           description: string | null
           display_order: number | null
@@ -13313,6 +13314,7 @@ export type Database = {
           allow_same_day_booking?: boolean | null
           category?: string | null
           content_creation_time_minutes?: number
+          cost?: number | null
           created_at?: string | null
           description?: string | null
           display_order?: number | null
@@ -13339,6 +13341,7 @@ export type Database = {
           allow_same_day_booking?: boolean | null
           category?: string | null
           content_creation_time_minutes?: number
+          cost?: number | null
           created_at?: string | null
           description?: string | null
           display_order?: number | null
