@@ -1,57 +1,93 @@
 
 
-## Add Session Navigation History (Back / Forward Arrows)
+## Multi-Select Location Filter for Analytics
 
 ### What Changes
 
-Add browser-style back and forward navigation arrows to the dashboard top bar, placed between the sidebar toggle button and the center search bar. These use an in-memory navigation history stack (session-only, not persisted) so users can quickly retrace their steps through the dashboard.
+Replace the single-select location dropdown with a multi-select checkbox popover when 3 or more locations exist. This lets users pick exactly which locations they want analytics for (e.g., select 3 out of 10). When there are only 1-2 locations, the current single-select behavior remains unchanged.
 
-### Layout
+### User Experience
 
 ```text
-[ Sidebar Toggle ] [ < ] [ > ]        [ Search... ]        [ controls... ]
+When 1-2 locations:   Current single-select dropdown (no change)
+
+When 3+ locations:
+
+  [ Location Filter (3 of 10) v ]      [ Today v ]
+
+  Popover opens:
+  +----------------------------------+
+  | [x] Select All                   |
+  |----------------------------------|
+  | [x] North Mesa                   |
+  | [x] Val Vista Lakes              |
+  | [x] Gilbert                      |
+  | [ ] Scottsdale                   |
+  | [ ] Chandler                     |
+  | ...                              |
+  +----------------------------------+
 ```
 
-The arrows sit to the right of the sidebar collapse button in the left section of the header bar, directly beside the existing controls. They mirror the browser back/forward paradigm that users already understand.
+- "Select All" checkbox at the top toggles all on/off
+- Trigger label shows "All Locations" when all selected, or "X of Y Locations" when a subset is selected
+- Single location selected shows that location's name directly
+- Deselecting all automatically re-selects all (cannot have zero selections)
 
-### How It Works
+### Backward Compatibility Strategy
 
-1. **NavigationHistoryContext** -- a new React context that maintains an in-memory stack of visited paths during the current session
-   - Tracks a `history` array and a `currentIndex` pointer
-   - Listens to `react-router-dom` location changes and pushes new entries (deduplicating consecutive duplicates)
-   - Exposes `canGoBack`, `canGoForward`, `goBack()`, `goForward()` 
-   - Ignores navigations triggered by its own `goBack`/`goForward` calls (flag-based) to avoid double-pushing
-   - Session-only: resets on page refresh or logout -- no persistence needed
+Currently `locationId` is a `string` used in 65+ hooks with the pattern:
+```ts
+if (locationId && locationId !== 'all') query = query.eq('location_id', locationId);
+```
 
-2. **Navigation Arrows in DashboardLayout** -- two small ghost icon buttons (`ArrowLeft`, `ArrowRight`) added to the left section of the top bar
-   - Disabled state (reduced opacity) when `canGoBack` / `canGoForward` is false
-   - Tooltips: "Back" and "Forward"
-   - Same `h-8 w-8` sizing as the sidebar toggle for visual consistency
+To avoid touching all 65 hooks, the approach:
+
+1. Keep `locationId: string` in the `AnalyticsFilters` interface
+2. Encode multi-select as a **comma-separated string** (e.g. `"uuid1,uuid2,uuid3"`)
+3. Create a shared utility `applyLocationFilter(query, locationId)` that:
+   - `'all'` or empty: no filter applied
+   - Single UUID: `.eq('location_id', id)`
+   - Comma-separated: `.in('location_id', ids)`
+4. Migrate hooks **incrementally** -- start with the hooks used by pinned dashboard cards, then expand to Analytics Hub and other pages in a follow-up
 
 ### Technical Details
 
-**New file: `src/contexts/NavigationHistoryContext.tsx`**
-- Wraps children, listens to `useLocation()` changes
-- Maintains `history: string[]` (pathname + search + hash) and `currentIndex: number`
-- On location change: if not triggered internally, slice history at currentIndex+1 and push new entry
-- `goBack`: decrement index, navigate to `history[currentIndex - 1]` with internal flag
-- `goForward`: increment index, navigate to `history[currentIndex + 1]` with internal flag
-- Cap history at ~50 entries to prevent unbounded growth
+**New file: `src/components/ui/location-multi-select.tsx`**
+- A Popover-based multi-select component with checkboxes
+- Props: `locations`, `selectedIds`, `onSelectionChange`, `canViewAggregate`
+- Uses Popover + Command or simple checkbox list
+- "Select All" toggle at the top
+- Trigger displays contextual label
 
-**Modified file: `src/components/dashboard/DashboardLayout.tsx`**
-- Import `NavigationHistoryProvider` and `useNavigationHistory`
-- Wrap the layout (or add provider at the DashboardLayout level, inside the Router)
-- Add two `Button variant="ghost" size="icon"` with `ArrowLeft` / `ArrowRight` icons in the left section of the top bar, after the sidebar toggle and before the org switcher
-- Buttons call `goBack()` / `goForward()` and are disabled when `!canGoBack` / `!canGoForward`
-- Wrapped in `Tooltip` for "Back" / "Forward" labels
+**New file: `src/lib/locationFilter.ts`**
+- `applyLocationFilter(query, locationId)` utility
+- `parseLocationIds(locationId: string): string[]` helper
+- `encodeLocationIds(ids: string[]): string` helper
+- `isAllLocations(locationId: string): boolean` helper
+
+**Modified: `src/components/dashboard/AnalyticsFilterBar.tsx`**
+- Import `LocationMultiSelect`
+- Conditionally render multi-select (3+ locations) vs single-select (1-2 locations)
+- The `onLocationChange` callback still passes a string (either `'all'`, a single UUID, or comma-separated UUIDs)
+
+**Modified: `src/pages/dashboard/DashboardHome.tsx`**
+- No state type changes needed (remains `string`)
+- Works seamlessly since the encoding is transparent
+
+**Modified (incremental): Key hooks**
+- Replace `if (locationId && locationId !== 'all') query.eq(...)` with `applyLocationFilter(query, locationId)` in the most critical hooks first:
+  - `useSalesData.ts`
+  - `useWeekAheadRevenue.ts`
+  - `useCapacityUtilization.ts`
+  - `useRetailAttachmentRate.ts`
+  - `useRebookingRate.ts`
+  - `useStaffUtilization.ts`
+- Remaining hooks can be migrated in follow-up passes -- they still work for single-location and all-locations selections
 
 ### Files
-- **New:** `src/contexts/NavigationHistoryContext.tsx`
-- **Modified:** `src/components/dashboard/DashboardLayout.tsx` (provider wrap + arrow buttons in header)
 
-### Edge Cases Handled
-- Consecutive visits to the same URL are deduplicated
-- Internal navigation (from goBack/goForward) does not push to history
-- History capped at 50 entries
-- Query param changes (e.g. tab switches in Analytics Hub) are tracked as separate history entries
-- Works alongside existing breadcrumbs without conflict
+- **New:** `src/components/ui/location-multi-select.tsx`
+- **New:** `src/lib/locationFilter.ts`
+- **Modified:** `src/components/dashboard/AnalyticsFilterBar.tsx`
+- **Modified:** Key analytics hooks (6-8 files, replacing `.eq` with `applyLocationFilter`)
+
