@@ -1,34 +1,29 @@
 
 
-## Add Service Mix Legend to Service Popularity Card
+## Clean Up Executive Brief Card Nesting
 
-### What Changes
-Add a compact Service Mix category summary below the bar chart in the Service Popularity card, using the existing `ServiceMixLegend` component already built for the Forecasting cards.
+### Problem
+The Executive Brief area has three nested card layers:
+1. Outer "Executive Brief" wrapper (with its own icon, title, close button, and `shadow-lg`)
+2. The `WeeklyLeverSection` component (which is itself a `Card` with icon, title, and "Generate New" button)
+3. The inner content area (empty state or recommendation)
 
-### How It Works
-The Service Popularity chart already has per-service data with `category` fields and `totalRevenue` values. We aggregate these into a `byCategory` record and pass it to `ServiceMixLegend`, which renders colored dots with category names and percentages.
+This creates a visually redundant "card within a card within a card" effect and the outer wrapper adds an unnecessary `shadow-lg`.
 
-The legend appears unconditionally (both Revenue and Frequency tabs) since the category breakdown is always relevant context when viewing individual service rankings.
+### Solution
+Remove the intermediate wrapper card entirely. When the Executive Brief button is expanded, render `WeeklyLeverSection` directly -- it already has its own card styling, header with icon, title, and action button. The close (X) button moves into the `WeeklyLeverSection` header row, passed as a callback prop.
 
-### Technical Details
+### Changes
 
-**File: `src/components/dashboard/sales/ServicePopularityChart.tsx`**
+**File: `src/components/dashboard/analytics/LeadershipTabContent.tsx`**
+- Remove the intermediate wrapper div (the one with `shadow-lg`, "EXECUTIVE BRIEF" header, and close button)
+- Render `<WeeklyLeverSection />` directly inside the motion container
+- Pass an `onClose` prop to `WeeklyLeverSection` so it can render the X button in its own header
 
-1. Import `ServiceMixLegend` from `@/components/dashboard/analytics/ServiceMixLegend`
-2. Compute a `byCategory` record from the full `data` array (not just `sortedData`), aggregating `totalRevenue` per category
-3. Render `<ServiceMixLegend byCategory={byCategory} />` between the chart tabs and the Stylist Breakdown section
+**File: `src/components/dashboard/analytics/WeeklyLeverSection.tsx`**
+- Accept an optional `onClose?: () => void` prop
+- When `onClose` is provided, render the X close button in the header row (after the "Generate New" button)
 
-The `byCategory` computation:
-```tsx
-const byCategory = useMemo(() => {
-  const map: Record<string, number> = {};
-  data?.forEach(svc => {
-    const cat = svc.category || 'Other';
-    map[cat] = (map[cat] || 0) + svc.totalRevenue;
-  });
-  return map;
-}, [data]);
-```
+### Result
+The expanded Executive Brief will show exactly one card: the Weekly Lever card with its icon, title, Generate New button, and close button all in one header row. No nested card borders, no corner shadows.
 
-### Files Modified
-- `src/components/dashboard/sales/ServicePopularityChart.tsx` (import + computed value + render)
