@@ -1,37 +1,47 @@
 
 
-## Remove Moon Icons from X-Axis Ticks, Bold "Closed" Text
+## Align Capacity Utilization Chart with Forecasting Chart Elements
 
-### What Changes
+### What's Changing
 
-In the x-axis tick labels across all four chart files, the inline SVG moon path will be removed. The "Closed" text will be restyled to match the appointment count line: `text-[11px]` with `fontWeight: 500` and `fill-foreground` (dark text, not muted). The moon icons in the bar overlay area (via `<Customized>`) remain untouched.
+The Capacity Utilization bar chart currently lacks three visual elements present in the Forecasting card. This plan adds them for consistency.
 
-### Files and Edits
+### 1. X-Axis Line
 
-**1. `src/components/dashboard/sales/CapacityUtilizationCard.tsx` (lines 88-95)**
-- Remove the `<g>` with the moon SVG path (lines 88-92)
-- Change the "Closed" text from `fill-muted-foreground text-[9px]` to `fill-foreground text-[11px]` with `fontWeight: 500`
-- Remove the x-offset (change `x={4}` to `x={0}`) since the moon icon no longer pushes the text right
+Add a subtle axis line matching the forecasting chart style.
 
-**2. `src/components/dashboard/analytics/CapacityUtilizationSection.tsx` (lines 89-95)**
-- Same changes as above
+**File: `src/components/dashboard/sales/CapacityUtilizationCard.tsx`**
+- Change `axisLine={false}` to `axisLine={{ stroke: 'hsl(var(--foreground) / 0.15)', strokeWidth: 1 }}`
 
-**3. `src/components/dashboard/sales/WeekAheadForecast.tsx`**
-- Two occurrences:
-  - Lines 114-123: "has appointments + is closed" case — remove moon path, bold "Closed"
-  - Lines 127-136: "no appointments + is closed" case — remove moon path, bold "Closed"
+### 2. Moon Icons in Bar Area for Closed Days
 
-**4. `src/components/dashboard/sales/ForecastingCard.tsx`**
-- Two occurrences:
-  - Lines 265-276: "has appointments + is closed" case — remove moon path, bold "Closed"
-  - Lines 279-288: "no appointments + is closed" case — remove moon path, bold "Closed"
+Add a `<Customized>` component (same pattern as ForecastingCard) that renders inline SVG moon paths centered in the bar space for each closed day.
 
-### Before / After
+**File: `src/components/dashboard/sales/CapacityUtilizationCard.tsx`**
+- Import `Customized` from recharts
+- Add a `<Customized>` block inside the `<BarChart>` that iterates through `chartData`, checks `days[index]?.isClosed`, and renders a scaled moon `<path>` at the horizontal center of each closed day's bar slot
 
-```text
-Before:  <moon-svg> + <text class="fill-muted-foreground text-[9px]">Closed</text>
-After:   <text class="fill-foreground text-[11px]" fontWeight={500}>Closed</text>
-```
+### 3. Average Utilization Reference Line + Badge
 
-No changes to the `<Customized>` bar-area moon overlays in any file.
+Add a dashed horizontal reference line at the average utilization percentage across open days, with a styled pill badge (matching the forecasting card's "Daily Operating Avg" badge aesthetic).
 
+**File: `src/components/dashboard/sales/CapacityUtilizationCard.tsx`**
+- Compute `avgUtilization` from open days only (exclude closed days)
+- Add a `<Customized>` component that:
+  - Draws a dashed line at the Y position corresponding to `avgUtilization`
+  - Renders a `foreignObject` with a pill badge showing "Avg: XX%"
+  - Uses the same warm amber styling as the forecasting card (gold dashed line, translucent amber pill)
+
+### Technical Details
+
+The same changes apply to `CapacityUtilizationSection.tsx` (analytics page version) for consistency.
+
+| Element | Before | After |
+|---------|--------|-------|
+| X-axis line | Hidden (`axisLine={false}`) | Subtle line matching forecasting |
+| Closed day bar area | Transparent bar, no icon | SVG moon path centered in slot |
+| Average reference | None | Dashed line + amber pill badge |
+
+### Files Modified
+- `src/components/dashboard/sales/CapacityUtilizationCard.tsx`
+- `src/components/dashboard/analytics/CapacityUtilizationSection.tsx`
