@@ -1,35 +1,23 @@
 
 
-# Match Live Previews to Actual Website Styling
+# Remove Inline Live Preview from Website Editor
 
-## Problem
-The live previews in the settings cards don't match how these components actually render on the live website. The announcement banner uses wrong text sizes, banned font weights (`font-semibold`), and different layout. The social links preview shows abstract icon circles instead of the actual footer "Connect" section format.
+## What Changes
+Remove the resizable live preview panel from the Website Editor page (`WebsiteSectionsHub.tsx`). The "Preview" button in the header already exists and can be repurposed to open the site in a new tab or kept as-is for a future drawer implementation. The inline iframe preview panel will be fully removed.
 
-## Changes (single file: WebsiteSettingsContent.tsx)
+## Specific Changes
 
-### 1. Announcement Banner Preview (lines 238-262)
-Replace the current preview with markup that mirrors `Header.tsx` lines 202-218:
+### File: `src/pages/dashboard/admin/WebsiteSectionsHub.tsx`
 
-- Layout: `bg-secondary py-2.5 px-4` with `flex items-center justify-between` (matching the desktop view)
-- Text: `text-sm text-foreground/80` for the message (not `text-xs`)
-- Highlight: `font-medium` only (remove `font-semibold` which is a banned class, remove underline)
-- CTA: `uppercase tracking-wider text-sm font-sans font-medium text-foreground` with a proper `ArrowRight` icon from lucide-react (not raw SVG)
-- Remove centered layout, use `justify-between` to match the live site's desktop rendering
+1. **Remove the `LivePreviewPanel` import** (line 33)
+2. **Remove `showPreview` state** (line 102) -- no longer needed
+3. **Remove the preview toggle button** from the header (lines 168-184) -- replace with just the "Open Site" button, or convert to a simple external link
+4. **Remove the conditional `ResizablePanel`** block that renders the `LivePreviewPanel` (lines 210-218)
+5. **Simplify the main panel** `defaultSize` -- remove the ternary `showPreview ? 50 : 80` and just use `80` (line 135)
+6. **Clean up unused imports** -- remove `PanelRightClose`, `PanelRightOpen` from lucide imports since they're only used by the preview toggle button
 
-### 2. Social Links Preview (lines 292-317)
-Replace the icon circles with markup that mirrors `Footer.tsx` lines 117-140:
-
-- "Connect" heading: `text-xs uppercase tracking-[0.2em] text-muted-foreground font-sans`
-- Show each social platform as a text link (like the footer does with Instagram), using `text-sm font-sans font-light text-foreground/50` for filled URLs
-- Dim/hide platforms without URLs
-- Include the platform icon at `size={18}` alongside the URL or handle text, matching the footer's `inline-flex items-center gap-2` pattern
-
-### Summary of Visual Fixes
-| Element | Current (Wrong) | Fixed (Matches Live) |
-|---------|-----------------|---------------------|
-| Banner text size | `text-xs` | `text-sm` |
-| Highlight weight | `font-semibold underline` | `font-medium` (no underline) |
-| CTA style | Colored, inline | Uppercase, tracking-wider, ArrowRight icon |
-| Banner layout | Centered, all inline | Flex justify-between |
-| Social preview | Abstract circles | Text links with icons, matching footer |
+### What Stays
+- The "Open Site" button (opens site in a new tab) remains
+- The sidebar toggle and all editor content remain unchanged
+- The `LivePreviewPanel` component file itself is kept (it's used in `WebsiteSettingsContent.tsx`)
 
