@@ -27,6 +27,8 @@ export interface ServiceEfficiencyRow {
   avgTipPct: number;
   stylistBreakdown: StylistBreakdown[];
   concentrationRisk: boolean; // true if top stylist > 70% of service revenue
+  dayDistribution: number[]; // 7 values, index 0=Mon..6=Sun
+  peakHour: string; // e.g. "Tue & Thu afternoons"
 }
 
 export interface ServiceEfficiencyData {
@@ -101,6 +103,8 @@ export function useServiceEfficiency(
       totalRevenue: number; count: number; totalDurationMin: number;
       newClients: number; rebooked: number; totalTips: number;
       stylistMap: Map<string, { rev: number; dur: number; count: number }>;
+      dayMap: Map<number, number>; // 0=Mon..6=Sun
+      slotMap: Map<string, number>; // 'morning'|'afternoon'|'evening'
     }>();
     let overallRevenue = 0;
     let overallDurationMin = 0;
@@ -125,6 +129,8 @@ export function useServiceEfficiency(
         totalRevenue: 0, count: 0, totalDurationMin: 0,
         newClients: 0, rebooked: 0, totalTips: 0,
         stylistMap: new Map(),
+        dayMap: new Map(),
+        slotMap: new Map(),
       };
       existing.totalRevenue += rev;
       existing.count += 1;
@@ -132,6 +138,21 @@ export function useServiceEfficiency(
       if (a.is_new_client) existing.newClients += 1;
       if (a.rebooked_at_checkout) existing.rebooked += 1;
       existing.totalTips += Number(a.tip_amount) || 0;
+
+      // Day-of-week tracking (0=Mon..6=Sun)
+      if (a.appointment_date) {
+        const d = new Date(a.appointment_date);
+        const jsDay = d.getUTCDay(); // 0=Sun
+        const monDay = jsDay === 0 ? 6 : jsDay - 1; // convert to 0=Mon
+        existing.dayMap.set(monDay, (existing.dayMap.get(monDay) || 0) + 1);
+      }
+
+      // Time slot tracking
+      if (a.start_time) {
+        const hour = parseInt(a.start_time.split(':')[0], 10);
+        const slot = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'evening';
+        existing.slotMap.set(slot, (existing.slotMap.get(slot) || 0) + 1);
+      }
 
       // Stylist tracking
       const staffId = a.phorest_staff_id || 'unknown';
@@ -170,6 +191,22 @@ export function useServiceEfficiency(
 
       const topShare = stylistBreakdown.length > 0 ? stylistBreakdown[0].revShare : 0;
 
+      // Day distribution (Mon-Sun)
+      const dayDistribution = Array.from({ length: 7 }, (_, i) => data.dayMap.get(i) || 0);
+
+      // Peak hour summary
+      const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      const maxDayCount = Math.max(...dayDistribution);
+      const peakDays = dayDistribution
+        .map((count, i) => ({ name: dayNames[i], count }))
+        .filter(d => d.count >= maxDayCount * 0.8 && d.count > 0)
+        .map(d => d.name);
+      const slotEntries = [...data.slotMap.entries()].sort((a, b) => b[1] - a[1]);
+      const peakSlot = slotEntries.length > 0 ? slotEntries[0][0] : '';
+      const peakHour = peakDays.length > 0 && peakSlot
+        ? `${peakDays.join(' & ')} ${peakSlot}s`
+        : peakDays.length > 0 ? peakDays.join(' & ') : '—';
+
       services.push({
         serviceName: name,
         category: catInfo?.category || 'Other',
@@ -185,6 +222,8 @@ export function useServiceEfficiency(
         avgTipPct: data.totalRevenue > 0 ? (data.totalTips / data.totalRevenue) * 100 : 0,
         stylistBreakdown,
         concentrationRisk: topShare > 70 && stylistBreakdown.length > 1,
+        dayDistribution,
+        peakHour,
       });
     }
 
