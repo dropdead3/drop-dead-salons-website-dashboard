@@ -1,87 +1,49 @@
 
 
-## Consolidate Three Staff Cards into One "Client Engagement" Card
+## Staff Performance Subtab — Gap Fixes and Enhancements
 
-### Why Consolidate
+### 1. Fix Staff Performance Leaderboard design system compliance
 
-The three cards (Client Visits, Returning Clients, Rebooking Overview) are closely related:
-- All query the same `phorest_appointments` table
-- All group by stylist with the same bar chart layout
-- All use the same two-panel (hero KPI + bar chart) structure
-- Client Visits and Returning Clients already share the same data hook, meaning the same query runs twice
-- They occupy three full-width card slots on the page when they could be one powerful card with three "lenses"
+**File**: `src/components/dashboard/analytics/SalesTabContent.tsx` (lines 397-429)
 
-Consolidating them reduces page scroll, eliminates redundant data fetching, and creates a richer, more interactive single card that tells a complete client engagement story.
+- Add `className={tokens.card.wrapper}` to the leaderboard `<Card>`
+- Restructure the `<CardHeader>` to use two-column `justify-between` layout
+- Add `MetricInfoTooltip` next to the "STAFF PERFORMANCE" title
+- Add `AnalyticsFilterBadge` in the right column
+- Add an `EmptyState` fallback when `stylistData` is empty or undefined
+- Use `tokens.card.iconBox`, `tokens.card.icon`, `tokens.card.title` for icon and title
 
-### New Design: Single "Client Engagement" Card
+### 2. Make StaffKPISummary tiles interactive (smart tab linking)
 
-```text
-+----------------------------------------------------------------------+
-| [Users icon]  CLIENT ENGAGEMENT  (i)     [Visits|Retention|Rebooking] |
-|               Client behavior by stylist       All Locations | Today  |
-+----------------------------------------------------------------------+
-|                         |                                             |
-|     148                 |  VISITS BY STYLIST  (when Visits selected)  |
-|   TOTAL VISITS          |  Alexis H.   |██████████████| 40           |
-|   ▲ 8.2% vs prior      |  Cienna R.   |████████████  | 38           |
-|                         |  Jamie V.    |███████████   | 36           |
-|                         |  ...                                       |
-+-------------------------+---------------------------------------------+
-|  [Drill-down panel when bar clicked]                                  |
-+----------------------------------------------------------------------+
-```
+**File**: `src/components/dashboard/sales/StaffKPISummary.tsx`
+**File**: `src/components/dashboard/analytics/SalesTabContent.tsx`
 
-The header right column contains a `FilterTabsList` toggle with three options:
-- **Visits**: Shows total visit count per stylist (current Client Visits)
-- **Retention**: Shows % returning per stylist (current Returning Clients)
-- **Rebooking**: Shows % rebooked per stylist (current Rebooking Overview)
+- Accept an `onTileClick` callback prop on `StaffKPISummary` that receives the engagement view key (`'visits' | 'retention' | 'rebooking'`)
+- Map each tile to its corresponding view: Total Visits -> `'visits'`, Returning % -> `'retention'`, Rebooking % -> `'rebooking'`, Avg Ticket -> `'visits'`
+- Add `cursor-pointer hover:border-primary/30 transition-colors` to clickable tiles
+- In `SalesTabContent`, lift the `ClientEngagementCard`'s active view into shared state. When a KPI tile is clicked, set that state so the engagement card switches to the matching tab and scrolls into view via `scrollIntoView({ behavior: 'smooth' })`
 
-The hero KPI on the left dynamically changes based on the active view:
-- Visits: "148 TOTAL VISITS" with PoP change
-- Retention: "72% RETURNING" with PoP change
-- Rebooking: "45% REBOOKED" with PoP change
+### 3. Add Avg Ticket period-over-period trend
 
-The drill-down panel adapts its content to the active view:
-- Visits: New vs Returning split, Average Ticket, Top 5 Services
-- Retention: Total Appointments, New/Returning counts, Average Ticket, Returning Rate
-- Rebooking: Total Appointments, Rebooked Count/Rate, Avg Ticket Rebooked vs Not
+**File**: `src/hooks/useClientEngagement.ts`
 
-### Data Hook: Combined `useClientEngagement`
+- Compute `avgTicketCurrent` and `avgTicketPrior` from the current/prior appointment data (total revenue / total appointments for each period)
+- Add to the return object: `avgTicket: { current: number, prior: number, percentChange: number | null }`
 
-A single hook that fetches all three datasets in one query pass. Instead of two separate hooks making redundant calls, this hook queries `phorest_appointments` once with all needed fields (`phorest_staff_id, is_new_client, rebooked_at_checkout, total_price, service_name, status`) and computes all three views from the same dataset. This halves the number of database round-trips.
+**File**: `src/components/dashboard/sales/StaffKPISummary.tsx`
 
-Returns a unified structure:
-- `visits`: total count, PoP change, per-staff breakdown with top services and avg ticket
-- `retention`: overall returning rate, PoP change, per-staff returning percentage
-- `rebooking`: overall rebooked rate, PoP change, per-staff rebooking rate and ticket comparison
+- Replace the hardcoded `change: null` on the Avg Ticket tile with `data.avgTicket.percentChange`
 
-### Technical Details
+### 4. Leaderboard empty state
 
-**Files created:**
-- `src/hooks/useClientEngagement.ts` -- Combined hook fetching all fields in one paginated pass, computing visits, retention, and rebooking data from the same result set
-- `src/components/dashboard/sales/ClientEngagementCard.tsx` -- Unified card with view toggle, dynamic hero KPI, and view-aware drill-down
+**File**: `src/components/dashboard/analytics/SalesTabContent.tsx`
 
-**Files deleted:**
-- `src/components/dashboard/sales/ClientVisitsCard.tsx`
-- `src/components/dashboard/sales/ReturningClientsCard.tsx`
-- `src/components/dashboard/sales/RebookingOverviewCard.tsx`
-- `src/hooks/useClientVisitsByStaff.ts` (only if no other consumers)
-- `src/hooks/useRebookingByStaff.ts`
+- Wrap the existing `stylistData?.slice(0, 10).map(...)` block with a conditional: if `stylistData` is empty or undefined after loading completes, render `<EmptyState icon={CreditCard} title="No staff data" description="No revenue data found for the selected period." />`
 
-**Files modified:**
-- `src/components/dashboard/analytics/SalesTabContent.tsx` -- Replace three card imports/instances with one `ClientEngagementCard`
+### Technical notes
 
-**Design compliance:**
-- View toggle uses `FilterTabsList` / `FilterTabsTrigger` in the header right column (this is a view-level toggle per card header rules, not a sort toggle)
-- Single `AnalyticsFilterBadge` in header right column
-- `tokens.card.wrapper`, `tokens.card.iconBox`, `tokens.card.title` on header
-- Glass gradient bars with active-bar highlighting (reused gradient pattern)
-- `framer-motion` drill-down with "Click a bar to explore" hint
-- Bar labels show counts for Visits view, percentages for Retention/Rebooking views
-- `XAxis domain` adjusts: unbounded for Visits, `[0, 100]` for percentage views
-- Skeleton and empty states match the two-panel layout
-- All design tokens, React Router `Link`, `AnimatedBlurredAmount` patterns preserved
-
-**Additional fix -- staff name resolution:**
-The staff name fallback currently shows raw Phorest IDs when no mapping exists. The new hook will add a secondary fallback: if neither mapping nor `phorest_staff_name` exists, it will query the appointment's own `staff_name` field (if available) before falling back to a truncated ID with an ellipsis, so the chart is more readable even with incomplete mapping data.
+- The `useClientEngagement` hook already fetches `total_price` for both current and prior periods, so computing the aggregate avg ticket and its trend requires no new database queries
+- The smart tab linking uses a React `useRef` on the engagement card wrapper and `scrollIntoView` for smooth UX
+- All changes follow existing design token patterns and card header rules
+- The leaderboard card uses a separate data source (`useStylistPerformance` or similar), so the `AnalyticsFilterBadge` will use the same `filterContext` already threaded through the subtab
 
