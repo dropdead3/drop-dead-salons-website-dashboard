@@ -320,7 +320,7 @@ export function CapacityUtilizationSection({
               <Calendar className="w-4 h-4 text-muted-foreground" />
               <span className="text-sm font-medium">Daily Utilization</span>
             </div>
-            <div className="h-[220px]">
+            <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 20, right: 5, bottom: 35, left: 5 }}>
                   <XAxis 
