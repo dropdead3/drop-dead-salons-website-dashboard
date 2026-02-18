@@ -265,20 +265,6 @@ function GeneralTab() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="pt-6 space-y-3">
-          <Button variant="outline" className="w-full" asChild>
-            <a href="/dashboard/admin/website-sections">
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Open Full Website Editor
-            </a>
-          </Button>
-          <Button variant="outline" className="w-full" onClick={() => window.open('/', '_blank')}>
-            <Eye className="w-4 h-4 mr-2" />
-            Preview Website
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }
@@ -945,28 +931,42 @@ function SeoLegalTab() {
 export function WebsiteSettingsContent() {
   return (
     <Tabs defaultValue="general" className="w-full">
-      <TabsList>
-        <TabsTrigger value="general" className="gap-1.5">
-          <Globe className="w-4 h-4" />
-          General
-        </TabsTrigger>
-        <TabsTrigger value="theme" className="gap-1.5">
-          <Palette className="w-4 h-4" />
-          Theme
-        </TabsTrigger>
-        <TabsTrigger value="booking" className="gap-1.5">
-          <Calendar className="w-4 h-4" />
-          Booking
-        </TabsTrigger>
-        <TabsTrigger value="retail" className="gap-1.5">
-          <ShoppingBag className="w-4 h-4" />
-          Retail
-        </TabsTrigger>
-        <TabsTrigger value="seo" className="gap-1.5">
-          <Scale className="w-4 h-4" />
-          SEO & Legal
-        </TabsTrigger>
-      </TabsList>
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <TabsList>
+          <TabsTrigger value="general" className="gap-1.5">
+            <Globe className="w-4 h-4" />
+            General
+          </TabsTrigger>
+          <TabsTrigger value="theme" className="gap-1.5">
+            <Palette className="w-4 h-4" />
+            Theme
+          </TabsTrigger>
+          <TabsTrigger value="booking" className="gap-1.5">
+            <Calendar className="w-4 h-4" />
+            Booking
+          </TabsTrigger>
+          <TabsTrigger value="retail" className="gap-1.5">
+            <ShoppingBag className="w-4 h-4" />
+            Retail
+          </TabsTrigger>
+          <TabsTrigger value="seo" className="gap-1.5">
+            <Scale className="w-4 h-4" />
+            SEO & Legal
+          </TabsTrigger>
+        </TabsList>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <a href="/dashboard/admin/website-sections">
+              <ExternalLink className="w-4 h-4 mr-1.5" />
+              Editor
+            </a>
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => window.open('/', '_blank')}>
+            <Eye className="w-4 h-4 mr-1.5" />
+            Preview
+          </Button>
+        </div>
+      </div>
 
       <TabsContent value="general"><GeneralTab /></TabsContent>
       <TabsContent value="theme"><ThemeTab /></TabsContent>
