@@ -324,7 +324,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
       </DrillDown>
       <DrillDown open={expandedKpi === 'active'}>
         <Card className="border-primary/20"><CardContent className="p-4">
-          <p className="text-xs font-medium text-muted-foreground mb-2">Services booked this period: <strong>{data?.activeServiceCount || 0}</strong></p>
+          <p className="text-xs font-medium text-muted-foreground mb-2">Services booked this period: <span className="font-medium">{data?.activeServiceCount || 0}</span></p>
           <p className="text-xs text-muted-foreground">The count of distinct services that had at least one booking. Review your full service menu to identify dormant services that may be candidates for retirement or promotion.</p>
         </CardContent></Card>
       </DrillDown>
@@ -354,7 +354,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
               <div className="space-y-1.5">{bottom5ByRPH.map(s => (<div key={s.serviceName} className="flex justify-between text-sm"><span className="truncate max-w-[160px]">{s.serviceName}</span><span className="font-medium tabular-nums text-red-500"><BlurredAmount>{formatCurrency(s.revPerHour)}</BlurredAmount>/hr</span></div>))}</div>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground mt-3">Salon average: <strong>{formatCurrency(data?.avgRevPerHour || 0)}</strong>/hr</p>
+          <p className="text-xs text-muted-foreground mt-3">Salon average: <span className="font-medium">{formatCurrency(data?.avgRevPerHour || 0)}</span>/hr</p>
         </CardContent></Card>
       </DrillDown>
     </div>
@@ -413,8 +413,8 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                       const isExpanded = expandedCategory === cat.category;
                       const clientStats = getCategoryClientStats(cat.services);
                       return (
-                        <React.Fragment key={cat.category}>
-                          <TableRow key={cat.category} className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedCategory(isExpanded ? null : cat.category)}>
+                         <React.Fragment key={cat.category}>
+                          <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedCategory(isExpanded ? null : cat.category)}>
                             <TableCell>
                               <div className="flex items-center gap-2">
                                 <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: cat.color }} />
@@ -435,8 +435,8 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
                                   <div className="p-4 bg-muted/20 space-y-3">
                                     <div className="flex gap-4 text-xs">
-                                      <span className="flex items-center gap-1"><Users className="w-3 h-3" /> New clients: <strong>{Math.round(clientStats.newPct)}%</strong></span>
-                                      <span className="flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Rebook rate: <strong>{Math.round(clientStats.rebookRate)}%</strong></span>
+                                      <span className="flex items-center gap-1"><Users className="w-3 h-3" /> New clients: <span className="font-medium">{Math.round(clientStats.newPct)}%</span></span>
+                                      <span className="flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Rebook rate: <span className="font-medium">{Math.round(clientStats.rebookRate)}%</span></span>
                                     </div>
                                     <div className="space-y-1">
                                       {cat.services.slice(0, 8).map(svc => {
@@ -588,7 +588,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                     const isExp = expandedEfficiency === s.serviceName;
                     return (
                       <React.Fragment key={s.serviceName}>
-                        <TableRow key={s.serviceName} className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedEfficiency(isExp ? null : s.serviceName)}>
+                        <TableRow className="cursor-pointer hover:bg-muted/50" onClick={() => setExpandedEfficiency(isExp ? null : s.serviceName)}>
                           <TableCell className="font-medium text-sm max-w-[200px] truncate">
                             <div className="flex items-center gap-1.5">
                               {s.serviceName}
@@ -610,9 +610,9 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
                                 <div className="p-4 bg-muted/20 space-y-4">
                                   <div className="flex flex-wrap gap-4 text-xs">
-                                    <span className="flex items-center gap-1"><Users className="w-3 h-3" /> New clients: <strong>{Math.round(s.newClientPct)}%</strong></span>
-                                    <span className="flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Rebook rate: <strong>{Math.round(s.rebookRate)}%</strong></span>
-                                    <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> Avg tip: <strong>{s.avgTipPct.toFixed(1)}%</strong></span>
+                                    <span className="flex items-center gap-1"><Users className="w-3 h-3" /> New clients: <span className="font-medium">{Math.round(s.newClientPct)}%</span></span>
+                                    <span className="flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Rebook rate: <span className="font-medium">{Math.round(s.rebookRate)}%</span></span>
+                                    <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> Avg tip: <span className="font-medium">{s.avgTipPct.toFixed(1)}%</span></span>
                                     {s.concentrationRisk && (
                                       <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400"><AlertTriangle className="w-3 h-3" /> Concentration risk — top stylist holds {Math.round(s.stylistBreakdown[0]?.revShare || 0)}% of revenue</span>
                                     )}
@@ -654,7 +654,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                                         })}
                                       </div>
                                       {s.peakHour && s.peakHour !== '—' && (
-                                        <p className="text-[10px] text-muted-foreground mt-1">Peak: <strong>{s.peakHour}</strong></p>
+                                        <p className="text-[10px] text-muted-foreground mt-1">Peak: <span className="font-medium">{s.peakHour}</span></p>
                                       )}
                                     </div>
                                   )}
@@ -670,7 +670,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
               </Table>
               {data && (
                 <div className="mt-3 text-xs text-muted-foreground flex items-center gap-4 px-4">
-                  <span>Salon avg: <strong>{formatCurrency(data.avgRevPerHour)}</strong>/hr</span>
+                  <span>Salon avg: <span className="font-medium">{formatCurrency(data.avgRevPerHour)}</span>/hr</span>
                   <span className="text-emerald-600 dark:text-emerald-400">■ Above avg</span>
                   <span className="text-red-500 dark:text-red-400">■ Below avg</span>
                   <span className="text-amber-500">▲ Concentration risk</span>
@@ -701,7 +701,10 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg"><RefreshCw className="w-5 h-5 text-primary" /></div>
               <div>
-                <CardTitle className="font-display text-base tracking-wide">SERVICE REBOOKING RATES</CardTitle>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-base tracking-wide">SERVICE REBOOKING RATES</CardTitle>
+                  <MetricInfoTooltip description="Percentage of appointments where the client rebooked at checkout. Green (>70%) = strong retention. Amber (40-70%) = needs attention. Red (<40%) = investigate." />
+                </div>
                 <CardDescription>
                   Quality signal — low rebook rate means clients aren't coming back for this service
                   {rebookLostRevenue.total > 0 && (
@@ -711,7 +714,6 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                   )}
                 </CardDescription>
               </div>
-              <MetricInfoTooltip description="Percentage of appointments where the client rebooked at checkout. Green (>70%) = strong retention. Amber (40-70%) = needs attention. Red (<40%) = investigate." />
             </div>
             <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
           </div>
@@ -750,7 +752,7 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                         {/* Enhancement 5: Lost rebook revenue per service */}
                         {rebookLostRevenue.perService.has(s.serviceName) && (
                           <p className="text-[11px] text-red-500/80 mt-2 px-1">
-                            If rebooking reached 70%, this service would generate an estimated <strong>+<BlurredAmount>{formatCurrencyWhole(rebookLostRevenue.perService.get(s.serviceName)!)}</BlurredAmount></strong> in additional revenue
+                            If rebooking reached 70%, this service would generate an estimated <span className="font-medium">+<BlurredAmount>{formatCurrencyWhole(rebookLostRevenue.perService.get(s.serviceName)!)}</BlurredAmount></span> in additional revenue
                           </p>
                         )}
                       </div>
@@ -918,15 +920,15 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
                           </ResponsiveContainer>
                         </div>
                         <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                          <span className="text-muted-foreground">Total: <strong>{formatNumber(service.totalBookings)}</strong></span>
-                          <span className="text-muted-foreground">Share: <strong>{shareOfBookings.toFixed(1)}%</strong> of top services</span>
+                          <span className="text-muted-foreground">Total: <span className="font-medium">{formatNumber(service.totalBookings)}</span></span>
+                          <span className="text-muted-foreground">Share: <span className="font-medium">{shareOfBookings.toFixed(1)}%</span> of top services</span>
                           {service.weeks.length >= 2 && (() => {
                             const lastWeek = service.weeks[service.weeks.length - 1]?.count || 0;
                             const prevWeek = service.weeks[service.weeks.length - 2]?.count || 0;
                             const wowChange = prevWeek > 0 ? ((lastWeek - prevWeek) / prevWeek) * 100 : 0;
                             return (
                               <span className={cn(wowChange > 0 ? 'text-emerald-600 dark:text-emerald-400' : wowChange < 0 ? 'text-red-500' : 'text-muted-foreground')}>
-                                WoW: <strong>{wowChange > 0 ? '+' : ''}{wowChange.toFixed(0)}%</strong>
+                                WoW: <span className="font-medium">{wowChange > 0 ? '+' : ''}{wowChange.toFixed(0)}%</span>
                               </span>
                             );
                           })()}
