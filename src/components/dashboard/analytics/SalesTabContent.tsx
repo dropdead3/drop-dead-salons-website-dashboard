@@ -48,7 +48,7 @@ import { HistoricalComparison } from '@/components/dashboard/sales/HistoricalCom
 import { StylistSalesRow } from '@/components/dashboard/sales/StylistSalesRow';
 import { LastSyncIndicator } from '@/components/dashboard/sales/LastSyncIndicator';
 import { ProductCategoryChart } from '@/components/dashboard/sales/ProductCategoryChart';
-import { ServicePopularityChart } from '@/components/dashboard/sales/ServicePopularityChart';
+
 import { ClientFunnelCard } from '@/components/dashboard/sales/ClientFunnelCard';
 import { PeakHoursHeatmap } from '@/components/dashboard/sales/PeakHoursHeatmap';
 import { CommissionSummaryCard } from '@/components/dashboard/sales/CommissionSummaryCard';
@@ -64,6 +64,7 @@ import { GoogleSheetsExport } from '@/components/dashboard/sales/GoogleSheetsExp
 import { CompareTabContent } from '@/components/dashboard/sales/compare/CompareTabContent';
 import { CorrelationsContent } from '@/components/dashboard/analytics/CorrelationsContent';
 import { RetailAnalyticsContent } from '@/components/dashboard/analytics/RetailAnalyticsContent';
+import { ServicesContent } from '@/components/dashboard/analytics/ServicesContent';
 import type { AnalyticsFilters } from '@/pages/dashboard/admin/AnalyticsHub';
 
 interface SalesTabContentProps {
@@ -217,6 +218,9 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             <VisibilityGate elementKey="sales_commission_subtab" elementName="Commission" elementCategory="Page Tabs">
               <SubTabsTrigger value="commission">Commission</SubTabsTrigger>
             </VisibilityGate>
+            <VisibilityGate elementKey="sales_services_subtab" elementName="Services" elementCategory="Page Tabs">
+              <SubTabsTrigger value="services">Services</SubTabsTrigger>
+            </VisibilityGate>
             <VisibilityGate elementKey="sales_retail_subtab" elementName="Retail" elementCategory="Page Tabs">
               <SubTabsTrigger value="retail">Retail</SubTabsTrigger>
             </VisibilityGate>
@@ -336,9 +340,21 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
           <PinnableCard elementKey="product_category_chart" elementName="Product Categories" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
             <ProductCategoryChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
           </PinnableCard>
-          <PinnableCard elementKey="service_popularity_chart" elementName="Service Popularity" category="Analytics Hub - Sales" dateRange={filters.dateRange} locationName={selectedLocationName}>
-            <ServicePopularityChart dateFrom={filters.dateFrom} dateTo={filters.dateTo} filterContext={filterContext} />
-          </PinnableCard>
+          {/* Compact Top Services summary — full analysis in Services tab */}
+          <Card className="cursor-pointer hover:bg-muted/30 transition-colors" onClick={() => onSubTabChange('services')}>
+            <CardContent className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-muted flex items-center justify-center rounded-lg">
+                  <Scissors className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Service Analytics</p>
+                  <p className="text-xs text-muted-foreground">Popularity, efficiency, pricing & demand trends</p>
+                </div>
+              </div>
+              <ArrowRight className="w-4 h-4 text-muted-foreground" />
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="goals" className="mt-6 space-y-6">
@@ -475,6 +491,17 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
               isLoading={stylistLoading || tiersLoading}
             />
           </PinnableCard>
+        </TabsContent>
+
+        <TabsContent value="services" className="mt-6">
+          <ServicesContent
+            dateFrom={filters.dateFrom}
+            dateTo={filters.dateTo}
+            locationId={locationFilter}
+            filterContext={filterContext}
+            dateRange={filters.dateRange}
+            locationName={selectedLocationName}
+          />
         </TabsContent>
 
         <TabsContent value="retail" className="mt-6">
