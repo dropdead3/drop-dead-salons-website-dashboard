@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, Layers, TrendingUp, ArrowUpDown, ChevronDown } from 'lucide-react';
+import { Loader2, Layers, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useServicePairings } from '@/hooks/useServicePairings';
@@ -91,27 +92,28 @@ export function ServiceBundlingIntelligence({
 
   return (
     <PinnableCard elementKey="service_pairings" elementName="Service Bundling Intelligence" category="Analytics Hub - Sales" dateRange={dateRange} locationName={locationName}>
-      <div className="space-y-4">
-        {/* Card 1: Standalone vs Grouped */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                  <Layers className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="font-display text-base tracking-wide">STANDALONE VS. GROUPED</CardTitle>
-                    <MetricInfoTooltip description="Shows what percentage of visits containing each service category were single-service (standalone) vs. multi-service (grouped). High standalone rates signal upsell opportunities. Click a category to drill down." />
-                  </div>
-                  <CardDescription>How often each category is booked alone vs. with other services</CardDescription>
-                </div>
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
+                <Layers className="w-5 h-5 text-primary" />
               </div>
-              <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
+              <div>
+                <div className="flex items-center gap-2">
+                  <CardTitle className="font-display text-base tracking-wide">SERVICE BUNDLING INTELLIGENCE</CardTitle>
+                  <MetricInfoTooltip description="Analyzes how services are booked together — standalone vs. grouped ratios, revenue lift from bundling, and natural category affinities across multi-service visits." />
+                </div>
+                <CardDescription>Standalone rates, revenue lift, and category pairing patterns</CardDescription>
+              </div>
             </div>
-          </CardHeader>
-          <CardContent>
+            <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Section 1: Standalone vs Grouped */}
+          <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-3">Standalone vs. Grouped</h4>
             {standaloneRates.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">Not enough data for this period</p>
             ) : (
@@ -178,26 +180,13 @@ export function ServiceBundlingIntelligence({
                 </p>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Card 2: Revenue Lift */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                <TrendingUp className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <CardTitle className="font-display text-base tracking-wide">REVENUE LIFT FROM GROUPING</CardTitle>
-                  <MetricInfoTooltip description="Compares the average visit ticket when a category is booked alone vs. as part of a multi-service visit. Click a row to see the specific service pairings driving the lift." />
-                </div>
-                <CardDescription>Average ticket difference between solo and grouped visits</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
+          <Separator />
+
+          {/* Section 2: Revenue Lift */}
+          <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-3">Revenue Lift from Grouping</h4>
             {revenueLift.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">Not enough data — need categories with both solo and grouped visits</p>
             ) : (
@@ -216,7 +205,6 @@ export function ServiceBundlingIntelligence({
                     {revenueLift.map(r => {
                       const isExp = expandedLift === r.category;
                       const servicePairs = getServicePairingsForCategory(r.category);
-                      // Find standalone rate data for sample sizes
                       const standaloneInfo = standaloneRates.find(s => s.category === r.category);
                       return (
                          <React.Fragment key={r.category}>
@@ -284,26 +272,13 @@ export function ServiceBundlingIntelligence({
                 </Table>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Card 3: Category Pairing Heatmap */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
-                <ArrowUpDown className="w-5 h-5 text-primary" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <CardTitle className="font-display text-base tracking-wide">CATEGORY PAIRING HEATMAP</CardTitle>
-                  <MetricInfoTooltip description="Shows how often service categories are booked together in multi-service visits. Darker cells indicate stronger natural affinities between categories." />
-                </div>
-                <CardDescription>How frequently categories are booked together</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
+          <Separator />
+
+          {/* Section 3: Category Pairing Heatmap */}
+          <div>
+            <h4 className="text-sm font-medium text-muted-foreground mb-3">Category Pairing Heatmap</h4>
             {heatmapCats.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-6">No multi-service visits found</p>
             ) : (
@@ -368,9 +343,9 @@ export function ServiceBundlingIntelligence({
                 </p>
               </div>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </PinnableCard>
   );
 }
