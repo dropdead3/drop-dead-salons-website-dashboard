@@ -1,68 +1,47 @@
 
 
-## Standardize Warning/Status Badges Across the Dashboard
+## Add Closed-Day Awareness to Capacity Utilization
 
-### Problem
+### What's Changing
 
-Two visually similar badges use completely different styling approaches, creating an inconsistent experience:
+The Capacity Utilization card currently shows 0% bars with misleading "Full" labels for days when locations are closed (e.g., Sunday, Monday). Instead, closed days will show a moon icon with a "Closed" label -- no bar rendered -- matching the pattern already used in the forecasting charts.
 
-| Badge | Current Style | Visual Result |
-|-------|--------------|---------------|
-| "18% utilized" (Capacity) | `Badge variant="destructive"` | Solid red fill, white text, heavy shadow |
-| "Behind Pace" (Goal Tracker) | Custom `div` with `bg-destructive/10 text-destructive` | Soft red tint, red text, no fill |
+### Data Layer Changes
 
-The soft pill style (used by Goal Tracker) better matches the project's calm, luxury aesthetic. The solid `Badge` variant feels clinical and heavy by comparison.
+**File: `src/hooks/useCapacityUtilization.ts`**
 
-### Solution
+Add an `isClosed` boolean to the `DayCapacity` interface. During date initialization, use `isClosedOnDate()` to check each date against all filtered locations (or single location). A day is "closed" when every relevant location is closed on that date (same logic as forecasting cards). Closed days get `availableHours: 0` and `isClosed: true`.
 
-Replace the `Badge` component usage in both Capacity Utilization cards with the same soft pill pattern used by the Goal Tracker pace badges. This creates a unified "status pill" language across the dashboard.
+Also exclude closed days from the summary stats (totalAvailableHours, totalGapHours, gapRevenue) so the utilization percentage and opportunity callout only reflect operating days.
 
-### Unified Status Pill Pattern
+### UI Changes
 
-All three states (good / warning / critical) will use the same soft-tint formula:
+**Files: `src/components/dashboard/sales/CapacityUtilizationCard.tsx` and `src/components/dashboard/analytics/CapacityUtilizationSection.tsx`**
 
-```text
-Good (>=70%):    bg-chart-2/10 text-chart-2      (soft green tint)
-Warning (50-69%): bg-amber-500/10 text-amber-600  (soft amber tint)
-Critical (<50%):  bg-destructive/10 text-destructive (soft red tint)
-```
+Both files get the same treatment:
 
-### Files to Modify
+1. **Custom X-axis tick** (`DayXAxisTick`): When a day is closed, show the day name plus a "Closed" label (with moon character) instead of "Xh open" / "Full".
 
-**1. `src/components/dashboard/sales/CapacityUtilizationCard.tsx`**
-- Replace the `Badge` component at line 209 with a styled `span` using the soft pill pattern
-- Remove the `getUtilizationBadgeVariant` function (no longer needed)
-- Add a new `getUtilizationPillClasses` function returning the appropriate soft-tint classes
-- The badge at line 372 (single-day detail view) gets the same treatment
+2. **Bar label** (`UtilizationBarLabel`): Suppress the percentage label for closed days (don't show "0%").
 
-**2. `src/components/dashboard/analytics/CapacityUtilizationSection.tsx`**
-- Same changes: replace `Badge` at line 199 with the soft pill pattern
-- Remove `getUtilizationBadgeVariant`, add `getUtilizationPillClasses`
+3. **Bar rendering**: Use a custom `<Cell>` per bar. For closed days, set fill to `transparent` and stroke to `none` so no bar renders. In the empty space, render a small moon icon via a custom SVG reference shape positioned at the bar's x-axis center.
 
-### Technical Details
+4. **Closed days moon icon**: Since Recharts bars can't render arbitrary JSX, the approach is to use a `customizedTick` or a Recharts `<ReferenceDot>` / custom shape. The simplest clean approach: render the moon symbol directly in the `DayXAxisTick` component (text element with the moon character, same as forecasting cards use).
 
-The helper function:
+5. **Tomorrow view**: If the single day is closed, show a "Closed" state instead of the utilization detail panel.
 
-```tsx
-function getUtilizationPillClasses(percent: number): string {
-  if (percent >= 70) return 'bg-chart-2/10 text-chart-2';
-  if (percent >= 50) return 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
-  return 'bg-destructive/10 text-destructive';
-}
-```
+### Technical Summary
 
-The badge markup changes from:
-```tsx
-<Badge variant={getUtilizationBadgeVariant(overallUtilization)} className="text-xs whitespace-nowrap">
-  {overallUtilization}% utilized
-</Badge>
-```
+| Element | Before | After |
+|---------|--------|-------|
+| `DayCapacity` interface | No `isClosed` field | `isClosed: boolean` added |
+| Closed day bar | Renders 0% bar with gradient | Transparent / no bar rendered |
+| Closed day label | "0%" above bar | No label |
+| Closed day x-axis | "Full" | Moon icon + "Closed" |
+| Summary stats | Include closed days in gap hours | Exclude closed days |
+| Tomorrow view (closed) | Shows 0% capacity | Shows "Closed" state with moon icon |
 
-To:
-```tsx
-<span className={cn('inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium', getUtilizationPillClasses(overallUtilization))}>
-  {overallUtilization}% utilized
-</span>
-```
+### Consistency
 
-This exactly mirrors the Goal Tracker's pace badge structure, creating visual harmony across both cards.
+This mirrors the exact pattern used in `WeekAheadForecast.tsx` and `ForecastingCard.tsx`, which compute a `closedDates` Set and render "Closed" in their x-axis ticks. The capacity card will use the same `isClosedOnDate` utility and the same visual language.
+
