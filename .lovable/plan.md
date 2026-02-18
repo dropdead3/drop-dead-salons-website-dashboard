@@ -1,69 +1,73 @@
 
 
-## Client Experience Analytics Card
+## Improve Client Experience Card -- Composite Ranking and Actionable Utility
 
-### What We're Building
+### The Problem
 
-A new "Client Experience" analytics card on the Staff Performance subtab that measures four levers of client experience quality, both salon-wide and per-stylist:
+The current Client Experience card shows four raw metrics (Avg Tip, Tip Rate, Feedback Rate, Rebook Rate) with a bar chart for one metric at a time. A salon owner has to mentally cross-reference four separate views to determine which stylists provide the best overall experience. There is no single ranking or signal that answers the core question.
 
-1. **Avg Tip** -- average tip amount per completed appointment
-2. **Tip Rate** -- percentage of appointments that received any tip (frequency signal)
-3. **Feedback Rate** -- percentage of appointments where a client feedback response was collected (sourced from `client_feedback_responses`), with optional new vs. returning split
-4. **Rebook Rate** -- percentage of appointments where client rebooked at checkout (reused from existing data)
+### What Changes
 
-### Architecture
+#### 1. Add a Composite Experience Score to the hook
 
-**New hook:** `src/hooks/useClientExperience.ts`
-- Fetches `phorest_appointments` for the period (tip_amount, rebooked_at_checkout, is_new_client, phorest_staff_id, total_price, status) using the existing paginated fetch pattern
-- Fetches `client_feedback_responses` for the period, joined by staff_user_id, to compute feedback collection counts
-- Fetches staff name mappings (same pattern as useClientEngagement)
-- Computes per-stylist and salon-wide aggregates for all four metrics
-- Includes prior-period comparison for the KPI tiles (percent change badges)
-- Returns a `hasNames` flag for the Stylist N fallback
+**File:** `src/hooks/useClientExperience.ts`
 
-**New component:** `src/components/dashboard/sales/ClientExperienceCard.tsx`
-- **Header:** Heart icon in muted icon box, "CLIENT EXPERIENCE" title (font-display, tokens.card.title), filter badge
-- **KPI Row:** 4 tiles using `tokens.kpi.*` -- Avg Tip, Tip Rate, Feedback Rate, Rebook Rate, each with a ChangeBadge for period-over-period trend
-- **Staff Drill-Down:** Horizontal bar chart (same glass gradient pattern as ClientEngagementCard) showing the active metric per stylist, toggle between the four metrics via pill buttons
-- **Bar limit:** Top 5 shown by default, expandable "Show all N stylists"
-- **Info banner** when staff names are unmapped (same pattern as ClientEngagementCard)
+- Compute a weighted composite score (0-100) per stylist using the same proven weights from `useStylistExperienceScore`:
+  - Rebook Rate: 35%
+  - Tip Rate: 30%
+  - Feedback Rate: 20%
+  - Avg Tip (normalized): 15%
+- Normalize tip amounts to a 0-100 scale (cap at a configurable "excellent" threshold, e.g. $15 avg tip = 100)
+- Add `compositeScore` and `status` ("strong" / "watch" / "needs-attention") to each `StaffExperienceDetail`
+- Add salon-wide composite to the returned data
 
-**Integration:** `src/components/dashboard/analytics/SalesTabContent.tsx`
-- Place the card below the Client Engagement card in the "staff" subtab
-- Wrap in PinnableCard with key `client_experience_staff`
-- Register in CARD_TO_TAB_MAP for pinning support
+#### 2. Add a Composite Score KPI tile and ranking view
 
-### Data Sources
+**File:** `src/components/dashboard/sales/ClientExperienceCard.tsx`
 
-| Metric | Source Table | Key Fields |
-|--------|-------------|------------|
-| Avg Tip | phorest_appointments | tip_amount, total_price |
-| Tip Rate | phorest_appointments | tip_amount (non-null, > 0) |
-| Feedback Rate | client_feedback_responses | staff_user_id, responded_at, appointment dates |
-| Rebook Rate | phorest_appointments | rebooked_at_checkout |
+- Add a 5th KPI tile: **Experience Score** (composite out of 100, with period-over-period change badge)
+- When the "Experience Score" tile is active, the drill-down section changes from a bar chart to a **ranked staff list** showing:
+  - Rank number
+  - Staff name
+  - Composite score (e.g. "74 / 100") with a status badge (Strong / Watch / Needs Attention)
+  - A small inline breakdown showing the four component scores as a micro bar or label row
+- This gives the owner one clear answer: "Stylist A has the best client experience at 82/100; Stylist D needs coaching at 38/100"
 
-No database schema changes needed. All tables and columns already exist.
+#### 3. Add coaching callout for low scorers
+
+- Below the ranked list, if any stylist scores below 50 ("needs-attention"), show a calm advisory callout (bg-muted/40 pattern): "N stylists may benefit from coaching on client experience fundamentals"
+- No shame language; advisory tone per Zura doctrine
+
+#### 4. Keep the existing four metric bar charts
+
+- The four original tiles (Avg Tip, Tip Rate, Feedback Rate, Rebook Rate) remain and still toggle the horizontal bar chart for single-metric drill-down
+- The composite score tile is an additive 5th option, not a replacement
 
 ### Technical Details
 
-**Files created:**
-- `src/hooks/useClientExperience.ts` -- composite hook with paginated fetching, prior-period comparison, staff name resolution
-- `src/components/dashboard/sales/ClientExperienceCard.tsx` -- card component with KPI row + drill-down chart
+**Hook changes (`useClientExperience.ts`):**
+- Add `compositeScore: number` and `status: 'strong' | 'watch' | 'needs-attention'` to `StaffExperienceDetail`
+- Add `compositeScore: { current: number; prior: number; percentChange: number | null }` to `ClientExperienceData`
+- Composite calculation reuses the weight constants from `useStylistExperienceScore` for consistency
+- Avg tip normalization: `Math.min((avgTip / AVG_TIP_EXCELLENT) * 100, 100)` where `AVG_TIP_EXCELLENT = 15`
 
-**Files modified:**
-- `src/components/dashboard/analytics/SalesTabContent.tsx` -- import and place the new card
-- `src/components/dashboard/PinnedAnalyticsCard.tsx` -- add to CARD_TO_TAB_MAP if it exists
+**Component changes (`ClientExperienceCard.tsx`):**
+- Add `'composite'` to the `ExperienceMetric` type union
+- Add 5th KPI tile in the grid (switch to `md:grid-cols-5` or use the bento 3+2 layout for 5 items)
+- When `activeMetric === 'composite'`, render a ranked list instead of the bar chart:
+  - Each row: rank badge, name, composite score, status badge, expandable breakdown
+- Status badge colors follow existing `STATUS_CONFIG` pattern (destructive for needs-attention, chart-5 for watch, chart-2 for strong)
+- Coaching callout uses the advisory tone (`bg-muted/40 border border-border/30`)
 
-**Design rules followed:**
-- `tokens.kpi.label` / `tokens.kpi.value` for all KPI tiles (Termina font)
-- `tokens.card.wrapper` / `tokens.card.title` for the card shell
-- Glass gradient bar pattern from ClientEngagementCard
-- No font-bold/semibold; max font-weight 500
-- MetricInfoTooltip on the header explaining the composite metric
-- AnalyticsFilterBadge for date/location context
-- Skeleton loading states matching tile layout
+**No database changes required.** All data is already available.
 
-**Feedback query approach:**
-- Query `client_feedback_responses` filtered by `responded_at` within the date range, grouped by `staff_user_id`
-- Divide by total appointments per stylist to get feedback collection rate
-- For the new-vs-returning split: cross-reference with the appointments query's `is_new_client` flag by matching on `staff_user_id` (aggregate level, not row-level join, since feedback doesn't have is_new_client directly)
+### Files Modified
+- `src/hooks/useClientExperience.ts` -- add composite score computation
+- `src/components/dashboard/sales/ClientExperienceCard.tsx` -- add 5th tile, ranked list view, coaching callout
+
+### Design Rules Followed
+- `tokens.kpi.label` / `tokens.kpi.value` for the new tile (Termina)
+- Max font-weight 500, no font-bold
+- Advisory tone, no shame language
+- Expandable "Show all" pattern for the ranked list
+- Status badges use theme-aware semantic colors
