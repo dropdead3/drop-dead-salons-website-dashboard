@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { Monitor, Smartphone, RefreshCw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -8,7 +8,7 @@ interface LivePreviewPanelProps {
   activeSectionId?: string;
 }
 
-export function LivePreviewPanel({ onClose, activeSectionId }: LivePreviewPanelProps) {
+export const LivePreviewPanel = memo(function LivePreviewPanel({ onClose, activeSectionId }: LivePreviewPanelProps) {
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -153,7 +153,7 @@ export function LivePreviewPanel({ onClose, activeSectionId }: LivePreviewPanelP
       </div>
     </div>
   );
-}
+});
 
 // Helper function to trigger preview refresh from anywhere
 export function triggerPreviewRefresh() {
