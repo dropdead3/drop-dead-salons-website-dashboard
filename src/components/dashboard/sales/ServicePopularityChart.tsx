@@ -552,17 +552,20 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
   return (
     <Card>
       <CardHeader>
-        <div className="space-y-2">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-muted flex items-center justify-center rounded-lg">
               <Scissors className="w-5 h-5 text-primary" />
             </div>
-            <div className="flex items-center gap-2">
-              <CardTitle className="font-display text-base tracking-wide">SERVICE POPULARITY</CardTitle>
-              <MetricInfoTooltip description={tooltipDescription} />
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className="font-display text-base tracking-wide">SERVICE POPULARITY</CardTitle>
+                <MetricInfoTooltip description={tooltipDescription} />
+              </div>
+              <CardDescription>{description}</CardDescription>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap justify-end">
             {filterContext && (
               <AnalyticsFilterBadge 
                 locationId={filterContext.locationId} 
@@ -573,7 +576,6 @@ export function ServicePopularityChart({ dateFrom, dateTo, locationId, filterCon
             <Badge variant="secondary"><BlurredAmount>{formatCurrencyWhole(badgeRevenue)}</BlurredAmount></Badge>
           </div>
         </div>
-        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
         {/* View toggle: By Service / By Category */}
