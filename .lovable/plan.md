@@ -1,46 +1,48 @@
 
 
-## Align Capacity Utilization Chart with Forecasting Chart Elements
+## Add Date Labels to Capacity Utilization X-Axis Ticks
 
 ### What's Changing
 
-The Capacity Utilization bar chart currently lacks three visual elements present in the Forecasting card. This plan adds them for consistency.
+The Forecasting chart shows three lines in its x-axis: day name, date (e.g. "Feb 17"), and appointment count. The Capacity Utilization chart is missing the date line. This adds it to match.
 
-### 1. X-Axis Line
+### Approach
 
-Add a subtle axis line matching the forecasting chart style.
+In both `DayXAxisTick` functions, insert a date line (`formatDate(day.date, 'MMM d')`) between the day name and the utilization/closed info. Shift the third line's `dy` down to accommodate.
 
-**File: `src/components/dashboard/sales/CapacityUtilizationCard.tsx`**
-- Change `axisLine={false}` to `axisLine={{ stroke: 'hsl(var(--foreground) / 0.15)', strokeWidth: 1 }}`
+Since `DayXAxisTick` is a standalone function component (not inside the main component), it needs to call `useFormatDate()` directly (same pattern as the Forecasting card's `DailyXAxisTick`).
 
-### 2. Moon Icons in Bar Area for Closed Days
+### Changes
 
-Add a `<Customized>` component (same pattern as ForecastingCard) that renders inline SVG moon paths centered in the bar space for each closed day.
+**Both files: `CapacityUtilizationCard.tsx` and `CapacityUtilizationSection.tsx`**
 
-**File: `src/components/dashboard/sales/CapacityUtilizationCard.tsx`**
-- Import `Customized` from recharts
-- Add a `<Customized>` block inside the `<BarChart>` that iterates through `chartData`, checks `days[index]?.isClosed`, and renders a scaled moon `<path>` at the horizontal center of each closed day's bar slot
+Import `useFormatDate` in the tick component, then update both branches (closed and open):
 
-### 3. Average Utilization Reference Line + Badge
+Before (closed branch):
+```
+Line 1: Day name     (dy=12, bold)
+Line 2: "Closed"     (dy=24, bold)
+```
 
-Add a dashed horizontal reference line at the average utilization percentage across open days, with a styled pill badge (matching the forecasting card's "Daily Operating Avg" badge aesthetic).
+After (closed branch):
+```
+Line 1: Day name     (dy=12, bold)
+Line 2: "Feb 17"     (dy=25, muted, 10px)
+Line 3: "Closed"     (dy=38, bold)
+```
 
-**File: `src/components/dashboard/sales/CapacityUtilizationCard.tsx`**
-- Compute `avgUtilization` from open days only (exclude closed days)
-- Add a `<Customized>` component that:
-  - Draws a dashed line at the Y position corresponding to `avgUtilization`
-  - Renders a `foreignObject` with a pill badge showing "Avg: XX%"
-  - Uses the same warm amber styling as the forecasting card (gold dashed line, translucent amber pill)
+Before (open branch):
+```
+Line 1: Day name     (dy=12, bold)
+Line 2: "Xh open"   (dy=24, muted)
+```
 
-### Technical Details
-
-The same changes apply to `CapacityUtilizationSection.tsx` (analytics page version) for consistency.
-
-| Element | Before | After |
-|---------|--------|-------|
-| X-axis line | Hidden (`axisLine={false}`) | Subtle line matching forecasting |
-| Closed day bar area | Transparent bar, no icon | SVG moon path centered in slot |
-| Average reference | None | Dashed line + amber pill badge |
+After (open branch):
+```
+Line 1: Day name     (dy=12, bold)
+Line 2: "Feb 17"     (dy=25, muted, 10px)
+Line 3: "Xh open"   (dy=38, muted)
+```
 
 ### Files Modified
 - `src/components/dashboard/sales/CapacityUtilizationCard.tsx`
