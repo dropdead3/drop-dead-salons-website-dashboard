@@ -5779,6 +5779,60 @@ export type Database = {
           },
         ]
       }
+      inventory_reorder_queue: {
+        Row: {
+          created_at: string
+          id: string
+          ordered_at: string | null
+          organization_id: string
+          product_id: string
+          reason: string | null
+          received_at: string | null
+          status: string
+          suggested_quantity: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ordered_at?: string | null
+          organization_id: string
+          product_id: string
+          reason?: string | null
+          received_at?: string | null
+          status?: string
+          suggested_quantity?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ordered_at?: string | null
+          organization_id?: string
+          product_id?: string
+          reason?: string | null
+          received_at?: string | null
+          status?: string
+          suggested_quantity?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_reorder_queue_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inventory_reorder_queue_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_application_notes: {
         Row: {
           application_id: string
@@ -11802,6 +11856,142 @@ export type Database = {
             columns: ["responsibility_id"]
             isOneToOne: false
             referencedRelation: "responsibilities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      retail_commission_config: {
+        Row: {
+          commission_type: string
+          created_at: string
+          default_rate: number
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          tiers: Json | null
+          updated_at: string
+        }
+        Insert: {
+          commission_type?: string
+          created_at?: string
+          default_rate?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id: string
+          tiers?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          commission_type?: string
+          created_at?: string
+          default_rate?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          tiers?: Json | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retail_commission_config_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      retail_commission_overrides: {
+        Row: {
+          config_id: string
+          created_at: string
+          id: string
+          organization_id: string
+          override_rate: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          config_id: string
+          created_at?: string
+          id?: string
+          organization_id: string
+          override_rate: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          config_id?: string
+          created_at?: string
+          id?: string
+          organization_id?: string
+          override_rate?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retail_commission_overrides_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "retail_commission_config"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "retail_commission_overrides_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      retail_sales_goals: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          goal_period: string
+          id: string
+          location_id: string | null
+          organization_id: string | null
+          period_start: string
+          target_attachment_rate: number | null
+          target_revenue: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          goal_period?: string
+          id?: string
+          location_id?: string | null
+          organization_id?: string | null
+          period_start: string
+          target_attachment_rate?: number | null
+          target_revenue?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          goal_period?: string
+          id?: string
+          location_id?: string | null
+          organization_id?: string | null
+          period_start?: string
+          target_attachment_rate?: number | null
+          target_revenue?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retail_sales_goals_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
