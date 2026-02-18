@@ -1,106 +1,162 @@
 
 
-# Website Editor: Enhancement Analysis (Round 2)
+# Wire Website Services Manager to Native Backend
 
-## What's Working Well
-The Website Editor is now a solid system with 24+ editor components, drag-and-drop section ordering, database-backed persistence, and inline live previews for most section editors. The previous round closed the major gaps (standardized buttons, dead code cleanup, section editors, footer editor, services persistence).
+## Overview
 
-## Remaining Gaps and Enhancement Opportunities
-
----
-
-### 1. Live Preview Panel Never Auto-Refreshes After Save
-
-**Problem**: `triggerPreviewRefresh()` is exported from `LivePreviewPanel.tsx` but is never called from any editor's save handler. When a user edits the Hero section and clicks "Save & Publish Changes" with the Preview panel open, the iframe stays stale until they manually click refresh.
-
-**Fix**: Import and call `triggerPreviewRefresh()` inside the `handleSave` success path of every editor that persists to the database. This is a one-line addition per editor (~12 editors).
+Replace the static `servicePricing.ts` data source with the native `services`, `service_category_colors`, and `service_level_prices` database tables. The Website Editor's Services tab becomes a **read-from-database view** that displays operational services, while website-specific metadata (descriptions, popular flags, display order overrides) is stored alongside the native data.
 
 ---
 
-### 2. Five New Section Editors Have No Live Preview
+## Current State
 
-**Problem**: The newly created section editors (`ServicesPreviewEditor`, `PopularServicesEditor`, `GalleryDisplayEditor`, `StylistsDisplayEditor`, `LocationsDisplayEditor`) all use the generic `SectionDisplayEditor` component, which renders a simple form card with no side-by-side preview panel. Every other homepage section editor (Hero, Brand Statement, Extensions, FAQ, New Client, Testimonials, Brands, Drinks, Footer CTA) has a dedicated preview component alongside it.
-
-**Fix**: Either:
-- (A) Add a "Link to Preview" approach -- show a callout card linking to the global Preview panel, or
-- (B) Extend `SectionDisplayEditor` to accept an optional preview component and render the xl:grid-cols-2 layout when one is provided.
-
-Option B is cleaner and consistent with existing patterns. This would require creating 5 new lightweight preview components.
-
----
-
-### 3. Footer Editor Missing from the Settings > Website Tab
-
-**Problem**: The Footer Editor exists in the Website Editor (`?tab=footer`) but the Settings > Website tab has cards for Announcement Banner, Social Links, Booking, Retail, SEO, and Theme -- but no Footer card. This means footer settings are only editable from one entry point, while all other website settings have dual access (Settings card + Website Editor).
-
-**Fix**: Add a "Footer" settings card in the Website Settings tab that shows a mini-preview of the footer and links to the Website Editor's Footer tab for full editing.
+| Aspect | Static File | Native DB |
+|---|---|---|
+| Services count | ~80+ | 66 active |
+| Categories | 10 (e.g. "Cutting & Styling", "Highlights") | 7 (e.g. "Haircut", "Blonding") |
+| Level pricing | Full grid in static JSON | 0 rows in `service_level_prices` |
+| Descriptions | Yes, per service | All NULL |
+| Popular flags | Yes (`isPopular`) | No column exists |
+| Source of truth | `servicePricing.ts` file | `services` + `service_category_colors` tables |
 
 ---
 
-### 4. Footer Editor Social Links are Instagram-Only
+## What Needs to Happen
 
-**Problem**: The `FooterEditor.tsx` only manages `instagram_handle` and `instagram_url`. But the `useWebsiteSocialLinksSettings` hook already supports Instagram, Facebook, Twitter, YouTube, LinkedIn, and TikTok. The Footer Editor should reference or manage all social links, not just Instagram.
+### Step 1: Database Schema Additions
 
-**Fix**: Wire the Footer Editor's "Social Media" card to use the `useWebsiteSocialLinksSettings` hook, adding fields for all 6 social platforms. Alternatively, add a "Manage Social Links" button that navigates to the existing Social Links card in Settings.
+Add two columns to the `services` table:
+- `description` already exists (text, nullable) but is unpopulated
+- `is_popular` (boolean, default false) -- new column
+- `website_description` (text, nullable) -- optional website-specific description that can differ from operational description
+
+Add a `description` column to `service_category_colors`:
+- `description` (text, nullable) -- for category-level descriptions shown on the website
+
+### Step 2: Seed Missing Data
+
+Populate the native database with data currently only in the static file:
+- Backfill `services.description` for all 66 services using the static file as reference
+- Backfill `services.is_popular` for the ~12 services marked popular in the static file
+- Populate `service_level_prices` for all 66 services x 7 levels (462 rows) using the pricing grid from the static file
+- Backfill `service_category_colors.description` for each category
+
+### Step 3: Create a New Database Hook
+
+Create `useNativeServicesForWebsite` hook that:
+- Fetches services from the `services` table (grouped by category)
+- Fetches category metadata from `service_category_colors` (display order, description)
+- Fetches level prices from `service_level_prices`
+- Fetches stylist levels from `stylist_levels`
+- Returns data in the shape the Website Editor expects (categories with items, each item having level prices)
+
+### Step 4: Refactor ServicesContent.tsx
+
+Replace the current static-file-based approach:
+- Remove import of `services as staticServices` from `servicePricing.ts`
+- Remove `useWebsiteServicesData()` (the JSON-blob approach)
+- Use the new `useNativeServicesForWebsite` hook instead
+- Keep CRUD operations (rename category, add service, toggle popular, reorder) but wire them to the native tables
+- Save button writes to `services`, `service_category_colors`, and `service_level_prices` tables directly
+
+### Step 5: Update Other Consumers
+
+Update the 6 other files that import from `servicePricing.ts`:
+- `src/pages/Services.tsx` (public services page) -- switch to database hook
+- `src/pages/dashboard/ViewProfile.tsx` -- switch to database hook
+- `src/components/dashboard/website-editor/WebsiteEditorSearch.tsx` -- switch to database hook
+- `src/components/dashboard/StylistsOverviewCard.tsx` -- already uses `stylistLevels` from DB for levels; only needs the static levels import removed
+- `src/utils/levelPricing.ts` -- refactor to use DB-fetched data or remove if unused
+- `src/pages/dashboard/admin/ServicesManager.tsx` -- switch to database hook (this is the Settings hub services manager)
+
+### Step 6: Remove Static File
+
+Once all consumers are migrated, delete `src/data/servicePricing.ts` and the `useWebsiteServicesData` hook from `useSectionConfig.ts`.
 
 ---
-
-### 5. Unsaved Changes Warning Missing
-
-**Problem**: Several editors track dirty state (`isDirty`) but none of them warn users when navigating away with unsaved changes. Clicking a different sidebar item discards all unsaved work silently.
-
-**Fix**: Add a `useBeforeUnload` hook and an `onTabChange` interceptor in `WebsiteSectionsHub` that shows a confirmation dialog ("You have unsaved changes. Discard?") before switching tabs.
-
----
-
-### 6. Sidebar Icons are Repetitive
-
-**Problem**: Footer CTA and Footer both use the `Megaphone` icon in the sidebar, same as Announcement Bar. Three items sharing the same icon reduces scannability.
-
-**Fix**: Use distinct icons:
-- Footer CTA: `MousePointerClick` or `ArrowDown`
-- Footer: `PanelBottom` or `LayoutTemplate`
-- Announcement Bar keeps `Megaphone`
-
----
-
-### 7. SectionDisplayEditor Missing "Save & Publish" in Card Header
-
-**Problem**: The `SectionDisplayEditor` component puts the save button in the card header, which is correct. However, it doesn't include the `Save` icon like other editors do, and uses `Save & Publish Changes` text inconsistently (it does show it, but the button is plain compared to other editors).
-
-**Fix**: Minor -- align the save button styling with the pattern used in HeroEditor/BrandStatementEditor (icon + text + sticky header).
-
----
-
-## Recommended Implementation Priority
-
-| Priority | Enhancement | Effort | Impact |
-|---|---|---|---|
-| 1 | Wire `triggerPreviewRefresh()` into all save handlers | Small | High -- preview actually works |
-| 2 | Unsaved changes warning on tab switch | Small | High -- prevents data loss |
-| 3 | Fix sidebar icons (3 Megaphones) | Tiny | Medium -- better navigation |
-| 4 | Expand Footer social links to all 6 platforms | Small | Medium -- feature completeness |
-| 5 | Add preview components to 5 section editors | Medium | Medium -- visual consistency |
-| 6 | Add Footer card to Settings > Website | Small | Low -- dual access convenience |
-| 7 | Sticky header + icon alignment on SectionDisplayEditor | Tiny | Low -- visual polish |
 
 ## Technical Details
 
-### Wiring triggerPreviewRefresh (Priority 1)
-In each editor's `handleSave` success callback, add:
+### New Column Migration SQL
+
+```text
+ALTER TABLE services ADD COLUMN IF NOT EXISTS is_popular BOOLEAN DEFAULT false;
+ALTER TABLE services ADD COLUMN IF NOT EXISTS website_description TEXT;
+ALTER TABLE service_category_colors ADD COLUMN IF NOT EXISTS description TEXT;
 ```
-import { triggerPreviewRefresh } from './LivePreviewPanel';
-// inside handleSave try block after toast.success:
-triggerPreviewRefresh();
+
+### Data Seeding Strategy
+
+A one-time seed script (run via the insert tool) will:
+1. Match static service names to DB service names (fuzzy match for slight differences like "Corrective Color (by the hour)" vs "Corrective Color - By The Hour")
+2. Update `description` and `is_popular` on matched services
+3. Insert `service_level_prices` rows for each service x level combination
+4. Update `service_category_colors.description` for each category
+
+### Hook Architecture
+
+```text
+useNativeServicesForWebsite()
+  |-- useQuery(['services-website'])
+  |     |-- SELECT * FROM services WHERE is_active = true
+  |-- useQuery(['service-category-colors'])
+  |     |-- SELECT * FROM service_category_colors ORDER BY display_order
+  |-- useQuery(['service-level-prices-all'])
+  |     |-- SELECT * FROM service_level_prices
+  |-- useQuery(['stylist-levels'])
+  |     |-- SELECT * FROM stylist_levels WHERE is_active = true ORDER BY display_order
+  |
+  |-- Returns: { categories: NativeServiceCategory[], levels: StylistLevel[] }
 ```
 
-Affected files: HeroEditor, BrandStatementEditor, ExtensionsEditor, FAQEditor, NewClientEditor, TestimonialsEditor, BrandsManager, DrinksManager, FooterCTAEditor, FooterEditor, AnnouncementBarContent, ServicesContent, and all 5 SectionDisplayEditor-based editors.
+### Category Mapping
 
-### Unsaved Changes Warning (Priority 2)
-Add an `onBeforeTabChange` callback in `WebsiteSectionsHub` that checks a ref-based dirty flag. Each editor component would register its dirty state via a context or callback prop. A simpler approach: add `window.onbeforeunload` in editors with dirty state, and show an `AlertDialog` when sidebar items are clicked while any editor reports unsaved changes.
+The static file and DB use different category names. The mapping:
 
-### Sidebar Icon Fix (Priority 3)
-In `WebsiteEditorSidebar.tsx`, update `SITE_CONTENT_ITEMS`:
-- `footer-cta`: use `MousePointerClick` from lucide
-- `footer`: use `PanelBottom` from lucide
+| Static File Category | DB Category |
+|---|---|
+| New-Client Consultations | New Client Consultation |
+| Cutting & Styling | Haircut + Styling |
+| Highlights | Blonding |
+| Balayage | Blonding |
+| Color Blocks & Vivids | Blonding + Color + Vivids |
+| Color Services | Color |
+| Color Add-Ons | Color |
+| Extensions - Install | Extensions |
+| Extensions - Maintenance | Extensions |
+| Extensions - Tapes | Extensions |
+
+The DB categories are the authoritative grouping. The static file's finer-grained categories (Highlights vs Balayage) were consolidated into "Blonding" in the DB.
+
+### Services Content Changes
+
+The `ServicesContent.tsx` component will:
+- Display services grouped by `service_category_colors` order
+- Show level-based pricing grid using `service_level_prices` joined with `stylist_levels`
+- Allow toggling `is_popular` (writes directly to `services.is_popular`)
+- Allow editing descriptions (writes to `services.description` or `services.website_description`)
+- Category rename writes to `service_category_colors.category_name`
+- Reorder categories writes to `service_category_colors.display_order`
+- "Add Service" creates a row in `services` table
+- "Delete Service" sets `is_active = false`
+- Level price edits write to `service_level_prices` (upsert)
+
+### Risk Mitigation
+
+- The static file is kept as a fallback until all seeding is verified
+- A "data health check" query runs on mount to verify `service_level_prices` has data; if empty, shows a warning banner
+- All mutations use the existing organization_id scoping and RLS
+
+---
+
+## Implementation Order
+
+1. Run schema migration (add columns)
+2. Seed descriptions, popular flags, and level prices from static data
+3. Add category descriptions to `service_category_colors`
+4. Create `useNativeServicesForWebsite` hook
+5. Refactor `ServicesContent.tsx` to use new hook
+6. Update public `Services.tsx` page
+7. Update remaining consumers (`ViewProfile`, `WebsiteEditorSearch`, `StylistsOverviewCard`, `levelPricing.ts`, `ServicesManager.tsx`)
+8. Remove `servicePricing.ts` static file and `useWebsiteServicesData`
 
