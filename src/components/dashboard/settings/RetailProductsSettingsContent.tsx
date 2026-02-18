@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/select';
 import {
   Search, Plus, BarChart3, Package, Edit2, AlertTriangle, Minus,
-  Loader2, Check, X,
+  Loader2, Check, X, MapPin,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -22,6 +22,7 @@ import { useProducts, useCreateProduct, useUpdateProduct, type Product } from '@
 import { useProductBrands, useProductCategorySummaries } from '@/hooks/useProductBrands';
 import { useProductCategories } from '@/hooks/useProducts';
 import { useBulkUpdateProducts, useBulkToggleProducts } from '@/hooks/useBulkUpdateProducts';
+import { useActiveLocations } from '@/hooks/useLocations';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 
 // ─── Products Tab ───
@@ -163,6 +164,7 @@ function ProductsTab() {
 }
 
 function ProductFormDialog({ product, onClose, onSave }: { product: Product | null; onClose: () => void; onSave: (data: Partial<Product>) => void }) {
+  const { data: locations } = useActiveLocations();
   const [form, setForm] = useState({
     name: product?.name || '',
     brand: product?.brand || '',
@@ -174,6 +176,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
     quantity_on_hand: product?.quantity_on_hand?.toString() || '',
     reorder_level: product?.reorder_level?.toString() || '',
     description: product?.description || '',
+    location_id: product?.location_id || '',
   });
 
   const handleSubmit = () => {
@@ -188,6 +191,7 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
       quantity_on_hand: form.quantity_on_hand ? parseInt(form.quantity_on_hand) : null,
       reorder_level: form.reorder_level ? parseInt(form.reorder_level) : null,
       description: form.description || null,
+      location_id: form.location_id || null,
     });
   };
 
@@ -215,6 +219,18 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
             <div><Label className="text-xs">Stock Qty</Label><Input type="number" value={form.quantity_on_hand} onChange={e => setForm(f => ({ ...f, quantity_on_hand: e.target.value }))} /></div>
             <div><Label className="text-xs">Reorder Level</Label><Input type="number" value={form.reorder_level} onChange={e => setForm(f => ({ ...f, reorder_level: e.target.value }))} /></div>
           </div>
+          {locations && locations.length > 1 && (
+            <div>
+              <Label className="text-xs">Location</Label>
+              <Select value={form.location_id} onValueChange={v => setForm(f => ({ ...f, location_id: v }))}>
+                <SelectTrigger className="h-9"><SelectValue placeholder="All locations" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Locations</SelectItem>
+                  {locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancel</Button>
@@ -360,7 +376,9 @@ function CategoriesTab() {
 // ─── Inventory by Location Tab ───
 function InventoryByLocationTab() {
   const { formatCurrency } = useFormatCurrency();
-  const { data: products, isLoading } = useProducts({});
+  const { data: locations } = useActiveLocations();
+  const [selectedLocationId, setSelectedLocationId] = useState<string>('all');
+  const { data: products, isLoading } = useProducts({ locationId: selectedLocationId !== 'all' ? selectedLocationId : undefined });
   const updateProduct = useUpdateProduct();
 
   const lowStockProducts = useMemo(() => {
@@ -377,6 +395,23 @@ function InventoryByLocationTab() {
 
   return (
     <div className="space-y-4">
+      {/* Location selector */}
+      {locations && locations.length > 1 && (
+        <div className="flex items-center gap-3">
+          <MapPin className="w-4 h-4 text-muted-foreground" />
+          <Select value={selectedLocationId} onValueChange={setSelectedLocationId}>
+            <SelectTrigger className="w-[220px] h-9"><SelectValue placeholder="Select location" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Locations</SelectItem>
+              {locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {selectedLocationId !== 'all' && (
+            <span className="text-xs text-muted-foreground">{products?.length ?? 0} product(s) at this location</span>
+          )}
+        </div>
+      )}
+
       {lowStockProducts.length > 0 && (
         <div className="p-3 rounded-lg border border-amber-200 bg-amber-50/50 dark:border-amber-900/50 dark:bg-amber-950/20">
           <div className="flex items-center gap-2 mb-1">
@@ -391,6 +426,8 @@ function InventoryByLocationTab() {
             <TableRow>
               <TableHead>Product</TableHead>
               <TableHead>Brand</TableHead>
+              <TableHead>Category</TableHead>
+              <TableHead className="text-right">Retail Price</TableHead>
               <TableHead className="text-right">On Hand</TableHead>
               <TableHead className="text-right">Reorder Level</TableHead>
               <TableHead className="text-right">Status</TableHead>
@@ -399,13 +436,17 @@ function InventoryByLocationTab() {
           </TableHeader>
           <TableBody>
             {!products?.length ? (
-              <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">No products</TableCell></TableRow>
+              <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No products{selectedLocationId !== 'all' ? ' at this location' : ''}</TableCell></TableRow>
             ) : products.map(p => {
               const isLow = p.reorder_level != null && p.quantity_on_hand != null && p.quantity_on_hand <= p.reorder_level;
               return (
                 <TableRow key={p.id} className={cn(isLow && 'bg-amber-50/50 dark:bg-amber-950/10')}>
                   <TableCell className="font-medium text-sm">{p.name}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">{p.brand || '—'}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">{p.category || '—'}</TableCell>
+                  <TableCell className="text-right tabular-nums text-sm text-muted-foreground">
+                    <BlurredAmount>{p.retail_price != null ? formatCurrency(p.retail_price) : '—'}</BlurredAmount>
+                  </TableCell>
                   <TableCell className="text-right tabular-nums font-medium">{p.quantity_on_hand ?? '—'}</TableCell>
                   <TableCell className="text-right tabular-nums text-muted-foreground">{p.reorder_level ?? '—'}</TableCell>
                   <TableCell className="text-right">
@@ -454,7 +495,7 @@ export function RetailProductsSettingsContent() {
           <TabsTrigger value="products" className="gap-1.5"><Package className="w-3.5 h-3.5" /> Products</TabsTrigger>
           <TabsTrigger value="brands">Brands</TabsTrigger>
           <TabsTrigger value="categories">Categories</TabsTrigger>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
+          <TabsTrigger value="inventory" className="gap-1.5"><MapPin className="w-3.5 h-3.5" /> Inventory</TabsTrigger>
         </TabsList>
 
         <TabsContent value="products" className="mt-4">
