@@ -8,6 +8,7 @@ import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { DashboardLockProvider, useDashboardLock } from '@/contexts/DashboardLockContext';
 import { ZuraNavigationProvider, useZuraNavigationSafe } from '@/contexts/ZuraNavigationContext';
+import { NavigationHistoryProvider, useNavigationHistory } from '@/contexts/NavigationHistoryContext';
 import { ZuraStickyGuidance } from '@/components/dashboard/ZuraStickyGuidance';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -124,6 +125,8 @@ import {
   Store,
   Receipt,
   ArrowLeftRight,
+  ArrowLeft,
+  ArrowRight,
   Gift,
   MessageSquare,
   MoreHorizontal,
@@ -189,6 +192,42 @@ function isLikelyIdSegment(segment: string) {
 function humanizeSegment(segment: string) {
   const s = segment.replace(/[-_]+/g, ' ').trim();
   return s.replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function NavHistoryArrows() {
+  const { canGoBack, canGoForward, goBack, goForward } = useNavigationHistory();
+  return (
+    <>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            disabled={!canGoBack}
+            onClick={goBack}
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Back</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+            disabled={!canGoForward}
+            onClick={goForward}
+          >
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom">Forward</TooltipContent>
+      </Tooltip>
+    </>
+  );
 }
 
 function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
@@ -1072,6 +1111,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                 {sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               </TooltipContent>
             </Tooltip>
+            <NavHistoryArrows />
             {isPlatformUser && location.pathname.startsWith('/dashboard/platform') && <OrganizationSwitcher compact />}
           </div>
 
@@ -1355,15 +1395,17 @@ export function DashboardLayout(props: DashboardLayoutProps) {
   return (
     <DashboardLockProvider>
       <ZuraNavigationProvider>
-        <div className={cn(
-          resolvedTheme === 'dark' && 'dark',
-          `theme-${colorTheme}`,
-          'bg-background text-foreground',
-          isPlatformRoute && 'platform-theme platform-gradient-radial min-h-screen'
-        )}>
-          <DashboardLayoutWithLock {...props} />
-          <ZuraStickyGuidance />
-        </div>
+        <NavigationHistoryProvider>
+          <div className={cn(
+            resolvedTheme === 'dark' && 'dark',
+            `theme-${colorTheme}`,
+            'bg-background text-foreground',
+            isPlatformRoute && 'platform-theme platform-gradient-radial min-h-screen'
+          )}>
+            <DashboardLayoutWithLock {...props} />
+            <ZuraStickyGuidance />
+          </div>
+        </NavigationHistoryProvider>
       </ZuraNavigationProvider>
     </DashboardLockProvider>
   );
