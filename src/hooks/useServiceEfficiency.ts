@@ -1,0 +1,159 @@
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useMemo } from 'react';
+
+export interface ServiceEfficiencyRow {
+  serviceName: string;
+  category: string;
+  avgDuration: number; // minutes
+  avgRevenue: number;
+  revPerHour: number;
+  bookings: number;
+  totalRevenue: number;
+  menuPrice: number | null;
+  realizationRate: number | null; // actual / menu * 100
+}
+
+export interface ServiceEfficiencyData {
+  services: ServiceEfficiencyRow[];
+  avgRevPerHour: number;
+  totalServiceRevenue: number;
+  activeServiceCount: number;
+  avgServiceTicket: number;
+  totalBookedHours: number;
+  overallRevPerHour: number;
+}
+
+export function useServiceEfficiency(
+  dateFrom: string,
+  dateTo: string,
+  locationId?: string
+) {
+  // Fetch appointment aggregates
+  const appointmentsQuery = useQuery({
+    queryKey: ['service-efficiency-appointments', dateFrom, dateTo, locationId],
+    queryFn: async () => {
+      let query = supabase
+        .from('phorest_appointments')
+        .select('service_name, total_price, start_time, end_time, appointment_date')
+        .neq('status', 'cancelled')
+        .gte('appointment_date', dateFrom)
+        .lte('appointment_date', dateTo);
+
+      if (locationId) {
+        query = query.eq('location_id', locationId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Fetch phorest_services for menu price and duration
+  const servicesQuery = useQuery({
+    queryKey: ['service-efficiency-catalog'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('phorest_services')
+        .select('name, category, duration_minutes, price')
+        .eq('is_active', true);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const result = useMemo<ServiceEfficiencyData | undefined>(() => {
+    if (!appointmentsQuery.data) return undefined;
+
+    const appointments = appointmentsQuery.data;
+    const catalog = servicesQuery.data || [];
+
+    // Build catalog lookup by name
+    const catalogMap = new Map<string, { category: string; duration: number; price: number | null }>();
+    for (const s of catalog) {
+      if (s.name && !catalogMap.has(s.name)) {
+        catalogMap.set(s.name, {
+          category: s.category || 'Other',
+          duration: s.duration_minutes || 0,
+          price: s.price,
+        });
+      }
+    }
+
+    // Aggregate by service_name
+    const agg = new Map<string, { totalRevenue: number; count: number; totalDurationMin: number }>();
+    let overallRevenue = 0;
+    let overallDurationMin = 0;
+
+    for (const a of appointments) {
+      if (!a.service_name) continue;
+      const rev = Number(a.total_price) || 0;
+      
+      // Calculate duration from start/end time or catalog
+      let durationMin = 0;
+      if (a.start_time && a.end_time) {
+        const [sh, sm] = a.start_time.split(':').map(Number);
+        const [eh, em] = a.end_time.split(':').map(Number);
+        durationMin = (eh * 60 + em) - (sh * 60 + sm);
+        if (durationMin <= 0) durationMin = 0;
+      }
+      if (durationMin === 0) {
+        durationMin = catalogMap.get(a.service_name)?.duration || 0;
+      }
+
+      const existing = agg.get(a.service_name) || { totalRevenue: 0, count: 0, totalDurationMin: 0 };
+      existing.totalRevenue += rev;
+      existing.count += 1;
+      existing.totalDurationMin += durationMin;
+      agg.set(a.service_name, existing);
+
+      overallRevenue += rev;
+      overallDurationMin += durationMin;
+    }
+
+    const services: ServiceEfficiencyRow[] = [];
+    for (const [name, data] of agg) {
+      const catInfo = catalogMap.get(name);
+      const avgRev = data.count > 0 ? data.totalRevenue / data.count : 0;
+      const avgDur = data.count > 0 ? data.totalDurationMin / data.count : 0;
+      const revPerHour = avgDur > 0 ? (avgRev / avgDur) * 60 : 0;
+      const menuPrice = catInfo?.price ?? null;
+      const realizationRate = menuPrice && menuPrice > 0 ? (avgRev / menuPrice) * 100 : null;
+
+      services.push({
+        serviceName: name,
+        category: catInfo?.category || 'Other',
+        avgDuration: Math.round(avgDur),
+        avgRevenue: avgRev,
+        revPerHour,
+        bookings: data.count,
+        totalRevenue: data.totalRevenue,
+        menuPrice,
+        realizationRate,
+      });
+    }
+
+    // Sort by rev/hour descending
+    services.sort((a, b) => b.revPerHour - a.revPerHour);
+
+    const totalBookedHours = overallDurationMin / 60;
+    const overallRevPerHour = totalBookedHours > 0 ? overallRevenue / totalBookedHours : 0;
+    const totalBookings = appointments.filter(a => a.service_name).length;
+
+    return {
+      services,
+      avgRevPerHour: overallRevPerHour,
+      totalServiceRevenue: overallRevenue,
+      activeServiceCount: agg.size,
+      avgServiceTicket: totalBookings > 0 ? overallRevenue / totalBookings : 0,
+      totalBookedHours,
+      overallRevPerHour,
+    };
+  }, [appointmentsQuery.data, servicesQuery.data]);
+
+  return {
+    data: result,
+    isLoading: appointmentsQuery.isLoading || servicesQuery.isLoading,
+  };
+}
