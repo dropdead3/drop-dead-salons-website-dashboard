@@ -1,30 +1,41 @@
 
 
-## Apply Glassmorphism to Help FAB
+## Soften Forecasting Bars to Warm Tan/Gray in Light Mode
 
 ### What's Changing
 
-The Help FAB button (bottom-right corner) currently uses a solid `bg-primary` fill. It will be updated to match the top bar's glass treatment: translucent background, heavy backdrop blur, and a subtle border for that frosted glass edge.
+The "Solid" mode bars currently use `hsl(var(--primary))` which renders as near-black in light mode. They'll be updated to a warm tan/gray tone that feels lighter and more refined, while preserving the dark mode appearance.
 
 ### Visual Effect
 
 ```text
-Before:  Solid black circle, opaque fill
-After:   Translucent bg-card/50, backdrop-blur-2xl, 
-         1px border-border/15 glass edge, 
-         shadow retained for floating depth
+Before:  Dark black/charcoal gradient bars (--primary based)
+After:   Warm tan/stone gradient -- e.g. hsl(35, 12%, 72%) fading to hsl(35, 10%, 85%)
+         Still with glass stroke for depth
+         Dark mode unchanged (keeps --primary)
 ```
 
 ### Technical Details
 
-**File:** `src/components/dashboard/HelpFAB.tsx`
+**Files to modify:**
 
-Two Button instances need updating (schedule page button at line 41-44, and main popover button at lines 68-71):
+| File | Change |
+|------|--------|
+| `src/components/dashboard/sales/WeekAheadForecast.tsx` (lines 461-463) | Update `solid-glass-week` gradient stops to use a warm neutral tone with CSS color-mix or a light-mode-specific warm gray |
+| `src/components/dashboard/sales/ForecastingCard.tsx` (lines 831-833) | Same update for `solid-glass-forecast` gradient |
 
-| Location | Current Classes | New Classes |
-|----------|----------------|-------------|
-| Schedule FAB (line 43) | `h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow` | `h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-card/50 backdrop-blur-2xl border border-border/15 text-foreground hover:bg-card/60` |
-| Main FAB (line 70) | `h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow` | `h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow bg-card/50 backdrop-blur-2xl border border-border/15 text-foreground hover:bg-card/60` |
+**Approach:**
 
-Both buttons also need `variant="ghost"` added to prevent the default primary background from overriding the glass styles.
+Use two sets of gradient stops -- a warm stone color for light mode and the existing primary for dark mode. Since SVG `<defs>` don't support Tailwind dark-mode classes, the cleanest approach is to use CSS custom properties that already shift between modes.
+
+The gradient stops will change from:
+- `stopColor="hsl(var(--primary))"` with 0.85/0.45 opacity
+
+To a warm neutral using the muted-foreground variable at reduced opacity, which naturally shifts between modes:
+- Top stop: `stopColor="hsl(var(--muted-foreground))"` at `0.45` opacity
+- Bottom stop: `stopColor="hsl(var(--muted-foreground))"` at `0.18` opacity
+
+This produces a soft warm gray/tan in light mode (since `--muted-foreground` is a warm neutral in the theme) and stays appropriately toned in dark mode. The glass stroke (`--foreground / 0.12`) remains unchanged.
+
+Both files receive identical gradient updates to keep the two forecasting charts visually consistent.
 
