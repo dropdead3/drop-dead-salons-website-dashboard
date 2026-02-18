@@ -1,51 +1,52 @@
 
 
-## Reorganize Cards Feature for Analytics Pages
+## Revenue Per Hour by Service Category
 
-### What This Adds
-A "Reorganize Cards" button on every analytics subtab page that opens a drag-and-drop drawer, letting users reorder the card sections to match their preferred viewing order. The order persists per user, per analytics page.
+### What It Shows
 
-### How It Works
+A ranked horizontal bar chart showing **average revenue per hour** for each service category (Blonding, Color, Haircut, Extensions, Styling, Extras, etc.). This answers the question: "Which service lines generate the most revenue per hour of chair time?"
 
-1. A small "Reorganize" button (using the existing `Settings2` or `ArrowUpDown` icon pattern) appears in the header area of each analytics subtab (Services, Overview, Retail, Correlations, Staffing, Appointments, Clients, Booking Pipeline, Marketing, etc.)
+**Default view:**
+- Horizontal bars ranked by rev/hour, highest first
+- Category-specific colors from the settings-driven color map
+- Overall salon average rev/hour shown as a vertical reference line on every bar
+- Badge on each bar showing the dollar amount per hour
 
-2. Clicking it opens a `Sheet` (side drawer) -- matching the existing `DashboardCustomizeMenu` pattern -- showing all card sections as a draggable list with grip handles using `@dnd-kit/sortable` (already installed and used throughout the app)
+**Drill-down per category (click to expand):**
+- Top 5 individual services within that category ranked by rev/hour
+- Per-service: name, avg duration, avg ticket, rev/hour, booking count
+- Stylist breakdown: which stylists perform this category, their individual rev/hour, and share percentage
+- Concentration risk flag if one stylist handles more than 70% of category hours
+- Efficiency delta: how far above/below the salon average each category sits (shown as a +/- percentage badge)
 
-3. Users drag cards into their preferred order. The order saves automatically to the `user_preferences.dashboard_layout` JSONB column under a new key: `analyticsCardOrder` (a map of `pageId -> cardId[]`)
+### Data Source
 
-4. Each analytics content component renders its sections in the user's saved order instead of hardcoded order
+The existing `useServiceEfficiency` hook already fetches all appointments with `service_name`, `total_price`, `start_time`, `end_time`, `phorest_staff_id`, and computes per-service rev/hour using actual appointment duration (with catalog fallback). No new database queries needed -- we aggregate this existing per-service data up to the category level using `getServiceCategory()` from the categorization utility.
 
-### Technical Details
+### Technical Implementation
 
-**New Hook: `src/hooks/useAnalyticsCardOrder.ts`**
-- Reads/writes `analyticsCardOrder` from `user_preferences.dashboard_layout` JSONB
-- Provides: `getCardOrder(pageId)` returns ordered card IDs, `saveCardOrder(pageId, cardIds[])` persists new order
-- Follows the exact same read/write pattern as `useDashboardLayout.ts` and `useSettingsLayout.ts` (check for existing row, upsert)
-- Includes a `resetOrder(pageId)` function
+**New component: `src/components/dashboard/sales/RevPerHourByCategoryChart.tsx`**
+- Accepts `dateFrom`, `dateTo`, `locationId`, `filterContext` props
+- Calls `useServiceEfficiency(dateFrom, dateTo, locationId)` to get per-service efficiency data
+- Groups `ServiceEfficiencyRow[]` by `category` field, computing:
+  - Category total revenue and total booked hours (sum of all services in category)
+  - Category rev/hour = total revenue / total hours
+  - Overall salon rev/hour as the reference line
+- Renders horizontal bar chart with animated bars (framer-motion), category colors, and reference line
+- Expandable rows per category showing top services and stylist breakdown
+- Filter badge integration via `AnalyticsFilterBadge`
 
-**New Component: `src/components/dashboard/analytics/AnalyticsCardReorderDrawer.tsx`**
-- Generic reusable drawer component that accepts a `pageId` and list of `{ id, label, icon }` card definitions
-- Uses `Sheet` + `DndContext` + `SortableContext` + `verticalListSortingStrategy` (same as `DashboardCustomizeMenu`)
-- Renders `SortableSectionItem` (or a simpler variant without the toggle switch -- just grip handle + icon + label)
-- "Reset to Default" button at the bottom
-- Auto-saves on every drag-end event
+**Modified: `src/components/dashboard/analytics/ServicesContent.tsx`**
+- Import the new component
+- Add it to the `SECTION_DEFINITIONS` array and `sections` map for the reorder system
+- Position it after the Service Efficiency Matrix section by default (since they share the efficiency theme)
 
-**Modified Content Components** (each gets the reorder button + ordered rendering):
-- `ServicesContent.tsx` -- 9 card sections (KPI tiles, Category Mix, Category Popularity, Client Type, Service Popularity, Efficiency Matrix, Rebooking Rates, Price Realization, Demand Trends, Service Pairings)
-- `SalesTabContent.tsx` overview subtab -- Sales Overview, Revenue Trend, Location Comparison, Product Categories
-- `MarketingTabContent.tsx` -- KPI tiles, Campaign Performance, Source Breakdown, Medium Distribution
-- `OperationsTabContent.tsx` subtabs -- delegates to child content components
-- Other subtab content components (Retail, Correlations, Staffing, etc.) as applicable
+**No new hooks, no new database queries, no schema changes.** All data is already available from `useServiceEfficiency`.
 
-**Implementation Pattern per Page:**
-1. Define a `SECTION_DEFINITIONS` array with `id`, `label`, `icon` for each card
-2. Map each card's JSX into a `Record<string, ReactNode>` keyed by section ID
-3. Use `useAnalyticsCardOrder(pageId)` to get the ordered IDs
-4. Render sections by iterating the ordered IDs and looking up the component map
-5. Add the `AnalyticsCardReorderDrawer` trigger button in the page header
+### Why This Matters
 
-This approach keeps each content component's card JSX untouched -- only the rendering order changes. No database migration needed since `dashboard_layout` is already a JSONB column that accepts arbitrary keys.
-
-### No Database Changes Required
-The `user_preferences.dashboard_layout` JSONB column already exists and can store the new `analyticsCardOrder` key without any schema migration.
+1. Revenue per hour is the core chair-time efficiency metric -- showing it at the category level reveals which service lines are the best use of salon capacity
+2. A salon doing heavy Extensions work at high ticket prices may still have lower rev/hour than Color if Extensions take 3x longer
+3. Category-level concentration risk flags help owners identify where losing a single stylist would collapse an efficient service line
+4. The efficiency delta badge makes it instantly clear which categories are dragging down (or lifting up) the salon average
 
