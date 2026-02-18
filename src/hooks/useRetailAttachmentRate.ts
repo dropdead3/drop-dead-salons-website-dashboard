@@ -37,8 +37,14 @@ export function useRetailAttachmentRate({ dateFrom, dateTo, locationId }: UseRet
         .in('item_type', ['Product', 'product', 'PRODUCT', 'Retail', 'retail', 'RETAIL']);
 
       if (locationId && locationId !== 'all') {
-        serviceQuery = serviceQuery.eq('location_id', locationId);
-        productQuery = productQuery.eq('location_id', locationId);
+        const ids = locationId.split(',').filter(Boolean);
+        if (ids.length === 1) {
+          serviceQuery = serviceQuery.eq('location_id', ids[0]);
+          productQuery = productQuery.eq('location_id', ids[0]);
+        } else if (ids.length > 1) {
+          serviceQuery = serviceQuery.in('location_id', ids);
+          productQuery = productQuery.in('location_id', ids);
+        }
       }
 
       const [serviceResult, productResult] = await Promise.all([

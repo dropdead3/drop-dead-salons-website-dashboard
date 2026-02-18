@@ -7,6 +7,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useActiveLocations } from '@/hooks/useLocations';
+import { LocationMultiSelect } from '@/components/ui/location-multi-select';
+import { parseLocationIds, encodeLocationIds } from '@/lib/locationFilter';
 import type { DateRangeType } from '@/components/dashboard/PinnedAnalyticsCard';
 
 const DATE_RANGE_LABELS: Record<DateRangeType, string> = {
@@ -31,22 +33,10 @@ interface AnalyticsFilterBarProps {
   onLocationChange: (value: string) => void;
   dateRange: DateRangeType;
   onDateRangeChange: (value: DateRangeType) => void;
-  /** Restrict dropdown to only these locations (if provided) */
   accessibleLocations?: Location[];
-  /** Whether the "All Locations" aggregate option should be shown */
   canViewAggregate?: boolean;
 }
 
-/**
- * Shared filter bar for analytics cards.
- * Renders location and date range selectors at the top of the dashboard
- * when any pinned analytics cards are visible.
- * 
- * Supports location-based access control:
- * - If accessibleLocations is provided, only those locations are shown
- * - If canViewAggregate is false, "All Locations" option is hidden
- * - If only one location and no aggregate, shows a static badge instead
- */
 export function AnalyticsFilterBar({
   locationId,
   onLocationChange,
@@ -56,18 +46,27 @@ export function AnalyticsFilterBar({
   canViewAggregate = true,
 }: AnalyticsFilterBarProps) {
   const { data: allLocations } = useActiveLocations();
-  
-  // Use provided accessible locations or fall back to all locations
   const locations = accessibleLocations ?? allLocations;
-  
-  // Determine if we should show the location selector
-  // Hide if: only one location AND no aggregate view allowed
-  const showLocationSelector = canViewAggregate || (locations?.length ?? 0) > 1;
-  
+  const locationCount = locations?.length ?? 0;
+
+  // 3+ locations → multi-select popover
+  const useMultiSelect = locationCount >= 3;
+
+  const showLocationSelector = canViewAggregate || locationCount > 1;
+
   return (
     <div className="flex flex-wrap items-center justify-end gap-3">
-      {/* Location Select - conditionally rendered based on access */}
-      {showLocationSelector && (
+      {/* Multi-select for 3+ locations */}
+      {showLocationSelector && useMultiSelect && locations && (
+        <LocationMultiSelect
+          locations={locations}
+          selectedIds={locationId === 'all' ? [] : parseLocationIds(locationId)}
+          onSelectionChange={(ids) => onLocationChange(encodeLocationIds(ids))}
+        />
+      )}
+
+      {/* Single-select for 1-2 locations */}
+      {showLocationSelector && !useMultiSelect && (
         <Select value={locationId} onValueChange={onLocationChange}>
           <SelectTrigger className="h-9 w-auto min-w-[180px] text-sm border-border">
             <MapPin className="w-4 h-4 mr-2 text-muted-foreground shrink-0" />
@@ -83,15 +82,15 @@ export function AnalyticsFilterBar({
           </SelectContent>
         </Select>
       )}
-      
-      {/* Single location badge (when only one location assigned and no aggregate) */}
-      {!showLocationSelector && locations?.length === 1 && (
+
+      {/* Single location badge */}
+      {!showLocationSelector && locationCount === 1 && locations && (
         <div className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-md text-sm h-9">
           <MapPin className="w-4 h-4 text-muted-foreground" />
           <span>{locations[0].name}</span>
         </div>
       )}
-      
+
       {/* Date Range Select */}
       <Select value={dateRange} onValueChange={(v) => onDateRangeChange(v as DateRangeType)}>
         <SelectTrigger className="h-9 w-auto min-w-[160px] text-sm border-border">

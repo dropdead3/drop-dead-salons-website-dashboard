@@ -132,9 +132,10 @@ export function useCapacityUtilization(period: CapacityPeriod, locationId?: stri
   return useQuery({
     queryKey: ['capacity-utilization', period, startDate, endDate, locationId, locations.length],
     queryFn: async () => {
-      // Get filtered locations
-      const filteredLocations = locationId && locationId !== 'all'
-        ? locations.filter(l => l.id === locationId)
+      // Get filtered locations (supports multi-select comma-separated ids)
+      const filterIds = locationId && locationId !== 'all' ? locationId.split(',').filter(Boolean) : [];
+      const filteredLocations = filterIds.length > 0
+        ? locations.filter(l => filterIds.includes(l.id))
         : locations;
 
       if (filteredLocations.length === 0) {
