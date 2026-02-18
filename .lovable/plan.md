@@ -1,74 +1,60 @@
 
 
-## Service Costs and Sales Profits
+## Service Costs and Sales Profits Card — Analysis and Enhancement Plan
 
-This feature adds cost tracking to services and a new analytics card that calculates profit margins, matching the reference screenshot.
+### Errors Found
 
-### Part 1: Database — Add Cost Column
+1. **Bar visualization uses "relative to max" logic instead of "share of total"**
+   The inline bar in the Total Sales column calculates width as `row.totalSales / data.maxSales * 100`. Per your platform standard, revenue bars should represent each row's share of the total revenue (value / sum of all values), not relative to the highest value. The current logic makes the top row always 100% wide, which misrepresents actual contribution.
 
-Add a `cost` column to the `services` table:
-- `cost NUMERIC(10,2) DEFAULT NULL` — the cost to deliver the service (product, time, supplies)
-- Nullable so existing services aren't affected until costs are entered
+2. **Bar colors use hardcoded Tailwind classes instead of CSS variable tokens**
+   The `barColors` array uses `bg-emerald-500`, `bg-blue-500`, etc. These should use the design system chart colors (`hsl(var(--chart-1))` through `--chart-5` and `--primary`), applied via inline `style` rather than Tailwind class names, for theme consistency.
 
-### Part 2: Service Editor — Cost Input
+3. **Loading state header is not standard**
+   The loading skeleton card is missing the `justify-between` two-column layout, the `MetricInfoTooltip`, and the `AnalyticsFilterBadge`. It also isn't wrapped in `PinnableCard`, which means the card flashes between two different DOM structures as data loads.
 
-**File: `src/components/dashboard/settings/ServiceEditorDialog.tsx`**
+4. **Empty state not wrapped in PinnableCard**
+   Same issue — when there's no data, the card loses its pinnable behavior.
 
-Add a "Cost ($)" input field next to the existing "Price ($)" field in the Details tab:
-- New state: `const [cost, setCost] = useState('')`
-- Populate from `initialData.cost` on edit
-- Include in the `handleDetailsSubmit` payload
-- Place it in the existing `grid grid-cols-2 gap-4` row, making it a 3-column grid: Duration | Price | Cost
+### Gaps
 
-**File: `src/hooks/useServicesData.ts`**
+5. **"Cost per Service" column is missing from the table**
+   The hook calculates and returns `costPerService` for each row, but the UI never displays it. The original plan called for showing this column. Owners need to see the unit cost to validate that their service costs are entered correctly.
 
-Add `cost: number | null` to the `Service` interface and include it in the `useCreateService` insert payload.
+6. **No visual indicator for services with no cost defined**
+   When a service has no cost in the `services` table, the card silently shows `$0` cost and `100%` profit. This is misleading. There should be a subtle indicator (e.g., a muted dash or a small "not set" badge) so the owner knows the profit figure is unreliable for that row.
 
-### Part 3: Analytics Card — Service Costs and Sales Profits
+7. **No summary KPIs above the table**
+   The card jumps straight from the header into a dense table. Adding 3-4 small KPI tiles above the table (Total Revenue, Total Cost, Total Profit, Avg Profit %) would give executives the headline numbers at a glance without scanning the entire table.
 
-**New file: `src/components/dashboard/sales/ServiceCostsProfitsCard.tsx`**
+### UI and Organization Enhancements
 
-A table-based analytics card matching the reference screenshot with these columns:
-- Location (Branch Name)
-- Service Category
-- Service Name
-- Total number of Services (count of appointments)
-- Total Service Sales (revenue with inline bar visualization)
-- Cost of Service (cost per service x count)
-- Service Profit (sales - cost)
-- Service Profit % ((profit / sales) x 100)
+8. **Group by category with collapsible sections**
+   For salons with 30+ services, this table becomes very long. Grouping rows by Service Category with collapsible sections (defaulting to expanded) would make it much more scannable. Each category group header could show its subtotal.
 
-Data sourcing:
-- Appointments from `phorest_appointments` (filtered by date range and location)
-- Cost from the `services` table (joined by service name or matched post-query)
-- Totals row at the bottom
+9. **Highlight rows missing cost data**
+   Rows where cost is not configured could have a subtle left-border accent or muted background to draw the owner's attention to incomplete data, reinforcing the incentive to enter costs in Settings.
 
-The card follows the standard luxury header layout with icon, title, MetricInfoTooltip, and AnalyticsFilterBadge.
+10. **Column alignment**
+    The `SortHeader` component passes `className="text-right"` to `TableHead`, but the sort icon and label are in a `flex` container that defaults to left alignment. Right-aligned numeric headers should use `justify-end` on the inner flex to actually right-align the header text with the cell data below it.
 
-**File: `src/components/dashboard/analytics/ServicesContent.tsx`**
+### Technical Changes
 
-Wire the new card into the Services subtab's ordered card list and render it alongside existing cards.
+**File: `src/components/dashboard/sales/ServiceCostsProfitsCard.tsx`**
 
-### Technical Details
+- Fix bar width calculation: `(row.totalSales / data.totals.totalSales) * 100`
+- Replace hardcoded `barColors` array with CSS variable-based inline styles using `--chart-1` through `--chart-5`
+- Add `costPerService` column between "# Services" and "Total Sales" (or between "Total Sales" and "Cost")
+- Add a "not set" indicator when `costPerService === 0` and the service wasn't found in the cost map (requires a small data change in the hook to flag this)
+- Wrap loading and empty states in `PinnableCard`
+- Fix loading state header to match the standard two-column layout with tooltip and filter badge
+- Fix `SortHeader` to use `justify-end` when `className` includes `text-right`
+- Add 3-4 summary KPI tiles above the table (Total Revenue, Total Cost, Total Profit, Avg Margin %)
 
-**Migration SQL:**
-```sql
-ALTER TABLE public.services
-ADD COLUMN cost NUMERIC(10,2) DEFAULT NULL;
+**File: `src/hooks/useServiceCostsProfits.ts`**
 
-COMMENT ON COLUMN public.services.cost IS 'Cost to deliver this service (product, supplies, etc.)';
-```
+- Add a `hasCostDefined: boolean` field to `ServiceCostProfitRow` so the UI can distinguish between "cost is $0" and "cost was never entered"
+- Change `maxSales` to `totalSalesSum` (or just use `totals.totalSales`) since the bar now uses share-of-total logic
 
-**New hook: `src/hooks/useServiceCostsProfits.ts`**
-- Queries `phorest_appointments` for the date range (with pagination for large datasets)
-- Queries `services` table for cost data
-- Joins by service name to calculate: total sales, total cost, profit, profit %
-- Groups by location + category + service name
-- Returns sorted by total service sales descending
+These changes keep the card structurally the same (single table with totals row) but fix the data integrity issues, align with the design system, and add the contextual cues that make this card actionable for salon owners.
 
-**Card features:**
-- Inline horizontal bar chart in the "Total Service Sales" column (colored bars like the reference)
-- Sortable columns (click header to sort)
-- Totals row at the bottom
-- Services without a cost defined show "$0" in the Cost column (100% profit) — this incentivizes owners to enter costs
-- Respects HideNumbersContext (BlurredAmount) for financial values
