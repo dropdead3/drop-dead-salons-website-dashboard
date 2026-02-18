@@ -1,40 +1,40 @@
 
 
-## Clean Up Donut Chart Gaps
+## Consolidate Service Bundling Intelligence into a Single Card
 
-Remove visible gaps between donut chart segments and replace with a clean thin stroke separator. This applies to all donut/pie charts across the project for consistency.
+The three separate `<Card>` elements inside `ServiceBundlingIntelligence.tsx` will be merged into one unified card with internal sections separated by dividers.
 
-### The Fix
+### Current Structure (3 standalone cards)
+```text
+[Card] Standalone vs. Grouped
+[Card] Revenue Lift from Grouping
+[Card] Category Pairing Heatmap
+```
 
-For every `<Pie>` component that currently uses `paddingAngle={2}` or `paddingAngle={5}`:
-- Set `paddingAngle={0}` (no gaps)
-- Set `stroke="hsl(var(--border) / 0.4)"` (thin separator line matching the app's border color)
-- Set `strokeWidth={1}` (clean, minimal divider)
+### New Structure (1 card, 3 sections)
+```text
+[Card] SERVICE BUNDLING INTELLIGENCE
+  |-- Icon + Title + Tooltip + FilterBadge (single header)
+  |-- Section: Standalone vs. Grouped (with subheading)
+  |-- Separator
+  |-- Section: Revenue Lift from Grouping (with subheading)
+  |-- Separator
+  |-- Section: Category Pairing Heatmap (with subheading)
+```
 
-### Files to Update (19 total with paddingAngle)
+### Technical Changes
 
-1. **`src/components/dashboard/analytics/ServicesContent.tsx`** (line 391) -- the category mix donut visible in the screenshot
-2. **`src/components/dashboard/sales/RevenueDonutChart.tsx`** (line 84)
-3. **`src/components/dashboard/payroll/analytics/CompensationBreakdownChart.tsx`** (line 90)
-4. **`src/components/dashboard/sales/ServiceMixChart.tsx`** (line 133)
-5. **`src/components/dashboard/sales/ClientFunnelCard.tsx`** (line 82)
-6. **`src/components/dashboard/LeadFunnelCard.tsx`** (line 147)
-7. **`src/components/dashboard/analytics/StaffUtilizationContent.tsx`** (line 258)
-8. **`src/components/dashboard/analytics/AppointmentsContent.tsx`** (line 339)
-9. **`src/components/dashboard/analytics/PromotionROIPanel.tsx`** (line 230)
-10. **`src/components/dashboard/marketing/MediumDistributionChart.tsx`** (line 107)
-11. **`src/components/dashboard/reports/IndividualStaffReport.tsx`** (lines 468, 505)
-12. **`src/components/platform/RevenueChart.tsx`** (line 165)
-13. **`src/components/platform/analytics/RevenueIntelligence.tsx`** (line 190)
-14. **`src/pages/dashboard/admin/SalesDashboard.tsx`** (line 597)
-15. **`src/pages/dashboard/admin/ProgramAnalytics.tsx`** (line ~520)
+**File: `src/components/dashboard/sales/ServiceBundlingIntelligence.tsx`**
 
-The `LocationDonutChart.tsx` already uses `paddingAngle={0}` with a stroke -- no changes needed there.
+1. Remove the outer `<div className="space-y-4">` wrapper and the three inner `<Card>` elements
+2. Replace with a single `<Card>` that has one `<CardHeader>` using the standard two-column layout:
+   - Left: Layers icon + "SERVICE BUNDLING INTELLIGENCE" title + MetricInfoTooltip + CardDescription
+   - Right: `AnalyticsFilterBadge`
+3. Single `<CardContent>` containing three internal sections, each with:
+   - A small subheading (e.g., `text-sm font-medium` label like "Standalone vs. Grouped")
+   - The existing content (bar charts, table, heatmap)
+   - A `<Separator>` between sections
+4. Remove the redundant icon containers, CardHeaders, and CardTitles from the former sub-cards
 
-### Design Rule Addition
-
-The `CARD_HEADER_DESIGN_RULES.md` will be updated with a new "Donut/Pie Chart" rule:
-- `paddingAngle={0}` always
-- `stroke="hsl(var(--border) / 0.4)"` and `strokeWidth={1}` for clean segment separation
-- No visible gaps between segments
+This eliminates the visual confusion of three cards that appear independent but are really one analytical unit, and ensures a single `AnalyticsFilterBadge` correctly represents the shared filter context.
 
