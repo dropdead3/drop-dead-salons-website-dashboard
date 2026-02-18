@@ -1,0 +1,68 @@
+import { useSiteSettings, useUpdateSiteSetting } from './useSiteSettings';
+
+// === Booking Settings ===
+export interface WebsiteBookingSettings {
+  [key: string]: unknown;
+  enabled: boolean;
+  require_deposit: boolean;
+  buffer_minutes: number;
+  new_client_mode: 'both' | 'new_only' | 'existing_only';
+}
+
+export function useWebsiteBookingSettings() {
+  return useSiteSettings<WebsiteBookingSettings>('website_booking');
+}
+
+export function useUpdateWebsiteBookingSettings() {
+  return useUpdateSiteSetting<WebsiteBookingSettings>();
+}
+
+// === Retail Settings ===
+export interface WebsiteRetailSettings {
+  [key: string]: unknown;
+  enabled: boolean;
+  pickup: boolean;
+  delivery: boolean;
+  shipping: boolean;
+  featured_products: boolean;
+}
+
+export function useWebsiteRetailSettings() {
+  return useSiteSettings<WebsiteRetailSettings>('website_retail');
+}
+
+export function useUpdateWebsiteRetailSettings() {
+  return useUpdateSiteSetting<WebsiteRetailSettings>();
+}
+
+// === SEO & Legal Settings ===
+export interface WebsiteSeoLegalSettings {
+  [key: string]: unknown;
+  ga_id: string;
+  gtm_id: string;
+  meta_pixel_id: string;
+  privacy_url: string;
+  terms_url: string;
+}
+
+export function useWebsiteSeoLegalSettings() {
+  return useSiteSettings<WebsiteSeoLegalSettings>('website_seo_legal');
+}
+
+export function useUpdateWebsiteSeoLegalSettings() {
+  return useUpdateSiteSetting<WebsiteSeoLegalSettings>();
+}
+
+// === Theme Settings ===
+export interface WebsiteThemeSettings {
+  [key: string]: unknown;
+  color_theme: string;
+}
+
+export function useWebsiteThemeSettings() {
+  return useSiteSettings<WebsiteThemeSettings>('website_theme');
+}
+
+export function useUpdateWebsiteThemeSettings() {
+  return useUpdateSiteSetting<WebsiteThemeSettings>();
+}
