@@ -114,7 +114,7 @@ function DayXAxisTick({ x, y, payload, days }: any) {
       <text 
         x={0} y={0} dy={38} 
         textAnchor="middle" 
-        className="fill-muted-foreground text-[10px]"
+        className="fill-foreground text-[11px]" style={{ fontWeight: 500 }}
       >
         {day.gapHours > 0 ? `${day.gapHours}h open` : 'Full'}
       </text>
