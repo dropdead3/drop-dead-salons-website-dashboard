@@ -48,9 +48,10 @@ Every analytics card in the dashboard **must** follow this header structure:
 - `MetricInfoTooltip` immediately after the title, inside the same flex row
 - Font weight capped at `font-medium` (500) — no bold
 
-### 4. Filter Badge Placement
+### 4. Filter Badge & View Toggle Placement
 - `<AnalyticsFilterBadge>` always goes in the **right column**
-- If the card also has view toggles (e.g., "New Clients" / "Retention"), they sit adjacent to the filter badge in the same right-column flex container
+- **View-level toggles** (e.g., "By Service / By Category", "New Clients / Retention") belong in the **right column** of the header, adjacent to the filter badge and stat badges
+- **Sort toggles** (e.g., "By Revenue / By Frequency") remain inside `<CardContent>` — they control chart ordering, not which dataset is shown
 
 ### 5. Stat Badges
 - Count badges (`Badge variant="outline"`) and revenue badges (`Badge variant="secondary"`) go in the **right column**, after the filter badge
