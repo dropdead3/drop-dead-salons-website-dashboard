@@ -1,82 +1,37 @@
 
 
-## Client Visits Analytics Card for Staff Performance Tab
+## Client Visits Card — Gap Analysis and Enhancements
 
-### What We're Building
+### Issues Found
 
-A "Client Visits" analytics card inspired by the reference screenshot, adapted to the Zura luxury aesthetic and enriched with drill-down intelligence. The card answers: **"How many client visits did each stylist handle, and how is that trending?"**
+**1. Card wrapper missing design token**
+All three `<Card>` instances (loading, empty, main states) use bare `<Card>` without `className={tokens.card.wrapper}` (`rounded-2xl`). Every other analytics card applies this token.
 
-It sits on the Staff Performance subtab (`/dashboard/admin/analytics?tab=sales&subtab=staff`) alongside the existing Staff Performance leaderboard, Peak Hours Heatmap, and Client Funnel cards.
+**2. Profile link uses `<a>` instead of React Router `<Link>`**
+Line 226 uses a raw `<a href=...>` for the stylist profile navigation. This causes a full page reload instead of a client-side transition. Must use `<Link to=...>` from `react-router-dom`.
 
-### Card Layout (Two Panels)
+**3. Drill-down stat values use raw classes instead of tokens**
+The `<p className="text-sm font-medium">` on lines 238, 241, 245 should use `tokens.body.emphasis` (`font-sans text-sm font-medium text-foreground`) for consistency with the design system.
 
-```text
-+------------------------------+-----------------------------------------------+
-|                              |                                               |
-|            148               |     CLIENT VISITS BREAKDOWN          (i)      |
-|                              |                                               |
-|    CLIENT VISITS  (i)        |   [=== Bar Chart by Stylist ===]              |
-|                              |   Alexis H.   |████████████████| 40           |
-|    ▲ 8.2%                    |   Cienna R.   |██████████████  | 38           |
-|    vs prior period           |   Jamie V.    |█████████████   | 36           |
-|                              |   ...                                         |
-+------------------------------+-----------------------------------------------+
-```
+**4. No click affordance on the bar chart**
+Users have no visual cue that bars are interactive. Add a small hint text below the chart ("Click a bar to explore") that fades out once a bar has been clicked, following the pattern used in other drill-down cards.
 
-**Left panel**: Hero KPI with total visit count, period-over-period change badge, and a `MetricInfoTooltip`.
+**5. No active-bar highlight**
+When a bar is expanded, there is no visual distinction showing which bar is selected. The expanded bar should use a slightly stronger fill opacity or a different gradient stop to indicate selection.
 
-**Right panel**: Horizontal bar chart (Recharts `BarChart` with `layout="vertical"`) showing visits per stylist, sorted descending. Bars use `hsl(var(--primary))` with the luxury glass gradient pattern. Count labels appear at bar ends.
+**6. Drill-down sub-labels use raw classes**
+`<p className="text-xs text-muted-foreground">` labels like "New Clients", "Returning", "Top Services" should use `tokens.label.tiny` or at minimum the muted body token for consistency.
 
-### Drill-Down (Click a Stylist Bar)
+### Plan
 
-Clicking a bar expands an inline `framer-motion` panel showing that stylist's visit details:
-- **Service Mix**: Top 5 services by visit count
-- **New vs Returning**: Split of new vs returning client visits
-- **Average Ticket**: Revenue per visit for this stylist
-- Navigation link to the stylist's full profile page
+**File modified**: `src/components/dashboard/sales/ClientVisitsCard.tsx`
 
-### Data Hook
+1. Add `className={tokens.card.wrapper}` to all three `<Card>` elements (loading, empty, main)
+2. Replace the `<a href=...>` profile link with React Router `<Link to=...>` (add import)
+3. Replace raw `text-sm font-medium` on drill-down stat values with `tokens.body.emphasis`
+4. Replace raw `text-xs text-muted-foreground` on drill-down labels with appropriate tokens
+5. Add a subtle "Click a bar to explore" hint below the chart that uses `tokens.body.muted` styling with reduced opacity, hidden once a bar has been clicked (track via a `hasInteracted` state)
+6. Add active-bar highlighting: when `expandedStaff` matches a bar's `staffId`, use a second SVG gradient (`clientVisitsBarGradientActive`) with higher opacity stops (0.7 to 0.35) so the selected bar visually stands out
 
-**New file**: `src/hooks/useClientVisitsByStaff.ts`
-
-Queries `phorest_appointments` for the selected date range and an equivalent prior period (same duration, immediately preceding). Groups by `phorest_staff_id`, resolves staff names via `phorest_staff_mapping` + `employee_profiles`, and calculates:
-
-- `totalVisits`: Count of non-cancelled/no-show appointments per stylist
-- `priorVisits`: Same count for the prior period
-- `percentChange`: Period-over-period change
-- `newClientVisits`: Count where `is_new_client = true`
-- `returningClientVisits`: Remainder
-- `topServices`: Top 5 service names by frequency
-- `avgTicket`: Average `total_price` per visit
-
-Returns both the aggregate totals and per-stylist breakdown. Uses manual pagination via `.range()` per project standards for high-volume orgs.
-
-Accepts `dateFrom`, `dateTo`, and optional `locationId` parameters.
-
-### UI Component
-
-**New file**: `src/components/dashboard/sales/ClientVisitsCard.tsx`
-
-- Wrapped in `PinnableCard` for Command Center pinning
-- Two-column `justify-between` header with icon + title on left, `AnalyticsFilterBadge` on right
-- Left KPI panel uses `tokens.stat.large` for the hero number
-- Period change uses a `ChangeBadge`-style indicator (green up arrow / red down arrow)
-- Right panel uses Recharts `BarChart` with `layout="vertical"`, `YAxis` showing truncated stylist names, bars with glass gradient fills
-- Click handler on bars triggers drill-down expansion
-- Loading state: Skeleton matching the two-panel layout
-- Empty state: Standard `tokens.empty` pattern
-
-### Integration
-
-**Modified file**: `src/components/dashboard/analytics/SalesTabContent.tsx`
-
-Add the `ClientVisitsCard` to the `staff` TabsContent section, positioned before the existing Staff Performance leaderboard (visits are a foundational metric that contextualizes revenue). Wrapped in `PinnableCard` with the standard element key and category props.
-
-### Technical Details
-
-- **Files created**: `src/hooks/useClientVisitsByStaff.ts`, `src/components/dashboard/sales/ClientVisitsCard.tsx`
-- **Files modified**: `src/components/dashboard/analytics/SalesTabContent.tsx` (add card to staff subtab)
-- **Patterns followed**: Manual pagination via `.range()`, `PinnableCard` wrapper, `AnalyticsFilterBadge` in header right column, `MetricInfoTooltip`, `BlurredAmount` for currency values, `tokens` design system, `framer-motion` for drill-down expansion
-- **Period comparison**: Computed by calculating the duration of `dateFrom` to `dateTo`, then querying the same duration immediately prior. Change displayed as percentage with directional icon
-- **Bar chart**: Recharts `BarChart` with `layout="vertical"`, `hsl(var(--primary))` fill with SVG linear gradient (0.45 to 0.18 opacity), 1px glass stroke, count labels via custom `<Label>` on bars
-
+### No other files need changes
+The hook (`useClientVisitsByStaff.ts`) and the integration in `SalesTabContent.tsx` are correct. The `PinnableCard` wrapper is applied externally as expected. The `AnalyticsFilterBadge` is correctly placed in the right column of the header.
