@@ -102,7 +102,7 @@ export function ServiceCostsProfitsCard({
       className={cn('cursor-pointer select-none hover:text-foreground transition-colors', className)}
       onClick={() => toggleSort(sortKey)}
     >
-      <div className={cn('flex items-center gap-1', className?.includes('text-right') && 'justify-end')}>
+      <div className="flex items-center gap-1">
         {label}
         <ArrowUpDown className={cn('w-3 h-3', sort.key === sortKey ? 'text-primary' : 'text-muted-foreground/50')} />
       </div>
@@ -181,18 +181,18 @@ export function ServiceCostsProfitsCard({
             <span className="text-xs text-muted-foreground/60">({group.rows.length})</span>
           </div>
         </TableCell>
-        <TableCell className="text-right tabular-nums text-xs text-muted-foreground">{formatNumber(group.count)}</TableCell>
+        <TableCell className="tabular-nums text-xs text-muted-foreground">{formatNumber(group.count)}</TableCell>
         <TableCell />
-        <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
+        <TableCell className="text-xs tabular-nums text-muted-foreground">
           <BlurredAmount>{formatCurrency(group.totalSales)}</BlurredAmount>
         </TableCell>
-        <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
+        <TableCell className="text-xs tabular-nums text-muted-foreground">
           <BlurredAmount>{formatCurrency(group.totalCost)}</BlurredAmount>
         </TableCell>
-        <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
+        <TableCell className="text-xs tabular-nums text-muted-foreground">
           <BlurredAmount>{formatCurrency(group.profit)}</BlurredAmount>
         </TableCell>
-        <TableCell className="text-right text-xs tabular-nums text-muted-foreground">
+        <TableCell className="text-xs tabular-nums text-muted-foreground">
           {formatPercent(catMarginPct)}
         </TableCell>
       </TableRow>
@@ -213,33 +213,33 @@ export function ServiceCostsProfitsCard({
           >
             <TableCell className="text-sm">{row.locationName}</TableCell>
             <TableCell className="text-sm max-w-[200px] truncate">{row.serviceName}</TableCell>
-            <TableCell className="text-right tabular-nums text-sm">{formatNumber(row.totalServices)}</TableCell>
-            <TableCell className="text-right tabular-nums text-sm">
+            <TableCell className="tabular-nums text-sm">{formatNumber(row.totalServices)}</TableCell>
+            <TableCell className="tabular-nums text-sm">
               {noCost
                 ? <span className="text-xs text-muted-foreground/50 italic">not set</span>
                 : <BlurredAmount>{formatCurrency(row.costPerService)}</BlurredAmount>
               }
             </TableCell>
-            <TableCell className="text-right">
-              <div className="flex items-center gap-2 justify-end">
-                <div className="w-20 h-2 bg-muted rounded-full overflow-hidden">
+            <TableCell>
+              <div className="flex items-center gap-2">
+                <div className="w-20 h-2 bg-muted rounded-full overflow-hidden flex-shrink-0">
                   <div
                     className="h-full rounded-full"
                     style={{ width: `${Math.max(barWidth, 1)}%`, backgroundColor: barColor }}
                   />
                 </div>
-                <span className="text-sm tabular-nums">
+                <span className="text-sm tabular-nums min-w-[5.5rem] text-left">
                   <BlurredAmount>{formatCurrency(row.totalSales)}</BlurredAmount>
                 </span>
               </div>
             </TableCell>
-            <TableCell className="text-right text-sm tabular-nums">
+            <TableCell className="text-sm tabular-nums">
               <BlurredAmount>{formatCurrency(row.totalCost)}</BlurredAmount>
             </TableCell>
-            <TableCell className={cn('text-right text-sm tabular-nums', row.profit >= 0 ? 'text-success' : 'text-destructive')}>
+            <TableCell className={cn('text-sm tabular-nums', row.profit >= 0 ? 'text-success' : 'text-destructive')}>
               <BlurredAmount>{formatCurrency(row.profit)}</BlurredAmount>
             </TableCell>
-            <TableCell className={cn('text-right text-sm tabular-nums', noCost ? 'text-muted-foreground/50' : row.profitPct >= 50 ? 'text-success' : row.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
+            <TableCell className={cn('text-sm tabular-nums', noCost ? 'text-muted-foreground/50' : row.profitPct >= 50 ? 'text-success' : row.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
               {noCost ? '—' : formatPercent(row.profitPct)}
             </TableCell>
           </TableRow>
@@ -303,12 +303,12 @@ export function ServiceCostsProfitsCard({
                 <TableRow>
                   <SortHeader label="Location" sortKey="locationName" />
                   <SortHeader label="Service" sortKey="serviceName" />
-                  <SortHeader label="# Services" sortKey="totalServices" className="text-right" />
-                  <SortHeader label="Unit Cost" sortKey="costPerService" className="text-right" />
-                  <SortHeader label="Total Sales" sortKey="totalSales" className="text-right" />
-                  <SortHeader label="Total Cost" sortKey="totalCost" className="text-right" />
-                  <SortHeader label="Profit" sortKey="profit" className="text-right" />
-                  <SortHeader label="Margin" sortKey="profitPct" className="text-right" />
+      <SortHeader label="# Services" sortKey="totalServices" />
+                  <SortHeader label="Unit Cost" sortKey="costPerService" />
+                  <SortHeader label="Total Sales" sortKey="totalSales" />
+                  <SortHeader label="Total Cost" sortKey="totalCost" />
+                  <SortHeader label="Profit" sortKey="profit" />
+                  <SortHeader label="Margin" sortKey="profitPct" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -317,18 +317,18 @@ export function ServiceCostsProfitsCard({
                 {/* Totals row */}
                 <TableRow className="bg-muted/30 border-t-2 border-border">
                   <TableCell colSpan={2} className="text-sm font-display uppercase tracking-wide text-muted-foreground">Totals</TableCell>
-                  <TableCell className="text-right tabular-nums text-sm">{formatNumber(data.totals.totalServices)}</TableCell>
+                  <TableCell className="tabular-nums text-sm">{formatNumber(data.totals.totalServices)}</TableCell>
                   <TableCell />
-                  <TableCell className="text-right text-sm tabular-nums">
+                  <TableCell className="text-sm tabular-nums">
                     <BlurredAmount>{formatCurrency(data.totals.totalSales)}</BlurredAmount>
                   </TableCell>
-                  <TableCell className="text-right text-sm tabular-nums">
+                  <TableCell className="text-sm tabular-nums">
                     <BlurredAmount>{formatCurrency(data.totals.totalCost)}</BlurredAmount>
                   </TableCell>
-                  <TableCell className={cn('text-right text-sm tabular-nums', data.totals.profit >= 0 ? 'text-success' : 'text-destructive')}>
+                  <TableCell className={cn('text-sm tabular-nums', data.totals.profit >= 0 ? 'text-success' : 'text-destructive')}>
                     <BlurredAmount>{formatCurrency(data.totals.profit)}</BlurredAmount>
                   </TableCell>
-                  <TableCell className={cn('text-right text-sm tabular-nums', data.totals.profitPct >= 50 ? 'text-success' : data.totals.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
+                  <TableCell className={cn('text-sm tabular-nums', data.totals.profitPct >= 50 ? 'text-success' : data.totals.profitPct >= 20 ? 'text-amber-600 dark:text-amber-400' : 'text-destructive')}>
                     {formatPercent(data.totals.profitPct)}
                   </TableCell>
                 </TableRow>
