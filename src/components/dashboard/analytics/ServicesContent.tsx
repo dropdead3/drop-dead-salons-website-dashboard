@@ -30,6 +30,7 @@ import { RevPerHourByCategoryChart } from '@/components/dashboard/sales/RevPerHo
 import { useServiceDemandTrend } from '@/hooks/useServiceDemandTrend';
 import { useServiceClientAnalysis } from '@/hooks/useServiceClientAnalysis';
 import { ServiceBundlingIntelligence } from '@/components/dashboard/sales/ServiceBundlingIntelligence';
+import { ServiceCostsProfitsCard } from '@/components/dashboard/sales/ServiceCostsProfitsCard';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
@@ -150,6 +151,7 @@ const SERVICES_SECTION_DEFS: CardDefinition[] = [
   { id: 'price_realization', label: 'Price Realization', icon: <DollarSign className="w-4 h-4" /> },
   { id: 'demand_trends', label: 'Service Demand Trends', icon: <TrendingUp className="w-4 h-4" /> },
   { id: 'service_pairings', label: 'Service Bundling Intelligence', icon: <Layers className="w-4 h-4" /> },
+  { id: 'service_costs_profits', label: 'Service Costs & Sales Profits', icon: <DollarSign className="w-4 h-4" /> },
 ];
 const SERVICES_DEFAULT_ORDER = SERVICES_SECTION_DEFS.map(s => s.id);
 
@@ -945,6 +947,18 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
   sections.service_pairings = (
     <ServiceBundlingIntelligence
       key="service_pairings"
+      dateFrom={dateFrom}
+      dateTo={dateTo}
+      locationId={locationId}
+      filterContext={filterContext}
+      dateRange={dateRange}
+      locationName={locationName}
+    />
+  );
+
+  sections.service_costs_profits = (
+    <ServiceCostsProfitsCard
+      key="service_costs_profits"
       dateFrom={dateFrom}
       dateTo={dateTo}
       locationId={locationId}

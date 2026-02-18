@@ -36,6 +36,7 @@ export function ServiceEditorDialog({
   const [category, setCategory] = useState('');
   const [duration, setDuration] = useState('60');
   const [price, setPrice] = useState('');
+  const [cost, setCost] = useState('');
   const [description, setDescription] = useState('');
   const [requiresQualification, setRequiresQualification] = useState(false);
   const [allowSameDayBooking, setAllowSameDayBooking] = useState(true);
@@ -49,6 +50,7 @@ export function ServiceEditorDialog({
         setCategory(initialData.category || '');
         setDuration(String(initialData.duration_minutes || 60));
         setPrice(initialData.price != null ? String(initialData.price) : '');
+        setCost(initialData.cost != null ? String(initialData.cost) : '');
         setDescription(initialData.description || '');
         setRequiresQualification(initialData.requires_qualification ?? false);
         setAllowSameDayBooking(initialData.allow_same_day_booking ?? true);
@@ -58,6 +60,7 @@ export function ServiceEditorDialog({
         setCategory(categories[0]?.category_name || '');
         setDuration('60');
         setPrice('');
+        setCost('');
         setDescription('');
         setRequiresQualification(false);
         setAllowSameDayBooking(true);
@@ -74,6 +77,7 @@ export function ServiceEditorDialog({
       category: category || null,
       duration_minutes: parseInt(duration) || 60,
       price: price ? parseFloat(price) : null,
+      cost: cost ? parseFloat(cost) : null,
       description: description.trim() || null,
       requires_qualification: requiresQualification,
       allow_same_day_booking: allowSameDayBooking,
@@ -136,7 +140,7 @@ export function ServiceEditorDialog({
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="service-duration">Duration (min) *</Label>
                     <Input id="service-duration" type="number" min="5" step="5" value={duration} onChange={e => setDuration(e.target.value)} />
@@ -144,6 +148,10 @@ export function ServiceEditorDialog({
                   <div className="space-y-2">
                     <Label htmlFor="service-price">Price ($)</Label>
                     <Input id="service-price" type="number" min="0" step="0.01" value={price} onChange={e => setPrice(e.target.value)} placeholder="Optional" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="service-cost">Cost ($)</Label>
+                    <Input id="service-cost" type="number" min="0" step="0.01" value={cost} onChange={e => setCost(e.target.value)} placeholder="Optional" />
                   </div>
                 </div>
 

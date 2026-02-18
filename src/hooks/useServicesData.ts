@@ -11,6 +11,7 @@ export interface Service {
   category: string | null;
   duration_minutes: number | null;
   price: number | null;
+  cost: number | null;
   is_active: boolean | null;
   requires_qualification: boolean | null;
   allow_same_day_booking: boolean | null;
@@ -156,6 +157,7 @@ export function useCreateService() {
           category: service.category,
           duration_minutes: service.duration_minutes,
           price: service.price,
+          cost: service.cost,
           is_active: service.is_active ?? true,
           requires_qualification: service.requires_qualification ?? false,
           allow_same_day_booking: service.allow_same_day_booking ?? true,
