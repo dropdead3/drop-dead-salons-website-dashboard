@@ -8,12 +8,16 @@ interface SidebarGreetingProps {
 }
 
 export function SidebarGreeting({ greeting, subtitle, firstName }: SidebarGreetingProps) {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(() => {
+    return !sessionStorage.getItem('greeting-shown');
+  });
 
   useEffect(() => {
+    if (!isVisible) return;
+    sessionStorage.setItem('greeting-shown', 'true');
     const timer = setTimeout(() => setIsVisible(false), 30000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isVisible]);
 
   return (
     <AnimatePresence>

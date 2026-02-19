@@ -24,6 +24,7 @@ export function DashboardLockProvider({ children }: { children: ReactNode }) {
 
   const unlock = useCallback((user?: UnlockedUser) => {
     setIsLocked(false);
+    sessionStorage.removeItem('greeting-shown');
     if (user) {
       setLastUnlockedUser(user);
     }
