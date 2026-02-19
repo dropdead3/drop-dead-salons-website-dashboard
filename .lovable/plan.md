@@ -1,58 +1,26 @@
 
 
-## Fix Collapsed Sidebar: Expand Button Visibility and Logo Overlap
+## Fix Bottom Padding on Clock/Lock Button Container
 
 ### Problem
-When the sidebar is collapsed, the logo and the expand chevron button share a centered flex container. The small chevron crowds into the logo area, making it hard to see and click. The screenshot shows them stacked vertically with poor separation.
+The Clock In and Lock Dashboard buttons sit in a rounded bento container near the bottom of the sidebar. The bottom spacing below this container doesn't visually match the side margins (`mx-3` = 12px), creating an unbalanced look around the edges.
 
 ### Solution
-Restructure the collapsed header to stack the logo and expand button vertically with clear separation, rather than trying to fit both in a single centered row.
 
 **File: `src/components/dashboard/SidebarNavContent.tsx`**
 
-1. **Change the collapsed layout from a single flex-row to a flex-column** so the logo sits on top and the expand button sits clearly below it with spacing.
-
-2. **Make the expand button more visible** by giving it a subtle background (`bg-muted/60 hover:bg-muted`) and slightly larger touch target (`h-7 w-7` instead of `h-6 w-6`).
+Adjust the bottom spacer from `h-2` (8px) to `h-3` (12px) so it matches the horizontal margin (`mx-3` = 12px), creating consistent visual padding on all sides of the footer area.
 
 ### Technical Detail
 
-Lines 320-376 -- restructure the collapsed state:
+```
+// Line 697
+// Before
+<div className="h-2" />
 
-```tsx
-<div className={cn("border-b border-border/30", isCollapsed ? "p-3" : "px-4 py-3")}>
-  <div className={cn(
-    "flex items-center",
-    isCollapsed ? "flex-col gap-2" : "justify-between"
-  )}>
-    {/* Logo link -- unchanged */}
-    <Link to="/dashboard" className="block min-w-0">
-      {/* ... collapsed/expanded logo rendering unchanged ... */}
-    </Link>
-
-    {/* Expand button -- collapsed state gets better visibility */}
-    {isCollapsed ? (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 rounded-md bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
-            onClick={onToggleCollapse}
-          >
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="right">Expand sidebar</TooltipContent>
-      </Tooltip>
-    ) : (
-      /* Collapse button -- unchanged */
-    )}
-  </div>
-</div>
+// After
+<div className="h-3" />
 ```
 
-Key changes:
-- `flex-col gap-2` in collapsed state separates logo and button vertically with clear spacing
-- Button gets `bg-muted/50 hover:bg-muted` background so it reads as an interactive element
-- Button sized up to `h-7 w-7` for better tap target
-- Removes the `mt-1.5` hack that was trying to offset the overlap
+Single-line change. The bottom breathing room will now match the left/right margins for a visually balanced footer.
+
