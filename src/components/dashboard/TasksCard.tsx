@@ -83,7 +83,7 @@ export function TasksCard({
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
           <div className="flex items-center gap-2">
-            <h2 className="font-display text-xs tracking-[0.15em]">{t('home.my_tasks')}</h2>
+            <h2 className="font-sans text-xs tracking-normal">{t('home.my_tasks')}</h2>
             {activeTasks.length > 0 && (
               <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                 {activeTasks.length} active{overdueCount > 0 && <span className="text-destructive">, {overdueCount} overdue</span>}
