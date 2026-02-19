@@ -49,7 +49,7 @@ import { useClientHealthSegments } from '@/hooks/useClientHealthSegments';
 import { useNewBookings } from '@/hooks/useNewBookings';
 import { useHiringCapacity } from '@/hooks/useHiringCapacity';
 import { useGoalTrackerData } from '@/hooks/useGoalTrackerData';
-import { useRevenueForecast } from '@/hooks/useRevenueForecast';
+import { useWeekAheadRevenue } from '@/hooks/useWeekAheadRevenue';
 import { getNextPayDay, type PayScheduleSettings } from '@/hooks/usePaySchedule';
 
 export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth';
@@ -285,7 +285,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
   const newBookingsQuery = useNewBookings(locationFilter, filters.dateRange);
   const hiringCapacity = useHiringCapacity();
   const { orgMetrics: goalOrgMetrics } = useGoalTrackerData('monthly');
-  const { data: forecastData } = useRevenueForecast({ forecastDays: 7, locationId: locationFilter });
+  const { data: weekAheadData, isLoading: weekAheadLoading } = useWeekAheadRevenue(locationFilter);
   const { data: queueData } = useTodaysQueue(locationFilter);
   const selectedLocationName = locationFilter
     ? locations?.find(l => l.id === locationFilter)?.name || 'Unknown'
@@ -418,12 +418,12 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         break;
       }
       case 'week_ahead_forecast': {
-        if (forecastData?.summary) {
-          metricValue = formatCurrencyCompact(forecastData.summary.totalPredicted);
-          metricLabel = 'projected';
-        } else {
+        if (weekAheadLoading) {
           metricValue = '--';
           metricLabel = 'loading';
+        } else {
+          metricValue = formatCurrencyCompact(weekAheadData?.totalRevenue ?? 0);
+          metricLabel = '7-day revenue';
         }
         break;
       }
