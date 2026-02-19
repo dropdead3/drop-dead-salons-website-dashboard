@@ -7,6 +7,8 @@ import { useDayRateBookings } from '@/hooks/useDayRateBookings';
 import { useLocations } from '@/hooks/useLocations';
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { Link } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 export function DayRateWidget() {
   const today = new Date();
@@ -54,11 +56,13 @@ export function DayRateWidget() {
   }
 
   return (
-    <Card className="p-4 space-y-4">
+    <Card className={cn("p-4 space-y-4", tokens.card.wrapper)}>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Armchair className="w-5 h-5 text-primary" />
-          <h3 className="font-display text-sm tracking-wide">DAY RATE</h3>
+        <div className="flex items-center gap-3">
+          <div className={tokens.card.iconBox}>
+            <Armchair className={tokens.card.icon} />
+          </div>
+          <h3 className={tokens.card.title}>DAY RATE</h3>
         </div>
         <Link 
           to="/dashboard/admin/day-rate-calendar" 
@@ -71,7 +75,7 @@ export function DayRateWidget() {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
             <Calendar className="w-4 h-4 text-primary" />
           </div>
           <div>
@@ -81,7 +85,7 @@ export function DayRateWidget() {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
             <Clock className="w-4 h-4 text-muted-foreground" />
           </div>
           <div>

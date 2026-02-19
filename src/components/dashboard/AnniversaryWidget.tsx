@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { tokens } from '@/lib/design-tokens';
 
 export function AnniversaryWidget() {
   const { data: todaysAnniversaries, isLoading: loadingToday } = useTodaysAnniversaries();
@@ -42,10 +43,12 @@ export function AnniversaryWidget() {
   const isMilestone = (years: number) => MILESTONE_YEARS.includes(years);
 
   return (
-    <Card className="p-4 min-w-[200px]">
-      <div className="flex items-center gap-2 mb-3">
-        <Award className="w-4 h-4 text-amber-500" />
-        <h3 className="font-display text-xs tracking-wide">WORK ANNIVERSARIES</h3>
+    <Card className={cn("p-4", tokens.card.wrapper)}>
+      <div className="flex items-center gap-3 mb-3">
+        <div className={tokens.card.iconBox}>
+          <Award className={tokens.card.icon} />
+        </div>
+        <h3 className={tokens.card.title}>WORK ANNIVERSARIES</h3>
       </div>
 
       {hasTodayAnniversaries && (
