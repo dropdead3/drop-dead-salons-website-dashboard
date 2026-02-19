@@ -1,75 +1,74 @@
 
 
-## Simple / Detailed View Toggle for Command Center Analytics
+## Complete Compact View Coverage for All Pinnable Analytics Cards
 
-### What It Does
+### Problem
 
-Adds a toggle in the analytics filter bar that lets the user switch between:
+The compact/simple view toggle was added, but only ~10 cards show real metrics. The remaining ~12 cards fall through to a default case showing "---" with no meaningful data. Every pinnable card needs a real primary metric in simple view.
 
-- **Detailed view** (current default): Full analytics cards with charts, grids, and drill-downs
-- **Simple view**: Each pinned card collapses to a single compact row showing the card name, icon, and its most important metric -- still looks like a dashboard, just tightened up
+### Cards Currently Missing Real Compact Metrics
 
-The widgets section remains untouched.
+| Card | What It Should Show | Data Source |
+|------|---------------------|-------------|
+| operational_health | Overall health score | Needs `useOperationalHealth` or internal calculation |
+| locations_rollup | Location count + top location | Already has `accessibleLocations` |
+| service_mix | Top category name + revenue | Add `useServiceMix` hook call |
+| client_funnel | Total unique clients | Add `useClientFunnel` hook call |
+| client_health | Clients needing attention | Add `useClientHealthSegments` hook call |
+| goal_tracker | Org progress % | Add `useGoalTracker` or revenue vs goal |
+| week_ahead_forecast | Projected revenue | Already has sales data to approximate |
+| new_bookings | Booking count today | Add `useNewBookings` hook call |
+| hiring_capacity | Open chairs / total | Add `useHiringCapacity` hook call |
+| staffing_trends | Active staff count | Already has `workload` data |
+| stylist_workload | Avg utilization % | Already has `workload` data (same as capacity but labeled differently) |
+| client_experience_staff | (fallback) | Card name only if no data available |
 
-### User Experience
+### Implementation
 
-The toggle appears as a small icon button (grid/list icon) next to the existing location and date filters in the analytics header bar. Preference is persisted in localStorage so it survives page reloads.
+**Single file change: `src/components/dashboard/PinnedAnalyticsCard.tsx`**
 
-Simple view renders each pinned card as a slim horizontal card (~56px tall) with:
-- Card icon (left)
-- Card name
-- Primary metric value (right-aligned, prominent)
-- Trend indicator if available
+1. Add hook imports at the top:
+   - `useServiceMix` from `useSalesData`
+   - `useClientFunnel` from `useSalesAnalytics`
+   - `useClientHealthSegments` from `useClientHealthSegments`
+   - `useNewBookings` from `useNewBookings`
+   - `useHiringCapacity` from `useHiringCapacity`
 
-All cards stack vertically in a tight grid, giving an executive "at a glance" feel.
+2. Call each hook alongside the existing hooks (before any conditional returns) with the same filter parameters already in scope (`filters.dateFrom`, `filters.dateTo`, `locationFilter`).
 
-### Technical Plan
+3. Expand the compact `switch` statement to map every card to a real metric:
 
-| Step | File | Change |
-|------|------|--------|
-| 1 | `src/components/dashboard/PinnedAnalyticsCard.tsx` | Add `compact` prop. When true, render a slim summary row instead of the full card. Map each `cardId` to its key metric label and extract the value from already-fetched data (salesData, performers, queueData, etc.) |
-| 2 | `src/components/dashboard/AnalyticsFilterBar.tsx` | Add a Simple/Detailed toggle button (LayoutGrid / List icon) to the filter bar. Accept `compact` and `onCompactChange` props |
-| 3 | `src/pages/dashboard/DashboardHome.tsx` | Add `compact` state (persisted to localStorage key `cc-view-mode`). Pass it down to `AnalyticsFilterBar` and to each `PinnedAnalyticsCard` |
-
-### Compact Card Design
-
-Each card in simple mode becomes a single `Card` row:
-
-```text
-+----------------------------------------------------------+
-| [icon]  Daily Brief          $4,230 revenue    +2.1%     |
-+----------------------------------------------------------+
-| [icon]  Sales Overview       $12,450 total      -1.3%    |
-+----------------------------------------------------------+
-| [icon]  Top Performers       Sarah M. (#1)     $3,200    |
-+----------------------------------------------------------+
+```
+operational_health  -> "Healthy" or score from child data (fallback: location count)
+locations_rollup    -> "{N} locations" from accessibleLocations
+service_mix         -> Top category name + revenue amount
+client_funnel       -> "{N} total clients" (new + returning)
+client_health       -> "{N} need attention" from segments
+goal_tracker        -> Revenue vs goal progress %
+week_ahead_forecast -> "Projected" + forecasted revenue
+new_bookings        -> "{N} new" booking count
+hiring_capacity     -> "{N} open chairs"
+staffing_trends     -> "{N} active staff"
+stylist_workload    -> Avg utilization % (reuse workload data)
+client_experience_staff -> Card name (graceful fallback)
 ```
 
-- Uses existing data hooks already called in `PinnedAnalyticsCard`
-- Each cardId maps to a summary extractor function that picks the single most important number
-- The PinnableCard hover interaction (Zura AI + pin icons) still works on the compact row
-- Cards remain individually removable/reorderable
+4. Remove the `default: '---'` fallback -- replace with card name display so no card ever shows a meaningless dash.
 
-### Metric Mapping Per Card
+### What Stays the Same
 
-| Card | Simple View Shows |
-|------|-------------------|
-| executive_summary | Total Revenue + change % |
-| daily_brief | Today's Revenue |
-| sales_overview | Total Revenue + change % |
-| top_performers | #1 performer name + revenue |
-| operations_stats | Total in queue (waiting + in service) |
-| revenue_breakdown | Service vs Product split |
-| client_funnel | Total clients |
-| client_health | Total needing attention |
-| operational_health | Overall health score |
-| locations_rollup | Location count + top performer |
-| service_mix | Top service category |
-| retail_effectiveness | Attachment rate % |
-| rebooking | Rebooking rate % |
-| team_goals | Progress % toward goal |
-| capacity_utilization | Utilization % |
-| All others | Card name only (graceful fallback) |
+- The toggle button in the filter bar (already implemented)
+- The compact card layout (slim 56px row with icon, label, metric)
+- The PinnableCard hover interaction (Zura AI + pin icons)
+- The widgets section (untouched)
+- All detailed view rendering (untouched)
 
-Three files modified. No database changes. Widgets section untouched.
+### Technical Notes
+
+- All new hooks are called unconditionally at the top of the component (React rules of hooks), but their data is only consumed inside the `if (compact)` block
+- Hook calls with `locationFilter` and date range params ensure compact metrics respect the active filters
+- `useHiringCapacity` takes no params (it's org-wide)
+- Performance impact is minimal since these hooks use React Query caching and most are already called by child components when in detailed view
+
+One file modified. No database changes.
 
