@@ -1,47 +1,20 @@
 
 
-## Move Greeting from Command Center into Sidebar
+## Move Zura Insights and Announcements Buttons to Analytics Header
 
 ### What Changes
-The "Another strong day, Eric" greeting and subtitle will be removed from the top of the Command Center page and placed inside the sidebar, directly below the logo. It will animate in on load and automatically fade out after 7 seconds.
+The Zura Insights and Announcements buttons will move from the top of the page (where the greeting used to be) down to where the "YOUR COMMAND CENTER" heading currently sits. The "YOUR COMMAND CENTER" heading will be removed entirely. This collapses the top of the page and makes the layout cleaner.
 
 ### Changes
 
-**1. `src/components/dashboard/SidebarNavContent.tsx` -- Add greeting below logo**
-- Accept new props: `greeting`, `subtitle`, `firstName` (passed from DashboardLayout)
-- Below the logo `div` (after line 346), insert a new animated greeting block that:
-  - Uses `AnimatePresence` + `motion.div` to fade/slide in
-  - Uses a `useState` + `useEffect` with a 7-second `setTimeout` to trigger exit
-  - Displays the greeting text and subtitle in a compact format (smaller than the current page heading)
-  - Hides when sidebar is collapsed
-  - Respects `prefers-reduced-motion`
+**File: `src/pages/dashboard/DashboardHome.tsx`**
 
-**2. `src/pages/dashboard/DashboardHome.tsx` -- Remove greeting from page**
-- Remove the greeting header block (lines 272-290) containing the h1 and subtitle paragraph
-- Keep the action buttons row (AIInsightsDrawer, AnnouncementsDrawer) -- they stay on the page
-- The `greeting`, `subtitle`, and `firstName` state/logic stays in this file but will also need to be lifted or duplicated into the sidebar
+1. **Remove the top buttons block (lines 272-280)**: Delete the `motion.div` that renders `AIInsightsDrawer` / `PersonalInsightsDrawer` and `AnnouncementsDrawer` at the top of the page, including its `border-b` divider.
 
-**3. `src/components/dashboard/DashboardLayout.tsx` -- Pass greeting data to sidebar**
-- Compute the greeting, subtitle, and firstName in the layout (or pass from auth context)
-- Forward these as props to `SidebarNavContent`
+2. **Replace "YOUR COMMAND CENTER" heading with the buttons (lines 736-754 and 776-794)**: In both the compact and detailed analytics rendering paths, replace the `h2` heading (`t('home.analytics')`) with the Zura Insights and Announcements buttons. The filter bar and customize menu remain in place on the right side -- only the left-side heading text is swapped out for the two buttons.
 
-### Technical Detail: Greeting in Sidebar
+**File: `src/locales/en.json`** (optional cleanup)
+- The `"analytics": "YOUR COMMAND CENTER"` translation key can be left in place or removed since it will no longer be referenced on this page.
 
-The greeting block will sit between the logo section and the announcements widget. It will look something like:
-
-```
-[Logo]
-─────────────
-"Another strong day, Eric"
-"Let's see where things stand"    <- fades out after 7s
-─────────────
-[Announcements Widget]
-[Nav items...]
-```
-
-Animation: `opacity 0 -> 1` on mount, then after 7s, `opacity 1 -> 0` + `height auto -> 0` exit. The border-bottom on the greeting container also animates away cleanly.
-
-### Files Modified
-- `src/components/dashboard/SidebarNavContent.tsx` -- add greeting UI
-- `src/pages/dashboard/DashboardHome.tsx` -- remove greeting from page body
-- `src/components/dashboard/DashboardLayout.tsx` -- compute and pass greeting props to sidebar
+### Result
+The top of the Command Center page becomes significantly cleaner -- no floating buttons above the content. Instead, the Zura Insights and Announcements buttons sit naturally at the start of the analytics section, replacing the redundant "YOUR COMMAND CENTER" label.
