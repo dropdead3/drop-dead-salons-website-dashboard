@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useLiveSessionSnapshot } from '@/hooks/useLiveSessionSnapshot';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -7,6 +8,7 @@ import {
   TooltipContent,
   TooltipProvider,
 } from '@/components/ui/tooltip';
+import { LiveSessionDrilldown } from './LiveSessionDrilldown';
 
 const MAX_AVATARS = 7;
 const ENTERPRISE_THRESHOLD = 40;
@@ -31,6 +33,7 @@ const DEMO_STYLISTS = [
 
 export function LiveSessionIndicator() {
   const live = useLiveSessionSnapshot();
+  const [drilldownOpen, setDrilldownOpen] = useState(false);
 
   const inSessionCount = DEMO_MODE ? 18 : live.inSessionCount;
   const activeStylistCount = DEMO_MODE ? DEMO_STYLISTS.length : live.activeStylistCount;
@@ -53,7 +56,10 @@ export function LiveSessionIndicator() {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-border cursor-default select-none">
+          <div
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-border cursor-pointer select-none hover:bg-accent/50 transition-colors"
+            onClick={() => setDrilldownOpen(true)}
+          >
             {/* Pulsating green dot */}
             <span className="relative flex h-2.5 w-2.5">
               <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
@@ -102,6 +108,13 @@ export function LiveSessionIndicator() {
           )}
         </TooltipContent>
       </Tooltip>
+      <LiveSessionDrilldown
+        open={drilldownOpen}
+        onOpenChange={setDrilldownOpen}
+        inSessionCount={inSessionCount}
+        activeStylistCount={activeStylistCount}
+        stylistDetails={live.stylistDetails}
+      />
     </TooltipProvider>
   );
 }

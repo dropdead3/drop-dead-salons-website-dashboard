@@ -1,0 +1,108 @@
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Clock } from 'lucide-react';
+import { DRILLDOWN_DIALOG_CONTENT_CLASS, DRILLDOWN_OVERLAY_CLASS } from './drilldownDialogStyles';
+import type { StylistDetail } from '@/hooks/useLiveSessionSnapshot';
+
+// Demo data
+const DEMO_DETAILS: StylistDetail[] = [
+  { name: 'Sarah M', photoUrl: null, currentService: 'Balayage & Tone', currentEndTime: '14:30:00', lastEndTime: '17:00:00' },
+  { name: 'Jasmine T', photoUrl: null, currentService: 'Haircut & Style', currentEndTime: '13:45:00', lastEndTime: '17:30:00' },
+  { name: 'Kira L', photoUrl: null, currentService: 'Root Touch-Up', currentEndTime: '14:00:00', lastEndTime: '18:00:00' },
+  { name: 'Morgan W', photoUrl: null, currentService: 'Extensions Install', currentEndTime: '15:00:00', lastEndTime: '18:00:00' },
+  { name: 'Alexa P', photoUrl: null, currentService: 'Blowout', currentEndTime: '13:30:00', lastEndTime: '18:30:00' },
+  { name: 'Bianca R', photoUrl: null, currentService: 'Highlights', currentEndTime: '14:15:00', lastEndTime: '18:30:00' },
+  { name: 'Dani C', photoUrl: null, currentService: 'Brazilian Blowout', currentEndTime: '14:45:00', lastEndTime: '19:00:00' },
+  { name: 'Elena F', photoUrl: null, currentService: 'Color Correction', currentEndTime: '15:30:00', lastEndTime: '19:00:00' },
+  { name: 'Gina H', photoUrl: null, currentService: 'Keratin Treatment', currentEndTime: '14:00:00', lastEndTime: '19:30:00' },
+  { name: 'Haven J', photoUrl: null, currentService: 'Men\'s Cut', currentEndTime: '13:15:00', lastEndTime: '19:30:00' },
+  { name: 'Ivy K', photoUrl: null, currentService: 'Updo', currentEndTime: '14:30:00', lastEndTime: '20:00:00' },
+  { name: 'Jade N', photoUrl: null, currentService: 'Gloss Treatment', currentEndTime: '13:45:00', lastEndTime: '20:00:00' },
+  { name: 'Luna Q', photoUrl: null, currentService: 'Full Color', currentEndTime: '14:00:00', lastEndTime: '20:30:00' },
+];
+
+const DEMO_MODE = true;
+
+function formatTimeDisplay(timeStr: string): string {
+  const [h, m] = timeStr.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${displayH}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+function getInitials(name: string) {
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return (name[0] || '?').toUpperCase();
+}
+
+interface LiveSessionDrilldownProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  inSessionCount: number;
+  activeStylistCount: number;
+  stylistDetails: StylistDetail[];
+}
+
+export function LiveSessionDrilldown({
+  open,
+  onOpenChange,
+  inSessionCount,
+  activeStylistCount,
+  stylistDetails,
+}: LiveSessionDrilldownProps) {
+  const details = DEMO_MODE ? DEMO_DETAILS : stylistDetails;
+  const sessionCount = DEMO_MODE ? 18 : inSessionCount;
+  const stylistCount = DEMO_MODE ? DEMO_DETAILS.length : activeStylistCount;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className={DRILLDOWN_DIALOG_CONTENT_CLASS} overlayClassName={DRILLDOWN_OVERLAY_CLASS}>
+        {/* Header */}
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+            </span>
+            <DialogTitle className="text-base font-semibold">Live Session</DialogTitle>
+          </div>
+          <DialogDescription className="text-xs text-muted-foreground mt-1">
+            {sessionCount} appointment{sessionCount !== 1 ? 's' : ''} in progress · {stylistCount} stylist{stylistCount !== 1 ? 's' : ''} working
+          </DialogDescription>
+        </DialogHeader>
+
+        {/* Stylist list */}
+        <ScrollArea className="flex-1 min-h-0">
+          <div className="divide-y divide-border">
+            {details.map((stylist, i) => (
+              <div key={i} className="flex items-center gap-3 px-5 py-3">
+                <Avatar className="h-8 w-8 shrink-0 border border-border">
+                  {stylist.photoUrl ? (
+                    <AvatarImage src={stylist.photoUrl} alt={stylist.name} />
+                  ) : null}
+                  <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
+                    {getInitials(stylist.name)}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{stylist.name}</p>
+                  {stylist.currentService && (
+                    <p className="text-xs text-muted-foreground truncate">{stylist.currentService}</p>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-1 text-xs text-muted-foreground whitespace-nowrap shrink-0">
+                  <Clock className="h-3 w-3" />
+                  <span>~{formatTimeDisplay(stylist.lastEndTime)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
