@@ -1121,25 +1121,6 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
         <div className="relative w-full max-w-none flex items-center justify-between h-14 px-6 bg-card/50 backdrop-blur-2xl rounded-xl border border-border/15 shadow-sm overflow-hidden">
           {/* Left side - Sidebar toggle + Org Switcher */}
           <div className="flex items-center gap-3">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                  onClick={toggleSidebarCollapsed}
-                >
-                  {sidebarCollapsed ? (
-                    <ChevronRight className="w-4 h-4" />
-                  ) : (
-                    <PanelLeftClose className="w-4 h-4" />
-                  )}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              </TooltipContent>
-            </Tooltip>
             <NavHistoryArrows />
             {isPlatformUser && location.pathname.startsWith('/dashboard/platform') && <OrganizationSwitcher compact />}
           </div>
