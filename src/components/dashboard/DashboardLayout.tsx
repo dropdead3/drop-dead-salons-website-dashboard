@@ -568,9 +568,8 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           ) : (
             <Button 
               variant={isViewingAs ? "default" : "outline"} 
-              size="sm" 
               className={cn(
-                "gap-2",
+                "h-9 rounded-full px-4 gap-2 text-xs",
                 isViewingAs && "bg-amber-500 hover:bg-amber-600 text-white border-amber-500"
               )}
             >
@@ -838,8 +837,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
         <TooltipTrigger asChild>
           <Button 
             variant="ghost" 
-            size="sm"
-            className="h-8 gap-1.5 text-muted-foreground hover:text-foreground"
+            className="h-9 rounded-full px-4 gap-1.5 text-muted-foreground hover:text-foreground"
             onClick={toggleHideNumbers}
           >
             {hideNumbers ? (
@@ -1148,10 +1146,10 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
             {(isPlatformUser || isAdmin) && (
               <div className="hidden xl:flex items-center gap-3">
                 <HideNumbersToggle />
-                <Badge variant="outline" className={cn("text-xs font-medium gap-1.5 px-3 rounded-lg", getAccessBadgeColor())}>
+                <div className={cn("h-9 rounded-full px-4 inline-flex items-center gap-1.5 text-xs font-medium border", getAccessBadgeColor())}>
                   <AccessIcon className="w-3 h-3" />
                   {getAccessLabel()}
-                </Badge>
+                </div>
                 {isAdmin && <ViewAsToggle />}
                 {(actualRoles.includes('admin') || actualRoles.includes('super_admin') || actualRoles.includes('manager')) && (
                   <PhorestSyncPopout />
