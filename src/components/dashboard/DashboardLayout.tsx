@@ -1144,17 +1144,6 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
             {isPlatformUser && location.pathname.startsWith('/dashboard/platform') && <OrganizationSwitcher compact />}
           </div>
 
-          {/* Beta Badge */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 cursor-default">
-                <FlaskConical className="h-3 w-3 text-amber-600" />
-                <span className="font-display tracking-widest text-[10px] text-amber-600">BETA</span>
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>This project is currently in beta testing</TooltipContent>
-          </Tooltip>
-
           {/* Center - Search Bar */}
           <div className="flex-1 flex justify-center px-4">
             <TopBarSearch filterNavItems={filterNavItems} />

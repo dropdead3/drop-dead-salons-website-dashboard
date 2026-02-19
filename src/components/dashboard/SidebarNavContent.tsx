@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid, Briefcase, ArrowLeft, Shield } from 'lucide-react';
+import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid, Briefcase, ArrowLeft, Shield, FlaskConical } from 'lucide-react';
 import { NavBadge } from './NavBadge';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
@@ -636,6 +636,25 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
 
       {/* Fixed Footer Navigation - always at bottom */}
       <div className="mt-auto shrink-0 flex flex-col gap-2">
+        {/* Beta Badge */}
+        {isCollapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="mx-2 flex items-center justify-center rounded-full border border-amber-500/30 bg-amber-500/15 p-1.5 cursor-default">
+                <FlaskConical className="h-3.5 w-3.5 text-amber-600" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right">Beta Testing V.1.1</TooltipContent>
+          </Tooltip>
+        ) : (
+          <div className="mx-3 flex items-center justify-center">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/15 px-2.5 py-1 cursor-default">
+              <FlaskConical className="h-3 w-3 text-amber-600" />
+              <span className="font-display tracking-widest text-[10px] text-amber-600">BETA TESTING V.1.1</span>
+            </div>
+          </div>
+        )}
+
         <div className={cn(
           "mx-3 rounded-lg bg-muted/30 border border-border/50",
           isCollapsed ? "mx-2 p-1" : "p-1.5"
