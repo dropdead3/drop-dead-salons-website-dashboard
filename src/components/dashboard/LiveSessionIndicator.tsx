@@ -31,8 +31,12 @@ const DEMO_STYLISTS = [
   { name: 'Luna Q', photoUrl: null },
 ];
 
-export function LiveSessionIndicator() {
-  const live = useLiveSessionSnapshot();
+interface LiveSessionIndicatorProps {
+  locationId?: string;
+}
+
+export function LiveSessionIndicator({ locationId }: LiveSessionIndicatorProps) {
+  const live = useLiveSessionSnapshot(locationId);
   const [drilldownOpen, setDrilldownOpen] = useState(false);
 
   const inSessionCount = DEMO_MODE ? 18 : live.inSessionCount;
