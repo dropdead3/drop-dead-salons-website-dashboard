@@ -75,61 +75,95 @@ export function FAQEditor() {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Rotating Words */}
-          <RotatingWordsInput
-            words={localConfig.rotating_words}
-            onChange={(words) => updateField('rotating_words', words)}
-            label="Headline Rotating Words"
-            placeholder="e.g. Asked, Answered..."
+          <ToggleInput
+            label="Show Rotating Words"
+            value={localConfig.show_rotating_words}
+            onChange={(value) => updateField('show_rotating_words', value)}
+            description="Toggle the animated rotating headline words"
           />
+          {localConfig.show_rotating_words && (
+            <RotatingWordsInput
+              words={localConfig.rotating_words}
+              onChange={(words) => updateField('rotating_words', words)}
+              label="Headline Rotating Words"
+              placeholder="e.g. Asked, Answered..."
+            />
+          )}
 
           {/* Intro Paragraphs */}
-          <div className="space-y-4 pt-4 border-t">
-            <h4 className="font-medium text-sm">Introduction Paragraphs</h4>
-            <p className="text-xs text-muted-foreground">Displayed above the FAQ list to set context for visitors.</p>
-            {localConfig.intro_paragraphs.map((paragraph, index) => (
-              <div key={index} className="space-y-2">
-                <Label>Paragraph {index + 1}</Label>
-                <Textarea
-                  value={paragraph}
-                  onChange={(e) => updateParagraph(index, e.target.value)}
-                  rows={3}
-                />
-              </div>
-            ))}
-          </div>
+          <ToggleInput
+            label="Show Intro Paragraphs"
+            value={localConfig.show_intro_paragraphs}
+            onChange={(value) => updateField('show_intro_paragraphs', value)}
+            description="Display introductory text above the FAQ list"
+          />
+          {localConfig.show_intro_paragraphs && (
+            <div className="space-y-4 pt-4 border-t">
+              <h4 className="font-medium text-sm">Introduction Paragraphs</h4>
+              <p className="text-xs text-muted-foreground">Displayed above the FAQ list to set context for visitors.</p>
+              {localConfig.intro_paragraphs.map((paragraph, index) => (
+                <div key={index} className="space-y-2">
+                  <Label>Paragraph {index + 1}</Label>
+                  <Textarea
+                    value={paragraph}
+                    onChange={(e) => updateParagraph(index, e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* CTA Buttons */}
           <div className="space-y-4 pt-4 border-t">
             <h4 className="font-medium text-sm">Call to Action Buttons</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <CharCountInput
-                label="Primary Button Text"
-                value={localConfig.cta_primary_text}
-                onChange={(value) => updateField('cta_primary_text', value)}
-                maxLength={30}
-                description="Main CTA below the FAQ list"
-              />
-              <CharCountInput
-                label="Secondary Button Text"
-                value={localConfig.cta_secondary_text}
-                onChange={(value) => updateField('cta_secondary_text', value)}
-                maxLength={30}
-              />
-            </div>
-            <UrlInput
-              label="Primary Button URL"
-              value={localConfig.cta_primary_url}
-              onChange={(value) => updateField('cta_primary_url', value)}
-              placeholder="/faq"
-              description="Where the primary button links to"
+            <ToggleInput
+              label="Show Primary CTA"
+              value={localConfig.show_primary_cta}
+              onChange={(value) => updateField('show_primary_cta', value)}
+              description="Display the main CTA below the FAQ list"
             />
-            <UrlInput
-              label="Secondary Button URL"
-              value={localConfig.cta_secondary_url}
-              onChange={(value) => updateField('cta_secondary_url', value)}
-              placeholder="/policies"
-              description="Where the secondary button links to"
+            {localConfig.show_primary_cta && (
+              <>
+                <CharCountInput
+                  label="Primary Button Text"
+                  value={localConfig.cta_primary_text}
+                  onChange={(value) => updateField('cta_primary_text', value)}
+                  maxLength={30}
+                />
+                <UrlInput
+                  label="Primary Button URL"
+                  value={localConfig.cta_primary_url}
+                  onChange={(value) => updateField('cta_primary_url', value)}
+                  placeholder="/faq"
+                  description="Where the primary button links to"
+                />
+              </>
+            )}
+
+            <ToggleInput
+              label="Show Secondary CTA"
+              value={localConfig.show_secondary_cta}
+              onChange={(value) => updateField('show_secondary_cta', value)}
+              description="Display the secondary CTA button"
             />
+            {localConfig.show_secondary_cta && (
+              <>
+                <CharCountInput
+                  label="Secondary Button Text"
+                  value={localConfig.cta_secondary_text}
+                  onChange={(value) => updateField('cta_secondary_text', value)}
+                  maxLength={30}
+                />
+                <UrlInput
+                  label="Secondary Button URL"
+                  value={localConfig.cta_secondary_url}
+                  onChange={(value) => updateField('cta_secondary_url', value)}
+                  placeholder="/policies"
+                  description="Where the secondary button links to"
+                />
+              </>
+            )}
           </div>
 
           {/* Advanced Settings */}

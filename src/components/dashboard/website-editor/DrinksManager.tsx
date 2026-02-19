@@ -8,6 +8,7 @@ import { Loader2, Plus, Trash2, GripVertical, Upload, X, Coffee } from 'lucide-r
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useDrinkMenuConfig, type DrinkMenuConfig, type Drink, DEFAULT_DRINK_MENU } from '@/hooks/useSectionConfig';
+import { ToggleInput } from './inputs/ToggleInput';
 import { SliderInput } from './inputs/SliderInput';
 import { supabase } from '@/integrations/supabase/client';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -274,37 +275,54 @@ export function DrinksManager() {
             Configure the header text and carousel behavior for the drink menu section.
           </p>
 
-          <div className="grid gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="eyebrow">Eyebrow Start</Label>
-              <Input
-                id="eyebrow"
-                value={localConfig.eyebrow}
-                onChange={(e) => updateField('eyebrow', e.target.value)}
-                placeholder="Drinks on us. We have an exclusive menu of"
-              />
-            </div>
+          {/* Eyebrow toggle */}
+          <ToggleInput
+            label="Show Eyebrow Header"
+            value={localConfig.show_eyebrow}
+            onChange={(val) => updateField('show_eyebrow', val)}
+            description="Display the header text above the drink carousel"
+          />
+          {localConfig.show_eyebrow && (
+            <div className="grid gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="eyebrow">Eyebrow Start</Label>
+                <Input
+                  id="eyebrow"
+                  value={localConfig.eyebrow}
+                  onChange={(e) => updateField('eyebrow', e.target.value)}
+                  placeholder="Drinks on us. We have an exclusive menu of"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="highlight">Highlighted Word (underlined)</Label>
-              <Input
-                id="highlight"
-                value={localConfig.eyebrow_highlight}
-                onChange={(e) => updateField('eyebrow_highlight', e.target.value)}
-                placeholder="complimentary"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="highlight">Highlighted Word (underlined)</Label>
+                <Input
+                  id="highlight"
+                  value={localConfig.eyebrow_highlight}
+                  onChange={(e) => updateField('eyebrow_highlight', e.target.value)}
+                  placeholder="complimentary"
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="suffix">Eyebrow End</Label>
-              <Input
-                id="suffix"
-                value={localConfig.eyebrow_suffix}
-                onChange={(e) => updateField('eyebrow_suffix', e.target.value)}
-                placeholder="options for your appointment."
-              />
+              <div className="space-y-2">
+                <Label htmlFor="suffix">Eyebrow End</Label>
+                <Input
+                  id="suffix"
+                  value={localConfig.eyebrow_suffix}
+                  onChange={(e) => updateField('eyebrow_suffix', e.target.value)}
+                  placeholder="options for your appointment."
+                />
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Drink images toggle */}
+          <ToggleInput
+            label="Show Drink Images"
+            value={localConfig.show_drink_images}
+            onChange={(val) => updateField('show_drink_images', val)}
+            description="Display drink images in the carousel (text-only mode when off)"
+          />
 
           {/* Advanced Settings */}
           <div className="pt-4 border-t space-y-4">

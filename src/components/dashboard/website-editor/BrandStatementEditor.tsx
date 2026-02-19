@@ -181,79 +181,105 @@ export function BrandStatementEditor() {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Eyebrow */}
-          <CharCountInput
-            label="Eyebrow Text"
-            value={localConfig.eyebrow}
-            onChange={(value) => updateField('eyebrow', value)}
-            maxLength={40}
-            description="Small introductory text above the headline (e.g. 'Our Brand is')"
+          <ToggleInput
+            label="Show Eyebrow"
+            value={localConfig.show_eyebrow}
+            onChange={(value) => updateField('show_eyebrow', value)}
+            description="Display the small introductory text above the headline"
           />
+          {localConfig.show_eyebrow && (
+            <CharCountInput
+              label="Eyebrow Text"
+              value={localConfig.eyebrow}
+              onChange={(value) => updateField('eyebrow', value)}
+              maxLength={40}
+              description="Small introductory text above the headline (e.g. 'Our Brand is')"
+            />
+          )}
 
           {/* Headline */}
-          <div className="space-y-4">
-            <CharCountInput
-              label="Headline Prefix"
-              value={localConfig.headline_prefix}
-              onChange={(value) => updateField('headline_prefix', value)}
-              maxLength={30}
-              placeholder="Not Your"
-              description="Static text before the rotating words"
-            />
-            <CharCountInput
-              label="Headline Suffix"
-              value={localConfig.headline_suffix}
-              onChange={(value) => updateField('headline_suffix', value)}
-              maxLength={30}
-              placeholder="Salon"
-              description="Static text after the rotating words"
-            />
-          </div>
-
-          {/* Rotating Words */}
-          <RotatingWordsInput
-            words={localConfig.rotating_words}
-            onChange={(words) => updateField('rotating_words', words)}
-            label="Rotating Words (Between Prefix & Suffix)"
-            placeholder="e.g. Boring, Average..."
+          <ToggleInput
+            label="Show Headline"
+            value={localConfig.show_headline}
+            onChange={(value) => updateField('show_headline', value)}
+            description="Display the prefix/suffix/rotating headline block"
           />
+          {localConfig.show_headline && (
+            <>
+              <div className="space-y-4">
+                <CharCountInput
+                  label="Headline Prefix"
+                  value={localConfig.headline_prefix}
+                  onChange={(value) => updateField('headline_prefix', value)}
+                  maxLength={30}
+                  placeholder="Not Your"
+                  description="Static text before the rotating words"
+                />
+                <CharCountInput
+                  label="Headline Suffix"
+                  value={localConfig.headline_suffix}
+                  onChange={(value) => updateField('headline_suffix', value)}
+                  maxLength={30}
+                  placeholder="Salon"
+                  description="Static text after the rotating words"
+                />
+              </div>
+
+              {/* Rotating Words */}
+              <RotatingWordsInput
+                words={localConfig.rotating_words}
+                onChange={(words) => updateField('rotating_words', words)}
+                label="Rotating Words (Between Prefix & Suffix)"
+                placeholder="e.g. Boring, Average..."
+              />
+            </>
+          )}
 
           {/* Paragraphs with DnD */}
-          <div className="space-y-4 pt-4 border-t">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-sm">Description Paragraphs</h4>
-                <p className="text-xs text-muted-foreground mt-0.5">Drag to reorder. These appear below the headline.</p>
+          <ToggleInput
+            label="Show Paragraphs"
+            value={localConfig.show_paragraphs}
+            onChange={(value) => updateField('show_paragraphs', value)}
+            description="Display description paragraphs below the headline"
+          />
+          {localConfig.show_paragraphs && (
+            <div className="space-y-4 pt-4 border-t">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-sm">Description Paragraphs</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">Drag to reorder. These appear below the headline.</p>
+                </div>
+                {localConfig.paragraphs.length < 5 && (
+                  <Button type="button" variant="outline" size="sm" onClick={addParagraph}>
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add
+                  </Button>
+                )}
               </div>
-              {localConfig.paragraphs.length < 5 && (
-                <Button type="button" variant="outline" size="sm" onClick={addParagraph}>
-                  <Plus className="h-4 w-4 mr-1" />
-                  Add
-                </Button>
-              )}
-            </div>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={localConfig.paragraphs.map((_, i) => `para-${i}`)}
-                strategy={verticalListSortingStrategy}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
               >
-                {localConfig.paragraphs.map((paragraph, index) => (
-                  <SortableParagraph
-                    key={`para-${index}`}
-                    id={`para-${index}`}
-                    index={index}
-                    value={paragraph}
-                    onChange={(value) => updateParagraph(index, value)}
-                    onRemove={() => removeParagraph(index)}
-                    canRemove={localConfig.paragraphs.length > 1}
-                  />
-                ))}
-              </SortableContext>
-            </DndContext>
-          </div>
+                <SortableContext
+                  items={localConfig.paragraphs.map((_, i) => `para-${i}`)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {localConfig.paragraphs.map((paragraph, index) => (
+                    <SortableParagraph
+                      key={`para-${index}`}
+                      id={`para-${index}`}
+                      index={index}
+                      value={paragraph}
+                      onChange={(value) => updateParagraph(index, value)}
+                      onRemove={() => removeParagraph(index)}
+                      canRemove={localConfig.paragraphs.length > 1}
+                    />
+                  ))}
+                </SortableContext>
+              </DndContext>
+            </div>
+          )}
 
           {/* Advanced Settings */}
           <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>

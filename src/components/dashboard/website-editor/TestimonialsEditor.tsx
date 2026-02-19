@@ -68,40 +68,62 @@ export function TestimonialsEditor() {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Eyebrow */}
-          <CharCountInput
-            label="Eyebrow Text"
-            value={localConfig.eyebrow}
-            onChange={(value) => updateField('eyebrow', value)}
-            maxLength={40}
-            description="Small text displayed above the main headline"
+          <ToggleInput
+            label="Show Eyebrow"
+            value={localConfig.show_eyebrow}
+            onChange={(value) => updateField('show_eyebrow', value)}
+            description="Display the small text above the main headline"
           />
+          {localConfig.show_eyebrow && (
+            <CharCountInput
+              label="Eyebrow Text"
+              value={localConfig.eyebrow}
+              onChange={(value) => updateField('eyebrow', value)}
+              maxLength={40}
+            />
+          )}
 
           {/* Headline */}
-          <CharCountInput
-            label="Headline"
-            value={localConfig.headline}
-            onChange={(value) => updateField('headline', value)}
-            maxLength={60}
-            description="Main heading for the testimonials section"
+          <ToggleInput
+            label="Show Headline"
+            value={localConfig.show_headline}
+            onChange={(value) => updateField('show_headline', value)}
+            description="Display the main heading for the testimonials section"
           />
+          {localConfig.show_headline && (
+            <CharCountInput
+              label="Headline"
+              value={localConfig.headline}
+              onChange={(value) => updateField('headline', value)}
+              maxLength={60}
+            />
+          )}
 
-          {/* Google Review URL */}
-          <UrlInput
-            label="Google Review URL"
-            value={localConfig.google_review_url}
-            onChange={(value) => updateField('google_review_url', value)}
-            placeholder="https://g.page/r/..."
-            description="Link to your Google Reviews page for the 'Leave a review' button"
+          {/* Google Review Link */}
+          <ToggleInput
+            label="Show Google Review Link"
+            value={localConfig.show_google_review_link}
+            onChange={(value) => updateField('show_google_review_link', value)}
+            description="Display the 'Leave a review' link/button"
           />
-
-          {/* Link Text */}
-          <CharCountInput
-            label="Review Link Text"
-            value={localConfig.link_text}
-            onChange={(value) => updateField('link_text', value)}
-            maxLength={30}
-            description="Text for the link that opens your Google Reviews"
-          />
+          {localConfig.show_google_review_link && (
+            <>
+              <UrlInput
+                label="Google Review URL"
+                value={localConfig.google_review_url}
+                onChange={(value) => updateField('google_review_url', value)}
+                placeholder="https://g.page/r/..."
+                description="Link to your Google Reviews page"
+              />
+              <CharCountInput
+                label="Review Link Text"
+                value={localConfig.link_text}
+                onChange={(value) => updateField('link_text', value)}
+                maxLength={30}
+                description="Text for the link that opens your Google Reviews"
+              />
+            </>
+          )}
 
           {/* Advanced Settings */}
           <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>

@@ -92,6 +92,9 @@ export interface HeroConfig {
   // Visibility toggles
   show_secondary_button: boolean;
   show_consultation_notes: boolean;
+  show_eyebrow: boolean;
+  show_rotating_words: boolean;
+  show_subheadline: boolean;
 }
 
 export interface BrandStatementConfig {
@@ -104,6 +107,10 @@ export interface BrandStatementConfig {
   typewriter_speed: number;
   typewriter_pause: number;
   show_typewriter_cursor: boolean;
+  // Visibility toggles
+  show_eyebrow: boolean;
+  show_headline: boolean;
+  show_paragraphs: boolean;
 }
 
 export interface TestimonialsConfig {
@@ -116,6 +123,10 @@ export interface TestimonialsConfig {
   scroll_animation_duration: number;
   show_star_ratings: boolean;
   max_visible_testimonials: number;
+  // Visibility toggles
+  show_eyebrow: boolean;
+  show_headline: boolean;
+  show_google_review_link: boolean;
 }
 
 export interface NewClientConfig {
@@ -129,6 +140,9 @@ export interface NewClientConfig {
   show_benefits_icons: boolean;
   // Visibility toggles
   show_benefits: boolean;
+  show_headline: boolean;
+  show_description: boolean;
+  show_cta: boolean;
 }
 
 export interface ExtensionsFeature {
@@ -157,6 +171,11 @@ export interface ExtensionsConfig {
   show_education_link: boolean;
   show_floating_badge: boolean;
   show_secondary_cta: boolean;
+  show_eyebrow: boolean;
+  show_headline: boolean;
+  show_description: boolean;
+  show_features: boolean;
+  show_primary_cta: boolean;
 }
 
 export interface FAQConfig {
@@ -169,6 +188,11 @@ export interface FAQConfig {
   show_search_bar: boolean;
   cta_primary_url: string;
   cta_secondary_url: string;
+  // Visibility toggles
+  show_rotating_words: boolean;
+  show_intro_paragraphs: boolean;
+  show_primary_cta: boolean;
+  show_secondary_cta: boolean;
 }
 
 export interface Brand {
@@ -184,6 +208,8 @@ export interface BrandsConfig {
   brands: Brand[];
   marquee_speed: number;
   show_intro_text: boolean;
+  // Visibility toggles
+  show_logos: boolean;
 }
 
 export interface Drink {
@@ -201,6 +227,9 @@ export interface DrinkMenuConfig {
   drinks: Drink[];
   carousel_speed: number;
   hover_slowdown_factor: number;
+  // Visibility toggles
+  show_eyebrow: boolean;
+  show_drink_images: boolean;
 }
 
 export interface FooterCTAConfig {
@@ -214,6 +243,8 @@ export interface FooterCTAConfig {
   // Visibility toggles
   show_description: boolean;
   show_eyebrow: boolean;
+  show_headline: boolean;
+  show_cta_button: boolean;
 }
 
 export interface LocationsSectionConfig {
@@ -231,6 +262,10 @@ export interface ServicesPreviewConfig {
   section_description: string;
   layout: 'grid' | 'list' | 'accordion';
   max_categories_visible: number;
+  // Visibility toggles
+  show_eyebrow: boolean;
+  show_title: boolean;
+  show_description: boolean;
 }
 
 export interface PopularServicesConfig {
@@ -239,6 +274,10 @@ export interface PopularServicesConfig {
   section_description: string;
   max_featured: number;
   layout: 'grid' | 'carousel';
+  // Visibility toggles
+  show_eyebrow: boolean;
+  show_title: boolean;
+  show_description: boolean;
 }
 
 export interface GalleryDisplayConfig {
@@ -247,6 +286,10 @@ export interface GalleryDisplayConfig {
   section_description: string;
   grid_columns: number;
   max_images: number;
+  // Visibility toggles
+  show_eyebrow: boolean;
+  show_title: boolean;
+  show_description: boolean;
 }
 
 export interface StylistsDisplayConfig {
@@ -255,6 +298,10 @@ export interface StylistsDisplayConfig {
   section_description: string;
   card_style: 'minimal' | 'detailed';
   max_visible: number;
+  // Visibility toggles
+  show_eyebrow: boolean;
+  show_title: boolean;
+  show_description: boolean;
 }
 
 export interface LocationsDisplayConfig {
@@ -263,6 +310,10 @@ export interface LocationsDisplayConfig {
   section_description: string;
   show_map: boolean;
   layout: 'cards' | 'list';
+  // Visibility toggles
+  show_eyebrow: boolean;
+  show_title: boolean;
+  show_description: boolean;
 }
 
 // WebsiteServicesData removed — services are now managed via useNativeServicesForWebsite hook
@@ -288,6 +339,9 @@ export const DEFAULT_HERO: HeroConfig = {
   show_scroll_indicator: true,
   show_secondary_button: true,
   show_consultation_notes: true,
+  show_eyebrow: true,
+  show_rotating_words: true,
+  show_subheadline: true,
 };
 
 export const DEFAULT_BRAND_STATEMENT: BrandStatementConfig = {
@@ -302,6 +356,9 @@ export const DEFAULT_BRAND_STATEMENT: BrandStatementConfig = {
   typewriter_speed: 100,
   typewriter_pause: 2,
   show_typewriter_cursor: true,
+  show_eyebrow: true,
+  show_headline: true,
+  show_paragraphs: true,
 };
 
 export const DEFAULT_TESTIMONIALS: TestimonialsConfig = {
@@ -314,6 +371,9 @@ export const DEFAULT_TESTIMONIALS: TestimonialsConfig = {
   scroll_animation_duration: 60,
   show_star_ratings: true,
   max_visible_testimonials: 20,
+  show_eyebrow: true,
+  show_headline: true,
+  show_google_review_link: true,
 };
 
 export const DEFAULT_NEW_CLIENT: NewClientConfig = {
@@ -329,6 +389,9 @@ export const DEFAULT_NEW_CLIENT: NewClientConfig = {
   cta_url: "",
   show_benefits_icons: true,
   show_benefits: true,
+  show_headline: true,
+  show_description: true,
+  show_cta: true,
 };
 
 export const DEFAULT_EXTENSIONS: ExtensionsConfig = {
@@ -353,6 +416,11 @@ export const DEFAULT_EXTENSIONS: ExtensionsConfig = {
   show_education_link: true,
   show_floating_badge: true,
   show_secondary_cta: true,
+  show_eyebrow: true,
+  show_headline: true,
+  show_description: true,
+  show_features: true,
+  show_primary_cta: true,
 };
 
 export const DEFAULT_FAQ: FAQConfig = {
@@ -368,6 +436,10 @@ export const DEFAULT_FAQ: FAQConfig = {
   show_search_bar: true,
   cta_primary_url: "/faq",
   cta_secondary_url: "/policies",
+  show_rotating_words: true,
+  show_intro_paragraphs: true,
+  show_primary_cta: true,
+  show_secondary_cta: true,
 };
 
 export const DEFAULT_BRANDS: BrandsConfig = {
@@ -375,6 +447,7 @@ export const DEFAULT_BRANDS: BrandsConfig = {
   brands: [],
   marquee_speed: 40,
   show_intro_text: true,
+  show_logos: true,
 };
 
 export const DEFAULT_DRINK_MENU: DrinkMenuConfig = {
@@ -385,6 +458,8 @@ export const DEFAULT_DRINK_MENU: DrinkMenuConfig = {
   drinks: [],
   carousel_speed: 30,
   hover_slowdown_factor: 0.1,
+  show_eyebrow: true,
+  show_drink_images: true,
 };
 
 export const DEFAULT_FOOTER_CTA: FooterCTAConfig = {
@@ -397,6 +472,8 @@ export const DEFAULT_FOOTER_CTA: FooterCTAConfig = {
   show_phone_numbers: true,
   show_description: true,
   show_eyebrow: true,
+  show_headline: true,
+  show_cta_button: true,
 };
 
 export const DEFAULT_LOCATIONS_SECTION: LocationsSectionConfig = {
@@ -413,6 +490,9 @@ export const DEFAULT_SERVICES_PREVIEW: ServicesPreviewConfig = {
   section_description: "From cuts to color, extensions to styling — explore everything we offer.",
   layout: 'accordion',
   max_categories_visible: 10,
+  show_eyebrow: true,
+  show_title: true,
+  show_description: true,
 };
 
 export const DEFAULT_POPULAR_SERVICES: PopularServicesConfig = {
@@ -421,6 +501,9 @@ export const DEFAULT_POPULAR_SERVICES: PopularServicesConfig = {
   section_description: "Our most booked services by clients who know what they want.",
   max_featured: 6,
   layout: 'grid',
+  show_eyebrow: true,
+  show_title: true,
+  show_description: true,
 };
 
 export const DEFAULT_GALLERY_DISPLAY: GalleryDisplayConfig = {
@@ -429,6 +512,9 @@ export const DEFAULT_GALLERY_DISPLAY: GalleryDisplayConfig = {
   section_description: "See the artistry behind every transformation.",
   grid_columns: 3,
   max_images: 12,
+  show_eyebrow: true,
+  show_title: true,
+  show_description: true,
 };
 
 export const DEFAULT_STYLISTS_DISPLAY: StylistsDisplayConfig = {
@@ -437,6 +523,9 @@ export const DEFAULT_STYLISTS_DISPLAY: StylistsDisplayConfig = {
   section_description: "Talented artists dedicated to your perfect look.",
   card_style: 'detailed',
   max_visible: 8,
+  show_eyebrow: true,
+  show_title: true,
+  show_description: true,
 };
 
 export const DEFAULT_LOCATIONS_DISPLAY: LocationsDisplayConfig = {
@@ -445,6 +534,9 @@ export const DEFAULT_LOCATIONS_DISPLAY: LocationsDisplayConfig = {
   section_description: "Find a salon near you.",
   show_map: true,
   layout: 'cards',
+  show_eyebrow: true,
+  show_title: true,
+  show_description: true,
 };
 
 // DEFAULT_WEBSITE_SERVICES removed — services are now managed via useNativeServicesForWebsite hook

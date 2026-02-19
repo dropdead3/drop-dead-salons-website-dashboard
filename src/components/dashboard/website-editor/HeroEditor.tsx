@@ -69,40 +69,63 @@ export function HeroEditor() {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Eyebrow */}
-          <CharCountInput
-            label="Eyebrow Text"
-            value={localConfig.eyebrow}
-            onChange={(value) => updateField('eyebrow', value)}
-            maxLength={40}
-            placeholder="Hair • Color • Artistry"
-            description="Small text displayed above the main headline"
+          <ToggleInput
+            label="Show Eyebrow"
+            value={localConfig.show_eyebrow}
+            onChange={(value) => updateField('show_eyebrow', value)}
+            description="Display the small text above the main headline"
           />
+          {localConfig.show_eyebrow && (
+            <CharCountInput
+              label="Eyebrow Text"
+              value={localConfig.eyebrow}
+              onChange={(value) => updateField('eyebrow', value)}
+              maxLength={40}
+              placeholder="Hair • Color • Artistry"
+            />
+          )}
 
           {/* Rotating Words */}
-          <RotatingWordsInput
-            words={localConfig.rotating_words}
-            onChange={(words) => updateField('rotating_words', words)}
-            label="Headline Rotating Words"
-            placeholder="e.g. Salon, Extensions..."
+          <ToggleInput
+            label="Show Rotating Words"
+            value={localConfig.show_rotating_words}
+            onChange={(value) => updateField('show_rotating_words', value)}
+            description="Toggle the animated rotating headline words"
           />
+          {localConfig.show_rotating_words && (
+            <RotatingWordsInput
+              words={localConfig.rotating_words}
+              onChange={(words) => updateField('rotating_words', words)}
+              label="Headline Rotating Words"
+              placeholder="e.g. Salon, Extensions..."
+            />
+          )}
 
           {/* Subheadline */}
-          <div className="space-y-4">
-            <CharCountInput
-              label="Subheadline Line 1"
-              value={localConfig.subheadline_line1}
-              onChange={(value) => updateField('subheadline_line1', value)}
-              maxLength={60}
-              description="First line of supporting text below the headline"
-            />
-            <CharCountInput
-              label="Subheadline Line 2"
-              value={localConfig.subheadline_line2}
-              onChange={(value) => updateField('subheadline_line2', value)}
-              maxLength={60}
-              description="Second line of supporting text"
-            />
-          </div>
+          <ToggleInput
+            label="Show Subheadline"
+            value={localConfig.show_subheadline}
+            onChange={(value) => updateField('show_subheadline', value)}
+            description="Display supporting text below the main headline"
+          />
+          {localConfig.show_subheadline && (
+            <div className="space-y-4">
+              <CharCountInput
+                label="Subheadline Line 1"
+                value={localConfig.subheadline_line1}
+                onChange={(value) => updateField('subheadline_line1', value)}
+                maxLength={60}
+                description="First line of supporting text below the headline"
+              />
+              <CharCountInput
+                label="Subheadline Line 2"
+                value={localConfig.subheadline_line2}
+                onChange={(value) => updateField('subheadline_line2', value)}
+                maxLength={60}
+                description="Second line of supporting text"
+              />
+            </div>
+          )}
 
           {/* CTAs */}
           <div className="space-y-4 pt-4 border-t">

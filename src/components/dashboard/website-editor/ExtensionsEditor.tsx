@@ -80,85 +80,126 @@ export function ExtensionsEditor() {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Eyebrow */}
-          <CharCountInput
-            label="Eyebrow Text"
-            value={localConfig.eyebrow}
-            onChange={(value) => updateField('eyebrow', value)}
-            maxLength={60}
-            description="Introductory text displayed above the headline"
+          <ToggleInput
+            label="Show Eyebrow"
+            value={localConfig.show_eyebrow}
+            onChange={(value) => updateField('show_eyebrow', value)}
+            description="Display introductory text above the headline"
           />
+          {localConfig.show_eyebrow && (
+            <CharCountInput
+              label="Eyebrow Text"
+              value={localConfig.eyebrow}
+              onChange={(value) => updateField('eyebrow', value)}
+              maxLength={60}
+            />
+          )}
 
           {/* Headlines */}
-          <div className="grid grid-cols-2 gap-4">
-            <CharCountInput
-              label="Headline Line 1"
-              value={localConfig.headline_line1}
-              onChange={(value) => updateField('headline_line1', value)}
-              maxLength={30}
-            />
-            <CharCountInput
-              label="Headline Line 2"
-              value={localConfig.headline_line2}
-              onChange={(value) => updateField('headline_line2', value)}
-              maxLength={30}
-            />
-          </div>
+          <ToggleInput
+            label="Show Headline"
+            value={localConfig.show_headline}
+            onChange={(value) => updateField('show_headline', value)}
+            description="Display the main headline"
+          />
+          {localConfig.show_headline && (
+            <div className="grid grid-cols-2 gap-4">
+              <CharCountInput
+                label="Headline Line 1"
+                value={localConfig.headline_line1}
+                onChange={(value) => updateField('headline_line1', value)}
+                maxLength={30}
+              />
+              <CharCountInput
+                label="Headline Line 2"
+                value={localConfig.headline_line2}
+                onChange={(value) => updateField('headline_line2', value)}
+                maxLength={30}
+              />
+            </div>
+          )}
 
           {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={localConfig.description}
-              onChange={(e) => updateField('description', e.target.value)}
-              rows={3}
-            />
-            <p className="text-xs text-muted-foreground">Supporting text below the headline</p>
-          </div>
+          <ToggleInput
+            label="Show Description"
+            value={localConfig.show_description}
+            onChange={(value) => updateField('show_description', value)}
+            description="Display supporting text below the headline"
+          />
+          {localConfig.show_description && (
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={localConfig.description}
+                onChange={(e) => updateField('description', e.target.value)}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">Supporting text below the headline</p>
+            </div>
+          )}
 
           {/* Features */}
-          <div className="space-y-4 pt-4 border-t">
-            <h4 className="font-medium text-sm">Feature Cards</h4>
-            <p className="text-xs text-muted-foreground">Highlight key selling points with icon, title, and description.</p>
-            {localConfig.features.map((feature, index) => (
-              <div key={index} className="p-4 border border-border rounded-lg space-y-3">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                  Feature {index + 1}
+          <ToggleInput
+            label="Show Feature Cards"
+            value={localConfig.show_features}
+            onChange={(value) => updateField('show_features', value)}
+            description="Display the feature highlight cards"
+          />
+          {localConfig.show_features && (
+            <div className="space-y-4 pt-4 border-t">
+              <h4 className="font-medium text-sm">Feature Cards</h4>
+              <p className="text-xs text-muted-foreground">Highlight key selling points with icon, title, and description.</p>
+              {localConfig.features.map((feature, index) => (
+                <div key={index} className="p-4 border border-border rounded-lg space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    Feature {index + 1}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Title</Label>
+                    <Input
+                      value={feature.title}
+                      onChange={(e) => updateFeature(index, 'title', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Input
+                      value={feature.description}
+                      onChange={(e) => updateFeature(index, 'description', e.target.value)}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Title</Label>
-                  <Input
-                    value={feature.title}
-                    onChange={(e) => updateFeature(index, 'title', e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <Input
-                    value={feature.description}
-                    onChange={(e) => updateFeature(index, 'description', e.target.value)}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* CTAs */}
           <div className="space-y-4 pt-4 border-t">
             <h4 className="font-medium text-sm">Call to Action Buttons</h4>
-            <CharCountInput
-              label="Primary CTA"
-              value={localConfig.cta_primary}
-              onChange={(value) => updateField('cta_primary', value)}
-              maxLength={30}
+            <ToggleInput
+              label="Show Primary CTA"
+              value={localConfig.show_primary_cta}
+              onChange={(value) => updateField('show_primary_cta', value)}
+              description="Display the primary call-to-action button"
             />
-            <UrlInput
-              label="Primary CTA URL"
-              value={localConfig.cta_primary_url}
-              onChange={(value) => updateField('cta_primary_url', value)}
-              placeholder="Leave empty to open the default form"
-              description="Where the primary button links to"
-            />
+            {localConfig.show_primary_cta && (
+              <>
+                <CharCountInput
+                  label="Primary CTA"
+                  value={localConfig.cta_primary}
+                  onChange={(value) => updateField('cta_primary', value)}
+                  maxLength={30}
+                />
+                <UrlInput
+                  label="Primary CTA URL"
+                  value={localConfig.cta_primary_url}
+                  onChange={(value) => updateField('cta_primary_url', value)}
+                  placeholder="Leave empty to open the default form"
+                  description="Where the primary button links to"
+                />
+              </>
+            )}
 
             <ToggleInput
               label="Show Secondary CTA"
