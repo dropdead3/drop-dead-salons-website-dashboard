@@ -225,6 +225,31 @@ export function usePhorestCalendar() {
     enabled: !!effectiveUserId,
   });
 
+  // For admin/manager views: track ALL appointments that have assistants assigned
+  const { data: appointmentsWithAssistants = new Set<string>() } = useQuery({
+    queryKey: ['appointments-with-assistants', dateRange, canViewAll || canViewTeam],
+    queryFn: async () => {
+      if (!canViewAll && !canViewTeam) return new Set<string>();
+      // Get appointment IDs in date range that have assistants
+      const { data: apptIds } = await supabase
+        .from('phorest_appointments')
+        .select('id')
+        .gte('appointment_date', dateRange.start)
+        .lte('appointment_date', dateRange.end);
+
+      if (!apptIds || apptIds.length === 0) return new Set<string>();
+
+      const ids = apptIds.map(a => a.id);
+      const { data } = await supabase
+        .from('appointment_assistants')
+        .select('appointment_id')
+        .in('appointment_id', ids);
+
+      return new Set((data || []).map(a => a.appointment_id));
+    },
+    enabled: canViewAll || canViewTeam,
+  });
+
   // Group appointments by date
   const appointmentsByDate = useMemo(() => {
     const map = new Map<string, PhorestAppointment[]>();
@@ -295,6 +320,7 @@ export function usePhorestCalendar() {
     appointments,
     appointmentsByDate,
     assistedAppointmentIds,
+    appointmentsWithAssistants,
     isLoading,
     lastSync,
     

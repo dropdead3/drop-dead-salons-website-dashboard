@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Phone, Clock, AlertTriangle, XCircle, GripVertical } from 'lucide-react';
+import { Phone, Clock, AlertTriangle, XCircle, GripVertical, Users } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
@@ -46,6 +46,7 @@ interface DayViewProps {
   isLocationClosed?: boolean;
   closureReason?: string;
   assistedAppointmentIds?: Set<string>;
+  appointmentsWithAssistants?: Set<string>;
 }
 
 // Use consolidated status colors from design tokens
@@ -169,6 +170,7 @@ interface AppointmentCardProps {
   categoryColors: Record<string, { bg: string; text: string; abbr: string }>;
   isDragOverlay?: boolean;
   isAssisting?: boolean;
+  hasAssistants?: boolean;
 }
 
 function AppointmentCard({ 
@@ -181,6 +183,7 @@ function AppointmentCard({
   categoryColors,
   isDragOverlay = false,
   isAssisting = false,
+  hasAssistants = false,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: appointment.id,
@@ -328,6 +331,9 @@ function AppointmentCard({
                 {isAssisting && (
                   <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-semibold shrink-0">AST</span>
                 )}
+                {!isAssisting && hasAssistants && (
+                  <Users className="h-3 w-3 opacity-60 shrink-0" />
+                )}
                 {appointment.client_name}
               </div>
             ) : (
@@ -338,6 +344,9 @@ function AppointmentCard({
                   )}
                   {isAssisting && (
                     <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-semibold shrink-0">ASSISTING</span>
+                  )}
+                  {!isAssisting && hasAssistants && (
+                    <Users className="h-3 w-3 opacity-60 shrink-0" />
                   )}
                   {appointment.client_name}
                   {appointment.client_phone && (
@@ -406,6 +415,7 @@ export function DayView({
   isLocationClosed,
   closureReason,
   assistedAppointmentIds,
+  appointmentsWithAssistants,
 }: DayViewProps) {
   const ROW_HEIGHT = 16; // 16px per 15-min slot
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -665,6 +675,7 @@ export function DayView({
                           totalOverlapping={totalOverlapping}
                           categoryColors={categoryColors}
                           isAssisting={assistedAppointmentIds?.has(apt.id) || false}
+                          hasAssistants={appointmentsWithAssistants?.has(apt.id) || false}
                         />
                       );
                     })}

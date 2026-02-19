@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { format, subDays } from 'date-fns';
-import { Users, ArrowRight } from 'lucide-react';
+import { Users, DollarSign } from 'lucide-react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -13,7 +14,9 @@ export function AssistantActivityCard() {
   const dateFrom = format(subDays(new Date(), period), 'yyyy-MM-dd');
 
   const { summaries, totalAssignments, uniqueAssistants, isLoading } = useAssistantActivity(dateFrom, dateTo);
+  const { formatCurrency } = useFormatCurrency();
   const [expanded, setExpanded] = useState(false);
+  const totalAssistedRevenue = summaries.reduce((sum, s) => sum + (s.assistedRevenue || 0), 0);
 
   const displayed = expanded ? summaries : summaries.slice(0, 5);
 
@@ -73,7 +76,7 @@ export function AssistantActivityCard() {
         </div>
 
         {/* Summary stats */}
-        <div className="flex items-center gap-4 mt-2 text-sm">
+        <div className="flex items-center gap-4 mt-2 text-sm flex-wrap">
           <div>
             <span className="font-semibold text-foreground">{totalAssignments}</span>
             <span className="text-muted-foreground ml-1">total assists</span>
@@ -82,6 +85,13 @@ export function AssistantActivityCard() {
             <span className="font-semibold text-foreground">{uniqueAssistants}</span>
             <span className="text-muted-foreground ml-1">assistants active</span>
           </div>
+          {totalAssistedRevenue > 0 && (
+            <div className="flex items-center gap-1">
+              <DollarSign className="h-3 w-3 text-muted-foreground" />
+              <span className="font-semibold text-foreground">{formatCurrency(totalAssistedRevenue)}</span>
+              <span className="text-muted-foreground">assisted revenue</span>
+            </div>
+          )}
         </div>
       </CardHeader>
 
