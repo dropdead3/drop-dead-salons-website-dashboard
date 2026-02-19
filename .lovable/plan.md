@@ -1,42 +1,38 @@
 
 
-## Match Sidebar Card Styling and Make Collapsed Nav Fully Round
+## Smoother Sidebar Collapse/Expand Animations
 
 ### Problem
-1. The collapsed sidebar's fill color (`bg-card`) and border stroke (`border-border/30`) don't match the card styling used elsewhere (cards use `bg-card/80 backdrop-blur-xl border-border/50`)
-2. The collapsed sidebar uses `rounded-xl` -- it should be fully round (`rounded-full`) to echo the top nav bar's pill aesthetic
-3. Internal buttons and hover states use `rounded-lg` -- these need to become `rounded-full` when collapsed to fit the pill-shaped container
+The sidebar collapse and expand animation feels abrupt, especially the corner radius transformation between `rounded-xl` (expanded) and `rounded-full` (collapsed). The current `duration-200` (200ms) is too fast for the shape change to feel natural.
 
 ### Changes
 
-**File: `src/components/dashboard/DashboardLayout.tsx`** (sidebar `<aside>`)
-- Change collapsed border from `border-border/30` to `border-border/50` to match cards
-- Change collapsed background from `bg-card` to `bg-card/80 backdrop-blur-xl backdrop-saturate-150` to match the expanded state and top nav bar
-- Add conditional rounding: `rounded-full` when collapsed, `rounded-xl` when expanded
+**File: `src/components/dashboard/DashboardLayout.tsx`** (line 866)
+
+Update the sidebar `<aside>` transition to be smoother:
+
+1. Increase duration from `duration-200` to `duration-500` (500ms) for a more relaxed, polished feel
+2. Change easing from `ease-in-out` to a custom cubic-bezier curve (`[cubic-bezier(0.4,0,0.2,1)]`) for a more natural deceleration on the border-radius morph
+3. Ensure `border-radius` is explicitly in the `transition-[...]` property list (it already is via `border-radius`, but we confirm it)
+
+The updated transition class becomes:
+```
+transition-[width,background-color,border-color,border-radius]
+duration-500
+ease-[cubic-bezier(0.4,0,0.2,1)]
+```
 
 **File: `src/components/dashboard/SidebarNavContent.tsx`** (internal elements)
-- NavLink: Change `rounded-lg` to `rounded-full` when `isCollapsed` is true (line ~277)
-- Popover section buttons: Change `rounded-lg` to `rounded-full` when collapsed (line ~654)
-- Onboarding link: Change `rounded-lg` to `rounded-full` when collapsed (line ~411)
-- Expand button: Change `rounded-md` to `rounded-full` (line ~357)
-- Logo initials fallback: Change `rounded` to `rounded-full` (line ~332)
-- Footer containers (`mx-3 rounded-lg`): Change to `rounded-full` when collapsed (lines ~742, ~748)
-- Beta badge collapsed: Already `rounded-full` -- no change needed
-- Clock and Lock buttons: Change `rounded-lg` to `rounded-full` when collapsed (these are in separate components `SidebarClockButton.tsx` and `SidebarLockButton.tsx`)
 
-**File: `src/components/dashboard/SidebarClockButton.tsx`**
-- Add conditional `rounded-full` (vs `rounded-lg`) based on `isCollapsed` prop
+Update internal element transitions to match the sidebar's timing so everything morphs in sync:
+- NavLink `transition-all duration-200` becomes `transition-all duration-300` (lines ~277, ~411, ~430, ~655, ~687)
+- This keeps internal items slightly faster than the container for a layered, organic feel
 
-**File: `src/components/dashboard/SidebarLockButton.tsx`**
-- Add conditional `rounded-full` (vs `rounded-lg`) based on `isCollapsed` prop
-
-### Summary of Visual Changes
-- Collapsed sidebar becomes a tall pill shape with matching card fill and border
-- All internal interactive elements (nav icons, buttons, footer containers) become circular/pill-shaped when collapsed
-- Expanded sidebar remains unchanged (`rounded-xl`)
+### Summary
+- Sidebar container: 200ms to 500ms with smoother easing for the shape transformation
+- Internal nav items: 200ms to 300ms to stay in sync without feeling sluggish
+- Result: a calm, confident collapse/expand animation where corners morph smoothly
 
 ### Files Modified
 - `src/components/dashboard/DashboardLayout.tsx`
 - `src/components/dashboard/SidebarNavContent.tsx`
-- `src/components/dashboard/SidebarClockButton.tsx`
-- `src/components/dashboard/SidebarLockButton.tsx`
