@@ -1,35 +1,26 @@
 
 
-## Premium Task Detail Drilldown UI Enhancement
+## Fix: Tasks Due Today Should Not Show as Overdue
 
-### Overview
-Elevate the task detail drilldown dialog with improved padding, spacing, visual hierarchy, and a card-within-card metadata section that matches the platform's luxury glass aesthetic.
+### Problem
+The current overdue logic compares `new Date(task.due_date)` against the start of today. Due to UTC vs local timezone interpretation of date-only strings (YYYY-MM-DD), tasks due today can incorrectly appear as overdue.
 
-### Changes (Single File: `src/components/dashboard/TaskDetailDrilldown.tsx`)
+### Fix (Single file: `src/components/dashboard/TaskItem.tsx`, line 43-44)
 
-**1. Header Section**
-- Increase padding from `p-5 pb-4` to `p-6 pb-5` for more breathing room
-- Ensure title uses `font-sans` (Aeonik Pro) consistently
-- Slightly larger badges with better spacing between them
+Use `parseISO` from `date-fns` (per project convention) to safely parse the due date as local midnight, then compare against today's local date start. A task is only overdue if its due date is strictly before today's date (not equal to today).
 
-**2. Notes Section**
-- Wrap in a subtle card-within-card container (`bg-muted/30 border border-border/30 rounded-lg p-4`) for visual separation
-- Add a section label with icon (`StickyNote` or existing icon)
+```text
+Before:
+  const isOverdue = new Date(task.due_date) < new Date(new Date().toDateString())
 
-**3. Metadata Grid**
-- Wrap the 2x2 grid in an elevated card-within-card (`bg-muted/20 border border-border/30 rounded-lg p-4`)
-- Add subtle gradient divider between notes and metadata
-- Better vertical spacing between label and value (`space-y-1`)
-- Use `font-sans` (not `font-medium` which is fine, but ensure no Termina leaks)
+After:
+  const today = startOfDay(new Date())
+  const dueLocal = startOfDay(parseISO(task.due_date))
+  const isOverdue = dueLocal < today   // strictly before today, not equal
+```
 
-**4. Footer Actions**
-- Increase padding from `p-4 pt-3` to `p-5 pt-4`
-- Center the action buttons for a more balanced layout
-- Add subtle rounded-lg pill styling to buttons for premium feel
+This ensures tasks due today remain "due today" until the day is over, and only become overdue starting tomorrow.
 
-**5. Overall Content Area**
-- Increase content padding from `p-5` to `p-6`
-- Increase spacing between sections from `space-y-5` to `space-y-6`
-
-### No new files or dependencies needed. All changes are in `TaskDetailDrilldown.tsx`.
-
+### Dependencies
+- `parseISO` and `startOfDay` from `date-fns` (already installed)
+- No new files or packages needed
