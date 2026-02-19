@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { LocationSelect } from '@/components/ui/location-select';
 import { useLiveSessionSnapshot } from '@/hooks/useLiveSessionSnapshot';
 import { isAllLocations } from '@/lib/locationFilter';
+import { useActiveLocations } from '@/hooks/useLocations';
 import type { StylistDetail } from '@/hooks/useLiveSessionSnapshot';
 
 // Demo data — split across two locations
@@ -81,10 +82,22 @@ export function LiveSessionDrilldown({
   }, [open, locationId]);
 
   const live = useLiveSessionSnapshot(drilldownLocationId);
+  const { data: activeLocations } = useActiveLocations();
 
-  const details = DEMO_MODE ? DEMO_DETAILS : live.stylistDetails;
-  const sessionCount = DEMO_MODE ? 18 : live.inSessionCount;
-  const stylistCount = DEMO_MODE ? DEMO_DETAILS.length : live.activeStylistCount;
+  // Filter demo data by selected location name
+  const filteredDemoDetails = useMemo(() => {
+    if (!DEMO_MODE) return [];
+    if (isAllLocations(drilldownLocationId)) return DEMO_DETAILS;
+    const selectedLoc = activeLocations?.find(l => l.id === drilldownLocationId);
+    if (!selectedLoc) return DEMO_DETAILS;
+    return DEMO_DETAILS.filter(d => d.locationName === selectedLoc.name);
+  }, [drilldownLocationId, activeLocations]);
+
+  const details = DEMO_MODE ? filteredDemoDetails : live.stylistDetails;
+  const stylistCount = details.length;
+  const sessionCount = DEMO_MODE
+    ? Math.round((details.length / DEMO_DETAILS.length) * 18)
+    : live.inSessionCount;
   const showGrouped = isAllLocations(drilldownLocationId);
 
   // Group stylists by location when showing all locations
