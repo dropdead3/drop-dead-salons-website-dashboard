@@ -11,8 +11,31 @@ import {
 const MAX_AVATARS = 7;
 const ENTERPRISE_THRESHOLD = 40;
 
+// TODO: Remove DEMO_MODE before shipping
+const DEMO_MODE = true;
+const DEMO_STYLISTS = [
+  { name: 'Sarah M', photoUrl: null },
+  { name: 'Jasmine T', photoUrl: null },
+  { name: 'Kira L', photoUrl: null },
+  { name: 'Morgan W', photoUrl: null },
+  { name: 'Alexa P', photoUrl: null },
+  { name: 'Bianca R', photoUrl: null },
+  { name: 'Dani C', photoUrl: null },
+  { name: 'Elena F', photoUrl: null },
+  { name: 'Gina H', photoUrl: null },
+  { name: 'Haven J', photoUrl: null },
+  { name: 'Ivy K', photoUrl: null },
+  { name: 'Jade N', photoUrl: null },
+  { name: 'Luna Q', photoUrl: null },
+];
+
 export function LiveSessionIndicator() {
-  const { inSessionCount, activeStylistCount, stylists, isLoading } = useLiveSessionSnapshot();
+  const live = useLiveSessionSnapshot();
+
+  const inSessionCount = DEMO_MODE ? 18 : live.inSessionCount;
+  const activeStylistCount = DEMO_MODE ? DEMO_STYLISTS.length : live.activeStylistCount;
+  const stylists = DEMO_MODE ? DEMO_STYLISTS : live.stylists;
+  const isLoading = DEMO_MODE ? false : live.isLoading;
 
   if (isLoading || inSessionCount === 0) return null;
 
