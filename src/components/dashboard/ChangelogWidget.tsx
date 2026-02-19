@@ -1,10 +1,9 @@
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
-import { Sparkles, Clock, ChevronRight, Star, ArrowRight } from 'lucide-react';
+import { Sparkles, Clock, ChevronRight, Star } from 'lucide-react';
 import { usePublishedChangelog, useUnreadChangelogCount } from '@/hooks/useChangelog';
 import { parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -15,7 +14,6 @@ export function ChangelogWidget() {
   const { data: entries = [], isLoading } = usePublishedChangelog();
   const { data: unreadCount = 0 } = useUnreadChangelogCount();
 
-  // Get recent updates and top coming soon
   const recentUpdates = entries
     .filter(e => e.entry_type !== 'coming_soon')
     .slice(0, 2);
@@ -27,12 +25,12 @@ export function ChangelogWidget() {
 
   if (isLoading) {
     return (
-      <Card className={tokens.kpi.tile}>
-        <div className="flex items-center gap-3 mb-3">
+      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
+        <div className="flex items-center gap-3">
           <Skeleton className="w-10 h-10 rounded-lg" />
           <Skeleton className="h-5 w-24" />
         </div>
-        <div className="space-y-3">
+        <div className="space-y-3 mt-4">
           <Skeleton className="h-16 w-full" />
           <Skeleton className="h-12 w-full" />
         </div>
@@ -41,28 +39,21 @@ export function ChangelogWidget() {
   }
 
   return (
-    <Card className={cn(tokens.kpi.tile, "h-full")}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className={tokens.card.iconBox}>
-            <Sparkles className={tokens.card.icon} />
-          </div>
-          <h3 className={tokens.kpi.label}>WHAT'S NEW</h3>
+    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
+      <div className="flex items-center gap-3">
+        <div className={tokens.card.iconBox}>
+          <Sparkles className={tokens.card.icon} />
         </div>
-        {unreadCount > 0 && (
-          <Badge variant="default" className="text-xs">
-            {unreadCount} new
-          </Badge>
-        )}
+        <span className={cn(tokens.kpi.label, 'flex-1')}>WHAT'S NEW</span>
       </div>
 
-      <div className="space-y-3">
+      <div className="mt-4 flex-1">
         {recentUpdates.length === 0 && topComingSoon.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No updates yet
           </p>
         ) : (
-          <>
+          <div className="space-y-3">
             {recentUpdates.map(entry => (
               <Link
                 key={entry.id}
@@ -121,14 +112,16 @@ export function ChangelogWidget() {
                 ))}
               </div>
             )}
-          </>
+          </div>
         )}
+      </div>
 
-        <Link to="/dashboard/changelog">
-          <Button variant="ghost" size="sm" className="w-full mt-2 text-muted-foreground hover:text-foreground">
-            View All Updates
-            <ArrowRight className="h-3.5 w-3.5 ml-2" />
-          </Button>
+      <div className="flex justify-end mt-2 pt-2 border-t border-border/30 min-h-[28px]">
+        <Link 
+          to="/dashboard/changelog"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+        >
+          View All Updates <ChevronRight className="w-3 h-3" />
         </Link>
       </div>
     </Card>
