@@ -1,20 +1,30 @@
 
-## Move Beta Badge to Sidebar (Above Feedback Buttons)
 
-### What Changes
-The beta badge will be removed from the top menu bar and placed in the sidebar, directly above the feedback bento buttons. The text will change from "BETA" to "Beta Testing V.1.1".
+## Fix Show/Hide $ on Simple Card View
+
+### Problem
+The "Simple" (compact) card view on the Command Center renders all metric values as plain text. When the user toggles "Show/hide $", the values on these cards are not blurred because they are not wrapped in the `BlurredAmount` component. This is a privacy gap -- financial data remains visible in Simple mode even when hidden everywhere else.
+
+### Root Cause
+In `src/components/dashboard/PinnedAnalyticsCard.tsx`, the compact view (lines 308-500) builds a `metricValue` string and renders it directly:
+```
+<p className="font-display text-2xl font-medium">{metricValue}</p>
+```
+No `BlurredAmount` wrapper is applied, so the HideNumbers context has no effect.
+
+### Solution
+Wrap the `metricValue` output in the `BlurredAmount` component for cards that display financial/sensitive data. Non-financial cards (like "0 NEW" bookings count or location counts) can optionally remain unblurred, but for consistency and simplicity, wrapping all compact metrics in `BlurredAmount` is the safest approach since even counts and percentages could be considered sensitive business data.
 
 ### Changes
 
-**1. `src/components/dashboard/DashboardLayout.tsx` -- Remove beta badge from top bar**
-- Delete the beta badge block (lines 1147-1156): the `Tooltip` wrapping the amber pill with `FlaskConical` icon and "BETA" text
-- Clean up `FlaskConical` import if no longer used in this file (it is used elsewhere for test accounts tab, so it stays)
+**File: `src/components/dashboard/PinnedAnalyticsCard.tsx`**
 
-**2. `src/components/dashboard/SidebarNavContent.tsx` -- Add beta badge above feedback buttons**
-- Import `FlaskConical` from lucide-react
-- Before the `SidebarFeedbackButtons` container (line 639), add a centered beta badge pill styled with the same amber glass aesthetic (amber-500/15 bg, amber-600 text, amber-500/30 border)
-- When expanded: show full "Beta Testing V.1.1" text with FlaskConical icon
-- When collapsed: show just the FlaskConical icon with a tooltip
+1. Import `BlurredAmount` from `@/contexts/HideNumbersContext` (add to existing imports)
+2. On line 482, wrap the metric value output:
+   - Before: `<p className="font-display text-2xl font-medium">{metricValue}</p>`
+   - After: `<BlurredAmount className="font-display text-2xl font-medium">{metricValue}</BlurredAmount>`
+
+This is a single-line change that ensures all compact card metrics respect the show/hide privacy toggle, matching the behavior of the Detailed view which already uses `BlurredAmount` throughout.
 
 ### Result
-The top bar loses the beta badge, making it cleaner. The sidebar bottom area will show: beta badge pill, then feedback bento buttons, then clock/lock buttons.
+When the user clicks "Show/hide $" in the top bar, the Simple card view will blur/unblur all metric values (dollar amounts, percentages, counts) just like the Detailed view does.
