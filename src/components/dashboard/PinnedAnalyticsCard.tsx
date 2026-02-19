@@ -2,7 +2,17 @@ import { useMemo, useState } from 'react';
 import { format, startOfMonth, endOfMonth, subDays, startOfWeek } from 'date-fns';
 import { VisibilityGate, useElementVisibility } from '@/components/visibility';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
+import { Card } from '@/components/ui/card';
 import { AggregateSalesCard, DateRange as SalesDateRange } from '@/components/dashboard/AggregateSalesCard';
+import {
+  DollarSign, TrendingUp, Users, Clock, BarChart3, Heart,
+  Activity, MapPin, Scissors, ShoppingBag, CalendarCheck,
+  Target, Gauge, FileText, Sparkles, Briefcase, UserPlus,
+  LineChart, BarChart2,
+} from 'lucide-react';
+import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { useFormatNumber } from '@/hooks/useFormatNumber';
+import { useRebookingRate } from '@/hooks/useRebookingRate';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
 import { CapacityUtilizationCard } from '@/components/dashboard/sales/CapacityUtilizationCard';
 import { NewBookingsCard } from '@/components/dashboard/NewBookingsCard';
@@ -135,14 +145,41 @@ export interface AnalyticsFilters {
 interface PinnedAnalyticsCardProps {
   cardId: string;
   filters: AnalyticsFilters;
+  compact?: boolean;
 }
+
+// Icon + label mapping for each card in compact mode
+const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
+  executive_summary: { icon: Sparkles, label: 'Executive Summary' },
+  daily_brief: { icon: FileText, label: 'Daily Brief' },
+  sales_overview: { icon: DollarSign, label: 'Sales Overview' },
+  top_performers: { icon: TrendingUp, label: 'Top Performers' },
+  operations_stats: { icon: Clock, label: 'Operations' },
+  revenue_breakdown: { icon: BarChart3, label: 'Revenue Breakdown' },
+  client_funnel: { icon: Users, label: 'Client Funnel' },
+  client_health: { icon: Heart, label: 'Client Health' },
+  operational_health: { icon: Activity, label: 'Operational Health' },
+  locations_rollup: { icon: MapPin, label: 'Locations Rollup' },
+  service_mix: { icon: Scissors, label: 'Service Mix' },
+  retail_effectiveness: { icon: ShoppingBag, label: 'Retail Effectiveness' },
+  rebooking: { icon: CalendarCheck, label: 'Rebooking Rate' },
+  team_goals: { icon: Target, label: 'Team Goals' },
+  goal_tracker: { icon: Target, label: 'Goal Tracker' },
+  capacity_utilization: { icon: Gauge, label: 'Capacity Utilization' },
+  week_ahead_forecast: { icon: LineChart, label: 'Week Ahead Forecast' },
+  new_bookings: { icon: UserPlus, label: 'New Bookings' },
+  hiring_capacity: { icon: Briefcase, label: 'Hiring Capacity' },
+  staffing_trends: { icon: BarChart2, label: 'Staffing Trends' },
+  stylist_workload: { icon: Users, label: 'Stylist Workload' },
+  client_experience_staff: { icon: Users, label: 'Client Experience' },
+};
 
 /**
  * Renders a single pinned analytics card with shared filters.
  * This component is used by DashboardHome to render individual analytics cards
  * that have been placed inline with other dashboard sections.
  */
-export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProps) {
+export function PinnedAnalyticsCard({ cardId, filters, compact = false }: PinnedAnalyticsCardProps) {
   // Check if parent tab is visible - if not, hide this card
   const parentTabKey = CARD_TO_TAB_MAP[cardId];
   const parentTabVisible = useElementVisibility(parentTabKey || '');
@@ -174,6 +211,9 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
   
   const { accessibleLocations } = useUserLocationAccess();
   const { data: locations } = useLocations();
+  const { data: rebookData } = useRebookingRate(filters.dateFrom, filters.dateTo, filters.locationId);
+  const { formatCurrencyWhole } = useFormatCurrency();
+  const { formatPercent } = useFormatNumber();
   const selectedLocationName = locationFilter
     ? locations?.find(l => l.id === locationFilter)?.name || 'Unknown'
     : 'All Locations';
@@ -190,6 +230,97 @@ export function PinnedAnalyticsCard({ cardId, filters }: PinnedAnalyticsCardProp
   // This check MUST come AFTER all hooks are called
   if (parentTabKey && !parentTabVisible) {
     return null;
+  }
+
+  // ── Compact (simple) view ──────────────────────────────────────
+  if (compact) {
+    const meta = CARD_META[cardId] || { icon: BarChart3, label: cardId };
+    const Icon = meta.icon;
+    
+    // Extract primary metric per card
+    let metricValue = '';
+    let metricLabel = '';
+    
+    switch (cardId) {
+      case 'executive_summary':
+      case 'sales_overview':
+        metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
+        metricLabel = 'revenue';
+        break;
+      case 'daily_brief':
+        metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
+        metricLabel = 'today';
+        break;
+      case 'top_performers': {
+        const top = performersForCard[0];
+        if (top) {
+          metricValue = `${top.name.split(' ')[0]} · ${formatCurrencyWhole(top.totalRevenue)}`;
+          metricLabel = '#1';
+        } else {
+          metricValue = '—';
+          metricLabel = '';
+        }
+        break;
+      }
+      case 'operations_stats':
+        metricValue = '—';
+        metricLabel = 'queue';
+        break;
+      case 'revenue_breakdown':
+        metricValue = `${formatCurrencyWhole(salesData?.serviceRevenue ?? 0)} / ${formatCurrencyWhole(salesData?.productRevenue ?? 0)}`;
+        metricLabel = 'svc / retail';
+        break;
+      case 'retail_effectiveness':
+        metricValue = attachmentData ? formatPercent(attachmentData.attachmentRate) : '—';
+        metricLabel = 'attach rate';
+        break;
+      case 'rebooking':
+        metricValue = rebookData ? formatPercent(rebookData.rebookRate) : '—';
+        metricLabel = 'rebook';
+        break;
+      case 'team_goals':
+        metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
+        metricLabel = 'progress';
+        break;
+      case 'capacity_utilization': {
+        const avgUtil = workload?.length
+          ? Math.round(workload.reduce((s, w) => s + w.utilizationScore, 0) / workload.length)
+          : 0;
+        metricValue = `${avgUtil}%`;
+        metricLabel = 'utilization';
+        break;
+      }
+      default:
+        metricValue = '—';
+        metricLabel = '';
+    }
+    
+    const visKey = cardId === 'operations_stats' ? 'operations_quick_stats' : cardId;
+    
+    return (
+      <VisibilityGate elementKey={visKey}>
+        <PinnableCard
+          elementKey={visKey}
+          elementName={meta.label}
+          category="Command Center"
+          dateRange={filters.dateRange}
+          locationName={selectedLocationName}
+        >
+          <Card className="flex items-center gap-3 px-4 py-3 h-14">
+            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+              <Icon className="w-4 h-4 text-muted-foreground" />
+            </div>
+            <span className="text-sm font-medium truncate">{meta.label}</span>
+            <div className="ml-auto flex items-center gap-2 shrink-0">
+              {metricLabel && (
+                <span className="text-xs text-muted-foreground hidden sm:inline">{metricLabel}</span>
+              )}
+              <span className="text-sm font-semibold tabular-nums">{metricValue}</span>
+            </div>
+          </Card>
+        </PinnableCard>
+      </VisibilityGate>
+    );
   }
   
   switch (cardId) {

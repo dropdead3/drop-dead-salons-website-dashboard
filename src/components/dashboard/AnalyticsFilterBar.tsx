@@ -1,4 +1,6 @@
-import { MapPin, Calendar } from 'lucide-react';
+import { MapPin, Calendar, LayoutGrid, List } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Select,
   SelectContent,
@@ -35,6 +37,8 @@ interface AnalyticsFilterBarProps {
   onDateRangeChange: (value: DateRangeType) => void;
   accessibleLocations?: Location[];
   canViewAggregate?: boolean;
+  compact?: boolean;
+  onCompactChange?: (compact: boolean) => void;
 }
 
 export function AnalyticsFilterBar({
@@ -44,6 +48,8 @@ export function AnalyticsFilterBar({
   onDateRangeChange,
   accessibleLocations,
   canViewAggregate = true,
+  compact,
+  onCompactChange,
 }: AnalyticsFilterBarProps) {
   const { data: allLocations } = useActiveLocations();
   const locations = accessibleLocations ?? allLocations;
@@ -55,7 +61,26 @@ export function AnalyticsFilterBar({
   const showLocationSelector = canViewAggregate || locationCount > 1;
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-3">
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      {/* Simple / Detailed toggle */}
+      {onCompactChange && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={() => onCompactChange(!compact)}
+            >
+              {compact ? <LayoutGrid className="w-4 h-4" /> : <List className="w-4 h-4" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {compact ? 'Detailed view' : 'Simple view'}
+          </TooltipContent>
+        </Tooltip>
+      )}
+
       {/* Multi-select for 3+ locations */}
       {showLocationSelector && useMultiSelect && locations && (
         <LocationMultiSelect
