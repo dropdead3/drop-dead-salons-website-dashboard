@@ -1,39 +1,57 @@
 
 
-## Fix: Smart Vertical Content Distribution in Goal Tracker
+## Smart Content Scaling for Goal Tracker Card
 
-### The Real Problem
+### Problem
 
-Adding `flex-1` to the location scoreboard wrapper makes that div stretch, but the location rows inside it stay at their natural height. The result: a big empty gap below the rows. The content didn't actually redistribute -- it just got a taller container with nothing filling it.
+The `justify-between` layout pushes the Location Scoreboard to the bottom, but the progress ring (hardcoded at 120px) and stats grid stay at their natural small size, creating a large empty gap in the middle. The content needs to grow to fill available space.
 
-### The Fix
+### Solution
 
-Use `justify-between` on the CardContent flex column so the org summary (ring + stats) anchors to the top and the location scoreboard anchors to the bottom. The natural spacing fills the middle. This is a clean, executive layout that works at any card height.
+Two changes that work together:
+
+**1. Top group becomes a centered flex container**
+
+The wrapper div around the org summary and pace trend gets `flex-1 flex flex-col justify-center` so it expands into available space and vertically centers its content. This eliminates the dead gap.
+
+**2. Scale up the progress ring and stats**
+
+Increase the progress ring from 120px to 160px. This makes the visual hero element more commanding and proportional to the card size. The percentage text inside scales up to match (`text-3xl`). The stats grid gets slightly larger text (`text-base` instead of `text-sm`) and more generous spacing.
 
 ### Technical Changes
 
 **File: `src/components/dashboard/sales/GoalTrackerCard.tsx`**
 
-1. **Line 90** -- Change CardContent classes to use `justify-between` instead of `space-y-5`:
+1. **Line 47**: Increase ring size from 120 to 160:
    ```tsx
-   <CardContent className="flex-1 flex flex-col justify-between gap-5">
+   const size = 160;
    ```
-   This replaces fixed `space-y-5` spacing with `gap-5` (same minimum) but distributes extra space between the org summary block and the location scoreboard.
 
-2. **Line 206** -- Remove `flex-1` from the location scoreboard wrapper since it no longer needs to grow:
+2. **Line 48**: Increase stroke width from 8 to 10 for visual balance:
    ```tsx
-   <div>
+   const strokeWidth = 10;
    ```
-   Back to a plain div. The `justify-between` on the parent handles distribution.
 
-3. **Wrap the org summary + pace trend in a single group div** (lines 97-202) so `justify-between` treats them as one top block vs the scoreboard as the bottom block. Without this, the pace trend section would get pushed away from the org summary when expanded.
+3. **Line 98**: Add flex growth and centering to the top group:
+   ```tsx
+   <div className="space-y-5 flex-1 flex flex-col justify-center">
+   ```
+
+4. **Line 136**: Scale up percentage text:
+   ```tsx
+   <span className="text-3xl font-display font-medium">
+   ```
+
+5. **Lines 162, 168, 174, 180**: Scale up stat values from `text-sm` to `text-base`:
+   ```tsx
+   <p className="text-base font-medium">
+   ```
 
 ### Result
 
-- Org summary (ring + stats) stays pinned to the top
-- Location scoreboard stays pinned to the bottom
-- Extra vertical space distributes naturally between the two sections
-- When the pace trend is expanded, it stays grouped with the org summary at the top
-- No dead space, no awkward stretching of individual elements
-- Works for any height difference between paired cards
+- The progress ring becomes a larger, more commanding visual element (160px vs 120px)
+- The top content group centers itself vertically in the available space
+- Stats text scales up proportionally
+- Location Scoreboard stays anchored at the bottom
+- The card feels intentionally designed at any height, not just stretched
 
