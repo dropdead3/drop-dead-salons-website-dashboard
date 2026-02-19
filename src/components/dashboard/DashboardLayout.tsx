@@ -1,4 +1,4 @@
-import { Fragment, useState, useEffect, useRef } from 'react'; // force rebuild
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -54,14 +54,6 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { Database } from '@/integrations/supabase/types';
 import { ImageWithSkeleton } from '@/components/ui/image-skeleton';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 
 type AppRole = Database['public']['Enums']['app_role'];
 import {
@@ -184,15 +176,6 @@ const SIDEBAR_COLLAPSED_KEY = 'dashboard-sidebar-collapsed';
 
 const SCROLL_THRESHOLD = 50;
 
-function isLikelyIdSegment(segment: string) {
-  // UUID v4-ish or long opaque ids
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(segment) || segment.length >= 18;
-}
-
-function humanizeSegment(segment: string) {
-  const s = segment.replace(/[-_]+/g, ' ').trim();
-  return s.replace(/\b\w/g, (c) => c.toUpperCase());
-}
 
 function NavHistoryArrows() {
   const { canGoBack, canGoForward, goBack, goForward } = useNavigationHistory();
@@ -1253,52 +1236,6 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           hasZuraGuidance && !hideFooter && "pb-64"
         )}>
           <div className={cn("w-full max-w-none flex-1 min-h-0 min-w-0", hideFooter && "flex flex-col overflow-hidden")}>
-            {!hideFooter && (() => {
-              const parts = location.pathname.split('/').filter(Boolean);
-              if (parts[0] !== 'dashboard' || parts.length <= 2) return null;
-              if (location.pathname.startsWith('/dashboard/admin/website-sections')) return null;
-
-              const crumbs: Array<{ label: string; href?: string }> = [{ label: 'Dashboard', href: '/dashboard' }];
-              let href = '/dashboard';
-              for (const seg of parts.slice(1)) {
-                href += `/${seg}`;
-                const label =
-                  seg === 'admin'
-                    ? 'Admin'
-                    : seg === 'platform'
-                      ? 'Platform'
-                      : isLikelyIdSegment(seg)
-                        ? 'Detail'
-                        : humanizeSegment(seg);
-                crumbs.push({ label, href });
-              }
-
-              return (
-                <div className="px-4 lg:px-6 pt-3 pb-1">
-                  <Breadcrumb>
-                    <BreadcrumbList className="text-xs">
-                      {crumbs.map((c, idx) => {
-                        const isLast = idx === crumbs.length - 1;
-                        return (
-                          <Fragment key={`${c.label}-${idx}`}>
-                            <BreadcrumbItem>
-                              {isLast || !c.href ? (
-                                <BreadcrumbPage className="text-xs">{c.label}</BreadcrumbPage>
-                              ) : (
-                                <BreadcrumbLink asChild className="text-xs">
-                                  <Link to={c.href}>{c.label}</Link>
-                                </BreadcrumbLink>
-                              )}
-                            </BreadcrumbItem>
-                            {!isLast && <BreadcrumbSeparator />}
-                          </Fragment>
-                        );
-                      })}
-                    </BreadcrumbList>
-                  </Breadcrumb>
-                </div>
-              );
-            })()}
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={`${location.pathname}${location.search}`}
