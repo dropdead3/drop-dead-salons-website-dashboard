@@ -731,7 +731,7 @@ function DashboardSections({
                         <div className="flex items-center gap-3">
                           {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
                           <AnnouncementsDrawer isLeadership={isLeadership} />
-                          <LiveSessionIndicator />
+                          <LiveSessionIndicator locationId={analyticsFilters.locationId} />
                         </div>
                         <AnalyticsFilterBar
                           locationId={analyticsFilters.locationId}
@@ -801,7 +801,7 @@ function DashboardSections({
                       <div className="flex items-center gap-3">
                         {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
                         <AnnouncementsDrawer isLeadership={isLeadership} />
-                        <LiveSessionIndicator />
+                        <LiveSessionIndicator locationId={analyticsFilters.locationId} />
                       </div>
                       <AnalyticsFilterBar
                         locationId={analyticsFilters.locationId}

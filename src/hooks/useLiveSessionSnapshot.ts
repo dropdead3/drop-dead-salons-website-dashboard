@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import { applyLocationFilter } from '@/lib/locationFilter';
 
 interface ActiveStylist {
   name: string;
@@ -27,20 +28,24 @@ interface LiveSessionSnapshot {
   isLoading: boolean;
 }
 
-export function useLiveSessionSnapshot(): LiveSessionSnapshot {
+export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot {
   const { data, isLoading } = useQuery({
-    queryKey: ['live-session-snapshot'],
+    queryKey: ['live-session-snapshot', locationId ?? 'all'],
     queryFn: async () => {
       const today = format(new Date(), 'yyyy-MM-dd');
       const now = format(new Date(), 'HH:mm:ss');
 
       // Get today's appointments where current time falls between start and end
-      const { data: appointments, error } = await supabase
-        .from('phorest_appointments')
-        .select('id, phorest_staff_id, start_time, end_time, service_name, client_name')
-        .eq('appointment_date', today)
-        .lte('start_time', now)
-        .gt('end_time', now);
+      const activeQuery = applyLocationFilter(
+        supabase
+          .from('phorest_appointments')
+          .select('id, phorest_staff_id, start_time, end_time, service_name, client_name')
+          .eq('appointment_date', today)
+          .lte('start_time', now)
+          .gt('end_time', now) as any,
+        locationId,
+      );
+      const { data: appointments, error } = await activeQuery;
 
       if (error) throw error;
       if (!appointments || appointments.length === 0) {
@@ -97,11 +102,15 @@ export function useLiveSessionSnapshot(): LiveSessionSnapshot {
       }));
 
       // Get ALL of today's appointments for active staff to find wrap-up times
-      const { data: allTodayAppts, error: allError } = await supabase
-        .from('phorest_appointments')
-        .select('id, phorest_staff_id, start_time, end_time, service_name')
-        .eq('appointment_date', today)
-        .in('phorest_staff_id', uniqueStaffIds);
+      const allTodayQuery = applyLocationFilter(
+        supabase
+          .from('phorest_appointments')
+          .select('id, phorest_staff_id, start_time, end_time, service_name')
+          .eq('appointment_date', today)
+          .in('phorest_staff_id', uniqueStaffIds) as any,
+        locationId,
+      );
+      const { data: allTodayAppts, error: allError } = await allTodayQuery;
 
       if (allError) throw allError;
 
