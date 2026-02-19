@@ -308,7 +308,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   return (
     <div className={cn("flex flex-col h-full", "sidebar-dark")}>
       {/* Logo & Collapse Toggle */}
-      <div className={cn("border-b border-border/30", isCollapsed ? "p-3" : "px-4 py-3")}>
+      <div className={cn("border-b border-border/30", isCollapsed ? "p-3" : "px-5 py-4")}>
         <div className={cn("flex items-center", isCollapsed ? "flex-col gap-2" : "justify-between")}>
           <Link to="/dashboard" className="block min-w-0">
             {isCollapsed ? (
@@ -318,7 +318,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     <img 
                       src={getIcon()} 
                       alt={businessSettings?.business_name || 'Drop Dead'} 
-                      className="h-5 w-auto max-w-[40px] object-contain"
+                      className="h-4 w-auto max-w-[32px] object-contain"
                     />
                   ) : (
                     <div className="w-7 h-7 rounded bg-white/10 text-white flex items-center justify-center font-display text-xs">
@@ -329,13 +329,13 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 <TooltipContent side="right">{businessSettings?.business_name || 'Drop Dead'}</TooltipContent>
               </Tooltip>
             ) : hasCustomLogo() ? (
-              <img 
+              <img
                 src={getLogo()} 
                 alt={businessSettings?.business_name || 'Drop Dead'} 
-                className="h-4 w-auto" 
+                className="h-3 w-auto max-w-[120px] object-contain" 
               />
             ) : (
-              <span className="font-display text-base uppercase tracking-wider text-white/90">
+              <span className="font-display text-sm uppercase tracking-wider text-white/90">
                 {businessSettings?.business_name || 'Drop Dead'}
               </span>
             )}
