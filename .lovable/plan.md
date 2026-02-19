@@ -1,71 +1,40 @@
 
 
-## Add Scheduling Conflict Warning When Assigning Assistants
+## Wire Live Session Indicator to Location Filter
 
-Yes, the system already supports multiple assistants per appointment (the DB unique constraint is on `appointment_id + assistant_user_id`, not on `appointment_id` alone). The gap is that there is no warning when you assign someone who is already booked on another overlapping appointment.
+The "In Session" indicator currently fetches all active appointments across all locations. It needs to respect the same location filter used by the analytics cards on the dashboard.
 
 ### What Changes
 
-**1. New hook: `src/hooks/useAssistantConflictCheck.ts`**
+**1. Update hook: `src/hooks/useLiveSessionSnapshot.ts`**
 
-A lightweight hook that, given a date and time range, fetches all `phorest_appointments` that overlap that window and checks which team members are either:
-- The **lead stylist** (`stylist_user_id`) on an overlapping appointment
-- An **assigned assistant** (`appointment_assistants.assistant_user_id`) on an overlapping appointment
+- Accept an optional `locationId` parameter (same encoding as the rest of the app: `'all'`, single UUID, or comma-separated UUIDs)
+- Use the shared `applyLocationFilter` utility from `src/lib/locationFilter.ts` to add `.eq('location_id', id)` or `.in('location_id', ids)` to both appointment queries (active sessions and all-today)
+- Include `locationId` in the `queryKey` so React Query refetches when the filter changes
 
-Returns a `Map<userId, conflictingAppointment[]>` so the picker can look up conflicts per candidate.
+**2. Update component: `src/components/dashboard/LiveSessionIndicator.tsx`**
 
-Query logic:
-```
-SELECT pa.id, pa.start_time, pa.end_time, pa.client_name, pa.service_name,
-       pa.stylist_user_id,
-       aa.assistant_user_id
-FROM phorest_appointments pa
-LEFT JOIN appointment_assistants aa ON aa.appointment_id = pa.id
-WHERE pa.appointment_date = <date>
-  AND pa.start_time < <end_time>
-  AND pa.end_time > <start_time>
-  AND pa.status NOT IN ('cancelled', 'no_show')
-  AND pa.id != <current_appointment_id>
-```
+- Accept a `locationId` prop
+- Pass it through to `useLiveSessionSnapshot(locationId)`
+- Pass it through to `LiveSessionDrilldown` as well (for consistency)
 
-This is a single query, done once when the picker opens, covering both lead and assistant conflicts.
+**3. Update page: `src/pages/dashboard/DashboardHome.tsx`**
 
-**2. Update: `src/components/dashboard/schedule/AppointmentDetailSheet.tsx`**
-
-In the assistant picker list (lines 340-373):
-- Import and call the new conflict check hook, passing the current appointment's date, start_time, end_time, and id
-- For each candidate in the picker, check if they have conflicts
-- If conflicting, show a warning row:
-  - Orange `AlertTriangle` icon next to their name
-  - Subtle text like "Busy 10:00-11:30 (Cut & Color)" showing the overlapping appointment
-- The user can **still assign** them (it is a warning, not a block) -- some assistants may float between appointments intentionally
-- The warning uses existing `AlertTriangle` icon (already imported) and muted orange styling
-
-### Layout of Picker With Conflict
-
-```
-[Avatar] Jamie R.
-         [!] Busy 10:00 - 11:30 (Cut & Color for Jessica S.)
-
-[Avatar] Alex T.                        <-- no conflict, clean row
-
-[Avatar] Morgan K.
-         [!] Assisting 9:30 - 10:45 (Balayage for Sarah M.)
-```
+- Pass `analyticsFilters.locationId` to `<LiveSessionIndicator locationId={...} />` in both render locations (compact and detailed mode, lines ~734 and ~804)
 
 ### What Does NOT Change
 
-- Revenue attribution -- still only counts for the lead stylist
-- The ability to assign multiple assistants -- already works
-- The DB trigger preventing self-assignment -- already in place
-- Existing assistant display, duration tracking, and notifications -- untouched
+- The drilldown dialog content and behavior
+- Demo mode logic (demo data is unfiltered mock data)
+- The location filter bar itself
+- Any other hooks or components
 
-### Technical Summary
+### Technical Details
+
+Three files modified, zero database changes.
 
 | File | Change |
 |------|--------|
-| `src/hooks/useAssistantConflictCheck.ts` | New hook -- fetches overlapping appointments and builds a conflict map per user |
-| `src/components/dashboard/schedule/AppointmentDetailSheet.tsx` | Wire conflict data into picker, show warning rows for busy candidates |
-
-Two files total. No database changes needed.
-
+| `src/hooks/useLiveSessionSnapshot.ts` | Add `locationId` param, apply filter to queries, update query key |
+| `src/components/dashboard/LiveSessionIndicator.tsx` | Accept + forward `locationId` prop |
+| `src/pages/dashboard/DashboardHome.tsx` | Pass `analyticsFilters.locationId` to indicator (2 spots) |
