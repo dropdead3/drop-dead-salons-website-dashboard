@@ -1,16 +1,33 @@
 
-## Fix Scroll on Happening Now Drill-Down
 
-The Radix `ScrollArea` component is not resolving height correctly inside the flex column dialog layout, causing the list to overflow without scrolling. The fix is to replace it with a native scrollable div.
+## Move "Assisted by" Badge Inline with Stylist Name
 
-### Root Cause
-Radix `ScrollArea` uses an internal viewport with `h-full w-full` that fails to resolve a concrete height inside nested flex containers, even with `flex-1 min-h-0`. This is a known Radix quirk.
+Currently, "Assisted by [Name.]" sits on its own line below the service. The change moves it to the same row as the stylist name, anchored to the right side, styled as a subtle badge.
 
-### Changes (single file: `src/components/dashboard/LiveSessionDrilldown.tsx`)
+### Layout Change
 
-1. **Remove** the `ScrollArea` import (line 2)
-2. **Replace** the `ScrollArea` wrapper (lines 95-97 and 153-154) with a single native scrollable div:
-   - Change `<div className="flex-1 min-h-0 overflow-hidden">` + `<ScrollArea className="h-full">` into one `<div className="flex-1 min-h-0 overflow-y-auto">`
-   - Remove the closing `</ScrollArea>` and extra `</div>`
+Current:
+```
+Sarah M.
+Balayage & Tone on Jessica Smith
+Assisted by Jamie R.
+Appointment 3 of 5
+```
 
-This gives the list a native scrollbar that respects the dialog's `max-h-[85vh]` constraint reliably.
+After:
+```
+Sarah M.                    [Assisted by Jamie R.]
+Balayage & Tone on Jessica Smith
+Appointment 3 of 5
+```
+
+### Technical Details
+
+**File: `src/components/dashboard/LiveSessionDrilldown.tsx`**
+
+1. Wrap the stylist name line (line 117) in a flex row with `items-center justify-between`
+2. Move the "Assisted by" block (lines 123-126) inside that same flex row, to the right
+3. Restyle it as a badge: small rounded pill with `bg-muted/60 text-muted-foreground/80 text-[10px] px-2 py-0.5 rounded-full italic whitespace-nowrap`
+4. Remove the old standalone "Assisted by" paragraph
+
+Single file change, ~10 lines modified.
