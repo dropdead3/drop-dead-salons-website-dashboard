@@ -10,36 +10,38 @@ export function ThemeToggle() {
     <button
       onClick={() => setTheme(isDark ? 'light' : 'dark')}
       className={cn(
-        "relative flex items-center h-8 w-[52px] rounded-full p-0.5 transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "relative flex items-center h-9 w-[60px] rounded-full p-1 transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isDark
-          ? "bg-secondary border border-border/60"
-          : "bg-accent/40 border border-border/30"
+          ? "bg-[hsl(0,0%,8%)] border border-border/40 shadow-[inset_0_1px_3px_hsl(0,0%,0%/0.4)]"
+          : "bg-accent/50 border border-border/30 shadow-[inset_0_1px_2px_hsl(0,0%,0%/0.06)]"
       )}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
-      {/* Track icons */}
+      {/* Sun icon - visible in dark mode as unselected hint */}
       <Sun className={cn(
-        "absolute left-1.5 w-3.5 h-3.5 transition-opacity duration-300",
-        isDark ? "opacity-40 text-muted-foreground" : "opacity-0"
+        "absolute left-2 w-3.5 h-3.5 transition-all duration-300",
+        isDark ? "opacity-30 text-muted-foreground" : "opacity-0 scale-75"
       )} />
+
+      {/* Moon icon - visible in light mode as unselected hint */}
       <Moon className={cn(
-        "absolute right-1.5 w-3.5 h-3.5 transition-opacity duration-300",
-        isDark ? "opacity-0" : "opacity-30 text-muted-foreground"
+        "absolute right-2 w-3.5 h-3.5 transition-all duration-300",
+        isDark ? "opacity-0 scale-75" : "opacity-30 text-muted-foreground"
       )} />
 
       {/* Sliding thumb */}
       <span
         className={cn(
-          "flex items-center justify-center h-6 w-6 rounded-full transition-all duration-300 ease-in-out",
+          "flex items-center justify-center h-7 w-7 rounded-full transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)]",
           isDark
-            ? "translate-x-[22px] bg-muted shadow-[0_0_6px_hsl(var(--muted-foreground)/0.15)]"
-            : "translate-x-0 bg-background shadow-md"
+            ? "translate-x-[24px] bg-foreground text-background shadow-[0_0_8px_hsl(var(--foreground)/0.3)]"
+            : "translate-x-0 bg-background text-foreground shadow-md"
         )}
       >
         {isDark ? (
-          <Moon className="w-3 h-3 text-foreground" />
+          <Moon className="w-3.5 h-3.5" />
         ) : (
-          <Sun className="w-3 h-3 text-foreground" />
+          <Sun className="w-3.5 h-3.5" />
         )}
       </span>
     </button>
