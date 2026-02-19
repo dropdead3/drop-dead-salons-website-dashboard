@@ -50,7 +50,7 @@ export function NewBookingsCard({ filterContext }: NewBookingsCardProps) {
     : 'text-muted-foreground';
 
   return (
-    <Card className={cn("p-6", tokens.card.wrapper)}>
+    <Card className={cn("p-6 h-full flex flex-col", tokens.card.wrapper)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
