@@ -13,24 +13,6 @@ import { LiveSessionDrilldown } from './LiveSessionDrilldown';
 const MAX_AVATARS = 7;
 const ENTERPRISE_THRESHOLD = 40;
 
-// TODO: Remove DEMO_MODE before shipping
-const DEMO_MODE = true;
-const DEMO_STYLISTS = [
-  { name: 'Sarah M', photoUrl: null },
-  { name: 'Jasmine T', photoUrl: null },
-  { name: 'Kira L', photoUrl: null },
-  { name: 'Morgan W', photoUrl: null },
-  { name: 'Alexa P', photoUrl: null },
-  { name: 'Bianca R', photoUrl: null },
-  { name: 'Dani C', photoUrl: null },
-  { name: 'Elena F', photoUrl: null },
-  { name: 'Gina H', photoUrl: null },
-  { name: 'Haven J', photoUrl: null },
-  { name: 'Ivy K', photoUrl: null },
-  { name: 'Jade N', photoUrl: null },
-  { name: 'Luna Q', photoUrl: null },
-];
-
 interface LiveSessionIndicatorProps {
   locationId?: string;
 }
@@ -39,11 +21,7 @@ export function LiveSessionIndicator({ locationId }: LiveSessionIndicatorProps) 
   const live = useLiveSessionSnapshot(locationId);
   const [drilldownOpen, setDrilldownOpen] = useState(false);
 
-  const inSessionCount = DEMO_MODE ? 18 : live.inSessionCount;
-  const activeStylistCount = DEMO_MODE ? DEMO_STYLISTS.length : live.activeStylistCount;
-  const activeAssistantCount = DEMO_MODE ? 5 : live.activeAssistantCount;
-  const stylists = DEMO_MODE ? DEMO_STYLISTS : live.stylists;
-  const isLoading = DEMO_MODE ? false : live.isLoading;
+  const { inSessionCount, activeStylistCount, activeAssistantCount, stylists, isLoading } = live;
 
   if (isLoading || inSessionCount === 0) return null;
 
@@ -118,7 +96,7 @@ export function LiveSessionIndicator({ locationId }: LiveSessionIndicatorProps) 
         onOpenChange={setDrilldownOpen}
         inSessionCount={inSessionCount}
         activeStylistCount={activeStylistCount}
-        stylistDetails={DEMO_MODE ? [] : live.stylistDetails}
+        stylistDetails={live.stylistDetails}
         locationId={locationId}
       />
     </TooltipProvider>
