@@ -1,35 +1,36 @@
 
 
-## Show Appointments in Drilldown Even Without Staff Mapping
+## Add Edit Task Feature
 
-### Problem
-
-The hook (`useLiveSessionSnapshot.ts`) correctly finds 5 active appointments, but when it tries to resolve staff identities via `phorest_staff_mapping`, it finds zero matches (none of today's 9 active Phorest staff IDs exist in the mapping table). At that point it returns empty `stylistDetails`, so the drilldown shows "0 stylists working" and no appointment rows.
-
-### Solution
-
-Remove the early-return bailout when staff aren't mapped. Instead, build `StylistDetail` entries directly from the appointment data, using fallback names.
+### Overview
+Add an inline edit capability to each task in the "My Tasks" widget. Clicking a task (or an edit icon) opens a dialog pre-filled with the task's current values, allowing the user to update title, description, due date, and priority.
 
 ### Changes
 
-**`src/hooks/useLiveSessionSnapshot.ts`**
+**1. `src/hooks/useTasks.ts` -- Add `updateTask` mutation**
+- New mutation that calls `supabase.from('tasks').update(...)` with title, description, due_date, and priority fields
+- Blocked during impersonation (same pattern as create/toggle/delete)
+- Invalidates `['tasks']` query on success
+- Shows toast on success/error
 
-1. After resolving staff mappings, also query `phorest_staff_mapping` for `phorest_staff_name` to get Phorest-side names (even if `user_id` is null).
-2. Remove the early return at line 94 that skips everything when `userIds.length === 0`.
-3. When building `StylistDetail` entries, use this name resolution waterfall:
-   - Employee profile display name (if mapped to a user)
-   - `phorest_staff_name` from the mapping table (if exists but not linked)
-   - Sequential fallback: "Stylist 1", "Stylist 2", etc.
-4. All appointment data (service name, client name, start/end times, progress) is already available from the appointments query, so rows will be fully populated regardless of mapping status.
+**2. `src/components/dashboard/EditTaskDialog.tsx` -- New component**
+- Reuses the same form layout as `AddTaskDialog` (title, description, due date, priority)
+- Accepts a `task` prop to pre-fill all fields
+- Accepts `onSave` callback and `isPending` state
+- Controlled `open`/`onOpenChange` props (no trigger button -- opened externally)
 
-### Technical Detail
+**3. `src/components/dashboard/TaskItem.tsx` -- Add edit trigger**
+- Add a `Pencil` icon button next to the delete button (visible on hover, same pattern)
+- Add `onEdit` callback prop
+- Clicking the pencil calls `onEdit(task)`
 
-The mapping table already stores `phorest_staff_name` from Phorest syncs. The query at line 80-83 just needs to also select that column. Then for unmapped staff, we use that name. For staff not in the mapping table at all, we use the "Stylist N" fallback pattern already established elsewhere in the codebase.
+**4. `src/pages/dashboard/DashboardHome.tsx` -- Wire it together**
+- Track `editingTask` state
+- Pass `onEdit` to each `TaskItem`
+- Render `EditTaskDialog` with the selected task
+- Call `updateTask.mutate(...)` on save
 
-### Result
-
-- The pill will still show "5 stylists, 0 assistants in service now" (correctly reflecting 5 unique staff IDs with active appointments)
-- The drilldown will show "5 appointments in progress . 5 stylists working"
-- Each row will display the staff member's Phorest name (or "Stylist N" fallback), their current service, client name, appointment progress, and wrap-up time
-- Once staff are linked in Settings, real profile photos and display names will automatically appear
-
+### Technical Details
+- The update mutation will send only changed fields to the database
+- Read-only / impersonation guards follow the existing pattern (edit icon hidden, mutation throws)
+- No database migration needed -- the `tasks` table already has all required columns
