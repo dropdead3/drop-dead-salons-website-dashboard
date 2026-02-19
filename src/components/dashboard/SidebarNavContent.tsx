@@ -164,30 +164,36 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     return getEffectiveHiddenLinks(sidebarLayout, roles);
   }, [sidebarLayout, roles]);
   
-  // Logo/icon helpers — collapsed rail is always dark, expanded follows theme
+  // Logo/icon helpers — collapsed now follows theme like expanded
   const hasCustomLogo = (forCollapsed = false) => {
-    if (forCollapsed) return !!businessSettings?.logo_dark_url;
+    if (forCollapsed) {
+      return resolvedTheme === 'dark'
+        ? !!businessSettings?.logo_dark_url
+        : !!businessSettings?.logo_light_url;
+    }
     return resolvedTheme === 'dark'
       ? !!businessSettings?.logo_dark_url
       : !!businessSettings?.logo_light_url;
   };
 
   const hasCustomIcon = (forCollapsed = false) => {
-    if (forCollapsed) return !!businessSettings?.icon_dark_url;
+    if (forCollapsed) {
+      return resolvedTheme === 'dark'
+        ? !!businessSettings?.icon_dark_url
+        : !!businessSettings?.icon_light_url;
+    }
     return resolvedTheme === 'dark'
       ? !!businessSettings?.icon_dark_url
       : !!businessSettings?.icon_light_url;
   };
 
   const getLogo = (forCollapsed = false) => {
-    if (forCollapsed) return businessSettings?.logo_dark_url || LogoWhite;
     return resolvedTheme === 'dark'
       ? (businessSettings?.logo_dark_url || LogoWhite)
       : (businessSettings?.logo_light_url || Logo);
   };
 
   const getIcon = (forCollapsed = false) => {
-    if (forCollapsed) return businessSettings?.icon_dark_url;
     return resolvedTheme === 'dark'
       ? businessSettings?.icon_dark_url
       : businessSettings?.icon_light_url;
@@ -316,7 +322,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   };
 
   return (
-    <div className={cn("flex flex-col h-full", isCollapsed && "sidebar-dark")}>
+    <div className={cn("flex flex-col h-full", isCollapsed && resolvedTheme === 'dark' && "sidebar-dark")}>
       {/* Logo & Collapse Toggle */}
       <div className={cn("border-b border-border/30", isCollapsed ? "p-3" : "px-5 py-4")}>
         <div className={cn("flex items-center", isCollapsed ? "flex-col-reverse gap-2" : "justify-between")}>
@@ -331,7 +337,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                       className="h-4 w-auto max-w-[32px] object-contain"
                     />
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center font-display text-xs">
+                    <div className="w-7 h-7 rounded-full bg-foreground/10 dark:bg-white/10 text-foreground dark:text-white flex items-center justify-center font-display text-xs">
                       {(businessSettings?.business_name || 'DD').substring(0, 2).toUpperCase()}
                     </div>
                   )}
@@ -356,7 +362,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 rounded-full bg-white/10 hover:bg-white/15 text-white/60 hover:text-white"
+                  className="h-7 w-7 rounded-full bg-foreground/10 hover:bg-foreground/15 text-muted-foreground hover:text-foreground dark:bg-white/10 dark:hover:bg-white/15 dark:text-white/60 dark:hover:text-white"
                   onClick={onToggleCollapse}
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
