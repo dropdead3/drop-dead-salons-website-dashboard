@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
 import { useAnnouncementBarSettings, useUpdateAnnouncementBarSettings, type AnnouncementBarSettings } from '@/hooks/useAnnouncementBar';
 import { toast } from 'sonner';
-import { Megaphone, ExternalLink, ArrowRight, Save, Loader2, Check } from 'lucide-react';
+import { Megaphone, ExternalLink, ArrowRight, Loader2, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Theme-derived color presets for the banner
@@ -51,14 +52,16 @@ export function AnnouncementBarContent() {
     }
   }, [settings]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
       await updateSettings.mutateAsync(formData);
       toast.success('Announcement bar settings saved');
     } catch (error) {
       toast.error('Failed to save settings');
     }
-  };
+  }, [formData, updateSettings]);
+
+  useEditorSaveAction(handleSave);
 
   const handleChange = (field: keyof AnnouncementBarSettings, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -87,22 +90,12 @@ export function AnnouncementBarContent() {
             Customize the promotional banner displayed above the header on the public website.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <a href="/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2">
-              <ExternalLink className="h-4 w-4" />
-              Preview Website
-            </a>
-          </Button>
-          <Button size="sm" onClick={handleSave} disabled={updateSettings.isPending}>
-            {updateSettings.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            Save & Publish Changes
-          </Button>
-        </div>
+        <Button variant="outline" size="sm" asChild>
+          <a href="/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2">
+            <ExternalLink className="h-4 w-4" />
+            Preview Website
+          </a>
+        </Button>
       </div>
 
       {/* Live Preview */}

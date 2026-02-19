@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save, Star, Award, MapPin } from 'lucide-react';
+import { Loader2, Star, Award, MapPin } from 'lucide-react';
+import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useExtensionsConfig, type ExtensionsConfig, DEFAULT_EXTENSIONS } from '@/hooks/useSectionConfig';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -27,7 +28,7 @@ export function ExtensionsEditor() {
     }
   }, [data, isLoading]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
       await update(localConfig);
       toast.success('Extensions section saved');
@@ -35,7 +36,9 @@ export function ExtensionsEditor() {
     } catch {
       toast.error('Failed to save');
     }
-  };
+  }, [localConfig, update]);
+
+  useEditorSaveAction(handleSave);
 
   const updateField = <K extends keyof ExtensionsConfig>(field: K, value: ExtensionsConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [field]: value }));
@@ -60,10 +63,6 @@ export function ExtensionsEditor() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
           <CardTitle className="text-lg">Extensions Section</CardTitle>
-          <Button onClick={handleSave} disabled={isSaving} size="sm">
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-            Save & Publish Changes
-          </Button>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Badge */}

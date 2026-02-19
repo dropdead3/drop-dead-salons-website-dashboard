@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useNewClientConfig, type NewClientConfig, DEFAULT_NEW_CLIENT } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
@@ -23,7 +24,7 @@ export function NewClientEditor() {
     }
   }, [data, isLoading]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
       await update(localConfig);
       toast.success('New Client section saved');
@@ -31,7 +32,9 @@ export function NewClientEditor() {
     } catch {
       toast.error('Failed to save');
     }
-  };
+  }, [localConfig, update]);
+
+  useEditorSaveAction(handleSave);
 
   const updateField = <K extends keyof NewClientConfig>(field: K, value: NewClientConfig[K]) => {
     setLocalConfig(prev => ({ ...prev, [field]: value }));
@@ -51,10 +54,6 @@ export function NewClientEditor() {
       <Card className="overflow-auto">
         <CardHeader className="flex flex-row items-center justify-between pb-4 sticky top-0 bg-card z-10 border-b">
           <CardTitle className="text-lg">New Client CTA</CardTitle>
-          <Button onClick={handleSave} disabled={isSaving} size="sm">
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-            Save & Publish Changes
-          </Button>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Headline */}
