@@ -1,33 +1,30 @@
 
-## Update Happening Now Drill-Down: Name Periods and Client Names
 
-Two formatting changes to each stylist row in the drill-down dialog.
+## Fix Scroll on Happening Now Drill-Down
 
-### 1. Add period after last-name initials
-All shortened last names (single letter) get a trailing period. This applies to:
-- Stylist names (e.g., "Sarah M" becomes "Sarah M.")
-- "Assisted by" names (e.g., "Jamie R" becomes "Jamie R.")
-- Both demo data and live data from the hook
+The scroll isn't working because the Radix `ScrollArea` viewport needs its parent to have a definitive height constraint. While `flex-1 min-h-0` is on the `ScrollArea`, the internal viewport div uses `h-full w-full` which doesn't resolve correctly in this flex layout.
 
-### 2. Show "on [Client Name]" after the service
-The service line changes from "Balayage & Tone" to "Balayage & Tone on Jessica Smith", showing which client is in the chair.
+### Fix (single file)
 
----
+**`src/components/dashboard/LiveSessionDrilldown.tsx`** -- line 95
 
-### Technical Details
+Change the `ScrollArea` to also include `overflow-hidden` so it properly constrains within the flex column, and wrap it in a container that enforces the flex shrinking:
 
-**`src/hooks/useLiveSessionSnapshot.ts`**
-- Add `clientName: string | null` to the `StylistDetail` interface
-- Include `client_name` in the appointment select query
-- Pass the client name from the current in-session appointment into the detail object
+```
+<ScrollArea className="flex-1 min-h-0 overflow-hidden">
+```
 
-**`src/components/dashboard/LiveSessionDrilldown.tsx`**
-- Update all demo data names to include trailing periods (e.g., "Sarah M.")
-- Update demo data to include `clientName` values (e.g., "Jessica Smith")
-- Update "Assisted by" names in demo data to include periods
-- Modify the service display line to append "on {clientName}" when available
-- Add a helper or inline logic to ensure any single-letter last name from live data also gets a period appended (defensive formatting)
+If that alone isn't sufficient (Radix quirk), wrap the ScrollArea in a div that enforces the constraint:
 
-### Files Modified
-- `src/hooks/useLiveSessionSnapshot.ts`
-- `src/components/dashboard/LiveSessionDrilldown.tsx`
+```html
+<div className="flex-1 min-h-0 overflow-hidden">
+  <ScrollArea className="h-full">
+    ...
+  </ScrollArea>
+</div>
+```
+
+This ensures the dialog's `max-h-[85vh] flex flex-col` layout properly caps the list height, and the ScrollArea's internal viewport gets a resolved height to enable scrolling.
+
+### File Modified
+- `src/components/dashboard/LiveSessionDrilldown.tsx` (line 95 area only)
