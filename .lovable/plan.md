@@ -1,36 +1,30 @@
 
+## Lock Sidebar to Fixed Width
 
-## Fix Resizable Panel Behavior in Website Editor
-
-### Problem
-
-The website editor uses three resizable panels (sidebar, editor, preview) inside a single `ResizablePanelGroup`. Two issues cause the strange resize behavior:
-
-1. **Conditional rendering breaks panel tracking** -- When the sidebar toggles via `showSidebar`, panels mount/unmount inside the group. The `react-resizable-panels` library tracks panels by their order/count, so adding/removing a panel mid-session confuses the size calculations for remaining panels.
-
-2. **No `collapsible` prop** -- Without `collapsible`, dragging a handle to its `minSize` creates a hard stop. The library then requires interacting with the *other* handle to redistribute space, which feels broken.
-
-### Solution
-
-Replace the conditional sidebar rendering with a `collapsible` panel that stays mounted. Use the `collapsedSize` and `onCollapse`/`onExpand` callbacks to sync with the existing `showSidebar` state. Also add `collapsible` to the preview panel for consistency.
+The sidebar panel will be pulled out of the `ResizablePanelGroup` entirely and rendered as a fixed-width element. This removes the left resize handle and ensures the sidebar always stays at the same width. Only the editor and preview panels remain resizable.
 
 ### Technical Details
 
 **File: `src/pages/dashboard/admin/WebsiteSectionsHub.tsx`**
 
-Changes to the `ResizablePanelGroup` block (lines 197-280):
+1. Move the sidebar out of the `ResizablePanelGroup` and render it as a fixed-width `div` (approximately `w-[420px]`) with `flex-shrink-0`, sitting to the left of the `ResizablePanelGroup` in a flex container.
 
-1. Remove the `{showSidebar && !isMobile && (...)}` conditional wrapper around the sidebar panel
-2. Instead, always render the sidebar `ResizablePanel` (on desktop) with these props:
-   - `collapsible={true}`
-   - `collapsedSize={0}`
-   - `minSize={15}`
-   - `defaultSize={showSidebar ? 20 : 0}`
-   - `onCollapse={() => setShowSidebar(false)}`
-   - `onExpand={() => setShowSidebar(true)}`
-   - Use a `ref` to programmatically collapse/expand when the toggle button is clicked
-3. Add `collapsible` to the preview panel as well so dragging it fully closed works smoothly
-4. Update the sidebar toggle button to call `panelRef.current.collapse()` / `panelRef.current.expand()` instead of toggling state directly
+2. Remove the `ResizableHandle` between the sidebar and editor since the sidebar is no longer resizable.
 
-This keeps all panels mounted at all times, which is how `react-resizable-panels` is designed to work. The library handles collapse/expand transitions smoothly, and both handles will function independently without interfering with each other.
+3. Remove `sidebarPanelRef`, `collapsible`, and related panel props since they're no longer needed for a fixed div.
 
+4. Update the sidebar toggle button to simply show/hide the fixed-width div (back to the simple `showSidebar` boolean toggle).
+
+5. The `ResizablePanelGroup` will now only contain the editor panel and the preview panel (with one resize handle between them), which keeps the editor/preview resizing functional.
+
+### Layout Structure (Desktop)
+
+```text
++------------------+-------------------------------+
+| Fixed sidebar    | ResizablePanelGroup           |
+| w-[420px]        | [Editor] <handle> [Preview]   |
+| (toggle on/off)  |                               |
++------------------+-------------------------------+
+```
+
+This matches the width shown in the screenshot and makes the sidebar permanently that size.
