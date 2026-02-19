@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { SEO } from '@/components/SEO';
 import { useWebsitePages, getPageBySlug } from '@/hooks/useWebsitePages';
@@ -7,11 +7,13 @@ import { PageSectionRenderer } from '@/components/home/PageSectionRenderer';
 
 export default function DynamicPage() {
   const { pageSlug } = useParams<{ pageSlug: string }>();
+  const [searchParams] = useSearchParams();
+  const isPreview = searchParams.get('preview') === 'true';
   const { data: pagesConfig, isLoading } = useWebsitePages();
 
   const page = useMemo(() => {
-    return getPageBySlug(pagesConfig, pageSlug || '');
-  }, [pagesConfig, pageSlug]);
+    return getPageBySlug(pagesConfig, pageSlug || '', isPreview);
+  }, [pagesConfig, pageSlug, isPreview]);
 
   if (isLoading) {
     return (

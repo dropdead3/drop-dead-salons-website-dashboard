@@ -159,9 +159,9 @@ export function useUpdateWebsitePages() {
 }
 
 // Helper to get a page by slug
-export function getPageBySlug(config: WebsitePagesConfig | null | undefined, slug: string): PageConfig | undefined {
+export function getPageBySlug(config: WebsitePagesConfig | null | undefined, slug: string, preview = false): PageConfig | undefined {
   if (!config) return undefined;
-  return config.pages.find(p => p.slug === slug && p.enabled);
+  return config.pages.find(p => p.slug === slug && (preview || p.enabled));
 }
 
 // Helper to get nav pages
