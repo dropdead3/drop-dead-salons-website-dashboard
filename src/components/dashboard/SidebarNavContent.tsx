@@ -639,8 +639,8 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                   getNavLabel={getNavLabel}
                   hiddenLinks={sectionHiddenLinks}
                 />
-              ) : isCollapsed ? (
-                // Collapsed: single section icon with popover menu
+              ) : isCollapsed && sectionId !== 'main' ? (
+                // Collapsed: single section icon with popover menu (skip for main section)
                 (() => {
                   const SectionIcon = SECTION_ICONS[sectionId] || SECTION_ICONS.main;
                   const isAnyActive = filteredItems.some(item => location.pathname === item.href);
