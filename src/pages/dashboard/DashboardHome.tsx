@@ -300,6 +300,7 @@ export default function DashboardHome() {
           toggleTask={toggleTask}
           deleteTask={deleteTask}
           updateTask={updateTask}
+          snoozeTask={snoozeTask}
           isImpersonating={isImpersonating}
           editingTask={editingTask}
           onEditTask={setEditingTask}
@@ -337,6 +338,7 @@ interface DashboardSectionsProps {
   toggleTask: any;
   deleteTask: any;
   updateTask: any;
+  snoozeTask: any;
   isImpersonating: boolean;
   editingTask: import('@/hooks/useTasks').Task | null;
   onEditTask: (task: import('@/hooks/useTasks').Task | null) => void;
@@ -369,6 +371,7 @@ function DashboardSections({
   toggleTask,
   deleteTask,
   updateTask,
+  snoozeTask,
   isImpersonating,
   editingTask,
   onEditTask,
