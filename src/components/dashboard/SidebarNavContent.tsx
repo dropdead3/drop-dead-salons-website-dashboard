@@ -282,9 +282,6 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             : "text-muted-foreground hover:text-foreground hover:bg-muted/60 hover:translate-x-0.5"
         )}
       >
-        {isActive && !isCollapsed && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-4 rounded-full bg-foreground/60" />
-        )}
         <Icon className="w-4 h-4 shrink-0" />
         {!isCollapsed && <span className="flex-1">{displayLabel}</span>}
         {!isCollapsed && badgeCount !== undefined && badgeCount > 0 && (
