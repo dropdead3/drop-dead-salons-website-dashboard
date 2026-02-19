@@ -41,6 +41,7 @@ export function TaskItem({ task, onToggle, onDelete, onEdit, onView, isReadOnly 
   }, [onToggle, task.is_completed]);
 
   const isOverdue = task.due_date && !task.is_completed && new Date(task.due_date) < new Date(new Date().toDateString());
+  const daysOverdue = isOverdue ? Math.floor((new Date(new Date().toDateString()).getTime() - new Date(task.due_date!).getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
   return (
     <motion.div
@@ -99,7 +100,7 @@ export function TaskItem({ task, onToggle, onDelete, onEdit, onView, isReadOnly 
           {task.due_date && !isArchiveView && (() => {
             return (
               <p className={cn("text-xs mt-0.5 ml-3.5", isOverdue ? "text-destructive font-medium" : "text-muted-foreground")}>
-                {isOverdue ? 'Overdue · ' : 'Due '}{formatDate(new Date(task.due_date), 'MMM d')}
+                {isOverdue ? `${daysOverdue}d overdue · ` : 'Due '}{formatDate(new Date(task.due_date), 'MMM d')}
               </p>
             );
           })()}
