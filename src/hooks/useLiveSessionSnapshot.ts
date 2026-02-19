@@ -18,6 +18,8 @@ export interface StylistDetail {
   totalAppts: number;
   assistedBy: string[];
   clientName: string | null;
+  locationId: string | null;
+  locationName: string | null;
 }
 
 interface LiveSessionSnapshot {
@@ -39,13 +41,21 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
       const activeQuery = applyLocationFilter(
         supabase
           .from('phorest_appointments')
-          .select('id, phorest_staff_id, start_time, end_time, service_name, client_name')
+          .select('id, phorest_staff_id, start_time, end_time, service_name, client_name, location_id')
           .eq('appointment_date', today)
           .lte('start_time', now)
           .gt('end_time', now) as any,
         locationId,
       );
       const { data: appointments, error } = await activeQuery;
+
+      // Resolve location names for grouping
+      const { data: locations } = await supabase
+        .from('locations')
+        .select('id, name');
+      const locationNameMap = new Map<string, string>(
+        (locations || []).map(l => [l.id, l.name])
+      );
 
       if (error) throw error;
       if (!appointments || appointments.length === 0) {
@@ -179,6 +189,8 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
         // Get assistant name for current appointment
         const assistedBy = current ? (assistantMap.get(current.id) || []) : [];
 
+        const apptLocationId = (current as any)?.location_id || null;
+
         stylistDetailsMap.set(staffId, {
           name,
           photoUrl,
@@ -189,6 +201,8 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
           totalAppts,
           assistedBy,
           clientName: (current as any)?.client_name || null,
+          locationId: apptLocationId,
+          locationName: apptLocationId ? (locationNameMap.get(apptLocationId) || null) : null,
         });
       }
 
