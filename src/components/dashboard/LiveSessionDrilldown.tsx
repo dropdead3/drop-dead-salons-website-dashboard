@@ -7,19 +7,19 @@ import type { StylistDetail } from '@/hooks/useLiveSessionSnapshot';
 
 // Demo data
 const DEMO_DETAILS: StylistDetail[] = [
-  { name: 'Sarah M', photoUrl: null, currentService: 'Balayage & Tone', currentEndTime: '14:30:00', lastEndTime: '17:00:00', currentApptIndex: 3, totalAppts: 5 },
-  { name: 'Jasmine T', photoUrl: null, currentService: 'Haircut & Style', currentEndTime: '13:45:00', lastEndTime: '17:30:00', currentApptIndex: 2, totalAppts: 6 },
-  { name: 'Kira L', photoUrl: null, currentService: 'Root Touch-Up', currentEndTime: '14:00:00', lastEndTime: '18:00:00', currentApptIndex: 4, totalAppts: 7 },
-  { name: 'Morgan W', photoUrl: null, currentService: 'Extensions Install', currentEndTime: '15:00:00', lastEndTime: '18:00:00', currentApptIndex: 1, totalAppts: 3 },
-  { name: 'Alexa P', photoUrl: null, currentService: 'Blowout', currentEndTime: '13:30:00', lastEndTime: '18:30:00', currentApptIndex: 5, totalAppts: 8 },
-  { name: 'Bianca R', photoUrl: null, currentService: 'Highlights', currentEndTime: '14:15:00', lastEndTime: '18:30:00', currentApptIndex: 2, totalAppts: 5 },
-  { name: 'Dani C', photoUrl: null, currentService: 'Brazilian Blowout', currentEndTime: '14:45:00', lastEndTime: '19:00:00', currentApptIndex: 3, totalAppts: 6 },
-  { name: 'Elena F', photoUrl: null, currentService: 'Color Correction', currentEndTime: '15:30:00', lastEndTime: '19:00:00', currentApptIndex: 4, totalAppts: 7 },
-  { name: 'Gina H', photoUrl: null, currentService: 'Keratin Treatment', currentEndTime: '14:00:00', lastEndTime: '19:30:00', currentApptIndex: 2, totalAppts: 4 },
-  { name: 'Haven J', photoUrl: null, currentService: 'Men\'s Cut', currentEndTime: '13:15:00', lastEndTime: '19:30:00', currentApptIndex: 6, totalAppts: 9 },
-  { name: 'Ivy K', photoUrl: null, currentService: 'Updo', currentEndTime: '14:30:00', lastEndTime: '20:00:00', currentApptIndex: 3, totalAppts: 5 },
-  { name: 'Jade N', photoUrl: null, currentService: 'Gloss Treatment', currentEndTime: '13:45:00', lastEndTime: '20:00:00', currentApptIndex: 1, totalAppts: 4 },
-  { name: 'Luna Q', photoUrl: null, currentService: 'Full Color', currentEndTime: '14:00:00', lastEndTime: '20:30:00', currentApptIndex: 2, totalAppts: 6 },
+  { name: 'Sarah M', photoUrl: null, currentService: 'Balayage & Tone', currentEndTime: '14:30:00', lastEndTime: '17:00:00', currentApptIndex: 3, totalAppts: 5, assistedBy: 'Jamie R' },
+  { name: 'Jasmine T', photoUrl: null, currentService: 'Haircut & Style', currentEndTime: '13:45:00', lastEndTime: '17:30:00', currentApptIndex: 2, totalAppts: 6, assistedBy: null },
+  { name: 'Kira L', photoUrl: null, currentService: 'Root Touch-Up', currentEndTime: '14:00:00', lastEndTime: '18:00:00', currentApptIndex: 4, totalAppts: 7, assistedBy: null },
+  { name: 'Morgan W', photoUrl: null, currentService: 'Extensions Install', currentEndTime: '15:00:00', lastEndTime: '18:00:00', currentApptIndex: 1, totalAppts: 3, assistedBy: 'Taylor K' },
+  { name: 'Alexa P', photoUrl: null, currentService: 'Blowout', currentEndTime: '13:30:00', lastEndTime: '18:30:00', currentApptIndex: 5, totalAppts: 8, assistedBy: null },
+  { name: 'Bianca R', photoUrl: null, currentService: 'Highlights', currentEndTime: '14:15:00', lastEndTime: '18:30:00', currentApptIndex: 2, totalAppts: 5, assistedBy: null },
+  { name: 'Dani C', photoUrl: null, currentService: 'Brazilian Blowout', currentEndTime: '14:45:00', lastEndTime: '19:00:00', currentApptIndex: 3, totalAppts: 6, assistedBy: 'Jamie R' },
+  { name: 'Elena F', photoUrl: null, currentService: 'Color Correction', currentEndTime: '15:30:00', lastEndTime: '19:00:00', currentApptIndex: 4, totalAppts: 7, assistedBy: null },
+  { name: 'Gina H', photoUrl: null, currentService: 'Keratin Treatment', currentEndTime: '14:00:00', lastEndTime: '19:30:00', currentApptIndex: 2, totalAppts: 4, assistedBy: null },
+  { name: 'Haven J', photoUrl: null, currentService: 'Men\'s Cut', currentEndTime: '13:15:00', lastEndTime: '19:30:00', currentApptIndex: 6, totalAppts: 9, assistedBy: null },
+  { name: 'Ivy K', photoUrl: null, currentService: 'Updo', currentEndTime: '14:30:00', lastEndTime: '20:00:00', currentApptIndex: 3, totalAppts: 5, assistedBy: 'Taylor K' },
+  { name: 'Jade N', photoUrl: null, currentService: 'Gloss Treatment', currentEndTime: '13:45:00', lastEndTime: '20:00:00', currentApptIndex: 1, totalAppts: 4, assistedBy: null },
+  { name: 'Luna Q', photoUrl: null, currentService: 'Full Color', currentEndTime: '14:00:00', lastEndTime: '20:30:00', currentApptIndex: 2, totalAppts: 6, assistedBy: null },
 ];
 
 const DEMO_MODE = true;
@@ -91,6 +91,11 @@ export function LiveSessionDrilldown({
                   <p className="text-sm font-medium text-foreground truncate">{stylist.name}</p>
                   {stylist.currentService && (
                     <p className="text-xs text-muted-foreground truncate">{stylist.currentService}</p>
+                  )}
+                  {stylist.assistedBy && (
+                    <p className="text-[10px] italic text-muted-foreground/80 truncate">
+                      Assisted by {stylist.assistedBy}
+                    </p>
                   )}
                   <p className="text-[10px] text-muted-foreground/70">
                     Appointment {stylist.currentApptIndex} of {stylist.totalAppts}
