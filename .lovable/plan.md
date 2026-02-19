@@ -1,24 +1,31 @@
 
 
-## Remove Glass Styling from Top Menu Bar
+## Unify Top Bar Button Styles
 
-### What Changes
-Replace the glassmorphism treatment (translucent background, backdrop blur, rounded corners, shadow) on the desktop top bar with a clean, flat style: solid white background with a subtle gray bottom border -- matching the dashboard's card/page background.
+### Goal
+Make the three controls in the top bar -- "Show/hide $", the role badge (e.g. "Super Admin"), and "View As" -- visually cohesive: all fully rounded (`rounded-full`), same height, and consistent padding. The role badge keeps its special gradient colors but becomes a pill-shaped button matching the others' dimensions.
 
 ### Changes
 
 **File: `src/components/dashboard/DashboardLayout.tsx`**
 
-Line 1118 -- Remove `top-3`, `mx-3`, `mt-3` spacing (bar should sit flush, not float)
+**1. HideNumbersToggle (lines 839-851)**
+- Change from `size="sm"` / `h-8` to explicit `rounded-full h-9 px-4` for a full pill shape
+- Keep `variant="ghost"` and muted styling
 
-Line 1121 -- Replace the glass classes:
-- Before: `bg-card/50 backdrop-blur-2xl rounded-xl border border-border/15 shadow-sm overflow-hidden`
-- After: `bg-card border-b border-border`
+**2. Access Badge (lines 1151-1154)**
+- Replace the `<Badge>` with a styled `<div>` (or keep Badge but override classes) to match button dimensions
+- Apply `rounded-full h-9 px-4 inline-flex items-center gap-1.5 text-xs font-medium border` plus the existing `getAccessBadgeColor()` gradient classes
+- Remove `rounded-lg` (currently set), replace with `rounded-full`
+- Ensure same `h-9` height as the adjacent buttons
 
-Remove `rounded-xl` (flush bar, no rounding), `shadow-sm` (no shadow), `backdrop-blur-2xl` (no blur), and change the border from a full 1px translucent border to just a bottom border with standard border color.
+**3. ViewAsToggle button (lines 569-596)**
+- Add `rounded-full h-9 px-4` to the non-menuItem variant
+- Keep existing `variant="outline"` / active amber styling
+- Remove `size="sm"` (height controlled explicitly)
 
-Also check for any bottom accent gradient element inside the bar and remove it if present, since that was part of the glass treatment.
-
-### Result
-The top bar will have a clean white background (respects theme via `bg-card`) with a single gray bottom stroke, matching the reference screenshot exactly.
+### Technical Details
+- All three controls: `h-9 rounded-full px-4 text-xs`
+- Badge keeps its gradient background, amber/yellow border, and shine animation -- just resized to match button height and given full rounding
+- No structural or behavioral changes, purely visual alignment
 
