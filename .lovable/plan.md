@@ -1,23 +1,32 @@
 
 
-## Fix Remaining Overdue Logic in Tasks Card and Detail Drilldown
+## Fix Tasks Card: Date Display Bug and Standard Card Styling
 
-### Problem
-The overdue fix was applied to `TaskItem.tsx` but two other files still use incorrect logic that marks tasks due today as overdue:
-- **TasksCard.tsx**: The overdue count and sorting use `new Date(due_date) < new Date(today)` which incorrectly includes today
-- **TaskDetailDrilldown.tsx**: Uses `isPast(startOfDay(parseISO(due_date)))` which returns true once midnight passes, marking today's tasks as overdue immediately
+### Bug 1: Due dates showing one day early (Feb 18 instead of Feb 19)
 
-### Changes
+**Root cause**: In `TaskItem.tsx`, line 106, the date is formatted using `new Date(task.due_date)` which interprets date-only strings (YYYY-MM-DD) as UTC midnight. In timezones behind UTC (like US timezones), this rolls the date back one day when displayed locally.
 
-**1. `src/components/dashboard/TasksCard.tsx`**
-- Import `parseISO` and `startOfDay` from `date-fns`
-- Replace `overdueCount` calculation (line 49) to use `startOfDay(parseISO(t.due_date)) < startOfDay(new Date())` (strictly before today)
-- Replace sorting logic (lines 55-58) to use the same consistent comparison
+**Fix**: Replace `new Date(task.due_date)` with `parseISO(task.due_date)` in all `formatDate` calls within `TaskItem.tsx` (lines 106 and 112). `parseISO` correctly interprets date-only strings as local midnight per the project's established convention.
 
-**2. `src/components/dashboard/TaskDetailDrilldown.tsx`**
-- Replace `isPast(startOfDay(parseISO(task.due_date)))` on line 54 with `startOfDay(parseISO(task.due_date)) < startOfDay(new Date())`
-- Remove unused `isPast` import if no longer needed
+### Bug 2: Tasks card not using standard card styling
 
-### Result
-All three task-related files will use identical overdue logic: a task is only overdue when its due date is strictly before today's date.
+**Current**: The header uses `font-sans text-xs tracking-normal` with no icon -- inconsistent with every other dashboard card.
+
+**Fix**: Update the `TasksCard.tsx` header to match the standard pattern:
+- Add the `CheckSquare` icon in the standard `tokens.card.iconBox` container
+- Change the title to use `tokens.card.title` (Termina, base size, tracked)
+- Keep the active count badge and add task button
+
+---
+
+### Files changed
+
+**`src/components/dashboard/TaskItem.tsx`** (lines 106, 112)
+- Replace `new Date(task.due_date)` with `parseISO(task.due_date)` in both formatDate calls
+- Replace `new Date(task.completed_at)` with `parseISO(task.completed_at)` for consistency
+
+**`src/components/dashboard/TasksCard.tsx`** (lines 88-91)
+- Import `tokens` from design tokens
+- Add icon box with `CheckSquare` icon using `tokens.card.iconBox` and `tokens.card.icon`
+- Change `h2` to use `tokens.card.title` class (Termina font, base size, tracking-wide)
 
