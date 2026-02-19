@@ -48,7 +48,7 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
 
   const validateSlug = useCallback((slug: string) => {
     if (!slug) return '';
-    if (RESERVED_SLUGS.includes(slug)) {
+    if (RESERVED_SLUGS.includes(slug) && slug !== page.slug) {
       return `"${slug}" is reserved. Choose a different slug.`;
     }
     if (allPages) {
