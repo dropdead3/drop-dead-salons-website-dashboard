@@ -66,7 +66,7 @@ export function LiveSessionDrilldown({
               <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping" />
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
             </span>
-            <DialogTitle className="text-base font-semibold">Live Session</DialogTitle>
+            <DialogTitle className="text-base font-semibold">Happening Now</DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground mt-1">
             {sessionCount} appointment{sessionCount !== 1 ? 's' : ''} in progress · {stylistCount} stylist{stylistCount !== 1 ? 's' : ''} working
