@@ -1,24 +1,35 @@
 
 
-## Update Live Session Indicator Copy
+## Show Appointments in Drilldown Even Without Staff Mapping
 
-Change the pill text from `"18 In Session"` to `"13 Stylists servicing 18 appointments now"` format.
+### Problem
 
-### Change
+The hook (`useLiveSessionSnapshot.ts`) correctly finds 5 active appointments, but when it tries to resolve staff identities via `phorest_staff_mapping`, it finds zero matches (none of today's 9 active Phorest staff IDs exist in the mapping table). At that point it returns empty `stylistDetails`, so the drilldown shows "0 stylists working" and no appointment rows.
 
-**`src/components/dashboard/LiveSessionIndicator.tsx`** (line 74-76)
+### Solution
 
-Update the count text span from:
-```
-{inSessionCount} In Session
-```
-to:
-```
-{activeStylistCount} Stylists servicing {inSessionCount} appointments now
-```
+Remove the early-return bailout when staff aren't mapped. Instead, build `StylistDetail` entries directly from the appointment data, using fallback names.
 
-This uses the two values already available in the component (`activeStylistCount` and `inSessionCount`). No new data or logic needed.
+### Changes
 
-The tooltip already shows both counts, so no tooltip changes required.
+**`src/hooks/useLiveSessionSnapshot.ts`**
 
-One file, one line change.
+1. After resolving staff mappings, also query `phorest_staff_mapping` for `phorest_staff_name` to get Phorest-side names (even if `user_id` is null).
+2. Remove the early return at line 94 that skips everything when `userIds.length === 0`.
+3. When building `StylistDetail` entries, use this name resolution waterfall:
+   - Employee profile display name (if mapped to a user)
+   - `phorest_staff_name` from the mapping table (if exists but not linked)
+   - Sequential fallback: "Stylist 1", "Stylist 2", etc.
+4. All appointment data (service name, client name, start/end times, progress) is already available from the appointments query, so rows will be fully populated regardless of mapping status.
+
+### Technical Detail
+
+The mapping table already stores `phorest_staff_name` from Phorest syncs. The query at line 80-83 just needs to also select that column. Then for unmapped staff, we use that name. For staff not in the mapping table at all, we use the "Stylist N" fallback pattern already established elsewhere in the codebase.
+
+### Result
+
+- The pill will still show "5 stylists, 0 assistants in service now" (correctly reflecting 5 unique staff IDs with active appointments)
+- The drilldown will show "5 appointments in progress . 5 stylists working"
+- Each row will display the staff member's Phorest name (or "Stylist N" fallback), their current service, client name, appointment progress, and wrap-up time
+- Once staff are linked in Settings, real profile photos and display names will automatically appear
+
