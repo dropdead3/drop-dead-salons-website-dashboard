@@ -28,6 +28,8 @@ import {
   Users,
 } from 'lucide-react';
 import { usePhorestConnection } from '@/hooks/usePhorestSync';
+import { CalendarSubscribeModal } from '@/components/dashboard/CalendarSubscribeModal';
+import { useCalendarFeedToken } from '@/hooks/useCalendarFeedToken';
 
 interface Integration {
   id: string;
@@ -43,6 +45,8 @@ interface Integration {
 export function IntegrationsTab() {
   const navigate = useNavigate();
   const { data: phorestConnection } = usePhorestConnection();
+  const { token: calFeedToken, loading: calFeedLoading } = useCalendarFeedToken();
+  const [calSyncOpen, setCalSyncOpen] = useState(false);
   const [pausedIntegrations, setPausedIntegrations] = useState<Set<string>>(new Set());
 
   const getPhorestStatus = (): 'connected' | 'paused' | 'not_connected' => {
@@ -142,6 +146,50 @@ export function IntegrationsTab() {
 
   return (
     <div className="space-y-8">
+      {/* Calendar Sync */}
+      <div className="space-y-4">
+        <h3 className="font-display text-lg tracking-wide">Calendar Sync</h3>
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Calendar className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg font-display">Calendar Subscription</CardTitle>
+                  {!calFeedLoading && (
+                    calFeedToken ? (
+                      <Badge className="bg-primary/10 text-primary gap-1 mt-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Active
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-muted-foreground gap-1 mt-1">
+                        Not Set Up
+                      </Badge>
+                    )
+                  )}
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCalSyncOpen(true)}
+              >
+                {calFeedToken ? 'Manage' : 'Set Up'}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Subscribe to your Zura appointments from Apple Calendar, Google Calendar, or Outlook. One-way and read-only — your personal events stay private.
+            </p>
+          </CardContent>
+        </Card>
+        <CalendarSubscribeModal open={calSyncOpen} onOpenChange={setCalSyncOpen} />
+      </div>
+
       {/* Connected Integrations */}
       <div className="space-y-4">
         <h3 className="font-display text-lg tracking-wide">Active Integrations</h3>
