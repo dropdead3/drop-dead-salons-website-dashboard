@@ -1,26 +1,30 @@
 
 
-## Enhance Top Bar Glassmorphism
+## Unify Corner Radii Across Dashboard Elements
 
-### Current State
-The top bar uses `bg-card/90 backdrop-blur-2xl border border-border/50 shadow-sm` -- decent but still fairly opaque at 90% card color.
+### Problem
+The analytics cards (Sales Overview, Week Ahead Forecast, etc.) use `rounded-xl` (20px) via the `tokens.kpi.tile` token, while the My Tasks card and top bar use `rounded-2xl` (30px). This creates a visual inconsistency where the corners don't match.
+
+### Solution
+Standardize everything to `rounded-2xl` so the sidebar, top bar, analytics cards, and My Tasks card all share the same corner radius.
 
 ### Changes
 
-**File: `src/components/dashboard/DashboardLayout.tsx` (line 1082)**
+**1. `src/lib/design-tokens.ts` -- KPI tile token**
+Update the `kpi.tile` token from `rounded-xl` to `rounded-2xl`. This propagates the correct radius to all analytics cards that use this token (Sales Overview, Week Ahead Forecast, New Bookings, Goal Tracker, and all pinned analytics cards).
 
-Update the inner top bar `<div>` classes from:
-```
-bg-card/90 backdrop-blur-2xl rounded-2xl border border-border/50 shadow-sm overflow-hidden
-```
-To:
-```
-bg-card/50 backdrop-blur-2xl rounded-2xl border border-border/15 shadow-sm overflow-hidden
-```
+**2. `src/components/ui/card.tsx` -- Base Card component**
+Update the default Card border-radius from `rounded-xl` to `rounded-2xl`. This catches any cards not using the token system directly, ensuring all Card instances match.
 
-- `bg-card/90` drops to `bg-card/50` -- significantly more transparent, letting the cream background show through
-- `border-border/50` drops to `border-border/15` -- a subtler structural edge that doesn't compete with the glass effect
+**3. `src/lib/design-tokens.ts` -- Layout cardBase token**
+The `layout.cardBase` token is already `rounded-2xl`, so no change needed there. Just the `kpi.tile` token needs updating.
 
-This aligns with the project's glassmorphism standard (documented in style memory: `bg-card/50`, `backdrop-blur-2xl`, `border-border/15`).
+### Result
+After these two changes:
+- Sidebar: `rounded-2xl` (already correct)
+- Top bar: `rounded-2xl` (already correct)
+- Analytics cards: `rounded-2xl` (updated via token)
+- My Tasks card: `rounded-2xl` (already correct)
+- All other Card instances: `rounded-2xl` (updated via base component)
 
-One line change, one file.
+Everything shares the same 30px corner radius for a cohesive bento aesthetic.
