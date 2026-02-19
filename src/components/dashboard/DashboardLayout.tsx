@@ -1141,7 +1141,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
+                  className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60"
                   onClick={() => navigate('/dashboard/schedule')}
                 >
                   <CalendarDays className="w-4 h-4" />
