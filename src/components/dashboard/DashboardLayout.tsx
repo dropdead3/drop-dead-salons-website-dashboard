@@ -143,6 +143,7 @@ import LogoIconWhite from '@/assets/dd-secondary-logo-white.svg';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { NextClientIndicator } from '@/components/dashboard/NextClientIndicator';
 import { TopBarSearch } from '@/components/dashboard/TopBarSearch';
+import { CalendarSubscribeModal } from '@/components/dashboard/CalendarSubscribeModal';
 // Role colors/icons now come from useRoleUtils hook
 
 interface DashboardLayoutProps {
@@ -216,6 +217,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const [headerScrollingUp, setHeaderScrollingUp] = useState(true);
+  const [calSyncOpen, setCalSyncOpen] = useState(false);
   const lastScrollY = useRef(0);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -1134,6 +1136,20 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
               </TooltipTrigger>
               <TooltipContent side="bottom">Calendar</TooltipContent>
             </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
+                  onClick={() => setCalSyncOpen(true)}
+                >
+                  <Link2 className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Subscribe to Calendar</TooltipContent>
+            </Tooltip>
+            <CalendarSubscribeModal open={calSyncOpen} onOpenChange={setCalSyncOpen} />
           </div>
 
           {/* Center - Search Bar */}
