@@ -9387,6 +9387,59 @@ export type Database = {
           },
         ]
       }
+      platform_feedback: {
+        Row: {
+          browser_info: Json | null
+          category: string | null
+          created_at: string
+          description: string
+          id: string
+          organization_id: string | null
+          screenshot_urls: string[] | null
+          status: string | null
+          submitted_by: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          browser_info?: Json | null
+          category?: string | null
+          created_at?: string
+          description: string
+          id?: string
+          organization_id?: string | null
+          screenshot_urls?: string[] | null
+          status?: string | null
+          submitted_by: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          browser_info?: Json | null
+          category?: string | null
+          created_at?: string
+          description?: string
+          id?: string
+          organization_id?: string | null
+          screenshot_urls?: string[] | null
+          status?: string | null
+          submitted_by?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_feedback_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_import_templates: {
         Row: {
           created_at: string
