@@ -88,7 +88,7 @@ export const statsNavItems: DashboardNavItem[] = [
 ];
 
 export const managerNavItems: DashboardNavItem[] = [
-  { href: '/dashboard/schedule', label: 'Schedule', labelKey: 'schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['super_admin'], managerGroup: 'teamTools' },
+  
   { href: '/dashboard/shift-swaps', label: 'Shift Swaps', labelKey: 'shift_swaps', icon: ArrowLeftRight, roles: ['stylist', 'stylist_assistant', 'receptionist', 'booth_renter'], managerGroup: 'teamTools' },
   { href: '/dashboard/rewards', label: 'Rewards', labelKey: 'rewards', icon: Gift, roles: ['stylist', 'stylist_assistant', 'receptionist'], managerGroup: 'teamTools' },
   { href: '/dashboard/assistant-schedule', label: 'Assistant Scheduling', labelKey: 'assistant_scheduling', icon: Users, permission: 'view_assistant_schedule', managerGroup: 'teamTools' },
