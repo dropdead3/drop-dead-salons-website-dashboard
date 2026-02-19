@@ -11,6 +11,7 @@ import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import type { CustomSectionType, StyleOverrides } from '@/hooks/useWebsiteSections';
 import { SectionStyleEditor } from './SectionStyleEditor';
+import { ImageUploadInput } from './inputs/ImageUploadInput';
 
 interface CustomSectionEditorProps {
   sectionId: string;
@@ -174,10 +175,12 @@ export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styl
               <Label>Body Text</Label>
               <Textarea value={c.body} onChange={e => update('body', e.target.value)} rows={4} />
             </div>
-            <div className="space-y-2">
-              <Label>Image URL</Label>
-              <Input value={c.image_url} onChange={e => update('image_url', e.target.value)} placeholder="https://..." />
-            </div>
+            <ImageUploadInput
+              value={c.image_url}
+              onChange={url => update('image_url', url)}
+              label="Image"
+              pathPrefix={`sections/${sectionId}`}
+            />
             <div className="space-y-2">
               <Label>Layout</Label>
               <Select value={c.layout} onValueChange={v => update('layout', v)}>

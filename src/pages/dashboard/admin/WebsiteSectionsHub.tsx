@@ -54,6 +54,7 @@ import {
   type BuiltinSectionType,
   type CustomSectionType,
 } from '@/hooks/useWebsiteSections';
+import { SectionStyleEditor } from '@/components/dashboard/website-editor/SectionStyleEditor';
 
 // Unsaved changes dialog
 import {
@@ -329,7 +330,24 @@ export default function WebsiteSectionsHub() {
   const renderEditor = () => {
     // Check built-in editors first
     const EditorComponent = EDITOR_COMPONENTS[activeTab];
-    if (EditorComponent) return <EditorComponent />;
+    if (EditorComponent) {
+      // Find the section to get its style overrides
+      const sectionId = TAB_TO_SECTION[activeTab];
+      const section = sectionId ? sectionsConfig?.homepage.find(s => s.id === sectionId) : null;
+      
+      return (
+        <div className="space-y-4">
+          <EditorComponent />
+          {section && (
+            <SectionStyleEditor
+              value={section.style_overrides ?? {}}
+              onChange={(overrides) => handleStyleOverrideChange(section.id, overrides)}
+              sectionId={section.id}
+            />
+          )}
+        </div>
+      );
+    }
 
     // Check if it's a custom section
     if (activeTab.startsWith('custom-')) {

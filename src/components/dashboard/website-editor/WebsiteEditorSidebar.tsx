@@ -30,6 +30,7 @@ import {
   PanelBottom,
   Plus,
   Trash2,
+  Copy,
 } from 'lucide-react';
 import {
   useWebsiteSections,
@@ -230,12 +231,51 @@ export function WebsiteEditorSidebar({
     if (!deleteTarget) return;
     const newSections = localSections.filter(s => s.id !== deleteTarget.id);
     await saveSections(newSections);
+    
+    // Clean up orphaned site_settings row for this custom section
+    const settingsKey = `section_custom_${deleteTarget.id}`;
+    supabase.from('site_settings').delete().eq('id', settingsKey).then(() => {
+      // fire-and-forget cleanup
+    });
+    
     toast.success(`"${deleteTarget.label}" deleted`);
     setDeleteTarget(null);
-    // Switch to first section if we deleted the active one
     if (activeTab === `custom-${deleteTarget.id}` && newSections.length > 0) {
       onTabChange(getSectionTab(newSections[0]));
     }
+  };
+
+  const handleDuplicateSection = async (section: SectionConfig) => {
+    const newId = generateSectionId();
+    const newSection: SectionConfig = {
+      ...section,
+      id: newId,
+      label: `${section.label} (Copy)`,
+      order: localSections.length + 1,
+      deletable: true,
+    };
+    const newSections = [...localSections, newSection];
+    await saveSections(newSections);
+
+    // Copy the custom section config if it exists
+    const sourceKey = `section_custom_${section.id}`;
+    const destKey = `section_custom_${newId}`;
+    const { data: sourceConfig } = await supabase
+      .from('site_settings')
+      .select('value')
+      .eq('id', sourceKey)
+      .maybeSingle();
+    if (sourceConfig?.value) {
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('site_settings').upsert({
+        id: destKey,
+        value: sourceConfig.value as never,
+        updated_by: user?.id,
+      });
+    }
+
+    toast.success(`"${section.label}" duplicated`);
+    onTabChange(`custom-${newId}`);
   };
 
   const getBuiltinSection = (type: BuiltinSectionType): SectionConfig | undefined => {
@@ -333,6 +373,7 @@ export function WebsiteEditorSidebar({
                       onToggle={(enabled) => handleToggleSection(section.id, enabled)}
                       deletable
                       onDelete={() => setDeleteTarget(section)}
+                      onDuplicate={() => handleDuplicateSection(section)}
                     />
                   ))}
                 </>
