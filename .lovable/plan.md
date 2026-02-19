@@ -1,29 +1,20 @@
 
 
-## Hide Breadcrumb Navigation on Website Editor
+## Remove All Breadcrumb Navigation
 
-The breadcrumb bar ("Dashboard > Admin > Website Sections") is rendered by the `DashboardLayout` component for all routes with depth greater than 2. Since the Website Editor has its own full header with title and navigation, this breadcrumb is redundant and wastes vertical space.
+Since the app already has back/forward navigation buttons for easy movement between pages, breadcrumbs add unnecessary visual noise without providing unique value.
 
-### Approach
+### Change
 
-Add the `website-sections` route to an exclusion list in the `DashboardLayout` breadcrumb rendering logic. This is a single, surgical change.
+**File: `src/components/dashboard/DashboardLayout.tsx`** (lines 1256-1301)
 
-### Technical Details
+Remove the entire breadcrumb rendering block — the self-invoking function that builds and displays the breadcrumb trail. This includes the route-specific exclusion we just added for website-sections, the crumb-building logic, and the rendered `<Breadcrumb>` component.
 
-**File: `src/components/dashboard/DashboardLayout.tsx`** (around line 1256-1258)
+The `{children}` rendering and everything else around it stays intact.
 
-Currently, the breadcrumb renders for any dashboard route with more than 2 path segments:
+### Result
 
-```
-if (parts[0] !== 'dashboard' || parts.length <= 2) return null;
-```
-
-We will add an additional check to skip breadcrumbs when the path matches `/dashboard/admin/website-sections`:
-
-```
-if (parts[0] !== 'dashboard' || parts.length <= 2) return null;
-if (location.pathname.startsWith('/dashboard/admin/website-sections')) return null;
-```
-
-This keeps the breadcrumb visible on all other admin pages while hiding it on the Website Editor where it's not needed.
+- No breadcrumb bar on any dashboard page
+- Cleaner vertical space across all admin/platform sub-pages
+- Navigation handled entirely by the existing back/forward buttons
 
