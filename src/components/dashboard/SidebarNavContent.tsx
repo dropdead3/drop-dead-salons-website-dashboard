@@ -694,7 +694,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             <SidebarLockButton isCollapsed={isCollapsed} />
           </div>
         </div>
-        <div className="h-[5px]" />
+        <div className="h-1" />
       </div>
     </div>
   );
