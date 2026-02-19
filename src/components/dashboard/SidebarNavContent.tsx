@@ -164,25 +164,33 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     return getEffectiveHiddenLinks(sidebarLayout, roles);
   }, [sidebarLayout, roles]);
   
-  // Check if custom logos are uploaded
-  // Sidebar is always dark, so always use dark-mode logo/icon variants
-  const hasCustomLogo = () => {
-    return !!(businessSettings?.logo_dark_url);
+  // Logo/icon helpers — collapsed rail is always dark, expanded follows theme
+  const hasCustomLogo = (forCollapsed = false) => {
+    if (forCollapsed) return !!businessSettings?.logo_dark_url;
+    return resolvedTheme === 'dark'
+      ? !!businessSettings?.logo_dark_url
+      : !!businessSettings?.logo_light_url;
   };
-  
-  // Check if custom icons are uploaded
-  const hasCustomIcon = () => {
-    return !!(businessSettings?.icon_dark_url);
+
+  const hasCustomIcon = (forCollapsed = false) => {
+    if (forCollapsed) return !!businessSettings?.icon_dark_url;
+    return resolvedTheme === 'dark'
+      ? !!businessSettings?.icon_dark_url
+      : !!businessSettings?.icon_light_url;
   };
-  
-  // Get the appropriate logo — always dark (white) variant for dark sidebar
-  const getLogo = () => {
-    return businessSettings?.logo_dark_url || LogoWhite;
+
+  const getLogo = (forCollapsed = false) => {
+    if (forCollapsed) return businessSettings?.logo_dark_url || LogoWhite;
+    return resolvedTheme === 'dark'
+      ? (businessSettings?.logo_dark_url || LogoWhite)
+      : (businessSettings?.logo_light_url || Logo);
   };
-  
-  // Get the appropriate icon — always dark (white) variant for dark sidebar
-  const getIcon = () => {
-    return businessSettings?.icon_dark_url;
+
+  const getIcon = (forCollapsed = false) => {
+    if (forCollapsed) return businessSettings?.icon_dark_url;
+    return resolvedTheme === 'dark'
+      ? businessSettings?.icon_dark_url
+      : businessSettings?.icon_light_url;
   };
   
   // Expose the internal ref
@@ -306,7 +314,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   };
 
   return (
-    <div className={cn("flex flex-col h-full", "sidebar-dark")}>
+    <div className={cn("flex flex-col h-full", isCollapsed && "sidebar-dark")}>
       {/* Logo & Collapse Toggle */}
       <div className={cn("border-b border-border/30", isCollapsed ? "p-3" : "px-5 py-4")}>
         <div className={cn("flex items-center", isCollapsed ? "flex-col gap-2" : "justify-between")}>
@@ -314,9 +322,9 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             {isCollapsed ? (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  {hasCustomIcon() ? (
+                  {hasCustomIcon(true) ? (
                     <img 
-                      src={getIcon()} 
+                      src={getIcon(true)} 
                       alt={businessSettings?.business_name || 'Drop Dead'} 
                       className="h-4 w-auto max-w-[32px] object-contain"
                     />
@@ -335,7 +343,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 className="h-3.5 w-auto max-w-[140px] object-contain" 
               />
             ) : (
-              <span className="font-display text-sm uppercase tracking-wider text-white/90">
+              <span className="font-display text-sm uppercase tracking-wider text-foreground">
                 {businessSettings?.business_name || 'Drop Dead'}
               </span>
             )}
@@ -358,7 +366,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-white/60 hover:text-white shrink-0"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
               onClick={onToggleCollapse}
             >
               <PanelLeftClose className="w-4 h-4" />
