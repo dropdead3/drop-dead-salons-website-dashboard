@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Lightbulb, Bug } from 'lucide-react';
+import { Lightbulb, Bug, HelpCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PlatformFeedbackDialog } from './PlatformFeedbackDialog';
 import { cn } from '@/lib/utils';
@@ -44,6 +45,18 @@ export function SidebarFeedbackButtons({ isCollapsed = false }: SidebarFeedbackB
             </button>
           </TooltipTrigger>
           <TooltipContent side="top" className="font-sans">Report a Bug</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link
+              to="/dashboard/help"
+              className="flex-1 flex items-center justify-center rounded-lg p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all duration-200 ease-out"
+            >
+              <HelpCircle className="h-4 w-4" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="font-sans">Help Center</TooltipContent>
         </Tooltip>
       </div>
 
