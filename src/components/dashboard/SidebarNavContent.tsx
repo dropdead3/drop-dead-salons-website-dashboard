@@ -622,23 +622,23 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
       </nav>
 
       {/* Fixed Footer Navigation - always at bottom */}
-      <div className="mt-auto shrink-0">
+      <div className="mt-auto shrink-0 flex flex-col gap-2">
         <div className={cn(
           "mx-3 rounded-lg bg-muted/30 border border-border/50",
           isCollapsed ? "mx-2 p-1" : "p-1.5"
         )}>
-          <div className={cn(
-            isCollapsed ? "space-y-1" : "space-y-0.5"
-          )}>
-            {/* Feedback Buttons */}
-            <SidebarFeedbackButtons isCollapsed={isCollapsed} />
-            {/* Clock In/Out Button */}
+          <SidebarFeedbackButtons isCollapsed={isCollapsed} />
+        </div>
+        <div className={cn(
+          "mx-3 rounded-lg bg-muted/30 border border-border/50",
+          isCollapsed ? "mx-2 p-1" : "p-1.5"
+        )}>
+          <div className={cn(isCollapsed ? "space-y-1" : "space-y-0.5")}>
             <SidebarClockButton isCollapsed={isCollapsed} />
-            {/* Lock Button */}
             <SidebarLockButton isCollapsed={isCollapsed} />
           </div>
         </div>
-        <div className="h-2" /> {/* Bottom spacing */}
+        <div className="h-2" />
       </div>
     </div>
   );
