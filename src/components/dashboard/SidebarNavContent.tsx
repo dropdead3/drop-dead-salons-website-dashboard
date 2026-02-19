@@ -327,10 +327,10 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     <img 
                       src={getIcon()} 
                       alt={businessSettings?.business_name || 'Drop Dead'} 
-                      className="w-6 h-6 object-contain"
+                      className="h-5 w-auto max-w-[40px] object-contain"
                     />
                   ) : (
-                    <div className="w-6 h-6 rounded bg-foreground text-background flex items-center justify-center font-display text-xs">
+                    <div className="w-7 h-7 rounded bg-foreground text-background flex items-center justify-center font-display text-xs">
                       {(businessSettings?.business_name || 'DD').substring(0, 2).toUpperCase()}
                     </div>
                   )}
