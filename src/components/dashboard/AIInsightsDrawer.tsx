@@ -312,11 +312,6 @@ export function AIInsightsDrawer() {
                 <Brain className="w-3 h-3 text-primary" />
               </div>
               <span>Zura Insights</span>
-              {sentiment && SentimentIcon && (
-                <div className={cn('w-4 h-4 rounded-full flex items-center justify-center', sentiment.bg)}>
-                  <SentimentIcon className={cn('w-2.5 h-2.5', sentiment.color)} />
-                </div>
-              )}
               <ChevronDown className="w-3.5 h-3.5 text-muted-foreground ml-0.5" />
             </motion.button>
           ) : (
