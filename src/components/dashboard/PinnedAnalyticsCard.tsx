@@ -470,25 +470,25 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           dateRange={filters.dateRange}
           locationName={selectedLocationName}
         >
-          <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[140px]')}>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                <Icon className="w-4 h-4 text-muted-foreground" />
+          <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <Icon className="w-5 h-5 text-primary" />
               </div>
               <span className={cn(tokens.kpi.label, 'flex-1')}>{meta.label}</span>
               {description && <MetricInfoTooltip description={description} />}
             </div>
-            <div className="mt-3 flex-1">
-              <p className={tokens.kpi.value}>{metricValue}</p>
+            <div className="mt-4 flex-1">
+              <p className="font-display text-2xl font-medium">{metricValue}</p>
               {metricLabel && (
-                <p className="text-xs text-muted-foreground mt-0.5">{metricLabel}</p>
+                <p className="text-[13px] text-muted-foreground mt-1 tracking-wide">{metricLabel}</p>
               )}
             </div>
-            <div className="flex justify-end mt-2 min-h-[20px]">
+            <div className="flex justify-end mt-2 pt-2 border-t border-border/30 min-h-[28px]">
               {link && (
                 <Link 
                   to={link.href} 
-                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                  className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
                 >
                   View {link.label} <ChevronRight className="w-3 h-3" />
                 </Link>
