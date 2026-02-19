@@ -1,23 +1,58 @@
 
 
-## Fix Sidebar Logo Size and Padding
+## Revert Expanded Sidebar to Light, Keep Collapsed Dark
 
 ### Problem
-The logo in the expanded sidebar is too large and lacks adequate padding at the top and sides, making it feel cramped against the dark background.
+The expanded sidebar is currently always dark. You want only the collapsed rail to stay dark/luxurious, with the expanded state returning to the light cream aesthetic with dark logos.
 
 ### Changes
 
-**`src/components/dashboard/SidebarNavContent.tsx`**
+**1. `src/components/dashboard/DashboardLayout.tsx` (line 866)**
 
-1. **Increase header padding** (line 311): Change the expanded padding from `px-4 py-3` to `px-5 py-4` for more breathing room on all sides.
+Make the dark background conditional on collapsed state again:
 
-2. **Reduce expanded logo size** (line 335): Change the custom logo from `h-4 w-auto` to `h-3 w-auto max-w-[120px]` so it sits more elegantly in the header area.
+```
+sidebarCollapsed
+  ? "lg:bg-[hsl(0,0%,6%)] lg:border-white/[0.06]"
+  : "lg:bg-card/80 lg:backdrop-blur-xl lg:backdrop-saturate-150 lg:border-border/50"
+```
 
-3. **Reduce collapsed icon size** (line 321): Change from `h-5 w-auto max-w-[40px]` to `h-4 w-auto max-w-[32px]` for proportional scaling.
+**2. `src/components/dashboard/SidebarNavContent.tsx` (line 309)**
 
-4. **Reduce text logo size** (line 338): Change the fallback text from `text-base` to `text-sm` so the business name doesn't dominate the header.
+Apply `sidebar-dark` class only when collapsed:
+
+```
+className={cn("flex flex-col h-full", isCollapsed && "sidebar-dark")}
+```
+
+**3. `src/components/dashboard/SidebarNavContent.tsx` -- Logo/icon helpers (lines 169-185)**
+
+Restore theme-aware logic using `resolvedTheme`:
+- `hasCustomLogo`: check both `logo_light_url` and `logo_dark_url` based on theme
+- `getLogo`: return light logo (dark text) in light mode, dark logo (white text) in dark mode
+- `hasCustomIcon`: same pattern
+- `getIcon`: same pattern
+
+Collapsed state always uses dark variants (white logos) since the rail is always dark. Expanded state uses theme-resolved variants.
+
+Since expanded is now light, the expanded logo/icon calls will pass `isCollapsed` to decide which variant to use.
+
+**4. `src/components/dashboard/SidebarNavContent.tsx` -- Expanded header colors (lines 338, 361)**
+
+Revert expanded-state text colors back to theme-aware:
+- Logo fallback text: `text-foreground` instead of `text-white/90`
+- Collapse button: `text-muted-foreground hover:text-foreground` instead of `text-white/60 hover:text-white`
+
+### Files Modified
+
+| File | Change |
+|------|--------|
+| `src/components/dashboard/DashboardLayout.tsx` | Conditional dark bg only when collapsed |
+| `src/components/dashboard/SidebarNavContent.tsx` | Conditional `sidebar-dark` class; theme-aware logos; restore light-mode text colors for expanded state |
 
 ### Result
-- Logo sits with generous whitespace around it, feeling premium and intentional
-- Proportional sizing between collapsed icon and expanded logo
-- Matches the calm, executive aesthetic of the dark sidebar
+- Collapsed rail stays sleek black with white icons
+- Expanded sidebar returns to the cream/light card aesthetic
+- Dark logos display correctly against the light expanded background
+- Smooth transition between states preserved
+
