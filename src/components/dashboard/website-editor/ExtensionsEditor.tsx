@@ -4,12 +4,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Star, Award, MapPin } from 'lucide-react';
+import { Loader2, Star, Award, MapPin, Settings2, RotateCcw } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useExtensionsConfig, type ExtensionsConfig, DEFAULT_EXTENSIONS } from '@/hooks/useSectionConfig';
 import { ToggleInput } from './inputs/ToggleInput';
+import { UrlInput } from './inputs/UrlInput';
+import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 
 const ICON_OPTIONS = [
@@ -21,6 +24,7 @@ const ICON_OPTIONS = [
 export function ExtensionsEditor() {
   const { data, isLoading, isSaving, update } = useExtensionsConfig();
   const [localConfig, setLocalConfig] = useState<ExtensionsConfig>(DEFAULT_EXTENSIONS);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
   useEffect(() => {
@@ -51,6 +55,11 @@ export function ExtensionsEditor() {
     updateField('features', newFeatures);
   };
 
+  const handleReset = () => {
+    setLocalConfig(DEFAULT_EXTENSIONS);
+    toast.info('Reset to defaults — save to apply');
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -64,54 +73,35 @@ export function ExtensionsEditor() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
           <CardTitle className="text-lg">Extensions Section</CardTitle>
+          <Button variant="ghost" size="sm" onClick={handleReset} className="text-muted-foreground gap-1.5">
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reset
+          </Button>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
-          {/* Badge */}
-          <ToggleInput
-            label="Show Floating Badge"
-            value={localConfig.show_floating_badge}
-            onChange={(value) => updateField('show_floating_badge', value)}
-            description="Display the floating badge overlay on the section"
-          />
-          {localConfig.show_floating_badge && (
-            <div className="space-y-2">
-              <Label htmlFor="badge_text">Badge Text</Label>
-              <Input
-                id="badge_text"
-                value={localConfig.badge_text}
-                onChange={(e) => updateField('badge_text', e.target.value)}
-              />
-            </div>
-          )}
-
           {/* Eyebrow */}
-          <div className="space-y-2">
-            <Label htmlFor="eyebrow">Eyebrow Text</Label>
-            <Input
-              id="eyebrow"
-              value={localConfig.eyebrow}
-              onChange={(e) => updateField('eyebrow', e.target.value)}
-            />
-          </div>
+          <CharCountInput
+            label="Eyebrow Text"
+            value={localConfig.eyebrow}
+            onChange={(value) => updateField('eyebrow', value)}
+            maxLength={60}
+            description="Introductory text displayed above the headline"
+          />
 
           {/* Headlines */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="headline1">Headline Line 1</Label>
-              <Input
-                id="headline1"
-                value={localConfig.headline_line1}
-                onChange={(e) => updateField('headline_line1', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="headline2">Headline Line 2</Label>
-              <Input
-                id="headline2"
-                value={localConfig.headline_line2}
-                onChange={(e) => updateField('headline_line2', e.target.value)}
-              />
-            </div>
+            <CharCountInput
+              label="Headline Line 1"
+              value={localConfig.headline_line1}
+              onChange={(value) => updateField('headline_line1', value)}
+              maxLength={30}
+            />
+            <CharCountInput
+              label="Headline Line 2"
+              value={localConfig.headline_line2}
+              onChange={(value) => updateField('headline_line2', value)}
+              maxLength={30}
+            />
           </div>
 
           {/* Description */}
@@ -121,13 +111,15 @@ export function ExtensionsEditor() {
               id="description"
               value={localConfig.description}
               onChange={(e) => updateField('description', e.target.value)}
-              rows={4}
+              rows={3}
             />
+            <p className="text-xs text-muted-foreground">Supporting text below the headline</p>
           </div>
 
           {/* Features */}
           <div className="space-y-4 pt-4 border-t">
             <h4 className="font-medium text-sm">Feature Cards</h4>
+            <p className="text-xs text-muted-foreground">Highlight key selling points with icon, title, and description.</p>
             {localConfig.features.map((feature, index) => (
               <div key={index} className="p-4 border border-border rounded-lg space-y-3">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -154,55 +146,114 @@ export function ExtensionsEditor() {
           {/* CTAs */}
           <div className="space-y-4 pt-4 border-t">
             <h4 className="font-medium text-sm">Call to Action Buttons</h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="cta_primary">Primary CTA</Label>
-                <Input
-                  id="cta_primary"
-                  value={localConfig.cta_primary}
-                  onChange={(e) => updateField('cta_primary', e.target.value)}
+            <CharCountInput
+              label="Primary CTA"
+              value={localConfig.cta_primary}
+              onChange={(value) => updateField('cta_primary', value)}
+              maxLength={30}
+            />
+            <UrlInput
+              label="Primary CTA URL"
+              value={localConfig.cta_primary_url}
+              onChange={(value) => updateField('cta_primary_url', value)}
+              placeholder="Leave empty to open the default form"
+              description="Where the primary button links to"
+            />
+
+            <ToggleInput
+              label="Show Secondary CTA"
+              value={localConfig.show_secondary_cta}
+              onChange={(value) => updateField('show_secondary_cta', value)}
+            />
+            {localConfig.show_secondary_cta && (
+              <>
+                <CharCountInput
+                  label="Secondary CTA"
+                  value={localConfig.cta_secondary}
+                  onChange={(value) => updateField('cta_secondary', value)}
+                  maxLength={30}
                 />
-              </div>
-              <div className="space-y-2">
+                <UrlInput
+                  label="Secondary CTA URL"
+                  value={localConfig.cta_secondary_url}
+                  onChange={(value) => updateField('cta_secondary_url', value)}
+                  placeholder="/extensions"
+                />
+              </>
+            )}
+          </div>
+
+          {/* Advanced Settings */}
+          <Collapsible open={showAdvanced} onOpenChange={setShowAdvanced}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" className="w-full justify-between mt-4">
+                <span className="flex items-center gap-2">
+                  <Settings2 className="h-4 w-4" />
+                  Advanced Settings
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {showAdvanced ? 'Hide' : 'Show'}
+                </span>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 pt-4">
+              <div className="p-4 bg-muted/50 rounded-lg space-y-4">
+                <h4 className="font-medium text-sm">Floating Badge</h4>
                 <ToggleInput
-                  label="Show Secondary CTA"
-                  value={localConfig.show_secondary_cta}
-                  onChange={(value) => updateField('show_secondary_cta', value)}
+                  label="Show Floating Badge"
+                  value={localConfig.show_floating_badge}
+                  onChange={(value) => updateField('show_floating_badge', value)}
+                  description="Display the floating badge overlay on the section"
                 />
-                {localConfig.show_secondary_cta && (
+                {localConfig.show_floating_badge && (
                   <>
-                    <Label htmlFor="cta_secondary">Secondary CTA</Label>
-                    <Input
-                      id="cta_secondary"
-                      value={localConfig.cta_secondary}
-                      onChange={(e) => updateField('cta_secondary', e.target.value)}
+                    <div className="space-y-2">
+                      <Label>Badge Text</Label>
+                      <Input
+                        value={localConfig.badge_text}
+                        onChange={(e) => updateField('badge_text', e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Badge Description</Label>
+                      <Input
+                        value={localConfig.floating_badge_description}
+                        onChange={(e) => updateField('floating_badge_description', e.target.value)}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+              <div className="p-4 bg-muted/50 rounded-lg space-y-4">
+                <h4 className="font-medium text-sm">Education Link</h4>
+                <ToggleInput
+                  label="Show Education Link"
+                  value={localConfig.show_education_link}
+                  onChange={(value) => updateField('show_education_link', value)}
+                  description="Display a link for stylists wanting to learn your method"
+                />
+                {localConfig.show_education_link && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Link Text</Label>
+                      <Input
+                        value={localConfig.education_link_text}
+                        onChange={(e) => updateField('education_link_text', e.target.value)}
+                      />
+                    </div>
+                    <UrlInput
+                      label="Link URL"
+                      value={localConfig.education_link_url}
+                      onChange={(value) => updateField('education_link_url', value)}
+                      placeholder="/education"
                     />
                   </>
                 )}
               </div>
-            </div>
-
-            {/* Education Link */}
-            <ToggleInput
-              label="Show Education Link"
-              value={localConfig.show_education_link}
-              onChange={(value) => updateField('show_education_link', value)}
-              description="Display the education/training link below the CTAs"
-            />
-            {localConfig.show_education_link && (
-              <div className="space-y-2">
-                <Label htmlFor="education_link">Education Link Text</Label>
-                <Input
-                  id="education_link"
-                  value={localConfig.education_link_text}
-                  onChange={(e) => updateField('education_link_text', e.target.value)}
-                />
-              </div>
-            )}
-          </div>
+            </CollapsibleContent>
+          </Collapsible>
         </CardContent>
       </Card>
-
     </div>
   );
 }

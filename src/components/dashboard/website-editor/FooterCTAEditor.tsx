@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Loader2, RotateCcw } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useFooterCTAConfig, type FooterCTAConfig, DEFAULT_FOOTER_CTA } from '@/hooks/useSectionConfig';
 import { UrlInput } from './inputs/UrlInput';
 import { ToggleInput } from './inputs/ToggleInput';
+import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 
@@ -39,6 +40,11 @@ export function FooterCTAEditor() {
     setLocalConfig(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleReset = () => {
+    setLocalConfig(DEFAULT_FOOTER_CTA);
+    toast.info('Reset to defaults — save to apply');
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -52,6 +58,10 @@ export function FooterCTAEditor() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
           <CardTitle className="text-lg">Footer CTA Section</CardTitle>
+          <Button variant="ghost" size="sm" onClick={handleReset} className="text-muted-foreground gap-1.5">
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reset
+          </Button>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           <p className="text-sm text-muted-foreground">
@@ -66,37 +76,32 @@ export function FooterCTAEditor() {
             description="Display the small text above the headline"
           />
           {localConfig.show_eyebrow && (
-            <div className="space-y-2">
-              <Label htmlFor="eyebrow">Eyebrow Text</Label>
-              <Input
-                id="eyebrow"
-                value={localConfig.eyebrow}
-                onChange={(e) => updateField('eyebrow', e.target.value)}
-                placeholder="Ready for Something Different?"
-              />
-            </div>
+            <CharCountInput
+              label="Eyebrow Text"
+              value={localConfig.eyebrow}
+              onChange={(value) => updateField('eyebrow', value)}
+              maxLength={50}
+              placeholder="Ready for Something Different?"
+              description="Small introductory text above the headline"
+            />
           )}
 
           {/* Headlines */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="headline1">Headline Line 1</Label>
-              <Input
-                id="headline1"
-                value={localConfig.headline_line1}
-                onChange={(e) => updateField('headline_line1', e.target.value)}
-                placeholder="Book Your"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="headline2">Headline Line 2</Label>
-              <Input
-                id="headline2"
-                value={localConfig.headline_line2}
-                onChange={(e) => updateField('headline_line2', e.target.value)}
-                placeholder="Consult"
-              />
-            </div>
+            <CharCountInput
+              label="Headline Line 1"
+              value={localConfig.headline_line1}
+              onChange={(value) => updateField('headline_line1', value)}
+              maxLength={30}
+              placeholder="Book Your"
+            />
+            <CharCountInput
+              label="Headline Line 2"
+              value={localConfig.headline_line2}
+              onChange={(value) => updateField('headline_line2', value)}
+              maxLength={30}
+              placeholder="Consult"
+            />
           </div>
 
           {/* Description */}
@@ -115,21 +120,21 @@ export function FooterCTAEditor() {
                 onChange={(e) => updateField('description', e.target.value)}
                 rows={3}
               />
+              <p className="text-xs text-muted-foreground">Supporting text that appears below the headline</p>
             </div>
           )}
 
           {/* CTA Settings */}
           <div className="space-y-4 pt-4 border-t">
             <h4 className="font-medium text-sm">Call to Action</h4>
-            <div className="space-y-2">
-              <Label htmlFor="cta_text">Button Text</Label>
-              <Input
-                id="cta_text"
-                value={localConfig.cta_text}
-                onChange={(e) => updateField('cta_text', e.target.value)}
-                placeholder="Book consult"
-              />
-            </div>
+            <CharCountInput
+              label="Button Text"
+              value={localConfig.cta_text}
+              onChange={(value) => updateField('cta_text', value)}
+              maxLength={30}
+              placeholder="Book consult"
+              description="Text displayed on the CTA button"
+            />
             <UrlInput
               label="Button URL"
               value={localConfig.cta_url}
@@ -150,7 +155,6 @@ export function FooterCTAEditor() {
           </div>
         </CardContent>
       </Card>
-
     </div>
   );
 }

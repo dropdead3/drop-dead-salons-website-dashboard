@@ -4,13 +4,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
+import { Loader2, RotateCcw } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useNewClientConfig, type NewClientConfig, DEFAULT_NEW_CLIENT } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
 import { BenefitsListInput } from './BenefitsListInput';
 import { ToggleInput } from './inputs/ToggleInput';
+import { UrlInput } from './inputs/UrlInput';
+import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 
@@ -41,6 +43,11 @@ export function NewClientEditor() {
     setLocalConfig(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleReset = () => {
+    setLocalConfig(DEFAULT_NEW_CLIENT);
+    toast.info('Reset to defaults — save to apply');
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -51,22 +58,24 @@ export function NewClientEditor() {
 
   return (
     <div className="space-y-6 h-full">
-      {/* Editor Panel */}
       <Card className="overflow-auto">
         <CardHeader className="flex flex-row items-center justify-between pb-4 sticky top-0 bg-card z-10 border-b">
           <CardTitle className="text-lg">New Client CTA</CardTitle>
+          <Button variant="ghost" size="sm" onClick={handleReset} className="text-muted-foreground gap-1.5">
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reset
+          </Button>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Headline */}
-          <div className="space-y-2">
-            <Label htmlFor="headline_prefix">Headline Prefix</Label>
-            <Input
-              id="headline_prefix"
-              value={localConfig.headline_prefix}
-              onChange={(e) => updateField('headline_prefix', e.target.value)}
-              placeholder="New Clients"
-            />
-          </div>
+          <CharCountInput
+            label="Headline Prefix"
+            value={localConfig.headline_prefix}
+            onChange={(value) => updateField('headline_prefix', value)}
+            maxLength={30}
+            placeholder="New Clients"
+            description="Static text before the rotating words"
+          />
 
           {/* Rotating Words */}
           <RotatingWordsInput
@@ -83,38 +92,48 @@ export function NewClientEditor() {
               id="description"
               value={localConfig.description}
               onChange={(e) => updateField('description', e.target.value)}
-              rows={4}
+              rows={3}
             />
+            <p className="text-xs text-muted-foreground">Supporting text displayed below the headline</p>
           </div>
 
           {/* Benefits */}
-          <ToggleInput
-            label="Show Benefits"
-            value={localConfig.show_benefits}
-            onChange={(value) => updateField('show_benefits', value)}
-            description="Display benefit badges below the description"
-          />
-          {localConfig.show_benefits && (
-            <BenefitsListInput
-              benefits={localConfig.benefits}
-              onChange={(benefits) => updateField('benefits', benefits)}
-              label="Benefits (shown as badges)"
-              placeholder="Add a benefit..."
+          <div className="pt-4 border-t space-y-4">
+            <ToggleInput
+              label="Show Benefits"
+              value={localConfig.show_benefits}
+              onChange={(value) => updateField('show_benefits', value)}
+              description="Display benefit badges below the description"
             />
-          )}
+            {localConfig.show_benefits && (
+              <BenefitsListInput
+                benefits={localConfig.benefits}
+                onChange={(benefits) => updateField('benefits', benefits)}
+                label="Benefits (shown as badges)"
+                placeholder="Add a benefit..."
+              />
+            )}
+          </div>
 
           {/* CTA */}
-          <div className="space-y-2 pt-4 border-t">
-            <Label htmlFor="cta_text">CTA Button Text</Label>
-            <Input
-              id="cta_text"
+          <div className="space-y-4 pt-4 border-t">
+            <CharCountInput
+              label="CTA Button Text"
               value={localConfig.cta_text}
-              onChange={(e) => updateField('cta_text', e.target.value)}
+              onChange={(value) => updateField('cta_text', value)}
+              maxLength={30}
+              description="Text displayed on the main call-to-action button"
+            />
+            <UrlInput
+              label="CTA Button URL"
+              value={localConfig.cta_url}
+              onChange={(value) => updateField('cta_url', value)}
+              placeholder="Leave empty to open the default form"
+              description="Where the button links to. Leave empty to open the default form."
             />
           </div>
         </CardContent>
       </Card>
-
     </div>
   );
 }
