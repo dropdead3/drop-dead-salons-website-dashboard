@@ -13,6 +13,8 @@ export interface StylistDetail {
   currentService: string | null;
   currentEndTime: string | null;
   lastEndTime: string; // wrap-up estimate
+  currentApptIndex: number; // 1-based
+  totalAppts: number;
 }
 
 interface LiveSessionSnapshot {
@@ -110,17 +112,26 @@ export function useLiveSessionSnapshot(): LiveSessionSnapshot {
         const name = profile?.display_name || profile?.full_name || 'Unknown';
         const photoUrl = profile?.photo_url || null;
 
-        // Current in-session appointment (pick latest start)
+        // All appointments for this staff today, sorted chronologically
+        const allForStaff = (allTodayAppts || [])
+          .filter(a => a.phorest_staff_id === staffId)
+          .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+
+        const totalAppts = allForStaff.length;
+
+        // Current in-session appointment (pick latest start among active)
         const currentAppts = appointments
           .filter(a => a.phorest_staff_id === staffId)
           .sort((a, b) => (b.start_time || '').localeCompare(a.start_time || ''));
         const current = currentAppts[0];
 
-        // Last appointment of the day for this staff
-        const allForStaff = (allTodayAppts || [])
-          .filter(a => a.phorest_staff_id === staffId)
-          .sort((a, b) => (b.end_time || '').localeCompare(a.end_time || ''));
-        const lastEndTime = allForStaff[0]?.end_time || current?.end_time || '';
+        // Find 1-based index of current appointment in the day's schedule
+        const currentApptIndex = current
+          ? allForStaff.findIndex(a => a.start_time === current.start_time && a.end_time === current.end_time) + 1
+          : 1;
+
+        // Last end time of the day
+        const lastEndTime = [...allForStaff].sort((a, b) => (b.end_time || '').localeCompare(a.end_time || ''))[0]?.end_time || current?.end_time || '';
 
         stylistDetailsMap.set(staffId, {
           name,
@@ -128,6 +139,8 @@ export function useLiveSessionSnapshot(): LiveSessionSnapshot {
           currentService: current?.service_name || null,
           currentEndTime: current?.end_time || null,
           lastEndTime,
+          currentApptIndex: currentApptIndex || 1,
+          totalAppts,
         });
       }
 
