@@ -143,30 +143,51 @@ const WIDGETS = [
 ];
 
 // All analytics cards that can be pinned to Command Center
+// size: 'half' = compact card that can pair side-by-side, 'full' = needs full width
 const PINNABLE_CARDS = [
   // Sales & Revenue
-  { id: 'sales_overview', label: 'Sales Overview', category: 'Sales', icon: <DollarSign className="w-4 h-4" /> },
-  { id: 'revenue_breakdown', label: 'Revenue Breakdown', category: 'Sales', icon: <PieChart className="w-4 h-4" /> },
-  { id: 'top_performers', label: 'Top Performers', category: 'Sales', icon: <Trophy className="w-4 h-4" /> },
+  { id: 'sales_overview', label: 'Sales Overview', category: 'Sales', icon: <DollarSign className="w-4 h-4" />, size: 'full' as const },
+  { id: 'revenue_breakdown', label: 'Revenue Breakdown', category: 'Sales', icon: <PieChart className="w-4 h-4" />, size: 'half' as const },
+  { id: 'top_performers', label: 'Top Performers', category: 'Sales', icon: <Trophy className="w-4 h-4" />, size: 'half' as const },
   
   // Forecasting & Goals
-  { id: 'week_ahead_forecast', label: 'Revenue Forecast', category: 'Forecasting', icon: <TrendingUp className="w-4 h-4" /> },
-  { id: 'team_goals', label: 'Team Goals', category: 'Forecasting', icon: <Target className="w-4 h-4" /> },
-  { id: 'goal_tracker', label: 'Goal Tracker', category: 'Forecasting', icon: <Target className="w-4 h-4" /> },
-  { id: 'new_bookings', label: 'New Bookings', category: 'Forecasting', icon: <CalendarPlus className="w-4 h-4" /> },
+  { id: 'week_ahead_forecast', label: 'Revenue Forecast', category: 'Forecasting', icon: <TrendingUp className="w-4 h-4" />, size: 'full' as const },
+  { id: 'team_goals', label: 'Team Goals', category: 'Forecasting', icon: <Target className="w-4 h-4" />, size: 'half' as const },
+  { id: 'goal_tracker', label: 'Goal Tracker', category: 'Forecasting', icon: <Target className="w-4 h-4" />, size: 'half' as const },
+  { id: 'new_bookings', label: 'New Bookings', category: 'Forecasting', icon: <CalendarPlus className="w-4 h-4" />, size: 'half' as const },
   
   // Clients
-  { id: 'client_funnel', label: 'Client Funnel', category: 'Clients', icon: <Users className="w-4 h-4" /> },
+  { id: 'client_funnel', label: 'Client Funnel', category: 'Clients', icon: <Users className="w-4 h-4" />, size: 'half' as const },
   
   // Operations & Capacity
-  { id: 'operations_stats', label: 'Operations Stats', category: 'Operations', icon: <LayoutDashboard className="w-4 h-4" /> },
-  { id: 'capacity_utilization', label: 'Capacity Utilization', category: 'Operations', icon: <Gauge className="w-4 h-4" /> },
-  { id: 'stylist_workload', label: 'Stylist Workload', category: 'Operations', icon: <Briefcase className="w-4 h-4" /> },
+  { id: 'operations_stats', label: 'Operations Stats', category: 'Operations', icon: <LayoutDashboard className="w-4 h-4" />, size: 'full' as const },
+  { id: 'capacity_utilization', label: 'Capacity Utilization', category: 'Operations', icon: <Gauge className="w-4 h-4" />, size: 'full' as const },
+  { id: 'stylist_workload', label: 'Stylist Workload', category: 'Operations', icon: <Briefcase className="w-4 h-4" />, size: 'half' as const },
   
   // Staffing
-  { id: 'staffing_trends', label: 'Staffing Trends', category: 'Staffing', icon: <LineChart className="w-4 h-4" /> },
-  { id: 'hiring_capacity', label: 'Hiring Capacity', category: 'Staffing', icon: <UserPlus className="w-4 h-4" /> },
+  { id: 'staffing_trends', label: 'Staffing Trends', category: 'Staffing', icon: <LineChart className="w-4 h-4" />, size: 'full' as const },
+  { id: 'hiring_capacity', label: 'Hiring Capacity', category: 'Staffing', icon: <UserPlus className="w-4 h-4" />, size: 'half' as const },
 ];
+
+// Size map for cards registered through the visibility system but not in PINNABLE_CARDS
+const CARD_SIZE_OVERRIDES: Record<string, 'half' | 'full'> = {
+  executive_summary: 'full',
+  daily_brief: 'full',
+  operational_health: 'half',
+  locations_rollup: 'full',
+  service_mix: 'half',
+  retail_effectiveness: 'half',
+  rebooking: 'half',
+  client_health: 'half',
+  client_experience_staff: 'full',
+};
+
+/** Returns the bento size hint for a pinned card. Defaults to 'full' for unknown cards. */
+export function getCardSize(cardId: string): 'half' | 'full' {
+  const card = PINNABLE_CARDS.find(c => c.id === cardId);
+  if (card) return card.size;
+  return CARD_SIZE_OVERRIDES[cardId] ?? 'full';
+}
 
 interface DashboardCustomizeMenuProps {
   variant?: 'icon' | 'button';
