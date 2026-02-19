@@ -36,6 +36,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { TaskItem } from '@/components/dashboard/TaskItem';
 import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
 import { EditTaskDialog } from '@/components/dashboard/EditTaskDialog';
+import { TaskDetailDrilldown } from '@/components/dashboard/TaskDetailDrilldown';
 import { TodaysBirthdayBanner } from '@/components/dashboard/TodaysBirthdayBanner';
 import { TrialCountdownBanner } from '@/components/dashboard/TrialCountdownBanner';
 import { WidgetsSection } from '@/components/dashboard/WidgetsSection';
@@ -125,6 +126,7 @@ export default function DashboardHome() {
   const { enrollment } = useDailyCompletion(user?.id);
   const { tasks, createTask, toggleTask, deleteTask, updateTask, isImpersonating } = useTasks();
   const [editingTask, setEditingTask] = useState<import('@/hooks/useTasks').Task | null>(null);
+  const [viewingTask, setViewingTask] = useState<import('@/hooks/useTasks').Task | null>(null);
   const { data: approvalStatus } = useCurrentUserApprovalStatus();
   const { data: profile } = useEmployeeProfile();
   const queryClient = useQueryClient();
@@ -300,6 +302,8 @@ export default function DashboardHome() {
           isImpersonating={isImpersonating}
           editingTask={editingTask}
           onEditTask={setEditingTask}
+          viewingTask={viewingTask}
+          onViewTask={setViewingTask}
           analyticsFilters={analyticsFilters}
           onLocationChange={setLocationId}
           onDateRangeChange={setDateRange}
@@ -335,6 +339,8 @@ interface DashboardSectionsProps {
   isImpersonating: boolean;
   editingTask: import('@/hooks/useTasks').Task | null;
   onEditTask: (task: import('@/hooks/useTasks').Task | null) => void;
+  viewingTask: import('@/hooks/useTasks').Task | null;
+  onViewTask: (task: import('@/hooks/useTasks').Task | null) => void;
   analyticsFilters: AnalyticsFilters;
   onLocationChange: (value: string) => void;
   onDateRangeChange: (value: DateRangeType) => void;
@@ -365,6 +371,8 @@ function DashboardSections({
   isImpersonating,
   editingTask,
   onEditTask,
+  viewingTask,
+  onViewTask,
   analyticsFilters,
   onLocationChange,
   onDateRangeChange,
@@ -594,6 +602,7 @@ function DashboardSections({
                     onToggle={(id, completed) => toggleTask.mutate({ id, is_completed: completed })}
                     onDelete={(id) => deleteTask.mutate(id)}
                     onEdit={(t) => onEditTask(t)}
+                    onView={(t) => onViewTask(t)}
                     isReadOnly={isImpersonating}
                   />
                 ))
@@ -617,6 +626,17 @@ function DashboardSections({
             onOpenChange={(open) => !open && onEditTask(null)}
             onSave={(id, updates) => updateTask.mutate({ id, updates })}
             isPending={updateTask.isPending}
+          />
+          <TaskDetailDrilldown
+            task={viewingTask}
+            open={!!viewingTask}
+            onOpenChange={(open) => !open && onViewTask(null)}
+            onToggle={(id, completed) => toggleTask.mutate({ id, is_completed: completed })}
+            onEdit={(t) => { onViewTask(null); onEditTask(t); }}
+            onDelete={(id) => deleteTask.mutate(id)}
+            onUpdateNotes={(id, notes) => updateTask.mutate({ id, updates: { notes } })}
+            isReadOnly={isImpersonating}
+            isNotesSaving={updateTask.isPending}
           />
         </VisibilityGate>
       </div>

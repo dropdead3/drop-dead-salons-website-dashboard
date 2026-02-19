@@ -12,6 +12,7 @@ interface TaskItemProps {
   onToggle: (id: string, completed: boolean) => void;
   onDelete: (id: string) => void;
   onEdit?: (task: Task) => void;
+  onView?: (task: Task) => void;
   isReadOnly?: boolean;
 }
 
@@ -21,7 +22,7 @@ const priorityIndicator = {
   high: 'bg-orange-500',
 };
 
-export function TaskItem({ task, onToggle, onDelete, onEdit, isReadOnly = false }: TaskItemProps) {
+export function TaskItem({ task, onToggle, onDelete, onEdit, onView, isReadOnly = false }: TaskItemProps) {
   const { formatDate } = useFormatDate();
   const [isHovered, setIsHovered] = useState(false);
 
@@ -51,7 +52,10 @@ export function TaskItem({ task, onToggle, onDelete, onEdit, isReadOnly = false 
           </TooltipContent>
         )}
       </Tooltip>
-      <div className="flex-1 min-w-0">
+      <div
+        className={cn("flex-1 min-w-0", onView && "cursor-pointer")}
+        onClick={() => onView?.(task)}
+      >
         <div className="flex items-center gap-2">
           <div className={cn('w-1.5 h-1.5 rounded-full', priorityIndicator[task.priority])} />
           <span
@@ -66,11 +70,14 @@ export function TaskItem({ task, onToggle, onDelete, onEdit, isReadOnly = false 
             <Lock className="w-3 h-3 text-muted-foreground shrink-0" />
           )}
         </div>
-        {task.due_date && (
-          <p className="text-xs text-muted-foreground mt-0.5 ml-3.5">
-            Due {formatDate(new Date(task.due_date), 'MMM d')}
-          </p>
-        )}
+        {task.due_date && (() => {
+          const isOverdue = !task.is_completed && new Date(task.due_date) < new Date(new Date().toDateString());
+          return (
+            <p className={cn("text-xs mt-0.5 ml-3.5", isOverdue ? "text-destructive font-medium" : "text-muted-foreground")}>
+              {isOverdue ? 'Overdue · ' : 'Due '}{formatDate(new Date(task.due_date), 'MMM d')}
+            </p>
+          );
+        })()}
       </div>
       {isHovered && !isReadOnly && (
         <div className="flex items-center gap-0.5">

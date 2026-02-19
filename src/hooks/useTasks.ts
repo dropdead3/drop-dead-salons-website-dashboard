@@ -9,6 +9,7 @@ export interface Task {
   user_id: string;
   title: string;
   description: string | null;
+  notes: string | null;
   is_completed: boolean;
   due_date: string | null;
   priority: 'low' | 'normal' | 'high';
@@ -137,7 +138,7 @@ export function useTasks() {
 
   // Update task - prevented during impersonation
   const updateTask = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: { title?: string; description?: string | null; due_date?: string | null; priority?: 'low' | 'normal' | 'high' } }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: { title?: string; description?: string | null; due_date?: string | null; priority?: 'low' | 'normal' | 'high'; notes?: string | null } }) => {
       if (isImpersonating) {
         throw new Error('Cannot modify tasks while impersonating');
       }

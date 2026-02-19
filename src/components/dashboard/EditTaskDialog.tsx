@@ -27,13 +27,14 @@ interface EditTaskDialogProps {
   task: Task | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (id: string, updates: { title: string; description?: string | null; due_date?: string | null; priority: 'low' | 'normal' | 'high' }) => void;
+  onSave: (id: string, updates: { title: string; description?: string | null; due_date?: string | null; priority: 'low' | 'normal' | 'high'; notes?: string | null }) => void;
   isPending: boolean;
 }
 
 export function EditTaskDialog({ task, open, onOpenChange, onSave, isPending }: EditTaskDialogProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [notes, setNotes] = useState('');
   const [dueDate, setDueDate] = useState<Date>(new Date());
   const [priority, setPriority] = useState<'low' | 'normal' | 'high'>('normal');
 
@@ -41,6 +42,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onSave, isPending }: 
     if (task) {
       setTitle(task.title);
       setDescription(task.description || '');
+      setNotes(task.notes || '');
       setDueDate(task.due_date ? parseISO(task.due_date) : new Date());
       setPriority(task.priority);
     }
@@ -53,6 +55,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onSave, isPending }: 
     onSave(task.id, {
       title: title.trim(),
       description: description.trim() || null,
+      notes: notes.trim() || null,
       due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : null,
       priority,
     });
@@ -84,6 +87,16 @@ export function EditTaskDialog({ task, open, onOpenChange, onSave, isPending }: 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Add more details..."
+              rows={2}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-notes">Notes (optional)</Label>
+            <Textarea
+              id="edit-notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add notes..."
               rows={2}
             />
           </div>
