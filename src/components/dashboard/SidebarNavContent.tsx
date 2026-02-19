@@ -274,7 +274,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
         onClick={handleClick}
         className={cn(
           "flex items-center gap-3 text-sm font-sans cursor-pointer",
-          "transition-all duration-200 ease-out rounded-lg",
+          "transition-all duration-200 ease-out", isCollapsed ? "rounded-full" : "rounded-lg",
           isCollapsed 
             ? cn("px-2 py-2.5 justify-center", inFooter ? "mx-0" : "mx-2")
             : cn("px-3 py-2.5", inFooter ? "mx-0" : "mx-3"),
@@ -329,7 +329,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                       className="h-4 w-auto max-w-[32px] object-contain"
                     />
                   ) : (
-                    <div className="w-7 h-7 rounded bg-white/10 text-white flex items-center justify-center font-display text-xs">
+                    <div className="w-7 h-7 rounded-full bg-white/10 text-white flex items-center justify-center font-display text-xs">
                       {(businessSettings?.business_name || 'DD').substring(0, 2).toUpperCase()}
                     </div>
                   )}
@@ -354,7 +354,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 rounded-md bg-white/10 hover:bg-white/15 text-white/60 hover:text-white"
+                  className="h-7 w-7 rounded-full bg-white/10 hover:bg-white/15 text-white/60 hover:text-white"
                   onClick={onToggleCollapse}
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -408,7 +408,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     onClick={onNavClick}
                     className={cn(
                       "flex items-center justify-center px-2 py-2.5 mx-2 text-sm font-sans",
-                      "transition-all duration-200 ease-out rounded-lg",
+                      "transition-all duration-200 ease-out rounded-full",
                       location.pathname === '/dashboard/onboarding'
                         ? "bg-foreground text-background shadow-sm" 
                         : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
@@ -651,7 +651,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                           <PopoverTrigger asChild>
                             <button
                               className={cn(
-                                "flex items-center justify-center px-2 py-2 mx-2 rounded-lg",
+                                "flex items-center justify-center px-2 py-2 mx-2 rounded-full",
                                 "transition-all duration-200 text-sm",
                                 isAnyActive
                                   ? "bg-foreground/10 text-foreground"
@@ -739,14 +739,14 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
         )}
 
         <div className={cn(
-          "mx-3 rounded-lg bg-muted/30 border border-border/50",
-          isCollapsed ? "mx-2 p-1" : "p-1.5"
+          "bg-muted/30 border border-border/50",
+          isCollapsed ? "mx-2 p-1 rounded-full" : "mx-3 p-1.5 rounded-lg"
         )}>
           <SidebarFeedbackButtons isCollapsed={isCollapsed} />
         </div>
         <div className={cn(
-          "mx-3 rounded-lg bg-muted/30 border border-border/50",
-          isCollapsed ? "mx-2 p-1" : "p-1.5"
+          "bg-muted/30 border border-border/50",
+          isCollapsed ? "mx-2 p-1 rounded-full" : "mx-3 p-1.5 rounded-lg"
         )}>
           <div className={cn(isCollapsed ? "space-y-1" : "space-y-0.5")}>
             <SidebarClockButton isCollapsed={isCollapsed} />
