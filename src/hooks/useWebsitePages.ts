@@ -123,14 +123,17 @@ export function useWebsitePages() {
         pagesConfig = { pages: createDefaultPages() };
       }
 
-      // Save the new pages config (fire-and-forget)
+      // Save the new pages config
       const { data: { user } } = await supabase.auth.getUser();
-      supabase
+      const { error: upsertError } = await supabase
         .from('site_settings')
-        .upsert({ id: 'website_pages', value: pagesConfig as never, updated_by: user?.id })
-        .then(() => {
-          queryClient.invalidateQueries({ queryKey: ['site-settings', 'website_pages'] });
-        });
+        .upsert({ id: 'website_pages', value: pagesConfig as never, updated_by: user?.id });
+
+      if (upsertError) {
+        console.error('Failed to seed website_pages:', upsertError);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['site-settings', 'website_pages'] });
+      }
 
       return pagesConfig;
     },
@@ -144,24 +147,10 @@ export function useUpdateWebsitePages() {
     mutationFn: async (value: WebsitePagesConfig) => {
       const { data: { user } } = await supabase.auth.getUser();
 
-      const { data: existing } = await supabase
+      const { error } = await supabase
         .from('site_settings')
-        .select('id')
-        .eq('id', 'website_pages')
-        .maybeSingle();
-
-      if (existing) {
-        const { error } = await supabase
-          .from('site_settings')
-          .update({ value: value as never, updated_by: user?.id })
-          .eq('id', 'website_pages');
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('site_settings')
-          .insert({ id: 'website_pages', value: value as never, updated_by: user?.id });
-        if (error) throw error;
-      }
+        .upsert({ id: 'website_pages', value: value as never, updated_by: user?.id });
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['site-settings', 'website_pages'] });

@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import type { PageConfig, WebsitePagesConfig } from '@/hooks/useWebsitePages';
 
 const RESERVED_SLUGS = [
@@ -18,6 +20,21 @@ interface PageSettingsEditorProps {
   page: PageConfig;
   allPages?: WebsitePagesConfig;
   onUpdate: (page: PageConfig) => Promise<void>;
+}
+
+function CharCounter({ value, max }: { value: string; max: number }) {
+  const len = value.length;
+  const isOver = len > max;
+  const isNear = len > max * 0.85;
+
+  return (
+    <span className={cn(
+      "text-[10px] font-mono tabular-nums",
+      isOver ? "text-destructive" : isNear ? "text-[hsl(var(--platform-warning))]" : "text-muted-foreground"
+    )}>
+      {len}/{max}
+    </span>
+  );
 }
 
 export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEditorProps) {
@@ -66,11 +83,21 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
 
   useEditorSaveAction(handleSave);
 
+  const previewUrl = page.page_type === 'home'
+    ? '/org/your-salon'
+    : `/org/your-salon/${local.slug || 'untitled'}`;
+
   return (
     <div className="max-w-2xl">
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Page Settings — {page.title}</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">Page Settings — {page.title}</CardTitle>
+            <Badge variant={local.enabled ? 'default' : 'secondary'} className="text-[10px]">
+              {local.enabled ? 'Live' : 'Draft'}
+            </Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1 font-mono">{previewUrl}</p>
         </CardHeader>
         <CardContent className="space-y-5">
           <div className="space-y-2">
@@ -96,24 +123,31 @@ export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEdi
           )}
 
           <div className="space-y-2">
-            <Label>SEO Title</Label>
+            <div className="flex items-center justify-between">
+              <Label>SEO Title</Label>
+              <CharCounter value={local.seo_title} max={60} />
+            </div>
             <Input
               value={local.seo_title}
               onChange={e => update('seo_title', e.target.value)}
               placeholder={local.title}
+              className={cn(local.seo_title.length > 60 && "border-destructive")}
             />
-            <p className="text-[10px] text-muted-foreground">Appears in browser tab and search results. Under 60 characters.</p>
+            <p className="text-[10px] text-muted-foreground">Appears in browser tab and search results.</p>
           </div>
 
           <div className="space-y-2">
-            <Label>SEO Description</Label>
+            <div className="flex items-center justify-between">
+              <Label>SEO Description</Label>
+              <CharCounter value={local.seo_description} max={160} />
+            </div>
             <Textarea
               value={local.seo_description}
               onChange={e => update('seo_description', e.target.value)}
               placeholder="Describe this page for search engines..."
               rows={2}
+              className={cn(local.seo_description.length > 160 && "border-destructive")}
             />
-            <p className="text-[10px] text-muted-foreground">Under 160 characters.</p>
           </div>
 
           <div className="flex items-center justify-between">
