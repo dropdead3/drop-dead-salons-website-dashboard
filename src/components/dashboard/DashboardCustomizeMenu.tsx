@@ -138,7 +138,7 @@ const WIDGETS = [
   { id: 'changelog', label: "What's New", icon: <Sparkles className="w-4 h-4" /> },
   { id: 'birthdays', label: 'Team Birthdays', icon: <Bell className="w-4 h-4" /> },
   { id: 'anniversaries', label: 'Work Anniversaries', icon: <CheckSquare className="w-4 h-4" /> },
-  { id: 'schedule', label: 'My Schedule', icon: <Calendar className="w-4 h-4" /> },
+  { id: 'schedule', label: 'My Work Days', icon: <Calendar className="w-4 h-4" /> },
   { id: 'dayrate', label: 'Day Rate Bookings', icon: <Armchair className="w-4 h-4" /> },
 ];
 

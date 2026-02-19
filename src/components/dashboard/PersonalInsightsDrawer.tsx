@@ -36,7 +36,7 @@ type PersonalCategory = 'my_performance' | 'my_clients' | 'my_schedule' | 'growt
 const personalCategoryConfig: Record<PersonalCategory, { icon: typeof TrendingUp; label: string }> = {
   my_performance: { icon: TrendingUp, label: 'My Performance' },
   my_clients: { icon: HeartPulse, label: 'My Clients' },
-  my_schedule: { icon: Calendar, label: 'My Schedule' },
+  my_schedule: { icon: Calendar, label: 'My Work Days' },
   growth_tip: { icon: Lightbulb, label: 'Growth Tip' },
   anomaly: { icon: AlertTriangle, label: 'Anomaly' },
 };
