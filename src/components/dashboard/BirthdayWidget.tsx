@@ -5,6 +5,7 @@ import { useTodaysBirthdays, useUpcomingBirthdays } from '@/hooks/useBirthdays';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 export function BirthdayWidget() {
   const { data: todaysBirthdays, isLoading: loadingToday } = useTodaysBirthdays();
@@ -37,10 +38,12 @@ export function BirthdayWidget() {
   const hasUpcoming = nextUpcoming.length > 0;
 
   return (
-    <Card className="p-4 min-w-[200px]">
-      <div className="flex items-center gap-2 mb-3">
-        <Cake className="w-4 h-4 text-pink-500" />
-        <h3 className="font-display text-xs tracking-wide">TEAM BIRTHDAYS</h3>
+    <Card className={cn("p-4", tokens.card.wrapper)}>
+      <div className="flex items-center gap-3 mb-3">
+        <div className={tokens.card.iconBox}>
+          <Cake className={tokens.card.icon} />
+        </div>
+        <h3 className={tokens.card.title}>TEAM BIRTHDAYS</h3>
       </div>
 
       {hasTodayBirthdays && (

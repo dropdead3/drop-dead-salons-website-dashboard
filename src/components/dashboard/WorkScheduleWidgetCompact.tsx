@@ -8,6 +8,7 @@ import { useLocations } from '@/hooks/useLocations';
 import { useLocationSchedules } from '@/hooks/useLocationSchedules';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
+import { tokens } from '@/lib/design-tokens';
 
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -30,10 +31,12 @@ export function WorkScheduleWidgetCompact() {
 
   if (userLocations.length === 0) {
     return (
-      <Card className="p-4 min-w-[200px]">
-        <div className="flex items-center gap-2 mb-3">
-          <Calendar className="w-4 h-4 text-blue-500" />
-          <h3 className="font-display text-xs tracking-wide">MY SCHEDULE</h3>
+      <Card className={cn("p-4", tokens.card.wrapper)}>
+        <div className="flex items-center gap-3 mb-3">
+          <div className={tokens.card.iconBox}>
+            <Calendar className={tokens.card.icon} />
+          </div>
+          <h3 className={tokens.card.title}>MY SCHEDULE</h3>
         </div>
         <p className="text-xs text-muted-foreground">
           No locations assigned
@@ -43,10 +46,12 @@ export function WorkScheduleWidgetCompact() {
   }
 
   return (
-    <Card className="p-4 min-w-[200px]">
-      <div className="flex items-center gap-2 mb-3">
-        <Calendar className="w-4 h-4 text-blue-500" />
-        <h3 className="font-display text-xs tracking-wide">MY SCHEDULE</h3>
+    <Card className={cn("p-4", tokens.card.wrapper)}>
+      <div className="flex items-center gap-3 mb-3">
+        <div className={tokens.card.iconBox}>
+          <Calendar className={tokens.card.icon} />
+        </div>
+        <h3 className={tokens.card.title}>MY SCHEDULE</h3>
       </div>
 
       {/* Location summary */}

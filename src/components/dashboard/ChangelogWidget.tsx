@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -8,6 +8,7 @@ import { Sparkles, Clock, ChevronRight, Star, ArrowRight } from 'lucide-react';
 import { usePublishedChangelog, useUnreadChangelogCount } from '@/hooks/useChangelog';
 import { parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { tokens } from '@/lib/design-tokens';
 
 export function ChangelogWidget() {
   const { formatDate } = useFormatDate();
@@ -26,34 +27,36 @@ export function ChangelogWidget() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader className="pb-3">
+      <Card className={cn("p-4", tokens.card.wrapper)}>
+        <div className="flex items-center gap-3 mb-3">
+          <Skeleton className="w-10 h-10 rounded-lg" />
           <Skeleton className="h-5 w-24" />
-        </CardHeader>
-        <CardContent className="space-y-3">
+        </div>
+        <div className="space-y-3">
           <Skeleton className="h-16 w-full" />
           <Skeleton className="h-12 w-full" />
-        </CardContent>
+        </div>
       </Card>
     );
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            What's New
-          </CardTitle>
-          {unreadCount > 0 && (
-            <Badge variant="default" className="text-xs">
-              {unreadCount} new
-            </Badge>
-          )}
+    <Card className={cn("p-4 h-full", tokens.card.wrapper)}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-3">
+          <div className={tokens.card.iconBox}>
+            <Sparkles className={tokens.card.icon} />
+          </div>
+          <h3 className={tokens.card.title}>WHAT'S NEW</h3>
         </div>
-      </CardHeader>
-      <CardContent className="space-y-3">
+        {unreadCount > 0 && (
+          <Badge variant="default" className="text-xs">
+            {unreadCount} new
+          </Badge>
+        )}
+      </div>
+
+      <div className="space-y-3">
         {recentUpdates.length === 0 && topComingSoon.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
             No updates yet
@@ -127,7 +130,7 @@ export function ChangelogWidget() {
             <ArrowRight className="h-3.5 w-3.5 ml-2" />
           </Button>
         </Link>
-      </CardContent>
+      </div>
     </Card>
   );
 }
