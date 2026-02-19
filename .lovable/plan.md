@@ -1,20 +1,22 @@
 
 
-## Move Zura Insights and Announcements Buttons to Analytics Header
+## Add Help Center Button to Sidebar, Remove from Top Bar
 
 ### What Changes
-The Zura Insights and Announcements buttons will move from the top of the page (where the greeting used to be) down to where the "YOUR COMMAND CENTER" heading currently sits. The "YOUR COMMAND CENTER" heading will be removed entirely. This collapses the top of the page and makes the layout cleaner.
+The Help Center button will be added to the sidebar navigation (below the greeting/announcements area) and removed from the top menu bar where it currently lives.
 
 ### Changes
 
-**File: `src/pages/dashboard/DashboardHome.tsx`**
+**1. `src/components/dashboard/SidebarNavContent.tsx` -- Add Help Center link below announcements**
+- Import `HelpCircle` from lucide-react
+- After the `SidebarAnnouncementsWidget` (line 370), add a Help Center link button
+- When collapsed, show just the icon with a tooltip; when expanded, show icon + label
+- Style consistently with other sidebar elements (muted foreground, hover state)
 
-1. **Remove the top buttons block (lines 272-280)**: Delete the `motion.div` that renders `AIInsightsDrawer` / `PersonalInsightsDrawer` and `AnnouncementsDrawer` at the top of the page, including its `border-b` divider.
-
-2. **Replace "YOUR COMMAND CENTER" heading with the buttons (lines 736-754 and 776-794)**: In both the compact and detailed analytics rendering paths, replace the `h2` heading (`t('home.analytics')`) with the Zura Insights and Announcements buttons. The filter bar and customize menu remain in place on the right side -- only the left-side heading text is swapped out for the two buttons.
-
-**File: `src/locales/en.json`** (optional cleanup)
-- The `"analytics": "YOUR COMMAND CENTER"` translation key can be left in place or removed since it will no longer be referenced on this page.
+**2. `src/components/dashboard/DashboardLayout.tsx` -- Remove Help Center from top bar**
+- Remove the standalone Help Center icon button (lines 1242-1259) that shows on xl+ screens
+- Remove the Help Center dropdown menu item (lines 1232-1237) from the user/admin dropdown
+- Clean up the `HelpCircle` import if no longer used elsewhere in the file
 
 ### Result
-The top of the Command Center page becomes significantly cleaner -- no floating buttons above the content. Instead, the Zura Insights and Announcements buttons sit naturally at the start of the analytics section, replacing the redundant "YOUR COMMAND CENTER" label.
+The Help Center gets a persistent, visible home in the sidebar instead of being tucked away in the top bar. One less icon in the top bar, cleaner layout. The sidebar link works in both expanded and collapsed states.
