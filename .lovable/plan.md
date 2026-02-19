@@ -1,55 +1,58 @@
 
-## Group Stylists by Location in "Happening Now" Drilldown
 
-When "All Locations" is selected, the drilldown currently shows a flat list with no way to tell which location each stylist is at. This update adds location-aware grouping.
+## Fix: Demo Data Not Filtering by Location Toggle
 
-### Approach: Section Headers per Location
+### Problem
 
-When the filter is set to "All Locations", stylists will be organized into sections with location name headers. When a specific location is selected, the list stays flat (no headers needed since all stylists are at that location).
+In `LiveSessionDrilldown.tsx`, line 85:
+```typescript
+const details = DEMO_MODE ? DEMO_DETAILS : live.stylistDetails;
+```
+This always returns all 13 demo stylists regardless of the selected location. The location toggle changes `drilldownLocationId`, but demo data ignores it entirely.
 
-```text
- [green dot] HAPPENING NOW                    [X]
- 18 appointments in progress . 13 stylists working
+Similarly, `sessionCount` and `stylistCount` on lines 86-87 are hardcoded and never reflect the filtered subset.
 
- [MapPin] All Locations          [v]
- ────────────────────────────────────
- 
- North Mesa
- ────────────────────────────────────
- [Avatar] Sarah M.    ...    Last wrap-up ~5:00 PM
- [Avatar] Jasmine T.  ...    Last wrap-up ~5:30 PM
- 
- Val Vista Lakes
- ────────────────────────────────────
- [Avatar] Kira L.     ...    Last wrap-up ~6:00 PM
- [Avatar] Morgan W.   ...    Last wrap-up ~6:00 PM
+### Fix (single file: `src/components/dashboard/LiveSessionDrilldown.tsx`)
+
+1. When in demo mode and a specific location is selected, filter `DEMO_DETAILS` by matching `locationId` against the demo location IDs (`loc-1`, `loc-2`)
+2. Since the `LocationSelect` component uses real location UUIDs but demo data uses `loc-1`/`loc-2`, add a demo location name map that maps the selected location's display name back to the demo data
+3. Simpler approach: filter demo details by `locationName` matching the selected location's label, or just filter by `locationId` if `drilldownLocationId` matches `loc-1`/`loc-2`
+
+**Cleanest approach:** Since `LocationSelect` returns real location UUIDs that won't match `loc-1`/`loc-2`, resolve the real location name from the `LocationSelect` and filter demo data by `locationName`. Alternatively, use `useActiveLocations` to map the selected UUID to a name and match against demo `locationName`.
+
+**Implementation:**
+- Import `useActiveLocations` (already available in the codebase)
+- When demo mode is on and a specific location is selected, look up the location name from the active locations list
+- Filter `DEMO_DETAILS` where `locationName` matches
+- Derive `sessionCount` and `stylistCount` from the filtered list instead of hardcoding
+
+```typescript
+const { data: activeLocations } = useActiveLocations();
+
+const filteredDemoDetails = useMemo(() => {
+  if (!DEMO_MODE) return [];
+  if (isAllLocations(drilldownLocationId)) return DEMO_DETAILS;
+  // Map selected location UUID to its name, then filter demo data by name
+  const selectedLoc = activeLocations?.find(l => l.id === drilldownLocationId);
+  if (!selectedLoc) return DEMO_DETAILS;
+  return DEMO_DETAILS.filter(d => d.locationName === selectedLoc.name);
+}, [drilldownLocationId, activeLocations]);
+
+const details = DEMO_MODE ? filteredDemoDetails : live.stylistDetails;
+const stylistCount = details.length;
+// Approximate session count from demo data proportionally
+const sessionCount = DEMO_MODE
+  ? Math.round((details.length / DEMO_DETAILS.length) * 18)
+  : live.inSessionCount;
 ```
 
-### What Changes
-
-**1. `src/hooks/useLiveSessionSnapshot.ts`**
-
-- Add `locationId` and `locationName` fields to the `StylistDetail` type
-- In the query, also select `location_id` from `phorest_appointments`
-- Look up the location name from a locations query (or join)
-- Populate the new fields when building each stylist's detail record
-- Demo data: add location assignments split across the two locations
-
-**2. `src/components/dashboard/LiveSessionDrilldown.tsx`**
-
-- Import `isAllLocations` from `@/lib/locationFilter`
-- When the drilldown location filter is "all":
-  - Group stylist details by `locationName`
-  - Render a location section header (subtle, sticky) before each group
-  - Each header shows the location name and count of active stylists at that location
-- When a specific location is selected: render flat list as today (no headers)
-- Demo data updated to reflect location grouping
+If the real location names don't match "North Mesa" / "Val Vista Lakes" exactly, the demo data will fall back to showing all stylists (safe default). When demo mode is removed, this logic goes away entirely.
 
 ### Technical Details
 
 | File | Change |
 |------|--------|
-| `src/hooks/useLiveSessionSnapshot.ts` | Add `locationId` + `locationName` to `StylistDetail`, select `location_id` in queries, resolve location names |
-| `src/components/dashboard/LiveSessionDrilldown.tsx` | Group-by-location rendering when "All Locations" selected, section headers with location name + count |
+| `src/components/dashboard/LiveSessionDrilldown.tsx` | Filter demo data by selected location name; derive counts from filtered list |
 
-Two files modified. No database changes.
+One file modified. No database changes.
+
