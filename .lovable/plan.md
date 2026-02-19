@@ -1,165 +1,156 @@
 
 
-## Premium Site Builder: Remaining Gaps and Enhancements
+## Add Granular Visibility Toggles to Every Section Editor
 
-After auditing every component, hook, and page in the website editor ecosystem, here are the concrete issues that still need to be addressed.
-
----
-
-### CRITICAL: Dual Data Source Is Still Active (P0)
-
-The single most important gap: **`Index.tsx` still reads from `useWebsiteSections()` (the `website_sections` key)**, while `DynamicPage.tsx` reads from `useWebsitePages()` (the `website_pages` key). The entire editor hub and sidebar also operate exclusively on `website_sections`.
-
-This means homepage data lives in TWO places that will drift apart. Every edit made in the Website Editor saves to `website_sections`, but the pages system has its own copy of homepage sections in `website_pages`.
-
-**Files affected:**
-- `Index.tsx` (line 7) -- reads `useWebsiteSections()` instead of `useWebsitePages()`
-- `WebsiteSectionsHub.tsx` (line 215) -- operates on `useWebsiteSections()`
-- `WebsiteEditorSidebar.tsx` (line 136) -- reads `useWebsiteSections()`
-- `OverviewTab.tsx` (line 19) -- reads `useWebsiteSections()` independently
-
-**Fix:** Make `useWebsitePages` the single source of truth. Refactor `useWebsiteSections` into a thin adapter that reads/writes the home page's sections from `website_pages`. Update all 4 consumers.
+Every sub-component within each section editor will get a `show_*` toggle, giving users full control over what appears on their site. This follows the pattern already established in `FooterCTAEditor` (which has `show_eyebrow`, `show_description`).
 
 ---
 
-### Gap 1: Non-Home Page Sections Cannot Be Edited (P0)
+### What Changes
 
-The sidebar renders non-home page sections as plain `ContentNavItem` components (lines 471-486 of sidebar). Clicking them sets `activeTab` to `custom-{id}`, but `renderEditor()` in the hub (line 515) looks up the section from `sectionsConfig?.homepage` -- not from the selected page's sections. This means clicking a section on the About page finds nothing and shows the "Select a section" placeholder.
-
-**Fix:** `renderEditor()` must look up sections from the currently selected page's section array, not just `homepage`.
+For each section, new `show_*` boolean fields will be added to the config interface and defaults in `useSectionConfig.ts`, and corresponding `ToggleInput` controls will be added to the editor UI. When toggled off, the field's input is hidden (collapsed) in the editor, and the frontend rendering component will skip rendering that element.
 
 ---
 
-### Gap 2: Non-Home Page Sections Have No DnD, Toggle, Delete, or Duplicate (P1)
+### Section-by-Section Toggle Map
 
-Non-home page sections use `ContentNavItem` (a simple label+icon button) instead of `SectionNavItem` (which has drag handle, toggle switch, duplicate, and delete). Users cannot reorder, enable/disable, duplicate, or delete sections on About/Contact/custom pages.
+**HeroEditor** (partially done -- adding missing ones)
+- `show_eyebrow` -- toggle eyebrow text
+- `show_rotating_words` -- toggle the rotating headline words
+- `show_subheadline` -- toggle both subheadline lines
+- Already has: `show_secondary_button`, `show_consultation_notes`, `show_scroll_indicator`
 
-**Fix:** Use `SectionNavItem` with a `DndContext` for non-home pages, same as for the homepage. Wire up toggle, delete, and duplicate handlers that operate on the selected page's sections within `website_pages`.
+**BrandStatementEditor**
+- `show_eyebrow` -- toggle eyebrow text
+- `show_headline` -- toggle the prefix/suffix/rotating headline
+- `show_paragraphs` -- toggle description paragraphs
 
----
+**TestimonialsEditor**
+- `show_eyebrow` -- toggle eyebrow text
+- `show_headline` -- toggle the headline
+- `show_google_review_link` -- toggle the Google Review link/button
+- Already has: `show_star_ratings`
 
-### Gap 3: "Add Section" Button Only Appears on Home Page (P1)
+**NewClientEditor** (partially done)
+- `show_headline` -- toggle headline prefix + rotating words
+- `show_description` -- toggle description text
+- `show_cta` -- toggle the CTA button
+- Already has: `show_benefits`
 
-The "Add Section" button (sidebar line 490) is wrapped in `{isHomePage && (...)}`. Users cannot add sections to non-home pages at all from the sidebar.
+**ExtensionsEditor** (partially done)
+- `show_eyebrow` -- toggle eyebrow text
+- `show_headline` -- toggle both headline lines
+- `show_description` -- toggle description
+- `show_features` -- toggle all feature cards
+- `show_primary_cta` -- toggle primary CTA button
+- Already has: `show_secondary_cta`, `show_floating_badge`, `show_education_link`
 
-**Fix:** Show the "Add Section" button for all pages. Wire the handler to insert into the correct page's sections array.
+**FAQEditor**
+- `show_rotating_words` -- toggle headline rotating words
+- `show_intro_paragraphs` -- toggle intro paragraphs
+- `show_primary_cta` -- toggle primary CTA button
+- `show_secondary_cta` -- toggle secondary CTA button
+- Already has: `show_search_bar`
 
----
+**FooterCTAEditor** (partially done)
+- `show_headline` -- toggle headline lines
+- `show_cta_button` -- toggle the CTA button
+- Already has: `show_eyebrow`, `show_description`, `show_phone_numbers`
 
-### Gap 4: OverviewTab Is Redundant and Uses a Different DnD Library (P2)
+**FooterEditor**
+- `show_tagline` -- toggle tagline
+- `show_social_links` -- toggle social media section
+- `show_nav_links` -- toggle navigation links
+- `show_bottom_links` -- toggle bottom bar links
+- `show_powered_by` -- toggle powered-by text
 
-`OverviewTab.tsx` duplicates sidebar functionality (section reorder + toggle) using `framer-motion Reorder` while the sidebar uses `@dnd-kit`. It reads from `useWebsiteSections()` independently. It has its own save logic. It's unclear where it's rendered (it's not in the current hub `EDITOR_COMPONENTS` map).
+**BrandsManager**
+- Already has: `show_intro_text`
+- `show_logos` -- toggle logo images (show text-only marquee)
 
-**Fix:** Remove `OverviewTab.tsx` entirely. The sidebar already provides all its functionality with the preferred DnD library.
+**DrinksManager**
+- `show_eyebrow` -- toggle the eyebrow header text
+- `show_drink_images` -- toggle drink images (text-only mode)
 
----
-
-### Gap 5: Style Override Debounce Doesn't Update Local State Optimistically (P1)
-
-In `WebsiteSectionsHub.tsx` (line 348-366), `handleStyleOverrideChange` creates a `newSections` array but never updates local/optimistic state. The user sees no change until the debounced DB write completes and the query refetches. The `SectionStyleEditor` slider will feel laggy because the parent doesn't reflect changes until after the 500ms debounce + network round-trip.
-
-**Fix:** Apply `newSections` to the query cache optimistically via `queryClient.setQueryData` immediately, then debounce only the persist call.
-
----
-
-### Gap 6: "Open Site" Button Always Opens Root (P2)
-
-The hub header (line 669) has `window.open('/', '_blank')` which always opens the root URL regardless of the selected page. When editing the About page, it should open `/org/{slug}/about`.
-
-**Fix:** Use `previewUrl` (already computed correctly per page) but strip the `?preview=true` param for the external link.
-
----
-
-### Gap 7: No Section Add/Delete/Reorder Operations on Non-Home Pages in the Hub (P0)
-
-The hub has handlers for `handleAddPage`, `handleDeletePage`, `handleUpdatePageSettings`, and `handleApplyPageTemplate` -- but no handlers for adding, deleting, reordering, or toggling individual sections within a non-home page. The sidebar only has these operations wired for the homepage via `useWebsiteSections()`.
-
-**Fix:** Add section CRUD handlers in the hub (or sidebar) that operate on `website_pages.pages[selectedPageId].sections` and call `updatePages.mutateAsync()`.
-
----
-
-### Gap 8: Header Mobile Menu Doesn't Include Dynamic Pages (P1)
-
-The Header's mobile menu (lines 440+) renders `NAV_LINKS` and `ABOUT_LINKS` but does not include `dynamicNavPages`. The desktop nav includes them, but mobile visitors cannot reach custom pages.
-
-**Fix:** Append dynamic page links to the mobile menu section, below the hardcoded links.
-
----
-
-### Gap 9: No Section Label Editing (P2)
-
-When a section is created (custom or duplicated), the user cannot rename its label. The sidebar shows the label but provides no inline edit. For custom sections, the label is set at creation and never changeable.
-
-**Fix:** Add an inline rename capability -- either a pencil icon on `SectionNavItem` that makes the label editable, or a "Section Label" field at the top of `CustomSectionEditor`.
-
----
-
-### Gap 10: Template Picker Has No Visual Previews (P2)
-
-Both `TemplatePicker` and `PageTemplatePicker` show only text descriptions. No thumbnails, no mini-previews. Users cannot visually compare templates.
-
-**Fix:** Add styled preview cards or placeholder thumbnails for each template. Even colored blocks showing the template's layout pattern would help.
+**SectionDisplayEditor-based editors** (Gallery, Locations, Popular Services, Services Preview, Stylists)
+- `show_eyebrow` -- toggle eyebrow text
+- `show_title` -- toggle section title
+- `show_description` -- toggle section description
 
 ---
 
-### Gap 11: No Confirmation Before Applying Page Template (P1)
+### Implementation Approach
 
-`handleApplyPageTemplate` (hub line 441) replaces all sections on the selected page immediately with no warning dialog. Existing content is destroyed silently.
+**Step 1: Update config types and defaults** (`useSectionConfig.ts`)
+Add the new `show_*` boolean fields to each config interface and set them all to `true` by default (non-breaking -- existing sites render unchanged).
 
-**Fix:** Add a confirmation dialog: "This will replace all sections on '{page.title}'. This cannot be undone."
+**Step 2: Update each editor** (13 editor files)
+For each new toggle, wrap the corresponding field input(s) in a conditional: show a `ToggleInput` above, and only render the input fields when the toggle is on. This matches the existing pattern used in `FooterCTAEditor`.
 
----
-
-### Gap 12: `SectionStyleWrapper` Border Radius Hides Anchor Highlights (P2)
-
-When `border_radius > 0`, the wrapper sets `overflow: hidden` (SectionStyleWrapper line 65). This clips the `preview-highlight` animation if it extends beyond the rounded corners. Minor visual issue.
-
-**Fix:** Use `overflow: clip` instead of `overflow: hidden` or apply the highlight inside the wrapper.
+**Step 3: Update frontend rendering** (homepage section components)
+In each section's rendering component (`HeroSection.tsx`, `BrandStatementSection.tsx`, etc.), read the `show_*` flags and conditionally render sub-elements. Elements with `show_*: false` simply don't render.
 
 ---
 
-## Implementation Plan
+### Technical Details
 
-### Batch 1: Data Unification (Critical Foundation)
+**Files to modify:**
 
-| Step | File | Change |
-|------|------|--------|
-| 1a | `useWebsiteSections.ts` | Refactor to read/write the home page's sections from `website_pages` via `useWebsitePages`. Keep the same external API (`useWebsiteSections()` returns `{ homepage: SectionConfig[] }`) for backward compatibility |
-| 1b | `Index.tsx` | No change needed after 1a (it already uses `useWebsiteSections` which will now read from pages) |
-| 1c | `WebsiteSectionsHub.tsx` | Update `renderEditor()` to look up sections from the selected page, not just `homepage` |
-| 1d | `OverviewTab.tsx` | Delete this file -- sidebar already provides its functionality |
+| File | Changes |
+|------|---------|
+| `src/hooks/useSectionConfig.ts` | Add ~30 new `show_*` boolean fields across 11 config interfaces + defaults |
+| `src/components/dashboard/website-editor/HeroEditor.tsx` | Add 3 new toggles (eyebrow, rotating words, subheadline) |
+| `src/components/dashboard/website-editor/BrandStatementEditor.tsx` | Add 3 toggles (eyebrow, headline, paragraphs) |
+| `src/components/dashboard/website-editor/TestimonialsEditor.tsx` | Add 3 toggles (eyebrow, headline, google review link) |
+| `src/components/dashboard/website-editor/NewClientEditor.tsx` | Add 3 toggles (headline, description, CTA) |
+| `src/components/dashboard/website-editor/ExtensionsEditor.tsx` | Add 4 toggles (eyebrow, headline, description, features) + 1 primary CTA toggle |
+| `src/components/dashboard/website-editor/FAQEditor.tsx` | Add 4 toggles (rotating words, intro, primary CTA, secondary CTA) |
+| `src/components/dashboard/website-editor/FooterCTAEditor.tsx` | Add 2 toggles (headline, CTA button) |
+| `src/components/dashboard/website-editor/FooterEditor.tsx` | Add 5 toggles (tagline, social, nav links, bottom links, powered by) |
+| `src/components/dashboard/website-editor/BrandsManager.tsx` | Add 1 toggle (logos) |
+| `src/components/dashboard/website-editor/DrinksManager.tsx` | Add 2 toggles (eyebrow, drink images) |
+| `src/components/dashboard/website-editor/GalleryDisplayEditor.tsx` | Add 3 toggle fields to FIELDS array |
+| `src/components/dashboard/website-editor/LocationsDisplayEditor.tsx` | Add 3 toggle fields to FIELDS array |
+| `src/components/dashboard/website-editor/PopularServicesEditor.tsx` | Add 3 toggle fields to FIELDS array |
+| `src/components/dashboard/website-editor/ServicesPreviewEditor.tsx` | Add 3 toggle fields to FIELDS array |
+| `src/components/dashboard/website-editor/StylistsDisplayEditor.tsx` | Add 3 toggle fields to FIELDS array |
 
-### Batch 2: Non-Home Page Editing (Core Multi-Page)
+**Frontend rendering files** (conditional rendering based on `show_*` flags):
+- `src/components/home/HeroSection.tsx`
+- `src/components/home/BrandStatementSection.tsx`
+- `src/components/home/TestimonialsSection.tsx`
+- `src/components/home/NewClientCTA.tsx`
+- `src/components/home/ExtensionsSection.tsx`
+- `src/components/home/FAQPreviewSection.tsx`
+- `src/components/home/FooterCTA.tsx`
+- `src/components/layout/Footer.tsx`
+- `src/components/home/BrandsMarquee.tsx`
+- `src/components/home/DrinkMenuSection.tsx`
+- `src/components/home/GallerySection.tsx`
+- `src/components/home/LocationsSection.tsx`
+- `src/components/home/PopularServicesSection.tsx`
+- `src/components/home/ServicesPreviewSection.tsx`
+- `src/components/home/StylistsSection.tsx`
 
-| Step | File | Change |
-|------|------|--------|
-| 2a | `WebsiteEditorSidebar.tsx` | Replace `ContentNavItem` for non-home sections with `SectionNavItem` wrapped in DnD. Add section CRUD handlers that operate on `website_pages` |
-| 2b | `WebsiteEditorSidebar.tsx` | Show "Add Section" button for all pages, not just home |
-| 2c | `WebsiteSectionsHub.tsx` | Add section-level CRUD handlers for non-home pages (add, delete, reorder, toggle, duplicate) using `updatePages.mutateAsync()` |
-| 2d | `WebsiteSectionsHub.tsx` | Fix `renderEditor()` to find custom sections from the selected page's section array |
+**Pattern used** (consistent across all editors):
+```text
+// Editor side: wrap inputs with toggle
+<ToggleInput
+  label="Show Eyebrow"
+  value={localConfig.show_eyebrow}
+  onChange={(v) => updateField('show_eyebrow', v)}
+  description="Display the small text above the headline"
+/>
+{localConfig.show_eyebrow && (
+  <CharCountInput label="Eyebrow Text" ... />
+)}
 
-### Batch 3: UX Polish
+// Frontend side: conditionally render
+{config.show_eyebrow !== false && (
+  <Eyebrow>{config.eyebrow}</Eyebrow>
+)}
+```
 
-| Step | File | Change |
-|------|------|--------|
-| 3a | `WebsiteSectionsHub.tsx` | Apply optimistic cache update in `handleStyleOverrideChange` before debounced persist |
-| 3b | `WebsiteSectionsHub.tsx` | Fix "Open Site" button to use page-aware URL (strip `?preview=true` from `previewUrl`) |
-| 3c | `Header.tsx` | Add dynamic pages to mobile menu |
-| 3d | `WebsiteSectionsHub.tsx` | Add confirmation dialog before applying page template |
-| 3e | `SectionNavItem.tsx` or `CustomSectionEditor.tsx` | Add section label rename capability |
+The `!== false` check ensures backward compatibility -- existing configs without the field still render the element (defaults to visible).
 
-### Batch 4: Visual Enhancements
-
-| Step | File | Change |
-|------|------|--------|
-| 4a | `TemplatePicker.tsx` + `PageTemplatePicker.tsx` | Add visual preview cards with layout indicators |
-| 4b | `SectionStyleWrapper.tsx` | Switch `overflow: hidden` to `overflow: clip` for border-radius |
-
----
-
-### Estimated Scope
-
-- **Files to delete:** 1 (`OverviewTab.tsx`)
-- **Files to modify:** 7 (`useWebsiteSections.ts`, `WebsiteSectionsHub.tsx`, `WebsiteEditorSidebar.tsx`, `Header.tsx`, `SectionNavItem.tsx`, `TemplatePicker.tsx`, `SectionStyleWrapper.tsx`)
-- **New files:** 0
-
+**No database changes required.** All toggles are stored as JSON fields within the existing `site_settings.value` JSONB column.
