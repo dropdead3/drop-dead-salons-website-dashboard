@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { BentoGrid } from '@/components/ui/bento-grid';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -299,8 +300,8 @@ export function ServicesContent() {
       )}
 
       {/* Stats */}
-      <div className="flex flex-wrap gap-3">
-        <Card className="flex-1 min-w-[140px]">
+      <BentoGrid maxPerRow={3} gap="gap-3">
+        <Card>
           <CardContent className="p-3 flex items-center gap-3">
             <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900/30">
               <Scissors className="w-5 h-5 text-blue-600" />
@@ -311,7 +312,7 @@ export function ServicesContent() {
             </div>
           </CardContent>
         </Card>
-        <Card className="flex-1 min-w-[140px]">
+        <Card>
           <CardContent className="p-3 flex items-center gap-3">
             <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900/30">
               <Layers className="w-5 h-5 text-purple-600" />
@@ -322,7 +323,7 @@ export function ServicesContent() {
             </div>
           </CardContent>
         </Card>
-        <Link to="/dashboard/admin/stylist-levels" className="flex-1 min-w-[140px]">
+        <Link to="/dashboard/admin/stylist-levels">
           <Card className="cursor-pointer transition-all duration-200 hover:scale-[1.02] hover:shadow-md hover:border-primary/30 h-full">
             <CardContent className="p-3 flex items-center gap-3">
               <div className="p-2 rounded-full bg-emerald-100 dark:bg-emerald-900/30">
@@ -335,7 +336,7 @@ export function ServicesContent() {
             </CardContent>
           </Card>
         </Link>
-        <Card className="flex-1 min-w-[140px]">
+        <Card>
           <CardContent className="p-3 flex items-center gap-3">
             <div className="p-2 rounded-full bg-amber-100 dark:bg-amber-900/30">
               <Star className="w-5 h-5 text-amber-600 fill-amber-600" />
@@ -346,7 +347,7 @@ export function ServicesContent() {
             </div>
           </CardContent>
         </Card>
-        <Card className="flex-1 min-w-[140px]">
+        <Card>
           <CardContent className="p-3 flex items-center gap-3">
             <div className="p-2 rounded-full bg-sky-100 dark:bg-sky-900/30">
               <Globe className="w-5 h-5 text-sky-600" />
@@ -357,7 +358,7 @@ export function ServicesContent() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </BentoGrid>
 
       {/* Search */}
       <div className="relative">
