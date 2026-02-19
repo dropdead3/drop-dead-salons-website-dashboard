@@ -125,7 +125,7 @@ export default function DashboardHome() {
   const { user } = useAuth();
   const roles = useEffectiveRoles();
   const { enrollment } = useDailyCompletion(user?.id);
-  const { tasks, createTask, toggleTask, deleteTask, updateTask, isImpersonating } = useTasks();
+  const { tasks, createTask, toggleTask, deleteTask, updateTask, snoozeTask, isImpersonating } = useTasks();
   const [editingTask, setEditingTask] = useState<import('@/hooks/useTasks').Task | null>(null);
   const [viewingTask, setViewingTask] = useState<import('@/hooks/useTasks').Task | null>(null);
   const { data: approvalStatus } = useCurrentUserApprovalStatus();
@@ -583,6 +583,7 @@ function DashboardSections({
             toggleTask={toggleTask}
             deleteTask={deleteTask}
             updateTask={updateTask}
+            snoozeTask={snoozeTask}
             isImpersonating={isImpersonating}
             editingTask={editingTask}
             onEditTask={onEditTask}

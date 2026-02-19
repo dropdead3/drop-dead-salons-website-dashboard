@@ -4,11 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, Trash2, Calendar, Clock, CheckCircle2, Sparkles, FileText, StickyNote } from 'lucide-react';
+import { Pencil, Trash2, Calendar, Clock, CheckCircle2, Sparkles, FileText, StickyNote, RefreshCw, AlarmClock, Plus, X, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { DRILLDOWN_DIALOG_CONTENT_CLASS, DRILLDOWN_OVERLAY_CLASS } from './drilldownDialogStyles';
 import type { Task } from '@/hooks/useTasks';
+import { useTaskChecklist } from '@/hooks/useTaskChecklist';
 
 interface TaskDetailDrilldownProps {
   task: Task | null;
@@ -41,11 +43,15 @@ export function TaskDetailDrilldown({
 }: TaskDetailDrilldownProps) {
   const [localNotes, setLocalNotes] = useState('');
   const [notesDirty, setNotesDirty] = useState(false);
+  const [newChecklistItem, setNewChecklistItem] = useState('');
+
+  const { items: checklistItems, addItem, toggleItem, deleteItem } = useTaskChecklist(open ? task?.id ?? null : null);
 
   useEffect(() => {
     if (task) {
       setLocalNotes(task.notes || '');
       setNotesDirty(false);
+      setNewChecklistItem('');
     }
   }, [task]);
 
@@ -53,10 +59,19 @@ export function TaskDetailDrilldown({
 
   const isOverdue = task.due_date && !task.is_completed && startOfDay(parseISO(task.due_date)) < startOfDay(new Date());
   const priority = priorityConfig[task.priority];
+  const isSnoozed = task.snoozed_until && startOfDay(parseISO(task.snoozed_until)) > startOfDay(new Date());
+  const completedChecklist = checklistItems.filter(i => i.is_completed).length;
 
   const handleSaveNotes = () => {
     onUpdateNotes(task.id, localNotes);
     setNotesDirty(false);
+  };
+
+  const handleAddChecklistItem = () => {
+    const title = newChecklistItem.trim();
+    if (!title) return;
+    addItem.mutate({ title, sort_order: checklistItems.length });
+    setNewChecklistItem('');
   };
 
   return (
@@ -80,7 +95,7 @@ export function TaskDetailDrilldown({
                   {task.title}
                 </DialogTitle>
               </DialogHeader>
-              <div className="flex items-center gap-2.5 mt-2">
+              <div className="flex items-center gap-2.5 mt-2 flex-wrap">
                 <Badge variant="outline" className={cn("text-[10px] px-2 py-0.5 border-0 rounded-full", priority.class)}>
                   {priority.label}
                 </Badge>
@@ -92,6 +107,16 @@ export function TaskDetailDrilldown({
                 {isOverdue && (
                   <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-0 rounded-full bg-destructive/10 text-destructive">
                     Overdue
+                  </Badge>
+                )}
+                {task.recurrence_pattern && (
+                  <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-0 rounded-full bg-primary/10 text-primary gap-1">
+                    <RefreshCw className="w-2.5 h-2.5" /> {task.recurrence_pattern}
+                  </Badge>
+                )}
+                {isSnoozed && (
+                  <Badge variant="outline" className="text-[10px] px-2 py-0.5 border-0 rounded-full bg-amber-500/10 text-amber-600 gap-1">
+                    <AlarmClock className="w-2.5 h-2.5" /> Snoozed until {format(parseISO(task.snoozed_until!), 'MMM d')}
                   </Badge>
                 )}
               </div>
@@ -110,6 +135,67 @@ export function TaskDetailDrilldown({
               <p className="font-sans text-sm leading-relaxed">{task.description}</p>
             </div>
           )}
+
+          {/* Checklist */}
+          <div className="bg-muted/30 border border-border/30 rounded-lg p-4">
+            <p className="font-sans text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+              <ListChecks className="w-3 h-3" /> Checklist
+              {checklistItems.length > 0 && (
+                <span className={cn(
+                  "text-[10px] ml-1",
+                  completedChecklist === checklistItems.length ? "text-green-600" : "text-muted-foreground"
+                )}>
+                  ({completedChecklist}/{checklistItems.length})
+                </span>
+              )}
+            </p>
+            <div className="space-y-1.5">
+              {checklistItems.map((item) => (
+                <div key={item.id} className="flex items-center gap-2 group/item">
+                  <Checkbox
+                    checked={item.is_completed}
+                    onCheckedChange={(checked) => !isReadOnly && toggleItem.mutate({ id: item.id, is_completed: checked as boolean })}
+                    className="h-3.5 w-3.5"
+                    disabled={isReadOnly}
+                  />
+                  <span className={cn(
+                    "text-sm font-sans flex-1",
+                    item.is_completed && "line-through text-muted-foreground"
+                  )}>
+                    {item.title}
+                  </span>
+                  {!isReadOnly && (
+                    <button
+                      onClick={() => deleteItem.mutate(item.id)}
+                      className="opacity-0 group-hover/item:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {!isReadOnly && (
+              <div className="flex items-center gap-2 mt-2">
+                <Input
+                  value={newChecklistItem}
+                  onChange={(e) => setNewChecklistItem(e.target.value)}
+                  placeholder="Add item..."
+                  className="h-7 text-xs"
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddChecklistItem()}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 shrink-0"
+                  onClick={handleAddChecklistItem}
+                  disabled={!newChecklistItem.trim()}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            )}
+          </div>
 
           {/* Notes */}
           <div className="bg-muted/30 border border-border/30 rounded-lg p-4">
@@ -156,8 +242,20 @@ export function TaskDetailDrilldown({
               </div>
               <div className="space-y-1">
                 <p className="font-sans text-xs text-muted-foreground flex items-center gap-1"><Sparkles className="w-3 h-3" /> Source</p>
-                <p className="font-sans font-medium capitalize">{(task as any).source === 'ai_insights' ? 'AI Insights' : 'Manual'}</p>
+                <p className="font-sans font-medium capitalize">{(task as any).source === 'ai_insights' ? 'AI Insights' : (task as any).source === 'recurring' ? 'Recurring' : 'Manual'}</p>
               </div>
+              {task.recurrence_pattern && (
+                <div className="space-y-1">
+                  <p className="font-sans text-xs text-muted-foreground flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Recurrence</p>
+                  <p className="font-sans font-medium capitalize">{task.recurrence_pattern}</p>
+                </div>
+              )}
+              {isSnoozed && (
+                <div className="space-y-1">
+                  <p className="font-sans text-xs text-amber-600 flex items-center gap-1"><AlarmClock className="w-3 h-3" /> Snoozed Until</p>
+                  <p className="font-sans font-medium">{format(parseISO(task.snoozed_until!), 'MMM d, yyyy')}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -4,7 +4,7 @@ import { AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CheckSquare, ChevronDown, ChevronUp, Search, X } from 'lucide-react';
+import { CheckSquare, ChevronDown, ChevronUp, Search, X, AlarmClock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
 import { TaskItem } from '@/components/dashboard/TaskItem';
@@ -22,6 +22,7 @@ interface TasksCardProps {
   toggleTask: any;
   deleteTask: any;
   updateTask: any;
+  snoozeTask: any;
   isImpersonating: boolean;
   editingTask: Task | null;
   onEditTask: (task: Task | null) => void;
@@ -41,6 +42,7 @@ export function TasksCard({
   toggleTask,
   deleteTask,
   updateTask,
+  snoozeTask,
   isImpersonating,
   editingTask,
   onEditTask,
@@ -51,25 +53,37 @@ export function TasksCard({
   const { formatDate } = useFormatDate();
   const [showAllActive, setShowAllActive] = useState(false);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [showSnoozed, setShowSnoozed] = useState(false);
   const [completedFilters, setCompletedFilters] = useState<CompletedFilters>({ search: '', priority: 'all' });
   const [searchQuery, setSearchQuery] = useState('');
 
   const isSearching = searchQuery.trim().length > 0;
+  const today = startOfDay(new Date());
 
-  const activeTasks = useMemo(() => tasks.filter((t) => !t.is_completed), [tasks]);
+  // Separate snoozed tasks
+  const { visibleActive, snoozedTasks } = useMemo(() => {
+    const active = tasks.filter((t) => !t.is_completed);
+    const snoozed: Task[] = [];
+    const visible: Task[] = [];
+    for (const task of active) {
+      if (task.snoozed_until && startOfDay(parseISO(task.snoozed_until)) > today) {
+        snoozed.push(task);
+      } else {
+        visible.push(task);
+      }
+    }
+    return { visibleActive: visible, snoozedTasks: snoozed };
+  }, [tasks, today]);
+
   const completedTasks = useMemo(() => tasks.filter((t) => t.is_completed), [tasks]);
 
   const overdueCount = useMemo(
-    () => {
-      const today = startOfDay(new Date());
-      return activeTasks.filter((t) => t.due_date && startOfDay(parseISO(t.due_date)) < today).length;
-    },
-    [activeTasks]
+    () => visibleActive.filter((t) => t.due_date && startOfDay(parseISO(t.due_date)) < today).length,
+    [visibleActive, today]
   );
 
   // Group active tasks by date
   const taskGroups = useMemo((): TaskGroup[] => {
-    const today = startOfDay(new Date());
     const tomorrow = addDays(today, 1);
 
     const overdue: Task[] = [];
@@ -78,7 +92,7 @@ export function TasksCard({
     const upcoming: Task[] = [];
     const noDate: Task[] = [];
 
-    for (const task of activeTasks) {
+    for (const task of visibleActive) {
       if (!task.due_date) {
         noDate.push(task);
       } else {
@@ -90,7 +104,6 @@ export function TasksCard({
       }
     }
 
-    // Sort each group by priority desc
     const prioOrder = { high: 3, normal: 2, low: 1 };
     const sortByPrio = (a: Task, b: Task) => prioOrder[b.priority] - prioOrder[a.priority];
     overdue.sort(sortByPrio);
@@ -109,10 +122,7 @@ export function TasksCard({
       { label: 'Upcoming', tasks: upcoming },
       { label: 'No Date', tasks: noDate },
     ].filter((g) => g.tasks.length > 0);
-  }, [activeTasks]);
-
-  // Total active task count for "show more"
-  const totalActiveCount = activeTasks.length;
+  }, [visibleActive, today]);
 
   // Search results across all tasks
   const searchResults = useMemo(() => {
@@ -137,6 +147,10 @@ export function TasksCard({
     return list;
   }, [completedTasks, completedFilters]);
 
+  const handleSnooze = (id: string, until: string) => {
+    snoozeTask.mutate({ id, snoozed_until: until });
+  };
+
   // Render a single task item with standard handlers
   const renderTask = (task: Task, isArchive = false) => (
     <TaskItem
@@ -146,6 +160,7 @@ export function TasksCard({
       onDelete={(id) => deleteTask.mutate(id)}
       onEdit={isArchive ? undefined : (t) => onEditTask(t)}
       onView={(t) => onViewTask(t)}
+      onSnooze={isArchive ? undefined : handleSnooze}
       isReadOnly={isImpersonating}
       isArchiveView={isArchive}
     />
@@ -161,9 +176,14 @@ export function TasksCard({
               <CheckSquare className={tokens.card.icon} />
             </div>
             <h2 className={tokens.card.title}>{t('home.my_tasks')}</h2>
-            {activeTasks.length > 0 && (
+            {visibleActive.length > 0 && (
               <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                {activeTasks.length} active{overdueCount > 0 && <span className="text-destructive">, {overdueCount} overdue</span>}
+                {visibleActive.length} active{overdueCount > 0 && <span className="text-destructive">, {overdueCount} overdue</span>}
+              </span>
+            )}
+            {snoozedTasks.length > 0 && (
+              <span className="text-[10px] text-amber-600 bg-amber-500/10 px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                <AlarmClock className="w-2.5 h-2.5" /> {snoozedTasks.length} snoozed
               </span>
             )}
             {isImpersonating && (
@@ -219,25 +239,22 @@ export function TasksCard({
           <>
             <div className="space-y-4">
               {taskGroups.length > 0 ? (
-                taskGroups.map((group) => {
-                  const tasksToShow = showAllActive ? group.tasks : group.tasks;
-                  return (
-                    <div key={group.label}>
-                      <p className={cn(
-                        "text-[10px] font-display tracking-wide mb-2",
-                        group.accent || "text-muted-foreground"
-                      )}>
-                        {group.label.toUpperCase()}
-                      </p>
-                      <div className="space-y-3">
-                        <AnimatePresence mode="popLayout">
-                          {tasksToShow.map((task) => renderTask(task))}
-                        </AnimatePresence>
-                      </div>
+                taskGroups.map((group) => (
+                  <div key={group.label}>
+                    <p className={cn(
+                      "text-[10px] font-display tracking-wide mb-2",
+                      group.accent || "text-muted-foreground"
+                    )}>
+                      {group.label.toUpperCase()}
+                    </p>
+                    <div className="space-y-3">
+                      <AnimatePresence mode="popLayout">
+                        {group.tasks.map((task) => renderTask(task))}
+                      </AnimatePresence>
                     </div>
-                  );
-                })
-              ) : completedTasks.length === 0 ? (
+                  </div>
+                ))
+              ) : completedTasks.length === 0 && snoozedTasks.length === 0 ? (
                 <div className="text-center py-14 text-muted-foreground">
                   <CheckSquare className="w-6 h-6 mx-auto mb-3 opacity-20" />
                   <p className="text-sm font-display">{t('home.no_tasks')}</p>
@@ -245,10 +262,35 @@ export function TasksCard({
                     {isImpersonating ? t('home.impersonating_no_tasks') : t('home.add_first_task')}
                   </p>
                 </div>
+              ) : taskGroups.length === 0 && snoozedTasks.length > 0 ? (
+                <p className="text-center text-xs text-muted-foreground py-4">All active tasks are snoozed</p>
               ) : (
                 <p className="text-center text-xs text-muted-foreground py-4">All tasks completed 🎉</p>
               )}
             </div>
+
+            {/* Snoozed Section */}
+            {snoozedTasks.length > 0 && (
+              <div className="mt-4 pt-3 border-t border-border/30">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-xs text-amber-600 gap-1.5"
+                  onClick={() => setShowSnoozed(!showSnoozed)}
+                >
+                  <AlarmClock className="w-3 h-3" />
+                  {showSnoozed ? 'Hide' : 'Show'} snoozed ({snoozedTasks.length})
+                  {showSnoozed ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                </Button>
+                {showSnoozed && (
+                  <div className="mt-2 space-y-3">
+                    <AnimatePresence mode="popLayout">
+                      {snoozedTasks.map((task) => renderTask(task))}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Completed Section */}
             {completedTasks.length > 0 && (

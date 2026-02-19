@@ -25,7 +25,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 
 interface AddTaskDialogProps {
-  onAdd: (task: { title: string; description?: string; due_date?: string; priority?: 'low' | 'normal' | 'high' }) => void;
+  onAdd: (task: { title: string; description?: string; due_date?: string; priority?: 'low' | 'normal' | 'high'; recurrence_pattern?: string | null }) => void;
   isPending: boolean;
   isReadOnly?: boolean;
 }
@@ -36,6 +36,7 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState<Date>(new Date());
   const [priority, setPriority] = useState<'low' | 'normal' | 'high'>('normal');
+  const [recurrence, setRecurrence] = useState<string>('none');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,12 +47,14 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
       description: description.trim() || undefined,
       due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : undefined,
       priority,
+      recurrence_pattern: recurrence === 'none' ? null : recurrence,
     });
 
     setTitle('');
     setDescription('');
     setDueDate(new Date());
     setPriority('normal');
+    setRecurrence('none');
     setOpen(false);
   };
 
@@ -150,6 +153,20 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="recurrence">Repeat</Label>
+            <Select value={recurrence} onValueChange={setRecurrence}>
+              <SelectTrigger id="recurrence">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
