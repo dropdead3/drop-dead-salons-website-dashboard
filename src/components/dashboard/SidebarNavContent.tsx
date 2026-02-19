@@ -313,7 +313,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className={cn("flex flex-col h-full", isCollapsed && "sidebar-collapsed-dark")}>
       {/* Logo & Collapse Toggle */}
       <div className={cn("border-b border-border/30", isCollapsed ? "p-3" : "px-4 py-3")}>
         <div className={cn("flex items-center", isCollapsed ? "flex-col gap-2" : "justify-between")}>
@@ -328,7 +328,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                       className="h-5 w-auto max-w-[40px] object-contain"
                     />
                   ) : (
-                    <div className="w-7 h-7 rounded bg-foreground text-background flex items-center justify-center font-display text-xs">
+                    <div className="w-7 h-7 rounded bg-white/10 text-white flex items-center justify-center font-display text-xs">
                       {(businessSettings?.business_name || 'DD').substring(0, 2).toUpperCase()}
                     </div>
                   )}
@@ -353,7 +353,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7 rounded-md bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
+                  className="h-7 w-7 rounded-md bg-white/10 hover:bg-white/15 text-white/60 hover:text-white"
                   onClick={onToggleCollapse}
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
