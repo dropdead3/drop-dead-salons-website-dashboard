@@ -14,10 +14,12 @@ import { TestimonialSection } from "@/components/home/TestimonialSection";
 import { FAQSection } from "@/components/home/FAQSection";
 import { BrandsSection } from "@/components/home/BrandsSection";
 import { DrinkMenuSection } from "@/components/home/DrinkMenuSection";
-import { useWebsiteSections, getEnabledSections, type HomepageSections } from "@/hooks/useWebsiteSections";
+import { CustomSectionRenderer } from "@/components/home/CustomSectionRenderer";
+import { useWebsiteSections, getEnabledSections, isBuiltinSection, type BuiltinSectionType, type CustomSectionType } from "@/hooks/useWebsiteSections";
 import React from 'react';
-// Map section keys to their components
-const SECTION_COMPONENTS: Record<keyof HomepageSections, React.ReactNode> = {
+
+// Map built-in section types to their components
+const BUILTIN_COMPONENTS: Record<BuiltinSectionType, React.ReactNode> = {
   hero: <HeroSection />,
   brand_statement: <BrandStatement />,
   testimonials: <TestimonialSection />,
@@ -36,13 +38,8 @@ const SECTION_COMPONENTS: Record<keyof HomepageSections, React.ReactNode> = {
 const Index = () => {
   const { data: sectionsConfig } = useWebsiteSections();
 
-  // Get enabled sections in their configured order
   const orderedSections = useMemo(() => {
-    const enabledSections = getEnabledSections(sectionsConfig);
-    return enabledSections.map(([key]) => ({
-      key: key as keyof HomepageSections,
-      component: SECTION_COMPONENTS[key as keyof HomepageSections],
-    }));
+    return getEnabledSections(sectionsConfig);
   }, [sectionsConfig]);
 
   // Listen for postMessage from parent (Website Editor) for scroll & highlight
@@ -77,8 +74,13 @@ const Index = () => {
         description="Drop Dead Salon is the Phoenix Valley's premier destination for expert hair color, extensions, cutting & styling. Serving Mesa, Gilbert, Chandler, Scottsdale, and the entire East Valley. Book your transformation today."
         type="local_business"
       />
-      {orderedSections.map(({ key, component }) => (
-        <div id={`section-${key}`} key={key}>{component}</div>
+      {orderedSections.map((section) => (
+        <div id={`section-${section.id}`} key={section.id}>
+          {isBuiltinSection(section.type)
+            ? BUILTIN_COMPONENTS[section.type]
+            : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
+          }
+        </div>
       ))}
     </Layout>
   );

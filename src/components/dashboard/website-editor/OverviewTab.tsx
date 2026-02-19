@@ -11,33 +11,21 @@ import { motion, Reorder } from 'framer-motion';
 import {
   useWebsiteSections,
   useUpdateWebsiteSections,
-  SECTION_LABELS,
-  SECTION_DESCRIPTIONS,
-  type HomepageSections,
+  isBuiltinSection,
   type SectionConfig,
 } from '@/hooks/useWebsiteSections';
-
-type SectionKey = keyof HomepageSections;
-
-interface SectionItem {
-  key: SectionKey;
-  config: SectionConfig;
-}
 
 export function OverviewTab() {
   const { data: sectionsConfig, isLoading } = useWebsiteSections();
   const updateSections = useUpdateWebsiteSections();
   const [isSaving, setIsSaving] = useState(false);
 
-  const orderedSections = useMemo<SectionItem[]>(() => {
+  const orderedSections = useMemo<SectionConfig[]>(() => {
     if (!sectionsConfig?.homepage) return [];
-    
-    return Object.entries(sectionsConfig.homepage)
-      .map(([key, config]) => ({ key: key as SectionKey, config }))
-      .sort((a, b) => a.config.order - b.config.order);
+    return [...sectionsConfig.homepage].sort((a, b) => a.order - b.order);
   }, [sectionsConfig]);
 
-  const [localSections, setLocalSections] = useState<SectionItem[]>([]);
+  const [localSections, setLocalSections] = useState<SectionConfig[]>([]);
 
   useMemo(() => {
     if (orderedSections.length > 0 && localSections.length === 0) {
@@ -45,34 +33,28 @@ export function OverviewTab() {
     }
   }, [orderedSections, localSections.length]);
 
-  const handleToggleSection = async (sectionKey: SectionKey, enabled: boolean) => {
+  const handleToggleSection = async (sectionId: string, enabled: boolean) => {
     if (!sectionsConfig) return;
 
-    const updatedSections = {
-      ...sectionsConfig,
-      homepage: {
-        ...sectionsConfig.homepage,
-        [sectionKey]: {
-          ...sectionsConfig.homepage[sectionKey],
-          enabled,
-        },
-      },
-    };
+    const newSections = sectionsConfig.homepage.map(s =>
+      s.id === sectionId ? { ...s, enabled } : s
+    );
 
-    setLocalSections(prev => 
-      prev.map(s => s.key === sectionKey ? { ...s, config: { ...s.config, enabled } } : s)
+    setLocalSections(prev =>
+      prev.map(s => s.id === sectionId ? { ...s, enabled } : s)
     );
 
     try {
-      await updateSections.mutateAsync(updatedSections);
-      toast.success(`${SECTION_LABELS[sectionKey]} ${enabled ? 'enabled' : 'disabled'}`);
+      await updateSections.mutateAsync({ homepage: newSections });
+      const label = newSections.find(s => s.id === sectionId)?.label ?? 'Section';
+      toast.success(`${label} ${enabled ? 'enabled' : 'disabled'}`);
     } catch {
       toast.error('Failed to update section');
       setLocalSections(orderedSections);
     }
   };
 
-  const handleReorder = (reorderedItems: SectionItem[]) => {
+  const handleReorder = (reorderedItems: SectionConfig[]) => {
     setLocalSections(reorderedItems);
   };
 
@@ -80,20 +62,11 @@ export function OverviewTab() {
     if (!sectionsConfig) return;
 
     setIsSaving(true);
-    
-    const updatedHomepage = localSections.reduce((acc, item, index) => {
-      acc[item.key] = {
-        ...item.config,
-        order: index + 1,
-      };
-      return acc;
-    }, {} as HomepageSections);
+
+    const reordered = localSections.map((s, i) => ({ ...s, order: i + 1 }));
 
     try {
-      await updateSections.mutateAsync({
-        ...sectionsConfig,
-        homepage: updatedHomepage,
-      });
+      await updateSections.mutateAsync({ homepage: reordered });
       toast.success('Section order saved');
     } catch {
       toast.error('Failed to save order');
@@ -104,10 +77,10 @@ export function OverviewTab() {
 
   const hasOrderChanged = useMemo(() => {
     if (orderedSections.length === 0 || localSections.length === 0) return false;
-    return orderedSections.some((s, i) => s.key !== localSections[i]?.key);
+    return orderedSections.some((s, i) => s.id !== localSections[i]?.id);
   }, [orderedSections, localSections]);
 
-  const enabledCount = localSections.filter(s => s.config.enabled).length;
+  const enabledCount = localSections.filter(s => s.enabled).length;
   const totalCount = localSections.length;
 
   if (isLoading) {
@@ -134,7 +107,7 @@ export function OverviewTab() {
               </CardDescription>
             </div>
             {hasOrderChanged && (
-              <Button 
+              <Button
                 onClick={handleSaveOrder}
                 disabled={isSaving}
                 size="sm"
@@ -145,15 +118,15 @@ export function OverviewTab() {
           </div>
         </CardHeader>
         <CardContent>
-          <Reorder.Group 
-            axis="y" 
-            values={localSections} 
+          <Reorder.Group
+            axis="y"
+            values={localSections}
             onReorder={handleReorder}
             className="space-y-2"
           >
             {localSections.map((item) => (
               <Reorder.Item
-                key={item.key}
+                key={item.id}
                 value={item}
                 className="touch-none"
               >
@@ -162,8 +135,8 @@ export function OverviewTab() {
                   initial={false}
                   className={`
                     flex items-center gap-4 p-4 rounded-xl border transition-all
-                    ${item.config.enabled 
-                      ? 'bg-card border-border hover:border-primary/30' 
+                    ${item.enabled
+                      ? 'bg-card border-border hover:border-primary/30'
                       : 'bg-muted/30 border-border/50 opacity-60'
                     }
                     cursor-grab active:cursor-grabbing
@@ -176,25 +149,27 @@ export function OverviewTab() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="font-medium text-sm">
-                        {SECTION_LABELS[item.key]}
+                        {item.label}
                       </span>
-                      <Badge 
-                        variant={item.config.enabled ? 'default' : 'secondary'}
+                      <Badge
+                        variant={item.enabled ? 'default' : 'secondary'}
                         className="text-[10px] px-1.5 py-0"
                       >
-                        #{item.config.order}
+                        #{item.order}
                       </Badge>
+                      {item.deletable && (
+                        <Badge variant="outline" className="text-[9px] px-1 py-0">Custom</Badge>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground truncate mt-0.5">
-                      {SECTION_DESCRIPTIONS[item.key]}
+                      {item.description}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-3">
-
                     <Switch
-                      checked={item.config.enabled}
-                      onCheckedChange={(checked) => handleToggleSection(item.key, checked)}
+                      checked={item.enabled}
+                      onCheckedChange={(checked) => handleToggleSection(item.id, checked)}
                       onClick={(e) => e.stopPropagation()}
                     />
                   </div>

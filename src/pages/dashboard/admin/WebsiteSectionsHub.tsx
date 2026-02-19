@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   LayoutGrid,
   ExternalLink,
@@ -11,6 +12,8 @@ import {
   PanelLeftOpen,
   Loader2,
   Save,
+  Undo2,
+  Redo2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { HeroEditor } from '@/components/dashboard/website-editor/HeroEditor';
@@ -28,6 +31,7 @@ import { PopularServicesEditor } from '@/components/dashboard/website-editor/Pop
 import { GalleryDisplayEditor } from '@/components/dashboard/website-editor/GalleryDisplayEditor';
 import { StylistsDisplayEditor } from '@/components/dashboard/website-editor/StylistsDisplayEditor';
 import { LocationsDisplayEditor } from '@/components/dashboard/website-editor/LocationsDisplayEditor';
+import { CustomSectionEditor } from '@/components/dashboard/website-editor/CustomSectionEditor';
 // Embedded Content Components
 import { TestimonialsContent } from '@/components/dashboard/website-editor/TestimonialsContent';
 import { GalleryContent } from '@/components/dashboard/website-editor/GalleryContent';
@@ -40,6 +44,16 @@ import { AnnouncementBarContent } from '@/components/dashboard/website-editor/An
 import { WebsiteEditorSidebar } from '@/components/dashboard/website-editor/WebsiteEditorSidebar';
 // Live Preview
 import { LivePreviewPanel } from '@/components/dashboard/website-editor/LivePreviewPanel';
+
+// Undo/Redo
+import { useUndoRedo } from '@/hooks/useUndoRedo';
+import {
+  useWebsiteSections,
+  useUpdateWebsiteSections,
+  type SectionConfig,
+  type BuiltinSectionType,
+  type CustomSectionType,
+} from '@/hooks/useWebsiteSections';
 
 // Unsaved changes dialog
 import {
@@ -62,7 +76,7 @@ import {
 } from '@/components/ui/resizable';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-// Map of tab values to editor components
+// Map of tab values to editor components (built-in)
 const EDITOR_COMPONENTS: Record<string, React.ComponentType> = {
   // Site Content (Data Managers)
   'services': ServicesContent,
@@ -109,15 +123,12 @@ const TAB_TO_SECTION: Record<string, string> = {
 
 // Tab labels for breadcrumb display
 const TAB_LABELS: Record<string, string> = {
-  // Site Content
   'services': 'Services Manager',
   'testimonials': 'Testimonials Manager',
   'gallery': 'Gallery Manager',
   'stylists': 'Stylists Manager',
   'locations': 'Locations Manager',
   'banner': 'Announcement Banner',
-  
-  // Homepage Sections
   'hero': 'Hero Section',
   'brand': 'Brand Statement',
   'testimonials-section': 'Testimonials Display',
@@ -140,7 +151,6 @@ export default function WebsiteSectionsHub() {
   const { effectiveOrganization, currentOrganization, selectedOrganization } = useOrganizationContext();
   const contextSlug = effectiveOrganization?.slug || selectedOrganization?.slug || currentOrganization?.slug;
 
-  // Fallback: fetch first org slug if context doesn't provide one (e.g. platform users)
   const { data: fallbackSlug } = useQuery({
     queryKey: ['website-editor-org-slug-fallback'],
     queryFn: async () => {
@@ -160,7 +170,6 @@ export default function WebsiteSectionsHub() {
     : '/?preview=true';
   const defaultTab = searchParams.get('tab') || 'hero';
   const [activeTab, setActiveTab] = useState(defaultTab);
-  // Preview is always visible on desktop
   const [showSidebar, setShowSidebar] = useState(true);
   
   const [pendingTab, setPendingTab] = useState<string | null>(null);
@@ -171,11 +180,80 @@ export default function WebsiteSectionsHub() {
   const dirtyToastShownRef = useRef(false);
   const isMobile = useIsMobile();
 
-  // Memoize the activeSectionId so it doesn't cause unnecessary re-renders
-  const activeSectionId = useMemo(() => TAB_TO_SECTION[activeTab], [activeTab]);
-  // No close handler needed - preview is always visible
+  // Undo/Redo for layout changes
+  const { data: sectionsConfig } = useWebsiteSections();
+  const updateSections = useUpdateWebsiteSections();
+  const {
+    state: undoState,
+    setState: pushUndoState,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useUndoRedo<SectionConfig[] | null>(null);
 
-  // Expose a global way for editors to register dirty state
+  // Initialize undo state when sections load
+  const initializedRef = useRef(false);
+  useEffect(() => {
+    if (sectionsConfig?.homepage && !initializedRef.current) {
+      pushUndoState([...sectionsConfig.homepage].sort((a, b) => a.order - b.order), true);
+      initializedRef.current = true;
+    }
+  }, [sectionsConfig, pushUndoState]);
+
+  // Track layout changes from sidebar
+  const handleSectionsChange = useCallback((sections: SectionConfig[]) => {
+    pushUndoState(sections);
+  }, [pushUndoState]);
+
+  const handleUndo = useCallback(async () => {
+    const prev = undo();
+    if (prev) {
+      try {
+        await updateSections.mutateAsync({ homepage: prev });
+        toast.success('Undone');
+      } catch {
+        toast.error('Failed to undo');
+      }
+    }
+  }, [undo, updateSections]);
+
+  const handleRedo = useCallback(async () => {
+    const next = redo();
+    if (next) {
+      try {
+        await updateSections.mutateAsync({ homepage: next });
+        toast.success('Redone');
+      } catch {
+        toast.error('Failed to redo');
+      }
+    }
+  }, [redo, updateSections]);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z') {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [handleUndo, handleRedo]);
+
+  const activeSectionId = useMemo(() => {
+    if (activeTab.startsWith('custom-')) {
+      return activeTab.replace('custom-', '');
+    }
+    return TAB_TO_SECTION[activeTab];
+  }, [activeTab]);
+
+  // Dirty state tracking
   useEffect(() => {
     const handleDirtyChange = (e: Event) => {
       const dirty = (e as CustomEvent).detail?.dirty ?? false;
@@ -185,9 +263,7 @@ export default function WebsiteSectionsHub() {
         dirtyToastShownRef.current = true;
         toast.warning('You have unsaved changes', { duration: 4000 });
       }
-      if (!dirty) {
-        dirtyToastShownRef.current = false;
-      }
+      if (!dirty) dirtyToastShownRef.current = false;
     };
 
     const handleSavingState = (e: Event) => {
@@ -197,11 +273,8 @@ export default function WebsiteSectionsHub() {
     window.addEventListener('editor-dirty-state', handleDirtyChange);
     window.addEventListener('editor-saving-state', handleSavingState);
 
-    // Also warn on browser close/refresh
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirtyRef.current) {
-        e.preventDefault();
-      }
+      if (isDirtyRef.current) e.preventDefault();
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
 
@@ -212,7 +285,6 @@ export default function WebsiteSectionsHub() {
     };
   }, []);
 
-  // Sync URL with active tab
   useEffect(() => {
     setSearchParams({ tab: activeTab }, { replace: true });
   }, [activeTab, setSearchParams]);
@@ -240,7 +312,44 @@ export default function WebsiteSectionsHub() {
     window.dispatchEvent(new CustomEvent('editor-save-request'));
   }, []);
 
-  const EditorComponent = EDITOR_COMPONENTS[activeTab];
+  // Determine editor component
+  const renderEditor = () => {
+    // Check built-in editors first
+    const EditorComponent = EDITOR_COMPONENTS[activeTab];
+    if (EditorComponent) return <EditorComponent />;
+
+    // Check if it's a custom section
+    if (activeTab.startsWith('custom-')) {
+      const sectionId = activeTab.replace('custom-', '');
+      const section = sectionsConfig?.homepage.find(s => s.id === sectionId);
+      if (section) {
+        return (
+          <CustomSectionEditor
+            sectionId={section.id}
+            sectionType={section.type as CustomSectionType}
+            sectionLabel={section.label}
+          />
+        );
+      }
+    }
+
+    return (
+      <div className="flex items-center justify-center h-full text-muted-foreground">
+        Select a section from the sidebar to edit
+      </div>
+    );
+  };
+
+  // Get tab label (including custom sections)
+  const getTabLabel = () => {
+    if (TAB_LABELS[activeTab]) return TAB_LABELS[activeTab];
+    if (activeTab.startsWith('custom-')) {
+      const sectionId = activeTab.replace('custom-', '');
+      const section = sectionsConfig?.homepage.find(s => s.id === sectionId);
+      return section?.label ?? 'Custom Section';
+    }
+    return 'Select a section';
+  };
 
   return (
     <DashboardLayout hideFooter>
@@ -251,6 +360,7 @@ export default function WebsiteSectionsHub() {
             <WebsiteEditorSidebar
               activeTab={activeTab}
               onTabChange={handleTabChange}
+              onSectionsChange={handleSectionsChange}
             />
           </div>
         )}
@@ -285,12 +395,42 @@ export default function WebsiteSectionsHub() {
                       <div>
                         <h1 className="text-xl font-display font-medium">Website Editor</h1>
                         <p className="text-xs text-muted-foreground">
-                          {TAB_LABELS[activeTab] || 'Select a section'}
+                          {getTabLabel()}
                         </p>
                       </div>
                     </div>
                   </div>
-                    <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    {/* Undo/Redo */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={!canUndo}
+                          onClick={handleUndo}
+                        >
+                          <Undo2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Undo (⌘Z)</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={!canRedo}
+                          onClick={handleRedo}
+                        >
+                          <Redo2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Redo (⌘⇧Z)</TooltipContent>
+                    </Tooltip>
+
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -305,13 +445,7 @@ export default function WebsiteSectionsHub() {
 
               {/* Editor Content */}
               <div className="flex-1 overflow-auto p-6 pb-20">
-                {EditorComponent ? (
-                  <EditorComponent />
-                ) : (
-                  <div className="flex items-center justify-center h-full text-muted-foreground">
-                    Select a section from the sidebar to edit
-                  </div>
-                )}
+                {renderEditor()}
               </div>
 
               {/* Fixed Bottom Save Bar */}
