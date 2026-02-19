@@ -74,7 +74,7 @@ export function TaskDetailDrilldown({
             <div className="flex-1 min-w-0">
               <DialogHeader>
                 <DialogTitle className={cn(
-                  "font-display text-base text-left",
+                  "font-sans text-base text-left",
                   task.is_completed && "line-through text-muted-foreground"
                 )}>
                   {task.title}
