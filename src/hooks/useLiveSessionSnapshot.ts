@@ -76,41 +76,48 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
         return { inSessionCount, activeStylistCount: 0, activeAssistantCount: 0, stylists: [], stylistDetails: [] };
       }
 
-      // Resolve staff to user profiles via phorest_staff_mapping
+      // Resolve staff to user profiles via phorest_staff_mapping (include phorest_staff_name)
       const { data: staffMappings, error: mappingError } = await supabase
         .from('phorest_staff_mapping')
-        .select('phorest_staff_id, user_id')
+        .select('phorest_staff_id, user_id, phorest_staff_name')
         .in('phorest_staff_id', uniqueStaffIds);
 
       if (mappingError) throw mappingError;
 
       const staffToUser = new Map<string, string>();
+      const staffToName = new Map<string, string>();
       (staffMappings || []).forEach(m => {
         if (m.user_id) staffToUser.set(m.phorest_staff_id, m.user_id);
+        if (m.phorest_staff_name) staffToName.set(m.phorest_staff_id, m.phorest_staff_name);
       });
 
       const userIds = [...new Set(staffToUser.values())];
 
-      if (userIds.length === 0) {
-        return { inSessionCount, activeStylistCount: uniqueStaffIds.length, activeAssistantCount: 0, stylists: [], stylistDetails: [] };
+      // Get employee profiles for mapped users (may be empty)
+      let profileMap = new Map<string, { user_id: string; full_name: string | null; display_name: string | null; photo_url: string | null }>();
+      if (userIds.length > 0) {
+        const { data: profiles, error: profileError } = await supabase
+          .from('employee_profiles')
+          .select('user_id, full_name, display_name, photo_url')
+          .in('user_id', userIds);
+
+        if (profileError) throw profileError;
+
+        profileMap = new Map(
+          (profiles || []).map(p => [p.user_id, p])
+        );
       }
 
-      // Get employee profiles for avatars
-      const { data: profiles, error: profileError } = await supabase
-        .from('employee_profiles')
-        .select('user_id, full_name, display_name, photo_url')
-        .in('user_id', userIds);
-
-      if (profileError) throw profileError;
-
-      const profileMap = new Map(
-        (profiles || []).map(p => [p.user_id, p])
-      );
-
-      const stylists: ActiveStylist[] = (profiles || []).map(p => ({
-        name: p.display_name || p.full_name || '',
-        photoUrl: p.photo_url,
-      }));
+      // Build stylists array using name waterfall
+      let fallbackIndex = 0;
+      const stylists: ActiveStylist[] = uniqueStaffIds.map(staffId => {
+        const userId = staffToUser.get(staffId);
+        const profile = userId ? profileMap.get(userId) : null;
+        const phorestName = staffToName.get(staffId);
+        fallbackIndex++;
+        const name = profile?.display_name || profile?.full_name || phorestName || `Stylist ${fallbackIndex}`;
+        return { name, photoUrl: profile?.photo_url || null };
+      });
 
       // Get ALL of today's appointments for active staff to find wrap-up times
       const allTodayQuery = applyLocationFilter(
@@ -160,10 +167,13 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
       // Build per-stylist details
       const stylistDetailsMap = new Map<string, StylistDetail>();
 
+      let detailFallbackIndex = 0;
       for (const staffId of uniqueStaffIds) {
+        detailFallbackIndex++;
         const userId = staffToUser.get(staffId);
         const profile = userId ? profileMap.get(userId) : null;
-        const name = profile?.display_name || profile?.full_name || 'Unknown';
+        const phorestName = staffToName.get(staffId);
+        const name = profile?.display_name || profile?.full_name || phorestName || `Stylist ${detailFallbackIndex}`;
         const photoUrl = profile?.photo_url || null;
 
         // All appointments for this staff today, sorted chronologically
