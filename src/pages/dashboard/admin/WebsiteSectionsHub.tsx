@@ -197,7 +197,7 @@ export default function WebsiteSectionsHub() {
       <div className="h-[calc(100vh-8rem)] flex">
         {/* Fixed-width Sidebar */}
         {!isMobile && showSidebar && (
-          <div className="w-[420px] flex-shrink-0 border-r overflow-auto">
+          <div className="w-[320px] flex-shrink-0 border-r overflow-auto">
             <WebsiteEditorSidebar
               activeTab={activeTab}
               onTabChange={handleTabChange}
