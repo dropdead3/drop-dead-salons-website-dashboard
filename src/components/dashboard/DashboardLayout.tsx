@@ -991,7 +991,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-amber-950 text-center text-sm font-medium lg:pl-72 overflow-hidden shadow-lg relative"
+            className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-amber-950 text-center text-sm font-medium overflow-hidden shadow-sm relative mx-3 mt-3 rounded-2xl"
           >
             {/* Animated background pattern */}
             <motion.div 
@@ -1076,11 +1076,10 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
 
       {/* Desktop Top Bar - Single unified bar */}
       <div className={cn(
-        "dashboard-top-bar hidden lg:block sticky top-0 z-30 border-b border-border/15",
+        "dashboard-top-bar hidden lg:block sticky top-0 z-30 mx-3 mt-3",
         hideFooter && "shrink-0"
       )}>
-        <div className="relative w-full max-w-none flex items-center justify-between h-14 px-6 bg-card/50 backdrop-blur-2xl">
-          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
+        <div className="relative w-full max-w-none flex items-center justify-between h-14 px-6 bg-card/90 backdrop-blur-2xl rounded-2xl border border-border/50 shadow-sm overflow-hidden">
           {/* Left side - Sidebar toggle + Org Switcher */}
           <div className="flex items-center gap-3">
             <Tooltip>
