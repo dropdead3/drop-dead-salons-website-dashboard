@@ -68,7 +68,7 @@ export function GoalTrackerCard() {
         'Projected': Math.round(orgMetrics.projectedRevenue),
       }}
     >
-      <Card className={tokens.card.wrapper}>
+      <Card className={cn(tokens.card.wrapper, "h-full flex flex-col")}>
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -87,7 +87,7 @@ export function GoalTrackerCard() {
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-5 flex-1 flex flex-col">
           {isLoading ? (
             <div className="h-40 flex items-center justify-center">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -203,7 +203,7 @@ export function GoalTrackerCard() {
 
               {/* Location scoreboard */}
               {locationScaffold.length > 0 && (
-                <div>
+                <div className="flex-1 flex flex-col">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">
                       Location Scoreboard
