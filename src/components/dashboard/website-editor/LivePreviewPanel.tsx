@@ -5,9 +5,10 @@ import { cn } from '@/lib/utils';
 
 interface LivePreviewPanelProps {
   activeSectionId?: string;
+  previewUrl?: string;
 }
 
-export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId }: LivePreviewPanelProps) {
+export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId, previewUrl }: LivePreviewPanelProps) {
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -134,7 +135,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
           <iframe
             ref={iframeRef}
             key={refreshKey}
-            src="/?preview=true"
+            src={previewUrl || "/?preview=true"}
             className="w-full h-full border-0"
             title="Website Preview"
             onLoad={handleIframeLoad}
