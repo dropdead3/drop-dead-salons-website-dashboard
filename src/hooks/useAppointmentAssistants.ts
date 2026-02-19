@@ -7,6 +7,7 @@ interface AssistantAssignment {
   appointment_id: string;
   assistant_user_id: string;
   organization_id: string;
+  assist_duration_minutes: number | null;
   created_at: string;
   assistant_profile?: {
     display_name: string | null;
@@ -85,13 +86,15 @@ export function useAppointmentAssistants(appointmentId: string | null) {
             metadata: { appointment_id: appointmentId },
           });
         }
-      } catch {
-        // Non-critical — don't block on notification failure
+      } catch (notifError) {
+        console.warn('[AssistantNotification] Failed to send notification:', notifError);
       }
     },
     onError: (error: any) => {
       if (error?.code === '23505') {
         toast.error('This assistant is already assigned');
+      } else if (error?.message?.includes('lead stylist')) {
+        toast.error('Cannot assign the lead stylist as their own assistant');
       } else {
         toast.error('Failed to assign assistant');
       }
@@ -118,11 +121,29 @@ export function useAppointmentAssistants(appointmentId: string | null) {
     },
   });
 
+  const updateDuration = useMutation({
+    mutationFn: async ({ assignmentId, minutes }: { assignmentId: string; minutes: number | null }) => {
+      const { error } = await supabase
+        .from('appointment_assistants')
+        .update({ assist_duration_minutes: minutes })
+        .eq('id', assignmentId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['appointment-assistants', appointmentId] });
+    },
+    onError: () => {
+      toast.error('Failed to update duration');
+    },
+  });
+
   return {
     assistants,
     isLoading,
     assignAssistant: assignAssistant.mutate,
     removeAssistant: removeAssistant.mutate,
+    updateAssistDuration: updateDuration.mutate,
     isAssigning: assignAssistant.isPending,
     isRemoving: removeAssistant.isPending,
   };

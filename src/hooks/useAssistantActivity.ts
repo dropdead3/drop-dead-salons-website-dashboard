@@ -8,6 +8,7 @@ export interface AssistantActivitySummary {
   assistantName: string;
   photoUrl: string | null;
   totalAssists: number;
+  assistedRevenue: number;
   /** Map of lead stylist user_id -> count */
   pairings: Map<string, { name: string; count: number }>;
 }
@@ -19,7 +20,20 @@ export function useAssistantActivity(dateFrom: string, dateTo: string) {
   const { data, isLoading } = useQuery({
     queryKey: ['assistant-activity', orgId, dateFrom, dateTo],
     queryFn: async () => {
-      // Get all assistant assignments in period with appointment dates
+      // Get all assistant assignments in period with appointment dates — server-side date filtering
+      // First get appointment IDs in date range
+      const { data: apptIds, error: apptError } = await supabase
+        .from('phorest_appointments')
+        .select('id')
+        .gte('appointment_date', dateFrom)
+        .lte('appointment_date', dateTo);
+
+      if (apptError) throw apptError;
+      if (!apptIds || apptIds.length === 0) {
+        return { summaries: [], totalAssignments: 0, uniqueAssistants: 0 };
+      }
+
+      const ids = apptIds.map(a => a.id);
       const { data: assignments, error } = await supabase
         .from('appointment_assistants')
         .select(`
@@ -29,19 +43,16 @@ export function useAssistantActivity(dateFrom: string, dateTo: string) {
             appointment_date,
             stylist_user_id,
             start_time,
-            end_time
+            end_time,
+            total_price
           )
         `)
-        .eq('organization_id', orgId!);
+        .eq('organization_id', orgId!)
+        .in('appointment_id', ids);
 
       if (error) throw error;
 
-      // Filter by date range
-      const filtered = (assignments || []).filter(a => {
-        const appt = a.appointment as any;
-        if (!appt?.appointment_date) return false;
-        return appt.appointment_date >= dateFrom && appt.appointment_date <= dateTo;
-      });
+      const filtered = assignments || [];
 
       // Get unique user IDs (assistants + lead stylists)
       const assistantIds = [...new Set(filtered.map(a => a.assistant_user_id))];
@@ -67,6 +78,7 @@ export function useAssistantActivity(dateFrom: string, dateTo: string) {
       const activityMap = new Map<string, {
         totalAssists: number;
         totalMinutes: number;
+        assistedRevenue: number;
         pairings: Map<string, { name: string; count: number }>;
       }>();
 
@@ -76,10 +88,15 @@ export function useAssistantActivity(dateFrom: string, dateTo: string) {
         const leadId = appt?.stylist_user_id;
 
         if (!activityMap.has(aId)) {
-          activityMap.set(aId, { totalAssists: 0, totalMinutes: 0, pairings: new Map() });
+          activityMap.set(aId, { totalAssists: 0, totalMinutes: 0, assistedRevenue: 0, pairings: new Map() });
         }
         const entry = activityMap.get(aId)!;
         entry.totalAssists++;
+
+        // Assisted revenue
+        if (appt?.total_price) {
+          entry.assistedRevenue += Number(appt.total_price);
+        }
 
         // Duration
         if (assignment.assist_duration_minutes) {
@@ -106,6 +123,7 @@ export function useAssistantActivity(dateFrom: string, dateTo: string) {
           photoUrl: profileMap.get(userId)?.photo_url || null,
           totalAssists: data.totalAssists,
           totalMinutes: data.totalMinutes,
+          assistedRevenue: data.assistedRevenue,
           pairings: data.pairings,
         })).sort((a, b) => b.totalAssists - a.totalAssists),
         totalAssignments: filtered.length,

@@ -119,7 +119,7 @@ export function AppointmentDetailSheet({
   const [showAssistantPicker, setShowAssistantPicker] = useState(false);
   
   const { notes, addNote, deleteNote, isAdding } = useAppointmentNotes(appointment?.phorest_id || null);
-  const { assistants, assignAssistant, removeAssistant, isAssigning } = useAppointmentAssistants(appointment?.id || null);
+  const { assistants, assignAssistant, removeAssistant, updateAssistDuration, isAssigning } = useAppointmentAssistants(appointment?.id || null);
   const canAddNotes = hasPermission('add_appointment_notes');
   const canManageAssistants = hasPermission('create_appointments') || hasPermission('view_team_appointments');
 
@@ -291,26 +291,44 @@ export function AppointmentDetailSheet({
                 {assistants.length > 0 ? (
                   <div className="space-y-2">
                     {assistants.map((a) => (
-                      <div key={a.id} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
+                      <div key={a.id} className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Avatar className="h-6 w-6 shrink-0">
                             <AvatarImage src={a.assistant_profile?.photo_url || undefined} />
                             <AvatarFallback className="text-xs">
                               {(a.assistant_profile?.display_name || a.assistant_profile?.full_name || '?').slice(0, 2).toUpperCase()}
                             </AvatarFallback>
                           </Avatar>
-                          <span className="text-sm">{a.assistant_profile?.display_name || a.assistant_profile?.full_name}</span>
+                          <span className="text-sm truncate">{a.assistant_profile?.display_name || a.assistant_profile?.full_name}</span>
                         </div>
-                        {canManageAssistants && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={() => removeAssistant(a.id)}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-1 shrink-0">
+                          {canManageAssistants && (
+                            <input
+                              type="number"
+                              min={0}
+                              max={480}
+                              placeholder="min"
+                              defaultValue={a.assist_duration_minutes ?? ''}
+                              className="w-14 h-6 text-xs text-center border rounded bg-background px-1"
+                              onBlur={(e) => {
+                                const val = e.target.value ? parseInt(e.target.value) : null;
+                                if (val !== (a.assist_duration_minutes ?? null)) {
+                                  updateAssistDuration({ assignmentId: a.id, minutes: val });
+                                }
+                              }}
+                            />
+                          )}
+                          {canManageAssistants && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => removeAssistant(a.id)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>

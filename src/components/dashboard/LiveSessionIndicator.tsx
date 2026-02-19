@@ -113,7 +113,7 @@ export function LiveSessionIndicator() {
         onOpenChange={setDrilldownOpen}
         inSessionCount={inSessionCount}
         activeStylistCount={activeStylistCount}
-        stylistDetails={live.stylistDetails}
+        stylistDetails={DEMO_MODE ? [] : live.stylistDetails}
       />
     </TooltipProvider>
   );
