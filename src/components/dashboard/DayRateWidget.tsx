@@ -102,7 +102,7 @@ export function DayRateWidget() {
         {/* Today's Bookings */}
         {todaysBookings.length > 0 && (
           <div className="space-y-2">
-            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">
               Today's Bookings
             </p>
             {todaysBookings.slice(0, 3).map(booking => (
