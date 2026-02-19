@@ -723,17 +723,64 @@ function DashboardSections({
   // Track if we've rendered the filter bar (only show once, before first pinned card)
   let filterBarRendered = false;
 
+  // Collect pinned card IDs for grid rendering in compact mode
+  const pinnedCardIds = useMemo(() => {
+    const fromOrder = orderedSectionIds
+      .filter(id => isPinnedCardEntry(id) && isCardPinned(getPinnedCardId(id)))
+      .map(getPinnedCardId);
+    return [...fromOrder, ...missingPinnedCards];
+  }, [orderedSectionIds, missingPinnedCards, visibilityData]);
+
+  // Determine the index of the first pinned card in the section order (for filter bar placement)
+  const firstPinnedIndex = orderedSectionIds.findIndex(
+    id => isPinnedCardEntry(id) && isCardPinned(getPinnedCardId(id))
+  );
+
   return (
     <>
-      {orderedSectionIds.map(sectionId => {
-        // Handle pinned analytics cards (prefixed with "pinned:")
+      {orderedSectionIds.map((sectionId, index) => {
+        // Handle pinned analytics cards
         if (isPinnedCardEntry(sectionId)) {
           const cardId = getPinnedCardId(sectionId);
-          
-          // Only render if card is pinned (visible in visibility table) and user is leadership
           if (!isLeadership || !isCardPinned(cardId)) return null;
           
-          // Render filter bar before first pinned card
+          // In compact mode, pinned cards are rendered together in a grid below
+          // Only render filter bar at the first pinned card position
+          if (compact) {
+            if (index === firstPinnedIndex) {
+              // Render filter bar + the entire bento grid here
+              return (
+                <React.Fragment key="compact-analytics-grid">
+                  {hasPinnedAnalytics && (
+                    <div className="pt-6 pb-2">
+                      <div className="flex items-center justify-between gap-4">
+                        <h2 className="font-display text-sm tracking-[0.12em] text-foreground">{t('home.analytics')}</h2>
+                        <AnalyticsFilterBar
+                          locationId={analyticsFilters.locationId}
+                          onLocationChange={onLocationChange}
+                          dateRange={analyticsFilters.dateRange}
+                          onDateRangeChange={onDateRangeChange}
+                          accessibleLocations={accessibleLocations}
+                          canViewAggregate={canViewAggregate}
+                          compact={compact}
+                          onCompactChange={onCompactChange}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {pinnedCardIds.map(cId => (
+                      <PinnedAnalyticsCard key={`pinned:${cId}`} cardId={cId} filters={analyticsFilters} compact={compact} />
+                    ))}
+                  </div>
+                </React.Fragment>
+              );
+            }
+            // Skip remaining pinned cards (already rendered in the grid above)
+            return null;
+          }
+          
+          // Detailed mode: render individually as before
           const showFilterBar = !filterBarRendered && hasPinnedAnalytics;
           if (showFilterBar) filterBarRendered = true;
           
@@ -769,8 +816,8 @@ function DashboardSections({
         
         return <React.Fragment key={sectionId}>{component}</React.Fragment>;
       })}
-      {/* Render pinned cards that are visible in DB but missing from sectionOrder */}
-      {missingPinnedCards.map(cardId => (
+      {/* In detailed mode, render missing pinned cards individually */}
+      {!compact && missingPinnedCards.map(cardId => (
         <PinnedAnalyticsCard key={`pinned:${cardId}`} cardId={cardId} filters={analyticsFilters} compact={compact} />
       ))}
     </>
