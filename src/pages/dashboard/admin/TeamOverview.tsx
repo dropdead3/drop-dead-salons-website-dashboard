@@ -41,6 +41,7 @@ import {
 import { ClientEngineOverview } from '@/components/dashboard/ClientEngineOverview';
 import { toast } from 'sonner';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { BentoGrid } from '@/components/ui/bento-grid';
 
 interface TeamMember {
   user_id: string;
@@ -333,7 +334,7 @@ export default function TeamOverview() {
         </div>
 
         {/* Stats Overview */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <BentoGrid maxPerRow={4} gap="gap-4" className="mb-8">
           <Card className="p-4">
             <p className="text-xs text-muted-foreground font-display tracking-wide mb-1">
               TOTAL ENROLLED
@@ -364,7 +365,7 @@ export default function TeamOverview() {
               {members.filter(m => m.status === 'paused').length}
             </p>
           </Card>
-        </div>
+        </BentoGrid>
 
         {/* Team List */}
         {loading ? (
@@ -600,7 +601,7 @@ export default function TeamOverview() {
 
                       {/* Quick Stats */}
                       <div className="mt-6 pt-6 border-t border-border">
-                        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                        <BentoGrid maxPerRow={5} gap="gap-4">
                           <div className="flex items-center gap-3">
                             <Target className="w-5 h-5 text-muted-foreground" />
                             <div>
@@ -644,7 +645,7 @@ export default function TeamOverview() {
                               </p>
                             </div>
                           </div>
-                        </div>
+                        </BentoGrid>
                       </div>
                     </div>
                   </CollapsibleContent>

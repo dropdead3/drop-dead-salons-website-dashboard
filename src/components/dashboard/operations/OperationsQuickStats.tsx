@@ -10,6 +10,7 @@ import { useTodaysQueue } from '@/hooks/useTodaysQueue';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { BentoGrid } from '@/components/ui/bento-grid';
 
 interface OperationsQuickStatsProps {
   locationId?: string;
@@ -58,7 +59,7 @@ export function OperationsQuickStats({ locationId, hideRevenue, filterContext }:
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <BentoGrid maxPerRow={4} gap="gap-4">
         {[1, 2, 3, 4].map(i => (
           <Card key={i} className="p-4">
             <div className="flex items-center gap-3">
@@ -70,7 +71,7 @@ export function OperationsQuickStats({ locationId, hideRevenue, filterContext }:
             </div>
           </Card>
         ))}
-      </div>
+      </BentoGrid>
     );
   }
 
@@ -85,7 +86,7 @@ export function OperationsQuickStats({ locationId, hideRevenue, filterContext }:
           />
         )}
       </div>
-      <div className={`grid grid-cols-2 ${hideRevenue ? 'lg:grid-cols-4' : 'lg:grid-cols-5'} gap-4`}>
+      <BentoGrid maxPerRow={hideRevenue ? 4 : 5} gap="gap-4">
         {stats.map((stat) => (
           <Card key={stat.label} className="p-4">
             <div className="flex items-center gap-3">
@@ -116,7 +117,7 @@ export function OperationsQuickStats({ locationId, hideRevenue, filterContext }:
             </div>
           </Card>
         )}
-      </div>
+      </BentoGrid>
     </div>
   );
 }

@@ -38,6 +38,7 @@ import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
 import { useLocations } from '@/hooks/useLocations';
 import { ClientDetailSheet } from '@/components/dashboard/ClientDetailSheet';
 import { ClientHealthSummaryCard } from '@/components/dashboard/client-health/ClientHealthSummaryCard';
+import { BentoGrid } from '@/components/ui/bento-grid';
 
 type SortField = 'total_spend' | 'visit_count' | 'last_visit' | 'name';
 type SortDirection = 'asc' | 'desc';
@@ -285,7 +286,7 @@ export default function ClientDirectory() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <BentoGrid maxPerRow={5} gap="gap-4" className="mb-6">
           <Card className="p-4 text-center">
             <Users className="w-5 h-5 text-primary mx-auto mb-2" />
             <p className="font-display text-2xl">{stats.total}</p>
@@ -311,7 +312,7 @@ export default function ClientDirectory() {
             <p className="font-display text-2xl">{formatCurrencyWhole(stats.totalRevenue)}</p>
             <p className="text-xs text-muted-foreground">Total Revenue</p>
           </Card>
-        </div>
+        </BentoGrid>
 
         {/* Filters */}
         <div className="flex flex-col md:flex-row gap-4 mb-6">

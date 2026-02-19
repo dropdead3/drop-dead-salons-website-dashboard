@@ -14,6 +14,7 @@ import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { RetentionMetrics } from '@/hooks/useOperationalAnalytics';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
 import { AtRiskClientsList } from './AtRiskClientsList';
+import { BentoGrid } from '@/components/ui/bento-grid';
 
 interface ClientsContentProps {
   retention?: RetentionMetrics;
@@ -28,11 +29,11 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
   if (isLoading || !retention) {
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <BentoGrid maxPerRow={5} gap="gap-4">
           {[1, 2, 3, 4, 5].map(i => (
             <Skeleton key={i} className="h-28" />
           ))}
-        </div>
+        </BentoGrid>
         <Skeleton className="h-[300px]" />
       </div>
     );
@@ -55,7 +56,7 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
         dateRange={dateRange}
         locationName={locationName}
       >
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <BentoGrid maxPerRow={5} gap="gap-4">
           <Card className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-primary/10">
@@ -141,7 +142,7 @@ export function ClientsContent({ retention, isLoading, dateRange, locationName }
               </div>
             </div>
           </Card>
-        </div>
+        </BentoGrid>
       </PinnableCard>
 
       {/* Detailed Retention Card */}

@@ -24,6 +24,7 @@ import { SourceBreakdownChart } from '@/components/dashboard/marketing/SourceBre
 import { MediumDistributionChart } from '@/components/dashboard/marketing/MediumDistributionChart';
 import { CampaignBudgetManager } from '@/components/dashboard/marketing/CampaignBudgetManager';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
+import { BentoGrid } from '@/components/ui/bento-grid';
 
 type DateRange = 'week' | 'month' | '3months';
 
@@ -89,7 +90,7 @@ export default function MarketingAnalytics() {
         </div>
 
         {/* Summary KPI Cards - Row 1: Main Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-4">
+        <BentoGrid maxPerRow={5} gap="gap-4" className="mb-4">
           <Card className={tokens.card.wrapper}>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
@@ -138,7 +139,7 @@ export default function MarketingAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className={`${tokens.card.wrapper} col-span-2 md:col-span-1`}>
+          <Card className={tokens.card.wrapper}>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center text-center">
                 <Award className="h-5 w-5 text-muted-foreground mb-2" />
@@ -149,11 +150,11 @@ export default function MarketingAnalytics() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </BentoGrid>
 
         {/* Summary KPI Cards - Row 2: ROI Metrics (only show if spend data exists) */}
         {hasSpendData && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <BentoGrid maxPerRow={4} gap="gap-4" className="mb-6">
             <Card className={tokens.card.wrapper}>
               <CardContent className="pt-6">
                 <div className="flex flex-col items-center text-center">
@@ -213,7 +214,7 @@ export default function MarketingAnalytics() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </BentoGrid>
         )}
 
         {/* Campaign Performance Table */}

@@ -25,6 +25,7 @@ import { RefundDialog } from '@/components/dashboard/transactions/RefundDialog';
 import { IssueCreditsDialog } from '@/components/dashboard/transactions/IssueCreditsDialog';
 import { GiftCardManager } from '@/components/dashboard/transactions/GiftCardManager';
 import { cn } from '@/lib/utils';
+import { BentoGrid } from '@/components/ui/bento-grid';
 
 type DatePreset = 'today' | 'this_week' | 'this_month' | 'last_month' | 'all';
 
@@ -132,7 +133,7 @@ export default function Transactions() {
 
           <TabsContent value="transactions" className="space-y-4">
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <BentoGrid maxPerRow={4} gap="gap-4">
               <Card className="p-4">
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
                 <p className="text-2xl font-display font-medium">{formatCurrency(totalRevenue)}</p>
@@ -151,7 +152,7 @@ export default function Transactions() {
                   {refundedCount}
                 </p>
               </Card>
-            </div>
+            </BentoGrid>
 
             {/* Filters */}
             <Card>
