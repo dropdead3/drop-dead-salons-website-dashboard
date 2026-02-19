@@ -1079,7 +1079,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
         "dashboard-top-bar hidden lg:block sticky top-3 z-30 mx-3 mt-3",
         hideFooter && "shrink-0"
       )}>
-        <div className="relative w-full max-w-none flex items-center justify-between h-14 px-6 bg-card/90 backdrop-blur-2xl rounded-2xl border border-border/50 shadow-sm overflow-hidden">
+        <div className="relative w-full max-w-none flex items-center justify-between h-14 px-6 bg-card/50 backdrop-blur-2xl rounded-2xl border border-border/15 shadow-sm overflow-hidden">
           {/* Left side - Sidebar toggle + Org Switcher */}
           <div className="flex items-center gap-3">
             <Tooltip>
