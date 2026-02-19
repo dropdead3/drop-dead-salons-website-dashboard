@@ -1,36 +1,39 @@
 
-## Fix Collapsed Sidebar Logo Size
+## Move Phorest Sync Button Next to Customize Button
 
-### Problem
-The DD secondary icon logo is a wide horizontal SVG (aspect ratio ~3.25:1). When the sidebar collapses, it's forced into a `w-6 h-6` (24x24px) square with `object-contain`, which shrinks it to nearly invisible.
+### What Changes
 
-### Solution
-Replace the fixed square constraint with a more appropriate sizing for the collapsed state:
+The Phorest sync icon (the circular refresh arrow with the status dot) currently sits in the top navigation bar alongside "View As" and the bell icon. It will be moved to sit right next to the "Customize" button in the analytics filter bar area on the dashboard home page.
 
-**File: `src/components/dashboard/SidebarNavContent.tsx` (lines 327-331)**
+### Implementation
 
-Change the custom icon rendering in collapsed state from:
-- `w-6 h-6 object-contain` (24x24 square -- crushes wide logos)
+**Two files will be modified:**
 
-To:
-- `h-5 w-auto max-w-[40px] object-contain` -- this gives the logo a reasonable height and lets the width flex naturally up to 40px, fitting comfortably within the 64px (w-16) collapsed sidebar while staying visually legible.
+1. **`src/components/dashboard/DashboardLayout.tsx`**
+   - Remove the `<PhorestSyncPopout />` from the top nav bar controls section (around line 1191-1193)
+   - Also remove it from the ellipsis overflow dropdown (around line 1229-1232)
+   - The top bar becomes cleaner with just the access badge, View As toggle, and notifications
 
-Also adjust the fallback initials block (line 333) from `w-6 h-6` to `w-7 h-7` so it matches the visual weight of the icon logo.
+2. **`src/pages/dashboard/DashboardHome.tsx`**
+   - Import `PhorestSyncPopout` component
+   - Add it inside the `leadingContent` prop of `AnalyticsFilterBar`, wrapping both the sync popout and the existing `DashboardCustomizeMenu` in a flex container so they sit side-by-side
+   - Only render the sync button for admin/super_admin/manager roles (same guard as currently used)
 
 ### Technical Detail
 
+The `leadingContent` prop change in DashboardHome.tsx (around line 742):
+
+```tsx
+leadingContent={
+  <div className="flex items-center gap-1">
+    {(actualRoles.includes('admin') || actualRoles.includes('super_admin') || actualRoles.includes('manager')) && (
+      <PhorestSyncPopout />
+    )}
+    <DashboardCustomizeMenu
+      roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
+    />
+  </div>
+}
 ```
-// Before (line 330)
-className="w-6 h-6 object-contain"
 
-// After
-className="h-5 w-auto max-w-[40px] object-contain"
-
-// Before fallback (line 333)
-className="w-6 h-6 rounded bg-foreground ..."
-
-// After
-className="w-7 h-7 rounded bg-foreground ..."
-```
-
-This is a single-file, two-line change. The logo will scale naturally within the collapsed sidebar width instead of being forced into a tiny square.
+This places the sync icon immediately to the left of the customize gear icon in the filter bar, matching the user's intent. The role-based visibility guard is preserved.
