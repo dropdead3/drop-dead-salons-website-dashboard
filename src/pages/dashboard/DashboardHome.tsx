@@ -282,15 +282,6 @@ export default function DashboardHome() {
                 {subtitle}
               </p>
             </div>
-            <DashboardCustomizeMenu 
-              variant="button" 
-              roleContext={{
-                isLeadership,
-                hasStylistRole,
-                isFrontDesk,
-                isReceptionist,
-              }}
-            />
           </div>
           <div className="flex flex-wrap items-start gap-3">
             {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
@@ -764,6 +755,11 @@ function DashboardSections({
                           canViewAggregate={canViewAggregate}
                           compact={compact}
                           onCompactChange={onCompactChange}
+                          leadingContent={
+                            <DashboardCustomizeMenu
+                              roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
+                            />
+                          }
                         />
                       </div>
                     </div>
@@ -799,6 +795,11 @@ function DashboardSections({
                       canViewAggregate={canViewAggregate}
                       compact={compact}
                       onCompactChange={onCompactChange}
+                      leadingContent={
+                        <DashboardCustomizeMenu
+                          roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
+                        />
+                      }
                     />
                   </div>
                 </div>

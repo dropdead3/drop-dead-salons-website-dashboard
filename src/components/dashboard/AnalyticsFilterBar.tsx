@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { MapPin, Calendar } from 'lucide-react';
 import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 import {
@@ -38,6 +39,7 @@ interface AnalyticsFilterBarProps {
   canViewAggregate?: boolean;
   compact?: boolean;
   onCompactChange?: (compact: boolean) => void;
+  leadingContent?: ReactNode;
 }
 
 export function AnalyticsFilterBar({
@@ -49,6 +51,7 @@ export function AnalyticsFilterBar({
   canViewAggregate = true,
   compact,
   onCompactChange,
+  leadingContent,
 }: AnalyticsFilterBarProps) {
   const { data: allLocations } = useActiveLocations();
   const locations = accessibleLocations ?? allLocations;
@@ -61,6 +64,9 @@ export function AnalyticsFilterBar({
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">
+      {/* Leading content (e.g. customize button) */}
+      {leadingContent}
+
       {/* Simple / Detailed toggle */}
       {onCompactChange && (
         <Tabs
