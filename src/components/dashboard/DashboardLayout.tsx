@@ -1118,6 +1118,14 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
         "dashboard-top-bar hidden lg:block sticky top-0 z-30 px-3 pt-3 pb-3",
         hideFooter && "shrink-0"
       )}>
+        {/* Extended blur zone -- blurs content around/below the bar */}
+        <div 
+          className="absolute inset-0 -bottom-8 backdrop-blur-md pointer-events-none"
+          style={{
+            maskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, black 60%, transparent 100%)',
+          }}
+        />
         <div className="relative w-full max-w-none flex items-center justify-between h-14 px-6 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border rounded-full">
           {/* Left side - Sidebar toggle + Org Switcher */}
           <div className="flex items-center gap-3">
