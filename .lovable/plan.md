@@ -1,20 +1,47 @@
 
 
-## Fix My Tasks Card Radius (and Other Hardcoded Overrides)
+## Move Greeting from Command Center into Sidebar
 
-### Root Cause
-The My Tasks card in `src/pages/dashboard/DashboardHome.tsx` (line 577) has `rounded-2xl` hardcoded in its className, which overrides the base Card component's `rounded-xl`. The tokens and base Card were updated in the previous change, but this inline class was missed.
+### What Changes
+The "Another strong day, Eric" greeting and subtitle will be removed from the top of the Command Center page and placed inside the sidebar, directly below the logo. It will animate in on load and automatically fade out after 7 seconds.
 
 ### Changes
 
-**File: `src/pages/dashboard/DashboardHome.tsx`**
+**1. `src/components/dashboard/SidebarNavContent.tsx` -- Add greeting below logo**
+- Accept new props: `greeting`, `subtitle`, `firstName` (passed from DashboardLayout)
+- Below the logo `div` (after line 346), insert a new animated greeting block that:
+  - Uses `AnimatePresence` + `motion.div` to fade/slide in
+  - Uses a `useState` + `useEffect` with a 7-second `setTimeout` to trigger exit
+  - Displays the greeting text and subtitle in a compact format (smaller than the current page heading)
+  - Hides when sidebar is collapsed
+  - Respects `prefers-reduced-motion`
 
-1. **My Tasks card (line 577)**: Change `rounded-2xl` to `rounded-xl`
-2. **Quick Stats cards (lines 499, 512, 525, 538)**: Change `rounded-2xl` to `rounded-xl` on all four stat cards
-3. **Any other hardcoded `rounded-2xl` on Card elements in this file**: Audit and update to `rounded-xl`
+**2. `src/pages/dashboard/DashboardHome.tsx` -- Remove greeting from page**
+- Remove the greeting header block (lines 272-290) containing the h1 and subtitle paragraph
+- Keep the action buttons row (AIInsightsDrawer, AnnouncementsDrawer) -- they stay on the page
+- The `greeting`, `subtitle`, and `firstName` state/logic stays in this file but will also need to be lifted or duplicated into the sidebar
 
-### Why This Was Missed
-The previous change correctly updated the design tokens and base Card component, but several cards in `DashboardHome.tsx` use inline `rounded-2xl` classes that override the base. Tailwind's specificity means the last matching utility wins, so these hardcoded values took precedence over the base Card's `rounded-xl`.
+**3. `src/components/dashboard/DashboardLayout.tsx` -- Pass greeting data to sidebar**
+- Compute the greeting, subtitle, and firstName in the layout (or pass from auth context)
+- Forward these as props to `SidebarNavContent`
 
-### Result
-After this change, My Tasks, Quick Stats, and all other dashboard cards will visually match at `rounded-xl` (20px) -- consistent with the sidebar, top bar, analytics cards, and widgets.
+### Technical Detail: Greeting in Sidebar
+
+The greeting block will sit between the logo section and the announcements widget. It will look something like:
+
+```
+[Logo]
+─────────────
+"Another strong day, Eric"
+"Let's see where things stand"    <- fades out after 7s
+─────────────
+[Announcements Widget]
+[Nav items...]
+```
+
+Animation: `opacity 0 -> 1` on mount, then after 7s, `opacity 1 -> 0` + `height auto -> 0` exit. The border-bottom on the greeting container also animates away cleanly.
+
+### Files Modified
+- `src/components/dashboard/SidebarNavContent.tsx` -- add greeting UI
+- `src/pages/dashboard/DashboardHome.tsx` -- remove greeting from page body
+- `src/components/dashboard/DashboardLayout.tsx` -- compute and pass greeting props to sidebar
