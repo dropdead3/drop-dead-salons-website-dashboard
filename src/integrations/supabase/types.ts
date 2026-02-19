@@ -512,6 +512,48 @@ export type Database = {
           },
         ]
       }
+      appointment_assistants: {
+        Row: {
+          appointment_id: string
+          assistant_user_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          organization_id: string
+        }
+        Insert: {
+          appointment_id: string
+          assistant_user_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          organization_id: string
+        }
+        Update: {
+          appointment_id?: string
+          assistant_user_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_assistants_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "phorest_appointments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointment_assistants_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointment_check_ins: {
         Row: {
           appointment_id: string | null

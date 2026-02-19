@@ -135,8 +135,20 @@ export function usePhorestCalendar() {
 
       // Apply permission-based filtering
       if (!canViewAll && !canViewTeam && canViewOwn && effectiveUserId) {
-        // Only view own appointments
-        query = query.eq('stylist_user_id', effectiveUserId);
+        // Only view own appointments - also include appointments where user is an assistant
+        const { data: assistedApptIds } = await supabase
+          .from('appointment_assistants')
+          .select('appointment_id')
+          .eq('assistant_user_id', effectiveUserId);
+
+        const assistedIds = (assistedApptIds || []).map(a => a.appointment_id);
+
+        if (assistedIds.length > 0) {
+          // Use or filter to include own + assisted appointments
+          query = query.or(`stylist_user_id.eq.${effectiveUserId},id.in.(${assistedIds.join(',')})`);
+        } else {
+          query = query.eq('stylist_user_id', effectiveUserId);
+        }
       }
 
       // Apply stylist filter if selected

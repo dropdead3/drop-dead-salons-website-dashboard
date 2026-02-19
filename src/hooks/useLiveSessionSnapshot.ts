@@ -15,6 +15,7 @@ export interface StylistDetail {
   lastEndTime: string; // wrap-up estimate
   currentApptIndex: number; // 1-based
   totalAppts: number;
+  assistedBy: string | null;
 }
 
 interface LiveSessionSnapshot {
@@ -97,11 +98,38 @@ export function useLiveSessionSnapshot(): LiveSessionSnapshot {
       // Get ALL of today's appointments for active staff to find wrap-up times
       const { data: allTodayAppts, error: allError } = await supabase
         .from('phorest_appointments')
-        .select('phorest_staff_id, start_time, end_time, service_name')
+        .select('id, phorest_staff_id, start_time, end_time, service_name')
         .eq('appointment_date', today)
         .in('phorest_staff_id', uniqueStaffIds);
 
       if (allError) throw allError;
+
+      // Get assistant assignments for currently active appointments
+      const activeApptIds = appointments.map(a => a.id).filter(Boolean);
+      let assistantMap = new Map<string, string>(); // appointment_id -> assistant name
+      if (activeApptIds.length > 0) {
+        const { data: assistants } = await supabase
+          .from('appointment_assistants')
+          .select('appointment_id, assistant_user_id')
+          .in('appointment_id', activeApptIds);
+
+        if (assistants && assistants.length > 0) {
+          const assistantUserIds = [...new Set(assistants.map(a => a.assistant_user_id))];
+          const { data: assistantProfiles } = await supabase
+            .from('employee_profiles')
+            .select('user_id, full_name, display_name')
+            .in('user_id', assistantUserIds);
+
+          const assistantProfileMap = new Map(
+            (assistantProfiles || []).map(p => [p.user_id, p.display_name || p.full_name || 'Unknown'])
+          );
+
+          assistants.forEach(a => {
+            const name = assistantProfileMap.get(a.assistant_user_id);
+            if (name) assistantMap.set(a.appointment_id, name);
+          });
+        }
+      }
 
       // Build per-stylist details
       const stylistDetailsMap = new Map<string, StylistDetail>();
@@ -133,6 +161,9 @@ export function useLiveSessionSnapshot(): LiveSessionSnapshot {
         // Last end time of the day
         const lastEndTime = [...allForStaff].sort((a, b) => (b.end_time || '').localeCompare(a.end_time || ''))[0]?.end_time || current?.end_time || '';
 
+        // Get assistant name for current appointment
+        const assistedBy = current ? (assistantMap.get(current.id) || null) : null;
+
         stylistDetailsMap.set(staffId, {
           name,
           photoUrl,
@@ -141,6 +172,7 @@ export function useLiveSessionSnapshot(): LiveSessionSnapshot {
           lastEndTime,
           currentApptIndex: currentApptIndex || 1,
           totalAppts,
+          assistedBy,
         });
       }
 

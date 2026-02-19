@@ -49,14 +49,19 @@ import {
   MessageSquare,
   Lock,
   Trash2,
-  Loader2
+  Loader2,
+  UserPlus,
+  X,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useAppointmentNotes } from '@/hooks/useAppointmentNotes';
+import { useAppointmentAssistants } from '@/hooks/useAppointmentAssistants';
 import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 
 interface AppointmentDetailSheetProps {
   appointment: PhorestAppointment | null;
@@ -105,14 +110,23 @@ export function AppointmentDetailSheet({
   isUpdating = false,
 }: AppointmentDetailSheetProps) {
   const { user, hasPermission } = useAuth();
+  const { effectiveOrganization } = useOrganizationContext();
   const { formatCurrency } = useFormatCurrency();
   const { formatDate } = useFormatDate();
   const [newNote, setNewNote] = useState('');
   const [isPrivateNote, setIsPrivateNote] = useState(false);
   const [confirmAction, setConfirmAction] = useState<AppointmentStatus | null>(null);
+  const [showAssistantPicker, setShowAssistantPicker] = useState(false);
   
   const { notes, addNote, deleteNote, isAdding } = useAppointmentNotes(appointment?.phorest_id || null);
+  const { assistants, assignAssistant, removeAssistant, isAssigning } = useAppointmentAssistants(appointment?.id || null);
   const canAddNotes = hasPermission('add_appointment_notes');
+  const canManageAssistants = hasPermission('create_appointments') || hasPermission('view_team_appointments');
+
+  // Fetch team for assistant picker
+  const { data: teamMembers = [] } = useTeamDirectory(undefined, {
+    organizationId: effectiveOrganization?.id,
+  });
 
   if (!appointment) return null;
 
@@ -253,6 +267,93 @@ export function AppointmentDetailSheet({
               </div>
 
               <Separator />
+
+              {/* Assistant Stylists */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
+                    Assistant Stylists
+                  </h4>
+                  {canManageAssistants && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 gap-1 text-xs"
+                      onClick={() => setShowAssistantPicker(!showAssistantPicker)}
+                    >
+                      <UserPlus className="h-3.5 w-3.5" />
+                      Assign
+                    </Button>
+                  )}
+                </div>
+
+                {/* Current assistants */}
+                {assistants.length > 0 ? (
+                  <div className="space-y-2">
+                    {assistants.map((a) => (
+                      <div key={a.id} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={a.assistant_profile?.photo_url || undefined} />
+                            <AvatarFallback className="text-xs">
+                              {(a.assistant_profile?.display_name || a.assistant_profile?.full_name || '?').slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm">{a.assistant_profile?.display_name || a.assistant_profile?.full_name}</span>
+                        </div>
+                        {canManageAssistants && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => removeAssistant(a.id)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No assistants assigned</p>
+                )}
+
+                {/* Assistant picker */}
+                {showAssistantPicker && (
+                  <div className="border rounded-lg p-2 space-y-1 max-h-40 overflow-y-auto">
+                    {teamMembers
+                      .filter(m => 
+                        m.user_id !== appointment.stylist_user_id &&
+                        !assistants.some(a => a.assistant_user_id === m.user_id) &&
+                        (m.roles?.includes('stylist_assistant') || m.roles?.includes('stylist') || m.roles?.includes('admin'))
+                      )
+                      .map(member => (
+                        <button
+                          key={member.user_id}
+                          className="flex items-center gap-2 w-full p-1.5 rounded hover:bg-muted text-left text-sm"
+                          disabled={isAssigning}
+                          onClick={() => {
+                            if (effectiveOrganization?.id) {
+                              assignAssistant({
+                                assistantUserId: member.user_id,
+                                organizationId: effectiveOrganization.id,
+                              });
+                              setShowAssistantPicker(false);
+                            }
+                          }}
+                        >
+                          <Avatar className="h-5 w-5">
+                            <AvatarImage src={member.photo_url || undefined} />
+                            <AvatarFallback className="text-[8px]">
+                              {(member.display_name || member.full_name || '?').slice(0, 2).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{member.display_name || member.full_name}</span>
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
 
               {/* Client Contact */}
               <div className="space-y-3">
