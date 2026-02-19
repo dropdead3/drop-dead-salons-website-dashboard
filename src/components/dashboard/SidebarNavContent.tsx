@@ -310,7 +310,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   return (
     <div className="flex flex-col h-full">
       {/* Logo & Collapse Toggle */}
-      <div className={cn("border-b border-border/50 shadow-[0_1px_2px_rgba(0,0,0,0.03)]", isCollapsed ? "p-3" : "p-6")}>
+      <div className={cn("border-b border-border/30", isCollapsed ? "p-3" : "p-6")}>
         <div className={cn("flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
           <Link to="/dashboard" className="block">
             {isCollapsed ? (
