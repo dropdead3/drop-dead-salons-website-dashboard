@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Clock } from 'lucide-react';
 import { DRILLDOWN_DIALOG_CONTENT_CLASS, DRILLDOWN_OVERLAY_CLASS } from './drilldownDialogStyles';
@@ -92,8 +92,7 @@ export function LiveSessionDrilldown({
         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
         {/* Stylist list */}
-        <div className="flex-1 min-h-0 overflow-hidden">
-        <ScrollArea className="h-full">
+        <div className="flex-1 min-h-0 overflow-y-auto">
           <div className="py-1">
             {details.map((stylist, i) => {
               const progress = stylist.totalAppts > 0
@@ -150,7 +149,6 @@ export function LiveSessionDrilldown({
               );
             })}
           </div>
-        </ScrollArea>
         </div>
       </DialogContent>
     </Dialog>
