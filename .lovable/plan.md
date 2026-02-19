@@ -1,90 +1,53 @@
 
 
-## Align Widget Cards with Simple Analytic Card Design
+## Fix Sub-Label and Empty State Typography Inconsistencies
 
-### What's Different
+### Audit Results
 
-Comparing the two screenshots, the simple analytic cards have a taller, more spacious feel with bottom-aligned action links, while the widget cards feel cramped and inconsistently structured. Here are the specific mismatches:
+| Element | Changelog | Birthday | Anniversary | Schedule | Day Rate | Help Center | AI Tasks |
+|---------|-----------|----------|-------------|----------|----------|-------------|----------|
+| Empty state text | text-sm | text-xs | text-xs | text-xs | text-sm | text-sm | text-xs |
+| Empty state padding | py-4 | py-2 | py-2 | none | py-4 | py-4 | py-2 |
+| Section sub-label | text-xs | text-[10px] | text-[10px] | text-[10px] | text-xs font-medium | n/a | n/a |
 
-| Property | Analytic Cards (correct) | Widget Cards (current) |
-|----------|------------------------|----------------------|
-| Padding | `p-5` | `p-4` (tokens.kpi.tile default) |
-| Min height | `min-h-[160px]` | None (cards collapse) |
-| Vertical layout | `justify-between` (pushes footer down) | No vertical distribution |
-| Action links | Bottom-aligned with `border-t border-border/30` separator | Inline in header or scattered |
-| Header structure | Icon + label only in top row | Some have action buttons in header row |
+### Standardization Rules
 
-### Target Pattern (matching analytic cards exactly)
+**Empty states**: All use `text-sm text-muted-foreground text-center py-4` (the larger, more spacious treatment seen in Changelog/Day Rate/Help Center). This feels more premium and less cramped.
 
-```tsx
-<Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
-  {/* Top: Icon + Label */}
-  <div className="flex items-center gap-3">
-    <div className={tokens.card.iconBox}>
-      <Icon className={tokens.card.icon} />
-    </div>
-    <span className={cn(tokens.kpi.label, 'flex-1')}>WIDGET TITLE</span>
-  </div>
+**Section sub-labels** (e.g., "Coming Up", "Today's Bookings"): All use `text-xs text-muted-foreground uppercase tracking-wide` (no font-medium, consistent with the calm label treatment). Currently a mix of text-[10px] and text-xs.
 
-  {/* Middle: Content */}
-  <div className="mt-4 flex-1">
-    {/* Widget-specific content */}
-  </div>
+**Content body text** (names, descriptions): Standardize to `text-sm` for primary content lines.
 
-  {/* Bottom: Action link with border separator */}
-  <div className="flex justify-end mt-2 pt-2 border-t border-border/30 min-h-[28px]">
-    <Link className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-      View Label <ChevronRight className="w-3 h-3" />
-    </Link>
-  </div>
-</Card>
-```
+**Help Center empty icon**: Reduce from `h-8 w-8` to `h-6 w-6` to avoid feeling oversized relative to other widgets.
 
 ### Changes Per File
 
-**1. `src/components/dashboard/ChangelogWidget.tsx`**
-- Add `justify-between min-h-[160px] p-5` to Card className
-- Remove unread badge from header row (keep it on individual entries)
-- Move "View All Updates" link to a bottom footer row with `border-t border-border/30`, using `text-xs font-medium` link style with `ChevronRight` icon instead of a full-width ghost Button
-- Change `<h3>` to `<span>` with `flex-1` to match analytic pattern
+**1. `src/components/dashboard/BirthdayWidget.tsx`**
+- Line 90: Change `text-[10px]` to `text-xs` on "Coming Up" label
+- Line 129: Change `text-xs` to `text-sm` and `py-2` to `py-4` on empty state
 
-**2. `src/components/dashboard/HelpCenterWidget.tsx`**
-- Add `justify-between min-h-[160px] p-5` to Card className
-- Remove "View All" button from header row
-- Move "Browse Help Center" to bottom footer row with `border-t border-border/30`, matching the "View Sales >" link style from analytic cards
-- Change `<h3>` to `<span>` with `flex-1`
+**2. `src/components/dashboard/AnniversaryWidget.tsx`**
+- Line 107: Change `text-[10px]` to `text-xs` on "Coming Up" label
+- Line 159: Change `text-xs` to `text-sm` and `py-2` to `py-4` on empty state
 
-**3. `src/components/dashboard/BirthdayWidget.tsx`**
-- Add `justify-between min-h-[160px] p-5` to Card className
-- Change `<h3>` to `<span>` with `flex-1`
-- Wrap content in `flex-1` div with `mt-4`
+**3. `src/components/dashboard/WorkScheduleWidgetCompact.tsx`**
+- Line 35: Change `text-xs` to `text-sm` on "No locations assigned" empty state
+- Line 84: Change `text-[10px]` to `text-xs` on "X days per week" label
 
-**4. `src/components/dashboard/AnniversaryWidget.tsx`**
-- Add `justify-between min-h-[160px] p-5` to Card className
-- Change `<h3>` to `<span>` with `flex-1`
-- Wrap content in `flex-1` div with `mt-4`
+**4. `src/components/dashboard/DayRateWidget.tsx`**
+- Line 105: Remove `font-medium` from "Today's Bookings" sub-label (keep `text-xs`)
+- Already correct on empty state (text-sm py-4)
 
-**5. `src/components/dashboard/WorkScheduleWidgetCompact.tsx`**
-- Add `justify-between min-h-[160px] p-5` to Card className
-- Change `<h3>` to `<span>` with `flex-1`
-- Move "Manage >" link to bottom footer row with `border-t border-border/30` instead of a full-width ghost Button
-- Wrap schedule content in `flex-1` div with `mt-4`
+**5. `src/components/dashboard/HelpCenterWidget.tsx`**
+- Line 57: Change empty icon from `h-8 w-8` to `h-6 w-6`
 
-**6. `src/components/dashboard/DayRateWidget.tsx`**
-- Add `justify-between min-h-[160px] p-5` to Card className (replace `space-y-4`)
-- Remove "View All" from header row
-- Move it to bottom footer row with `border-t border-border/30` matching the analytic link style
-- Change `<h3>` to `<span>` with `flex-1`
-- Wrap stats content in `flex-1` div with `mt-4`
+**6. `src/components/dashboard/AITasksWidget.tsx`**
+- Line 27: Change `text-xs` to `text-sm` and `py-2` to `py-4` on empty state
 
-**7. `src/components/dashboard/AITasksWidget.tsx`**
-- Add `justify-between min-h-[160px] p-5` to Card className
-- Change `<h3>` to `<span>` with `flex-1`
-- Wrap tasks content in `flex-1` div with `mt-4`
+**7. `src/components/dashboard/ChangelogWidget.tsx`**
+- Already correct (text-sm py-4 on empty state, text-xs on sub-label)
 
 ### What This Achieves
-- All widget cards will have the same height, padding, and vertical rhythm as the simple analytic cards
-- Action links consistently appear at the bottom right with a subtle border separator
-- Headers are clean with just icon + label (no competing controls)
-- The `justify-between` + `min-h` ensures content distributes vertically the same way
-
+- Every widget empty state renders identically: centered, `text-sm`, generous `py-4` spacing
+- Every section sub-label renders identically: `text-xs uppercase tracking-wide`
+- No more visual jitter between widgets when content is absent
