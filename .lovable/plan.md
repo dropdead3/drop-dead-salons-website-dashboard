@@ -1,27 +1,35 @@
 
 
-## Fix Border Consistency on Pinned Analytics Cards
+## Replace Icon Toggle with Filter Tab Toggle for Simple/Detailed View
 
-### Problem
-The top 4 simplified analytics cards (Sales Overview, Week Ahead Forecast, New Bookings, Goal Tracker) have a lighter border than the rest of the dashboard cards. This is because:
+### What changes
+The current Simple/Detailed view toggle is a single icon button that flips between two icons with a tooltip. We will replace it with the existing `FilterTabsList` / `FilterTabsTrigger` component pair, showing two labeled tabs: **Simple** and **Detailed**.
 
-- **Top 4 cards**: Use `tokens.kpi.tile` which applies `border-border/50` (50% opacity)
-- **Other cards** (My Tasks, Widgets, etc.): Use the standard `Card` component which applies `border` at full opacity via `hsl(var(--border))`
+### File: `src/components/dashboard/AnalyticsFilterBar.tsx`
 
-The reduced opacity makes the top cards look like they belong to a different visual system.
+#### 1. Update imports
+- Remove: `LayoutGrid`, `List` from lucide-react; `Button`; `Tooltip`, `TooltipContent`, `TooltipTrigger`
+- Add: `Tabs`, `FilterTabsList`, `FilterTabsTrigger` from `@/components/ui/tabs`
 
-### Fix
+#### 2. Replace the toggle block (lines 66-82)
 
-**File: `src/lib/design-tokens.ts` (line 56)**
+Replace the icon `Button` wrapped in a `Tooltip` with:
 
-Update the `kpi.tile` token from:
+```tsx
+{onCompactChange && (
+  <Tabs
+    value={compact ? 'simple' : 'detailed'}
+    onValueChange={(v) => onCompactChange(v === 'simple')}
+  >
+    <FilterTabsList>
+      <FilterTabsTrigger value="simple">Simple</FilterTabsTrigger>
+      <FilterTabsTrigger value="detailed">Detailed</FilterTabsTrigger>
+    </FilterTabsList>
+  </Tabs>
+)}
 ```
-rounded-xl border border-border/50 bg-card p-4 flex flex-col gap-1
-```
-to:
-```
-rounded-xl border border-border bg-card p-4 flex flex-col gap-1
-```
 
-This single change removes the `/50` opacity modifier from the border color, making the top 4 cards match the standard `Card` component's full-opacity `border` class. One token changed, all pinned cards inherit the fix automatically.
+This uses the existing tokenized `FilterTabsList` and `FilterTabsTrigger` components (compact pill-style tabs at 8px height), which visually match other filter toggles in the analytics section and provide clear textual labels instead of ambiguous icons.
 
+### No other files change
+The `FilterTabsList` and `FilterTabsTrigger` components already exist and are exported from `@/components/ui/tabs`. No new components or tokens are needed.
