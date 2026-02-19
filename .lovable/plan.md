@@ -1,91 +1,34 @@
 
 
-## Assistant Stylists on Appointments
+## Improve Live Session Drill-Down Styling
 
-This feature adds the ability to assign assistant stylists to scheduled appointments. The drill-down will show "Assisted by [Name]" when an assistant is linked, and those appointments will also appear on the assistant's calendar.
+Refine the "Happening Now" drill-down to match the platform's luxury glassmorphism aesthetic and ensure it scrolls properly when the list exceeds the viewport.
 
-### What Changes
+### Changes (single file: `src/components/dashboard/LiveSessionDrilldown.tsx`)
 
-**1. New database table: `appointment_assistants`**
-A junction table linking appointments to assistant user IDs:
-- `id` (UUID, PK)
-- `appointment_id` (UUID, FK to `phorest_appointments.id`)
-- `assistant_user_id` (UUID, FK to `auth.users`)
-- `organization_id` (UUID, FK to `organizations.id`)
-- `created_at`, `created_by`
+**1. Header upgrade**
+- Use `font-display tracking-wide uppercase` on the title (Termina, per design tokens) instead of `font-semibold`
+- Add a subtle gradient divider below the header instead of a plain border
 
-RLS policies scoped to org members. Index on `appointment_id` and `assistant_user_id`.
+**2. Stylist row refinement**
+- Increase row padding and avatar size (h-9 w-9) for breathing room
+- Add a subtle hover state (`hover:bg-muted/30 transition-colors`) on each row
+- Use `rounded-lg` on the avatar fallback background for a softer look
+- Apply `font-medium` (not `font-semibold`) on stylist names per design system rules
+- Add a mini progress indicator showing appointment progress as a thin bar (e.g., 3/5 = 60%) under the "Appointment X of Y" text using a simple div with `bg-primary/40` fill
 
-**2. Update live session hook: `src/hooks/useLiveSessionSnapshot.ts`**
-- After resolving active appointments, query `appointment_assistants` for those appointment IDs
-- Join to `employee_profiles` to get assistant names
-- Add `assistedBy: string | null` to the `StylistDetail` interface
+**3. Wrap-up time styling**
+- Wrap the time block in a small `bg-muted/40 rounded-md px-2 py-1` chip so it reads as a contained data element rather than floating text
 
-**3. Update drill-down UI: `src/components/dashboard/LiveSessionDrilldown.tsx`**
-- Below the service name, show "Assisted by [Name]" in a subtle label when present
-- Update demo data to include a few entries with assistant names
-
-**4. Update calendar hook: `src/hooks/usePhorestCalendar.ts`**
-- Expand the appointment query to also fetch appointments where the current user is listed as an assistant in `appointment_assistants`
-- Merge these into the calendar results so assistants see the appointments on their schedule
-
-**5. Add "Assign Assistant" UI on appointment detail**
-- Add a small action (button or dropdown) on the appointment card or detail view to assign an assistant stylist
-- Filtered to users with the `stylist_assistant` role in the same organization
-- Creates a row in `appointment_assistants`
-
----
+**4. Scroll behavior**
+- The `ScrollArea` already has `flex-1 min-h-0` which should work within the `max-h-[85vh] flex flex-col` dialog -- verify this is functioning and add an explicit `overflow-hidden` on the outer container if needed
 
 ### Technical Details
 
-**Database migration:**
-```sql
-CREATE TABLE IF NOT EXISTS public.appointment_assistants (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  appointment_id UUID NOT NULL REFERENCES public.phorest_appointments(id) ON DELETE CASCADE,
-  assistant_user_id UUID NOT NULL,
-  organization_id UUID NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  created_by UUID REFERENCES auth.users(id),
-  UNIQUE(appointment_id, assistant_user_id)
-);
+**File modified:** `src/components/dashboard/LiveSessionDrilldown.tsx`
 
-ALTER TABLE public.appointment_assistants ENABLE ROW LEVEL SECURITY;
--- RLS: org members can view/create/delete
-```
-
-**StylistDetail interface update:**
-```typescript
-interface StylistDetail {
-  // existing fields...
-  assistedBy: string | null; // assistant display name
-}
-```
-
-**Drill-down row addition:**
-```text
-Sarah M
-Balayage & Tone
-Assisted by Jamie R          <-- new line, muted italic
-Appointment 3 of 5
-```
-
-**Calendar query expansion:**
-```typescript
-// Also fetch appointments where user is an assistant
-const { data: assistedAppts } = await supabase
-  .from('appointment_assistants')
-  .select('appointment_id')
-  .eq('assistant_user_id', userId);
-// Merge those appointment IDs into the main query
-```
-
-### Files Created
-- Database migration (via migration tool)
-
-### Files Modified
-- `src/hooks/useLiveSessionSnapshot.ts` (add assistant lookup)
-- `src/components/dashboard/LiveSessionDrilldown.tsx` (show "Assisted by" + update demo data)
-- `src/hooks/usePhorestCalendar.ts` (include assistant appointments in calendar)
-- Appointment detail component (add assign-assistant action)
-
+- Import `tokens` from `@/lib/design-tokens`
+- Replace `text-base font-semibold` on DialogTitle with `tokens.heading.section` (Termina, uppercase, tracked)
+- Add hover transition to each row div
+- Wrap the time display in a muted chip container
+- Add a thin progress bar (4px tall div) under the appointment count text
