@@ -1,24 +1,31 @@
 
 
-## Make Feedback Buttons Icon-Only with Hover Tooltips
+## Add "Beta Test" Badge to the Top Menu Bar
 
-The "Request a Feature" and "Report a Bug" buttons currently show text labels that get truncated. This change makes them always icon-only (matching the collapsed behavior) with tooltip hints on hover.
+A small "BETA" badge will be added to the left of the search bar in the dashboard's top header to indicate the entire project is in beta testing.
 
 ### Changes
 
-**`src/components/dashboard/SidebarFeedbackButtons.tsx`**
+**`src/components/dashboard/DashboardLayout.tsx`**
 
-- Remove the `isCollapsed` conditional logic -- both buttons always render as icon-only.
-- Wrap both buttons in `<Tooltip>` with `side="top"` so the label appears on hover.
-- Use a compact `flex gap-1` row layout instead of the 2-column grid.
-- Slightly increase icon size to `h-4 w-4` for better visibility as standalone icons.
-- Remove the `isCollapsed` prop since it's no longer needed.
+Insert a styled badge between the left-side controls (sidebar toggle, nav arrows) and the center search bar area. The badge will:
 
-**`src/components/dashboard/SidebarNavContent.tsx`**
+- Display "BETA" in uppercase using `font-display` with wide tracking (per design system rules)
+- Use a subtle glass-style appearance: `bg-amber-500/15 text-amber-600 border border-amber-500/30` (amber to signal "in progress / testing")
+- Include a `FlaskConical` icon (already imported in the file) for visual context
+- Be small and unobtrusive -- `text-[10px]` with a rounded-full pill shape
+- Wrapped in a `Tooltip` showing "This project is currently in beta testing" on hover
 
-- Remove the `isCollapsed` prop passed to `<SidebarFeedbackButtons />`.
+The badge will be placed at approximately line 1100, after the `NavHistoryArrows` and `OrganizationSwitcher`, and before the search bar `div`.
 
-### Result
+### Visual Result
 
-Two small icon buttons (lightbulb + bug) sit cleanly above Clock In / Lock Dashboard. Hovering reveals "Request a Feature" or "Report a Bug" tooltips.
+```text
+[< >] [FLASK BETA]  |  [____Search...____ ⌘K]  |  [Bell] [Avatar]
+```
 
+### Technical Details
+
+- No new files needed -- single edit to `DashboardLayout.tsx`
+- Uses the already-imported `FlaskConical` icon, `Tooltip`/`TooltipContent`/`TooltipTrigger`, and `Badge` components
+- Follows design system: `font-display` for the label, `font-medium` max weight, no banned bold classes
