@@ -145,6 +145,14 @@ export default function DashboardHome() {
   // Analytics filter state (shared across all pinned analytics cards)
   const [locationId, setLocationId] = useState<string>('');
   const [dateRange, setDateRange] = useState<DateRangeType>('today');
+  const [compactView, setCompactView] = useState<boolean>(() => {
+    try { return localStorage.getItem('cc-view-mode') === 'compact'; } catch { return false; }
+  });
+  
+  const handleCompactChange = (v: boolean) => {
+    setCompactView(v);
+    try { localStorage.setItem('cc-view-mode', v ? 'compact' : 'detailed'); } catch {}
+  };
   
   // Set default location when access data loads
   useEffect(() => {
@@ -318,6 +326,8 @@ export default function DashboardHome() {
           onDateRangeChange={setDateRange}
           accessibleLocations={accessibleLocations}
           canViewAggregate={canViewAggregate}
+          compact={compactView}
+          onCompactChange={handleCompactChange}
         />
         )}
       </motion.div>
@@ -350,6 +360,9 @@ interface DashboardSectionsProps {
   accessibleLocations: { id: string; name: string }[];
   /** Whether user can see "All Locations" aggregate option */
   canViewAggregate: boolean;
+  /** Whether compact view is active */
+  compact: boolean;
+  onCompactChange: (compact: boolean) => void;
 }
 
 function DashboardSections({
@@ -372,6 +385,8 @@ function DashboardSections({
   onDateRangeChange,
   accessibleLocations,
   canViewAggregate,
+  compact,
+  onCompactChange,
 }: DashboardSectionsProps) {
   const { t } = useTranslation('dashboard');
   const { formatCurrencyWhole } = useFormatCurrency();
@@ -735,11 +750,13 @@ function DashboardSections({
                       onDateRangeChange={onDateRangeChange}
                       accessibleLocations={accessibleLocations}
                       canViewAggregate={canViewAggregate}
+                      compact={compact}
+                      onCompactChange={onCompactChange}
                     />
                   </div>
                 </div>
               )}
-              <PinnedAnalyticsCard cardId={cardId} filters={analyticsFilters} />
+              <PinnedAnalyticsCard cardId={cardId} filters={analyticsFilters} compact={compact} />
             </React.Fragment>
           );
         }
@@ -754,7 +771,7 @@ function DashboardSections({
       })}
       {/* Render pinned cards that are visible in DB but missing from sectionOrder */}
       {missingPinnedCards.map(cardId => (
-        <PinnedAnalyticsCard key={`pinned:${cardId}`} cardId={cardId} filters={analyticsFilters} />
+        <PinnedAnalyticsCard key={`pinned:${cardId}`} cardId={cardId} filters={analyticsFilters} compact={compact} />
       ))}
     </>
   );
