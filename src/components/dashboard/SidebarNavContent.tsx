@@ -165,31 +165,24 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   }, [sidebarLayout, roles]);
   
   // Check if custom logos are uploaded
+  // Sidebar is always dark, so always use dark-mode logo/icon variants
   const hasCustomLogo = () => {
-    const isDark = resolvedTheme === 'dark';
-    const customLogo = isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
-    return !!customLogo;
+    return !!(businessSettings?.logo_dark_url);
   };
   
   // Check if custom icons are uploaded
   const hasCustomIcon = () => {
-    const isDark = resolvedTheme === 'dark';
-    const customIcon = isDark ? businessSettings?.icon_dark_url : businessSettings?.icon_light_url;
-    return !!customIcon;
+    return !!(businessSettings?.icon_dark_url);
   };
   
-  // Get the appropriate logo based on theme and settings
+  // Get the appropriate logo — always dark (white) variant for dark sidebar
   const getLogo = () => {
-    const isDark = resolvedTheme === 'dark';
-    const customLogo = isDark ? businessSettings?.logo_dark_url : businessSettings?.logo_light_url;
-    const fallbackLogo = isDark ? LogoWhite : Logo;
-    return customLogo || fallbackLogo;
+    return businessSettings?.logo_dark_url || LogoWhite;
   };
   
-  // Get the appropriate icon based on theme and settings
+  // Get the appropriate icon — always dark (white) variant for dark sidebar
   const getIcon = () => {
-    const isDark = resolvedTheme === 'dark';
-    return isDark ? businessSettings?.icon_dark_url : businessSettings?.icon_light_url;
+    return businessSettings?.icon_dark_url;
   };
   
   // Expose the internal ref
