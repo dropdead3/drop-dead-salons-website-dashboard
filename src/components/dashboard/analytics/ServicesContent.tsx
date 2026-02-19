@@ -30,6 +30,7 @@ import { RevPerHourByCategoryChart } from '@/components/dashboard/sales/RevPerHo
 import { useServiceDemandTrend } from '@/hooks/useServiceDemandTrend';
 import { useServiceClientAnalysis } from '@/hooks/useServiceClientAnalysis';
 import { ServiceBundlingIntelligence } from '@/components/dashboard/sales/ServiceBundlingIntelligence';
+import { NewClientConversionCard } from '@/components/dashboard/analytics/NewClientConversionCard';
 import { ServiceCostsProfitsCard } from '@/components/dashboard/sales/ServiceCostsProfitsCard';
 import { useServiceRetailAttachment } from '@/hooks/useServiceRetailAttachment';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
@@ -154,6 +155,7 @@ const SERVICES_SECTION_DEFS: CardDefinition[] = [
   { id: 'service_pairings', label: 'Service Bundling Intelligence', icon: <Layers className="w-4 h-4" /> },
   { id: 'service_costs_profits', label: 'Service Costs & Sales Profits', icon: <DollarSign className="w-4 h-4" /> },
   { id: 'retail_pairing', label: 'Retail Pairing Strength', icon: <ShoppingBag className="w-4 h-4" /> },
+  { id: 'new_client_conversion', label: 'New Client Conversion', icon: <Users className="w-4 h-4" /> },
 ];
 const SERVICES_DEFAULT_ORDER = SERVICES_SECTION_DEFS.map(s => s.id);
 
@@ -482,8 +484,6 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
       </Card>
     </PinnableCard>
   );
-
-
 
   sections.client_type = (
     <PinnableCard key="client_type" elementKey="service_client_analysis" elementName="Client Type by Service" category="Analytics Hub - Sales" dateRange={dateRange} locationName={locationName}>
@@ -1077,6 +1077,12 @@ export function ServicesContent({ dateFrom, dateTo, locationId, filterContext, d
           )}
         </CardContent>
       </Card>
+    </PinnableCard>
+  );
+
+  sections.new_client_conversion = (
+    <PinnableCard key="new_client_conversion" elementKey="services_new_client_conversion" elementName="New Client Conversion" category="Analytics Hub - Services">
+      <NewClientConversionCard dateFrom={dateFrom} dateTo={dateTo} locationId={locationId} />
     </PinnableCard>
   );
 
