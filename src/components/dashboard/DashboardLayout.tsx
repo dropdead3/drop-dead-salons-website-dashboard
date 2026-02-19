@@ -1115,10 +1115,10 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
 
       {/* Desktop Top Bar - Single unified bar */}
       <div className={cn(
-        "dashboard-top-bar hidden lg:block sticky top-3 z-30 mx-3 mt-3",
+        "dashboard-top-bar hidden lg:block sticky top-0 z-30",
         hideFooter && "shrink-0"
       )}>
-        <div className="relative w-full max-w-none flex items-center justify-between h-14 px-6 bg-card/50 backdrop-blur-2xl rounded-xl border border-border/15 shadow-sm overflow-hidden">
+        <div className="relative w-full max-w-none flex items-center justify-between h-14 px-6 bg-card border-b border-border">
           {/* Left side - Sidebar toggle + Org Switcher */}
           <div className="flex items-center gap-3">
             <NavHistoryArrows />
