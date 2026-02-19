@@ -26,6 +26,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTableBranding } from '@/lib/reportPdfLayout';
 import { toast } from 'sonner';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { BentoGrid } from '@/components/ui/bento-grid';
 
 interface SalesReportGeneratorProps {
   reportType: string;
@@ -272,7 +273,7 @@ export function SalesReportGenerator({
       <CardContent className="space-y-6">
         {/* Summary Stats */}
         {metrics && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <BentoGrid maxPerRow={4} gap="gap-4">
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Total Revenue</p>
               <p className="text-2xl font-medium">{formatCurrencyWhole(metrics.totalRevenue)}</p>
@@ -289,7 +290,7 @@ export function SalesReportGenerator({
               <p className="text-sm text-muted-foreground">Average Ticket</p>
               <p className="text-2xl font-medium">{formatCurrencyWhole(Math.round(metrics.averageTicket))}</p>
             </div>
-          </div>
+          </BentoGrid>
         )}
 
         {/* Data Table */}
@@ -360,7 +361,7 @@ export function SalesReportGenerator({
     >
       <div className="space-y-6">
         {metrics && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <BentoGrid maxPerRow={4} gap="gap-4">
             <div className="p-4 rounded-lg bg-muted">
               <p className="text-sm text-muted-foreground">Total Revenue</p>
               <p className="text-2xl font-medium">{formatCurrencyWhole(metrics.totalRevenue)}</p>
@@ -377,7 +378,7 @@ export function SalesReportGenerator({
               <p className="text-sm text-muted-foreground">Average Ticket</p>
               <p className="text-2xl font-medium">{formatCurrencyWhole(Math.round(metrics.averageTicket))}</p>
             </div>
-          </div>
+          </BentoGrid>
         )}
         {reportType === 'stylist-sales' && stylistData && (
           <div className="rounded-lg border">

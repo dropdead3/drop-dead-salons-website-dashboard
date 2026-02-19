@@ -39,6 +39,7 @@ import {
 import { useState } from "react";
 import { useBuildTasks, useCreateBuildTask, useUpdateBuildTask, useDeleteBuildTask, useToggleBuildTaskStatus, type BuildTask, type BuildTaskStatus, type BuildTaskCategory, type BuildTaskPriority } from "@/hooks/useBuildTasks";
 import { toast } from "sonner";
+import { BentoGrid } from '@/components/ui/bento-grid';
 
 const priorityConfig = {
   'high': { label: 'High', color: 'bg-destructive/20 text-destructive' },
@@ -330,7 +331,7 @@ export default function DashboardBuild() {
         </div>
 
         {/* Overview Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <BentoGrid maxPerRow={5} gap="gap-4">
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
@@ -400,7 +401,7 @@ export default function DashboardBuild() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </BentoGrid>
 
         {/* Blocked Tasks - Priority */}
         {blockedTasks.length > 0 && (

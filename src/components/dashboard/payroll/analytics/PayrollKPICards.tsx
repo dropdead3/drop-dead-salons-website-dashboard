@@ -15,6 +15,7 @@ import { PayrollKPIs } from '@/hooks/usePayrollAnalytics';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { BentoGrid } from '@/components/ui/bento-grid';
 
 interface PayrollKPICardsProps {
   kpis: PayrollKPIs;
@@ -92,7 +93,7 @@ function KPICard({ title, value, subtitle, trend, icon: Icon, iconClassName, isL
 export function PayrollKPICards({ kpis, isLoading }: PayrollKPICardsProps) {
   const { currency } = useFormatCurrency();
   return (
-    <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+    <BentoGrid maxPerRow={4} gap="gap-4">
       <KPICard
         title="Next Payroll Forecast"
         tooltipDescription="Estimated gross payroll for the upcoming pay period based on current revenue pace and configured compensation rates."
@@ -182,6 +183,6 @@ export function PayrollKPICards({ kpis, isLoading }: PayrollKPICardsProps) {
         iconClassName="bg-emerald-500/10"
         isLoading={isLoading}
       />
-    </div>
+    </BentoGrid>
   );
 }

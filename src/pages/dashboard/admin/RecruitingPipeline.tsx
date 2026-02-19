@@ -50,6 +50,7 @@ import {
 import { format, formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ApplicantDetailSheet } from "@/components/dashboard/ApplicantDetailSheet";
+import { BentoGrid } from '@/components/ui/bento-grid';
 
 export default function RecruitingPipeline() {
   const navigate = useNavigate();
@@ -148,7 +149,7 @@ export default function RecruitingPipeline() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <BentoGrid maxPerRow={5} gap="gap-4">
           <Card>
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center gap-3">
@@ -214,7 +215,7 @@ export default function RecruitingPipeline() {
               </div>
             </CardContent>
           </Card>
-        </div>
+        </BentoGrid>
 
         {/* Filters */}
         <Card>

@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { formatCurrencyWhole as formatCurrencyWholeUtil } from '@/lib/formatCurrency';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
+import { BentoGrid } from '@/components/ui/bento-grid';
 
 const statusColors: Record<string, string> = {
   current: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30',
@@ -38,7 +39,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <BentoGrid maxPerRow={5} gap="gap-4">
         <Card className="bg-card/50">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 text-muted-foreground mb-2">
@@ -108,7 +109,7 @@ export function RentRevenueAnalytics({ organizationId }: RentRevenueAnalyticsPro
             <p className="text-2xl font-medium">{metrics.activeRenterCount}</p>
           </CardContent>
         </Card>
-      </div>
+      </BentoGrid>
 
       {/* Trend Chart */}
       {metrics.monthlyTrend.length > 0 && (
