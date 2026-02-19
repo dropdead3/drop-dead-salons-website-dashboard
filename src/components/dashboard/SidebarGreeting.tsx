@@ -11,7 +11,7 @@ export function SidebarGreeting({ greeting, subtitle, firstName }: SidebarGreeti
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(false), 7000);
+    const timer = setTimeout(() => setIsVisible(false), 30000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -25,12 +25,12 @@ export function SidebarGreeting({ greeting, subtitle, firstName }: SidebarGreeti
           transition={{ duration: 0.5, ease: 'easeInOut' }}
           className="overflow-hidden"
         >
-          <div className="px-6 py-3 border-b border-border/30">
-            <p className="text-xs font-display font-medium tracking-wide text-foreground/90">
+          <div className="px-6 py-4 border-b border-border/30">
+            <p className="text-sm font-display font-semibold tracking-wide text-foreground">
               {greeting} <span className="text-foreground/70">{firstName}</span>
             </p>
             {subtitle && (
-              <p className="text-[10px] text-muted-foreground mt-0.5">
+              <p className="text-xs text-muted-foreground mt-1">
                 {subtitle}
               </p>
             )}
