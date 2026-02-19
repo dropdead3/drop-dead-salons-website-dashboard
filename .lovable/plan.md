@@ -1,76 +1,73 @@
 
 
-## Task Drilldown Detail View
+## Task Management Enhancements
 
 ### Overview
-Add a drilldown dialog that opens when clicking on a task, showing full task details: title, description, priority, created date, due date, completion status, source, and timestamps. This follows the same drilldown pattern used by `LiveSessionDrilldown` and `DayProviderBreakdownPanel`.
+Transform the "My Tasks" widget from a simple checklist into a polished task management experience with completion animations, a completed tasks archive, filtering, and several UX improvements.
 
-### Gaps and Enhancements Identified
-1. **No way to view full task details** -- clicking a task does nothing; description is hidden entirely
-2. **No notes/activity log on tasks** -- the DB schema has no `notes` column beyond `description`; we should add a `notes` text field to the `tasks` table for ongoing task notes
-3. **Tasks capped at 5 visible** -- the widget shows "X more tasks" but provides no way to see them all
-4. **No overdue indicator** -- tasks past their due date have no visual warning
-5. **Completed date not shown** -- `completed_at` exists in the DB but is never surfaced
+### 1. Completion Animation (Fade + Slide Out)
 
-### Changes
+When a task is checked off, animate it out with a satisfying fade + slide-up before removing it from the active list. Uses `framer-motion` `AnimatePresence` + `motion.div` wrapping each `TaskItem`.
 
-**1. Database Migration -- Add `notes` column to `tasks` table**
-- `ALTER TABLE public.tasks ADD COLUMN notes text;`
-- Allows users to add freeform notes distinct from the description
+- Brief 400ms delay after checking so the user sees the checkmark
+- Then fade out + slide up over 300ms
+- Task moves to the completed list automatically
 
-**2. New Component: `src/components/dashboard/TaskDetailDrilldown.tsx`**
-- Full-width drilldown dialog using `DRILLDOWN_DIALOG_CONTENT_CLASS` for consistent styling
-- Sections displayed:
-  - Header with title, priority badge, and completion status toggle
-  - Description (if present)
-  - Notes field (editable inline textarea, auto-saves on blur)
-  - Metadata grid: Created date, Due date (with overdue highlight), Completed date (if completed), Source badge (manual vs ai_insights)
-- Footer with Edit and Delete action buttons
-- Read-only mode support for impersonation
+### 2. Active vs Completed Split
 
-**3. Update `src/components/dashboard/TaskItem.tsx`**
-- Make the task title/row clickable to open the drilldown (onClick handler)
-- Add `onView` callback prop alongside existing `onEdit`
-- Add overdue visual indicator (red text on due date when past due and not completed)
+Split the task query results into two lists on the frontend:
+- **Active tasks** (shown by default, sorted by priority then due date)
+- **Completed tasks** (hidden by default behind a toggle button)
 
-**4. Update `src/hooks/useTasks.ts`**
-- Include `notes` in the `Task` type interface
-- Add `notes` to the `updateTask` mutation's accepted fields
+Add a "Show completed (N)" / "Hide completed" toggle button at the bottom of the widget. When expanded, completed tasks appear below a subtle divider with muted styling.
 
-**5. Update `src/components/dashboard/EditTaskDialog.tsx`**
-- Add a "Notes" textarea field to the edit form
+### 3. Uncomplete (Reopen) a Task
 
-**6. Wire in `src/pages/dashboard/DashboardHome.tsx`**
-- Add `viewingTask` state (separate from `editingTask`)
-- Pass `onView` to each `TaskItem`
-- Render `TaskDetailDrilldown` with the selected task
-- Pass through edit/delete/toggle handlers so drilldown can trigger actions
-- When "Edit" is clicked inside drilldown, close drilldown and open `EditTaskDialog`
+Completed tasks in the archive will have the same checkbox -- unchecking moves the task back to the active list (with a reverse animation). This already works via the existing `toggleTask` mutation; it just needs to be wired into the completed list UI.
 
-### Technical Details
+### 4. Filterable Completed Tasks
 
-**Drilldown Layout:**
-```text
-+---------------------------------------+
-| [Priority dot] Task Title        [X]  |
-| [checkbox] Mark as complete           |
-+---------------------------------------+
-| Description                           |
-| "Some task description text..."       |
-+---------------------------------------+
-| Notes                                 |
-| [editable textarea]          [Save]   |
-+---------------------------------------+
-| Created    Feb 19, 2026               |
-| Due        Feb 21, 2026              |
-| Completed  --                         |
-| Source     Manual                      |
-+---------------------------------------+
-|              [Edit]  [Delete]         |
-+---------------------------------------+
-```
+When the completed list is visible, show a small filter bar with:
+- **Search** -- text filter on task title
+- **Priority** -- filter by low / normal / high
+- **Date range** -- filter by completion date (completed_at)
 
-**Overdue logic:** `task.due_date && !task.is_completed && new Date(task.due_date) < today`
+This keeps it lightweight since it's inline filtering on already-fetched data (no new queries).
 
-**Notes auto-save:** Textarea with a "Save" button that calls `updateTask.mutate({ id, updates: { notes } })`
+### 5. Additional Enhancements
+
+- **Task count badges** -- Show active count and overdue count in the header ("3 active, 1 overdue")
+- **"View all" link** -- When more than 5 active tasks exist, the "X more tasks" text becomes a clickable expander to show all active tasks (not just first 5)
+- **Overdue section** -- Overdue tasks pinned to the top of the active list with a subtle red left border
+
+### Technical Changes
+
+**`src/components/dashboard/TaskItem.tsx`**
+- Wrap in `motion.div` with exit animation props
+- Accept `isCompleting` state to trigger delayed removal
+
+**`src/pages/dashboard/DashboardHome.tsx`**
+- Split `tasks` into `activeTasks` and `completedTasks` using `useMemo`
+- Add `showCompleted` boolean state
+- Add `completedFilter` state (search text, priority, date range)
+- Wrap task list in `AnimatePresence`
+- Add "Show completed" toggle button
+- Add filter bar (only visible when completed list is open)
+- Add "View all" expander for active tasks beyond 5
+- Add overdue count badge in header
+
+**`src/components/dashboard/CompletedTasksFilter.tsx` (New)**
+- Small inline filter bar component with search input, priority select, and date range
+- Filters applied client-side on the completed tasks array
+
+**No database changes needed** -- all data (is_completed, completed_at, priority) already exists.
+
+### UX Details
+
+- Animation uses `framer-motion` (already installed)
+- Completed tasks show `completed_at` date instead of due date
+- Completed tasks have a muted/faded appearance with strikethrough title
+- Filter bar is minimal: a search input and two small dropdowns, matching the calm executive aesthetic
+- Empty state for completed list: "No completed tasks yet"
+- Empty state for filtered results: "No tasks match your filters"
 
