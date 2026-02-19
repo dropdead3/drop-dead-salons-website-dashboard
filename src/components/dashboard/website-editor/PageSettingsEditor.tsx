@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -6,26 +6,55 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
-import type { PageConfig } from '@/hooks/useWebsitePages';
+import type { PageConfig, WebsitePagesConfig } from '@/hooks/useWebsitePages';
+
+const RESERVED_SLUGS = [
+  'services', 'extensions', 'about', 'policies', 'booking',
+  'careers', 'gallery', 'stylists', 'shop', 'login', 'contact',
+  'dashboard', 'admin', 'day-rate',
+];
 
 interface PageSettingsEditorProps {
   page: PageConfig;
+  allPages?: WebsitePagesConfig;
   onUpdate: (page: PageConfig) => Promise<void>;
 }
 
-export function PageSettingsEditor({ page, onUpdate }: PageSettingsEditorProps) {
+export function PageSettingsEditor({ page, allPages, onUpdate }: PageSettingsEditorProps) {
   const [local, setLocal] = useState(page);
+  const [slugError, setSlugError] = useState('');
 
   useEffect(() => {
     setLocal(page);
+    setSlugError('');
   }, [page]);
 
+  const validateSlug = useCallback((slug: string) => {
+    if (!slug) return '';
+    if (RESERVED_SLUGS.includes(slug)) {
+      return `"${slug}" is reserved. Choose a different slug.`;
+    }
+    if (allPages) {
+      const collision = allPages.pages.find(p => p.slug === slug && p.id !== page.id);
+      if (collision) return `"${slug}" is already used by "${collision.title}".`;
+    }
+    return '';
+  }, [allPages, page.id]);
+
   const update = (key: keyof PageConfig, value: unknown) => {
-    setLocal(prev => ({ ...prev, [key]: value }));
+    const next = { ...local, [key]: value };
+    setLocal(next);
+    if (key === 'slug') {
+      setSlugError(validateSlug(value as string));
+    }
     window.dispatchEvent(new CustomEvent('editor-dirty-state', { detail: { dirty: true } }));
   };
 
   const handleSave = useCallback(async () => {
+    if (slugError) {
+      toast.error(slugError);
+      return;
+    }
     try {
       await onUpdate(local);
       toast.success('Page settings saved');
@@ -33,7 +62,7 @@ export function PageSettingsEditor({ page, onUpdate }: PageSettingsEditorProps) 
     } catch {
       toast.error('Failed to save page settings');
     }
-  }, [local, onUpdate]);
+  }, [local, onUpdate, slugError]);
 
   useEditorSaveAction(handleSave);
 
@@ -60,6 +89,9 @@ export function PageSettingsEditor({ page, onUpdate }: PageSettingsEditorProps) 
                   className="flex-1"
                 />
               </div>
+              {slugError && (
+                <p className="text-[11px] text-destructive">{slugError}</p>
+              )}
             </div>
           )}
 

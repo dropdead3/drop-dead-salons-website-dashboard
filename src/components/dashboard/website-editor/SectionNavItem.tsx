@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, Trash2 } from 'lucide-react';
+import { GripVertical, Trash2, Copy } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ interface SectionNavItemProps {
   onToggle: (enabled: boolean) => void;
   deletable?: boolean;
   onDelete?: () => void;
+  onDuplicate?: () => void;
 }
 
 export function SectionNavItem({
@@ -30,6 +31,7 @@ export function SectionNavItem({
   onToggle,
   deletable = false,
   onDelete,
+  onDuplicate,
 }: SectionNavItemProps) {
   const {
     attributes,
@@ -95,6 +97,17 @@ export function SectionNavItem({
 
       {/* Actions */}
       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+        {onDuplicate && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={onDuplicate}
+            title="Duplicate section"
+          >
+            <Copy className="h-3 w-3" />
+          </Button>
+        )}
         {deletable && onDelete && (
           <Button
             variant="ghost"

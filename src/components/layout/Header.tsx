@@ -7,6 +7,7 @@ import LogoIcon from "@/assets/dd-secondary-logo.svg";
 import { cn } from "@/lib/utils";
 import { useAnnouncementBarSettings } from "@/hooks/useAnnouncementBar";
 import { useOrgPath } from "@/hooks/useOrgPath";
+import { useWebsitePages, getNavPages } from "@/hooks/useWebsitePages";
 
 function isColorDark(color: string): boolean {
   if (!color) return false;
@@ -66,6 +67,8 @@ export function Header() {
   const location = useLocation();
   const { data: announcementSettings } = useAnnouncementBarSettings();
   const orgPath = useOrgPath();
+  const { data: pagesConfig } = useWebsitePages();
+  const dynamicNavPages = getNavPages(pagesConfig);
 
   // Track desktop breakpoint for sticky effects
   useEffect(() => {
@@ -89,6 +92,13 @@ export function Header() {
     { href: orgPath("/extensions"), label: "Hair Extensions", priority: 3, type: "link" as const },
     { href: orgPath("/careers"), label: "Join The Team", priority: 4, type: "link" as const },
     { href: orgPath("/gallery"), label: "Gallery", priority: 5, type: "link" as const },
+    // Dynamic pages from the website pages system
+    ...dynamicNavPages.map((p, i) => ({
+      href: orgPath(`/${p.slug}`),
+      label: p.title,
+      priority: 6 + i,
+      type: "link" as const,
+    })),
   ];
 
   // Calculate which items should be hidden based on window width
@@ -96,22 +106,24 @@ export function Header() {
   const calculateHiddenItems = useCallback(() => {
     const windowWidth = window.innerWidth;
     
+    // All priorities from highest number (hidden first) to lowest
+    const allPriorities = allNavItems.map(i => i.priority).sort((a, b) => b - a);
+    
     // Define breakpoints where items start hiding (from right to left by priority)
-    // These are tuned to prevent any overlap
     if (windowWidth >= 1400) {
       setHiddenNavItems([]); // Show all
     } else if (windowWidth >= 1280) {
-      setHiddenNavItems([5]); // Hide Gallery
+      setHiddenNavItems(allPriorities.slice(0, 1 + dynamicNavPages.length));
     } else if (windowWidth >= 1180) {
-      setHiddenNavItems([5, 4]); // Hide Gallery, Join The Team
+      setHiddenNavItems(allPriorities.slice(0, 2 + dynamicNavPages.length));
     } else if (windowWidth >= 1100) {
-      setHiddenNavItems([5, 4, 3]); // Hide Gallery, Join The Team, Hair Extensions
+      setHiddenNavItems(allPriorities.slice(0, 3 + dynamicNavPages.length));
     } else if (windowWidth >= 1024) {
-      setHiddenNavItems([5, 4, 3, 2]); // Hide all except Services
+      setHiddenNavItems(allPriorities.slice(0, 4 + dynamicNavPages.length));
     } else {
-      setHiddenNavItems([5, 4, 3, 2, 1]); // Below lg breakpoint, mobile takes over
+      setHiddenNavItems(allPriorities); // Below lg breakpoint, mobile takes over
     }
-  }, []);
+  }, [allNavItems, dynamicNavPages.length]);
 
   // ResizeObserver for responsive nav
   useEffect(() => {
@@ -644,6 +656,22 @@ export function Header() {
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {link.label}
+                  </Link>
+                ))}
+                {/* Dynamic pages from website builder */}
+                {dynamicNavPages.map((p) => (
+                  <Link
+                    key={p.slug}
+                    to={orgPath(`/${p.slug}`)}
+                    className={cn(
+                      "text-xl font-display uppercase tracking-wide transition-opacity",
+                      location.pathname === orgPath(`/${p.slug}`)
+                        ? "opacity-100"
+                        : "opacity-60"
+                    )}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {p.title}
                   </Link>
                 ))}
                 <Link

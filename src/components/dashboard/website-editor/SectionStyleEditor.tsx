@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronDown, ChevronRight, Paintbrush } from 'lucide-react';
 import type { StyleOverrides } from '@/components/home/SectionStyleWrapper';
 import { DEFAULT_STYLE_OVERRIDES } from '@/components/home/SectionStyleWrapper';
+import { ImageUploadInput } from './inputs/ImageUploadInput';
 
 interface SectionStyleEditorProps {
   value: Partial<StyleOverrides>;
@@ -85,13 +86,18 @@ export function SectionStyleEditor({ value, onChange, sectionId }: SectionStyleE
                   className="h-8 text-xs flex-1"
                 />
               </div>
+            ) : merged.background_type === 'image' ? (
+              <ImageUploadInput
+                value={merged.background_value}
+                onChange={v => update('background_value', v)}
+                label=""
+                pathPrefix={`sections/${sectionId ?? 'bg'}`}
+              />
             ) : (
               <Input
                 value={merged.background_value}
                 onChange={e => update('background_value', e.target.value)}
-                placeholder={merged.background_type === 'gradient'
-                  ? 'linear-gradient(135deg, #667eea, #764ba2)'
-                  : 'https://...'}
+                placeholder="linear-gradient(135deg, #667eea, #764ba2)"
                 className="h-8 text-xs"
               />
             )}
