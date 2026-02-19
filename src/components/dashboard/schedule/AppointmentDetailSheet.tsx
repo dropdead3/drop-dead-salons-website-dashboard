@@ -59,6 +59,7 @@ import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useAppointmentNotes } from '@/hooks/useAppointmentNotes';
 import { useAppointmentAssistants } from '@/hooks/useAppointmentAssistants';
+import { useAssistantConflictCheck } from '@/hooks/useAssistantConflictCheck';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
@@ -127,6 +128,15 @@ export function AppointmentDetailSheet({
   const { data: teamMembers = [] } = useTeamDirectory(undefined, {
     organizationId: effectiveOrganization?.id,
   });
+
+  // Conflict check for assistant picker
+  const conflictMap = useAssistantConflictCheck(
+    appointment?.appointment_date || null,
+    appointment?.start_time || null,
+    appointment?.end_time || null,
+    appointment?.id || null,
+    showAssistantPicker,
+  );
 
   if (!appointment) return null;
 
@@ -345,30 +355,43 @@ export function AppointmentDetailSheet({
                         !assistants.some(a => a.assistant_user_id === m.user_id) &&
                         (m.roles?.includes('stylist_assistant') || m.roles?.includes('stylist') || m.roles?.includes('admin'))
                       )
-                      .map(member => (
-                        <button
-                          key={member.user_id}
-                          className="flex items-center gap-2 w-full p-1.5 rounded hover:bg-muted text-left text-sm"
-                          disabled={isAssigning}
-                          onClick={() => {
-                            if (effectiveOrganization?.id) {
-                              assignAssistant({
-                                assistantUserId: member.user_id,
-                                organizationId: effectiveOrganization.id,
-                              });
-                              setShowAssistantPicker(false);
-                            }
-                          }}
-                        >
-                          <Avatar className="h-5 w-5">
-                            <AvatarImage src={member.photo_url || undefined} />
-                            <AvatarFallback className="text-[8px]">
-                              {(member.display_name || member.full_name || '?').slice(0, 2).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span>{member.display_name || member.full_name}</span>
-                        </button>
-                      ))}
+                      .map(member => {
+                        const conflicts = conflictMap.get(member.user_id) || [];
+                        return (
+                          <button
+                            key={member.user_id}
+                            className="flex flex-col w-full p-1.5 rounded hover:bg-muted text-left text-sm"
+                            disabled={isAssigning}
+                            onClick={() => {
+                              if (effectiveOrganization?.id) {
+                                assignAssistant({
+                                  assistantUserId: member.user_id,
+                                  organizationId: effectiveOrganization.id,
+                                });
+                                setShowAssistantPicker(false);
+                              }
+                            }}
+                          >
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-5 w-5">
+                                <AvatarImage src={member.photo_url || undefined} />
+                                <AvatarFallback className="text-[8px]">
+                                  {(member.display_name || member.full_name || '?').slice(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span>{member.display_name || member.full_name}</span>
+                              {conflicts.length > 0 && (
+                                <AlertTriangle className="h-3.5 w-3.5 text-orange-500 shrink-0 ml-auto" />
+                              )}
+                            </div>
+                            {conflicts.map((c, i) => (
+                              <span key={i} className="text-[11px] text-orange-600 dark:text-orange-400 pl-7 leading-tight">
+                                {c.role === 'assistant' ? 'Assisting' : 'Busy'} {formatTime12h(c.startTime)}–{formatTime12h(c.endTime)} ({c.serviceName} for {c.clientName})
+                              </span>
+                            ))}
+                          </button>
+                        );
+                      })}
                   </div>
                 )}
               </div>
