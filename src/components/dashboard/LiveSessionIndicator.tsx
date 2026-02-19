@@ -72,7 +72,7 @@ export function LiveSessionIndicator({ locationId }: LiveSessionIndicatorProps) 
 
             {/* Count text */}
             <span className="text-xs font-medium text-foreground whitespace-nowrap font-sans">
-              {activeStylistCount} Stylists servicing {inSessionCount} appointments now
+              {activeStylistCount} Stylists Servicing {inSessionCount} Appointments Now
             </span>
 
             {/* Stacked avatars (hidden for enterprise) */}
