@@ -42,6 +42,7 @@ import { useBirthdayNotifications } from '@/hooks/useBirthdayNotifications';
 import { useViewAs } from '@/contexts/ViewAsContext';
 import { AnnouncementsBento } from '@/components/dashboard/AnnouncementsBento';
 import { AnnouncementsDrawer } from '@/components/dashboard/AnnouncementsDrawer';
+import { LiveSessionIndicator } from '@/components/dashboard/LiveSessionIndicator';
 import { DashboardSetupWizard } from '@/components/dashboard/DashboardSetupWizard';
 import { DashboardCustomizeMenu, getCardSize } from '@/components/dashboard/DashboardCustomizeMenu';
 import { useDashboardLayout, isPinnedCardEntry, getPinnedCardId, PINNABLE_CARD_IDS } from '@/hooks/useDashboardLayout';
@@ -730,6 +731,7 @@ function DashboardSections({
                         <div className="flex items-center gap-3">
                           {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
                           <AnnouncementsDrawer isLeadership={isLeadership} />
+                          <LiveSessionIndicator />
                         </div>
                         <AnalyticsFilterBar
                           locationId={analyticsFilters.locationId}
@@ -799,6 +801,7 @@ function DashboardSections({
                       <div className="flex items-center gap-3">
                         {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
                         <AnnouncementsDrawer isLeadership={isLeadership} />
+                        <LiveSessionIndicator />
                       </div>
                       <AnalyticsFilterBar
                         locationId={analyticsFilters.locationId}
