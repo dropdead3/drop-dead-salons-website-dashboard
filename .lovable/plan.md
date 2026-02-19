@@ -1,103 +1,85 @@
 
 
-## Bento Grid Layout for Simple View Analytics Cards
+## Fix Compact Bento Tile Gaps, Metrics, and UI Polish
 
-### What Changes
+### Problems Identified
 
-The current simple/compact view renders each pinned analytics card as a flat single-line row (56px tall). This will be redesigned into a **bento-style tile grid** inspired by the reference screenshot -- each card becomes its own standalone tile displaying the primary metric prominently, matching the existing KPI tile design system.
+1. **Broken card: "SALES_DASHBOARD_BENTO"** -- A card ID exists in the user's pinned data that has no entry in `CARD_META`, so it renders the raw ID as both the label and the hero metric. Unknown card IDs need to be filtered out or given a graceful fallback with a human-readable label.
 
-### Visual Design Per Tile
+2. **Week Ahead Forecast shows its own name as the metric** -- When `forecastData?.summary` is null/loading, the fallback sets `metricValue = meta.label` ("Week Ahead Forecast"), which then renders as the hero metric text. Same pattern affects `service_mix`, `client_health`, and any card using `meta.label` as fallback.
 
-Each compact tile will follow this structure:
+3. **Operations Stats shows "---"** -- Hard-coded dash instead of real queue data.
+
+4. **No info tooltips** -- None of the compact tiles explain what the metric means. Each tile needs a small (i) icon with a `MetricInfoTooltip` describing the metric.
+
+5. **Inconsistent tile heights** -- Some tiles have "View X >" links, some do not. Tiles without links end up shorter. The layout needs consistent internal structure regardless of link presence.
+
+6. **"0 NEW" renders as a large hero metric** -- All zero-state metrics should still display normally (this is correct behavior), but the label formatting could be cleaner.
+
+### Plan (single file: `PinnedAnalyticsCard.tsx`)
+
+| Change | Detail |
+|--------|--------|
+| Add `CARD_DESCRIPTIONS` map | A `Record<string, string>` mapping each cardId to a one-line explanation (e.g., "Total revenue from services and products in the selected period") |
+| Add `MetricInfoTooltip` to each compact tile | Render the (i) icon next to the label in the tile header using the existing `MetricInfoTooltip` component |
+| Fix fallback metrics | Replace `metricValue = meta.label` fallbacks with loading indicators ("--") so card names never appear as metric values |
+| Handle unknown card IDs | If `cardId` is not in `CARD_META`, skip rendering (return null) in compact mode instead of showing raw IDs |
+| Fix Operations Stats | Wire operations_stats to real queue data from the existing `OperationsQuickStats` data, or show a sensible placeholder ("View for details") |
+| Standardize tile layout | Use `flex-1` on the metric section and always render the link row (even if empty) to keep consistent heights across the grid |
+| Add missing `CARD_LINKS` entries | Ensure every card in `CARD_META` has a corresponding link so all tiles have a "View X >" action |
+
+### Compact Tile Structure (after fix)
 
 ```text
-+---------------------------------------+
-| [icon]  EXECUTIVE SUMMARY  (i)        |
-|                                        |
-|  $12,450                               |
-|                                        |
-|  revenue                               |
-|                         View Details > |
-+---------------------------------------+
++---------------------------------------------+
+| [icon]  SALES OVERVIEW  (i)                  |
+|                                              |
+|  $12,450                                     |
+|  revenue                                     |
+|                                              |
+|                            View Sales >      |
++---------------------------------------------+
 ```
 
-- **Top row**: Icon (muted container) + uppercase Termina label (using `tokens.kpi.label`)
-- **Hero metric**: Large display value (using `tokens.kpi.value` or `tokens.stat.large`)
-- **Metric sublabel**: Small muted text beneath the value
-- **Bottom-right**: Optional "View [X] >" link to the full analytics tab
-- Card uses `tokens.kpi.tile` styling (rounded-xl, border, bg-card, padding)
+- (i) icon uses existing `MetricInfoTooltip` component
+- Metric area uses `flex-1` to push the link row to the bottom consistently
+- Fallback for loading/missing data: "--" (not the card name)
+- Unknown card IDs: filtered out (return null)
 
-### Grid Layout
+### Metric Descriptions (for tooltips)
 
-Compact cards will render in a responsive bento grid instead of a vertical stack:
+| Card | Tooltip |
+|------|---------|
+| executive_summary | Total revenue across all services and products |
+| daily_brief | Revenue generated today across all providers |
+| sales_overview | Combined service and product revenue for the selected period |
+| top_performers | Highest-earning team member by total revenue |
+| operations_stats | Current queue activity including waiting and in-service clients |
+| revenue_breakdown | Revenue split between services and retail products |
+| client_funnel | Total unique clients (new and returning) in the period |
+| client_health | Clients flagged as at-risk, win-back, or new-no-return |
+| operational_health | Overall operational status across monitored locations |
+| locations_rollup | Number of active locations in your organization |
+| service_mix | Highest-revenue service category in the period |
+| retail_effectiveness | Percentage of service transactions that include a retail purchase |
+| rebooking | Percentage of clients who rebooked before leaving |
+| team_goals | Team revenue progress toward the current period target |
+| goal_tracker | Organization-wide goal completion percentage |
+| capacity_utilization | Average chair utilization across all providers |
+| week_ahead_forecast | Projected total revenue for the next 7 days |
+| new_bookings | New appointments booked in the selected period |
+| hiring_capacity | Open chair positions based on capacity analysis |
+| staffing_trends | Count of currently active staff members |
+| stylist_workload | Average utilization percentage across all stylists |
 
-- **Desktop**: `grid-cols-4` (4 tiles per row)
-- **Tablet**: `grid-cols-2`
-- **Mobile**: `grid-cols-1`
+### Technical Details
 
-The grid wrapper will be added in `DashboardHome.tsx` around the pinned card renders when `compact` is true.
+- Import `MetricInfoTooltip` from `@/components/ui/MetricInfoTooltip`
+- Add `CARD_DESCRIPTIONS: Record<string, string>` constant
+- In the compact tile header, add `<MetricInfoTooltip description={CARD_DESCRIPTIONS[cardId]} />` after the label
+- Replace all `metricValue = meta.label` fallbacks with `metricValue = '--'`
+- Add early return `null` if `!CARD_META[cardId]` in compact mode
+- Add missing entries to `CARD_LINKS` for cards that currently lack them (e.g., `locations_rollup`, `hiring_capacity`, `team_goals`)
+- Restructure tile JSX to use `flex-1` on the metric `div` and a fixed-height bottom row for the link
 
-### Technical Plan
-
-| Step | File | Change |
-|------|------|--------|
-| 1 | `src/components/dashboard/PinnedAnalyticsCard.tsx` | Redesign the compact return block from a single-line `h-14` row to a bento tile using KPI token classes. Add a `CARD_LINK` map for optional "View X >" navigation links per card. |
-| 2 | `src/pages/dashboard/DashboardHome.tsx` | Wrap pinned card renders in a responsive grid container (`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4`) when `compactView` is true, instead of rendering them as sequential full-width blocks. |
-
-### Compact Tile Anatomy (code sketch)
-
-```tsx
-<Card className="rounded-xl border border-border/50 bg-card p-5 flex flex-col justify-between min-h-[140px]">
-  <div className="flex items-center gap-2">
-    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
-      <Icon className="w-4 h-4 text-muted-foreground" />
-    </div>
-    <span className="font-display text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-      {meta.label}
-    </span>
-  </div>
-  <div className="mt-3">
-    <p className="font-display text-xl font-medium">{metricValue}</p>
-    {metricLabel && (
-      <p className="text-xs text-muted-foreground mt-0.5">{metricLabel}</p>
-    )}
-  </div>
-  {linkHref && (
-    <div className="flex justify-end mt-2">
-      <Link to={linkHref} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
-        View {linkLabel} <ChevronRight className="w-3 h-3" />
-      </Link>
-    </div>
-  )}
-</Card>
-```
-
-### Link Mapping Per Card
-
-| Card | Link Text | Route |
-|------|-----------|-------|
-| executive_summary | View Brief | /dashboard/admin/analytics?tab=leadership |
-| sales_overview | View Sales | /dashboard/admin/analytics?tab=sales |
-| top_performers | View Team | /dashboard/admin/analytics?tab=sales&subtab=team |
-| capacity_utilization | View Capacity | /dashboard/admin/analytics?tab=operations&subtab=capacity |
-| client_funnel | View Clients | /dashboard/admin/analytics?tab=marketing |
-| goal_tracker | View Goals | /dashboard/admin/analytics?tab=sales&subtab=goals |
-| new_bookings | View Pipeline | /dashboard/admin/analytics?tab=operations&subtab=booking-pipeline |
-| All others | (no link or generic "View Details") | Respective analytics subtab |
-
-### What Stays the Same
-
-- All metric extraction logic (the existing switch/case)
-- PinnableCard wrapper and hover interactions (Zura AI + pin icons)
-- VisibilityGate gating
-- The toggle button in the filter bar
-- localStorage persistence of view mode
-- Widgets section (completely untouched)
-- Detailed view rendering (untouched)
-
-### Files Modified
-
-- `src/components/dashboard/PinnedAnalyticsCard.tsx` -- compact tile redesign
-- `src/pages/dashboard/DashboardHome.tsx` -- grid wrapper for compact mode
-
-No database changes. Two files modified.
+One file modified. No database changes.
