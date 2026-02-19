@@ -47,7 +47,7 @@ import { KeyboardShortcutsDialog } from '@/components/KeyboardShortcutsDialog';
 import { OrganizationSwitcher } from '@/components/platform/OrganizationSwitcher';
 import { PlatformContextBanner } from '@/components/platform/PlatformContextBanner';
 import { useRoleUtils, getIconComponent } from '@/hooks/useRoleUtils';
-import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
+import { useTeamDirectory, useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { isTestAccount } from '@/utils/testAccounts';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
@@ -236,6 +236,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
   const { isImpersonating, isMultiOrgOwner } = useOrganizationContext();
   const { viewAsRole, setViewAsRole, isViewingAs, viewAsUser, setViewAsUser, isViewingAsUser, clearViewAs } = useViewAs();
   const { hideNumbers, toggleHideNumbers } = useHideNumbers();
+  const { data: employeeProfile } = useEmployeeProfile();
   const location = useLocation();
   const reduceMotion = useReducedMotion();
   const hasZuraGuidance = !!(zuraCtx?.savedState && location.pathname !== '/dashboard');
@@ -946,8 +947,15 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           <NotificationsPanel unreadCount={unreadCount} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <UserCircle className="w-4 h-4" />
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                {employeeProfile?.photo_url ? (
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={employeeProfile.photo_url} alt="Profile" />
+                    <AvatarFallback><UserCircle className="w-4 h-4" /></AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <UserCircle className="w-4 h-4" />
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -1213,8 +1221,15 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
             <NotificationsPanel unreadCount={unreadCount} />
             <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8">
-                <UserCircle className="w-4 h-4" />
+              <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                {employeeProfile?.photo_url ? (
+                  <Avatar className="h-7 w-7">
+                    <AvatarImage src={employeeProfile.photo_url} alt="Profile" />
+                    <AvatarFallback><UserCircle className="w-4 h-4" /></AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <UserCircle className="w-4 h-4" />
+                )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
