@@ -1,26 +1,28 @@
 
-
-## Fix: Tasks Due Today Should Not Show as Overdue
+## Move Schedule Out of Team Tools
 
 ### Problem
-The current overdue logic compares `new Date(task.due_date)` against the start of today. Due to UTC vs local timezone interpretation of date-only strings (YYYY-MM-DD), tasks due today can incorrectly appear as overdue.
+Schedule currently appears in two places in the sidebar:
+1. As a standalone link in the Main section (Command Center, Schedule, Team Chat)
+2. Duplicated inside the Team Tools popover group under Management
 
-### Fix (Single file: `src/components/dashboard/TaskItem.tsx`, line 43-44)
+The user wants Schedule removed from the Team Tools group so it only appears as a standalone important link right below Command Center.
 
-Use `parseISO` from `date-fns` (per project convention) to safely parse the due date as local midnight, then compare against today's local date start. A task is only overdue if its due date is strictly before today's date (not equal to today).
+### Changes
 
-```text
-Before:
-  const isOverdue = new Date(task.due_date) < new Date(new Date().toDateString())
+**File: `src/config/dashboardNav.ts` (line 91)**
+- Remove the Schedule entry from `managerNavItems` (the one with `managerGroup: 'teamTools'`)
+- This eliminates the duplicate from the Team Tools popover
+- Schedule will continue to render as a standalone sidebar icon (collapsed) or link (expanded) in the Main section, directly below Command Center and above Team Chat
 
-After:
-  const today = startOfDay(new Date())
-  const dueLocal = startOfDay(parseISO(task.due_date))
-  const isOverdue = dueLocal < today   // strictly before today, not equal
+### What stays the same
+- The Main section already has the correct order: Command Center -> Schedule -> Team Chat
+- No sidebar rendering logic changes needed
+- Schedule permissions and routing remain unchanged
+
+### Technical detail
+One line removal in `src/config/dashboardNav.ts`:
 ```
-
-This ensures tasks due today remain "due today" until the day is over, and only become overdue starting tomorrow.
-
-### Dependencies
-- `parseISO` and `startOfDay` from `date-fns` (already installed)
-- No new files or packages needed
+// Remove this line from managerNavItems:
+{ href: '/dashboard/schedule', label: 'Schedule', ..., managerGroup: 'teamTools' }
+```
