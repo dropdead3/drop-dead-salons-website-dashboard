@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -5,6 +6,8 @@ import { Clock } from 'lucide-react';
 import { DRILLDOWN_DIALOG_CONTENT_CLASS, DRILLDOWN_OVERLAY_CLASS } from './drilldownDialogStyles';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
+import { LocationSelect } from '@/components/ui/location-select';
+import { useLiveSessionSnapshot } from '@/hooks/useLiveSessionSnapshot';
 import type { StylistDetail } from '@/hooks/useLiveSessionSnapshot';
 
 // Demo data
@@ -58,6 +61,7 @@ interface LiveSessionDrilldownProps {
   inSessionCount: number;
   activeStylistCount: number;
   stylistDetails: StylistDetail[];
+  locationId?: string;
 }
 
 export function LiveSessionDrilldown({
@@ -66,10 +70,20 @@ export function LiveSessionDrilldown({
   inSessionCount,
   activeStylistCount,
   stylistDetails,
+  locationId,
 }: LiveSessionDrilldownProps) {
-  const details = DEMO_MODE ? DEMO_DETAILS : stylistDetails;
-  const sessionCount = DEMO_MODE ? 18 : inSessionCount;
-  const stylistCount = DEMO_MODE ? DEMO_DETAILS.length : activeStylistCount;
+  const [drilldownLocationId, setDrilldownLocationId] = useState(locationId || 'all');
+
+  // Sync with parent filter when dialog opens
+  useEffect(() => {
+    if (open) setDrilldownLocationId(locationId || 'all');
+  }, [open, locationId]);
+
+  const live = useLiveSessionSnapshot(drilldownLocationId);
+
+  const details = DEMO_MODE ? DEMO_DETAILS : live.stylistDetails;
+  const sessionCount = DEMO_MODE ? 18 : live.inSessionCount;
+  const stylistCount = DEMO_MODE ? DEMO_DETAILS.length : live.activeStylistCount;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -87,6 +101,17 @@ export function LiveSessionDrilldown({
             {sessionCount} appointment{sessionCount !== 1 ? 's' : ''} in progress · {stylistCount} stylist{stylistCount !== 1 ? 's' : ''} working
           </DialogDescription>
         </DialogHeader>
+
+        {/* Location filter */}
+        <div className="px-5 pb-3">
+          <LocationSelect
+            value={drilldownLocationId}
+            onValueChange={setDrilldownLocationId}
+            includeAll
+            allLabel="All Locations"
+            triggerClassName="h-8 text-xs"
+          />
+        </div>
 
         {/* Gradient divider */}
         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />

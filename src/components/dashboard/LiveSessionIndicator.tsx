@@ -118,6 +118,7 @@ export function LiveSessionIndicator({ locationId }: LiveSessionIndicatorProps) 
         inSessionCount={inSessionCount}
         activeStylistCount={activeStylistCount}
         stylistDetails={DEMO_MODE ? [] : live.stylistDetails}
+        locationId={locationId}
       />
     </TooltipProvider>
   );
