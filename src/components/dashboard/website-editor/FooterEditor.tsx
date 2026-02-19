@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Save, Link2, Instagram, Facebook, Twitter, Youtube, Linkedin, Plus, Trash2 } from 'lucide-react';
+import { Link2, Instagram, Facebook, Twitter, Youtube, Linkedin, Plus, Trash2 } from 'lucide-react';
+import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -125,7 +126,7 @@ export function FooterEditor() {
     setIsDirty(true);
   };
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
       await saveMutation.mutateAsync(config);
       setIsDirty(false);
@@ -134,7 +135,9 @@ export function FooterEditor() {
     } catch {
       toast.error('Failed to save footer settings');
     }
-  };
+  }, [config, saveMutation]);
+
+  useEditorSaveAction(handleSave);
 
   const addNavLink = () => {
     handleChange('nav_links', [...config.nav_links, { href: '/', label: 'New Link' }]);
@@ -175,10 +178,6 @@ export function FooterEditor() {
           <h2 className="text-xl font-display">Footer Settings</h2>
           <p className="text-sm text-muted-foreground">Manage footer content, links, and social profiles</p>
         </div>
-        <Button onClick={handleSave} disabled={!isDirty || saveMutation.isPending} className="gap-2">
-          <Save className="h-4 w-4" />
-          {saveMutation.isPending ? 'Saving...' : 'Save & Publish Changes'}
-        </Button>
       </div>
 
       {/* Brand & Contact */}

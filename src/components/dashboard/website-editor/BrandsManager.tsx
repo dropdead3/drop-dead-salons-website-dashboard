@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, Save, Plus, Trash2, GripVertical, Upload, X, ImageIcon } from 'lucide-react';
+import { Loader2, Plus, Trash2, GripVertical, Upload, X, ImageIcon } from 'lucide-react';
+import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useBrandsConfig, type Brand, DEFAULT_BRANDS } from '@/hooks/useSectionConfig';
 import { supabase } from '@/integrations/supabase/client';
@@ -270,7 +271,7 @@ export function BrandsManager() {
     handleUpdateBrand(brandId, { logo_url: undefined });
   };
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
       // Filter out brands with empty names
       const validBrands = localConfig.brands.filter(
@@ -282,7 +283,9 @@ export function BrandsManager() {
     } catch {
       toast.error('Failed to save');
     }
-  };
+  }, [localConfig, update]);
+
+  useEditorSaveAction(handleSave);
 
   if (isLoading) {
     return (
@@ -298,10 +301,6 @@ export function BrandsManager() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-4 border-b">
           <CardTitle className="text-lg">Brands Section</CardTitle>
-          <Button onClick={handleSave} disabled={isSaving} size="sm">
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
-            Save & Publish Changes
-          </Button>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Intro Text */}

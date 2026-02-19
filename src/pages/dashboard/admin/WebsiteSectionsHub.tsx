@@ -6,7 +6,10 @@ import {
   ExternalLink,
   PanelLeftClose,
   PanelLeftOpen,
+  Loader2,
+  Save,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { HeroEditor } from '@/components/dashboard/website-editor/HeroEditor';
 import { BrandStatementEditor } from '@/components/dashboard/website-editor/BrandStatementEditor';
 import { NewClientEditor } from '@/components/dashboard/website-editor/NewClientEditor';
@@ -139,6 +142,9 @@ export default function WebsiteSectionsHub() {
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const isDirtyRef = useRef(false);
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const dirtyToastShownRef = useRef(false);
   const isMobile = useIsMobile();
 
   // Memoize the activeSectionId so it doesn't cause unnecessary re-renders
@@ -148,9 +154,24 @@ export default function WebsiteSectionsHub() {
   // Expose a global way for editors to register dirty state
   useEffect(() => {
     const handleDirtyChange = (e: Event) => {
-      isDirtyRef.current = (e as CustomEvent).detail?.dirty ?? false;
+      const dirty = (e as CustomEvent).detail?.dirty ?? false;
+      isDirtyRef.current = dirty;
+      setIsDirty(dirty);
+      if (dirty && !dirtyToastShownRef.current) {
+        dirtyToastShownRef.current = true;
+        toast.warning('You have unsaved changes', { duration: 4000 });
+      }
+      if (!dirty) {
+        dirtyToastShownRef.current = false;
+      }
     };
+
+    const handleSavingState = (e: Event) => {
+      setIsSaving((e as CustomEvent).detail?.saving ?? false);
+    };
+
     window.addEventListener('editor-dirty-state', handleDirtyChange);
+    window.addEventListener('editor-saving-state', handleSavingState);
 
     // Also warn on browser close/refresh
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -162,6 +183,7 @@ export default function WebsiteSectionsHub() {
 
     return () => {
       window.removeEventListener('editor-dirty-state', handleDirtyChange);
+      window.removeEventListener('editor-saving-state', handleSavingState);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
@@ -189,6 +211,10 @@ export default function WebsiteSectionsHub() {
       setPendingTab(null);
     }
   };
+
+  const triggerSave = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('editor-save-request'));
+  }, []);
 
   const EditorComponent = EDITOR_COMPONENTS[activeTab];
 
@@ -254,7 +280,7 @@ export default function WebsiteSectionsHub() {
               </div>
 
               {/* Editor Content */}
-              <div className="flex-1 overflow-auto p-6">
+              <div className="flex-1 overflow-auto p-6 pb-20">
                 {EditorComponent ? (
                   <EditorComponent />
                 ) : (
@@ -262,6 +288,17 @@ export default function WebsiteSectionsHub() {
                     Select a section from the sidebar to edit
                   </div>
                 )}
+              </div>
+
+              {/* Fixed Bottom Save Bar */}
+              <div className="flex-shrink-0 px-6 py-3 border-t bg-background/80 backdrop-blur flex items-center justify-end gap-3">
+                {isDirty && (
+                  <span className="text-sm text-amber-600 dark:text-amber-400">Unsaved changes</span>
+                )}
+                <Button onClick={triggerSave} disabled={!isDirty || isSaving} size="sm">
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                  Save & Publish Changes
+                </Button>
               </div>
             </div>
           </ResizablePanel>
