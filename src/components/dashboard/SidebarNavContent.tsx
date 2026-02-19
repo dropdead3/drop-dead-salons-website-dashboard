@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid, Briefcase, ArrowLeft, Shield, FlaskConical } from 'lucide-react';
+import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid, Briefcase, ArrowLeft, Shield, FlaskConical, PanelLeftClose, ChevronRight } from 'lucide-react';
 import { NavBadge } from './NavBadge';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
@@ -317,9 +317,9 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   return (
     <div className="flex flex-col h-full">
       {/* Logo & Collapse Toggle */}
-      <div className={cn("border-b border-border/30", isCollapsed ? "p-3" : "p-6")}>
+      <div className={cn("border-b border-border/30", isCollapsed ? "p-3" : "px-4 py-3")}>
         <div className={cn("flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
-          <Link to="/dashboard" className="block">
+          <Link to="/dashboard" className="block min-w-0">
             {isCollapsed ? (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -327,10 +327,10 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                     <img 
                       src={getIcon()} 
                       alt={businessSettings?.business_name || 'Drop Dead'} 
-                      className="w-8 h-8 object-contain"
+                      className="w-6 h-6 object-contain"
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded bg-foreground text-background flex items-center justify-center font-display text-sm">
+                    <div className="w-6 h-6 rounded bg-foreground text-background flex items-center justify-center font-display text-xs">
                       {(businessSettings?.business_name || 'DD').substring(0, 2).toUpperCase()}
                     </div>
                   )}
@@ -341,14 +341,38 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               <img 
                 src={getLogo()} 
                 alt={businessSettings?.business_name || 'Drop Dead'} 
-                className="h-5 w-auto" 
+                className="h-4 w-auto" 
               />
             ) : (
-              <span className="font-display text-lg uppercase tracking-wider text-foreground">
+              <span className="font-display text-base uppercase tracking-wider text-foreground">
                 {businessSettings?.business_name || 'Drop Dead'}
               </span>
             )}
           </Link>
+          {isCollapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 mt-1.5 text-muted-foreground hover:text-foreground"
+                  onClick={onToggleCollapse}
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right">Expand sidebar</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
+              onClick={onToggleCollapse}
+            >
+              <PanelLeftClose className="w-4 h-4" />
+            </Button>
+          )}
         </div>
       </div>
 
