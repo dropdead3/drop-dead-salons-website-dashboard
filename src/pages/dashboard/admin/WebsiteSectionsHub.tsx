@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
 import { 
   LayoutGrid,
@@ -134,6 +135,10 @@ const TAB_LABELS: Record<string, string> = {
 
 export default function WebsiteSectionsHub() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { effectiveOrganization } = useOrganizationContext();
+  const previewUrl = effectiveOrganization?.slug
+    ? `/org/${effectiveOrganization.slug}?preview=true`
+    : '/?preview=true';
   const defaultTab = searchParams.get('tab') || 'hero';
   const [activeTab, setActiveTab] = useState(defaultTab);
   // Preview is always visible on desktop
@@ -308,7 +313,7 @@ export default function WebsiteSectionsHub() {
             <>
               <ResizableHandle withHandle />
               <ResizablePanel defaultSize={45} minSize={20} collapsible collapsedSize={0}>
-                <LivePreviewPanel activeSectionId={activeSectionId} />
+                <LivePreviewPanel activeSectionId={activeSectionId} previewUrl={previewUrl} />
               </ResizablePanel>
             </>
           )}
