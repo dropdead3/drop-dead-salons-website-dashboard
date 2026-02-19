@@ -1,29 +1,35 @@
 
 
-## Contextual Schedule/Command Center Icon in Top Nav
+## Premium Task Detail Drilldown UI Enhancement
 
-### What Changes
-In the top navigation bar, the CalendarDays icon currently always links to `/dashboard/schedule`. When you're already on the schedule page, this is redundant. Instead, it should swap to a Command Center icon (LayoutDashboard) that navigates back to `/dashboard`.
+### Overview
+Elevate the task detail drilldown dialog with improved padding, spacing, visual hierarchy, and a card-within-card metadata section that matches the platform's luxury glass aesthetic.
 
-### Implementation
+### Changes (Single File: `src/components/dashboard/TaskDetailDrilldown.tsx`)
 
-**File: `src/components/dashboard/DashboardLayout.tsx` (~line 1139-1151)**
+**1. Header Section**
+- Increase padding from `p-5 pb-4` to `p-6 pb-5` for more breathing room
+- Ensure title uses `font-sans` (Aeonik Pro) consistently
+- Slightly larger badges with better spacing between them
 
-- Use `useLocation()` (already available) to check if the current path starts with `/dashboard/schedule`
-- If on the schedule page: show `LayoutDashboard` icon, navigate to `/dashboard`, tooltip says "Command Center"
-- If on any other page: keep current `CalendarDays` icon, navigate to `/dashboard/schedule`, tooltip says "Schedule"
+**2. Notes Section**
+- Wrap in a subtle card-within-card container (`bg-muted/30 border border-border/30 rounded-lg p-4`) for visual separation
+- Add a section label with icon (`StickyNote` or existing icon)
 
-This is a ~5-line conditional change in one file. No new components or dependencies needed.
+**3. Metadata Grid**
+- Wrap the 2x2 grid in an elevated card-within-card (`bg-muted/20 border border-border/30 rounded-lg p-4`)
+- Add subtle gradient divider between notes and metadata
+- Better vertical spacing between label and value (`space-y-1`)
+- Use `font-sans` (not `font-medium` which is fine, but ensure no Termina leaks)
 
-### Technical Detail
+**4. Footer Actions**
+- Increase padding from `p-4 pt-3` to `p-5 pt-4`
+- Center the action buttons for a more balanced layout
+- Add subtle rounded-lg pill styling to buttons for premium feel
 
-```text
-Before:
-  [CalendarDays icon] --> always navigates to /dashboard/schedule
+**5. Overall Content Area**
+- Increase content padding from `p-5` to `p-6`
+- Increase spacing between sections from `space-y-5` to `space-y-6`
 
-After:
-  If on /dashboard/schedule:
-    [LayoutDashboard icon] --> navigates to /dashboard (tooltip: "Command Center")
-  Else:
-    [CalendarDays icon] --> navigates to /dashboard/schedule (tooltip: "Schedule")
-```
+### No new files or dependencies needed. All changes are in `TaskDetailDrilldown.tsx`.
+
