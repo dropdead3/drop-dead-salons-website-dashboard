@@ -16,6 +16,7 @@ import {
 } from '@dnd-kit/sortable';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import {
   Scissors,
@@ -26,26 +27,36 @@ import {
   Megaphone,
   MousePointerClick,
   PanelBottom,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import {
   useWebsiteSections,
   useUpdateWebsiteSections,
   SECTION_LABELS,
   SECTION_DESCRIPTIONS,
-  type HomepageSections,
+  isBuiltinSection,
+  generateSectionId,
+  CUSTOM_TYPE_INFO,
   type SectionConfig,
+  type BuiltinSectionType,
+  type CustomSectionType,
 } from '@/hooks/useWebsiteSections';
 import { SectionNavItem } from './SectionNavItem';
 import { SectionGroupHeader } from './SectionGroupHeader';
 import { ContentNavItem } from './ContentNavItem';
 import { WebsiteEditorSearch } from './WebsiteEditorSearch';
-
-type SectionKey = keyof HomepageSections;
-
-interface SectionItem {
-  key: SectionKey;
-  config: SectionConfig;
-}
+import { AddSectionDialog } from './AddSectionDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Site Content items (data managers - not part of homepage ordering)
 const SITE_CONTENT_ITEMS = [
@@ -59,80 +70,68 @@ const SITE_CONTENT_ITEMS = [
   { tab: 'footer', label: 'Footer', description: 'Footer links, social & copyright', icon: PanelBottom },
 ];
 
-// Homepage section groupings for logical organization
-const SECTION_GROUPS: { title: string; sections: SectionKey[] }[] = [
-  {
-    title: 'Above the Fold',
-    sections: ['hero', 'brand_statement'],
-  },
-  {
-    title: 'Social Proof',
-    sections: ['testimonials', 'brands'],
-  },
-  {
-    title: 'Services & Portfolio',
-    sections: ['services_preview', 'popular_services', 'extensions', 'gallery'],
-  },
-  {
-    title: 'Conversion',
-    sections: ['new_client', 'faq'],
-  },
-  {
-    title: 'Team & Extras',
-    sections: ['stylists', 'locations', 'drink_menu'],
-  },
-];
-
-// Map section keys to UNIQUE tab values
-const SECTION_TO_TAB: Record<SectionKey, string> = {
+// Map built-in section IDs to UNIQUE tab values
+const BUILTIN_SECTION_TO_TAB: Record<BuiltinSectionType, string> = {
   hero: 'hero',
   brand_statement: 'brand',
-  testimonials: 'testimonials-section', // Unique: section config
-  services_preview: 'services-preview', // Unique
-  popular_services: 'popular-services', // Unique
-  gallery: 'gallery-section', // Unique: section config
+  testimonials: 'testimonials-section',
+  services_preview: 'services-preview',
+  popular_services: 'popular-services',
+  gallery: 'gallery-section',
   new_client: 'new-client',
-  stylists: 'stylists-section', // Unique: section config
-  locations: 'locations-section', // Unique: section config
+  stylists: 'stylists-section',
+  locations: 'locations-section',
   faq: 'faq',
   extensions: 'extensions',
   brands: 'brands',
   drink_menu: 'drinks',
 };
 
+function getSectionTab(section: SectionConfig): string {
+  if (isBuiltinSection(section.type)) {
+    return BUILTIN_SECTION_TO_TAB[section.type];
+  }
+  return `custom-${section.id}`;
+}
+
+// Homepage section groupings for logical organization (built-in only)
+const SECTION_GROUPS: { title: string; sectionTypes: BuiltinSectionType[] }[] = [
+  { title: 'Above the Fold', sectionTypes: ['hero', 'brand_statement'] },
+  { title: 'Social Proof', sectionTypes: ['testimonials', 'brands'] },
+  { title: 'Services & Portfolio', sectionTypes: ['services_preview', 'popular_services', 'extensions', 'gallery'] },
+  { title: 'Conversion', sectionTypes: ['new_client', 'faq'] },
+  { title: 'Team & Extras', sectionTypes: ['stylists', 'locations', 'drink_menu'] },
+];
+
 interface WebsiteEditorSidebarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   collapsed?: boolean;
+  onSectionsChange?: (sections: SectionConfig[]) => void;
 }
 
 export function WebsiteEditorSidebar({
   activeTab,
   onTabChange,
   collapsed = false,
+  onSectionsChange,
 }: WebsiteEditorSidebarProps) {
   const { data: sectionsConfig, isLoading } = useWebsiteSections();
   const updateSections = useUpdateWebsiteSections();
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<SectionConfig | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const orderedSections = useMemo<SectionItem[]>(() => {
+  const orderedSections = useMemo<SectionConfig[]>(() => {
     if (!sectionsConfig?.homepage) return [];
-    return Object.entries(sectionsConfig.homepage)
-      .map(([key, config]) => ({ key: key as SectionKey, config }))
-      .sort((a, b) => a.config.order - b.config.order);
+    return [...sectionsConfig.homepage].sort((a, b) => a.order - b.order);
   }, [sectionsConfig]);
 
-  const [localSections, setLocalSections] = useState<SectionItem[]>([]);
+  const [localSections, setLocalSections] = useState<SectionConfig[]>([]);
 
   useEffect(() => {
     if (orderedSections.length > 0) {
@@ -140,27 +139,32 @@ export function WebsiteEditorSidebar({
     }
   }, [orderedSections]);
 
-  const handleToggleSection = async (sectionKey: SectionKey, enabled: boolean) => {
+  const builtinSections = useMemo(() => localSections.filter(s => isBuiltinSection(s.type)), [localSections]);
+  const customSections = useMemo(() => localSections.filter(s => !isBuiltinSection(s.type)), [localSections]);
+
+  const saveSections = async (newSections: SectionConfig[]) => {
     if (!sectionsConfig) return;
-
-    const updatedSections = {
-      ...sectionsConfig,
-      homepage: {
-        ...sectionsConfig.homepage,
-        [sectionKey]: {
-          ...sectionsConfig.homepage[sectionKey],
-          enabled,
-        },
-      },
-    };
-
-    setLocalSections(prev =>
-      prev.map(s => s.key === sectionKey ? { ...s, config: { ...s.config, enabled } } : s)
-    );
-
+    const reordered = newSections.map((s, i) => ({ ...s, order: i + 1 }));
+    setLocalSections(reordered);
+    onSectionsChange?.(reordered);
     try {
-      await updateSections.mutateAsync(updatedSections);
-      toast.success(`${SECTION_LABELS[sectionKey]} ${enabled ? 'enabled' : 'disabled'}`);
+      await updateSections.mutateAsync({ homepage: reordered });
+    } catch {
+      toast.error('Failed to save');
+      setLocalSections(orderedSections);
+    }
+  };
+
+  const handleToggleSection = async (sectionId: string, enabled: boolean) => {
+    const newSections = localSections.map(s =>
+      s.id === sectionId ? { ...s, enabled } : s
+    );
+    setLocalSections(newSections);
+    onSectionsChange?.(newSections);
+    try {
+      await updateSections.mutateAsync({ homepage: newSections });
+      const label = newSections.find(s => s.id === sectionId)?.label ?? 'Section';
+      toast.success(`${label} ${enabled ? 'enabled' : 'disabled'}`);
     } catch {
       toast.error('Failed to update section');
       setLocalSections(orderedSections);
@@ -169,48 +173,48 @@ export function WebsiteEditorSidebar({
 
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
-    if (!over || active.id === over.id || !sectionsConfig) return;
+    if (!over || active.id === over.id) return;
 
-    const oldIndex = localSections.findIndex(s => s.key === active.id);
-    const newIndex = localSections.findIndex(s => s.key === over.id);
-
+    const oldIndex = localSections.findIndex(s => s.id === active.id);
+    const newIndex = localSections.findIndex(s => s.id === over.id);
     const reordered = arrayMove(localSections, oldIndex, newIndex);
-    setLocalSections(reordered);
+    await saveSections(reordered);
+    toast.success('Section order updated');
+  };
 
-    // Save new order
-    const updatedHomepage = reordered.reduce((acc, item, index) => {
-      acc[item.key] = {
-        ...item.config,
-        order: index + 1,
-      };
-      return acc;
-    }, {} as HomepageSections);
+  const handleAddSection = async (type: CustomSectionType, label: string) => {
+    const newSection: SectionConfig = {
+      id: generateSectionId(),
+      type,
+      label,
+      description: CUSTOM_TYPE_INFO[type].description,
+      enabled: true,
+      order: localSections.length + 1,
+      deletable: true,
+    };
+    const newSections = [...localSections, newSection];
+    await saveSections(newSections);
+    toast.success(`"${label}" added`);
+    onTabChange(`custom-${newSection.id}`);
+  };
 
-    try {
-      await updateSections.mutateAsync({
-        ...sectionsConfig,
-        homepage: updatedHomepage,
-      });
-      toast.success('Section order updated');
-    } catch {
-      toast.error('Failed to save order');
-      setLocalSections(orderedSections);
+  const handleDeleteSection = async () => {
+    if (!deleteTarget) return;
+    const newSections = localSections.filter(s => s.id !== deleteTarget.id);
+    await saveSections(newSections);
+    toast.success(`"${deleteTarget.label}" deleted`);
+    setDeleteTarget(null);
+    // Switch to first section if we deleted the active one
+    if (activeTab === `custom-${deleteTarget.id}` && newSections.length > 0) {
+      onTabChange(getSectionTab(newSections[0]));
     }
   };
 
-  const getSectionOrder = (key: SectionKey): number => {
-    const section = localSections.find(s => s.key === key);
-    return section?.config.order ?? 0;
+  const getBuiltinSection = (type: BuiltinSectionType): SectionConfig | undefined => {
+    return localSections.find(s => s.type === type);
   };
 
-  const getSectionEnabled = (key: SectionKey): boolean => {
-    const section = localSections.find(s => s.key === key);
-    return section?.config.enabled ?? true;
-  };
-
-  if (collapsed) {
-    return null;
-  }
+  if (collapsed) return null;
 
   if (isLoading) {
     return (
@@ -230,7 +234,7 @@ export function WebsiteEditorSidebar({
       {/* Navigation */}
       <ScrollArea className="flex-1">
         <div className="py-2">
-          {/* Site Content Section (Data Managers) */}
+          {/* Site Content Section */}
           <SectionGroupHeader title="Site Content" />
           <div className="space-y-0.5 mb-2">
             {SITE_CONTENT_ITEMS.map(item => (
@@ -248,50 +252,113 @@ export function WebsiteEditorSidebar({
           <Separator className="my-3 mx-3" />
 
           {/* Homepage Sections (with DND) */}
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={localSections.map(s => s.key)}
-              strategy={verticalListSortingStrategy}
-            >
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={localSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
               <div className="mb-1">
                 <p className="px-4 py-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
                   Homepage Layout
                 </p>
               </div>
-              {SECTION_GROUPS.map((group, groupIndex) => (
-                <div key={group.title}>
-                  {groupIndex > 0 && <Separator className="my-2 mx-3" />}
-                  <SectionGroupHeader title={group.title} />
-                  {group.sections.map(sectionKey => (
+
+              {/* Built-in section groups */}
+              {SECTION_GROUPS.map((group, groupIndex) => {
+                const groupSections = group.sectionTypes
+                  .map(type => getBuiltinSection(type))
+                  .filter(Boolean) as SectionConfig[];
+                if (groupSections.length === 0) return null;
+                return (
+                  <div key={group.title}>
+                    {groupIndex > 0 && <Separator className="my-2 mx-3" />}
+                    <SectionGroupHeader title={group.title} />
+                    {groupSections.map(section => (
+                      <SectionNavItem
+                        key={section.id}
+                        id={section.id}
+                        label={section.label}
+                        description={section.description}
+                        order={section.order}
+                        enabled={section.enabled}
+                        isActive={activeTab === getSectionTab(section)}
+                        onSelect={() => onTabChange(getSectionTab(section))}
+                        onToggle={(enabled) => handleToggleSection(section.id, enabled)}
+                      />
+                    ))}
+                  </div>
+                );
+              })}
+
+              {/* Custom sections */}
+              {customSections.length > 0 && (
+                <>
+                  <Separator className="my-2 mx-3" />
+                  <SectionGroupHeader title="Custom Sections" />
+                  {customSections.map(section => (
                     <SectionNavItem
-                      key={sectionKey}
-                      id={sectionKey}
-                      label={SECTION_LABELS[sectionKey]}
-                      description={SECTION_DESCRIPTIONS[sectionKey]}
-                      order={getSectionOrder(sectionKey)}
-                      enabled={getSectionEnabled(sectionKey)}
-                      isActive={activeTab === SECTION_TO_TAB[sectionKey]}
-                      onSelect={() => onTabChange(SECTION_TO_TAB[sectionKey])}
-                      onToggle={(enabled) => handleToggleSection(sectionKey, enabled)}
+                      key={section.id}
+                      id={section.id}
+                      label={section.label}
+                      description={section.description}
+                      order={section.order}
+                      enabled={section.enabled}
+                      isActive={activeTab === `custom-${section.id}`}
+                      onSelect={() => onTabChange(`custom-${section.id}`)}
+                      onToggle={(enabled) => handleToggleSection(section.id, enabled)}
+                      deletable
+                      onDelete={() => setDeleteTarget(section)}
                     />
                   ))}
-                </div>
-              ))}
+                </>
+              )}
             </SortableContext>
           </DndContext>
+
+          {/* Add Section Button */}
+          <div className="px-3 mt-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs"
+              onClick={() => setShowAddDialog(true)}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Add Section
+            </Button>
+          </div>
         </div>
       </ScrollArea>
 
       {/* Stats Footer */}
       <div className="p-3 border-t bg-muted/30">
         <div className="text-[10px] text-muted-foreground text-center">
-          {localSections.filter(s => s.config.enabled).length}/{localSections.length} sections visible
+          {localSections.filter(s => s.enabled).length}/{localSections.length} sections visible
         </div>
       </div>
+
+      {/* Add Section Dialog */}
+      <AddSectionDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        onAdd={handleAddSection}
+      />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{deleteTarget?.label}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this section and its configuration. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSection} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
