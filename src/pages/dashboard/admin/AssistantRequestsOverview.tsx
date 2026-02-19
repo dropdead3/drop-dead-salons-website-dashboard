@@ -15,6 +15,7 @@ import { useActiveAssistants, useAssistantCoverageSummary } from '@/hooks/useAss
 import { ManualAssignmentDialog } from '@/components/dashboard/ManualAssignmentDialog';
 import { AssistantPerformanceMetrics } from '@/components/dashboard/AssistantPerformanceMetrics';
 import { AssistantWorkloadChart } from '@/components/dashboard/AssistantWorkloadChart';
+import { AssistantActivityCard } from '@/components/dashboard/AssistantActivityCard';
 import { AssistantRequestsCalendar } from '@/components/dashboard/AssistantRequestsCalendar';
 import { cn } from '@/lib/utils';
 function StatCard({ 
@@ -364,6 +365,9 @@ export default function AssistantRequestsOverview() {
                   icon={XCircle}
                 />
               </div>
+
+              {/* Assistant Activity (appointment-level assists) */}
+              <AssistantActivityCard />
 
               {/* Recent Activity */}
               <Card>

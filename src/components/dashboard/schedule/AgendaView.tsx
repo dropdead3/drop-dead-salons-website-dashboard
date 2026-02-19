@@ -14,6 +14,7 @@ interface AgendaViewProps {
   currentDate: Date;
   appointments: PhorestAppointment[];
   onAppointmentClick: (appointment: PhorestAppointment) => void;
+  assistedAppointmentIds?: Set<string>;
 }
 
 const STATUS_CONFIG = APPOINTMENT_STATUS_BADGE;
@@ -35,10 +36,12 @@ function getDateLabel(dateStr: string, formatDate: (date: Date, pattern: string)
 
 function AppointmentCard({ 
   appointment, 
-  onClick 
+  onClick,
+  isAssisting = false,
 }: { 
   appointment: PhorestAppointment; 
   onClick: () => void;
+  isAssisting?: boolean;
 }) {
   const statusConfig = STATUS_CONFIG[appointment.status];
   const isCancelledOrNoShow = appointment.status === 'cancelled' || appointment.status === 'no_show';
@@ -73,7 +76,12 @@ function AppointmentCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-2">
               <div>
-                <h4 className="font-medium text-base">{appointment.client_name}</h4>
+                <div className="flex items-center gap-1.5">
+                  <h4 className="font-medium text-base">{appointment.client_name}</h4>
+                  {isAssisting && (
+                    <span className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5 rounded-sm font-semibold">ASSISTING</span>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">{appointment.service_name}</p>
               </div>
               <Badge className={cn('shrink-0', statusConfig.bg, statusConfig.text)}>
@@ -119,6 +127,7 @@ export function AgendaView({
   currentDate,
   appointments,
   onAppointmentClick,
+  assistedAppointmentIds,
 }: AgendaViewProps) {
   const { formatDate } = useFormatDate();
 
@@ -187,6 +196,7 @@ export function AgendaView({
                   key={apt.id}
                   appointment={apt}
                   onClick={() => onAppointmentClick(apt)}
+                  isAssisting={assistedAppointmentIds?.has(apt.id) || false}
                 />
               ))}
             </div>

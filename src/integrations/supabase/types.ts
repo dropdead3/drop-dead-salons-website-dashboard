@@ -515,6 +515,7 @@ export type Database = {
       appointment_assistants: {
         Row: {
           appointment_id: string
+          assist_duration_minutes: number | null
           assistant_user_id: string
           created_at: string
           created_by: string | null
@@ -523,6 +524,7 @@ export type Database = {
         }
         Insert: {
           appointment_id: string
+          assist_duration_minutes?: number | null
           assistant_user_id: string
           created_at?: string
           created_by?: string | null
@@ -531,6 +533,7 @@ export type Database = {
         }
         Update: {
           appointment_id?: string
+          assist_duration_minutes?: number | null
           assistant_user_id?: string
           created_at?: string
           created_by?: string | null

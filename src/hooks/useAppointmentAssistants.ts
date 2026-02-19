@@ -67,10 +67,27 @@ export function useAppointmentAssistants(appointmentId: string | null) {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ['appointment-assistants', appointmentId] });
       queryClient.invalidateQueries({ queryKey: ['live-session-snapshot'] });
+      queryClient.invalidateQueries({ queryKey: ['assisted-appointment-ids'] });
       toast.success('Assistant assigned');
+
+      // Send in-app notification to the assigned assistant
+      try {
+        const currentUser = (await supabase.auth.getUser()).data.user;
+        if (currentUser && data.assistant_user_id !== currentUser.id) {
+          await supabase.from('notifications').insert({
+            user_id: data.assistant_user_id,
+            type: 'assistant_assigned',
+            title: 'Assistant Assignment',
+            message: `You've been assigned as an assistant on an appointment`,
+            metadata: { appointment_id: appointmentId },
+          });
+        }
+      } catch {
+        // Non-critical — don't block on notification failure
+      }
     },
     onError: (error: any) => {
       if (error?.code === '23505') {
@@ -93,6 +110,7 @@ export function useAppointmentAssistants(appointmentId: string | null) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['appointment-assistants', appointmentId] });
       queryClient.invalidateQueries({ queryKey: ['live-session-snapshot'] });
+      queryClient.invalidateQueries({ queryKey: ['assisted-appointment-ids'] });
       toast.success('Assistant removed');
     },
     onError: () => {

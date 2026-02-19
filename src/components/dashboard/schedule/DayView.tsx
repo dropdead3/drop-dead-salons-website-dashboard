@@ -45,6 +45,7 @@ interface DayViewProps {
   locationHours?: { open: string; close: string } | null;
   isLocationClosed?: boolean;
   closureReason?: string;
+  assistedAppointmentIds?: Set<string>;
 }
 
 // Use consolidated status colors from design tokens
@@ -167,6 +168,7 @@ interface AppointmentCardProps {
   totalOverlapping?: number;
   categoryColors: Record<string, { bg: string; text: string; abbr: string }>;
   isDragOverlay?: boolean;
+  isAssisting?: boolean;
 }
 
 function AppointmentCard({ 
@@ -178,6 +180,7 @@ function AppointmentCard({
   totalOverlapping = 1,
   categoryColors,
   isDragOverlay = false,
+  isAssisting = false,
 }: AppointmentCardProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: appointment.id,
@@ -321,7 +324,10 @@ function AppointmentCard({
           )}
           <div className="px-1.5 py-0.5 relative z-10">
             {isCompact ? (
-              <div className="text-xs font-medium truncate">
+              <div className="text-xs font-medium truncate flex items-center gap-1">
+                {isAssisting && (
+                  <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-semibold shrink-0">AST</span>
+                )}
                 {appointment.client_name}
               </div>
             ) : (
@@ -329,6 +335,9 @@ function AppointmentCard({
                 <div className="text-xs font-medium truncate flex items-center gap-1">
                   {appointment.status === 'confirmed' && (
                     <span className="w-1.5 h-1.5 rounded-full bg-white/80 shrink-0" />
+                  )}
+                  {isAssisting && (
+                    <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-semibold shrink-0">ASSISTING</span>
                   )}
                   {appointment.client_name}
                   {appointment.client_phone && (
@@ -396,6 +405,7 @@ export function DayView({
   locationHours,
   isLocationClosed,
   closureReason,
+  assistedAppointmentIds,
 }: DayViewProps) {
   const ROW_HEIGHT = 16; // 16px per 15-min slot
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -654,6 +664,7 @@ export function DayView({
                           columnIndex={columnIndex}
                           totalOverlapping={totalOverlapping}
                           categoryColors={categoryColors}
+                          isAssisting={assistedAppointmentIds?.has(apt.id) || false}
                         />
                       );
                     })}

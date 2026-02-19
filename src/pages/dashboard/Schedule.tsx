@@ -57,6 +57,7 @@ export default function Schedule() {
     filters,
     setFilters,
     appointments: allAppointments,
+    assistedAppointmentIds,
     isLoading,
     lastSync,
     canCreate,
@@ -380,6 +381,7 @@ export default function Schedule() {
                 locationHours={hoursInfo.openTime && hoursInfo.closeTime ? { open: hoursInfo.openTime, close: hoursInfo.closeTime } : null}
                 isLocationClosed={hoursInfo.isClosed}
                 closureReason={hoursInfo.closureReason}
+                assistedAppointmentIds={assistedAppointmentIds}
               />
             );
           })()}
@@ -393,6 +395,7 @@ export default function Schedule() {
               onAppointmentClick={handleAppointmentClick}
               onSlotClick={handleSlotClick}
               selectedAppointmentId={selectedAppointment?.id}
+              assistedAppointmentIds={assistedAppointmentIds}
             />
           )}
           
@@ -408,6 +411,7 @@ export default function Schedule() {
               onDayDoubleClick={handleDayDoubleClick}
               locationHoursJson={selectedLocationData?.hours_json}
               locationHolidayClosures={selectedLocationData?.holiday_closures}
+              assistedAppointmentIds={assistedAppointmentIds}
             />
           )}
           
@@ -427,6 +431,7 @@ export default function Schedule() {
               currentDate={currentDate}
               appointments={appointments}
               onAppointmentClick={handleAppointmentClick}
+              assistedAppointmentIds={assistedAppointmentIds}
             />
           )}
         </>

@@ -32,6 +32,7 @@ interface WeekViewProps {
   onDayDoubleClick?: (date: Date) => void;
   locationHoursJson?: HoursJson | null;
   locationHolidayClosures?: HolidayClosure[] | null;
+  assistedAppointmentIds?: Set<string>;
 }
 
 // Use consolidated status colors from design tokens
@@ -80,11 +81,13 @@ function AppointmentCard({
   hoursStart,
   onClick,
   categoryColors,
+  isAssisting = false,
 }: { 
   appointment: PhorestAppointment; 
   hoursStart: number;
   onClick: () => void;
   categoryColors: Record<string, { bg: string; text: string; abbr: string }>;
+  isAssisting?: boolean;
 }) {
   const style = getEventStyle(appointment.start_time, appointment.end_time, hoursStart);
   const statusColors = STATUS_COLORS[appointment.status];
@@ -181,17 +184,22 @@ function AppointmentCard({
           )}
           <div className="relative z-10">
             {isCompact ? (
-              <div className="text-xs font-medium truncate">{appointment.client_name}</div>
+              <div className="text-xs font-medium truncate flex items-center gap-0.5">
+                {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[7px] px-0.5 rounded-sm font-semibold shrink-0">AST</span>}
+                {appointment.client_name}
+              </div>
             ) : isMedium ? (
               <>
-                <div className="text-xs font-medium truncate">
+                <div className="text-xs font-medium truncate flex items-center gap-0.5">
+                  {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-semibold shrink-0">ASSISTING</span>}
                   {appointment.client_name} {appointment.client_phone}
                 </div>
                 <div className="text-[11px] opacity-90 truncate">{appointment.service_name}</div>
               </>
             ) : (
               <>
-                <div className="text-xs font-medium truncate">
+                <div className="text-xs font-medium truncate flex items-center gap-0.5">
+                  {isAssisting && <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-semibold shrink-0">ASSISTING</span>}
                   {appointment.client_name} {appointment.client_phone}
                 </div>
                 <div className="text-[11px] opacity-90 truncate">{appointment.service_name}</div>
@@ -252,6 +260,7 @@ export function WeekView({
   onDayDoubleClick,
   locationHoursJson,
   locationHolidayClosures,
+  assistedAppointmentIds,
 }: WeekViewProps) {
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
@@ -510,6 +519,7 @@ export function WeekView({
                       hoursStart={hoursStart}
                       onClick={() => onAppointmentClick(apt)}
                       categoryColors={categoryColors}
+                      isAssisting={assistedAppointmentIds?.has(apt.id) || false}
                     />
                   ))}
 
