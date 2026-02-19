@@ -41,6 +41,7 @@ export function LiveSessionIndicator({ locationId }: LiveSessionIndicatorProps) 
 
   const inSessionCount = DEMO_MODE ? 18 : live.inSessionCount;
   const activeStylistCount = DEMO_MODE ? DEMO_STYLISTS.length : live.activeStylistCount;
+  const activeAssistantCount = DEMO_MODE ? 5 : live.activeAssistantCount;
   const stylists = DEMO_MODE ? DEMO_STYLISTS : live.stylists;
   const isLoading = DEMO_MODE ? false : live.isLoading;
 
@@ -72,7 +73,7 @@ export function LiveSessionIndicator({ locationId }: LiveSessionIndicatorProps) 
 
             {/* Count text */}
             <span className="text-xs font-medium text-foreground whitespace-nowrap font-sans">
-              {activeStylistCount} Stylists Servicing {inSessionCount} Appointments Now
+              {activeStylistCount} stylists, {activeAssistantCount} assistants in service now
             </span>
 
             {/* Stacked avatars (hidden for enterprise) */}
