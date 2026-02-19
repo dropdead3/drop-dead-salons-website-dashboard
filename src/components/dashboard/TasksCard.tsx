@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckSquare, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { TaskItem } from '@/components/dashboard/TaskItem';
 import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
 import { EditTaskDialog } from '@/components/dashboard/EditTaskDialog';
@@ -86,8 +87,11 @@ export function TasksCard({
       <Card className="relative overflow-hidden p-6 rounded-xl backdrop-blur-sm transition-all duration-300">
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
-          <div className="flex items-center gap-2">
-            <h2 className="font-sans text-xs tracking-normal">{t('home.my_tasks')}</h2>
+          <div className="flex items-center gap-3">
+            <div className={tokens.card.iconBox}>
+              <CheckSquare className={tokens.card.icon} />
+            </div>
+            <h2 className={tokens.card.title}>{t('home.my_tasks')}</h2>
             {activeTasks.length > 0 && (
               <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                 {activeTasks.length} active{overdueCount > 0 && <span className="text-destructive">, {overdueCount} overdue</span>}
