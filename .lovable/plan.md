@@ -1,65 +1,39 @@
 
 
-## Smart Content Re-Layout for Stretched Cards
+## Fix: Smart Vertical Content Distribution in Goal Tracker
 
-### What You're Seeing
+### The Real Problem
 
-The equal-height pairing stretches the Goal Tracker card container to match New Bookings, but the content inside stops at its natural height -- leaving dead space at the bottom. You're right that simply top-aligning isn't enough.
+Adding `flex-1` to the location scoreboard wrapper makes that div stretch, but the location rows inside it stay at their natural height. The result: a big empty gap below the rows. The content didn't actually redistribute -- it just got a taller container with nothing filling it.
 
-### Approach
+### The Fix
 
-This needs two layers of work:
-
-**Layer 1: Make card content fill the stretched container (structural)**
-
-Propagate the flex-grow signal through the Card component so the content area expands:
-
-- **GoalTrackerCard**: Add `h-full flex flex-col` to the `Card`, and `flex-1` to `CardContent` so the location scoreboard section grows into available space
-- **NewBookingsCard**: Same treatment for consistency (both cards in a pair should fill their containers)
-
-**Layer 2: Smart content distribution (the actual re-layout)**
-
-For the Goal Tracker specifically, when extra vertical space is available:
-
-- The **Location Scoreboard** section gets `flex-1` so it naturally expands to fill remaining height
-- Location rows within it space out with `justify-start` (content stays at top of the scoreboard area, which is clean and readable)
-- The org summary (progress ring + stats) stays compact at the top -- stretching it would look wrong
-
-This is the right pattern because the scoreboard is the variable-length content. The ring and stats are fixed-size elements that should stay tight.
+Use `justify-between` on the CardContent flex column so the org summary (ring + stats) anchors to the top and the location scoreboard anchors to the bottom. The natural spacing fills the middle. This is a clean, executive layout that works at any card height.
 
 ### Technical Changes
 
 **File: `src/components/dashboard/sales/GoalTrackerCard.tsx`**
 
-1. Add `h-full flex flex-col` to the `Card` element (line 71):
+1. **Line 90** -- Change CardContent classes to use `justify-between` instead of `space-y-5`:
    ```tsx
-   <Card className={cn(tokens.card.wrapper, "h-full flex flex-col")}>
+   <CardContent className="flex-1 flex flex-col justify-between gap-5">
    ```
+   This replaces fixed `space-y-5` spacing with `gap-5` (same minimum) but distributes extra space between the org summary block and the location scoreboard.
 
-2. Add `flex-1 flex flex-col` to `CardContent` (line 90):
+2. **Line 206** -- Remove `flex-1` from the location scoreboard wrapper since it no longer needs to grow:
    ```tsx
-   <CardContent className="space-y-5 flex-1 flex flex-col">
+   <div>
    ```
+   Back to a plain div. The `justify-between` on the parent handles distribution.
 
-3. Wrap the location scoreboard section (line 206) with `flex-1` so it grows into available space:
-   ```tsx
-   <div className="flex-1 flex flex-col">
-     {/* existing location scoreboard content */}
-   </div>
-   ```
+3. **Wrap the org summary + pace trend in a single group div** (lines 97-202) so `justify-between` treats them as one top block vs the scoreboard as the bottom block. Without this, the pace trend section would get pushed away from the org summary when expanded.
 
-**File: `src/components/dashboard/NewBookingsCard.tsx`**
+### Result
 
-Apply the same `h-full flex flex-col` pattern to its Card so both halves of a pair fill equally.
+- Org summary (ring + stats) stays pinned to the top
+- Location scoreboard stays pinned to the bottom
+- Extra vertical space distributes naturally between the two sections
+- When the pace trend is expanded, it stays grouped with the org summary at the top
+- No dead space, no awkward stretching of individual elements
+- Works for any height difference between paired cards
 
-**File: `src/components/dashboard/PinnableCard.tsx`**
-
-No changes needed -- the existing `[&>*]:flex-1` already passes flex-grow to direct children.
-
-### What This Achieves
-
-- Both cards in a pair fill to the same height (no dead space)
-- The Goal Tracker's location scoreboard naturally absorbs the extra height
-- Fixed elements (progress ring, stats grid) stay compact and well-proportioned
-- No content gets awkwardly stretched or distorted
-- Works for any height difference, not just this specific pairing
