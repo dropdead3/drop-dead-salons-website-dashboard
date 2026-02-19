@@ -173,7 +173,7 @@ export function CollapsibleNavGroup({
                         "transition-all duration-200 text-sm",
                         active
                           ? "bg-foreground/10 text-foreground"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                          : "text-foreground/50 hover:text-foreground hover:bg-muted/60"
                       )}
                       style={{ width: 'calc(100% - 16px)' }}
                     >
