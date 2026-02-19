@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
@@ -57,16 +57,18 @@ import {
   type SectionConfig,
   type BuiltinSectionType,
   type CustomSectionType,
+  generateSectionId,
+  CUSTOM_TYPE_INFO,
 } from '@/hooks/useWebsiteSections';
 import {
   useWebsitePages,
   useUpdateWebsitePages,
   type PageConfig,
+  type WebsitePagesConfig,
   generatePageId,
 } from '@/hooks/useWebsitePages';
 import { SectionStyleEditor } from '@/components/dashboard/website-editor/SectionStyleEditor';
 import type { PageTemplate } from '@/data/page-templates';
-import { generateSectionId, CUSTOM_TYPE_INFO } from '@/hooks/useWebsiteSections';
 
 // Unsaved changes dialog
 import {
@@ -164,6 +166,7 @@ export default function WebsiteSectionsHub() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { effectiveOrganization, currentOrganization, selectedOrganization } = useOrganizationContext();
   const contextSlug = effectiveOrganization?.slug || selectedOrganization?.slug || currentOrganization?.slug;
+  const queryClient = useQueryClient();
 
   const { data: fallbackSlug } = useQuery({
     queryKey: ['website-editor-org-slug-fallback'],
@@ -201,6 +204,8 @@ export default function WebsiteSectionsHub() {
 
   // Page template picker
   const [showPageTemplatePicker, setShowPageTemplatePicker] = useState(false);
+  // Template confirmation
+  const [pendingTemplate, setPendingTemplate] = useState<PageTemplate | null>(null);
 
   // Compute preview URL based on selected page
   const previewUrl = useMemo(() => {
@@ -343,32 +348,184 @@ export default function WebsiteSectionsHub() {
     window.dispatchEvent(new CustomEvent('editor-save-request'));
   }, []);
 
-  // Debounced style override saves
+  // Helper: get sections for the currently selected page
+  const getSelectedPageSections = useCallback((): SectionConfig[] => {
+    if (selectedPageId === 'home') return sectionsConfig?.homepage ?? [];
+    return selectedPage?.sections ?? [];
+  }, [selectedPageId, sectionsConfig, selectedPage]);
+
+  // Debounced style override saves with optimistic cache update
   const styleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleStyleOverrideChange = useCallback((sectionId: string, overrides: Record<string, unknown>) => {
-    if (!sectionsConfig) return;
-    
-    // Optimistic local update (applied immediately for UI responsiveness)
-    const newSections = sectionsConfig.homepage.map(s =>
-      s.id === sectionId ? { ...s, style_overrides: overrides } : s
-    );
-    
+    if (!pagesConfig) return;
+
+    // Build updated pages config
+    const updatedPages: WebsitePagesConfig = {
+      pages: pagesConfig.pages.map(p => {
+        if (p.id !== selectedPageId) return p;
+        return {
+          ...p,
+          sections: p.sections.map(s =>
+            s.id === sectionId ? { ...s, style_overrides: overrides } : s
+          ),
+        };
+      }),
+    };
+
+    // Optimistic cache update for instant UI feedback
+    queryClient.setQueryData(['site-settings', 'website_pages'], updatedPages);
+
     // Debounce the actual DB save
     if (styleDebounceRef.current) clearTimeout(styleDebounceRef.current);
     styleDebounceRef.current = setTimeout(async () => {
       try {
-        await updateSections.mutateAsync({ homepage: newSections });
+        await updatePages.mutateAsync(updatedPages);
         triggerPreviewRefresh();
       } catch {
         toast.error('Failed to save style');
+        // Revert on error
+        queryClient.invalidateQueries({ queryKey: ['site-settings', 'website_pages'] });
       }
     }, 500);
-  }, [sectionsConfig, updateSections]);
+  }, [pagesConfig, selectedPageId, updatePages, queryClient]);
+
+  // Section CRUD for non-home pages
+  const handlePageSectionToggle = useCallback(async (sectionId: string, enabled: boolean) => {
+    if (!pagesConfig || selectedPageId === 'home') return;
+    const updatedPages: WebsitePagesConfig = {
+      pages: pagesConfig.pages.map(p => {
+        if (p.id !== selectedPageId) return p;
+        return { ...p, sections: p.sections.map(s => s.id === sectionId ? { ...s, enabled } : s) };
+      }),
+    };
+    try {
+      await updatePages.mutateAsync(updatedPages);
+      toast.success(`Section ${enabled ? 'enabled' : 'disabled'}`);
+    } catch {
+      toast.error('Failed to update section');
+    }
+  }, [pagesConfig, selectedPageId, updatePages]);
+
+  const handlePageSectionReorder = useCallback(async (reorderedSections: SectionConfig[]) => {
+    if (!pagesConfig || selectedPageId === 'home') return;
+    const updatedPages: WebsitePagesConfig = {
+      pages: pagesConfig.pages.map(p => {
+        if (p.id !== selectedPageId) return p;
+        return { ...p, sections: reorderedSections.map((s, i) => ({ ...s, order: i + 1 })) };
+      }),
+    };
+    try {
+      await updatePages.mutateAsync(updatedPages);
+    } catch {
+      toast.error('Failed to reorder');
+    }
+  }, [pagesConfig, selectedPageId, updatePages]);
+
+  const handlePageSectionAdd = useCallback(async (type: CustomSectionType, label: string) => {
+    if (!pagesConfig || selectedPageId === 'home') return;
+    const currentSections = selectedPage?.sections ?? [];
+    const newSection: SectionConfig = {
+      id: generateSectionId(),
+      type,
+      label,
+      description: CUSTOM_TYPE_INFO[type].description,
+      enabled: true,
+      order: currentSections.length + 1,
+      deletable: true,
+    };
+    const updatedPages: WebsitePagesConfig = {
+      pages: pagesConfig.pages.map(p => {
+        if (p.id !== selectedPageId) return p;
+        return { ...p, sections: [...p.sections, newSection] };
+      }),
+    };
+    try {
+      await updatePages.mutateAsync(updatedPages);
+      toast.success(`"${label}" added`);
+      setActiveTab(`custom-${newSection.id}`);
+    } catch {
+      toast.error('Failed to add section');
+    }
+  }, [pagesConfig, selectedPageId, selectedPage, updatePages]);
+
+  const handlePageSectionDelete = useCallback(async (sectionId: string) => {
+    if (!pagesConfig || selectedPageId === 'home') return;
+    const updatedPages: WebsitePagesConfig = {
+      pages: pagesConfig.pages.map(p => {
+        if (p.id !== selectedPageId) return p;
+        return { ...p, sections: p.sections.filter(s => s.id !== sectionId).map((s, i) => ({ ...s, order: i + 1 })) };
+      }),
+    };
+    try {
+      await updatePages.mutateAsync(updatedPages);
+      // Clean up orphaned settings
+      const settingsKey = `section_custom_${sectionId}`;
+      supabase.from('site_settings').delete().eq('id', settingsKey).then(() => {});
+      toast.success('Section deleted');
+      if (activeTab === `custom-${sectionId}`) {
+        setActiveTab('page-settings');
+      }
+    } catch {
+      toast.error('Failed to delete section');
+    }
+  }, [pagesConfig, selectedPageId, updatePages, activeTab]);
+
+  const handlePageSectionDuplicate = useCallback(async (section: SectionConfig) => {
+    if (!pagesConfig || selectedPageId === 'home') return;
+    const newId = generateSectionId();
+    const newSection: SectionConfig = {
+      ...section,
+      id: newId,
+      label: `${section.label} (Copy)`,
+      order: (selectedPage?.sections.length ?? 0) + 1,
+      deletable: true,
+    };
+    const updatedPages: WebsitePagesConfig = {
+      pages: pagesConfig.pages.map(p => {
+        if (p.id !== selectedPageId) return p;
+        return { ...p, sections: [...p.sections, newSection] };
+      }),
+    };
+    try {
+      await updatePages.mutateAsync(updatedPages);
+      // Copy config
+      const sourceKey = `section_custom_${section.id}`;
+      const destKey = `section_custom_${newId}`;
+      const { data: sourceConfig } = await supabase.from('site_settings').select('value').eq('id', sourceKey).maybeSingle();
+      if (sourceConfig?.value) {
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from('site_settings').upsert({ id: destKey, value: sourceConfig.value as never, updated_by: user?.id });
+      }
+      toast.success(`"${section.label}" duplicated`);
+      setActiveTab(`custom-${newId}`);
+    } catch {
+      toast.error('Failed to duplicate');
+    }
+  }, [pagesConfig, selectedPageId, selectedPage, updatePages]);
+
+  // Section label rename
+  const handleSectionLabelChange = useCallback(async (sectionId: string, newLabel: string) => {
+    if (!pagesConfig) return;
+    const updatedPages: WebsitePagesConfig = {
+      pages: pagesConfig.pages.map(p => {
+        if (p.id !== selectedPageId) return p;
+        return { ...p, sections: p.sections.map(s => s.id === sectionId ? { ...s, label: newLabel } : s) };
+      }),
+    };
+    // Also update home sections if on home page
+    if (selectedPageId === 'home' && sectionsConfig) {
+      // The adapter handles this through pages
+    }
+    try {
+      await updatePages.mutateAsync(updatedPages);
+    } catch {
+      toast.error('Failed to rename section');
+    }
+  }, [pagesConfig, selectedPageId, updatePages, sectionsConfig]);
 
   // Page management handlers
   const handlePageChange = useCallback((pageId: string) => {
     setSelectedPageId(pageId);
-    // Reset to first section or page-settings when switching pages
     if (pageId !== 'home') {
       setActiveTab('page-settings');
     } else {
@@ -458,7 +615,6 @@ export default function WebsiteSectionsHub() {
 
     try {
       await updatePages.mutateAsync(updated);
-      // Save template configs for each section
       const { data: { user } } = await supabase.auth.getUser();
       for (let i = 0; i < template.sections.length; i++) {
         const ts = template.sections[i];
@@ -475,6 +631,18 @@ export default function WebsiteSectionsHub() {
     }
   }, [pagesConfig, selectedPage, selectedPageId, updatePages]);
 
+  // Template confirmation wrapper
+  const handleTemplateSelect = useCallback((template: PageTemplate) => {
+    setPendingTemplate(template);
+  }, []);
+
+  const handleConfirmTemplate = useCallback(async () => {
+    if (pendingTemplate) {
+      await handleApplyPageTemplate(pendingTemplate);
+      setPendingTemplate(null);
+    }
+  }, [pendingTemplate, handleApplyPageTemplate]);
+
   // Determine editor component
   const renderEditor = () => {
     // Page settings tab
@@ -488,31 +656,33 @@ export default function WebsiteSectionsHub() {
       );
     }
 
-    // Check built-in editors first
-    const EditorComponent = EDITOR_COMPONENTS[activeTab];
-    if (EditorComponent) {
-      // Find the section to get its style overrides
-      const sectionId = TAB_TO_SECTION[activeTab];
-      const section = sectionId ? sectionsConfig?.homepage.find(s => s.id === sectionId) : null;
-      
-      return (
-        <div className="space-y-4">
-          <EditorComponent />
-          {section && (
-            <SectionStyleEditor
-              value={section.style_overrides ?? {}}
-              onChange={(overrides) => handleStyleOverrideChange(section.id, overrides)}
-              sectionId={section.id}
-            />
-          )}
-        </div>
-      );
+    // Check built-in editors first (only for home page)
+    if (selectedPageId === 'home') {
+      const EditorComponent = EDITOR_COMPONENTS[activeTab];
+      if (EditorComponent) {
+        const sectionId = TAB_TO_SECTION[activeTab];
+        const section = sectionId ? sectionsConfig?.homepage.find(s => s.id === sectionId) : null;
+        
+        return (
+          <div className="space-y-4">
+            <EditorComponent />
+            {section && (
+              <SectionStyleEditor
+                value={section.style_overrides ?? {}}
+                onChange={(overrides) => handleStyleOverrideChange(section.id, overrides)}
+                sectionId={section.id}
+              />
+            )}
+          </div>
+        );
+      }
     }
 
-    // Check if it's a custom section
+    // Check if it's a custom section — look in the SELECTED page's sections
     if (activeTab.startsWith('custom-')) {
       const sectionId = activeTab.replace('custom-', '');
-      const section = sectionsConfig?.homepage.find(s => s.id === sectionId);
+      const pageSections = getSelectedPageSections();
+      const section = pageSections.find(s => s.id === sectionId);
       if (section) {
         return (
           <CustomSectionEditor
@@ -521,6 +691,7 @@ export default function WebsiteSectionsHub() {
             sectionLabel={section.label}
             styleOverrides={section.style_overrides}
             onStyleChange={(overrides) => handleStyleOverrideChange(section.id, overrides)}
+            onLabelChange={(newLabel) => handleSectionLabelChange(section.id, newLabel)}
           />
         );
       }
@@ -538,11 +709,17 @@ export default function WebsiteSectionsHub() {
     if (TAB_LABELS[activeTab]) return TAB_LABELS[activeTab];
     if (activeTab.startsWith('custom-')) {
       const sectionId = activeTab.replace('custom-', '');
-      const section = sectionsConfig?.homepage.find(s => s.id === sectionId);
+      const pageSections = getSelectedPageSections();
+      const section = pageSections.find(s => s.id === sectionId);
       return section?.label ?? 'Custom Section';
     }
     return 'Select a section';
   };
+
+  // Open Site URL — page-aware, strip preview param
+  const openSiteUrl = useMemo(() => {
+    return previewUrl.replace('?preview=true', '');
+  }, [previewUrl]);
 
   return (
     <DashboardLayout hideFooter>
@@ -559,6 +736,11 @@ export default function WebsiteSectionsHub() {
               onAddPage={handleAddPage}
               onDeletePage={handleDeletePage}
               onApplyPageTemplate={() => setShowPageTemplatePicker(true)}
+              onPageSectionToggle={handlePageSectionToggle}
+              onPageSectionReorder={handlePageSectionReorder}
+              onPageSectionDelete={handlePageSectionDelete}
+              onPageSectionDuplicate={handlePageSectionDuplicate}
+              onPageSectionAdd={handlePageSectionAdd}
             />
           </div>
         )}
@@ -591,6 +773,11 @@ export default function WebsiteSectionsHub() {
                 onAddPage={handleAddPage}
                 onDeletePage={handleDeletePage}
                 onApplyPageTemplate={() => setShowPageTemplatePicker(true)}
+                onPageSectionToggle={handlePageSectionToggle}
+                onPageSectionReorder={handlePageSectionReorder}
+                onPageSectionDelete={handlePageSectionDelete}
+                onPageSectionDuplicate={handlePageSectionDuplicate}
+                onPageSectionAdd={handlePageSectionAdd}
               />
             </div>
           </div>
@@ -666,7 +853,7 @@ export default function WebsiteSectionsHub() {
                     <Button 
                       variant="outline" 
                       size="sm"
-                      onClick={() => window.open('/', '_blank')}
+                      onClick={() => window.open(openSiteUrl, '_blank')}
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
                       Open Site
@@ -728,8 +915,26 @@ export default function WebsiteSectionsHub() {
         <PageTemplatePicker
           open={showPageTemplatePicker}
           onOpenChange={setShowPageTemplatePicker}
-          onSelect={handleApplyPageTemplate}
+          onSelect={handleTemplateSelect}
         />
+
+        {/* Template Confirmation Dialog */}
+        <AlertDialog open={!!pendingTemplate} onOpenChange={(open) => !open && setPendingTemplate(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Apply "{pendingTemplate?.name}" Template?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will replace all sections on "{selectedPage?.title}". This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmTemplate}>
+                Apply Template
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </DashboardLayout>
   );
