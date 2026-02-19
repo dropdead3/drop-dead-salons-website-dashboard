@@ -1,58 +1,36 @@
 
 
-## Revert Expanded Sidebar to Light, Keep Collapsed Dark
+## Lighten Dark Mode Surface Colors (Keep Black Background)
 
-### Problem
-The expanded sidebar is currently always dark. You want only the collapsed rail to stay dark/luxurious, with the expanded state returning to the light cream aesthetic with dark logos.
+### What Changes
+Adjust the dark mode CSS variables for the Cream theme so the background stays pure black while cards, the nav bar, sidebar, and FAB containers get a slightly lighter fill -- creating a subtle layered depth like the reference screenshot.
 
 ### Changes
 
-**1. `src/components/dashboard/DashboardLayout.tsx` (line 866)**
+**`src/index.css` -- Dark Cream theme block (lines 196-250)**
 
-Make the dark background conditional on collapsed state again:
+Update these HSL values:
 
-```
-sidebarCollapsed
-  ? "lg:bg-[hsl(0,0%,6%)] lg:border-white/[0.06]"
-  : "lg:bg-card/80 lg:backdrop-blur-xl lg:backdrop-saturate-150 lg:border-border/50"
-```
+| Token | Current | New | Element affected |
+|-------|---------|-----|-----------------|
+| `--background` | `0 0% 4%` | `0 0% 4%` | Page background (stays black) |
+| `--card` | `0 0% 7%` | `0 0% 11%` | All cards, nav bar, sidebar expanded |
+| `--popover` | `0 0% 7%` | `0 0% 11%` | Dropdown menus, popovers |
+| `--secondary` | `0 0% 12%` | `0 0% 16%` | Secondary fills, hover states |
+| `--muted` | `0 0% 22%` | `0 0% 20%` | Muted backgrounds (slight tune) |
+| `--input` | `0 0% 12%` | `0 0% 14%` | Input field backgrounds |
+| `--sidebar-background` | `0 0% 6%` | `0 0% 10%` | Sidebar panel |
+| `--sidebar-accent` | `0 0% 12%` | `0 0% 16%` | Active sidebar items |
 
-**2. `src/components/dashboard/SidebarNavContent.tsx` (line 309)**
+This single CSS variable update will automatically propagate to every component that uses `bg-card`, `bg-secondary`, `bg-popover`, and `bg-sidebar` -- including the top nav bar (which uses `bg-card/80`), all dashboard cards, and the expanded sidebar.
 
-Apply `sidebar-dark` class only when collapsed:
-
-```
-className={cn("flex flex-col h-full", isCollapsed && "sidebar-dark")}
-```
-
-**3. `src/components/dashboard/SidebarNavContent.tsx` -- Logo/icon helpers (lines 169-185)**
-
-Restore theme-aware logic using `resolvedTheme`:
-- `hasCustomLogo`: check both `logo_light_url` and `logo_dark_url` based on theme
-- `getLogo`: return light logo (dark text) in light mode, dark logo (white text) in dark mode
-- `hasCustomIcon`: same pattern
-- `getIcon`: same pattern
-
-Collapsed state always uses dark variants (white logos) since the rail is always dark. Expanded state uses theme-resolved variants.
-
-Since expanded is now light, the expanded logo/icon calls will pass `isCollapsed` to decide which variant to use.
-
-**4. `src/components/dashboard/SidebarNavContent.tsx` -- Expanded header colors (lines 338, 361)**
-
-Revert expanded-state text colors back to theme-aware:
-- Logo fallback text: `text-foreground` instead of `text-white/90`
-- Collapse button: `text-muted-foreground hover:text-foreground` instead of `text-white/60 hover:text-white`
-
-### Files Modified
-
-| File | Change |
-|------|--------|
-| `src/components/dashboard/DashboardLayout.tsx` | Conditional dark bg only when collapsed |
-| `src/components/dashboard/SidebarNavContent.tsx` | Conditional `sidebar-dark` class; theme-aware logos; restore light-mode text colors for expanded state |
+The same adjustments will be mirrored for the Rose, Sage, and Ocean dark themes to keep cross-theme consistency.
 
 ### Result
-- Collapsed rail stays sleek black with white icons
-- Expanded sidebar returns to the cream/light card aesthetic
-- Dark logos display correctly against the light expanded background
-- Smooth transition between states preserved
+- Background stays rich black (4%)
+- Cards and surfaces lift to a visible charcoal (~11%) creating clear layered depth
+- Nav bar glass effect becomes more visible against the dark background
+- Consistent across all four color themes
 
+### Files Modified
+- `src/index.css`
