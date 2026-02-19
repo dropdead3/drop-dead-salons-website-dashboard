@@ -1,74 +1,103 @@
 
 
-## Complete Compact View Coverage for All Pinnable Analytics Cards
+## Bento Grid Layout for Simple View Analytics Cards
 
-### Problem
+### What Changes
 
-The compact/simple view toggle was added, but only ~10 cards show real metrics. The remaining ~12 cards fall through to a default case showing "---" with no meaningful data. Every pinnable card needs a real primary metric in simple view.
+The current simple/compact view renders each pinned analytics card as a flat single-line row (56px tall). This will be redesigned into a **bento-style tile grid** inspired by the reference screenshot -- each card becomes its own standalone tile displaying the primary metric prominently, matching the existing KPI tile design system.
 
-### Cards Currently Missing Real Compact Metrics
+### Visual Design Per Tile
 
-| Card | What It Should Show | Data Source |
-|------|---------------------|-------------|
-| operational_health | Overall health score | Needs `useOperationalHealth` or internal calculation |
-| locations_rollup | Location count + top location | Already has `accessibleLocations` |
-| service_mix | Top category name + revenue | Add `useServiceMix` hook call |
-| client_funnel | Total unique clients | Add `useClientFunnel` hook call |
-| client_health | Clients needing attention | Add `useClientHealthSegments` hook call |
-| goal_tracker | Org progress % | Add `useGoalTracker` or revenue vs goal |
-| week_ahead_forecast | Projected revenue | Already has sales data to approximate |
-| new_bookings | Booking count today | Add `useNewBookings` hook call |
-| hiring_capacity | Open chairs / total | Add `useHiringCapacity` hook call |
-| staffing_trends | Active staff count | Already has `workload` data |
-| stylist_workload | Avg utilization % | Already has `workload` data (same as capacity but labeled differently) |
-| client_experience_staff | (fallback) | Card name only if no data available |
+Each compact tile will follow this structure:
 
-### Implementation
-
-**Single file change: `src/components/dashboard/PinnedAnalyticsCard.tsx`**
-
-1. Add hook imports at the top:
-   - `useServiceMix` from `useSalesData`
-   - `useClientFunnel` from `useSalesAnalytics`
-   - `useClientHealthSegments` from `useClientHealthSegments`
-   - `useNewBookings` from `useNewBookings`
-   - `useHiringCapacity` from `useHiringCapacity`
-
-2. Call each hook alongside the existing hooks (before any conditional returns) with the same filter parameters already in scope (`filters.dateFrom`, `filters.dateTo`, `locationFilter`).
-
-3. Expand the compact `switch` statement to map every card to a real metric:
-
-```
-operational_health  -> "Healthy" or score from child data (fallback: location count)
-locations_rollup    -> "{N} locations" from accessibleLocations
-service_mix         -> Top category name + revenue amount
-client_funnel       -> "{N} total clients" (new + returning)
-client_health       -> "{N} need attention" from segments
-goal_tracker        -> Revenue vs goal progress %
-week_ahead_forecast -> "Projected" + forecasted revenue
-new_bookings        -> "{N} new" booking count
-hiring_capacity     -> "{N} open chairs"
-staffing_trends     -> "{N} active staff"
-stylist_workload    -> Avg utilization % (reuse workload data)
-client_experience_staff -> Card name (graceful fallback)
+```text
++---------------------------------------+
+| [icon]  EXECUTIVE SUMMARY  (i)        |
+|                                        |
+|  $12,450                               |
+|                                        |
+|  revenue                               |
+|                         View Details > |
++---------------------------------------+
 ```
 
-4. Remove the `default: '---'` fallback -- replace with card name display so no card ever shows a meaningless dash.
+- **Top row**: Icon (muted container) + uppercase Termina label (using `tokens.kpi.label`)
+- **Hero metric**: Large display value (using `tokens.kpi.value` or `tokens.stat.large`)
+- **Metric sublabel**: Small muted text beneath the value
+- **Bottom-right**: Optional "View [X] >" link to the full analytics tab
+- Card uses `tokens.kpi.tile` styling (rounded-xl, border, bg-card, padding)
+
+### Grid Layout
+
+Compact cards will render in a responsive bento grid instead of a vertical stack:
+
+- **Desktop**: `grid-cols-4` (4 tiles per row)
+- **Tablet**: `grid-cols-2`
+- **Mobile**: `grid-cols-1`
+
+The grid wrapper will be added in `DashboardHome.tsx` around the pinned card renders when `compact` is true.
+
+### Technical Plan
+
+| Step | File | Change |
+|------|------|--------|
+| 1 | `src/components/dashboard/PinnedAnalyticsCard.tsx` | Redesign the compact return block from a single-line `h-14` row to a bento tile using KPI token classes. Add a `CARD_LINK` map for optional "View X >" navigation links per card. |
+| 2 | `src/pages/dashboard/DashboardHome.tsx` | Wrap pinned card renders in a responsive grid container (`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4`) when `compactView` is true, instead of rendering them as sequential full-width blocks. |
+
+### Compact Tile Anatomy (code sketch)
+
+```tsx
+<Card className="rounded-xl border border-border/50 bg-card p-5 flex flex-col justify-between min-h-[140px]">
+  <div className="flex items-center gap-2">
+    <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center">
+      <Icon className="w-4 h-4 text-muted-foreground" />
+    </div>
+    <span className="font-display text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+      {meta.label}
+    </span>
+  </div>
+  <div className="mt-3">
+    <p className="font-display text-xl font-medium">{metricValue}</p>
+    {metricLabel && (
+      <p className="text-xs text-muted-foreground mt-0.5">{metricLabel}</p>
+    )}
+  </div>
+  {linkHref && (
+    <div className="flex justify-end mt-2">
+      <Link to={linkHref} className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
+        View {linkLabel} <ChevronRight className="w-3 h-3" />
+      </Link>
+    </div>
+  )}
+</Card>
+```
+
+### Link Mapping Per Card
+
+| Card | Link Text | Route |
+|------|-----------|-------|
+| executive_summary | View Brief | /dashboard/admin/analytics?tab=leadership |
+| sales_overview | View Sales | /dashboard/admin/analytics?tab=sales |
+| top_performers | View Team | /dashboard/admin/analytics?tab=sales&subtab=team |
+| capacity_utilization | View Capacity | /dashboard/admin/analytics?tab=operations&subtab=capacity |
+| client_funnel | View Clients | /dashboard/admin/analytics?tab=marketing |
+| goal_tracker | View Goals | /dashboard/admin/analytics?tab=sales&subtab=goals |
+| new_bookings | View Pipeline | /dashboard/admin/analytics?tab=operations&subtab=booking-pipeline |
+| All others | (no link or generic "View Details") | Respective analytics subtab |
 
 ### What Stays the Same
 
-- The toggle button in the filter bar (already implemented)
-- The compact card layout (slim 56px row with icon, label, metric)
-- The PinnableCard hover interaction (Zura AI + pin icons)
-- The widgets section (untouched)
-- All detailed view rendering (untouched)
+- All metric extraction logic (the existing switch/case)
+- PinnableCard wrapper and hover interactions (Zura AI + pin icons)
+- VisibilityGate gating
+- The toggle button in the filter bar
+- localStorage persistence of view mode
+- Widgets section (completely untouched)
+- Detailed view rendering (untouched)
 
-### Technical Notes
+### Files Modified
 
-- All new hooks are called unconditionally at the top of the component (React rules of hooks), but their data is only consumed inside the `if (compact)` block
-- Hook calls with `locationFilter` and date range params ensure compact metrics respect the active filters
-- `useHiringCapacity` takes no params (it's org-wide)
-- Performance impact is minimal since these hooks use React Query caching and most are already called by child components when in detailed view
+- `src/components/dashboard/PinnedAnalyticsCard.tsx` -- compact tile redesign
+- `src/pages/dashboard/DashboardHome.tsx` -- grid wrapper for compact mode
 
-One file modified. No database changes.
-
+No database changes. Two files modified.
