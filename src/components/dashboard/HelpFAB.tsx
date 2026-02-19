@@ -41,7 +41,7 @@ export function HelpFAB() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-14 w-14 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 bg-card/50 backdrop-blur-2xl border border-border/15 text-foreground hover:bg-card/70 hover:scale-110 hover:border-border/30"
+              className="h-14 w-14 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border text-foreground hover:bg-card hover:scale-110"
               aria-label="AI Copilot"
               onClick={handleCopilotToggle}
             >
@@ -69,7 +69,7 @@ export function HelpFAB() {
           <Button
             variant="ghost"
             size="icon"
-            className="h-14 w-14 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 bg-card/50 backdrop-blur-2xl border border-border/15 text-foreground hover:bg-card/70 hover:scale-110 hover:border-border/30"
+            className="h-14 w-14 rounded-full shadow-lg hover:shadow-2xl transition-all duration-300 bg-card/80 backdrop-blur-xl backdrop-saturate-150 border border-border text-foreground hover:bg-card hover:scale-110"
             aria-label="Help & Support"
           >
             <AnimatePresence mode="wait">
