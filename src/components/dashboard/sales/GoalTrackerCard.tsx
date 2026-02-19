@@ -44,8 +44,8 @@ export function GoalTrackerCard() {
   }, []);
 
   // SVG progress ring
-  const size = 120;
-  const strokeWidth = 8;
+  const size = 160;
+  const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (orgMetrics.percentage / 100) * circumference;
@@ -95,7 +95,7 @@ export function GoalTrackerCard() {
           ) : (
             <>
               {/* Top group: org summary + pace trend */}
-              <div className="space-y-5">
+              <div className="space-y-5 flex-1 flex flex-col justify-center">
               {/* Organization summary */}
               <div className="flex items-center gap-6">
                 {/* Progress ring */}
@@ -133,7 +133,7 @@ export function GoalTrackerCard() {
                     />
                   </svg>
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-display font-medium">{orgMetrics.percentage.toFixed(0)}%</span>
+                    <span className="text-3xl font-display font-medium">{orgMetrics.percentage.toFixed(0)}%</span>
                     <ChevronDown className={cn(
                       'w-3 h-3 text-muted-foreground transition-transform mt-0.5',
                       showTrend && 'rotate-180',
@@ -159,25 +159,25 @@ export function GoalTrackerCard() {
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Earned</p>
-                      <p className="text-sm font-medium">
+                      <p className="text-base font-medium">
                         <AnimatedBlurredAmount value={orgMetrics.revenue} currency={currency} />
                       </p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Target</p>
-                      <p className="text-sm font-medium">
+                      <p className="text-base font-medium">
                         <BlurredAmount>{formatCurrencyWhole(orgMetrics.target)}</BlurredAmount>
                       </p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Projected</p>
-                      <p className={cn('text-sm font-medium', orgMetrics.projectedRevenue >= orgMetrics.target ? 'text-chart-2' : 'text-destructive')}>
+                      <p className={cn('text-base font-medium', orgMetrics.projectedRevenue >= orgMetrics.target ? 'text-chart-2' : 'text-destructive')}>
                         <AnimatedBlurredAmount value={orgMetrics.projectedRevenue} currency={currency} />
                       </p>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Days Left</p>
-                      <p className="text-sm font-medium">{orgMetrics.daysRemaining}</p>
+                      <p className="text-base font-medium">{orgMetrics.daysRemaining}</p>
                     </div>
                   </div>
                 </div>
