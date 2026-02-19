@@ -16,6 +16,7 @@ import { BrandsSection } from "@/components/home/BrandsSection";
 import { DrinkMenuSection } from "@/components/home/DrinkMenuSection";
 import { CustomSectionRenderer } from "@/components/home/CustomSectionRenderer";
 import { useWebsiteSections, getEnabledSections, isBuiltinSection, type BuiltinSectionType, type CustomSectionType } from "@/hooks/useWebsiteSections";
+import { SectionStyleWrapper } from "@/components/home/SectionStyleWrapper";
 import React from 'react';
 
 // Map built-in section types to their components
@@ -75,12 +76,14 @@ const Index = () => {
         type="local_business"
       />
       {orderedSections.map((section) => (
-        <div id={`section-${section.id}`} key={section.id}>
-          {isBuiltinSection(section.type)
-            ? BUILTIN_COMPONENTS[section.type]
-            : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
-          }
-        </div>
+        <SectionStyleWrapper key={section.id} styleOverrides={section.style_overrides}>
+          <div id={`section-${section.id}`}>
+            {isBuiltinSection(section.type)
+              ? BUILTIN_COMPONENTS[section.type]
+              : <CustomSectionRenderer sectionId={section.id} sectionType={section.type as CustomSectionType} />
+            }
+          </div>
+        </SectionStyleWrapper>
       ))}
     </Layout>
   );

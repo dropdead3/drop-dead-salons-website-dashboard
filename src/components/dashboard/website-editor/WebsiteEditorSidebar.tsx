@@ -8,6 +8,7 @@ import {
   useSensors,
   DragEndEvent,
 } from '@dnd-kit/core';
+import { supabase } from '@/integrations/supabase/client';
 import {
   arrayMove,
   SortableContext,
@@ -198,6 +199,33 @@ export function WebsiteEditorSidebar({
     onTabChange(`custom-${newSection.id}`);
   };
 
+  const handleAddFromTemplate = async (template: import('@/data/section-templates').SectionTemplate) => {
+    const newSection: SectionConfig = {
+      id: generateSectionId(),
+      type: template.section_type as CustomSectionType,
+      label: template.name,
+      description: template.description,
+      enabled: true,
+      order: localSections.length + 1,
+      deletable: true,
+      style_overrides: template.style_overrides,
+    };
+    const newSections = [...localSections, newSection];
+    await saveSections(newSections);
+
+    // Also save the template's default config as the section content
+    const settingsKey = `section_custom_${newSection.id}`;
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from('site_settings').upsert({
+      id: settingsKey,
+      value: template.default_config as never,
+      updated_by: user?.id,
+    });
+
+    toast.success(`"${template.name}" added from template`);
+    onTabChange(`custom-${newSection.id}`);
+  };
+
   const handleDeleteSection = async () => {
     if (!deleteTarget) return;
     const newSections = localSections.filter(s => s.id !== deleteTarget.id);
@@ -339,6 +367,7 @@ export function WebsiteEditorSidebar({
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
         onAdd={handleAddSection}
+        onAddFromTemplate={handleAddFromTemplate}
       />
 
       {/* Delete Confirmation */}

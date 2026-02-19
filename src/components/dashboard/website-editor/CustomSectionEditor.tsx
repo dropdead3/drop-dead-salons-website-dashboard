@@ -9,12 +9,15 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
-import type { CustomSectionType } from '@/hooks/useWebsiteSections';
+import type { CustomSectionType, StyleOverrides } from '@/hooks/useWebsiteSections';
+import { SectionStyleEditor } from './SectionStyleEditor';
 
 interface CustomSectionEditorProps {
   sectionId: string;
   sectionType: CustomSectionType;
   sectionLabel: string;
+  styleOverrides?: Partial<StyleOverrides>;
+  onStyleChange?: (overrides: Partial<StyleOverrides>) => void;
 }
 
 interface RichTextConfig {
@@ -62,7 +65,7 @@ const DEFAULTS: Record<CustomSectionType, SectionData> = {
   spacer: { height: 64, show_divider: false },
 };
 
-export function CustomSectionEditor({ sectionId, sectionType, sectionLabel }: CustomSectionEditorProps) {
+export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styleOverrides, onStyleChange }: CustomSectionEditorProps) {
   const settingsKey = `section_custom_${sectionId}`;
   const queryClient = useQueryClient();
 
@@ -268,13 +271,24 @@ export function CustomSectionEditor({ sectionId, sectionType, sectionLabel }: Cu
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">{sectionLabel}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {renderFields()}
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">{sectionLabel}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {renderFields()}
+        </CardContent>
+      </Card>
+
+      {/* Section Style Overrides */}
+      {onStyleChange && (
+        <SectionStyleEditor
+          value={styleOverrides ?? {}}
+          onChange={onStyleChange}
+          sectionId={sectionId}
+        />
+      )}
+    </div>
   );
 }

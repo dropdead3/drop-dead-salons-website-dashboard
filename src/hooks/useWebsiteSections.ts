@@ -19,6 +19,16 @@ export type CustomSectionType = typeof CUSTOM_SECTION_TYPES[number];
 
 export type SectionType = BuiltinSectionType | CustomSectionType;
 
+export interface StyleOverrides {
+  background_type: 'none' | 'color' | 'gradient' | 'image';
+  background_value: string;
+  padding_top: number;
+  padding_bottom: number;
+  max_width: 'sm' | 'md' | 'lg' | 'xl' | 'full';
+  text_color_override: string;
+  border_radius: number;
+}
+
 export interface SectionConfig {
   id: string;
   type: SectionType;
@@ -27,6 +37,7 @@ export interface SectionConfig {
   enabled: boolean;
   order: number;
   deletable: boolean;
+  style_overrides?: Partial<StyleOverrides>;
 }
 
 export interface WebsiteSectionsConfig {

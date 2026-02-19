@@ -312,6 +312,19 @@ export default function WebsiteSectionsHub() {
     window.dispatchEvent(new CustomEvent('editor-save-request'));
   }, []);
 
+  // Handle style override changes for a section
+  const handleStyleOverrideChange = useCallback(async (sectionId: string, overrides: Record<string, unknown>) => {
+    if (!sectionsConfig) return;
+    const newSections = sectionsConfig.homepage.map(s =>
+      s.id === sectionId ? { ...s, style_overrides: overrides } : s
+    );
+    try {
+      await updateSections.mutateAsync({ homepage: newSections });
+    } catch {
+      toast.error('Failed to save style');
+    }
+  }, [sectionsConfig, updateSections]);
+
   // Determine editor component
   const renderEditor = () => {
     // Check built-in editors first
@@ -328,6 +341,8 @@ export default function WebsiteSectionsHub() {
             sectionId={section.id}
             sectionType={section.type as CustomSectionType}
             sectionLabel={section.label}
+            styleOverrides={section.style_overrides}
+            onStyleChange={(overrides) => handleStyleOverrideChange(section.id, overrides)}
           />
         );
       }

@@ -34,6 +34,7 @@ import Stylists from "./pages/Stylists";
 import Extensions from "./pages/Extensions";
 import Policies from "./pages/Policies";
 import Shop from "./pages/Shop";
+import DynamicPage from "./pages/DynamicPage";
 import { OrgPublicRoute } from "./components/org/OrgPublicRoute";
 
 // Dashboard pages
@@ -230,6 +231,7 @@ const App = () => (
                         <Route path="book" element={<PublicBooking />} />
                         <Route path="day-rate" element={<DayRateBooking />} />
                         <Route path="shop" element={<Shop />} />
+                        <Route path=":pageSlug" element={<DynamicPage />} />
                       </Route>
 
                       {/* Standalone public pages (not org-scoped) */}
