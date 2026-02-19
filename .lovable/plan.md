@@ -1,190 +1,165 @@
 
 
-## Premium Site Builder: Deep Gap Analysis and Enhancement Plan
+## Premium Site Builder: Remaining Gaps and Enhancements
 
-After a thorough audit of every component in the website editor ecosystem, here are the remaining gaps between the current state and a premium-grade custom site builder.
-
----
-
-### Critical Architecture Gap: Dual Data Source Still Active
-
-The most fundamental issue remains: `Index.tsx` (the homepage) reads from `useWebsiteSections()` (the `website_sections` key), while `DynamicPage.tsx` reads from `useWebsitePages()` (the `website_pages` key). The `WebsiteSectionsHub` also operates exclusively on `website_sections`. These two systems store homepage sections independently and will drift.
-
-**Fix**: Make `Index.tsx` read from `useWebsitePages()` for the home page (slug `""`). Convert `useWebsiteSections` into a thin adapter that reads/writes the home page's section array from `website_pages`. The hub should operate on the pages system.
+After auditing every component, hook, and page in the website editor ecosystem, here are the concrete issues that still need to be addressed.
 
 ---
 
-### Gap 1: Multi-Page Editor UI Is Missing
+### CRITICAL: Dual Data Source Is Still Active (P0)
 
-`PageSettingsEditor.tsx` and `PageTemplatePicker.tsx` exist as components but are **never imported or rendered** in the hub or sidebar. The sidebar has no page selector, no "Add Page" button, no "Delete Page" control. The editor can only manage homepage sections.
+The single most important gap: **`Index.tsx` still reads from `useWebsiteSections()` (the `website_sections` key)**, while `DynamicPage.tsx` reads from `useWebsitePages()` (the `website_pages` key). The entire editor hub and sidebar also operate exclusively on `website_sections`.
 
-**Fix**: Add to `WebsiteEditorSidebar`:
-- A page selector dropdown at the top (Home, About, Contact, custom pages)
-- "Add Page" and "Delete Page" buttons
-- "Page Settings" as a clickable tab that opens `PageSettingsEditor`
+This means homepage data lives in TWO places that will drift apart. Every edit made in the Website Editor saves to `website_sections`, but the pages system has its own copy of homepage sections in `website_pages`.
 
-Add to `WebsiteSectionsHub`:
-- Page context state (`selectedPageId`)
-- Import and route to `PageSettingsEditor` when `tab=page-settings`
-- Import `PageTemplatePicker` accessible from a "Page Templates" action
+**Files affected:**
+- `Index.tsx` (line 7) -- reads `useWebsiteSections()` instead of `useWebsitePages()`
+- `WebsiteSectionsHub.tsx` (line 215) -- operates on `useWebsiteSections()`
+- `WebsiteEditorSidebar.tsx` (line 136) -- reads `useWebsiteSections()`
+- `OverviewTab.tsx` (line 19) -- reads `useWebsiteSections()` independently
 
----
-
-### Gap 2: No Preview Auto-Refresh After Custom Section or Style Saves
-
-`triggerPreviewRefresh()` is called by all 13 built-in editors after save, but `CustomSectionEditor` never calls it. Neither does `SectionStyleEditor`. Custom section content changes and style overrides don't appear in the live preview until manual refresh.
-
-**Fix**: Add `triggerPreviewRefresh()` calls to:
-- `CustomSectionEditor.saveMutation.onSuccess`
-- `WebsiteSectionsHub.handleStyleOverrideChange` (after successful save)
+**Fix:** Make `useWebsitePages` the single source of truth. Refactor `useWebsiteSections` into a thin adapter that reads/writes the home page's sections from `website_pages`. Update all 4 consumers.
 
 ---
 
-### Gap 3: Style Override Saves Are Unbounced -- Every Slider Tick Hits Database
+### Gap 1: Non-Home Page Sections Cannot Be Edited (P0)
 
-In `WebsiteSectionsHub`, `handleStyleOverrideChange` immediately calls `updateSections.mutateAsync()`. When a user drags the padding slider, this fires dozens of database writes per second. No debouncing exists.
+The sidebar renders non-home page sections as plain `ContentNavItem` components (lines 471-486 of sidebar). Clicking them sets `activeTab` to `custom-{id}`, but `renderEditor()` in the hub (line 515) looks up the section from `sectionsConfig?.homepage` -- not from the selected page's sections. This means clicking a section on the About page finds nothing and shows the "Select a section" placeholder.
 
-**Fix**: Debounce `handleStyleOverrideChange` with a 500ms delay using `useDebounce` or a `setTimeout` pattern. Keep local state optimistic and only flush to DB after the debounce window.
-
----
-
-### Gap 4: Built-in Section Editors Cannot Be Scoped to Non-Home Pages
-
-The `EDITOR_COMPONENTS` map routes tab names to global editor components (e.g., `HeroEditor` reads from a global `site_settings` key). If a user adds a `hero` section to an About page, clicking it would open the global Hero editor, modifying the homepage hero -- not the About page's hero.
-
-**Fix (medium-term)**: For non-home pages, route built-in section types through `CustomSectionEditor` instead, using page-scoped `site_settings` keys like `section_page_{pageId}_{sectionId}`.
+**Fix:** `renderEditor()` must look up sections from the currently selected page's section array, not just `homepage`.
 
 ---
 
-### Gap 5: No Duplicate Button on Built-in Sections
+### Gap 2: Non-Home Page Sections Have No DnD, Toggle, Delete, or Duplicate (P1)
 
-`SectionNavItem` shows duplicate/delete buttons only when `deletable` is true. Built-in sections cannot be duplicated. Users may want to duplicate a built-in section as a starting point for a custom variant.
+Non-home page sections use `ContentNavItem` (a simple label+icon button) instead of `SectionNavItem` (which has drag handle, toggle switch, duplicate, and delete). Users cannot reorder, enable/disable, duplicate, or delete sections on About/Contact/custom pages.
 
-**Fix**: Show the duplicate button on all sections (built-in and custom). When duplicating a built-in section, create a custom section of the same type with `deletable: true` and copy the source config.
-
----
-
-### Gap 6: Undo/Redo Uses React State -- Lost on Tab Switch
-
-The `useUndoRedo` hook stores history in `useRef`. If the user navigates away from the Website Editor and comes back, all undo history is lost. The hook also re-initializes on every mount, so switching between dashboard pages clears the stack.
-
-**Fix**: Store undo history in `sessionStorage` keyed by page ID so it persists within the browser session. Alternatively, accept the limitation and document that undo history is session-scoped (current behavior is functional but not premium).
+**Fix:** Use `SectionNavItem` with a `DndContext` for non-home pages, same as for the homepage. Wire up toggle, delete, and duplicate handlers that operate on the selected page's sections within `website_pages`.
 
 ---
 
-### Gap 7: No Section Reordering Across Groups in Sidebar
+### Gap 3: "Add Section" Button Only Appears on Home Page (P1)
 
-The sidebar groups built-in sections into fixed categories ("Above the Fold", "Social Proof", etc.) using `SECTION_GROUPS`. DnD operates on the flat `localSections` array, but the visual grouping prevents a user from dragging a section between groups intuitively. The section order number changes but the visual position within groups stays fixed.
+The "Add Section" button (sidebar line 490) is wrapped in `{isHomePage && (...)}`. Users cannot add sections to non-home pages at all from the sidebar.
 
-**Fix**: Either remove the visual grouping for built-in sections (render them as a flat list like custom sections), or implement inter-group drag with group boundaries as drop zones.
-
----
-
-### Gap 8: No Mobile Editor Access
-
-The sidebar is hidden on mobile (`!isMobile && showSidebar`). Mobile users see only the editor content panel with no way to navigate sections, add sections, or switch pages. The "Add Section" button is inside the hidden sidebar.
-
-**Fix**: Add a mobile-friendly section picker:
-- Collapsible sheet or drawer that opens from a floating button
-- Section list with toggle/select capabilities
-- "Add Section" accessible from mobile
+**Fix:** Show the "Add Section" button for all pages. Wire the handler to insert into the correct page's sections array.
 
 ---
 
-### Gap 9: `OverviewTab` Is Disconnected from the Hub
+### Gap 4: OverviewTab Is Redundant and Uses a Different DnD Library (P2)
 
-`OverviewTab.tsx` imports `useWebsiteSections` independently and has its own save logic. It's a standalone section reordering UI, but it's not clear where it's used. It duplicates sidebar functionality and uses `framer-motion` Reorder (different DnD library than the sidebar's `@dnd-kit`).
+`OverviewTab.tsx` duplicates sidebar functionality (section reorder + toggle) using `framer-motion Reorder` while the sidebar uses `@dnd-kit`. It reads from `useWebsiteSections()` independently. It has its own save logic. It's unclear where it's rendered (it's not in the current hub `EDITOR_COMPONENTS` map).
 
-**Fix**: Either remove `OverviewTab` entirely (the sidebar already provides reorder + toggle) or repurpose it as a quick-glance page overview within the multi-page system. Consolidate to one DnD library.
-
----
-
-### Gap 10: No Section Visibility Indicator in Preview
-
-When a section is toggled off in the sidebar, the preview correctly hides it. But there's no visual indication in the editor about which sections are hidden. Users may forget they disabled a section.
-
-**Fix**: Add a subtle "X sections hidden" indicator in the editor header or sidebar footer (partially exists -- sidebar footer shows "X/Y sections visible" but could be more prominent with a clickable "show hidden" filter).
+**Fix:** Remove `OverviewTab.tsx` entirely. The sidebar already provides all its functionality with the preferred DnD library.
 
 ---
 
-### Gap 11: `SectionStyleWrapper` Skips Rendering When No Overrides
+### Gap 5: Style Override Debounce Doesn't Update Local State Optimistically (P1)
 
-`SectionStyleWrapper` returns bare `children` when `background_type === 'none'` and padding is 0. This means the `id` anchor (`section-{id}`) is on a child div, not a styled wrapper. This can cause inconsistent scroll-to behavior and the highlight animation won't have a visible background flash on unstyled sections.
+In `WebsiteSectionsHub.tsx` (line 348-366), `handleStyleOverrideChange` creates a `newSections` array but never updates local/optimistic state. The user sees no change until the debounced DB write completes and the query refetches. The `SectionStyleEditor` slider will feel laggy because the parent doesn't reflect changes until after the 500ms debounce + network round-trip.
 
-**Fix**: Always render the outer wrapper div (even with no styles) to ensure consistent DOM structure. Only skip the style properties, not the wrapper itself.
-
----
-
-### Gap 12: No Preview URL Routing for Dynamic Pages
-
-`LivePreviewPanel` always loads `previewUrl` which points to `/org/{slug}?preview=true` (the homepage). When editing an About page's sections, the preview still shows the homepage. There's no mechanism to switch the preview iframe to the page being edited.
-
-**Fix**: Update `LivePreviewPanel` to accept a `pageSlug` prop. When editing a non-home page, set the preview URL to `/org/{slug}/{pageSlug}?preview=true`. The hub should pass the current page's slug to the preview panel.
+**Fix:** Apply `newSections` to the query cache optimistically via `queryClient.setQueryData` immediately, then debounce only the persist call.
 
 ---
 
-### Enhancement Opportunities
+### Gap 6: "Open Site" Button Always Opens Root (P2)
 
-#### A. Section Copy/Paste Between Pages
-Allow copying a section from one page and pasting it into another page's section list. Uses clipboard-style state in the hub.
+The hub header (line 669) has `window.open('/', '_blank')` which always opens the root URL regardless of the selected page. When editing the About page, it should open `/org/{slug}/about`.
 
-#### B. Section Collapse in Sidebar
-Allow collapsing section groups in the sidebar to reduce clutter when managing 15+ sections.
-
-#### C. Drag-to-Reorder Custom Sections Between Positions
-Currently custom sections are always appended at the end. Allow inserting at a specific position via drag target indicators.
-
-#### D. Preview Breakpoint Persistence
-The desktop/mobile toggle in `LivePreviewPanel` resets to desktop on every mount. Persist the last-used viewport in `localStorage`.
-
-#### E. Section Search in Sidebar
-The `WebsiteEditorSearch` exists but only searches section labels. Enhance to also search within section content (heading, body text) for larger sites.
-
-#### F. Bulk Section Operations
-Select multiple sections and bulk-enable, bulk-disable, or bulk-delete them. Useful for quickly toggling seasonal content.
+**Fix:** Use `previewUrl` (already computed correctly per page) but strip the `?preview=true` param for the external link.
 
 ---
 
-### Recommended Implementation Priority
+### Gap 7: No Section Add/Delete/Reorder Operations on Non-Home Pages in the Hub (P0)
 
-**Batch 1 -- Data Integrity (must-fix)**
-1. Unify data source: `Index.tsx` reads from `useWebsitePages`
-2. Add `triggerPreviewRefresh()` to custom section and style saves
-3. Debounce style override saves
+The hub has handlers for `handleAddPage`, `handleDeletePage`, `handleUpdatePageSettings`, and `handleApplyPageTemplate` -- but no handlers for adding, deleting, reordering, or toggling individual sections within a non-home page. The sidebar only has these operations wired for the homepage via `useWebsiteSections()`.
 
-**Batch 2 -- Multi-Page Activation (core feature)**
-4. Wire `PageSettingsEditor` and `PageTemplatePicker` into the hub
-5. Add page selector, add/delete page controls to sidebar
-6. Update `LivePreviewPanel` to route to the active page's URL
-7. Scope built-in editors for non-home pages
-
-**Batch 3 -- UX Polish**
-8. Show duplicate button on built-in sections
-9. Always render `SectionStyleWrapper` outer div
-10. Add mobile editor navigation (floating drawer)
-11. Remove or repurpose `OverviewTab`
-12. Flatten section groups or implement inter-group drag
-
-**Batch 4 -- Premium Features**
-13. Section copy/paste between pages
-14. Sidebar section group collapse
-15. Preview breakpoint persistence
-16. Section content search
-17. Bulk section operations
+**Fix:** Add section CRUD handlers in the hub (or sidebar) that operate on `website_pages.pages[selectedPageId].sections` and call `updatePages.mutateAsync()`.
 
 ---
 
-### Technical Details -- Key File Changes
+### Gap 8: Header Mobile Menu Doesn't Include Dynamic Pages (P1)
 
-| File | Changes |
-|------|---------|
-| `src/pages/Index.tsx` | Switch from `useWebsiteSections` to `useWebsitePages` for home page |
-| `src/hooks/useWebsiteSections.ts` | Become adapter wrapping `useWebsitePages` home page |
-| `src/components/dashboard/website-editor/CustomSectionEditor.tsx` | Add `triggerPreviewRefresh()` on save success |
-| `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` | Add page state, debounced style saves, import PageSettingsEditor/PageTemplatePicker, pass pageSlug to preview |
-| `src/components/dashboard/website-editor/WebsiteEditorSidebar.tsx` | Add page selector dropdown, Add/Delete Page, mobile drawer, duplicate on built-in sections |
-| `src/components/dashboard/website-editor/LivePreviewPanel.tsx` | Accept `pageSlug` prop, update preview URL |
-| `src/components/home/SectionStyleWrapper.tsx` | Always render wrapper div |
-| `src/components/dashboard/website-editor/SectionNavItem.tsx` | Show duplicate button regardless of `deletable` |
-| `src/components/dashboard/website-editor/OverviewTab.tsx` | Remove or refactor to use pages system |
+The Header's mobile menu (lines 440+) renders `NAV_LINKS` and `ABOUT_LINKS` but does not include `dynamicNavPages`. The desktop nav includes them, but mobile visitors cannot reach custom pages.
+
+**Fix:** Append dynamic page links to the mobile menu section, below the hardcoded links.
+
+---
+
+### Gap 9: No Section Label Editing (P2)
+
+When a section is created (custom or duplicated), the user cannot rename its label. The sidebar shows the label but provides no inline edit. For custom sections, the label is set at creation and never changeable.
+
+**Fix:** Add an inline rename capability -- either a pencil icon on `SectionNavItem` that makes the label editable, or a "Section Label" field at the top of `CustomSectionEditor`.
+
+---
+
+### Gap 10: Template Picker Has No Visual Previews (P2)
+
+Both `TemplatePicker` and `PageTemplatePicker` show only text descriptions. No thumbnails, no mini-previews. Users cannot visually compare templates.
+
+**Fix:** Add styled preview cards or placeholder thumbnails for each template. Even colored blocks showing the template's layout pattern would help.
+
+---
+
+### Gap 11: No Confirmation Before Applying Page Template (P1)
+
+`handleApplyPageTemplate` (hub line 441) replaces all sections on the selected page immediately with no warning dialog. Existing content is destroyed silently.
+
+**Fix:** Add a confirmation dialog: "This will replace all sections on '{page.title}'. This cannot be undone."
+
+---
+
+### Gap 12: `SectionStyleWrapper` Border Radius Hides Anchor Highlights (P2)
+
+When `border_radius > 0`, the wrapper sets `overflow: hidden` (SectionStyleWrapper line 65). This clips the `preview-highlight` animation if it extends beyond the rounded corners. Minor visual issue.
+
+**Fix:** Use `overflow: clip` instead of `overflow: hidden` or apply the highlight inside the wrapper.
+
+---
+
+## Implementation Plan
+
+### Batch 1: Data Unification (Critical Foundation)
+
+| Step | File | Change |
+|------|------|--------|
+| 1a | `useWebsiteSections.ts` | Refactor to read/write the home page's sections from `website_pages` via `useWebsitePages`. Keep the same external API (`useWebsiteSections()` returns `{ homepage: SectionConfig[] }`) for backward compatibility |
+| 1b | `Index.tsx` | No change needed after 1a (it already uses `useWebsiteSections` which will now read from pages) |
+| 1c | `WebsiteSectionsHub.tsx` | Update `renderEditor()` to look up sections from the selected page, not just `homepage` |
+| 1d | `OverviewTab.tsx` | Delete this file -- sidebar already provides its functionality |
+
+### Batch 2: Non-Home Page Editing (Core Multi-Page)
+
+| Step | File | Change |
+|------|------|--------|
+| 2a | `WebsiteEditorSidebar.tsx` | Replace `ContentNavItem` for non-home sections with `SectionNavItem` wrapped in DnD. Add section CRUD handlers that operate on `website_pages` |
+| 2b | `WebsiteEditorSidebar.tsx` | Show "Add Section" button for all pages, not just home |
+| 2c | `WebsiteSectionsHub.tsx` | Add section-level CRUD handlers for non-home pages (add, delete, reorder, toggle, duplicate) using `updatePages.mutateAsync()` |
+| 2d | `WebsiteSectionsHub.tsx` | Fix `renderEditor()` to find custom sections from the selected page's section array |
+
+### Batch 3: UX Polish
+
+| Step | File | Change |
+|------|------|--------|
+| 3a | `WebsiteSectionsHub.tsx` | Apply optimistic cache update in `handleStyleOverrideChange` before debounced persist |
+| 3b | `WebsiteSectionsHub.tsx` | Fix "Open Site" button to use page-aware URL (strip `?preview=true` from `previewUrl`) |
+| 3c | `Header.tsx` | Add dynamic pages to mobile menu |
+| 3d | `WebsiteSectionsHub.tsx` | Add confirmation dialog before applying page template |
+| 3e | `SectionNavItem.tsx` or `CustomSectionEditor.tsx` | Add section label rename capability |
+
+### Batch 4: Visual Enhancements
+
+| Step | File | Change |
+|------|------|--------|
+| 4a | `TemplatePicker.tsx` + `PageTemplatePicker.tsx` | Add visual preview cards with layout indicators |
+| 4b | `SectionStyleWrapper.tsx` | Switch `overflow: hidden` to `overflow: clip` for border-radius |
+
+---
+
+### Estimated Scope
+
+- **Files to delete:** 1 (`OverviewTab.tsx`)
+- **Files to modify:** 7 (`useWebsiteSections.ts`, `WebsiteSectionsHub.tsx`, `WebsiteEditorSidebar.tsx`, `Header.tsx`, `SectionNavItem.tsx`, `TemplatePicker.tsx`, `SectionStyleWrapper.tsx`)
+- **New files:** 0
 
