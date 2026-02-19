@@ -829,7 +829,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       {/* Desktop Sidebar */}
       <aside 
         className={cn(
-          "hidden lg:fixed lg:top-3 lg:bottom-3 lg:left-3 lg:z-50 lg:block lg:border lg:border-border/50 lg:rounded-2xl lg:bg-card/90 lg:backdrop-blur-xl lg:overflow-hidden lg:shadow-sm transition-[width] duration-200 ease-in-out",
+          "hidden lg:fixed lg:top-3 lg:bottom-3 lg:left-3 lg:z-50 lg:block lg:border lg:border-border/50 lg:rounded-xl lg:bg-card/90 lg:backdrop-blur-xl lg:overflow-hidden lg:shadow-sm transition-[width] duration-200 ease-in-out",
           sidebarCollapsed ? "lg:w-16" : "lg:w-72"
         )}
       >
@@ -991,7 +991,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-amber-950 text-center text-sm font-medium overflow-hidden shadow-sm relative mx-3 mt-3 rounded-2xl"
+            className="bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 text-amber-950 text-center text-sm font-medium overflow-hidden shadow-sm relative mx-3 mt-3 rounded-xl"
           >
             {/* Animated background pattern */}
             <motion.div 
@@ -1079,7 +1079,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
         "dashboard-top-bar hidden lg:block sticky top-3 z-30 mx-3 mt-3",
         hideFooter && "shrink-0"
       )}>
-        <div className="relative w-full max-w-none flex items-center justify-between h-14 px-6 bg-card/50 backdrop-blur-2xl rounded-2xl border border-border/15 shadow-sm overflow-hidden">
+        <div className="relative w-full max-w-none flex items-center justify-between h-14 px-6 bg-card/50 backdrop-blur-2xl rounded-xl border border-border/15 shadow-sm overflow-hidden">
           {/* Left side - Sidebar toggle + Org Switcher */}
           <div className="flex items-center gap-3">
             <Tooltip>

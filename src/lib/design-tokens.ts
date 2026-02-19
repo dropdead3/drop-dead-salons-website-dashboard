@@ -53,7 +53,7 @@ export const tokens = {
   // ========================================
   kpi: {
     /** KPI tile container (rounded, bordered, padded) */
-    tile: 'rounded-2xl border border-border bg-card p-4 flex flex-col gap-1',
+    tile: 'rounded-xl border border-border bg-card p-4 flex flex-col gap-1',
     /** KPI tile label: Termina, 11px, uppercase, tracked, muted */
     label: 'font-display text-[11px] font-medium text-muted-foreground uppercase tracking-wider',
     /** KPI tile value: Termina, xl, medium */
@@ -67,7 +67,7 @@ export const tokens = {
   // ========================================
   card: {
     /** Standard dashboard card wrapper */
-    wrapper: 'rounded-2xl',
+    wrapper: 'rounded-xl',
     /** Standard icon container (10×10, muted bg, rounded) */
     iconBox: 'w-10 h-10 bg-muted flex items-center justify-center rounded-lg shrink-0',
     /** Standard icon inside the icon box */
@@ -83,7 +83,7 @@ export const tokens = {
     /** Standard page container with responsive padding */
     pageContainer: 'px-6 lg:px-8 py-8 max-w-[1600px] mx-auto',
     /** Card base styling */
-    cardBase: 'rounded-2xl',
+    cardBase: 'rounded-xl',
     /** Standard card padding */
     cardPadding: 'p-6',
   },
