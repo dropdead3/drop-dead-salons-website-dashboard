@@ -1,28 +1,45 @@
 
 
-## Move Tasks and Widgets Below Pinned Analytics Cards
-
-### Problem
-
-In detailed mode, pinned analytics cards are rendered in a separate block **after** the main section loop. This forces tasks (`schedule_tasks`) and widgets to appear above the analytics cards, even though their position in `sectionOrder` says otherwise. The screenshot confirms: My Tasks and Widgets sit above where the analytics cards should be.
+## Fix Equal-Height Card Pairing
 
 ### Root Cause
 
-In `DashboardHome.tsx`, the main rendering loop (line 714) iterates `orderedSectionIds` and renders regular sections inline, but returns `null` for pinned card entries in detailed mode (line 769). Then a separate block at lines 781-858 renders all pinned cards with bento grouping -- but this block is **after** the loop, so it always appears at the bottom.
+The `PinnableCard` component's outer `div` has `relative h-full` but is **not** a flex container. Its child (the `contentRef` div) has `flex-1`, which only works when the parent is a flex container. Since it isn't, `flex-1` is ignored and the content div just takes its natural height -- which is why the Goal Tracker card stops short while New Bookings fills its own content height.
 
-### Solution
+```text
+Current DOM chain (broken):
 
-Move the bento-grouped pinned cards rendering **inside** the main loop, triggered at the position of the **first** pinned card entry. This way the analytics cards render at their correct position in the section order, and tasks/widgets render after them (as defined by `sectionOrder`).
+div.flex-1.min-w-0.flex.flex-col     <-- DashboardHome pair wrapper (flex parent, good)
+  div.relative.h-full                <-- PinnableCard outer (NOT flex, breaks chain)
+    div.flex-1.flex.flex-col          <-- contentRef (flex-1 ignored, parent not flex)
+      Card                            <-- doesn't stretch
+```
 
-### Technical Changes
+### Fix
 
-**File: `src/pages/dashboard/DashboardHome.tsx`**
+Add `flex flex-col` to the PinnableCard outer div so `flex-1` on the content div actually takes effect.
 
-1. In the detailed-mode branch of the pinned card handler (around line 767-769), instead of always returning `null`, check if this is the **first** pinned card in the order. If it is, render the entire bento-grouped block (filter bar + all grouped pinned cards) right there -- the same logic currently at lines 781-858 but moved inline.
+```text
+Fixed DOM chain:
 
-2. Remove the separate post-loop block (lines 780-858) since the pinned cards will now render within the loop.
+div.flex-1.min-w-0.flex.flex-col     <-- DashboardHome pair wrapper
+  div.relative.h-full.flex.flex-col  <-- PinnableCard outer (now a flex column)
+    div.flex-1.flex.flex-col          <-- contentRef (flex-1 works, stretches)
+      Card                            <-- flex-1 via [&>*]:flex-1, fills height
+```
 
-3. The logic stays identical -- collect all visible pinned IDs, group consecutive halves into pairs, render with bento pairing and equal-height stretching. The only change is **where** this block appears in the rendered output.
+### Technical Change
 
-This is a rendering position change only. No new components, no data changes, no database updates.
+**File: `src/components/dashboard/PinnableCard.tsx`** (line 74)
+
+Change the outer div className from:
+```tsx
+className={cn("relative h-full", className)}
+```
+to:
+```tsx
+className={cn("relative h-full flex flex-col", className)}
+```
+
+One line, one class addition. This completes the flex chain so both cards in a pair stretch to the height of the taller one.
 
