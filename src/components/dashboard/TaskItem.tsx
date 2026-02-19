@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { parseISO, startOfDay, differenceInCalendarDays } from 'date-fns';
 import { motion } from 'framer-motion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
@@ -40,8 +41,10 @@ export function TaskItem({ task, onToggle, onDelete, onEdit, onView, isReadOnly 
     }
   }, [onToggle, task.is_completed]);
 
-  const isOverdue = task.due_date && !task.is_completed && new Date(task.due_date) < new Date(new Date().toDateString());
-  const daysOverdue = isOverdue ? Math.floor((new Date(new Date().toDateString()).getTime() - new Date(task.due_date!).getTime()) / (1000 * 60 * 60 * 24)) : 0;
+  const today = startOfDay(new Date());
+  const dueLocal = task.due_date ? startOfDay(parseISO(task.due_date)) : null;
+  const isOverdue = !!dueLocal && !task.is_completed && dueLocal < today;
+  const daysOverdue = isOverdue ? differenceInCalendarDays(today, dueLocal!) : 0;
 
   return (
     <motion.div
