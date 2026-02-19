@@ -32,7 +32,7 @@ export function SidebarFeedbackButtons({ isCollapsed = false }: SidebarFeedbackB
               <Lightbulb className="h-4 w-4" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="top" className="font-sans">Request a Feature</TooltipContent>
+          <TooltipContent side="right" className="font-sans">Request a Feature</TooltipContent>
         </Tooltip>
 
         <Tooltip>
@@ -44,7 +44,7 @@ export function SidebarFeedbackButtons({ isCollapsed = false }: SidebarFeedbackB
               <Bug className="h-4 w-4" />
             </button>
           </TooltipTrigger>
-          <TooltipContent side="top" className="font-sans">Report a Bug</TooltipContent>
+          <TooltipContent side="right" className="font-sans">Report a Bug</TooltipContent>
         </Tooltip>
 
         <Tooltip>
@@ -56,7 +56,7 @@ export function SidebarFeedbackButtons({ isCollapsed = false }: SidebarFeedbackB
               <HelpCircle className="h-4 w-4" />
             </Link>
           </TooltipTrigger>
-          <TooltipContent side="top" className="font-sans">Help Center</TooltipContent>
+          <TooltipContent side="right" className="font-sans">Help Center</TooltipContent>
         </Tooltip>
       </div>
 
