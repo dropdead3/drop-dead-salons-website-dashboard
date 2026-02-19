@@ -2,10 +2,15 @@ import { useState } from 'react';
 import { Lightbulb, Bug } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { PlatformFeedbackDialog } from './PlatformFeedbackDialog';
+import { cn } from '@/lib/utils';
 
 type FeedbackType = 'feature_request' | 'bug_report';
 
-export function SidebarFeedbackButtons() {
+interface SidebarFeedbackButtonsProps {
+  isCollapsed?: boolean;
+}
+
+export function SidebarFeedbackButtons({ isCollapsed = false }: SidebarFeedbackButtonsProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<FeedbackType>('feature_request');
 
@@ -16,7 +21,7 @@ export function SidebarFeedbackButtons() {
 
   return (
     <>
-      <div className="rounded-lg border border-border/40 bg-muted/30 p-1.5 mb-2 mx-1 flex gap-1">
+      <div className={cn("flex gap-1", isCollapsed && "flex-col")}>
         <Tooltip>
           <TooltipTrigger asChild>
             <button
