@@ -87,13 +87,15 @@ export function GoalTrackerCard() {
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-5 flex-1 flex flex-col">
+        <CardContent className="flex-1 flex flex-col justify-between gap-5">
           {isLoading ? (
             <div className="h-40 flex items-center justify-center">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
           ) : (
             <>
+              {/* Top group: org summary + pace trend */}
+              <div className="space-y-5">
               {/* Organization summary */}
               <div className="flex items-center gap-6">
                 {/* Progress ring */}
@@ -200,10 +202,11 @@ export function GoalTrackerCard() {
                   </motion.div>
                 )}
               </AnimatePresence>
+              </div>
 
               {/* Location scoreboard */}
               {locationScaffold.length > 0 && (
-                <div className="flex-1 flex flex-col">
+                <div>
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-display">
                       Location Scoreboard
