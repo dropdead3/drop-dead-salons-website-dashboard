@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
 import { 
@@ -135,9 +137,26 @@ const TAB_LABELS: Record<string, string> = {
 
 export default function WebsiteSectionsHub() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { effectiveOrganization } = useOrganizationContext();
-  const previewUrl = effectiveOrganization?.slug
-    ? `/org/${effectiveOrganization.slug}?preview=true`
+  const { effectiveOrganization, currentOrganization, selectedOrganization } = useOrganizationContext();
+  const contextSlug = effectiveOrganization?.slug || selectedOrganization?.slug || currentOrganization?.slug;
+
+  // Fallback: fetch first org slug if context doesn't provide one (e.g. platform users)
+  const { data: fallbackSlug } = useQuery({
+    queryKey: ['website-editor-org-slug-fallback'],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('organizations')
+        .select('slug')
+        .limit(1)
+        .single();
+      return data?.slug ?? null;
+    },
+    enabled: !contextSlug,
+  });
+
+  const orgSlug = contextSlug || fallbackSlug;
+  const previewUrl = orgSlug
+    ? `/org/${orgSlug}?preview=true`
     : '/?preview=true';
   const defaultTab = searchParams.get('tab') || 'hero';
   const [activeTab, setActiveTab] = useState(defaultTab);
