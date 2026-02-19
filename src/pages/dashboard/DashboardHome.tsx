@@ -764,9 +764,85 @@ function DashboardSections({
             return null;
           }
           
-          // Detailed mode: collect this card into the pending list; actual rendering happens at the next full card or section boundary
-          // We accumulate cards and render them grouped when we hit a non-pinned item or end of list
-          return null; // Rendered via detailedPinnedGroups below
+          // Detailed mode: render all pinned cards at the first pinned position
+          if (index === firstPinnedIndex) {
+            const allDetailedPinned = [
+              ...orderedSectionIds
+                .filter(id => isPinnedCardEntry(id) && isCardPinned(getPinnedCardId(id)))
+                .map(getPinnedCardId),
+              ...missingPinnedCards,
+            ];
+            
+            if (allDetailedPinned.length === 0) return null;
+            
+            // Group consecutive half-sized cards into pairs
+            type CardGroup = { type: 'full' | 'pair'; cards: string[] };
+            const groups: CardGroup[] = [];
+            let i = 0;
+            while (i < allDetailedPinned.length) {
+              const current = allDetailedPinned[i];
+              const next = allDetailedPinned[i + 1];
+              if (getCardSize(current) === 'half' && next && getCardSize(next) === 'half') {
+                groups.push({ type: 'pair', cards: [current, next] });
+                i += 2;
+              } else {
+                groups.push({ type: 'full', cards: [current] });
+                i += 1;
+              }
+            }
+            
+            return (
+              <React.Fragment key="detailed-analytics-grid">
+                {hasPinnedAnalytics && (
+                  <div className="pt-6 pb-2">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-3">
+                        {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
+                        <AnnouncementsDrawer isLeadership={isLeadership} />
+                      </div>
+                      <AnalyticsFilterBar
+                        locationId={analyticsFilters.locationId}
+                        onLocationChange={onLocationChange}
+                        dateRange={analyticsFilters.dateRange}
+                        onDateRangeChange={onDateRangeChange}
+                        accessibleLocations={accessibleLocations}
+                        canViewAggregate={canViewAggregate}
+                        compact={compact}
+                        onCompactChange={onCompactChange}
+                        leadingContent={
+                          <div className="flex items-center gap-1">
+                            {isLeadership && <PhorestSyncPopout />}
+                            <DashboardCustomizeMenu
+                              roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
+                            />
+                          </div>
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+                {groups.map((group, gi) => {
+                  if (group.type === 'pair') {
+                    return (
+                      <div key={`pair-${gi}`} className="flex gap-4 items-stretch">
+                        <div className="flex-1 min-w-0 flex flex-col">
+                          <PinnedAnalyticsCard cardId={group.cards[0]} filters={analyticsFilters} compact={compact} />
+                        </div>
+                        <div className="flex-1 min-w-0 flex flex-col">
+                          <PinnedAnalyticsCard cardId={group.cards[1]} filters={analyticsFilters} compact={compact} />
+                        </div>
+                      </div>
+                    );
+                  }
+                  return (
+                    <PinnedAnalyticsCard key={group.cards[0]} cardId={group.cards[0]} filters={analyticsFilters} compact={compact} />
+                  );
+                })}
+              </React.Fragment>
+            );
+          }
+          // Skip remaining pinned cards (already rendered at first position)
+          return null;
         }
         
         // Regular section: only render if section is enabled
@@ -777,85 +853,6 @@ function DashboardSections({
         
         return <React.Fragment key={sectionId}>{component}</React.Fragment>;
       })}
-      {/* Detailed mode: render pinned cards with bento pairing */}
-      {!compact && (() => {
-        // Collect all visible pinned card IDs in order
-        const allDetailedPinned = [
-          ...orderedSectionIds
-            .filter(id => isPinnedCardEntry(id) && isCardPinned(getPinnedCardId(id)))
-            .map(getPinnedCardId),
-          ...missingPinnedCards,
-        ];
-        
-        if (allDetailedPinned.length === 0) return null;
-        
-        // Group consecutive half-sized cards into pairs
-        type CardGroup = { type: 'full' | 'pair'; cards: string[] };
-        const groups: CardGroup[] = [];
-        let i = 0;
-        while (i < allDetailedPinned.length) {
-          const current = allDetailedPinned[i];
-          const next = allDetailedPinned[i + 1];
-          if (getCardSize(current) === 'half' && next && getCardSize(next) === 'half') {
-            groups.push({ type: 'pair', cards: [current, next] });
-            i += 2;
-          } else {
-            groups.push({ type: 'full', cards: [current] });
-            i += 1;
-          }
-        }
-        
-        return (
-          <>
-            {/* Filter bar before first group */}
-            {hasPinnedAnalytics && (
-              <div className="pt-6 pb-2">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
-                    <AnnouncementsDrawer isLeadership={isLeadership} />
-                  </div>
-                  <AnalyticsFilterBar
-                    locationId={analyticsFilters.locationId}
-                    onLocationChange={onLocationChange}
-                    dateRange={analyticsFilters.dateRange}
-                    onDateRangeChange={onDateRangeChange}
-                    accessibleLocations={accessibleLocations}
-                    canViewAggregate={canViewAggregate}
-                    compact={compact}
-                    onCompactChange={onCompactChange}
-                    leadingContent={
-                      <div className="flex items-center gap-1">
-                        {isLeadership && <PhorestSyncPopout />}
-                        <DashboardCustomizeMenu
-                          roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
-                        />
-                      </div>
-                    }
-                  />
-                </div>
-              </div>
-            )}
-            {groups.map((group, gi) => {
-              if (group.type === 'pair') {
-                return (
-                  <div key={`pair-${gi}`} className="flex gap-4 items-stretch">
-                    <div className="flex-1 min-w-0 flex flex-col">
-                      <PinnedAnalyticsCard cardId={group.cards[0]} filters={analyticsFilters} compact={compact} />
-                    </div>
-                    <div className="flex-1 min-w-0 flex flex-col">
-                      <PinnedAnalyticsCard cardId={group.cards[1]} filters={analyticsFilters} compact={compact} />
-                    </div>
-                  </div>
-                );
-              }
-              return (
-                <PinnedAnalyticsCard key={group.cards[0]} cardId={group.cards[0]} filters={analyticsFilters} compact={compact} />
-              );
-            })}
-          </>
-        );
-      })()}
     </>
   );
 }
