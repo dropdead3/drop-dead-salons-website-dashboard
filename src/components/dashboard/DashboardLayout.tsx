@@ -70,7 +70,6 @@ import {
   Bell,
   ChevronDown,
   X,
-  HelpCircle,
   CalendarClock,
   UserCircle,
   Contact,
@@ -1229,34 +1228,12 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                   
                   <DropdownMenuSeparator />
                   
-                  <DropdownMenuItem asChild>
-                    <Link to="/dashboard/help" className="flex items-center gap-2 cursor-pointer">
-                      <HelpCircle className="w-4 h-4" />
-                      Help Center
-                    </Link>
-                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
 
-            {/* Help Center - visible on xl+ */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className={cn("h-8 w-8 text-muted-foreground hover:text-foreground", (isPlatformUser || isAdmin) && "hidden xl:inline-flex")}
-                  asChild
-                >
-                  <Link to="/dashboard/help">
-                    <HelpCircle className="w-4 h-4" />
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                Help Center <span className="ml-2 inline-flex items-center gap-1 text-[10px] text-muted-foreground"><kbd className="px-1 py-0.5 bg-muted rounded border">?</kbd></span>
-              </TooltipContent>
-            </Tooltip>
+
+
             <NotificationsPanel unreadCount={unreadCount} />
             <DropdownMenu>
             <DropdownMenuTrigger asChild>
