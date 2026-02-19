@@ -14619,6 +14619,41 @@ export type Database = {
         }
         Relationships: []
       }
+      task_checklist_items: {
+        Row: {
+          created_at: string
+          id: string
+          is_completed: boolean
+          sort_order: number
+          task_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          sort_order?: number
+          task_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          sort_order?: number
+          task_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "task_checklist_items_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tasks: {
         Row: {
           completed_at: string | null
@@ -14629,6 +14664,9 @@ export type Database = {
           is_completed: boolean | null
           notes: string | null
           priority: string | null
+          recurrence_parent_id: string | null
+          recurrence_pattern: string | null
+          snoozed_until: string | null
           source: string
           title: string
           updated_at: string
@@ -14643,6 +14681,9 @@ export type Database = {
           is_completed?: boolean | null
           notes?: string | null
           priority?: string | null
+          recurrence_parent_id?: string | null
+          recurrence_pattern?: string | null
+          snoozed_until?: string | null
           source?: string
           title: string
           updated_at?: string
@@ -14657,12 +14698,23 @@ export type Database = {
           is_completed?: boolean | null
           notes?: string | null
           priority?: string | null
+          recurrence_parent_id?: string | null
+          recurrence_pattern?: string | null
+          snoozed_until?: string | null
           source?: string
           title?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tasks_recurrence_parent_id_fkey"
+            columns: ["recurrence_parent_id"]
+            isOneToOne: false
+            referencedRelation: "tasks"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_calendar_events: {
         Row: {

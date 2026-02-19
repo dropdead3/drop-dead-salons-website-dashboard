@@ -15,6 +15,9 @@ export interface Task {
   priority: 'low' | 'normal' | 'high';
   created_at: string;
   completed_at: string | null;
+  recurrence_pattern: string | null;
+  recurrence_parent_id: string | null;
+  snoozed_until: string | null;
 }
 
 /**
@@ -45,7 +48,7 @@ export function useTasks() {
 
   // Create task - always uses actual user ID (not impersonated)
   const createTask = useMutation({
-    mutationFn: async (task: { title: string; description?: string; due_date?: string; priority?: 'low' | 'normal' | 'high'; source?: string }) => {
+    mutationFn: async (task: { title: string; description?: string; due_date?: string; priority?: 'low' | 'normal' | 'high'; source?: string; recurrence_pattern?: string | null }) => {
       // When impersonating, don't allow task creation
       if (isImpersonating) {
         throw new Error('Cannot create tasks while impersonating');
@@ -60,6 +63,7 @@ export function useTasks() {
           due_date: task.due_date || null,
           priority: task.priority || 'normal',
           source: task.source || 'manual',
+          recurrence_pattern: task.recurrence_pattern || null,
         } as any)
         .select()
         .single();
@@ -136,9 +140,34 @@ export function useTasks() {
     },
   });
 
+  // Snooze task - prevented during impersonation
+  const snoozeTask = useMutation({
+    mutationFn: async ({ id, snoozed_until }: { id: string; snoozed_until: string | null }) => {
+      if (isImpersonating) {
+        throw new Error('Cannot modify tasks while impersonating');
+      }
+      const { error } = await supabase
+        .from('tasks')
+        .update({ snoozed_until })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast.success('Task snoozed');
+    },
+    onError: (error: Error) => {
+      if (error.message === 'Cannot modify tasks while impersonating') {
+        toast.error('View-only mode', { description: 'Cannot modify tasks while impersonating' });
+      } else {
+        toast.error('Failed to snooze task');
+      }
+    },
+  });
+
   // Update task - prevented during impersonation
   const updateTask = useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: { title?: string; description?: string | null; due_date?: string | null; priority?: 'low' | 'normal' | 'high'; notes?: string | null } }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: { title?: string; description?: string | null; due_date?: string | null; priority?: 'low' | 'normal' | 'high'; notes?: string | null; recurrence_pattern?: string | null } }) => {
       if (isImpersonating) {
         throw new Error('Cannot modify tasks while impersonating');
       }
@@ -171,5 +200,6 @@ export function useTasks() {
     toggleTask,
     deleteTask,
     updateTask,
+    snoozeTask,
   };
 }

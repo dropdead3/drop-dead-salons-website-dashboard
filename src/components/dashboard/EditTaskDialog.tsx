@@ -27,7 +27,7 @@ interface EditTaskDialogProps {
   task: Task | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (id: string, updates: { title: string; description?: string | null; due_date?: string | null; priority: 'low' | 'normal' | 'high'; notes?: string | null }) => void;
+  onSave: (id: string, updates: { title: string; description?: string | null; due_date?: string | null; priority: 'low' | 'normal' | 'high'; notes?: string | null; recurrence_pattern?: string | null }) => void;
   isPending: boolean;
 }
 
@@ -37,6 +37,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onSave, isPending }: 
   const [notes, setNotes] = useState('');
   const [dueDate, setDueDate] = useState<Date>(new Date());
   const [priority, setPriority] = useState<'low' | 'normal' | 'high'>('normal');
+  const [recurrence, setRecurrence] = useState<string>('none');
 
   useEffect(() => {
     if (task) {
@@ -45,6 +46,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onSave, isPending }: 
       setNotes(task.notes || '');
       setDueDate(task.due_date ? parseISO(task.due_date) : new Date());
       setPriority(task.priority);
+      setRecurrence(task.recurrence_pattern || 'none');
     }
   }, [task]);
 
@@ -58,6 +60,7 @@ export function EditTaskDialog({ task, open, onOpenChange, onSave, isPending }: 
       notes: notes.trim() || null,
       due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : null,
       priority,
+      recurrence_pattern: recurrence === 'none' ? null : recurrence,
     });
 
     onOpenChange(false);
@@ -140,6 +143,20 @@ export function EditTaskDialog({ task, open, onOpenChange, onSave, isPending }: 
                 </SelectContent>
               </Select>
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-recurrence">Repeat</Label>
+            <Select value={recurrence} onValueChange={setRecurrence}>
+              <SelectTrigger id="edit-recurrence">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">None</SelectItem>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="monthly">Monthly</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
