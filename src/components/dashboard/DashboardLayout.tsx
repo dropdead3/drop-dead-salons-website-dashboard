@@ -35,6 +35,7 @@ import { useUnreadAnnouncements } from '@/hooks/useUnreadAnnouncements';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';
 import { useOnboardingProgress } from '@/hooks/useOnboardingProgress';
 import { NotificationsPanel } from '@/components/dashboard/NotificationsPanel';
+import { ThemeToggle } from '@/components/dashboard/ThemeToggle';
 import { PhorestSyncPopout } from '@/components/dashboard/PhorestSyncPopout';
 import { ImpersonationHistoryPanel } from '@/components/dashboard/ImpersonationHistoryPanel';
 import { CustomLandingPageBanner } from '@/components/dashboard/CustomLandingPageBanner';
@@ -986,6 +987,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
             <span className="hidden sm:inline">{getAccessLabel()}</span>
           </Badge>
           <ViewAsToggle />
+          <ThemeToggle />
           <NotificationsPanel unreadCount={unreadCount} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -1235,6 +1237,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
 
 
 
+            <ThemeToggle />
             <NotificationsPanel unreadCount={unreadCount} />
             <DropdownMenu>
             <DropdownMenuTrigger asChild>
