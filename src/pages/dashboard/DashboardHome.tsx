@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -37,6 +37,7 @@ import { TaskItem } from '@/components/dashboard/TaskItem';
 import { AddTaskDialog } from '@/components/dashboard/AddTaskDialog';
 import { EditTaskDialog } from '@/components/dashboard/EditTaskDialog';
 import { TaskDetailDrilldown } from '@/components/dashboard/TaskDetailDrilldown';
+import { TasksCard } from '@/components/dashboard/TasksCard';
 import { TodaysBirthdayBanner } from '@/components/dashboard/TodaysBirthdayBanner';
 import { TrialCountdownBanner } from '@/components/dashboard/TrialCountdownBanner';
 import { WidgetsSection } from '@/components/dashboard/WidgetsSection';
@@ -576,67 +577,17 @@ function DashboardSections({
         )}
 
         <VisibilityGate elementKey="my_tasks">
-          <Card className="relative overflow-hidden p-6 rounded-xl backdrop-blur-sm transition-all duration-300">
-            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
-              <div className="flex items-center gap-2">
-                <h2 className="font-display text-xs tracking-[0.15em]">{t('home.my_tasks')}</h2>
-                {isImpersonating && (
-                  <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                    {t('home.view_only')}
-                  </span>
-                )}
-              </div>
-              <AddTaskDialog 
-                onAdd={(task) => createTask.mutate(task)} 
-                isPending={createTask.isPending} 
-                isReadOnly={isImpersonating}
-              />
-            </div>
-            <div className="space-y-3">
-              {tasks.length > 0 ? (
-                tasks.slice(0, 5).map((task) => (
-                  <TaskItem
-                    key={task.id}
-                    task={task}
-                    onToggle={(id, completed) => toggleTask.mutate({ id, is_completed: completed })}
-                    onDelete={(id) => deleteTask.mutate(id)}
-                    onEdit={(t) => onEditTask(t)}
-                    onView={(t) => onViewTask(t)}
-                    isReadOnly={isImpersonating}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-14 text-muted-foreground">
-                  <CheckSquare className="w-6 h-6 mx-auto mb-3 opacity-20" />
-                  <p className="text-sm font-display">{t('home.no_tasks')}</p>
-                  <p className="text-xs mt-1 text-muted-foreground/60">{isImpersonating ? t('home.impersonating_no_tasks') : t('home.add_first_task')}</p>
-                </div>
-              )}
-            </div>
-            {tasks.length > 5 && (
-              <p className="text-xs text-muted-foreground text-center mt-3">
-                {t('home.more_tasks', { count: tasks.length - 5 })}
-              </p>
-            )}
-          </Card>
-          <EditTaskDialog
-            task={editingTask}
-            open={!!editingTask}
-            onOpenChange={(open) => !open && onEditTask(null)}
-            onSave={(id, updates) => updateTask.mutate({ id, updates })}
-            isPending={updateTask.isPending}
-          />
-          <TaskDetailDrilldown
-            task={viewingTask}
-            open={!!viewingTask}
-            onOpenChange={(open) => !open && onViewTask(null)}
-            onToggle={(id, completed) => toggleTask.mutate({ id, is_completed: completed })}
-            onEdit={(t) => { onViewTask(null); onEditTask(t); }}
-            onDelete={(id) => deleteTask.mutate(id)}
-            onUpdateNotes={(id, notes) => updateTask.mutate({ id, updates: { notes } })}
-            isReadOnly={isImpersonating}
-            isNotesSaving={updateTask.isPending}
+          <TasksCard
+            tasks={tasks}
+            createTask={createTask}
+            toggleTask={toggleTask}
+            deleteTask={deleteTask}
+            updateTask={updateTask}
+            isImpersonating={isImpersonating}
+            editingTask={editingTask}
+            onEditTask={onEditTask}
+            viewingTask={viewingTask}
+            onViewTask={onViewTask}
           />
         </VisibilityGate>
       </div>
