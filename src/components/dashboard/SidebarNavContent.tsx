@@ -2,6 +2,7 @@ import { forwardRef, useEffect, useRef, useImperativeHandle, useMemo } from 'rea
 import { useTranslation } from 'react-i18next';
 import { useRubberBandScroll } from '@/hooks/useRubberBandScroll';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,7 @@ import { SidebarLockButton } from './SidebarLockButton';
 import { SidebarClockButton } from './SidebarClockButton';
 import { SidebarFeedbackButtons } from './SidebarFeedbackButtons';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
-import { useSidebarLayout, SECTION_LABELS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, MANAGEMENT_SUB_GROUPS, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
+import { useSidebarLayout, SECTION_LABELS, SECTION_ICONS, DEFAULT_SECTION_ORDER, DEFAULT_LINK_ORDER, MANAGEMENT_SUB_GROUPS, isBuiltInSection, getEffectiveHiddenSections, getEffectiveHiddenLinks, anyRoleHasOverrides } from '@/hooks/useSidebarLayout';
 import { CollapsibleNavGroup, type NavSubGroup } from './CollapsibleNavGroup';
 import { AccountOwnerOrgSwitcher } from './AccountOwnerOrgSwitcher';
 type PlatformRole = 'platform_owner' | 'platform_admin' | 'platform_support' | 'platform_developer';
@@ -640,6 +641,66 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                   getNavLabel={getNavLabel}
                   hiddenLinks={sectionHiddenLinks}
                 />
+              ) : isCollapsed ? (
+                // Collapsed: single section icon with popover menu
+                (() => {
+                  const SectionIcon = SECTION_ICONS[sectionId] || SECTION_ICONS.main;
+                  const isAnyActive = filteredItems.some(item => location.pathname === item.href);
+                  return (
+                    <Popover>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <PopoverTrigger asChild>
+                            <button
+                              className={cn(
+                                "flex items-center justify-center px-2 py-2 mx-2 rounded-lg",
+                                "transition-all duration-200 text-sm",
+                                isAnyActive
+                                  ? "bg-foreground/10 text-foreground"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                              )}
+                              style={{ width: 'calc(100% - 16px)' }}
+                            >
+                              <SectionIcon className="w-4 h-4" />
+                            </button>
+                          </PopoverTrigger>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">{sectionLabel}</TooltipContent>
+                      </Tooltip>
+                      <PopoverContent side="right" align="start" sideOffset={8} className="w-56 p-1">
+                        <p className="px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider font-display">
+                          {sectionLabel}
+                        </p>
+                        {filteredItems.map((item) => {
+                          const Icon = item.icon;
+                          const isActive = location.pathname === item.href;
+                          const label = getNavLabel(item);
+                          return (
+                            <a
+                              key={item.href}
+                              href={item.href}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                navigate(item.href, { state: { navTimestamp: Date.now() } });
+                                onNavClick();
+                              }}
+                              className={cn(
+                                "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-sans",
+                                "transition-all duration-200 cursor-pointer",
+                                isActive
+                                  ? "bg-foreground text-background shadow-sm"
+                                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                              )}
+                            >
+                              <Icon className="w-4 h-4 shrink-0" />
+                              <span>{label}</span>
+                            </a>
+                          );
+                        })}
+                      </PopoverContent>
+                    </Popover>
+                  );
+                })()
               ) : (
                 <div className="space-y-1">
                   {filteredItems.map((item) => (

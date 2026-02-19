@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Collapsible,
   CollapsibleContent,
@@ -153,14 +154,69 @@ export function CollapsibleNavGroup({
     );
   };
 
-  // When sidebar is collapsed, show flat list of all items with tooltips
+  // When sidebar is collapsed, show one icon per group with popover menus
   if (isCollapsed) {
-    const allItems = visibleGroups.flatMap(g => getVisibleItems(g.items));
     return (
       <div className="space-y-1">
-        {allItems.map(item => (
-          <NavLink key={item.href} item={item} />
-        ))}
+        {visibleGroups.map((group) => {
+          const GroupIcon = group.icon;
+          const active = isGroupActive(group);
+          const items = getVisibleItems(group.items);
+          return (
+            <Popover key={group.id}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <PopoverTrigger asChild>
+                    <button
+                      className={cn(
+                        "flex items-center justify-center px-2 py-2 mx-2 rounded-lg",
+                        "transition-all duration-200 text-sm",
+                        active
+                          ? "bg-foreground/10 text-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                      )}
+                      style={{ width: 'calc(100% - 16px)' }}
+                    >
+                      <GroupIcon className="w-4 h-4" />
+                    </button>
+                  </PopoverTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="right">{group.label}</TooltipContent>
+              </Tooltip>
+              <PopoverContent side="right" align="start" sideOffset={8} className="w-56 p-1">
+                <p className="px-3 py-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider font-display">
+                  {group.label}
+                </p>
+                {items.map(item => {
+                  const Icon = item.icon;
+                  const isActive = location.pathname === item.href;
+                  const label = getNavLabel ? getNavLabel(item) : item.label;
+                  return (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        navigate(item.href, { state: { navTimestamp: Date.now() } });
+                        onNavClick();
+                      }}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-sans",
+                        "transition-all duration-200 cursor-pointer",
+                        isActive
+                          ? "bg-foreground text-background shadow-sm"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                      )}
+                    >
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{label}</span>
+                    </a>
+                  );
+                })}
+              </PopoverContent>
+            </Popover>
+          );
+        })}
       </div>
     );
   }
