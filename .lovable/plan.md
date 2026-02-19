@@ -1,47 +1,43 @@
 
 
-## Live Session Snapshot Indicator
+## Live Session Drill-Down Dialog
 
-A new component that shows a real-time snapshot of currently in-session appointments, placed to the right of the Announcements button in the dashboard header row.
+Add a clickable drill-down to the Live Session Indicator that opens a dialog showing each active stylist, their current appointment, and their estimated wrap-up time (based on their last appointment of the day).
 
 ### What it Shows
-- A green pulsating dot indicating live status
-- Count of appointments currently in session (e.g., "3 In Session")
-- Stacked avatars of stylists currently working (up to 7, with "+N" overflow)
-- If total stylists exceed 40 (enterprise), avatars are hidden and only the count is shown
-- Clicking the indicator could show a tooltip or popover with details
-
-### Data Logic
-- Query `phorest_appointments` for today's date where `start_time <= now` AND `end_time > now` (appointments currently in progress)
-- Join to `phorest_staff_mapping` to get `user_id`, then to `employee_profiles` to get `photo_url` and `display_name` for avatars
-- Deduplicate stylists (one stylist may have overlapping appointments)
-- Auto-refresh every 60 seconds to keep the snapshot current
+- Dialog opens when clicking the Live Session pill
+- Each stylist row shows: avatar, name, current service, and estimated day-end time
+- "Estimated wrap-up" is derived from the latest `end_time` across all of that stylist's appointments today
+- Sorted by wrap-up time (earliest finishers first)
+- Uses the same drill-down dialog animation and styling as existing panels (e.g., DayProviderBreakdownPanel)
 
 ### Technical Changes
 
-**1. New hook: `src/hooks/useLiveSessionSnapshot.ts`**
-- Queries `phorest_appointments` for today where current time falls between `start_time` and `end_time`
-- Resolves stylist avatars via `phorest_staff_mapping` -> `employee_profiles`
-- Returns: `{ inSessionCount, activeStylistCount, stylists: Array<{ name, photoUrl }>, isLoading }`
-- Refreshes every 60 seconds via `refetchInterval`
+**1. Update hook: `src/hooks/useLiveSessionSnapshot.ts`**
+- Expand the returned data to include per-stylist detail: current service name, current appointment end time, and last appointment end time (wrap-up estimate)
+- Fetch all of today's appointments (not just in-session) per active stylist to find their last appointment's `end_time`
+- Return a new `stylistDetails` array alongside the existing summary fields
 
-**2. New component: `src/components/dashboard/LiveSessionIndicator.tsx`**
-- Renders as an inline pill (matching the Zura Insights / Announcements button style)
-- Green pulsating dot (CSS animation) on the left
-- Text: "{N} In Session"
-- Stacked avatar row (negative margin overlap, up to 7 avatars + "+N" overflow badge)
-- Enterprise mode (40+ stylists): hides avatars, shows count only
-- Uses `bg-background border border-border` styling to match sibling buttons
-- Fallback initials for stylists without photos
+**2. New component: `src/components/dashboard/LiveSessionDrilldown.tsx`**
+- Dialog using `DRILLDOWN_DIALOG_CONTENT_CLASS` and `DRILLDOWN_OVERLAY_CLASS` for consistent animation
+- Header: "Live Session" with subtitle showing count (e.g., "18 appointments in progress - 13 stylists working")
+- ScrollArea with stylist rows, each showing:
+  - Avatar (photo or initials fallback)
+  - Stylist name
+  - Current service name (muted text)
+  - "Wraps up ~5:30 PM" (last appointment end time, formatted)
+- Sorted by wrap-up time ascending
+- Demo mode support matching the indicator's demo data
 
-**3. Modified: `src/pages/dashboard/DashboardHome.tsx`**
-- Import `LiveSessionIndicator`
-- Add it after `<AnnouncementsDrawer>` in both the compact and detailed analytics header rows (lines ~732 and ~801)
+**3. Update component: `src/components/dashboard/LiveSessionIndicator.tsx`**
+- Add `useState` for dialog open/close
+- Change the pill from `cursor-default` to `cursor-pointer` with hover effect
+- Add `onClick` to open the drill-down dialog
+- Import and render `LiveSessionDrilldown`
 
 ### Files Created
-- `src/hooks/useLiveSessionSnapshot.ts`
-- `src/components/dashboard/LiveSessionIndicator.tsx`
+- `src/components/dashboard/LiveSessionDrilldown.tsx`
 
 ### Files Modified
-- `src/pages/dashboard/DashboardHome.tsx` (add LiveSessionIndicator to both header rows)
-
+- `src/hooks/useLiveSessionSnapshot.ts` (add per-stylist schedule detail)
+- `src/components/dashboard/LiveSessionIndicator.tsx` (add click-to-open + render dialog)
