@@ -40,10 +40,14 @@ import { LocationsContent } from '@/components/dashboard/website-editor/Location
 import { ServicesContent } from '@/components/dashboard/website-editor/ServicesContent';
 import { AnnouncementBarContent } from '@/components/dashboard/website-editor/AnnouncementBarContent';
 
+// Multi-page components
+import { PageSettingsEditor } from '@/components/dashboard/website-editor/PageSettingsEditor';
+import { PageTemplatePicker } from '@/components/dashboard/website-editor/PageTemplatePicker';
+
 // Sidebar Navigation
 import { WebsiteEditorSidebar } from '@/components/dashboard/website-editor/WebsiteEditorSidebar';
 // Live Preview
-import { LivePreviewPanel } from '@/components/dashboard/website-editor/LivePreviewPanel';
+import { LivePreviewPanel, triggerPreviewRefresh } from '@/components/dashboard/website-editor/LivePreviewPanel';
 
 // Undo/Redo
 import { useUndoRedo } from '@/hooks/useUndoRedo';
@@ -54,7 +58,15 @@ import {
   type BuiltinSectionType,
   type CustomSectionType,
 } from '@/hooks/useWebsiteSections';
+import {
+  useWebsitePages,
+  useUpdateWebsitePages,
+  type PageConfig,
+  generatePageId,
+} from '@/hooks/useWebsitePages';
 import { SectionStyleEditor } from '@/components/dashboard/website-editor/SectionStyleEditor';
+import type { PageTemplate } from '@/data/page-templates';
+import { generateSectionId, CUSTOM_TYPE_INFO } from '@/hooks/useWebsiteSections';
 
 // Unsaved changes dialog
 import {
@@ -145,6 +157,7 @@ const TAB_LABELS: Record<string, string> = {
   'drinks': 'Drink Menu',
   'footer-cta': 'Footer CTA',
   'footer': 'Footer Settings',
+  'page-settings': 'Page Settings',
 };
 
 export default function WebsiteSectionsHub() {
@@ -166,9 +179,6 @@ export default function WebsiteSectionsHub() {
   });
 
   const orgSlug = contextSlug || fallbackSlug;
-  const previewUrl = orgSlug
-    ? `/org/${orgSlug}?preview=true`
-    : '/?preview=true';
   const defaultTab = searchParams.get('tab') || 'hero';
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [showSidebar, setShowSidebar] = useState(true);
@@ -180,6 +190,26 @@ export default function WebsiteSectionsHub() {
   const [isSaving, setIsSaving] = useState(false);
   const dirtyToastShownRef = useRef(false);
   const isMobile = useIsMobile();
+
+  // Multi-page state
+  const [selectedPageId, setSelectedPageId] = useState('home');
+  const { data: pagesConfig } = useWebsitePages();
+  const updatePages = useUpdateWebsitePages();
+  const selectedPage = useMemo(() => {
+    return pagesConfig?.pages.find(p => p.id === selectedPageId);
+  }, [pagesConfig, selectedPageId]);
+
+  // Page template picker
+  const [showPageTemplatePicker, setShowPageTemplatePicker] = useState(false);
+
+  // Compute preview URL based on selected page
+  const previewUrl = useMemo(() => {
+    if (!orgSlug) return '/?preview=true';
+    if (selectedPageId === 'home' || !selectedPage?.slug) {
+      return `/org/${orgSlug}?preview=true`;
+    }
+    return `/org/${orgSlug}/${selectedPage.slug}?preview=true`;
+  }, [orgSlug, selectedPageId, selectedPage]);
 
   // Undo/Redo for layout changes
   const { data: sectionsConfig } = useWebsiteSections();
@@ -313,21 +343,151 @@ export default function WebsiteSectionsHub() {
     window.dispatchEvent(new CustomEvent('editor-save-request'));
   }, []);
 
-  // Handle style override changes for a section
-  const handleStyleOverrideChange = useCallback(async (sectionId: string, overrides: Record<string, unknown>) => {
+  // Debounced style override saves
+  const styleDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleStyleOverrideChange = useCallback((sectionId: string, overrides: Record<string, unknown>) => {
     if (!sectionsConfig) return;
+    
+    // Optimistic local update (applied immediately for UI responsiveness)
     const newSections = sectionsConfig.homepage.map(s =>
       s.id === sectionId ? { ...s, style_overrides: overrides } : s
     );
-    try {
-      await updateSections.mutateAsync({ homepage: newSections });
-    } catch {
-      toast.error('Failed to save style');
-    }
+    
+    // Debounce the actual DB save
+    if (styleDebounceRef.current) clearTimeout(styleDebounceRef.current);
+    styleDebounceRef.current = setTimeout(async () => {
+      try {
+        await updateSections.mutateAsync({ homepage: newSections });
+        triggerPreviewRefresh();
+      } catch {
+        toast.error('Failed to save style');
+      }
+    }, 500);
   }, [sectionsConfig, updateSections]);
+
+  // Page management handlers
+  const handlePageChange = useCallback((pageId: string) => {
+    setSelectedPageId(pageId);
+    // Reset to first section or page-settings when switching pages
+    if (pageId !== 'home') {
+      setActiveTab('page-settings');
+    } else {
+      setActiveTab('hero');
+    }
+  }, []);
+
+  const handleAddPage = useCallback(async () => {
+    if (!pagesConfig) return;
+    const newPage: PageConfig = {
+      id: generatePageId(),
+      slug: `page-${Date.now().toString(36)}`,
+      title: 'New Page',
+      seo_title: '',
+      seo_description: '',
+      enabled: true,
+      show_in_nav: true,
+      nav_order: pagesConfig.pages.length,
+      sections: [
+        {
+          id: generateSectionId(),
+          type: 'rich_text',
+          label: 'Content',
+          description: 'Main content block',
+          enabled: true,
+          order: 1,
+          deletable: true,
+        },
+      ],
+      page_type: 'custom',
+      deletable: true,
+    };
+    const updated = { pages: [...pagesConfig.pages, newPage] };
+    try {
+      await updatePages.mutateAsync(updated);
+      toast.success('Page created');
+      setSelectedPageId(newPage.id);
+      setActiveTab('page-settings');
+    } catch {
+      toast.error('Failed to create page');
+    }
+  }, [pagesConfig, updatePages]);
+
+  const handleDeletePage = useCallback(async (pageId: string) => {
+    if (!pagesConfig) return;
+    const page = pagesConfig.pages.find(p => p.id === pageId);
+    if (!page?.deletable) {
+      toast.error('This page cannot be deleted');
+      return;
+    }
+    const updated = { pages: pagesConfig.pages.filter(p => p.id !== pageId) };
+    try {
+      await updatePages.mutateAsync(updated);
+      toast.success(`"${page.title}" deleted`);
+      setSelectedPageId('home');
+      setActiveTab('hero');
+    } catch {
+      toast.error('Failed to delete page');
+    }
+  }, [pagesConfig, updatePages]);
+
+  const handleUpdatePageSettings = useCallback(async (updatedPage: PageConfig) => {
+    if (!pagesConfig) return;
+    const updated = {
+      pages: pagesConfig.pages.map(p => p.id === updatedPage.id ? updatedPage : p),
+    };
+    await updatePages.mutateAsync(updated);
+  }, [pagesConfig, updatePages]);
+
+  const handleApplyPageTemplate = useCallback(async (template: PageTemplate) => {
+    if (!pagesConfig || !selectedPage) return;
+    const newSections: SectionConfig[] = template.sections.map((ts, i) => ({
+      id: generateSectionId(),
+      type: ts.type,
+      label: ts.label,
+      description: CUSTOM_TYPE_INFO[ts.type]?.description ?? '',
+      enabled: true,
+      order: i + 1,
+      deletable: true,
+    }));
+
+    const updated = {
+      pages: pagesConfig.pages.map(p =>
+        p.id === selectedPageId ? { ...p, sections: newSections } : p
+      ),
+    };
+
+    try {
+      await updatePages.mutateAsync(updated);
+      // Save template configs for each section
+      const { data: { user } } = await supabase.auth.getUser();
+      for (let i = 0; i < template.sections.length; i++) {
+        const ts = template.sections[i];
+        const settingsKey = `section_custom_${newSections[i].id}`;
+        await supabase.from('site_settings').upsert({
+          id: settingsKey,
+          value: ts.config as never,
+          updated_by: user?.id,
+        });
+      }
+      toast.success(`"${template.name}" template applied`);
+    } catch {
+      toast.error('Failed to apply template');
+    }
+  }, [pagesConfig, selectedPage, selectedPageId, updatePages]);
 
   // Determine editor component
   const renderEditor = () => {
+    // Page settings tab
+    if (activeTab === 'page-settings' && selectedPage) {
+      return (
+        <PageSettingsEditor
+          page={selectedPage}
+          allPages={pagesConfig ?? undefined}
+          onUpdate={handleUpdatePageSettings}
+        />
+      );
+    }
+
     // Check built-in editors first
     const EditorComponent = EDITOR_COMPONENTS[activeTab];
     if (EditorComponent) {
@@ -394,7 +554,45 @@ export default function WebsiteSectionsHub() {
               activeTab={activeTab}
               onTabChange={handleTabChange}
               onSectionsChange={handleSectionsChange}
+              selectedPageId={selectedPageId}
+              onPageChange={handlePageChange}
+              onAddPage={handleAddPage}
+              onDeletePage={handleDeletePage}
+              onApplyPageTemplate={() => setShowPageTemplatePicker(true)}
             />
+          </div>
+        )}
+
+        {/* Mobile floating drawer trigger */}
+        {isMobile && (
+          <Button
+            variant="default"
+            size="sm"
+            className="fixed bottom-20 right-4 z-50 rounded-full shadow-lg h-12 w-12 p-0"
+            onClick={() => setShowSidebar(prev => !prev)}
+          >
+            <LayoutGrid className="h-5 w-5" />
+          </Button>
+        )}
+
+        {/* Mobile sidebar drawer */}
+        {isMobile && showSidebar && (
+          <div className="fixed inset-0 z-40 bg-background/80 backdrop-blur-sm" onClick={() => setShowSidebar(false)}>
+            <div
+              className="absolute left-0 top-0 bottom-0 w-[320px] bg-background border-r shadow-xl overflow-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <WebsiteEditorSidebar
+                activeTab={activeTab}
+                onTabChange={(tab) => { handleTabChange(tab); setShowSidebar(false); }}
+                onSectionsChange={handleSectionsChange}
+                selectedPageId={selectedPageId}
+                onPageChange={handlePageChange}
+                onAddPage={handleAddPage}
+                onDeletePage={handleDeletePage}
+                onApplyPageTemplate={() => setShowPageTemplatePicker(true)}
+              />
+            </div>
           </div>
         )}
 
@@ -428,6 +626,7 @@ export default function WebsiteSectionsHub() {
                       <div>
                         <h1 className="text-xl font-display font-medium">Website Editor</h1>
                         <p className="text-xs text-muted-foreground">
+                          {selectedPage && selectedPageId !== 'home' ? `${selectedPage.title} › ` : ''}
                           {getTabLabel()}
                         </p>
                       </div>
@@ -524,6 +723,13 @@ export default function WebsiteSectionsHub() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Page Template Picker */}
+        <PageTemplatePicker
+          open={showPageTemplatePicker}
+          onOpenChange={setShowPageTemplatePicker}
+          onSelect={handleApplyPageTemplate}
+        />
       </div>
     </DashboardLayout>
   );

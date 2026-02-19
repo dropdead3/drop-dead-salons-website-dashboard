@@ -36,9 +36,6 @@ interface SectionStyleWrapperProps {
 }
 
 export function SectionStyleWrapper({ styleOverrides, children, className }: SectionStyleWrapperProps) {
-  if (!styleOverrides || styleOverrides.background_type === 'none' && !styleOverrides.padding_top && !styleOverrides.padding_bottom) {
-    return <>{children}</>;
-  }
 
   const merged = { ...DEFAULT_STYLE_OVERRIDES, ...styleOverrides };
   
