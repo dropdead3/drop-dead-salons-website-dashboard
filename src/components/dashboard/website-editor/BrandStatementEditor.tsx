@@ -1,25 +1,110 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Settings2, Plus, Trash2 } from 'lucide-react';
+import { Loader2, Settings2, Plus, Trash2, RotateCcw, GripVertical } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useBrandStatementConfig, type BrandStatementConfig, DEFAULT_BRAND_STATEMENT } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
 import { SliderInput } from './inputs/SliderInput';
 import { ToggleInput } from './inputs/ToggleInput';
+import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { cn } from '@/lib/utils';
+
+interface SortableParagraphProps {
+  id: string;
+  index: number;
+  value: string;
+  onChange: (value: string) => void;
+  onRemove: () => void;
+  canRemove: boolean;
+}
+
+function SortableParagraph({ id, index, value, onChange, onRemove, canRemove }: SortableParagraphProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn("space-y-2", isDragging && "opacity-50")}
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button
+            className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors"
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
+          <Label>Paragraph {index + 1}</Label>
+        </div>
+        {canRemove && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onRemove}
+            className="h-8 text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+      <Textarea
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        rows={3}
+      />
+    </div>
+  );
+}
 
 export function BrandStatementEditor() {
   const { data, isLoading, isSaving, update } = useBrandStatementConfig();
   const [localConfig, setLocalConfig] = useState<BrandStatementConfig>(DEFAULT_BRAND_STATEMENT);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
 
   useEffect(() => {
     if (data && !isLoading) {
@@ -62,6 +147,20 @@ export function BrandStatementEditor() {
     }
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = localConfig.paragraphs.findIndex((_, i) => `para-${i}` === active.id);
+      const newIndex = localConfig.paragraphs.findIndex((_, i) => `para-${i}` === over.id);
+      updateField('paragraphs', arrayMove(localConfig.paragraphs, oldIndex, newIndex));
+    }
+  };
+
+  const handleReset = () => {
+    setLocalConfig(DEFAULT_BRAND_STATEMENT);
+    toast.info('Reset to defaults — save to apply');
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -72,42 +171,42 @@ export function BrandStatementEditor() {
 
   return (
     <div className="space-y-6 h-full">
-      {/* Editor Panel */}
       <Card className="overflow-auto">
         <CardHeader className="flex flex-row items-center justify-between pb-4 sticky top-0 bg-card z-10 border-b">
           <CardTitle className="text-lg">Brand Statement</CardTitle>
+          <Button variant="ghost" size="sm" onClick={handleReset} className="text-muted-foreground gap-1.5">
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reset
+          </Button>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Eyebrow */}
-          <div className="space-y-2">
-            <Label htmlFor="eyebrow">Eyebrow Text</Label>
-            <Input
-              id="eyebrow"
-              value={localConfig.eyebrow}
-              onChange={(e) => updateField('eyebrow', e.target.value)}
-            />
-          </div>
+          <CharCountInput
+            label="Eyebrow Text"
+            value={localConfig.eyebrow}
+            onChange={(value) => updateField('eyebrow', value)}
+            maxLength={40}
+            description="Small introductory text above the headline (e.g. 'Our Brand is')"
+          />
 
           {/* Headline */}
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="prefix">Headline Prefix</Label>
-              <Input
-                id="prefix"
-                value={localConfig.headline_prefix}
-                onChange={(e) => updateField('headline_prefix', e.target.value)}
-                placeholder="Not Your"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="suffix">Headline Suffix</Label>
-              <Input
-                id="suffix"
-                value={localConfig.headline_suffix}
-                onChange={(e) => updateField('headline_suffix', e.target.value)}
-                placeholder="Salon"
-              />
-            </div>
+            <CharCountInput
+              label="Headline Prefix"
+              value={localConfig.headline_prefix}
+              onChange={(value) => updateField('headline_prefix', value)}
+              maxLength={30}
+              placeholder="Not Your"
+              description="Static text before the rotating words"
+            />
+            <CharCountInput
+              label="Headline Suffix"
+              value={localConfig.headline_suffix}
+              onChange={(value) => updateField('headline_suffix', value)}
+              maxLength={30}
+              placeholder="Salon"
+              description="Static text after the rotating words"
+            />
           </div>
 
           {/* Rotating Words */}
@@ -118,10 +217,13 @@ export function BrandStatementEditor() {
             placeholder="e.g. Boring, Average..."
           />
 
-          {/* Paragraphs */}
+          {/* Paragraphs with DnD */}
           <div className="space-y-4 pt-4 border-t">
             <div className="flex items-center justify-between">
-              <h4 className="font-medium text-sm">Description Paragraphs</h4>
+              <div>
+                <h4 className="font-medium text-sm">Description Paragraphs</h4>
+                <p className="text-xs text-muted-foreground mt-0.5">Drag to reorder. These appear below the headline.</p>
+              </div>
               {localConfig.paragraphs.length < 5 && (
                 <Button type="button" variant="outline" size="sm" onClick={addParagraph}>
                   <Plus className="h-4 w-4 mr-1" />
@@ -129,29 +231,28 @@ export function BrandStatementEditor() {
                 </Button>
               )}
             </div>
-            {localConfig.paragraphs.map((paragraph, index) => (
-              <div key={index} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Paragraph {index + 1}</Label>
-                  {localConfig.paragraphs.length > 1 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeParagraph(index)}
-                      className="h-8 text-destructive hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-                <Textarea
-                  value={paragraph}
-                  onChange={(e) => updateParagraph(index, e.target.value)}
-                  rows={4}
-                />
-              </div>
-            ))}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={localConfig.paragraphs.map((_, i) => `para-${i}`)}
+                strategy={verticalListSortingStrategy}
+              >
+                {localConfig.paragraphs.map((paragraph, index) => (
+                  <SortableParagraph
+                    key={`para-${index}`}
+                    id={`para-${index}`}
+                    index={index}
+                    value={paragraph}
+                    onChange={(value) => updateParagraph(index, value)}
+                    onRemove={() => removeParagraph(index)}
+                    canRemove={localConfig.paragraphs.length > 1}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
           </div>
 
           {/* Advanced Settings */}
@@ -178,7 +279,7 @@ export function BrandStatementEditor() {
                   max={200}
                   step={10}
                   unit="ms"
-                  description="Time between each character"
+                  description="Time between each character appearing"
                 />
                 <SliderInput
                   label="Pause Between Words"
@@ -201,7 +302,6 @@ export function BrandStatementEditor() {
           </Collapsible>
         </CardContent>
       </Card>
-
     </div>
   );
 }

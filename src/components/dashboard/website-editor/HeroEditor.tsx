@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Loader2, Settings2 } from 'lucide-react';
+import { Loader2, Settings2, RotateCcw } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useHeroConfig, type HeroConfig, DEFAULT_HERO } from '@/hooks/useSectionConfig';
@@ -11,6 +11,7 @@ import { RotatingWordsInput } from './RotatingWordsInput';
 import { SliderInput } from './inputs/SliderInput';
 import { UrlInput } from './inputs/UrlInput';
 import { ToggleInput } from './inputs/ToggleInput';
+import { CharCountInput } from './inputs/CharCountInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
@@ -21,7 +22,6 @@ export function HeroEditor() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const debouncedConfig = useDebounce(localConfig, 300);
 
-  // Sync local state when data loads
   useEffect(() => {
     if (data && !isLoading) {
       setLocalConfig(data);
@@ -44,6 +44,11 @@ export function HeroEditor() {
     setLocalConfig(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleReset = () => {
+    setLocalConfig(DEFAULT_HERO);
+    toast.info('Reset to defaults — save to apply');
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -54,22 +59,24 @@ export function HeroEditor() {
 
   return (
     <div className="space-y-6 h-full">
-      {/* Editor Panel */}
       <Card className="overflow-auto">
         <CardHeader className="flex flex-row items-center justify-between pb-4 sticky top-0 bg-card z-10 border-b">
           <CardTitle className="text-lg">Hero Section</CardTitle>
+          <Button variant="ghost" size="sm" onClick={handleReset} className="text-muted-foreground gap-1.5">
+            <RotateCcw className="h-3.5 w-3.5" />
+            Reset
+          </Button>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Eyebrow */}
-          <div className="space-y-2">
-            <Label htmlFor="eyebrow">Eyebrow Text</Label>
-            <Input
-              id="eyebrow"
-              value={localConfig.eyebrow}
-              onChange={(e) => updateField('eyebrow', e.target.value)}
-              placeholder="Hair • Color • Artistry"
-            />
-          </div>
+          <CharCountInput
+            label="Eyebrow Text"
+            value={localConfig.eyebrow}
+            onChange={(value) => updateField('eyebrow', value)}
+            maxLength={40}
+            placeholder="Hair • Color • Artistry"
+            description="Small text displayed above the main headline"
+          />
 
           {/* Rotating Words */}
           <RotatingWordsInput
@@ -81,35 +88,32 @@ export function HeroEditor() {
 
           {/* Subheadline */}
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="subheadline1">Subheadline Line 1</Label>
-              <Input
-                id="subheadline1"
-                value={localConfig.subheadline_line1}
-                onChange={(e) => updateField('subheadline_line1', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="subheadline2">Subheadline Line 2</Label>
-              <Input
-                id="subheadline2"
-                value={localConfig.subheadline_line2}
-                onChange={(e) => updateField('subheadline_line2', e.target.value)}
-              />
-            </div>
+            <CharCountInput
+              label="Subheadline Line 1"
+              value={localConfig.subheadline_line1}
+              onChange={(value) => updateField('subheadline_line1', value)}
+              maxLength={60}
+              description="First line of supporting text below the headline"
+            />
+            <CharCountInput
+              label="Subheadline Line 2"
+              value={localConfig.subheadline_line2}
+              onChange={(value) => updateField('subheadline_line2', value)}
+              maxLength={60}
+              description="Second line of supporting text"
+            />
           </div>
 
           {/* CTAs */}
           <div className="space-y-4 pt-4 border-t">
             <h4 className="font-medium text-sm">Call to Action Buttons</h4>
-            <div className="space-y-2">
-              <Label htmlFor="cta_new">Primary Button Text</Label>
-              <Input
-                id="cta_new"
-                value={localConfig.cta_new_client}
-                onChange={(e) => updateField('cta_new_client', e.target.value)}
-              />
-            </div>
+            <CharCountInput
+              label="Primary Button Text"
+              value={localConfig.cta_new_client}
+              onChange={(value) => updateField('cta_new_client', value)}
+              maxLength={30}
+              description="Main call-to-action button"
+            />
             <UrlInput
               label="Primary Button URL"
               value={localConfig.cta_new_client_url}
@@ -127,14 +131,12 @@ export function HeroEditor() {
             />
             {localConfig.show_secondary_button && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="cta_returning">Secondary Button Text</Label>
-                  <Input
-                    id="cta_returning"
-                    value={localConfig.cta_returning_client}
-                    onChange={(e) => updateField('cta_returning_client', e.target.value)}
-                  />
-                </div>
+                <CharCountInput
+                  label="Secondary Button Text"
+                  value={localConfig.cta_returning_client}
+                  onChange={(value) => updateField('cta_returning_client', value)}
+                  maxLength={30}
+                />
                 <UrlInput
                   label="Secondary Button URL"
                   value={localConfig.cta_returning_client_url}
@@ -223,20 +225,21 @@ export function HeroEditor() {
                   onChange={(value) => updateField('show_scroll_indicator', value)}
                   description="Show the scroll arrow at the bottom"
                 />
-                <div className="space-y-2">
-                  <Label>Scroll Indicator Text</Label>
-                  <Input
-                    value={localConfig.scroll_indicator_text}
-                    onChange={(e) => updateField('scroll_indicator_text', e.target.value)}
-                    placeholder="Scroll"
-                  />
-                </div>
+                {localConfig.show_scroll_indicator && (
+                  <div className="space-y-2">
+                    <Label>Scroll Indicator Text</Label>
+                    <Input
+                      value={localConfig.scroll_indicator_text}
+                      onChange={(e) => updateField('scroll_indicator_text', e.target.value)}
+                      placeholder="Scroll"
+                    />
+                  </div>
+                )}
               </div>
             </CollapsibleContent>
           </Collapsible>
         </CardContent>
       </Card>
-
     </div>
   );
 }
