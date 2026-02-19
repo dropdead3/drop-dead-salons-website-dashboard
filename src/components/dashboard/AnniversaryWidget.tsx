@@ -43,12 +43,12 @@ export function AnniversaryWidget() {
   const isMilestone = (years: number) => MILESTONE_YEARS.includes(years);
 
   return (
-    <Card className={cn("p-4", tokens.card.wrapper)}>
+    <Card className={tokens.kpi.tile}>
       <div className="flex items-center gap-3 mb-3">
         <div className={tokens.card.iconBox}>
           <Award className={tokens.card.icon} />
         </div>
-        <h3 className={tokens.card.title}>WORK ANNIVERSARIES</h3>
+        <h3 className={tokens.kpi.label}>WORK ANNIVERSARIES</h3>
       </div>
 
       {hasTodayAnniversaries && (

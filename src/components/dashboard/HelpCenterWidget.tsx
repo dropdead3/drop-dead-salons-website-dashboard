@@ -15,13 +15,13 @@ export function HelpCenterWidget() {
   const totalArticles = categories?.reduce((sum, cat) => sum + (cat.article_count || 0), 0) || 0;
 
   return (
-    <Card className={cn("p-4 h-full", tokens.card.wrapper)}>
+    <Card className={cn(tokens.kpi.tile, "h-full")}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className={tokens.card.iconBox}>
             <HelpCircle className={tokens.card.icon} />
           </div>
-          <h3 className={tokens.card.title}>HELP CENTER</h3>
+          <h3 className={tokens.kpi.label}>HELP CENTER</h3>
         </div>
         <Button
           variant="ghost"

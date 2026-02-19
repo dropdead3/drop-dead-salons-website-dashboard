@@ -27,7 +27,7 @@ export function ChangelogWidget() {
 
   if (isLoading) {
     return (
-      <Card className={cn("p-4", tokens.card.wrapper)}>
+      <Card className={tokens.kpi.tile}>
         <div className="flex items-center gap-3 mb-3">
           <Skeleton className="w-10 h-10 rounded-lg" />
           <Skeleton className="h-5 w-24" />
@@ -41,13 +41,13 @@ export function ChangelogWidget() {
   }
 
   return (
-    <Card className={cn("p-4 h-full", tokens.card.wrapper)}>
+    <Card className={cn(tokens.kpi.tile, "h-full")}>
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className={tokens.card.iconBox}>
             <Sparkles className={tokens.card.icon} />
           </div>
-          <h3 className={tokens.card.title}>WHAT'S NEW</h3>
+          <h3 className={tokens.kpi.label}>WHAT'S NEW</h3>
         </div>
         {unreadCount > 0 && (
           <Badge variant="default" className="text-xs">

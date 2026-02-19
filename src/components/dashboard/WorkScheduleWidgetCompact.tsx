@@ -31,12 +31,12 @@ export function WorkScheduleWidgetCompact() {
 
   if (userLocations.length === 0) {
     return (
-      <Card className={cn("p-4", tokens.card.wrapper)}>
+      <Card className={tokens.kpi.tile}>
         <div className="flex items-center gap-3 mb-3">
           <div className={tokens.card.iconBox}>
             <Calendar className={tokens.card.icon} />
           </div>
-          <h3 className={tokens.card.title}>MY SCHEDULE</h3>
+          <h3 className={tokens.kpi.label}>MY SCHEDULE</h3>
         </div>
         <p className="text-xs text-muted-foreground">
           No locations assigned
@@ -46,12 +46,12 @@ export function WorkScheduleWidgetCompact() {
   }
 
   return (
-    <Card className={cn("p-4", tokens.card.wrapper)}>
+    <Card className={tokens.kpi.tile}>
       <div className="flex items-center gap-3 mb-3">
         <div className={tokens.card.iconBox}>
           <Calendar className={tokens.card.icon} />
         </div>
-        <h3 className={tokens.card.title}>MY SCHEDULE</h3>
+        <h3 className={tokens.kpi.label}>MY SCHEDULE</h3>
       </div>
 
       {/* Location summary */}

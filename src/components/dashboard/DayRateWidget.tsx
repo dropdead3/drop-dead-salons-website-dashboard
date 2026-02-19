@@ -56,13 +56,13 @@ export function DayRateWidget() {
   }
 
   return (
-    <Card className={cn("p-4 space-y-4", tokens.card.wrapper)}>
+    <Card className={cn(tokens.kpi.tile, "space-y-4")}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className={tokens.card.iconBox}>
             <Armchair className={tokens.card.icon} />
           </div>
-          <h3 className={tokens.card.title}>DAY RATE</h3>
+          <h3 className={tokens.kpi.label}>DAY RATE</h3>
         </div>
         <Link 
           to="/dashboard/admin/day-rate-calendar" 
