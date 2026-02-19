@@ -1,53 +1,52 @@
 
 
-## Fix Sub-Label and Empty State Typography Inconsistencies
+## Make the Sidebar a Bento-Style Floating Card
 
-### Audit Results
+### Current State
+The sidebar is a full-height fixed panel pinned to the left edge with `border-r border-border bg-card/90 backdrop-blur-xl`. It stretches from top to bottom with no margin or rounding -- a traditional sidebar.
 
-| Element | Changelog | Birthday | Anniversary | Schedule | Day Rate | Help Center | AI Tasks |
-|---------|-----------|----------|-------------|----------|----------|-------------|----------|
-| Empty state text | text-sm | text-xs | text-xs | text-xs | text-sm | text-sm | text-xs |
-| Empty state padding | py-4 | py-2 | py-2 | none | py-4 | py-4 | py-2 |
-| Section sub-label | text-xs | text-[10px] | text-[10px] | text-[10px] | text-xs font-medium | n/a | n/a |
+### Target (from Retropay reference)
+A floating, rounded card that sits on top of the cream background with visible margin on all sides. The sidebar becomes a "bento tile" rather than a structural panel.
 
-### Standardization Rules
+### Changes
 
-**Empty states**: All use `text-sm text-muted-foreground text-center py-4` (the larger, more spacious treatment seen in Changelog/Day Rate/Help Center). This feels more premium and less cramped.
+**1. `src/components/dashboard/DashboardLayout.tsx` (Desktop Sidebar aside element)**
 
-**Section sub-labels** (e.g., "Coming Up", "Today's Bookings"): All use `text-xs text-muted-foreground uppercase tracking-wide` (no font-medium, consistent with the calm label treatment). Currently a mix of text-[10px] and text-xs.
+Update the `<aside>` wrapper (line ~830-834):
+- Remove `border-r border-border` (the card's own border replaces this)
+- Add vertical and left margin: `m-3` (12px breathing room from viewport edges)
+- Add rounding: `rounded-2xl`
+- Add explicit border: `border border-border/50`
+- Adjust height: `lg:inset-y-0` becomes custom top/bottom with margin (`lg:top-3 lg:bottom-3 lg:left-0`) instead of `lg:inset-y-0`
+- Keep `bg-card/90 backdrop-blur-xl`
+- Add `overflow-hidden` so child content respects the rounded corners
 
-**Content body text** (names, descriptions): Standardize to `text-sm` for primary content lines.
+The aside changes from:
+```
+lg:inset-y-0 lg:left-0 lg:border-r lg:border-border lg:bg-card/90 lg:backdrop-blur-xl
+```
+To:
+```
+lg:top-3 lg:bottom-3 lg:left-3 lg:border lg:border-border/50 lg:rounded-2xl lg:bg-card/90 lg:backdrop-blur-xl lg:overflow-hidden lg:shadow-sm
+```
 
-**Help Center empty icon**: Reduce from `h-8 w-8` to `h-6 w-6` to avoid feeling oversized relative to other widgets.
+Width stays the same (`w-72` expanded, `w-16` collapsed).
 
-### Changes Per File
+**2. Content offset adjustment**
 
-**1. `src/components/dashboard/BirthdayWidget.tsx`**
-- Line 90: Change `text-[10px]` to `text-xs` on "Coming Up" label
-- Line 129: Change `text-xs` to `text-sm` and `py-2` to `py-4` on empty state
+The main content area currently uses `lg:pl-72` or `lg:pl-16` to account for the sidebar width. With the 12px left margin on the sidebar, the padding-left needs to increase by 12px (the left margin) + ~12px (the right gap between sidebar and content):
+- Expanded: `lg:pl-72` becomes `lg:pl-[312px]` (288px sidebar + 24px total margin)
+- Collapsed: `lg:pl-16` becomes `lg:pl-[88px]` (64px sidebar + 24px total margin)
 
-**2. `src/components/dashboard/AnniversaryWidget.tsx`**
-- Line 107: Change `text-[10px]` to `text-xs` on "Coming Up" label
-- Line 159: Change `text-xs` to `text-sm` and `py-2` to `py-4` on empty state
+**3. `src/components/dashboard/SidebarNavContent.tsx` (Inner content)**
 
-**3. `src/components/dashboard/WorkScheduleWidgetCompact.tsx`**
-- Line 35: Change `text-xs` to `text-sm` on "No locations assigned" empty state
-- Line 84: Change `text-[10px]` to `text-xs` on "X days per week" label
-
-**4. `src/components/dashboard/DayRateWidget.tsx`**
-- Line 105: Remove `font-medium` from "Today's Bookings" sub-label (keep `text-xs`)
-- Already correct on empty state (text-sm py-4)
-
-**5. `src/components/dashboard/HelpCenterWidget.tsx`**
-- Line 57: Change empty icon from `h-8 w-8` to `h-6 w-6`
-
-**6. `src/components/dashboard/AITasksWidget.tsx`**
-- Line 27: Change `text-xs` to `text-sm` and `py-2` to `py-4` on empty state
-
-**7. `src/components/dashboard/ChangelogWidget.tsx`**
-- Already correct (text-sm py-4 on empty state, text-xs on sub-label)
+Minor tweaks to the inner content to complement the bento look:
+- Remove the bottom border from the logo section header (line 313) since the card itself provides the structural boundary. Keep a subtle `border-b border-border/30` for internal separation.
+- The footer section (lines 625-641) already has rounded containers with `bg-muted/30` which will look great inside the bento card.
 
 ### What This Achieves
-- Every widget empty state renders identically: centered, `text-sm`, generous `py-4` spacing
-- Every section sub-label renders identically: `text-xs uppercase tracking-wide`
-- No more visual jitter between widgets when content is absent
+- The sidebar visually "floats" on the cream background as a bento tile
+- Rounded corners and subtle shadow give it depth and premium feel
+- The cream background peeks through on all sides of the sidebar
+- Matches the Retropay reference aesthetic
+- Mobile sidebar (Sheet) is unaffected -- this only changes the desktop fixed sidebar
