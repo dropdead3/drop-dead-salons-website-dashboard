@@ -64,9 +64,6 @@ export function AnalyticsFilterBar({
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-2">
-      {/* Leading content (e.g. customize button) */}
-      {leadingContent}
-
       {/* Simple / Detailed toggle */}
       {onCompactChange && (
         <Tabs
@@ -129,6 +126,9 @@ export function AnalyticsFilterBar({
           ))}
         </SelectContent>
       </Select>
+
+      {/* Customize button (e.g. customize menu) */}
+      {leadingContent}
     </div>
   );
 }
