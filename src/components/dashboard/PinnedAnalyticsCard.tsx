@@ -8,8 +8,11 @@ import {
   DollarSign, TrendingUp, Users, Clock, BarChart3, Heart,
   Activity, MapPin, Scissors, ShoppingBag, CalendarCheck,
   Target, Gauge, FileText, Sparkles, Briefcase, UserPlus,
-  LineChart, BarChart2,
+  LineChart, BarChart2, ChevronRight,
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { useRebookingRate } from '@/hooks/useRebookingRate';
@@ -178,6 +181,26 @@ const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
   staffing_trends: { icon: BarChart2, label: 'Staffing Trends' },
   stylist_workload: { icon: Users, label: 'Stylist Workload' },
   client_experience_staff: { icon: Users, label: 'Client Experience' },
+};
+
+// Link mapping for compact bento tiles
+const CARD_LINKS: Record<string, { label: string; href: string }> = {
+  executive_summary: { label: 'Brief', href: '/dashboard/admin/analytics?tab=leadership' },
+  sales_overview: { label: 'Sales', href: '/dashboard/admin/analytics?tab=sales' },
+  top_performers: { label: 'Team', href: '/dashboard/admin/analytics?tab=sales&subtab=team' },
+  capacity_utilization: { label: 'Capacity', href: '/dashboard/admin/analytics?tab=operations&subtab=capacity' },
+  client_funnel: { label: 'Clients', href: '/dashboard/admin/analytics?tab=marketing' },
+  goal_tracker: { label: 'Goals', href: '/dashboard/admin/analytics?tab=sales&subtab=goals' },
+  new_bookings: { label: 'Pipeline', href: '/dashboard/admin/analytics?tab=operations&subtab=booking-pipeline' },
+  client_health: { label: 'Health', href: '/dashboard/admin/analytics?tab=operations' },
+  service_mix: { label: 'Mix', href: '/dashboard/admin/analytics?tab=sales' },
+  rebooking: { label: 'Rebooking', href: '/dashboard/admin/analytics?tab=operations' },
+  retail_effectiveness: { label: 'Retail', href: '/dashboard/admin/analytics?tab=sales' },
+  staffing_trends: { label: 'Staff', href: '/dashboard/admin/analytics?tab=operations' },
+  stylist_workload: { label: 'Workload', href: '/dashboard/admin/analytics?tab=operations&subtab=capacity' },
+  operational_health: { label: 'Health', href: '/dashboard/admin/analytics?tab=operations' },
+  week_ahead_forecast: { label: 'Forecast', href: '/dashboard/admin/analytics?tab=sales' },
+  daily_brief: { label: 'Brief', href: '/dashboard/admin/analytics?tab=leadership' },
 };
 
 /**
@@ -395,6 +418,8 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
     
     const visKey = cardId === 'operations_stats' ? 'operations_quick_stats' : cardId;
     
+    const link = CARD_LINKS[cardId];
+    
     return (
       <VisibilityGate elementKey={visKey}>
         <PinnableCard
@@ -404,17 +429,29 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           dateRange={filters.dateRange}
           locationName={selectedLocationName}
         >
-          <Card className="flex items-center gap-3 px-4 py-3 h-14">
-            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-              <Icon className="w-4 h-4 text-muted-foreground" />
+          <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[140px]')}>
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                <Icon className="w-4 h-4 text-muted-foreground" />
+              </div>
+              <span className={tokens.kpi.label}>{meta.label}</span>
             </div>
-            <span className="text-sm font-medium truncate">{meta.label}</span>
-            <div className="ml-auto flex items-center gap-2 shrink-0">
+            <div className="mt-3">
+              <p className={tokens.kpi.value}>{metricValue}</p>
               {metricLabel && (
-                <span className="text-xs text-muted-foreground hidden sm:inline">{metricLabel}</span>
+                <p className="text-xs text-muted-foreground mt-0.5">{metricLabel}</p>
               )}
-              <span className="text-sm font-semibold tabular-nums">{metricValue}</span>
             </div>
+            {link && (
+              <div className="flex justify-end mt-2">
+                <Link 
+                  to={link.href} 
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                >
+                  View {link.label} <ChevronRight className="w-3 h-3" />
+                </Link>
+              </div>
+            )}
           </Card>
         </PinnableCard>
       </VisibilityGate>
