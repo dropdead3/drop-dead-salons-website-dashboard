@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { Trash2, Lock } from 'lucide-react';
+import { Trash2, Lock, Pencil } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import type { Task } from '@/hooks/useTasks';
@@ -11,6 +11,7 @@ interface TaskItemProps {
   task: Task;
   onToggle: (id: string, completed: boolean) => void;
   onDelete: (id: string) => void;
+  onEdit?: (task: Task) => void;
   isReadOnly?: boolean;
 }
 
@@ -20,7 +21,7 @@ const priorityIndicator = {
   high: 'bg-orange-500',
 };
 
-export function TaskItem({ task, onToggle, onDelete, isReadOnly = false }: TaskItemProps) {
+export function TaskItem({ task, onToggle, onDelete, onEdit, isReadOnly = false }: TaskItemProps) {
   const { formatDate } = useFormatDate();
   const [isHovered, setIsHovered] = useState(false);
 
@@ -72,14 +73,26 @@ export function TaskItem({ task, onToggle, onDelete, isReadOnly = false }: TaskI
         )}
       </div>
       {isHovered && !isReadOnly && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-destructive"
-          onClick={() => onDelete(task.id)}
-        >
-          <Trash2 className="h-3 w-3" />
-        </Button>
+        <div className="flex items-center gap-0.5">
+          {onEdit && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+              onClick={() => onEdit(task)}
+            >
+              <Pencil className="h-3 w-3" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+            onClick={() => onDelete(task.id)}
+          >
+            <Trash2 className="h-3 w-3" />
+          </Button>
+        </div>
       )}
     </div>
   );

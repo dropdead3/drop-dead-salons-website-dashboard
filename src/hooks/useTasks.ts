@@ -135,6 +135,33 @@ export function useTasks() {
     },
   });
 
+  // Update task - prevented during impersonation
+  const updateTask = useMutation({
+    mutationFn: async ({ id, updates }: { id: string; updates: { title?: string; description?: string | null; due_date?: string | null; priority?: 'low' | 'normal' | 'high' } }) => {
+      if (isImpersonating) {
+        throw new Error('Cannot modify tasks while impersonating');
+      }
+
+      const { error } = await supabase
+        .from('tasks')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      toast.success('Task updated');
+    },
+    onError: (error: Error) => {
+      if (error.message === 'Cannot modify tasks while impersonating') {
+        toast.error('View-only mode', { description: 'Cannot modify tasks while impersonating' });
+      } else {
+        toast.error('Failed to update task');
+      }
+    },
+  });
+
   return {
     tasks: tasksQuery.data || [],
     isLoading: tasksQuery.isLoading,
@@ -142,5 +169,6 @@ export function useTasks() {
     createTask,
     toggleTask,
     deleteTask,
+    updateTask,
   };
 }
