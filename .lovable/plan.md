@@ -1,40 +1,47 @@
 
 
-## Wire Live Session Indicator to Location Filter
+## Add Location Toggle Inside the "Happening Now" Drilldown
 
-The "In Session" indicator currently fetches all active appointments across all locations. It needs to respect the same location filter used by the analytics cards on the dashboard.
+The drilldown dialog will get its own location filter, independent of the main dashboard filter. This lets users quickly switch locations while viewing live sessions without closing the dialog.
 
 ### What Changes
 
-**1. Update hook: `src/hooks/useLiveSessionSnapshot.ts`**
+**1. `src/components/dashboard/LiveSessionDrilldown.tsx`**
 
-- Accept an optional `locationId` parameter (same encoding as the rest of the app: `'all'`, single UUID, or comma-separated UUIDs)
-- Use the shared `applyLocationFilter` utility from `src/lib/locationFilter.ts` to add `.eq('location_id', id)` or `.in('location_id', ids)` to both appointment queries (active sessions and all-today)
-- Include `locationId` in the `queryKey` so React Query refetches when the filter changes
+- Add a `locationId` prop (passed from the parent indicator, which already has it)
+- Add local state for a `drilldownLocationId` (initialized from the prop so it starts matching the dashboard filter)
+- Import `useActiveLocations` to get the list of locations
+- Import the `LocationSelect` component
+- Render a compact location select between the header description and the gradient divider
+- When the location changes locally, re-query the live data by passing it to a new `useLiveSessionSnapshot` call inside the drilldown itself (making the drilldown self-contained for data)
+- Update the counts and stylist list based on the locally-selected location
+- In demo mode, the location select still renders but the data stays static (demo data is unfiltered)
 
-**2. Update component: `src/components/dashboard/LiveSessionIndicator.tsx`**
+**2. `src/components/dashboard/LiveSessionIndicator.tsx`**
 
-- Accept a `locationId` prop
-- Pass it through to `useLiveSessionSnapshot(locationId)`
-- Pass it through to `LiveSessionDrilldown` as well (for consistency)
+- Pass `locationId` through to `LiveSessionDrilldown` (already partially wired)
 
-**3. Update page: `src/pages/dashboard/DashboardHome.tsx`**
+### UI Layout
 
-- Pass `analyticsFilters.locationId` to `<LiveSessionIndicator locationId={...} />` in both render locations (compact and detailed mode, lines ~734 and ~804)
+The location select sits below the subtitle, above the stylist list:
 
-### What Does NOT Change
+```text
+ [green dot] HAPPENING NOW                    [X]
+ 18 appointments in progress . 13 stylists working
 
-- The drilldown dialog content and behavior
-- Demo mode logic (demo data is unfiltered mock data)
-- The location filter bar itself
-- Any other hooks or components
+ [MapPin] All Locations          [v]
+ ────────────────────────────────────
+ [Stylist rows...]
+```
+
+It uses the existing `LocationSelect` component for consistency with the rest of the app.
 
 ### Technical Details
 
-Three files modified, zero database changes.
-
 | File | Change |
 |------|--------|
-| `src/hooks/useLiveSessionSnapshot.ts` | Add `locationId` param, apply filter to queries, update query key |
-| `src/components/dashboard/LiveSessionIndicator.tsx` | Accept + forward `locationId` prop |
-| `src/pages/dashboard/DashboardHome.tsx` | Pass `analyticsFilters.locationId` to indicator (2 spots) |
+| `src/components/dashboard/LiveSessionDrilldown.tsx` | Add location select, local state, self-contained data fetch |
+| `src/components/dashboard/LiveSessionIndicator.tsx` | Pass `locationId` to drilldown |
+
+Two files modified. No database changes.
+
