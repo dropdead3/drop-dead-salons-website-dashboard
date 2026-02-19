@@ -14,6 +14,8 @@ import { Link } from 'react-router-dom';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
+import { useTodaysQueue } from '@/hooks/useTodaysQueue';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { useRebookingRate } from '@/hooks/useRebookingRate';
 import { ForecastingCard } from '@/components/dashboard/sales/ForecastingCard';
@@ -183,6 +185,32 @@ const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
   client_experience_staff: { icon: Users, label: 'Client Experience' },
 };
 
+// Tooltip descriptions for compact bento tiles
+const CARD_DESCRIPTIONS: Record<string, string> = {
+  executive_summary: 'Total revenue across all services and products.',
+  daily_brief: 'Revenue generated today across all providers.',
+  sales_overview: 'Combined service and product revenue for the selected period.',
+  top_performers: 'Highest-earning team member by total revenue.',
+  operations_stats: 'Current queue activity including waiting and in-service clients.',
+  revenue_breakdown: 'Revenue split between services and retail products.',
+  client_funnel: 'Total unique clients (new and returning) in the period.',
+  client_health: 'Clients flagged as at-risk, win-back, or new-no-return.',
+  operational_health: 'Overall operational status across monitored locations.',
+  locations_rollup: 'Number of active locations in your organization.',
+  service_mix: 'Highest-revenue service category in the period.',
+  retail_effectiveness: 'Percentage of service transactions that include a retail purchase.',
+  rebooking: 'Percentage of clients who rebooked before leaving.',
+  team_goals: 'Team revenue progress toward the current period target.',
+  goal_tracker: 'Organization-wide goal completion percentage.',
+  capacity_utilization: 'Average chair utilization across all providers.',
+  week_ahead_forecast: 'Projected total revenue for the next 7 days.',
+  new_bookings: 'New appointments booked in the selected period.',
+  hiring_capacity: 'Open chair positions based on capacity analysis.',
+  staffing_trends: 'Count of currently active staff members.',
+  stylist_workload: 'Average utilization percentage across all stylists.',
+  client_experience_staff: 'Client experience scores by staff member.',
+};
+
 // Link mapping for compact bento tiles
 const CARD_LINKS: Record<string, { label: string; href: string }> = {
   executive_summary: { label: 'Brief', href: '/dashboard/admin/analytics?tab=leadership' },
@@ -201,6 +229,12 @@ const CARD_LINKS: Record<string, { label: string; href: string }> = {
   operational_health: { label: 'Health', href: '/dashboard/admin/analytics?tab=operations' },
   week_ahead_forecast: { label: 'Forecast', href: '/dashboard/admin/analytics?tab=sales' },
   daily_brief: { label: 'Brief', href: '/dashboard/admin/analytics?tab=leadership' },
+  revenue_breakdown: { label: 'Revenue', href: '/dashboard/admin/analytics?tab=sales' },
+  team_goals: { label: 'Goals', href: '/dashboard/admin/analytics?tab=sales&subtab=goals' },
+  locations_rollup: { label: 'Locations', href: '/dashboard/admin/analytics?tab=sales' },
+  hiring_capacity: { label: 'Hiring', href: '/dashboard/admin/analytics?tab=operations' },
+  operations_stats: { label: 'Queue', href: '/dashboard/admin/analytics?tab=operations' },
+  client_experience_staff: { label: 'Experience', href: '/dashboard/admin/analytics?tab=sales' },
 };
 
 /**
@@ -252,6 +286,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
   const hiringCapacity = useHiringCapacity();
   const { orgMetrics: goalOrgMetrics } = useGoalTrackerData('monthly');
   const { data: forecastData } = useRevenueForecast({ forecastDays: 7, locationId: locationFilter });
+  const { data: queueData } = useTodaysQueue(locationFilter);
   const selectedLocationName = locationFilter
     ? locations?.find(l => l.id === locationFilter)?.name || 'Unknown'
     : 'All Locations';
@@ -272,7 +307,10 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
 
   // ── Compact (simple) view ──────────────────────────────────────
   if (compact) {
-    const meta = CARD_META[cardId] || { icon: BarChart3, label: cardId };
+    // Filter out unknown card IDs gracefully
+    if (!CARD_META[cardId]) return null;
+    
+    const meta = CARD_META[cardId];
     const Icon = meta.icon;
     
     // Extract primary metric per card
@@ -295,25 +333,28 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           metricValue = `${top.name.split(' ')[0]} · ${formatCurrencyWhole(top.totalRevenue)}`;
           metricLabel = '#1';
         } else {
-          metricValue = '—';
+          metricValue = '--';
           metricLabel = '';
         }
         break;
       }
-      case 'operations_stats':
-        metricValue = '—';
-        metricLabel = 'queue';
+      case 'operations_stats': {
+        const waiting = queueData?.stats.waitingCount ?? 0;
+        const inService = queueData?.stats.inServiceCount ?? 0;
+        metricValue = `${waiting + inService}`;
+        metricLabel = `${waiting} waiting · ${inService} in service`;
         break;
+      }
       case 'revenue_breakdown':
         metricValue = `${formatCurrencyWhole(salesData?.serviceRevenue ?? 0)} / ${formatCurrencyWhole(salesData?.productRevenue ?? 0)}`;
         metricLabel = 'svc / retail';
         break;
       case 'retail_effectiveness':
-        metricValue = attachmentData ? formatPercent(attachmentData.attachmentRate) : '—';
+        metricValue = attachmentData ? formatPercent(attachmentData.attachmentRate) : '--';
         metricLabel = 'attach rate';
         break;
       case 'rebooking':
-        metricValue = rebookData ? formatPercent(rebookData.rebookRate) : '—';
+        metricValue = rebookData ? formatPercent(rebookData.rebookRate) : '--';
         metricLabel = 'rebook';
         break;
       case 'team_goals':
@@ -346,7 +387,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           metricValue = `${topCat.category} · ${formatCurrencyCompact(topCat.revenue)}`;
           metricLabel = 'top';
         } else {
-          metricValue = meta.label;
+          metricValue = '--';
           metricLabel = '';
         }
         break;
@@ -366,7 +407,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           metricValue = `${formatNumber(needAttention)} need attention`;
           metricLabel = '';
         } else {
-          metricValue = meta.label;
+          metricValue = '--';
           metricLabel = '';
         }
         break;
@@ -381,8 +422,8 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           metricValue = formatCurrencyCompact(forecastData.summary.totalPredicted);
           metricLabel = 'projected';
         } else {
-          metricValue = meta.label;
-          metricLabel = '';
+          metricValue = '--';
+          metricLabel = 'loading';
         }
         break;
       }
@@ -412,13 +453,13 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         break;
       }
       default:
-        metricValue = meta.label;
+        metricValue = '--';
         metricLabel = '';
     }
     
     const visKey = cardId === 'operations_stats' ? 'operations_quick_stats' : cardId;
-    
     const link = CARD_LINKS[cardId];
+    const description = CARD_DESCRIPTIONS[cardId];
     
     return (
       <VisibilityGate elementKey={visKey}>
@@ -434,24 +475,25 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
               <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
                 <Icon className="w-4 h-4 text-muted-foreground" />
               </div>
-              <span className={tokens.kpi.label}>{meta.label}</span>
+              <span className={cn(tokens.kpi.label, 'flex-1')}>{meta.label}</span>
+              {description && <MetricInfoTooltip description={description} />}
             </div>
-            <div className="mt-3">
+            <div className="mt-3 flex-1">
               <p className={tokens.kpi.value}>{metricValue}</p>
               {metricLabel && (
                 <p className="text-xs text-muted-foreground mt-0.5">{metricLabel}</p>
               )}
             </div>
-            {link && (
-              <div className="flex justify-end mt-2">
+            <div className="flex justify-end mt-2 min-h-[20px]">
+              {link && (
                 <Link 
                   to={link.href} 
                   className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
                 >
                   View {link.label} <ChevronRight className="w-3 h-3" />
                 </Link>
-              </div>
-            )}
+              )}
+            </div>
           </Card>
         </PinnableCard>
       </VisibilityGate>
