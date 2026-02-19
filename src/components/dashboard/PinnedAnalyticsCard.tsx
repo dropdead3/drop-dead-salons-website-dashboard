@@ -481,7 +481,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
             <div className="mt-4 flex-1">
               <p className="font-display text-2xl font-medium">{metricValue}</p>
               {metricLabel && (
-                <p className="text-[13px] text-muted-foreground mt-1 tracking-wide">{metricLabel}</p>
+                <p className="text-xs text-muted-foreground/80 mt-1">{metricLabel}</p>
               )}
             </div>
             <div className="flex justify-end mt-2 pt-2 border-t border-border/30 min-h-[28px]">
