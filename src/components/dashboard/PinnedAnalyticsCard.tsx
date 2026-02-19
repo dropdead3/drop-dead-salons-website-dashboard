@@ -33,12 +33,18 @@ import { LocationsRollupCard } from '@/components/dashboard/analytics/LocationsR
 import { ServiceMixCard } from '@/components/dashboard/analytics/ServiceMixCard';
 import { RetailEffectivenessCard } from '@/components/dashboard/analytics/RetailEffectivenessCard';
 import { RebookingCard } from '@/components/dashboard/analytics/RebookingCard';
-import { useSalesMetrics, useSalesByStylist } from '@/hooks/useSalesData';
+import { useSalesMetrics, useSalesByStylist, useServiceMix } from '@/hooks/useSalesData';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
 import { useStaffUtilization } from '@/hooks/useStaffUtilization';
 import { useLocations } from '@/hooks/useLocations';
 import { useUserLocationAccess } from '@/hooks/useUserLocationAccess';
 import type { FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
+import { useClientFunnel } from '@/hooks/useSalesAnalytics';
+import { useClientHealthSegments } from '@/hooks/useClientHealthSegments';
+import { useNewBookings } from '@/hooks/useNewBookings';
+import { useHiringCapacity } from '@/hooks/useHiringCapacity';
+import { useGoalTrackerData } from '@/hooks/useGoalTrackerData';
+import { useRevenueForecast } from '@/hooks/useRevenueForecast';
 import { getNextPayDay, type PayScheduleSettings } from '@/hooks/usePaySchedule';
 
 export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth';
@@ -212,8 +218,17 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
   const { accessibleLocations } = useUserLocationAccess();
   const { data: locations } = useLocations();
   const { data: rebookData } = useRebookingRate(filters.dateFrom, filters.dateTo, filters.locationId);
-  const { formatCurrencyWhole } = useFormatCurrency();
-  const { formatPercent } = useFormatNumber();
+  const { formatCurrencyWhole, formatCurrencyCompact } = useFormatCurrency();
+  const { formatPercent, formatNumber } = useFormatNumber();
+  
+  // Additional hooks for compact metrics (called unconditionally per React rules)
+  const { data: serviceMixData } = useServiceMix(filters.dateFrom, filters.dateTo, locationFilter);
+  const { data: clientFunnelData } = useClientFunnel(filters.dateFrom, filters.dateTo, locationFilter);
+  const { data: clientHealthData } = useClientHealthSegments();
+  const newBookingsQuery = useNewBookings(locationFilter, filters.dateRange);
+  const hiringCapacity = useHiringCapacity();
+  const { orgMetrics: goalOrgMetrics } = useGoalTrackerData('monthly');
+  const { data: forecastData } = useRevenueForecast({ forecastDays: 7, locationId: locationFilter });
   const selectedLocationName = locationFilter
     ? locations?.find(l => l.id === locationFilter)?.name || 'Unknown'
     : 'All Locations';
@@ -290,8 +305,91 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         metricLabel = 'utilization';
         break;
       }
+      case 'operational_health': {
+        const locCount = accessibleLocations?.length ?? 0;
+        metricValue = locCount > 0 ? `${locCount} location${locCount !== 1 ? 's' : ''} monitored` : 'Healthy';
+        metricLabel = 'status';
+        break;
+      }
+      case 'locations_rollup': {
+        const locRollupCount = accessibleLocations?.length ?? 0;
+        metricValue = `${locRollupCount} location${locRollupCount !== 1 ? 's' : ''}`;
+        metricLabel = '';
+        break;
+      }
+      case 'service_mix': {
+        const topCat = serviceMixData?.[0];
+        if (topCat) {
+          metricValue = `${topCat.category} · ${formatCurrencyCompact(topCat.revenue)}`;
+          metricLabel = 'top';
+        } else {
+          metricValue = meta.label;
+          metricLabel = '';
+        }
+        break;
+      }
+      case 'client_funnel': {
+        const total = (clientFunnelData?.newClientCount ?? 0) + (clientFunnelData?.returningClientCount ?? 0);
+        metricValue = `${formatNumber(total)} clients`;
+        metricLabel = 'total';
+        break;
+      }
+      case 'client_health': {
+        if (clientHealthData) {
+          const needAttention =
+            (clientHealthData['at-risk']?.length ?? 0) +
+            (clientHealthData['win-back']?.length ?? 0) +
+            (clientHealthData['new-no-return']?.length ?? 0);
+          metricValue = `${formatNumber(needAttention)} need attention`;
+          metricLabel = '';
+        } else {
+          metricValue = meta.label;
+          metricLabel = '';
+        }
+        break;
+      }
+      case 'goal_tracker': {
+        metricValue = `${Math.round(goalOrgMetrics.percentage)}%`;
+        metricLabel = goalOrgMetrics.paceStatus === 'ahead' ? 'ahead' : goalOrgMetrics.paceStatus === 'behind' ? 'behind' : 'on track';
+        break;
+      }
+      case 'week_ahead_forecast': {
+        if (forecastData?.summary) {
+          metricValue = formatCurrencyCompact(forecastData.summary.totalPredicted);
+          metricLabel = 'projected';
+        } else {
+          metricValue = meta.label;
+          metricLabel = '';
+        }
+        break;
+      }
+      case 'new_bookings': {
+        const count = newBookingsQuery.data?.bookedInRange ?? 0;
+        metricValue = `${formatNumber(count)} new`;
+        metricLabel = 'bookings';
+        break;
+      }
+      case 'hiring_capacity': {
+        metricValue = `${hiringCapacity.totalHiresNeeded} open`;
+        metricLabel = hiringCapacity.totalHiresNeeded === 1 ? 'chair' : 'chairs';
+        break;
+      }
+      case 'staffing_trends': {
+        const activeStaff = workload?.length ?? 0;
+        metricValue = `${formatNumber(activeStaff)} active`;
+        metricLabel = 'staff';
+        break;
+      }
+      case 'stylist_workload': {
+        const avgUtilWl = workload?.length
+          ? Math.round(workload.reduce((s, w) => s + w.utilizationScore, 0) / workload.length)
+          : 0;
+        metricValue = `${avgUtilWl}%`;
+        metricLabel = 'avg util';
+        break;
+      }
       default:
-        metricValue = '—';
+        metricValue = meta.label;
         metricLabel = '';
     }
     
