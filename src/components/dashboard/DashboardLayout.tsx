@@ -1136,18 +1136,24 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           <div className="flex items-center gap-3">
             <NavHistoryArrows />
             {isPlatformUser && location.pathname.startsWith('/dashboard/platform') && <OrganizationSwitcher compact />}
-            <Tooltip>
+             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                  onClick={() => navigate('/dashboard/schedule')}
+                  onClick={() => navigate(location.pathname.startsWith('/dashboard/schedule') ? '/dashboard' : '/dashboard/schedule')}
                 >
-                  <CalendarDays className="w-4 h-4" />
+                  {location.pathname.startsWith('/dashboard/schedule') ? (
+                    <LayoutDashboard className="w-4 h-4" />
+                  ) : (
+                    <CalendarDays className="w-4 h-4" />
+                  )}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">Schedule</TooltipContent>
+              <TooltipContent side="bottom">
+                {location.pathname.startsWith('/dashboard/schedule') ? 'Command Center' : 'Schedule'}
+              </TooltipContent>
             </Tooltip>
           </div>
 
