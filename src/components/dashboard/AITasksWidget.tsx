@@ -24,7 +24,7 @@ export function AITasksWidget() {
 
       <div className="mt-4 flex-1">
         {aiTasks.length === 0 ? (
-          <p className="text-xs text-muted-foreground py-2">No pending AI tasks</p>
+          <p className="text-sm text-muted-foreground text-center py-4">No pending AI tasks</p>
         ) : (
           <div className="space-y-2">
             {aiTasks.map((task: any) => (

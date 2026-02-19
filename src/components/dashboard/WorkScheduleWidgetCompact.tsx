@@ -32,7 +32,7 @@ export function WorkScheduleWidgetCompact() {
           <span className={cn(tokens.kpi.label, 'flex-1')}>MY SCHEDULE</span>
         </div>
         <div className="mt-4 flex-1">
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             No locations assigned
           </p>
         </div>
@@ -81,7 +81,7 @@ export function WorkScheduleWidgetCompact() {
           })}
         </div>
 
-        <p className="text-[10px] text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {uniqueWorkDays.length} days per week
         </p>
       </div>
