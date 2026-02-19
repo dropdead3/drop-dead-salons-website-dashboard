@@ -9,7 +9,9 @@ interface LivePreviewPanelProps {
 }
 
 export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId, previewUrl }: LivePreviewPanelProps) {
-  const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>(() => {
+    return (localStorage.getItem('preview-viewport') as 'desktop' | 'mobile') || 'desktop';
+  });
   const [refreshKey, setRefreshKey] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -94,7 +96,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
                 "h-7 px-2",
                 viewMode === 'desktop' && "bg-background shadow-sm"
               )}
-              onClick={() => setViewMode('desktop')}
+              onClick={() => { setViewMode('desktop'); localStorage.setItem('preview-viewport', 'desktop'); }}
             >
               <Monitor className="h-4 w-4" />
             </Button>
@@ -105,7 +107,7 @@ export const LivePreviewPanel = memo(function LivePreviewPanel({ activeSectionId
                 "h-7 px-2",
                 viewMode === 'mobile' && "bg-background shadow-sm"
               )}
-              onClick={() => setViewMode('mobile')}
+              onClick={() => { setViewMode('mobile'); localStorage.setItem('preview-viewport', 'mobile'); }}
             >
               <Smartphone className="h-4 w-4" />
             </Button>

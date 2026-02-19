@@ -18,6 +18,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import {
   Scissors,
@@ -31,6 +32,9 @@ import {
   Plus,
   Trash2,
   Copy,
+  FileText,
+  Settings,
+  LayoutTemplate,
 } from 'lucide-react';
 import {
   useWebsiteSections,
@@ -44,6 +48,7 @@ import {
   type BuiltinSectionType,
   type CustomSectionType,
 } from '@/hooks/useWebsiteSections';
+import { useWebsitePages } from '@/hooks/useWebsitePages';
 import { SectionNavItem } from './SectionNavItem';
 import { SectionGroupHeader } from './SectionGroupHeader';
 import { ContentNavItem } from './ContentNavItem';
@@ -110,6 +115,11 @@ interface WebsiteEditorSidebarProps {
   onTabChange: (tab: string) => void;
   collapsed?: boolean;
   onSectionsChange?: (sections: SectionConfig[]) => void;
+  selectedPageId?: string;
+  onPageChange?: (pageId: string) => void;
+  onAddPage?: () => void;
+  onDeletePage?: (pageId: string) => void;
+  onApplyPageTemplate?: () => void;
 }
 
 export function WebsiteEditorSidebar({
@@ -117,8 +127,14 @@ export function WebsiteEditorSidebar({
   onTabChange,
   collapsed = false,
   onSectionsChange,
+  selectedPageId = 'home',
+  onPageChange,
+  onAddPage,
+  onDeletePage,
+  onApplyPageTemplate,
 }: WebsiteEditorSidebarProps) {
   const { data: sectionsConfig, isLoading } = useWebsiteSections();
+  const { data: pagesConfig } = useWebsitePages();
   const updateSections = useUpdateWebsiteSections();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<SectionConfig | null>(null);
@@ -282,6 +298,9 @@ export function WebsiteEditorSidebar({
     return localSections.find(s => s.type === type);
   };
 
+  const isHomePage = selectedPageId === 'home';
+  const selectedPage = pagesConfig?.pages.find(p => p.id === selectedPageId);
+
   if (collapsed) return null;
 
   if (isLoading) {
@@ -294,6 +313,66 @@ export function WebsiteEditorSidebar({
 
   return (
     <div className="h-full flex flex-col bg-background border-r">
+      {/* Page Selector */}
+      <div className="p-3 border-b space-y-2">
+        <div className="flex items-center gap-2">
+          <Select value={selectedPageId} onValueChange={v => onPageChange?.(v)}>
+            <SelectTrigger className="h-8 text-xs flex-1">
+              <SelectValue placeholder="Select page" />
+            </SelectTrigger>
+            <SelectContent>
+              {pagesConfig?.pages.map(p => (
+                <SelectItem key={p.id} value={p.id}>
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-3 w-3" />
+                    <span>{p.title}</span>
+                    {!p.enabled && <span className="text-muted-foreground">(disabled)</span>}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={onAddPage} title="Add Page">
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+        {/* Page actions for non-home pages */}
+        {!isHomePage && selectedPage && (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs flex-1"
+              onClick={() => onTabChange('page-settings')}
+            >
+              <Settings className="h-3 w-3 mr-1" />
+              Page Settings
+            </Button>
+            {onApplyPageTemplate && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs flex-1"
+                onClick={onApplyPageTemplate}
+              >
+                <LayoutTemplate className="h-3 w-3 mr-1" />
+                Templates
+              </Button>
+            )}
+            {selectedPage.deletable && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs text-destructive hover:text-destructive"
+                onClick={() => onDeletePage?.(selectedPageId)}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Search */}
       <div className="p-3 border-b">
         <WebsiteEditorSearch onSelectResult={onTabChange} />
@@ -302,43 +381,71 @@ export function WebsiteEditorSidebar({
       {/* Navigation */}
       <ScrollArea className="flex-1">
         <div className="py-2">
-          {/* Site Content Section */}
-          <SectionGroupHeader title="Site Content" />
-          <div className="space-y-0.5 mb-2">
-            {SITE_CONTENT_ITEMS.map(item => (
-              <ContentNavItem
-                key={item.tab}
-                label={item.label}
-                description={item.description}
-                icon={item.icon}
-                isActive={activeTab === item.tab}
-                onSelect={() => onTabChange(item.tab)}
-              />
-            ))}
-          </div>
-
-          <Separator className="my-3 mx-3" />
-
-          {/* Homepage Sections (with DND) */}
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={localSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
-              <div className="mb-1">
-                <p className="px-4 py-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                  Homepage Layout
-                </p>
+          {isHomePage && (
+            <>
+              {/* Site Content Section */}
+              <SectionGroupHeader title="Site Content" />
+              <div className="space-y-0.5 mb-2">
+                {SITE_CONTENT_ITEMS.map(item => (
+                  <ContentNavItem
+                    key={item.tab}
+                    label={item.label}
+                    description={item.description}
+                    icon={item.icon}
+                    isActive={activeTab === item.tab}
+                    onSelect={() => onTabChange(item.tab)}
+                  />
+                ))}
               </div>
 
-              {/* Built-in section groups */}
-              {SECTION_GROUPS.map((group, groupIndex) => {
-                const groupSections = group.sectionTypes
-                  .map(type => getBuiltinSection(type))
-                  .filter(Boolean) as SectionConfig[];
-                if (groupSections.length === 0) return null;
-                return (
-                  <div key={group.title}>
-                    {groupIndex > 0 && <Separator className="my-2 mx-3" />}
-                    <SectionGroupHeader title={group.title} />
-                    {groupSections.map(section => (
+              <Separator className="my-3 mx-3" />
+            </>
+          )}
+
+          {/* Homepage Sections (with DND) - only show for home page */}
+          {isHomePage && (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={localSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
+                <div className="mb-1">
+                  <p className="px-4 py-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                    Homepage Layout
+                  </p>
+                </div>
+
+                {/* Built-in section groups */}
+                {SECTION_GROUPS.map((group, groupIndex) => {
+                  const groupSections = group.sectionTypes
+                    .map(type => getBuiltinSection(type))
+                    .filter(Boolean) as SectionConfig[];
+                  if (groupSections.length === 0) return null;
+                  return (
+                    <div key={group.title}>
+                      {groupIndex > 0 && <Separator className="my-2 mx-3" />}
+                      <SectionGroupHeader title={group.title} />
+                      {groupSections.map(section => (
+                        <SectionNavItem
+                          key={section.id}
+                          id={section.id}
+                          label={section.label}
+                          description={section.description}
+                          order={section.order}
+                          enabled={section.enabled}
+                          isActive={activeTab === getSectionTab(section)}
+                          onSelect={() => onTabChange(getSectionTab(section))}
+                          onToggle={(enabled) => handleToggleSection(section.id, enabled)}
+                          onDuplicate={() => handleDuplicateSection(section)}
+                        />
+                      ))}
+                    </div>
+                  );
+                })}
+
+                {/* Custom sections */}
+                {customSections.length > 0 && (
+                  <>
+                    <Separator className="my-2 mx-3" />
+                    <SectionGroupHeader title="Custom Sections" />
+                    {customSections.map(section => (
                       <SectionNavItem
                         key={section.id}
                         id={section.id}
@@ -346,60 +453,63 @@ export function WebsiteEditorSidebar({
                         description={section.description}
                         order={section.order}
                         enabled={section.enabled}
-                        isActive={activeTab === getSectionTab(section)}
-                        onSelect={() => onTabChange(getSectionTab(section))}
+                        isActive={activeTab === `custom-${section.id}`}
+                        onSelect={() => onTabChange(`custom-${section.id}`)}
                         onToggle={(enabled) => handleToggleSection(section.id, enabled)}
+                        deletable
+                        onDelete={() => setDeleteTarget(section)}
+                        onDuplicate={() => handleDuplicateSection(section)}
                       />
                     ))}
-                  </div>
-                );
-              })}
+                  </>
+                )}
+              </SortableContext>
+            </DndContext>
+          )}
 
-              {/* Custom sections */}
-              {customSections.length > 0 && (
-                <>
-                  <Separator className="my-2 mx-3" />
-                  <SectionGroupHeader title="Custom Sections" />
-                  {customSections.map(section => (
-                    <SectionNavItem
-                      key={section.id}
-                      id={section.id}
-                      label={section.label}
-                      description={section.description}
-                      order={section.order}
-                      enabled={section.enabled}
-                      isActive={activeTab === `custom-${section.id}`}
-                      onSelect={() => onTabChange(`custom-${section.id}`)}
-                      onToggle={(enabled) => handleToggleSection(section.id, enabled)}
-                      deletable
-                      onDelete={() => setDeleteTarget(section)}
-                      onDuplicate={() => handleDuplicateSection(section)}
-                    />
-                  ))}
-                </>
-              )}
-            </SortableContext>
-          </DndContext>
+          {/* Non-home page sections */}
+          {!isHomePage && selectedPage && (
+            <>
+              <SectionGroupHeader title={`${selectedPage.title} Sections`} />
+              {selectedPage.sections
+                .sort((a, b) => a.order - b.order)
+                .map(section => (
+                  <ContentNavItem
+                    key={section.id}
+                    label={section.label}
+                    description={section.description}
+                    icon={FileText}
+                    isActive={activeTab === `custom-${section.id}`}
+                    onSelect={() => onTabChange(`custom-${section.id}`)}
+                  />
+                ))}
+            </>
+          )}
 
           {/* Add Section Button */}
-          <div className="px-3 mt-3">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full text-xs"
-              onClick={() => setShowAddDialog(true)}
-            >
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Add Section
-            </Button>
-          </div>
+          {isHomePage && (
+            <div className="px-3 mt-3">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full text-xs"
+                onClick={() => setShowAddDialog(true)}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                Add Section
+              </Button>
+            </div>
+          )}
         </div>
       </ScrollArea>
 
       {/* Stats Footer */}
       <div className="p-3 border-t bg-muted/30">
         <div className="text-[10px] text-muted-foreground text-center">
-          {localSections.filter(s => s.enabled).length}/{localSections.length} sections visible
+          {isHomePage
+            ? `${localSections.filter(s => s.enabled).length}/${localSections.length} sections visible`
+            : `${selectedPage?.title ?? 'Page'} • ${selectedPage?.sections.length ?? 0} sections`
+          }
         </div>
       </div>
 

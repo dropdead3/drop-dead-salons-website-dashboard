@@ -113,6 +113,8 @@ export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styl
       setIsDirty(false);
       window.dispatchEvent(new CustomEvent('editor-dirty-state', { detail: { dirty: false } }));
       toast.success('Section saved');
+      // Refresh live preview
+      window.dispatchEvent(new CustomEvent('website-preview-refresh'));
     },
     onError: () => toast.error('Failed to save'),
   });
