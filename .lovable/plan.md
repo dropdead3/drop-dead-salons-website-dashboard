@@ -1,29 +1,37 @@
 
-## Fix: Feedback Buttons Not Stacking When Sidebar is Collapsed
 
-### Problem
+## Separate Feedback Buttons Into Their Own Bento Card
 
-The `SidebarFeedbackButtons` component always renders its two icon buttons in a horizontal `flex` row. When the sidebar collapses to its narrow state, there isn't enough width for both icons side-by-side, causing the layout to break (the Bug icon overflows outside the container as shown in the screenshot).
+### What Changes
 
-The other footer buttons (`SidebarClockButton`, `SidebarLockButton`) already accept an `isCollapsed` prop and adapt their layout accordingly -- this component does not.
+The Lightbulb and Bug feedback buttons currently sit inside the same bento card as the Clock In and Lock buttons. We will pull them out into their own visually distinct bento card above the existing one, matching the same rounded/border styling.
 
-### Fix
+### Implementation
+
+**File: `src/components/dashboard/SidebarNavContent.tsx`** (lines 625-641)
+
+Wrap `SidebarFeedbackButtons` in its own bento card container, separate from the Clock/Lock card:
+
+```
+Before (single card):
+  [Feedback] [Clock] [Lock]
+
+After (two cards):
+  Card 1: [Feedback buttons]
+  Card 2: [Clock] [Lock]
+```
+
+The new card will use the same styling as the existing one (`rounded-lg bg-muted/30 border border-border/50`) with appropriate padding based on `isCollapsed`. A small gap (`gap-2`) separates the two cards.
 
 **File: `src/components/dashboard/SidebarFeedbackButtons.tsx`**
 
-- Accept an `isCollapsed` prop (matching the pattern used by sibling components)
-- When collapsed: switch from `flex gap-1` (horizontal) to `flex flex-col gap-1` (vertical stack)
-- Remove the component's own border/background wrapper styling since the parent container in `SidebarNavContent` already provides that styling -- this eliminates the double-border/nested-card issue visible in the screenshot
-
-**File: `src/components/dashboard/SidebarNavContent.tsx`**
-
-- Pass `isCollapsed={isCollapsed}` to `SidebarFeedbackButtons` (line 634), matching how it's passed to `SidebarClockButton` and `SidebarLockButton`
+The component itself stays unchanged -- the separation is purely structural in the parent layout.
 
 ### Technical Details
 
 | File | Change |
 |------|--------|
-| `src/components/dashboard/SidebarFeedbackButtons.tsx` | Add `isCollapsed` prop; switch flex direction to `flex-col` when collapsed; remove redundant border/bg wrapper |
-| `src/components/dashboard/SidebarNavContent.tsx` | Pass `isCollapsed` prop on line 634 |
+| `src/components/dashboard/SidebarNavContent.tsx` | Move `SidebarFeedbackButtons` into its own bento card wrapper above the existing Clock/Lock card. Add `flex flex-col gap-2` to the footer container. |
 
-Two files, minimal changes.
+One file, ~6 lines changed.
+
