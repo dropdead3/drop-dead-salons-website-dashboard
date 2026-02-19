@@ -28,7 +28,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         className={cn(
-          "rounded-xl border bg-card text-card-foreground",
+          "rounded-2xl border bg-card text-card-foreground",
           inferredInteractive && "hover-lift",
           inferredGlow && "card-glow",
           className
