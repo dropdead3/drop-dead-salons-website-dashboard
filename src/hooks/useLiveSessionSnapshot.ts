@@ -25,6 +25,7 @@ export interface StylistDetail {
 interface LiveSessionSnapshot {
   inSessionCount: number;
   activeStylistCount: number;
+  activeAssistantCount: number;
   stylists: ActiveStylist[];
   stylistDetails: StylistDetail[];
   isLoading: boolean;
@@ -59,7 +60,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
 
       if (error) throw error;
       if (!appointments || appointments.length === 0) {
-        return { inSessionCount: 0, activeStylistCount: 0, stylists: [], stylistDetails: [] };
+        return { inSessionCount: 0, activeStylistCount: 0, activeAssistantCount: 0, stylists: [], stylistDetails: [] };
       }
 
       const inSessionCount = appointments.length;
@@ -72,7 +73,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
       )];
 
       if (uniqueStaffIds.length === 0) {
-        return { inSessionCount, activeStylistCount: 0, stylists: [], stylistDetails: [] };
+        return { inSessionCount, activeStylistCount: 0, activeAssistantCount: 0, stylists: [], stylistDetails: [] };
       }
 
       // Resolve staff to user profiles via phorest_staff_mapping
@@ -91,7 +92,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
       const userIds = [...new Set(staffToUser.values())];
 
       if (userIds.length === 0) {
-        return { inSessionCount, activeStylistCount: uniqueStaffIds.length, stylists: [], stylistDetails: [] };
+        return { inSessionCount, activeStylistCount: uniqueStaffIds.length, activeAssistantCount: 0, stylists: [], stylistDetails: [] };
       }
 
       // Get employee profiles for avatars
@@ -209,9 +210,14 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
       const stylistDetails = [...stylistDetailsMap.values()]
         .sort((a, b) => a.lastEndTime.localeCompare(b.lastEndTime));
 
+      // Count unique assistants currently active
+      const uniqueAssistantNames = new Set<string>();
+      stylistDetails.forEach(d => d.assistedBy.forEach(a => uniqueAssistantNames.add(a)));
+
       return {
         inSessionCount,
         activeStylistCount: uniqueStaffIds.length,
+        activeAssistantCount: uniqueAssistantNames.size,
         stylists,
         stylistDetails,
       };
@@ -223,6 +229,7 @@ export function useLiveSessionSnapshot(locationId?: string): LiveSessionSnapshot
   return {
     inSessionCount: data?.inSessionCount ?? 0,
     activeStylistCount: data?.activeStylistCount ?? 0,
+    activeAssistantCount: data?.activeAssistantCount ?? 0,
     stylists: data?.stylists ?? [],
     stylistDetails: data?.stylistDetails ?? [],
     isLoading,
