@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { PhorestSyncPopout } from '@/components/dashboard/PhorestSyncPopout';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ChartSkeleton } from '@/components/ui/chart-skeleton';
@@ -740,9 +741,12 @@ function DashboardSections({
                           compact={compact}
                           onCompactChange={onCompactChange}
                           leadingContent={
-                            <DashboardCustomizeMenu
-                              roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
-                            />
+                            <div className="flex items-center gap-1">
+                              {isLeadership && <PhorestSyncPopout />}
+                              <DashboardCustomizeMenu
+                                roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
+                              />
+                            </div>
                           }
                         />
                       </div>
@@ -783,9 +787,12 @@ function DashboardSections({
                       compact={compact}
                       onCompactChange={onCompactChange}
                       leadingContent={
-                        <DashboardCustomizeMenu
-                          roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
-                        />
+                        <div className="flex items-center gap-1">
+                          {isLeadership && <PhorestSyncPopout />}
+                          <DashboardCustomizeMenu
+                            roleContext={{ isLeadership, hasStylistRole, isFrontDesk, isReceptionist }}
+                          />
+                        </div>
                       }
                     />
                   </div>
