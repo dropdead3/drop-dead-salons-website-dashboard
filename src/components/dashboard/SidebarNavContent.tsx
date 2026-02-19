@@ -280,7 +280,9 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             : cn("px-3 py-2.5", inFooter ? "mx-0" : "mx-3"),
           isActive 
             ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none" 
-            : "text-muted-foreground hover:text-foreground hover:bg-muted/60 hover:translate-x-0.5"
+            : isCollapsed
+              ? "text-foreground/50 hover:text-foreground hover:bg-muted/60"
+              : "text-muted-foreground hover:text-foreground hover:bg-muted/60 hover:translate-x-0.5"
         )}
       >
         <Icon className="w-4 h-4 shrink-0" />
@@ -655,7 +657,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                                 "transition-all duration-300 text-sm",
                                 isAnyActive
                                   ? "bg-foreground/10 text-foreground"
-                                  : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                                  : "text-foreground/50 hover:text-foreground hover:bg-muted/60"
                               )}
                               style={{ width: 'calc(100% - 16px)' }}
                             >
