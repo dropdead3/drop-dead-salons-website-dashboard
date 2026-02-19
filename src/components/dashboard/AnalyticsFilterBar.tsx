@@ -1,6 +1,5 @@
-import { MapPin, Calendar, LayoutGrid, List } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { MapPin, Calendar } from 'lucide-react';
+import { Tabs, FilterTabsList, FilterTabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -64,21 +63,15 @@ export function AnalyticsFilterBar({
     <div className="flex flex-wrap items-center justify-end gap-2">
       {/* Simple / Detailed toggle */}
       {onCompactChange && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              onClick={() => onCompactChange(!compact)}
-            >
-              {compact ? <LayoutGrid className="w-4 h-4" /> : <List className="w-4 h-4" />}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">
-            {compact ? 'Detailed view' : 'Simple view'}
-          </TooltipContent>
-        </Tooltip>
+        <Tabs
+          value={compact ? 'simple' : 'detailed'}
+          onValueChange={(v) => onCompactChange(v === 'simple')}
+        >
+          <FilterTabsList>
+            <FilterTabsTrigger value="simple">Simple</FilterTabsTrigger>
+            <FilterTabsTrigger value="detailed">Detailed</FilterTabsTrigger>
+          </FilterTabsList>
+        </Tabs>
       )}
 
       {/* Multi-select for 3+ locations */}
