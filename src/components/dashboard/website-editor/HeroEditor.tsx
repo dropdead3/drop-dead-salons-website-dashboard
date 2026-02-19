@@ -103,7 +103,7 @@ export function HeroEditor() {
           <div className="space-y-4 pt-4 border-t">
             <h4 className="font-medium text-sm">Call to Action Buttons</h4>
             <div className="space-y-2">
-              <Label htmlFor="cta_new">New Client Button Text</Label>
+              <Label htmlFor="cta_new">Primary Button Text</Label>
               <Input
                 id="cta_new"
                 value={localConfig.cta_new_client}
@@ -111,47 +111,68 @@ export function HeroEditor() {
               />
             </div>
             <UrlInput
-              label="New Client Button URL"
+              label="Primary Button URL"
               value={localConfig.cta_new_client_url}
               onChange={(value) => updateField('cta_new_client_url', value)}
-              placeholder="Leave empty to open consultation form"
-              description="Leave empty to open the consultation form dialog"
+              placeholder="Leave empty to open the default form"
+              description="Leave empty to open the default form dialog"
             />
-            <div className="space-y-2">
-              <Label htmlFor="cta_returning">Returning Client Button Text</Label>
-              <Input
-                id="cta_returning"
-                value={localConfig.cta_returning_client}
-                onChange={(e) => updateField('cta_returning_client', e.target.value)}
-              />
-            </div>
-            <UrlInput
-              label="Returning Client Button URL"
-              value={localConfig.cta_returning_client_url}
-              onChange={(value) => updateField('cta_returning_client_url', value)}
-              placeholder="/booking"
+
+            {/* Secondary Button with visibility toggle */}
+            <ToggleInput
+              label="Show Secondary Button"
+              value={localConfig.show_secondary_button}
+              onChange={(value) => updateField('show_secondary_button', value)}
+              description="Display a second CTA button below the primary"
             />
+            {localConfig.show_secondary_button && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="cta_returning">Secondary Button Text</Label>
+                  <Input
+                    id="cta_returning"
+                    value={localConfig.cta_returning_client}
+                    onChange={(e) => updateField('cta_returning_client', e.target.value)}
+                  />
+                </div>
+                <UrlInput
+                  label="Secondary Button URL"
+                  value={localConfig.cta_returning_client_url}
+                  onChange={(value) => updateField('cta_returning_client_url', value)}
+                  placeholder="/booking"
+                />
+              </>
+            )}
           </div>
 
-          {/* Consultation Notes */}
+          {/* Below-Button Notes */}
           <div className="space-y-4 pt-4 border-t">
-            <h4 className="font-medium text-sm">Consultation Notes</h4>
-            <div className="space-y-2">
-              <Label htmlFor="note1">Note Line 1</Label>
-              <Input
-                id="note1"
-                value={localConfig.consultation_note_line1}
-                onChange={(e) => updateField('consultation_note_line1', e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="note2">Note Line 2</Label>
-              <Input
-                id="note2"
-                value={localConfig.consultation_note_line2}
-                onChange={(e) => updateField('consultation_note_line2', e.target.value)}
-              />
-            </div>
+            <ToggleInput
+              label="Show Below-Button Notes"
+              value={localConfig.show_consultation_notes}
+              onChange={(value) => updateField('show_consultation_notes', value)}
+              description="Display helper text below the CTA buttons"
+            />
+            {localConfig.show_consultation_notes && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="note1">Note Line 1</Label>
+                  <Input
+                    id="note1"
+                    value={localConfig.consultation_note_line1}
+                    onChange={(e) => updateField('consultation_note_line1', e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="note2">Note Line 2</Label>
+                  <Input
+                    id="note2"
+                    value={localConfig.consultation_note_line2}
+                    onChange={(e) => updateField('consultation_note_line2', e.target.value)}
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           {/* Advanced Settings */}

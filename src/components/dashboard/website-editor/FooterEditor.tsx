@@ -39,9 +39,9 @@ interface FooterConfig {
 }
 
 const DEFAULT_FOOTER: FooterConfig = {
-  tagline: 'Death to bad hair.',
-  copyright_text: '© {year} Drop Dead Salon. All rights reserved.',
-  contact_email: 'contact@dropdeadsalon.com',
+  tagline: '',
+  copyright_text: '© {year} Your Salon Name. All rights reserved.',
+  contact_email: '',
   instagram_url: '',
   facebook_url: '',
   twitter_url: '',
@@ -52,11 +52,8 @@ const DEFAULT_FOOTER: FooterConfig = {
     { href: '/services', label: 'Services' },
     { href: '/booking', label: 'Book' },
   ],
-  bottom_links: [
-    { href: '/stylists#careers', label: 'Work at Drop Dead' },
-    { href: '/gift-cards', label: 'Buy a gift card' },
-  ],
-  powered_by_text: 'Powered by Drop Dead Salon Software',
+  bottom_links: [],
+  powered_by_text: '',
 };
 
 const SOCIAL_PLATFORMS = [
