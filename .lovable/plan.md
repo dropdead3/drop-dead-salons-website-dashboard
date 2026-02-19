@@ -1,22 +1,20 @@
 
-
-## Add Help Center Button to Sidebar, Remove from Top Bar
+## Move Help Center into Feedback Bento Buttons (3 across)
 
 ### What Changes
-The Help Center button will be added to the sidebar navigation (below the greeting/announcements area) and removed from the top menu bar where it currently lives.
+The Help Center button (currently its own section in the sidebar nav area) will be removed from there and added as a third icon button alongside the Feature Request and Bug Report buttons in the bento grid at the bottom of the sidebar. The layout will go from 2 icons across to 3.
 
 ### Changes
 
-**1. `src/components/dashboard/SidebarNavContent.tsx` -- Add Help Center link below announcements**
-- Import `HelpCircle` from lucide-react
-- After the `SidebarAnnouncementsWidget` (line 370), add a Help Center link button
-- When collapsed, show just the icon with a tooltip; when expanded, show icon + label
-- Style consistently with other sidebar elements (muted foreground, hover state)
+**1. `src/components/dashboard/SidebarFeedbackButtons.tsx` -- Add Help Center as third button**
+- Import `HelpCircle` from lucide-react and `Link` from react-router-dom
+- Add a third button (using a `Link` to `/dashboard/help`) with `HelpCircle` icon and tooltip "Help Center"
+- The three buttons will sit evenly in a row (or column when collapsed), matching the existing styling
 
-**2. `src/components/dashboard/DashboardLayout.tsx` -- Remove Help Center from top bar**
-- Remove the standalone Help Center icon button (lines 1242-1259) that shows on xl+ screens
-- Remove the Help Center dropdown menu item (lines 1232-1237) from the user/admin dropdown
-- Clean up the `HelpCircle` import if no longer used elsewhere in the file
+**2. `src/components/dashboard/SidebarNavContent.tsx` -- Remove standalone Help Center link**
+- Remove the entire Help Center `div` block (lines 372-409) that was added in the previous change
+- Clean up the `HelpCircle` import if no longer used in this file
+- The `Link` import should remain since it is used elsewhere
 
 ### Result
-The Help Center gets a persistent, visible home in the sidebar instead of being tucked away in the top bar. One less icon in the top bar, cleaner layout. The sidebar link works in both expanded and collapsed states.
+The bottom bento area will show three evenly spaced icon buttons: Lightbulb (Feature Request), Bug (Bug Report), and HelpCircle (Help Center) -- matching the screenshot reference. The standalone Help Center nav link above the main navigation is removed.
