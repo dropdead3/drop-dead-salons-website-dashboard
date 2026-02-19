@@ -29,7 +29,7 @@ export function WorkScheduleWidgetCompact() {
           <div className={tokens.card.iconBox}>
             <Calendar className={tokens.card.icon} />
           </div>
-          <span className={cn(tokens.kpi.label, 'flex-1')}>MY SCHEDULE</span>
+          <span className={cn(tokens.kpi.label, 'flex-1')}>MY WORK DAYS</span>
         </div>
         <div className="mt-4 flex-1">
           <p className="text-sm text-muted-foreground">
@@ -46,7 +46,7 @@ export function WorkScheduleWidgetCompact() {
         <div className={tokens.card.iconBox}>
           <Calendar className={tokens.card.icon} />
         </div>
-        <span className={cn(tokens.kpi.label, 'flex-1')}>MY SCHEDULE</span>
+        <span className={cn(tokens.kpi.label, 'flex-1')}>MY WORK DAYS</span>
       </div>
 
       <div className="mt-4 flex-1">

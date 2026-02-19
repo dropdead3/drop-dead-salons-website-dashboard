@@ -19,7 +19,7 @@ const AVAILABLE_WIDGETS = [
   { id: 'changelog', label: "What's New", icon: Sparkles },
   { id: 'birthdays', label: 'Team Birthdays', icon: Cake },
   { id: 'anniversaries', label: 'Work Anniversaries', icon: Award },
-  { id: 'schedule', label: 'My Schedule', icon: Calendar },
+  { id: 'schedule', label: 'My Work Days', icon: Calendar },
   { id: 'dayrate', label: 'Day Rate Bookings', icon: Armchair },
   { id: 'help', label: 'Help Center', icon: HelpCircle },
   { id: 'ai_tasks', label: 'AI Tasks', icon: Brain },
@@ -134,7 +134,7 @@ export function WidgetsSection({ defaultEnabledWidgets = ['changelog', 'birthday
         <VisibilityGate elementKey="widget_anniversaries" elementName="Work Anniversaries Widget" elementCategory="Dashboard Widgets">
           {isWidgetEnabled('anniversaries') && <AnniversaryWidget />}
         </VisibilityGate>
-        <VisibilityGate elementKey="widget_schedule" elementName="My Schedule Widget" elementCategory="Dashboard Widgets">
+        <VisibilityGate elementKey="widget_schedule" elementName="My Work Days Widget" elementCategory="Dashboard Widgets">
           {isWidgetEnabled('schedule') && <WorkScheduleWidgetCompact />}
         </VisibilityGate>
         <VisibilityGate elementKey="widget_dayrate" elementName="Day Rate Bookings Widget" elementCategory="Dashboard Widgets">
