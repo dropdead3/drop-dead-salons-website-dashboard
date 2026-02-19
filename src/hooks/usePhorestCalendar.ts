@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, addDays } from 'date-fns';
@@ -211,6 +211,20 @@ export function usePhorestCalendar() {
     },
   });
 
+  // Track which appointments the current user is assisting
+  const { data: assistedAppointmentIds = new Set<string>() } = useQuery({
+    queryKey: ['assisted-appointment-ids', effectiveUserId, dateRange],
+    queryFn: async () => {
+      if (!effectiveUserId) return new Set<string>();
+      const { data } = await supabase
+        .from('appointment_assistants')
+        .select('appointment_id')
+        .eq('assistant_user_id', effectiveUserId);
+      return new Set((data || []).map(a => a.appointment_id));
+    },
+    enabled: !!effectiveUserId,
+  });
+
   // Group appointments by date
   const appointmentsByDate = useMemo(() => {
     const map = new Map<string, PhorestAppointment[]>();
@@ -280,6 +294,7 @@ export function usePhorestCalendar() {
     // Data
     appointments,
     appointmentsByDate,
+    assistedAppointmentIds,
     isLoading,
     lastSync,
     
