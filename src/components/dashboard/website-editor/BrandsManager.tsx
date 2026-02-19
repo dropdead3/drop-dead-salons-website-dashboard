@@ -304,22 +304,30 @@ export function BrandsManager() {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Intro Text */}
-          <div className="space-y-2">
-            <Label htmlFor="intro_text">Introduction Text</Label>
-            <Input
-              id="intro_text"
-              value={localConfig.intro_text}
-              onChange={(e) => setLocalConfig({ ...localConfig, intro_text: e.target.value })}
-              placeholder="Our favorite brands..."
-            />
-          </div>
-
-          {/* Toggle for showing intro */}
           <ToggleInput
             label="Show Introduction Text"
             description="Display the intro paragraph above the brand marquee"
             value={localConfig.show_intro_text}
             onChange={(value) => setLocalConfig({ ...localConfig, show_intro_text: value })}
+          />
+          {localConfig.show_intro_text && (
+            <div className="space-y-2">
+              <Label htmlFor="intro_text">Introduction Text</Label>
+              <Input
+                id="intro_text"
+                value={localConfig.intro_text}
+                onChange={(e) => setLocalConfig({ ...localConfig, intro_text: e.target.value })}
+                placeholder="Our favorite brands..."
+              />
+            </div>
+          )}
+
+          {/* Logo visibility toggle */}
+          <ToggleInput
+            label="Show Brand Logos"
+            description="Display logo images alongside brand text in the marquee"
+            value={localConfig.show_logos}
+            onChange={(value) => setLocalConfig({ ...localConfig, show_logos: value })}
           />
 
           {/* Marquee Speed */}

@@ -68,34 +68,50 @@ export function NewClientEditor() {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Headline */}
-          <CharCountInput
-            label="Headline Prefix"
-            value={localConfig.headline_prefix}
-            onChange={(value) => updateField('headline_prefix', value)}
-            maxLength={30}
-            placeholder="New Clients"
-            description="Static text before the rotating words"
+          <ToggleInput
+            label="Show Headline"
+            value={localConfig.show_headline}
+            onChange={(value) => updateField('show_headline', value)}
+            description="Display the headline prefix and rotating words"
           />
-
-          {/* Rotating Words */}
-          <RotatingWordsInput
-            words={localConfig.rotating_words}
-            onChange={(words) => updateField('rotating_words', words)}
-            label="Rotating Words"
-            placeholder="e.g. Start Here, Wanted..."
-          />
+          {localConfig.show_headline && (
+            <>
+              <CharCountInput
+                label="Headline Prefix"
+                value={localConfig.headline_prefix}
+                onChange={(value) => updateField('headline_prefix', value)}
+                maxLength={30}
+                placeholder="New Clients"
+                description="Static text before the rotating words"
+              />
+              <RotatingWordsInput
+                words={localConfig.rotating_words}
+                onChange={(words) => updateField('rotating_words', words)}
+                label="Rotating Words"
+                placeholder="e.g. Start Here, Wanted..."
+              />
+            </>
+          )}
 
           {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={localConfig.description}
-              onChange={(e) => updateField('description', e.target.value)}
-              rows={3}
-            />
-            <p className="text-xs text-muted-foreground">Supporting text displayed below the headline</p>
-          </div>
+          <ToggleInput
+            label="Show Description"
+            value={localConfig.show_description}
+            onChange={(value) => updateField('show_description', value)}
+            description="Display supporting text below the headline"
+          />
+          {localConfig.show_description && (
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={localConfig.description}
+                onChange={(e) => updateField('description', e.target.value)}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">Supporting text displayed below the headline</p>
+            </div>
+          )}
 
           {/* Benefits */}
           <div className="pt-4 border-t space-y-4">
@@ -117,20 +133,30 @@ export function NewClientEditor() {
 
           {/* CTA */}
           <div className="space-y-4 pt-4 border-t">
-            <CharCountInput
-              label="CTA Button Text"
-              value={localConfig.cta_text}
-              onChange={(value) => updateField('cta_text', value)}
-              maxLength={30}
-              description="Text displayed on the main call-to-action button"
+            <ToggleInput
+              label="Show CTA Button"
+              value={localConfig.show_cta}
+              onChange={(value) => updateField('show_cta', value)}
+              description="Display the call-to-action button"
             />
-            <UrlInput
-              label="CTA Button URL"
-              value={localConfig.cta_url}
-              onChange={(value) => updateField('cta_url', value)}
-              placeholder="Leave empty to open the default form"
-              description="Where the button links to. Leave empty to open the default form."
-            />
+            {localConfig.show_cta && (
+              <>
+                <CharCountInput
+                  label="CTA Button Text"
+                  value={localConfig.cta_text}
+                  onChange={(value) => updateField('cta_text', value)}
+                  maxLength={30}
+                  description="Text displayed on the main call-to-action button"
+                />
+                <UrlInput
+                  label="CTA Button URL"
+                  value={localConfig.cta_url}
+                  onChange={(value) => updateField('cta_url', value)}
+                  placeholder="Leave empty to open the default form"
+                  description="Where the button links to. Leave empty to open the default form."
+                />
+              </>
+            )}
           </div>
         </CardContent>
       </Card>

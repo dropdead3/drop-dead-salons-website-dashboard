@@ -87,22 +87,30 @@ export function FooterCTAEditor() {
           )}
 
           {/* Headlines */}
-          <div className="grid grid-cols-2 gap-4">
-            <CharCountInput
-              label="Headline Line 1"
-              value={localConfig.headline_line1}
-              onChange={(value) => updateField('headline_line1', value)}
-              maxLength={30}
-              placeholder="Book Your"
-            />
-            <CharCountInput
-              label="Headline Line 2"
-              value={localConfig.headline_line2}
-              onChange={(value) => updateField('headline_line2', value)}
-              maxLength={30}
-              placeholder="Consult"
-            />
-          </div>
+          <ToggleInput
+            label="Show Headline"
+            value={localConfig.show_headline}
+            onChange={(value) => updateField('show_headline', value)}
+            description="Display the main headline text"
+          />
+          {localConfig.show_headline && (
+            <div className="grid grid-cols-2 gap-4">
+              <CharCountInput
+                label="Headline Line 1"
+                value={localConfig.headline_line1}
+                onChange={(value) => updateField('headline_line1', value)}
+                maxLength={30}
+                placeholder="Book Your"
+              />
+              <CharCountInput
+                label="Headline Line 2"
+                value={localConfig.headline_line2}
+                onChange={(value) => updateField('headline_line2', value)}
+                maxLength={30}
+                placeholder="Consult"
+              />
+            </div>
+          )}
 
           {/* Description */}
           <ToggleInput
@@ -127,21 +135,31 @@ export function FooterCTAEditor() {
           {/* CTA Settings */}
           <div className="space-y-4 pt-4 border-t">
             <h4 className="font-medium text-sm">Call to Action</h4>
-            <CharCountInput
-              label="Button Text"
-              value={localConfig.cta_text}
-              onChange={(value) => updateField('cta_text', value)}
-              maxLength={30}
-              placeholder="Book consult"
-              description="Text displayed on the CTA button"
+            <ToggleInput
+              label="Show CTA Button"
+              value={localConfig.show_cta_button}
+              onChange={(value) => updateField('show_cta_button', value)}
+              description="Display the call-to-action button"
             />
-            <UrlInput
-              label="Button URL"
-              value={localConfig.cta_url}
-              onChange={(value) => updateField('cta_url', value)}
-              placeholder="/booking"
-              description="Where the button links to"
-            />
+            {localConfig.show_cta_button && (
+              <>
+                <CharCountInput
+                  label="Button Text"
+                  value={localConfig.cta_text}
+                  onChange={(value) => updateField('cta_text', value)}
+                  maxLength={30}
+                  placeholder="Book consult"
+                  description="Text displayed on the CTA button"
+                />
+                <UrlInput
+                  label="Button URL"
+                  value={localConfig.cta_url}
+                  onChange={(value) => updateField('cta_url', value)}
+                  placeholder="/booking"
+                  description="Where the button links to"
+                />
+              </>
+            )}
           </div>
 
           {/* Display Options */}

@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEditorDirtyState } from '@/hooks/useEditorDirtyState';
+import { ToggleInput } from './inputs/ToggleInput';
 
 interface FooterLink {
   href: string;
@@ -36,6 +37,12 @@ interface FooterConfig {
   nav_links: FooterLink[];
   bottom_links: FooterBottomLink[];
   powered_by_text: string;
+  // Visibility toggles
+  show_tagline: boolean;
+  show_social_links: boolean;
+  show_nav_links: boolean;
+  show_bottom_links: boolean;
+  show_powered_by: boolean;
 }
 
 const DEFAULT_FOOTER: FooterConfig = {
@@ -54,6 +61,11 @@ const DEFAULT_FOOTER: FooterConfig = {
   ],
   bottom_links: [],
   powered_by_text: '',
+  show_tagline: true,
+  show_social_links: true,
+  show_nav_links: true,
+  show_bottom_links: true,
+  show_powered_by: true,
 };
 
 const SOCIAL_PLATFORMS = [
@@ -184,10 +196,18 @@ export function FooterEditor() {
           <CardDescription>Tagline, copyright, and contact information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label>Tagline</Label>
-            <Input value={config.tagline} onChange={e => handleChange('tagline', e.target.value)} />
-          </div>
+          <ToggleInput
+            label="Show Tagline"
+            value={config.show_tagline}
+            onChange={(v) => handleChange('show_tagline', v)}
+            description="Display the brand tagline in the footer"
+          />
+          {config.show_tagline && (
+            <div className="space-y-2">
+              <Label>Tagline</Label>
+              <Input value={config.tagline} onChange={e => handleChange('tagline', e.target.value)} />
+            </div>
+          )}
           <div className="space-y-2">
             <Label>Copyright Text</Label>
             <Input value={config.copyright_text} onChange={e => handleChange('copyright_text', e.target.value)} />
@@ -197,10 +217,18 @@ export function FooterEditor() {
             <Label>Contact Email</Label>
             <Input type="email" value={config.contact_email} onChange={e => handleChange('contact_email', e.target.value)} />
           </div>
-          <div className="space-y-2">
-            <Label>Powered By Text</Label>
-            <Input value={config.powered_by_text} onChange={e => handleChange('powered_by_text', e.target.value)} />
-          </div>
+          <ToggleInput
+            label="Show Powered By"
+            value={config.show_powered_by}
+            onChange={(v) => handleChange('show_powered_by', v)}
+            description="Display the 'Powered by' text at the bottom"
+          />
+          {config.show_powered_by && (
+            <div className="space-y-2">
+              <Label>Powered By Text</Label>
+              <Input value={config.powered_by_text} onChange={e => handleChange('powered_by_text', e.target.value)} />
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -214,7 +242,13 @@ export function FooterEditor() {
           <CardDescription>Social media links displayed in the footer</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {SOCIAL_PLATFORMS.map(({ key, icon: Icon, label, placeholder }) => (
+          <ToggleInput
+            label="Show Social Links"
+            value={config.show_social_links}
+            onChange={(v) => handleChange('show_social_links', v)}
+            description="Display social media icons in the footer"
+          />
+          {config.show_social_links && SOCIAL_PLATFORMS.map(({ key, icon: Icon, label, placeholder }) => (
             <div key={key} className="flex items-center gap-3">
               <div className="w-5 h-5 flex items-center justify-center text-muted-foreground shrink-0">
                 <Icon className="w-4 h-4" />
@@ -240,18 +274,28 @@ export function FooterEditor() {
           <CardDescription>Main footer navigation links</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {config.nav_links.map((link, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <Input className="flex-1" placeholder="Label" value={link.label} onChange={e => updateNavLink(index, 'label', e.target.value)} />
-              <Input className="flex-1" placeholder="/path" value={link.href} onChange={e => updateNavLink(index, 'href', e.target.value)} />
-              <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:text-destructive" onClick={() => removeNavLink(index)}>
-                <Trash2 className="h-4 w-4" />
+          <ToggleInput
+            label="Show Navigation Links"
+            value={config.show_nav_links}
+            onChange={(v) => handleChange('show_nav_links', v)}
+            description="Display navigation links in the footer"
+          />
+          {config.show_nav_links && (
+            <>
+              {config.nav_links.map((link, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input className="flex-1" placeholder="Label" value={link.label} onChange={e => updateNavLink(index, 'label', e.target.value)} />
+                  <Input className="flex-1" placeholder="/path" value={link.href} onChange={e => updateNavLink(index, 'href', e.target.value)} />
+                  <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:text-destructive" onClick={() => removeNavLink(index)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={addNavLink} className="gap-2">
+                <Plus className="h-4 w-4" /> Add Link
               </Button>
-            </div>
-          ))}
-          <Button variant="outline" size="sm" onClick={addNavLink} className="gap-2">
-            <Plus className="h-4 w-4" /> Add Link
-          </Button>
+            </>
+          )}
         </CardContent>
       </Card>
 
@@ -262,18 +306,28 @@ export function FooterEditor() {
           <CardDescription>Links shown at the very bottom of the footer</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {config.bottom_links.map((link, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <Input className="flex-1" placeholder="Label" value={link.label} onChange={e => updateBottomLink(index, 'label', e.target.value)} />
-              <Input className="flex-1" placeholder="/path" value={link.href} onChange={e => updateBottomLink(index, 'href', e.target.value)} />
-              <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:text-destructive" onClick={() => removeBottomLink(index)}>
-                <Trash2 className="h-4 w-4" />
+          <ToggleInput
+            label="Show Bottom Links"
+            value={config.show_bottom_links}
+            onChange={(v) => handleChange('show_bottom_links', v)}
+            description="Display links at the very bottom of the footer"
+          />
+          {config.show_bottom_links && (
+            <>
+              {config.bottom_links.map((link, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input className="flex-1" placeholder="Label" value={link.label} onChange={e => updateBottomLink(index, 'label', e.target.value)} />
+                  <Input className="flex-1" placeholder="/path" value={link.href} onChange={e => updateBottomLink(index, 'href', e.target.value)} />
+                  <Button variant="ghost" size="icon" className="shrink-0 text-destructive hover:text-destructive" onClick={() => removeBottomLink(index)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button variant="outline" size="sm" onClick={addBottomLink} className="gap-2">
+                <Plus className="h-4 w-4" /> Add Link
               </Button>
-            </div>
-          ))}
-          <Button variant="outline" size="sm" onClick={addBottomLink} className="gap-2">
-            <Plus className="h-4 w-4" /> Add Link
-          </Button>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
