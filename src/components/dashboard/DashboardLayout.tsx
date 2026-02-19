@@ -1188,9 +1188,6 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                   {getAccessLabel()}
                 </div>
                 {isAdmin && <ViewAsToggle />}
-                {(actualRoles.includes('admin') || actualRoles.includes('super_admin') || actualRoles.includes('manager')) && (
-                  <PhorestSyncPopout />
-                )}
               </div>
             )}
 
@@ -1226,10 +1223,6 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                   {/* View As */}
                   {isAdmin && <ViewAsToggle asMenuItem />}
                   
-                  {/* Phorest Sync */}
-                  {(actualRoles.includes('admin') || actualRoles.includes('super_admin') || actualRoles.includes('manager')) && (
-                    <PhorestSyncPopout asMenuItem />
-                  )}
                   
                   <DropdownMenuSeparator />
                   
