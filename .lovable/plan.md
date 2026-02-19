@@ -1,136 +1,157 @@
 
+## Advanced Website Editor: Custom Sections, Delete, Undo/Redo
 
-## Website Editor Generalization: Analysis and Enhancement Plan
-
-This plan addresses the core issue -- the website editor labels and defaults are hardcoded to Drop Dead Salon's specific context, making the editor unusable for other salons using the same theme. Beyond relabeling, this identifies structural gaps preventing a truly customizable site builder.
+This plan transforms the website editor from a fixed 13-section system into a flexible site builder where users can create new section types, delete sections they don't need, and undo/redo all layout changes.
 
 ---
 
-### Problem Areas Identified
+### Current Limitations
 
-**1. Hardcoded "New Client / Returning Client" Labels (Hero Editor)**
-- `HeroEditor.tsx` line 106: "New Client Button Text"
-- `HeroEditor.tsx` line 114: "New Client Button URL"
-- `HeroEditor.tsx` line 121: "Returning Client Button Text"
-- `HeroEditor.tsx` line 129: "Returning Client Button URL"
-- These should be "Primary Button" and "Secondary Button"
+- The `HomepageSections` interface is a fixed TypeScript type with 13 hardcoded keys
+- Section labels, descriptions, components, and tab mappings are all static `Record` objects spread across 5+ files
+- No undo/redo exists in the editor (the `useUndoRedo` hook exists but is unused)
+- Sections can only be toggled on/off -- never deleted
+- No way to add new section types
 
-**2. Drop Dead-Specific Default Values (useSectionConfig.ts)**
-- Brand Statement eyebrow: "Drop Dead is" 
-- Brand Statement paragraph: "Located in the heart of Mesa and Gilbert, Arizona, Drop Dead Salon..."
-- Extensions headline: "Drop Dead Method"
-- FAQ intro: "At Drop Dead Hair Studio..."
-- Footer defaults: "Drop Dead Salon", "Work at Drop Dead", "Powered by Drop Dead Salon Software"
-- These defaults should be generic placeholders that any salon can understand
+---
 
-**3. Missing Component-Level Visibility Controls**
-- Individual elements within a section (e.g., consultation notes, scroll indicator, education link) cannot be hidden independently
-- The Hero section has no toggle for its consultation notes block
-- Extensions has no toggle for the education link or floating badge
-- Footer CTA has no toggle for the description text
+### Architecture Change: Dynamic Section Model
 
-**4. Missing "Add Component" Capability**
-- No way to add custom content blocks or duplicate existing sections
-- Section list is fixed at build time -- no dynamic section creation
+The core change is moving from a **typed record** (`HomepageSections` with fixed keys) to a **dynamic array** model.
 
-**5. Inconsistent CTA Labeling Across Editors**
-- Hero: "New Client Button Text" / "Returning Client Button Text"
-- Extensions: "Primary CTA" / "Secondary CTA" (already correct)
-- FAQ: "Primary Button Text" / "Secondary Button Text" (already correct)
-- Footer CTA: "Button Text" (already correct)
-- New Client CTA: "CTA Button Text" (acceptable)
+```text
+BEFORE (fixed):
+  homepage: { hero: {enabled, order}, brand_statement: {enabled, order}, ... }
+
+AFTER (dynamic):
+  homepage: [
+    { id: "hero", type: "hero", label: "Hero Section", description: "...", enabled: true, order: 1, deletable: false },
+    { id: "brand_statement", type: "brand_statement", ... },
+    { id: "custom_abc123", type: "rich_text", label: "About Our Team", ..., deletable: true },
+  ]
+```
+
+Built-in sections (hero, testimonials, etc.) are marked `deletable: false` and retain their dedicated editor components. Custom sections use a generic editor.
 
 ---
 
 ### Implementation Plan
 
-#### Phase 1: Relabel All Editors to Generic Terminology
+#### 1. New Data Model (`useWebsiteSections.ts`)
 
-**File: `src/components/dashboard/website-editor/HeroEditor.tsx`**
-- Line 104: Change section header to "Call to Action Buttons" (keep as-is, this is fine)
-- Line 106: "New Client Button Text" --> "Primary Button Text"
-- Line 114: "New Client Button URL" --> "Primary Button URL"
-- Line 118: Update description: "Leave empty to open consultation form" --> "Leave empty to open the default form"
-- Line 121: "Returning Client Button Text" --> "Secondary Button Text"
-- Line 129: "Returning Client Button URL" --> "Secondary Button URL"
-- Lines 138-155: "Consultation Notes" --> "Below-Button Notes" with field labels "Note Line 1/2" kept generic
+Replace the `HomepageSections` interface with a dynamic array-based structure:
 
-**File: `src/hooks/useSectionConfig.ts`** -- Neutralize all defaults:
-- Line 264: Eyebrow default --> "Your Tagline Here"
-- Line 265: Rotating words --> ["Salon", "Studio", "Experience"]
-- Line 266-267: Subheadlines --> generic placeholders
-- Line 268-269: CTA defaults --> "Book Now" / "Explore Services"
-- Line 270-271: Note defaults --> "" (empty)
-- Line 281: Brand Statement eyebrow --> "Our Brand"
-- Line 286-287: Paragraphs --> generic salon description
-- Line 325-326: Extensions headline --> "Our Signature" / "Method"
-- Line 347-348: FAQ intro --> generic FAQ intro text
-- Lines 362-367: Brands --> empty array (each salon adds their own)
-- Footer defaults (FooterEditor.tsx lines 42-59): neutralize "Drop Dead" references
+- **`SectionConfig`** gains: `id: string`, `type: SectionType`, `label: string`, `description: string`, `deletable: boolean`
+- **`SectionType`** union: all 13 built-in types plus `"rich_text"`, `"image_text"`, `"video"`, `"custom_cta"`, `"spacer"`
+- **`WebsiteSectionsConfig.homepage`** becomes `SectionConfig[]` (array, not record)
+- Migration helper: `migrateFromRecord()` converts old record format to new array format on first load, preserving existing data
+- Update `getOrderedSections()` and `getEnabledSections()` for the new array shape
 
-#### Phase 2: Add Per-Element Visibility Toggles
+#### 2. Custom Section Types (New Component Templates)
 
-Add `show_*` boolean fields to section configs so individual components can be hidden:
+Create 5 generic section types users can add:
 
-**HeroConfig** (add to interface + defaults):
-- `show_secondary_button: boolean` (default: true)
-- `show_consultation_notes: boolean` (default: true)
+| Type | Description | Editor Fields |
+|------|-------------|---------------|
+| `rich_text` | Markdown/text block | Heading, body text, alignment, background style |
+| `image_text` | Image + text side-by-side | Image URL, heading, body, layout (image left/right), CTA button |
+| `video` | Embedded video section | Video URL (YouTube/Vimeo), heading, autoplay toggle |
+| `custom_cta` | Call-to-action banner | Heading, description, button text, button URL, style variant |
+| `spacer` | Visual divider/spacing | Height (px), show divider line toggle |
 
-**ExtensionsConfig** (add):
-- `show_education_link: boolean` (default: true)
-- `show_floating_badge: boolean` (default: true)
-- `show_secondary_cta: boolean` (default: true)
+Each gets a generic `CustomSectionEditor` component with field configs driven by the `type`.
 
-**FooterCTAConfig** (add):
-- `show_description: boolean` (default: true)
-- `show_eyebrow: boolean` (default: true)
+#### 3. New File: `CustomSectionEditor.tsx`
 
-**NewClientConfig** (add):
-- `show_benefits: boolean` (default: true)
+A dynamic editor component that renders appropriate fields based on section type. It uses the existing `SectionDisplayEditor` pattern with field configs per type. Saves to `site_settings` with key `section_custom_{id}`.
 
-Each editor gets a `ToggleInput` next to the relevant field group, allowing the salon owner to hide that component without deleting content.
+#### 4. New File: `CustomSectionRenderer.tsx`
 
-#### Phase 3: Add Component Visibility to Hero Editor UI
+A frontend renderer for `Index.tsx` that reads the custom section's config from `site_settings` and renders the appropriate layout (rich text, image+text, video embed, CTA, or spacer).
 
-Update `HeroEditor.tsx` to wrap the secondary button fields and consultation notes in collapsible blocks gated by their new `show_*` toggles. When toggled off, the fields collapse and the preview hides that element.
+#### 5. "Add Section" Dialog in Sidebar
 
-#### Phase 4: Footer Editor Generalization
+Add an "Add Section" button at the bottom of the Homepage Layout area in `WebsiteEditorSidebar.tsx`:
 
-Update `FooterEditor.tsx`:
-- Line 42: tagline --> "" (empty placeholder)
-- Line 43: copyright --> "(c) {year} Your Salon Name"
-- Line 44: contact_email --> ""
-- Lines 56-58: bottom_links --> empty array
-- Line 59: powered_by_text --> ""
+- Opens a dialog with the 5 custom section types as cards
+- User picks a type, enters a label (e.g., "About Our Philosophy")
+- Creates a new entry in the sections array with a generated ID (`custom_{nanoid}`)
+- Appended to the end of the section order
+
+#### 6. Delete Section Capability
+
+Add a delete button (trash icon) to each section row in the sidebar:
+
+- Built-in sections: delete button is hidden (they use the existing toggle instead)
+- Custom sections: shows a confirmation dialog, then removes from the array and deletes the associated `site_settings` row
+- Update `WebsiteEditorSidebar.tsx` and `SectionNavItem.tsx` to accept an `onDelete` prop
+
+#### 7. Undo/Redo for Section Layout
+
+Integrate the existing `useUndoRedo` hook into the section management flow:
+
+- **Scope**: Undo/redo covers the sections array (order, visibility, additions, deletions) -- not individual section content edits
+- **Location**: Add Undo/Redo buttons to the Website Editor header bar in `WebsiteSectionsHub.tsx`
+- **Keyboard shortcuts**: Cmd/Ctrl+Z for undo, Cmd/Ctrl+Shift+Z for redo
+- **Flow**: Every section toggle, reorder, add, or delete pushes a snapshot to the undo stack. Undo restores the previous snapshot and saves to database.
+- Wire into `WebsiteEditorSidebar.tsx` by lifting section state management to the parent hub and passing down handlers
+
+#### 8. Update `Index.tsx` (Frontend Rendering)
+
+- Change from `Record<keyof HomepageSections, ReactNode>` to a lookup function
+- Built-in types resolve to their existing components
+- Custom types resolve to `<CustomSectionRenderer id={section.id} type={section.type} />`
+- Handle unknown types gracefully (skip rendering)
+
+#### 9. Update All Consumers of the Old Model
+
+Files that reference `HomepageSections` as a record type need updates:
+
+- `useWebsiteSections.ts` -- core data model change
+- `WebsiteEditorSidebar.tsx` -- dynamic sections, add/delete buttons
+- `SectionNavItem.tsx` -- add delete prop
+- `WebsiteSectionsHub.tsx` -- undo/redo buttons, dynamic editor routing
+- `OverviewTab.tsx` -- adapt to array model
+- `Index.tsx` -- dynamic rendering
 
 ---
 
-### Files Modified
+### Files to Create
+
+| File | Purpose |
+|------|---------|
+| `src/components/dashboard/website-editor/CustomSectionEditor.tsx` | Generic editor for custom section types |
+| `src/components/dashboard/website-editor/AddSectionDialog.tsx` | Dialog for choosing and adding a new section type |
+| `src/components/home/CustomSectionRenderer.tsx` | Frontend renderer for custom sections |
+
+### Files to Modify
 
 | File | Changes |
 |------|---------|
-| `src/components/dashboard/website-editor/HeroEditor.tsx` | Relabel CTA fields to Primary/Secondary, add visibility toggles |
-| `src/hooks/useSectionConfig.ts` | Neutralize all Drop Dead defaults, add `show_*` booleans to interfaces |
-| `src/components/dashboard/website-editor/FooterEditor.tsx` | Neutralize footer defaults |
-| `src/components/dashboard/website-editor/NewClientEditor.tsx` | Add `show_benefits` toggle |
-| `src/components/dashboard/website-editor/ExtensionsEditor.tsx` | Add visibility toggles for education link, floating badge, secondary CTA |
-| `src/components/dashboard/website-editor/FooterCTAEditor.tsx` | Add visibility toggles for eyebrow and description |
+| `src/hooks/useWebsiteSections.ts` | Array-based model, migration helper, custom section types |
+| `src/components/dashboard/website-editor/WebsiteEditorSidebar.tsx` | Add/delete buttons, dynamic section list |
+| `src/components/dashboard/website-editor/SectionNavItem.tsx` | Delete button prop |
+| `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` | Undo/redo buttons + keyboard shortcuts, dynamic editor routing |
+| `src/components/dashboard/website-editor/OverviewTab.tsx` | Adapt to array model |
+| `src/pages/Index.tsx` | Dynamic section rendering with custom section support |
 
 ---
 
-### What This Does NOT Cover (Future Phases)
+### Migration Strategy
 
-These are identified gaps that require deeper architectural changes and should be separate efforts:
+When the app loads the `website_sections` setting:
+1. Check if `homepage` is an object (old format) or array (new format)
+2. If object, run `migrateFromRecord()` to convert to array format
+3. Save the migrated format back to the database
+4. All subsequent operations use the array format
 
-1. **Dynamic Section Creation** -- allowing users to add custom content blocks (rich text, image+text, video embeds) beyond the fixed section list. This requires a block-based content model.
+This ensures zero data loss for existing configurations.
 
-2. **Section Duplication** -- cloning an existing section with its config to create variations (e.g., two different CTA sections).
+---
 
-3. **Per-Section Style Overrides** -- letting each section customize its own background color, padding, font size independent of the theme.
+### What This Does NOT Include
 
-4. **Image/Media Management Per Section** -- hero background images, section background images, custom icons beyond the current Lucide set.
-
-5. **Custom CSS Injection** -- advanced users adding custom styles to specific sections.
-
-6. **Multi-Page Support** -- the editor currently only manages the homepage. A full site builder needs page-level management (About, Contact, etc.).
-
+- **Per-section style overrides** (background colors, padding, fonts) -- separate effort
+- **Media/image upload** within custom sections -- would reference URLs for now
+- **Multi-page support** (About, Contact pages) -- requires page-level routing architecture
+- **Template library** (pre-built section designs) -- future enhancement
