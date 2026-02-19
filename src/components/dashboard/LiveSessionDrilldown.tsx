@@ -126,6 +126,14 @@ export function LiveSessionDrilldown({
                     <MapPin className="h-3 w-3 text-muted-foreground" />
                     <span className="text-xs font-medium text-foreground">{locationName}</span>
                     <span className="text-[10px] text-muted-foreground">· {stylists.length} stylist{stylists.length !== 1 ? 's' : ''}</span>
+                    {(() => {
+                      const latestEnd = stylists.reduce((latest, s) => s.lastEndTime > latest ? s.lastEndTime : latest, '');
+                      if (!latestEnd) return null;
+                      const [h, m] = latestEnd.split(':').map(Number);
+                      const d = new Date(); d.setHours(h, m, 0, 0);
+                      const formatted = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                      return <span className="ml-auto text-[10px] text-muted-foreground">Last appointment finishes at ~{formatted}</span>;
+                    })()}
                   </div>
                   {stylists.map((stylist, i) => (
                     <StylistRow key={i} stylist={stylist} />
