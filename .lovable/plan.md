@@ -1,28 +1,23 @@
 
-## Move Schedule Out of Team Tools
+
+## Fix Remaining Overdue Logic in Tasks Card and Detail Drilldown
 
 ### Problem
-Schedule currently appears in two places in the sidebar:
-1. As a standalone link in the Main section (Command Center, Schedule, Team Chat)
-2. Duplicated inside the Team Tools popover group under Management
-
-The user wants Schedule removed from the Team Tools group so it only appears as a standalone important link right below Command Center.
+The overdue fix was applied to `TaskItem.tsx` but two other files still use incorrect logic that marks tasks due today as overdue:
+- **TasksCard.tsx**: The overdue count and sorting use `new Date(due_date) < new Date(today)` which incorrectly includes today
+- **TaskDetailDrilldown.tsx**: Uses `isPast(startOfDay(parseISO(due_date)))` which returns true once midnight passes, marking today's tasks as overdue immediately
 
 ### Changes
 
-**File: `src/config/dashboardNav.ts` (line 91)**
-- Remove the Schedule entry from `managerNavItems` (the one with `managerGroup: 'teamTools'`)
-- This eliminates the duplicate from the Team Tools popover
-- Schedule will continue to render as a standalone sidebar icon (collapsed) or link (expanded) in the Main section, directly below Command Center and above Team Chat
+**1. `src/components/dashboard/TasksCard.tsx`**
+- Import `parseISO` and `startOfDay` from `date-fns`
+- Replace `overdueCount` calculation (line 49) to use `startOfDay(parseISO(t.due_date)) < startOfDay(new Date())` (strictly before today)
+- Replace sorting logic (lines 55-58) to use the same consistent comparison
 
-### What stays the same
-- The Main section already has the correct order: Command Center -> Schedule -> Team Chat
-- No sidebar rendering logic changes needed
-- Schedule permissions and routing remain unchanged
+**2. `src/components/dashboard/TaskDetailDrilldown.tsx`**
+- Replace `isPast(startOfDay(parseISO(task.due_date)))` on line 54 with `startOfDay(parseISO(task.due_date)) < startOfDay(new Date())`
+- Remove unused `isPast` import if no longer needed
 
-### Technical detail
-One line removal in `src/config/dashboardNav.ts`:
-```
-// Remove this line from managerNavItems:
-{ href: '/dashboard/schedule', label: 'Schedule', ..., managerGroup: 'teamTools' }
-```
+### Result
+All three task-related files will use identical overdue logic: a task is only overdue when its due date is strictly before today's date.
+
