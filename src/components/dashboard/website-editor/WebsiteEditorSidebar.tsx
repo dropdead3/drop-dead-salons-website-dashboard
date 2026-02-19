@@ -120,6 +120,12 @@ interface WebsiteEditorSidebarProps {
   onAddPage?: () => void;
   onDeletePage?: (pageId: string) => void;
   onApplyPageTemplate?: () => void;
+  // Non-home page section operations
+  onPageSectionToggle?: (sectionId: string, enabled: boolean) => void;
+  onPageSectionReorder?: (sections: SectionConfig[]) => void;
+  onPageSectionDelete?: (sectionId: string) => void;
+  onPageSectionDuplicate?: (section: SectionConfig) => void;
+  onPageSectionAdd?: (type: CustomSectionType, label: string) => void;
 }
 
 export function WebsiteEditorSidebar({
@@ -132,6 +138,11 @@ export function WebsiteEditorSidebar({
   onAddPage,
   onDeletePage,
   onApplyPageTemplate,
+  onPageSectionToggle,
+  onPageSectionReorder,
+  onPageSectionDelete,
+  onPageSectionDuplicate,
+  onPageSectionAdd,
 }: WebsiteEditorSidebarProps) {
   const { data: sectionsConfig, isLoading } = useWebsiteSections();
   const { data: pagesConfig } = useWebsitePages();
@@ -160,6 +171,7 @@ export function WebsiteEditorSidebar({
   const builtinSections = useMemo(() => localSections.filter(s => isBuiltinSection(s.type)), [localSections]);
   const customSections = useMemo(() => localSections.filter(s => !isBuiltinSection(s.type)), [localSections]);
 
+  // --- Homepage section operations ---
   const saveSections = async (newSections: SectionConfig[]) => {
     if (!sectionsConfig) return;
     const reordered = newSections.map((s, i) => ({ ...s, order: i + 1 }));
@@ -201,6 +213,10 @@ export function WebsiteEditorSidebar({
   };
 
   const handleAddSection = async (type: CustomSectionType, label: string) => {
+    if (!isHomePage && onPageSectionAdd) {
+      onPageSectionAdd(type, label);
+      return;
+    }
     const newSection: SectionConfig = {
       id: generateSectionId(),
       type,
@@ -223,10 +239,17 @@ export function WebsiteEditorSidebar({
       label: template.name,
       description: template.description,
       enabled: true,
-      order: localSections.length + 1,
+      order: (isHomePage ? localSections.length : (selectedPage?.sections.length ?? 0)) + 1,
       deletable: true,
       style_overrides: template.style_overrides,
     };
+
+    if (!isHomePage && onPageSectionAdd) {
+      // For non-home pages, we use the page section add handler
+      onPageSectionAdd(template.section_type as CustomSectionType, template.name);
+      return;
+    }
+
     const newSections = [...localSections, newSection];
     await saveSections(newSections);
 
@@ -250,9 +273,7 @@ export function WebsiteEditorSidebar({
     
     // Clean up orphaned site_settings row for this custom section
     const settingsKey = `section_custom_${deleteTarget.id}`;
-    supabase.from('site_settings').delete().eq('id', settingsKey).then(() => {
-      // fire-and-forget cleanup
-    });
+    supabase.from('site_settings').delete().eq('id', settingsKey).then(() => {});
     
     toast.success(`"${deleteTarget.label}" deleted`);
     setDeleteTarget(null);
@@ -300,6 +321,30 @@ export function WebsiteEditorSidebar({
 
   const isHomePage = selectedPageId === 'home';
   const selectedPage = pagesConfig?.pages.find(p => p.id === selectedPageId);
+
+  // --- Non-home page sections with DnD ---
+  const [localPageSections, setLocalPageSections] = useState<SectionConfig[]>([]);
+
+  useEffect(() => {
+    if (!isHomePage && selectedPage) {
+      setLocalPageSections([...selectedPage.sections].sort((a, b) => a.order - b.order));
+    }
+  }, [isHomePage, selectedPage]);
+
+  const handlePageDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = localPageSections.findIndex(s => s.id === active.id);
+    const newIndex = localPageSections.findIndex(s => s.id === over.id);
+    const reordered = arrayMove(localPageSections, oldIndex, newIndex).map((s, i) => ({ ...s, order: i + 1 }));
+    setLocalPageSections(reordered);
+    onPageSectionReorder?.(reordered);
+    toast.success('Section order updated');
+  };
+
+  // Non-home page delete target
+  const [pageDeleteTarget, setPageDeleteTarget] = useState<SectionConfig | null>(null);
 
   if (collapsed) return null;
 
@@ -467,39 +512,43 @@ export function WebsiteEditorSidebar({
             </DndContext>
           )}
 
-          {/* Non-home page sections */}
+          {/* Non-home page sections with DnD */}
           {!isHomePage && selectedPage && (
-            <>
-              <SectionGroupHeader title={`${selectedPage.title} Sections`} />
-              {selectedPage.sections
-                .sort((a, b) => a.order - b.order)
-                .map(section => (
-                  <ContentNavItem
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handlePageDragEnd}>
+              <SortableContext items={localPageSections.map(s => s.id)} strategy={verticalListSortingStrategy}>
+                <SectionGroupHeader title={`${selectedPage.title} Sections`} />
+                {localPageSections.map(section => (
+                  <SectionNavItem
                     key={section.id}
+                    id={section.id}
                     label={section.label}
                     description={section.description}
-                    icon={FileText}
+                    order={section.order}
+                    enabled={section.enabled}
                     isActive={activeTab === `custom-${section.id}`}
                     onSelect={() => onTabChange(`custom-${section.id}`)}
+                    onToggle={(enabled) => onPageSectionToggle?.(section.id, enabled)}
+                    deletable={section.deletable}
+                    onDelete={() => setPageDeleteTarget(section)}
+                    onDuplicate={() => onPageSectionDuplicate?.(section)}
                   />
                 ))}
-            </>
+              </SortableContext>
+            </DndContext>
           )}
 
-          {/* Add Section Button */}
-          {isHomePage && (
-            <div className="px-3 mt-3">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full text-xs"
-                onClick={() => setShowAddDialog(true)}
-              >
-                <Plus className="h-3.5 w-3.5 mr-1.5" />
-                Add Section
-              </Button>
-            </div>
-          )}
+          {/* Add Section Button — shown for ALL pages */}
+          <div className="px-3 mt-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs"
+              onClick={() => setShowAddDialog(true)}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Add Section
+            </Button>
+          </div>
         </div>
       </ScrollArea>
 
@@ -508,7 +557,7 @@ export function WebsiteEditorSidebar({
         <div className="text-[10px] text-muted-foreground text-center">
           {isHomePage
             ? `${localSections.filter(s => s.enabled).length}/${localSections.length} sections visible`
-            : `${selectedPage?.title ?? 'Page'} • ${selectedPage?.sections.length ?? 0} sections`
+            : `${selectedPage?.title ?? 'Page'} • ${localPageSections.filter(s => s.enabled).length}/${localPageSections.length} sections visible`
           }
         </div>
       </div>
@@ -521,7 +570,7 @@ export function WebsiteEditorSidebar({
         onAddFromTemplate={handleAddFromTemplate}
       />
 
-      {/* Delete Confirmation */}
+      {/* Delete Confirmation (home page sections) */}
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -533,6 +582,33 @@ export function WebsiteEditorSidebar({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteSection} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              <Trash2 className="h-4 w-4 mr-1" />
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation (non-home page sections) */}
+      <AlertDialog open={!!pageDeleteTarget} onOpenChange={(open) => !open && setPageDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete "{pageDeleteTarget?.label}"?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this section. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pageDeleteTarget) {
+                  onPageSectionDelete?.(pageDeleteTarget.id);
+                  setPageDeleteTarget(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               <Trash2 className="h-4 w-4 mr-1" />
               Delete
             </AlertDialogAction>

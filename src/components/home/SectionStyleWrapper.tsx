@@ -64,7 +64,7 @@ export function SectionStyleWrapper({ styleOverrides, children, className }: Sec
   // Border radius
   if (merged.border_radius > 0) {
     outerStyle.borderRadius = `${merged.border_radius}px`;
-    outerStyle.overflow = 'hidden';
+    outerStyle.overflow = 'clip';
   }
 
   const maxWidthClass = merged.max_width !== 'full' ? MAX_WIDTH_CLASSES[merged.max_width] : '';

@@ -1,5 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useMemo } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useWebsitePages, useUpdateWebsitePages, type WebsitePagesConfig } from './useWebsitePages';
 
 // Built-in section types (have dedicated editor components)
 export const BUILTIN_SECTION_TYPES = [
@@ -87,135 +88,60 @@ export const SECTION_DESCRIPTIONS: Record<BuiltinSectionType, string> = {
   drink_menu: 'Complimentary drink menu',
 };
 
-// Legacy record format for migration
-interface LegacyHomepageSections {
-  [key: string]: { enabled: boolean; order: number };
-}
+// Default sections
+const DEFAULT_HOMEPAGE: SectionConfig[] = BUILTIN_SECTION_TYPES.map((type, index) => ({
+  id: type,
+  type,
+  label: SECTION_LABELS[type],
+  description: SECTION_DESCRIPTIONS[type],
+  enabled: true,
+  order: index + 1,
+  deletable: false,
+}));
 
-interface LegacyWebsiteSectionsConfig {
-  homepage: LegacyHomepageSections;
-}
-
-// Default sections in new array format
-const DEFAULT_SECTIONS: WebsiteSectionsConfig = {
-  homepage: BUILTIN_SECTION_TYPES.map((type, index) => ({
-    id: type,
-    type,
-    label: SECTION_LABELS[type],
-    description: SECTION_DESCRIPTIONS[type],
-    enabled: true,
-    order: index + 1,
-    deletable: false,
-  })),
-};
-
-// Migrate old record format to new array format
-function migrateFromRecord(legacy: LegacyWebsiteSectionsConfig): WebsiteSectionsConfig {
-  const entries = Object.entries(legacy.homepage);
-  return {
-    homepage: entries
-      .sort(([, a], [, b]) => a.order - b.order)
-      .map(([key, config]) => {
-        const builtinType = key as BuiltinSectionType;
-        const isBuiltin = BUILTIN_SECTION_TYPES.includes(builtinType);
-        return {
-          id: key,
-          type: isBuiltin ? builtinType : (key as SectionType),
-          label: isBuiltin ? SECTION_LABELS[builtinType] : key,
-          description: isBuiltin ? SECTION_DESCRIPTIONS[builtinType] : '',
-          enabled: config.enabled,
-          order: config.order,
-          deletable: !isBuiltin,
-        };
-      }),
-  };
-}
-
-function isLegacyFormat(data: unknown): data is LegacyWebsiteSectionsConfig {
-  if (!data || typeof data !== 'object') return false;
-  const d = data as Record<string, unknown>;
-  if (!d.homepage || typeof d.homepage !== 'object') return false;
-  return !Array.isArray(d.homepage);
-}
-
+/**
+ * Thin adapter: reads/writes the HOME page's sections from `website_pages`.
+ * This is the SINGLE source of truth — no more `website_sections` key.
+ */
 export function useWebsiteSections() {
-  const queryClient = useQueryClient();
+  const pagesQuery = useWebsitePages();
 
-  return useQuery({
-    queryKey: ['site-settings', 'website_sections'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('id', 'website_sections')
-        .maybeSingle();
+  const data = useMemo<WebsiteSectionsConfig | undefined>(() => {
+    if (!pagesQuery.data) return undefined;
+    const homePage = pagesQuery.data.pages.find(p => p.id === 'home');
+    return { homepage: homePage?.sections ?? DEFAULT_HOMEPAGE };
+  }, [pagesQuery.data]);
 
-      if (error) throw error;
-
-      if (!data?.value) return DEFAULT_SECTIONS;
-
-      // Auto-migrate legacy record format
-      if (isLegacyFormat(data.value)) {
-        const migrated = migrateFromRecord(data.value as LegacyWebsiteSectionsConfig);
-        // Save migrated format back (fire-and-forget)
-        const { data: { user } } = await supabase.auth.getUser();
-        supabase
-          .from('site_settings')
-          .update({ value: migrated as never, updated_by: user?.id })
-          .eq('id', 'website_sections')
-          .then(() => {
-            queryClient.invalidateQueries({ queryKey: ['site-settings', 'website_sections'] });
-          });
-        return migrated;
-      }
-
-      return data.value as unknown as WebsiteSectionsConfig;
-    },
-  });
+  return {
+    data,
+    isLoading: pagesQuery.isLoading,
+    error: pagesQuery.error,
+    isError: pagesQuery.isError,
+  };
 }
 
 export function useUpdateWebsiteSections() {
   const queryClient = useQueryClient();
+  const updatePages = useUpdateWebsitePages();
 
   return useMutation({
     mutationFn: async (value: WebsiteSectionsConfig) => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const currentPages = queryClient.getQueryData<WebsitePagesConfig>(['site-settings', 'website_pages']);
+      if (!currentPages) throw new Error('Pages config not loaded');
 
-      const { data: existingData } = await supabase
-        .from('site_settings')
-        .select('id')
-        .eq('id', 'website_sections')
-        .maybeSingle();
-
-      if (existingData) {
-        const { error } = await supabase
-          .from('site_settings')
-          .update({
-            value: value as never,
-            updated_by: user?.id,
-          })
-          .eq('id', 'website_sections');
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('site_settings')
-          .insert({
-            id: 'website_sections',
-            value: value as never,
-            updated_by: user?.id,
-          });
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['site-settings', 'website_sections'] });
+      const updated: WebsitePagesConfig = {
+        pages: currentPages.pages.map(p =>
+          p.id === 'home' ? { ...p, sections: value.homepage } : p
+        ),
+      };
+      await updatePages.mutateAsync(updated);
     },
   });
 }
 
 // Helper to get ordered sections
 export function getOrderedSections(config: WebsiteSectionsConfig | null | undefined): SectionConfig[] {
-  if (!config) return DEFAULT_SECTIONS.homepage;
+  if (!config) return DEFAULT_HOMEPAGE;
   return [...config.homepage].sort((a, b) => a.order - b.order);
 }
 

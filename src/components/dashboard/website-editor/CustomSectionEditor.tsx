@@ -19,6 +19,7 @@ interface CustomSectionEditorProps {
   sectionLabel: string;
   styleOverrides?: Partial<StyleOverrides>;
   onStyleChange?: (overrides: Partial<StyleOverrides>) => void;
+  onLabelChange?: (newLabel: string) => void;
 }
 
 interface RichTextConfig {
@@ -66,8 +67,9 @@ const DEFAULTS: Record<CustomSectionType, SectionData> = {
   spacer: { height: 64, show_divider: false },
 };
 
-export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styleOverrides, onStyleChange }: CustomSectionEditorProps) {
+export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styleOverrides, onStyleChange, onLabelChange }: CustomSectionEditorProps) {
   const settingsKey = `section_custom_${sectionId}`;
+  const [editingLabel, setEditingLabel] = useState(sectionLabel);
   const queryClient = useQueryClient();
 
   const { data: savedConfig } = useQuery({
@@ -279,7 +281,23 @@ export function CustomSectionEditor({ sectionId, sectionType, sectionLabel, styl
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">{sectionLabel}</CardTitle>
+          {onLabelChange ? (
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">Section Label</Label>
+              <Input
+                value={editingLabel}
+                onChange={e => setEditingLabel(e.target.value)}
+                onBlur={() => {
+                  if (editingLabel.trim() && editingLabel !== sectionLabel) {
+                    onLabelChange(editingLabel.trim());
+                  }
+                }}
+                className="text-lg font-semibold h-auto py-1 px-2"
+              />
+            </div>
+          ) : (
+            <CardTitle className="text-lg">{sectionLabel}</CardTitle>
+          )}
         </CardHeader>
         <CardContent className="space-y-4">
           {renderFields()}
