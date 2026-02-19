@@ -332,7 +332,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
               <img
                 src={getLogo()} 
                 alt={businessSettings?.business_name || 'Drop Dead'} 
-                className="h-3 w-auto max-w-[120px] object-contain" 
+                className="h-3.5 w-auto max-w-[140px] object-contain" 
               />
             ) : (
               <span className="font-display text-sm uppercase tracking-wider text-white/90">
