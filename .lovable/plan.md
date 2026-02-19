@@ -1,62 +1,50 @@
 
-## Fix: 403 RLS Error on Page Settings Save + Page Editor Enhancements
 
-### Root Cause
+## Fix: 404 on Contact Page Preview + Reserved Slug Conflict
 
-The `site_settings` table has RLS policies for **SELECT** (public) and **UPDATE** (admins only), but **no INSERT policy**. The `website_pages` row does not exist in the database yet. When the code tries to create it (via `.upsert()` or `.insert()`), it gets blocked by RLS with a 403 error:
+### Problem 1: Preview shows 404 for disabled pages
 
-```
-"new row violates row-level security policy for table 'site_settings'"
-```
+The editor preview iframe loads `/org/{slug}/contact?preview=true`, but `DynamicPage.tsx` never reads the `?preview=true` query parameter. It calls `getPageBySlug()` which filters pages by `p.enabled === true`. Since the Contact page defaults to `enabled: false` in the database, it always returns 404 in the preview -- even while the user is actively editing it.
 
-This causes a cascade of failures:
-1. The initial migration in `useWebsitePages` (fire-and-forget upsert) silently fails
-2. Every subsequent save attempt in `useUpdateWebsitePages` also fails on the INSERT path
-3. The preview shows 404 because `DynamicPage` reads from `website_pages` which is empty
-4. The "Failed to save page settings" toast appears
+### Problem 2: Reserved slugs block built-in pages
 
-### Fix
+`PageSettingsEditor` has a `RESERVED_SLUGS` list that includes `'contact'` and `'about'`. These are the exact slugs used by the built-in default pages. If a user ever touches the slug field (even accidentally clicking into it and clicking away), the validator would flag their own page's slug as reserved. The reserved list should exclude slugs that belong to the page being edited.
 
-**Step 1: Add INSERT RLS policy for `site_settings`**
+### Problem 3: Save was failing (now fixed)
 
-Create a database migration to add an INSERT policy matching the existing UPDATE policy -- allowing admins, managers, and super_admins to insert new rows:
-
-```sql
-CREATE POLICY "Admins can insert site_settings"
-  ON public.site_settings
-  FOR INSERT
-  TO authenticated
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM user_roles
-      WHERE user_roles.user_id = auth.uid()
-      AND user_roles.role IN ('admin', 'manager', 'super_admin')
-    )
-    OR EXISTS (
-      SELECT 1 FROM employee_profiles
-      WHERE employee_profiles.user_id = auth.uid()
-      AND employee_profiles.is_super_admin = true
-    )
-  );
-```
-
-**Step 2: Harden `useUpdateWebsitePages` mutation**
-
-The current code checks for an existing row, then branches to INSERT or UPDATE. This is fragile. Switch to a single `.upsert()` call which is atomic and handles both cases. Also add proper error handling to the fire-and-forget migration in `useWebsitePages`.
-
-**Step 3: Improve `PageSettingsEditor` UX**
-
-Minor enhancements to the page settings form:
-- Add a character counter for SEO Title (60 char limit) and SEO Description (160 char limit) to match the hint text
-- Show the full preview URL so users know exactly where the page will live
-- Add a subtle status indicator showing whether the page is currently live or draft
+The previous migration added an INSERT RLS policy on `site_settings`. The database logs confirm the row now exists and is writable. The "Failed to save" error should no longer occur. No additional database changes needed.
 
 ---
 
-### Files to Modify
+### Fix Details
 
-| File | Change |
-|------|--------|
-| Database migration | Add INSERT policy on `site_settings` for admins |
-| `src/hooks/useWebsitePages.ts` | Replace INSERT/UPDATE branch with `.upsert()`, add error handling to migration |
-| `src/components/dashboard/website-editor/PageSettingsEditor.tsx` | Add character counters for SEO fields, show full preview URL, add live/draft badge |
+**File: `src/pages/DynamicPage.tsx`**
+
+Add a `?preview=true` bypass: when the URL contains this query param, skip the `p.enabled` filter so disabled pages render in the editor preview. This matches how the editor already appends `?preview=true` to the iframe URL.
+
+```
+Before: getPageBySlug(pagesConfig, pageSlug || '')
+  --> only finds pages where enabled === true
+
+After: when ?preview=true is present, find page by slug regardless of enabled state
+```
+
+**File: `src/hooks/useWebsitePages.ts`**
+
+Export a new helper `getPageBySlugPreview()` that finds a page by slug without the `enabled` check. Or add an optional `ignoreEnabled` parameter to `getPageBySlug`.
+
+**File: `src/components/dashboard/website-editor/PageSettingsEditor.tsx`**
+
+Update `validateSlug` to allow the page's own current slug even if it appears in `RESERVED_SLUGS`. The reserved list is meant to prevent user-created pages from colliding with hardcoded routes -- it should not block built-in pages from keeping their own slugs.
+
+---
+
+### Implementation
+
+| Step | File | Change |
+|------|------|--------|
+| 1 | `src/hooks/useWebsitePages.ts` | Add optional `preview` parameter to `getPageBySlug` that skips the `enabled` filter |
+| 2 | `src/pages/DynamicPage.tsx` | Read `?preview=true` from search params; pass `preview: true` to `getPageBySlug` when present |
+| 3 | `src/components/dashboard/website-editor/PageSettingsEditor.tsx` | Update `validateSlug` to allow the page's own existing slug (skip reserved check if slug matches `page.slug`) |
+
+Three files modified. No database changes.
