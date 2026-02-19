@@ -1,50 +1,73 @@
 
 
-## Enforce BentoGrid Layout Across All Stat Card Grids
+## Smart Bento Pairing for Dashboard Pinned Cards
 
-Great prompt -- you're thinking systematically about layout consistency, which is exactly right for a design system. One refinement for next time: specifying "stat/KPI card grids only" vs "all grids" upfront would help scope the work faster, since many grids (content layouts, form grids, etc.) should stay as-is.
+### Problem
+In detailed view, every pinned analytics card takes the full width of the dashboard, even when cards like "New Bookings" and "Goal Tracker" don't need that space. They end up stretched with excessive whitespace inside.
 
-### What Changes
+### Solution
+Add a **size hint** (`'half' | 'full'`) to each pinnable card definition, then group consecutive `half`-sized cards into side-by-side pairs when rendering in detailed mode. Cards marked `full` always get their own row.
 
-Replace rigid `grid-cols-2 md:grid-cols-N` patterns on stat/KPI card containers with `BentoGrid`, so cards always split evenly across two rows (with the extra going to the top row) instead of cramming into one.
+### Size Classification
 
-### Files to Update
+| Card | Size | Reason |
+|------|------|--------|
+| Sales Overview | full | Wide chart + breakdowns |
+| Revenue Breakdown | half | Donut chart, compact |
+| Top Performers | half | Ranked list, narrow |
+| Revenue Forecast | full | Trend chart, needs width |
+| Team Goals | half | Progress bars, compact |
+| Goal Tracker | half | Radial gauge, compact |
+| New Bookings | half | Metric + pipeline, compact |
+| Client Funnel | half | Vertical funnel, narrow |
+| Operations Stats | full | Multi-KPI row |
+| Capacity Utilization | full | Bar chart, needs width |
+| Stylist Workload | half | Compact grid |
+| Staffing Trends | full | Line chart, needs width |
+| Hiring Capacity | half | Metric card, compact |
+| Executive Summary | full | Wide summary |
+| Client Health | half | Segments, compact |
+| Daily Brief | full | Text-heavy, needs width |
+| Operational Health | half | Score card, compact |
+| Locations Rollup | full | Table with drilldown |
+| Service Mix | half | Donut/list, compact |
+| Retail Effectiveness | half | Metric card, compact |
+| Rebooking | half | Rate + bar, compact |
+| Client Experience Staff | full | Table view |
 
-| File | Cards | Current Layout | BentoGrid Result |
-|------|-------|----------------|------------------|
-| `PayrollKPICards.tsx` | 8 KPI cards | `grid-cols-2 lg:grid-cols-4` | 4 + 4 (same visual, but BentoGrid-managed) |
-| `OperationsQuickStats.tsx` | 4-5 stats | `grid-cols-2 lg:grid-cols-5` (dynamic) | 3+2 when 5 cards, 2+2 when 4 |
-| `ClientsContent.tsx` | 5 metric cards | `grid-cols-2 md:grid-cols-5` | 3 + 2 |
-| `RecruitingPipeline.tsx` | 5 stat cards | `grid-cols-2 md:grid-cols-5` | 3 + 2 |
-| `ClientDirectory.tsx` | 5 stat cards | `grid-cols-2 md:grid-cols-5` | 3 + 2 |
-| `DashboardBuild.tsx` | 5 overview stats | `grid-cols-2 md:grid-cols-5` | 3 + 2 |
-| `MarketingAnalytics.tsx` | 5 KPIs (row 1), 4 KPIs (row 2) | `grid-cols-2 lg:grid-cols-5` / `grid-cols-2 md:grid-cols-4` | 3+2 / 2+2 |
-| `Transactions.tsx` | 4 stat cards | `grid-cols-2 md:grid-cols-4` | 2 + 2 |
-| `TeamOverview.tsx` (top stats) | 4 cards | `grid-cols-2 lg:grid-cols-4` | 2 + 2 |
-| `TeamOverview.tsx` (member quick stats) | 5 inline stats | `grid-cols-2 lg:grid-cols-5` | 3 + 2 |
-| `RentRevenueAnalytics.tsx` | 5 summary cards | `grid-cols-2 lg:grid-cols-5` | 3 + 2 |
-| `SalesReportGenerator.tsx` | 4 stats (x2 sections) | `grid-cols-2 md:grid-cols-4` | 2 + 2 |
+### How Pairing Works
 
-### What Stays the Same
+When rendering in detailed mode, the engine scans the ordered list of visible pinned cards and groups them:
 
-These grids are NOT stat card grids and should keep their current layout:
-- Content/layout grids (e.g., `OverviewContent.tsx` 4-column drill-down)
-- Form/selector grids (e.g., `CompareTypeSelector`)
-- Card catalog grids (e.g., `RewardsCatalogTab`, provider hubs)
-- Marketing landing page grids (e.g., `StatsSection`)
-- Hub quick links grid
+```text
+Input order:  [new_bookings(half), goal_tracker(half), sales_overview(full), top_performers(half), revenue_breakdown(half)]
 
-### Technical Details
+Output rows:
+  Row 1: [new_bookings] [goal_tracker]     <- two halves paired
+  Row 2: [sales_overview]                  <- full, own row
+  Row 3: [top_performers] [revenue_breakdown] <- two halves paired
+```
 
-Each file change follows the same pattern:
+If a `half` card has no adjacent `half` partner, it renders full-width on its own (no awkward half-empty rows).
 
-1. Add `import { BentoGrid } from '@/components/ui/bento-grid'`
-2. Replace the `<div className="grid grid-cols-2 md:grid-cols-N gap-4">` wrapper with `<BentoGrid maxPerRow={4} gap="gap-4">`
-3. Remove any `col-span` hacks on individual cards (e.g., MarketingAnalytics has `col-span-2 md:col-span-1` on the 5th card -- no longer needed)
+### Drag-and-Drop Compatibility
 
-For `OperationsQuickStats`, which conditionally shows 4 or 5 cards based on `hideRevenue`, BentoGrid handles this automatically since it counts children dynamically.
+Reordering still works because the user reorders by card ID in the customize drawer. The pairing logic runs at render time based on the final ordered list -- it doesn't change the stored order, just how cards are visually grouped.
 
-For `PayrollKPICards`, the 8 cards with `maxPerRow={4}` will produce 4+4, matching the current visual but managed consistently through BentoGrid.
+### Technical Changes
 
-Loading/skeleton states in files like `ClientsContent` and `OperationsQuickStats` will also be wrapped in BentoGrid for consistency.
+**1. `src/components/dashboard/DashboardCustomizeMenu.tsx`**
+- Add a `size: 'half' | 'full'` field to each entry in `PINNABLE_CARDS`
+- Export a helper: `getCardSize(cardId: string): 'half' | 'full'`
 
+**2. `src/pages/dashboard/DashboardHome.tsx`**
+- In the detailed-mode rendering block (around lines 767-803), instead of rendering each pinned card individually, collect visible pinned cards into a list, then group them using a pairing algorithm:
+  - Walk the list; when two consecutive `half` cards appear, wrap them in a `flex` row
+  - `full` cards get their own row
+  - A lone trailing `half` card gets its own row
+- The filter bar still renders once before the first pinned card group
+
+**3. `src/components/dashboard/PinnedAnalyticsCard.tsx`**
+- No changes needed to the card component itself -- sizing is handled by the parent container (`flex-1` in a flex row for halves, or full-width div for fulls)
+
+This approach is purely a rendering-time grouping. It respects the user's drag-and-drop order, works with the existing visibility system, and doesn't require any database changes.
