@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { format, startOfMonth, endOfMonth, subDays, startOfWeek } from 'date-fns';
 import { VisibilityGate, useElementVisibility } from '@/components/visibility';
 import { PinnableCard } from '@/components/dashboard/PinnableCard';
@@ -479,7 +480,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
               {description && <MetricInfoTooltip description={description} />}
             </div>
             <div className="mt-4 flex-1">
-              <p className="font-display text-2xl font-medium">{metricValue}</p>
+              <BlurredAmount className="font-display text-2xl font-medium">{metricValue}</BlurredAmount>
               {metricLabel && (
                 <p className="text-xs text-muted-foreground/80 mt-1">{metricLabel}</p>
               )}
