@@ -863,7 +863,9 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       <aside 
         className={cn(
           "hidden lg:fixed lg:top-3 lg:bottom-3 lg:left-3 lg:z-50 lg:block lg:border lg:rounded-xl lg:backdrop-blur-xl lg:overflow-hidden lg:shadow-sm transition-[width,background-color,border-color] duration-200 ease-in-out",
-          "lg:bg-[hsl(0,0%,6%)] lg:border-white/[0.06]",
+          sidebarCollapsed
+            ? "lg:bg-[hsl(0,0%,6%)] lg:border-white/[0.06]"
+            : "lg:bg-card/80 lg:backdrop-blur-xl lg:backdrop-saturate-150 lg:border-border/50",
           sidebarCollapsed ? "lg:w-16" : "lg:w-72"
         )}
       >
