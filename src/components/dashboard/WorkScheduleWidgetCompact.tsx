@@ -1,7 +1,5 @@
-import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Calendar, MapPin, ChevronRight } from 'lucide-react';
 import { useEmployeeProfile } from '@/hooks/useEmployeeProfile';
 import { useLocations } from '@/hooks/useLocations';
@@ -21,80 +19,81 @@ export function WorkScheduleWidgetCompact() {
     profile?.location_ids?.includes(loc.id) || profile?.location_id === loc.id
   ) || [];
 
-  // Get all work days across all locations
   const allWorkDays = allSchedules?.flatMap(s => s.work_days || []) || [];
   const uniqueWorkDays = [...new Set(allWorkDays)];
 
-  // Get primary location schedule
-  const primaryLocationId = userLocations[0]?.id;
-  const primarySchedule = allSchedules?.find(s => s.location_id === primaryLocationId);
-
   if (userLocations.length === 0) {
     return (
-      <Card className={tokens.kpi.tile}>
-        <div className="flex items-center gap-3 mb-3">
+      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
+        <div className="flex items-center gap-3">
           <div className={tokens.card.iconBox}>
             <Calendar className={tokens.card.icon} />
           </div>
-          <h3 className={tokens.kpi.label}>MY SCHEDULE</h3>
+          <span className={cn(tokens.kpi.label, 'flex-1')}>MY SCHEDULE</span>
         </div>
-        <p className="text-xs text-muted-foreground">
-          No locations assigned
-        </p>
+        <div className="mt-4 flex-1">
+          <p className="text-xs text-muted-foreground">
+            No locations assigned
+          </p>
+        </div>
       </Card>
     );
   }
 
   return (
-    <Card className={tokens.kpi.tile}>
-      <div className="flex items-center gap-3 mb-3">
+    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
+      <div className="flex items-center gap-3">
         <div className={tokens.card.iconBox}>
           <Calendar className={tokens.card.icon} />
         </div>
-        <h3 className={tokens.kpi.label}>MY SCHEDULE</h3>
+        <span className={cn(tokens.kpi.label, 'flex-1')}>MY SCHEDULE</span>
       </div>
 
-      {/* Location summary */}
-      <div className="flex items-center gap-2 mb-3">
-        <MapPin className="w-3 h-3 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground">
-          {userLocations.length === 1 
-            ? userLocations[0].name 
-            : `${userLocations.length} locations`}
-        </span>
+      <div className="mt-4 flex-1">
+        {/* Location summary */}
+        <div className="flex items-center gap-2 mb-3">
+          <MapPin className="w-3 h-3 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">
+            {userLocations.length === 1 
+              ? userLocations[0].name 
+              : `${userLocations.length} locations`}
+          </span>
+        </div>
+
+        {/* Days display */}
+        <div className="flex flex-wrap gap-1 mb-3">
+          {DAYS_OF_WEEK.map((day) => {
+            const isWorking = uniqueWorkDays.includes(day);
+            return (
+              <Badge
+                key={day}
+                variant={isWorking ? 'default' : 'outline'}
+                className={cn(
+                  "text-[10px] px-1.5 py-0.5",
+                  isWorking 
+                    ? "bg-primary/90 text-primary-foreground" 
+                    : "text-muted-foreground/50 border-muted"
+                )}
+              >
+                {day.charAt(0)}
+              </Badge>
+            );
+          })}
+        </div>
+
+        <p className="text-[10px] text-muted-foreground">
+          {uniqueWorkDays.length} days per week
+        </p>
       </div>
 
-      {/* Days display */}
-      <div className="flex flex-wrap gap-1 mb-3">
-        {DAYS_OF_WEEK.map((day) => {
-          const isWorking = uniqueWorkDays.includes(day);
-          return (
-            <Badge
-              key={day}
-              variant={isWorking ? 'default' : 'outline'}
-              className={cn(
-                "text-[10px] px-1.5 py-0.5",
-                isWorking 
-                  ? "bg-primary/90 text-primary-foreground" 
-                  : "text-muted-foreground/50 border-muted"
-              )}
-            >
-              {day.charAt(0)}
-            </Badge>
-          );
-        })}
+      <div className="flex justify-end mt-2 pt-2 border-t border-border/30 min-h-[28px]">
+        <Link 
+          to="/dashboard/profile"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+        >
+          Manage <ChevronRight className="w-3 h-3" />
+        </Link>
       </div>
-
-      <p className="text-[10px] text-muted-foreground mb-2">
-        {uniqueWorkDays.length} days per week
-      </p>
-
-      <Link to="/dashboard/profile">
-        <Button variant="ghost" size="sm" className="w-full h-7 text-xs gap-1 text-muted-foreground hover:text-foreground">
-          Manage
-          <ChevronRight className="w-3 h-3" />
-        </Button>
-      </Link>
     </Card>
   );
 }

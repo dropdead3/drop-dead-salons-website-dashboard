@@ -14,19 +14,18 @@ export function BirthdayWidget() {
 
   const isLoading = loadingToday || loadingUpcoming;
 
-  // Filter upcoming to exclude today's birthdays and limit to 3
   const nextUpcoming = upcomingBirthdays
     ?.filter(b => b.daysUntil > 0)
     .slice(0, 3) || [];
 
   if (isLoading) {
     return (
-      <Card className="p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Skeleton className="w-4 h-4" />
+      <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
+        <div className="flex items-center gap-3">
+          <Skeleton className="w-10 h-10 rounded-lg" />
           <Skeleton className="w-24 h-4" />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-2 mt-4">
           <Skeleton className="w-full h-8" />
           <Skeleton className="w-full h-8" />
         </div>
@@ -38,98 +37,100 @@ export function BirthdayWidget() {
   const hasUpcoming = nextUpcoming.length > 0;
 
   return (
-    <Card className={tokens.kpi.tile}>
-      <div className="flex items-center gap-3 mb-3">
+    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
+      <div className="flex items-center gap-3">
         <div className={tokens.card.iconBox}>
           <Cake className={tokens.card.icon} />
         </div>
-        <h3 className={tokens.kpi.label}>TEAM BIRTHDAYS</h3>
+        <span className={cn(tokens.kpi.label, 'flex-1')}>TEAM BIRTHDAYS</span>
       </div>
 
-      {hasTodayBirthdays && (
-        <div className="mb-3">
-          <div className="flex items-center gap-1 text-xs text-pink-500 font-medium mb-2">
-            <PartyPopper className="w-3 h-3" />
-            <span>Today!</span>
-          </div>
-          <div className="space-y-2">
-            {todaysBirthdays.map((person) => (
-              <div 
-                key={person.id} 
-                className={cn(
-                  "flex items-center gap-2 p-1.5 rounded-md -mx-1.5",
-                  isViewingAsUser && person.isCurrentUser && "bg-primary/10 ring-1 ring-primary/30"
-                )}
-              >
-                <Avatar className={cn(
-                  "w-6 h-6",
-                  isViewingAsUser && person.isCurrentUser && "ring-2 ring-primary"
-                )}>
-                  <AvatarImage src={person.photo_url || undefined} />
-                  <AvatarFallback className="text-[10px] bg-pink-100 text-pink-700">
-                    {(person.display_name || person.full_name)?.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="text-sm font-medium truncate flex items-center gap-1">
-                  {person.display_name || person.full_name}
-                  {isViewingAsUser && person.isCurrentUser && (
-                    <Eye className="w-3 h-3 text-primary shrink-0" />
+      <div className="mt-4 flex-1">
+        {hasTodayBirthdays && (
+          <div className="mb-3">
+            <div className="flex items-center gap-1 text-xs text-pink-500 font-medium mb-2">
+              <PartyPopper className="w-3 h-3" />
+              <span>Today!</span>
+            </div>
+            <div className="space-y-2">
+              {todaysBirthdays.map((person) => (
+                <div 
+                  key={person.id} 
+                  className={cn(
+                    "flex items-center gap-2 p-1.5 rounded-md -mx-1.5",
+                    isViewingAsUser && person.isCurrentUser && "bg-primary/10 ring-1 ring-primary/30"
                   )}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {hasUpcoming && (
-        <div>
-          {hasTodayBirthdays && (
-            <div className="border-t border-border pt-2 mt-2" />
-          )}
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">
-            Coming Up
-          </p>
-          <div className="space-y-1.5">
-            {nextUpcoming.map((person) => (
-              <div 
-                key={person.id} 
-                className={cn(
-                  "flex items-center justify-between gap-2 p-1.5 rounded-md -mx-1.5",
-                  isViewingAsUser && person.isCurrentUser && "bg-primary/10 ring-1 ring-primary/30"
-                )}
-              >
-                <div className="flex items-center gap-2 min-w-0">
+                >
                   <Avatar className={cn(
-                    "w-5 h-5",
+                    "w-6 h-6",
                     isViewingAsUser && person.isCurrentUser && "ring-2 ring-primary"
                   )}>
                     <AvatarImage src={person.photo_url || undefined} />
-                    <AvatarFallback className="text-[8px] bg-muted">
+                    <AvatarFallback className="text-[10px] bg-pink-100 text-pink-700">
                       {(person.display_name || person.full_name)?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-xs truncate flex items-center gap-1">
+                  <span className="text-sm font-medium truncate flex items-center gap-1">
                     {person.display_name || person.full_name}
                     {isViewingAsUser && person.isCurrentUser && (
                       <Eye className="w-3 h-3 text-primary shrink-0" />
                     )}
                   </span>
                 </div>
-                <span className="text-[10px] text-muted-foreground shrink-0">
-                  {person.daysUntil === 1 ? 'Tomorrow' : `${person.daysUntil}d`}
-                </span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {!hasTodayBirthdays && !hasUpcoming && (
-        <p className="text-xs text-muted-foreground text-center py-2">
-          No upcoming birthdays
-        </p>
-      )}
+        {hasUpcoming && (
+          <div>
+            {hasTodayBirthdays && (
+              <div className="border-t border-border pt-2 mt-2" />
+            )}
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wide mb-2">
+              Coming Up
+            </p>
+            <div className="space-y-1.5">
+              {nextUpcoming.map((person) => (
+                <div 
+                  key={person.id} 
+                  className={cn(
+                    "flex items-center justify-between gap-2 p-1.5 rounded-md -mx-1.5",
+                    isViewingAsUser && person.isCurrentUser && "bg-primary/10 ring-1 ring-primary/30"
+                  )}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Avatar className={cn(
+                      "w-5 h-5",
+                      isViewingAsUser && person.isCurrentUser && "ring-2 ring-primary"
+                    )}>
+                      <AvatarImage src={person.photo_url || undefined} />
+                      <AvatarFallback className="text-[8px] bg-muted">
+                        {(person.display_name || person.full_name)?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs truncate flex items-center gap-1">
+                      {person.display_name || person.full_name}
+                      {isViewingAsUser && person.isCurrentUser && (
+                        <Eye className="w-3 h-3 text-primary shrink-0" />
+                      )}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground shrink-0">
+                    {person.daysUntil === 1 ? 'Tomorrow' : `${person.daysUntil}d`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!hasTodayBirthdays && !hasUpcoming && (
+          <p className="text-xs text-muted-foreground text-center py-2">
+            No upcoming birthdays
+          </p>
+        )}
+      </div>
     </Card>
   );
 }

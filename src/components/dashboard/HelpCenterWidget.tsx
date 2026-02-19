@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { HelpCircle, ArrowRight, Star, BookOpen } from 'lucide-react';
+import { HelpCircle, ChevronRight, Star, BookOpen } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useFeaturedKBArticles, useKBCategoriesWithCounts } from '@/hooks/useKnowledgeBase';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
+import { Link } from 'react-router-dom';
 
 export function HelpCenterWidget() {
   const navigate = useNavigate();
@@ -15,28 +15,17 @@ export function HelpCenterWidget() {
   const totalArticles = categories?.reduce((sum, cat) => sum + (cat.article_count || 0), 0) || 0;
 
   return (
-    <Card className={cn(tokens.kpi.tile, "h-full")}>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-3">
-          <div className={tokens.card.iconBox}>
-            <HelpCircle className={tokens.card.icon} />
-          </div>
-          <h3 className={tokens.kpi.label}>HELP CENTER</h3>
+    <Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
+      <div className="flex items-center gap-3">
+        <div className={tokens.card.iconBox}>
+          <HelpCircle className={tokens.card.icon} />
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/dashboard/help')}
-          className="text-xs gap-1 h-7"
-        >
-          View All
-          <ArrowRight className="h-3 w-3" />
-        </Button>
+        <span className={cn(tokens.kpi.label, 'flex-1')}>HELP CENTER</span>
       </div>
 
-      <div className="space-y-3">
+      <div className="mt-4 flex-1">
         {displayArticles.length > 0 ? (
-          <>
+          <div className="space-y-3">
             {displayArticles.map((article) => (
               <button
                 key={article.id}
@@ -62,7 +51,7 @@ export function HelpCenterWidget() {
                 </div>
               </button>
             ))}
-          </>
+          </div>
         ) : (
           <div className="text-center py-4">
             <BookOpen className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
@@ -71,15 +60,15 @@ export function HelpCenterWidget() {
             </p>
           </div>
         )}
+      </div>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate('/dashboard/help')}
-          className="w-full"
+      <div className="flex justify-end mt-2 pt-2 border-t border-border/30 min-h-[28px]">
+        <Link 
+          to="/dashboard/help"
+          className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
         >
-          Browse Help Center
-        </Button>
+          Browse Help Center <ChevronRight className="w-3 h-3" />
+        </Link>
       </div>
     </Card>
   );
