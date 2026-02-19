@@ -1,61 +1,50 @@
 
 
-## Bento Grid Layout Component with Smart Row Distribution
+## Enforce BentoGrid Layout Across All Stat Card Grids
 
-### Concept
-Create a reusable `BentoGrid` component that enforces a simple rule: when cards overflow into a second row, distribute them as evenly as possible, with the extra card always going to the top row.
+Great prompt -- you're thinking systematically about layout consistency, which is exactly right for a design system. One refinement for next time: specifying "stat/KPI card grids only" vs "all grids" upfront would help scope the work faster, since many grids (content layouts, form grids, etc.) should stay as-is.
 
-**Distribution examples:**
-- 2 cards: 2 (single row)
-- 3 cards: 3 (single row)
-- 4 cards: 4 (single row -- or 2+2 if container is narrow)
-- 5 cards: 3 top + 2 bottom
-- 6 cards: 3 + 3
-- 7 cards: 4 + 3
-- 8 cards: 4 + 4
-- 9 cards: 5 + 4
+### What Changes
 
-### Approach
-Rather than using CSS flex-wrap (which has no concept of "balance rows"), we split children into explicit rows in JavaScript and render each row as its own flex container.
+Replace rigid `grid-cols-2 md:grid-cols-N` patterns on stat/KPI card containers with `BentoGrid`, so cards always split evenly across two rows (with the extra going to the top row) instead of cramming into one.
 
-```text
-Container
-  Row 1 (flex, equal-width children): [Card] [Card] [Card]
-  Row 2 (flex, equal-width children): [Card] [Card]
-```
+### Files to Update
 
-### Technical Changes
+| File | Cards | Current Layout | BentoGrid Result |
+|------|-------|----------------|------------------|
+| `PayrollKPICards.tsx` | 8 KPI cards | `grid-cols-2 lg:grid-cols-4` | 4 + 4 (same visual, but BentoGrid-managed) |
+| `OperationsQuickStats.tsx` | 4-5 stats | `grid-cols-2 lg:grid-cols-5` (dynamic) | 3+2 when 5 cards, 2+2 when 4 |
+| `ClientsContent.tsx` | 5 metric cards | `grid-cols-2 md:grid-cols-5` | 3 + 2 |
+| `RecruitingPipeline.tsx` | 5 stat cards | `grid-cols-2 md:grid-cols-5` | 3 + 2 |
+| `ClientDirectory.tsx` | 5 stat cards | `grid-cols-2 md:grid-cols-5` | 3 + 2 |
+| `DashboardBuild.tsx` | 5 overview stats | `grid-cols-2 md:grid-cols-5` | 3 + 2 |
+| `MarketingAnalytics.tsx` | 5 KPIs (row 1), 4 KPIs (row 2) | `grid-cols-2 lg:grid-cols-5` / `grid-cols-2 md:grid-cols-4` | 3+2 / 2+2 |
+| `Transactions.tsx` | 4 stat cards | `grid-cols-2 md:grid-cols-4` | 2 + 2 |
+| `TeamOverview.tsx` (top stats) | 4 cards | `grid-cols-2 lg:grid-cols-4` | 2 + 2 |
+| `TeamOverview.tsx` (member quick stats) | 5 inline stats | `grid-cols-2 lg:grid-cols-5` | 3 + 2 |
+| `RentRevenueAnalytics.tsx` | 5 summary cards | `grid-cols-2 lg:grid-cols-5` | 3 + 2 |
+| `SalesReportGenerator.tsx` | 4 stats (x2 sections) | `grid-cols-2 md:grid-cols-4` | 2 + 2 |
 
-**1. New file: `src/components/ui/bento-grid.tsx`**
+### What Stays the Same
 
-A small, reusable component:
+These grids are NOT stat card grids and should keep their current layout:
+- Content/layout grids (e.g., `OverviewContent.tsx` 4-column drill-down)
+- Form/selector grids (e.g., `CompareTypeSelector`)
+- Card catalog grids (e.g., `RewardsCatalogTab`, provider hubs)
+- Marketing landing page grids (e.g., `StatsSection`)
+- Hub quick links grid
 
-```tsx
-interface BentoGridProps {
-  children: React.ReactNode;
-  maxPerRow?: number; // max cards before wrapping (default: 3)
-  gap?: string;       // tailwind gap class (default: "gap-3")
-  className?: string;
-}
-```
+### Technical Details
 
-Logic:
-- Count the children.
-- If count <= `maxPerRow`, render one row.
-- If count > `maxPerRow`, split into 2 rows:
-  - Top row gets `Math.ceil(count / 2)` items.
-  - Bottom row gets the rest.
-- Each row is a `flex` container where children get `flex-1`.
+Each file change follows the same pattern:
 
-This keeps the rule pure and reusable across the platform (analytics cards, dashboard stats, etc.).
+1. Add `import { BentoGrid } from '@/components/ui/bento-grid'`
+2. Replace the `<div className="grid grid-cols-2 md:grid-cols-N gap-4">` wrapper with `<BentoGrid maxPerRow={4} gap="gap-4">`
+3. Remove any `col-span` hacks on individual cards (e.g., MarketingAnalytics has `col-span-2 md:col-span-1` on the 5th card -- no longer needed)
 
-**2. Update `src/components/dashboard/website-editor/ServicesContent.tsx`**
+For `OperationsQuickStats`, which conditionally shows 4 or 5 cards based on `hideRevenue`, BentoGrid handles this automatically since it counts children dynamically.
 
-Replace the `<div className="flex flex-wrap gap-3">` wrapper (line 302) with `<BentoGrid maxPerRow={3} gap="gap-3">`. Remove `flex-1 min-w-[140px]` from individual cards since BentoGrid handles sizing.
+For `PayrollKPICards`, the 8 cards with `maxPerRow={4}` will produce 4+4, matching the current visual but managed consistently through BentoGrid.
 
-The 5 stat cards will render as:
-- Row 1: Total Services, Categories, Stylist Levels (3 cards)
-- Row 2: Popular, Online (2 cards)
-
-Each card in a row stretches equally, so row 2's cards are slightly wider than row 1's -- a clean, balanced bento look.
+Loading/skeleton states in files like `ClientsContent` and `OperationsQuickStats` will also be wrapped in BentoGrid for consistency.
 
