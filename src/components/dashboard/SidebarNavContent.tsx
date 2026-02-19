@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid, Briefcase, ArrowLeft, Shield } from 'lucide-react';
+import { ExternalLink, Rocket, TrendingUp, Users, LayoutGrid, Briefcase, ArrowLeft, Shield, HelpCircle } from 'lucide-react';
 import { NavBadge } from './NavBadge';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
@@ -368,6 +368,45 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
 
       {/* Announcements Widget - at the very top (hide when collapsed) */}
       {!isCollapsed && <SidebarAnnouncementsWidget onNavClick={onNavClick} />}
+
+      {/* Help Center link */}
+      <div className={cn("border-b border-border", isCollapsed ? "py-2" : "")}>
+        {isCollapsed ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                to="/dashboard/help"
+                onClick={onNavClick}
+                className={cn(
+                  "flex items-center justify-center px-2 py-2 mx-2 rounded-lg",
+                  "transition-all duration-200 ease-out text-sm",
+                  location.pathname === '/dashboard/help'
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                )}
+              >
+                <HelpCircle className="w-4 h-4" />
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="right">Help Center</TooltipContent>
+          </Tooltip>
+        ) : (
+          <Link
+            to="/dashboard/help"
+            onClick={onNavClick}
+            className={cn(
+              "flex items-center gap-2 px-4 py-3 text-xs uppercase tracking-wider font-display font-medium",
+              "transition-colors hover:bg-muted/50",
+              location.pathname === '/dashboard/help'
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <HelpCircle className="w-4 h-4" />
+            Help Center
+          </Link>
+        )}
+      </div>
 
       {/* Phorest Sync Status Widget moved to header popout */}
 
