@@ -16,6 +16,7 @@ export interface StylistDetail {
   currentApptIndex: number; // 1-based
   totalAppts: number;
   assistedBy: string | null;
+  clientName: string | null;
 }
 
 interface LiveSessionSnapshot {
@@ -36,7 +37,7 @@ export function useLiveSessionSnapshot(): LiveSessionSnapshot {
       // Get today's appointments where current time falls between start and end
       const { data: appointments, error } = await supabase
         .from('phorest_appointments')
-        .select('id, phorest_staff_id, start_time, end_time, service_name')
+        .select('id, phorest_staff_id, start_time, end_time, service_name, client_name')
         .eq('appointment_date', today)
         .lte('start_time', now)
         .gt('end_time', now);
@@ -173,6 +174,7 @@ export function useLiveSessionSnapshot(): LiveSessionSnapshot {
           currentApptIndex: currentApptIndex || 1,
           totalAppts,
           assistedBy,
+          clientName: (current as any)?.client_name || null,
         });
       }
 
