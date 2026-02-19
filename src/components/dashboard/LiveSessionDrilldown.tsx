@@ -114,15 +114,17 @@ export function LiveSessionDrilldown({
                   </Avatar>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{formatNameWithPeriod(stylist.name)}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-foreground truncate">{formatNameWithPeriod(stylist.name)}</p>
+                      {stylist.assistedBy && (
+                        <span className="bg-muted/60 text-muted-foreground/80 text-[10px] px-2 py-0.5 rounded-full italic whitespace-nowrap">
+                          Assisted by {formatNameWithPeriod(stylist.assistedBy)}
+                        </span>
+                      )}
+                    </div>
                     {stylist.currentService && (
                       <p className="text-xs text-muted-foreground truncate">
                         {stylist.currentService}{stylist.clientName ? ` on ${stylist.clientName}` : ''}
-                      </p>
-                    )}
-                    {stylist.assistedBy && (
-                      <p className="text-[10px] italic text-muted-foreground/80 truncate">
-                        Assisted by {formatNameWithPeriod(stylist.assistedBy)}
                       </p>
                     )}
                     <p className="text-[10px] text-muted-foreground/70 mt-0.5">
