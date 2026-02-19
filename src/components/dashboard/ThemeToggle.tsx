@@ -12,7 +12,7 @@ export function ThemeToggle() {
       className={cn(
         "relative flex items-center h-8 w-[52px] rounded-full p-0.5 transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         isDark
-          ? "bg-accent/60 border border-border/50"
+          ? "bg-secondary border border-border/60"
           : "bg-accent/40 border border-border/30"
       )}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -20,7 +20,7 @@ export function ThemeToggle() {
       {/* Track icons */}
       <Sun className={cn(
         "absolute left-1.5 w-3.5 h-3.5 transition-opacity duration-300",
-        isDark ? "opacity-30 text-muted-foreground" : "opacity-0"
+        isDark ? "opacity-40 text-muted-foreground" : "opacity-0"
       )} />
       <Moon className={cn(
         "absolute right-1.5 w-3.5 h-3.5 transition-opacity duration-300",
@@ -30,9 +30,9 @@ export function ThemeToggle() {
       {/* Sliding thumb */}
       <span
         className={cn(
-          "flex items-center justify-center h-6 w-6 rounded-full shadow-sm transition-all duration-300 ease-in-out",
+          "flex items-center justify-center h-6 w-6 rounded-full transition-all duration-300 ease-in-out",
           isDark
-            ? "translate-x-[22px] bg-foreground/10 backdrop-blur-sm"
+            ? "translate-x-[22px] bg-muted shadow-[0_0_6px_hsl(var(--muted-foreground)/0.15)]"
             : "translate-x-0 bg-background shadow-md"
         )}
       >
