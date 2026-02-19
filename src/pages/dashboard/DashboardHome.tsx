@@ -269,15 +269,6 @@ export default function DashboardHome() {
         <InsightsNudgeBanner userId={user?.id} isLeadership={isLeadership} />
 
         {/* Header with Customize Button */}
-        <motion.div
-          className="border-b border-border/60 pb-6"
-          variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}
-        >
-          <div className="flex flex-wrap items-start gap-3">
-            {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
-            <AnnouncementsDrawer isLeadership={isLeadership} />
-          </div>
-        </motion.div>
 
         {/* Dynamic sections based on layout order - wait for layout to prevent flash of hidden content */}
         {layoutLoading ? (
@@ -735,7 +726,10 @@ function DashboardSections({
                   {hasPinnedAnalytics && (
                     <div className="pt-6 pb-2">
                       <div className="flex items-center justify-between gap-4">
-                        <h2 className="font-display text-sm tracking-[0.12em] text-foreground">{t('home.analytics')}</h2>
+                        <div className="flex items-center gap-3">
+                          {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
+                          <AnnouncementsDrawer isLeadership={isLeadership} />
+                        </div>
                         <AnalyticsFilterBar
                           locationId={analyticsFilters.locationId}
                           onLocationChange={onLocationChange}
@@ -775,7 +769,10 @@ function DashboardSections({
               {showFilterBar && (
                 <div className="pt-6 pb-2">
                   <div className="flex items-center justify-between gap-4">
-                    <h2 className="font-display text-sm tracking-[0.12em] text-foreground">{t('home.analytics')}</h2>
+                    <div className="flex items-center gap-3">
+                      {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
+                      <AnnouncementsDrawer isLeadership={isLeadership} />
+                    </div>
                     <AnalyticsFilterBar
                       locationId={analyticsFilters.locationId}
                       onLocationChange={onLocationChange}
