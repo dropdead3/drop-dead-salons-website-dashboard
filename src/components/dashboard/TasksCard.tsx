@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { parseISO, startOfDay } from 'date-fns';
 import { AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -46,16 +47,19 @@ export function TasksCard({
   const completedTasks = useMemo(() => tasks.filter((t) => t.is_completed), [tasks]);
 
   const overdueCount = useMemo(
-    () => activeTasks.filter((t) => t.due_date && new Date(t.due_date) < new Date(new Date().toDateString())).length,
+    () => {
+      const today = startOfDay(new Date());
+      return activeTasks.filter((t) => t.due_date && startOfDay(parseISO(t.due_date)) < today).length;
+    },
     [activeTasks]
   );
 
   // Sort: overdue first, then by priority
   const sortedActive = useMemo(() => {
-    const now = new Date(new Date().toDateString());
+    const today = startOfDay(new Date());
     return [...activeTasks].sort((a, b) => {
-      const aOverdue = a.due_date && new Date(a.due_date) < now ? 1 : 0;
-      const bOverdue = b.due_date && new Date(b.due_date) < now ? 1 : 0;
+      const aOverdue = a.due_date && startOfDay(parseISO(a.due_date)) < today ? 1 : 0;
+      const bOverdue = b.due_date && startOfDay(parseISO(b.due_date)) < today ? 1 : 0;
       if (bOverdue !== aOverdue) return bOverdue - aOverdue;
       const prioOrder = { high: 3, normal: 2, low: 1 };
       return prioOrder[b.priority] - prioOrder[a.priority];

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { format, parseISO, isPast, startOfDay } from 'date-fns';
+import { format, parseISO, startOfDay } from 'date-fns';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -51,7 +51,7 @@ export function TaskDetailDrilldown({
 
   if (!task) return null;
 
-  const isOverdue = task.due_date && !task.is_completed && isPast(startOfDay(parseISO(task.due_date)));
+  const isOverdue = task.due_date && !task.is_completed && startOfDay(parseISO(task.due_date)) < startOfDay(new Date());
   const priority = priorityConfig[task.priority];
 
   const handleSaveNotes = () => {
