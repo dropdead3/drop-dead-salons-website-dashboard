@@ -279,7 +279,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             ? cn("px-2 py-2.5 justify-center", inFooter ? "mx-0" : "mx-2")
             : cn("px-3 py-2.5", inFooter ? "mx-0" : "mx-3"),
           isActive 
-            ? "bg-foreground text-background shadow-sm" 
+            ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none" 
             : "text-muted-foreground hover:text-foreground hover:bg-muted/60 hover:translate-x-0.5"
         )}
       >
@@ -686,7 +686,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                                 "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-sans",
                                 "transition-all duration-300 cursor-pointer",
                                 isActive
-                                  ? "bg-foreground text-background shadow-sm"
+                                  ? "bg-foreground text-background shadow-sm dark:bg-muted dark:text-foreground dark:shadow-none"
                                   : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                               )}
                             >
