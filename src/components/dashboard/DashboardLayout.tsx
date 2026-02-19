@@ -829,7 +829,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       {/* Desktop Sidebar */}
       <aside 
         className={cn(
-          "hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:border-r lg:border-border lg:bg-card/90 lg:backdrop-blur-xl transition-[width] duration-200 ease-in-out",
+          "hidden lg:fixed lg:top-3 lg:bottom-3 lg:left-3 lg:z-50 lg:block lg:border lg:border-border/50 lg:rounded-2xl lg:bg-card/90 lg:backdrop-blur-xl lg:overflow-hidden lg:shadow-sm transition-[width] duration-200 ease-in-out",
           sidebarCollapsed ? "lg:w-16" : "lg:w-72"
         )}
       >
@@ -859,7 +859,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       {/* Content wrapper - flex column when hideFooter for proper height chain */}
       <div className={cn(
         "w-full transition-[padding-left] duration-200 ease-in-out min-w-0 overflow-x-clip",
-        sidebarCollapsed ? "lg:pl-16" : "lg:pl-72",
+        sidebarCollapsed ? "lg:pl-[88px]" : "lg:pl-[312px]",
         hideFooter && "h-screen flex flex-col"
       )}>
       {/* Platform Incident Banner - above everything */}
