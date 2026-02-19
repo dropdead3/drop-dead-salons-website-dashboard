@@ -98,6 +98,9 @@ export function LiveSessionDrilldown({
   const sessionCount = DEMO_MODE
     ? Math.round((details.length / DEMO_DETAILS.length) * 18)
     : live.inSessionCount;
+  const assistantCount = DEMO_MODE
+    ? new Set(details.flatMap(d => d.assistedBy)).size
+    : live.activeAssistantCount;
   const showGrouped = isAllLocations(drilldownLocationId);
 
   // Group stylists by location when showing all locations
@@ -125,7 +128,7 @@ export function LiveSessionDrilldown({
             <DialogTitle className={cn(tokens.heading.section, 'text-sm')}>Happening Now</DialogTitle>
           </div>
           <DialogDescription className="text-xs text-muted-foreground mt-1.5">
-            {sessionCount} appointment{sessionCount !== 1 ? 's' : ''} in progress · {stylistCount} stylist{stylistCount !== 1 ? 's' : ''} working
+            {sessionCount} appointment{sessionCount !== 1 ? 's' : ''} in progress · {stylistCount} stylist{stylistCount !== 1 ? 's' : ''}{assistantCount > 0 ? `, ${assistantCount} assistant${assistantCount !== 1 ? 's' : ''}` : ''} working
           </DialogDescription>
         </DialogHeader>
 
