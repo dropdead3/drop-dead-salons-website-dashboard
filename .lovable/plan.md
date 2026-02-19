@@ -1,54 +1,27 @@
 
 
-## Update Analytics Card Sub-Labels: Aeonik Pro + Richer Context
+## Fix Border Consistency on Pinned Analytics Cards
 
 ### Problem
-The sub-labels below hero numbers are currently set in Termina (`font-display`) with full uppercase -- they should be in Aeonik Pro (`font-sans`) with only the first letter capitalized. The descriptions also need to be longer and more contextual to give users clearer meaning at a glance.
+The top 4 simplified analytics cards (Sales Overview, Week Ahead Forecast, New Bookings, Goal Tracker) have a lighter border than the rest of the dashboard cards. This is because:
 
-### Changes (single file: `src/components/dashboard/PinnedAnalyticsCard.tsx`)
+- **Top 4 cards**: Use `tokens.kpi.tile` which applies `border-border/50` (50% opacity)
+- **Other cards** (My Tasks, Widgets, etc.): Use the standard `Card` component which applies `border` at full opacity via `hsl(var(--border))`
 
-#### 1. Typography fix (line 484)
+The reduced opacity makes the top cards look like they belong to a different visual system.
 
-Change from:
+### Fix
+
+**File: `src/lib/design-tokens.ts` (line 56)**
+
+Update the `kpi.tile` token from:
 ```
-font-display text-[11px] tracking-[0.08em] uppercase text-muted-foreground/80 mt-1
+rounded-xl border border-border/50 bg-card p-4 flex flex-col gap-1
 ```
 to:
 ```
-text-xs text-muted-foreground/80 mt-1
+rounded-xl border border-border bg-card p-4 flex flex-col gap-1
 ```
 
-This switches back to Aeonik Pro (the default `font-sans`) and removes `uppercase` and the Termina tracking. The label strings themselves will be written in sentence case (first letter capitalized).
-
-#### 2. Enrich label content with longer, more contextual descriptions
-
-| Card | Current Label | New Label |
-|------|--------------|-----------|
-| sales_overview | Total Revenue | Total revenue across all services and retail |
-| daily_brief | Today's Revenue | Revenue earned so far today |
-| top_performers | Top Performer | Highest earning team member this period |
-| client_queue | (waiting/in service) | (unchanged -- already contextual) |
-| revenue_breakdown | Service / Retail Split | Service revenue vs. retail product revenue |
-| retail_effectiveness | Retail Attachment Rate | Percentage of service tickets with retail add-ons |
-| rebooking | Rebooking Rate | Clients who rebooked before leaving |
-| team_goals | Team Progress | Combined team revenue toward goal |
-| capacity_utilization | Avg Utilization | Average chair utilization across locations |
-| operational_health | System Status | Monitoring status across all locations |
-| service_category_breakdown | Top Category | Highest revenue service category |
-| client_funnel | Total Clients | New and returning clients this period |
-| goal_tracker | On Track / Ahead of Pace / Behind Pace | On track to hit goal / Ahead of target pace / Falling behind target pace |
-| week_ahead_forecast | 7-Day Projected Revenue | Projected revenue for the next 7 days |
-| week_ahead_forecast (loading) | Loading Forecast | Loading forecast data |
-| new_bookings | Recent Bookings | New bookings placed this period |
-| hiring_capacity | Open Chairs | Chairs available for new hires |
-| staff_workload | Active Staff | Currently active team members |
-| workload_utilization | Avg Utilization | Average utilization across active staff |
-
-### Technical Detail
-
-- Uses default `font-sans` (Aeonik Pro) -- no font family class needed
-- Sentence case is handled by writing the strings naturally (no CSS `uppercase`)
-- `text-xs` with `text-muted-foreground/80` keeps labels secondary to the hero metric
-- No new dependencies or data changes
-- One file modified
+This single change removes the `/50` opacity modifier from the border color, making the top 4 cards match the standard `Card` component's full-opacity `border` class. One token changed, all pinned cards inherit the fix automatically.
 
