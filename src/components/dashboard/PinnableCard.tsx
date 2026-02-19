@@ -71,7 +71,7 @@ export function PinnableCard({
   
   return (
     <div 
-      className={cn("relative", className)}
+      className={cn("relative h-full", className)}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
@@ -102,7 +102,7 @@ export function PinnableCard({
           </div>
         </div>
       )}
-      <div ref={contentRef}>
+      <div ref={contentRef} className="flex-1 flex flex-col [&>*]:flex-1">
         {children}
       </div>
     </div>

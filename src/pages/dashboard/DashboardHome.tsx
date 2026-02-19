@@ -839,11 +839,11 @@ function DashboardSections({
             {groups.map((group, gi) => {
               if (group.type === 'pair') {
                 return (
-                  <div key={`pair-${gi}`} className="flex gap-4">
-                    <div className="flex-1 min-w-0">
+                  <div key={`pair-${gi}`} className="flex gap-4 items-stretch">
+                    <div className="flex-1 min-w-0 flex flex-col">
                       <PinnedAnalyticsCard cardId={group.cards[0]} filters={analyticsFilters} compact={compact} />
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 flex flex-col">
                       <PinnedAnalyticsCard cardId={group.cards[1]} filters={analyticsFilters} compact={compact} />
                     </div>
                   </div>
