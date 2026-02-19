@@ -631,7 +631,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             isCollapsed ? "space-y-1" : "space-y-0.5"
           )}>
             {/* Feedback Buttons */}
-            <SidebarFeedbackButtons isCollapsed={isCollapsed} />
+            <SidebarFeedbackButtons />
             {/* Clock In/Out Button */}
             <SidebarClockButton isCollapsed={isCollapsed} />
             {/* Lock Button */}

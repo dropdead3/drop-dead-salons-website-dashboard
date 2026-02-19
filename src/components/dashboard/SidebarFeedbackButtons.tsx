@@ -1,16 +1,11 @@
 import { useState } from 'react';
 import { Lightbulb, Bug } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 import { PlatformFeedbackDialog } from './PlatformFeedbackDialog';
 
 type FeedbackType = 'feature_request' | 'bug_report';
 
-interface SidebarFeedbackButtonsProps {
-  isCollapsed?: boolean;
-}
-
-export function SidebarFeedbackButtons({ isCollapsed = false }: SidebarFeedbackButtonsProps) {
+export function SidebarFeedbackButtons() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogType, setDialogType] = useState<FeedbackType>('feature_request');
 
@@ -19,41 +14,32 @@ export function SidebarFeedbackButtons({ isCollapsed = false }: SidebarFeedbackB
     setDialogOpen(true);
   };
 
-  const ButtonContent = ({ icon: Icon, label, type }: { icon: typeof Lightbulb; label: string; type: FeedbackType }) => {
-    const content = (
-      <button
-        onClick={() => openDialog(type)}
-        className={cn(
-          "flex items-center gap-2 rounded-md px-2.5 py-2 text-xs font-medium transition-all",
-          "text-muted-foreground hover:text-foreground hover:bg-muted/60",
-          isCollapsed && "justify-center px-2"
-        )}
-      >
-        <Icon className="h-3.5 w-3.5 shrink-0" />
-        {!isCollapsed && <span className="truncate">{label}</span>}
-      </button>
-    );
-
-    if (isCollapsed) {
-      return (
-        <Tooltip>
-          <TooltipTrigger asChild>{content}</TooltipTrigger>
-          <TooltipContent side="right" className="font-sans">{label}</TooltipContent>
-        </Tooltip>
-      );
-    }
-
-    return content;
-  };
-
   return (
     <>
-      <div className={cn(
-        "border-b border-border/30 pb-1 mb-1",
-        isCollapsed ? "space-y-1" : "grid grid-cols-2 gap-1"
-      )}>
-        <ButtonContent icon={Lightbulb} label="Request a Feature" type="feature_request" />
-        <ButtonContent icon={Bug} label="Report a Bug" type="bug_report" />
+      <div className="flex gap-1 px-2 pb-1 mb-1 border-b border-border/30">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => openDialog('feature_request')}
+              className="flex items-center justify-center rounded-md p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
+            >
+              <Lightbulb className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="font-sans">Request a Feature</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => openDialog('bug_report')}
+              className="flex items-center justify-center rounded-md p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
+            >
+              <Bug className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="font-sans">Report a Bug</TooltipContent>
+        </Tooltip>
       </div>
 
       <PlatformFeedbackDialog
