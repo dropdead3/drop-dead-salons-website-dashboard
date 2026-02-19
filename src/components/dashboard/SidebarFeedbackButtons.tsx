@@ -16,12 +16,12 @@ export function SidebarFeedbackButtons() {
 
   return (
     <>
-      <div className="flex gap-1 px-2 pb-1 mb-1 border-b border-border/30">
+      <div className="rounded-lg border border-border/40 bg-muted/30 p-1.5 mb-2 mx-1 flex gap-1">
         <Tooltip>
           <TooltipTrigger asChild>
             <button
               onClick={() => openDialog('feature_request')}
-              className="flex items-center justify-center rounded-md p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
+              className="flex-1 flex items-center justify-center rounded-md p-2 text-muted-foreground hover:text-foreground hover:bg-background/80 transition-all"
             >
               <Lightbulb className="h-4 w-4" />
             </button>
@@ -33,7 +33,7 @@ export function SidebarFeedbackButtons() {
           <TooltipTrigger asChild>
             <button
               onClick={() => openDialog('bug_report')}
-              className="flex items-center justify-center rounded-md p-2 text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
+              className="flex-1 flex items-center justify-center rounded-md p-2 text-muted-foreground hover:text-foreground hover:bg-background/80 transition-all"
             >
               <Bug className="h-4 w-4" />
             </button>
