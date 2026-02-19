@@ -92,7 +92,8 @@ export function LiveSessionDrilldown({
         <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
 
         {/* Stylist list */}
-        <ScrollArea className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 overflow-hidden">
+        <ScrollArea className="h-full">
           <div className="py-1">
             {details.map((stylist, i) => {
               const progress = stylist.totalAppts > 0
@@ -150,6 +151,7 @@ export function LiveSessionDrilldown({
             })}
           </div>
         </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
