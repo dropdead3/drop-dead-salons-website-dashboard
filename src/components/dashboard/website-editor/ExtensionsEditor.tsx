@@ -8,6 +8,7 @@ import { Loader2, Star, Award, MapPin } from 'lucide-react';
 import { useEditorSaveAction } from '@/hooks/useEditorSaveAction';
 import { toast } from 'sonner';
 import { useExtensionsConfig, type ExtensionsConfig, DEFAULT_EXTENSIONS } from '@/hooks/useSectionConfig';
+import { ToggleInput } from './inputs/ToggleInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 
@@ -66,14 +67,22 @@ export function ExtensionsEditor() {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Badge */}
-          <div className="space-y-2">
-            <Label htmlFor="badge_text">Badge Text</Label>
-            <Input
-              id="badge_text"
-              value={localConfig.badge_text}
-              onChange={(e) => updateField('badge_text', e.target.value)}
-            />
-          </div>
+          <ToggleInput
+            label="Show Floating Badge"
+            value={localConfig.show_floating_badge}
+            onChange={(value) => updateField('show_floating_badge', value)}
+            description="Display the floating badge overlay on the section"
+          />
+          {localConfig.show_floating_badge && (
+            <div className="space-y-2">
+              <Label htmlFor="badge_text">Badge Text</Label>
+              <Input
+                id="badge_text"
+                value={localConfig.badge_text}
+                onChange={(e) => updateField('badge_text', e.target.value)}
+              />
+            </div>
+          )}
 
           {/* Eyebrow */}
           <div className="space-y-2">
@@ -155,22 +164,41 @@ export function ExtensionsEditor() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cta_secondary">Secondary CTA</Label>
-                <Input
-                  id="cta_secondary"
-                  value={localConfig.cta_secondary}
-                  onChange={(e) => updateField('cta_secondary', e.target.value)}
+                <ToggleInput
+                  label="Show Secondary CTA"
+                  value={localConfig.show_secondary_cta}
+                  onChange={(value) => updateField('show_secondary_cta', value)}
                 />
+                {localConfig.show_secondary_cta && (
+                  <>
+                    <Label htmlFor="cta_secondary">Secondary CTA</Label>
+                    <Input
+                      id="cta_secondary"
+                      value={localConfig.cta_secondary}
+                      onChange={(e) => updateField('cta_secondary', e.target.value)}
+                    />
+                  </>
+                )}
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="education_link">Education Link Text</Label>
-              <Input
-                id="education_link"
-                value={localConfig.education_link_text}
-                onChange={(e) => updateField('education_link_text', e.target.value)}
-              />
-            </div>
+
+            {/* Education Link */}
+            <ToggleInput
+              label="Show Education Link"
+              value={localConfig.show_education_link}
+              onChange={(value) => updateField('show_education_link', value)}
+              description="Display the education/training link below the CTAs"
+            />
+            {localConfig.show_education_link && (
+              <div className="space-y-2">
+                <Label htmlFor="education_link">Education Link Text</Label>
+                <Input
+                  id="education_link"
+                  value={localConfig.education_link_text}
+                  onChange={(e) => updateField('education_link_text', e.target.value)}
+                />
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

@@ -82,13 +82,16 @@ export interface HeroConfig {
   cta_returning_client: string;
   consultation_note_line1: string;
   consultation_note_line2: string;
-  // New advanced options
+  // Advanced options
   animation_start_delay: number;
   word_rotation_interval: number;
   cta_new_client_url: string;
   cta_returning_client_url: string;
   scroll_indicator_text: string;
   show_scroll_indicator: boolean;
+  // Visibility toggles
+  show_secondary_button: boolean;
+  show_consultation_notes: boolean;
 }
 
 export interface BrandStatementConfig {
@@ -121,9 +124,11 @@ export interface NewClientConfig {
   description: string;
   benefits: string[];
   cta_text: string;
-  // New advanced options
+  // Advanced options
   cta_url: string;
   show_benefits_icons: boolean;
+  // Visibility toggles
+  show_benefits: boolean;
 }
 
 export interface ExtensionsFeature {
@@ -142,12 +147,16 @@ export interface ExtensionsConfig {
   cta_primary: string;
   cta_secondary: string;
   education_link_text: string;
-  // New advanced options
+  // Advanced options
   cta_primary_url: string;
   cta_secondary_url: string;
   education_link_url: string;
   floating_badge_text: string;
   floating_badge_description: string;
+  // Visibility toggles
+  show_education_link: boolean;
+  show_floating_badge: boolean;
+  show_secondary_cta: boolean;
 }
 
 export interface FAQConfig {
@@ -202,6 +211,9 @@ export interface FooterCTAConfig {
   cta_text: string;
   cta_url: string;
   show_phone_numbers: boolean;
+  // Visibility toggles
+  show_description: boolean;
+  show_eyebrow: boolean;
 }
 
 export interface LocationsSectionConfig {
@@ -260,33 +272,33 @@ export interface LocationsDisplayConfig {
 // ============================================
 
 export const DEFAULT_HERO: HeroConfig = {
-  eyebrow: "Hair • Color • Artistry",
-  rotating_words: ["Salon", "Extensions", "Salon", "Blonding", "Salon", "Color", "Salon", "Results"],
-  subheadline_line1: "Where technical talent meets artistry.",
-  subheadline_line2: "We believe in more than just the status quo.",
-  cta_new_client: "I am a new client",
-  cta_returning_client: "I am a returning client",
-  consultation_note_line1: "New clients begin with a $15 consultation",
-  consultation_note_line2: "Returning clients are free to book their known services",
-  // New defaults
+  eyebrow: "Your Tagline Here",
+  rotating_words: ["Salon", "Studio", "Experience"],
+  subheadline_line1: "Where expertise meets artistry.",
+  subheadline_line2: "Your journey to beautiful hair starts here.",
+  cta_new_client: "Book Now",
+  cta_returning_client: "Explore Services",
+  consultation_note_line1: "",
+  consultation_note_line2: "",
   animation_start_delay: 4,
   word_rotation_interval: 5.5,
   cta_new_client_url: "",
   cta_returning_client_url: "/booking",
   scroll_indicator_text: "Scroll",
   show_scroll_indicator: true,
+  show_secondary_button: true,
+  show_consultation_notes: true,
 };
 
 export const DEFAULT_BRAND_STATEMENT: BrandStatementConfig = {
-  eyebrow: "Drop Dead is",
-  rotating_words: ["Average", "Boring", "Mother's", "Standard", "Typical", "Basic", "Ordinary"],
+  eyebrow: "Our Brand",
+  rotating_words: ["Average", "Boring", "Standard", "Typical", "Basic", "Ordinary"],
   headline_prefix: "Not Your",
   headline_suffix: "Salon",
   paragraphs: [
-    "Located in the heart of Mesa and Gilbert, Arizona, Drop Dead Salon has become the Phoenix Valley's destination for transformative hair experiences.",
+    "We've built a destination for transformative hair experiences that go beyond the ordinary.",
     "Experience an extensive range of innovative treatments meticulously crafted by our artist-led team."
   ],
-  // New defaults
   typewriter_speed: 100,
   typewriter_pause: 2,
   show_typewriter_cursor: true,
@@ -314,15 +326,15 @@ export const DEFAULT_NEW_CLIENT: NewClientConfig = {
     "No Judgement, All Are Welcome"
   ],
   cta_text: "Let's Get Started",
-  // New defaults
   cta_url: "",
   show_benefits_icons: true,
+  show_benefits: true,
 };
 
 export const DEFAULT_EXTENSIONS: ExtensionsConfig = {
   badge_text: "OUR SIGNATURE",
   eyebrow: "Get the most comfortable extensions with the",
-  headline_line1: "Drop Dead",
+  headline_line1: "Our Signature",
   headline_line2: "Method",
   description: "The most versatile and comfortable hidden beaded row method available.",
   features: [
@@ -333,19 +345,21 @@ export const DEFAULT_EXTENSIONS: ExtensionsConfig = {
   cta_primary: "Book Extension Consult",
   cta_secondary: "Learn More",
   education_link_text: "Are you a stylist wanting to learn our method?",
-  // New defaults
   cta_primary_url: "",
   cta_secondary_url: "/extensions",
   education_link_url: "/education",
   floating_badge_text: "Change Your Look Instantly",
   floating_badge_description: "Premium extensions that blend seamlessly",
+  show_education_link: true,
+  show_floating_badge: true,
+  show_secondary_cta: true,
 };
 
 export const DEFAULT_FAQ: FAQConfig = {
   rotating_words: ["Asked", "Answered"],
   intro_paragraphs: [
-    "At Drop Dead Hair Studio, it's simple—Death to Bad Hair is more than a motto; it's our mission.",
-    "We're here to deliver bold transformations and flawless results with every visit."
+    "We're here to answer your most common questions before you visit.",
+    "If you don't find what you're looking for, reach out and we'll be happy to help."
   ],
   cta_primary_text: "See All FAQ's",
   cta_secondary_text: "Salon Policies",
@@ -358,14 +372,7 @@ export const DEFAULT_FAQ: FAQConfig = {
 
 export const DEFAULT_BRANDS: BrandsConfig = {
   intro_text: "Our favorite brands we love to use in the salon",
-  // New defaults
-  brands: [
-    { id: '1', name: "Kevin Murphy", display_text: "KEVIN.MURPHY" },
-    { id: '2', name: "AIIR", display_text: "AIIR" },
-    { id: '3', name: "Nutrafol", display_text: "NUTRAFOL" },
-    { id: '4', name: "Drop Dead Professional", display_text: "DROP DEAD PROFESSIONAL" },
-    { id: '5', name: "Danger Jones", display_text: "DANGER JONES" },
-  ],
+  brands: [],
   marquee_speed: 40,
   show_intro_text: true,
 };
@@ -388,6 +395,8 @@ export const DEFAULT_FOOTER_CTA: FooterCTAConfig = {
   cta_text: "Book consult",
   cta_url: "/booking",
   show_phone_numbers: true,
+  show_description: true,
+  show_eyebrow: true,
 };
 
 export const DEFAULT_LOCATIONS_SECTION: LocationsSectionConfig = {

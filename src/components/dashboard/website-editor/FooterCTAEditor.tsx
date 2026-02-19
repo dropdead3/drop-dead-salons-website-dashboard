@@ -55,19 +55,27 @@ export function FooterCTAEditor() {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           <p className="text-sm text-muted-foreground">
-            Configure the "Book Your Consult" call-to-action section that appears before the footer.
+            Configure the call-to-action section that appears before the footer.
           </p>
 
           {/* Eyebrow */}
-          <div className="space-y-2">
-            <Label htmlFor="eyebrow">Eyebrow Text</Label>
-            <Input
-              id="eyebrow"
-              value={localConfig.eyebrow}
-              onChange={(e) => updateField('eyebrow', e.target.value)}
-              placeholder="Ready for Something Different?"
-            />
-          </div>
+          <ToggleInput
+            label="Show Eyebrow Text"
+            value={localConfig.show_eyebrow}
+            onChange={(value) => updateField('show_eyebrow', value)}
+            description="Display the small text above the headline"
+          />
+          {localConfig.show_eyebrow && (
+            <div className="space-y-2">
+              <Label htmlFor="eyebrow">Eyebrow Text</Label>
+              <Input
+                id="eyebrow"
+                value={localConfig.eyebrow}
+                onChange={(e) => updateField('eyebrow', e.target.value)}
+                placeholder="Ready for Something Different?"
+              />
+            </div>
+          )}
 
           {/* Headlines */}
           <div className="grid grid-cols-2 gap-4">
@@ -92,15 +100,23 @@ export function FooterCTAEditor() {
           </div>
 
           {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              value={localConfig.description}
-              onChange={(e) => updateField('description', e.target.value)}
-              rows={3}
-            />
-          </div>
+          <ToggleInput
+            label="Show Description"
+            value={localConfig.show_description}
+            onChange={(value) => updateField('show_description', value)}
+            description="Display the paragraph below the headline"
+          />
+          {localConfig.show_description && (
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={localConfig.description}
+                onChange={(e) => updateField('description', e.target.value)}
+                rows={3}
+              />
+            </div>
+          )}
 
           {/* CTA Settings */}
           <div className="space-y-4 pt-4 border-t">

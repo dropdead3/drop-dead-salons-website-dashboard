@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { useNewClientConfig, type NewClientConfig, DEFAULT_NEW_CLIENT } from '@/hooks/useSectionConfig';
 import { RotatingWordsInput } from './RotatingWordsInput';
 import { BenefitsListInput } from './BenefitsListInput';
+import { ToggleInput } from './inputs/ToggleInput';
 import { useDebounce } from '@/hooks/use-debounce';
 import { triggerPreviewRefresh } from './LivePreviewPanel';
 
@@ -87,12 +88,20 @@ export function NewClientEditor() {
           </div>
 
           {/* Benefits */}
-          <BenefitsListInput
-            benefits={localConfig.benefits}
-            onChange={(benefits) => updateField('benefits', benefits)}
-            label="Benefits (shown as badges)"
-            placeholder="Add a benefit..."
+          <ToggleInput
+            label="Show Benefits"
+            value={localConfig.show_benefits}
+            onChange={(value) => updateField('show_benefits', value)}
+            description="Display benefit badges below the description"
           />
+          {localConfig.show_benefits && (
+            <BenefitsListInput
+              benefits={localConfig.benefits}
+              onChange={(benefits) => updateField('benefits', benefits)}
+              label="Benefits (shown as badges)"
+              placeholder="Add a benefit..."
+            />
+          )}
 
           {/* CTA */}
           <div className="space-y-2 pt-4 border-t">
