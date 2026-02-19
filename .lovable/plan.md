@@ -1,33 +1,30 @@
 
 
-## Match Sidebar Border to Top Navigation Bar
+## Rename "My Schedule" to "My Work Days"
 
-### Problem
-The sidebar uses `border-border/50` (50% opacity border) while the top navigation bar uses `border-border` (full opacity). This creates a visible mismatch in stroke intensity between the two navigation elements.
+Update the card title and all related labels across the codebase for consistency.
 
-### Change
+### Changes
 
-**File: `src/components/dashboard/DashboardLayout.tsx`** (line 868-869)
+**1. `src/components/dashboard/WorkScheduleWidgetCompact.tsx`**
+- Change both instances of `MY SCHEDULE` to `MY WORK DAYS` (lines 32 and 49)
 
-Update the sidebar border from `border-border/50` to `border-border` in both collapsed and expanded states to match the top bar exactly.
+**2. `src/components/dashboard/WidgetsSection.tsx`**
+- Rename the widget label from `My Schedule` to `My Work Days` (line 22)
+- Update the VisibilityGate `elementName` from `My Schedule Widget` to `My Work Days Widget` (line 137)
 
-Before:
-```
-lg:border-border/50 lg:rounded-[32px]   (collapsed)
-lg:border-border/50 lg:rounded-xl       (expanded)
-```
+**3. `src/components/dashboard/DashboardCustomizeMenu.tsx`**
+- Rename the customization menu label from `My Schedule` to `My Work Days` (line 141)
 
-After:
-```
-lg:border-border lg:rounded-[32px]      (collapsed)
-lg:border-border lg:rounded-xl          (expanded)
-```
+**4. `src/components/dashboard/PersonalInsightsDrawer.tsx`**
+- Rename the insight category label from `My Schedule` to `My Work Days` (line 39)
 
-Both elements will now share identical styling:
-- Fill: `bg-card/80`
-- Blur: `backdrop-blur-xl backdrop-saturate-150`
-- Border: `border border-border` (full opacity)
+### Files not changed (intentionally)
+- `AIChatPanel.tsx` -- conversational prompt ("What's my schedule today?") reads naturally as-is
+- `send-insights-email/index.ts` -- edge function emoji map key; changing would require coordination with insight generation logic
 
 ### Files Modified
-- `src/components/dashboard/DashboardLayout.tsx` (2 class changes on lines 868-869)
-
+- `src/components/dashboard/WorkScheduleWidgetCompact.tsx`
+- `src/components/dashboard/WidgetsSection.tsx`
+- `src/components/dashboard/DashboardCustomizeMenu.tsx`
+- `src/components/dashboard/PersonalInsightsDrawer.tsx`
