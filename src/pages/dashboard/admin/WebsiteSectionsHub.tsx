@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo, type ElementRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { 
@@ -135,6 +135,7 @@ export default function WebsiteSectionsHub() {
   const [activeTab, setActiveTab] = useState(defaultTab);
   // Preview is always visible on desktop
   const [showSidebar, setShowSidebar] = useState(true);
+  const sidebarPanelRef = useRef<ElementRef<typeof ResizablePanel>>(null);
   const [pendingTab, setPendingTab] = useState<string | null>(null);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const isDirtyRef = useRef(false);
@@ -195,10 +196,19 @@ export default function WebsiteSectionsHub() {
     <DashboardLayout>
       <div className="h-[calc(100vh-8rem)]">
         <ResizablePanelGroup direction="horizontal" className="h-full">
-          {/* Sidebar Navigation Panel */}
-          {showSidebar && !isMobile && (
+          {/* Sidebar Navigation Panel - always mounted on desktop */}
+          {!isMobile && (
             <>
-              <ResizablePanel defaultSize={25} minSize={20} maxSize={35}>
+              <ResizablePanel
+                ref={sidebarPanelRef}
+                defaultSize={showSidebar ? 25 : 0}
+                minSize={15}
+                maxSize={35}
+                collapsible
+                collapsedSize={0}
+                onCollapse={() => setShowSidebar(false)}
+                onExpand={() => setShowSidebar(true)}
+              >
                 <WebsiteEditorSidebar
                   activeTab={activeTab}
                   onTabChange={handleTabChange}
@@ -209,7 +219,7 @@ export default function WebsiteSectionsHub() {
           )}
 
           {/* Main Editor Panel */}
-          <ResizablePanel defaultSize={75} minSize={30}>
+          <ResizablePanel defaultSize={isMobile ? 100 : 40} minSize={30}>
             <div className="h-full flex flex-col overflow-hidden">
               {/* Header */}
               <div className="flex-shrink-0 px-6 py-4 border-b bg-background">
@@ -220,7 +230,13 @@ export default function WebsiteSectionsHub() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => setShowSidebar(!showSidebar)}
+                          onClick={() => {
+                            const panel = sidebarPanelRef.current;
+                            if (panel) {
+                              if (showSidebar) panel.collapse();
+                              else panel.expand();
+                            }
+                          }}
                           className="h-8 w-8"
                         >
                           {showSidebar ? (
@@ -267,11 +283,11 @@ export default function WebsiteSectionsHub() {
             </div>
           </ResizablePanel>
 
-          {/* Live Preview Panel - Always visible on desktop */}
+          {/* Live Preview Panel - always mounted on desktop */}
           {!isMobile && (
             <>
               <ResizableHandle withHandle />
-              <ResizablePanel defaultSize={35} minSize={25} maxSize={50}>
+              <ResizablePanel defaultSize={35} minSize={20} maxSize={50} collapsible collapsedSize={0}>
                 <LivePreviewPanel activeSectionId={activeSectionId} />
               </ResizablePanel>
             </>
