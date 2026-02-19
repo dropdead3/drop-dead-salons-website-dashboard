@@ -318,7 +318,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     <div className="flex flex-col h-full">
       {/* Logo & Collapse Toggle */}
       <div className={cn("border-b border-border/30", isCollapsed ? "p-3" : "px-4 py-3")}>
-        <div className={cn("flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
+        <div className={cn("flex items-center", isCollapsed ? "flex-col gap-2" : "justify-between")}>
           <Link to="/dashboard" className="block min-w-0">
             {isCollapsed ? (
               <Tooltip>
@@ -355,7 +355,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-6 w-6 mt-1.5 text-muted-foreground hover:text-foreground"
+                  className="h-7 w-7 rounded-md bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground"
                   onClick={onToggleCollapse}
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
