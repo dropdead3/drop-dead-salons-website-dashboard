@@ -1,35 +1,41 @@
 
 
-## Replace Icon Toggle with Filter Tab Toggle for Simple/Detailed View
+## Show User Profile Photo in Header Avatar
 
 ### What changes
-The current Simple/Detailed view toggle is a single icon button that flips between two icons with a tooltip. We will replace it with the existing `FilterTabsList` / `FilterTabsTrigger` component pair, showing two labeled tabs: **Simple** and **Detailed**.
+Replace the static `UserCircle` icon in both the desktop and mobile header profile dropdown triggers with the user's actual profile photo when available, falling back to the `UserCircle` icon when no photo is set.
 
-### File: `src/components/dashboard/AnalyticsFilterBar.tsx`
+### File: `src/components/dashboard/DashboardLayout.tsx`
 
-#### 1. Update imports
-- Remove: `LayoutGrid`, `List` from lucide-react; `Button`; `Tooltip`, `TooltipContent`, `TooltipTrigger`
-- Add: `Tabs`, `FilterTabsList`, `FilterTabsTrigger` from `@/components/ui/tabs`
+#### 1. Import the employee profile hook
+Add `useEmployeeProfile` to the existing imports from `@/hooks/useEmployeeProfile`.
 
-#### 2. Replace the toggle block (lines 66-82)
-
-Replace the icon `Button` wrapped in a `Tooltip` with:
-
+#### 2. Call the hook inside `DashboardLayoutInner`
+Add near the other hooks at the top of the component:
 ```tsx
-{onCompactChange && (
-  <Tabs
-    value={compact ? 'simple' : 'detailed'}
-    onValueChange={(v) => onCompactChange(v === 'simple')}
-  >
-    <FilterTabsList>
-      <FilterTabsTrigger value="simple">Simple</FilterTabsTrigger>
-      <FilterTabsTrigger value="detailed">Detailed</FilterTabsTrigger>
-    </FilterTabsList>
-  </Tabs>
-)}
+const { data: employeeProfile } = useEmployeeProfile();
 ```
 
-This uses the existing tokenized `FilterTabsList` and `FilterTabsTrigger` components (compact pill-style tabs at 8px height), which visually match other filter toggles in the analytics section and provide clear textual labels instead of ambiguous icons.
+#### 3. Replace the desktop header profile trigger (around line 948-951)
+Replace the `UserCircle` icon button with a conditional avatar:
+```tsx
+<Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+  {employeeProfile?.photo_url ? (
+    <Avatar className="h-7 w-7">
+      <AvatarImage src={employeeProfile.photo_url} alt="Profile" />
+      <AvatarFallback><UserCircle className="w-4 h-4" /></AvatarFallback>
+    </Avatar>
+  ) : (
+    <UserCircle className="w-4 h-4" />
+  )}
+</Button>
+```
 
-### No other files change
-The `FilterTabsList` and `FilterTabsTrigger` components already exist and are exported from `@/components/ui/tabs`. No new components or tokens are needed.
+#### 4. Replace the mobile header profile trigger (around line 1215-1218)
+Same change as above for the mobile layout's profile dropdown trigger.
+
+### Why this works
+- `useEmployeeProfile` is already used elsewhere and returns the current user's `photo_url` from their employee profile
+- `Avatar`, `AvatarImage`, and `AvatarFallback` are already imported in this file
+- When no photo is uploaded, `photo_url` is null, so the `UserCircle` icon continues to show
+- Once a photo is added, it appears as a circular avatar in the header immediately
