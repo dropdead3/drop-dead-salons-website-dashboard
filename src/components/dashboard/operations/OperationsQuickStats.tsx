@@ -59,7 +59,7 @@ export function OperationsQuickStats({ locationId, hideRevenue, filterContext }:
 
   if (isLoading) {
     return (
-      <BentoGrid maxPerRow={4} gap="gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map(i => (
           <Card key={i} className="p-4">
             <div className="flex items-center gap-3">
@@ -71,7 +71,7 @@ export function OperationsQuickStats({ locationId, hideRevenue, filterContext }:
             </div>
           </Card>
         ))}
-      </BentoGrid>
+      </div>
     );
   }
 
@@ -86,7 +86,7 @@ export function OperationsQuickStats({ locationId, hideRevenue, filterContext }:
           />
         )}
       </div>
-      <BentoGrid maxPerRow={hideRevenue ? 4 : 5} gap="gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4">
         {stats.map((stat) => (
           <Card key={stat.label} className="p-4">
             <div className="flex items-center gap-3">
@@ -117,7 +117,7 @@ export function OperationsQuickStats({ locationId, hideRevenue, filterContext }:
             </div>
           </Card>
         )}
-      </BentoGrid>
+      </div>
     </div>
   );
 }
