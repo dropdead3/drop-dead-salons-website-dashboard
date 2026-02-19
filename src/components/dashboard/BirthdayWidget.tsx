@@ -38,12 +38,12 @@ export function BirthdayWidget() {
   const hasUpcoming = nextUpcoming.length > 0;
 
   return (
-    <Card className={cn("p-4", tokens.card.wrapper)}>
+    <Card className={tokens.kpi.tile}>
       <div className="flex items-center gap-3 mb-3">
         <div className={tokens.card.iconBox}>
           <Cake className={tokens.card.icon} />
         </div>
-        <h3 className={tokens.card.title}>TEAM BIRTHDAYS</h3>
+        <h3 className={tokens.kpi.label}>TEAM BIRTHDAYS</h3>
       </div>
 
       {hasTodayBirthdays && (

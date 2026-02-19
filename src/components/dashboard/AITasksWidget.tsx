@@ -14,12 +14,12 @@ export function AITasksWidget() {
   );
 
   return (
-    <Card className={cn("p-4", tokens.card.wrapper)}>
+    <Card className={tokens.kpi.tile}>
       <div className="flex items-center gap-2 mb-3">
         <div className={tokens.card.iconBox}>
           <Brain className={tokens.card.icon} />
         </div>
-        <h3 className={tokens.card.title}>AI SUGGESTED TASKS</h3>
+        <h3 className={tokens.kpi.label}>AI SUGGESTED TASKS</h3>
       </div>
       {aiTasks.length === 0 ? (
         <p className="text-xs text-muted-foreground py-2">No pending AI tasks</p>
