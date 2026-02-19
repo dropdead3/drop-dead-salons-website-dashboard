@@ -1,157 +1,237 @@
 
-## Advanced Website Editor: Custom Sections, Delete, Undo/Redo
 
-This plan transforms the website editor from a fixed 13-section system into a flexible site builder where users can create new section types, delete sections they don't need, and undo/redo all layout changes.
+## Comprehensive Website Editor Enhancement Plan
 
----
-
-### Current Limitations
-
-- The `HomepageSections` interface is a fixed TypeScript type with 13 hardcoded keys
-- Section labels, descriptions, components, and tab mappings are all static `Record` objects spread across 5+ files
-- No undo/redo exists in the editor (the `useUndoRedo` hook exists but is unused)
-- Sections can only be toggled on/off -- never deleted
-- No way to add new section types
+Four major features to transform the editor into a full site builder. Each feature builds on the existing `site_settings` + `SectionConfig[]` architecture.
 
 ---
 
-### Architecture Change: Dynamic Section Model
+### Feature 1: Per-Section Style Overrides
 
-The core change is moving from a **typed record** (`HomepageSections` with fixed keys) to a **dynamic array** model.
+Allow each section to customize its own background, padding, and font sizing independent of the global theme.
+
+**Data Model**
+
+Add a `style_overrides` object to `SectionConfig`:
 
 ```text
-BEFORE (fixed):
-  homepage: { hero: {enabled, order}, brand_statement: {enabled, order}, ... }
-
-AFTER (dynamic):
-  homepage: [
-    { id: "hero", type: "hero", label: "Hero Section", description: "...", enabled: true, order: 1, deletable: false },
-    { id: "brand_statement", type: "brand_statement", ... },
-    { id: "custom_abc123", type: "rich_text", label: "About Our Team", ..., deletable: true },
-  ]
+SectionConfig {
+  ...existing fields,
+  style_overrides?: {
+    background_type: 'none' | 'color' | 'gradient' | 'image';
+    background_value: string;       // hex, gradient CSS, or image URL
+    padding_top: number;            // px, default 64
+    padding_bottom: number;         // px, default 64
+    max_width: 'sm' | 'md' | 'lg' | 'xl' | 'full';  // content container width
+    text_color_override: string;    // hex or empty
+    border_radius: number;          // section border radius in px
+  }
+}
 ```
 
-Built-in sections (hero, testimonials, etc.) are marked `deletable: false` and retain their dedicated editor components. Custom sections use a generic editor.
+**Implementation**
+
+| File | Change |
+|------|--------|
+| `src/hooks/useWebsiteSections.ts` | Add `style_overrides` to `SectionConfig` interface with sensible defaults |
+| `src/components/dashboard/website-editor/SectionStyleEditor.tsx` (new) | Collapsible "Style" panel with color picker, padding sliders, max-width selector, background type/value inputs |
+| `src/components/dashboard/website-editor/CustomSectionEditor.tsx` | Import and render `SectionStyleEditor` below content fields |
+| `src/components/dashboard/website-editor/HeroEditor.tsx` (and all built-in editors) | Add `SectionStyleEditor` as an "Advanced > Section Styling" collapsible at the bottom of each editor |
+| `src/pages/Index.tsx` | Wrap each section `<div>` with inline styles derived from `style_overrides` |
+| `src/components/home/SectionStyleWrapper.tsx` (new) | Shared wrapper component that reads `style_overrides` and applies `style={{ paddingTop, paddingBottom, background, color }}` plus Tailwind max-width classes |
+
+**How it works**: Each section's wrapper reads `style_overrides` from the section config and applies CSS inline styles. The editor provides a collapsible "Section Styling" panel with:
+- Background type selector (none / solid color / gradient / image)
+- Color picker for background and text
+- Padding top/bottom sliders (16-200px)
+- Content max-width selector
+- Live preview updates via postMessage bridge
 
 ---
 
-### Implementation Plan
+### Feature 2: Media/Image Upload for Custom Sections
 
-#### 1. New Data Model (`useWebsiteSections.ts`)
+Replace URL-only image inputs with a proper upload flow using the existing storage infrastructure.
 
-Replace the `HomepageSections` interface with a dynamic array-based structure:
+**Storage Setup**
 
-- **`SectionConfig`** gains: `id: string`, `type: SectionType`, `label: string`, `description: string`, `deletable: boolean`
-- **`SectionType`** union: all 13 built-in types plus `"rich_text"`, `"image_text"`, `"video"`, `"custom_cta"`, `"spacer"`
-- **`WebsiteSectionsConfig.homepage`** becomes `SectionConfig[]` (array, not record)
-- Migration helper: `migrateFromRecord()` converts old record format to new array format on first load, preserving existing data
-- Update `getOrderedSections()` and `getEnabledSections()` for the new array shape
+Create a new public storage bucket `website-sections` via SQL migration:
 
-#### 2. Custom Section Types (New Component Templates)
+```text
+INSERT INTO storage.buckets (id, name, public) VALUES ('website-sections', 'website-sections', true);
+-- RLS: authenticated users can upload/delete, anyone can read
+```
 
-Create 5 generic section types users can add:
+**Implementation**
 
-| Type | Description | Editor Fields |
-|------|-------------|---------------|
-| `rich_text` | Markdown/text block | Heading, body text, alignment, background style |
-| `image_text` | Image + text side-by-side | Image URL, heading, body, layout (image left/right), CTA button |
-| `video` | Embedded video section | Video URL (YouTube/Vimeo), heading, autoplay toggle |
-| `custom_cta` | Call-to-action banner | Heading, description, button text, button URL, style variant |
-| `spacer` | Visual divider/spacing | Height (px), show divider line toggle |
+| File | Change |
+|------|--------|
+| SQL migration | Create `website-sections` bucket with RLS policies for authenticated upload and public read |
+| `src/components/dashboard/website-editor/inputs/ImageUploadInput.tsx` (new) | Reusable component: drag-and-drop zone, file picker, upload to `website-sections` bucket, returns public URL. Shows thumbnail preview, loading state, and delete button. Uses `optimizeImage()` from `src/lib/image-utils.ts` for client-side compression before upload |
+| `src/components/dashboard/website-editor/CustomSectionEditor.tsx` | Replace the plain `<Input>` for `image_url` (in `image_text` type) with `<ImageUploadInput>`. Keep the URL input as a fallback "or paste URL" option |
+| `src/components/dashboard/website-editor/SectionStyleEditor.tsx` | Use `ImageUploadInput` for background image selection when `background_type === 'image'` |
+| `src/components/home/CustomSectionRenderer.tsx` | No changes needed -- it already renders `image_url` as an `<img>` src |
 
-Each gets a generic `CustomSectionEditor` component with field configs driven by the `type`.
-
-#### 3. New File: `CustomSectionEditor.tsx`
-
-A dynamic editor component that renders appropriate fields based on section type. It uses the existing `SectionDisplayEditor` pattern with field configs per type. Saves to `site_settings` with key `section_custom_{id}`.
-
-#### 4. New File: `CustomSectionRenderer.tsx`
-
-A frontend renderer for `Index.tsx` that reads the custom section's config from `site_settings` and renders the appropriate layout (rich text, image+text, video embed, CTA, or spacer).
-
-#### 5. "Add Section" Dialog in Sidebar
-
-Add an "Add Section" button at the bottom of the Homepage Layout area in `WebsiteEditorSidebar.tsx`:
-
-- Opens a dialog with the 5 custom section types as cards
-- User picks a type, enters a label (e.g., "About Our Philosophy")
-- Creates a new entry in the sections array with a generated ID (`custom_{nanoid}`)
-- Appended to the end of the section order
-
-#### 6. Delete Section Capability
-
-Add a delete button (trash icon) to each section row in the sidebar:
-
-- Built-in sections: delete button is hidden (they use the existing toggle instead)
-- Custom sections: shows a confirmation dialog, then removes from the array and deletes the associated `site_settings` row
-- Update `WebsiteEditorSidebar.tsx` and `SectionNavItem.tsx` to accept an `onDelete` prop
-
-#### 7. Undo/Redo for Section Layout
-
-Integrate the existing `useUndoRedo` hook into the section management flow:
-
-- **Scope**: Undo/redo covers the sections array (order, visibility, additions, deletions) -- not individual section content edits
-- **Location**: Add Undo/Redo buttons to the Website Editor header bar in `WebsiteSectionsHub.tsx`
-- **Keyboard shortcuts**: Cmd/Ctrl+Z for undo, Cmd/Ctrl+Shift+Z for redo
-- **Flow**: Every section toggle, reorder, add, or delete pushes a snapshot to the undo stack. Undo restores the previous snapshot and saves to database.
-- Wire into `WebsiteEditorSidebar.tsx` by lifting section state management to the parent hub and passing down handlers
-
-#### 8. Update `Index.tsx` (Frontend Rendering)
-
-- Change from `Record<keyof HomepageSections, ReactNode>` to a lookup function
-- Built-in types resolve to their existing components
-- Custom types resolve to `<CustomSectionRenderer id={section.id} type={section.type} />`
-- Handle unknown types gracefully (skip rendering)
-
-#### 9. Update All Consumers of the Old Model
-
-Files that reference `HomepageSections` as a record type need updates:
-
-- `useWebsiteSections.ts` -- core data model change
-- `WebsiteEditorSidebar.tsx` -- dynamic sections, add/delete buttons
-- `SectionNavItem.tsx` -- add delete prop
-- `WebsiteSectionsHub.tsx` -- undo/redo buttons, dynamic editor routing
-- `OverviewTab.tsx` -- adapt to array model
-- `Index.tsx` -- dynamic rendering
+**Component Design for `ImageUploadInput`**:
+- Drop zone with dashed border and upload icon
+- "Or paste URL" text input below
+- On file drop/select: optimize via `optimizeImage()`, upload to `website-sections/{sectionId}/{timestamp}.webp`, return public URL
+- Thumbnail preview with remove button once uploaded
+- Accepts `value` (current URL) and `onChange` (new URL) props
+- `bucket` and `path` props for flexibility across different contexts
 
 ---
 
-### Files to Create
+### Feature 3: Multi-Page Support
 
-| File | Purpose |
-|------|---------|
-| `src/components/dashboard/website-editor/CustomSectionEditor.tsx` | Generic editor for custom section types |
-| `src/components/dashboard/website-editor/AddSectionDialog.tsx` | Dialog for choosing and adding a new section type |
-| `src/components/home/CustomSectionRenderer.tsx` | Frontend renderer for custom sections |
+Extend the editor and routing to support About, Contact, and custom pages beyond the homepage.
 
-### Files to Modify
+**Data Model**
 
-| File | Changes |
-|------|---------|
-| `src/hooks/useWebsiteSections.ts` | Array-based model, migration helper, custom section types |
-| `src/components/dashboard/website-editor/WebsiteEditorSidebar.tsx` | Add/delete buttons, dynamic section list |
-| `src/components/dashboard/website-editor/SectionNavItem.tsx` | Delete button prop |
-| `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` | Undo/redo buttons + keyboard shortcuts, dynamic editor routing |
-| `src/components/dashboard/website-editor/OverviewTab.tsx` | Adapt to array model |
-| `src/pages/Index.tsx` | Dynamic section rendering with custom section support |
+Add a new `site_settings` key: `website_pages`
+
+```text
+WebsitePagesConfig {
+  pages: PageConfig[];
+}
+
+PageConfig {
+  id: string;                    // e.g. "home", "about", "contact", "custom_xyz"
+  slug: string;                  // URL path segment: "", "about", "contact", "our-story"
+  title: string;                 // "Home", "About Us", "Contact"
+  seo_title: string;
+  seo_description: string;
+  enabled: boolean;
+  show_in_nav: boolean;          // whether to show in the header navigation
+  nav_order: number;
+  sections: SectionConfig[];     // each page has its own section array
+  page_type: 'home' | 'standard' | 'custom';
+  deletable: boolean;
+}
+```
+
+**Migration from current model**: The existing `website_sections` setting becomes the `sections` array for the `home` page. A migration helper converts the current flat structure into the pages model on first load.
+
+**Implementation**
+
+| File | Change |
+|------|--------|
+| `src/hooks/useWebsitePages.ts` (new) | New hook: `useWebsitePages()`, `useUpdateWebsitePages()`. Manages the `website_pages` site setting. Includes migration from `website_sections` to pages model. Default pages: Home, About, Contact |
+| `src/hooks/useWebsiteSections.ts` | Becomes a thin wrapper that reads/writes sections for the currently selected page. Add `pageId` parameter |
+| `src/pages/DynamicPage.tsx` (new) | Generic page component that reads its `PageConfig` by slug and renders its sections array (same pattern as `Index.tsx`) |
+| `src/App.tsx` | Add a catch-all route under `/org/:orgSlug/*` that renders `DynamicPage`. Keep existing hardcoded routes (about, services, etc.) as higher-priority matches |
+| `src/components/layout/Header.tsx` | Read `website_pages` config and dynamically render nav links for pages where `show_in_nav === true`, ordered by `nav_order` |
+| `src/components/dashboard/website-editor/WebsiteEditorSidebar.tsx` | Add a "Pages" section above "Site Content" with a page selector dropdown. Selecting a page loads that page's sections into the layout area. Add "Add Page" and "Delete Page" controls |
+| `src/components/dashboard/website-editor/PageSettingsEditor.tsx` (new) | Editor for page-level settings: title, slug, SEO title/description, show-in-nav toggle |
+| `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` | Add page context state. Pass selected page to sidebar and editors. Update breadcrumb to show "Home > Hero" or "About > Rich Text" |
+| `src/components/SEO.tsx` | Accept dynamic title/description from `PageConfig.seo_title` and `seo_description` |
+
+**Routing Architecture**:
+
+```text
+/org/:orgSlug              -> Index.tsx (home page, highest priority)
+/org/:orgSlug/about        -> existing About.tsx (keep existing)
+/org/:orgSlug/services     -> existing Services.tsx (keep existing)
+/org/:orgSlug/:pageSlug    -> DynamicPage.tsx (catch-all for custom pages)
+```
+
+Existing hardcoded routes remain unchanged. Custom pages use a catch-all that looks up the slug in `website_pages`. If no match is found, render a 404.
+
+**Page Templates**: Default pages come pre-configured:
+- **Home**: Current section set (migrated)
+- **About**: rich_text (story) + image_text (team) + custom_cta
+- **Contact**: rich_text (info) + locations (reused built-in) + custom_cta
 
 ---
 
-### Migration Strategy
+### Feature 4: Template Library
 
-When the app loads the `website_sections` setting:
-1. Check if `homepage` is an object (old format) or array (new format)
-2. If object, run `migrateFromRecord()` to convert to array format
-3. Save the migrated format back to the database
-4. All subsequent operations use the array format
+Pre-built section and page designs users can apply with one click.
 
-This ensures zero data loss for existing configurations.
+**Data Model**
+
+Templates are stored as a static JSON registry (no database needed initially):
+
+```text
+SectionTemplate {
+  id: string;                    // "hero-minimal", "cta-bold-dark"
+  name: string;                  // "Minimal Hero"
+  description: string;
+  category: 'hero' | 'content' | 'cta' | 'social_proof' | 'team' | 'full_page';
+  thumbnail_url: string;         // preview image
+  section_type: SectionType;
+  default_config: Record<string, unknown>;   // pre-filled config values
+  style_overrides?: StyleOverrides;          // pre-set styling
+}
+
+PageTemplate {
+  id: string;
+  name: string;
+  description: string;
+  thumbnail_url: string;
+  sections: { type: SectionType; config: Record<string, unknown>; style_overrides?: StyleOverrides }[];
+}
+```
+
+**Implementation**
+
+| File | Change |
+|------|--------|
+| `src/data/section-templates.ts` (new) | Static registry of 15-20 section templates across categories. Each template includes a `default_config` matching its section type's config interface |
+| `src/data/page-templates.ts` (new) | Static registry of 4-5 page templates (Landing Page, About Us, Contact, Services Showcase, Minimal) |
+| `src/components/dashboard/website-editor/TemplatePicker.tsx` (new) | Modal/dialog with template cards organized by category. Each card shows thumbnail, name, description. Click applies the template config to the current section or creates a new section |
+| `src/components/dashboard/website-editor/PageTemplatePicker.tsx` (new) | Similar to TemplatePicker but for full pages. Applies a complete set of sections at once. Shows "This will replace current sections" warning |
+| `src/components/dashboard/website-editor/AddSectionDialog.tsx` | Add a "Start from Template" tab alongside the current type picker. Shows `TemplatePicker` filtered to the selected type |
+| `src/components/dashboard/website-editor/WebsiteEditorSidebar.tsx` | Add "Browse Templates" button near the "Add Section" button |
+| `src/pages/dashboard/admin/WebsiteSectionsHub.tsx` | Add "Apply Page Template" option in the header dropdown |
+
+**Template Categories**:
+- **Hero Variants**: Minimal (text only), Split (image + text), Video Background, Full-screen CTA
+- **Content Blocks**: Story Block, Feature Grid, Stats Counter, Timeline
+- **Social Proof**: Testimonial Carousel, Review Grid, Logo Wall
+- **CTA Variants**: Bold Dark, Gradient, Minimal, Split with Image
+- **Team**: Grid Cards, Carousel, Bios with Photos
+- **Full Page Templates**: Salon Landing, About Us, Contact, Services Showcase
+
+**Application Flow**:
+1. User clicks "Add Section" or "Browse Templates"
+2. Template picker opens with category filter tabs
+3. User selects a template -- preview shown
+4. "Apply" creates a new section with the template's type, config, and style overrides pre-filled
+5. User can then customize everything via the normal editor
 
 ---
 
-### What This Does NOT Include
+### Implementation Order and Dependencies
 
-- **Per-section style overrides** (background colors, padding, fonts) -- separate effort
-- **Media/image upload** within custom sections -- would reference URLs for now
-- **Multi-page support** (About, Contact pages) -- requires page-level routing architecture
-- **Template library** (pre-built section designs) -- future enhancement
+```text
+Phase 1: Per-Section Style Overrides
+  -- No dependencies, extends existing SectionConfig
+  -- Estimated scope: 3 new files, 15+ files modified
+
+Phase 2: Media/Image Upload
+  -- Depends on: storage bucket creation
+  -- Estimated scope: 1 migration, 2 new files, 3 modified
+
+Phase 3: Multi-Page Support
+  -- Depends on: Phase 1 (style overrides travel with sections)
+  -- Largest change: new routing, page model, sidebar redesign
+  -- Estimated scope: 4 new files, 8+ modified, 1 migration (optional)
+
+Phase 4: Template Library
+  -- Depends on: Phase 1 (templates include style overrides) + Phase 3 (page templates)
+  -- Estimated scope: 5 new files, 3 modified
+  -- Can be partially built alongside Phase 1 (section templates only)
+```
+
+---
+
+### Database Changes Required
+
+Only one SQL migration is needed across all four features:
+
+1. **Storage bucket**: `website-sections` (public, with authenticated upload RLS)
+2. No new tables -- all config continues to live in `site_settings` as JSON
+
+The `site_settings` table already supports arbitrary JSON values, so the new `website_pages` config, style overrides, and template references all fit within the existing schema.
+
