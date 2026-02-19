@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { format } from 'date-fns';
+import { CalendarIcon, Plus, Lock } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -17,8 +19,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { Plus, Lock } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface AddTaskDialogProps {
   onAdd: (task: { title: string; description?: string; due_date?: string; priority?: 'low' | 'normal' | 'high' }) => void;
@@ -30,7 +34,7 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [dueDate, setDueDate] = useState('');
+  const [dueDate, setDueDate] = useState<Date>(new Date());
   const [priority, setPriority] = useState<'low' | 'normal' | 'high'>('normal');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -40,13 +44,13 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
     onAdd({
       title: title.trim(),
       description: description.trim() || undefined,
-      due_date: dueDate || undefined,
+      due_date: dueDate ? format(dueDate, 'yyyy-MM-dd') : undefined,
       priority,
     });
 
     setTitle('');
     setDescription('');
-    setDueDate('');
+    setDueDate(new Date());
     setPriority('normal');
     setOpen(false);
   };
@@ -108,13 +112,30 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="due_date">Due Date</Label>
-              <Input
-                id="due_date"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
+              <Label>Due Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !dueDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dueDate ? format(dueDate, 'MMM d, yyyy') : 'Pick a date'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={dueDate}
+                    onSelect={(d) => d && setDueDate(d)}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
             <div className="space-y-2">
               <Label htmlFor="priority">Priority</Label>
