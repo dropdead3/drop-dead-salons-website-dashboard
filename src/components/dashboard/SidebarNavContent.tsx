@@ -313,7 +313,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
   };
 
   return (
-    <div className={cn("flex flex-col h-full", isCollapsed && "sidebar-collapsed-dark")}>
+    <div className={cn("flex flex-col h-full", "sidebar-dark")}>
       {/* Logo & Collapse Toggle */}
       <div className={cn("border-b border-border/30", isCollapsed ? "p-3" : "px-4 py-3")}>
         <div className={cn("flex items-center", isCollapsed ? "flex-col gap-2" : "justify-between")}>
@@ -342,7 +342,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
                 className="h-4 w-auto" 
               />
             ) : (
-              <span className="font-display text-base uppercase tracking-wider text-foreground">
+              <span className="font-display text-base uppercase tracking-wider text-white/90">
                 {businessSettings?.business_name || 'Drop Dead'}
               </span>
             )}
@@ -365,7 +365,7 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-muted-foreground hover:text-foreground shrink-0"
+              className="h-7 w-7 text-white/60 hover:text-white shrink-0"
               onClick={onToggleCollapse}
             >
               <PanelLeftClose className="w-4 h-4" />
