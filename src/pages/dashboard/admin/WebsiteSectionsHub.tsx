@@ -219,7 +219,7 @@ export default function WebsiteSectionsHub() {
   const EditorComponent = EDITOR_COMPONENTS[activeTab];
 
   return (
-    <DashboardLayout>
+    <DashboardLayout hideFooter>
       <div className="h-[calc(100vh-8rem)] flex">
         {/* Fixed-width Sidebar */}
         {!isMobile && showSidebar && (
