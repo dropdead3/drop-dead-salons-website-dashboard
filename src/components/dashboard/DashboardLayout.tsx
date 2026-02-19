@@ -840,7 +840,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
         <TooltipTrigger asChild>
           <Button 
             variant="ghost" 
-            className="h-9 rounded-full px-4 gap-1.5 text-muted-foreground hover:text-foreground"
+            className="h-9 rounded-full px-4 gap-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary"
             onClick={toggleHideNumbers}
           >
             {hideNumbers ? (
