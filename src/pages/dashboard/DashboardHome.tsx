@@ -496,7 +496,7 @@ function DashboardSections({
     quick_stats: hasStylistRole && (
       <VisibilityGate elementKey="quick_stats">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="relative overflow-hidden p-4 rounded-2xl backdrop-blur-sm transition-all duration-300">
+          <Card className="relative overflow-hidden p-4 rounded-xl backdrop-blur-sm transition-all duration-300">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-muted shadow-inner flex items-center justify-center rounded-xl">
                 <Calendar className="w-6 h-6 text-primary" />
@@ -509,7 +509,7 @@ function DashboardSections({
               </div>
             </div>
           </Card>
-          <Card className="relative overflow-hidden p-4 rounded-2xl backdrop-blur-sm transition-all duration-300">
+          <Card className="relative overflow-hidden p-4 rounded-xl backdrop-blur-sm transition-all duration-300">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-muted shadow-inner flex items-center justify-center rounded-xl">
                 <DollarSign className="w-6 h-6 text-primary" />
@@ -522,7 +522,7 @@ function DashboardSections({
               </div>
             </div>
           </Card>
-          <Card className="relative overflow-hidden p-4 rounded-2xl backdrop-blur-sm transition-all duration-300">
+          <Card className="relative overflow-hidden p-4 rounded-xl backdrop-blur-sm transition-all duration-300">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-muted shadow-inner flex items-center justify-center rounded-xl">
                 <Users className="w-6 h-6 text-primary" />
@@ -535,7 +535,7 @@ function DashboardSections({
               </div>
             </div>
           </Card>
-          <Card className="relative overflow-hidden p-4 rounded-2xl backdrop-blur-sm transition-all duration-300">
+          <Card className="relative overflow-hidden p-4 rounded-xl backdrop-blur-sm transition-all duration-300">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-muted shadow-inner flex items-center justify-center rounded-xl">
                 <TrendingUp className="w-6 h-6 text-primary" />
@@ -556,7 +556,7 @@ function DashboardSections({
       <div className={cn("grid gap-6", hasStylistRole && "lg:grid-cols-2")}>
         {hasStylistRole && (
           <VisibilityGate elementKey="todays_schedule">
-            <Card className="relative overflow-hidden p-6 rounded-2xl backdrop-blur-sm transition-all duration-300">
+            <Card className="relative overflow-hidden p-6 rounded-xl backdrop-blur-sm transition-all duration-300">
               <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
               <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
                 <h2 className="font-display text-xs tracking-[0.15em]">{t('home.todays_schedule')}</h2>
@@ -574,7 +574,7 @@ function DashboardSections({
         )}
 
         <VisibilityGate elementKey="my_tasks">
-          <Card className="relative overflow-hidden p-6 rounded-2xl backdrop-blur-sm transition-all duration-300">
+          <Card className="relative overflow-hidden p-6 rounded-xl backdrop-blur-sm transition-all duration-300">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-border/40 to-transparent" />
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-border/50">
               <div className="flex items-center gap-2">
@@ -625,12 +625,12 @@ function DashboardSections({
     client_engine: hasStylistRole && (
       <VisibilityGate elementKey="client_engine">
         <div className="relative group">
-          <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-r from-[hsl(45,60%,70%)] via-[hsl(40,50%,85%)] to-[hsl(45,60%,70%)] opacity-60 blur-[0.5px]" />
-          <div className="absolute -inset-[1px] rounded-2xl overflow-hidden">
+          <div className="absolute -inset-[1px] rounded-xl bg-gradient-to-r from-[hsl(45,60%,70%)] via-[hsl(40,50%,85%)] to-[hsl(45,60%,70%)] opacity-60 blur-[0.5px]" />
+          <div className="absolute -inset-[1px] rounded-xl overflow-hidden">
             <div className="gold-shimmer" />
           </div>
           
-          <Card className="relative p-6 rounded-2xl bg-gradient-to-br from-[hsl(40,30%,95%)] via-[hsl(45,25%,92%)] to-[hsl(40,20%,85%)] border border-[hsl(45,50%,75%)]/50 backdrop-blur-sm">
+          <Card className="relative p-6 rounded-xl bg-gradient-to-br from-[hsl(40,30%,95%)] via-[hsl(45,25%,92%)] to-[hsl(40,20%,85%)] border border-[hsl(45,50%,75%)]/50 backdrop-blur-sm">
             <div className="flex items-center justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-4 mb-2">
