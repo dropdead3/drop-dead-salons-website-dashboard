@@ -1,37 +1,75 @@
 
 
-## Separate Feedback Buttons Into Their Own Bento Card
+## Simple / Detailed View Toggle for Command Center Analytics
 
-### What Changes
+### What It Does
 
-The Lightbulb and Bug feedback buttons currently sit inside the same bento card as the Clock In and Lock buttons. We will pull them out into their own visually distinct bento card above the existing one, matching the same rounded/border styling.
+Adds a toggle in the analytics filter bar that lets the user switch between:
 
-### Implementation
+- **Detailed view** (current default): Full analytics cards with charts, grids, and drill-downs
+- **Simple view**: Each pinned card collapses to a single compact row showing the card name, icon, and its most important metric -- still looks like a dashboard, just tightened up
 
-**File: `src/components/dashboard/SidebarNavContent.tsx`** (lines 625-641)
+The widgets section remains untouched.
 
-Wrap `SidebarFeedbackButtons` in its own bento card container, separate from the Clock/Lock card:
+### User Experience
 
+The toggle appears as a small icon button (grid/list icon) next to the existing location and date filters in the analytics header bar. Preference is persisted in localStorage so it survives page reloads.
+
+Simple view renders each pinned card as a slim horizontal card (~56px tall) with:
+- Card icon (left)
+- Card name
+- Primary metric value (right-aligned, prominent)
+- Trend indicator if available
+
+All cards stack vertically in a tight grid, giving an executive "at a glance" feel.
+
+### Technical Plan
+
+| Step | File | Change |
+|------|------|--------|
+| 1 | `src/components/dashboard/PinnedAnalyticsCard.tsx` | Add `compact` prop. When true, render a slim summary row instead of the full card. Map each `cardId` to its key metric label and extract the value from already-fetched data (salesData, performers, queueData, etc.) |
+| 2 | `src/components/dashboard/AnalyticsFilterBar.tsx` | Add a Simple/Detailed toggle button (LayoutGrid / List icon) to the filter bar. Accept `compact` and `onCompactChange` props |
+| 3 | `src/pages/dashboard/DashboardHome.tsx` | Add `compact` state (persisted to localStorage key `cc-view-mode`). Pass it down to `AnalyticsFilterBar` and to each `PinnedAnalyticsCard` |
+
+### Compact Card Design
+
+Each card in simple mode becomes a single `Card` row:
+
+```text
++----------------------------------------------------------+
+| [icon]  Daily Brief          $4,230 revenue    +2.1%     |
++----------------------------------------------------------+
+| [icon]  Sales Overview       $12,450 total      -1.3%    |
++----------------------------------------------------------+
+| [icon]  Top Performers       Sarah M. (#1)     $3,200    |
++----------------------------------------------------------+
 ```
-Before (single card):
-  [Feedback] [Clock] [Lock]
 
-After (two cards):
-  Card 1: [Feedback buttons]
-  Card 2: [Clock] [Lock]
-```
+- Uses existing data hooks already called in `PinnedAnalyticsCard`
+- Each cardId maps to a summary extractor function that picks the single most important number
+- The PinnableCard hover interaction (Zura AI + pin icons) still works on the compact row
+- Cards remain individually removable/reorderable
 
-The new card will use the same styling as the existing one (`rounded-lg bg-muted/30 border border-border/50`) with appropriate padding based on `isCollapsed`. A small gap (`gap-2`) separates the two cards.
+### Metric Mapping Per Card
 
-**File: `src/components/dashboard/SidebarFeedbackButtons.tsx`**
+| Card | Simple View Shows |
+|------|-------------------|
+| executive_summary | Total Revenue + change % |
+| daily_brief | Today's Revenue |
+| sales_overview | Total Revenue + change % |
+| top_performers | #1 performer name + revenue |
+| operations_stats | Total in queue (waiting + in service) |
+| revenue_breakdown | Service vs Product split |
+| client_funnel | Total clients |
+| client_health | Total needing attention |
+| operational_health | Overall health score |
+| locations_rollup | Location count + top performer |
+| service_mix | Top service category |
+| retail_effectiveness | Attachment rate % |
+| rebooking | Rebooking rate % |
+| team_goals | Progress % toward goal |
+| capacity_utilization | Utilization % |
+| All others | Card name only (graceful fallback) |
 
-The component itself stays unchanged -- the separation is purely structural in the parent layout.
-
-### Technical Details
-
-| File | Change |
-|------|--------|
-| `src/components/dashboard/SidebarNavContent.tsx` | Move `SidebarFeedbackButtons` into its own bento card wrapper above the existing Clock/Lock card. Add `flex flex-col gap-2` to the footer container. |
-
-One file, ~6 lines changed.
+Three files modified. No database changes. Widgets section untouched.
 
