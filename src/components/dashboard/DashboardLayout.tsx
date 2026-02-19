@@ -1137,12 +1137,12 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                   variant="ghost"
                   size="icon"
                   className="h-9 w-9 rounded-full text-muted-foreground hover:text-foreground"
-                  onClick={() => navigate('/dashboard/calendar')}
+                  onClick={() => navigate('/dashboard/schedule')}
                 >
                   <CalendarDays className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent side="bottom">Calendar</TooltipContent>
+              <TooltipContent side="bottom">Schedule</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
