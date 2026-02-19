@@ -321,17 +321,17 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       case 'executive_summary':
       case 'sales_overview':
         metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
-        metricLabel = 'revenue';
+        metricLabel = 'Total Revenue';
         break;
       case 'daily_brief':
         metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
-        metricLabel = 'today';
+        metricLabel = 'Today\'s Revenue';
         break;
       case 'top_performers': {
         const top = performersForCard[0];
         if (top) {
           metricValue = `${top.name.split(' ')[0]} · ${formatCurrencyWhole(top.totalRevenue)}`;
-          metricLabel = '#1';
+          metricLabel = 'Top Performer';
         } else {
           metricValue = '--';
           metricLabel = '';
@@ -347,32 +347,32 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       }
       case 'revenue_breakdown':
         metricValue = `${formatCurrencyWhole(salesData?.serviceRevenue ?? 0)} / ${formatCurrencyWhole(salesData?.productRevenue ?? 0)}`;
-        metricLabel = 'svc / retail';
+        metricLabel = 'Service / Retail Split';
         break;
       case 'retail_effectiveness':
         metricValue = attachmentData ? formatPercent(attachmentData.attachmentRate) : '--';
-        metricLabel = 'attach rate';
+        metricLabel = 'Retail Attachment Rate';
         break;
       case 'rebooking':
         metricValue = rebookData ? formatPercent(rebookData.rebookRate) : '--';
-        metricLabel = 'rebook';
+        metricLabel = 'Rebooking Rate';
         break;
       case 'team_goals':
         metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
-        metricLabel = 'progress';
+        metricLabel = 'Team Progress';
         break;
       case 'capacity_utilization': {
         const avgUtil = workload?.length
           ? Math.round(workload.reduce((s, w) => s + w.utilizationScore, 0) / workload.length)
           : 0;
         metricValue = `${avgUtil}%`;
-        metricLabel = 'utilization';
+        metricLabel = 'Avg Utilization';
         break;
       }
       case 'operational_health': {
         const locCount = accessibleLocations?.length ?? 0;
         metricValue = locCount > 0 ? `${locCount} location${locCount !== 1 ? 's' : ''} monitored` : 'Healthy';
-        metricLabel = 'status';
+        metricLabel = 'System Status';
         break;
       }
       case 'locations_rollup': {
@@ -385,7 +385,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         const topCat = serviceMixData?.[0];
         if (topCat) {
           metricValue = `${topCat.category} · ${formatCurrencyCompact(topCat.revenue)}`;
-          metricLabel = 'top';
+          metricLabel = 'Top Category';
         } else {
           metricValue = '--';
           metricLabel = '';
@@ -395,7 +395,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       case 'client_funnel': {
         const total = (clientFunnelData?.newClientCount ?? 0) + (clientFunnelData?.returningClientCount ?? 0);
         metricValue = `${formatNumber(total)} clients`;
-        metricLabel = 'total';
+        metricLabel = 'Total Clients';
         break;
       }
       case 'client_health': {
@@ -414,34 +414,34 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       }
       case 'goal_tracker': {
         metricValue = `${Math.round(goalOrgMetrics.percentage)}%`;
-        metricLabel = goalOrgMetrics.paceStatus === 'ahead' ? 'ahead' : goalOrgMetrics.paceStatus === 'behind' ? 'behind' : 'on track';
+        metricLabel = goalOrgMetrics.paceStatus === 'ahead' ? 'Ahead of Pace' : goalOrgMetrics.paceStatus === 'behind' ? 'Behind Pace' : 'On Track';
         break;
       }
       case 'week_ahead_forecast': {
         if (weekAheadLoading) {
           metricValue = '--';
-          metricLabel = 'loading';
+          metricLabel = 'Loading Forecast';
         } else {
           metricValue = formatCurrencyCompact(weekAheadData?.totalRevenue ?? 0);
-          metricLabel = '7-day revenue';
+          metricLabel = '7-Day Projected Revenue';
         }
         break;
       }
       case 'new_bookings': {
         const count = newBookingsQuery.data?.bookedInRange ?? 0;
         metricValue = `${formatNumber(count)} new`;
-        metricLabel = 'bookings';
+        metricLabel = 'Recent Bookings';
         break;
       }
       case 'hiring_capacity': {
         metricValue = `${hiringCapacity.totalHiresNeeded} open`;
-        metricLabel = hiringCapacity.totalHiresNeeded === 1 ? 'chair' : 'chairs';
+        metricLabel = 'Open Chairs';
         break;
       }
       case 'staffing_trends': {
         const activeStaff = workload?.length ?? 0;
         metricValue = `${formatNumber(activeStaff)} active`;
-        metricLabel = 'staff';
+        metricLabel = 'Active Staff';
         break;
       }
       case 'stylist_workload': {
@@ -449,7 +449,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           ? Math.round(workload.reduce((s, w) => s + w.utilizationScore, 0) / workload.length)
           : 0;
         metricValue = `${avgUtilWl}%`;
-        metricLabel = 'avg util';
+        metricLabel = 'Avg Utilization';
         break;
       }
       default:
@@ -481,7 +481,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
             <div className="mt-4 flex-1">
               <p className="font-display text-2xl font-medium">{metricValue}</p>
               {metricLabel && (
-                <p className="text-xs text-muted-foreground/80 mt-1">{metricLabel}</p>
+                <p className="font-display text-[11px] tracking-[0.08em] uppercase text-muted-foreground/80 mt-1">{metricLabel}</p>
               )}
             </div>
             <div className="flex justify-end mt-2 pt-2 border-t border-border/30 min-h-[28px]">
