@@ -863,7 +863,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       {/* Desktop Sidebar */}
       <aside 
         className={cn(
-          "hidden lg:fixed lg:top-3 lg:bottom-3 lg:left-3 lg:z-50 lg:block lg:border lg:backdrop-blur-xl lg:overflow-hidden lg:shadow-sm transition-[width,background-color,border-color,border-radius] duration-200 ease-in-out",
+          "hidden lg:fixed lg:top-3 lg:bottom-3 lg:left-3 lg:z-50 lg:block lg:border lg:backdrop-blur-xl lg:overflow-hidden lg:shadow-sm transition-[width,background-color,border-color,border-radius] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]",
           sidebarCollapsed
             ? "lg:bg-card/80 lg:backdrop-saturate-150 lg:border-border/50 lg:rounded-full"
             : "lg:bg-card/80 lg:backdrop-saturate-150 lg:border-border/50 lg:rounded-xl",
