@@ -1455,24 +1455,24 @@ body.dashboard-cursor {
 .font-extrabold:not(.font-serif) { font-weight: 500 !important; }
 .font-black:not(.font-serif) { font-weight: 500 !important; }
 
-/* ===== LUXURIOUS DARK COLLAPSED SIDEBAR ===== */
-.sidebar-collapsed-dark {
+/* ===== LUXURIOUS DARK SIDEBAR ===== */
+.sidebar-dark {
   --sidebar-fg: 0 0% 100%;
   --sidebar-muted-fg: 0 0% 100% / 0.5;
   color: hsl(0 0% 100% / 0.7);
 }
-.sidebar-collapsed-dark .text-muted-foreground { color: hsl(0 0% 100% / 0.45) !important; }
-.sidebar-collapsed-dark .text-foreground { color: hsl(0 0% 100% / 0.9) !important; }
-.sidebar-collapsed-dark .bg-muted\/30 { background: hsl(0 0% 100% / 0.04) !important; }
-.sidebar-collapsed-dark .bg-muted\/50 { background: hsl(0 0% 100% / 0.08) !important; }
-.sidebar-collapsed-dark .bg-foreground { background: hsl(0 0% 100% / 0.15) !important; }
-.sidebar-collapsed-dark .bg-foreground\/10 { background: hsl(0 0% 100% / 0.1) !important; }
-.sidebar-collapsed-dark .border-border\/50,
-.sidebar-collapsed-dark .border-border\/30 { border-color: hsl(0 0% 100% / 0.06) !important; }
-.sidebar-collapsed-dark .hover\:bg-muted\/60:hover { background: hsl(0 0% 100% / 0.08) !important; }
-.sidebar-collapsed-dark .hover\:bg-muted:hover { background: hsl(0 0% 100% / 0.1) !important; }
-.sidebar-collapsed-dark .hover\:text-foreground:hover { color: hsl(0 0% 100%) !important; }
-.sidebar-collapsed-dark .bg-white\/\[0\.04\] { background: hsl(0 0% 100% / 0.04) !important; }
+.sidebar-dark .text-muted-foreground { color: hsl(0 0% 100% / 0.45) !important; }
+.sidebar-dark .text-foreground { color: hsl(0 0% 100% / 0.9) !important; }
+.sidebar-dark .bg-muted\/30 { background: hsl(0 0% 100% / 0.04) !important; }
+.sidebar-dark .bg-muted\/50 { background: hsl(0 0% 100% / 0.08) !important; }
+.sidebar-dark .bg-foreground { background: hsl(0 0% 100% / 0.15) !important; }
+.sidebar-dark .bg-foreground\/10 { background: hsl(0 0% 100% / 0.1) !important; }
+.sidebar-dark .border-border\/50,
+.sidebar-dark .border-border\/30 { border-color: hsl(0 0% 100% / 0.06) !important; }
+.sidebar-dark .hover\:bg-muted\/60:hover { background: hsl(0 0% 100% / 0.08) !important; }
+.sidebar-dark .hover\:bg-muted:hover { background: hsl(0 0% 100% / 0.1) !important; }
+.sidebar-dark .hover\:text-foreground:hover { color: hsl(0 0% 100%) !important; }
+.sidebar-dark .bg-white\/\[0\.04\] { background: hsl(0 0% 100% / 0.04) !important; }
 
 /* ===== PREVIEW HIGHLIGHT ===== */
 .preview-highlight {
