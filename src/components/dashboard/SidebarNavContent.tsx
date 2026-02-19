@@ -12,6 +12,7 @@ import { NavBadge } from './NavBadge';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
 import { SidebarAnnouncementsWidget } from './SidebarAnnouncementsWidget';
+import { SidebarGreeting } from './SidebarGreeting';
 import { SidebarSyncStatusWidget } from './SidebarSyncStatusWidget';
 import { SidebarLockButton } from './SidebarLockButton';
 import { SidebarClockButton } from './SidebarClockButton';
@@ -59,6 +60,9 @@ interface SidebarNavContentProps {
   onboardingProgress?: OnboardingProgress;
   isCollapsed?: boolean;
   onToggleCollapse?: () => void;
+  greeting?: string;
+  subtitle?: string;
+  firstName?: string;
 }
 
 const SIDEBAR_SCROLL_KEY = 'dashboard-sidebar-scroll';
@@ -85,6 +89,9 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
     onboardingProgress,
     isCollapsed = false,
     onToggleCollapse,
+    greeting,
+    subtitle,
+    firstName,
   }, ref) => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -344,6 +351,11 @@ const SidebarNavContent = forwardRef<HTMLElement, SidebarNavContentProps>((
           </Link>
         </div>
       </div>
+
+      {/* Animated Greeting - below logo, auto-dismisses after 7s */}
+      {!isCollapsed && greeting && firstName && (
+        <SidebarGreeting greeting={greeting} subtitle={subtitle} firstName={firstName} />
+      )}
 
       {/* Platform Hub link removed - access via platform routes only */}
 

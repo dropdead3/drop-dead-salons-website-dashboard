@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -302,6 +302,40 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
     percentage: onboardingPercentage,
   };
   const { roleNames: ALL_ROLES, roleLabels: ROLE_LABELS, getRoleBadgeClasses, getRoleIcon, getRoleDescription } = useRoleUtils();
+
+  // Greeting computation for sidebar
+  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || 'there';
+  const isLeadershipUser = actualRoles.includes('super_admin') || actualRoles.includes('manager') || (employeeProfile as any)?.is_super_admin;
+  const hasStylistRoleForGreeting = actualRoles.includes('stylist') || actualRoles.includes('stylist_assistant') || actualRoles.includes('booth_renter');
+  const isFrontDeskForGreeting = actualRoles.includes('receptionist');
+  
+  const greetingPool = useMemo(() => {
+    const ROLE_MESSAGES = {
+      leadership: {
+        greetings: ["Welcome back,", "Ready to lead,", "Let's build momentum,", "Great things ahead,", "Another strong day,", "Let's make it count,"],
+        subtitles: ["Here's what's happening across your operations", "Your team is set up for a strong day", "The numbers are telling a story", "Let's see where things stand", "Everything's moving in the right direction", "Here's your snapshot for today"],
+      },
+      stylist: {
+        greetings: ["Welcome back,", "Good to see you,", "You're on a roll,", "Another great day ahead,", "Let's make it a great one,", "Time to create,"],
+        subtitles: ["Here's what's on your schedule", "Your clients are going to love today", "Let's keep the momentum going", "You're set up for a strong day", "Here's your lineup for today", "Let's make every appointment count"],
+      },
+      frontDesk: {
+        greetings: ["Welcome back,", "Good to see you,", "The front desk is yours,", "Another great day ahead,", "Let's keep things running smooth,", "Ready to roll,"],
+        subtitles: ["Here's what's coming in today", "The schedule is looking good", "Let's keep the flow going", "You're set up for a smooth day", "Here's your snapshot for today", "Everything's on track"],
+      },
+      default: {
+        greetings: ["Welcome back,", "Good to see you,", "Another great day ahead,", "Let's make it count,", "You're on a roll,", "Great things ahead,"],
+        subtitles: ["Here's what's happening today", "Let's keep the momentum going", "You're set up for a strong day", "Everything's moving in the right direction", "Here's your snapshot for today", "Let's see where things stand"],
+      },
+    };
+    if (isLeadershipUser) return ROLE_MESSAGES.leadership;
+    if (hasStylistRoleForGreeting) return ROLE_MESSAGES.stylist;
+    if (isFrontDeskForGreeting) return ROLE_MESSAGES.frontDesk;
+    return ROLE_MESSAGES.default;
+  }, [isLeadershipUser, hasStylistRoleForGreeting, isFrontDeskForGreeting]);
+
+  const [sidebarGreeting] = useState(() => greetingPool.greetings[Math.floor(Math.random() * greetingPool.greetings.length)]);
+  const [sidebarSubtitle] = useState(() => greetingPool.subtitles[Math.floor(Math.random() * greetingPool.subtitles.length)]);
 
   // Close mobile sidebar on navigation
   const handleNavClick = () => {
@@ -853,6 +887,9 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
           onboardingProgress={onboardingProgress}
           isCollapsed={sidebarCollapsed}
           onToggleCollapse={toggleSidebarCollapsed}
+          greeting={sidebarGreeting}
+          subtitle={sidebarSubtitle}
+          firstName={firstName}
         />
       </aside>
 
@@ -895,6 +932,9 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
                 onNavClick={handleNavClick}
                 isOnboardingComplete={isOnboardingComplete}
                 onboardingProgress={onboardingProgress}
+                greeting={sidebarGreeting}
+                subtitle={sidebarSubtitle}
+                firstName={firstName}
               />
             </SheetContent>
           </Sheet>

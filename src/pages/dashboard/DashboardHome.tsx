@@ -270,19 +270,9 @@ export default function DashboardHome() {
 
         {/* Header with Customize Button */}
         <motion.div
-          className="border-b border-border/60 pb-6 space-y-4"
+          className="border-b border-border/60 pb-6"
           variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}
         >
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="font-display text-2xl lg:text-3xl mb-2 font-medium">
-                {greeting} <span className="text-foreground/80">{firstName}</span>
-              </h1>
-              <p className="text-muted-foreground font-sans font-medium">
-                {subtitle}
-              </p>
-            </div>
-          </div>
           <div className="flex flex-wrap items-start gap-3">
             {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
             <AnnouncementsDrawer isLeadership={isLeadership} />
