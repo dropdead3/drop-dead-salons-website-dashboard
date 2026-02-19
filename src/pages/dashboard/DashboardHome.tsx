@@ -726,7 +726,7 @@ function DashboardSections({
                 <React.Fragment key="compact-analytics-grid">
                   {hasPinnedAnalytics && (
                     <div className="pt-6 pb-2">
-                      <div className="flex items-center justify-between gap-4">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                           {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
                           <AnnouncementsDrawer isLeadership={isLeadership} />
@@ -795,7 +795,7 @@ function DashboardSections({
               <React.Fragment key="detailed-analytics-grid">
                 {hasPinnedAnalytics && (
                   <div className="pt-6 pb-2">
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
                         {isLeadership ? <AIInsightsDrawer /> : <PersonalInsightsDrawer />}
                         <AnnouncementsDrawer isLeadership={isLeadership} />
@@ -824,7 +824,7 @@ function DashboardSections({
                 {groups.map((group, gi) => {
                   if (group.type === 'pair') {
                     return (
-                      <div key={`pair-${gi}`} className="flex gap-4 items-stretch">
+                      <div key={`pair-${gi}`} className="flex flex-col md:flex-row gap-4 md:items-stretch">
                         <div className="flex-1 min-w-0 flex flex-col">
                           <PinnedAnalyticsCard cardId={group.cards[0]} filters={analyticsFilters} compact={compact} />
                         </div>
