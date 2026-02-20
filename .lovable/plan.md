@@ -1,31 +1,44 @@
 
 
-# Convert Client Detail Panel to Right-Side Floating Pop-Out
+# Upgrade Client Detail Panel to Luxury Glassmorphism Bento
 
 ## Problem
 
-The client detail panel is currently centered on screen. It should instead float on the right side of the viewport, matching a slide-out panel pattern while keeping the premium bento styling (rounded corners, backdrop blur, shadow).
+The panel currently uses `bg-popover`, `shadow-xl`, and a basic ease curve -- it doesn't match the platform's luxury glass aesthetic (`bg-card/80 backdrop-blur-xl`) or use a spring animation for that premium feel.
 
 ## Changes
 
 ### File: `src/components/dashboard/ClientDetailSheet.tsx`
 
-**Line 386-392** -- Update the floating panel's position and animation:
+**Lines 386-392** -- Update the floating panel's styling and animation:
 
-- Remove center positioning (`left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2`)
-- Apply right-side positioning: `fixed right-4 top-[50%] -translate-y-1/2 z-50`
-- Keep existing styling: `rounded-xl border border-border bg-popover shadow-xl overflow-hidden flex flex-col`
-- Keep responsive width: `w-[calc(100vw-2rem)] max-w-[440px] max-h-[85vh]`
+1. **Glassmorphism treatment**: Replace `bg-popover shadow-xl` with `bg-card/80 backdrop-blur-xl shadow-2xl` to match the platform's standard card language.
 
-**Animation update** (same lines):
+2. **Spring animation**: Replace the ease-curve transition with a physics-based spring:
+   - `initial`: `{ opacity: 0, x: 80 }` (starts further off-screen for a more dramatic entrance)
+   - `animate`: `{ opacity: 1, x: 0 }`
+   - `exit`: `{ opacity: 0, x: 80 }`
+   - `transition`: `{ type: 'spring', damping: 26, stiffness: 300, mass: 0.8 }` (snappy with a subtle overshoot)
 
-- Change from center scale animation to a right-side slide-in:
-  - `initial`: `{ opacity: 0, x: 40 }` (starts slightly off-screen right)
-  - `animate`: `{ opacity: 1, x: 0 }`
-  - `exit`: `{ opacity: 0, x: 40 }`
-- Remove `scale` from the animation since slide feels more natural for a side panel
+3. **Keep everything else**: `rounded-xl`, `border border-border`, `right-4 top-[50%] -translate-y-1/2`, responsive width, and all internal content remain unchanged.
+
+**Line 382** -- Subtle overlay refinement: Keep `bg-black/20 backdrop-blur-sm` as-is (already matches the luxury overlay standard).
+
+## Summary of class change
+
+```text
+Before:
+  bg-popover shadow-xl
+  transition: duration 0.2s, ease [0.16, 1, 0.3, 1]
+  initial/exit: x: 40
+
+After:
+  bg-card/80 backdrop-blur-xl shadow-2xl
+  transition: type spring, damping 26, stiffness 300, mass 0.8
+  initial/exit: x: 80
+```
 
 ## Result
 
-The panel will slide in from the right edge with a 16px (1rem) margin, vertically centered, keeping the premium backdrop blur overlay and all existing bento card content unchanged.
+The panel will slide in from the right with a satisfying spring bounce, featuring the same glassmorphism depth treatment used across all dashboard cards -- fully cohesive with the platform's luxury bento aesthetic.
 
