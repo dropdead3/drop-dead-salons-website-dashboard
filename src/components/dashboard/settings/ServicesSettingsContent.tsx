@@ -21,6 +21,7 @@ import { useCreateCategory, useRenameCategory, useDeleteCategory } from '@/hooks
 import { useServicesData, useCreateService, useUpdateService, useDeleteService, type Service } from '@/hooks/useServicesData';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { CategoryFormDialog } from './CategoryFormDialog';
+import { CategoryAddonManager } from './CategoryAddonManager';
 import { ServiceFormDialog } from './ServiceFormDialog';
 import { ServiceEditorDialog } from './ServiceEditorDialog';
 import { toast } from 'sonner';
@@ -304,6 +305,15 @@ export function ServicesSettingsContent() {
                           <div className="flex-1 min-w-0">
                             <p className={cn(tokens.body.emphasis, 'truncate')}>{cat.category_name}</p>
                             <p className={tokens.body.muted}>{serviceCount} service{serviceCount !== 1 ? 's' : ''}</p>
+                            {effectiveOrganization?.id && (
+                              <CategoryAddonManager
+                                categoryId={cat.id}
+                                categoryName={cat.category_name}
+                                organizationId={effectiveOrganization.id}
+                                availableCategories={localOrder.filter(c => c.id !== cat.id).map(c => c.category_name)}
+                                availableServiceNames={allServices?.map(s => s.name) ?? []}
+                              />
+                            )}
                           </div>
                           <div className="flex items-center gap-1">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {

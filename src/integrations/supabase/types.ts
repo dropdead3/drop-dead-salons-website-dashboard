@@ -13109,6 +13109,60 @@ export type Database = {
           },
         ]
       }
+      service_category_addons: {
+        Row: {
+          addon_category_name: string | null
+          addon_label: string
+          addon_service_name: string | null
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          organization_id: string
+          source_category_id: string
+          updated_at: string
+        }
+        Insert: {
+          addon_category_name?: string | null
+          addon_label: string
+          addon_service_name?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          organization_id: string
+          source_category_id: string
+          updated_at?: string
+        }
+        Update: {
+          addon_category_name?: string | null
+          addon_label?: string
+          addon_service_name?: string | null
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          organization_id?: string
+          source_category_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_category_addons_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_category_addons_source_category_id_fkey"
+            columns: ["source_category_id"]
+            isOneToOne: false
+            referencedRelation: "service_category_colors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_category_colors: {
         Row: {
           category_name: string
