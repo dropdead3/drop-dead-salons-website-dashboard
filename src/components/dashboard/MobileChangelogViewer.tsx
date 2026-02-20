@@ -5,6 +5,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Carousel,
@@ -141,7 +142,7 @@ export function MobileChangelogViewer({
                           <div className="mt-8 flex justify-center">
                             <Button
                               variant={entry.user_voted ? 'default' : 'outline'}
-                              size="lg"
+                              size={tokens.button.hero}
                               className="gap-3"
                               onClick={() => onVote(entry)}
                             >

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -383,7 +384,7 @@ export default function StylistLevels() {
                         />
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size={tokens.button.inline}
                           className="h-8 px-2"
                           onClick={() => setEditingIndex(null)}
                         >
@@ -495,7 +496,7 @@ export default function StylistLevels() {
                 <div className="flex items-center gap-1">
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size={tokens.button.inline}
                     className="h-8"
                     onClick={handleAddNew}
                     disabled={!newLevelName.trim()}
@@ -504,7 +505,7 @@ export default function StylistLevels() {
                   </Button>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size={tokens.button.inline}
                     className="h-8 px-2"
                     onClick={() => {
                       setIsAddingNew(false);

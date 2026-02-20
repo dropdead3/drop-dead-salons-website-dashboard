@@ -3,6 +3,7 @@ import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageContainer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Calendar, Clock, User, ExternalLink, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -46,7 +47,7 @@ export default function CoachRequests() {
         <div className="space-y-6">
           <div>
             <Link to="/dashboard/schedule-meeting">
-              <Button variant="ghost" size="sm" className="mb-4">
+              <Button variant="ghost" size={tokens.button.card} className="mb-4">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Meetings Hub
               </Button>
@@ -111,7 +112,7 @@ export default function CoachRequests() {
                       
                       <div className="flex flex-col gap-2 items-end">
                         <Button
-                          size="sm"
+                          size={tokens.button.inline}
                           variant="ghost"
                           onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/meeting/${meeting.id}`); }}
                         >
@@ -122,7 +123,7 @@ export default function CoachRequests() {
                         {meeting.status === 'pending' && (
                           <>
                             <Button
-                              size="sm"
+                              size={tokens.button.inline}
                               onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: meeting.id, status: 'confirmed' }); }}
                               disabled={updateStatus.isPending}
                             >
@@ -130,7 +131,7 @@ export default function CoachRequests() {
                               Confirm
                             </Button>
                             <Button
-                              size="sm"
+                              size={tokens.button.inline}
                               variant="outline"
                               onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: meeting.id, status: 'cancelled' }); }}
                               disabled={updateStatus.isPending}

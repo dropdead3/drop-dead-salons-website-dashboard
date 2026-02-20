@@ -21,7 +21,7 @@ export default function MeetingInbox() {
         <div className="space-y-6">
           <div>
             <Link to="/dashboard/schedule-meeting">
-              <Button variant="ghost" size="sm" className="mb-4">
+              <Button variant="ghost" size={tokens.button.card} className="mb-4">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Meetings Hub
               </Button>

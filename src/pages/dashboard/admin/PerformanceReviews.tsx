@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -202,7 +203,7 @@ export default function PerformanceReviews() {
                         <TableCell className="text-muted-foreground">{formatDate(parseISO(review.created_at), 'MMM d, yyyy')}</TableCell>
                         <TableCell>
                           {review.status === 'draft' && (
-                            <Button size="sm" variant="outline" onClick={() => handleSubmitReview(review.id)}>Submit</Button>
+                            <Button size={tokens.button.inline} variant="outline" onClick={() => handleSubmitReview(review.id)}>Submit</Button>
                           )}
                         </TableCell>
                       </TableRow>

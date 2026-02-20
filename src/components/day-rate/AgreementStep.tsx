@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -177,7 +178,7 @@ export function AgreementStep({ bookingData, onAccept }: AgreementStepProps) {
         onClick={handleSubmit}
         disabled={!canSign || isSubmitting}
         className="w-full"
-        size="lg"
+        size={tokens.button.hero}
       >
         {isSubmitting ? (
           'Submitting...'

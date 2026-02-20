@@ -3,6 +3,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInte
 import { ChevronLeft, ChevronRight, Plus, Calendar, CalendarDays, CalendarRange } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -124,7 +125,7 @@ export default function TeamCalendar() {
 
             {/* Navigation */}
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleToday}>
+              <Button variant="outline" size={tokens.button.card} onClick={handleToday}>
                 Today
               </Button>
               <Button variant="ghost" size="icon" onClick={handlePrevious}>

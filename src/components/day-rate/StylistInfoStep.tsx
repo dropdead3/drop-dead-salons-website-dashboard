@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import {
   Form,
@@ -232,7 +233,7 @@ export function StylistInfoStep({ initialData, onSubmit }: StylistInfoStepProps)
           </div>
         </div>
 
-        <Button type="submit" className="w-full" size="lg">
+        <Button type="submit" className="w-full" size={tokens.button.hero}>
           Continue to Agreement
         </Button>
       </form>

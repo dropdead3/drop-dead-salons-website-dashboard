@@ -3,6 +3,7 @@ import { useBoothRenter } from '@/hooks/useBoothRenters';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { 
@@ -233,7 +234,7 @@ export default function RenterPayRent() {
               ) : !paymentMethods?.length ? (
                 <div className="text-center py-4">
                   <p className="text-sm text-muted-foreground mb-3">No payment methods saved</p>
-                  <Button variant="outline" size="sm" asChild>
+                  <Button variant="outline" size={tokens.button.card} asChild>
                     <a href="/dashboard/renter/payment-methods">Add Card</a>
                   </Button>
                 </div>

@@ -49,7 +49,7 @@ export default function MyMeetings() {
         <div className="space-y-6">
           <div>
             <Link to="/dashboard/schedule-meeting">
-              <Button variant="ghost" size="sm" className="mb-4">
+              <Button variant="ghost" size={tokens.button.card} className="mb-4">
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Meetings Hub
               </Button>
@@ -74,7 +74,7 @@ export default function MyMeetings() {
                  description="Request a meeting to get started"
                  action={
                    <Link to="/dashboard/schedule-meeting/new">
-                     <Button size="sm">Request a meeting</Button>
+                     <Button size={tokens.button.card}>Request a meeting</Button>
                    </Link>
                  }
                />
@@ -119,7 +119,7 @@ export default function MyMeetings() {
                       
                       <div className="flex flex-col gap-2 items-end">
                         <Button
-                          size="sm"
+                          size={tokens.button.inline}
                           variant="ghost"
                           onClick={(e) => { e.stopPropagation(); navigate(`/dashboard/meeting/${meeting.id}`); }}
                         >
@@ -129,7 +129,7 @@ export default function MyMeetings() {
                         
                         {meeting.status === 'pending' && meeting.requester_id === user?.id && (
                           <Button
-                            size="sm"
+                            size={tokens.button.inline}
                             variant="outline"
                             onClick={(e) => { e.stopPropagation(); updateStatus.mutate({ id: meeting.id, status: 'cancelled' }); }}
                             disabled={updateStatus.isPending}

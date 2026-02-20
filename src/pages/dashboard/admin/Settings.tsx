@@ -6,6 +6,7 @@ import { useDashboardTheme } from '@/contexts/DashboardThemeContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import {
@@ -387,7 +388,7 @@ function NotificationsCard() {
               
               {hasStaffingChanges && (
                 <Button 
-                  size="sm" 
+                  size={tokens.button.card} 
                   onClick={handleSaveStaffingSettings}
                   disabled={updateStaffingSettings.isPending}
                   className="w-full"
@@ -1459,7 +1460,7 @@ export default function Settings() {
               <>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={handleResetLayout}
                   className="gap-1.5"
                 >
@@ -1468,7 +1469,7 @@ export default function Settings() {
                 </Button>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={handleCancelEdit}
                   className="gap-1.5"
                 >
@@ -1476,7 +1477,7 @@ export default function Settings() {
                   Cancel
                 </Button>
                 <Button
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={handleSaveLayout}
                   disabled={!hasChanges || updateLayout.isPending}
                   className="gap-1.5"
@@ -1492,7 +1493,7 @@ export default function Settings() {
             ) : (
               <Button
                 variant="outline"
-                size="sm"
+                size={tokens.button.card}
                 onClick={() => setIsEditMode(true)}
                 className="gap-1.5"
               >

@@ -3,6 +3,7 @@ import { PlatformPageContainer } from '@/components/platform/ui/PlatformPageCont
 import { PlatformPageHeader } from '@/components/platform/ui/PlatformPageHeader';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -163,7 +164,7 @@ export default function KpiBuilderPage() {
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <Badge variant="outline" className="text-xs capitalize">{template.cadence}</Badge>
-                    <Button variant="ghost" size="sm" className="gap-1 text-xs">
+                    <Button variant="ghost" size={tokens.button.inline} className="gap-1 text-xs">
                       <Plus className="h-3 w-3" /> Adopt
                     </Button>
                   </div>

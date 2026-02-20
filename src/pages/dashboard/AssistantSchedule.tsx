@@ -144,7 +144,7 @@ function AdminRequestRow({ request, onManualAssign }: { request: AssistantReques
           )}
         </div>
         {needsAssignment && onManualAssign && (
-          <Button size="sm" variant="outline" onClick={() => onManualAssign(request)}>
+          <Button size={tokens.button.inline} variant="outline" onClick={() => onManualAssign(request)}>
             <UserPlus className="h-4 w-4" />
           </Button>
         )}

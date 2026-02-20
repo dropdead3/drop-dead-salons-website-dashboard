@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components/ui/tabs';
 import { useAssistantRequests, type AssistantRequest } from '@/hooks/useAssistantRequests';
@@ -118,7 +119,7 @@ function RequestRow({ request, onManualAssign }: { request: AssistantRequest; on
           )}
         </div>
         {needsAssignment && onManualAssign && (
-          <Button size="sm" variant="outline" onClick={() => onManualAssign(request)}>
+          <Button size={tokens.button.inline} variant="outline" onClick={() => onManualAssign(request)}>
             <UserPlus className="h-4 w-4" />
           </Button>
         )}

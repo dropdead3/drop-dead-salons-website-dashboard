@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { BellEntryCard } from '@/components/dashboard/BellEntryCard';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -696,7 +697,7 @@ export default function RingTheBell() {
                 {(locationFilter || leadSourceFilter) && (
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size={tokens.button.inline}
                     onClick={() => {
                       setLocationFilter(null);
                       setLeadSourceFilter(null);

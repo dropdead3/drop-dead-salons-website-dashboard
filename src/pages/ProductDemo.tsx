@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import { DemoChat } from '@/components/demo/DemoChat';
 import { useProductDemo } from '@/hooks/useProductDemo';
@@ -75,10 +76,10 @@ export default function ProductDemo() {
               Ready to transform your salon operations?
             </p>
             <div className="flex items-center justify-center gap-3">
-              <Button size="lg" onClick={() => navigate('/register')}>
+              <Button size={tokens.button.hero} onClick={() => navigate('/register')}>
                 Start Free Trial
               </Button>
-              <Button variant="outline" size="lg" onClick={() => navigate('/contact')}>
+              <Button variant="outline" size={tokens.button.hero} onClick={() => navigate('/contact')}>
                 Schedule a Demo
               </Button>
             </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -297,7 +298,7 @@ export function PhysicalCardOrderForm({ organizationId }: PhysicalCardOrderFormP
 
             <Button 
               className="w-full" 
-              size="lg"
+              size={tokens.button.hero}
               onClick={handleSubmit}
               disabled={createOrder.isPending || !shippingAddress.name || !shippingAddress.street}
             >

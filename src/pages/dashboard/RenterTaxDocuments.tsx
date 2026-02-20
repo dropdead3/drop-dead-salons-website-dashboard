@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { FileText, Download, DollarSign, AlertCircle } from 'lucide-react';
@@ -130,7 +131,7 @@ export default function RenterTaxDocuments() {
                         This will be available by January 31st of the following year.
                       </p>
                       {selectedYearData.document_url ? (
-                        <Button size="sm" className="mt-3" asChild>
+                        <Button size={tokens.button.card} className="mt-3" asChild>
                           <a href={selectedYearData.document_url} target="_blank" rel="noopener noreferrer">
                             <Download className="h-4 w-4 mr-2" />
                             Download 1099-NEC
@@ -205,7 +206,7 @@ export default function RenterTaxDocuments() {
                     </TableCell>
                     <TableCell>
                       {doc.document_url && (
-                        <Button size="sm" variant="ghost" asChild>
+                        <Button size={tokens.button.inline} variant="ghost" asChild>
                           <a href={doc.document_url} target="_blank" rel="noopener noreferrer">
                             <Download className="h-4 w-4" />
                           </a>

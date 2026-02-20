@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -370,7 +371,7 @@ export default function HomepageStylists() {
           {showActions ? (
             <div className="flex flex-col gap-2">
               <Button
-                size="sm"
+                size={tokens.button.inline}
                 onClick={() => updateVisibility.mutate({ userId: stylist.user_id, visible: true })}
                 disabled={updateVisibility.isPending}
               >
@@ -378,7 +379,7 @@ export default function HomepageStylists() {
                 Approve
               </Button>
               <Button
-                size="sm"
+                size={tokens.button.inline}
                 variant="outline"
                 onClick={() => denyRequest.mutate(stylist.user_id)}
                 disabled={denyRequest.isPending}
@@ -468,7 +469,7 @@ export default function HomepageStylists() {
             <div className="mt-4 pt-4 border-t">
               <Button
                 variant="outline"
-                size="sm"
+                size={tokens.button.card}
                 onClick={() => setPreviewOpen(true)}
                 className="gap-2"
               >

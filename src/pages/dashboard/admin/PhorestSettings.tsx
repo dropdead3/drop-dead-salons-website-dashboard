@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
@@ -684,7 +685,7 @@ export default function PhorestSettings() {
                                 <TableCell>
                                   <div className="flex items-center gap-2">
                                     <CollapsibleTrigger asChild>
-                                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                                      <Button variant="ghost" size={tokens.button.inline} className="h-6 w-6 p-0">
                                         <ChevronDown className={`w-4 h-4 transition-transform ${isExpanded ? '' : '-rotate-90'}`} />
                                       </Button>
                                     </CollapsibleTrigger>

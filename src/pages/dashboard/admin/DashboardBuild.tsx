@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
+import { tokens } from '@/lib/design-tokens';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { 
@@ -596,16 +597,16 @@ function TaskCard({ task, variant, onEdit, onDelete, onStatusChange, deleteConfi
         <div className="flex items-center gap-2 ml-8">
           <span className="text-xs text-muted-foreground">Move to:</span>
           {variant !== 'pending' && (
-            <Button variant="outline" size="sm" className="h-6 text-xs" onClick={() => onStatusChange(task, 'pending')}>
+            <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'pending')}>
               Pending
             </Button>
           )}
           {variant !== 'in-progress' && (
-            <Button variant="outline" size="sm" className="h-6 text-xs" onClick={() => onStatusChange(task, 'in-progress')}>
+            <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'in-progress')}>
               In Progress
             </Button>
           )}
-          <Button variant="outline" size="sm" className="h-6 text-xs" onClick={() => onStatusChange(task, 'complete')}>
+          <Button variant="outline" size={tokens.button.inline} className="h-6 text-xs" onClick={() => onStatusChange(task, 'complete')}>
             Complete
           </Button>
         </div>
