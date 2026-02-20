@@ -14,7 +14,9 @@ import {
   TrendingUp,
   User,
   MapPin,
-  CheckCircle
+  CheckCircle,
+  Cake,
+  Award
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { VisitHistoryTimeline } from '@/components/dashboard/VisitHistoryTimeline';
@@ -33,6 +35,8 @@ export interface ExtendedPhorestClient {
   total_spend?: number | null;
   is_vip?: boolean;
   branch_name?: string | null;
+  birthday?: string | null;
+  client_since?: string | null;
 }
 
 interface ClientProfileViewProps {
@@ -111,25 +115,43 @@ export function ClientProfileView({ client, onBack, onSelect }: ClientProfileVie
         </Card>
       </div>
 
-      {/* Last Visit Info */}
-      {lastVisit && (
+      {/* Last Visit & Personal Info */}
+      {(lastVisit || client.birthday || client.client_since) && (
         <div className="px-4 py-2 border-b border-border bg-muted/20">
-          <p className="text-[10px] uppercase font-medium text-muted-foreground mb-1">Last Visit</p>
+          {lastVisit && (
+            <>
+              <p className="text-[10px] uppercase font-medium text-muted-foreground mb-1">Last Visit</p>
+              <div className="flex items-center gap-3 text-xs mb-1.5">
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3 h-3 text-muted-foreground" />
+                  {formatDate(new Date(lastVisit.appointment_date), 'MMM d, yyyy')}
+                </span>
+                {lastVisit.stylist_name && (
+                  <span className="flex items-center gap-1">
+                    <User className="w-3 h-3 text-muted-foreground" />
+                    {lastVisit.stylist_name}
+                  </span>
+                )}
+                {client.branch_name && (
+                  <span className="flex items-center gap-1 text-muted-foreground">
+                    <MapPin className="w-3 h-3" />
+                    {client.branch_name}
+                  </span>
+                )}
+              </div>
+            </>
+          )}
           <div className="flex items-center gap-3 text-xs">
-            <span className="flex items-center gap-1">
-              <Calendar className="w-3 h-3 text-muted-foreground" />
-              {formatDate(new Date(lastVisit.appointment_date), 'MMM d, yyyy')}
-            </span>
-            {lastVisit.stylist_name && (
+            {client.birthday && (
               <span className="flex items-center gap-1">
-                <User className="w-3 h-3 text-muted-foreground" />
-                {lastVisit.stylist_name}
+                <Cake className="w-3 h-3 text-muted-foreground" />
+                {formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')}
               </span>
             )}
-            {client.branch_name && (
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <MapPin className="w-3 h-3" />
-                {client.branch_name}
+            {client.client_since && (
+              <span className="flex items-center gap-1">
+                <Award className="w-3 h-3 text-muted-foreground" />
+                Since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy')}
               </span>
             )}
           </div>

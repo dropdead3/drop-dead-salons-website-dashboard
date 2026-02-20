@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { format } from 'date-fns';
 import { tokens } from '@/lib/design-tokens';
 import {
   Dialog,
@@ -12,6 +13,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import {
   Select,
   SelectContent,
@@ -19,7 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, UserPlus } from 'lucide-react';
+import { CalendarIcon, Loader2, UserPlus } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,6 +68,8 @@ export function NewClientDialog({
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [notes, setNotes] = useState('');
+  const [birthday, setBirthday] = useState<Date | undefined>(undefined);
+  const [clientSince, setClientSince] = useState<Date | undefined>(new Date());
   const [locationId, setLocationId] = useState(defaultLocationId || '');
   const [showLocationSelector, setShowLocationSelector] = useState(!defaultLocationId);
 
@@ -69,6 +79,8 @@ export function NewClientDialog({
     setEmail('');
     setPhone('');
     setNotes('');
+    setBirthday(undefined);
+    setClientSince(new Date());
     setLocationId(defaultLocationId || '');
   };
 
@@ -87,6 +99,8 @@ export function NewClientDialog({
           email: email.trim() || undefined,
           phone: phone.replace(/\D/g, '').trim() || undefined,
           notes: notes.trim() || undefined,
+          birthday: birthday ? format(birthday, 'yyyy-MM-dd') : undefined,
+          client_since: clientSince ? format(clientSince, 'yyyy-MM-dd') : undefined,
         },
       });
 
@@ -214,6 +228,63 @@ export function NewClientDialog({
           <p className="text-xs text-muted-foreground">
             * Email or phone is required for contact
           </p>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Birthday</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !birthday && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {birthday ? format(birthday, "MMM d, yyyy") : "Optional"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={birthday}
+                    onSelect={setBirthday}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label>Client Since</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !clientSince && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {clientSince ? format(clientSince, "MMM d, yyyy") : "Optional"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={clientSince}
+                    onSelect={setClientSince}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="notes">Notes (Optional)</Label>

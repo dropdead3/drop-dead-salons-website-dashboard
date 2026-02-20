@@ -8850,7 +8850,9 @@ export type Database = {
           ban_reason: string | null
           banned_at: string | null
           banned_by: string | null
+          birthday: string | null
           branch_name: string | null
+          client_since: string | null
           created_at: string
           email: string | null
           first_visit: string | null
@@ -8875,7 +8877,9 @@ export type Database = {
           ban_reason?: string | null
           banned_at?: string | null
           banned_by?: string | null
+          birthday?: string | null
           branch_name?: string | null
+          client_since?: string | null
           created_at?: string
           email?: string | null
           first_visit?: string | null
@@ -8900,7 +8904,9 @@ export type Database = {
           ban_reason?: string | null
           banned_at?: string | null
           banned_by?: string | null
+          birthday?: string | null
           branch_name?: string | null
+          client_since?: string | null
           created_at?: string
           email?: string | null
           first_visit?: string | null

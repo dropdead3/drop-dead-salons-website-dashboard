@@ -14,6 +14,8 @@ interface CreateClientRequest {
   email?: string;
   phone?: string;
   notes?: string;
+  birthday?: string;
+  client_since?: string;
 }
 
 async function phorestRequest(
@@ -98,7 +100,7 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
     const body: CreateClientRequest = await req.json();
     
-    const { branch_id, first_name, last_name, email, phone, notes } = body;
+    const { branch_id, first_name, last_name, email, phone, notes, birthday, client_since } = body;
 
     if (!branch_id || !first_name || !last_name) {
       throw new Error("branch_id, first_name, and last_name are required");
@@ -168,6 +170,8 @@ Deno.serve(async (req) => {
       location_id: location?.id || null,
       visit_count: 0,
       total_spend: 0,
+      birthday: birthday || null,
+      client_since: client_since || new Date().toISOString().split('T')[0],
     };
 
     const { data: insertedClient, error: insertError } = await supabase
