@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -109,7 +110,7 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg">Check-in Reports</CardTitle>
         {!isBuilding && (
-          <Button size="sm" onClick={() => setIsBuilding(true)}>
+          <Button size={tokens.button.card} onClick={() => setIsBuilding(true)}>
             <FileText className="h-4 w-4 mr-1" />
             Build Report
           </Button>
@@ -230,7 +231,7 @@ export function ReportBuilder({ meetingId, teamMemberId, teamMemberName }: Repor
                 </div>
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size={tokens.button.inline}>
                       <Eye className="h-4 w-4 mr-1" />
                       View
                     </Button>

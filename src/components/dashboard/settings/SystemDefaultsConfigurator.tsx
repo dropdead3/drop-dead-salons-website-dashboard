@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -275,7 +276,7 @@ export function SystemDefaultsConfigurator() {
                         <>
                           <Button
                             variant="outline"
-                            size="sm"
+                            size={tokens.button.inline}
                             onClick={() => discardChanges(role.name)}
                             className="font-display text-xs"
                           >
@@ -283,7 +284,7 @@ export function SystemDefaultsConfigurator() {
                             DISCARD
                           </Button>
                           <Button
-                            size="sm"
+                            size={tokens.button.inline}
                             onClick={() => saveDefaults(role.name)}
                             disabled={setDefaults.isPending}
                             className="font-display text-xs"
@@ -297,7 +298,7 @@ export function SystemDefaultsConfigurator() {
                         <>
                           <Button
                             variant="outline"
-                            size="sm"
+                            size={tokens.button.inline}
                             onClick={() => setConfirmSaveAsCurrent(role.name)}
                             disabled={!diff.hasDifference || saveCurrentAsDefaults.isPending}
                             className="font-display text-xs"
@@ -307,7 +308,7 @@ export function SystemDefaultsConfigurator() {
                           </Button>
                           <Button
                             variant="outline"
-                            size="sm"
+                            size={tokens.button.inline}
                             onClick={() => setConfirmReset(role.name)}
                             disabled={!diff.hasDifference || resetToDefaults.isPending}
                             className="font-display text-xs"

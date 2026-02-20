@@ -2,6 +2,7 @@ import { format } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { AnalyticsFilterBadge, type FilterContext } from '@/components/dashboard/AnalyticsFilterBadge';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -49,7 +50,7 @@ export function DailyBriefCard({ filterContext, locationId }: DailyBriefCardProp
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>Failed to load daily brief.</span>
           </div>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => { refetchRevenue(); refetchAppointments(); }}>
+          <Button variant="outline" size={tokens.button.card} className="mt-3" onClick={() => { refetchRevenue(); refetchAppointments(); }}>
             Retry
           </Button>
         </CardContent>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Tabs, TabsContent, SubTabsList, SubTabsTrigger } from '@/components/ui/tabs';
 import { VisibilityGate } from '@/components/visibility/VisibilityGate';
 import {
@@ -40,7 +41,7 @@ import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { AnalyticsFilterBadge } from '@/components/dashboard/AnalyticsFilterBadge';
 import { EmptyState } from '@/components/ui/empty-state';
-import { tokens } from '@/lib/design-tokens';
+// tokens already imported above
 import { AggregateSalesCard } from '@/components/dashboard/AggregateSalesCard';
 
 // Sub-components
@@ -516,7 +517,7 @@ export function SalesTabContent({ filters, subTab = 'overview', onSubTabChange }
             </div>
             <Button
               variant="outline"
-              size="sm"
+              size={tokens.button.inline}
               className="shrink-0 text-xs gap-1.5"
               onClick={() => navigate('/dashboard/admin/payroll?tab=commissions')}
             >

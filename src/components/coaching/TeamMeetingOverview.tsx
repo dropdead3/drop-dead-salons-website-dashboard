@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -196,13 +197,13 @@ export function TeamMeetingOverview() {
                     <TableCell>
                       <div className="flex items-center justify-end gap-1.5">
                         <Link to={`/dashboard/schedule-meeting/new?staffId=${s.userId}`}>
-                          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
+                          <Button variant="ghost" size={tokens.button.inline} className="h-7 text-xs gap-1">
                             <CalendarPlus className="w-3 h-3" />
                             Schedule
                           </Button>
                         </Link>
                         <Link to={`/dashboard/admin/analytics?tab=reports&report=individual-staff&staffId=${s.userId}`}>
-                          <Button variant="ghost" size="sm" className="h-7 text-xs gap-1">
+                          <Button variant="ghost" size={tokens.button.inline} className="h-7 text-xs gap-1">
                             <FileText className="w-3 h-3" />
                             Prep
                           </Button>

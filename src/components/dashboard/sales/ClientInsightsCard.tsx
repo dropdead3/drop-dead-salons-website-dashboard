@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Users, Star, AlertTriangle, ChevronRight, Loader2, MapPin } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -130,7 +131,7 @@ export function ClientInsightsCard({
             <MetricInfoTooltip description="Highlights key client metrics including new vs returning breakdown, average ticket size, and visit frequency. Data is sourced from completed appointments." />
           </div>
           <Link to="/dashboard/my-clients">
-            <Button variant="ghost" size="sm" className="text-xs">
+            <Button variant="ghost" size={tokens.button.inline} className="text-xs">
               View All <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </Link>

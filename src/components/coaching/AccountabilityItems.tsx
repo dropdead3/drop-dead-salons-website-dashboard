@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -120,7 +121,7 @@ export function AccountabilityItems({ meetingId, teamMemberId, isCoach }: Accoun
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-lg">Action Items</CardTitle>
           {isCoach && !isAdding && (
-            <Button size="sm" onClick={() => setIsAdding(true)}>
+            <Button size={tokens.button.card} onClick={() => setIsAdding(true)}>
               <Plus className="h-4 w-4 mr-1" />
               Add Item
             </Button>

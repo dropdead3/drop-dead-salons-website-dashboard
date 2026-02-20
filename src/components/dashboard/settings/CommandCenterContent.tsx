@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -337,7 +338,7 @@ export function CommandCenterContent() {
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                size="sm"
+                size={tokens.button.card}
                 onClick={() => syncMutation.mutate()}
                 disabled={syncMutation.isPending}
               >
@@ -351,7 +352,7 @@ export function CommandCenterContent() {
 
               <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                 <DialogTrigger asChild>
-                  <Button size="sm">
+                  <Button size={tokens.button.card}>
                     <Plus className="h-4 w-4 mr-2" />
                     Add Element
                   </Button>
@@ -428,10 +429,10 @@ export function CommandCenterContent() {
 
           {/* Expand/Collapse All */}
           <div className="flex items-center gap-2 mt-4">
-            <Button variant="ghost" size="sm" onClick={expandAll}>
+            <Button variant="ghost" size={tokens.button.inline} onClick={expandAll}>
               Expand All
             </Button>
-            <Button variant="ghost" size="sm" onClick={collapseAll}>
+            <Button variant="ghost" size={tokens.button.inline} onClick={collapseAll}>
               Collapse All
             </Button>
             <span className="text-sm text-muted-foreground ml-auto">
@@ -510,7 +511,7 @@ export function CommandCenterContent() {
                     
                     <div className="flex gap-2">
                       <Button
-                        size="sm"
+                        size={tokens.button.inline}
                         variant={allVisible ? "secondary" : "outline"}
                         className={cn(
                           "flex-1 h-8 text-xs gap-1.5",
@@ -523,7 +524,7 @@ export function CommandCenterContent() {
                         <span>Show</span>
                       </Button>
                       <Button
-                        size="sm"
+                        size={tokens.button.inline}
                         variant={noneVisible ? "secondary" : "outline"}
                         className={cn(
                           "flex-1 h-8 text-xs gap-1.5",

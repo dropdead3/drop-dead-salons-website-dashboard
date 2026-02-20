@@ -8,6 +8,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -147,9 +148,9 @@ export function ShareToChannelDialog({ open, onOpenChange, campaignName, content
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" size="sm" onClick={() => handleClose(false)}>Cancel</Button>
+          <Button variant="ghost" size={tokens.button.card} onClick={() => handleClose(false)}>Cancel</Button>
           <Button
-            size="sm"
+            size={tokens.button.card}
             onClick={handleSend}
             disabled={!selectedChannel || sending || sent}
             className="gap-1.5"
