@@ -1,4 +1,5 @@
 import { memo, useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Sparkles, RefreshCw, Calendar, Clock, ChevronDown, ChevronUp, TrendingUp, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -134,7 +135,7 @@ function SchedulingCopilotPanelComponent({
             ) : error ? (
               <div className="text-center py-8 text-muted-foreground">
                 <p className="text-sm mb-2">Unable to load suggestions</p>
-                <Button variant="outline" size="sm" onClick={handleRefresh}>
+                <Button variant="outline" size={tokens.button.card} onClick={handleRefresh}>
                   Try Again
                 </Button>
               </div>
@@ -153,7 +154,7 @@ function SchedulingCopilotPanelComponent({
                 {dismissedIds.size > 0 && (
                   <Button
                     variant="link"
-                    size="sm"
+                    size={tokens.button.inline}
                     onClick={() => setDismissedIds(new Set())}
                     className="mt-2"
                   >

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -251,7 +252,7 @@ export function HandbooksContent() {
                 <Label>Visible To</Label>
                 <div className="flex flex-wrap gap-2">
                   {roleOptions.map(role => (
-                    <Button key={role.value} type="button" size="sm" variant={visibleToRoles.includes(role.value) ? 'default' : 'outline'} onClick={() => toggleRoleVisibility(role.value)}>
+                    <Button key={role.value} type="button" size={tokens.button.inline} variant={visibleToRoles.includes(role.value) ? 'default' : 'outline'} onClick={() => toggleRoleVisibility(role.value)}>
                       {role.label}
                     </Button>
                   ))}

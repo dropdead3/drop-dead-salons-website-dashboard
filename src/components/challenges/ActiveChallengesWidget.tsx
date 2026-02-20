@@ -1,3 +1,4 @@
+import { tokens } from '@/lib/design-tokens';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -83,7 +84,7 @@ export function ActiveChallengesWidget({
           </CardTitle>
           {challenges.length > maxItems && (
             <Link to="/dashboard/admin/challenges">
-              <Button variant="ghost" size="sm" className="text-xs">
+              <Button variant="ghost" size={tokens.button.inline} className="text-xs">
                 View All
                 <ChevronRight className="w-3 h-3 ml-1" />
               </Button>

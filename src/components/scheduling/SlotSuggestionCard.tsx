@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { motion } from 'framer-motion';
 import { Clock, User, Sparkles, Check, X, TrendingUp, Zap, Target } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -100,7 +101,7 @@ function SlotSuggestionCardComponent({
             {/* Right side - Actions */}
             <div className="flex flex-col gap-2">
               <Button
-                size="sm"
+                size={tokens.button.card}
                 onClick={onAccept}
                 disabled={isLoading}
                 className="gap-1.5"
@@ -109,7 +110,7 @@ function SlotSuggestionCardComponent({
                 Book
               </Button>
               <Button
-                size="sm"
+                size={tokens.button.card}
                 variant="ghost"
                 onClick={onDismiss}
                 disabled={isLoading}

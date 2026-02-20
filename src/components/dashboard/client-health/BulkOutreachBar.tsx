@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Mail, MessageSquare, Download, X } from 'lucide-react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
@@ -48,18 +49,18 @@ export function BulkOutreachBar({ selectedClients, segmentLabel, onClearSelectio
       <div className="sticky bottom-0 z-10 border-t bg-background/95 backdrop-blur px-4 py-3 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium">{selectedClients.length} selected</span>
-          <Button variant="ghost" size="sm" onClick={onClearSelection} className="h-7 px-2">
+          <Button variant="ghost" size={tokens.button.inline} onClick={onClearSelection} className="h-7 px-2">
             <X className="h-3 w-3" />
           </Button>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setEmailDialogOpen(true)} className="gap-1.5">
+          <Button variant="outline" size={tokens.button.inline} onClick={() => setEmailDialogOpen(true)} className="gap-1.5">
             <Mail className="h-3.5 w-3.5" /> Email
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setShareDialogOpen(true)} className="gap-1.5">
+          <Button variant="outline" size={tokens.button.inline} onClick={() => setShareDialogOpen(true)} className="gap-1.5">
             <MessageSquare className="h-3.5 w-3.5" /> Share with Staff
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExportCSV} className="gap-1.5">
+          <Button variant="outline" size={tokens.button.inline} onClick={handleExportCSV} className="gap-1.5">
             <Download className="h-3.5 w-3.5" /> Export CSV
           </Button>
         </div>

@@ -1,3 +1,4 @@
+import { tokens } from '@/lib/design-tokens';
 import { Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,7 +35,7 @@ export function EventTypeFilter({ selectedTypes, onTypesChange }: EventTypeFilte
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button variant="outline" size={tokens.button.inline} className="gap-2">
           <Filter className="h-4 w-4" />
           Filter
           {selectedTypes.length > 0 && (
@@ -48,7 +49,7 @@ export function EventTypeFilter({ selectedTypes, onTypesChange }: EventTypeFilte
         <DropdownMenuLabel className="flex items-center justify-between">
           Event Types
           {selectedTypes.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={handleClear} className="h-auto py-0 text-xs">
+            <Button variant="ghost" size={tokens.button.inline} onClick={handleClear} className="h-auto py-0 text-xs">
               Clear
             </Button>
           )}

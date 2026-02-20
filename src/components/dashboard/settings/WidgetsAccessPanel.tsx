@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -145,7 +146,7 @@ export function WidgetsAccessPanel({ role, roleColor }: WidgetsAccessPanelProps)
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            size="sm"
+            size={tokens.button.inline}
             className="h-7 text-xs gap-1"
             onClick={() => handleGlobalToggle(true)}
             disabled={totalVisible === totalCount || bulkUpdate.isPending}
@@ -155,7 +156,7 @@ export function WidgetsAccessPanel({ role, roleColor }: WidgetsAccessPanelProps)
           </Button>
           <Button
             variant="outline"
-            size="sm"
+            size={tokens.button.inline}
             className="h-7 text-xs gap-1"
             onClick={() => handleGlobalToggle(false)}
             disabled={totalVisible === 0 || bulkUpdate.isPending}

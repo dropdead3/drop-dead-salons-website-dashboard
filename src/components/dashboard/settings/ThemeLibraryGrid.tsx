@@ -1,3 +1,4 @@
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -125,7 +126,7 @@ export function ThemeLibraryGrid({
                     {theme.is_available && !isActive ? (
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <Button size="sm" variant="default" className="flex-1 h-8 text-xs" disabled={isActivating}>
+                          <Button size={tokens.button.inline} variant="default" className="flex-1 h-8 text-xs" disabled={isActivating}>
                             {isActivating ? (
                               <Loader2 className="w-3 h-3 animate-spin mr-1" />
                             ) : null}
@@ -150,18 +151,18 @@ export function ThemeLibraryGrid({
                         </AlertDialogContent>
                       </AlertDialog>
                     ) : theme.is_available ? (
-                      <Button size="sm" variant="secondary" className="flex-1 h-8 text-xs" disabled>
+                      <Button size={tokens.button.inline} variant="secondary" className="flex-1 h-8 text-xs" disabled>
                         <Check className="w-3 h-3 mr-1" />
                         Active
                       </Button>
                     ) : (
-                      <Button size="sm" variant="secondary" className="flex-1 h-8 text-xs" disabled>
+                      <Button size={tokens.button.inline} variant="secondary" className="flex-1 h-8 text-xs" disabled>
                         Coming Soon
                       </Button>
                     )}
                     {theme.is_available && (
                       <Button
-                        size="sm"
+                        size={tokens.button.inline}
                         variant="outline"
                         className="h-8 text-xs"
                         onClick={() => onPreview(theme.id)}

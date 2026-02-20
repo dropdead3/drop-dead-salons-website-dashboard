@@ -1651,7 +1651,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
                     <Settings2 className="w-3.5 h-3.5" /> Configure
                   </Button>
                 </div>

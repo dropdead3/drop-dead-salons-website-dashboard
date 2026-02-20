@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Loader2, Save, Image, RotateCcw, Upload, MapPin as MapPinIcon, Info, Shield, Eye, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -685,7 +686,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
         {locationId && locations.length > 1 && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" disabled={pushLocationToAll.isPending}>
+              <Button variant="outline" size={tokens.button.card} disabled={pushLocationToAll.isPending}>
                 {pushLocationToAll.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
                 Apply to All
               </Button>
@@ -708,7 +709,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
         {locationId && hasCustomOverride && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" disabled={resetToDefaults.isPending}>
+              <Button variant="ghost" size={tokens.button.card} disabled={resetToDefaults.isPending}>
                 {resetToDefaults.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RotateCcw className="w-4 h-4 mr-2" />}
                 Reset to Defaults
               </Button>
@@ -745,7 +746,7 @@ export function KioskLocationSettingsForm({ locationId, orgId, locationName, onP
           {onPreviewOpen && (
             <Button
               variant="ghost"
-              size="sm"
+              size={tokens.button.inline}
               className="h-7 text-xs"
               onClick={() => onPreviewOpen(localSettings)}
             >
