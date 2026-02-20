@@ -8,6 +8,9 @@ import { ArrowLeft, Calendar, Clock, User, ExternalLink, XCircle, Loader2 } from
 import { useAuth } from '@/contexts/AuthContext';
 import { useOneOnOneMeetings, useUpdateMeetingStatus } from '@/hooks/useOneOnOneMeetings';
 import { format, parseISO } from 'date-fns';
+import { tokens } from '@/lib/design-tokens';
+import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/ui/empty-state';
 
 const meetingTypes = [
   { value: 'coaching', label: 'Coaching Session' },
@@ -51,10 +54,10 @@ export default function MyMeetings() {
                 Back to Meetings Hub
               </Button>
             </Link>
-            <h1 className="font-display text-3xl lg:text-4xl">My Meetings</h1>
-            <p className="text-muted-foreground mt-1">
-              View your scheduled and past meetings.
-            </p>
+             <h1 className={tokens.heading.page}>My Meetings</h1>
+             <p className={cn(tokens.body.muted, "mt-1")}>
+               View your scheduled and past meetings.
+             </p>
           </div>
 
           <div className="space-y-4">
@@ -64,15 +67,17 @@ export default function MyMeetings() {
                   <Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" />
                 </CardContent>
               </Card>
-            ) : myMeetings.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  No meetings scheduled yet.{' '}
-                  <Link to="/dashboard/schedule-meeting/new" className="text-primary hover:underline">
-                    Request a meeting
-                  </Link>
-                </CardContent>
-              </Card>
+             ) : myMeetings.length === 0 ? (
+               <EmptyState
+                 icon={Calendar}
+                 title="No meetings scheduled"
+                 description="Request a meeting to get started"
+                 action={
+                   <Link to="/dashboard/schedule-meeting/new">
+                     <Button size="sm">Request a meeting</Button>
+                   </Link>
+                 }
+               />
             ) : (
               myMeetings.map(meeting => (
                 <Card 
@@ -85,8 +90,8 @@ export default function MyMeetings() {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium">
-                            {format(parseISO(meeting.meeting_date), 'EEEE, MMMM d, yyyy')}
+                         <span className={tokens.body.emphasis}>
+                             {format(parseISO(meeting.meeting_date), 'EEEE, MMMM d, yyyy')}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
