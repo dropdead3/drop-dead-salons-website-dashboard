@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -78,7 +79,7 @@ export function UserStatusPicker({ trigger }: UserStatusPickerProps) {
                 onChange={(e) => setStatusMessage(e.target.value)}
                 className="text-sm"
               />
-              <Button size="sm" onClick={handleMessageSave} disabled={isUpdating}>
+              <Button size={tokens.button.inline} onClick={handleMessageSave} disabled={isUpdating}>
                 Save
               </Button>
             </div>

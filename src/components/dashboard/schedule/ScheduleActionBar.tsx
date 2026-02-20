@@ -58,7 +58,7 @@ export function ScheduleActionBar({
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
-          size="sm"
+          size={tokens.button.inline}
           onClick={onUndo}
           disabled={isUpdating}
           className="gap-1.5"
@@ -81,7 +81,7 @@ export function ScheduleActionBar({
             </span>
             <Button
               variant="ghost"
-              size="sm"
+              size={tokens.button.inline}
               onClick={onViewDetails}
               className="gap-1.5 text-primary"
             >
@@ -104,7 +104,7 @@ export function ScheduleActionBar({
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
-          size="sm"
+          size={tokens.button.inline}
           onClick={onCheckIn}
           disabled={!canCheckIn || isUpdating}
           className={cn(
@@ -118,7 +118,7 @@ export function ScheduleActionBar({
 
         <Button
           variant="outline"
-          size="sm"
+          size={tokens.button.inline}
           onClick={onPay}
           disabled={!canPay || isUpdating}
           className={cn(
@@ -132,7 +132,7 @@ export function ScheduleActionBar({
 
         <Button
           variant="outline"
-          size="sm"
+          size={tokens.button.inline}
           onClick={onRemove}
           disabled={!canRemove || isUpdating}
           className="gap-1.5"
@@ -143,7 +143,7 @@ export function ScheduleActionBar({
 
         <Button
           variant="outline"
-          size="sm"
+          size={tokens.button.inline}
           onClick={onNotes}
           disabled={!hasSelection || isUpdating}
           className="gap-1.5"
@@ -154,7 +154,7 @@ export function ScheduleActionBar({
 
         <Button
           variant="outline"
-          size="sm"
+          size={tokens.button.inline}
           onClick={onConfirm}
           disabled={!canConfirm || isUpdating}
           className={cn(

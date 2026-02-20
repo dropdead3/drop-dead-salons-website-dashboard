@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { AlertCircle, Heart, Pause, RotateCcw, Shield, Sparkles, Eye, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -83,7 +84,7 @@ export function MissedDayPreview() {
 
           <Button
             variant="outline"
-            size="sm"
+            size={tokens.button.card}
             onClick={() => {
               setPreviewDaysMissed(1);
               setPreviewPassesRemaining(totalPasses);

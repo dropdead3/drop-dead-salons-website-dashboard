@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { QRCodeSVG } from 'qrcode.react';
 import { Copy, Check, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,7 +68,7 @@ export function KioskDeployCard({ locationId, locationName }: KioskDeployCardPro
             <div className="flex items-center gap-2">
               <Button 
                 variant="outline" 
-                size="sm"
+                size={tokens.button.card}
                 onClick={handleCopy}
                 className="gap-2"
               >
@@ -81,7 +82,7 @@ export function KioskDeployCard({ locationId, locationName }: KioskDeployCardPro
               
               <Button 
                 variant="outline" 
-                size="sm"
+                size={tokens.button.card}
                 asChild
                 className="gap-2"
               >

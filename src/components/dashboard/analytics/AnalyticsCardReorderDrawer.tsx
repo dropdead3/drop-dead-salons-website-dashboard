@@ -27,6 +27,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 export interface CardDefinition {
   id: string;
@@ -118,7 +119,7 @@ export function AnalyticsCardReorderDrawer({
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-foreground h-8">
+        <Button variant="ghost" size={tokens.button.card} className="gap-1.5 text-muted-foreground hover:text-foreground h-8">
           <ArrowUpDown className="w-3.5 h-3.5" />
           <span className="hidden sm:inline text-xs">Reorganize</span>
         </Button>
@@ -159,7 +160,7 @@ export function AnalyticsCardReorderDrawer({
 
           <Button
             variant="outline"
-            size="sm"
+            size={tokens.button.card}
             className="w-full gap-2"
             onClick={() => {
               onReset();

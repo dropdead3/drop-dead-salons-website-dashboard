@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -129,7 +130,7 @@ export function AnnouncementsBento({ announcements, isLeadership }: Announcement
               </>
             )}
             {totalCount > 3 && (
-              <Button variant="ghost" size="sm" asChild className="text-xs h-7">
+              <Button variant="ghost" size={tokens.button.card} asChild className="text-xs h-7">
                 <Link to="/dashboard/admin/announcements">
                   View All ({totalCount})
                 </Link>

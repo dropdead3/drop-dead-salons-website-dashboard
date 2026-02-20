@@ -12,6 +12,7 @@ import { useMeetingNotes, useCreateMeetingNote, useUpdateMeetingNote, useDeleteM
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { tokens } from '@/lib/design-tokens';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -188,7 +189,7 @@ export function MeetingNotes({ meetingId, isCoach }: MeetingNotesProps) {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg">Meeting Notes</CardTitle>
         {isCoach && !isAdding && (
-          <Button size="sm" onClick={() => setIsAdding(true)}>
+          <Button size={tokens.button.card} onClick={() => setIsAdding(true)}>
             <Plus className="h-4 w-4 mr-1" />
             Add Note
           </Button>

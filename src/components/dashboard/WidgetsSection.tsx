@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -57,7 +58,7 @@ export function WidgetsSection({ defaultEnabledWidgets = ['changelog', 'birthday
       <div className="flex items-center justify-end">
         <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
           <DialogTrigger asChild>
-            <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+            <Button variant="ghost" size={tokens.button.card} className="gap-2 text-muted-foreground">
               <Settings2 className="w-4 h-4" />
               <span className="text-xs">Add Widgets</span>
             </Button>
