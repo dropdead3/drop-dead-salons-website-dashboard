@@ -50,9 +50,10 @@ import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBa
 import { AddBreakForm } from './AddBreakForm';
 import { BannedClientWarningDialog } from '@/components/dashboard/clients/BannedClientWarningDialog';
 import { ServiceAddonToast } from './ServiceAddonToast';
-import { useAllCategoryAddons } from '@/hooks/useCategoryAddons';
+import { useAddonAssignmentMaps } from '@/hooks/useServiceAddonAssignments';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useServiceCategoryColors } from '@/hooks/useServiceCategoryColors';
+import type { ServiceAddon } from '@/hooks/useServiceAddons';
 
 type QuickBookingMode = 'popover' | 'panel';
 
@@ -201,9 +202,9 @@ export function QuickBookingPopover({
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const { data: categoryColorsList = [] } = useServiceCategoryColors();
 
-  // Add-on recommendations
+  // Add-on recommendations (new system)
   const { effectiveOrganization } = useOrganizationContext();
-  const { data: addonMap = {} } = useAllCategoryAddons(effectiveOrganization?.id);
+  const { byCategoryId, byServiceId } = useAddonAssignmentMaps(effectiveOrganization?.id);
 
   // When a category is selected, show add-on toast after 800ms if not dismissed
   useEffect(() => {
@@ -213,36 +214,41 @@ export function QuickBookingPopover({
     }
     if (dismissedAddonCategories.has(selectedCategory)) return;
 
-    // Find the category's DB id from the colorsList
     const catEntry = categoryColorsList.find(c => c.category_name === selectedCategory);
     if (!catEntry) return;
 
-    const addons = addonMap[catEntry.id];
+    const addons = byCategoryId[catEntry.id];
     if (!addons || addons.length === 0) return;
 
     const timer = setTimeout(() => setShowAddonToast(true), 800);
     return () => clearTimeout(timer);
-  }, [selectedCategory, addonMap, categoryColorsList, dismissedAddonCategories]);
+  }, [selectedCategory, byCategoryId, categoryColorsList, dismissedAddonCategories]);
 
-  // Compute matched add-on suggestions for the current category
-  const addonSuggestions = useMemo(() => {
+  // Compute add-on suggestions: category-level + service-level, deduplicated
+  const addonSuggestions = useMemo((): ServiceAddon[] => {
     if (!selectedCategory || !showAddonToast) return [];
     const catEntry = categoryColorsList.find(c => c.category_name === selectedCategory);
     if (!catEntry) return [];
-    const addons = addonMap[catEntry.id] || [];
-    return addons
-      .flatMap(addon => {
-        if (addon.addon_service_name) {
-          return services.filter(s => s.name === addon.addon_service_name);
-        }
-        if (addon.addon_category_name) {
-          return (servicesByCategory?.[addon.addon_category_name] || []).slice(0, 2);
-        }
-        return [];
+
+    const catAddons = byCategoryId[catEntry.id] || [];
+    // Also gather service-level addons for selected services
+    const svcAddons = selectedServices.flatMap(svcId => byServiceId[svcId] || []);
+
+    // Deduplicate by addon id, filter out addons already added to the booking
+    const seen = new Set<string>();
+    const addedServiceNames = new Set(
+      services.filter(s => selectedServices.includes(s.phorest_service_id)).map(s => s.name)
+    );
+
+    return [...catAddons, ...svcAddons]
+      .filter(addon => {
+        if (seen.has(addon.id)) return false;
+        if (addedServiceNames.has(addon.name)) return false;
+        seen.add(addon.id);
+        return true;
       })
-      .filter(s => !selectedServices.includes(s.phorest_service_id))
       .slice(0, 3);
-  }, [selectedCategory, showAddonToast, addonMap, categoryColorsList, services, servicesByCategory, selectedServices]);
+  }, [selectedCategory, showAddonToast, byCategoryId, byServiceId, categoryColorsList, selectedServices, services]);
 
   // Get selected service details (for totals calculation)
   const selectedServiceDetails = useMemo(() => {
@@ -1156,9 +1162,15 @@ export function QuickBookingPopover({
               visible={showAddonToast && addonSuggestions.length > 0}
               categoryName={selectedCategory || ''}
               suggestions={addonSuggestions}
-              onAdd={(id) => {
-                handleServiceToggle(id);
-                // If this was the last suggestion, auto-dismiss immediately
+              onAdd={(addonId) => {
+                // Find matching Phorest service by name to add to booking
+                const addon = addonSuggestions.find(a => a.id === addonId);
+                if (addon) {
+                  const matchedService = services.find(s => s.name === addon.name);
+                  if (matchedService) {
+                    handleServiceToggle(matchedService.phorest_service_id);
+                  }
+                }
                 if (addonSuggestions.length <= 1) {
                   setShowAddonToast(false);
                 }
