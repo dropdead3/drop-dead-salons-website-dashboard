@@ -389,7 +389,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 80 }}
             transition={{ type: 'spring', damping: 26, stiffness: 300, mass: 0.8 }}
-            className="fixed right-4 top-[50%] -translate-y-1/2 z-50 w-[calc(100vw-2rem)] max-w-[440px] max-h-[85vh] rounded-xl border border-border bg-card/80 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col"
+            className="fixed right-4 top-4 bottom-4 z-50 w-[calc(100vw-2rem)] max-w-[440px] rounded-xl border border-border bg-card/80 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col"
           >
             {/* Close button */}
             <button
