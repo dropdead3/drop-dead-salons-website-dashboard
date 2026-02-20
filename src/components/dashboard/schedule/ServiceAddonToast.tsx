@@ -1,15 +1,15 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, Plus, Clock, DollarSign } from 'lucide-react';
+import { Sparkles, X, Plus, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { PhorestService } from '@/hooks/usePhorestServices';
+import type { ServiceAddon } from '@/hooks/useServiceAddons';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 interface ServiceAddonToastProps {
   visible: boolean;
   categoryName: string;
-  suggestions: PhorestService[];
-  onAdd: (phorestServiceId: string) => void;
+  suggestions: ServiceAddon[];
+  onAdd: (addonId: string) => void;
   onDismiss: () => void;
 }
 
@@ -20,7 +20,7 @@ export function ServiceAddonToast({
   onAdd,
   onDismiss,
 }: ServiceAddonToastProps) {
-  const { formatCurrencyWhole } = useFormatCurrency();
+  const { formatCurrency } = useFormatCurrency();
 
   return (
     <AnimatePresence>
@@ -52,30 +52,30 @@ export function ServiceAddonToast({
 
           {/* Suggestions */}
           <div className="p-2 space-y-1">
-            {suggestions.map(service => (
+            {suggestions.map(addon => (
               <div
-                key={service.phorest_service_id}
+                key={addon.id}
                 className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-lg hover:bg-primary/5 transition-colors"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{service.name}</p>
+                  <p className="text-sm font-medium truncate">{addon.name}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {service.duration_minutes}m
-                    </span>
-                    {service.price !== null && (
-                      <span className={cn('text-[11px] text-muted-foreground')}>
-                        {formatCurrencyWhole(service.price)}
+                    {addon.duration_minutes && (
+                      <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {addon.duration_minutes}m
                       </span>
                     )}
+                    <span className={cn('text-[11px] text-muted-foreground')}>
+                      {formatCurrency(addon.price)}
+                    </span>
                   </div>
                 </div>
                 <Button
                   size="sm"
                   variant="outline"
                   className="h-7 px-2.5 text-xs shrink-0 border-primary/30 text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
-                  onClick={() => onAdd(service.phorest_service_id)}
+                  onClick={() => onAdd(addon.id)}
                 >
                   <Plus className="h-3 w-3 mr-1" />
                   Add

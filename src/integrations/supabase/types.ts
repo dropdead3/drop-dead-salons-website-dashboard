@@ -13109,6 +13109,118 @@ export type Database = {
           },
         ]
       }
+      service_addon_assignments: {
+        Row: {
+          addon_id: string
+          created_at: string
+          display_order: number
+          id: string
+          organization_id: string
+          target_category_id: string | null
+          target_service_id: string | null
+          target_type: string
+        }
+        Insert: {
+          addon_id: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          organization_id: string
+          target_category_id?: string | null
+          target_service_id?: string | null
+          target_type: string
+        }
+        Update: {
+          addon_id?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          organization_id?: string
+          target_category_id?: string | null
+          target_service_id?: string | null
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_addon_assignments_addon_id_fkey"
+            columns: ["addon_id"]
+            isOneToOne: false
+            referencedRelation: "service_addons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_addon_assignments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_addon_assignments_target_category_id_fkey"
+            columns: ["target_category_id"]
+            isOneToOne: false
+            referencedRelation: "service_category_colors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_addon_assignments_target_service_id_fkey"
+            columns: ["target_service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_addons: {
+        Row: {
+          cost: number | null
+          created_at: string
+          description: string | null
+          display_order: number
+          duration_minutes: number | null
+          id: string
+          is_active: boolean
+          name: string
+          organization_id: string
+          price: number
+          updated_at: string
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          duration_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          name: string
+          organization_id: string
+          price?: number
+          updated_at?: string
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          duration_minutes?: number | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          organization_id?: string
+          price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_addons_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_category_addons: {
         Row: {
           addon_category_name: string | null
