@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { optimizeImage, formatFileSize } from '@/lib/image-utils';
+import { tokens } from '@/lib/design-tokens';
 
 interface ImageUploadInputProps {
   value: string;
@@ -257,7 +258,7 @@ export function ImageUploadInput({
               <Button 
                 type="button" 
                 variant="secondary" 
-                size="sm"
+                size={tokens.button.card}
                 onClick={handleUrlSubmit}
                 disabled={!urlValue.trim()}
               >
@@ -266,7 +267,7 @@ export function ImageUploadInput({
               <Button 
                 type="button" 
                 variant="ghost" 
-                size="sm"
+                size={tokens.button.inline}
                 onClick={() => {
                   setShowUrlInput(false);
                   setUrlValue('');

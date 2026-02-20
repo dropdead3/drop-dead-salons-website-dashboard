@@ -202,7 +202,7 @@ function SubmissionDialog({
                   <span className="text-sm flex-1 truncate">File uploaded</span>
                   <Button 
                     variant="ghost" 
-                    size="sm" 
+                    size={tokens.button.inline} 
                     onClick={() => setProofUrl('')}
                   >
                     Remove

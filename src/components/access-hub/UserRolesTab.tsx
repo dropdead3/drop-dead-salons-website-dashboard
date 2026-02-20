@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Loader2, Search, User, Crown, AlertTriangle, Lock, Users, Award } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { ResponsibilityBadges } from './ResponsibilityBadges';
 import { AssignResponsibilityDialog } from './AssignResponsibilityDialog';
 import { useAllUsersWithRoles, useToggleUserRole } from '@/hooks/useUserRoles';
@@ -349,7 +350,7 @@ export function UserRolesTab({ canManage }: UserRolesTabProps) {
                       {canManage && (
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size={tokens.button.inline}
                           className="h-7 text-xs gap-1 mt-1"
                           onClick={() => setResponsibilityDialog({ userId: user.user_id, userName: user.display_name || user.full_name })}
                         >
