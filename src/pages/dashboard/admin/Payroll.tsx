@@ -26,6 +26,7 @@ import { PayrollOverview } from '@/components/dashboard/payroll/PayrollOverview'
 import { CommissionInsights } from '@/components/dashboard/payroll/CommissionInsights';
 import { CommissionTiersEditor } from '@/components/dashboard/sales/CommissionTiersEditor';
 import { NewHireWizardContent } from '@/components/dashboard/payroll/NewHireWizardContent';
+import { PayrollReminderSettings } from '@/components/dashboard/payroll/PayrollReminderSettings';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -207,6 +208,8 @@ export default function Payroll() {
                   {!isConnected && (
                     <PayrollProviderHub />
                   )}
+                  
+                  <PayrollReminderSettings />
                   
                   {isConnected && (
                     <Card>
