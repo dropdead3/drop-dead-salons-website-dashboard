@@ -3,6 +3,7 @@ import { format, differenceInMinutes, parseISO } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { Copy, CreditCard, Info, Receipt, Download, Eye, DollarSign, CalendarCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -423,7 +424,7 @@ export function CheckoutSummarySheet({
                   key={preset.label}
                   type="button"
                   variant={tipAmount === Math.round(subtotal * preset.multiplier * 100) / 100 ? 'default' : 'outline'}
-                  size="sm"
+                  size={tokens.button.inline}
                   className="flex-1"
                   onClick={() => handleTipPreset(preset.multiplier)}
                 >
@@ -504,7 +505,7 @@ export function CheckoutSummarySheet({
             <Button
               type="button"
               variant="outline"
-              size="sm"
+              size={tokens.button.inline}
               className="flex-1 gap-2"
               onClick={() => generateReceiptPDF(true)}
             >
@@ -514,7 +515,7 @@ export function CheckoutSummarySheet({
             <Button
               type="button"
               variant="outline"
-              size="sm"
+              size={tokens.button.inline}
               className="flex-1 gap-2"
               onClick={() => generateReceiptPDF(false)}
             >

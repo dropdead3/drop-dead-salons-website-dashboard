@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -270,7 +271,7 @@ export function AchievementsConfigPanel() {
                       <div className="flex items-center gap-3">
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size={tokens.button.inline}
                           onClick={() => handleEdit(achievement)}
                         >
                           <Pencil className="w-4 h-4" />

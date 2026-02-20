@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TrendingUp, TrendingDown, Users, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useTipsDrilldown, type StylistTipMetrics } from '@/hooks/useTipsDrilldown';
@@ -254,7 +255,7 @@ export function TipsDrilldownPanel({ isOpen, parentLocationId }: TipsDrilldownPa
                   {filteredStylists.length > 10 && (
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size={tokens.button.inline}
                       className="text-xs text-muted-foreground hover:text-foreground mt-1"
                       onClick={() => setShowAll(!showAll)}
                     >

@@ -13,6 +13,7 @@ import {
   Filter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   Select,
@@ -177,7 +178,7 @@ export function ScheduleToolbar({
           <ChevronRight className="h-4 w-4" />
         </Button>
         
-        <Button variant="ghost" size="sm" onClick={goToToday}>
+        <Button variant="ghost" size={tokens.button.inline} onClick={goToToday}>
           Today
         </Button>
       </div>
@@ -217,7 +218,7 @@ export function ScheduleToolbar({
         {/* Filter Popover */}
         <Popover open={filterOpen} onOpenChange={setFilterOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" size="sm" className="relative">
+            <Button variant="outline" size={tokens.button.inline} className="relative">
               <Filter className="h-4 w-4 mr-1.5" />
               Filters
               {activeFilterCount > 0 && (
@@ -320,7 +321,7 @@ export function ScheduleToolbar({
         {/* Sync Button */}
         <Button 
           variant="outline" 
-          size="sm" 
+          size={tokens.button.inline} 
           onClick={onSync}
           disabled={isSyncing}
         >

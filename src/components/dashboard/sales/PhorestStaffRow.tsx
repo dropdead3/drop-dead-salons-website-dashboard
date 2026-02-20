@@ -2,6 +2,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { 
   ChevronRight, 
   Link2, 
@@ -141,7 +142,7 @@ export function PhorestStaffRow({ staff, rank, totalRevenue, onLinkClick }: Phor
               </Badge>
             ) : (
               <Button 
-                size="sm" 
+                size={tokens.button.inline} 
                 variant="outline" 
                 className="gap-1 h-7"
                 onClick={handleLinkClick}
@@ -192,7 +193,7 @@ export function PhorestStaffRow({ staff, rank, totalRevenue, onLinkClick }: Phor
           </div>
           {!staff.isMapped && (
             <Button 
-              size="sm" 
+              size={tokens.button.inline} 
               variant="outline" 
               className="gap-1 h-6 text-xs"
               onClick={handleLinkClick}

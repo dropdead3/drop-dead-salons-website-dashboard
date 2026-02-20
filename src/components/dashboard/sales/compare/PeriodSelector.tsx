@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { Calendar as CalendarIcon, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -97,7 +98,7 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
             <div className="flex gap-1.5">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal h-8 text-xs">
+                  <Button variant="outline" size={tokens.button.inline} className="flex-1 justify-start text-left font-normal h-8 text-xs">
                     <CalendarIcon className="mr-1.5 h-3 w-3" />
                     {periodA.dateFrom ? formatDate(new Date(periodA.dateFrom), 'MMM d, yyyy') : 'Start'}
                   </Button>
@@ -115,7 +116,7 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
               <span className="text-muted-foreground self-center text-xs">–</span>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal h-8 text-xs">
+                  <Button variant="outline" size={tokens.button.inline} className="flex-1 justify-start text-left font-normal h-8 text-xs">
                     <CalendarIcon className="mr-1.5 h-3 w-3" />
                     {periodA.dateTo ? formatDate(new Date(periodA.dateTo), 'MMM d, yyyy') : 'End'}
                   </Button>
@@ -149,7 +150,7 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
                 <div className="flex gap-1.5">
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal h-8 text-xs">
+                      <Button variant="outline" size={tokens.button.inline} className="flex-1 justify-start text-left font-normal h-8 text-xs">
                         <CalendarIcon className="mr-1.5 h-3 w-3" />
                         {periodB.dateFrom ? formatDate(new Date(periodB.dateFrom), 'MMM d, yyyy') : 'Start'}
                       </Button>
@@ -167,7 +168,7 @@ export function PeriodSelector({ periodA, periodB, onPeriodsChange, mode }: Peri
                   <span className="text-muted-foreground self-center text-xs">–</span>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" size="sm" className="flex-1 justify-start text-left font-normal h-8 text-xs">
+                      <Button variant="outline" size={tokens.button.inline} className="flex-1 justify-start text-left font-normal h-8 text-xs">
                         <CalendarIcon className="mr-1.5 h-3 w-3" />
                         {periodB.dateTo ? formatDate(new Date(periodB.dateTo), 'MMM d, yyyy') : 'End'}
                       </Button>

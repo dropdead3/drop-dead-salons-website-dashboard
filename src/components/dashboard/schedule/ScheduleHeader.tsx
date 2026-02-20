@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import {
   Popover,
   PopoverContent,
@@ -136,7 +137,7 @@ export function ScheduleHeader({
             <PopoverTrigger asChild>
               <Button 
                 variant="ghost" 
-                size="sm"
+                size={tokens.button.inline}
                 className="text-[hsl(40,20%,92%)]/70 hover:text-[hsl(40,20%,92%)] hover:bg-[hsl(40,20%,92%)]/10"
               >
                 <CalendarIcon className="h-4 w-4 mr-1.5" />
@@ -277,11 +278,11 @@ export function ScheduleHeader({
       <div className="bg-card border border-t-0 border-border/50 px-4 py-2 flex items-center justify-between rounded-b-lg">
         {/* Left: Week/Day Navigation */}
         <div className="flex items-center gap-1">
-          <Button variant="outline" size="sm" onClick={goToPrevWeek} className="gap-1">
+          <Button variant="outline" size={tokens.button.inline} onClick={goToPrevWeek} className="gap-1">
             <ChevronsLeft className="h-4 w-4" />
             Week
           </Button>
-          <Button variant="outline" size="sm" onClick={goToPrevDay} className="gap-1">
+          <Button variant="outline" size={tokens.button.inline} onClick={goToPrevDay} className="gap-1">
             <ChevronLeft className="h-4 w-4" />
             Day
           </Button>
@@ -291,7 +292,7 @@ export function ScheduleHeader({
         <div className="flex items-center gap-1">
           <Button
             variant={isToday(currentDate) ? 'default' : 'outline'}
-            size="sm"
+            size={tokens.button.inline}
             onClick={goToToday}
             className={cn(
               isToday(currentDate) && 'bg-primary text-primary-foreground'
@@ -306,7 +307,7 @@ export function ScheduleHeader({
               <Button
                 key={day.toISOString()}
                 variant={isSelected && !isTodayDate ? 'secondary' : 'ghost'}
-                size="sm"
+                size={tokens.button.inline}
                 onClick={() => {
                   setCurrentDate(day);
                   setView('day');
@@ -325,11 +326,11 @@ export function ScheduleHeader({
 
         {/* Right: Forward Navigation + Jump Ahead */}
         <div className="flex items-center gap-1">
-          <Button variant="outline" size="sm" onClick={goToNextDay} className="gap-1">
+          <Button variant="outline" size={tokens.button.inline} onClick={goToNextDay} className="gap-1">
             Day
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={goToNextWeek} className="gap-1">
+          <Button variant="outline" size={tokens.button.inline} onClick={goToNextWeek} className="gap-1">
             Week
             <ChevronsRight className="h-4 w-4" />
           </Button>
@@ -337,7 +338,7 @@ export function ScheduleHeader({
           {/* Jump Ahead Dropdown */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="ml-1 gap-1">
+              <Button variant="outline" size={tokens.button.inline} className="ml-1 gap-1">
                 {stylists.length} <Plus className="h-3 w-3" />
                 <ChevronRight className="h-3 w-3 rotate-90" />
               </Button>
@@ -350,7 +351,7 @@ export function ScheduleHeader({
                     <Button
                       key={weeks}
                       variant="ghost"
-                      size="sm"
+                      size={tokens.button.inline}
                       className="justify-start h-auto py-2 px-3"
                       onClick={() => setCurrentDate(targetDate)}
                     >

@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Calendar, 
@@ -139,7 +140,7 @@ export function PendingMeetingRequests({ viewAs }: Props) {
               <div className="flex flex-col gap-2">
                 {viewAs === 'team_member' && (
                   <Button
-                    size="sm"
+                    size={tokens.button.card}
                     onClick={() => handleSchedule(request)}
                   >
                     <ArrowRight className="h-4 w-4 mr-1" />
@@ -147,7 +148,7 @@ export function PendingMeetingRequests({ viewAs }: Props) {
                   </Button>
                 )}
                 <Button
-                  size="sm"
+                  size={tokens.button.card}
                   variant="outline"
                   onClick={() => handleCancel(request.id)}
                   disabled={updateStatus.isPending}
@@ -160,7 +161,7 @@ export function PendingMeetingRequests({ viewAs }: Props) {
 
             {request.status === 'scheduled' && request.linked_meeting_id && (
               <Button
-                size="sm"
+                size={tokens.button.inline}
                 variant="ghost"
                 onClick={() => navigate(`/dashboard/meeting/${request.linked_meeting_id}`)}
               >

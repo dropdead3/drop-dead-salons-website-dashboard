@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -153,7 +154,7 @@ function ServiceFlowsList() {
         </p>
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
           <DialogTrigger asChild>
-            <Button size="sm">
+            <Button size={tokens.button.card}>
               <Plus className="w-4 h-4 mr-1.5" />
               New Flow
             </Button>
@@ -347,7 +348,7 @@ function FlowStepEditor({ flowId, onBack }: { flowId: string; onBack: () => void
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={onBack}>← Back</Button>
+        <Button variant="ghost" size={tokens.button.inline} onClick={onBack}>← Back</Button>
         <div>
           <h3 className="font-medium">{flow?.name || 'Flow'}</h3>
           <p className="text-xs text-muted-foreground">
@@ -364,7 +365,7 @@ function FlowStepEditor({ flowId, onBack }: { flowId: string; onBack: () => void
               <CardTitle className="text-base">Email Steps</CardTitle>
               <CardDescription>Configure the timing and content for each communication step.</CardDescription>
             </div>
-            <Button size="sm" onClick={() => setShowAddStep(true)}>
+            <Button size={tokens.button.card} onClick={() => setShowAddStep(true)}>
               <Plus className="w-4 h-4 mr-1.5" />
               Add Step
             </Button>
@@ -522,7 +523,7 @@ function StepTimelineItem({
                   </div>
                   <div className="flex gap-2">
                     <Button
-                      size="sm"
+                      size={tokens.button.inline}
                       onClick={() => onUpdate({ subject: editSubject, html_body: editBody })}
                       disabled={editSubject === step.subject && editBody === step.html_body}
                     >
@@ -530,7 +531,7 @@ function StepTimelineItem({
                     </Button>
                     <Button
                       variant="destructive"
-                      size="sm"
+                      size={tokens.button.inline}
                       onClick={onDelete}
                     >
                       <Trash2 className="w-3.5 h-3.5 mr-1" />
@@ -662,7 +663,7 @@ function StepLocationOverrides({ stepId }: { stepId: string }) {
                   <Label className="text-xs">Override Body (optional)</Label>
                   <Textarea value={overrideBody} onChange={e => setOverrideBody(e.target.value)} rows={4} className="text-sm font-mono" />
                 </div>
-                <Button size="sm" onClick={handleAdd} disabled={upsertOverride.isPending}>
+                <Button size={tokens.button.inline} onClick={handleAdd} disabled={upsertOverride.isPending}>
                   {upsertOverride.isPending && <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" />}
                   Save Override
                 </Button>
@@ -704,7 +705,7 @@ function LocationOverrideEditor({
         <Textarea value={body} onChange={e => setBody(e.target.value)} rows={3} className="text-sm font-mono" placeholder="(use default)" />
       </div>
       {hasChanges && (
-        <Button size="sm" onClick={() => onSave(subject || null, body || null)} disabled={isSaving}>
+        <Button size={tokens.button.inline} onClick={() => onSave(subject || null, body || null)} disabled={isSaving}>
           {isSaving && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
           Update
         </Button>
@@ -734,7 +735,7 @@ function TestSendPanel({ stepId }: { stepId: string }) {
           type="email"
         />
         <Button
-          size="sm"
+          size={tokens.button.inline}
           onClick={() => testSend.mutate({ stepId, testEmail })}
           disabled={!testEmail || testSend.isPending}
         >
@@ -1079,7 +1080,7 @@ function ReminderConfigCard({
             </div>
             <div className="flex gap-2">
               {hasChanges && (
-                <Button size="sm" onClick={() => onSave({ is_active: isActive, subject, html_body: htmlBody })} disabled={isSaving}>
+                <Button size={tokens.button.inline} onClick={() => onSave({ is_active: isActive, subject, html_body: htmlBody })} disabled={isSaving}>
                   {isSaving && <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />}
                   Save
                 </Button>
@@ -1087,7 +1088,7 @@ function ReminderConfigCard({
               {config?.id && (
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.inline}
                   onClick={() => setShowOverrides(!showOverrides)}
                 >
                   <MapPin className="w-3.5 h-3.5 mr-1" />
@@ -1181,7 +1182,7 @@ function ReminderLocationOverrides({ configId }: { configId: string }) {
                 placeholder="Override body (optional)"
               />
               <Button
-                size="sm"
+                size={tokens.button.inline}
                 onClick={() => {
                   upsertOverride.mutate({
                     configId,

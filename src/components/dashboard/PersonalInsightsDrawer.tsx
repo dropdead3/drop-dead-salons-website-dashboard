@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { usePersonalInsights } from '@/hooks/usePersonalInsights';
 import { GuidancePanel } from './GuidancePanel';
@@ -290,7 +291,7 @@ export function PersonalInsightsDrawer() {
                         <div className="text-center py-14">
                           <ZuraAvatar size="md" className="mx-auto mb-3 opacity-20" />
                           <p className="text-sm font-display text-muted-foreground">No personal insights yet</p>
-                          <Button variant="outline" size="sm" onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
+                          <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
                             <Brain className="w-3.5 h-3.5" />
                             Generate My Insights
                           </Button>

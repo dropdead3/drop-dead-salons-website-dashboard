@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
@@ -109,7 +110,7 @@ export function SalesGoalsDialog({ trigger }: SalesGoalsDialogProps) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size={tokens.button.card}>
             <Target className="w-4 h-4 mr-2" />
             Goals
           </Button>

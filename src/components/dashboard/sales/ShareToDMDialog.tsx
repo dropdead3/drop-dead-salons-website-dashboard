@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
@@ -196,11 +197,11 @@ export function ShareToDMDialog({ open, onOpenChange, planTitle, planContent }: 
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" size="sm" onClick={() => handleClose(false)}>
+          <Button variant="ghost" size={tokens.button.card} onClick={() => handleClose(false)}>
             Cancel
           </Button>
           <Button
-            size="sm"
+            size={tokens.button.card}
             onClick={handleSend}
             disabled={selectedUsers.length === 0 || sending || sent}
             className="gap-1.5"

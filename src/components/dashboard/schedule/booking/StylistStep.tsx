@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar } from '@/components/ui/calendar';
@@ -129,7 +130,7 @@ export function StylistStep({
               </h3>
               <Button
                 variant="ghost"
-                size="sm"
+                size={tokens.button.inline}
                 className="h-7 text-xs text-primary"
                 onClick={() => setShowCalendar(!showCalendar)}
               >

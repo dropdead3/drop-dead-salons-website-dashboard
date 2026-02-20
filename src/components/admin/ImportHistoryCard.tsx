@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Progress } from '@/components/ui/progress';
 import {
   AlertDialog,
@@ -168,7 +169,7 @@ export function ImportHistoryCard({ job, showRollback = true }: ImportHistoryCar
             <AlertDialogTrigger asChild>
               <Button 
                 variant="outline" 
-                size="sm" 
+                size={tokens.button.inline} 
                 className="text-destructive hover:text-destructive"
                 disabled={isRollingBack}
               >

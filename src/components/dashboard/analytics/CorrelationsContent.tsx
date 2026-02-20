@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, Minus, Lightbulb, RefreshCw, Info } from 'lucide-react';
@@ -96,7 +97,7 @@ export function CorrelationsContent({ locationId, filterContext, dateRange, loca
                   Automatically detected relationships between your metrics
                 </CardDescription>
               </div>
-              <Button variant="outline" size="sm" onClick={() => refetch()}>
+              <Button variant="outline" size={tokens.button.card} onClick={() => refetch()}>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh
               </Button>

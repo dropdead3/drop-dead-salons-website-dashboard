@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Calculator, Info, RotateCcw, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -74,7 +75,7 @@ export function CapacityBreakdown({
       <CollapsibleTrigger asChild>
         <Button
           variant="ghost"
-          size="sm"
+          size={tokens.button.inline}
           className="w-full flex items-center justify-between h-9 px-3 border border-border rounded-lg hover:bg-muted/50 hover:border-primary/30 transition-colors"
         >
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -96,7 +97,7 @@ export function CapacityBreakdown({
             {hasChanges && (
               <Button
                 variant="ghost"
-                size="sm"
+                size={tokens.button.inline}
                 onClick={handleReset}
                 className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground gap-1"
               >

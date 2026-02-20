@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { FileText, Loader2, Download } from 'lucide-react';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -209,7 +210,7 @@ export function SalesReportPDF({ dateFrom, dateTo, metrics, stylistData, locatio
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size={tokens.button.card}>
           <FileText className="w-4 h-4 mr-2" />
           PDF Report
         </Button>

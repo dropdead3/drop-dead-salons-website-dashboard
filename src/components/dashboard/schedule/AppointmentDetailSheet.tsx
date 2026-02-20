@@ -9,6 +9,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
@@ -192,7 +193,7 @@ export function AppointmentDetailSheet({
                   <DropdownMenuTrigger asChild>
                     <Button 
                       variant="outline" 
-                      size="sm"
+                      size={tokens.button.inline}
                       className={cn('gap-1.5', statusConfig.bg, statusConfig.text)}
                       disabled={isUpdating}
                     >
@@ -287,7 +288,7 @@ export function AppointmentDetailSheet({
                   {canManageAssistants && (
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size={tokens.button.inline}
                       className="h-7 gap-1 text-xs"
                       onClick={() => setShowAssistantPicker(!showAssistantPicker)}
                     >
@@ -496,7 +497,7 @@ export function AppointmentDetailSheet({
                         </Label>
                       </div>
                       <Button 
-                        size="sm" 
+                        size={tokens.button.card} 
                         onClick={handleAddNote}
                         disabled={!newNote.trim() || isAdding}
                       >

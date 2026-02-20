@@ -223,7 +223,7 @@ export function ServicesSettingsContent() {
                 <Palette className="w-5 h-5 text-primary" />
                 <CardTitle className={tokens.heading.section}>SERVICE CATEGORIES</CardTitle>
               </div>
-              <Button size="sm" onClick={() => { setCategoryDialogMode('create'); setEditingCategory(null); setCategoryDialogOpen(true); }}>
+              <Button size={tokens.button.card} onClick={() => { setCategoryDialogMode('create'); setEditingCategory(null); setCategoryDialogOpen(true); }}>
                 <Plus className="w-4 h-4 mr-1" /> Add Category
               </Button>
             </div>

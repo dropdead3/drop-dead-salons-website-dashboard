@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { SlidersHorizontal, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import {
   Popover,
   PopoverContent,
@@ -102,7 +103,7 @@ export function CalendarFiltersPopover({
           {activeFilterCount > 0 && (
             <Button
               variant="ghost"
-              size="sm"
+              size={tokens.button.inline}
               className="h-auto py-1 px-2 text-xs text-muted-foreground hover:text-foreground"
               onClick={clearAll}
             >

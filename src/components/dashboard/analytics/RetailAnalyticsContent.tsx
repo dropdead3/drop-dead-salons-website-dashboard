@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter,
 } from '@/components/ui/table';
@@ -135,7 +136,7 @@ function Sparkline({ data, color = 'hsl(var(--chart-1))' }: { data: { date: stri
 // ─── CSV Export Button ───
 function ExportButton({ data, section }: { data: RetailAnalyticsResult; section: Parameters<typeof exportRetailCSV>[1] }) {
   return (
-    <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => exportRetailCSV(data, section)}>
+    <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => exportRetailCSV(data, section)}>
       <Download className="w-3.5 h-3.5" /> Export
     </Button>
   );
@@ -193,7 +194,7 @@ function BrandPerformanceCard({ brands, totalRevenue, formatCurrencyWhole, data,
             <div className="flex items-center gap-2">
               {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
               <ExportButton data={data} section="brands" />
-              <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
                 <Settings2 className="w-3.5 h-3.5" /> Manage Products
               </Button>
             </div>
@@ -399,7 +400,7 @@ function DeadStockCard({ deadStock, formatCurrencyWhole, data, filterContext }: 
             <div className="flex items-center gap-2">
               {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
               <ExportButton data={data} section="deadstock" />
-              <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+              <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
                 <Settings2 className="w-3.5 h-3.5" /> Manage Products
               </Button>
             </div>
@@ -1313,7 +1314,7 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 </div>
                 <div className="flex items-center gap-2">
                   {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
-                  <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
                     <Settings2 className="w-3.5 h-3.5" /> Set Goals
                   </Button>
                 </div>
@@ -1491,10 +1492,10 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 </div>
                 <div className="flex items-center gap-2">
                   {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
-                  <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => exportInventoryAlertsCSV(inventoryAlerts)}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => exportInventoryAlertsCSV(inventoryAlerts)}>
                     <Download className="w-3.5 h-3.5" /> Export
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
                     <Settings2 className="w-3.5 h-3.5" /> Manage Inventory
                   </Button>
                 </div>
@@ -1574,10 +1575,10 @@ export function RetailAnalyticsContent({ dateFrom, dateTo, locationId, filterCon
                 </div>
                 <div className="flex items-center gap-2">
                   {filterContext && <AnalyticsFilterBadge locationId={filterContext.locationId} dateRange={filterContext.dateRange} />}
-                  <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => exportCommissionsCSV(staffCommissions)}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => exportCommissionsCSV(staffCommissions)}>
                     <Download className="w-3.5 h-3.5" /> Export
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
+                  <Button variant="ghost" size={tokens.button.inline} className="text-xs gap-1 text-muted-foreground" onClick={() => navigate('/dashboard/admin/settings?category=retail-products')}>
                     <Settings2 className="w-3.5 h-3.5" /> Configure
                   </Button>
                 </div>
