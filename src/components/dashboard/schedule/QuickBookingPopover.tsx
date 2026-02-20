@@ -49,6 +49,10 @@ import { useStaffQualifiedServices } from '@/hooks/useStaffServiceQualifications
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { AddBreakForm } from './AddBreakForm';
 import { BannedClientWarningDialog } from '@/components/dashboard/clients/BannedClientWarningDialog';
+import { ServiceAddonToast } from './ServiceAddonToast';
+import { useAllCategoryAddons } from '@/hooks/useCategoryAddons';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
+import { useServiceCategoryColors } from '@/hooks/useServiceCategoryColors';
 
 type QuickBookingMode = 'popover' | 'panel';
 
@@ -137,6 +141,10 @@ export function QuickBookingPopover({
   const [showNotes, setShowNotes] = useState(false);
   const [showBreakForm, setShowBreakForm] = useState(false);
 
+  // Add-on toast state
+  const [showAddonToast, setShowAddonToast] = useState(false);
+  const [dismissedAddonCategories, setDismissedAddonCategories] = useState<Set<string>>(new Set());
+
   // Stylist-first mode state
   const [stylistFirstMode, setStylistFirstMode] = useState(false);
   const [preSelectedStylistId, setPreSelectedStylistId] = useState<string | null>(null);
@@ -191,6 +199,50 @@ export function QuickBookingPopover({
   const { data: locations = [] } = useLocations();
   const { data: servicesByCategory, services = [], isLoading: isLoadingServices } = useAllServicesByCategory();
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
+  const { data: categoryColorsList = [] } = useServiceCategoryColors();
+
+  // Add-on recommendations
+  const { effectiveOrganization } = useOrganizationContext();
+  const { data: addonMap = {} } = useAllCategoryAddons(effectiveOrganization?.id);
+
+  // When a category is selected, show add-on toast after 800ms if not dismissed
+  useEffect(() => {
+    if (!selectedCategory) {
+      setShowAddonToast(false);
+      return;
+    }
+    if (dismissedAddonCategories.has(selectedCategory)) return;
+
+    // Find the category's DB id from the colorsList
+    const catEntry = categoryColorsList.find(c => c.category_name === selectedCategory);
+    if (!catEntry) return;
+
+    const addons = addonMap[catEntry.id];
+    if (!addons || addons.length === 0) return;
+
+    const timer = setTimeout(() => setShowAddonToast(true), 800);
+    return () => clearTimeout(timer);
+  }, [selectedCategory, addonMap, categoryColorsList, dismissedAddonCategories]);
+
+  // Compute matched add-on suggestions for the current category
+  const addonSuggestions = useMemo(() => {
+    if (!selectedCategory || !showAddonToast) return [];
+    const catEntry = categoryColorsList.find(c => c.category_name === selectedCategory);
+    if (!catEntry) return [];
+    const addons = addonMap[catEntry.id] || [];
+    return addons
+      .flatMap(addon => {
+        if (addon.addon_service_name) {
+          return services.filter(s => s.name === addon.addon_service_name);
+        }
+        if (addon.addon_category_name) {
+          return (servicesByCategory?.[addon.addon_category_name] || []).slice(0, 2);
+        }
+        return [];
+      })
+      .filter(s => !selectedServices.includes(s.phorest_service_id))
+      .slice(0, 3);
+  }, [selectedCategory, showAddonToast, addonMap, categoryColorsList, services, servicesByCategory, selectedServices]);
 
   // Get selected service details (for totals calculation)
   const selectedServiceDetails = useMemo(() => {
@@ -452,6 +504,9 @@ export function QuickBookingPopover({
     setBookingNotes('');
     setShowNotes(false);
     setShowBreakForm(false);
+    // Reset add-on toast state
+    setShowAddonToast(false);
+    setDismissedAddonCategories(new Set());
     // Reset stylist-first mode
     setStylistFirstMode(false);
     setPreSelectedStylistId(null);
@@ -1095,50 +1150,71 @@ export function QuickBookingPopover({
           </ScrollArea>
 
           {/* Footer */}
-          <div className="p-3 border-t border-border bg-card space-y-2">
-            {selectedServices.length > 0 && (
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
-                      {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
-                    </Badge>
-                    <span className="text-sm text-muted-foreground">{totalDuration}m</span>
+          <div className="border-t border-border bg-card">
+            {/* Add-on toast — lives above the footer buttons */}
+            <ServiceAddonToast
+              visible={showAddonToast && addonSuggestions.length > 0}
+              categoryName={selectedCategory || ''}
+              suggestions={addonSuggestions}
+              onAdd={(id) => {
+                handleServiceToggle(id);
+                // Hide toast when all suggestions are added
+                const remaining = addonSuggestions.filter(s => s.phorest_service_id !== id && !selectedServices.includes(s.phorest_service_id));
+                if (remaining.length === 0) setShowAddonToast(false);
+              }}
+              onDismiss={() => {
+                setShowAddonToast(false);
+                if (selectedCategory) {
+                  setDismissedAddonCategories(prev => new Set(prev).add(selectedCategory));
+                }
+              }}
+            />
+
+            <div className="p-3 space-y-2">
+              {selectedServices.length > 0 && (
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
+                        {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">{totalDuration}m</span>
+                    </div>
+                    <span className="text-base font-semibold">{formatCurrencyWhole(totalPrice)}</span>
                   </div>
-                  <span className="text-base font-semibold">{formatCurrencyWhole(totalPrice)}</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedServiceDetails.map(s => (
+                      <Badge key={s.id} variant="outline" className="text-xs font-normal px-2 py-0.5 pr-1 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.phorest_service_id))}>
+                        {s.name}
+                        <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedServiceDetails.map(s => (
-                    <Badge key={s.id} variant="outline" className="text-xs font-normal px-2 py-0.5 pr-1 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.phorest_service_id))}>
-                      {s.name}
-                      <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-            {selectedCategory && selectedServices.length > 0 && (
-              <Button
-                variant="ghost"
-                className="w-full h-9 text-xs text-muted-foreground border border-dashed border-border hover:bg-muted/50 hover:text-foreground"
-                onClick={() => setSelectedCategory(null)}
-              >
-                + Add service from another category
+              )}
+              {selectedCategory && selectedServices.length > 0 && (
+                <Button
+                  variant="ghost"
+                  className="w-full h-9 text-xs text-muted-foreground border border-dashed border-border hover:bg-muted/50 hover:text-foreground"
+                  onClick={() => setSelectedCategory(null)}
+                >
+                  + Add service from another category
+                </Button>
+              )}
+              {!selectedCategory && (
+                <Button
+                  variant="outline"
+                  className="w-full h-9 gap-2"
+                  onClick={() => setShowBreakForm(true)}
+                >
+                  <Coffee className="h-4 w-4" />
+                  Add Break
+                </Button>
+              )}
+              <Button className="w-full h-9" onClick={handleServicesComplete}>
+                {selectedServices.length === 0 ? 'Skip Services' : 'Continue'}
               </Button>
-            )}
-            {!selectedCategory && (
-              <Button
-                variant="outline"
-                className="w-full h-9 gap-2"
-                onClick={() => setShowBreakForm(true)}
-              >
-                <Coffee className="h-4 w-4" />
-                Add Break
-              </Button>
-            )}
-            <Button className="w-full h-9" onClick={handleServicesComplete}>
-              {selectedServices.length === 0 ? 'Skip Services' : 'Continue'}
-            </Button>
+            </div>
           </div>
             </>
           )}
