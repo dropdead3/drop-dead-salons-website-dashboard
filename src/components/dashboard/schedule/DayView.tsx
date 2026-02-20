@@ -57,7 +57,7 @@ function parseTimeToMinutes(time: string): number {
   return hours * 60 + minutes;
 }
 
-function getEventStyle(startTime: string, endTime: string, hoursStart: number, rowHeight: number = 16) {
+function getEventStyle(startTime: string, endTime: string, hoursStart: number, rowHeight: number = 20) {
   const startMinutes = parseTimeToMinutes(startTime);
   const endMinutes = parseTimeToMinutes(endTime);
   const startOffset = startMinutes - (hoursStart * 60);
@@ -127,13 +127,18 @@ function DroppableSlot({
   const { setNodeRef, isOver: dndIsOver } = useDroppable({ id });
   const highlight = isOver || dndIsOver;
 
+  const borderClass = minute === 0
+    ? 'border-t border-border/60'
+    : minute === 30
+      ? 'border-t border-dotted border-border/40'
+      : 'border-t border-dotted border-border/20';
+
   return (
     <div
       ref={setNodeRef}
       className={cn(
-        'h-4 group relative',
-        minute === 0 && 'border-t border-border',
-        minute !== 0 && 'border-t border-dashed border-border/30',
+        'h-5 group relative',
+        borderClass,
         isPastSlot
           ? 'bg-muted/40 cursor-not-allowed'
           : isOutsideHours
@@ -423,7 +428,7 @@ export function DayView({
   assistedAppointmentIds,
   appointmentsWithAssistants,
 }: DayViewProps) {
-  const ROW_HEIGHT = 16; // 16px per 15-min slot
+  const ROW_HEIGHT = 20; // 20px per 15-min slot (matches Week view)
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
   const reschedule = useRescheduleAppointment();
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -452,10 +457,13 @@ export function DayView({
   
   // Generate time labels for each hour with 15-min intervals
   const timeSlots = useMemo(() => {
-    const slots: { hour: number; minute: number }[] = [];
+    const slots: { hour: number; minute: number; label: string; isHour: boolean; isHalf: boolean }[] = [];
     for (let hour = hoursStart; hour < hoursEnd; hour++) {
       for (let minute = 0; minute < 60; minute += 15) {
-        slots.push({ hour, minute });
+        const isHour = minute === 0;
+        const isHalf = minute === 30;
+        const label = isHour ? formatHour(hour) : isHalf ? '30' : '';
+        slots.push({ hour, minute, label, isHour, isHalf });
       }
     }
     return slots;
@@ -592,17 +600,17 @@ export function DayView({
         {/* Calendar Grid */}
         <div ref={scrollRef} className="flex-1 overflow-auto">
           <div className="min-w-[600px]">
-            {/* Stylist Headers - Phorest dark style */}
-            <div className="flex border-b sticky top-0 z-10">
+            {/* Stylist Headers - frosted glass sticky header */}
+            <div className="flex border-b sticky top-0 z-10" style={{ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
               {/* Week indicator */}
-              <div className="w-14 shrink-0 bg-muted/50 flex items-center justify-center text-xs text-muted-foreground font-medium border-r">
+              <div className="w-[70px] shrink-0 bg-muted/70 flex items-center justify-center text-xs text-muted-foreground font-medium border-r">
                 W {weekNumber}
               </div>
               
               {stylists.map((stylist) => (
                 <div 
                   key={stylist.user_id} 
-                  className="flex-1 min-w-[160px] bg-foreground text-background p-2 flex items-center gap-2 border-r border-foreground/20 last:border-r-0"
+                  className="flex-1 min-w-[160px] bg-foreground/95 text-background p-2 flex items-center gap-2 border-r border-foreground/20 last:border-r-0"
                 >
                   <Avatar className="h-8 w-8 border border-background/20">
                     <AvatarImage src={stylist.photo_url || undefined} />
@@ -616,27 +624,41 @@ export function DayView({
                 </div>
               ))}
             </div>
+            {/* Gradient fade below header */}
+            <div className="h-3 bg-gradient-to-b from-muted/40 to-transparent pointer-events-none sticky top-[52px] z-[9]" />
 
             {/* Time Grid */}
             <div className="flex relative">
               {/* Time Labels */}
-              <div className="w-14 shrink-0 border-r bg-muted/30">
-                {timeSlots.map(({ hour, minute }) => (
-                  <div 
-                    key={`${hour}-${minute}`}
-                    className={cn(
-                      'h-4 text-right pr-2 flex items-center justify-end',
-                      minute === 0 && 'border-t border-border',
-                      minute !== 0 && 'border-t border-dashed border-border/30'
-                    )}
-                  >
-                    {minute === 0 && (
-                      <span className="text-[11px] text-muted-foreground -mt-2">
-                        {formatHour(hour)}
-                      </span>
-                    )}
-                  </div>
-                ))}
+              <div className="w-[70px] shrink-0 border-r bg-muted/30">
+                {timeSlots.map(({ hour, minute, label, isHour, isHalf }) => {
+                  const borderClass = isHour
+                    ? 'border-t border-border/60'
+                    : isHalf
+                      ? 'border-t border-dotted border-border/40'
+                      : 'border-t border-dotted border-border/20';
+
+                  return (
+                    <div 
+                      key={`${hour}-${minute}`}
+                      className={cn(
+                        'h-5 text-right pr-2 flex items-center justify-end',
+                        borderClass
+                      )}
+                    >
+                      {isHour && (
+                        <span className="text-[11px] text-foreground font-medium -mt-2">
+                          {label}
+                        </span>
+                      )}
+                      {isHalf && (
+                        <span className="text-[10px] text-muted-foreground/50 -mt-1">
+                          {label}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
 
               {/* Stylist Columns */}
@@ -710,7 +732,7 @@ export function DayView({
               {/* Current Time Indicator */}
               {showCurrentTime && currentTimeOffset > 0 && currentTimeOffset < timeSlots.length * ROW_HEIGHT && (
                 <div 
-                  className="absolute left-14 right-0 border-t-2 border-destructive pointer-events-none z-20"
+                  className="absolute left-[70px] right-0 border-t-2 border-destructive pointer-events-none z-20"
                   style={{ top: `${currentTimeOffset}px` }}
                 >
                   <div className="absolute -left-1 -top-1.5 w-3 h-3 bg-destructive rounded-full" />
