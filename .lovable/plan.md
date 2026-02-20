@@ -1,47 +1,81 @@
 
-## Design Token Compliance -- Meetings & Accountability Page
 
-### Current Issues Found
+# Recurring Appointments
 
-| # | Violation | Location | Fix |
-|---|-----------|----------|-----|
-| 1 | **Page title uses raw `font-display text-3xl lg:text-4xl`** | Line 221 | Use `tokens.heading.page` |
-| 2 | **Page subtitle uses raw `text-muted-foreground`** | Line 222 | Use `tokens.body.muted` |
-| 3 | **StatCard value uses raw `text-2xl font-display font-medium`** | Line 42 | Use `tokens.kpi.value` |
-| 4 | **StatCard label uses raw `text-xs text-muted-foreground`** | Line 43 | Use `tokens.body.muted` with `text-xs` override |
-| 5 | **StatCard icon box uses raw classes** | Line 38 | Use `tokens.card.iconBox` |
-| 6 | **Card headers missing `tokens.card.title`** on CardTitle (lines 289, 344, 390) | 3 locations | Replace raw `font-display text-base tracking-wide` with `tokens.card.title` |
-| 7 | **Card icon boxes use raw `w-10 h-10 bg-muted flex...`** | Lines 285, 340, 386 | Use `tokens.card.iconBox` |
-| 8 | **Meeting row names use raw `font-medium text-sm`** | Lines 301, 355, 403 | Use `tokens.body.emphasis` |
-| 9 | **Raw empty state text** in 3 cards (lines 321, 370, 427) | 3 locations | Replace with `EmptyState` component |
-| 10 | **"View All" buttons use raw `text-muted-foreground hover:text-foreground`** | Lines 326, 375, 432 | Standardize styling |
+## Overview
+Add the ability for staff to create repeating appointments during the booking flow. The system generates future appointment instances from a recurrence rule, displays them on the calendar with a visual indicator, and allows managing/cancelling individual or all future occurrences.
 
-### Technical Details
+## User Flow
 
-**File: `src/pages/dashboard/ScheduleMeeting.tsx`** (single file, all changes)
+1. Staff completes normal booking steps (client, service, stylist, time)
+2. On the Confirm step, a "Repeat this appointment" toggle appears
+3. When enabled, staff selects frequency and end condition
+4. On confirm, the first appointment is created normally, then all future occurrences are generated and conflict-checked
+5. Recurring appointments show a repeat icon on the calendar
+6. Viewing a recurring appointment shows series info and options to cancel one or all future
 
-1. **Add imports**: `tokens` from `@/lib/design-tokens`, `EmptyState` from `@/components/ui/empty-state`
+## Frequency Options
 
-2. **Page header** (lines 221-224):
-   - Title: `<h1 className={tokens.heading.page}>` (replaces raw font-display classes)
-   - Subtitle: `<p className={tokens.body.muted}>` (replaces raw text-muted-foreground)
+| Frequency | Days Between |
+|-----------|-------------|
+| Weekly | 7 |
+| Every 2 weeks | 14 |
+| Every 4 weeks | 28 |
+| Every 6 weeks | 42 |
+| Every 8 weeks | 56 |
+| Monthly | Calendar month (same day-of-month) |
 
-3. **StatCard component** (lines 34-48):
-   - Icon container: use `tokens.card.iconBox` with color override via `cn()`
-   - Value: `tokens.kpi.value`
-   - Label: `cn(tokens.body.muted, "text-xs")`
+## Technical Details
 
-4. **Three CardHeader blocks** (Upcoming Meetings, Pending Requests, Active Commitments):
-   - Icon boxes: `tokens.card.iconBox`
-   - CardTitle: `tokens.card.title`
+### 1. Database Migration
 
-5. **Meeting/request/commitment row text**:
-   - Name/date spans with `font-medium text-sm` become `tokens.body.emphasis`
-   - Secondary text already using `text-xs text-muted-foreground` is acceptable but gets `tokens.body.muted` with size override
+Add three columns to `phorest_appointments`:
 
-6. **Three empty states** replaced with `<EmptyState>` component:
-   - "No upcoming meetings scheduled" with Calendar icon
-   - "No pending requests" with Inbox icon
-   - "No active commitments" with ClipboardList icon
+- `recurrence_rule` (JSONB) -- stores the pattern on all occurrences (frequency, occurrences/end_date)
+- `recurrence_group_id` (UUID) -- links all appointments in a series
+- `recurrence_index` (INTEGER) -- position in series (0, 1, 2...)
+- Partial index on `recurrence_group_id` for efficient series lookups
 
-No database, routing, or structural changes. Pure design-token compliance pass.
+### 2. New Files
+
+**`src/components/dashboard/schedule/booking/RecurrenceSelector.tsx`**
+- Toggle switch: "Repeat this appointment"
+- Frequency dropdown with all 6 options above
+- End condition: number of occurrences (default 6, max 26) or end date
+- Preview text showing count and final date (e.g., "Creates 6 appointments through Sep 25, 2026")
+
+**`supabase/functions/create-recurring-appointments/index.ts`**
+- Accepts: first appointment details, recurrence rule
+- Generates future dates based on frequency
+- Conflict-checks each date via existing `check_booking_conflicts` function
+- Batch-inserts non-conflicting appointments with shared `recurrence_group_id`
+- Returns: created count, skipped dates with reasons
+
+### 3. Modified Files
+
+**`BookingWizard.tsx`**
+- Add `recurrenceRule` to wizard state
+- Pass to ConfirmStep and use on final submit
+
+**`ConfirmStep.tsx`**
+- Render `RecurrenceSelector` component
+- After creating first appointment, call `create-recurring-appointments` edge function if recurrence is set
+- Show toast with results (e.g., "Created 5 of 6 recurring appointments. 1 skipped due to conflict.")
+
+**`AppointmentDetailSheet.tsx`**
+- Show "Recurring (3 of 6)" badge when appointment has `recurrence_group_id`
+- Add "Cancel all future in series" button that cancels all appointments in the group with date >= current
+
+**`usePhorestCalendar.ts`**
+- Add `recurrence_group_id` and `recurrence_index` to the select query
+
+**`AppointmentCard.tsx`** (or equivalent calendar card)
+- Show small Repeat icon when `recurrence_group_id` is present
+
+### 4. Edge Cases
+
+- **Conflicts**: Skipped silently with a summary toast; the rest of the series is still created
+- **Cancellation**: Cancelling a single occurrence does not affect others; "cancel all future" only affects same group with later dates
+- **Monthly frequency**: Uses same day-of-month; if day doesn't exist (e.g., Jan 31 -> Feb), clamps to last day of month
+- **Max occurrences**: Capped at 26 (roughly 6 months of weekly) to prevent runaway creation
+
