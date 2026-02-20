@@ -55,6 +55,22 @@ import { getNextPayDay, type PayScheduleSettings } from '@/hooks/usePaySchedule'
 
 export type DateRangeType = 'today' | 'yesterday' | '7d' | '30d' | 'thisWeek' | 'thisMonth' | 'todayToEom' | 'todayToPayday' | 'lastMonth';
 
+/** Human-readable phrase for the active date range, used in compact card labels. */
+function getPeriodLabel(dateRange: DateRangeType): string {
+  const map: Record<DateRangeType, string> = {
+    today: 'today',
+    yesterday: 'yesterday',
+    '7d': 'the last 7 days',
+    '30d': 'the last 30 days',
+    thisWeek: 'this week',
+    thisMonth: 'this month',
+    todayToEom: 'today through end of month',
+    todayToPayday: 'today through next pay day',
+    lastMonth: 'last month',
+  };
+  return map[dateRange] ?? 'this period';
+}
+
 // Map pinned cards to their parent analytics tab visibility keys
 // If the parent tab is hidden, the card should also be hidden
 const CARD_TO_TAB_MAP: Record<string, string> = {
@@ -322,17 +338,17 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       case 'executive_summary':
       case 'sales_overview':
         metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
-        metricLabel = 'Total revenue across all services and retail';
+        metricLabel = `Total revenue across all services and retail for ${getPeriodLabel(filters.dateRange)}`;
         break;
       case 'daily_brief':
         metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
-        metricLabel = 'Revenue earned so far today';
+        metricLabel = `Revenue earned ${getPeriodLabel(filters.dateRange)}`;
         break;
       case 'top_performers': {
         const top = performersForCard[0];
         if (top) {
           metricValue = `${top.name.split(' ')[0]} · ${formatCurrencyWhole(top.totalRevenue)}`;
-          metricLabel = 'Highest earning team member this period';
+          metricLabel = `Highest earning team member ${getPeriodLabel(filters.dateRange)}`;
         } else {
           metricValue = '--';
           metricLabel = '';
@@ -348,19 +364,19 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       }
       case 'revenue_breakdown':
         metricValue = `${formatCurrencyWhole(salesData?.serviceRevenue ?? 0)} / ${formatCurrencyWhole(salesData?.productRevenue ?? 0)}`;
-        metricLabel = 'Service revenue vs. retail product revenue';
+        metricLabel = `Service vs. retail revenue for ${getPeriodLabel(filters.dateRange)}`;
         break;
       case 'retail_effectiveness':
         metricValue = attachmentData ? formatPercent(attachmentData.attachmentRate) : '--';
-        metricLabel = 'Percentage of service tickets with retail add-ons';
+        metricLabel = `Retail attachment rate for ${getPeriodLabel(filters.dateRange)}`;
         break;
       case 'rebooking':
         metricValue = rebookData ? formatPercent(rebookData.rebookRate) : '--';
-        metricLabel = 'Clients who rebooked before leaving';
+        metricLabel = `Clients who rebooked before leaving (${getPeriodLabel(filters.dateRange)})`;
         break;
       case 'team_goals':
         metricValue = formatCurrencyWhole(salesData?.totalRevenue ?? 0);
-        metricLabel = 'Combined team revenue toward goal';
+        metricLabel = `Combined team revenue toward goal (${getPeriodLabel(filters.dateRange)})`;
         break;
       case 'capacity_utilization': {
         const avgUtil = workload?.length
@@ -386,7 +402,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
         const topCat = serviceMixData?.[0];
         if (topCat) {
           metricValue = `${topCat.category} · ${formatCurrencyCompact(topCat.revenue)}`;
-          metricLabel = 'Highest revenue service category';
+          metricLabel = `Top service category by revenue (${getPeriodLabel(filters.dateRange)})`;
         } else {
           metricValue = '--';
           metricLabel = '';
@@ -396,7 +412,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       case 'client_funnel': {
         const total = (clientFunnelData?.newClientCount ?? 0) + (clientFunnelData?.returningClientCount ?? 0);
         metricValue = `${formatNumber(total)} clients`;
-        metricLabel = 'New and returning clients this period';
+        metricLabel = `New and returning clients ${getPeriodLabel(filters.dateRange)}`;
         break;
       }
       case 'client_health': {
@@ -431,7 +447,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       case 'new_bookings': {
         const count = newBookingsQuery.data?.bookedInRange ?? 0;
         metricValue = `${formatNumber(count)} added`;
-        metricLabel = 'Appointments added to the schedule so far today';
+        metricLabel = `Appointments added to the schedule ${getPeriodLabel(filters.dateRange)}`;
         break;
       }
       case 'hiring_capacity': {
