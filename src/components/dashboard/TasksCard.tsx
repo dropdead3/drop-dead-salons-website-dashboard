@@ -274,7 +274,7 @@ export function TasksCard({
               <div className="mt-4 pt-3 border-t border-border/30">
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size={tokens.button.card}
                   className="w-full text-xs text-amber-600 gap-1.5"
                   onClick={() => setShowSnoozed(!showSnoozed)}
                 >
@@ -297,7 +297,7 @@ export function TasksCard({
               <div className="mt-4 pt-3 border-t border-border/30">
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size={tokens.button.card}
                   className="w-full text-xs text-muted-foreground gap-1.5"
                   onClick={() => setShowCompleted(!showCompleted)}
                 >

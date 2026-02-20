@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -169,7 +170,7 @@ export function TeamGoalsCard({
                 </div>
               </div>
             )}
-            <Button variant="ghost" size="sm" onClick={handleOpenEdit}>
+            <Button variant="ghost" size={tokens.button.inline} onClick={handleOpenEdit}>
               <Edit2 className="w-4 h-4" />
             </Button>
           </div>
@@ -297,7 +298,7 @@ export function TeamGoalsCard({
             <div className="space-y-2 pt-4 border-t">
               <div className="flex items-center justify-between">
                 <Label>Reward Milestones</Label>
-                <Button variant="outline" size="sm" onClick={addMilestone}>Add</Button>
+                <Button variant="outline" size={tokens.button.inline} onClick={addMilestone}>Add</Button>
               </div>
               <div className="space-y-2">
                 {milestones.map((m, idx) => (
@@ -320,7 +321,7 @@ export function TeamGoalsCard({
                     />
                     <Button 
                       variant="ghost" 
-                      size="sm" 
+                      size={tokens.button.inline} 
                       onClick={() => removeMilestone(idx)}
                       className="h-9 px-2 text-destructive"
                     >

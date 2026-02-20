@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
@@ -39,7 +40,7 @@ export function LandingPageSettings() {
           {hasCustomLandingPage && (
             <Button
               variant="outline"
-              size="sm"
+              size={tokens.button.card}
               onClick={() => resetToDefault()}
               disabled={isUpdating}
               className="gap-2"

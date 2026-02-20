@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { formatPhoneNumber, cn } from '@/lib/utils';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -524,7 +525,7 @@ export function EditOrganizationDialog({ organization, open, onOpenChange }: Edi
                             <div className="border-t border-slate-700 p-2">
                               <Button
                                 variant="ghost"
-                                size="sm"
+                                size={tokens.button.inline}
                                 className="w-full text-slate-400 hover:text-white hover:bg-slate-700"
                                 onClick={() => field.onChange(null)}
                               >

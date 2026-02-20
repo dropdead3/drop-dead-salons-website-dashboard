@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { 
   Flag, 
   Zap, 
@@ -134,7 +135,7 @@ export function AccountFeatureFlagsTab({ organizationId, organizationName }: Acc
         {overrideCount > 0 && (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <PlatformButton variant="outline" size="sm">
+              <PlatformButton variant="outline" size={tokens.button.card}>
                 <RotateCcw className="h-4 w-4 mr-1" />
                 Reset All ({overrideCount})
               </PlatformButton>

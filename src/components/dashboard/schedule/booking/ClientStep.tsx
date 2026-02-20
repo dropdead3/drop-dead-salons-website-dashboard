@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -92,7 +93,7 @@ export function ClientStep({
               </p>
               <Button
                 variant="link"
-                size="sm"
+                size={tokens.button.card}
                 className="mt-2 text-primary"
                 onClick={onNewClient}
               >

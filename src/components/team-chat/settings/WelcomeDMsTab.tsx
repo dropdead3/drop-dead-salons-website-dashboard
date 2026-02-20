@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Button } from '@/components/ui/button';
@@ -118,7 +119,7 @@ export function WelcomeDMsTab({ settings, onUpdate }: WelcomeDMsTabProps) {
                   New members will receive DMs from whoever holds these roles
                 </p>
               </div>
-              <Button variant="outline" size="sm" onClick={handleAdd}>
+              <Button variant="outline" size={tokens.button.card} onClick={handleAdd}>
                 <Plus className="h-4 w-4 mr-1" />
                 Add Sender
               </Button>
@@ -136,7 +137,7 @@ export function WelcomeDMsTab({ settings, onUpdate }: WelcomeDMsTabProps) {
                   <p className="text-sm text-muted-foreground">
                     No welcome senders configured yet
                   </p>
-                  <Button variant="link" size="sm" onClick={handleAdd}>
+                  <Button variant="link" size={tokens.button.card} onClick={handleAdd}>
                     Add your first welcome sender
                   </Button>
                 </CardContent>
