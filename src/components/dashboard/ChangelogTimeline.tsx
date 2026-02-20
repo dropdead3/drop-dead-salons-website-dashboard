@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { motion, AnimatePresence } from 'framer-motion';
 import { parseISO, getYear, getQuarter } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -175,7 +176,7 @@ export function ChangelogTimeline({ entries }: ChangelogTimelineProps) {
                                 {isComingSoon && (
                                   <Button
                                     variant={entry.user_voted ? 'default' : 'outline'}
-                                    size="sm"
+                                    size={tokens.button.card}
                                     className="mt-3 gap-2"
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -300,7 +301,7 @@ export function ChangelogTimeline({ entries }: ChangelogTimelineProps) {
                   </div>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size={tokens.button.inline}
                     onClick={() => setSelectedEntry(null)}
                   >
                     ✕

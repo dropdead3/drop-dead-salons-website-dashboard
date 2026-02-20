@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { tokens } from '@/lib/design-tokens';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Volume2 } from 'lucide-react';
@@ -31,10 +32,10 @@ export function SoundSettingsSection() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={playSuccess} disabled={!enabled}>
+          <Button type="button" variant="outline" size={tokens.button.card} onClick={playSuccess} disabled={!enabled}>
             Preview success
           </Button>
-          <Button type="button" variant="outline" size="sm" onClick={playError} disabled={!enabled}>
+          <Button type="button" variant="outline" size={tokens.button.card} onClick={playError} disabled={!enabled}>
             Preview error
           </Button>
         </div>

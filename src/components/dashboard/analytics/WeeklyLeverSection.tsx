@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Loader2, Target, RefreshCw } from 'lucide-react';
 import { WeeklyLeverBrief } from '@/components/executive-brief/WeeklyLeverBrief';
@@ -35,7 +36,7 @@ export function WeeklyLeverSection({ onClose }: WeeklyLeverSectionProps) {
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
-              size="sm"
+              size={tokens.button.card}
               onClick={() => generateMutation.mutate()}
               disabled={generateMutation.isPending}
               className="gap-1.5 text-xs h-8"

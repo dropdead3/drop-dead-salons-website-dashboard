@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { motion } from 'framer-motion';
 import { TrendingUp, TrendingDown, Minus, Sparkles, Calendar, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -74,7 +75,7 @@ function RevenueForecastCardComponent({
       <Card className={className}>
         <CardContent className="py-8 text-center">
           <p className="text-sm text-muted-foreground mb-2">Unable to load forecast</p>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <Button variant="outline" size={tokens.button.card} onClick={() => refetch()}>
             Try Again
           </Button>
         </CardContent>

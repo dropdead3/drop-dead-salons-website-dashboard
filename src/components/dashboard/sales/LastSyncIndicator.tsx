@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { tokens } from '@/lib/design-tokens';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { Clock, CheckCircle2, AlertCircle, RefreshCw } from 'lucide-react';
@@ -59,7 +60,7 @@ export function LastSyncIndicator({
         <span>Never synced</span>
         <Button 
           variant="ghost" 
-          size="sm" 
+          size={tokens.button.inline} 
           className="h-6 px-2 text-xs"
           onClick={handleRefresh}
           disabled={isPending}
@@ -91,7 +92,7 @@ export function LastSyncIndicator({
             </span>
             <Button 
               variant="ghost" 
-              size="sm" 
+              size={tokens.button.inline} 
               className="h-6 w-6 p-0"
               onClick={handleRefresh}
               disabled={isPending}

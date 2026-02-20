@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -100,7 +101,7 @@ export function ReportBuilderPage({ onClose, initialConfig, templateId }: Report
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           {onClose && (
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size={tokens.button.card} onClick={onClose}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
@@ -259,7 +260,7 @@ export function ReportBuilderPage({ onClose, initialConfig, templateId }: Report
                     <Button
                       key={viz.id}
                       variant={visualization === viz.id ? 'default' : 'outline'}
-                      size="sm"
+                      size={tokens.button.inline}
                       onClick={() => setVisualization(viz.id as any)}
                     >
                       <Icon className="w-4 h-4 mr-2" />
@@ -288,7 +289,7 @@ export function ReportBuilderPage({ onClose, initialConfig, templateId }: Report
                       <span>{metric.label || metric.id}</span>
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size={tokens.button.inline}
                         className="h-6 w-6 p-0"
                         onClick={() => setSelectedMetrics(prev => prev.filter(m => m.id !== metric.id))}
                       >

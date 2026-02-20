@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -198,7 +199,7 @@ export function RoleAccessConfigurator() {
                 </Select>
                 {copyFromRole && (
                   <Button 
-                    size="sm" 
+                    size={tokens.button.card} 
                     onClick={handleCopyFromRole}
                     disabled={bulkUpdateMutation.isPending}
                   >
@@ -212,7 +213,7 @@ export function RoleAccessConfigurator() {
                 )}
                 <Button 
                   variant="outline" 
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={handleResetRole}
                   disabled={bulkUpdateMutation.isPending}
                 >
