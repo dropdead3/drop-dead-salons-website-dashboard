@@ -109,6 +109,26 @@ Semantic colors: `primary`, `secondary`, `accent`, `destructive`, `success`, `oa
 - Use shadcn/ui components from `@/components/ui/`
 - Dashboard content: `<div className="px-8 py-8 max-w-[1600px] mx-auto">`
 
+## Button Size Rules (HARD RULES)
+
+Always use `tokens.button.*` for size props — never hardcode sizes ad hoc.
+
+| Token | Size | Use Case |
+|-------|------|----------|
+| `tokens.button.inline` | `sm` | Table rows, inline actions |
+| `tokens.button.card` | `sm` | Card-level CTAs, secondary actions |
+| `tokens.button.page` | `default` | Page header primary CTAs |
+| `tokens.button.hero` | `lg` | Hero sections, onboarding, empty-state CTAs |
+
+Card footer "View All" links:
+```tsx
+<Button variant="ghost" size={tokens.button.card} className={tokens.button.cardFooter}>
+  View All <ChevronRight className="w-4 h-4 ml-1" />
+</Button>
+```
+
+Font: Always `font-sans` (Aeonik Pro). Max weight: `font-medium`.
+
 ## Loading States
 
 Spinner (full page):

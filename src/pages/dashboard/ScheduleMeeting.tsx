@@ -322,7 +322,7 @@ export default function ScheduleMeeting() {
                  />
               )}
               <Link to="/dashboard/schedule-meeting/my-meetings">
-                <Button variant="ghost" className="w-full mt-4 text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size={tokens.button.card} className={tokens.button.cardFooter}>
                   View All Meetings <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </Link>
@@ -373,7 +373,7 @@ export default function ScheduleMeeting() {
                      />
                   )}
                   <Link to="/dashboard/schedule-meeting/requests">
-                    <Button variant="ghost" className="w-full mt-4 text-muted-foreground hover:text-foreground">
+                    <Button variant="ghost" size={tokens.button.card} className={tokens.button.cardFooter}>
                       View All Requests <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </Link>
@@ -432,7 +432,7 @@ export default function ScheduleMeeting() {
                      />
                   )}
                   <Link to="/dashboard/schedule-meeting/commitments">
-                    <Button variant="ghost" className="w-full mt-4 text-muted-foreground hover:text-foreground">
+                    <Button variant="ghost" size={tokens.button.card} className={tokens.button.cardFooter}>
                       View All Commitments <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </Link>
