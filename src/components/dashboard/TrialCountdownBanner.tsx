@@ -4,6 +4,7 @@ import { Sparkles, ArrowRight, X, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTrialStatus, type UrgencyLevel } from '@/hooks/useTrialStatus';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { Link } from 'react-router-dom';
 
 const DISMISS_STORAGE_KEY = 'trial-banner-dismissed';
@@ -207,7 +208,7 @@ export function TrialCountdownBanner() {
           <div className="flex items-center gap-2">
             <Button
               asChild
-              size="sm"
+              size={tokens.button.card}
               className={cn('gap-1.5', buttonClasses)}
             >
               <Link to="/dashboard/settings/billing">

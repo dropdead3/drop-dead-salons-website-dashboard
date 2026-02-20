@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { useStaffStrikes, useResolveStrike, STRIKE_TYPE_LABELS, SEVERITY_COLORS, STRIKE_TYPE_COLORS, StaffStrikeWithDetails } from '@/hooks/useStaffStrikes';
 
 interface StrikeHistoryTimelineProps {
@@ -167,7 +168,7 @@ export function StrikeHistoryTimeline({ userId }: StrikeHistoryTimelineProps) {
                           
                           {!strike.is_resolved && (
                             <Button
-                              size="sm"
+                              size={tokens.button.inline}
                               variant="outline"
                               className="h-7 text-xs"
                               onClick={() => handleResolveClick(strike)}

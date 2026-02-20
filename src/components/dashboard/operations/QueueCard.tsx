@@ -25,6 +25,7 @@ import {
   Pencil,
   Trash2,
 } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import type { QueueAppointment } from '@/hooks/useTodaysQueue';
@@ -222,7 +223,7 @@ export function QueueCard({
         <div className="flex gap-2 mt-1">
           {variant === 'waiting' && onCheckIn && (
             <Button 
-              size="sm" 
+              size={tokens.button.card} 
               className="flex-1"
               onClick={onCheckIn}
               disabled={isUpdating}
@@ -234,7 +235,7 @@ export function QueueCard({
           
           {variant === 'upcoming' && onCheckIn && (
             <Button 
-              size="sm" 
+              size={tokens.button.card} 
               variant="outline"
               className="flex-1"
               onClick={onCheckIn}
@@ -247,7 +248,7 @@ export function QueueCard({
           
           {variant === 'inService' && onPay && (
             <Button 
-              size="sm" 
+              size={tokens.button.card} 
               className="flex-1 bg-green-600 hover:bg-green-700"
               onClick={onPay}
               disabled={isUpdating}

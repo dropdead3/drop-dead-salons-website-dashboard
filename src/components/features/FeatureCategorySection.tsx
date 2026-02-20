@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { FeatureToggleCard } from './FeatureToggleCard';
 import type { MergedFeature } from '@/hooks/useOrganizationFeatures';
 
@@ -113,7 +114,7 @@ export function FeatureCategorySection({
                   {canManage && onBulkToggle && totalCount > 0 && (
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size={tokens.button.inline}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleBulkToggle();
