@@ -1,4 +1,5 @@
 import { ReactNode, useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Monitor, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -19,7 +20,7 @@ export function SectionPreviewWrapper({ children, className }: SectionPreviewWra
         <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
           <Button
             variant="ghost"
-            size="sm"
+            size={tokens.button.inline}
             className={cn(
               "h-7 px-2",
               viewMode === 'desktop' && "bg-background shadow-sm"
@@ -30,7 +31,7 @@ export function SectionPreviewWrapper({ children, className }: SectionPreviewWra
           </Button>
           <Button
             variant="ghost"
-            size="sm"
+            size={tokens.button.inline}
             className={cn(
               "h-7 px-2",
               viewMode === 'mobile' && "bg-background shadow-sm"

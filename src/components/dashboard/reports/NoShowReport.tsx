@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import jsPDF from 'jspdf';
@@ -265,11 +266,11 @@ export function NoShowReport({
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
+              <Button variant="outline" size={tokens.button.card} onClick={() => setPreviewOpen(true)}>
                 <Eye className="w-4 h-4 mr-2" />
                 Preview
               </Button>
-              <Button variant="outline" size="sm" onClick={exportCSV}>
+              <Button variant="outline" size={tokens.button.card} onClick={exportCSV}>
                 <FileSpreadsheet className="w-4 h-4 mr-2" />
                 CSV
               </Button>

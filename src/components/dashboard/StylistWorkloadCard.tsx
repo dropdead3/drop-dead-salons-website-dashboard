@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Users, ArrowRight, TrendingUp, TrendingDown, Minus, DollarSign } from 'lucide-react';
@@ -103,7 +104,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
             </CardTitle>
             <Button
               variant="ghost"
-              size="sm"
+              size={tokens.button.card}
               onClick={() => navigate(analyticsHubUrl('operations', 'staff-utilization'))}
               className="gap-1 text-muted-foreground hover:text-foreground"
             >
@@ -165,7 +166,7 @@ export function StylistWorkloadCard({ workload, isLoading }: StylistWorkloadCard
           </div>
           <Button
             variant="ghost"
-            size="sm"
+            size={tokens.button.card}
             onClick={() => navigate(analyticsHubUrl('operations', 'staff-utilization'))}
             className="gap-1 text-muted-foreground hover:text-foreground"
           >

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, Loader2, Command, Sparkles, Users, BookOpen, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -235,7 +236,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
             />
             <Button
               variant={aiMode ? "default" : "ghost"}
-              size="sm"
+              size={tokens.button.inline}
               className="h-7 px-2 gap-1"
               onClick={() => {
                 setAiMode(!aiMode);
@@ -290,7 +291,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
                   <Button 
                     onClick={handleSubmitAI} 
                     className="mt-3 w-full"
-                    size="sm"
+                    size={tokens.button.card}
                   >
                     <Sparkles className="w-4 h-4 mr-2" />
                     Ask AI
@@ -330,7 +331,7 @@ export function TopBarSearch({ filterNavItems }: TopBarSearchProps) {
                     <p>No results found</p>
                     <Button 
                       variant="link" 
-                      size="sm" 
+                      size={tokens.button.inline} 
                       className="mt-1"
                       onClick={() => setAiMode(true)}
                     >

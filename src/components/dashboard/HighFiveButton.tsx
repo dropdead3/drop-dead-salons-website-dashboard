@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -76,7 +77,7 @@ export function HighFiveButton({
             <Button
               ref={buttonRef}
               variant="outline"
-              size="sm"
+              size={tokens.button.inline}
               onClick={handleClick}
               disabled={disabled}
               className={cn(

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -307,10 +308,10 @@ export function IndividualStaffReport({ dateFrom, dateTo, locationId, onClose, i
           </Select>
           {data && (
             <>
-              <Button variant="outline" size="sm" onClick={exportCSV}>
+              <Button variant="outline" size={tokens.button.card} onClick={exportCSV}>
                 <FileSpreadsheet className="w-4 h-4 mr-2" /> CSV
               </Button>
-              <Button size="sm" onClick={generatePDF} disabled={isGenerating}>
+              <Button size={tokens.button.card} onClick={generatePDF} disabled={isGenerating}>
                 {isGenerating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</> : <><Download className="w-4 h-4 mr-2" /> Download PDF</>}
               </Button>
             </>

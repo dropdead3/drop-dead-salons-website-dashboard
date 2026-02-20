@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -291,7 +292,7 @@ export function FooterEditor() {
                   </Button>
                 </div>
               ))}
-              <Button variant="outline" size="sm" onClick={addNavLink} className="gap-2">
+              <Button variant="outline" size={tokens.button.inline} onClick={addNavLink} className="gap-2">
                 <Plus className="h-4 w-4" /> Add Link
               </Button>
             </>
@@ -323,7 +324,7 @@ export function FooterEditor() {
                   </Button>
                 </div>
               ))}
-              <Button variant="outline" size="sm" onClick={addBottomLink} className="gap-2">
+              <Button variant="outline" size={tokens.button.inline} onClick={addBottomLink} className="gap-2">
                 <Plus className="h-4 w-4" /> Add Link
               </Button>
             </>

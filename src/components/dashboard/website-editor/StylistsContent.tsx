@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -286,7 +287,7 @@ export function StylistsContent() {
           {showActions ? (
             <div className="flex flex-col gap-2">
               <Button
-                size="sm"
+                size={tokens.button.card}
                 onClick={() => updateVisibility.mutate({ userId: stylist.user_id, visible: true })}
                 disabled={updateVisibility.isPending}
               >
@@ -294,7 +295,7 @@ export function StylistsContent() {
                 Approve
               </Button>
               <Button
-                size="sm"
+                size={tokens.button.card}
                 variant="outline"
                 onClick={() => denyRequest.mutate(stylist.user_id)}
                 disabled={denyRequest.isPending}
@@ -383,7 +384,7 @@ export function StylistsContent() {
           <div className="mt-4 pt-4 border-t">
             <Button
               variant="outline"
-              size="sm"
+              size={tokens.button.card}
               onClick={() => setPreviewOpen(true)}
               className="gap-2"
             >

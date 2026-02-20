@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -203,7 +204,7 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
               <>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={handleDiscard}
                   disabled={isSaving}
                 >
@@ -213,7 +214,7 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
                 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="sm" disabled={isSaving}>
+                    <Button variant="outline" size={tokens.button.card} disabled={isSaving}>
                       <RotateCcw className="w-4 h-4 mr-1" />
                       Reset
                     </Button>
@@ -235,7 +236,7 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
                 </AlertDialog>
                 
                 <Button
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={handleSave}
                   disabled={isSaving || !hasUnsavedChanges}
                   className="bg-gold hover:bg-gold/90 text-gold-foreground"
@@ -252,7 +253,7 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
               <>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={exportTheme}
                 >
                   <Download className="w-4 h-4 mr-1" />
@@ -268,7 +269,7 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
                 />
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <Upload className="w-4 h-4 mr-1" />
@@ -276,7 +277,7 @@ export function ThemeEditor({ isEditMode, onToggleEditMode }: ThemeEditorProps) 
                 </Button>
                 
                 <Button
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={onToggleEditMode}
                   className="bg-gold hover:bg-gold/90 text-gold-foreground"
                 >

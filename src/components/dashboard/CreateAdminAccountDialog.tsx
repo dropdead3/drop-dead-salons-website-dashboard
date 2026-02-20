@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -107,7 +108,7 @@ export function CreateAdminAccountDialog({ onSuccess }: CreateAdminAccountDialog
       if (!open) resetForm();
     }}>
       <DialogTrigger asChild>
-        <Button variant="default" size="sm" className="gap-2">
+        <Button variant="default" size={tokens.button.card} className="gap-2">
           <UserPlus className="h-4 w-4" />
           Create Admin Account
         </Button>
@@ -138,7 +139,7 @@ export function CreateAdminAccountDialog({ onSuccess }: CreateAdminAccountDialog
               </div>
               <Button
                 variant="outline"
-                size="sm"
+                size={tokens.button.card}
                 className="w-full gap-2"
                 onClick={copyCredentials}
               >

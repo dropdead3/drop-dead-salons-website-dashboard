@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -147,7 +148,7 @@ function SortableBrandItem({ brand, onUpdate, onRemove, onImageUpload, onImageRe
           <Button
             type="button"
             variant="outline"
-            size="sm"
+            size={tokens.button.inline}
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
             className="text-xs"
@@ -353,7 +354,7 @@ export function BrandsManager() {
               Drag to reorder. Logos are optional - text will display in the marquee.
             </p>
           </div>
-          <Button onClick={handleAddBrand} variant="outline" size="sm">
+          <Button onClick={handleAddBrand} variant="outline" size={tokens.button.card}>
             <Plus className="h-4 w-4 mr-2" />
             Add Brand
           </Button>

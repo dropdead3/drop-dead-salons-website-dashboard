@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import {
   DndContext,
   closestCenter,
@@ -386,7 +387,7 @@ export function WebsiteEditorSidebar({
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
-              size="sm"
+              size={tokens.button.inline}
               className="h-7 text-xs flex-1"
               onClick={() => onTabChange('page-settings')}
             >
@@ -396,7 +397,7 @@ export function WebsiteEditorSidebar({
             {onApplyPageTemplate && (
               <Button
                 variant="ghost"
-                size="sm"
+                size={tokens.button.inline}
                 className="h-7 text-xs flex-1"
                 onClick={onApplyPageTemplate}
               >
@@ -407,7 +408,7 @@ export function WebsiteEditorSidebar({
             {selectedPage.deletable && (
               <Button
                 variant="ghost"
-                size="sm"
+                size={tokens.button.inline}
                 className="h-7 text-xs text-destructive hover:text-destructive"
                 onClick={() => onDeletePage?.(selectedPageId)}
               >
@@ -541,7 +542,7 @@ export function WebsiteEditorSidebar({
           <div className="px-3 mt-3">
             <Button
               variant="outline"
-              size="sm"
+              size={tokens.button.card}
               className="w-full text-xs"
               onClick={() => setShowAddDialog(true)}
             >

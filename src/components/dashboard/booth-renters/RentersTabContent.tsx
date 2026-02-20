@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { useNavigate } from 'react-router-dom';
 import { useBoothRenters, type BoothRenterProfile } from '@/hooks/useBoothRenters';
 import { Card, CardContent } from '@/components/ui/card';
@@ -205,10 +206,10 @@ export function RentersTabContent({ organizationId }: RentersTabContentProps) {
                   </div>
                   
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleViewRenter(renter)}>
+                    <Button variant="outline" size={tokens.button.inline} onClick={() => handleViewRenter(renter)}>
                       View
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleViewRenter(renter)}>
+                    <Button variant="outline" size={tokens.button.inline} onClick={() => handleViewRenter(renter)}>
                       Payments
                     </Button>
                   </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { useNavigate } from 'react-router-dom';
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
@@ -211,7 +212,7 @@ export default function ReportsHub() {
             {/* Date Range Picker */}
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="min-w-[200px] justify-start">
+                <Button variant="outline" size={tokens.button.card} className="min-w-[200px] justify-start">
                   <CalendarIcon className="w-4 h-4 mr-2" />
                   {format(dateRange.from, 'MMM d')} - {format(dateRange.to, 'MMM d, yyyy')}
                 </Button>
@@ -221,7 +222,7 @@ export default function ReportsHub() {
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
-                      size="sm"
+                      size={tokens.button.inline}
                       onClick={() => setDateRange({
                         from: startOfMonth(new Date()),
                         to: endOfMonth(new Date()),
@@ -231,7 +232,7 @@ export default function ReportsHub() {
                     </Button>
                     <Button
                       variant="outline"
-                      size="sm"
+                      size={tokens.button.inline}
                       onClick={() => setDateRange({
                         from: startOfMonth(subMonths(new Date(), 1)),
                         to: endOfMonth(subMonths(new Date(), 1)),
@@ -276,7 +277,7 @@ export default function ReportsHub() {
         {/* Selected Report View */}
         {selectedReport ? (
           <div className="space-y-4">
-            <Button variant="ghost" size="sm" onClick={handleCloseReport}>
+            <Button variant="ghost" size={tokens.button.inline} onClick={handleCloseReport}>
               ← Back to Reports
             </Button>
             {renderSelectedReport()}
