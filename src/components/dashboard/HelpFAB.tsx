@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { CalendarClock, MessageCircleQuestion, X } from 'lucide-react';
@@ -12,9 +12,19 @@ import { ChatLeadershipTab } from './help-fab/ChatLeadershipTab';
 export function HelpFAB() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('ai-help');
+  const [bookingOpen, setBookingOpen] = useState(false);
   const location = useLocation();
   
   const isSchedulePage = location.pathname === '/dashboard/schedule';
+
+  // Listen for booking popover open/close to hide FAB
+  useEffect(() => {
+    const handleBookingState = (e: Event) => {
+      setBookingOpen((e as CustomEvent).detail?.open ?? false);
+    };
+    window.addEventListener('booking-popover-state', handleBookingState);
+    return () => window.removeEventListener('booking-popover-state', handleBookingState);
+  }, []);
 
   const handleCopilotToggle = useCallback(() => {
     if (isSchedulePage) {
@@ -24,6 +34,11 @@ export function HelpFAB() {
   
   // Hide on Team Chat page since it has its own AI panel
   if (location.pathname === '/dashboard/team-chat') {
+    return null;
+  }
+
+  // Hide when booking popover is open on schedule page
+  if (isSchedulePage && bookingOpen) {
     return null;
   }
 
