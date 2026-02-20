@@ -1,17 +1,13 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { differenceInDays } from 'date-fns';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
-import { 
-  Sheet, 
-  SheetContent, 
-  SheetHeader, 
-  SheetTitle,
-  SheetDescription 
-} from '@/components/ui/sheet';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -362,10 +358,48 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
 
   const hasAddress = client.address_line1 || client.city || client.state || client.zip || client.country;
 
-  return (
-    <Sheet open={open} onOpenChange={(o) => { if (!o) { setIsEditing(false); setIsEditingDates(false); setIsEditingSettings(false); setIsEditingPrompts(false); setIsEditingAddress(false); setIsEditingReminders(false); } onOpenChange(o); }}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto bg-background/95 backdrop-blur-xl p-0">
-        <div className="p-6 space-y-4">
+  const handleClose = () => {
+    setIsEditing(false);
+    setIsEditingDates(false);
+    setIsEditingSettings(false);
+    setIsEditingPrompts(false);
+    setIsEditingAddress(false);
+    setIsEditingReminders(false);
+    onOpenChange(false);
+  };
+
+  return createPortal(
+    <AnimatePresence>
+      {open && (
+        <>
+          {/* Backdrop */}
+          <motion.div
+            key="client-detail-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+            onClick={handleClose}
+          />
+          {/* Floating Panel */}
+          <motion.div
+            key="client-detail-panel"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100vw-2rem)] max-w-[440px] max-h-[85vh] rounded-xl border border-border bg-popover shadow-xl overflow-hidden flex flex-col"
+          >
+            {/* Close button */}
+            <button
+              onClick={handleClose}
+              className="absolute right-3 top-3 z-10 rounded-full p-1.5 bg-muted/60 hover:bg-muted transition-colors"
+            >
+              <X className="w-4 h-4 text-muted-foreground" />
+            </button>
+            <ScrollArea className="flex-1 max-h-[85vh]">
+    <div className="p-6 space-y-4">
           {/* Banned Client Alert */}
           {client.is_banned && (
             <div className="mb-0">
@@ -382,7 +416,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
           )}
 
           {/* Header — Avatar + Name + Badges */}
-          <SheetHeader className="pb-0 border-0">
+          <div className="pb-0 border-0">
             <div className="flex items-center gap-4">
               <Avatar className={cn("w-16 h-16 border-2 border-border/40", client.is_archived && "opacity-50")}>
                 <AvatarFallback className="font-display text-xl bg-primary/10 tracking-wide">
@@ -390,10 +424,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <SheetTitle className="font-display text-xl tracking-wide flex items-center gap-2 flex-wrap uppercase">
+                <h2 className="font-display text-xl tracking-wide flex items-center gap-2 flex-wrap uppercase">
                   {client.name}
-                </SheetTitle>
-                <SheetDescription className="flex flex-wrap gap-2 mt-1.5">
+                </h2>
+                <div className="flex flex-wrap gap-2 mt-1.5">
                   {client.is_banned && <BannedClientBadge size="md" />}
                   {client.is_archived && (
                     <Badge variant="secondary" className="text-xs">
@@ -415,10 +449,10 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                       New Client
                     </Badge>
                   )}
-                </SheetDescription>
+                </div>
               </div>
             </div>
-          </SheetHeader>
+          </div>
 
           {/* Contact Quick Actions */}
           <div className="flex gap-2">
@@ -874,7 +908,11 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             />
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+            </ScrollArea>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>,
+    document.body
   );
 }
