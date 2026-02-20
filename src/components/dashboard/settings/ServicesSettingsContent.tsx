@@ -402,21 +402,19 @@ export function ServicesSettingsContent() {
                 title="No categories yet"
                 description="Create service categories first to configure add-on recommendations."
               />
-            ) : totalAddonCount === 0 ? (
-              <EmptyState
-                icon={Sparkles}
-                title="No add-ons configured"
-                description="Add-on recommendations surface high-margin services at exactly the right moment during booking — when the appointment is being built. Configure add-ons per category below to start increasing average ticket value."
-                action={
-                  <p className="text-xs text-muted-foreground">
-                    Expand any category below to configure its recommendations.
-                  </p>
-                }
-              />
             ) : null}
 
             {localOrder.length > 0 && (
               <div className="space-y-1 mt-2">
+                {totalAddonCount === 0 && (
+                  <div className="mb-3 px-3 py-2.5 rounded-lg bg-muted/40 border border-border/50 flex items-start gap-2.5">
+                    <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Add-on recommendations surface high-margin services at exactly the right moment during booking.
+                      Expand a category below to configure its recommendations.
+                    </p>
+                  </div>
+                )}
                 {localOrder.map((cat) => {
                   const abbr = getCategoryAbbreviation(cat.category_name);
                   const hasGradient = isGradientMarker(cat.color_hex);
@@ -440,10 +438,18 @@ export function ServicesSettingsContent() {
                         <div className="flex-1 min-w-0">
                           <p className={cn(tokens.body.emphasis, 'truncate')}>{cat.category_name}</p>
                           {addonCount > 0 ? (
-                            <p className={cn(tokens.body.muted, 'flex items-center gap-1')}>
-                              <Sparkles className="h-3 w-3 text-primary" />
-                              {addonCount} recommendation{addonCount !== 1 ? 's' : ''} configured
-                            </p>
+                            <div className="flex flex-col gap-0.5">
+                              <p className={cn(tokens.body.muted, 'flex items-center gap-1')}>
+                                <Sparkles className="h-3 w-3 text-primary" />
+                                {addonCount} recommendation{addonCount !== 1 ? 's' : ''} configured
+                              </p>
+                              {!isExpanded && (
+                                <p className="text-[11px] text-muted-foreground truncate">
+                                  {addonMap[cat.id]?.slice(0, 2).map(a => a.addon_label).join(', ')}
+                                  {addonCount > 2 ? ` +${addonCount - 2} more` : ''}
+                                </p>
+                              )}
+                            </div>
                           ) : (
                             <p className={tokens.body.muted}>No recommendations yet</p>
                           )}

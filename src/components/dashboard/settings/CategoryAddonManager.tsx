@@ -3,6 +3,7 @@ import { Plus, X, Loader2, Link2, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import {
   Select,
   SelectContent,
@@ -33,10 +34,13 @@ export function CategoryAddonManager({
   availableCategories,
   availableServiceNames,
 }: CategoryAddonManagerProps) {
+  const SENTINEL = '__none__';
+
   const [addLabel, setAddLabel] = useState('');
+  const [labelTouched, setLabelTouched] = useState(false);
   const [linkMode, setLinkMode] = useState<LinkMode>('service');
-  const [selectedService, setSelectedService] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedService, setSelectedService] = useState(SENTINEL);
+  const [selectedCategory, setSelectedCategory] = useState(SENTINEL);
   const [isAdding, setIsAdding] = useState(false);
 
   const { data: addons = [], isLoading } = useCategoryAddons(categoryId);
@@ -45,12 +49,14 @@ export function CategoryAddonManager({
 
   const resetForm = () => {
     setAddLabel('');
-    setSelectedService('');
-    setSelectedCategory('');
+    setLabelTouched(false);
+    setSelectedService(SENTINEL);
+    setSelectedCategory(SENTINEL);
     setIsAdding(false);
   };
 
   const handleCreate = () => {
+    setLabelTouched(true);
     if (!addLabel.trim()) return;
 
     createAddon.mutate(
@@ -58,9 +64,13 @@ export function CategoryAddonManager({
         organization_id: organizationId,
         source_category_id: categoryId,
         addon_label: addLabel.trim(),
-        // Empty string sentinel → null (label-only recommendation)
-        addon_service_name: linkMode === 'service' ? (selectedService || null) : null,
-        addon_category_name: linkMode === 'category' ? (selectedCategory || null) : null,
+        // __none__ sentinel → null (label-only recommendation)
+        addon_service_name: linkMode === 'service'
+          ? (selectedService && selectedService !== SENTINEL ? selectedService : null)
+          : null,
+        addon_category_name: linkMode === 'category'
+          ? (selectedCategory && selectedCategory !== SENTINEL ? selectedCategory : null)
+          : null,
         display_order: addons.length,
       },
       { onSuccess: resetForm }
@@ -130,8 +140,8 @@ export function CategoryAddonManager({
           <Input
             placeholder="Label (e.g. Scalp Treatment)"
             value={addLabel}
-            onChange={e => setAddLabel(e.target.value)}
-            className="h-8 text-xs"
+            onChange={e => { setAddLabel(e.target.value); setLabelTouched(true); }}
+            className={cn('h-8 text-xs', labelTouched && !addLabel.trim() && 'border-destructive focus-visible:ring-destructive')}
             autoFocus
             onKeyDown={e => { if (e.key === 'Enter') handleCreate(); if (e.key === 'Escape') resetForm(); }}
           />
@@ -165,8 +175,8 @@ export function CategoryAddonManager({
                   <SelectValue placeholder="Select a service (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  {/* Sentinel: deselect / label-only */}
-                  <SelectItem value="" className="text-xs text-muted-foreground">
+                  {/* Sentinel: deselect / label-only — must not be empty string (Radix prohibits it) */}
+                  <SelectItem value="__none__" className="text-xs italic text-muted-foreground">
                     Label only — no specific service
                   </SelectItem>
                   {availableServiceNames.map(name => (
@@ -178,7 +188,7 @@ export function CategoryAddonManager({
               </Select>
             ) : (
               <p className="text-[11px] text-muted-foreground leading-snug">
-                No Phorest services synced yet. You can still save a label-only recommendation.
+                No services loaded yet. You can still save a label-only recommendation, or sync your POS first.
               </p>
             )
           )}
@@ -190,6 +200,10 @@ export function CategoryAddonManager({
                 <SelectValue placeholder="Select a category (optional)" />
               </SelectTrigger>
               <SelectContent>
+                {/* Sentinel: deselect — must not be empty string (Radix prohibits it) */}
+                <SelectItem value="__none__" className="text-xs italic text-muted-foreground">
+                  No specific category
+                </SelectItem>
                 {availableCategories.map(cat => (
                   <SelectItem key={cat} value={cat} className="text-xs">
                     {cat}
