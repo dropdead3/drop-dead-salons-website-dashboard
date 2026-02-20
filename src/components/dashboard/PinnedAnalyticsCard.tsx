@@ -423,8 +423,8 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           metricValue = '--';
           metricLabel = 'Loading forecast data';
         } else {
-          metricValue = formatCurrencyCompact(weekAheadData?.totalRevenue ?? 0);
-          metricLabel = 'Projected revenue for the next 7 days';
+          metricValue = formatCurrencyWhole(weekAheadData?.totalRevenue ?? 0);
+          metricLabel = 'Estimated booked service revenue for the next 7 days';
         }
         break;
       }
