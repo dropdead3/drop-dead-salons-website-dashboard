@@ -147,7 +147,7 @@ function SortableSpecialtyItem({ option, onUpdate, onDelete, isUpdating }: Sorta
             </div>
 
             <Button
-              size="sm"
+              size={tokens.button.inline}
               variant="ghost"
               onClick={() => setIsEditing(true)}
               disabled={isUpdating}
@@ -162,7 +162,7 @@ function SortableSpecialtyItem({ option, onUpdate, onDelete, isUpdating }: Sorta
             />
 
             <Button
-              size="sm"
+              size={tokens.button.inline}
               variant="ghost"
               onClick={() => setShowDeleteConfirm(true)}
               disabled={isUpdating}
@@ -294,14 +294,14 @@ export function SpecialtyOptionsManager() {
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                size="sm"
+                size={tokens.button.card}
                 onClick={() => setOrderedIds(null)}
                 disabled={reorderOptions.isPending}
               >
                 Reset
               </Button>
               <Button
-                size="sm"
+                size={tokens.button.card}
                 onClick={handleSaveOrder}
                 disabled={reorderOptions.isPending}
               >

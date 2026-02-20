@@ -353,7 +353,7 @@ export default function Changelog() {
             <div className="flex rounded-lg border bg-muted p-1">
               <Button
                 variant={activeTab === 'list' ? 'secondary' : 'ghost'}
-                size="sm"
+                size={tokens.button.card}
                 onClick={() => setActiveTab('list')}
                 className="gap-1.5 text-xs sm:text-sm"
               >
@@ -362,7 +362,7 @@ export default function Changelog() {
               </Button>
               <Button
                 variant={activeTab === 'timeline' ? 'secondary' : 'ghost'}
-                size="sm"
+                size={tokens.button.card}
                 onClick={() => setActiveTab('timeline')}
                 className="gap-1.5 text-xs sm:text-sm"
               >

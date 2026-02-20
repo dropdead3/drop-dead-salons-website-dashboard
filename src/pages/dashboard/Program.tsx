@@ -36,6 +36,7 @@ import {
   ChevronLeft,
   Bell
 } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -310,7 +311,7 @@ export default function Program() {
               <AlertDialogTrigger asChild>
                 <Button 
                   variant="outline" 
-                  size="sm"
+                  size={tokens.button.card}
                   disabled={restarting}
                   className="text-muted-foreground hover:text-destructive hover:border-destructive"
                 >
@@ -471,7 +472,7 @@ export default function Program() {
                 </p>
                 <Button 
                   variant="outline" 
-                  size="sm" 
+                  size={tokens.button.card} 
                   className="mt-4"
                   asChild
                 >
@@ -499,7 +500,7 @@ export default function Program() {
                 </p>
                 <Button 
                   variant="outline" 
-                  size="sm" 
+                  size={tokens.button.card} 
                   className="mt-4"
                   asChild
                 >
@@ -524,7 +525,7 @@ export default function Program() {
                 Did you book a new client or a high-ticket service (above $500) today? If so, ring the bell! We want to celebrate it.
               </p>
             </div>
-            <Button variant="outline" size="sm" asChild className="group flex-shrink-0 bg-white/50 hover:bg-white/70 border-[hsl(35,30%,70%)] hover-scale">
+            <Button variant="outline" size={tokens.button.card} asChild className="group flex-shrink-0 bg-white/50 hover:bg-white/70 border-[hsl(35,30%,70%)] hover-scale">
               <Link to="/dashboard/ring-the-bell">
                 <Bell className="w-4 h-4 mr-2 origin-top group-hover:animate-swing" />
                 Ring It
