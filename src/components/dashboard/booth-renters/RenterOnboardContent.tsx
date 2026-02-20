@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
 type RentalModel = 'monthly' | 'weekly' | 'daily';
@@ -797,7 +798,7 @@ export function RenterOnboardContent({ organizationId }: RenterOnboardContentPro
                 <div className="p-4 rounded-lg bg-muted/50 border space-y-2">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-medium">Login Credentials</p>
-                    <Button variant="ghost" size="sm" onClick={copyCredentials}>
+                    <Button variant="ghost" size={tokens.button.inline} onClick={copyCredentials}>
                       {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                     </Button>
                   </div>

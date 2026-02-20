@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle2, Target, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { useNavigate } from 'react-router-dom';
 import { useKpiDefinitions } from '@/hooks/useKpiDefinitions';
 
@@ -37,7 +38,7 @@ export function SilenceState({ compact = false }: SilenceStateProps) {
           <span className="text-sm text-[hsl(var(--platform-foreground))]">No KPIs configured</span>
           <Button
             variant="link"
-            size="sm"
+            size={tokens.button.inline}
             className="ml-auto h-auto p-0 text-xs"
             onClick={() => navigate('/dashboard/admin/kpi-builder')}
           >

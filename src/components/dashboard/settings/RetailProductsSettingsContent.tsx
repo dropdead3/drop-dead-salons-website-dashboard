@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { tokens } from '@/lib/design-tokens';
 import {
   Search, Plus, BarChart3, Package, Edit2, AlertTriangle, Minus,
   Loader2, Check, X, MapPin, CheckCircle2, Info, ExternalLink, ImagePlus,
@@ -76,7 +77,7 @@ function ProductsTab() {
           <Switch checked={lowStockOnly} onCheckedChange={setLowStockOnly} id="low-stock" />
           <Label htmlFor="low-stock" className="text-sm cursor-pointer">Low Stock</Label>
         </div>
-        <Button size="sm" onClick={() => setShowAddDialog(true)} className="gap-1.5">
+        <Button size={tokens.button.card} onClick={() => setShowAddDialog(true)} className="gap-1.5">
           <Plus className="w-4 h-4" /> Add Product
         </Button>
       </div>
@@ -84,10 +85,10 @@ function ProductsTab() {
       {selectedIds.size > 0 && (
         <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border">
           <span className="text-sm font-medium">{selectedIds.size} selected</span>
-          <Button size="sm" variant="outline" onClick={() => bulkToggle.mutate({ ids: Array.from(selectedIds), isActive: false })}>
+          <Button size={tokens.button.inline} variant="outline" onClick={() => bulkToggle.mutate({ ids: Array.from(selectedIds), isActive: false })}>
             Deactivate
           </Button>
-          <Button size="sm" variant="ghost" onClick={() => setSelectedIds(new Set())}>Clear</Button>
+          <Button size={tokens.button.inline} variant="ghost" onClick={() => setSelectedIds(new Set())}>Clear</Button>
         </div>
       )}
 
@@ -233,8 +234,8 @@ function ProductFormDialog({ product, onClose, onSave }: { product: Product | nu
                 <div className="relative group w-full aspect-video rounded-lg overflow-hidden border border-border bg-muted/30">
                   <img src={form.image_url} alt="Product" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                    <Button variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()}>Replace</Button>
-                    <Button variant="secondary" size="sm" onClick={() => setForm(f => ({ ...f, image_url: '' }))}>Remove</Button>
+                    <Button variant="secondary" size={tokens.button.inline} onClick={() => fileInputRef.current?.click()}>Replace</Button>
+                    <Button variant="secondary" size={tokens.button.inline} onClick={() => setForm(f => ({ ...f, image_url: '' }))}>Remove</Button>
                   </div>
                 </div>
               ) : (
@@ -549,7 +550,7 @@ export function RetailProductsSettingsContent() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div />
-        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate('/dashboard/admin/analytics?tab=sales&subtab=retail')}>
+        <Button variant="outline" size={tokens.button.card} className="gap-1.5" onClick={() => navigate('/dashboard/admin/analytics?tab=sales&subtab=retail')}>
           <BarChart3 className="w-4 h-4" /> View Retail Analytics
         </Button>
       </div>
@@ -567,7 +568,7 @@ export function RetailProductsSettingsContent() {
                 — {onlineCount} of {totalCount} products visible online
               </span>
             </div>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 shrink-0" onClick={() => navigate('/dashboard/admin/settings?category=website')}>
+            <Button variant="ghost" size={tokens.button.inline} className="gap-1.5 text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 shrink-0" onClick={() => navigate('/dashboard/admin/settings?category=website')}>
               Manage Store Settings <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           </div>
@@ -579,7 +580,7 @@ export function RetailProductsSettingsContent() {
                 Online Store is not active. Clients cannot browse or purchase products online.
               </span>
             </div>
-            <Button variant="ghost" size="sm" className="gap-1.5 text-amber-700 dark:text-amber-300 hover:text-amber-800 shrink-0" onClick={() => navigate('/dashboard/admin/settings?category=website')}>
+            <Button variant="ghost" size={tokens.button.inline} className="gap-1.5 text-amber-700 dark:text-amber-300 hover:text-amber-800 shrink-0" onClick={() => navigate('/dashboard/admin/settings?category=website')}>
               Activate Online Store <ExternalLink className="w-3.5 h-3.5" />
             </Button>
           </div>

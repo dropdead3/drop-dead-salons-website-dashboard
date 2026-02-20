@@ -13,6 +13,7 @@ import {
   type WebsiteRetailThemeSettings,
 } from '@/hooks/useWebsiteSettings';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { hslToHex, hexToHsl } from '@/lib/colorUtils';
 
 // ─── Theme presets ───
@@ -278,7 +279,7 @@ export function StoreAppearanceConfigurator({ storeUrl }: StoreAppearanceConfigu
                 <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size={tokens.button.inline}
                     className={cn("h-7 px-2", viewMode === 'desktop' && "bg-background shadow-sm")}
                     onClick={() => setViewMode('desktop')}
                   >
@@ -286,14 +287,14 @@ export function StoreAppearanceConfigurator({ storeUrl }: StoreAppearanceConfigu
                   </Button>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size={tokens.button.inline}
                     className={cn("h-7 px-2", viewMode === 'mobile' && "bg-background shadow-sm")}
                     onClick={() => setViewMode('mobile')}
                   >
                     <Smartphone className="h-4 w-4" />
                   </Button>
                 </div>
-                <Button variant="ghost" size="sm" onClick={handleRefresh} className="h-7 w-7 p-0">
+                <Button variant="ghost" size={tokens.button.inline} onClick={handleRefresh} className="h-7 w-7 p-0">
                   <RefreshCw className={cn("h-4 w-4", iframeLoading && "animate-spin")} />
                 </Button>
               </div>
