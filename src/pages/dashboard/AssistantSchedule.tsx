@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { parseISO, isToday, isTomorrow, isPast, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Plus, Clock, User, CheckCircle2, XCircle, Calendar, List, LayoutGrid, MapPin, Repeat, Users, CalendarDays, TrendingUp, AlertCircle, UserCheck, UserPlus } from 'lucide-react';
+import { Plus, Clock, User, CheckCircle2, XCircle, Calendar, List, LayoutGrid, MapPin, Repeat, Users, CalendarDays, TrendingUp, AlertCircle, UserCheck, UserPlus, Inbox } from 'lucide-react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -39,7 +40,7 @@ function formatDateLabel(dateStr: string, formatDate: (d: Date | string | number
   return formatDate(date, 'EEEE, MMM d');
 }
 
-// --- Stat Card (reused from admin overview) ---
+// --- Stat Card (design-system aligned: card-within-card with muted icon container) ---
 function StatCard({ 
   title, 
   value, 
@@ -53,33 +54,29 @@ function StatCard({
   description?: string;
   variant?: 'default' | 'success' | 'warning' | 'danger';
 }) {
-  const variantStyles = {
-    default: 'bg-card',
-    success: 'bg-green-50 border-green-200 dark:bg-green-950/20 dark:border-green-900',
-    warning: 'bg-amber-50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900',
-    danger: 'bg-red-50 border-red-200 dark:bg-red-950/20 dark:border-red-900',
-  };
-
-  const iconStyles = {
-    default: 'text-muted-foreground',
-    success: 'text-green-600 dark:text-green-400',
-    warning: 'text-amber-600 dark:text-amber-400',
-    danger: 'text-red-600 dark:text-red-400',
+  const variantBorder = {
+    default: 'border-border/40',
+    success: 'border-primary/20',
+    warning: 'border-accent/40',
+    danger: 'border-destructive/20',
   };
 
   return (
-    <Card className={cn('transition-all', variantStyles[variant])}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className={cn('h-4 w-4', iconStyles[variant])} />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-medium">{value}</div>
-        {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
-        )}
-      </CardContent>
-    </Card>
+    <div className={cn(
+      'bg-card border rounded-xl p-4 transition-all',
+      variantBorder[variant]
+    )}>
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{title}</span>
+        <div className="w-8 h-8 rounded-lg bg-muted/40 flex items-center justify-center">
+          <Icon className="h-4 w-4 text-muted-foreground" />
+        </div>
+      </div>
+      <div className="text-2xl font-medium text-foreground">{value}</div>
+      {description && (
+        <p className="text-xs text-muted-foreground mt-1">{description}</p>
+      )}
+    </div>
   );
 }
 
@@ -626,12 +623,29 @@ export default function AssistantSchedule() {
                       />
                     </div>
 
-                    {/* Summary row */}
-                    <div className="grid gap-4 md:grid-cols-4">
-                      <StatCard title="Total Requests" value={stats.total} icon={Users} />
-                      <StatCard title="Completed" value={stats.completed} icon={CheckCircle2} variant="success" />
-                      <StatCard title="Total Declines" value={stats.totalDeclines} icon={XCircle} variant={stats.totalDeclines > 5 ? 'danger' : 'default'} />
-                      <StatCard title="Cancelled" value={stats.cancelled} icon={XCircle} />
+                    {/* Compact summary strip */}
+                    <div className="flex items-center gap-6 px-4 py-3 rounded-xl bg-muted/30 border border-border/30 text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground">Total</span>
+                        <span className="font-semibold text-foreground">{stats.total}</span>
+                      </div>
+                      <div className="w-px h-4 bg-border/40" />
+                      <div className="flex items-center gap-1.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                        <span className="text-muted-foreground">Completed</span>
+                        <span className="font-semibold text-foreground">{stats.completed}</span>
+                      </div>
+                      <div className="w-px h-4 bg-border/40" />
+                      <div className="flex items-center gap-1.5">
+                        <XCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                        <span className="text-muted-foreground">Declines</span>
+                        <span className="font-semibold text-foreground">{stats.totalDeclines}</span>
+                      </div>
+                      <div className="w-px h-4 bg-border/40" />
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-muted-foreground">Cancelled</span>
+                        <span className="font-semibold text-foreground">{stats.cancelled}</span>
+                      </div>
                     </div>
 
                     {/* Assistant Activity */}
@@ -645,7 +659,11 @@ export default function AssistantSchedule() {
                       </CardHeader>
                       <CardContent>
                         {recentRequests.length === 0 ? (
-                          <p className="text-center py-8 text-muted-foreground">No requests yet</p>
+                          <EmptyState
+                            icon={Inbox}
+                            title="No requests yet"
+                            description="Assistant requests will appear here as they're created."
+                          />
                         ) : (
                           <div className="divide-y">
                             {recentRequests.map((request) => (
@@ -670,10 +688,11 @@ export default function AssistantSchedule() {
                   </CardHeader>
                   <CardContent>
                     {pendingRequests.length === 0 ? (
-                      <div className="text-center py-12">
-                        <CheckCircle2 className="h-12 w-12 mx-auto text-green-500 mb-4" />
-                        <p className="text-muted-foreground">All caught up! No pending requests.</p>
-                      </div>
+                      <EmptyState
+                        icon={CheckCircle2}
+                        title="All caught up"
+                        description="No pending requests needing attention right now."
+                      />
                     ) : (
                       <div className="divide-y">
                         {pendingRequests.map((request) => (
@@ -696,7 +715,11 @@ export default function AssistantSchedule() {
                   </CardHeader>
                   <CardContent>
                     {filteredAssistants.length === 0 ? (
-                      <p className="text-center py-8 text-muted-foreground">No active assistants found</p>
+                      <EmptyState
+                        icon={Users}
+                        title="No active assistants"
+                        description="No assistants with active schedules were found for the selected location."
+                      />
                     ) : (
                       <div className="space-y-4">
                         {filteredAssistants.map((assistant) => (
