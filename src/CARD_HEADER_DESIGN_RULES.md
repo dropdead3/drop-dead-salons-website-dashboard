@@ -84,6 +84,30 @@ All `<Pie>` components must use:
 ❌ Never use `paddingAngle={2}` or `paddingAngle={5}` — these create distracting gaps  
 ❌ Never use `strokeWidth={0}` — segments need a subtle divider for readability
 
+## Simplified / KPI-Tile Cards
+
+Simplified analytics cards (KPI tiles rendered via `PinnedAnalyticsCard` or similar) use a **different** info-icon placement than full-size analytics cards:
+
+- The `MetricInfoTooltip` is positioned **absolutely** at `top-4 right-4` (via `tokens.kpi.infoIcon`)
+- The `Card` container must include `relative` in its className
+- The tooltip is rendered **outside** the icon+label flex row, as the first child of the Card
+
+```tsx
+<Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5 relative')}>
+  {description && <MetricInfoTooltip description={description} className={tokens.kpi.infoIcon} />}
+  <div className="flex items-center gap-3">
+    <div className={tokens.card.iconBox}>
+      <Icon className={tokens.card.icon} />
+    </div>
+    <span className={cn(tokens.kpi.label, 'flex-1')}>{meta.label}</span>
+  </div>
+  ...
+</Card>
+```
+
+❌ Do NOT place `MetricInfoTooltip` inline with the label in KPI tiles  
+❌ Do NOT omit `relative` on the Card when using absolute-positioned info icons
+
 ## Reference Cards (Correct Implementation)
 
 - `ServicesContent.tsx` → `efficiency_matrix`, `rebook_rates`, `price_realization`, `demand_trends`, `category_mix`, `client_type`

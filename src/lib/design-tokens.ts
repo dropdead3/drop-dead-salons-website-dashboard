@@ -60,6 +60,8 @@ export const tokens = {
     value: 'font-display text-xl font-medium',
     /** KPI trend badge: 10px, medium */
     change: 'text-[10px] font-medium',
+    /** Info icon pinned to top-right of KPI tile */
+    infoIcon: 'absolute top-4 right-4',
   },
 
   // ========================================
