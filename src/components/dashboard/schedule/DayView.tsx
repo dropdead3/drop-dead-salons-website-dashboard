@@ -454,7 +454,13 @@ export function DayView({
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
   );
-  
+
+  const formatHour = (hour: number) => {
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12} ${ampm}`;
+  };
+
   // Generate time labels for each hour with 15-min intervals
   const timeSlots = useMemo(() => {
     const slots: { hour: number; minute: number; label: string; isHour: boolean; isHalf: boolean }[] = [];
@@ -500,12 +506,6 @@ export function DayView({
   const currentTimeOffset = showCurrentTime
     ? ((now.getHours() * 60 + now.getMinutes()) - (hoursStart * 60)) / 15 * ROW_HEIGHT
     : 0;
-
-  const formatHour = (hour: number) => {
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour % 12 || 12;
-    return `${hour12} ${ampm}`;
-  };
 
   // Calculate overlapping appointments for a stylist
   const getOverlapInfo = (appointments: PhorestAppointment[], targetApt: PhorestAppointment) => {
