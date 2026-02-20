@@ -18,6 +18,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Star, 
   AlertTriangle, 
@@ -34,7 +36,11 @@ import {
   X,
   Check,
   Loader2,
-  Archive
+  Archive,
+  Settings,
+  Bell,
+  Home,
+  StickyNote
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -53,8 +59,12 @@ interface Client {
   id: string;
   phorest_client_id: string | null;
   name: string;
+  first_name?: string | null;
+  last_name?: string | null;
+  gender?: string | null;
   email: string | null;
   phone: string | null;
+  landline?: string | null;
   is_vip: boolean;
   visit_count: number;
   total_spend: number | null;
@@ -70,6 +80,20 @@ interface Client {
   birthday?: string | null;
   client_since?: string | null;
   is_archived?: boolean;
+  reminder_email_opt_in?: boolean;
+  reminder_sms_opt_in?: boolean;
+  client_category?: string | null;
+  lead_source?: string | null;
+  referred_by?: string | null;
+  external_client_id?: string | null;
+  prompt_client_notes?: boolean;
+  prompt_appointment_notes?: boolean;
+  address_line1?: string | null;
+  address_line2?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
+  country?: string | null;
 }
 
 interface ClientDetailSheetProps {
@@ -89,22 +113,54 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
 
   // Contact edit mode state
   const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState('');
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [editGender, setEditGender] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
+  const [editLandline, setEditLandline] = useState('');
 
-  // Dates edit mode state (independent)
+  // Dates edit mode state
   const [isEditingDates, setIsEditingDates] = useState(false);
   const [editBirthday, setEditBirthday] = useState('');
   const [editClientSince, setEditClientSince] = useState('');
+
+  // Settings edit mode state
+  const [isEditingSettings, setIsEditingSettings] = useState(false);
+  const [editCategory, setEditCategory] = useState('');
+  const [editLeadSource, setEditLeadSource] = useState('');
+  const [editReferredBy, setEditReferredBy] = useState('');
+  const [editExternalId, setEditExternalId] = useState('');
+
+  // Prompts edit mode state
+  const [isEditingPrompts, setIsEditingPrompts] = useState(false);
+  const [editPromptClientNotes, setEditPromptClientNotes] = useState(false);
+  const [editPromptAppointmentNotes, setEditPromptAppointmentNotes] = useState(false);
+
+  // Address edit mode state
+  const [isEditingAddress, setIsEditingAddress] = useState(false);
+  const [editAddress1, setEditAddress1] = useState('');
+  const [editAddress2, setEditAddress2] = useState('');
+  const [editCity, setEditCity] = useState('');
+  const [editState, setEditState] = useState('');
+  const [editZip, setEditZip] = useState('');
+  const [editCountry, setEditCountry] = useState('');
+
+  // Reminders edit mode state
+  const [isEditingReminders, setIsEditingReminders] = useState(false);
+  const [editReminderEmail, setEditReminderEmail] = useState(true);
+  const [editReminderSms, setEditReminderSms] = useState(true);
   
   const canEdit = roles.some(role => ['admin', 'manager', 'super_admin', 'receptionist'].includes(role));
 
   const startEditing = () => {
     if (!client) return;
-    setEditName(client.name || '');
+    setEditFirstName(client.first_name || client.name?.split(' ')[0] || '');
+    setEditLastName(client.last_name || client.name?.split(' ').slice(1).join(' ') || '');
+    setEditGender(client.gender || '');
     setEditEmail(client.email || '');
     setEditPhone(client.phone || '');
+    setEditLandline(client.landline || '');
     setIsEditing(true);
   };
 
@@ -115,31 +171,70 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
     setIsEditingDates(true);
   };
 
+  const startEditingSettings = () => {
+    if (!client) return;
+    setEditCategory(client.client_category || '');
+    setEditLeadSource(client.lead_source || '');
+    setEditReferredBy(client.referred_by || '');
+    setEditExternalId(client.external_client_id || '');
+    setIsEditingSettings(true);
+  };
+
+  const startEditingPrompts = () => {
+    if (!client) return;
+    setEditPromptClientNotes(client.prompt_client_notes || false);
+    setEditPromptAppointmentNotes(client.prompt_appointment_notes || false);
+    setIsEditingPrompts(true);
+  };
+
+  const startEditingAddress = () => {
+    if (!client) return;
+    setEditAddress1(client.address_line1 || '');
+    setEditAddress2(client.address_line2 || '');
+    setEditCity(client.city || '');
+    setEditState(client.state || '');
+    setEditZip(client.zip || '');
+    setEditCountry(client.country || '');
+    setIsEditingAddress(true);
+  };
+
+  const startEditingReminders = () => {
+    if (!client) return;
+    setEditReminderEmail(client.reminder_email_opt_in !== false);
+    setEditReminderSms(client.reminder_sms_opt_in !== false);
+    setIsEditingReminders(true);
+  };
+
   const cancelEditing = () => setIsEditing(false);
   const cancelEditingDates = () => setIsEditingDates(false);
+
+  const invalidateClients = () => {
+    queryClient.invalidateQueries({ queryKey: ['client-directory'] });
+    queryClient.invalidateQueries({ queryKey: ['phorest-clients'] });
+  };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!client) throw new Error('No client');
-      const [firstName, ...rest] = editName.trim().split(' ');
-      const lastName = rest.join(' ');
+      const fullName = `${editFirstName.trim()} ${editLastName.trim()}`.trim();
       
       const { error } = await supabase
         .from('phorest_clients')
         .update({
-          first_name: firstName,
-          last_name: lastName || null,
-          name: editName.trim(),
+          first_name: editFirstName.trim() || null,
+          last_name: editLastName.trim() || null,
+          name: fullName,
+          gender: editGender || null,
           email: editEmail.trim() || null,
           phone: editPhone.trim() || null,
-        })
+          landline: editLandline.trim() || null,
+        } as any)
         .eq('id', client.id);
       
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['client-directory'] });
-      queryClient.invalidateQueries({ queryKey: ['phorest-clients'] });
+      invalidateClients();
       toast.success('Client info updated');
       setIsEditing(false);
     },
@@ -151,34 +246,124 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
   const saveDatesMutation = useMutation({
     mutationFn: async () => {
       if (!client) throw new Error('No client');
-      
+      const { error } = await supabase
+        .from('phorest_clients')
+        .update({ birthday: editBirthday || null, client_since: editClientSince || null })
+        .eq('id', client.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidateClients(); toast.success('Dates updated'); setIsEditingDates(false); },
+    onError: (error: Error) => { toast.error('Failed to update dates', { description: error.message }); },
+  });
+
+  const saveSettingsMutation = useMutation({
+    mutationFn: async () => {
+      if (!client) throw new Error('No client');
       const { error } = await supabase
         .from('phorest_clients')
         .update({
-          birthday: editBirthday || null,
-          client_since: editClientSince || null,
-        })
+          client_category: editCategory || null,
+          lead_source: editLeadSource || null,
+          referred_by: editReferredBy || null,
+          external_client_id: editExternalId || null,
+        } as any)
         .eq('id', client.id);
-      
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['client-directory'] });
-      queryClient.invalidateQueries({ queryKey: ['phorest-clients'] });
-      toast.success('Dates updated');
-      setIsEditingDates(false);
+    onSuccess: () => { invalidateClients(); toast.success('Settings updated'); setIsEditingSettings(false); },
+    onError: (error: Error) => { toast.error('Failed to update settings', { description: error.message }); },
+  });
+
+  const savePromptsMutation = useMutation({
+    mutationFn: async () => {
+      if (!client) throw new Error('No client');
+      const { error } = await supabase
+        .from('phorest_clients')
+        .update({
+          prompt_client_notes: editPromptClientNotes,
+          prompt_appointment_notes: editPromptAppointmentNotes,
+        } as any)
+        .eq('id', client.id);
+      if (error) throw error;
     },
-    onError: (error: Error) => {
-      toast.error('Failed to update dates', { description: error.message });
+    onSuccess: () => { invalidateClients(); toast.success('Prompts updated'); setIsEditingPrompts(false); },
+    onError: (error: Error) => { toast.error('Failed to update prompts', { description: error.message }); },
+  });
+
+  const saveAddressMutation = useMutation({
+    mutationFn: async () => {
+      if (!client) throw new Error('No client');
+      const { error } = await supabase
+        .from('phorest_clients')
+        .update({
+          address_line1: editAddress1 || null,
+          address_line2: editAddress2 || null,
+          city: editCity || null,
+          state: editState || null,
+          zip: editZip || null,
+          country: editCountry || null,
+        } as any)
+        .eq('id', client.id);
+      if (error) throw error;
     },
+    onSuccess: () => { invalidateClients(); toast.success('Address updated'); setIsEditingAddress(false); },
+    onError: (error: Error) => { toast.error('Failed to update address', { description: error.message }); },
+  });
+
+  const saveRemindersMutation = useMutation({
+    mutationFn: async () => {
+      if (!client) throw new Error('No client');
+      const { error } = await supabase
+        .from('phorest_clients')
+        .update({
+          reminder_email_opt_in: editReminderEmail,
+          reminder_sms_opt_in: editReminderSms,
+        } as any)
+        .eq('id', client.id);
+      if (error) throw error;
+    },
+    onSuccess: () => { invalidateClients(); toast.success('Reminders updated'); setIsEditingReminders(false); },
+    onError: (error: Error) => { toast.error('Failed to update reminders', { description: error.message }); },
   });
 
   if (!client) return null;
 
   const initials = client.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
+  const EditHeader = ({ title, icon: Icon, isEditMode, onStart, onCancel, onSave, isPending }: {
+    title: string; icon: any; isEditMode: boolean; onStart: () => void; onCancel: () => void; onSave: () => void; isPending: boolean;
+  }) => (
+    <CardHeader className="pb-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 bg-muted rounded-md flex items-center justify-center">
+            <Icon className="w-3.5 h-3.5 text-primary" />
+          </div>
+          <CardTitle className={tokens.heading.subsection}>{title}</CardTitle>
+        </div>
+        {canEdit && !isEditMode && (
+          <Button variant="ghost" size="sm" onClick={onStart} className="h-7 px-2">
+            <Pencil className="w-3.5 h-3.5" />
+          </Button>
+        )}
+        {isEditMode && (
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={onCancel} className="h-7 px-2 text-muted-foreground">
+              <X className="w-3.5 h-3.5" />
+            </Button>
+            <Button variant="ghost" size="sm" onClick={onSave} disabled={isPending} className="h-7 px-2 text-primary">
+              {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+            </Button>
+          </div>
+        )}
+      </div>
+    </CardHeader>
+  );
+
+  const hasAddress = client.address_line1 || client.city || client.state || client.zip || client.country;
+
   return (
-    <Sheet open={open} onOpenChange={(o) => { if (!o) { setIsEditing(false); setIsEditingDates(false); } onOpenChange(o); }}>
+    <Sheet open={open} onOpenChange={(o) => { if (!o) { setIsEditing(false); setIsEditingDates(false); setIsEditingSettings(false); setIsEditingPrompts(false); setIsEditingAddress(false); setIsEditingReminders(false); } onOpenChange(o); }}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto bg-background/95 backdrop-blur-xl p-0">
         <div className="p-6 space-y-4">
           {/* Banned Client Alert */}
@@ -288,53 +473,58 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             </Card>
           </div>
 
-          {/* Contact Info — Bento card */}
+          {/* Contact Info — Phorest-aligned */}
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className={tokens.heading.subsection}>Contact Information</CardTitle>
-                {canEdit && !isEditing && (
-                  <Button variant="ghost" size="sm" onClick={startEditing} className="h-7 px-2">
-                    <Pencil className="w-3.5 h-3.5" />
-                  </Button>
-                )}
-                {isEditing && (
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={cancelEditing} className="h-7 px-2 text-muted-foreground">
-                      <X className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => saveMutation.mutate()} 
-                      disabled={saveMutation.isPending}
-                      className="h-7 px-2 text-primary"
-                    >
-                      {saveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                    </Button>
-                  </div>
-                )}
-              </div>
-              {isEditing && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Changes are saved locally and won't sync back to Phorest.
-                </p>
-              )}
-            </CardHeader>
+            <EditHeader
+              title="Contact Information"
+              icon={Mail}
+              isEditMode={isEditing}
+              onStart={startEditing}
+              onCancel={cancelEditing}
+              onSave={() => saveMutation.mutate()}
+              isPending={saveMutation.isPending}
+            />
+            {isEditing && (
+              <p className="text-xs text-muted-foreground px-6 -mt-1 mb-1">
+                Changes are saved locally and won't sync back to Phorest.
+              </p>
+            )}
             <CardContent className="space-y-2 text-sm">
               {isEditing ? (
-                <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs text-muted-foreground">Name</label>
-                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-8 text-sm" />
+                    <label className="text-xs text-muted-foreground">First Name</label>
+                    <Input value={editFirstName} onChange={(e) => setEditFirstName(e.target.value)} className="h-8 text-sm" />
                   </div>
                   <div>
-                    <label className="text-xs text-muted-foreground">Email</label>
-                    <Input type="email" autoCapitalize="none" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="h-8 text-sm" />
+                    <label className="text-xs text-muted-foreground">Last Name</label>
+                    <Input value={editLastName} onChange={(e) => setEditLastName(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Gender</label>
+                    <Select value={editGender} onValueChange={setEditGender}>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Non-Binary">Non-Binary</SelectItem>
+                        <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <label className="text-xs text-muted-foreground">Phone</label>
                     <Input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Landline</label>
+                    <Input type="tel" value={editLandline} onChange={(e) => setEditLandline(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground">Email</label>
+                    <Input type="email" autoCapitalize="none" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="h-8 text-sm" />
                   </div>
                 </div>
               ) : (
@@ -349,6 +539,17 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4 text-muted-foreground" />
                       <span>{client.phone}</span>
+                    </div>
+                  )}
+                  {client.landline && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span>{client.landline} (landline)</span>
+                    </div>
+                  )}
+                  {client.gender && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <span className="text-xs">Gender: {client.gender}</span>
                     </div>
                   )}
                   {(locationName || client.branch_name) && (
@@ -368,42 +569,20 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             </CardContent>
           </Card>
 
-          {/* Important Dates — Bento card */}
+          {/* Important Dates */}
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 bg-muted rounded-md flex items-center justify-center">
-                    <Calendar className="w-3.5 h-3.5 text-primary" />
-                  </div>
-                  <CardTitle className={tokens.heading.subsection}>Important Dates</CardTitle>
-                </div>
-                {canEdit && !isEditingDates && (
-                  <Button variant="ghost" size="sm" onClick={startEditingDates} className="h-7 px-2">
-                    <Pencil className="w-3.5 h-3.5" />
-                  </Button>
-                )}
-                {isEditingDates && (
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="sm" onClick={cancelEditingDates} className="h-7 px-2 text-muted-foreground">
-                      <X className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => saveDatesMutation.mutate()} 
-                      disabled={saveDatesMutation.isPending}
-                      className="h-7 px-2 text-primary"
-                    >
-                      {saveDatesMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardHeader>
+            <EditHeader
+              title="Important Dates"
+              icon={Calendar}
+              isEditMode={isEditingDates}
+              onStart={startEditingDates}
+              onCancel={cancelEditingDates}
+              onSave={() => saveDatesMutation.mutate()}
+              isPending={saveDatesMutation.isPending}
+            />
             <CardContent className="space-y-2 text-sm">
               {isEditingDates ? (
-                <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs text-muted-foreground">Birthday</label>
                     <Input type="date" value={editBirthday} onChange={(e) => setEditBirthday(e.target.value)} className="h-8 text-sm" />
@@ -445,13 +624,201 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             </CardContent>
           </Card>
 
-          {/* Marketing Preferences — Bento card */}
+          {/* Notifications — Marketing + Reminders */}
           <Card className="bg-card/80 backdrop-blur-xl border-border/60">
-            <CardContent className="pt-4">
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 bg-muted rounded-md flex items-center justify-center">
+                  <Bell className="w-3.5 h-3.5 text-primary" />
+                </div>
+                <CardTitle className={tokens.heading.subsection}>Notifications</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <ClientMarketingStatus 
                 clientId={client.id} 
                 organizationId={selectedOrganization?.id} 
               />
+              {/* Reminder Consent */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between pt-2 border-t border-border/40">
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Reminder Consent</p>
+                  {canEdit && !isEditingReminders && (
+                    <Button variant="ghost" size="sm" onClick={startEditingReminders} className="h-7 px-2">
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                  )}
+                  {isEditingReminders && (
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => setIsEditingReminders(false)} className="h-7 px-2 text-muted-foreground">
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => saveRemindersMutation.mutate()} disabled={saveRemindersMutation.isPending} className="h-7 px-2 text-primary">
+                        {saveRemindersMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                {isEditingReminders ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox checked={editReminderEmail} onCheckedChange={(v) => setEditReminderEmail(!!v)} />
+                      Email reminders
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <Checkbox checked={editReminderSms} onCheckedChange={(v) => setEditReminderSms(!!v)} />
+                      SMS reminders
+                    </label>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-muted-foreground" />
+                      <span>Email: {client.reminder_email_opt_in !== false ? 'On' : 'Off'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                      <span>SMS: {client.reminder_sms_opt_in !== false ? 'On' : 'Off'}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Client Settings */}
+          <Card className="bg-card/80 backdrop-blur-xl border-border/60">
+            <EditHeader
+              title="Client Settings"
+              icon={Settings}
+              isEditMode={isEditingSettings}
+              onStart={startEditingSettings}
+              onCancel={() => setIsEditingSettings(false)}
+              onSave={() => saveSettingsMutation.mutate()}
+              isPending={saveSettingsMutation.isPending}
+            />
+            <CardContent className="space-y-2 text-sm">
+              {isEditingSettings ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Client Category</label>
+                    <Input value={editCategory} onChange={(e) => setEditCategory(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Where did they hear of us</label>
+                    <Input value={editLeadSource} onChange={(e) => setEditLeadSource(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Referred By</label>
+                    <Input value={editReferredBy} onChange={(e) => setEditReferredBy(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">External Client ID</label>
+                    <Input value={editExternalId} onChange={(e) => setEditExternalId(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {client.client_category && <p><span className="text-muted-foreground">Category:</span> {client.client_category}</p>}
+                  {client.lead_source && <p><span className="text-muted-foreground">Source:</span> {client.lead_source}</p>}
+                  {client.referred_by && <p><span className="text-muted-foreground">Referred by:</span> {client.referred_by}</p>}
+                  {client.external_client_id && <p><span className="text-muted-foreground">External ID:</span> {client.external_client_id}</p>}
+                  {!client.client_category && !client.lead_source && !client.referred_by && !client.external_client_id && (
+                    <p className="text-muted-foreground italic">No settings configured</p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Prompts */}
+          <Card className="bg-card/80 backdrop-blur-xl border-border/60">
+            <EditHeader
+              title="Prompts"
+              icon={StickyNote}
+              isEditMode={isEditingPrompts}
+              onStart={startEditingPrompts}
+              onCancel={() => setIsEditingPrompts(false)}
+              onSave={() => savePromptsMutation.mutate()}
+              isPending={savePromptsMutation.isPending}
+            />
+            <CardContent className="space-y-2 text-sm">
+              {isEditingPrompts ? (
+                <div className="space-y-3">
+                  <label className="flex items-center gap-2">
+                    <Checkbox checked={editPromptClientNotes} onCheckedChange={(v) => setEditPromptClientNotes(!!v)} />
+                    Prompt on client notes
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <Checkbox checked={editPromptAppointmentNotes} onCheckedChange={(v) => setEditPromptAppointmentNotes(!!v)} />
+                    Prompt on appointment notes
+                  </label>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <p>Client notes: {client.prompt_client_notes ? 'Prompt enabled' : 'Off'}</p>
+                  <p>Appointment notes: {client.prompt_appointment_notes ? 'Prompt enabled' : 'Off'}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Address */}
+          <Card className="bg-card/80 backdrop-blur-xl border-border/60">
+            <EditHeader
+              title="Address"
+              icon={Home}
+              isEditMode={isEditingAddress}
+              onStart={startEditingAddress}
+              onCancel={() => setIsEditingAddress(false)}
+              onSave={() => saveAddressMutation.mutate()}
+              isPending={saveAddressMutation.isPending}
+            />
+            <CardContent className="space-y-2 text-sm">
+              {isEditingAddress ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground">Address Line 1</label>
+                    <Input value={editAddress1} onChange={(e) => setEditAddress1(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground">Address Line 2</label>
+                    <Input value={editAddress2} onChange={(e) => setEditAddress2(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">City</label>
+                    <Input value={editCity} onChange={(e) => setEditCity(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">State / Region</label>
+                    <Input value={editState} onChange={(e) => setEditState(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Zip / Postcode</label>
+                    <Input value={editZip} onChange={(e) => setEditZip(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Country</label>
+                    <Input value={editCountry} onChange={(e) => setEditCountry(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {hasAddress ? (
+                    <div className="flex items-start gap-2">
+                      <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
+                      <div>
+                        {client.address_line1 && <p>{client.address_line1}</p>}
+                        {client.address_line2 && <p>{client.address_line2}</p>}
+                        <p>{[client.city, client.state, client.zip].filter(Boolean).join(', ')}</p>
+                        {client.country && <p>{client.country}</p>}
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground italic">No address on file</p>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
 

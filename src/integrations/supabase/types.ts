@@ -8850,6 +8850,8 @@ export type Database = {
       }
       phorest_clients: {
         Row: {
+          address_line1: string | null
+          address_line2: string | null
           archived_at: string | null
           archived_by: string | null
           ban_reason: string | null
@@ -8857,14 +8859,22 @@ export type Database = {
           banned_by: string | null
           birthday: string | null
           branch_name: string | null
+          city: string | null
+          client_category: string | null
           client_since: string | null
+          country: string | null
           created_at: string
           email: string | null
+          external_client_id: string | null
+          first_name: string | null
           first_visit: string | null
+          gender: string | null
           id: string
           is_archived: boolean
           is_banned: boolean | null
           is_vip: boolean | null
+          landline: string | null
+          last_name: string | null
           last_visit: string | null
           lead_source: string | null
           location_id: string | null
@@ -8875,11 +8885,20 @@ export type Database = {
           phorest_client_id: string
           preferred_services: string[] | null
           preferred_stylist_id: string | null
+          prompt_appointment_notes: boolean | null
+          prompt_client_notes: boolean | null
+          referred_by: string | null
+          reminder_email_opt_in: boolean | null
+          reminder_sms_opt_in: boolean | null
+          state: string | null
           total_spend: number
           updated_at: string
           visit_count: number
+          zip: string | null
         }
         Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
           archived_at?: string | null
           archived_by?: string | null
           ban_reason?: string | null
@@ -8887,14 +8906,22 @@ export type Database = {
           banned_by?: string | null
           birthday?: string | null
           branch_name?: string | null
+          city?: string | null
+          client_category?: string | null
           client_since?: string | null
+          country?: string | null
           created_at?: string
           email?: string | null
+          external_client_id?: string | null
+          first_name?: string | null
           first_visit?: string | null
+          gender?: string | null
           id?: string
           is_archived?: boolean
           is_banned?: boolean | null
           is_vip?: boolean | null
+          landline?: string | null
+          last_name?: string | null
           last_visit?: string | null
           lead_source?: string | null
           location_id?: string | null
@@ -8905,11 +8932,20 @@ export type Database = {
           phorest_client_id: string
           preferred_services?: string[] | null
           preferred_stylist_id?: string | null
+          prompt_appointment_notes?: boolean | null
+          prompt_client_notes?: boolean | null
+          referred_by?: string | null
+          reminder_email_opt_in?: boolean | null
+          reminder_sms_opt_in?: boolean | null
+          state?: string | null
           total_spend?: number
           updated_at?: string
           visit_count?: number
+          zip?: string | null
         }
         Update: {
+          address_line1?: string | null
+          address_line2?: string | null
           archived_at?: string | null
           archived_by?: string | null
           ban_reason?: string | null
@@ -8917,14 +8953,22 @@ export type Database = {
           banned_by?: string | null
           birthday?: string | null
           branch_name?: string | null
+          city?: string | null
+          client_category?: string | null
           client_since?: string | null
+          country?: string | null
           created_at?: string
           email?: string | null
+          external_client_id?: string | null
+          first_name?: string | null
           first_visit?: string | null
+          gender?: string | null
           id?: string
           is_archived?: boolean
           is_banned?: boolean | null
           is_vip?: boolean | null
+          landline?: string | null
+          last_name?: string | null
           last_visit?: string | null
           lead_source?: string | null
           location_id?: string | null
@@ -8935,9 +8979,16 @@ export type Database = {
           phorest_client_id?: string
           preferred_services?: string[] | null
           preferred_stylist_id?: string | null
+          prompt_appointment_notes?: boolean | null
+          prompt_client_notes?: boolean | null
+          referred_by?: string | null
+          reminder_email_opt_in?: boolean | null
+          reminder_sms_opt_in?: boolean | null
+          state?: string | null
           total_spend?: number
           updated_at?: string
           visit_count?: number
+          zip?: string | null
         }
         Relationships: [
           {
