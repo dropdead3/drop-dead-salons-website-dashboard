@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef, useEffect } from 'react';
 import { ClosedBadge } from '@/components/dashboard/ClosedBadge';
 import { isClosedOnDate, getLocationHoursForDate, type HoursJson, type HolidayClosure } from '@/hooks/useLocations';
 import { 
@@ -274,6 +274,28 @@ export function WeekView({
 }: WeekViewProps) {
   const [activeSlot, setActiveSlot] = useState<{ date: Date; time: string } | null>(null);
   const { colorMap: categoryColors } = useServiceCategoryColorsMap();
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to 1 hour before earliest opening time across the week
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    let earliestOpen = hoursStart;
+    if (locationHoursJson) {
+      const openHours = weekDays.map(day => {
+        const info = getLocationHoursForDate(locationHoursJson, locationHolidayClosures ?? null, day);
+        if (info.isClosed || !info.openTime) return Infinity;
+        const [h] = info.openTime.split(':').map(Number);
+        return h;
+      }).filter(h => h !== Infinity);
+      if (openHours.length > 0) {
+        earliestOpen = Math.min(...openHours);
+      }
+    }
+    const scrollToHour = Math.max(earliestOpen - 1, hoursStart);
+    const slotsOffset = (scrollToHour - hoursStart) * SLOTS_PER_HOUR;
+    const top = slotsOffset * ROW_HEIGHT;
+    scrollRef.current.scrollTo({ top, behavior: 'instant' });
+  }, [currentDate.toDateString(), locationHoursJson, hoursStart]);
   
   // Week starts with today, followed by 6 future days
   const today = new Date();
@@ -329,7 +351,7 @@ export function WeekView({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 overflow-auto border border-border rounded-lg bg-card">
+      <div ref={scrollRef} className="flex-1 overflow-auto border border-border rounded-lg bg-card">
         <div className="min-w-[800px]">
           {/* Day Headers with luxury blur effect */}
           <div className="sticky top-0 z-10">
