@@ -1,4 +1,5 @@
 import React from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Building2, X, ExternalLink } from 'lucide-react';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useNavigate } from 'react-router-dom';
@@ -33,7 +34,7 @@ export function PlatformContextBanner() {
         <div className="flex items-center gap-2">
           <PlatformButton
             variant="ghost"
-            size="sm"
+            size={tokens.button.inline}
             onClick={handleViewDetails}
             className="h-7 text-xs gap-1"
           >
@@ -42,7 +43,7 @@ export function PlatformContextBanner() {
           </PlatformButton>
           <PlatformButton
             variant="ghost"
-            size="sm"
+            size={tokens.button.inline}
             onClick={() => {
               clearSelection();
               navigate('/dashboard/platform/overview');

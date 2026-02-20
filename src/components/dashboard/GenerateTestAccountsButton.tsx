@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -79,7 +80,7 @@ export function GenerateTestAccountsButton() {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
+        <Button variant="outline" size={tokens.button.card} className="gap-2">
           <FlaskConical className="h-4 w-4" />
           Generate Test Accounts
         </Button>

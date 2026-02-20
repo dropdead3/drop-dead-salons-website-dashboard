@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -303,7 +304,7 @@ export function LocationsSettingsContent() {
                   <div>
                     <Button 
                       onClick={handleOpenCreate} 
-                      size="sm" 
+                      size={tokens.button.card} 
                       className="gap-2"
                       disabled={!canAddLocation && !capacity.locations.isUnlimited}
                     >
@@ -580,7 +581,7 @@ export function LocationsSettingsContent() {
                       <Button
                         type="button"
                         variant="ghost"
-                        size="sm"
+                        size={tokens.button.inline}
                         onClick={() => setFormData(f => ({ ...f, tax_rate: null }))}
                       >
                         Use Default
@@ -717,7 +718,7 @@ export function LocationsSettingsContent() {
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={() => {
                     setFormData(f => ({
                       ...f,
@@ -734,7 +735,7 @@ export function LocationsSettingsContent() {
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={() => {
                     setFormData(f => ({
                       ...f,
@@ -751,7 +752,7 @@ export function LocationsSettingsContent() {
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={() => {
                     setFormData(f => ({
                       ...f,
@@ -768,7 +769,7 @@ export function LocationsSettingsContent() {
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={() => {
                     setFormData(f => ({
                       ...f,
@@ -868,7 +869,7 @@ export function LocationsSettingsContent() {
                   />
                 </div>
                 <Button 
-                  size="sm" 
+                  size={tokens.button.inline} 
                   onClick={addHoliday}
                   disabled={!newHolidayDate || !newHolidayName}
                 >

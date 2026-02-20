@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Loader2, Save, ArrowUpRight } from 'lucide-react';
 import { addMonths, format, differenceInDays } from 'date-fns';
 import {
@@ -294,7 +295,7 @@ export function BillingConfigurationPanel({
               {selectedPlan && plans && plans.length > 1 && (
                 <PlatformButton
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={() => setUpgradeDialogOpen(true)}
                 >
                   <ArrowUpRight className="h-4 w-4 mr-1" />
