@@ -67,11 +67,11 @@ function StatCard({
       'bg-card border rounded-xl p-4 transition-all',
       variantBorder[variant]
     )}>
-      <div className="flex items-center justify-between mb-3">
-        <span className={tokens.kpi.label}>{title}</span>
-        <div className="w-8 h-8 rounded-lg bg-muted/40 flex items-center justify-center">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-8 h-8 rounded-lg bg-muted/40 flex items-center justify-center shrink-0">
           <Icon className="h-4 w-4 text-muted-foreground" />
         </div>
+        <span className={tokens.kpi.label}>{title}</span>
       </div>
       <div className={tokens.kpi.value}>{value}</div>
       {description && (
