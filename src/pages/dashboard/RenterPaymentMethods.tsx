@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useRenterPaymentMethods, useAddPaymentMethod, useRemovePaymentMethod, useToggleAutopay } from '@/hooks/useRenterPaymentMethods';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -146,7 +147,7 @@ export default function RenterPaymentMethods() {
                     </div>
                     
                     <Button
-                      size="sm"
+                      size={tokens.button.inline}
                       variant="ghost"
                       onClick={() => handleRemove(method.id)}
                       disabled={removePaymentMethod.isPending}

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Pencil, Trash2, Calendar, Clock, CheckCircle2, Sparkles, FileText, StickyNote, RefreshCw, AlarmClock, Plus, X, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { DRILLDOWN_DIALOG_CONTENT_CLASS, DRILLDOWN_OVERLAY_CLASS } from './drilldownDialogStyles';
 import type { Task } from '@/hooks/useTasks';
 import { useTaskChecklist } from '@/hooks/useTaskChecklist';
@@ -212,7 +213,7 @@ export function TaskDetailDrilldown({
             />
             {notesDirty && !isReadOnly && (
               <div className="flex justify-end mt-2">
-                <Button size="sm" variant="outline" onClick={handleSaveNotes} disabled={isNotesSaving} className="rounded-full">
+                <Button size={tokens.button.inline} variant="outline" onClick={handleSaveNotes} disabled={isNotesSaving} className="rounded-full">
                   {isNotesSaving ? 'Saving...' : 'Save Notes'}
                 </Button>
               </div>
@@ -265,7 +266,7 @@ export function TaskDetailDrilldown({
           <div className="p-5 pt-4 border-t border-border/50 flex justify-center gap-3">
             <Button
               variant="outline"
-              size="sm"
+              size={tokens.button.inline}
               className="gap-1.5 rounded-full px-4"
               onClick={() => { onOpenChange(false); onEdit(task); }}
             >
@@ -273,7 +274,7 @@ export function TaskDetailDrilldown({
             </Button>
             <Button
               variant="outline"
-              size="sm"
+              size={tokens.button.inline}
               className="gap-1.5 rounded-full px-4 text-destructive hover:text-destructive"
               onClick={() => { onDelete(task.id); onOpenChange(false); }}
             >

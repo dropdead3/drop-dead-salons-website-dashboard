@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Coins, TrendingUp, Gift, Loader2 } from 'lucide-react';
 import { usePointsBalance, usePointsHistory } from '@/hooks/usePoints';
 import { Link } from 'react-router-dom';
@@ -30,7 +31,7 @@ export function PointsBalanceCard() {
             )}
           </div>
         </div>
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="outline" size={tokens.button.card} asChild>
           <Link to="/dashboard/rewards">
             <Gift className="w-4 h-4 mr-1" />
             Shop
