@@ -176,6 +176,15 @@ interface PinnedAnalyticsCardProps {
   compact?: boolean;
 }
 
+// Cards whose data is independent of the date range filter
+const TIME_INDEPENDENT_CARDS = new Set([
+  'week_ahead_forecast',
+  'hiring_capacity',
+  'staffing_trends',
+  'stylist_workload',
+  'client_health',
+]);
+
 // Icon + label mapping for each card in compact mode
 const CARD_META: Record<string, { icon: React.ElementType; label: string }> = {
   executive_summary: { icon: Sparkles, label: 'Executive Summary' },
@@ -495,6 +504,11 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
               </div>
               <span className={cn(tokens.kpi.label, 'flex-1')}>{meta.label}</span>
             </div>
+            {TIME_INDEPENDENT_CARDS.has(cardId) && filters.dateRange !== 'today' && (
+              <span className="text-[10px] text-muted-foreground/60 bg-muted/50 px-1.5 py-0.5 rounded-full border border-border/30 self-start mt-1">
+                Time filter n/a
+              </span>
+            )}
             <div className="mt-4 flex-1">
               <BlurredAmount className="font-display text-2xl font-medium">{metricValue}</BlurredAmount>
               {metricLabel && (
