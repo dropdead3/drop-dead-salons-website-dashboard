@@ -71,7 +71,7 @@ export function MobileChangelogViewer({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b">
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button variant="ghost" size={tokens.button.inline} onClick={onClose}>
             <ChevronLeft className="h-5 w-5 mr-1" />
             Back
           </Button>

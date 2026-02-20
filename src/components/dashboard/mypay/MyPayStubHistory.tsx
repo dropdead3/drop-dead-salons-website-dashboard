@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -112,7 +113,7 @@ export function MyPayStubHistory({ payStubs }: MyPayStubHistoryProps) {
                   <TableCell>
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size={tokens.button.inline}
                       onClick={() => setSelectedStub(stub)}
                     >
                       <Eye className="h-4 w-4" />

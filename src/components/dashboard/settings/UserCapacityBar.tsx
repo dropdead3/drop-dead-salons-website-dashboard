@@ -1,4 +1,5 @@
 import { Progress } from '@/components/ui/progress';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Plus, Infinity, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -60,7 +61,7 @@ export function UserCapacityBar({ capacity, onAddSeats }: UserCapacityBarProps) 
         </div>
         <Button
           variant="outline"
-          size="sm"
+          size={tokens.button.card}
           onClick={onAddSeats}
           className="gap-1.5"
         >

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Link } from 'react-router-dom';
 import { 
   Bell, 
@@ -91,7 +92,7 @@ export function PlatformNotificationBell() {
           {(unreadCount || 0) > 0 && (
             <Button
               variant="ghost"
-              size="sm"
+              size={tokens.button.inline}
               onClick={handleMarkAllRead}
               className="h-7 text-xs text-slate-400 hover:text-white"
             >

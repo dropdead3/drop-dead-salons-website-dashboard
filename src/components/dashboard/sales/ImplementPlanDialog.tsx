@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import {
   Rocket,
   ListChecks,
@@ -503,13 +504,13 @@ export function ImplementPlanDialog({
               <>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={() => handleOpenChange(false)}
                 >
                   Cancel
                 </Button>
                 <Button
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={handleActivate}
                   disabled={!hasValidSteps || !campaignName.trim() || executing}
                   className="gap-1.5"

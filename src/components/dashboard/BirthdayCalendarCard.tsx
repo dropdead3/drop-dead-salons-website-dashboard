@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -146,7 +147,7 @@ export function BirthdayCalendarCard() {
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToPreviousMonth}>
                   <ChevronLeft className="w-3 h-3" />
                 </Button>
-                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={goToToday}>
+                <Button variant="ghost" size={tokens.button.inline} className="h-7 px-2 text-xs" onClick={goToToday}>
                   Today
                 </Button>
                 <Button variant="ghost" size="icon" className="h-7 w-7" onClick={goToNextMonth}>
