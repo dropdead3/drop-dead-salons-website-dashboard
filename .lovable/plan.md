@@ -1,104 +1,84 @@
 
 
-# Add "Source" as a First-Class Client Data Point
+# Add Pagination and Alphabetical Filter to Client Directory
 
 ## Problem
 
-The `lead_source` field exists in the database and is editable in the Client Settings card, but:
-- It's a free-text input with no standardized options, making aggregation impossible
-- It's buried inside "Client Settings" -- not visible at a glance
-- It's NULL for all 586 clients
-- There's no way to filter or report by source in the client directory
-
-## Solution
-
-Make "Source" a prominent, standardized field with a dropdown of predefined options plus a custom "Other" entry, visible in both the client list and detail panel, and filterable in the directory.
-
----
+The client list renders all filtered clients at once (potentially 3,500+), causing a very long scrollable page. There is no way to jump between pages or filter alphabetically.
 
 ## Changes
 
-### 1. Standardized Source Options
-
-Define a shared constant of common referral sources:
-
-```text
-Instagram, TikTok, Google, Yelp, Facebook, Referral (Friend/Family), 
-Referral (Stylist), Walk-In, Website, Event, Other
-```
-
-This list will be used in the detail panel edit mode, the directory filter, and stats.
-
-### 2. Client Detail Panel -- Promote Source Field
-
-**File: `src/components/dashboard/ClientDetailSheet.tsx`**
-
-- Move "Source" out of the buried Client Settings card and into the Contact Information card (or a new small card right below it) so it's immediately visible
-- Replace the free-text `Input` with a `Select` dropdown using the standardized options, plus an "Other" option that reveals a text input
-- Show the source as a colored Badge in read mode (e.g., Instagram = pink, Google = blue, Walk-In = gray, Referral = green)
-
-### 3. Client Directory List -- Show Source Inline
+### 1. Pagination -- 50 clients per page
 
 **File: `src/pages/dashboard/ClientDirectory.tsx`**
 
-- Add a small `lead_source` Badge next to location in each client row's metadata line (the line showing visits, last visit, location)
-- Only display if `lead_source` is not null -- no visual noise for clients without data yet
+Add pagination state and logic:
+- New state: `currentPage` (default: 1), reset to 1 whenever filters, search, sort, or tabs change
+- Derive `totalPages` from `Math.ceil(filteredClients.length / 50)`
+- Slice `filteredClients` to show only `(currentPage - 1) * 50` through `currentPage * 50`
+- Add pagination controls at the bottom of the client list card using the existing `Pagination` component from `@/components/ui/pagination`
 
-### 4. Client Directory -- Add Source Filter
+Pagination UI (below the client list, inside the Card):
+- Previous / Next buttons
+- Page number indicators with ellipsis for large page counts (e.g., 1 2 3 ... 68 69 70)
+- "Showing 1-50 of 3,530 clients" summary text above the controls
 
-**File: `src/pages/dashboard/ClientDirectory.tsx`**
+### 2. Alphabetical Filter
 
-- Add a "Source" dropdown filter alongside the existing Location and Stylist filters
-- Filter options populated from the standardized list, plus dynamic detection of any custom "Other" values in the data
-- State variable `selectedSource` with default `'all'`
+Add a letter bar (A-Z + "All") in the filter row:
+- New state: `selectedLetter` (default: `'all'`)
+- When a letter is clicked, filter `filteredClients` to only show clients whose name starts with that letter
+- Resets `currentPage` to 1 when letter changes
+- Styled as a horizontal row of small pill buttons, fitting the existing rounded UI aesthetic
+- Letters with no matching clients are shown as muted/disabled
 
-### 5. Source Stats Card
+### 3. Sort by Name button
 
-**File: `src/pages/dashboard/ClientDirectory.tsx`**
-
-- Add a small "Top Source" stat card to the existing bento stats row showing the most common lead source (once data starts populating)
-- Shows "No data" gracefully until sources are entered
-
----
+Add a "Name" sort button alongside the existing Spend/Visits/Recent sort buttons:
+- Clicking it sorts alphabetically A-Z (asc) or Z-A (desc)
+- Uses the existing `handleSort('name')` which already exists in the code
 
 ## Technical Details
 
-### New shared file: `src/lib/leadSources.ts`
-
-```typescript
-export const LEAD_SOURCES = [
-  { value: 'instagram', label: 'Instagram' },
-  { value: 'tiktok', label: 'TikTok' },
-  { value: 'google', label: 'Google' },
-  { value: 'yelp', label: 'Yelp' },
-  { value: 'facebook', label: 'Facebook' },
-  { value: 'referral_friend', label: 'Referral (Friend/Family)' },
-  { value: 'referral_stylist', label: 'Referral (Stylist)' },
-  { value: 'walk_in', label: 'Walk-In' },
-  { value: 'website', label: 'Website' },
-  { value: 'event', label: 'Event' },
-  { value: 'other', label: 'Other' },
-] as const;
+### State additions (around line 62):
+```
+const [currentPage, setCurrentPage] = useState(1);
+const [selectedLetter, setSelectedLetter] = useState<string>('all');
 ```
 
-### ClientDetailSheet.tsx changes (lines ~750-780)
-- Replace `<Input>` for lead source with `<Select>` using LEAD_SOURCES options
-- When "Other" is selected, show a secondary text input for custom entry
-- In read mode, render `lead_source` as a styled Badge with color mapping
-- Move the source display from "Client Settings" up to the contact/info section
+### Reset page on filter changes:
+Add a `useEffect` that resets `currentPage` to 1 whenever `searchQuery`, `activeTab`, `selectedLocation`, `selectedStylist`, `selectedSource`, `selectedLetter`, `sortField`, or `sortDirection` changes.
 
-### ClientDirectory.tsx changes (lines ~330-400, ~517-542)
-- Add `selectedSource` state and a Source filter `<Select>` in the filter bar
-- Add source badge inline in the client row metadata
-- Add filtering logic in the `filteredClients` memo
+### Alphabetical filtering (in `filteredClients` memo):
+After all existing filters, add:
+```
+if (selectedLetter !== 'all') {
+  filtered = filtered.filter(c => 
+    c.name.toUpperCase().startsWith(selectedLetter)
+  );
+}
+```
 
-### No database changes needed
-The `lead_source` column already exists as `text` on `phorest_clients`. Standardized values are stored as lowercase slugs (e.g., `instagram`, `referral_friend`). Custom "Other" entries store the user's free text.
+### Paginated slice (new memo):
+```
+const paginatedClients = useMemo(() => {
+  const start = (currentPage - 1) * PAGE_SIZE;
+  return filteredClients.slice(start, start + PAGE_SIZE);
+}, [filteredClients, currentPage]);
+```
+
+### Alphabet bar:
+Render between the filter row and the client list Card. Each letter is a small `Button` (variant ghost or outline when active). Letters with zero matching clients get `disabled` styling.
+
+### Pagination controls:
+Render at the bottom of CardContent, after the client list. Uses `Pagination`, `PaginationContent`, `PaginationItem`, `PaginationPrevious`, `PaginationNext`, `PaginationLink`, and `PaginationEllipsis` from `@/components/ui/pagination`.
+
+### Name sort button:
+Add alongside existing sort buttons (Spend, Visits, Recent) in the CardHeader.
 
 ## Files Modified
-- **New**: `src/lib/leadSources.ts` (shared constants + color mapping)
-- **Edit**: `src/components/dashboard/ClientDetailSheet.tsx` (promote source field, use Select dropdown)
-- **Edit**: `src/pages/dashboard/ClientDirectory.tsx` (source badge in rows, source filter, top source stat)
+- **Edit**: `src/pages/dashboard/ClientDirectory.tsx` (pagination state, alphabetical filter, paginated rendering, pagination controls, name sort button)
 
 ## Result
-"Source" becomes a visible, standardized, filterable data point across the client experience -- ready for reporting and campaign attribution as data is entered.
+The client list is broken into pages of 50, with intuitive navigation. Users can quickly jump to clients by first letter and sort alphabetically -- making a 3,500+ client directory manageable and fast.
+
