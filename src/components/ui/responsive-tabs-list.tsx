@@ -106,7 +106,7 @@ export const ResponsiveTabsList = React.forwardRef<
         {...props}
       >
         {childArray.map((child, i) => (
-          <span key={(child as React.ReactElement<any>).key || i} data-tab-item className="inline-flex">
+          <span key={(child as React.ReactElement<any>).key || i} data-tab-item>
             {child}
           </span>
         ))}
