@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -168,7 +169,7 @@ export function ChangelogSearchFilter({
             <div className="flex flex-wrap gap-2">
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn(
+                  <Button variant="outline" size={tokens.button.inline} className={cn(
                     'justify-start text-left font-normal',
                     !filters.dateFrom && 'text-muted-foreground'
                   )}>
@@ -189,7 +190,7 @@ export function ChangelogSearchFilter({
               <span className="text-muted-foreground self-center">to</span>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="sm" className={cn(
+                  <Button variant="outline" size={tokens.button.inline} className={cn(
                     'justify-start text-left font-normal',
                     !filters.dateTo && 'text-muted-foreground'
                   )}>
@@ -210,7 +211,7 @@ export function ChangelogSearchFilter({
               {(filters.dateFrom || filters.dateTo) && (
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size={tokens.button.inline}
                   onClick={() => onFiltersChange({ ...filters, dateFrom: undefined, dateTo: undefined })}
                   className="text-muted-foreground"
                 >
@@ -227,7 +228,7 @@ export function ChangelogSearchFilter({
               <p className="text-sm text-muted-foreground">
                 Showing {resultCount} of {totalCount} updates
               </p>
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
+              <Button variant="ghost" size={tokens.button.inline} onClick={clearFilters}>
                 <X className="h-3 w-3 mr-1" />
                 Clear all filters
               </Button>

@@ -338,7 +338,7 @@ export function ServicesSettingsContent() {
                 <Scissors className="w-5 h-5 text-primary" />
                 <CardTitle className={tokens.heading.section}>SERVICES</CardTitle>
               </div>
-              <Button size="sm" onClick={() => {
+              <Button size={tokens.button.card} onClick={() => {
                 setServiceDialogMode('create');
                 setEditingService(null);
                 setPresetCategory(serviceCategories[0]?.category_name || '');
@@ -402,7 +402,7 @@ export function ServicesSettingsContent() {
                           )}
                           <Button
                             variant="ghost"
-                            size="sm"
+                            size={tokens.button.inline}
                             className="w-full mt-1 text-xs text-muted-foreground"
                             onClick={() => {
                               setServiceDialogMode('create');

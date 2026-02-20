@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -2822,7 +2823,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
       <div className="fixed bottom-24 right-6 z-50 flex items-center gap-1 border rounded-lg p-1.5 bg-background/95 backdrop-blur-sm shadow-lg">
         <Button
           variant="ghost"
-          size="sm"
+          size={tokens.button.inline}
           onClick={handleUndo}
           disabled={!canUndo}
           className="h-8 w-8 p-0"
@@ -2833,7 +2834,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
         <div className="w-px h-5 bg-border" />
         <Button
           variant="ghost"
-          size="sm"
+          size={tokens.button.inline}
           onClick={handleRedo}
           disabled={!canRedo}
           className="h-8 w-8 p-0"
@@ -2866,7 +2867,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
           <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border shadow-sm">
             <Button
               variant={toolbarPanel === 'themes' ? 'default' : 'outline'}
-              size="sm"
+              size={tokens.button.inline}
               className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'themes' && "bg-background border-border/80")}
               onClick={() => setToolbarPanel(toolbarPanel === 'themes' ? null : 'themes')}
             >
@@ -2875,7 +2876,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
             </Button>
             <Button
               variant={toolbarPanel === 'blocks' ? 'default' : 'outline'}
-              size="sm"
+              size={tokens.button.inline}
               className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'blocks' && "bg-background border-border/80")}
               onClick={() => setToolbarPanel(toolbarPanel === 'blocks' ? null : 'blocks')}
             >
@@ -2885,7 +2886,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
             {variables.length > 0 && (
               <Button
                 variant={toolbarPanel === 'variables' ? 'default' : 'outline'}
-                size="sm"
+                size={tokens.button.inline}
                 className={cn("gap-2 px-4 shadow-sm", toolbarPanel !== 'variables' && "bg-background border-border/80")}
                 onClick={() => setToolbarPanel(toolbarPanel === 'variables' ? null : 'variables')}
               >
@@ -3398,7 +3399,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           </div>
                           <Button
                             variant="outline"
-                            size="sm"
+                            size={tokens.button.inline}
                             className="h-8 w-8 p-0"
                             onClick={() => applyInlineFormat(selectedBlock.id, 'strong')}
                             title="Bold selected text"
@@ -3407,7 +3408,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           </Button>
                           <Button
                             variant="outline"
-                            size="sm"
+                            size={tokens.button.inline}
                             className="h-8 w-8 p-0"
                             onClick={() => applyInlineFormat(selectedBlock.id, 'em')}
                             title="Italic selected text"
@@ -3416,7 +3417,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                           </Button>
                           <Button
                             variant="outline"
-                            size="sm"
+                            size={tokens.button.inline}
                             className="h-8 w-8 p-0"
                             onClick={() => applyLinkFormat(selectedBlock.id)}
                             title="Add link to selected text"
@@ -3622,7 +3623,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               className="h-8 text-sm flex-1"
                             />
                             <label className="cursor-pointer">
-                              <Button variant="outline" size="sm" disabled={isUploading} asChild>
+                              <Button variant="outline" size={tokens.button.inline} disabled={isUploading} asChild>
                                 <span>
                                   {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                                 </span>
@@ -3861,7 +3862,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                         key={pos}
                                         type="button"
                                         variant={footerConfig.logoPosition === pos ? 'default' : 'outline'}
-                                        size="sm"
+                                        size={tokens.button.inline}
                                         className="flex-1 h-7 text-xs capitalize"
                                         onClick={() => {
                                           updateBlock(selectedBlock.id, {
@@ -4065,7 +4066,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                         key={pos}
                                         type="button"
                                         variant={selectedBlock.headerConfig?.logoPosition === pos || (!selectedBlock.headerConfig?.logoPosition && pos === 'left') ? 'default' : 'outline'}
-                                        size="sm"
+                                        size={tokens.button.inline}
                                         className="flex-1 h-7 text-xs capitalize"
                                         onClick={() => {
                                           updateBlock(selectedBlock.id, {
@@ -4110,7 +4111,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                       key={pos}
                                       type="button"
                                       variant={selectedBlock.headerConfig?.navLinksPosition === pos || (!selectedBlock.headerConfig?.navLinksPosition && pos === 'right') ? 'default' : 'outline'}
-                                      size="sm"
+                                      size={tokens.button.inline}
                                       className="flex-1 h-7 text-xs capitalize"
                                       onClick={() => {
                                         updateBlock(selectedBlock.id, {
@@ -4201,7 +4202,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                             ))}
                             <Button
                               variant="outline"
-                              size="sm"
+                              size={tokens.button.inline}
                               className="w-full"
                               onClick={() => {
                                 const newLinks = [...(selectedBlock.navLinks || []), { label: 'New Link', url: '#', enabled: true }];
@@ -4360,7 +4361,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                 )}
                                 <div className="flex-1">
                                   <label className="cursor-pointer">
-                                    <Button variant="outline" size="sm" className="w-full text-xs h-9" asChild>
+                                    <Button variant="outline" size={tokens.button.inline} className="w-full text-xs h-9" asChild>
                                       <span>
                                         <Upload className="w-3.5 h-3.5 mr-1.5" />
                                         {isUploading ? 'Uploading...' : 'Upload Photo'}
@@ -4383,7 +4384,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                   {config.imageUrl && (
                                     <Button 
                                       variant="ghost" 
-                                      size="sm" 
+                                      size={tokens.button.inline} 
                                       className="w-full text-xs text-destructive hover:text-destructive mt-1"
                                       onClick={() => {
                                         updateBlock(selectedBlock.id, {
@@ -4431,7 +4432,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                   key={option.value}
                                   type="button"
                                   variant={config.layout === option.value ? 'default' : 'outline'}
-                                  size="sm"
+                                  size={tokens.button.inline}
                                   className="h-8 text-[10px]"
                                   onClick={() => {
                                     updateBlock(selectedBlock.id, {
@@ -4551,7 +4552,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               <Button
                                 type="button"
                                 variant={config.columnCount === 2 ? 'default' : 'outline'}
-                                size="sm"
+                                size={tokens.button.inline}
                                 className="flex-1 h-8"
                                 onClick={() => {
                                   const newColumnBlocks = columnBlocks.slice(0, 2);
@@ -4567,7 +4568,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               <Button
                                 type="button"
                                 variant={config.columnCount === 3 ? 'default' : 'outline'}
-                                size="sm"
+                                size={tokens.button.inline}
                                 className="flex-1 h-8"
                                 onClick={() => {
                                   const newColumnBlocks = [...columnBlocks];
@@ -4611,7 +4612,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                   <span className="text-[11px] font-medium text-muted-foreground">Column {colIndex + 1}</span>
                                   <Popover>
                                     <PopoverTrigger asChild>
-                                      <Button variant="outline" size="sm" className="h-6 text-[10px] px-2">
+                                      <Button variant="outline" size={tokens.button.inline} className="h-6 text-[10px] px-2">
                                         <Plus className="w-3 h-3 mr-1" />
                                         Add Block
                                       </Button>
@@ -4751,7 +4752,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                             <Button
                                               type="button"
                                               variant={colBlock.styles.buttonVariant !== 'secondary' ? 'default' : 'outline'}
-                                              size="sm"
+                                              size={tokens.button.inline}
                                               className="flex-1 h-6 text-[10px]"
                                               onClick={() => updateColumnBlock(colIndex, blockIndex, { 
                                                 styles: { ...colBlock.styles, buttonVariant: 'primary' } 
@@ -4762,7 +4763,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                             <Button
                                               type="button"
                                               variant={colBlock.styles.buttonVariant === 'secondary' ? 'default' : 'outline'}
-                                              size="sm"
+                                              size={tokens.button.inline}
                                               className="flex-1 h-6 text-[10px]"
                                               onClick={() => updateColumnBlock(colIndex, blockIndex, { 
                                                 styles: { ...colBlock.styles, buttonVariant: 'secondary' } 
@@ -4851,7 +4852,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                             <Button
                                               key={align}
                                               variant={colBlock.styles.textAlign === align ? 'default' : 'ghost'}
-                                              size="sm"
+                                              size={tokens.button.inline}
                                               className="h-6 w-6 p-0"
                                               onClick={() => updateColumnBlock(colIndex, blockIndex, { 
                                                 styles: { ...colBlock.styles, textAlign: align } 
@@ -4945,7 +4946,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               <Button
                                 key={style}
                                 variant={(selectedBlock.styles.dividerStyle || 'solid') === style ? 'default' : 'outline'}
-                                size="sm"
+                                size={tokens.button.inline}
                                 className="h-7 flex-1 text-xs capitalize"
                                 onClick={() => updateBlockStyles(selectedBlock.id, { dividerStyle: style })}
                               >
@@ -4997,7 +4998,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                               <Button
                                 key={align}
                                 variant={selectedBlock.styles.textAlign === align ? 'default' : 'outline'}
-                                size="sm"
+                                size={tokens.button.inline}
                                 className="h-8 w-8 p-0"
                                 onClick={() => updateBlockStyles(selectedBlock.id, { textAlign: align })}
                               >
@@ -5132,7 +5133,7 @@ export const EmailTemplateEditor = forwardRef<EmailTemplateEditorRef, EmailTempl
                                     <Button
                                       key={style}
                                       variant={(selectedBlock.styles.borderStyle || 'solid') === style ? 'default' : 'outline'}
-                                      size="sm"
+                                      size={tokens.button.inline}
                                       className="h-7 flex-1 text-xs capitalize"
                                       onClick={() => updateBlockStyles(selectedBlock.id, { borderStyle: style })}
                                     >
