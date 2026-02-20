@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Sheet, SheetContent } from '@/components/ui/sheet';
+import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -256,97 +256,115 @@ export function BookingWizard({
 
   return (
     <>
-      <Sheet open={open} onOpenChange={handleClose}>
-        <SheetContent 
-          side="right" 
-          className="w-full sm:max-w-md p-0 flex flex-col gap-0 [&>button]:hidden"
-        >
-          <BookingHeader
-            step={step}
-            title={getStepTitle()}
-            subtitle={
-              step !== 'service' && selectedServices.length > 0
-                ? `${selectedServices.length} service${selectedServices.length > 1 ? 's' : ''} selected`
-                : formatDate(selectedDate, 'EEEE, MMM d') + ' at ' + formatTime12h(selectedTime)
-            }
-            onClose={handleClose}
-            onBack={step !== 'service' ? handleBack : undefined}
-          />
+      <AnimatePresence>
+        {open && (
+          <>
+            {/* Backdrop overlay */}
+            <motion.div
+              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={handleClose}
+            />
 
-          <div className="flex-1 overflow-hidden">
-            {step === 'client' && (
-              <ClientStep
-                clients={clients}
-                isLoading={isLoadingClients}
-                searchQuery={clientSearch}
-                onSearchChange={setClientSearch}
-                onSelectClient={handleSelectClient}
-                onNewClient={() => setShowNewClientDialog(true)}
+            {/* Floating bento panel */}
+            <motion.div
+              className="fixed z-50 top-3 right-3 bottom-3 w-full sm:max-w-md rounded-xl bg-card/80 backdrop-blur-xl border border-border shadow-2xl flex flex-col overflow-hidden"
+              initial={{ x: '100%', opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: '100%', opacity: 0 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            >
+              <BookingHeader
+                step={step}
+                title={getStepTitle()}
+                subtitle={
+                  step !== 'service' && selectedServices.length > 0
+                    ? `${selectedServices.length} service${selectedServices.length > 1 ? 's' : ''} selected`
+                    : formatDate(selectedDate, 'EEEE, MMM d') + ' at ' + formatTime12h(selectedTime)
+                }
+                onClose={handleClose}
+                onBack={step !== 'service' ? handleBack : undefined}
               />
-            )}
 
-            {step === 'service' && (
-              <ServiceStep
-                locations={locations}
-                selectedLocation={selectedLocation}
-                onLocationChange={setSelectedLocation}
-                servicesByCategory={servicesByCategory}
-                allServices={services}
-                selectedServices={selectedServices}
-                onToggleService={(serviceId) => {
-                  setSelectedServices(prev =>
-                    prev.includes(serviceId)
-                      ? prev.filter(id => id !== serviceId)
-                      : [...prev, serviceId]
-                  );
-                }}
-                totalDuration={totalDuration}
-                totalPrice={totalPrice}
-                onContinue={handleServicesComplete}
-                canContinue={!!selectedLocation}
-                isLoadingServices={isLoadingServices}
-              />
-            )}
+              <div className="flex-1 overflow-hidden">
+                {step === 'client' && (
+                  <ClientStep
+                    clients={clients}
+                    isLoading={isLoadingClients}
+                    searchQuery={clientSearch}
+                    onSearchChange={setClientSearch}
+                    onSelectClient={handleSelectClient}
+                    onNewClient={() => setShowNewClientDialog(true)}
+                  />
+                )}
 
-            {step === 'stylist' && (
-              <StylistStep
-                stylists={filteredStylists}
-                selectedStylist={selectedStylist}
-                onStylistChange={setSelectedStylist}
-                selectedDate={selectedDate}
-                onDateChange={setSelectedDate}
-                selectedTime={selectedTime}
-                onTimeChange={setSelectedTime}
-                onContinue={handleStylistComplete}
-                canContinue={!!selectedStylist && !!selectedTime}
-                qualificationInfo={qualificationData?.hasQualificationData ? {
-                  totalQualified: filteredStylists.length,
-                  hasData: true
-                } : undefined}
-              />
-            )}
+                {step === 'service' && (
+                  <ServiceStep
+                    locations={locations}
+                    selectedLocation={selectedLocation}
+                    onLocationChange={setSelectedLocation}
+                    servicesByCategory={servicesByCategory}
+                    allServices={services}
+                    selectedServices={selectedServices}
+                    onToggleService={(serviceId) => {
+                      setSelectedServices(prev =>
+                        prev.includes(serviceId)
+                          ? prev.filter(id => id !== serviceId)
+                          : [...prev, serviceId]
+                      );
+                    }}
+                    totalDuration={totalDuration}
+                    totalPrice={totalPrice}
+                    onContinue={handleServicesComplete}
+                    canContinue={!!selectedLocation}
+                    isLoadingServices={isLoadingServices}
+                  />
+                )}
 
-            {step === 'confirm' && (
-              <ConfirmStep
-                client={selectedClient}
-                services={selectedServiceDetails}
-                stylistName={getStylistName()}
-                date={selectedDate}
-                time={selectedTime}
-                totalDuration={totalDuration}
-                totalPrice={totalPrice}
-                notes={notes}
-                onNotesChange={setNotes}
-                onConfirm={() => createBooking.mutate()}
-                isLoading={createBooking.isPending}
-                locationName={locations.find(l => l.id === selectedLocation)?.name || ''}
-                recurrenceRule={recurrenceRule}
-                onRecurrenceChange={setRecurrenceRule}
-              />
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+                {step === 'stylist' && (
+                  <StylistStep
+                    stylists={filteredStylists}
+                    selectedStylist={selectedStylist}
+                    onStylistChange={setSelectedStylist}
+                    selectedDate={selectedDate}
+                    onDateChange={setSelectedDate}
+                    selectedTime={selectedTime}
+                    onTimeChange={setSelectedTime}
+                    onContinue={handleStylistComplete}
+                    canContinue={!!selectedStylist && !!selectedTime}
+                    qualificationInfo={qualificationData?.hasQualificationData ? {
+                      totalQualified: filteredStylists.length,
+                      hasData: true
+                    } : undefined}
+                  />
+                )}
+
+                {step === 'confirm' && (
+                  <ConfirmStep
+                    client={selectedClient}
+                    services={selectedServiceDetails}
+                    stylistName={getStylistName()}
+                    date={selectedDate}
+                    time={selectedTime}
+                    totalDuration={totalDuration}
+                    totalPrice={totalPrice}
+                    notes={notes}
+                    onNotesChange={setNotes}
+                    onConfirm={() => createBooking.mutate()}
+                    isLoading={createBooking.isPending}
+                    locationName={locations.find(l => l.id === selectedLocation)?.name || ''}
+                    recurrenceRule={recurrenceRule}
+                    onRecurrenceChange={setRecurrenceRule}
+                  />
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       <NewClientDialog
         open={showNewClientDialog}

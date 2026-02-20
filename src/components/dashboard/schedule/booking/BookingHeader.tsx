@@ -17,7 +17,7 @@ export function BookingHeader({ step, title, subtitle, onClose, onBack }: Bookin
   const currentStepIndex = STEPS.indexOf(step);
 
   return (
-    <div className="border-b border-border bg-card">
+    <div className="border-b border-border bg-transparent rounded-t-xl">
       {/* Top bar with navigation */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
