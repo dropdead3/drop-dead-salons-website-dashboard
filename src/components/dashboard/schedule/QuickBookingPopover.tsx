@@ -1092,8 +1092,9 @@ export function QuickBookingPopover({
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {selectedServiceDetails.map(s => (
-                    <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0">
+                    <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0 pr-0.5 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.id))}>
                       {s.name}
+                      <X className="h-2.5 w-2.5 text-muted-foreground hover:text-destructive" />
                     </Badge>
                   ))}
                 </div>
@@ -1169,8 +1170,9 @@ export function QuickBookingPopover({
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {selectedServiceDetails.map(s => (
-                    <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0">
+                    <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0 pr-0.5 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.id))}>
                       {s.name}
+                      <X className="h-2.5 w-2.5 text-muted-foreground hover:text-destructive" />
                     </Badge>
                   ))}
                 </div>
@@ -1311,8 +1313,9 @@ export function QuickBookingPopover({
                 </div>
                 <div className="flex flex-wrap gap-1">
                   {selectedServiceDetails.map(s => (
-                    <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0">
+                    <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0 pr-0.5 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.id))}>
                       {s.name}
+                      <X className="h-2.5 w-2.5 text-muted-foreground hover:text-destructive" />
                     </Badge>
                   ))}
                 </div>
