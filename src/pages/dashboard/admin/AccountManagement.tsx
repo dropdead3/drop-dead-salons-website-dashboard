@@ -491,7 +491,7 @@ export default function AccountManagement() {
                     <TooltipTrigger asChild>
                       <Button
                         variant="default"
-                        size="sm"
+                        size={tokens.button.card}
                         disabled
                         className="gap-1 bg-stone-700/90 text-amber-100 border border-amber-400/30 backdrop-blur-sm opacity-100 cursor-not-allowed hover:bg-stone-700/90"
                       >
@@ -506,7 +506,7 @@ export default function AccountManagement() {
                     <AlertDialogTrigger asChild>
                       <Button
                         variant={account.is_super_admin ? "default" : "outline"}
-                        size="sm"
+                        size={tokens.button.card}
                         className={cn("gap-1", account.is_super_admin && "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600")}
                       >
                         <Crown className="w-3 h-3" />
@@ -595,7 +595,7 @@ export default function AccountManagement() {
               {(isPending || isExpired) && (
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={() => resendInvitation.mutate({ email: invitation.email, role: invitation.role })}
                   disabled={resendInvitation.isPending}
                   className="gap-1"

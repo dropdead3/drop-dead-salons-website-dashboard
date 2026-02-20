@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { tokens } from '@/lib/design-tokens';
 import {
   GraduationCap,
   Users,
@@ -318,7 +319,7 @@ function AssistantCard({ assistant, requirements }: { assistant: AssistantProgre
                                 <SheetTrigger asChild>
                                   <Button 
                                     variant="ghost" 
-                                    size="sm"
+                                    size={tokens.button.inline}
                                     onClick={() => setSelectedSubmission({ submission, title: req.title })}
                                   >
                                     <Eye className="h-4 w-4 mr-1" />
@@ -458,7 +459,7 @@ function RequirementsManager() {
               </Badge>
               <Button
                 variant="ghost"
-                size="sm"
+                size={tokens.button.inline}
                 onClick={() => updateRequirement.mutate({ id: req.id, is_active: !req.is_active })}
               >
                 {req.is_active ? 'Disable' : 'Enable'}

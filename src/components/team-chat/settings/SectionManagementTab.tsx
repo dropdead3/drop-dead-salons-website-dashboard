@@ -29,6 +29,7 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 interface SortableSectionItemProps {
   section: { id: string; name: string; icon: string; is_system: boolean };
@@ -161,7 +162,7 @@ export function SectionManagementTab() {
           </div>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button size="sm">
+              <Button size={tokens.button.card}>
                 <Plus className="h-4 w-4 mr-2" />
                 New Section
               </Button>

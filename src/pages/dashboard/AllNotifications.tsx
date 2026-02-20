@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { formatRelativeTime } from '@/lib/format';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -305,7 +306,7 @@ export default function AllNotifications() {
           <div className="flex items-center gap-2 mt-3">
             {notification.link && (
               <Link to={notification.link}>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size={tokens.button.card}>
                   {getActionLabel(notification.type)}
                   <ArrowRight className="w-3 h-3 ml-1" />
                 </Button>
@@ -377,7 +378,7 @@ export default function AllNotifications() {
           <div className="flex items-center gap-2 mt-3">
             {announcement.link_url && (
               <a href={announcement.link_url} target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size={tokens.button.card}>
                   {announcement.link_label || 'View Link'}
                   <ArrowRight className="w-3 h-3 ml-1" />
                 </Button>

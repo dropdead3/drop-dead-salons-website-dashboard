@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Save, Users } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { useZuraRoleRules, useUpsertRoleRule, ZuraRoleRule } from '@/hooks/useZuraConfig';
 
 interface RoleRulesTabProps {
@@ -155,7 +156,7 @@ export function RoleRulesTab({ organizationId }: RoleRulesTabProps) {
                     </div>
 
                     <div className="flex justify-end">
-                      <Button onClick={() => saveRole(role.value)} disabled={upsertRule.isPending} size="sm" className="gap-2">
+                      <Button onClick={() => saveRole(role.value)} disabled={upsertRule.isPending} size={tokens.button.card} className="gap-2">
                         <Save className="h-3.5 w-3.5" /> Save {role.label} Rules
                       </Button>
                     </div>

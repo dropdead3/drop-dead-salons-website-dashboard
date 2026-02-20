@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Trash2, Lock, Pencil, RefreshCw, AlarmClock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import type { Task } from '@/hooks/useTasks';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -156,10 +157,10 @@ export function TaskItem({ task, onToggle, onDelete, onEdit, onView, onSnooze, i
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-2" align="end">
                   <div className="flex flex-col gap-1">
-                    <Button variant="ghost" size="sm" className="justify-start text-xs h-7" onClick={() => handleSnooze(addDays(today, 1))}>
+                    <Button variant="ghost" size={tokens.button.inline} className="justify-start text-xs h-7" onClick={() => handleSnooze(addDays(today, 1))}>
                       Tomorrow
                     </Button>
-                    <Button variant="ghost" size="sm" className="justify-start text-xs h-7" onClick={() => handleSnooze(addWeeks(today, 1))}>
+                    <Button variant="ghost" size={tokens.button.inline} className="justify-start text-xs h-7" onClick={() => handleSnooze(addWeeks(today, 1))}>
                       Next week
                     </Button>
                     <div className="border-t border-border/50 pt-1 mt-1">

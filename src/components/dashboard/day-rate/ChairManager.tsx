@@ -21,6 +21,7 @@ import {
   Settings2,
   AlertCircle 
 } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { useLocations, useUpdateLocation } from '@/hooks/useLocations';
 import { 
   useDayRateChairs, 
@@ -216,7 +217,7 @@ function LocationChairCard({
                   <div className="flex gap-2">
                     <Dialog open={showBulkCreate} onOpenChange={setShowBulkCreate}>
                       <DialogTrigger asChild>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size={tokens.button.card}>
                           Bulk Add
                         </Button>
                       </DialogTrigger>
@@ -249,7 +250,7 @@ function LocationChairCard({
                         </div>
                       </DialogContent>
                     </Dialog>
-                    <Button variant="outline" size="sm" onClick={handleAddChair}>
+                    <Button variant="outline" size={tokens.button.card} onClick={handleAddChair}>
                       <Plus className="w-4 h-4 mr-1" />
                       Add Chair
                     </Button>
