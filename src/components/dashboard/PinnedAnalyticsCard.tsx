@@ -504,18 +504,18 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
               </div>
               <span className={cn(tokens.kpi.label, 'flex-1')}>{meta.label}</span>
             </div>
-            {TIME_INDEPENDENT_CARDS.has(cardId) && filters.dateRange !== 'today' && (
-              <span className="text-[10px] text-muted-foreground/60 bg-muted/50 px-1.5 py-0.5 rounded-full border border-border/30 self-start mt-1">
-                Time filter n/a
-              </span>
-            )}
             <div className="mt-4 flex-1">
               <BlurredAmount className="font-display text-2xl font-medium">{metricValue}</BlurredAmount>
               {metricLabel && (
                 <p className="text-xs text-muted-foreground/80 mt-1">{metricLabel}</p>
               )}
             </div>
-            <div className="flex justify-end mt-2 pt-2 border-t border-border/30 min-h-[28px]">
+            <div className="flex justify-between items-center mt-2 pt-2 border-t border-border/30 min-h-[28px]">
+              {TIME_INDEPENDENT_CARDS.has(cardId) && filters.dateRange !== 'today' ? (
+                <span className="text-[10px] italic text-muted-foreground/50">
+                  Time filter n/a
+                </span>
+              ) : <span />}
               {link && (
                 <Link 
                   to={link.href} 
