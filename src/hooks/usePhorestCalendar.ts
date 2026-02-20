@@ -61,7 +61,7 @@ export function usePhorestCalendar() {
   
   // Calendar state
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState<CalendarView>('week');
+  const [view, setView] = useState<CalendarView>('day');
   const [filters, setFilters] = useState<CalendarFilters>({
     locationIds: [],
     stylistIds: [],
