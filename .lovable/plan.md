@@ -1,34 +1,26 @@
 
 
-# Floating Action Bar for Schedule Page
+# Add Bottom Padding to Calendar for Floating Action Bar
 
 ## What Changes
-The bottom action bar on the Schedule page currently sits flush against the edges with a flat `border-t` style. It needs to match the floating, rounded aesthetic of the collapsed sidebar and top navigation bar -- using `rounded-full`, glassmorphism (`bg-card/80 backdrop-blur-xl border-border`), and floating with margin from the edges.
+The calendar content area currently extends behind the floating action bar, causing it to obscure the bottom rows. We need to add bottom padding to the calendar's scrollable area so the content stops above the action bar, creating a clean bento-style gap.
 
-## Changes
+## Approach
+Add `pb-20` (80px) bottom padding to the calendar content area on day/week views. This ensures the last time slots remain visible and the floating bar sits cleanly below the calendar card with breathing room -- no overlap.
 
-### File: `src/components/dashboard/schedule/ScheduleActionBar.tsx`
+## Technical Details
 
-Update the outer wrapper div styling:
+### File: `src/pages/dashboard/Schedule.tsx` (line 471)
 
-**Current:**
+Change the calendar container's padding from `p-4` to `p-4 pb-20` (when day/week view is active). This gives the calendar scroll area enough bottom space so its content doesn't get hidden behind the ~64px floating action bar + its own 16px padding.
+
+```tsx
+// Current
+<div className="flex-1 p-4 overflow-hidden">
+
+// New -- add extra bottom padding when the action bar is visible
+<div className={cn("flex-1 p-4 overflow-hidden", (view === 'day' || view === 'week') && "pb-20")}>
 ```
-bg-card border-t border-border px-4 py-2.5
-```
 
-**New:**
-```
-bg-card/80 backdrop-blur-xl border border-border rounded-full px-6 py-2.5 mx-4 mb-4 shadow-lg
-```
-
-- `rounded-full` -- pill shape matching top nav and collapsed sidebar
-- `bg-card/80 backdrop-blur-xl` -- glassmorphism treatment consistent with other floating elements
-- `border border-border` -- full border instead of just `border-t`
-- `mx-4 mb-4` -- floating margin from edges (bottom and sides)
-- `shadow-lg` -- subtle elevation to lift it off the background
-- Remove the `border-t-2 border-t-primary/60` selection highlight (replace with a subtler indicator that works with rounded-full, such as a ring or shadow)
-
-### File: `src/pages/dashboard/Schedule.tsx`
-
-Adjust the layout so the action bar floats over the calendar content rather than being a flex child that pushes content up. Wrap it in a container or use absolute/fixed positioning at the bottom of the schedule area so the calendar gets full height beneath it.
+This is a single-line change. The `pb-20` (80px) accounts for the action bar height (~52px) plus the `pb-4` (16px) gap beneath it, leaving clean visual separation.
 
