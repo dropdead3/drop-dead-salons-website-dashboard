@@ -230,19 +230,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                 )}
               </SheetDescription>
             </div>
-            <div className="flex items-center gap-1">
-              <ArchiveClientToggle
-                clientId={client.id}
-                clientName={client.name}
-                isArchived={client.is_archived || false}
-              />
-              <BanClientToggle
-                clientId={client.id}
-                clientName={client.name}
-                isBanned={client.is_banned || false}
-                banReason={client.ban_reason}
-              />
-            </div>
+            
           </div>
         </SheetHeader>
 
@@ -500,6 +488,21 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             <ClientNotesSection clientId={client.id} />
           </TabsContent>
         </Tabs>
+
+        {/* Archive & Ban Actions */}
+        <div className="flex items-center gap-2 pt-6 pb-2 mt-4 border-t border-border">
+          <ArchiveClientToggle
+            clientId={client.id}
+            clientName={client.name}
+            isArchived={client.is_archived || false}
+          />
+          <BanClientToggle
+            clientId={client.id}
+            clientName={client.name}
+            isBanned={client.is_banned || false}
+            banReason={client.ban_reason}
+          />
+        </div>
       </SheetContent>
     </Sheet>
   );
