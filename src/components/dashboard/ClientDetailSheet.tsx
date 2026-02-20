@@ -21,7 +21,9 @@ import {
   MapPin,
   MessageSquare,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Cake,
+  Award
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -51,6 +53,8 @@ interface Client {
   daysSinceVisit?: number | null;
   is_banned?: boolean;
   ban_reason?: string | null;
+  birthday?: string | null;
+  client_since?: string | null;
 }
 
 interface ClientDetailSheetProps {
@@ -199,6 +203,27 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
                 <span>Last visit: {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}</span>
+              </div>
+            )}
+            {client.birthday && (
+              <div className="flex items-center gap-2">
+                <Cake className="w-4 h-4 text-muted-foreground" />
+                <span>Birthday: {formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')}</span>
+              </div>
+            )}
+            {client.client_since && (
+              <div className="flex items-center gap-2">
+                <Award className="w-4 h-4 text-muted-foreground" />
+                <span>
+                  Client since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy')}
+                  {' — '}
+                  {(() => {
+                    const years = differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 365;
+                    if (years >= 1) return `${Math.floor(years)} year${Math.floor(years) !== 1 ? 's' : ''}`;
+                    const months = Math.floor(differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 30);
+                    return `${months} month${months !== 1 ? 's' : ''}`;
+                  })()}
+                </span>
               </div>
             )}
           </CardContent>
