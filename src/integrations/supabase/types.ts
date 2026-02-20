@@ -8005,6 +8005,9 @@ export type Database = {
           organization_id: string
           pay_schedule_type: string
           processing_mode: string
+          reminder_channels: Json | null
+          reminder_days_before: number[] | null
+          reminder_enabled: boolean | null
           semi_monthly_first_day: number
           semi_monthly_second_day: number
           updated_at: string
@@ -8021,6 +8024,9 @@ export type Database = {
           organization_id: string
           pay_schedule_type?: string
           processing_mode?: string
+          reminder_channels?: Json | null
+          reminder_days_before?: number[] | null
+          reminder_enabled?: boolean | null
           semi_monthly_first_day?: number
           semi_monthly_second_day?: number
           updated_at?: string
@@ -8037,6 +8043,9 @@ export type Database = {
           organization_id?: string
           pay_schedule_type?: string
           processing_mode?: string
+          reminder_channels?: Json | null
+          reminder_days_before?: number[] | null
+          reminder_enabled?: boolean | null
           semi_monthly_first_day?: number
           semi_monthly_second_day?: number
           updated_at?: string

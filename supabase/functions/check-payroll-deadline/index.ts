@@ -17,6 +17,9 @@ interface PayrollSettings {
   weekly_day_of_week: number;
   monthly_pay_day: number;
   days_until_check: number;
+  reminder_enabled: boolean | null;
+  reminder_days_before: number[] | null;
+  reminder_channels: { email?: boolean; push?: boolean; sms_on_missed?: boolean } | null;
 }
 
 function getCurrentPeriodEnd(settings: PayrollSettings, today: Date): Date | null {
@@ -71,32 +74,49 @@ function getCurrentPeriodStart(settings: PayrollSettings, today: Date): Date | n
 function formatDate(d: Date): string { return d.toISOString().split("T")[0]; }
 function formatDisplayDate(d: Date): string { return d.toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
 
-function buildDeadlineTodayEmail(periodRange: string, checkDate: string, actionUrl: string): string {
-  return `
-    <h1 style="font-size:20px;margin:0 0 8px;color:#111827;">Payroll Submission Due Today</h1>
-    <p style="font-size:14px;color:#6b7280;margin:0 0 20px;">Period: ${periodRange} · Check Date: ${checkDate}</p>
-    <p style="font-size:14px;color:#374151;margin:0 0 24px;">
-      Your payroll submission for this period is due today. Please review and submit before end of day to ensure timely processing.
-    </p>
-    <a href="${actionUrl}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">
-      Run Payroll →
-    </a>`;
+function diffDays(a: Date, b: Date): number {
+  const msPerDay = 86400000;
+  return Math.round((b.getTime() - a.getTime()) / msPerDay);
 }
 
-function buildDeadlineMissedEmail(periodRange: string, deadlineDate: string, actionUrl: string): string {
+function buildReminderEmail(daysLeft: number, periodRange: string, checkDate: string, actionUrl: string): string {
+  if (daysLeft < 0) {
+    // Missed deadline
+    return `
+      <div style="background:#fef2f2;border-radius:8px;padding:12px 16px;margin:0 0 20px;">
+        <span style="font-size:18px;">⚠️</span>
+        <span style="font-size:14px;font-weight:600;color:#991b1b;">URGENT: Payroll Deadline Missed</span>
+      </div>
+      <p style="font-size:14px;color:#374151;margin:0 0 8px;">
+        Payroll for <strong>${periodRange}</strong> was due and has not been submitted.
+      </p>
+      <p style="font-size:14px;color:#374151;margin:0 0 24px;">
+        Please submit payroll immediately to avoid delays in employee pay.
+      </p>
+      <a href="${actionUrl}" style="display:inline-block;background:#dc2626;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">
+        Run Payroll Now →
+      </a>`;
+  }
+  if (daysLeft === 0) {
+    return `
+      <h1 style="font-size:20px;margin:0 0 8px;color:#111827;">Payroll Submission Due Today</h1>
+      <p style="font-size:14px;color:#6b7280;margin:0 0 20px;">Period: ${periodRange} · Check Date: ${checkDate}</p>
+      <p style="font-size:14px;color:#374151;margin:0 0 24px;">
+        Your payroll submission for this period is due today. Please review and submit before end of day to ensure timely processing.
+      </p>
+      <a href="${actionUrl}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">
+        Run Payroll →
+      </a>`;
+  }
+  // Upcoming reminder
   return `
-    <div style="background:#fef2f2;border-radius:8px;padding:12px 16px;margin:0 0 20px;">
-      <span style="font-size:18px;">⚠️</span>
-      <span style="font-size:14px;font-weight:600;color:#991b1b;">URGENT: Payroll Deadline Missed</span>
-    </div>
-    <p style="font-size:14px;color:#374151;margin:0 0 8px;">
-      Payroll for <strong>${periodRange}</strong> was due on <strong>${deadlineDate}</strong> and has not been submitted.
-    </p>
+    <h1 style="font-size:20px;margin:0 0 8px;color:#111827;">Payroll Deadline in ${daysLeft} Day${daysLeft > 1 ? 's' : ''}</h1>
+    <p style="font-size:14px;color:#6b7280;margin:0 0 20px;">Period: ${periodRange} · Check Date: ${checkDate}</p>
     <p style="font-size:14px;color:#374151;margin:0 0 24px;">
-      Please submit payroll immediately to avoid delays in employee pay.
+      Your payroll submission for this period is due in ${daysLeft} day${daysLeft > 1 ? 's' : ''}. Start preparing to ensure timely processing.
     </p>
-    <a href="${actionUrl}" style="display:inline-block;background:#dc2626;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">
-      Run Payroll Now →
+    <a href="${actionUrl}" style="display:inline-block;background:#2563eb;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">
+      Review Payroll →
     </a>`;
 }
 
@@ -126,19 +146,31 @@ Deno.serve(async (req) => {
 
     let notificationsSent = 0;
 
-    for (const settings of allSettings) {
-      const periodEnd = getCurrentPeriodEnd(settings as PayrollSettings, today);
-      const periodStart = getCurrentPeriodStart(settings as PayrollSettings, today);
+    for (const rawSettings of allSettings) {
+      const settings = rawSettings as PayrollSettings;
+
+      // Skip org if reminders are disabled
+      if (settings.reminder_enabled === false) continue;
+
+      const channels = settings.reminder_channels ?? { email: true, push: true, sms_on_missed: true };
+      const reminderDays = settings.reminder_days_before ?? [3, 1, 0];
+
+      const periodEnd = getCurrentPeriodEnd(settings, today);
+      const periodStart = getCurrentPeriodStart(settings, today);
       if (!periodEnd || !periodStart) continue;
 
       const periodEndStr = formatDate(periodEnd);
       const periodStartStr = formatDate(periodStart);
-      const isDeadlineDay = todayStr === periodEndStr;
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const isMissedDeadline = formatDate(yesterday) === periodEndStr;
 
-      if (!isDeadlineDay && !isMissedDeadline) continue;
+      // Calculate days until deadline (negative = missed)
+      const daysUntilDeadline = diffDays(today, periodEnd);
+
+      // Check if today matches any configured reminder day
+      const isReminderDay = reminderDays.includes(daysUntilDeadline);
+      // Also check if deadline was missed (yesterday was deadline, daysUntilDeadline === -1)
+      const isMissedDeadline = daysUntilDeadline === -1;
+
+      if (!isReminderDay && !isMissedDeadline) continue;
 
       const { data: existingRuns } = await supabase
         .from("payroll_runs")
@@ -181,45 +213,52 @@ Deno.serve(async (req) => {
       const prefsMap = new Map(prefs?.map(p => [p.user_id, p]) || []);
 
       const periodRange = `${formatDisplayDate(periodStart)} – ${formatDisplayDate(periodEnd)}`;
-      const deadlineDate = formatDisplayDate(periodEnd);
       const siteUrl = Deno.env.get("SITE_URL") || `${supabaseUrl.replace(".supabase.co", ".lovable.app")}`;
       const actionUrl = `${siteUrl}/dashboard/admin/payroll`;
       const checkDate = formatDisplayDate(new Date(periodEnd.getTime() + settings.days_until_check * 86400000));
+
+      const effectiveDays = isMissedDeadline ? -1 : daysUntilDeadline;
 
       for (const user of orgUsers) {
         const userPref = prefsMap.get(user.user_id);
         if (userPref?.payroll_deadline_enabled === false) continue;
 
-        if (user.email) {
-          const html = isDeadlineDay
-            ? buildDeadlineTodayEmail(periodRange, checkDate, actionUrl)
-            : buildDeadlineMissedEmail(periodRange, deadlineDate, actionUrl);
+        // Email
+        if (user.email && channels.email !== false) {
+          const subjectPrefix = effectiveDays < 0 ? "URGENT: Payroll deadline missed" :
+            effectiveDays === 0 ? "Payroll submission due today" :
+            `Payroll deadline in ${effectiveDays} day${effectiveDays > 1 ? 's' : ''}`;
 
           await sendOrgEmail(supabase, settings.organization_id, {
             to: [user.email],
-            subject: isDeadlineDay
-              ? `Payroll submission due today – ${periodRange}`
-              : `URGENT: Payroll deadline missed – ${periodRange}`,
-            html,
+            subject: `${subjectPrefix} – ${periodRange}`,
+            html: buildReminderEmail(effectiveDays, periodRange, checkDate, actionUrl),
           });
         }
 
-        try {
-          await supabase.functions.invoke("send-push-notification", {
-            body: {
-              user_id: user.user_id,
-              title: isDeadlineDay ? "Payroll Due Today" : "⚠️ Payroll Overdue",
-              body: isDeadlineDay
-                ? `Payroll for ${periodRange} is due today.`
-                : `Payroll for ${periodRange} was due ${deadlineDate} and has not been submitted.`,
-              url: "/dashboard/admin/payroll",
-            },
-          });
-        } catch (pushErr) {
-          console.error(`Push failed for ${user.user_id}:`, pushErr);
+        // Push notification
+        if (channels.push !== false) {
+          try {
+            const title = effectiveDays < 0 ? "⚠️ Payroll Overdue" :
+              effectiveDays === 0 ? "Payroll Due Today" :
+              `Payroll Due in ${effectiveDays} Day${effectiveDays > 1 ? 's' : ''}`;
+            const body = effectiveDays < 0
+              ? `Payroll for ${periodRange} is overdue and has not been submitted.`
+              : effectiveDays === 0
+              ? `Payroll for ${periodRange} is due today.`
+              : `Payroll for ${periodRange} is due in ${effectiveDays} day${effectiveDays > 1 ? 's' : ''}.`;
+
+            await supabase.functions.invoke("send-push-notification", {
+              body: { user_id: user.user_id, title, body, url: "/dashboard/admin/payroll" },
+            });
+          } catch (pushErr) {
+            console.error(`Push failed for ${user.user_id}:`, pushErr);
+          }
         }
 
-        if (isMissedDeadline) {
+        // SMS only on missed deadline
+        if (isMissedDeadline && channels.sms_on_missed !== false) {
+          const deadlineDate = formatDisplayDate(periodEnd);
           await sendSms(supabase, {
             to: user.email,
             templateKey: "payroll_deadline_missed",
