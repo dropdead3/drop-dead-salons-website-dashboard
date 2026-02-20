@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { parseISO, isToday, isTomorrow, isPast, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
-import { Plus, Clock, User, CheckCircle2, XCircle, Calendar, List, LayoutGrid, MapPin, Repeat, Users, CalendarDays, TrendingUp, AlertCircle, UserCheck, UserPlus, Inbox } from 'lucide-react';
+import { Plus, Clock, User, CheckCircle2, XCircle, Calendar, List, LayoutGrid, MapPin, Repeat, Users, CalendarDays, TrendingUp, AlertCircle, UserCheck, UserPlus, Inbox, Loader2 } from 'lucide-react';
+import { tokens, APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
@@ -67,7 +68,7 @@ function StatCard({
       variantBorder[variant]
     )}>
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">{title}</span>
+        <span className={tokens.kpi.label}>{title}</span>
         <div className="w-8 h-8 rounded-lg bg-muted/40 flex items-center justify-center">
           <Icon className="h-4 w-4 text-muted-foreground" />
         </div>
@@ -89,25 +90,30 @@ function AdminRequestRow({ request, onManualAssign }: { request: AssistantReques
 
   const statusBadge = () => {
     if (request.status === 'completed') {
-      return <Badge className="bg-blue-100 text-blue-800 border-blue-200">Completed</Badge>;
+      const t = APPOINTMENT_STATUS_BADGE.completed;
+      return <Badge className={cn(t.bg, t.text)}>{t.label}</Badge>;
     }
     if (request.status === 'cancelled') {
-      return <Badge variant="outline" className="text-muted-foreground">Cancelled</Badge>;
+      const t = APPOINTMENT_STATUS_BADGE.cancelled;
+      return <Badge variant="outline" className={t.text}>{t.label}</Badge>;
     }
     if (request.status === 'pending') {
-      return <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending Assignment</Badge>;
+      const t = APPOINTMENT_STATUS_BADGE.booked;
+      return <Badge className={cn(t.bg, t.text)}>Pending Assignment</Badge>;
     }
     if (isAccepted) {
-      return <Badge className="bg-green-100 text-green-800 border-green-200">Accepted</Badge>;
+      const t = APPOINTMENT_STATUS_BADGE.confirmed;
+      return <Badge className={cn(t.bg, t.text)}>Accepted</Badge>;
     }
-    return <Badge className="bg-amber-100 text-amber-800 border-amber-200">Awaiting Response</Badge>;
+    const t = APPOINTMENT_STATUS_BADGE.checked_in;
+    return <Badge className={cn(t.bg, t.text)}>Awaiting Response</Badge>;
   };
 
   return (
     <div className="flex items-center justify-between py-3 border-b last:border-b-0">
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="font-medium truncate">{request.client_name}</span>
+          <span className={cn(tokens.body.emphasis, "truncate")}>{request.client_name}</span>
           {statusBadge()}
           {declinedCount > 0 && (
             <Badge variant="outline" className="text-destructive border-destructive/30">
@@ -157,11 +163,11 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
   const isAccepted = !!request.accepted_at;
   const needsResponse = request.status === 'assigned' && !isAccepted && !isStylistView && !isPastRequest;
 
-  const statusColors = {
-    pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    assigned: isAccepted ? 'bg-green-100 text-green-800 border-green-200' : 'bg-amber-100 text-amber-800 border-amber-200',
-    completed: 'bg-blue-100 text-blue-800 border-blue-200',
-    cancelled: 'bg-gray-100 text-gray-600 border-gray-200',
+  const statusColorMap: Record<string, { bg: string; text: string }> = {
+    pending: APPOINTMENT_STATUS_BADGE.booked,
+    assigned: isAccepted ? APPOINTMENT_STATUS_BADGE.confirmed : APPOINTMENT_STATUS_BADGE.checked_in,
+    completed: APPOINTMENT_STATUS_BADGE.completed,
+    cancelled: APPOINTMENT_STATUS_BADGE.cancelled,
   };
 
   const handleComplete = () => {
@@ -193,7 +199,7 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
               <span className="font-medium">
                 {formatTime(request.start_time)} - {formatTime(request.end_time)}
               </span>
-              <Badge className={cn('border', statusColors[request.status])}>
+              <Badge className={cn('border', statusColorMap[request.status]?.bg, statusColorMap[request.status]?.text)}>
                 {request.status === 'assigned' && !isAccepted ? 'Awaiting Response' : request.status}
               </Badge>
               {isAccepted && (
@@ -207,7 +213,7 @@ function RequestCard({ request, isStylistView }: { request: AssistantRequest; is
             <div className="grid gap-1 text-sm">
               <div className="flex items-center gap-2">
                 <User className="h-3.5 w-3.5 text-muted-foreground" />
-                <span>Client: <strong>{request.client_name}</strong></span>
+                <span>Client: <span className={tokens.body.emphasis}>{request.client_name}</span></span>
               </div>
               
               <div className="text-muted-foreground">
@@ -487,7 +493,7 @@ export default function AssistantSchedule() {
       <div className={cn("p-6 mx-auto", isAdmin ? "max-w-6xl" : "max-w-4xl")}>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-display">
+            <h1 className={tokens.heading.page}>
               {isStylist ? 'Request An Assistant' : isStylistAssistant ? 'Assisting Requests' : 'Assistant Schedule'}
             </h1>
             <p className="text-muted-foreground">
@@ -589,7 +595,9 @@ export default function AssistantSchedule() {
             {isAdmin && (
               <TabsContent value="overview" className="space-y-6">
                 {loadingAll ? (
-                  <div className="text-center py-12 text-muted-foreground">Loading...</div>
+                  <div className="flex items-center justify-center h-64">
+                    <Loader2 className={tokens.loading.spinner} />
+                  </div>
                 ) : (
                   <>
                     {/* Stats Grid */}
@@ -627,24 +635,24 @@ export default function AssistantSchedule() {
                     <div className="flex items-center gap-6 px-4 py-3 rounded-xl bg-muted/30 border border-border/30 text-sm">
                       <div className="flex items-center gap-1.5">
                         <span className="text-muted-foreground">Total</span>
-                        <span className="font-semibold text-foreground">{stats.total}</span>
+                        <span className="font-medium text-foreground">{stats.total}</span>
                       </div>
                       <div className="w-px h-4 bg-border/40" />
                       <div className="flex items-center gap-1.5">
                         <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
                         <span className="text-muted-foreground">Completed</span>
-                        <span className="font-semibold text-foreground">{stats.completed}</span>
+                        <span className="font-medium text-foreground">{stats.completed}</span>
                       </div>
                       <div className="w-px h-4 bg-border/40" />
                       <div className="flex items-center gap-1.5">
                         <XCircle className="h-3.5 w-3.5 text-muted-foreground" />
                         <span className="text-muted-foreground">Declines</span>
-                        <span className="font-semibold text-foreground">{stats.totalDeclines}</span>
+                        <span className="font-medium text-foreground">{stats.totalDeclines}</span>
                       </div>
                       <div className="w-px h-4 bg-border/40" />
                       <div className="flex items-center gap-1.5">
                         <span className="text-muted-foreground">Cancelled</span>
-                        <span className="font-semibold text-foreground">{stats.cancelled}</span>
+                        <span className="font-medium text-foreground">{stats.cancelled}</span>
                       </div>
                     </div>
 
@@ -654,8 +662,15 @@ export default function AssistantSchedule() {
                     {/* Recent Requests */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Recent Requests</CardTitle>
-                        <CardDescription>Latest assistant request activity</CardDescription>
+                        <div className="flex items-center gap-3">
+                          <div className={tokens.card.iconBox}>
+                            <Inbox className={tokens.card.icon} />
+                          </div>
+                          <div>
+                            <CardTitle className={tokens.card.title}>RECENT REQUESTS</CardTitle>
+                            <CardDescription>Latest assistant request activity</CardDescription>
+                          </div>
+                        </div>
                       </CardHeader>
                       <CardContent>
                         {recentRequests.length === 0 ? (
@@ -683,8 +698,15 @@ export default function AssistantSchedule() {
               <TabsContent value="attention">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Requests Needing Attention</CardTitle>
-                    <CardDescription>Pending assignments and awaiting responses</CardDescription>
+                    <div className="flex items-center gap-3">
+                      <div className={tokens.card.iconBox}>
+                        <AlertCircle className={tokens.card.icon} />
+                      </div>
+                      <div>
+                        <CardTitle className={tokens.card.title}>NEEDS ATTENTION</CardTitle>
+                        <CardDescription>Pending assignments and awaiting responses</CardDescription>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {pendingRequests.length === 0 ? (
@@ -710,8 +732,15 @@ export default function AssistantSchedule() {
               <TabsContent value="assistants" className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Active Assistants</CardTitle>
-                    <CardDescription>Assistants and their location schedules</CardDescription>
+                    <div className="flex items-center gap-3">
+                      <div className={tokens.card.iconBox}>
+                        <Users className={tokens.card.icon} />
+                      </div>
+                      <div>
+                        <CardTitle className={tokens.card.title}>ACTIVE ASSISTANTS</CardTitle>
+                        <CardDescription>Assistants and their location schedules</CardDescription>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {filteredAssistants.length === 0 ? (
@@ -729,7 +758,7 @@ export default function AssistantSchedule() {
                               <AvatarFallback>{(assistant.display_name || assistant.full_name).charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                              <h4 className="font-medium">{assistant.display_name || assistant.full_name}</h4>
+                              <h4 className={tokens.body.emphasis}>{assistant.display_name || assistant.full_name}</h4>
                               {assistant.schedules.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">No schedule set</p>
                               ) : (
@@ -778,14 +807,23 @@ export default function AssistantSchedule() {
               <TabsContent value="all">
                 <Card>
                   <CardHeader>
-                    <CardTitle>All Requests</CardTitle>
-                    <CardDescription>Complete history of assistant requests</CardDescription>
+                    <div className="flex items-center gap-3">
+                      <div className={tokens.card.iconBox}>
+                        <Calendar className={tokens.card.icon} />
+                      </div>
+                      <div>
+                        <CardTitle className={tokens.card.title}>ALL REQUESTS</CardTitle>
+                        <CardDescription>Complete history of assistant requests</CardDescription>
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent>
                     {loadingAll ? (
-                      <div className="text-center py-8 text-muted-foreground">Loading...</div>
+                      <div className="flex items-center justify-center h-64">
+                        <Loader2 className={tokens.loading.spinner} />
+                      </div>
                     ) : allRequests.length === 0 ? (
-                      <p className="text-center py-8 text-muted-foreground">No requests yet</p>
+                      <EmptyState icon={Inbox} title="No requests yet" description="Assistant requests will appear here as they're created." />
                     ) : (
                       <div className="divide-y">
                         {allRequests.map((request) => (
@@ -819,7 +857,9 @@ export default function AssistantSchedule() {
                   </CardHeader>
                   <CardContent>
                     {loadingMyRequests ? (
-                      <div className="text-center py-8 text-muted-foreground">Loading...</div>
+                      <div className="flex items-center justify-center h-64">
+                        <Loader2 className={tokens.loading.spinner} />
+                      </div>
                     ) : (
                       <RequestsList requests={filterActive(myRequests)} isStylistView={true} />
                     )}
@@ -849,7 +889,9 @@ export default function AssistantSchedule() {
                   </CardHeader>
                   <CardContent>
                     {loadingMyAssignments ? (
-                      <div className="text-center py-8 text-muted-foreground">Loading...</div>
+                      <div className="flex items-center justify-center h-64">
+                        <Loader2 className={tokens.loading.spinner} />
+                      </div>
                     ) : (
                       <RequestsList requests={filterActive(myAssignments)} isStylistView={false} />
                     )}
