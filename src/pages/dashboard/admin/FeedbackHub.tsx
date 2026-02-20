@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { MessageSquareText, BarChart3, Users, Send, Star, Settings, ArrowLeft } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { NPSScoreCard } from '@/components/feedback/NPSScoreCard';
 import { FeedbackResponseList } from '@/components/feedback/FeedbackResponseList';
 import { ReviewThresholdSettings } from '@/components/feedback/ReviewThresholdSettings';
@@ -94,7 +95,7 @@ export default function FeedbackHub() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button variant="outline" size="sm" className="w-full justify-start gap-2">
+                  <Button variant="outline" size={tokens.button.card} className="w-full justify-start gap-2">
                     <Send className="h-4 w-4" />
                     Send Survey Request
                   </Button>

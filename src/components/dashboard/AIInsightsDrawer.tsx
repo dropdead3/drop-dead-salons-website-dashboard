@@ -17,6 +17,7 @@ import { SilenceState } from '@/components/executive-brief/SilenceState';
 import { EnforcementGateBanner } from '@/components/enforcement/EnforcementGateBanner';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Loader2 } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -435,7 +436,7 @@ export function AIInsightsDrawer() {
                               <ZuraAvatar size="md" className="mx-auto mb-3 opacity-20" />
                               <p className="text-sm font-display text-muted-foreground">No insights generated yet</p>
                               <p className="text-xs text-muted-foreground/80 mt-1 max-w-[240px] mx-auto">We’ll analyze your sales, capacity, and team data to surface what matters.</p>
-                              <Button variant="outline" size="sm" onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
+                              <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
                                 <Brain className="w-3.5 h-3.5" />
                                 Generate Insights
                               </Button>
@@ -524,7 +525,7 @@ export function AIInsightsDrawer() {
                           ) : (
                             <div className="text-center py-10">
                               <p className="text-sm text-muted-foreground">No insights or actions right now</p>
-                              <Button variant="outline" size="sm" onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
+                              <Button variant="outline" size={tokens.button.card} onClick={() => refresh(true)} disabled={isRefreshing} className="gap-1.5 mt-3">
                                 <RefreshCw className="w-3.5 h-3.5" />
                                 Refresh
                               </Button>

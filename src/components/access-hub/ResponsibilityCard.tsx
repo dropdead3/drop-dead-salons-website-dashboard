@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { ChevronDown, ChevronRight, Edit2, Trash2, Archive, RotateCcw, GripVertical } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { getRoleIconComponent } from '@/components/dashboard/RoleIconPicker';
 import { getRoleColorClasses } from '@/components/dashboard/RoleColorPicker';
 import { RoleIconPicker } from '@/components/dashboard/RoleIconPicker';
@@ -91,8 +92,8 @@ export function ResponsibilityCard({
             <RoleColorPicker value={editData.color} onChange={(color) => setEditData(prev => ({ ...prev, color }))} />
           </div>
           <div className="flex gap-2 justify-end">
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>Cancel</Button>
-            <Button size="sm" onClick={handleSave} disabled={!editData.display_name.trim()}>Save</Button>
+            <Button variant="outline" size={tokens.button.card} onClick={() => setIsEditing(false)}>Cancel</Button>
+            <Button size={tokens.button.card} onClick={handleSave} disabled={!editData.display_name.trim()}>Save</Button>
           </div>
         </CardContent>
       </Card>
@@ -149,7 +150,7 @@ export function ResponsibilityCard({
           {/* Expandable assets section */}
           <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
             <CollapsibleTrigger asChild>
-              <Button variant="ghost" size="sm" className="mt-2 h-7 text-xs text-muted-foreground gap-1 px-2">
+              <Button variant="ghost" size={tokens.button.inline} className="mt-2 h-7 text-xs text-muted-foreground gap-1 px-2">
                 {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                 Helper Assets
               </Button>

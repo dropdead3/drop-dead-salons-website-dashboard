@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { tokens } from '@/lib/design-tokens';
 import { 
   Plus, 
   Trash2, 
@@ -373,10 +374,10 @@ function WeekCard({
                       <Label className="text-sm">Week Active</Label>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={() => { setEditedWeek(week); setIsEditing(false); }}>
+                      <Button variant="outline" size={tokens.button.card} onClick={() => { setEditedWeek(week); setIsEditing(false); }}>
                         <X className="w-4 h-4 mr-1" /> Cancel
                       </Button>
-                      <Button size="sm" onClick={handleSaveWeek} disabled={saving}>
+                      <Button size={tokens.button.card} onClick={handleSaveWeek} disabled={saving}>
                         {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
                         Save
                       </Button>
@@ -405,7 +406,7 @@ function WeekCard({
                         </div>
                       )}
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                    <Button variant="outline" size={tokens.button.card} onClick={() => setIsEditing(true)}>
                       <Edit2 className="w-4 h-4 mr-1" /> Edit Week
                     </Button>
                   </div>
@@ -417,7 +418,7 @@ function WeekCard({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium text-sm">Weekly Assignments</h4>
-                <Button size="sm" variant="outline" onClick={() => setIsAddingAssignment(true)} disabled={isAddingAssignment}>
+                <Button size={tokens.button.card} variant="outline" onClick={() => setIsAddingAssignment(true)} disabled={isAddingAssignment}>
                   <Plus className="w-4 h-4 mr-1" /> Add Assignment
                 </Button>
               </div>
@@ -490,10 +491,10 @@ function WeekCard({
                       </div>
                     </div>
                     <div className="flex justify-end gap-2">
-                      <Button variant="outline" size="sm" onClick={() => setIsAddingAssignment(false)}>
+                      <Button variant="outline" size={tokens.button.card} onClick={() => setIsAddingAssignment(false)}>
                         <X className="w-4 h-4 mr-1" /> Cancel
                       </Button>
-                      <Button size="sm" onClick={handleAddAssignment}>
+                      <Button size={tokens.button.card} onClick={handleAddAssignment}>
                         <Check className="w-4 h-4 mr-1" /> Add
                       </Button>
                     </div>

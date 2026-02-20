@@ -23,6 +23,7 @@ import {
   Award,
   Loader2
 } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { ClientEngineWelcome } from './ClientEngineWelcome';
 import { ProgramLogoEditor } from './ProgramLogoEditor';
 import { ProgramConfig } from '@/hooks/useProgramConfig';
@@ -284,7 +285,7 @@ export function WelcomePagePreview({
                 <CollapsibleContent className="pl-6 pb-3">
                   <div className="bg-muted/30 rounded-lg p-4">
                     <p className="text-sm text-muted-foreground mb-3">Tasks shown are pulled from your program configuration.</p>
-                    <Button variant="outline" size="sm" asChild className="gap-2">
+                    <Button variant="outline" size={tokens.button.card} asChild className="gap-2">
                       <Link to="/dashboard/admin/program-editor?tab=tasks">
                         <ExternalLink className="w-3 h-3" />
                         Edit Daily Tasks
@@ -316,7 +317,7 @@ export function WelcomePagePreview({
                 <CollapsibleContent className="pl-6 pb-3">
                   <div className="bg-muted/30 rounded-lg p-4">
                     <p className="text-sm text-muted-foreground mb-3">Rules shown are pulled from your program configuration.</p>
-                    <Button variant="outline" size="sm" asChild className="gap-2">
+                    <Button variant="outline" size={tokens.button.card} asChild className="gap-2">
                       <Link to="/dashboard/admin/program-editor?tab=rules">
                         <ExternalLink className="w-3 h-3" />
                         Edit Program Rules
@@ -400,11 +401,11 @@ export function WelcomePagePreview({
                           className="text-sm"
                         />
                         <div className="flex gap-2">
-                          <Button size="sm" onClick={handleSaveOutcome} disabled={updateOutcome.isPending}>
+                          <Button size={tokens.button.card} onClick={handleSaveOutcome} disabled={updateOutcome.isPending}>
                             {updateOutcome.isPending ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}
                             Save
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => setEditingOutcome(null)}>
+                          <Button size={tokens.button.card} variant="outline" onClick={() => setEditingOutcome(null)}>
                             Cancel
                           </Button>
                         </div>

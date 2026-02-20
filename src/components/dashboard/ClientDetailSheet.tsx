@@ -23,6 +23,7 @@ import {
   Clock,
   TrendingUp
 } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { VisitHistoryTimeline } from './VisitHistoryTimeline';
 import { ClientNotesSection } from './ClientNotesSection';
@@ -120,7 +121,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
         {/* Contact Quick Actions */}
         <div className="flex gap-2 py-4 border-b">
           {client.phone && (
-            <Button variant="outline" size="sm" asChild className="flex-1">
+            <Button variant="outline" size={tokens.button.card} asChild className="flex-1">
               <a href={`tel:${client.phone}`}>
                 <Phone className="w-4 h-4 mr-2" />
                 Call
@@ -128,7 +129,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             </Button>
           )}
           {client.email && (
-            <Button variant="outline" size="sm" asChild className="flex-1">
+            <Button variant="outline" size={tokens.button.card} asChild className="flex-1">
               <a href={`mailto:${client.email}`}>
                 <Mail className="w-4 h-4 mr-2" />
                 Email
@@ -136,7 +137,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
             </Button>
           )}
           {client.phone && (
-            <Button variant="outline" size="sm" asChild className="flex-1">
+            <Button variant="outline" size={tokens.button.card} asChild className="flex-1">
               <a href={`sms:${client.phone}`}>
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Text
