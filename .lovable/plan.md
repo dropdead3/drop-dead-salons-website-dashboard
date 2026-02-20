@@ -1,51 +1,36 @@
 
 
-## Badge Time-Independent Cards When Filter Doesn't Apply
+## Move "Time filter n/a" Badge to Bottom-Left Corner
 
-### Problem
-Cards like **Week Ahead Forecast**, **Hiring Capacity**, **Staffing Trends**, **Stylist Workload**, and **Client Health** show data that is not affected by the date range filter. When a user changes the filter (e.g., "Last 7 days"), these cards silently ignore it, which can be confusing.
+### Change
 
-### Solution
-Add a small informational badge reading **"Time filter n/a"** to compact cards whose data is independent of the selected date range. The badge only appears when the filter is set to something other than the default ("today"), so it does not clutter the view unnecessarily.
+**File:** `src/components/dashboard/PinnedAnalyticsCard.tsx`
 
-### Time-Independent Cards (will receive badge)
-- `week_ahead_forecast` -- always next 7 days
-- `hiring_capacity` -- structural headcount
-- `staffing_trends` -- current active staff
-- `stylist_workload` -- current utilization snapshot
-- `client_health` -- segment counts, not period-scoped
+Move the badge from its current position (between the header and metric value, lines 507-511) down into the footer row (line 518), positioned on the left side opposite the "View Forecast" link on the right.
 
-### Implementation Detail
+### Before
+The badge sits awkwardly between the card title and the dollar amount, taking up vertical space and breaking the visual flow.
 
-**Single file changed:** `src/components/dashboard/PinnedAnalyticsCard.tsx`
+### After
+The badge will anchor to the bottom-left of the card, sitting in the same row as the "View ..." link. The footer `div` will use `justify-between` (instead of `justify-end`) so the badge sits left and the link sits right. When there is no link, the badge still anchors bottom-left. Styling will also be refined slightly for a cleaner look: smaller text, softer background, and italic to feel like a quiet footnote rather than a UI element.
 
-1. **Define the set of time-independent card IDs** as a constant:
+### Technical Detail
+
+1. **Remove** the badge block from lines 507-511 (its current position after the header).
+2. **Update** the footer `div` (line 518) from `justify-end` to `justify-between items-center`.
+3. **Insert** the badge as the first child inside the footer div, before the link:
    ```tsx
-   const TIME_INDEPENDENT_CARDS = new Set([
-     'week_ahead_forecast',
-     'hiring_capacity',
-     'staffing_trends',
-     'stylist_workload',
-     'client_health',
-   ]);
+   <div className="flex justify-between items-center mt-2 pt-2 border-t border-border/30 min-h-[28px]">
+     {TIME_INDEPENDENT_CARDS.has(cardId) && filters.dateRange !== 'today' ? (
+       <span className="text-[10px] italic text-muted-foreground/50">
+         Time filter n/a
+       </span>
+     ) : <span />}
+     {link && (
+       <Link ...>View {link.label} <ChevronRight /></Link>
+     )}
+   </div>
    ```
 
-2. **Compute a flag** in the compact rendering block:
-   ```tsx
-   const isTimeIndependent = TIME_INDEPENDENT_CARDS.has(cardId);
-   ```
+This places the badge as a subtle, italic footnote in the bottom-left corner, balanced against the action link on the right.
 
-3. **Render a subtle badge** inside the card when the flag is true. It will sit next to the card title area, styled as a small muted pill:
-   ```tsx
-   {isTimeIndependent && (
-     <span className="text-[10px] text-muted-foreground/60 bg-muted/50 px-1.5 py-0.5 rounded-full border border-border/30">
-       Time filter n/a
-     </span>
-   )}
-   ```
-   This badge will be placed in the header row, after the card label text, keeping it visible but non-intrusive.
-
-### Visual Result
-- When filter is active, time-independent cards will show a small **"Time filter n/a"** pill badge beside their title
-- The badge uses existing muted/border color tokens so it blends with the current design language
-- Time-dependent cards (Sales, Bookings, etc.) remain unchanged
