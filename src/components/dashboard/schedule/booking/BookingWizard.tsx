@@ -17,6 +17,7 @@ import { ServiceStep } from './ServiceStep';
 import { StylistStep } from './StylistStep';
 import { ConfirmStep } from './ConfirmStep';
 import { NewClientDialog } from '../NewClientDialog';
+import type { RecurrenceRule } from './RecurrenceSelector';
 
 export interface PhorestClient {
   id: string;
@@ -60,6 +61,7 @@ export function BookingWizard({
   const [selectedDate, setSelectedDate] = useState<Date>(defaultDate);
   const [selectedTime, setSelectedTime] = useState(defaultTime);
   const [notes, setNotes] = useState('');
+  const [recurrenceRule, setRecurrenceRule] = useState<RecurrenceRule | null>(null);
 
   // Data fetching
   const { data: locations = [] } = useLocations();
@@ -162,6 +164,25 @@ export function BookingWizard({
       if (response.error) throw response.error;
       if (!response.data?.success) throw new Error(response.data?.error || 'Booking failed');
 
+      // If recurrence is set, create recurring appointments
+      if (recurrenceRule && response.data.appointment_id) {
+        const recResponse = await supabase.functions.invoke('create-recurring-appointments', {
+          body: {
+            first_appointment_id: response.data.appointment_id,
+            recurrence_rule: recurrenceRule,
+          },
+        });
+
+        if (recResponse.data?.success) {
+          const { created_count, skipped_count, total_requested } = recResponse.data;
+          if (skipped_count > 0) {
+            toast.info(
+              `Created ${created_count} of ${total_requested} recurring appointments. ${skipped_count} skipped due to conflicts.`
+            );
+          }
+        }
+      }
+
       return response.data;
     },
     onSuccess: () => {
@@ -184,6 +205,7 @@ export function BookingWizard({
     setSelectedDate(defaultDate);
     setSelectedTime(defaultTime);
     setNotes('');
+    setRecurrenceRule(null);
     onOpenChange(false);
   };
 
@@ -318,6 +340,8 @@ export function BookingWizard({
                 onConfirm={() => createBooking.mutate()}
                 isLoading={createBooking.isPending}
                 locationName={locations.find(l => l.id === selectedLocation)?.name || ''}
+                recurrenceRule={recurrenceRule}
+                onRecurrenceChange={setRecurrenceRule}
               />
             )}
           </div>

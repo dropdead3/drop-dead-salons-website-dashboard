@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Phone, Clock, MapPin, User, ChevronRight } from 'lucide-react';
+import { Phone, Clock, MapPin, User, ChevronRight, Repeat } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { APPOINTMENT_STATUS_BADGE } from '@/lib/design-tokens';
 
@@ -78,6 +78,9 @@ function AppointmentCard({
               <div>
                 <div className="flex items-center gap-1.5">
                   <h4 className="font-medium text-base">{appointment.client_name}</h4>
+                  {appointment.recurrence_group_id && (
+                    <Repeat className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
                   {isAssisting && (
                     <span className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0.5 rounded-sm font-semibold">ASSISTING</span>
                   )}

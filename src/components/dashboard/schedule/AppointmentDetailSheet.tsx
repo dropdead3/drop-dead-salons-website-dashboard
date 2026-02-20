@@ -53,6 +53,7 @@ import {
   Loader2,
   UserPlus,
   X,
+  Repeat,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -64,6 +65,8 @@ import { useAssistantConflictCheck } from '@/hooks/useAssistantConflictCheck';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AppointmentDetailSheetProps {
   appointment: PhorestAppointment | null;
@@ -119,7 +122,8 @@ export function AppointmentDetailSheet({
   const [isPrivateNote, setIsPrivateNote] = useState(false);
   const [confirmAction, setConfirmAction] = useState<AppointmentStatus | null>(null);
   const [showAssistantPicker, setShowAssistantPicker] = useState(false);
-  
+  const [cancellingFuture, setCancellingFuture] = useState(false);
+  const queryClient = useQueryClient();
   const { notes, addNote, deleteNote, isAdding } = useAppointmentNotes(appointment?.phorest_id || null);
   const { assistants, assignAssistant, removeAssistant, updateAssistDuration, isAssigning } = useAppointmentAssistants(appointment?.id || null);
   const canAddNotes = hasPermission('add_appointment_notes');
@@ -173,6 +177,33 @@ export function AppointmentDetailSheet({
       setConfirmAction(null);
     }
   };
+
+  const handleCancelAllFuture = async () => {
+    if (!appointment.recurrence_group_id) return;
+    setCancellingFuture(true);
+    try {
+      const { error } = await supabase
+        .from('phorest_appointments')
+        .update({ status: 'cancelled' })
+        .eq('recurrence_group_id', appointment.recurrence_group_id)
+        .gte('appointment_date', appointment.appointment_date)
+        .neq('status', 'cancelled');
+
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ['phorest-appointments'] });
+      toast.success('All future recurring appointments cancelled');
+      onOpenChange(false);
+    } catch (err: any) {
+      toast.error('Failed to cancel future appointments', { description: err.message });
+    } finally {
+      setCancellingFuture(false);
+    }
+  };
+
+  // Calculate recurrence info
+  const recurrenceLabel = appointment.recurrence_group_id && appointment.recurrence_rule
+    ? `Recurring (${(appointment.recurrence_index ?? 0) + 1} of ${(appointment.recurrence_rule as any)?.occurrences ?? '?'})`
+    : null;
 
   return (
     <>
@@ -234,6 +265,30 @@ export function AppointmentDetailSheet({
 
           <ScrollArea className="flex-1">
             <div className="p-6 space-y-6">
+              {/* Recurring Badge */}
+              {recurrenceLabel && (
+                <div className="flex items-center justify-between bg-muted/50 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Repeat className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium">{recurrenceLabel}</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-destructive hover:text-destructive"
+                    onClick={handleCancelAllFuture}
+                    disabled={cancellingFuture}
+                  >
+                    {cancellingFuture ? (
+                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                    ) : (
+                      <XCircle className="h-3 w-3 mr-1" />
+                    )}
+                    Cancel all future
+                  </Button>
+                </div>
+              )}
+
               {/* Appointment Details */}
               <div className="space-y-3">
                 <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wide">

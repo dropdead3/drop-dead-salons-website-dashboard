@@ -27,6 +27,10 @@ export interface PhorestAppointment {
   // New fields for filtering
   phorest_client_id: string | null;
   is_new_client: boolean;
+  // Recurrence fields
+  recurrence_group_id: string | null;
+  recurrence_index: number | null;
+  recurrence_rule: Record<string, unknown> | null;
   // Joined data
   stylist_profile?: {
     display_name: string | null;

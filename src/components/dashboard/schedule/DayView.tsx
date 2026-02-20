@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
-import { Phone, Clock, AlertTriangle, XCircle, GripVertical, Users } from 'lucide-react';
+import { Phone, Clock, AlertTriangle, XCircle, GripVertical, Users, Repeat } from 'lucide-react';
 import type { PhorestAppointment, AppointmentStatus } from '@/hooks/usePhorestCalendar';
 import { useServiceCategoryColorsMap } from '@/hooks/useServiceCategoryColors';
 import { getCategoryColor, SPECIAL_GRADIENTS, isGradientMarker, getGradientFromMarker } from '@/utils/categoryColors';
@@ -328,6 +328,9 @@ function AppointmentCard({
           <div className="px-1.5 py-0.5 relative z-10">
             {isCompact ? (
               <div className="text-xs font-medium truncate flex items-center gap-1">
+                {appointment.recurrence_group_id && (
+                  <Repeat className="h-2.5 w-2.5 opacity-60 shrink-0" />
+                )}
                 {isAssisting && (
                   <span className="bg-accent/80 text-accent-foreground text-[8px] px-1 py-px rounded-sm font-semibold shrink-0">AST</span>
                 )}
@@ -339,6 +342,9 @@ function AppointmentCard({
             ) : (
               <>
                 <div className="text-xs font-medium truncate flex items-center gap-1">
+                  {appointment.recurrence_group_id && (
+                    <Repeat className="h-3 w-3 opacity-60 shrink-0" />
+                  )}
                   {appointment.status === 'confirmed' && (
                     <span className="w-1.5 h-1.5 rounded-full bg-white/80 shrink-0" />
                   )}
