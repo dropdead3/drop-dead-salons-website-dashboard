@@ -1,128 +1,171 @@
 
-## Verification Report + Fix Plan: Add-On Configurator
+## Rearchitecting the Add-Ons System: A Proper Configurator
 
-### Current State
+### What the User Wants (vs. What Was Built)
 
-The Settings page is **crashing with an ErrorBoundary** on the Services tab. The configurator cannot be used at all in its current state.
+The current system is built backwards. It uses a text-label approach where each category row gets a "recommendation" that is just a string label optionally matched by name to a Phorest service. There is no pricing, no cost, no margin tracking, and no assignment to specific services.
 
----
+What's needed is a **proper two-layer architecture**:
 
-### Bug 1 (P0 — Page Crash) — Empty String `value` on Radix `SelectItem`
-
-**Error from console:**
-```
-Error: A <Select.Item /> must have a value prop that is not an empty string.
-This is because the Select value can be set to an empty string to clear
-the selection and show the placeholder.
-```
-
-**Root cause:** In `CategoryAddonManager.tsx` line 169, we added the "Label only" sentinel with `value=""`:
-```tsx
-<SelectItem value="" className="text-xs text-muted-foreground">
-  Label only — no specific service
-</SelectItem>
-```
-
-Radix UI's `Select` component explicitly prohibits empty string values on `SelectItem` — it uses `""` internally to represent "no selection / show placeholder." This causes a hard throw that React's ErrorBoundary catches, crashing the entire settings page.
-
-**Fix:** Replace `value=""` with a non-empty sentinel string like `value="__none__"`, then handle it in `handleCreate`:
-```tsx
-<SelectItem value="__none__" className="text-xs text-muted-foreground italic">
-  Label only — no specific service
-</SelectItem>
-```
-And in `handleCreate`:
-```tsx
-addon_service_name: linkMode === 'service'
-  ? (selectedService && selectedService !== '__none__' ? selectedService : null)
-  : null,
-```
-And reset with `setSelectedService('__none__')` instead of `''`.
-
-Same fix needed for the category picker — add a "No specific category" sentinel `value="__none__"` as the first item there too, so both dropdowns allow deselection.
+1. **Add-Ons Library** — Define add-ons as standalone entities with a name, price, and cost (for margin tracking). These exist at the organization level and are reusable.
+2. **Add-On Assignments** — Attach library add-ons to:
+   - A **full category** (every service in that category can trigger the recommendation)
+   - **Specific services** (more surgical — only when booking "Full Balayage" does "Olaplex Treatment" appear)
 
 ---
 
-### Bug 2 (P1) — Empty State Shows Simultaneously With Category List
+### Data Architecture
 
-In `ServicesSettingsContent.tsx` lines 405–416, the `EmptyState` for "No add-ons configured" renders even when `localOrder.length > 0`, because the condition is `totalAddonCount === 0` (not guarded by `localOrder.length === 0`). Then at line 418, the category list also renders. Both show at the same time when the org has categories but no add-ons yet. The empty state should be *replaced by* the category list, not stacked above it.
+Two new tables replace the current `service_category_addons` approach:
 
-**Fix:** Change the conditional from `else if` / separate block to a single layout: show the guidance text *inside* the card content area above the list (as a quiet banner, not a full `EmptyState`) when `totalAddonCount === 0 && localOrder.length > 0`.
+**Table 1: `service_addons` (the library)**
 
-```tsx
-{totalAddonCount === 0 && localOrder.length > 0 && (
-  <div className="mb-3 px-3 py-2.5 rounded-lg bg-muted/40 border border-border/50 flex items-start gap-2.5">
-    <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-    <p className="text-xs text-muted-foreground leading-relaxed">
-      Add-on recommendations surface high-margin services at exactly the right moment during booking.
-      Expand a category below to configure its recommendations.
-    </p>
-  </div>
-)}
-```
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID | PK |
+| `organization_id` | UUID | FK → organizations |
+| `name` | TEXT | "Olaplex Treatment", "Scalp Treatment" |
+| `description` | TEXT nullable | Optional detail |
+| `price` | NUMERIC | What the client pays |
+| `cost` | NUMERIC nullable | Product/supply cost for margin tracking |
+| `duration_minutes` | INTEGER nullable | Time to add to appointment |
+| `is_active` | BOOLEAN | Soft delete |
+| `display_order` | INTEGER | For sorting |
+| `created_at` | TIMESTAMPTZ | |
+| `updated_at` | TIMESTAMPTZ | |
 
----
+**Table 2: `service_addon_assignments` (the attachments)**
 
-### Bug 3 (P1) — Category Picker Has No "None" Option
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID | PK |
+| `organization_id` | UUID | FK → organizations |
+| `addon_id` | UUID | FK → service_addons |
+| `target_type` | TEXT | `'category'` or `'service'` |
+| `target_category_id` | UUID nullable | FK → service_category_colors |
+| `target_service_id` | UUID nullable | FK → services |
+| `display_order` | INTEGER | Within each target |
+| `created_at` | TIMESTAMPTZ | |
 
-The category `Select` (lines 187–200) lists categories but has no way to deselect once one is picked. If an admin accidentally selects a category, they must cancel the whole form. No sentinel item exists here (unlike the service picker which has the broken `""` sentinel). This is a form usability gap.
+RLS on both tables follows `is_org_member` for SELECT, `is_org_admin` for INSERT/UPDATE/DELETE.
 
-**Fix:** Add `value="__none__"` sentinel as the first item in the category picker with the same guard in `handleCreate`.
-
----
-
-### Enhancement 1 — Form Validation: Require Label Before Showing Save
-
-Currently `handleCreate` guards on `!addLabel.trim()`, but the Save button shows as disabled without any visual cue when the label is empty. The placeholder text "Label (e.g. Scalp Treatment)" disappears once you start typing, but there is no inline feedback if you try to save blank.
-
-**Fix:** Add a red border state on the label `Input` when save is attempted with empty label:
-```tsx
-const [labelTouched, setLabelTouched] = useState(false);
-// On input: setLabelTouched(true)
-// className includes: labelTouched && !addLabel.trim() && 'border-destructive'
-```
+The existing `service_category_addons` table stays untouched (it's in the DB, removing it could break things). We build the new system alongside it. The booking wizard will be updated to query the new tables.
 
 ---
 
-### Enhancement 2 — Add-On Row Should Show Current Add-Ons Count Inline (Not Just "N recommendations configured")
+### What Gets Built
 
-The row subtitle says "N recommendations configured" but doesn't name them. Admins can't see what's configured without clicking. A collapsed preview of the first 2–3 badge names would give at-a-glance visibility.
+**Part 1: Add-Ons Library Page (new card in Services Settings)**
 
-**Fix:** When `addonCount > 0 && !isExpanded`, show a muted inline chip list of the first 2 add-on labels followed by "..." if there are more:
-```tsx
-{!isExpanded && addonCount > 0 && (
-  <p className="text-[11px] text-muted-foreground truncate">
-    {addonMap[cat.id]?.slice(0, 2).map(a => a.addon_label).join(', ')}
-    {addonCount > 2 ? ` +${addonCount - 2} more` : ''}
-  </p>
-)}
-```
+A top-level "SERVICE ADD-ONS" card in `ServicesSettingsContent.tsx`:
+
+- Full-width table of defined add-ons: Name | Price | Cost | Margin | Duration | Actions
+- "+ Add Add-On" opens an inline form (or dialog) with:
+  - Name (required)
+  - Price (required, numeric input)
+  - Cost (optional, numeric input — for margin tracking)
+  - Duration (optional, minutes)
+  - Description (optional)
+- Each row has Edit (inline) and Delete (with confirmation) actions
+- Margin is computed live as `((price - cost) / price) * 100` shown as a muted percentage badge
+
+**Part 2: Category & Service Assignments**
+
+The "BOOKING ADD-ON RECOMMENDATIONS" card becomes a proper assignment UI:
+
+- Each category row expands to show:
+  - **Assigned add-ons** (from the library) — shown as chips with price badges
+  - A "+ Assign Add-On" button opens a dropdown/combobox of available library add-ons
+  - Below the category-level assignments, each service within that category has its own sub-row with its own specific add-on assignments
+
+**Part 3: Booking Wizard Update**
+
+The `QuickBookingPopover.tsx` `addonSuggestions` memo is updated to query the new tables:
+- When category is selected: look up `service_addon_assignments` with `target_type = 'category'` AND `target_category_id = catEntry.id`
+- When specific services are selected: also surface `service_addon_assignments` with `target_type = 'service'` AND `target_service_id IN selectedServiceIds`
+- The `ServiceAddonToast` suggestions are now native `service_addons` objects (with real price/cost/duration) instead of Phorest service lookup
 
 ---
 
-### Enhancement 3 — `useAllServices` May Return Empty Array If Phorest Not Connected
+### New Files
 
-If Phorest sync hasn't run, `phorestServiceNames` is `[]`. The fallback message in `CategoryAddonManager` covers this case, but the message "No Phorest services synced yet" may alarm admins unnecessarily if they haven't set up Phorest. Change the copy to be softer:
+| File | Purpose |
+|---|---|
+| `supabase/migrations/...` | Create `service_addons` + `service_addon_assignments` tables with RLS |
+| `src/hooks/useServiceAddons.ts` | CRUD hooks for the library: `useServiceAddons`, `useCreateServiceAddon`, `useUpdateServiceAddon`, `useDeleteServiceAddon` |
+| `src/hooks/useServiceAddonAssignments.ts` | Hooks for assignments: `useAddonAssignments`, `useCreateAddonAssignment`, `useDeleteAddonAssignment`, `useAllAddonAssignmentsByOrg` |
+| `src/components/dashboard/settings/ServiceAddonsLibrary.tsx` | The library CRUD card |
+| `src/components/dashboard/settings/ServiceAddonAssignmentsCard.tsx` | The category + service assignment card |
 
-**Fix:** Change the fallback text to:
-> "No services loaded yet. You can still save a label-only recommendation, or sync your POS first."
-
----
-
-### Files to Change
+### Modified Files
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/settings/CategoryAddonManager.tsx` | Replace empty-string `SelectItem` value with `"__none__"` sentinel in service picker; add same sentinel to category picker; update `handleCreate` to treat `"__none__"` as `null`; update `resetForm` to set `selectedService` and `selectedCategory` to `"__none__"`; soften empty services copy; add label validation visual feedback |
-| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Replace stacked EmptyState + list pattern with inline guidance banner when `totalAddonCount === 0`; add collapsed preview of add-on names in each row subtitle |
+| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Remove old `CategoryAddonManager` import; add `ServiceAddonsLibrary` and `ServiceAddonAssignmentsCard` cards; remove old `useAllCategoryAddons` and `phorestServiceNames` logic |
+| `src/components/dashboard/settings/CategoryAddonManager.tsx` | Deprecate/remove (replaced by `ServiceAddonAssignmentsCard`) |
+| `src/components/dashboard/schedule/QuickBookingPopover.tsx` | Swap `addonSuggestions` memo to use `useAllAddonAssignmentsByOrg` and the new `service_addons` data; update `ServiceAddonToast` props to pass native addon objects |
+| `src/components/dashboard/schedule/ServiceAddonToast.tsx` | Accept native `ServiceAddon` type instead of `PhorestService`; remove dependency on `phorest_service_id` |
 
-### Priority Order
+---
 
-1. **Bug 1 (P0)** — Fix empty string `SelectItem` crash — page is completely broken without this
-2. **Bug 2 (P1)** — Fix empty state / list stacking layout
-3. **Bug 3 (P1)** — Add "None" sentinel to category picker
-4. **Enhancement 2** — Collapsed add-on name preview in row
-5. **Enhancement 1** — Label validation visual
-6. **Enhancement 3** — Softer fallback copy
+### UI Design of the Library Card
 
-No database or RLS changes needed. The crash fix is one string change; everything else is UI polish.
+```text
+SERVICE ADD-ONS                                    [+ Add Add-On]
+─────────────────────────────────────────────────────────────────
+ Olaplex Treatment       $35.00    Cost $12    66% margin    30m  [Edit] [✕]
+ K18 Treatment           $28.00    Cost $8     71% margin    15m  [Edit] [✕]
+ Scalp Treatment         $45.00    Cost $15    67% margin    20m  [Edit] [✕]
+ Gloss Add-On            $25.00    —           —             20m  [Edit] [✕]
+```
+
+When cost is entered, margin is computed and shown as a green/amber/red badge based on margin threshold (e.g., ≥50% = green, 30–49% = amber, <30% = red).
+
+---
+
+### UI Design of the Assignment Card
+
+```text
+BOOKING ADD-ON RECOMMENDATIONS
+
+  [CO] Color                   2 add-ons            [+ Assign] [∨]
+  ┌────────────────────────────────────────────────────────────────
+  │ Category-level (triggers for any Color service):
+  │  [Olaplex Treatment $35] [×]   [K18 Treatment $28] [×]
+  │
+  │ Service-level assignments:
+  │  Full Balayage          [Scalp Treatment $45] [×]   [+ Add]
+  │  Partial Balayage       No specific add-ons          [+ Add]
+  │  Color Melt             [Gloss Add-On $25] [×]       [+ Add]
+  └────────────────────────────────────────────────────────────────
+```
+
+---
+
+### Booking Wizard Behavior
+
+Category-level: When stylist picks "Color" category → show category-level add-ons in the toast (Olaplex + K18).
+Service-level: When stylist picks "Full Balayage" specifically → additionally surface "Scalp Treatment" (service-specific).
+Deduplication: If an add-on appears in both category and service assignments, show it once.
+Already-added filter: Filter out any add-on whose name matches a service already in the booking.
+
+---
+
+### Migration Strategy for Existing `service_category_addons` Data
+
+The existing table has zero rows (confirmed by the database query above: `[]`). No data migration is needed. The old table will simply become unused once we point the booking wizard at the new tables.
+
+---
+
+### Build Order
+
+1. Database migration (2 tables + RLS)
+2. `useServiceAddons.ts` hook
+3. `useServiceAddonAssignments.ts` hook
+4. `ServiceAddonsLibrary.tsx` component
+5. `ServiceAddonAssignmentsCard.tsx` component
+6. Wire both into `ServicesSettingsContent.tsx` (replace old card)
+7. Update `ServiceAddonToast.tsx` to accept the new type
+8. Update `QuickBookingPopover.tsx` to use new data sources
+
+No new routes or navigation entries are needed. Everything lives within the existing Services Settings page.
