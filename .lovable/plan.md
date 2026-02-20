@@ -1,29 +1,55 @@
 
 
-# Clean Up Sort Buttons -- Remove Icons
+## Remove Payroll Deadline Card from Dashboard + Build Payroll Reminder Settings
 
-## Problem
+### What changes
 
-The sort buttons (Name, Spend, Visits, Recent) each have a leading icon AND a trailing ArrowUpDown icon, making the row feel visually busy and cluttered. That's 8 icons across 4 buttons.
+1. **Remove the `PayrollDeadlineCard` from the main dashboard** -- the `payroll_deadline` element in `DashboardHome.tsx` will be removed along with its import. The component file itself stays (it may be useful later or for reference), but it will no longer render on the Control Center dashboard.
 
-## Change
+2. **Build a "Payroll Reminders" settings card inside the Payroll Hub Settings tab** (`/dashboard/admin/payroll?tab=settings`) that lets admins configure:
+   - **Reminder enabled/disabled** (org-level toggle)
+   - **Reminder timing**: How many days before the payroll deadline to start sending reminders (e.g., 5 days, 3 days, 1 day)
+   - **Notification channels**: Email, push notification, SMS toggles
+   - **Escalation**: Whether to send an urgent notification if payroll is missed (the existing "deadline missed" logic)
 
-**File: `src/pages/dashboard/ClientDirectory.tsx` (lines 582-622)**
+3. **Database migration** to add reminder configuration columns to `organization_payroll_settings`:
+   - `reminder_enabled` (boolean, default true)
+   - `reminder_days_before` (integer[], default `{3, 1, 0}` -- 3 days, 1 day, and day-of)
+   - `reminder_channels` (jsonb, default `{"email": true, "push": true, "sms_on_missed": true}`)
 
-Remove the leading icons (`Type`, `DollarSign`, `Calendar`, `Clock`) from all four sort buttons. Keep only the text label and a single `ArrowUpDown` icon per button. The active sort button already gets `bg-muted` highlighting which is sufficient to indicate state.
+4. **Update the `check-payroll-deadline` edge function** to respect the new org-level reminder settings:
+   - Check `reminder_enabled` before sending any notifications
+   - Use `reminder_days_before` array to determine which days to notify (instead of only day-of and day-after)
+   - Respect `reminder_channels` to decide which notification methods to use
 
-Before: `[T] Name [sort] | [$] Spend [sort] | [cal] Visits [sort] | [clock] Recent [sort]`
-After: `Name [sort] | Spend [sort] | Visits [sort] | Recent [sort]`
+5. **New UI component**: `PayrollReminderSettings` card placed in the Payroll Hub Settings tab, with:
+   - Master toggle for reminders
+   - Multi-select for reminder days (checkboxes: 5 days, 3 days, 1 day, day-of)
+   - Channel toggles (email, push, SMS on missed deadline)
+   - Clean, minimal design consistent with existing settings cards
 
-This cuts the icon count in half and creates a calmer, more executive feel aligned with Zura's UX principles.
+---
 
-## Technical Detail
+### Technical details
 
-Remove four icon elements:
-- Line 589: `<Type className="w-3 h-3 mr-1" />`
-- Line 599: `<DollarSign className="w-3 h-3 mr-1" />`
-- Line 609: `<Calendar className="w-3 h-3 mr-1" />`
-- Line 619: `<Clock className="w-3 h-3 mr-1" />`
+**Files modified:**
+- `src/pages/dashboard/DashboardHome.tsx` -- Remove `PayrollDeadlineCard` import and `payroll_deadline` entry from the dashboard elements map
+- `src/pages/dashboard/admin/Payroll.tsx` -- Add `PayrollReminderSettings` component to the Settings tab
+- `supabase/functions/check-payroll-deadline/index.ts` -- Update to read new columns and support multi-day reminders and channel filtering
 
-Clean up unused imports for `Type`, `DollarSign`, `Calendar`, `Clock` if they're no longer referenced elsewhere in the file.
+**Files created:**
+- `src/components/dashboard/payroll/PayrollReminderSettings.tsx` -- New settings card UI
+
+**Database migration:**
+```text
+ALTER TABLE organization_payroll_settings
+  ADD COLUMN reminder_enabled boolean DEFAULT true,
+  ADD COLUMN reminder_days_before integer[] DEFAULT '{3,1,0}',
+  ADD COLUMN reminder_channels jsonb DEFAULT '{"email": true, "push": true, "sms_on_missed": true}';
+```
+
+**Edge function logic update:**
+- Instead of checking only `isDeadlineDay` and `isMissedDeadline`, calculate `daysUntilDeadline` and check if it matches any value in `reminder_days_before`
+- Before sending email/push/SMS, check the corresponding key in `reminder_channels`
+- Skip the entire org if `reminder_enabled` is false
 
