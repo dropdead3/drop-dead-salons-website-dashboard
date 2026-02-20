@@ -15,6 +15,7 @@ import {
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PhorestSyncButton } from './PhorestSyncButton';
+import { tokens } from '@/lib/design-tokens';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { AnimatedNumber } from '@/components/ui/AnimatedNumber';
 

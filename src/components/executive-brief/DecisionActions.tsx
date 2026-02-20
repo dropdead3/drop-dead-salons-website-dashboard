@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { CheckCircle2, XCircle, PenLine, Clock, Loader2 } from 'lucide-react';
 import { useDecideOnRecommendation, type LeverRecommendation } from '@/hooks/useLeverRecommendations';
+import { tokens } from '@/lib/design-tokens';
 
 interface DecisionActionsProps {
   recommendation: LeverRecommendation;
@@ -38,7 +39,7 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
     <>
       <div className="flex flex-wrap gap-2">
         <Button
-          size="sm"
+          size={tokens.button.card}
           className="gap-1.5"
           onClick={() => handleQuickAction('approved')}
           disabled={decide.isPending}
@@ -48,7 +49,7 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
         </Button>
         <Button
           variant="outline"
-          size="sm"
+          size={tokens.button.card}
           className="gap-1.5"
           onClick={() => setDialogType('modified')}
         >
@@ -57,7 +58,7 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
         </Button>
         <Button
           variant="outline"
-          size="sm"
+          size={tokens.button.card}
           className="gap-1.5"
           onClick={() => setDialogType('declined')}
         >
@@ -66,7 +67,7 @@ export function DecisionActions({ recommendation }: DecisionActionsProps) {
         </Button>
         <Button
           variant="ghost"
-          size="sm"
+          size={tokens.button.card}
           className="gap-1.5"
           onClick={() => handleQuickAction('snoozed')}
           disabled={decide.isPending}

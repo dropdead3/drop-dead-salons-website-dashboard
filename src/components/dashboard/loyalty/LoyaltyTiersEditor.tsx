@@ -14,6 +14,7 @@ import {
   LoyaltyTier 
 } from '@/hooks/useLoyaltyTiers';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 interface LoyaltyTiersEditorProps {
   organizationId?: string;
@@ -107,7 +108,7 @@ export function LoyaltyTiersEditor({ organizationId }: LoyaltyTiersEditorProps) 
         <p className="text-sm text-muted-foreground">
           Configure reward tiers for your loyalty program
         </p>
-        <Button size="sm" onClick={handleAddTier}>
+        <Button size={tokens.button.card} onClick={handleAddTier}>
           <Plus className="h-4 w-4 mr-2" />
           Add Tier
         </Button>
@@ -228,7 +229,7 @@ export function LoyaltyTiersEditor({ organizationId }: LoyaltyTiersEditorProps) 
                       className="h-7 w-40 text-xs"
                     />
                     <Button 
-                      size="sm" 
+                      size={tokens.button.inline} 
                       variant="ghost" 
                       className="h-7 px-2"
                       onClick={() => handleAddPerk(tier)}

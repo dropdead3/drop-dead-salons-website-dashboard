@@ -11,6 +11,7 @@ import { Shield, ShieldCheck, ShieldAlert, ShieldX, Edit2, Check, ExternalLink }
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 interface InsuranceCardProps {
   boothRenterId: string;
@@ -148,7 +149,7 @@ export function InsuranceCard({ boothRenterId, canVerify = false }: InsuranceCar
             )}
 
             {insurance.insurance_document_url && (
-              <Button variant="link" size="sm" className="h-auto p-0" asChild>
+              <Button variant="link" size={tokens.button.inline} className="h-auto p-0" asChild>
                 <a href={insurance.insurance_document_url} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-3 w-3 mr-1" />
                   View Document
@@ -165,7 +166,7 @@ export function InsuranceCard({ boothRenterId, canVerify = false }: InsuranceCar
         <div className="flex gap-2 pt-2">
           <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" variant="outline" onClick={handleEditOpen}>
+              <Button size={tokens.button.card} variant="outline" onClick={handleEditOpen}>
                 <Edit2 className="h-3 w-3 mr-1" />
                 {insurance?.insurance_provider ? 'Update' : 'Add Insurance'}
               </Button>
@@ -201,7 +202,7 @@ export function InsuranceCard({ boothRenterId, canVerify = false }: InsuranceCar
 
           {canVerify && insurance?.insurance_provider && !insurance.insurance_verified && (
             <Button 
-              size="sm" 
+              size={tokens.button.card} 
               onClick={handleVerify}
               disabled={verifyInsurance.isPending}
             >

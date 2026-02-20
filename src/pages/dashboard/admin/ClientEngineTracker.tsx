@@ -66,6 +66,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAllPauseRequests } from '@/hooks/usePauseRequests';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { differenceInDays, formatDistanceToNow } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import type { Database } from '@/integrations/supabase/types';
@@ -720,7 +721,7 @@ export default function ClientEngineTracker() {
 
                     <Button
                       variant="outline"
-                      size="sm"
+                      size={tokens.button.card}
                       onClick={() => {
                         setSelectedRequest(request.id);
                         setPauseDays(request.requested_duration_days);

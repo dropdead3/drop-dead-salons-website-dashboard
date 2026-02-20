@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { EmployeeCompensation, PayrollTotals } from '@/hooks/usePayrollCalculations';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { tokens } from '@/lib/design-tokens';
 
 interface ReviewStepProps {
   compensations: EmployeeCompensation[];
@@ -207,7 +208,7 @@ export function ReviewStep({
       <div>
         <div className="flex items-center justify-between mb-4">
           <h4 className="font-medium">Employee Breakdown</h4>
-          <Button variant="outline" size="sm" onClick={exportToCSV}>
+          <Button variant="outline" size={tokens.button.card} onClick={exportToCSV}>
             <FileDown className="h-4 w-4 mr-1" />
             Export CSV
           </Button>
