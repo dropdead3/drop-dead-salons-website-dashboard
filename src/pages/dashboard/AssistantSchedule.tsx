@@ -629,29 +629,6 @@ export default function AssistantSchedule() {
                     </div>
 
                     {/* Compact summary strip */}
-                    <div className="flex items-center gap-6 px-4 py-3 rounded-xl bg-muted/30 border border-border/30 text-sm">
-                      <div className="flex items-center gap-1.5">
-                        <span className={tokens.body.muted}>Total</span>
-                        <span className={tokens.body.emphasis}>{stats.total}</span>
-                      </div>
-                      <div className="w-px h-4 bg-border/40" />
-                      <div className="flex items-center gap-1.5">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                        <span className={tokens.body.muted}>Completed</span>
-                        <span className={tokens.body.emphasis}>{stats.completed}</span>
-                      </div>
-                      <div className="w-px h-4 bg-border/40" />
-                      <div className="flex items-center gap-1.5">
-                        <XCircle className="h-3.5 w-3.5 text-muted-foreground" />
-                        <span className={tokens.body.muted}>Declines</span>
-                        <span className={tokens.body.emphasis}>{stats.totalDeclines}</span>
-                      </div>
-                      <div className="w-px h-4 bg-border/40" />
-                      <div className="flex items-center gap-1.5">
-                        <span className={tokens.body.muted}>Cancelled</span>
-                        <span className={tokens.body.emphasis}>{stats.cancelled}</span>
-                      </div>
-                    </div>
 
                     {/* Assistant Activity */}
                     <AssistantActivityCard />
