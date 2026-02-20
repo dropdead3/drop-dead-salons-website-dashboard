@@ -1,82 +1,51 @@
 
 
-## Make Simplified Cards Dynamic to Date Range Filter
+## Badge Time-Independent Cards When Filter Doesn't Apply
 
 ### Problem
-Several simplified (compact) card labels are hardcoded with time references like "today" or vague "this period" language, regardless of what date range the user has actually selected in the filter bar. This creates confusion when viewing data for "Last 7 days" but the card says "so far today."
+Cards like **Week Ahead Forecast**, **Hiring Capacity**, **Staffing Trends**, **Stylist Workload**, and **Client Health** show data that is not affected by the date range filter. When a user changes the filter (e.g., "Last 7 days"), these cards silently ignore it, which can be confusing.
 
-### Approach
-Add a small helper function that converts the active `DateRangeType` into a human-readable period phrase, then thread that phrase into every card's `metricLabel` so the context always matches the selected filter.
+### Solution
+Add a small informational badge reading **"Time filter n/a"** to compact cards whose data is independent of the selected date range. The badge only appears when the filter is set to something other than the default ("today"), so it does not clutter the view unnecessarily.
 
-### Date Range Label Map
+### Time-Independent Cards (will receive badge)
+- `week_ahead_forecast` -- always next 7 days
+- `hiring_capacity` -- structural headcount
+- `staffing_trends` -- current active staff
+- `stylist_workload` -- current utilization snapshot
+- `client_health` -- segment counts, not period-scoped
 
-| Filter Value     | Label Phrase                  |
-|------------------|-------------------------------|
-| today            | today                         |
-| yesterday        | yesterday                     |
-| 7d               | the last 7 days               |
-| 30d              | the last 30 days              |
-| thisWeek         | this week                     |
-| thisMonth        | this month                    |
-| todayToEom       | today through end of month    |
-| todayToPayday    | today through next pay day    |
-| lastMonth        | last month                    |
-
-### Cards Updated (all in `PinnedAnalyticsCard.tsx`)
-
-1. **Sales Overview / Executive Summary**
-   - Before: `"Total revenue across all services and retail"`
-   - After: `"Total revenue across all services and retail for {period}"`
-
-2. **Daily Brief**
-   - Before: `"Revenue earned so far today"` (always says today)
-   - After: `"Revenue earned {period}"` -- e.g. "Revenue earned this week"
-
-3. **Top Performers**
-   - Before: `"Highest earning team member this period"`
-   - After: `"Highest earning team member {period}"`
-
-4. **Revenue Breakdown**
-   - Before: `"Service revenue vs. retail product revenue"`
-   - After: `"Service vs. retail revenue for {period}"`
-
-5. **Team Goals**
-   - Before: `"Combined team revenue toward goal"`
-   - After: `"Combined team revenue toward goal ({period})"`
-
-6. **Client Funnel**
-   - Before: `"New and returning clients this period"`
-   - After: `"New and returning clients {period}"`
-
-7. **New Bookings**
-   - Before: `"Appointments added to the schedule so far today"`
-   - After: `"Appointments added to the schedule {period}"`
-
-8. **Service Mix**
-   - Before: `"Highest revenue service category"`
-   - After: `"Top service category by revenue ({period})"`
-
-9. **Rebooking**
-   - Before: `"Clients who rebooked before leaving"`
-   - After: `"Clients who rebooked before leaving ({period})"`
-
-10. **Retail Effectiveness**
-    - Before: `"Percentage of service tickets with retail add-ons"`
-    - After: `"Retail attachment rate for {period}"`
-
-### Cards NOT Changed (static/independent of date filter)
-- **Week Ahead Forecast** -- always next 7 days, independent of filter
-- **Hiring Capacity** -- structural, not time-bound
-- **Staffing Trends** -- headcount, not period-scoped
-- **Stylist Workload** -- utilization snapshot
-- **Operations Stats** -- live queue, always "now"
-- **Operational Health** -- monitoring status
-- **Locations Rollup** -- structural count
-- **Client Health** -- segment counts, not period-filtered
-
-### Technical Detail
+### Implementation Detail
 
 **Single file changed:** `src/components/dashboard/PinnedAnalyticsCard.tsx`
 
-A helper function `getPeriodLabel(dateRange: DateRangeType): string` will be added near the top of the file, returning the friendly phrase. Then each `metricLabel` assignment in the compact `switch` block will interpolate the result. Approximately 10-12 lines of label strings change; no data-fetching or hook logic is modified.
+1. **Define the set of time-independent card IDs** as a constant:
+   ```tsx
+   const TIME_INDEPENDENT_CARDS = new Set([
+     'week_ahead_forecast',
+     'hiring_capacity',
+     'staffing_trends',
+     'stylist_workload',
+     'client_health',
+   ]);
+   ```
 
+2. **Compute a flag** in the compact rendering block:
+   ```tsx
+   const isTimeIndependent = TIME_INDEPENDENT_CARDS.has(cardId);
+   ```
+
+3. **Render a subtle badge** inside the card when the flag is true. It will sit next to the card title area, styled as a small muted pill:
+   ```tsx
+   {isTimeIndependent && (
+     <span className="text-[10px] text-muted-foreground/60 bg-muted/50 px-1.5 py-0.5 rounded-full border border-border/30">
+       Time filter n/a
+     </span>
+   )}
+   ```
+   This badge will be placed in the header row, after the card label text, keeping it visible but non-intrusive.
+
+### Visual Result
+- When filter is active, time-independent cards will show a small **"Time filter n/a"** pill badge beside their title
+- The badge uses existing muted/border color tokens so it blends with the current design language
+- Time-dependent cards (Sales, Bookings, etc.) remain unchanged
