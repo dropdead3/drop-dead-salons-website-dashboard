@@ -1126,14 +1126,16 @@ export function QuickBookingPopover({
                 + Add service from another category
               </Button>
             )}
-            <Button
-              variant="outline"
-              className="w-full h-9 gap-2"
-              onClick={() => setShowBreakForm(true)}
-            >
-              <Coffee className="h-4 w-4" />
-              Add Break
-            </Button>
+            {!selectedCategory && (
+              <Button
+                variant="outline"
+                className="w-full h-9 gap-2"
+                onClick={() => setShowBreakForm(true)}
+              >
+                <Coffee className="h-4 w-4" />
+                Add Break
+              </Button>
+            )}
             <Button className="w-full h-9" onClick={handleServicesComplete}>
               {selectedServices.length === 0 ? 'Skip Services' : 'Continue'}
             </Button>
