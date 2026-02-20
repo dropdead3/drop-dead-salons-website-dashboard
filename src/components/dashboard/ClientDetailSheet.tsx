@@ -179,329 +179,333 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) { setIsEditing(false); setIsEditingDates(false); } onOpenChange(o); }}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-        {/* Banned Client Alert */}
-        {client.is_banned && (
-          <div className="mb-4">
-            <BannedClientAlert reason={client.ban_reason} />
-          </div>
-        )}
-
-        {/* Archived Alert */}
-        {client.is_archived && (
-          <div className="mb-4 p-3 rounded-lg bg-muted border border-border flex items-center gap-2">
-            <Archive className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">This client is archived. Marketing is paused.</span>
-          </div>
-        )}
-
-        <SheetHeader className="pb-4 border-b">
-          <div className="flex items-center gap-4">
-            <Avatar className={cn("w-16 h-16", client.is_archived && "opacity-50")}>
-              <AvatarFallback className="font-display text-xl bg-primary/10">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <SheetTitle className="font-display text-xl flex items-center gap-2 flex-wrap">
-                {client.name}
-                {client.is_banned && <BannedClientBadge size="md" />}
-                {client.is_archived && (
-                  <Badge variant="secondary" className="text-xs">
-                    <Archive className="w-3 h-3 mr-1" /> Archived
-                  </Badge>
-                )}
-                {client.is_vip && !client.is_banned && !client.is_archived && (
-                  <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">
-                    <Star className="w-3 h-3 mr-1" /> VIP
-                  </Badge>
-                )}
-              </SheetTitle>
-              <SheetDescription className="flex flex-wrap gap-2 mt-1">
-                {client.isAtRisk && !client.is_banned && (
-                  <Badge variant="destructive" className="text-xs">
-                    <AlertTriangle className="w-3 h-3 mr-1" /> At Risk
-                  </Badge>
-                )}
-                {client.isNew && !client.is_banned && (
-                  <Badge variant="outline" className="text-xs text-green-600 border-green-300">
-                    New Client
-                  </Badge>
-                )}
-              </SheetDescription>
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto bg-background/95 backdrop-blur-xl p-0">
+        <div className="p-6 space-y-4">
+          {/* Banned Client Alert */}
+          {client.is_banned && (
+            <div className="mb-0">
+              <BannedClientAlert reason={client.ban_reason} />
             </div>
-            
-          </div>
-        </SheetHeader>
-
-        {/* Contact Quick Actions */}
-        <div className="flex gap-2 py-4 border-b">
-          {client.phone && (
-            <Button variant="outline" size={tokens.button.card} asChild className="flex-1">
-              <a href={`tel:${client.phone}`}>
-                <Phone className="w-4 h-4 mr-2" />
-                Call
-              </a>
-            </Button>
           )}
-          {client.email && (
-            <Button variant="outline" size={tokens.button.card} asChild className="flex-1">
-              <a href={`mailto:${client.email}`}>
-                <Mail className="w-4 h-4 mr-2" />
-                Email
-              </a>
-            </Button>
-          )}
-          {client.phone && (
-            <Button variant="outline" size={tokens.button.card} asChild className="flex-1">
-              <a href={`sms:${client.phone}`}>
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Text
-              </a>
-            </Button>
-          )}
-        </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-3 py-4">
-          <Card className="p-3 text-center">
-            <Calendar className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-            <p className="font-display text-lg">{client.visit_count}</p>
-            <p className="text-xs text-muted-foreground">Visits</p>
-          </Card>
-          <Card className="p-3 text-center">
-            <TrendingUp className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-            <p className="font-display text-lg">{formatCurrencyWhole(client.total_spend || 0)}</p>
-            <p className="text-xs text-muted-foreground">Total Spend</p>
-          </Card>
-          <Card className="p-3 text-center">
-            <Clock className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
-            <p className={cn(
-              "font-display text-lg",
-              client.daysSinceVisit && client.daysSinceVisit > 60 && "text-red-600",
-              client.daysSinceVisit && client.daysSinceVisit > 30 && client.daysSinceVisit <= 60 && "text-amber-600"
-            )}>
-              {client.daysSinceVisit !== null ? `${client.daysSinceVisit}d` : 'N/A'}
-            </p>
-            <p className="text-xs text-muted-foreground">Since Visit</p>
-          </Card>
-        </div>
-
-        {/* Contact Info */}
-        <Card className="mb-4">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-medium">Contact Information</CardTitle>
-              {canEdit && !isEditing && (
-                <Button variant="ghost" size="sm" onClick={startEditing} className="h-7 px-2">
-                  <Pencil className="w-3.5 h-3.5" />
-                </Button>
-              )}
-              {isEditing && (
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={cancelEditing} className="h-7 px-2 text-muted-foreground">
-                    <X className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => saveMutation.mutate()} 
-                    disabled={saveMutation.isPending}
-                    className="h-7 px-2 text-green-600"
-                  >
-                    {saveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                  </Button>
-                </div>
-              )}
+          {/* Archived Alert */}
+          {client.is_archived && (
+            <div className="p-3 rounded-xl bg-muted/60 border border-border/60 flex items-center gap-2">
+              <Archive className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">This client is archived. Marketing is paused.</span>
             </div>
-            {isEditing && (
-              <p className="text-xs text-muted-foreground mt-1">
-                Changes are saved locally and won't sync back to Phorest.
+          )}
+
+          {/* Header — Avatar + Name + Badges */}
+          <SheetHeader className="pb-0 border-0">
+            <div className="flex items-center gap-4">
+              <Avatar className={cn("w-16 h-16 border-2 border-border/40", client.is_archived && "opacity-50")}>
+                <AvatarFallback className="font-display text-xl bg-primary/10 tracking-wide">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <SheetTitle className="font-display text-xl tracking-wide flex items-center gap-2 flex-wrap uppercase">
+                  {client.name}
+                </SheetTitle>
+                <SheetDescription className="flex flex-wrap gap-2 mt-1.5">
+                  {client.is_banned && <BannedClientBadge size="md" />}
+                  {client.is_archived && (
+                    <Badge variant="secondary" className="text-xs">
+                      <Archive className="w-3 h-3 mr-1" /> Archived
+                    </Badge>
+                  )}
+                  {client.is_vip && !client.is_banned && !client.is_archived && (
+                    <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">
+                      <Star className="w-3 h-3 mr-1" /> VIP
+                    </Badge>
+                  )}
+                  {client.isAtRisk && !client.is_banned && (
+                    <Badge variant="destructive" className="text-xs">
+                      <AlertTriangle className="w-3 h-3 mr-1" /> At Risk
+                    </Badge>
+                  )}
+                  {client.isNew && !client.is_banned && (
+                    <Badge variant="outline" className="text-xs border-green-500/40 text-green-600 dark:text-green-400">
+                      New Client
+                    </Badge>
+                  )}
+                </SheetDescription>
+              </div>
+            </div>
+          </SheetHeader>
+
+          {/* Contact Quick Actions */}
+          <div className="flex gap-2">
+            {client.phone && (
+              <Button variant="outline" size={tokens.button.card} asChild className="flex-1 rounded-xl border-border/60">
+                <a href={`tel:${client.phone}`}>
+                  <Phone className="w-4 h-4 mr-2" />
+                  Call
+                </a>
+              </Button>
+            )}
+            {client.email && (
+              <Button variant="outline" size={tokens.button.card} asChild className="flex-1 rounded-xl border-border/60">
+                <a href={`mailto:${client.email}`}>
+                  <Mail className="w-4 h-4 mr-2" />
+                  Email
+                </a>
+              </Button>
+            )}
+            {client.phone && (
+              <Button variant="outline" size={tokens.button.card} asChild className="flex-1 rounded-xl border-border/60">
+                <a href={`sms:${client.phone}`}>
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Text
+                </a>
+              </Button>
+            )}
+          </div>
+
+          {/* Stats Cards — Bento tiles */}
+          <div className="grid grid-cols-3 gap-3">
+            <Card className="p-3 text-center bg-card/80 backdrop-blur-xl border-border/60">
+              <Calendar className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
+              <p className="font-display text-lg tracking-wide">{client.visit_count}</p>
+              <p className="text-xs text-muted-foreground">Visits</p>
+            </Card>
+            <Card className="p-3 text-center bg-card/80 backdrop-blur-xl border-border/60">
+              <TrendingUp className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
+              <p className="font-display text-lg tracking-wide">{formatCurrencyWhole(client.total_spend || 0)}</p>
+              <p className="text-xs text-muted-foreground">Total Spend</p>
+            </Card>
+            <Card className="p-3 text-center bg-card/80 backdrop-blur-xl border-border/60">
+              <Clock className="w-4 h-4 mx-auto text-muted-foreground mb-1" />
+              <p className={cn(
+                "font-display text-lg tracking-wide",
+                client.daysSinceVisit && client.daysSinceVisit > 60 && "text-destructive",
+                client.daysSinceVisit && client.daysSinceVisit > 30 && client.daysSinceVisit <= 60 && "text-amber-600 dark:text-amber-400"
+              )}>
+                {client.daysSinceVisit !== null ? `${client.daysSinceVisit}d` : 'N/A'}
               </p>
-            )}
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            {isEditing ? (
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-muted-foreground">Name</label>
-                  <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-8 text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Email</label>
-                  <Input type="email" autoCapitalize="none" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="h-8 text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Phone</label>
-                  <Input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="h-8 text-sm" />
-                </div>
-              </div>
-            ) : (
-              <>
-                {client.email && (
-                  <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4 text-muted-foreground" />
-                    <span>{client.email}</span>
-                  </div>
-                )}
-                {client.phone && (
-                  <div className="flex items-center gap-2">
-                    <Phone className="w-4 h-4 text-muted-foreground" />
-                    <span>{client.phone}</span>
-                  </div>
-                )}
-                {(locationName || client.branch_name) && (
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-muted-foreground" />
-                    <span>{locationName || client.branch_name}</span>
-                  </div>
-                )}
-                {client.last_visit && (
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span>Last visit: {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}</span>
-                  </div>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
+              <p className="text-xs text-muted-foreground">Since Visit</p>
+            </Card>
+          </div>
 
-        {/* Important Dates */}
-        <Card className="mb-4">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-primary" />
-                <CardTitle className="text-sm font-medium">Important Dates</CardTitle>
-              </div>
-              {canEdit && !isEditingDates && (
-                <Button variant="ghost" size="sm" onClick={startEditingDates} className="h-7 px-2">
-                  <Pencil className="w-3.5 h-3.5" />
-                </Button>
-              )}
-              {isEditingDates && (
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" onClick={cancelEditingDates} className="h-7 px-2 text-muted-foreground">
-                    <X className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => saveDatesMutation.mutate()} 
-                    disabled={saveDatesMutation.isPending}
-                    className="h-7 px-2 text-green-600"
-                  >
-                    {saveDatesMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            {isEditingDates ? (
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-muted-foreground">Birthday</label>
-                  <Input type="date" value={editBirthday} onChange={(e) => setEditBirthday(e.target.value)} className="h-8 text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Client Since</label>
-                  <Input type="date" value={editClientSince} onChange={(e) => setEditClientSince(e.target.value)} className="h-8 text-sm" />
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center gap-2">
-                  <Cake className="w-4 h-4 text-muted-foreground" />
-                  <span>
-                    {client.birthday 
-                      ? `Birthday: ${formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')}`
-                      : 'No birthday on file'}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Award className="w-4 h-4 text-muted-foreground" />
-                  <span>
-                    {client.client_since ? (
-                      <>
-                        Client since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy')}
-                        {' — '}
-                        {(() => {
-                          const years = differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 365;
-                          if (years >= 1) return `${Math.floor(years)} year${Math.floor(years) !== 1 ? 's' : ''}`;
-                          const months = Math.floor(differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 30);
-                          return `${months} month${months !== 1 ? 's' : ''}`;
-                        })()}
-                      </>
-                    ) : 'No start date on file'}
-                  </span>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Marketing Preferences */}
-        <Card className="mb-4">
-          <CardContent className="pt-4">
-            <ClientMarketingStatus 
-              clientId={client.id} 
-              organizationId={selectedOrganization?.id} 
-            />
-          </CardContent>
-        </Card>
-
-        {/* Preferred Services */}
-        {client.preferred_services && client.preferred_services.length > 0 && (
-          <Card className="mb-4">
+          {/* Contact Info — Bento card */}
+          <Card className="bg-card/80 backdrop-blur-xl border-border/60">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Preferred Services</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap gap-1">
-                {client.preferred_services.map(service => (
-                  <Badge key={service} variant="secondary" className="text-xs">
-                    {service}
-                  </Badge>
-                ))}
+              <div className="flex items-center justify-between">
+                <CardTitle className={tokens.heading.subsection}>Contact Information</CardTitle>
+                {canEdit && !isEditing && (
+                  <Button variant="ghost" size="sm" onClick={startEditing} className="h-7 px-2">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+                {isEditing && (
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={cancelEditing} className="h-7 px-2 text-muted-foreground">
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => saveMutation.mutate()} 
+                      disabled={saveMutation.isPending}
+                      className="h-7 px-2 text-primary"
+                    >
+                      {saveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                    </Button>
+                  </div>
+                )}
               </div>
+              {isEditing && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Changes are saved locally and won't sync back to Phorest.
+                </p>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              {isEditing ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Name</label>
+                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Email</label>
+                    <Input type="email" autoCapitalize="none" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Phone</label>
+                    <Input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {client.email && (
+                    <div className="flex items-center gap-2">
+                      <Mail className="w-4 h-4 text-muted-foreground" />
+                      <span>{client.email}</span>
+                    </div>
+                  )}
+                  {client.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span>{client.phone}</span>
+                    </div>
+                  )}
+                  {(locationName || client.branch_name) && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      <span>{locationName || client.branch_name}</span>
+                    </div>
+                  )}
+                  {client.last_visit && (
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span>Last visit: {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}</span>
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
-        )}
 
-        {/* Tabs for History and Notes */}
-        <Tabs defaultValue="history" className="mt-4">
-          <TabsList className="w-full">
-            <TabsTrigger value="history" className="flex-1">Visit History</TabsTrigger>
-            <TabsTrigger value="notes" className="flex-1">Notes</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="history" className="mt-4">
-            <VisitHistoryTimeline 
-              visits={visitHistory || []} 
-              isLoading={historyLoading} 
+          {/* Important Dates — Bento card */}
+          <Card className="bg-card/80 backdrop-blur-xl border-border/60">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 bg-muted rounded-md flex items-center justify-center">
+                    <Calendar className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <CardTitle className={tokens.heading.subsection}>Important Dates</CardTitle>
+                </div>
+                {canEdit && !isEditingDates && (
+                  <Button variant="ghost" size="sm" onClick={startEditingDates} className="h-7 px-2">
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+                {isEditingDates && (
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={cancelEditingDates} className="h-7 px-2 text-muted-foreground">
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => saveDatesMutation.mutate()} 
+                      disabled={saveDatesMutation.isPending}
+                      className="h-7 px-2 text-primary"
+                    >
+                      {saveDatesMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              {isEditingDates ? (
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Birthday</label>
+                    <Input type="date" value={editBirthday} onChange={(e) => setEditBirthday(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Client Since</label>
+                    <Input type="date" value={editClientSince} onChange={(e) => setEditClientSince(e.target.value)} className="h-8 text-sm" />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <Cake className="w-4 h-4 text-muted-foreground" />
+                    <span>
+                      {client.birthday 
+                        ? `Birthday: ${formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')}`
+                        : 'No birthday on file'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Award className="w-4 h-4 text-muted-foreground" />
+                    <span>
+                      {client.client_since ? (
+                        <>
+                          Client since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy')}
+                          {' — '}
+                          {(() => {
+                            const years = differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 365;
+                            if (years >= 1) return `${Math.floor(years)} year${Math.floor(years) !== 1 ? 's' : ''}`;
+                            const months = Math.floor(differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 30);
+                            return `${months} month${months !== 1 ? 's' : ''}`;
+                          })()}
+                        </>
+                      ) : 'No start date on file'}
+                    </span>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Marketing Preferences — Bento card */}
+          <Card className="bg-card/80 backdrop-blur-xl border-border/60">
+            <CardContent className="pt-4">
+              <ClientMarketingStatus 
+                clientId={client.id} 
+                organizationId={selectedOrganization?.id} 
+              />
+            </CardContent>
+          </Card>
+
+          {/* Preferred Services */}
+          {client.preferred_services && client.preferred_services.length > 0 && (
+            <Card className="bg-card/80 backdrop-blur-xl border-border/60">
+              <CardHeader className="pb-2">
+                <CardTitle className={tokens.heading.subsection}>Preferred Services</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-1">
+                  {client.preferred_services.map(service => (
+                    <Badge key={service} variant="secondary" className="text-xs">
+                      {service}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Tabs for History and Notes */}
+          <Tabs defaultValue="history" className="mt-0">
+            <TabsList className="w-full rounded-xl">
+              <TabsTrigger value="history" className="flex-1">Visit History</TabsTrigger>
+              <TabsTrigger value="notes" className="flex-1">Notes</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="history" className="mt-4">
+              <VisitHistoryTimeline 
+                visits={visitHistory || []} 
+                isLoading={historyLoading} 
+              />
+            </TabsContent>
+            
+            <TabsContent value="notes" className="mt-4">
+              <ClientNotesSection clientId={client.id} />
+            </TabsContent>
+          </Tabs>
+
+          {/* Archive & Ban Actions */}
+          <div className="flex items-center gap-2 pt-4 mt-2 border-t border-border/40">
+            <ArchiveClientToggle
+              clientId={client.id}
+              clientName={client.name}
+              isArchived={client.is_archived || false}
             />
-          </TabsContent>
-          
-          <TabsContent value="notes" className="mt-4">
-            <ClientNotesSection clientId={client.id} />
-          </TabsContent>
-        </Tabs>
-
-        {/* Archive & Ban Actions */}
-        <div className="flex items-center gap-2 pt-6 pb-2 mt-4 border-t border-border">
-          <ArchiveClientToggle
-            clientId={client.id}
-            clientName={client.name}
-            isArchived={client.is_archived || false}
-          />
-          <BanClientToggle
-            clientId={client.id}
-            clientName={client.name}
-            isBanned={client.is_banned || false}
-            banReason={client.ban_reason}
-          />
+            <BanClientToggle
+              clientId={client.id}
+              clientName={client.name}
+              isBanned={client.is_banned || false}
+              banReason={client.ban_reason}
+            />
+          </div>
         </div>
       </SheetContent>
     </Sheet>
