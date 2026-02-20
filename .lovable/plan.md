@@ -1,21 +1,21 @@
 
-# Increase Bottom Spacing Between Calendar and Action Bar
+
+# Reduce Bottom Padding to Match Reference
 
 ## Change
-Increase the bottom padding on the calendar container from `pb-20` (80px) to `pb-28` (112px) to create more breathing room between the calendar content and the floating action bar, matching the visual spacing at the top of the calendar.
+The `pb-28` was too aggressive. Reduce it to `pb-24` (96px) which provides just enough clearance for the floating action bar (~48px height + 16px bottom margin) plus a small visual gap matching the spacing visible in the screenshot between the nav pills and the calendar card.
 
-## Technical Details
+## Technical Detail
 
 ### File: `src/pages/dashboard/Schedule.tsx` (line 471)
 
-Change `pb-20` to `pb-28`:
-
 ```tsx
 // Current
-<div className={cn("flex-1 p-4 overflow-hidden", (view === 'day' || view === 'week') && "pb-20")}>
+pb-28
 
 // New
-<div className={cn("flex-1 p-4 overflow-hidden", (view === 'day' || view === 'week') && "pb-28")}>
+pb-24
 ```
 
-This gives 112px of bottom padding, which after subtracting the action bar height (~48px) and its own bottom margin (16px), leaves approximately 48px of visible gap between the last calendar row and the top of the action bar -- visually balanced with the top spacing.
+Single token change -- `pb-24` gives 96px total, leaving ~32px of visible gap above the action bar, consistent with the reference image spacing.
+
