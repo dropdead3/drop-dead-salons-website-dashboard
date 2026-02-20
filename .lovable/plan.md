@@ -1,41 +1,34 @@
 
 
-# Match Day View Time Labels to Week View
+# Convert Booking Wizard to Floating Bento Card Panel
 
-## Problem
-The Day view's time label column uses different styling than the Week view:
-- Different font sizes (`text-[11px]`/`text-[10px]` vs `text-xs`)
-- Negative margin offsets (`-mt-2`/`-mt-1`) that misalign labels from their grid rows
-- Border classes applied to each label row (Week view has none on the label column)
-- Two separate conditional `<span>` elements instead of one unified span
+## What Changes
+Transform the booking wizard from a standard full-height Sheet into a floating bento card that slides in from the right, matching the platform's luxury aesthetic and bento design system.
 
-## Changes to `src/components/dashboard/schedule/DayView.tsx`
+## Approach
+Replace the Sheet component with a custom animated panel using Framer Motion. The panel will float with margin/inset from edges, use the standard bento card styling (rounded-xl, glassmorphism, backdrop-blur), and slide in from the right.
 
-### Update time label rendering (lines 634-661)
+## Changes
 
-Replace the current two-span conditional rendering with the Week view's pattern:
+### 1. `src/components/dashboard/schedule/booking/BookingWizard.tsx`
 
-**Current (Day view):**
-```tsx
-<div className={cn('h-5 text-right pr-2 flex items-center justify-end', borderClass)}>
-  {isHour && <span className="text-[11px] text-foreground font-medium -mt-2">{label}</span>}
-  {isHalf && <span className="text-[10px] text-muted-foreground/50 -mt-1">{label}</span>}
-</div>
-```
+- Remove the `Sheet` / `SheetContent` wrapper
+- Replace with a custom overlay + floating panel using Framer Motion's `AnimatePresence` and `motion.div`
+- Panel styling:
+  - Fixed position, inset from top/right/bottom (e.g. `top-3 right-3 bottom-3`)
+  - `w-full sm:max-w-md` width
+  - `rounded-xl` corners (bento standard)
+  - `bg-card/80 backdrop-blur-xl border border-border` (glassmorphism standard)
+  - `shadow-2xl` for depth
+- Slide animation: `x: "100%"` to `x: 0` with spring transition
+- Backdrop overlay with fade in/out
 
-**Target (matching Week view):**
-```tsx
-<div className={cn(
-  'h-[20px] text-xs text-muted-foreground pr-2 text-right flex items-center justify-end',
-  isHour && 'font-medium'
-)}>
-  {label && (
-    <span className={cn(isHour ? 'text-foreground' : 'text-muted-foreground/60')}>
-      {label}
-    </span>
-  )}
-</div>
-```
+### 2. `src/components/dashboard/schedule/booking/BookingHeader.tsx`
 
-This removes the border classes from time label rows, uses consistent `text-xs` sizing, removes the negative margins, and uses the same single-span pattern as the Week view.
+- Update top corners to match the floating card aesthetic
+- Add `rounded-t-xl` to the header container so it follows the card shape
+- Use `font-display tracking-wide uppercase` for the title to match platform header conventions
+
+### Visual Result
+The wizard will appear as a premium floating card hovering over the schedule, with rounded corners on all sides, a frosted glass background, and smooth slide-in animation from the right edge -- consistent with the bento design language used throughout the dashboard.
 
