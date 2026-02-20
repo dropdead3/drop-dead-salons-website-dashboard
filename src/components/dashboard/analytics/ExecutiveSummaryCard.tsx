@@ -40,6 +40,7 @@ import { usePaySchedule } from '@/hooks/usePaySchedule';
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
 import { subDays, differenceInDays, parseISO, format, startOfMonth, startOfYear } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 
 type SummaryRange = 'today' | '7d' | '30d' | 'mtd' | 'ytd';
@@ -256,7 +257,7 @@ export function ExecutiveSummaryCard() {
           </div>
           <Button
             variant="outline"
-            size="sm"
+            size={tokens.button.card}
             className="mt-3"
             onClick={() => {
               refetchMetrics();

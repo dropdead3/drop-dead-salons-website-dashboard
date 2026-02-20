@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useSignaturePresets, SignatureConfig } from '@/hooks/useSignaturePresets';
 import { Save, FolderOpen, Loader2, User, ChevronDown } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 
 interface SignaturePresetActionsProps {
   config: SignatureConfig;
@@ -43,7 +44,7 @@ export const SignaturePresetActions: React.FC<SignaturePresetActionsProps> = ({
     <div className="flex items-center gap-2 pb-3 border-b border-border mb-3">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="flex-1 gap-1.5" disabled={isLoading}>
+          <Button variant="outline" size={tokens.button.card} className="flex-1 gap-1.5" disabled={isLoading}>
             <FolderOpen className="h-3.5 w-3.5" />
             Load Preset
             <ChevronDown className="h-3 w-3 opacity-50" />
@@ -75,7 +76,7 @@ export const SignaturePresetActions: React.FC<SignaturePresetActionsProps> = ({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={() => setSaveDialogOpen(true)}>
+      <Button variant="outline" size={tokens.button.card} className="flex-1 gap-1.5" onClick={() => setSaveDialogOpen(true)}>
         <Save className="h-3.5 w-3.5" />
         Save Preset
       </Button>

@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { tokens } from '@/lib/design-tokens';
 import {
   User,
   FileText,
@@ -178,7 +179,7 @@ export function RenterDetailSheet({
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
-                        size="sm"
+                        size={tokens.button.card}
                         onClick={() => {
                           setIsEditing(false);
                           setEditData({});
@@ -188,7 +189,7 @@ export function RenterDetailSheet({
                         Cancel
                       </Button>
                       <Button
-                        size="sm"
+                        size={tokens.button.card}
                         onClick={handleSaveProfile}
                         disabled={updateRenter.isPending}
                       >
@@ -201,7 +202,7 @@ export function RenterDetailSheet({
                       </Button>
                     </div>
                   ) : (
-                    <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                    <Button variant="outline" size={tokens.button.card} onClick={() => setIsEditing(true)}>
                       <Edit2 className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
@@ -319,7 +320,7 @@ export function RenterDetailSheet({
           {/* Contracts Tab */}
           <TabsContent value="contracts" className="space-y-4 mt-4">
             <div className="flex justify-end">
-              <Button size="sm" onClick={onIssueContract}>
+              <Button size={tokens.button.card} onClick={onIssueContract}>
                 <FileText className="h-4 w-4 mr-1" />
                 Issue Contract
               </Button>

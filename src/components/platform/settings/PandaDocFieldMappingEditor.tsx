@@ -17,6 +17,7 @@ import {
   PlatformCardDescription,
 } from '@/components/platform/ui/PlatformCard';
 import { PlatformLabel } from '@/components/platform/ui/PlatformLabel';
+import { tokens } from '@/lib/design-tokens';
 import {
   usePandaDocFieldMapping,
   useUpdatePandaDocFieldMapping,
@@ -140,7 +141,7 @@ export function PandaDocFieldMappingEditor() {
             )}
             <Button
               variant="outline"
-              size="sm"
+              size={tokens.button.card}
               onClick={handleReset}
               className="gap-2"
             >
@@ -209,7 +210,7 @@ export function PandaDocFieldMappingEditor() {
         <div className="flex items-center justify-between pt-4 border-t border-slate-700/50">
           <Button
             variant="outline"
-            size="sm"
+            size={tokens.button.card}
             onClick={handleAddRow}
             className="gap-2"
           >

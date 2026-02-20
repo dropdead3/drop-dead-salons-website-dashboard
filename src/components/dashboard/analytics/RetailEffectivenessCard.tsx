@@ -9,6 +9,7 @@ import { ShoppingBag, AlertCircle } from 'lucide-react';
 import { useDailySalesSummary } from '@/hooks/useSalesData';
 import { MetricInfoTooltip } from '@/components/ui/MetricInfoTooltip';
 import { useRetailAttachmentRate } from '@/hooks/useRetailAttachmentRate';
+import { tokens } from '@/lib/design-tokens';
 
 export interface RetailEffectivenessCardProps {
   filterContext: FilterContext;
@@ -59,7 +60,7 @@ export function RetailEffectivenessCard({
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>Failed to load retail data.</span>
           </div>
-          <Button variant="outline" size="sm" className="mt-3" onClick={() => { refetchSummary(); refetchAttachment(); }}>
+          <Button variant="outline" size={tokens.button.card} className="mt-3" onClick={() => { refetchSummary(); refetchAttachment(); }}>
             Retry
           </Button>
         </CardContent>

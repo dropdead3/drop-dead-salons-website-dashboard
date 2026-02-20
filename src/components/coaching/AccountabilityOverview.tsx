@@ -17,6 +17,7 @@ import {
 import { useCoachAccountabilityItems, type AccountabilityItem } from '@/hooks/useAccountabilityItems';
 import { parseISO, isPast, isToday } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { tokens } from '@/lib/design-tokens';
 
 type StatusFilter = 'all' | 'pending' | 'in_progress' | 'completed' | 'overdue';
 
@@ -203,7 +204,7 @@ export function AccountabilityOverview() {
                       </div>
                       {item.meeting_id && (
                         <Button
-                          size="sm"
+                          size={tokens.button.inline}
                           variant="ghost"
                           className="h-7 px-2"
                           onClick={() => navigate(`/dashboard/meeting/${item.meeting_id}`)}

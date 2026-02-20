@@ -237,7 +237,7 @@ export function StylistPriceOverridesDialog({
                               autoFocus
                             />
                           </div>
-                          <Button size="sm" className="h-8" onClick={e => { e.stopPropagation(); handleAddOverride(); }} disabled={upsertOverride.isPending}>
+                          <Button size={tokens.button.inline} className="h-8" onClick={e => { e.stopPropagation(); handleAddOverride(); }} disabled={upsertOverride.isPending}>
                             Add
                           </Button>
                         </div>

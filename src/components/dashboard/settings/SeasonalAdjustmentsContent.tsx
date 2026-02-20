@@ -85,7 +85,7 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
           Apply percentage or fixed-amount modifiers during date ranges.
         </p>
         {!showForm && (
-          <Button variant="outline" size="sm" onClick={() => setShowForm(true)}>
+          <Button variant="outline" size={tokens.button.card} onClick={() => setShowForm(true)}>
             <Plus className="w-3.5 h-3.5 mr-1" />
             Add
           </Button>
@@ -181,9 +181,9 @@ export function SeasonalAdjustmentsContent({ serviceId }: SeasonalAdjustmentsCon
           </div>
 
           <div className="flex justify-end gap-2 pt-1">
-            <Button variant="ghost" size="sm" onClick={resetForm}>Cancel</Button>
+            <Button variant="ghost" size={tokens.button.inline} onClick={resetForm}>Cancel</Button>
             <Button
-              size="sm"
+              size={tokens.button.inline}
               onClick={handleCreate}
               disabled={!formName.trim() || !formValue.trim() || !formStartDate || !formEndDate || createAdj.isPending}
             >

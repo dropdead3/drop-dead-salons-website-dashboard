@@ -31,6 +31,7 @@ import {
 import { useCommissionTiers } from '@/hooks/useCommissionTiers';
 import { Plus, Edit2, Trash2, Percent, Loader2, DollarSign, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { BlurredAmount } from '@/contexts/HideNumbersContext';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 
@@ -126,7 +127,7 @@ export function CommissionTiersEditor() {
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" onClick={handleOpenCreate}>
+              <Button size={tokens.button.card} onClick={handleOpenCreate}>
                 <Plus className="w-4 h-4 mr-1.5" />
                 Add Tier
               </Button>
@@ -248,10 +249,10 @@ export function CommissionTiersEditor() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => handleOpenEdit(tier)}>
+                      <Button variant="ghost" size={tokens.button.inline} onClick={() => handleOpenEdit(tier)}>
                         <Edit2 className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDeactivate(tier.id)}>
+                      <Button variant="ghost" size={tokens.button.inline} onClick={() => handleDeactivate(tier.id)}>
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
                     </div>

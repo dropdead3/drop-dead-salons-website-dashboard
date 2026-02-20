@@ -14,6 +14,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { useNavigate } from 'react-router-dom';
 
 export interface MatchSuggestion {
@@ -102,7 +103,7 @@ export function StaffMatchingSuggestions({
           </div>
           <Button 
             variant="ghost" 
-            size="sm" 
+            size={tokens.button.card} 
             className="gap-1 text-xs"
             onClick={() => navigate('/dashboard/admin/phorest-settings')}
           >
@@ -165,7 +166,7 @@ export function StaffMatchingSuggestions({
               {/* Actions */}
               <div className="flex items-center gap-1 shrink-0">
                 <Button 
-                  size="sm" 
+                  size={tokens.button.inline} 
                   className="h-7 gap-1"
                   onClick={() => handleLink(suggestion)}
                   disabled={isLinking}
@@ -178,7 +179,7 @@ export function StaffMatchingSuggestions({
                   <span className="hidden sm:inline">Link</span>
                 </Button>
                 <Button 
-                  size="sm" 
+                  size={tokens.button.inline} 
                   variant="ghost" 
                   className="h-7 w-7 p-0"
                   onClick={() => handleDismiss(suggestion)}

@@ -27,6 +27,7 @@ import { addReportHeader, addReportFooter, fetchLogoAsDataUrl, getReportAutoTabl
 import { toast } from 'sonner';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { BentoGrid } from '@/components/ui/bento-grid';
+import { tokens } from '@/lib/design-tokens';
 
 interface SalesReportGeneratorProps {
   reportType: string;
@@ -246,11 +247,11 @@ export function SalesReportGenerator({
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
+            <Button variant="outline" size={tokens.button.card} onClick={() => setPreviewOpen(true)}>
               <Eye className="w-4 h-4 mr-2" />
               Preview
             </Button>
-            <Button variant="outline" size="sm" onClick={exportCSV}>
+            <Button variant="outline" size={tokens.button.card} onClick={exportCSV}>
               <FileSpreadsheet className="w-4 h-4 mr-2" />
               CSV
             </Button>

@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 const statusIcon: Record<string, typeof Rocket> = {
   active: Rocket,
@@ -96,7 +97,7 @@ export function CampaignsTabContent() {
             <CardTitle className="font-display text-base">All Campaigns</CardTitle>
             <CardDescription>Created from Zura AI insights</CardDescription>
           </div>
-          <Button variant="outline" size="sm" asChild>
+          <Button variant="outline" size={tokens.button.card} asChild>
             <Link to="/dashboard/campaigns">View All</Link>
           </Button>
         </CardHeader>

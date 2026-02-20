@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { FileSpreadsheet, Download, Copy, Check, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { tokens } from '@/lib/design-tokens';
 
 interface ExportData {
   stylistData?: any[];
@@ -171,7 +172,7 @@ export function GoogleSheetsExport({ data, dateFrom, dateTo }: GoogleSheetsExpor
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size={tokens.button.card}>
           <FileSpreadsheet className="w-4 h-4 mr-2" />
           Export to Sheets
         </Button>

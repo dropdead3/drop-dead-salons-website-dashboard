@@ -26,6 +26,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useDailyTasks, useProgramRules } from '@/hooks/useProgramConfig';
+import { tokens } from '@/lib/design-tokens';
 
 interface ProgramPreviewModalProps {
   weeks?: Array<{
@@ -73,7 +74,7 @@ export function ProgramPreviewModal({ weeks = [] }: ProgramPreviewModalProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size={tokens.button.card}>
           <Eye className="w-4 h-4 mr-2" />
           Preview as Participant
         </Button>
