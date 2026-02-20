@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -218,7 +219,7 @@ export function PlatformSecurityTab() {
             </p>
             <PlatformButton 
               variant="destructive" 
-              size="sm"
+              size={tokens.button.card}
               onClick={handleForceLogout}
               disabled={isForceLoggingOut}
             >
@@ -280,7 +281,7 @@ export function PlatformSecurityTab() {
               <p className="text-white font-medium">Recent Security Events</p>
               <p className="text-sm text-slate-400">View login attempts, role changes, and other security events</p>
             </div>
-            <PlatformButton variant="secondary" size="sm">
+            <PlatformButton variant="secondary" size={tokens.button.card}>
               <FileText className="h-4 w-4 mr-2" />
               View Log
             </PlatformButton>
@@ -291,7 +292,7 @@ export function PlatformSecurityTab() {
               <p className="text-white font-medium">Export Audit Log</p>
               <p className="text-sm text-slate-400">Download security events for the last 30 days</p>
             </div>
-            <PlatformButton variant="secondary" size="sm">
+            <PlatformButton variant="secondary" size={tokens.button.card}>
               <Download className="h-4 w-4 mr-2" />
               Export CSV
             </PlatformButton>

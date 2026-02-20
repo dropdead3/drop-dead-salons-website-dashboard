@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -134,7 +135,7 @@ export function PageTabsAccessPanel({ role, roleColor }: PageTabsAccessPanelProp
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size={tokens.button.inline}
                     className="h-6 text-xs gap-1"
                     onClick={() => handleBulkToggle(page, true)}
                     disabled={visibleCount === items.length || bulkUpdate.isPending}
@@ -144,7 +145,7 @@ export function PageTabsAccessPanel({ role, roleColor }: PageTabsAccessPanelProp
                   </Button>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size={tokens.button.inline}
                     className="h-6 text-xs gap-1"
                     onClick={() => handleBulkToggle(page, false)}
                     disabled={visibleCount === 0 || bulkUpdate.isPending}

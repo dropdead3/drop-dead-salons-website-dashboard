@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { tokens } from '@/lib/design-tokens';
 import { AlertTriangle, ChevronRight, MapPin, CheckCircle } from 'lucide-react';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
 import { Badge } from '@/components/ui/badge';
@@ -61,7 +62,7 @@ export function LocationIssuesTable({ locations, isLoading }: LocationIssuesTabl
         </div>
         <PlatformButton
           variant="ghost"
-          size="sm"
+          size={tokens.button.inline}
           onClick={() => navigate('/dashboard/platform/accounts')}
         >
           View All

@@ -1,4 +1,5 @@
 import { Moon, Sun, Monitor, Check, Palette, Upload, ImageIcon, Crown, Save, RotateCcw, Sparkles } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { usePlatformTheme } from '@/contexts/PlatformThemeContext';
 import { usePlatformBranding, PlatformBranding } from '@/hooks/usePlatformBranding';
 import { cn } from '@/lib/utils';
@@ -125,7 +126,7 @@ function LogoUpload({ label, description, currentUrl, onUpload, onRemove, varian
             />
             <PlatformButton
               variant="ghost"
-              size="sm"
+              size={tokens.button.inline}
               onClick={onRemove}
               className={cn(isDark ? 'text-slate-400 hover:text-red-400' : 'text-slate-500 hover:text-red-500')}
             >
@@ -222,7 +223,7 @@ export function PlatformAppearanceTab() {
           <div className="flex items-center gap-2">
             <PlatformButton
               variant="ghost"
-              size="sm"
+              size={tokens.button.card}
               onClick={handleDiscard}
               disabled={isSaving}
             >
@@ -231,7 +232,7 @@ export function PlatformAppearanceTab() {
             </PlatformButton>
             <PlatformButton
               variant="glow"
-              size="sm"
+              size={tokens.button.card}
               onClick={handleSave}
               disabled={isSaving}
             >

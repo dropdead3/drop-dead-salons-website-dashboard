@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Save, Loader2, Upload, Mail, Paintbrush, Eye } from 'lucide-react';
@@ -207,7 +208,7 @@ export function EmailBrandingSection({ organizationId }: EmailBrandingSectionPro
               )}
               <PlatformButton
                 variant="outline"
-                size="sm"
+                size={tokens.button.card}
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploading}
               >
@@ -217,7 +218,7 @@ export function EmailBrandingSection({ organizationId }: EmailBrandingSectionPro
               {branding.email_logo_url && (
                 <PlatformButton
                   variant="ghost"
-                  size="sm"
+                  size={tokens.button.inline}
                   onClick={() => setBranding(prev => ({ ...prev, email_logo_url: '' }))}
                 >
                   Remove
@@ -266,7 +267,7 @@ export function EmailBrandingSection({ organizationId }: EmailBrandingSectionPro
         <div className="flex items-center justify-between pt-2 border-t border-border">
           <PlatformButton
             variant="outline"
-            size="sm"
+            size={tokens.button.card}
             onClick={() => setShowPreview(!showPreview)}
             className="gap-1.5"
           >

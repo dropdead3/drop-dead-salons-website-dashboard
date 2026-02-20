@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -518,18 +519,18 @@ export function FinancialReportGenerator({
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={onClose}>
+              <Button variant="outline" size={tokens.button.card} onClick={onClose}>
                 Close
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setPreviewOpen(true)}>
+              <Button variant="outline" size={tokens.button.card} onClick={() => setPreviewOpen(true)}>
                 <Eye className="h-4 w-4" />
                 <span className="ml-2">Preview</span>
               </Button>
-              <Button variant="outline" size="sm" onClick={exportCSV}>
+              <Button variant="outline" size={tokens.button.card} onClick={exportCSV}>
                 <FileSpreadsheet className="h-4 w-4" />
                 <span className="ml-2">CSV</span>
               </Button>
-              <Button size="sm" onClick={generatePDF} disabled={isGenerating}>
+              <Button size={tokens.button.card} onClick={generatePDF} disabled={isGenerating}>
                 {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                 <span className="ml-2">PDF</span>
               </Button>

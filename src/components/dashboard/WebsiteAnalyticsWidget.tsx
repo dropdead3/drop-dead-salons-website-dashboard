@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { tokens } from '@/lib/design-tokens';
 import { TrendingUp, TrendingDown, Minus, RefreshCw, Globe, Eye, Clock, MousePointerClick, Info } from 'lucide-react';
 import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CommandCenterVisibilityToggle } from '@/components/dashboard/CommandCenterVisibilityToggle';
@@ -89,7 +90,7 @@ export function WebsiteAnalyticsWidget() {
             </p>
             <Button 
               variant="outline" 
-              size="sm" 
+              size={tokens.button.card} 
               className="mt-4"
               onClick={() => refreshAnalytics()}
               disabled={isRefreshing}

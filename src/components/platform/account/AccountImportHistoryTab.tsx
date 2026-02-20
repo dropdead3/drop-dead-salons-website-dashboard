@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -94,7 +95,7 @@ export function AccountImportHistoryTab({ organizationId }: AccountImportHistory
               ))}
             </SelectContent>
           </Select>
-          <PlatformButton size="sm" onClick={() => navigate(`/dashboard/platform/import?org=${organizationId}`)}>
+          <PlatformButton size={tokens.button.card} onClick={() => navigate(`/dashboard/platform/import?org=${organizationId}`)}>
             <Upload className="h-4 w-4 mr-2" />
             New Import
           </PlatformButton>
@@ -210,7 +211,7 @@ function ImportJobCard({ job, onRollback, isRollingBack }: ImportJobCardProps) {
         {canRollback && (
           <PlatformButton 
             variant="ghost" 
-            size="sm"
+            size={tokens.button.inline}
             onClick={onRollback}
             disabled={isRollingBack}
             className="text-slate-400 hover:text-red-400"

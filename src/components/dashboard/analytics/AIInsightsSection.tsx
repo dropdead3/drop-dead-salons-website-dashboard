@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -249,7 +250,7 @@ export function AIInsightsSection() {
                 ZURA INSIGHTS
               </CardTitle>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="gap-1.5 text-xs h-8">
+            <Button variant="ghost" size={tokens.button.inline} onClick={() => refresh(true)} disabled={isRefreshing || cooldown > 0} className="gap-1.5 text-xs h-8">
               <RefreshCw className={cn('w-3.5 h-3.5', isRefreshing && 'animate-spin')} />
               {cooldown > 0 ? `${cooldown}s` : isRefreshing ? 'Analyzing...' : 'Refresh'}
             </Button>

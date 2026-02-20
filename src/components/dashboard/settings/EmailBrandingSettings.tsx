@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -518,7 +519,7 @@ export function EmailBrandingSettings() {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <Popover open={testPopoverOpen} onOpenChange={setTestPopoverOpen}>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size={tokens.button.card} className="gap-2">
                 <Send className="w-4 h-4" />
                 Send Test
               </Button>
@@ -551,7 +552,7 @@ export function EmailBrandingSettings() {
                   />
                 </div>
                 <Button
-                  size="sm"
+                  size={tokens.button.card}
                   className="w-full gap-2"
                   onClick={handleSendTestEmail}
                   disabled={sendingTest || !testEmail}
@@ -570,7 +571,7 @@ export function EmailBrandingSettings() {
             <Button
               onClick={() => saveMutation.mutate()}
               disabled={!hasChanges || saveMutation.isPending}
-              size="sm"
+              size={tokens.button.card}
               className="gap-2"
             >
               {saveMutation.isPending ? (

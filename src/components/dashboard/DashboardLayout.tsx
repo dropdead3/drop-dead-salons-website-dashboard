@@ -11,6 +11,7 @@ import { ZuraNavigationProvider, useZuraNavigationSafe } from '@/contexts/ZuraNa
 import { NavigationHistoryProvider, useNavigationHistory } from '@/contexts/NavigationHistoryContext';
 import { ZuraStickyGuidance } from '@/components/dashboard/ZuraStickyGuidance';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
@@ -1097,7 +1098,7 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
               {/* Exit button with ESC hint */}
               <Button 
                 variant="outline"
-                size="sm" 
+                size={tokens.button.inline} 
                 onClick={() => clearViewAs()}
                 className="h-7 px-3 bg-amber-950 text-amber-100 border-amber-950 hover:bg-amber-900 hover:text-white ml-2 gap-1.5 font-medium shadow-sm"
               >
