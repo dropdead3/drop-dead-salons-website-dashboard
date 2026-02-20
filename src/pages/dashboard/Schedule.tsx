@@ -445,7 +445,7 @@ export default function Schedule() {
 
   return (
     <DashboardLayout hideFooter>
-      <div className="flex flex-col h-screen">
+      <div className="flex flex-col h-screen relative">
         {/* Header */}
         <div className="px-4 pt-4">
           <ScheduleHeader
@@ -491,19 +491,23 @@ export default function Schedule() {
           )}
         </div>
 
-        {/* Action Bar */}
+        {/* Floating Action Bar */}
         {(view === 'day' || view === 'week') && (
-          <ScheduleActionBar
-            selectedAppointment={selectedAppointment}
-            onCheckIn={handleCheckIn}
-            onPay={handlePay}
-            onRemove={handleRemove}
-            onNotes={handleNotes}
-            onConfirm={handleConfirm}
-            onViewDetails={() => setDetailOpen(true)}
-            isUpdating={isUpdating}
-            todayAppointmentCount={todayAppointmentCount}
-          />
+          <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pointer-events-none z-20">
+            <div className="pointer-events-auto">
+              <ScheduleActionBar
+                selectedAppointment={selectedAppointment}
+                onCheckIn={handleCheckIn}
+                onPay={handlePay}
+                onRemove={handleRemove}
+                onNotes={handleNotes}
+                onConfirm={handleConfirm}
+                onViewDetails={() => setDetailOpen(true)}
+                isUpdating={isUpdating}
+                todayAppointmentCount={todayAppointmentCount}
+              />
+            </div>
+          </div>
         )}
       </div>
 

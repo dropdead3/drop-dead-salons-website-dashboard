@@ -50,8 +50,8 @@ export function ScheduleActionBar({
   return (
     <div
       className={cn(
-        'bg-card border-t border-border px-4 py-2.5 flex items-center justify-between transition-all duration-300',
-        hasSelection && 'border-t-2 border-t-primary/60'
+        'bg-card/80 backdrop-blur-xl border border-border rounded-full px-6 py-2.5 flex items-center justify-between transition-all duration-300 shadow-lg',
+        hasSelection && 'ring-1 ring-primary/40 shadow-primary/10'
       )}
     >
       {/* Left: Undo */}
