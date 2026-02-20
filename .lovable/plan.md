@@ -1,54 +1,47 @@
 
+## Design Token Compliance -- Meetings & Accountability Page
 
-## Design Token Compliance Fix -- Assistant Schedule (Round 3)
+### Current Issues Found
 
-### Remaining Violations Found
-
-| # | Violation | Lines | Fix |
-|---|-----------|-------|-----|
-| 1 | **StatCard value uses raw classes** (`text-2xl font-medium text-foreground`) instead of `tokens.stat.large` or `tokens.kpi.value` | Line 76 | Replace with `tokens.kpi.value` |
-| 2 | **StatCard description uses raw classes** (`text-xs text-muted-foreground`) | Line 78 | Replace with `tokens.body.muted` |
-| 3 | **AdminRequestRow: `font-medium` raw class** on stylist name (line 137) | Line 137 | Replace with `tokens.body.emphasis` |
-| 4 | **RequestCard: `font-medium` raw class** on time display (line 199) | Line 199 | Replace with `tokens.body.emphasis` |
-| 5 | **RequestCard: hardcoded `bg-green-50 text-green-700 border-green-200`** on "Accepted" badge (line 206) | Line 206 | Use `APPOINTMENT_STATUS_BADGE.confirmed` tokens |
-| 6 | **RequestCard: hardcoded `bg-green-600 hover:bg-green-700`** on Accept button (line 271) | Line 271 | Use semantic `bg-primary hover:bg-primary/90` or success semantic class |
-| 7 | **RequestCard: hardcoded `text-red-600 border-red-200 hover:bg-red-50`** on Decline button (line 280) | Line 280 | Use `text-destructive border-destructive/30 hover:bg-destructive/10` |
-| 8 | **RequestCard: hardcoded `bg-amber-50 text-amber-700`** on "Awaiting assistant response" badge (line 322) | Line 322 | Use `APPOINTMENT_STATUS_BADGE.checked_in` tokens |
-| 9 | **RequestsList: raw empty state** (lines 364-370) instead of `EmptyState` component | Lines 364-370 | Replace with `<EmptyState>` |
-| 10 | **Stylist/Assistant CardHeaders** missing canonical icon-box layout (lines 854-856, 887-889, 871-872, 903-904) | Lines 854, 871, 887, 903 | Add icon-box + `tokens.card.title` pattern |
-| 11 | **Page subtitle uses raw `text-muted-foreground`** without token (line 499) | Line 499 | Use `tokens.body.muted` |
-| 12 | **Assistant roster: `font-medium` raw on location name** (line 771) | Line 771 | Use `tokens.body.emphasis` class |
-| 13 | **Summary strip label `text-muted-foreground` raw** without body token (lines 637, 643, 649, 654) | Multiple | Use `tokens.body.muted` inline |
-| 14 | **Date group heading in RequestsList** uses raw `font-medium text-sm text-muted-foreground` (line 377) | Line 377 | Use `tokens.heading.subsection` |
+| # | Violation | Location | Fix |
+|---|-----------|----------|-----|
+| 1 | **Page title uses raw `font-display text-3xl lg:text-4xl`** | Line 221 | Use `tokens.heading.page` |
+| 2 | **Page subtitle uses raw `text-muted-foreground`** | Line 222 | Use `tokens.body.muted` |
+| 3 | **StatCard value uses raw `text-2xl font-display font-medium`** | Line 42 | Use `tokens.kpi.value` |
+| 4 | **StatCard label uses raw `text-xs text-muted-foreground`** | Line 43 | Use `tokens.body.muted` with `text-xs` override |
+| 5 | **StatCard icon box uses raw classes** | Line 38 | Use `tokens.card.iconBox` |
+| 6 | **Card headers missing `tokens.card.title`** on CardTitle (lines 289, 344, 390) | 3 locations | Replace raw `font-display text-base tracking-wide` with `tokens.card.title` |
+| 7 | **Card icon boxes use raw `w-10 h-10 bg-muted flex...`** | Lines 285, 340, 386 | Use `tokens.card.iconBox` |
+| 8 | **Meeting row names use raw `font-medium text-sm`** | Lines 301, 355, 403 | Use `tokens.body.emphasis` |
+| 9 | **Raw empty state text** in 3 cards (lines 321, 370, 427) | 3 locations | Replace with `EmptyState` component |
+| 10 | **"View All" buttons use raw `text-muted-foreground hover:text-foreground`** | Lines 326, 375, 432 | Standardize styling |
 
 ### Technical Details
 
-**File: `src/pages/dashboard/AssistantSchedule.tsx`**
+**File: `src/pages/dashboard/ScheduleMeeting.tsx`** (single file, all changes)
 
-All changes are in this single file. Summary:
+1. **Add imports**: `tokens` from `@/lib/design-tokens`, `EmptyState` from `@/components/ui/empty-state`
 
-1. **StatCard** -- value line becomes `<div className={tokens.kpi.value}>{value}</div>`, description becomes `<p className={cn(tokens.body.muted, "mt-1 text-xs")}>`
+2. **Page header** (lines 221-224):
+   - Title: `<h1 className={tokens.heading.page}>` (replaces raw font-display classes)
+   - Subtitle: `<p className={tokens.body.muted}>` (replaces raw text-muted-foreground)
 
-2. **AdminRequestRow** -- stylist name `font-medium` becomes `tokens.body.emphasis`
+3. **StatCard component** (lines 34-48):
+   - Icon container: use `tokens.card.iconBox` with color override via `cn()`
+   - Value: `tokens.kpi.value`
+   - Label: `cn(tokens.body.muted, "text-xs")`
 
-3. **RequestCard** -- replace all five hardcoded color instances with semantic tokens:
-   - Accepted badge: `APPOINTMENT_STATUS_BADGE.confirmed` bg/text
-   - Accept button: `bg-primary hover:bg-primary/90`
-   - Decline button: `text-destructive border-destructive/30 hover:bg-destructive/10`
-   - Awaiting badge: `APPOINTMENT_STATUS_BADGE.checked_in` bg/text
-   - Time span: `tokens.body.emphasis`
+4. **Three CardHeader blocks** (Upcoming Meetings, Pending Requests, Active Commitments):
+   - Icon boxes: `tokens.card.iconBox`
+   - CardTitle: `tokens.card.title`
 
-4. **RequestsList empty state** -- replace raw div with `<EmptyState icon={Calendar} title="No requests found" />`
+5. **Meeting/request/commitment row text**:
+   - Name/date spans with `font-medium text-sm` become `tokens.body.emphasis`
+   - Secondary text already using `text-xs text-muted-foreground` is acceptable but gets `tokens.body.muted` with size override
 
-5. **Stylist/Assistant CardHeaders** (4 cards) -- add icon-box layout with appropriate icons (Inbox for requests, CheckCircle2 for completed, UserCheck for assignments)
+6. **Three empty states** replaced with `<EmptyState>` component:
+   - "No upcoming meetings scheduled" with Calendar icon
+   - "No pending requests" with Inbox icon
+   - "No active commitments" with ClipboardList icon
 
-6. **Page subtitle** -- `<p className={tokens.body.muted}>`
-
-7. **Summary strip labels** -- wrap in `tokens.body.muted` class
-
-8. **Location name in roster** -- replace raw `font-medium` with `tokens.body.emphasis`
-
-9. **Date group heading** -- replace raw classes with `tokens.heading.subsection`
-
-No database, routing, or new component changes needed. Pure token compliance pass on remaining raw classes and hardcoded colors.
-
+No database, routing, or structural changes. Pure design-token compliance pass.
