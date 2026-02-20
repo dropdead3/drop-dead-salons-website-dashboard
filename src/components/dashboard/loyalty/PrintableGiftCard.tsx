@@ -2,6 +2,7 @@ import { useRef, useCallback } from 'react';
 import { jsPDF } from 'jspdf';
 import { QRCodeCanvas } from 'qrcode.react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Printer, Download } from 'lucide-react';
 import { GiftCardSettings } from '@/hooks/useGiftCardSettings';
 import { GiftCard } from '@/hooks/useGiftCards';
@@ -147,11 +148,11 @@ export function PrintableGiftCard({
 
       {/* Actions */}
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" onClick={handlePrint}>
+        <Button variant="outline" size={tokens.button.card} onClick={handlePrint}>
           <Printer className="h-4 w-4 mr-2" />
           Print
         </Button>
-        <Button variant="outline" size="sm" onClick={handleDownload}>
+        <Button variant="outline" size={tokens.button.card} onClick={handleDownload}>
           <Download className="h-4 w-4 mr-2" />
           Download PDF
         </Button>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -248,7 +249,7 @@ export function OnboardingTasksManager() {
             {tasks.length} task{tasks.length !== 1 ? 's' : ''} configured
           </span>
         </div>
-        <Button onClick={openCreateDialog} size="sm" className="font-display text-xs">
+        <Button onClick={openCreateDialog} size={tokens.button.card} className="font-display text-xs">
           <Plus className="w-4 h-4 mr-1" />
           ADD TASK
         </Button>
@@ -258,7 +259,7 @@ export function OnboardingTasksManager() {
         <Card className="p-8 text-center">
           <ClipboardCheck className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
           <p className="text-muted-foreground font-sans">No onboarding tasks configured</p>
-          <Button onClick={openCreateDialog} variant="outline" size="sm" className="mt-4 font-display text-xs">
+          <Button onClick={openCreateDialog} variant="outline" size={tokens.button.card} className="mt-4 font-display text-xs">
             <Plus className="w-4 h-4 mr-1" />
             CREATE FIRST TASK
           </Button>

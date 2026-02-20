@@ -10,6 +10,7 @@ import {
 } from '@/hooks/useReferralProgram';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -310,7 +311,7 @@ export function ReferralProgramManager({ organizationId }: ReferralProgramManage
                   <CardContent className="flex flex-col items-center justify-center py-8">
                     <Link2 className="h-8 w-8 text-muted-foreground mb-2" />
                     <p className="text-muted-foreground">No active referral links</p>
-                    <Button size="sm" variant="link" onClick={() => setIsCreateOpen(true)}>
+                    <Button size={tokens.button.inline} variant="link" onClick={() => setIsCreateOpen(true)}>
                       Create your first referral link
                     </Button>
                   </CardContent>

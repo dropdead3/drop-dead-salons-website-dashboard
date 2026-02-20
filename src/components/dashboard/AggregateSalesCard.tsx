@@ -6,6 +6,7 @@ import { AnimatedBlurredAmount } from '@/components/ui/AnimatedBlurredAmount';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { 
   DollarSign, 
   Scissors, 
@@ -514,7 +515,7 @@ export function AggregateSalesCard({
           <div className="flex items-center gap-1 border-l border-border/60 pl-2 sm:pl-3">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8" onClick={handleExportCSV}>
+                <Button variant="outline" size={tokens.button.inline} className="h-8" onClick={handleExportCSV}>
                   <Download className="w-4 h-4" />
                 </Button>
               </TooltipTrigger>

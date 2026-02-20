@@ -8,6 +8,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Card } from '@/components/ui/card';
 import { 
   Calendar, 
@@ -46,7 +47,7 @@ export function CalendarSyncModal({ startDate, programName = 'DD75: Client Engin
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size={tokens.button.card}>
           <Calendar className="w-4 h-4 mr-2" />
           Sync to Calendar
         </Button>

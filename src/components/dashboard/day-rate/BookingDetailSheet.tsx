@@ -7,6 +7,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -249,7 +250,7 @@ export function BookingDetailSheet({ booking, locationName, onClose }: BookingDe
             />
 
             {hasChanges && (
-              <Button onClick={handleSaveNotes} size="sm">
+              <Button onClick={handleSaveNotes} size={tokens.button.card}>
                 Save Notes
               </Button>
             )}
