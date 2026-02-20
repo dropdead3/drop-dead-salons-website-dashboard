@@ -148,7 +148,7 @@ export function CampaignPerformanceTable({ campaigns, isLoading }: CampaignPerfo
           </div>
           <CardTitle className="font-display text-base tracking-wide">CAMPAIGN PERFORMANCE</CardTitle>
         </div>
-        <Button variant="outline" size="sm" onClick={handleExport}>
+        <Button variant="outline" size={tokens.button.card} onClick={handleExport}>
           <Download className="h-4 w-4 mr-2" />
           Export CSV
         </Button>

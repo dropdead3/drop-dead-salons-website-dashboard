@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { LiveCountdown } from '@/components/dashboard/LiveCountdown';
 import { VisibilityGate } from '@/components/visibility';
 import { usePaySchedule } from '@/hooks/usePaySchedule';
@@ -82,7 +83,7 @@ export function PayrollDeadlineCard() {
                 <p className="text-sm font-medium text-foreground">{t('payroll.pay_schedule_not_configured')}</p>
                 <p className="text-xs">{t('payroll.setup_pay_schedule_desc')}</p>
               </div>
-              <Button variant="ghost" size="sm" asChild>
+              <Button variant="ghost" size={tokens.button.inline} asChild>
                 <Link to="/dashboard/admin/payroll?tab=settings">
                   {tc('configure')} <ChevronRight className="h-3 w-3 ml-1" />
                 </Link>

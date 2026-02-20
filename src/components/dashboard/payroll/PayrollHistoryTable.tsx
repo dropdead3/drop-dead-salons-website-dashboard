@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { usePayroll, PayrollRun } from '@/hooks/usePayroll';
@@ -83,7 +84,7 @@ function PayrollRow({ run, isExpanded, onToggle }: PayrollRowProps) {
         onClick={onToggle}
       >
         <TableCell>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+          <Button variant="ghost" size={tokens.button.inline} className="h-6 w-6 p-0">
             {isExpanded ? (
               <ChevronDown className="h-4 w-4" />
             ) : (

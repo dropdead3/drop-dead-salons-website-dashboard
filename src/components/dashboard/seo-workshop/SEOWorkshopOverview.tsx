@@ -10,6 +10,7 @@ import { useSEOWorkshopProgress } from '@/hooks/useSEOWorkshop';
 import { CheckCircle2, Circle, ListTodo } from 'lucide-react';
 import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 
 interface SEOWorkshopOverviewProps {
   organizationId: string | undefined;
@@ -126,7 +127,7 @@ export function SEOWorkshopOverview({ organizationId, onGoToActions }: SEOWorksh
               ))}
             </ul>
             {onGoToActions && (
-              <Button variant="outline" size="sm" className="mt-4" onClick={onGoToActions}>
+              <Button variant="outline" size={tokens.button.card} className="mt-4" onClick={onGoToActions}>
                 View all action items
               </Button>
             )}

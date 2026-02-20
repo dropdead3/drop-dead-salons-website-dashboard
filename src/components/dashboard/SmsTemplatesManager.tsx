@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -141,7 +142,7 @@ export function SmsTemplatesManager() {
           <MessageSquare className="h-4 w-4" />
           <span>{templates?.length || 0} templates</span>
         </div>
-        <Button onClick={() => setIsCreating(true)} size="sm">
+        <Button onClick={() => setIsCreating(true)} size={tokens.button.card}>
           <Plus className="h-4 w-4 mr-1" />
           New Template
         </Button>

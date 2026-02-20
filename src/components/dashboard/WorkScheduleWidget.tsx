@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -161,7 +162,7 @@ export function WorkScheduleWidget() {
           </div>
           <Dialog open={requestDialogOpen} onOpenChange={setRequestDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" variant="outline" disabled={!!pendingRequest}>
+              <Button size={tokens.button.card} variant="outline" disabled={!!pendingRequest}>
                 <Send className="w-4 h-4 mr-2" />
                 Request Change
               </Button>

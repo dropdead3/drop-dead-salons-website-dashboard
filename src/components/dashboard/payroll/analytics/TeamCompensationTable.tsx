@@ -16,6 +16,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -62,7 +63,7 @@ function EmployeeRow({ employee, isExpanded, onToggle }: EmployeeRowProps) {
         onClick={onToggle}
       >
         <TableCell>
-          <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+          <Button variant="ghost" size={tokens.button.inline} className="h-6 w-6 p-0">
             {isExpanded ? (
               <ChevronDown className="h-4 w-4" />
             ) : (

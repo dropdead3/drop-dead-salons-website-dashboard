@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
@@ -121,10 +122,10 @@ function SortableSpecialtyItem({ option, onUpdate, onDelete, isUpdating }: Sorta
                 if (e.key === 'Escape') handleCancelEdit();
               }}
             />
-            <Button size="sm" variant="ghost" onClick={handleSaveName}>
+            <Button size={tokens.button.inline} variant="ghost" onClick={handleSaveName}>
               <Check className="w-4 h-4" />
             </Button>
-            <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
+            <Button size={tokens.button.inline} variant="ghost" onClick={handleCancelEdit}>
               <X className="w-4 h-4" />
             </Button>
           </div>

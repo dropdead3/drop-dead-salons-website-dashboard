@@ -7,6 +7,7 @@ import {
 import { useLocations, formatHoursForDisplay, getClosedDaysArray, type Location } from '@/hooks/useLocations';
 import { MapPin, Phone, Clock, ExternalLink, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 
 interface LocationPreviewModalProps {
@@ -74,11 +75,11 @@ function LocationPreviewCard({ location }: { location: Location }) {
       
       {/* Actions */}
       <div className="px-6 pb-6 pt-2 flex gap-2">
-        <Button size="sm" className="flex-1 gap-2">
+        <Button size={tokens.button.card} className="flex-1 gap-2">
           Book Now
           <ExternalLink className="w-3 h-3" />
         </Button>
-        <Button size="sm" variant="outline" className="gap-2">
+        <Button size={tokens.button.card} variant="outline" className="gap-2">
           <MapPin className="w-3 h-3" />
           Directions
         </Button>
