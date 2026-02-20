@@ -1081,20 +1081,20 @@ export function QuickBookingPopover({
           <div className="p-3 border-t border-border bg-card space-y-2">
             {selectedServices.length > 0 && (
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
+                    <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
                       {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
                     </Badge>
-                    <span className="text-muted-foreground">{totalDuration}m</span>
+                    <span className="text-sm text-muted-foreground">{totalDuration}m</span>
                   </div>
-                  <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
+                  <span className="text-base font-semibold">{formatCurrencyWhole(totalPrice)}</span>
                 </div>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {selectedServiceDetails.map(s => (
-                    <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0 pr-0.5 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.id))}>
+                    <Badge key={s.id} variant="outline" className="text-xs font-normal px-2 py-0.5 pr-1 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.id))}>
                       {s.name}
-                      <X className="h-2.5 w-2.5 text-muted-foreground hover:text-destructive" />
+                      <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                     </Badge>
                   ))}
                 </div>
@@ -1159,20 +1159,20 @@ export function QuickBookingPopover({
           <div className="p-3 border-t border-border bg-card space-y-2">
             {selectedServices.length > 0 && (
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
+                    <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
                       {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
                     </Badge>
-                    <span className="text-muted-foreground">{totalDuration}m</span>
+                    <span className="text-sm text-muted-foreground">{totalDuration}m</span>
                   </div>
-                  <span className="font-medium">{formatCurrencyWhole(totalPrice)}</span>
+                  <span className="text-base font-semibold">{formatCurrencyWhole(totalPrice)}</span>
                 </div>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {selectedServiceDetails.map(s => (
-                    <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0 pr-0.5 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.id))}>
+                    <Badge key={s.id} variant="outline" className="text-xs font-normal px-2 py-0.5 pr-1 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.id))}>
                       {s.name}
-                      <X className="h-2.5 w-2.5 text-muted-foreground hover:text-destructive" />
+                      <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                     </Badge>
                   ))}
                 </div>
@@ -1299,23 +1299,23 @@ export function QuickBookingPopover({
           <div className="p-3 border-t border-border bg-card space-y-2">
             {!stylistFirstMode && selectedServices.length > 0 && selectedStylist && selectedLevelNumber && (
               <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="rounded-full text-[10px] px-2 py-0">
+                    <Badge variant="secondary" className="rounded-full text-xs px-2.5 py-0.5">
                       {selectedServices.length} service{selectedServices.length > 1 ? 's' : ''}
                     </Badge>
-                    <span className="text-muted-foreground">{totalDuration}m</span>
+                    <span className="text-sm text-muted-foreground">{totalDuration}m</span>
                   </div>
                   <div className="text-right">
-                    <span className="font-medium">{formatCurrencyWhole(levelBasedTotalPrice)}</span>
-                    <span className="text-muted-foreground ml-1.5">• Level {selectedLevelNumber}</span>
+                    <span className="text-base font-semibold">{formatCurrencyWhole(levelBasedTotalPrice)}</span>
+                    <span className="text-sm text-muted-foreground ml-1.5">• Level {selectedLevelNumber}</span>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {selectedServiceDetails.map(s => (
-                    <Badge key={s.id} variant="outline" className="text-[10px] font-normal px-1.5 py-0 pr-0.5 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.id))}>
+                    <Badge key={s.id} variant="outline" className="text-xs font-normal px-2 py-0.5 pr-1 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.id))}>
                       {s.name}
-                      <X className="h-2.5 w-2.5 text-muted-foreground hover:text-destructive" />
+                      <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                     </Badge>
                   ))}
                 </div>
