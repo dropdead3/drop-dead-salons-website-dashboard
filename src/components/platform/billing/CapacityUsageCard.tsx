@@ -1,4 +1,5 @@
 import { MapPin, Users, AlertTriangle, TrendingUp, Infinity } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { Progress } from '@/components/ui/progress';
 import {
   PlatformCard,
@@ -142,7 +143,7 @@ export function CapacityUsageCard({
           {onAddCapacity && (
             <PlatformButton 
               variant="outline" 
-              size="sm" 
+              size={tokens.button.card} 
               onClick={onAddCapacity}
               className="flex-1"
             >
@@ -151,7 +152,7 @@ export function CapacityUsageCard({
           )}
           {onUpgradePlan && capacity.nearLimit && (
             <PlatformButton 
-              size="sm" 
+              size={tokens.button.card} 
               onClick={onUpgradePlan}
               className="flex-1"
             >

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -99,7 +100,7 @@ export function ClientNotesSection({ clientId }: ClientNotesSectionProps) {
           </div>
           <Button 
             type="submit" 
-            size="sm" 
+            size={tokens.button.card} 
             disabled={!newNote.trim() || addNote.isPending}
           >
             {addNote.isPending ? (

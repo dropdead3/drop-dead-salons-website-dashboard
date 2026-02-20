@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { tokens } from '@/lib/design-tokens';
 import { Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { PlatformButton } from '@/components/platform/ui/PlatformButton';
@@ -63,7 +64,7 @@ export function AccountNoteCard({ note, onDelete, isDeleting }: AccountNoteCardP
         {isAuthor && (
           <PlatformButton
             variant="ghost"
-            size="sm"
+            size={tokens.button.inline}
             onClick={() => onDelete(note.id)}
             disabled={isDeleting}
             className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-red-400"
