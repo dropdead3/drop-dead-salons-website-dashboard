@@ -418,28 +418,44 @@ async function syncClients(
       console.log(`Fetching clients for branch: ${branchName} (${branchId}), mapped location: ${locationId}`);
 
       try {
-        // Fetch clients for this branch
-        const clientsData = await phorestRequest(
-          `/branch/${branchId}/client?size=500`, 
-          businessId, 
-          username, 
-          password
-        );
-        const clients = clientsData._embedded?.clients || clientsData.clients || [];
-        
-        console.log(`Found ${clients.length} clients in branch ${branchName}`);
+        // Fetch clients for this branch with pagination
+        let page = 0;
+        let hasMore = true;
+        let branchClientCount = 0;
+        let totalExpected = 0;
 
-        for (const client of clients) {
-          const clientId = client.clientId || client.id;
-          
-          // If we've seen this client before, update only if this is more recent
-          if (clientDataMap.has(clientId)) {
-            const existing = clientDataMap.get(clientId);
-            const existingLastVisit = existing.lastAppointmentDate ? new Date(existing.lastAppointmentDate) : null;
-            const newLastVisit = client.lastAppointmentDate ? new Date(client.lastAppointmentDate) : null;
+        while (hasMore) {
+          const clientsData = await phorestRequest(
+            `/branch/${branchId}/client?size=200&page=${page}`, 
+            businessId, 
+            username, 
+            password
+          );
+          const clients = clientsData._embedded?.clients || clientsData.clients || [];
+          const pageInfo = clientsData.page || {};
+          const totalPages = pageInfo.totalPages || 1;
+          totalExpected = pageInfo.totalElements || totalExpected;
+
+          branchClientCount += clients.length;
+          console.log(`Branch ${branchName}: fetched page ${page + 1} of ${totalPages} (${clients.length} clients)`);
+
+          for (const client of clients) {
+            const clientId = client.clientId || client.id;
             
-            // Keep the record with the most recent visit (this determines their "home" location)
-            if (newLastVisit && (!existingLastVisit || newLastVisit > existingLastVisit)) {
+            if (clientDataMap.has(clientId)) {
+              const existing = clientDataMap.get(clientId);
+              const existingLastVisit = existing.lastAppointmentDate ? new Date(existing.lastAppointmentDate) : null;
+              const newLastVisit = client.lastAppointmentDate ? new Date(client.lastAppointmentDate) : null;
+              
+              if (newLastVisit && (!existingLastVisit || newLastVisit > existingLastVisit)) {
+                clientDataMap.set(clientId, {
+                  ...client,
+                  _branchId: branchId,
+                  _branchName: branchName,
+                  _locationId: locationId,
+                });
+              }
+            } else {
               clientDataMap.set(clientId, {
                 ...client,
                 _branchId: branchId,
@@ -447,29 +463,45 @@ async function syncClients(
                 _locationId: locationId,
               });
             }
+          }
+
+          // Check if there are more pages
+          if (clients.length === 0 || page + 1 >= totalPages || page >= 100) {
+            hasMore = false;
           } else {
-            clientDataMap.set(clientId, {
-              ...client,
-              _branchId: branchId,
-              _branchName: branchName,
-              _locationId: locationId,
-            });
+            page++;
           }
         }
+
+        console.log(`Branch ${branchName}: ${branchClientCount} clients fetched (expected ${totalExpected})`);
       } catch (e: any) {
         console.log(`Failed to fetch clients for branch ${branchId}:`, e.message);
-        // Fall back to global client endpoint if branch-specific fails
       }
     }
 
     // If no clients found via branch endpoints, fall back to global endpoint
     if (clientDataMap.size === 0) {
-      console.log("Falling back to global client endpoint...");
-      const clientsData = await phorestRequest("/client?size=500", businessId, username, password);
-      const clients = clientsData._embedded?.clients || clientsData.clients || [];
-      
-      for (const client of clients) {
-        clientDataMap.set(client.clientId || client.id, client);
+      console.log("Falling back to global client endpoint with pagination...");
+      let page = 0;
+      let hasMore = true;
+
+      while (hasMore) {
+        const clientsData = await phorestRequest(`/client?size=200&page=${page}`, businessId, username, password);
+        const clients = clientsData._embedded?.clients || clientsData.clients || [];
+        const pageInfo = clientsData.page || {};
+        const totalPages = pageInfo.totalPages || 1;
+
+        console.log(`Global endpoint: fetched page ${page + 1} of ${totalPages} (${clients.length} clients)`);
+
+        for (const client of clients) {
+          clientDataMap.set(client.clientId || client.id, client);
+        }
+
+        if (clients.length === 0 || page + 1 >= totalPages || page >= 100) {
+          hasMore = false;
+        } else {
+          page++;
+        }
       }
     }
 
