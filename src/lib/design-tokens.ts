@@ -77,6 +77,22 @@ export const tokens = {
   },
 
   // ========================================
+  // BUTTON SIZE TOKENS
+  // ========================================
+  button: {
+    /** Inline / table-row actions — compact */
+    inline: 'sm' as const,
+    /** Card-level CTAs, secondary actions */
+    card: 'sm' as const,
+    /** Page header primary actions (default) */
+    page: 'default' as const,
+    /** Hero sections, onboarding, empty-state CTAs */
+    hero: 'lg' as const,
+    /** Card footer "View All" link style */
+    cardFooter: 'w-full text-muted-foreground hover:text-foreground text-sm h-9',
+  },
+
+  // ========================================
   // LAYOUT TOKENS
   // ========================================
   layout: {
