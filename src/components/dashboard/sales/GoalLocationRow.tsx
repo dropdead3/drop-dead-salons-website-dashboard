@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, TrendingUp, TrendingDown, Target, Loader2, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -214,7 +215,7 @@ export function GoalLocationRow({
               {paceStatus === 'behind' && (
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size={tokens.button.inline}
                   onClick={handleRecovery}
                   disabled={recoveryLoading}
                   className="h-auto py-1 px-2 text-[11px] text-muted-foreground hover:text-foreground gap-1"

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
@@ -123,7 +124,7 @@ export function TeamCalendarMini({ onEventClick, showCreateButton = true }: Team
                 {formatDate(selectedDate, 'MMMM d, yyyy')}
               </h5>
               {showCreateButton && (
-                <Button variant="ghost" size="sm" onClick={() => setCreateDialogOpen(true)}>
+                <Button variant="ghost" size={tokens.button.inline} onClick={() => setCreateDialogOpen(true)}>
                   <Plus className="h-3 w-3 mr-1" />
                   Add
                 </Button>

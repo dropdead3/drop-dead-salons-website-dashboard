@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -131,7 +132,7 @@ export function HistoricalComparison({
             <div className="flex rounded-lg border overflow-hidden">
               <Button
                 variant={period === 'lastMonth' ? 'default' : 'ghost'}
-                size="sm"
+                size={tokens.button.inline}
                 className="h-7 text-xs rounded-none"
                 onClick={() => setPeriod('lastMonth')}
               >
@@ -139,7 +140,7 @@ export function HistoricalComparison({
               </Button>
               <Button
                 variant={period === 'lastYear' ? 'default' : 'ghost'}
-                size="sm"
+                size={tokens.button.inline}
                 className="h-7 text-xs rounded-none"
                 onClick={() => setPeriod('lastYear')}
               >

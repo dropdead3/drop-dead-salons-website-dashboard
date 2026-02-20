@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { useProducts } from '@/hooks/useProducts';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -150,7 +151,7 @@ export function OnlineStoreProductsTable() {
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
-          size="sm"
+          size={tokens.button.card}
           disabled={bulkSet.isPending || allIds.length === 0}
           onClick={() => bulkSet.mutate({ ids: allIds, available_online: true })}
         >
@@ -158,7 +159,7 @@ export function OnlineStoreProductsTable() {
         </Button>
         <Button
           variant="outline"
-          size="sm"
+          size={tokens.button.card}
           disabled={bulkSet.isPending || allIds.length === 0}
           onClick={() => bulkSet.mutate({ ids: allIds, available_online: false })}
         >

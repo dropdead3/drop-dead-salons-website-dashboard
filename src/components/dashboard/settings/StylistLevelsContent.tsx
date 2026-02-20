@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -296,7 +297,7 @@ export function StylistLevelsContent() {
                           if (e.key === 'Enter' || e.key === 'Escape') setEditingIndex(null);
                         }}
                       />
-                      <Button variant="ghost" size="sm" onClick={() => setEditingIndex(null)}>Done</Button>
+                      <Button variant="ghost" size={tokens.button.inline} onClick={() => setEditingIndex(null)}>Done</Button>
                     </div>
                   ) : (
                     <div className="flex-1 flex items-center justify-between gap-2 min-w-0">
@@ -373,8 +374,8 @@ export function StylistLevelsContent() {
                   if (e.key === 'Escape') { setIsAddingNew(false); setNewLevelName(''); }
                 }}
               />
-              <Button size="sm" onClick={handleAddNew} disabled={!newLevelName.trim()}>Add</Button>
-              <Button size="sm" variant="ghost" onClick={() => { setIsAddingNew(false); setNewLevelName(''); }}>Cancel</Button>
+              <Button size={tokens.button.inline} onClick={handleAddNew} disabled={!newLevelName.trim()}>Add</Button>
+              <Button size={tokens.button.inline} variant="ghost" onClick={() => { setIsAddingNew(false); setNewLevelName(''); }}>Cancel</Button>
             </div>
           ) : (
             <Button variant="outline" className="w-full" onClick={() => setIsAddingNew(true)}>

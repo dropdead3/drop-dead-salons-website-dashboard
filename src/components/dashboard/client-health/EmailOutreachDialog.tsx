@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -122,9 +123,9 @@ export function EmailOutreachDialog({ open, onOpenChange, clients, segmentLabel 
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="ghost" size={tokens.button.card} onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button
-            size="sm"
+            size={tokens.button.card}
             onClick={handleSend}
             disabled={!selectedTemplate || clientsWithEmail.length === 0 || sending || sent}
             className="gap-1.5"

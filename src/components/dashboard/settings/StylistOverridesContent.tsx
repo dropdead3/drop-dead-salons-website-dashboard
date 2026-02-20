@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Loader2, Trash2, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { tokens } from '@/lib/design-tokens';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
@@ -218,7 +218,7 @@ export function StylistOverridesContent({ serviceId, basePrice }: StylistOverrid
                           autoFocus
                         />
                       </div>
-                      <Button size="sm" className="h-8" onClick={e => { e.stopPropagation(); handleAddOverride(); }} disabled={upsertOverride.isPending}>
+                      <Button size={tokens.button.inline} className="h-8" onClick={e => { e.stopPropagation(); handleAddOverride(); }} disabled={upsertOverride.isPending}>
                         Add
                       </Button>
                     </div>

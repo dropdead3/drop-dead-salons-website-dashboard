@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,15 +89,15 @@ export function PersonalGoalsCard({
             </div>
           </div>
           {!isEditing ? (
-            <Button variant="ghost" size="sm" onClick={() => setIsEditing(true)}>
+            <Button variant="ghost" size={tokens.button.inline} onClick={() => setIsEditing(true)}>
               <Edit2 className="w-4 h-4" />
             </Button>
           ) : (
             <div className="flex gap-1">
-              <Button variant="ghost" size="sm" onClick={() => setIsEditing(false)}>
+              <Button variant="ghost" size={tokens.button.inline} onClick={() => setIsEditing(false)}>
                 <X className="w-4 h-4" />
               </Button>
-              <Button size="sm" onClick={handleSave} disabled={isUpdating}>
+              <Button size={tokens.button.inline} onClick={handleSave} disabled={isUpdating}>
                 {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               </Button>
             </div>
