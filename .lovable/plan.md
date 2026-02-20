@@ -1,21 +1,28 @@
 
+# Auto-Scroll Calendar to Operating Hours
 
-# Reduce Bottom Padding to Match Reference
+## What This Does
+When the day or week calendar view loads, it will automatically scroll to just above the location's opening time so you immediately see the first available booking slots -- no manual scrolling needed.
 
-## Change
-The `pb-28` was too aggressive. Reduce it to `pb-24` (96px) which provides just enough clearance for the floating action bar (~48px height + 16px bottom margin) plus a small visual gap matching the spacing visible in the screenshot between the nav pills and the calendar card.
+## How It Works
+- When the calendar renders (or when the date/location changes), it checks the selected location's opening hour for that day
+- It then scrolls the grid container to a position roughly 1 hour before the opening time
+- This gives you a small buffer of context above the first bookable slot
+- If no operating hours are defined, it falls back to scrolling to the user's configured `hours_start` preference
 
-## Technical Detail
+## Technical Details
 
-### File: `src/pages/dashboard/Schedule.tsx` (line 471)
+### DayView Changes (`src/components/dashboard/schedule/DayView.tsx`)
+- Add a `useRef` on the scrollable container (`div.flex-1.overflow-auto`)
+- Add a `useEffect` that calculates the scroll position based on `locationHours.open` (or `hoursStart` fallback)
+- Scroll target: 1 hour before the open time, converted to pixel offset using the existing `ROW_HEIGHT` (16px per 15-min slot = 64px per hour)
+- Uses `scrollTo({ top, behavior: 'instant' })` so it doesn't feel sluggish on load
 
-```tsx
-// Current
-pb-28
+### WeekView Changes (`src/components/dashboard/schedule/WeekView.tsx`)
+- Add a `useRef` on the scrollable container (`div.flex-1.overflow-auto`)
+- Add a `useEffect` that finds the earliest opening hour across the visible week days using `getLocationHoursForDate`
+- Scroll target: 1 hour before the earliest open time
+- Uses `ROW_HEIGHT` (20px per 15-min slot = 80px per hour)
 
-// New
-pb-24
-```
-
-Single token change -- `pb-24` gives 96px total, leaving ~32px of visible gap above the action bar, consistent with the reference image spacing.
-
+### No Changes Needed in Schedule.tsx
+- The location hours data is already passed as props to both views, so no parent-level changes are required
