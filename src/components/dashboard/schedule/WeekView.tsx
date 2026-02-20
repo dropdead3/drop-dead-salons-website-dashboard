@@ -294,7 +294,10 @@ export function WeekView({
     const scrollToHour = Math.max(earliestOpen - 1, hoursStart);
     const slotsOffset = (scrollToHour - hoursStart) * SLOTS_PER_HOUR;
     const top = slotsOffset * ROW_HEIGHT;
-    scrollRef.current.scrollTo({ top, behavior: 'instant' });
+    const ref = scrollRef.current;
+    requestAnimationFrame(() => {
+      ref?.scrollTo({ top, behavior: 'instant' });
+    });
   }, [currentDate.toDateString(), locationHoursJson, hoursStart]);
   
   // Week starts with today, followed by 6 future days

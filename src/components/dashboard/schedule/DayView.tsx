@@ -440,7 +440,10 @@ export function DayView({
     const scrollToHour = Math.max(openHour - 1, hoursStart);
     const slotsOffset = (scrollToHour - hoursStart) * 4; // 4 slots per hour
     const top = slotsOffset * ROW_HEIGHT;
-    scrollRef.current.scrollTo({ top, behavior: 'instant' });
+    const ref = scrollRef.current;
+    requestAnimationFrame(() => {
+      ref?.scrollTo({ top, behavior: 'instant' });
+    });
   }, [date.toDateString(), locationHours?.open, hoursStart]);
 
   const sensors = useSensors(
