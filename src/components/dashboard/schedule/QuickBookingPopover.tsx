@@ -1109,7 +1109,7 @@ export function QuickBookingPopover({
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedServiceDetails.map(s => (
-                    <Badge key={s.id} variant="outline" className="text-xs font-normal px-2 py-0.5 pr-1 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.id))}>
+                    <Badge key={s.id} variant="outline" className="text-xs font-normal px-2 py-0.5 pr-1 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.phorest_service_id))}>
                       {s.name}
                       <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                     </Badge>
@@ -1199,7 +1199,7 @@ export function QuickBookingPopover({
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedServiceDetails.map(s => (
-                    <Badge key={s.id} variant="outline" className="text-xs font-normal px-2 py-0.5 pr-1 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.id))}>
+                    <Badge key={s.id} variant="outline" className="text-xs font-normal px-2 py-0.5 pr-1 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.phorest_service_id))}>
                       {s.name}
                       <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                     </Badge>
@@ -1342,7 +1342,7 @@ export function QuickBookingPopover({
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedServiceDetails.map(s => (
-                    <Badge key={s.id} variant="outline" className="text-xs font-normal px-2 py-0.5 pr-1 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.id))}>
+                    <Badge key={s.id} variant="outline" className="text-xs font-normal px-2 py-0.5 pr-1 gap-1 cursor-pointer hover:bg-destructive/10 hover:border-destructive/30 transition-colors" onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.phorest_service_id))}>
                       {s.name}
                       <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
                     </Badge>
