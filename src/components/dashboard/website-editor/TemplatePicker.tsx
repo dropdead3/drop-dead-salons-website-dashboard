@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import {
   Dialog,
   DialogContent,
@@ -50,7 +51,7 @@ export function TemplatePicker({ open, onOpenChange, onSelect, filterType }: Tem
           <div className="flex gap-1.5 flex-wrap">
             <Button
               variant={activeCategory === null ? 'default' : 'outline'}
-              size="sm"
+              size={tokens.button.inline}
               className="h-7 text-xs"
               onClick={() => setActiveCategory(null)}
             >
@@ -60,7 +61,7 @@ export function TemplatePicker({ open, onOpenChange, onSelect, filterType }: Tem
               <Button
                 key={cat.id}
                 variant={activeCategory === cat.id ? 'default' : 'outline'}
-                size="sm"
+                size={tokens.button.inline}
                 className="h-7 text-xs"
                 onClick={() => setActiveCategory(cat.id)}
               >

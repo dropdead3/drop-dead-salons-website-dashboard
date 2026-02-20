@@ -1,4 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { tokens } from '@/lib/design-tokens';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, LucideIcon } from 'lucide-react';
 
@@ -24,7 +25,7 @@ export function ReportCard({ id, name, description, icon: Icon, onSelect }: Repo
         <CardDescription className="text-sm">{description}</CardDescription>
       </CardHeader>
       <CardContent className="pt-0">
-        <Button variant="ghost" size="sm" className="w-full justify-center">
+        <Button variant="ghost" size={tokens.button.card} className="w-full justify-center">
           Generate Report
         </Button>
       </CardContent>

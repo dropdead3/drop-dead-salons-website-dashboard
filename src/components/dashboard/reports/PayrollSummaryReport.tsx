@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -151,8 +152,8 @@ export function PayrollSummaryReport({ dateFrom, dateTo, locationId, onClose }: 
       <div className="flex items-center justify-between">
         <button onClick={onClose} className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1"><ArrowLeft className="w-4 h-4" /> Back to Reports</button>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={exportCSV}><FileSpreadsheet className="w-4 h-4 mr-2" /> CSV</Button>
-          <Button size="sm" onClick={generatePDF} disabled={isGenerating}>
+          <Button variant="outline" size={tokens.button.card} onClick={exportCSV}><FileSpreadsheet className="w-4 h-4 mr-2" /> CSV</Button>
+          <Button size={tokens.button.card} onClick={generatePDF} disabled={isGenerating}>
             {isGenerating ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Generating...</> : <><Download className="w-4 h-4 mr-2" /> Download PDF</>}
           </Button>
         </div>

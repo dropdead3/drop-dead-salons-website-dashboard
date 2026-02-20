@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -188,7 +189,7 @@ export function ScheduledReportsSubTab() {
                 <div className="flex items-center gap-2">
                   <Button 
                     variant="ghost" 
-                    size="sm"
+                    size={tokens.button.inline}
                     onClick={() => setHistoryReportId(report.id)}
                   >
                     <History className="w-4 h-4" />
@@ -196,7 +197,7 @@ export function ScheduledReportsSubTab() {
                   
                   <Button 
                     variant="ghost" 
-                    size="sm"
+                    size={tokens.button.inline}
                     onClick={() => handleToggleActive(report)}
                     disabled={updateReport.isPending}
                   >
@@ -209,7 +210,7 @@ export function ScheduledReportsSubTab() {
                   
                   <Button 
                     variant="ghost" 
-                    size="sm"
+                    size={tokens.button.inline}
                     onClick={() => setDeleteId(report.id)}
                     className="text-destructive hover:text-destructive"
                   >

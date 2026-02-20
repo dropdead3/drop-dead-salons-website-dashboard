@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -306,7 +307,7 @@ export function TypographyEditor({ isEditMode, onToggleEditMode }: TypographyEdi
               <>
                 <Button
                   variant="outline"
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={handleDiscard}
                   disabled={isSaving}
                 >
@@ -316,7 +317,7 @@ export function TypographyEditor({ isEditMode, onToggleEditMode }: TypographyEdi
                 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="sm" disabled={isSaving}>
+                    <Button variant="outline" size={tokens.button.card} disabled={isSaving}>
                       <RotateCcw className="w-4 h-4 mr-1" />
                       Reset
                     </Button>
@@ -338,7 +339,7 @@ export function TypographyEditor({ isEditMode, onToggleEditMode }: TypographyEdi
                 </AlertDialog>
                 
                 <Button
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={handleSave}
                   disabled={isSaving || !hasUnsavedChanges}
                   className="bg-gold hover:bg-gold/90 text-gold-foreground"
@@ -353,7 +354,7 @@ export function TypographyEditor({ isEditMode, onToggleEditMode }: TypographyEdi
               </>
             ) : (
               <Button
-                size="sm"
+                size={tokens.button.card}
                 onClick={onToggleEditMode}
                 className="bg-gold hover:bg-gold/90 text-gold-foreground"
               >

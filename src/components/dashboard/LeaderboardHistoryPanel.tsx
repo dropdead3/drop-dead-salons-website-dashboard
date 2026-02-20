@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { format, subWeeks, startOfWeek } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { Card } from '@/components/ui/card';
@@ -82,7 +83,7 @@ export function LeaderboardHistoryPanel({
         </div>
         {canSaveSnapshot && (
           <Button
-            size="sm"
+            size={tokens.button.card}
             variant="outline"
             onClick={handleSaveSnapshot}
             disabled={saving || currentRankings.length === 0}
@@ -102,7 +103,7 @@ export function LeaderboardHistoryPanel({
       <div className="flex items-center justify-between bg-muted/50 rounded-lg p-2">
         <Button
           variant="ghost"
-          size="sm"
+          size={tokens.button.inline}
           onClick={() => setSelectedWeekOffset(prev => prev + 1)}
           disabled={selectedWeekOffset >= 7}
         >
@@ -113,7 +114,7 @@ export function LeaderboardHistoryPanel({
         </span>
         <Button
           variant="ghost"
-          size="sm"
+          size={tokens.button.inline}
           onClick={() => setSelectedWeekOffset(prev => prev - 1)}
           disabled={selectedWeekOffset <= 0}
         >

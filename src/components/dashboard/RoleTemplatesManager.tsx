@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -259,7 +260,7 @@ export function RoleTemplatesManager() {
               <div className="text-center py-8 border rounded-lg border-dashed">
                 <Files className="w-8 h-8 mx-auto mb-2 text-muted-foreground/50" />
                 <p className="text-sm text-muted-foreground">No custom templates yet</p>
-                <Button variant="link" size="sm" onClick={openCreateDialog} className="mt-2">
+                <Button variant="link" size={tokens.button.card} onClick={openCreateDialog} className="mt-2">
                   Create your first template
                 </Button>
               </div>

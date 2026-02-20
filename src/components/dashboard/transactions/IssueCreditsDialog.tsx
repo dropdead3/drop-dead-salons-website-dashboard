@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import {
   Dialog,
   DialogContent,
@@ -109,7 +110,7 @@ export function IssueCreditsDialog({ open, onOpenChange, preselectedClientId }: 
                     <p className="text-xs text-muted-foreground">{selectedClient.email || selectedClient.phone || selectedClient.mobile}</p>
                   </div>
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => {
+                <Button variant="ghost" size={tokens.button.inline} onClick={() => {
                   setSelectedClientId(null);
                   setShowClientSearch(true);
                 }}>

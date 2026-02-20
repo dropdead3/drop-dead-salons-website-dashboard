@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -172,10 +173,10 @@ export function ExecutiveSummaryReport({ dateFrom, dateTo, locationId, onClose }
               </CardDescription>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={exportCSV}>
+              <Button variant="outline" size={tokens.button.card} onClick={exportCSV}>
                 <FileSpreadsheet className="w-4 h-4 mr-1" /> CSV
               </Button>
-              <Button size="sm" onClick={generatePDF} disabled={isGenerating}>
+              <Button size={tokens.button.card} onClick={generatePDF} disabled={isGenerating}>
                 {isGenerating ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Download className="w-4 h-4 mr-1" />}
                 PDF
               </Button>
