@@ -9,6 +9,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -83,7 +84,7 @@ export function AddTaskDialog({ onAdd, isPending, isReadOnly = false }: AddTaskD
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
+        <Button variant="ghost" size={tokens.button.inline} className="gap-1 text-muted-foreground">
           <Plus className="w-4 h-4" />
           Add task
         </Button>

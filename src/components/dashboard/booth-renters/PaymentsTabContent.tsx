@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRentPayments, useRentPaymentsSummary, useRecordPayment } from '@/hooks/useRentPayments';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -236,7 +237,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
                           </Button>
                         )}
                         {payment.status === 'paid' && (
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size={tokens.button.inline}>
                             View Receipt
                           </Button>
                         )}

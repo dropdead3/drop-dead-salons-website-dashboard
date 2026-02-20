@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Lock, Search, Eye, EyeOff, Crown, Shield, History, User, ExternalLink, Plus, Pencil, Trash2, MoreHorizontal } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -224,7 +225,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                             ) : (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button variant="outline" size="sm" className="gap-1.5">
+                                  <Button variant="outline" size={tokens.button.inline} className="gap-1.5">
                                     Manage
                                     <MoreHorizontal className="w-3.5 h-3.5" />
                                   </Button>

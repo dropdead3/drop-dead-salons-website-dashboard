@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
@@ -107,15 +108,15 @@ export function ResponsibilityAssetsEditor({ responsibilityId, canManage }: Resp
               />
             )}
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setIsAdding(false)}>Cancel</Button>
-              <Button size="sm" className="h-7 text-xs" onClick={handleAdd} disabled={!newAsset.title.trim() || createAsset.isPending}>
+              <Button variant="outline" size={tokens.button.inline} className="h-7 text-xs" onClick={() => setIsAdding(false)}>Cancel</Button>
+              <Button size={tokens.button.inline} className="h-7 text-xs" onClick={handleAdd} disabled={!newAsset.title.trim() || createAsset.isPending}>
                 Add
               </Button>
             </div>
           </CardContent>
         </Card>
       ) : canManage ? (
-        <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={() => setIsAdding(true)}>
+        <Button variant="outline" size={tokens.button.inline} className="h-7 text-xs gap-1" onClick={() => setIsAdding(true)}>
           <Plus className="h-3 w-3" /> Add Asset
         </Button>
       ) : null}

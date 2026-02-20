@@ -559,7 +559,7 @@ export default function PhorestSettings() {
                           </Badge>
                         </div>
                         <Button
-                          size="sm"
+                          size={tokens.button.inline}
                           onClick={() => handleAutoMatch(suggestion.employee, suggestion.phorestStaff)}
                           disabled={createMapping.isPending}
                         >
@@ -746,7 +746,7 @@ export default function PhorestSettings() {
                                           ) : null}
                                           <Button
                                             variant="ghost"
-                                            size="sm"
+                                            size={tokens.button.inline}
                                             onClick={() => toggleMappingVisibility(mapping.id)}
                                             className="h-7 w-7 p-0"
                                           >
@@ -779,7 +779,7 @@ export default function PhorestSettings() {
                                       <TableCell className="text-right">
                                         <Button
                                           variant="ghost"
-                                          size="sm"
+                                          size={tokens.button.inline}
                                           onClick={() => deleteMapping.mutate(mapping.id)}
                                           disabled={deleteMapping.isPending}
                                         >
@@ -824,7 +824,7 @@ export default function PhorestSettings() {
                               )}
                               <Button
                                 variant="ghost"
-                                size="sm"
+                                size={tokens.button.inline}
                                 onClick={() => toggleMappingVisibility(mapping.id)}
                                 className="h-7 w-7 p-0"
                               >
@@ -863,7 +863,7 @@ export default function PhorestSettings() {
                           <TableCell className="text-right">
                             <Button
                               variant="ghost"
-                              size="sm"
+                              size={tokens.button.inline}
                               onClick={() => deleteMapping.mutate(mapping.id)}
                               disabled={deleteMapping.isPending}
                             >

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -401,7 +402,7 @@ export function NewHireWizardContent() {
               <div className="p-4 rounded-lg bg-muted/50 border space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium">Login Credentials</p>
-                  <Button variant="ghost" size="sm" onClick={copyCredentials}>
+                  <Button variant="ghost" size={tokens.button.inline} onClick={copyCredentials}>
                     {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </Button>
                 </div>

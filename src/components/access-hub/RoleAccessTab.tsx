@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { tokens } from '@/lib/design-tokens';
 import { 
   Select,
   SelectContent,
@@ -204,7 +205,7 @@ export function RoleAccessTab({ canManage }: RoleAccessTabProps) {
                   </Select>
                   {copyFromRole && (
                     <Button 
-                      size="sm" 
+                      size={tokens.button.inline} 
                       onClick={handleCopyFromRole}
                       disabled={bulkUpdateMutation.isPending}
                     >
@@ -218,7 +219,7 @@ export function RoleAccessTab({ canManage }: RoleAccessTabProps) {
                   )}
                   <Button 
                     variant="outline" 
-                    size="sm"
+                    size={tokens.button.inline}
                     onClick={handleResetRole}
                     disabled={bulkUpdateMutation.isPending}
                   >

@@ -331,7 +331,7 @@ export function ScheduleToolbar({
 
         {/* New Booking */}
         {canCreate && (
-          <Button size="sm" onClick={onNewBooking}>
+          <Button size={tokens.button.card} onClick={onNewBooking}>
             <Plus className="h-4 w-4 mr-1.5" />
             <span className="hidden sm:inline">New Booking</span>
           </Button>
