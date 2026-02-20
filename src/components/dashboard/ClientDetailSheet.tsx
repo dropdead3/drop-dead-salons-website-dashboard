@@ -87,14 +87,17 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
   const { selectedOrganization } = useOrganizationContext();
   const queryClient = useQueryClient();
 
-  // Edit mode state
+  // Contact edit mode state
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
+
+  // Dates edit mode state (independent)
+  const [isEditingDates, setIsEditingDates] = useState(false);
   const [editBirthday, setEditBirthday] = useState('');
   const [editClientSince, setEditClientSince] = useState('');
-
+  
   const canEdit = roles.some(role => ['admin', 'manager', 'super_admin', 'receptionist'].includes(role));
 
   const startEditing = () => {
@@ -102,14 +105,18 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
     setEditName(client.name || '');
     setEditEmail(client.email || '');
     setEditPhone(client.phone || '');
-    setEditBirthday(client.birthday || '');
-    setEditClientSince(client.client_since || '');
     setIsEditing(true);
   };
 
-  const cancelEditing = () => {
-    setIsEditing(false);
+  const startEditingDates = () => {
+    if (!client) return;
+    setEditBirthday(client.birthday || '');
+    setEditClientSince(client.client_since || '');
+    setIsEditingDates(true);
   };
+
+  const cancelEditing = () => setIsEditing(false);
+  const cancelEditingDates = () => setIsEditingDates(false);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -125,8 +132,6 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
           name: editName.trim(),
           email: editEmail.trim() || null,
           phone: editPhone.trim() || null,
-          birthday: editBirthday || null,
-          client_since: editClientSince || null,
         })
         .eq('id', client.id);
       
@@ -143,12 +148,37 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
     },
   });
 
+  const saveDatesMutation = useMutation({
+    mutationFn: async () => {
+      if (!client) throw new Error('No client');
+      
+      const { error } = await supabase
+        .from('phorest_clients')
+        .update({
+          birthday: editBirthday || null,
+          client_since: editClientSince || null,
+        })
+        .eq('id', client.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client-directory'] });
+      queryClient.invalidateQueries({ queryKey: ['phorest-clients'] });
+      toast.success('Dates updated');
+      setIsEditingDates(false);
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to update dates', { description: error.message });
+    },
+  });
+
   if (!client) return null;
 
   const initials = client.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
-    <Sheet open={open} onOpenChange={(o) => { if (!o) setIsEditing(false); onOpenChange(o); }}>
+    <Sheet open={open} onOpenChange={(o) => { if (!o) { setIsEditing(false); setIsEditingDates(false); } onOpenChange(o); }}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         {/* Banned Client Alert */}
         {client.is_banned && (
@@ -317,14 +347,6 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                   <label className="text-xs text-muted-foreground">Phone</label>
                   <Input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="h-8 text-sm" />
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Birthday</label>
-                  <Input type="date" value={editBirthday} onChange={(e) => setEditBirthday(e.target.value)} className="h-8 text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Client Since</label>
-                  <Input type="date" value={editClientSince} onChange={(e) => setEditClientSince(e.target.value)} className="h-8 text-sm" />
-                </div>
               </div>
             ) : (
               <>
@@ -352,27 +374,81 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                     <span>Last visit: {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}</span>
                   </div>
                 )}
-                {client.birthday && (
-                  <div className="flex items-center gap-2">
-                    <Cake className="w-4 h-4 text-muted-foreground" />
-                    <span>Birthday: {formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')}</span>
-                  </div>
-                )}
-                {client.client_since && (
-                  <div className="flex items-center gap-2">
-                    <Award className="w-4 h-4 text-muted-foreground" />
-                    <span>
-                      Client since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy')}
-                      {' — '}
-                      {(() => {
-                        const years = differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 365;
-                        if (years >= 1) return `${Math.floor(years)} year${Math.floor(years) !== 1 ? 's' : ''}`;
-                        const months = Math.floor(differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 30);
-                        return `${months} month${months !== 1 ? 's' : ''}`;
-                      })()}
-                    </span>
-                  </div>
-                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Important Dates */}
+        <Card className="mb-4">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-primary" />
+                <CardTitle className="text-sm font-medium">Important Dates</CardTitle>
+              </div>
+              {canEdit && !isEditingDates && (
+                <Button variant="ghost" size="sm" onClick={startEditingDates} className="h-7 px-2">
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
+              )}
+              {isEditingDates && (
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="sm" onClick={cancelEditingDates} className="h-7 px-2 text-muted-foreground">
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => saveDatesMutation.mutate()} 
+                    disabled={saveDatesMutation.isPending}
+                    className="h-7 px-2 text-green-600"
+                  >
+                    {saveDatesMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {isEditingDates ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Birthday</label>
+                  <Input type="date" value={editBirthday} onChange={(e) => setEditBirthday(e.target.value)} className="h-8 text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Client Since</label>
+                  <Input type="date" value={editClientSince} onChange={(e) => setEditClientSince(e.target.value)} className="h-8 text-sm" />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2">
+                  <Cake className="w-4 h-4 text-muted-foreground" />
+                  <span>
+                    {client.birthday 
+                      ? `Birthday: ${formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')}`
+                      : 'No birthday on file'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Award className="w-4 h-4 text-muted-foreground" />
+                  <span>
+                    {client.client_since ? (
+                      <>
+                        Client since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy')}
+                        {' — '}
+                        {(() => {
+                          const years = differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 365;
+                          if (years >= 1) return `${Math.floor(years)} year${Math.floor(years) !== 1 ? 's' : ''}`;
+                          const months = Math.floor(differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 30);
+                          return `${months} month${months !== 1 ? 's' : ''}`;
+                        })()}
+                      </>
+                    ) : 'No start date on file'}
+                  </span>
+                </div>
               </>
             )}
           </CardContent>
