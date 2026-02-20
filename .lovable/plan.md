@@ -1,60 +1,30 @@
 
-## Reposition Info Icon to Top-Right Corner of Simplified Analytics Cards
 
-### Problem
-The circle info icon (`MetricInfoTooltip`) currently sits inline in the flex row with the icon box and label. This causes inconsistent positioning depending on label length. It should be pinned to the top-right corner of the card with equal padding from the top and right edges.
+## Show Exact Dollar Amount on Week Ahead Forecast Card
 
-### Changes
+### What changes
 
-**1. Add a KPI info-icon token to `src/lib/design-tokens.ts`**
+The simplified "Week Ahead Forecast" pinned card currently displays a compact/rounded value like "$6K". This will be changed to show the exact whole-dollar amount (e.g., "$6,240") and update the subtitle to reflect the more precise language.
 
-Add a new token under `kpi`:
+### Change
+
+In `src/components/dashboard/PinnedAnalyticsCard.tsx` (line 426-427), replace:
+
 ```
-infoIcon: 'absolute top-4 right-4'
-```
-
-This creates a reusable positioning rule for all simplified analytics cards.
-
-**2. Update `src/components/dashboard/PinnedAnalyticsCard.tsx` (line ~474-481)**
-
-- Make the Card's inner layout `relative` so the icon can be absolutely positioned
-- Move `MetricInfoTooltip` out of the flex row and apply the new `kpi.infoIcon` token
-- Remove it from the icon+label flex row
-
-Before:
-```
-<Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5')}>
-  <div className="flex items-center gap-3">
-    <div className="w-10 h-10 ...">
-      <Icon ... />
-    </div>
-    <span ...>{meta.label}</span>
-    {description && <MetricInfoTooltip description={description} />}
-  </div>
+metricValue = formatCurrencyCompact(weekAheadData?.totalRevenue ?? 0);
+metricLabel = 'Projected revenue for the next 7 days';
 ```
 
-After:
+with:
+
 ```
-<Card className={cn(tokens.kpi.tile, 'justify-between min-h-[160px] p-5 relative')}>
-  {description && <MetricInfoTooltip description={description} className={tokens.kpi.infoIcon} />}
-  <div className="flex items-center gap-3">
-    <div className="w-10 h-10 ...">
-      <Icon ... />
-    </div>
-    <span ...>{meta.label}</span>
-  </div>
+metricValue = formatCurrencyWhole(weekAheadData?.totalRevenue ?? 0);
+metricLabel = 'Estimated booked service revenue for the next 7 days';
 ```
 
-**3. Update `src/components/dashboard/AITasksWidget.tsx`** (same pattern if applicable)
+`formatCurrencyWhole` is already imported and available on the same line (279) as `formatCurrencyCompact`, so no new imports are needed.
 
-Apply the same absolute-positioning pattern so all simplified KPI-style cards are consistent.
+### Technical detail
 
-### Design rule update
+Single two-line change in `PinnedAnalyticsCard.tsx`. No other files affected. The `formatCurrencyWhole` formatter outputs full dollar amounts with no decimal places (e.g., "$6,240" instead of "$6K").
 
-Document in `CARD_HEADER_DESIGN_RULES.md` that simplified/KPI-tile cards position the info icon absolutely at `top-4 right-4`, not inline with the title.
-
-### Files modified
-- `src/lib/design-tokens.ts` -- add `kpi.infoIcon` token
-- `src/components/dashboard/PinnedAnalyticsCard.tsx` -- reposition MetricInfoTooltip
-- `src/components/dashboard/AITasksWidget.tsx` -- apply same pattern if it has an info icon
-- `src/CARD_HEADER_DESIGN_RULES.md` -- document the rule for simplified cards
