@@ -36,10 +36,12 @@ import {
   Settings,
   Bell,
   Home,
-  StickyNote
+  StickyNote,
+  Megaphone
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn, formatPhoneDisplay } from '@/lib/utils';
+import { LEAD_SOURCES, getLeadSourceLabel, getLeadSourceColor, isStandardSource } from '@/lib/leadSources';
 import { VisitHistoryTimeline } from './VisitHistoryTimeline';
 import { ClientNotesSection } from './ClientNotesSection';
 import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
@@ -125,6 +127,7 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
   const [isEditingSettings, setIsEditingSettings] = useState(false);
   const [editCategory, setEditCategory] = useState('');
   const [editLeadSource, setEditLeadSource] = useState('');
+  const [editLeadSourceCustom, setEditLeadSourceCustom] = useState('');
   const [editReferredBy, setEditReferredBy] = useState('');
   const [editExternalId, setEditExternalId] = useState('');
 
@@ -170,7 +173,15 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
   const startEditingSettings = () => {
     if (!client) return;
     setEditCategory(client.client_category || '');
-    setEditLeadSource(client.lead_source || '');
+    // If existing value is a standard source, use it; otherwise treat as "other" with custom text
+    const currentSource = client.lead_source || '';
+    if (isStandardSource(currentSource) || !currentSource) {
+      setEditLeadSource(currentSource);
+      setEditLeadSourceCustom('');
+    } else {
+      setEditLeadSource('other');
+      setEditLeadSourceCustom(currentSource);
+    }
     setEditReferredBy(client.referred_by || '');
     setEditExternalId(client.external_client_id || '');
     setIsEditingSettings(true);
@@ -255,11 +266,14 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
   const saveSettingsMutation = useMutation({
     mutationFn: async () => {
       if (!client) throw new Error('No client');
+      const resolvedSource = editLeadSource === 'other' && editLeadSourceCustom.trim()
+        ? editLeadSourceCustom.trim()
+        : editLeadSource || null;
       const { error } = await supabase
         .from('phorest_clients')
         .update({
           client_category: editCategory || null,
-          lead_source: editLeadSource || null,
+          lead_source: resolvedSource,
           referred_by: editReferredBy || null,
           external_client_id: editExternalId || null,
         } as any)
@@ -608,6 +622,15 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                       <span>Last visit: {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}</span>
                     </div>
                   )}
+                  {/* Source badge in contact section */}
+                  {client.lead_source && (
+                    <div className="flex items-center gap-2">
+                      <Megaphone className="w-4 h-4 text-muted-foreground" />
+                      <Badge variant="outline" className={cn("text-xs font-medium", getLeadSourceColor(client.lead_source))}>
+                        {getLeadSourceLabel(client.lead_source)}
+                      </Badge>
+                    </div>
+                  )}
                 </>
               )}
             </CardContent>
@@ -754,10 +777,27 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                     <label className="text-xs text-muted-foreground">Client Category</label>
                     <Input value={editCategory} onChange={(e) => setEditCategory(e.target.value)} className="h-8 text-sm" />
                   </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground">Where did they hear of us</label>
-                    <Input value={editLeadSource} onChange={(e) => setEditLeadSource(e.target.value)} className="h-8 text-sm" />
+                  <div className="col-span-2">
+                    <label className="text-xs text-muted-foreground">How did they hear about us?</label>
+                    <Select value={editLeadSource} onValueChange={(v) => { setEditLeadSource(v); if (v !== 'other') setEditLeadSourceCustom(''); }}>
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Select source..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {LEAD_SOURCES.map(source => (
+                          <SelectItem key={source.value} value={source.value}>
+                            {source.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+                  {editLeadSource === 'other' && (
+                    <div className="col-span-2">
+                      <label className="text-xs text-muted-foreground">Please specify</label>
+                      <Input value={editLeadSourceCustom} onChange={(e) => setEditLeadSourceCustom(e.target.value)} className="h-8 text-sm" placeholder="e.g. Magazine ad, friend's recommendation..." />
+                    </div>
+                  )}
                   <div>
                     <label className="text-xs text-muted-foreground">Referred By</label>
                     <Input value={editReferredBy} onChange={(e) => setEditReferredBy(e.target.value)} className="h-8 text-sm" />

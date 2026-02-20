@@ -35,6 +35,8 @@ import { differenceInDays } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { cn } from '@/lib/utils';
+import { LEAD_SOURCES, getLeadSourceLabel, getLeadSourceColor } from '@/lib/leadSources';
+import { Megaphone } from 'lucide-react';
 import { PhorestSyncButton } from '@/components/dashboard/PhorestSyncButton';
 import { useLocations } from '@/hooks/useLocations';
 import { ClientDetailSheet } from '@/components/dashboard/ClientDetailSheet';
@@ -57,6 +59,7 @@ export default function ClientDirectory() {
   const [selectedClient, setSelectedClient] = useState<any | null>(null);
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
   const [selectedStylist, setSelectedStylist] = useState<string>('all');
+  const [selectedSource, setSelectedSource] = useState<string>('all');
 
   // Determine if user can see all clients (leadership + front desk)
   const canViewAllClients = roles.some(role => 
@@ -174,6 +177,11 @@ export default function ClientDirectory() {
       );
     }
 
+    // Source filter
+    if (selectedSource !== 'all') {
+      filtered = filtered.filter(c => c.lead_source === selectedSource);
+    }
+
     // Tab filter (VIP, At Risk, New, Banned, Archived)
     if (activeTab === 'archived') {
       filtered = filtered.filter(c => c.is_archived);
@@ -225,7 +233,7 @@ export default function ClientDirectory() {
     });
 
     return filtered;
-  }, [processedClients, selectedLocation, activeTab, searchQuery, sortField, sortDirection]);
+  }, [processedClients, selectedLocation, selectedSource, activeTab, searchQuery, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -255,6 +263,18 @@ export default function ClientDirectory() {
       newClients: active.filter(c => c.isNew).length,
       totalRevenue: active.reduce((s, c) => s + Number(c.total_spend || 0), 0),
       archived: clientsForStats.filter(c => c.is_archived).length,
+      topSource: (() => {
+        const sourceCounts: Record<string, number> = {};
+        active.forEach(c => {
+          if (c.lead_source) {
+            sourceCounts[c.lead_source] = (sourceCounts[c.lead_source] || 0) + 1;
+          }
+        });
+        const entries = Object.entries(sourceCounts);
+        if (entries.length === 0) return null;
+        entries.sort((a, b) => b[1] - a[1]);
+        return { source: entries[0][0], count: entries[0][1] };
+      })(),
     };
   }, [processedClients, selectedLocation]);
 
@@ -299,7 +319,7 @@ export default function ClientDirectory() {
         )}
 
         {/* Stats Cards */}
-        <BentoGrid maxPerRow={5} gap="gap-4" className="mb-6">
+        <BentoGrid maxPerRow={6} gap="gap-4" className="mb-6">
           <Card className="p-4 text-center">
             <Users className="w-5 h-5 text-primary mx-auto mb-2" />
             <p className="font-display text-2xl">{stats.total}</p>
@@ -324,6 +344,15 @@ export default function ClientDirectory() {
             <DollarSign className="w-5 h-5 text-primary mx-auto mb-2" />
             <p className="font-display text-2xl">{formatCurrencyWhole(stats.totalRevenue)}</p>
             <p className="text-xs text-muted-foreground">Total Revenue</p>
+          </Card>
+          <Card className="p-4 text-center">
+            <Megaphone className="w-5 h-5 text-primary mx-auto mb-2" />
+            <p className="font-display text-lg truncate">
+              {stats.topSource ? getLeadSourceLabel(stats.topSource.source) : '—'}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {stats.topSource ? `Top Source (${stats.topSource.count})` : 'Top Source'}
+            </p>
           </Card>
         </BentoGrid>
 
@@ -374,6 +403,22 @@ export default function ClientDirectory() {
               </SelectContent>
             </Select>
           )}
+
+          {/* Source Filter */}
+          <Select value={selectedSource} onValueChange={setSelectedSource}>
+            <SelectTrigger className="w-full md:w-[200px]">
+              <Megaphone className="w-4 h-4 mr-2 text-muted-foreground" />
+              <SelectValue placeholder="All Sources" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sources</SelectItem>
+              {LEAD_SOURCES.map(source => (
+                <SelectItem key={source.value} value={source.value}>
+                  {source.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
@@ -538,6 +583,14 @@ export default function ClientDirectory() {
                               <span className="flex items-center gap-1">
                                 <MapPin className="w-3 h-3" /> {locationName}
                               </span>
+                            </>
+                          )}
+                          {client.lead_source && (
+                            <>
+                              <span>•</span>
+                              <Badge variant="outline" className={cn("text-[10px] py-0 px-1.5", getLeadSourceColor(client.lead_source))}>
+                                {getLeadSourceLabel(client.lead_source)}
+                              </Badge>
                             </>
                           )}
                         </div>
