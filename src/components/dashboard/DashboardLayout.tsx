@@ -218,6 +218,7 @@ function NavHistoryArrows() {
 function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [headerHovered, setHeaderHovered] = useState(false);
   const [headerScrollingUp, setHeaderScrollingUp] = useState(true);
   
   const lastScrollY = useRef(0);
@@ -1119,11 +1120,28 @@ function DashboardLayoutInner({ children, hideFooter }: DashboardLayoutProps) {
       {/* Custom Landing Page Banner - hide in full-screen mode */}
       {!hideFooter && <CustomLandingPageBanner sidebarCollapsed={sidebarCollapsed} />}
 
+      {/* Hot zone trigger for auto-hide header */}
+      {hideFooter && (
+        <div
+          className="hidden lg:block fixed top-0 left-0 right-0 h-10 z-50"
+          onMouseEnter={() => setHeaderHovered(true)}
+        />
+      )}
+
       {/* Desktop Top Bar - Single unified bar */}
-      <div className={cn(
-        "dashboard-top-bar hidden lg:block sticky top-0 z-30 px-3 pt-3 pb-3",
-        hideFooter && "shrink-0"
-      )}>
+      <div
+        className={cn(
+          "dashboard-top-bar hidden lg:block z-30 px-3 pt-3 pb-3",
+          hideFooter
+            ? "fixed top-0 right-0 z-50 transition-transform duration-300 ease-in-out"
+            : "sticky top-0",
+          hideFooter && !headerHovered && "-translate-y-full",
+          hideFooter && headerHovered && "translate-y-0",
+          hideFooter && "shrink-0"
+        )}
+        style={hideFooter ? { left: sidebarCollapsed ? '88px' : '312px' } : undefined}
+        onMouseLeave={() => hideFooter && setHeaderHovered(false)}
+      >
         {/* Extended blur zone -- blurs content around/below the bar */}
         <div 
           className="absolute inset-0 -bottom-8 backdrop-blur-md pointer-events-none"
