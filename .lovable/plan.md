@@ -1,28 +1,28 @@
 
-# Auto-Scroll Calendar to Operating Hours
+# Fix: Top Menu Bar Not Auto-Hiding After Auto-Scroll Change
 
-## What This Does
-When the day or week calendar view loads, it will automatically scroll to just above the location's opening time so you immediately see the first available booking slots -- no manual scrolling needed.
+## Problem
+After adding the auto-scroll feature to DayView and WeekView, the top menu bar on the Schedule page is no longer auto-hiding. The bar should be hidden by default and only appear when the user hovers near the top of the screen.
 
-## How It Works
-- When the calendar renders (or when the date/location changes), it checks the selected location's opening hour for that day
-- It then scrolls the grid container to a position roughly 1 hour before the opening time
-- This gives you a small buffer of context above the first bookable slot
-- If no operating hours are defined, it falls back to scrolling to the user's configured `hours_start` preference
+## Root Cause
+The `scrollTo` call in the `useEffect` fires during initial render/mount, which can cause a brief layout shift or scroll event propagation that interferes with the header's hide/show state in `DashboardLayout`. The programmatic scroll may trigger the window's scroll listener or cause a transient hover-zone interaction during the initial paint.
 
-## Technical Details
+## Fix
 
-### DayView Changes (`src/components/dashboard/schedule/DayView.tsx`)
-- Add a `useRef` on the scrollable container (`div.flex-1.overflow-auto`)
-- Add a `useEffect` that calculates the scroll position based on `locationHours.open` (or `hoursStart` fallback)
-- Scroll target: 1 hour before the open time, converted to pixel offset using the existing `ROW_HEIGHT` (16px per 15-min slot = 64px per hour)
-- Uses `scrollTo({ top, behavior: 'instant' })` so it doesn't feel sluggish on load
+### DayView.tsx and WeekView.tsx
+Wrap the `scrollTo` call in a `requestAnimationFrame` to defer it until after the browser has completed layout and paint. This prevents the programmatic scroll from interfering with the header's initial hidden state.
 
-### WeekView Changes (`src/components/dashboard/schedule/WeekView.tsx`)
-- Add a `useRef` on the scrollable container (`div.flex-1.overflow-auto`)
-- Add a `useEffect` that finds the earliest opening hour across the visible week days using `getLocationHoursForDate`
-- Scroll target: 1 hour before the earliest open time
-- Uses `ROW_HEIGHT` (20px per 15-min slot = 80px per hour)
+**Before:**
+```ts
+scrollRef.current.scrollTo({ top, behavior: 'instant' });
+```
 
-### No Changes Needed in Schedule.tsx
-- The location hours data is already passed as props to both views, so no parent-level changes are required
+**After:**
+```ts
+const ref = scrollRef.current;
+requestAnimationFrame(() => {
+  ref?.scrollTo({ top, behavior: 'instant' });
+});
+```
+
+This is a minimal, targeted change -- just two lines in each file -- that ensures the auto-scroll happens cleanly after the header has settled into its hidden state.
