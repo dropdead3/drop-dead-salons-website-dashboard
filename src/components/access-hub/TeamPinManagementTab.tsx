@@ -215,7 +215,7 @@ export function TeamPinManagementTab({ canManage }: TeamPinManagementTabProps) {
                             {!member.has_pin ? (
                               <Button
                                 variant="outline"
-                                size="sm"
+                                size={tokens.button.card}
                                 onClick={() => handleOpenResetDialog(member, 'set')}
                                 className="gap-1.5"
                               >

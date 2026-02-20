@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   LayoutGrid,
@@ -749,7 +750,7 @@ export default function WebsiteSectionsHub() {
         {isMobile && (
           <Button
             variant="default"
-            size="sm"
+            size={tokens.button.card}
             className="fixed bottom-20 right-4 z-50 rounded-full shadow-lg h-12 w-12 p-0"
             onClick={() => setShowSidebar(prev => !prev)}
           >
@@ -852,7 +853,7 @@ export default function WebsiteSectionsHub() {
 
                     <Button 
                       variant="outline" 
-                      size="sm"
+                      size={tokens.button.card}
                       onClick={() => window.open(openSiteUrl, '_blank')}
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
@@ -872,7 +873,7 @@ export default function WebsiteSectionsHub() {
                 {isDirty && (
                   <span className="text-sm text-amber-600 dark:text-amber-400">Unsaved changes</span>
                 )}
-                <Button onClick={triggerSave} disabled={!isDirty || isSaving} size="sm">
+                <Button onClick={triggerSave} disabled={!isDirty || isSaving} size={tokens.button.card}>
                   {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
                   Save & Publish Changes
                 </Button>
