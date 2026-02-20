@@ -12,7 +12,7 @@ import { MonthView } from '@/components/dashboard/schedule/MonthView';
 import { AgendaView } from '@/components/dashboard/schedule/AgendaView';
 import { AppointmentDetailSheet } from '@/components/dashboard/schedule/AppointmentDetailSheet';
 import { CheckoutSummarySheet } from '@/components/dashboard/schedule/CheckoutSummarySheet';
-import { BookingWizard } from '@/components/dashboard/schedule/booking';
+import { QuickBookingPopover } from '@/components/dashboard/schedule/QuickBookingPopover';
 import { ScheduleUtilizationBar } from '@/components/dashboard/schedule/ScheduleUtilizationBar';
 import { SchedulingCopilotPanel } from '@/components/scheduling/SchedulingCopilotPanel';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
@@ -532,12 +532,14 @@ export default function Schedule() {
         locationPhone={selectedLocationData?.phone}
       />
 
-      <BookingWizard
+      <QuickBookingPopover
+        mode="panel"
         open={bookingOpen}
         onOpenChange={setBookingOpen}
-        defaultDate={bookingDefaults.date}
+        date={bookingDefaults.date || currentDate}
+        time={bookingDefaults.time || '09:00'}
+        defaultLocationId={selectedLocation}
         defaultStylistId={bookingDefaults.stylistId}
-        defaultTime={bookingDefaults.time}
       />
 
       <ClosedDayWarningDialog
