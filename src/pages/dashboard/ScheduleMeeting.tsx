@@ -30,14 +30,13 @@ interface StatCardProps {
   icon: React.ComponentType<{ className?: string }>;
   value: number;
   label: string;
-  colorClass: string;
 }
 
-function StatCard({ icon: Icon, value, label, colorClass }: StatCardProps) {
+function StatCard({ icon: Icon, value, label }: StatCardProps) {
   return (
     <Card className="p-4">
       <div className="flex items-center gap-3">
-        <div className={cn(tokens.card.iconBox, colorClass)}>
+        <div className={tokens.card.iconBox}>
           <Icon className={tokens.card.icon} />
         </div>
         <div>
@@ -251,14 +250,12 @@ export default function ScheduleMeeting() {
               icon={Calendar}
               value={stats.upcomingMeetings}
               label="Upcoming Meetings"
-              colorClass="bg-primary/10 text-primary"
             />
             {isCoach && (
               <StatCard
                 icon={Inbox}
                 value={stats.pendingRequests}
                 label="Pending Requests"
-                colorClass="bg-chart-4/10 text-chart-4"
               />
             )}
             {isCoach && (
@@ -266,14 +263,12 @@ export default function ScheduleMeeting() {
                 icon={ClipboardList}
                 value={stats.activeCommitments}
                 label="Active Commitments"
-                colorClass="bg-chart-3/10 text-chart-3"
               />
             )}
             <StatCard
               icon={MessageSquareMore}
               value={stats.inboxPending}
               label="Inbox Pending"
-              colorClass="bg-chart-2/10 text-chart-2"
             />
           </div>
 
