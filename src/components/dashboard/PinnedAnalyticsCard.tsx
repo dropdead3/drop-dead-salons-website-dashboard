@@ -430,8 +430,8 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
       }
       case 'new_bookings': {
         const count = newBookingsQuery.data?.bookedInRange ?? 0;
-        metricValue = `${formatNumber(count)} new`;
-        metricLabel = 'New bookings placed this period';
+        metricValue = `${formatNumber(count)} added`;
+        metricLabel = 'Appointments added to the schedule so far today';
         break;
       }
       case 'hiring_capacity': {
