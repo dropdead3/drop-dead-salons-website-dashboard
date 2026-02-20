@@ -1,116 +1,111 @@
 
-## Add-On Configurator: Gap Fixes + Enhancements
+## Verification Report + Fix Plan: Add-On Configurator
 
-### What Was Found
+### Current State
 
-The configurator UI is fully rendered and structurally correct. The add-on card, per-category expand rows, Phorest service dropdown, and wizard toast are all wired. However, there are **two critical bugs** that prevent the configurator from functioning for the current user type (Super Admin / platform user), plus several UX gaps.
+The Settings page is **crashing with an ErrorBoundary** on the Services tab. The configurator cannot be used at all in its current state.
 
 ---
 
-### Bug 1 (Critical) — Expand Panel Never Renders for Platform/Super Admin Users
+### Bug 1 (P0 — Page Crash) — Empty String `value` on Radix `SelectItem`
 
-**Root cause:**
-The expand guard on line 454:
+**Error from console:**
+```
+Error: A <Select.Item /> must have a value prop that is not an empty string.
+This is because the Select value can be set to an empty string to clear
+the selection and show the placeholder.
+```
+
+**Root cause:** In `CategoryAddonManager.tsx` line 169, we added the "Label only" sentinel with `value=""`:
 ```tsx
-{isExpanded && effectiveOrganization?.id && (
-  <CategoryAddonManager ... organizationId={effectiveOrganization.id} />
+<SelectItem value="" className="text-xs text-muted-foreground">
+  Label only — no specific service
+</SelectItem>
+```
+
+Radix UI's `Select` component explicitly prohibits empty string values on `SelectItem` — it uses `""` internally to represent "no selection / show placeholder." This causes a hard throw that React's ErrorBoundary catches, crashing the entire settings page.
+
+**Fix:** Replace `value=""` with a non-empty sentinel string like `value="__none__"`, then handle it in `handleCreate`:
+```tsx
+<SelectItem value="__none__" className="text-xs text-muted-foreground italic">
+  Label only — no specific service
+</SelectItem>
+```
+And in `handleCreate`:
+```tsx
+addon_service_name: linkMode === 'service'
+  ? (selectedService && selectedService !== '__none__' ? selectedService : null)
+  : null,
+```
+And reset with `setSelectedService('__none__')` instead of `''`.
+
+Same fix needed for the category picker — add a "No specific category" sentinel `value="__none__"` as the first item there too, so both dropdowns allow deselection.
+
+---
+
+### Bug 2 (P1) — Empty State Shows Simultaneously With Category List
+
+In `ServicesSettingsContent.tsx` lines 405–416, the `EmptyState` for "No add-ons configured" renders even when `localOrder.length > 0`, because the condition is `totalAddonCount === 0` (not guarded by `localOrder.length === 0`). Then at line 418, the category list also renders. Both show at the same time when the org has categories but no add-ons yet. The empty state should be *replaced by* the category list, not stacked above it.
+
+**Fix:** Change the conditional from `else if` / separate block to a single layout: show the guidance text *inside* the card content area above the list (as a quiet banner, not a full `EmptyState`) when `totalAddonCount === 0 && localOrder.length > 0`.
+
+```tsx
+{totalAddonCount === 0 && localOrder.length > 0 && (
+  <div className="mb-3 px-3 py-2.5 rounded-lg bg-muted/40 border border-border/50 flex items-start gap-2.5">
+    <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+    <p className="text-xs text-muted-foreground leading-relaxed">
+      Add-on recommendations surface high-margin services at exactly the right moment during booking.
+      Expand a category below to configure its recommendations.
+    </p>
+  </div>
 )}
 ```
-`effectiveOrganization` is `null` for platform users (Super Admins) unless they have explicitly selected an org via the org switcher. So the panel's condition always evaluates to false — the expand works (chevron toggles) but nothing renders beneath it.
-
-**Fix:**
-Resolve a local `resolvedOrgId` that falls back to `userOrganizations[0]?.id` — exactly the same pattern used in `TeamChat.tsx`. Use `resolvedOrgId` for both the `CategoryAddonManager` guard and the `useAllCategoryAddons` hook call.
-
-```tsx
-// Resolved org ID: effective org first, fall back to first accessible org (for platform users)
-const resolvedOrgId = effectiveOrganization?.id || userOrganizations[0]?.id;
-```
-
-Then use `resolvedOrgId` in:
-- `useAllCategoryAddons(resolvedOrgId)` — so the badge counts populate
-- The expand guard: `{isExpanded && resolvedOrgId && ...}`
-- `organizationId={resolvedOrgId}` passed to `CategoryAddonManager`
 
 ---
 
-### Bug 2 (Critical) — Add-On Count Badges Always Show 0 / Empty State Always Shows
+### Bug 3 (P1) — Category Picker Has No "None" Option
 
-Same root cause as Bug 1. `useAllCategoryAddons(effectiveOrganization?.id)` is called with `undefined` for platform users → the hook is disabled (its `enabled: !!organizationId` guard), so `addonMap` is always `{}`. This means:
-- The "✦ 2 add-ons" badges in the Service Categories card never appear
-- The "NO ADD-ONS CONFIGURED" empty state shows even if add-ons exist
-- `totalAddonCount` is always 0
+The category `Select` (lines 187–200) lists categories but has no way to deselect once one is picked. If an admin accidentally selects a category, they must cancel the whole form. No sentinel item exists here (unlike the service picker which has the broken `""` sentinel). This is a form usability gap.
 
-**Fix:** Same `resolvedOrgId` fix above resolves this automatically.
+**Fix:** Add `value="__none__"` sentinel as the first item in the category picker with the same guard in `handleCreate`.
 
 ---
 
-### Bug 3 — No Feedback When Phorest Services Are Empty in "By Service" Mode
+### Enhancement 1 — Form Validation: Require Label Before Showing Save
 
-In `CategoryAddonManager`, the "Specific Service" select only renders when `availableServiceNames.length > 0`:
+Currently `handleCreate` guards on `!addLabel.trim()`, but the Save button shows as disabled without any visual cue when the label is empty. The placeholder text "Label (e.g. Scalp Treatment)" disappears once you start typing, but there is no inline feedback if you try to save blank.
+
+**Fix:** Add a red border state on the label `Input` when save is attempted with empty label:
 ```tsx
-{linkMode === 'service' && availableServiceNames.length > 0 && (
-  <Select ...>
+const [labelTouched, setLabelTouched] = useState(false);
+// On input: setLabelTouched(true)
+// className includes: labelTouched && !addLabel.trim() && 'border-destructive'
 ```
-If the list is empty, nothing shows — the admin clicks "Specific Service", the select disappears, and there's no explanation. They can still save with just a label (which is valid), but the UX is confusing.
 
-**Fix:** Show a muted helper note when in "service" mode but no names are available:
+---
+
+### Enhancement 2 — Add-On Row Should Show Current Add-Ons Count Inline (Not Just "N recommendations configured")
+
+The row subtitle says "N recommendations configured" but doesn't name them. Admins can't see what's configured without clicking. A collapsed preview of the first 2–3 badge names would give at-a-glance visibility.
+
+**Fix:** When `addonCount > 0 && !isExpanded`, show a muted inline chip list of the first 2 add-on labels followed by "..." if there are more:
 ```tsx
-{linkMode === 'service' && availableServiceNames.length === 0 && (
-  <p className="text-[11px] text-muted-foreground">
-    No Phorest services synced yet. You can still save a label-only recommendation.
+{!isExpanded && addonCount > 0 && (
+  <p className="text-[11px] text-muted-foreground truncate">
+    {addonMap[cat.id]?.slice(0, 2).map(a => a.addon_label).join(', ')}
+    {addonCount > 2 ? ` +${addonCount - 2} more` : ''}
   </p>
 )}
 ```
 
 ---
 
-### Enhancement 1 — "By Service" Dropdown Needs a Clear Value Option
+### Enhancement 3 — `useAllServices` May Return Empty Array If Phorest Not Connected
 
-Once an admin selects a service from the dropdown, there's no way to deselect it (to save a label-only recommendation instead). The Select has no "None / label only" option.
+If Phorest sync hasn't run, `phorestServiceNames` is `[]`. The fallback message in `CategoryAddonManager` covers this case, but the message "No Phorest services synced yet" may alarm admins unnecessarily if they haven't set up Phorest. Change the copy to be softer:
 
-**Fix:** Add a sentinel "Label only (no service link)" option as the first item:
-```tsx
-<SelectItem value="" className="text-xs text-muted-foreground">
-  Label only — no specific service
-</SelectItem>
-```
-And handle `selectedService === ''` as `null` in the `handleCreate` payload (already done: `selectedService || null`).
-
----
-
-### Enhancement 2 — "By Category" Dropdown Should Exclude Self-Referencing
-
-Currently `availableCategories` is passed as all categories except the current one. This is correct. However, "Block" and "Break" categories are filtered from `localOrder` in `serviceCategories` but the `availableCategories` list in the expand still comes from `localOrder` which may include them.
-
-**Fix:** In the `CategoryAddonManager` props, filter `availableCategories` to exclude Block/Break:
-```tsx
-availableCategories={localOrder
-  .filter(c => c.id !== cat.id && !['Block', 'Break'].includes(c.category_name))
-  .map(c => c.category_name)}
-```
-
----
-
-### Enhancement 3 — Link Type Indicator on Saved Add-On Badges
-
-Currently saved add-on badges show:
-```
-[Scalp Treatment · K18 Treatment Add-On ×]
-```
-The `·` separator is generic. A small icon would make it instantly clear what type of link it is:
-
-- Service link: `🔗 K18 Treatment Add-On`
-- Category link: `📁 Extras`
-
-Use Lucide `Link2` and `FolderOpen` icons instead of `·` to visually distinguish the link type.
-
----
-
-### Enhancement 4 — Auto-Open First Category When Empty State Exists
-
-When total add-ons = 0, the empty state says "Expand any category below to configure." But the categories are all collapsed. One good UX nudge: when there are no add-ons configured at all, auto-expand the first category row so admins immediately see the `CategoryAddonManager` and know what to do.
-
-**Fix:** In `useEffect` or initial state, if `totalAddonCount === 0 && localOrder.length > 0`, pre-seed `expandedAddonRows` with `localOrder[0].id`.
+**Fix:** Change the fallback text to:
+> "No services loaded yet. You can still save a label-only recommendation, or sync your POS first."
 
 ---
 
@@ -118,18 +113,16 @@ When total add-ons = 0, the empty state says "Expand any category below to confi
 
 | File | Change |
 |---|---|
-| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Pull `userOrganizations` from context; compute `resolvedOrgId`; pass to `useAllCategoryAddons` and `CategoryAddonManager`; fix `availableCategories` to exclude Block/Break; auto-expand first row when empty |
-| `src/components/dashboard/settings/CategoryAddonManager.tsx` | Add "no services" fallback note in service link mode; add "Label only" sentinel select item; swap `·` for `Link2`/`FolderOpen` icons on saved badges |
-
-No database migrations or RLS changes needed. The table and policies are fully correct.
-
----
+| `src/components/dashboard/settings/CategoryAddonManager.tsx` | Replace empty-string `SelectItem` value with `"__none__"` sentinel in service picker; add same sentinel to category picker; update `handleCreate` to treat `"__none__"` as `null`; update `resetForm` to set `selectedService` and `selectedCategory` to `"__none__"`; soften empty services copy; add label validation visual feedback |
+| `src/components/dashboard/settings/ServicesSettingsContent.tsx` | Replace stacked EmptyState + list pattern with inline guidance banner when `totalAddonCount === 0`; add collapsed preview of add-on names in each row subtitle |
 
 ### Priority Order
 
-1. **Bug 1 + 2** — `resolvedOrgId` fix (unblocks all configuration for Super Admin users) — highest priority, one change, immediate unblock
-2. **Bug 3** — Empty service list feedback
-3. **Enhancement 1** — "Label only" deselect in dropdown
-4. **Enhancement 2** — Block/Break filter in category list
-5. **Enhancement 3** — Link type icons on badges
-6. **Enhancement 4** — Auto-expand first row when empty
+1. **Bug 1 (P0)** — Fix empty string `SelectItem` crash — page is completely broken without this
+2. **Bug 2 (P1)** — Fix empty state / list stacking layout
+3. **Bug 3 (P1)** — Add "None" sentinel to category picker
+4. **Enhancement 2** — Collapsed add-on name preview in row
+5. **Enhancement 1** — Label validation visual
+6. **Enhancement 3** — Softer fallback copy
+
+No database or RLS changes needed. The crash fix is one string change; everything else is UI polish.
