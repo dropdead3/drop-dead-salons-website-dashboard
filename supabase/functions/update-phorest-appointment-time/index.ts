@@ -52,7 +52,7 @@ Deno.serve(async (req) => {
   try {
     const PHOREST_BUSINESS_ID = Deno.env.get("PHOREST_BUSINESS_ID");
     const PHOREST_USERNAME = Deno.env.get("PHOREST_USERNAME");
-    const PHOREST_PASSWORD = Deno.env.get("PHOREST_PASSWORD");
+    const PHOREST_PASSWORD = Deno.env.get("PHOREST_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
