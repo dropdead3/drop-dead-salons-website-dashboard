@@ -468,7 +468,7 @@ export default function Schedule() {
 
 
         {/* Calendar View (with optional copilot panel) */}
-        <div className={cn("flex-1 p-4 overflow-hidden", (view === 'day' || view === 'week') && "pb-[96px]")}>
+        <div className={cn("flex-1 p-4 overflow-hidden", (view === 'day' || view === 'week') && "pb-[92px]")}>
           {copilotOpen && !isMobile ? (
             <ResizablePanelGroup direction="horizontal" className="h-full">
               <ResizablePanel defaultSize={75} minSize={50}>
