@@ -1,5 +1,10 @@
+import { useState } from 'react';
 import { differenceInDays } from 'date-fns';
 import { useFormatDate } from '@/hooks/useFormatDate';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useOrganizationContext } from '@/contexts/OrganizationContext';
 import { 
   Sheet, 
   SheetContent, 
@@ -10,6 +15,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
@@ -23,7 +29,12 @@ import {
   Clock,
   TrendingUp,
   Cake,
-  Award
+  Award,
+  Pencil,
+  X,
+  Check,
+  Loader2,
+  Archive
 } from 'lucide-react';
 import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
@@ -33,7 +44,10 @@ import { useClientVisitHistory } from '@/hooks/useClientVisitHistory';
 import { BannedClientAlert } from './clients/BannedClientAlert';
 import { BannedClientBadge } from './clients/BannedClientBadge';
 import { BanClientToggle } from './clients/BanClientToggle';
+import { ArchiveClientToggle } from './clients/ArchiveClientToggle';
+import { ClientMarketingStatus } from './clients/ClientMarketingStatus';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
+import { toast } from 'sonner';
 
 interface Client {
   id: string;
@@ -55,6 +69,7 @@ interface Client {
   ban_reason?: string | null;
   birthday?: string | null;
   client_since?: string | null;
+  is_archived?: boolean;
 }
 
 interface ClientDetailSheetProps {
@@ -68,13 +83,72 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
   const { data: visitHistory, isLoading: historyLoading } = useClientVisitHistory(client?.phorest_client_id);
   const { formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
+  const { roles } = useAuth();
+  const { selectedOrganization } = useOrganizationContext();
+  const queryClient = useQueryClient();
+
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editBirthday, setEditBirthday] = useState('');
+  const [editClientSince, setEditClientSince] = useState('');
+
+  const canEdit = roles.some(role => ['admin', 'manager', 'super_admin', 'receptionist'].includes(role));
+
+  const startEditing = () => {
+    if (!client) return;
+    setEditName(client.name || '');
+    setEditEmail(client.email || '');
+    setEditPhone(client.phone || '');
+    setEditBirthday(client.birthday || '');
+    setEditClientSince(client.client_since || '');
+    setIsEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setIsEditing(false);
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (!client) throw new Error('No client');
+      const [firstName, ...rest] = editName.trim().split(' ');
+      const lastName = rest.join(' ');
+      
+      const { error } = await supabase
+        .from('phorest_clients')
+        .update({
+          first_name: firstName,
+          last_name: lastName || null,
+          name: editName.trim(),
+          email: editEmail.trim() || null,
+          phone: editPhone.trim() || null,
+          birthday: editBirthday || null,
+          client_since: editClientSince || null,
+        })
+        .eq('id', client.id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client-directory'] });
+      queryClient.invalidateQueries({ queryKey: ['phorest-clients'] });
+      toast.success('Client info updated');
+      setIsEditing(false);
+    },
+    onError: (error: Error) => {
+      toast.error('Failed to update client', { description: error.message });
+    },
+  });
 
   if (!client) return null;
 
   const initials = client.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={(o) => { if (!o) setIsEditing(false); onOpenChange(o); }}>
       <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
         {/* Banned Client Alert */}
         {client.is_banned && (
@@ -83,9 +157,17 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
           </div>
         )}
 
+        {/* Archived Alert */}
+        {client.is_archived && (
+          <div className="mb-4 p-3 rounded-lg bg-muted border border-border flex items-center gap-2">
+            <Archive className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">This client is archived. Marketing is paused.</span>
+          </div>
+        )}
+
         <SheetHeader className="pb-4 border-b">
           <div className="flex items-center gap-4">
-            <Avatar className="w-16 h-16">
+            <Avatar className={cn("w-16 h-16", client.is_archived && "opacity-50")}>
               <AvatarFallback className="font-display text-xl bg-primary/10">
                 {initials}
               </AvatarFallback>
@@ -94,7 +176,12 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
               <SheetTitle className="font-display text-xl flex items-center gap-2 flex-wrap">
                 {client.name}
                 {client.is_banned && <BannedClientBadge size="md" />}
-                {client.is_vip && !client.is_banned && (
+                {client.is_archived && (
+                  <Badge variant="secondary" className="text-xs">
+                    <Archive className="w-3 h-3 mr-1" /> Archived
+                  </Badge>
+                )}
+                {client.is_vip && !client.is_banned && !client.is_archived && (
                   <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400">
                     <Star className="w-3 h-3 mr-1" /> VIP
                   </Badge>
@@ -113,12 +200,19 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
                 )}
               </SheetDescription>
             </div>
-            <BanClientToggle
-              clientId={client.id}
-              clientName={client.name}
-              isBanned={client.is_banned || false}
-              banReason={client.ban_reason}
-            />
+            <div className="flex items-center gap-1">
+              <ArchiveClientToggle
+                clientId={client.id}
+                clientName={client.name}
+                isArchived={client.is_archived || false}
+              />
+              <BanClientToggle
+                clientId={client.id}
+                clientName={client.name}
+                isBanned={client.is_banned || false}
+                banReason={client.ban_reason}
+              />
+            </div>
           </div>
         </SheetHeader>
 
@@ -178,54 +272,119 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
         {/* Contact Info */}
         <Card className="mb-4">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium">Contact Information</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium">Contact Information</CardTitle>
+              {canEdit && !isEditing && (
+                <Button variant="ghost" size="sm" onClick={startEditing} className="h-7 px-2">
+                  <Pencil className="w-3.5 h-3.5" />
+                </Button>
+              )}
+              {isEditing && (
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="sm" onClick={cancelEditing} className="h-7 px-2 text-muted-foreground">
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => saveMutation.mutate()} 
+                    disabled={saveMutation.isPending}
+                    className="h-7 px-2 text-green-600"
+                  >
+                    {saveMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  </Button>
+                </div>
+              )}
+            </div>
+            {isEditing && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Changes are saved locally and won't sync back to Phorest.
+              </p>
+            )}
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            {client.email && (
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-muted-foreground" />
-                <span>{client.email}</span>
+            {isEditing ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Name</label>
+                  <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="h-8 text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Email</label>
+                  <Input type="email" autoCapitalize="none" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="h-8 text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Phone</label>
+                  <Input type="tel" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="h-8 text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Birthday</label>
+                  <Input type="date" value={editBirthday} onChange={(e) => setEditBirthday(e.target.value)} className="h-8 text-sm" />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Client Since</label>
+                  <Input type="date" value={editClientSince} onChange={(e) => setEditClientSince(e.target.value)} className="h-8 text-sm" />
+                </div>
               </div>
+            ) : (
+              <>
+                {client.email && (
+                  <div className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-muted-foreground" />
+                    <span>{client.email}</span>
+                  </div>
+                )}
+                {client.phone && (
+                  <div className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-muted-foreground" />
+                    <span>{client.phone}</span>
+                  </div>
+                )}
+                {(locationName || client.branch_name) && (
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-muted-foreground" />
+                    <span>{locationName || client.branch_name}</span>
+                  </div>
+                )}
+                {client.last_visit && (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-muted-foreground" />
+                    <span>Last visit: {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}</span>
+                  </div>
+                )}
+                {client.birthday && (
+                  <div className="flex items-center gap-2">
+                    <Cake className="w-4 h-4 text-muted-foreground" />
+                    <span>Birthday: {formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')}</span>
+                  </div>
+                )}
+                {client.client_since && (
+                  <div className="flex items-center gap-2">
+                    <Award className="w-4 h-4 text-muted-foreground" />
+                    <span>
+                      Client since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy')}
+                      {' — '}
+                      {(() => {
+                        const years = differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 365;
+                        if (years >= 1) return `${Math.floor(years)} year${Math.floor(years) !== 1 ? 's' : ''}`;
+                        const months = Math.floor(differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 30);
+                        return `${months} month${months !== 1 ? 's' : ''}`;
+                      })()}
+                    </span>
+                  </div>
+                )}
+              </>
             )}
-            {client.phone && (
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-muted-foreground" />
-                <span>{client.phone}</span>
-              </div>
-            )}
-            {(locationName || client.branch_name) && (
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-muted-foreground" />
-                <span>{locationName || client.branch_name}</span>
-              </div>
-            )}
-            {client.last_visit && (
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-muted-foreground" />
-                <span>Last visit: {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}</span>
-              </div>
-            )}
-            {client.birthday && (
-              <div className="flex items-center gap-2">
-                <Cake className="w-4 h-4 text-muted-foreground" />
-                <span>Birthday: {formatDate(new Date(client.birthday + 'T00:00:00'), 'MMM d')}</span>
-              </div>
-            )}
-            {client.client_since && (
-              <div className="flex items-center gap-2">
-                <Award className="w-4 h-4 text-muted-foreground" />
-                <span>
-                  Client since {formatDate(new Date(client.client_since + 'T00:00:00'), 'MMM yyyy')}
-                  {' — '}
-                  {(() => {
-                    const years = differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 365;
-                    if (years >= 1) return `${Math.floor(years)} year${Math.floor(years) !== 1 ? 's' : ''}`;
-                    const months = Math.floor(differenceInDays(new Date(), new Date(client.client_since + 'T00:00:00')) / 30);
-                    return `${months} month${months !== 1 ? 's' : ''}`;
-                  })()}
-                </span>
-              </div>
-            )}
+          </CardContent>
+        </Card>
+
+        {/* Marketing Preferences */}
+        <Card className="mb-4">
+          <CardContent className="pt-4">
+            <ClientMarketingStatus 
+              clientId={client.id} 
+              organizationId={selectedOrganization?.id} 
+            />
           </CardContent>
         </Card>
 

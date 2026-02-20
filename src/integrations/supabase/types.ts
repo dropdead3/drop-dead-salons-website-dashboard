@@ -2770,6 +2770,7 @@ export type Database = {
           marketing_opt_out: boolean
           opt_out_at: string | null
           organization_id: string
+          sms_opt_out: boolean
         }
         Insert: {
           client_id: string
@@ -2778,6 +2779,7 @@ export type Database = {
           marketing_opt_out?: boolean
           opt_out_at?: string | null
           organization_id: string
+          sms_opt_out?: boolean
         }
         Update: {
           client_id?: string
@@ -2786,6 +2788,7 @@ export type Database = {
           marketing_opt_out?: boolean
           opt_out_at?: string | null
           organization_id?: string
+          sms_opt_out?: boolean
         }
         Relationships: [
           {
@@ -8847,6 +8850,8 @@ export type Database = {
       }
       phorest_clients: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
           ban_reason: string | null
           banned_at: string | null
           banned_by: string | null
@@ -8857,6 +8862,7 @@ export type Database = {
           email: string | null
           first_visit: string | null
           id: string
+          is_archived: boolean
           is_banned: boolean | null
           is_vip: boolean | null
           last_visit: string | null
@@ -8874,6 +8880,8 @@ export type Database = {
           visit_count: number
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
           ban_reason?: string | null
           banned_at?: string | null
           banned_by?: string | null
@@ -8884,6 +8892,7 @@ export type Database = {
           email?: string | null
           first_visit?: string | null
           id?: string
+          is_archived?: boolean
           is_banned?: boolean | null
           is_vip?: boolean | null
           last_visit?: string | null
@@ -8901,6 +8910,8 @@ export type Database = {
           visit_count?: number
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
           ban_reason?: string | null
           banned_at?: string | null
           banned_by?: string | null
@@ -8911,6 +8922,7 @@ export type Database = {
           email?: string | null
           first_visit?: string | null
           id?: string
+          is_archived?: boolean
           is_banned?: boolean | null
           is_vip?: boolean | null
           last_visit?: string | null

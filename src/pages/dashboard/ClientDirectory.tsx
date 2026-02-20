@@ -25,7 +25,8 @@ import {
   ChevronRight,
   Lock,
   User,
-  Ban
+  Ban,
+  Archive
 } from 'lucide-react';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { useQuery } from '@tanstack/react-query';
@@ -132,6 +133,7 @@ export default function ClientDirectory() {
         daysSinceVisit,
         isAtRisk,
         isNew,
+        is_archived: (client as any).is_archived ?? false,
       };
     });
   }, [clients]);
@@ -172,15 +174,22 @@ export default function ClientDirectory() {
       );
     }
 
-    // Tab filter (VIP, At Risk, New, Banned)
-    if (activeTab === 'vip') {
-      filtered = filtered.filter(c => c.is_vip);
-    } else if (activeTab === 'at-risk') {
-      filtered = filtered.filter(c => c.isAtRisk);
-    } else if (activeTab === 'new') {
-      filtered = filtered.filter(c => c.isNew);
-    } else if (activeTab === 'banned') {
-      filtered = filtered.filter(c => c.is_banned);
+    // Tab filter (VIP, At Risk, New, Banned, Archived)
+    if (activeTab === 'archived') {
+      filtered = filtered.filter(c => c.is_archived);
+    } else {
+      // All other tabs: exclude archived clients
+      filtered = filtered.filter(c => !c.is_archived);
+      
+      if (activeTab === 'vip') {
+        filtered = filtered.filter(c => c.is_vip);
+      } else if (activeTab === 'at-risk') {
+        filtered = filtered.filter(c => c.isAtRisk);
+      } else if (activeTab === 'new') {
+        filtered = filtered.filter(c => c.isNew);
+      } else if (activeTab === 'banned') {
+        filtered = filtered.filter(c => c.is_banned);
+      }
     }
 
     // Search filter
@@ -235,13 +244,17 @@ export default function ClientDirectory() {
       clientsForStats = clientsForStats.filter(c => c.location_id === selectedLocation || c.branch_name === selectedLocation);
     }
     
+    // Exclude archived from main stats
+    const active = clientsForStats.filter(c => !c.is_archived);
+    
     return {
-      total: clientsForStats.length,
-      vip: clientsForStats.filter(c => c.is_vip).length,
-      banned: clientsForStats.filter(c => c.is_banned).length,
-      atRisk: clientsForStats.filter(c => c.isAtRisk).length,
-      newClients: clientsForStats.filter(c => c.isNew).length,
-      totalRevenue: clientsForStats.reduce((s, c) => s + Number(c.total_spend || 0), 0),
+      total: active.length,
+      vip: active.filter(c => c.is_vip).length,
+      banned: active.filter(c => c.is_banned).length,
+      atRisk: active.filter(c => c.isAtRisk).length,
+      newClients: active.filter(c => c.isNew).length,
+      totalRevenue: active.reduce((s, c) => s + Number(c.total_spend || 0), 0),
+      archived: clientsForStats.filter(c => c.is_archived).length,
     };
   }, [processedClients, selectedLocation]);
 
@@ -377,6 +390,11 @@ export default function ClientDirectory() {
                   <Ban className="w-3 h-3 mr-1" /> Banned ({stats.banned})
                 </TabsTrigger>
               )}
+              {stats.archived > 0 && (
+                <TabsTrigger value="archived" className="text-xs text-muted-foreground">
+                  <Archive className="w-3 h-3 mr-1" /> Archived ({stats.archived})
+                </TabsTrigger>
+              )}
             </TabsList>
           </Tabs>
         </div>
@@ -459,10 +477,13 @@ export default function ClientDirectory() {
                   return (
                     <div 
                       key={client.id} 
-                      className="py-4 flex items-center gap-4 cursor-pointer hover:bg-muted/50 -mx-6 px-6 transition-colors"
+                      className={cn(
+                        "py-4 flex items-center gap-4 cursor-pointer hover:bg-muted/50 -mx-6 px-6 transition-colors",
+                        client.is_archived && "opacity-60"
+                      )}
                       onClick={handleClientClick}
                     >
-                      <Avatar className="w-12 h-12">
+                      <Avatar className={cn("w-12 h-12", client.is_archived && "opacity-50")}>
                         <AvatarFallback className="font-display text-sm bg-primary/10">
                           {client.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                         </AvatarFallback>
@@ -471,6 +492,11 @@ export default function ClientDirectory() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="font-medium truncate">{client.name}</p>
+                          {client.is_archived && (
+                            <Badge variant="secondary" className="text-xs">
+                              <Archive className="w-3 h-3 mr-1" /> Archived
+                            </Badge>
+                          )}
                           {client.is_banned && <BannedClientBadge />}
                           {client.is_vip && !client.is_banned && (
                             <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 text-xs">
