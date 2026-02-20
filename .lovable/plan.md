@@ -1,79 +1,86 @@
 
 
-# Add Client Birthday and Anniversary to Client Directory
+# Client Contact Editing, Archiving, and Marketing Preferences
 
 ## Overview
 
-Add `birthday` and `client_since` (anniversary) date fields to the client data model, capture them when creating new clients, display them in client detail views, and surface upcoming client birthdays/anniversaries for proactive engagement.
+Three capabilities being added to the Client Directory:
+
+1. **Edit client contact info** -- inline editing of name, email, phone, birthday, and client_since from the detail sheet
+2. **Archive clients** (super_admin only) -- soft-archive instead of delete, which stops all marketing and hides from default views
+3. **Marketing subscription visibility and admin controls** -- show email/SMS opt-in status, let admins toggle marketing on or off per client
+
+---
 
 ## Database Changes
 
-Add two columns to the `clients` table:
+### 1. Add columns to `phorest_clients`
 
 | Column | Type | Default | Purpose |
 |---|---|---|---|
-| `birthday` | `date` | NULL | Client's birthdate |
-| `client_since` | `date` | `created_at::date` | Date they became a client (editable anniversary date) |
+| `is_archived` | boolean | false | Soft-archive flag (no deletion) |
+| `archived_at` | timestamptz | NULL | When archived |
+| `archived_by` | uuid | NULL | Who archived |
+| `sms_opt_out` | boolean | false | SMS marketing opt-out flag |
 
-For existing clients, `client_since` will default to the date the record was created.
+### 2. Add `sms_opt_out` column to `client_email_preferences`
+
+The existing table tracks `marketing_opt_out` (email). We add `sms_opt_out` to track SMS separately at the org level, but for simplicity we'll also put `sms_opt_out` directly on `phorest_clients` since clients aren't scoped to org in that table.
+
+Actually, since `client_email_preferences` already exists and is org-scoped, we'll add `sms_opt_out` there. But for the detail sheet (which queries `phorest_clients`), we'll query `client_email_preferences` separately. That keeps existing email compliance flows intact.
+
+**Final approach:** Add `is_archived`, `archived_at`, `archived_by` to `phorest_clients`. Use existing `client_email_preferences` for email opt-out and add `sms_opt_out` boolean there.
+
+---
 
 ## UI Changes
 
-### 1. New Client Dialog (`NewClientDialog.tsx`)
+### 1. Client Detail Sheet -- Edit Mode
 
-Add two optional date inputs after the phone field:
+- Add an "Edit" button (pencil icon) in the contact info card header
+- Toggles fields to editable inputs: name, email, phone, birthday, client_since
+- Save/Cancel buttons appear in edit mode
+- Mutation updates `phorest_clients` directly
+- Available to admin, manager, super_admin, receptionist roles
 
-- **Birthday** -- date picker input (optional)
-- **Client Since** -- date picker input, defaults to today (optional, auto-populated)
+### 2. Client Detail Sheet -- Archive Button
 
-These get passed through to the `create-phorest-client` edge function and saved to the local `clients` table.
+- Replace the "Ban Client" area with a section that includes both Ban and Archive
+- Archive button: only visible to super_admin
+- Shows confirmation dialog: "Archiving stops all marketing and hides this client from default views. They can be restored later."
+- Archived clients get a visual indicator (muted/grayed) and an "Archived" badge
+- Archived clients are hidden from default directory views but visible via a new "Archived" filter tab
 
-### 2. Client Detail Sheet (`ClientDetailSheet.tsx`)
+### 3. Marketing Status Display
 
-In the Contact Information card, add:
+- In the Contact Information card, show subscription badges:
+  - Email: green "Subscribed" or red "Unsubscribed" badge
+  - SMS: green "Subscribed" or red "Unsubscribed" badge
+- Admin/super_admin can toggle these via switches next to each badge
+- Toggling email updates `client_email_preferences.marketing_opt_out`
+- Toggling SMS updates `client_email_preferences.sms_opt_out`
 
-- Birthday row with Cake icon (e.g., "Mar 15" or "March 15, 1990")
-- Client Since row with Heart/Award icon (e.g., "Client since Jan 2023 -- 2 years")
+### 4. Client Directory -- Archived Tab
 
-### 3. Client Profile View in Booking Popover (`ClientProfileView.tsx`)
+- Add "Archived" tab alongside Banned tab (only visible when archived clients exist)
+- Archived clients hidden from All/VIP/At Risk/New tabs by default
+- Stats exclude archived clients
 
-Show birthday and client anniversary if available, consistent with the detail sheet.
-
-### 4. Client Directory Table
-
-No changes to the main table columns -- birthday/anniversary are detail-level fields shown in the sheet.
-
-## Edge Function Update
-
-### `create-phorest-client/index.ts`
-
-Accept optional `birthday` and `client_since` fields in the request body. When inserting into the local `clients` table after Phorest sync, include these fields.
-
-## Data Flow
-
-```text
-New Client Dialog
-  --> Edge Function (create-phorest-client)
-    --> Phorest API (create client -- birthday if supported)
-    --> Local clients table (birthday + client_since columns)
-
-Client Detail Sheet / Profile View
-  --> Query clients table
-  --> Display birthday + client_since
-```
+---
 
 ## Files Modified
 
-1. **Migration SQL** -- Add `birthday` and `client_since` columns to `clients` table
-2. **`supabase/functions/create-phorest-client/index.ts`** -- Accept and store new fields
-3. **`src/components/dashboard/schedule/NewClientDialog.tsx`** -- Add birthday and client_since date inputs
-4. **`src/components/dashboard/ClientDetailSheet.tsx`** -- Display birthday and anniversary in contact info
-5. **`src/components/dashboard/schedule/booking/ClientProfileView.tsx`** -- Display birthday if available
-6. **`src/pages/dashboard/ClientDirectory.tsx`** -- Pass new fields through the Client interface if needed
+1. **New migration SQL** -- Add `is_archived`, `archived_at`, `archived_by` to `phorest_clients`; add `sms_opt_out` to `client_email_preferences`
+2. **`src/components/dashboard/ClientDetailSheet.tsx`** -- Add edit mode for contact fields, marketing status display with toggles, archive button for super_admin
+3. **`src/pages/dashboard/ClientDirectory.tsx`** -- Filter out archived clients by default, add Archived tab, update stats
+4. **`src/components/dashboard/clients/BanClientToggle.tsx`** -- No changes needed (ban stays separate from archive)
+5. **New: `src/components/dashboard/clients/ArchiveClientToggle.tsx`** -- Archive/restore dialog, super_admin only
+6. **New: `src/components/dashboard/clients/ClientMarketingStatus.tsx`** -- Marketing subscription display and admin toggle controls
 
-## Future Opportunities
+## Technical Notes
 
-- Surface upcoming client birthdays in a dashboard widget (similar to team birthday widget)
-- Auto-generate birthday discount offers via the marketing platform
-- Client anniversary milestone recognition (1 year, 5 years, etc.)
-- Birthday/anniversary filters in the Client Health Hub
+- Editing contact info is a direct update to `phorest_clients` -- this does NOT sync back to Phorest (local-only edit). A note in the UI will clarify this.
+- Archive is a soft operation: `is_archived = true`. No data is deleted. Archived clients are excluded from marketing email/SMS processing.
+- The `client_email_preferences` table is org-scoped; we'll need to query it with the organization context when displaying/toggling preferences in the detail sheet.
+- The existing email compliance flow in `email-sender.ts` already checks `marketing_opt_out`. The SMS flow (Twilio) will need a similar check against `sms_opt_out` in a future update.
+
