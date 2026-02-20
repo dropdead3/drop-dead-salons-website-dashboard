@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsTrigger, ResponsiveTabsList } from '@/components
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { VisibilityGate, useElementVisibility } from '@/components/visibility/VisibilityGate';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { 
@@ -300,7 +301,7 @@ export default function AnalyticsHub() {
               {dateRange === 'custom' && (
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="min-w-[200px] justify-start">
+                    <Button variant="outline" size={tokens.button.card} className="min-w-[200px] justify-start">
                       <CalendarIcon className="w-4 h-4 mr-2" />
                       {formatDate(customDateRange.from, 'MMM d')} - {formatDate(customDateRange.to, 'MMM d, yyyy')}
                     </Button>

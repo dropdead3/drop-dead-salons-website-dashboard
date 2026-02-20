@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -187,10 +188,10 @@ export default function IncidentReports() {
                         <TableCell className="max-w-[250px] truncate">{incident.description}</TableCell>
                         <TableCell>
                           {incident.status === 'open' && (
-                            <Button size="sm" variant="outline" onClick={() => updateIncident.mutate({ id: incident.id, status: 'investigating' })}>Investigate</Button>
+                            <Button size={tokens.button.inline} variant="outline" onClick={() => updateIncident.mutate({ id: incident.id, status: 'investigating' })}>Investigate</Button>
                           )}
                           {incident.status === 'investigating' && (
-                            <Button size="sm" variant="outline" onClick={() => updateIncident.mutate({ id: incident.id, status: 'resolved', resolved_at: new Date().toISOString() })}>Resolve</Button>
+                            <Button size={tokens.button.inline} variant="outline" onClick={() => updateIncident.mutate({ id: incident.id, status: 'resolved', resolved_at: new Date().toISOString() })}>Resolve</Button>
                           )}
                         </TableCell>
                       </TableRow>

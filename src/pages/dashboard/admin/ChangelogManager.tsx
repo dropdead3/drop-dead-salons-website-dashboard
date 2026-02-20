@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -110,23 +111,23 @@ function ChangelogEntryCard({
             </div>
 
             <div className="flex items-center gap-2 mt-3">
-              <Button variant="outline" size="sm" onClick={onEdit}>
+              <Button variant="outline" size={tokens.button.inline} onClick={onEdit}>
                 <Edit className="h-3 w-3 mr-1" />
                 Edit
               </Button>
               {entry.status === 'draft' && (
-                <Button variant="outline" size="sm" onClick={onPublish}>
+                <Button variant="outline" size={tokens.button.inline} onClick={onPublish}>
                   <Send className="h-3 w-3 mr-1" />
                   Publish
                 </Button>
               )}
               {entry.status === 'scheduled' && (
-                <Button variant="outline" size="sm" onClick={onPublish}>
+                <Button variant="outline" size={tokens.button.inline} onClick={onPublish}>
                   <Send className="h-3 w-3 mr-1" />
                   Publish Now
                 </Button>
               )}
-              <Button variant="ghost" size="sm" className="text-destructive" onClick={onDelete}>
+              <Button variant="ghost" size={tokens.button.inline} className="text-destructive" onClick={onDelete}>
                 <Trash2 className="h-3 w-3" />
               </Button>
             </div>
@@ -185,7 +186,7 @@ function FeatureRequestCard({
             )}
 
             <div className="flex items-center gap-2 mt-3">
-              <Button variant="outline" size="sm" onClick={onRespond}>
+              <Button variant="outline" size={tokens.button.inline} onClick={onRespond}>
                 <MessageSquare className="h-3 w-3 mr-1" />
                 {request.admin_response ? 'Edit Response' : 'Respond'}
               </Button>
@@ -199,7 +200,7 @@ function FeatureRequestCard({
                   ))}
                 </SelectContent>
               </Select>
-              <Button variant="ghost" size="sm" className="text-destructive" onClick={onDelete}>
+              <Button variant="ghost" size={tokens.button.inline} className="text-destructive" onClick={onDelete}>
                 <Trash2 className="h-3 w-3" />
               </Button>
             </div>

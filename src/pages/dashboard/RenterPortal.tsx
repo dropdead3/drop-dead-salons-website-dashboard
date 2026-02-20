@@ -5,6 +5,7 @@ import { useRenterPaymentMethods } from '@/hooks/useRenterPaymentMethods';
 import { useRenterYTDCommissions } from '@/hooks/useCommissionStatements';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useFormatDate } from '@/hooks/useFormatDate';
@@ -221,7 +222,7 @@ export default function RenterPortal() {
                 Add a payment method to enable automatic rent payments.
               </p>
             </div>
-            <Button size="sm" asChild>
+            <Button size={tokens.button.card} asChild>
               <Link to="/dashboard/renter/payment-methods">Add Payment Method</Link>
             </Button>
           </CardContent>

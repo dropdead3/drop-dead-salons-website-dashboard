@@ -7,6 +7,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -236,7 +237,7 @@ export function MissedDayDialog({
                   onClick={() => setShowConfirmDialog(true)} 
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 hover:shadow-xl group overflow-hidden"
                   disabled={isLoading || isExpired}
-                  size="lg"
+                  size={tokens.button.hero}
                 >
                   <Heart className="h-4 w-4 mr-2 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 ease-out" />
                   <span className="group-hover:translate-x-0 -translate-x-3 transition-transform duration-300 ease-out">Use Pass & Continue</span>

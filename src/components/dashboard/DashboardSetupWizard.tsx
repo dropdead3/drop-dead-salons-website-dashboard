@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { 
   Sparkles, 
   Layout, 
@@ -101,11 +102,11 @@ export function DashboardSetupWizard({ onComplete, roleTemplateKey }: DashboardS
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={handleContinue} className="gap-2">
+              <Button size={tokens.button.hero} onClick={handleContinue} className="gap-2">
                 Choose My Layout
                 <ArrowRight className="w-4 h-4" />
               </Button>
-              <Button size="lg" variant="outline" onClick={handleSkip}>
+              <Button size={tokens.button.hero} variant="outline" onClick={handleSkip}>
                 Use Recommended
               </Button>
             </div>

@@ -608,7 +608,7 @@ export default function AccountManagement() {
               {isPending && (
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm" className="gap-1">
+                    <Button variant="destructive" size={tokens.button.inline} className="gap-1">
                       <XCircle className="h-3.5 w-3.5" />
                       Cancel
                     </Button>

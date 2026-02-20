@@ -5,6 +5,7 @@ import { useEffectiveRoles } from '@/hooks/useEffectiveUser';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -865,7 +866,7 @@ export default function Onboarding() {
             <p className="text-muted-foreground font-sans mb-6">
               You've completed all onboarding steps. You're ready to start!
             </p>
-            <Button onClick={() => navigate('/dashboard')} size="lg" className="font-display">
+            <Button onClick={() => navigate('/dashboard')} size={tokens.button.hero} className="font-display">
               <Sparkles className="w-4 h-4 mr-2" />
               GO TO DASHBOARD
             </Button>
@@ -936,7 +937,7 @@ export default function Onboarding() {
                       onClick={handleAcknowledge} 
                       disabled={!hasReadContent || submitting}
                       className="w-full font-display"
-                      size="lg"
+                      size={tokens.button.hero}
                     >
                       {submitting ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -363,8 +364,8 @@ export default function CampaignDetail() {
                   autoFocus
                 />
                 <div className="flex gap-2">
-                  <Button size="sm" variant="ghost" onClick={() => setEditingDescription(false)}>Cancel</Button>
-                  <Button size="sm" onClick={handleSaveDescription}>Save</Button>
+                  <Button size={tokens.button.inline} variant="ghost" onClick={() => setEditingDescription(false)}>Cancel</Button>
+                  <Button size={tokens.button.inline} onClick={handleSaveDescription}>Save</Button>
                 </div>
               </div>
             ) : (
@@ -485,8 +486,8 @@ export default function CampaignDetail() {
                 autoFocus
               />
               <div className="flex gap-2">
-                <Button size="sm" variant="ghost" onClick={() => setEditingNote(false)}>Cancel</Button>
-                <Button size="sm" onClick={handleSaveNote}>Save</Button>
+                <Button size={tokens.button.inline} variant="ghost" onClick={() => setEditingNote(false)}>Cancel</Button>
+                <Button size={tokens.button.inline} onClick={handleSaveNote}>Save</Button>
               </div>
             </div>
           ) : (

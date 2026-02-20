@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -156,12 +157,12 @@ function SubmissionDialog({
             Pending Review
           </Badge>
         ) : canResubmit ? (
-          <Button variant="outline" size="sm" className="border-rose-500/30 text-rose-600 hover:bg-rose-500/10">
+          <Button variant="outline" size={tokens.button.card} className="border-rose-500/30 text-rose-600 hover:bg-rose-500/10">
             <AlertCircle className="h-4 w-4 mr-1" />
             Resubmit
           </Button>
         ) : (
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size={tokens.button.card}>
             <Send className="h-4 w-4 mr-1" />
             Request Check
           </Button>

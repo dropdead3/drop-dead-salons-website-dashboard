@@ -5,6 +5,7 @@ import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Carousel,
@@ -156,7 +157,7 @@ export function MobileFeatureRequestViewer({
                         {/* Vote CTA Button */}
                         <Button
                           variant={request.user_voted ? 'default' : 'outline'}
-                          size="lg"
+                          size={tokens.button.hero}
                           className="mt-8 gap-2"
                           onClick={() => onVote(request)}
                         >

@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -473,7 +474,7 @@ export default function Changelog() {
                   Top Feature Requests
                 </h2>
                 {!isMobile && (
-                  <Button variant="outline" size="sm" onClick={() => setShowSubmitDialog(true)}>
+                  <Button variant="outline" size={tokens.button.card} onClick={() => setShowSubmitDialog(true)}>
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Submit Idea
                   </Button>
