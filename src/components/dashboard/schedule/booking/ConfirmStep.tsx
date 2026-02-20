@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { RecurrenceSelector, type RecurrenceRule } from './RecurrenceSelector';
 import { 
   User, 
   Scissors, 
@@ -39,6 +40,8 @@ interface ConfirmStepProps {
   onConfirm: () => void;
   isLoading: boolean;
   locationName: string;
+  recurrenceRule?: RecurrenceRule | null;
+  onRecurrenceChange?: (rule: RecurrenceRule | null) => void;
 }
 
 export function ConfirmStep({
@@ -54,6 +57,8 @@ export function ConfirmStep({
   onConfirm,
   isLoading,
   locationName,
+  recurrenceRule,
+  onRecurrenceChange,
 }: ConfirmStepProps) {
   const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
   const { formatDate } = useFormatDate();
@@ -186,6 +191,18 @@ export function ConfirmStep({
               className="min-h-[80px] resize-none bg-muted/50 border-0"
             />
           </div>
+
+          {/* Recurrence */}
+          {onRecurrenceChange && (
+            <div className="space-y-3">
+              <Separator />
+              <RecurrenceSelector
+                value={recurrenceRule ?? null}
+                onChange={onRecurrenceChange}
+                startDate={date}
+              />
+            </div>
+          )}
         </div>
       </ScrollArea>
 

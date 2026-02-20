@@ -133,6 +133,9 @@ export function generateMockAppointments(config: MockAppointmentConfig): Phorest
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       is_new_client: isNewClient,
+      recurrence_group_id: null,
+      recurrence_index: null,
+      recurrence_rule: null,
     };
     
     appointments.push(appointment);
@@ -162,6 +165,9 @@ export function generateMockAppointments(config: MockAppointmentConfig): Phorest
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       is_new_client: false,
+      recurrence_group_id: null,
+      recurrence_index: null,
+      recurrence_rule: null,
     };
     
     const overlapAppt2: PhorestAppointment = {
@@ -184,6 +190,9 @@ export function generateMockAppointments(config: MockAppointmentConfig): Phorest
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       is_new_client: false,
+      recurrence_group_id: null,
+      recurrence_index: null,
+      recurrence_rule: null,
     };
     
     appointments.push(overlapAppt1, overlapAppt2);

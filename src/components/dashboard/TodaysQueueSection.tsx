@@ -319,6 +319,9 @@ export function TodaysQueueSection({
             updated_at: new Date().toISOString(),
             phorest_client_id: checkoutAppointment.phorest_client_id,
             is_new_client: checkoutAppointment.is_new_client ?? false,
+            recurrence_group_id: null,
+            recurrence_index: null,
+            recurrence_rule: null,
           }}
           open={checkoutOpen}
           onOpenChange={setCheckoutOpen}

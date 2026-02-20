@@ -8764,6 +8764,9 @@ export type Database = {
           phorest_id: string
           phorest_staff_id: string | null
           rebooked_at_checkout: boolean | null
+          recurrence_group_id: string | null
+          recurrence_index: number | null
+          recurrence_rule: Json | null
           service_category: string | null
           service_name: string | null
           start_time: string
@@ -8787,6 +8790,9 @@ export type Database = {
           phorest_id: string
           phorest_staff_id?: string | null
           rebooked_at_checkout?: boolean | null
+          recurrence_group_id?: string | null
+          recurrence_index?: number | null
+          recurrence_rule?: Json | null
           service_category?: string | null
           service_name?: string | null
           start_time: string
@@ -8810,6 +8816,9 @@ export type Database = {
           phorest_id?: string
           phorest_staff_id?: string | null
           rebooked_at_checkout?: boolean | null
+          recurrence_group_id?: string | null
+          recurrence_index?: number | null
+          recurrence_rule?: Json | null
           service_category?: string | null
           service_name?: string | null
           start_time?: string
