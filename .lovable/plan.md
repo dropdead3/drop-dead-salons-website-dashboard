@@ -1,45 +1,34 @@
 
 
-# Auto-Hide Top Menu Bar on Schedule Page
+# Floating Action Bar for Schedule Page
 
-## What We're Doing
-The desktop top navigation bar will be hidden by default on the schedule page, sliding down from the top only when the mouse enters the top area of the screen. This gives the calendar maximum vertical space while keeping navigation accessible.
+## What Changes
+The bottom action bar on the Schedule page currently sits flush against the edges with a flat `border-t` style. It needs to match the floating, rounded aesthetic of the collapsed sidebar and top navigation bar -- using `rounded-full`, glassmorphism (`bg-card/80 backdrop-blur-xl border-border`), and floating with margin from the edges.
 
-## How It Works
+## Changes
 
-1. When the mouse moves into the top ~40px of the screen, the top bar slides down with a smooth animation
-2. The bar stays visible while the mouse remains over it
-3. When the mouse leaves the bar (and isn't near the top edge), it slides back up and hides
-4. This behavior only applies on the schedule page (where `hideFooter` is true) on desktop (lg+)
-5. Mobile header remains unchanged
+### File: `src/components/dashboard/schedule/ScheduleActionBar.tsx`
 
-## Technical Details
+Update the outer wrapper div styling:
 
-### File: `src/components/dashboard/DashboardLayout.tsx`
+**Current:**
+```
+bg-card border-t border-border px-4 py-2.5
+```
 
-**New state and mouse tracking (inside `DashboardLayoutInner`):**
-- Add `headerAutoHidden` state (true when `hideFooter` is active)
-- Add `headerHovered` state to track mouse proximity
-- Add a transparent "hot zone" div (~40px tall) fixed at the top of the screen that triggers reveal on `mouseenter`
-- The top bar wrapper gets `onMouseLeave` to re-hide when cursor exits
+**New:**
+```
+bg-card/80 backdrop-blur-xl border border-border rounded-full px-6 py-2.5 mx-4 mb-4 shadow-lg
+```
 
-**Desktop Top Bar changes (lines ~1122-1247):**
-- When `hideFooter` is true, change from `sticky top-0` to `fixed top-0 left-0 right-0` positioning (offset by sidebar width)
-- Apply a CSS transform: `translateY(-100%)` when hidden, `translateY(0)` when revealed
-- Add `transition-transform duration-300 ease-in-out` for smooth slide animation
-- The bar sits in a higher z-index layer so it overlays calendar content when revealed
+- `rounded-full` -- pill shape matching top nav and collapsed sidebar
+- `bg-card/80 backdrop-blur-xl` -- glassmorphism treatment consistent with other floating elements
+- `border border-border` -- full border instead of just `border-t`
+- `mx-4 mb-4` -- floating margin from edges (bottom and sides)
+- `shadow-lg` -- subtle elevation to lift it off the background
+- Remove the `border-t-2 border-t-primary/60` selection highlight (replace with a subtler indicator that works with rounded-full, such as a ring or shadow)
 
-**Hot zone trigger:**
-- A fixed, invisible div at the very top of the viewport (full width, ~40px tall)
-- Only rendered when `hideFooter` is true
-- On `mouseenter`, sets `headerHovered = true` which reveals the bar
-- The top bar's `onMouseLeave` sets `headerHovered = false` to re-hide
+### File: `src/pages/dashboard/Schedule.tsx`
 
-**Main content adjustment:**
-- When `hideFooter` is true, remove the top bar from document flow (it becomes fixed/overlaying) so the calendar gets the extra ~80px of vertical space
-- Update the `h-[calc(100vh-4rem)]` in `Schedule.tsx` to use full height since the header no longer takes up space in the flow
-
-### Files to Modify
-1. **`src/components/dashboard/DashboardLayout.tsx`** -- Add auto-hide logic, hot zone div, and conditional positioning/animation classes to the desktop top bar
-2. **`src/pages/dashboard/Schedule.tsx`** -- Adjust the height calc to account for the header no longer being in flow
+Adjust the layout so the action bar floats over the calendar content rather than being a flex child that pushes content up. Wrap it in a container or use absolute/fixed positioning at the bottom of the schedule area so the calendar gets full height beneath it.
 
