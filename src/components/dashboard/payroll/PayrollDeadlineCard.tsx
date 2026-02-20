@@ -218,7 +218,7 @@ export function PayrollDeadlineCard() {
 
           <Button
             variant={isPastDeadline && !isAutomatic ? 'destructive' : 'outline'}
-            size="sm"
+            size={tokens.button.card}
             className="w-full"
             asChild
           >

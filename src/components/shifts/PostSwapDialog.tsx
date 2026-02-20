@@ -18,6 +18,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { LocationSelect } from '@/components/ui/location-select';
 import { ArrowLeftRight, ArrowDown, Gift, CalendarIcon, Loader2 } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { cn } from '@/lib/utils';
 import { useCreateSwap } from '@/hooks/useShiftSwaps';
 
@@ -204,7 +205,7 @@ export function PostSwapDialog({ open, onOpenChange }: PostSwapDialogProps) {
                   key={days}
                   type="button"
                   variant={expiresInDays === days ? 'default' : 'outline'}
-                  size="sm"
+                  size={tokens.button.card}
                   onClick={() => setExpiresInDays(days)}
                 >
                   {days} day{days > 1 ? 's' : ''}
@@ -213,7 +214,7 @@ export function PostSwapDialog({ open, onOpenChange }: PostSwapDialogProps) {
               <Button
                 type="button"
                 variant={expiresInDays === undefined ? 'default' : 'outline'}
-                size="sm"
+                size={tokens.button.card}
                 onClick={() => setExpiresInDays(undefined)}
               >
                 Never
