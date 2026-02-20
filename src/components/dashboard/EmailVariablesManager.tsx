@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Plus, Pencil, Trash2, Search, Variable, Check, X, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -211,7 +212,7 @@ export function EmailVariablesManager() {
             </SelectContent>
           </Select>
         </div>
-        <Button onClick={handleOpenCreate} size="sm">
+        <Button onClick={handleOpenCreate} size={tokens.button.card}>
           <Plus className="h-4 w-4 mr-1" />
           Add Variable
         </Button>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -174,7 +175,7 @@ export function IntegrationsTab() {
               </div>
               <Button
                 variant="outline"
-                size="sm"
+                size={tokens.button.card}
                 onClick={() => setCalSyncOpen(true)}
               >
                 {calFeedToken ? 'Manage' : 'Set Up'}
@@ -231,7 +232,7 @@ export function IntegrationsTab() {
                       {integration.configPath && (
                         <Button
                           variant="outline"
-                          size="sm"
+                          size={tokens.button.card}
                           onClick={() => navigate(integration.configPath!)}
                         >
                           <Settings className="w-4 h-4 mr-2" />
@@ -241,7 +242,7 @@ export function IntegrationsTab() {
                       
                       <Button
                         variant="outline"
-                        size="sm"
+                        size={tokens.button.card}
                         onClick={() => handlePauseIntegration(integration.id)}
                       >
                         {integration.status === 'paused' ? (

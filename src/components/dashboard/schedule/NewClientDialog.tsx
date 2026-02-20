@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import {
   Dialog,
   DialogContent,
@@ -163,7 +164,7 @@ export function NewClientDialog({
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
+                size={tokens.button.inline}
                 className="h-auto px-2 py-1 text-xs"
                 onClick={() => setShowLocationSelector(true)}
               >

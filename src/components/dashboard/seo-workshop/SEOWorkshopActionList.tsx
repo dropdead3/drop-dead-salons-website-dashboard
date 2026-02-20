@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { tokens } from '@/lib/design-tokens';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import {
@@ -132,7 +133,7 @@ export function SEOWorkshopActionList({ organizationId }: SEOWorkshopActionListP
                     </div>
                     <Button
                       variant="ghost"
-                      size="sm"
+                      size={tokens.button.inline}
                       className="shrink-0 gap-1 text-xs"
                       onClick={() => handleAddToMyTasks(action)}
                       disabled={createTask.isPending}

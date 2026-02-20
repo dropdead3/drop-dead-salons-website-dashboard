@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import type { Json } from '@/integrations/supabase/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -331,7 +332,7 @@ export function EmailTemplatesManager() {
         <p className="text-sm text-muted-foreground font-sans">
           Customize email templates for automated notifications.
         </p>
-        <Button onClick={openCreateDialog} size="sm" className="gap-2">
+        <Button onClick={openCreateDialog} size={tokens.button.card} className="gap-2">
           <Plus className="w-4 h-4" />
           New Template
         </Button>
@@ -380,7 +381,7 @@ export function EmailTemplatesManager() {
               <div className="flex items-center gap-1">
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size={tokens.button.inline}
                   className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                   onClick={() => openEditDialog(template)}
                 >
@@ -389,7 +390,7 @@ export function EmailTemplatesManager() {
                 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                    <Button variant="ghost" size={tokens.button.inline} className="h-8 w-8 p-0">
                       <MoreHorizontal className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -589,7 +590,7 @@ export function EmailTemplatesManager() {
             <div className="flex gap-2">
               <Button 
                 variant="outline" 
-                size="sm"
+                size={tokens.button.card}
                 className="text-muted-foreground"
                 onClick={() => {
                   editorRef.current?.regenerateHtml();

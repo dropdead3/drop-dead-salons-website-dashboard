@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -82,7 +83,7 @@ export function LocationsContent() {
         <div className="flex items-center gap-2">
           <Button 
             variant="outline" 
-            size="sm"
+            size={tokens.button.card}
             onClick={() => setPreviewOpen(true)}
             className="gap-2"
           >
@@ -91,7 +92,7 @@ export function LocationsContent() {
           </Button>
           <Button 
             variant="outline" 
-            size="sm"
+            size={tokens.button.card}
             onClick={() => navigate('/dashboard/admin/settings')}
             className="gap-2"
           >

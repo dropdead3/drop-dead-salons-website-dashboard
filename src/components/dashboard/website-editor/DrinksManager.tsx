@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -360,7 +361,7 @@ export function DrinksManager() {
             <Coffee className="h-5 w-5 text-muted-foreground" />
             <CardTitle className="text-lg">Drinks ({localConfig.drinks.length})</CardTitle>
           </div>
-          <Button onClick={handleAddDrink} size="sm" variant="outline">
+          <Button onClick={handleAddDrink} size={tokens.button.card} variant="outline">
             <Plus className="h-4 w-4 mr-2" />
             Add Drink
           </Button>

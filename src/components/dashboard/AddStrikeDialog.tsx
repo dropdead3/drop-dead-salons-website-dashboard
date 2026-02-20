@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -109,7 +110,7 @@ export function AddStrikeDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger || (
-          <Button variant="destructive" size="sm">
+          <Button variant="destructive" size={tokens.button.card}>
             <AlertTriangle className="w-4 h-4 mr-2" />
             Add Strike
           </Button>

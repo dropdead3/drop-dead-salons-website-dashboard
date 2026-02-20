@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { tokens } from '@/lib/design-tokens';
 import {
   Dialog,
   DialogContent,
@@ -124,7 +125,7 @@ export function AddSectionDialog({ open, onOpenChange, onAdd, onAddFromTemplate 
               <div className="flex gap-1.5 flex-wrap">
                 <Button
                   variant={activeCategory === null ? 'default' : 'outline'}
-                  size="sm"
+                  size={tokens.button.inline}
                   className="h-7 text-xs"
                   onClick={() => setActiveCategory(null)}
                 >
@@ -134,7 +135,7 @@ export function AddSectionDialog({ open, onOpenChange, onAdd, onAddFromTemplate 
                   <Button
                     key={cat.id}
                     variant={activeCategory === cat.id ? 'default' : 'outline'}
-                    size="sm"
+                    size={tokens.button.inline}
                     className="h-7 text-xs"
                     onClick={() => setActiveCategory(cat.id)}
                   >
@@ -172,7 +173,7 @@ export function AddSectionDialog({ open, onOpenChange, onAdd, onAddFromTemplate 
             <div className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
               {(() => { const Icon = TYPE_ICONS[selectedType]; return <Icon className="h-4 w-4" />; })()}
               <span className="text-sm font-medium">{CUSTOM_TYPE_INFO[selectedType].label}</span>
-              <Button variant="ghost" size="sm" className="ml-auto h-6 text-xs" onClick={() => setSelectedType(null)}>
+              <Button variant="ghost" size={tokens.button.inline} className="ml-auto h-6 text-xs" onClick={() => setSelectedType(null)}>
                 Change
               </Button>
             </div>
