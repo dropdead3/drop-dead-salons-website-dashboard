@@ -186,7 +186,7 @@ export function WidgetsAccessPanel({ role, roleColor }: WidgetsAccessPanelProps)
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size={tokens.button.inline}
                     className="h-6 text-xs gap-1"
                     onClick={() => handleBulkToggle(category, true)}
                     disabled={visibleCount === items.length || bulkUpdate.isPending}
@@ -196,7 +196,7 @@ export function WidgetsAccessPanel({ role, roleColor }: WidgetsAccessPanelProps)
                   </Button>
                   <Button
                     variant="ghost"
-                    size="sm"
+                    size={tokens.button.inline}
                     className="h-6 text-xs gap-1"
                     onClick={() => handleBulkToggle(category, false)}
                     disabled={visibleCount === 0 || bulkUpdate.isPending}

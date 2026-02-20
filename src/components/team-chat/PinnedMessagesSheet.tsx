@@ -13,6 +13,7 @@ import {
 import { usePinnedMessages } from '@/hooks/team-chat/usePinnedMessages';
 import { useTeamChatContext } from '@/contexts/TeamChatContext';
 import { Loader2 } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 
 interface PinnedMessagesSheetProps {
   open: boolean;
@@ -93,7 +94,7 @@ export function PinnedMessagesSheet({ open, onOpenChange }: PinnedMessagesSheetP
 
                             <Button
                               variant="link"
-                              size="sm"
+                              size={tokens.button.inline}
                               className="h-auto p-0 text-xs"
                               onClick={() => handleViewThread(pm.message.id)}
                             >

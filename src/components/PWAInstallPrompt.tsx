@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { usePWAInstall } from '@/hooks/usePWAInstall';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 interface PWAInstallPromptProps {
   className?: string;
@@ -102,7 +103,7 @@ export function PWAInstallPrompt({ className }: PWAInstallPromptProps) {
               Add to your home screen for quick access and offline support.
             </p>
           </div>
-          <Button size="sm" onClick={handleInstall} className="w-full">
+          <Button size={tokens.button.card} onClick={handleInstall} className="w-full">
             <Download className="h-4 w-4 mr-2" />
             Install
           </Button>

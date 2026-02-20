@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import Logo from '@/assets/drop-dead-logo.svg';
 import LogoWhite from '@/assets/drop-dead-logo-white.svg';
+import { tokens } from '@/lib/design-tokens';
 
 interface DashboardLockScreenProps {
   onUnlock: (user?: { user_id: string; display_name: string }) => void;
@@ -390,7 +391,7 @@ export function DashboardLockScreen({ onUnlock }: DashboardLockScreenProps) {
       >
         <Button
           variant="ghost"
-          size="sm"
+          size={tokens.button.inline}
           className="text-muted-foreground hover:text-foreground gap-2"
           onClick={handleSignOut}
         >

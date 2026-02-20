@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { X, Zap, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 interface FlashSaleBannerProps {
   promotionId: string;
@@ -127,7 +128,7 @@ export function FlashSaleBanner({
           </div>
 
           <Button
-            size="sm"
+            size={tokens.button.card}
             variant="secondary"
             className="bg-white text-black hover:bg-gray-100 font-medium"
             asChild
@@ -136,7 +137,7 @@ export function FlashSaleBanner({
           </Button>
 
           <Button
-            size="sm"
+            size={tokens.button.inline}
             variant="ghost"
             className="text-white hover:bg-white/20 p-1 h-auto"
             onClick={handleDismiss}

@@ -205,7 +205,7 @@ export default function RenterPayRent() {
                         <div className="flex items-center gap-3">
                           <p className="font-medium">{formatCurrency(invoice.amount_due)}</p>
                           <Button 
-                            size="sm"
+                            size={tokens.button.card}
                             onClick={() => handlePayNow(invoice.id, invoice.amount_due)}
                             disabled={isProcessing || !defaultMethod}
                           >

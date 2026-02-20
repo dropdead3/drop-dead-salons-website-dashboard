@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Check, X, Loader2, Clock, Gift, MessageSquare } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { usePendingRedemptions, useUpdateRedemptionStatus } from '@/hooks/usePoints';
 import { format } from 'date-fns';
 
@@ -128,7 +129,7 @@ export function RedemptionApprovalsTab() {
 
                   <div className="flex items-center gap-2">
                     <Button
-                      size="sm"
+                      size={tokens.button.card}
                       variant="outline"
                       onClick={() => handleAction(redemption, 'denied')}
                       disabled={updateStatus.isPending}
@@ -138,7 +139,7 @@ export function RedemptionApprovalsTab() {
                       Deny
                     </Button>
                     <Button
-                      size="sm"
+                      size={tokens.button.card}
                       onClick={() => handleAction(redemption, 'approved')}
                       disabled={updateStatus.isPending}
                     >
@@ -146,7 +147,7 @@ export function RedemptionApprovalsTab() {
                       Approve
                     </Button>
                     <Button
-                      size="sm"
+                      size={tokens.button.card}
                       variant="secondary"
                       onClick={() => handleAction(redemption, 'fulfilled')}
                       disabled={updateStatus.isPending}
