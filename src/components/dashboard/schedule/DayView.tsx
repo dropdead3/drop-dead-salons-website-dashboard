@@ -631,34 +631,21 @@ export function DayView({
             <div className="flex relative">
               {/* Time Labels */}
               <div className="w-[70px] shrink-0 border-r bg-muted/30">
-                {timeSlots.map(({ hour, minute, label, isHour, isHalf }) => {
-                  const borderClass = isHour
-                    ? 'border-t border-border/60'
-                    : isHalf
-                      ? 'border-t border-dotted border-border/40'
-                      : 'border-t border-dotted border-border/20';
-
-                  return (
-                    <div 
-                      key={`${hour}-${minute}`}
-                      className={cn(
-                        'h-5 text-right pr-2 flex items-center justify-end',
-                        borderClass
-                      )}
-                    >
-                      {isHour && (
-                        <span className="text-[11px] text-foreground font-medium -mt-2">
-                          {label}
-                        </span>
-                      )}
-                      {isHalf && (
-                        <span className="text-[10px] text-muted-foreground/50 -mt-1">
-                          {label}
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
+                {timeSlots.map(({ hour, minute, label, isHour, isHalf }) => (
+                  <div 
+                    key={`${hour}-${minute}`}
+                    className={cn(
+                      'h-[20px] text-xs text-muted-foreground pr-2 text-right flex items-center justify-end',
+                      isHour && 'font-medium'
+                    )}
+                  >
+                    {label && (
+                      <span className={cn(isHour ? 'text-foreground' : 'text-muted-foreground/60')}>
+                        {label}
+                      </span>
+                    )}
+                  </div>
+                ))}
               </div>
 
               {/* Stylist Columns */}
