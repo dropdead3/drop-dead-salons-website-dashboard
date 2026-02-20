@@ -227,7 +227,7 @@ export function PaymentsTabContent({ organizationId }: PaymentsTabContentProps) 
                         {payment.status !== 'paid' && payment.status !== 'waived' && (
                           <Button
                             variant="outline"
-                            size="sm"
+                            size={tokens.button.card}
                             onClick={() => {
                               setSelectedPayment(payment);
                               setPaymentAmount(payment.balance.toString());

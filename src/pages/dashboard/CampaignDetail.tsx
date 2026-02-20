@@ -403,7 +403,7 @@ export default function CampaignDetail() {
               {campaign.status === 'active' && progress === 100 && (
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size={tokens.button.inline}
                   className="text-chart-2 text-xs"
                   onClick={() => updateStatus.mutate({ id: campaign.id, status: 'completed' })}
                 >
@@ -414,7 +414,7 @@ export default function CampaignDetail() {
               {campaign.status === 'active' && (
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size={tokens.button.inline}
                   className="text-muted-foreground text-xs"
                   onClick={() => updateStatus.mutate({ id: campaign.id, status: 'archived' })}
                 >
@@ -425,7 +425,7 @@ export default function CampaignDetail() {
               {(campaign.status === 'completed' || campaign.status === 'archived') && (
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size={tokens.button.inline}
                   className="text-primary text-xs"
                   onClick={() => updateStatus.mutate({ id: campaign.id, status: 'active' })}
                 >
@@ -528,7 +528,7 @@ export default function CampaignDetail() {
             />
             <Button
               variant="ghost"
-              size="sm"
+              size={tokens.button.inline}
               onClick={handleAddTask}
               disabled={!newTaskTitle.trim()}
               className="shrink-0 text-xs"

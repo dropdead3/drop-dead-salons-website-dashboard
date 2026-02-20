@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { tokens } from '@/lib/design-tokens';
 import { 
   FileText, 
   Plus, 
@@ -332,7 +333,7 @@ export default function Handbooks() {
                       <Button
                         key={role.value}
                         type="button"
-                        size="sm"
+                        size={tokens.button.card}
                         variant={visibleToRoles.includes(role.value) ? 'default' : 'outline'}
                         onClick={() => toggleRoleVisibility(role.value)}
                         className="text-xs"

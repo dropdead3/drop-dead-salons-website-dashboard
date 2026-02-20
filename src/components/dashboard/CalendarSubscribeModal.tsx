@@ -19,6 +19,7 @@ import {
   Link2,
   Trash2,
 } from 'lucide-react';
+import { tokens } from '@/lib/design-tokens';
 import { useCalendarFeedToken } from '@/hooks/useCalendarFeedToken';
 import { toast } from 'sonner';
 
@@ -171,11 +172,11 @@ export function CalendarSubscribeModal({ open, onOpenChange }: CalendarSubscribe
 
               {/* Actions */}
               <div className="flex gap-2 justify-end">
-                <Button variant="outline" size="sm" onClick={generateToken}>
+                <Button variant="outline" size={tokens.button.card} onClick={generateToken}>
                   <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
                   Regenerate
                 </Button>
-                <Button variant="destructive" size="sm" onClick={revokeToken}>
+                <Button variant="destructive" size={tokens.button.card} onClick={revokeToken}>
                   <Trash2 className="w-3.5 h-3.5 mr-1.5" />
                   Revoke
                 </Button>

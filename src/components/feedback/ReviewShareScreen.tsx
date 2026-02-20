@@ -5,6 +5,7 @@ import { Star, Copy, ExternalLink, Check, MapPin, MessageSquare } from 'lucide-r
 import { ReviewThresholdSettings, trackExternalReviewClick } from '@/hooks/useReviewThreshold';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 
 interface ReviewShareScreenProps {
   settings: ReviewThresholdSettings;
@@ -127,7 +128,7 @@ export function ReviewShareScreen({
                 </span>
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size={tokens.button.inline}
                   onClick={handleCopyReview}
                   className="gap-1"
                 >
