@@ -38,7 +38,7 @@ function StatCard({ icon: Icon, value, label, colorClass }: StatCardProps) {
     <Card className="p-4">
       <div className="flex items-center gap-3">
         <div className={cn(tokens.card.iconBox, colorClass)}>
-          <Icon className="w-5 h-5" />
+          <Icon className={tokens.card.icon} />
         </div>
         <div>
           <p className={cn(tokens.kpi.value, "tabular-nums text-foreground")}>{value}</p>
@@ -342,7 +342,7 @@ export default function ScheduleMeeting() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
                      <div className={tokens.card.iconBox}>
-                       <Inbox className="w-5 h-5 text-chart-4" />
+                       <Inbox className={tokens.card.icon} />
                      </div>
                      <div>
                        <CardTitle className={tokens.card.title}>PENDING REQUESTS</CardTitle>
@@ -390,7 +390,7 @@ export default function ScheduleMeeting() {
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-3">
                      <div className={tokens.card.iconBox}>
-                       <ClipboardList className="w-5 h-5 text-chart-3" />
+                       <ClipboardList className={tokens.card.icon} />
                      </div>
                      <div>
                        <CardTitle className={tokens.card.title}>ACTIVE COMMITMENTS</CardTitle>
