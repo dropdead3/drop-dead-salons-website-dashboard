@@ -1,35 +1,31 @@
 
 
-# Enlarge Service Summary Footer in Booking Popover
+# Fix: Create Client Edge Function Using Wrong Secret Name
 
-## What Changes
+## The Problem
 
-Increase the size of the service summary section that appears at the bottom of the booking popover across all steps. This affects four repeated footer blocks in `QuickBookingPopover.tsx`.
+The `create-phorest-client` edge function is failing because it looks for a secret called `PHOREST_PASSWORD`, which does not exist. The configured secret is `PHOREST_API_KEY`. This means the function immediately throws "Missing Phorest API credentials" before it even tries to call the Phorest API.
 
-## Specific Size Increases
+## Root Cause
 
-| Element | Current | New |
-|---|---|---|
-| Summary row text | `text-xs` (12px) | `text-sm` (14px) |
-| Service count badge ("2 services") | `text-[10px] px-2 py-0` | `text-xs px-2.5 py-0.5` |
-| Duration text ("75m") | `text-muted-foreground` (inherits text-xs) | `text-sm text-muted-foreground` |
-| Total price ("$75") | `font-medium` (inherits text-xs) | `text-base font-semibold` |
-| Service name badges ("Combo Cut x") | `text-[10px] px-1.5 py-0` | `text-xs px-2 py-0.5` |
-| X icon on badges | `h-2.5 w-2.5` | `h-3 w-3` |
-| Badge gap | `gap-1` | `gap-1.5` |
+An inconsistency across edge functions:
+- `update-phorest-appointment` correctly uses `PHOREST_API_KEY`
+- `create-phorest-client` incorrectly uses `PHOREST_PASSWORD`
+- `update-phorest-appointment-time` also incorrectly uses `PHOREST_PASSWORD`
 
-## Files Modified
+## The Fix
 
-**`src/components/dashboard/schedule/QuickBookingPopover.tsx`** -- Update four identical footer summary blocks:
-1. Service step footer (~line 1084)
-2. Location/client step footer (~line 1162)
-3. Stylist step footer (~line 1302)
-4. One additional instance
+Update two edge functions to reference `PHOREST_API_KEY` instead of `PHOREST_PASSWORD`:
 
-Each block gets the same size bump to keep all steps visually consistent.
+### File 1: `supabase/functions/create-phorest-client/index.ts`
+- Change `Deno.env.get("PHOREST_PASSWORD")` to `Deno.env.get("PHOREST_API_KEY")`
 
-## Technical Notes
+### File 2: `supabase/functions/update-phorest-appointment-time/index.ts`
+- Change all references from `PHOREST_PASSWORD` to `PHOREST_API_KEY`
 
-- No new components or dependencies
-- Pure className changes across 4 repeated footer sections
-- The `pr-0.5` on service badges adjusts to `pr-1` to keep the X icon spacing balanced at the larger size
+## Impact
+
+- No database changes needed
+- No frontend changes needed
+- Both functions will be redeployed automatically after the fix
+
