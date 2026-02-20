@@ -5,8 +5,11 @@ import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
+import { EmptyState } from '@/components/ui/empty-state';
 import { 
   Loader2, Plus, Pencil, Trash2, GripVertical, Palette, Info, Clock, DollarSign, Scissors,
+  Sparkles, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { tokens } from '@/lib/design-tokens';
@@ -58,6 +61,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { useAllCategoryAddons } from '@/hooks/useCategoryAddons';
+import { useAllServices } from '@/hooks/usePhorestServices';
 
 // Curated color palette
 const CATEGORY_PALETTE = [
@@ -95,6 +100,8 @@ export function ServicesSettingsContent() {
   const { effectiveOrganization } = useOrganizationContext();
   const { data: categories, isLoading: catsLoading } = useServiceCategoryColors();
   const { data: allServices, isLoading: servicesLoading } = useServicesData(undefined, effectiveOrganization?.id);
+  const { data: phorestServices = [] } = useAllServices();
+  const { data: addonMap = {} } = useAllCategoryAddons(effectiveOrganization?.id);
   const updateColor = useUpdateCategoryColor();
   const reorderCategories = useReorderCategories();
   const createCategory = useCreateCategory();
@@ -103,6 +110,13 @@ export function ServicesSettingsContent() {
   const createService = useCreateService();
   const updateService = useUpdateService();
   const deleteService = useDeleteService();
+
+  // Flat, deduplicated list of Phorest service names (what the wizard searches)
+  const phorestServiceNames = useMemo(() => {
+    const names = new Set<string>();
+    phorestServices.forEach(s => { if (s.name) names.add(s.name); });
+    return Array.from(names).sort();
+  }, [phorestServices]);
 
   // Filter to service categories only (not Block/Break)
   const serviceCategories = useMemo(() => 
@@ -122,6 +136,14 @@ export function ServicesSettingsContent() {
     });
     return grouped;
   }, [allServices]);
+
+  // Track which addon rows are expanded in the dedicated card
+  const [expandedAddonRows, setExpandedAddonRows] = useState<Set<string>>(new Set());
+  const toggleAddonRow = (catId: string) => setExpandedAddonRows(prev => {
+    const next = new Set(prev);
+    next.has(catId) ? next.delete(catId) : next.add(catId);
+    return next;
+  });
 
   // Dialog states
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
@@ -209,6 +231,11 @@ export function ServicesSettingsContent() {
     updateService.mutate({ id: service.id, is_active: !service.is_active });
   };
 
+  // Total configured add-on count across all categories
+  const totalAddonCount = useMemo(() => {
+    return Object.values(addonMap).reduce((sum, arr) => sum + arr.length, 0);
+  }, [addonMap]);
+
   if (catsLoading || servicesLoading) {
     return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
   }
@@ -248,6 +275,7 @@ export function ServicesSettingsContent() {
                       const hasGradient = isGradientMarker(cat.color_hex);
                       const gradient = hasGradient ? getGradientFromMarker(cat.color_hex) : null;
                       const serviceCount = servicesByCategory[cat.category_name]?.length || 0;
+                      const addonCount = addonMap[cat.id]?.length || 0;
 
                       return (
                         <SortableCategoryRow key={cat.id} category={cat}>
@@ -301,19 +329,18 @@ export function ServicesSettingsContent() {
                             </PopoverContent>
                           </Popover>
 
-                          {/* Name & controls */}
+                          {/* Name & service count */}
                           <div className="flex-1 min-w-0">
                             <p className={cn(tokens.body.emphasis, 'truncate')}>{cat.category_name}</p>
-                            <p className={tokens.body.muted}>{serviceCount} service{serviceCount !== 1 ? 's' : ''}</p>
-                            {effectiveOrganization?.id && (
-                              <CategoryAddonManager
-                                categoryId={cat.id}
-                                categoryName={cat.category_name}
-                                organizationId={effectiveOrganization.id}
-                                availableCategories={localOrder.filter(c => c.id !== cat.id).map(c => c.category_name)}
-                                availableServiceNames={allServices?.map(s => s.name) ?? []}
-                              />
-                            )}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className={tokens.body.muted}>{serviceCount} service{serviceCount !== 1 ? 's' : ''}</p>
+                              {addonCount > 0 && (
+                                <Badge variant="secondary" className="text-[10px] py-0 px-1.5 h-4 font-normal gap-1">
+                                  <Sparkles className="h-2.5 w-2.5" />
+                                  {addonCount} add-on{addonCount !== 1 ? 's' : ''}
+                                </Badge>
+                              )}
+                            </div>
                           </div>
                           <div className="flex items-center gap-1">
                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => {
@@ -336,6 +363,109 @@ export function ServicesSettingsContent() {
                   </div>
                 </SortableContext>
               </DndContext>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Booking Add-On Recommendations Card */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <CardTitle className={tokens.heading.section}>BOOKING ADD-ON RECOMMENDATIONS</CardTitle>
+              </div>
+              {totalAddonCount > 0 && (
+                <Badge variant="secondary" className="text-xs">
+                  {totalAddonCount} configured
+                </Badge>
+              )}
+            </div>
+            <CardDescription>
+              When a stylist selects a service category during booking, Zura will suggest these add-ons — increasing average ticket without any extra effort.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {localOrder.length === 0 ? (
+              <EmptyState
+                icon={Scissors}
+                title="No categories yet"
+                description="Create service categories first to configure add-on recommendations."
+              />
+            ) : totalAddonCount === 0 ? (
+              <EmptyState
+                icon={Sparkles}
+                title="No add-ons configured"
+                description="Add-on recommendations surface high-margin services at exactly the right moment during booking — when the appointment is being built. Configure add-ons per category below to start increasing average ticket value."
+                action={
+                  <p className="text-xs text-muted-foreground">
+                    Expand any category below to configure its recommendations.
+                  </p>
+                }
+              />
+            ) : null}
+
+            {localOrder.length > 0 && (
+              <div className="space-y-1 mt-2">
+                {localOrder.map((cat) => {
+                  const abbr = getCategoryAbbreviation(cat.category_name);
+                  const hasGradient = isGradientMarker(cat.color_hex);
+                  const gradient = hasGradient ? getGradientFromMarker(cat.color_hex) : null;
+                  const addonCount = addonMap[cat.id]?.length || 0;
+                  const isExpanded = expandedAddonRows.has(cat.id);
+
+                  return (
+                    <div key={cat.id} className="rounded-lg border border-border/50 overflow-hidden">
+                      {/* Row header */}
+                      <button
+                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/40 transition-colors text-left"
+                        onClick={() => toggleAddonRow(cat.id)}
+                      >
+                        <div
+                          className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-sans font-medium shrink-0"
+                          style={gradient ? { background: gradient.background, color: gradient.textColor } : { backgroundColor: cat.color_hex, color: cat.text_color_hex }}
+                        >
+                          {abbr}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={cn(tokens.body.emphasis, 'truncate')}>{cat.category_name}</p>
+                          {addonCount > 0 ? (
+                            <p className={cn(tokens.body.muted, 'flex items-center gap-1')}>
+                              <Sparkles className="h-3 w-3 text-primary" />
+                              {addonCount} recommendation{addonCount !== 1 ? 's' : ''} configured
+                            </p>
+                          ) : (
+                            <p className={tokens.body.muted}>No recommendations yet</p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {addonCount === 0 && (
+                            <span className="text-xs text-primary font-medium">+ Configure</span>
+                          )}
+                          {isExpanded ? (
+                            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </div>
+                      </button>
+
+                      {/* Expanded manager */}
+                      {isExpanded && effectiveOrganization?.id && (
+                        <div className="border-t border-border/50 bg-muted/20 px-4 py-3">
+                          <CategoryAddonManager
+                            categoryId={cat.id}
+                            categoryName={cat.category_name}
+                            organizationId={effectiveOrganization.id}
+                            availableCategories={localOrder.filter(c => c.id !== cat.id).map(c => c.category_name)}
+                            availableServiceNames={phorestServiceNames}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </CardContent>
         </Card>
