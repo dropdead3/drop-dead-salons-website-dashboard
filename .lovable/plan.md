@@ -1,113 +1,70 @@
 
 
-# Align Client Fields with Phorest Data Model
+# Add Gender to Create-Client Flow and Update Phorest Sync Mapping
 
 ## Problem
 
-The current `phorest_clients` table is missing several fields that Phorest uses for client management. This creates a mapping gap between local data and the POS system.
+Two gaps remain after the Phorest field alignment:
 
-## Fields Comparison
-
-| Phorest Field | Current Status | Action |
-|---|---|---|
-| First Name | Missing (only `name`) | Add `first_name` column |
-| Last Name | Missing (only `name`) | Add `last_name` column |
-| Gender | Missing | Add `gender` column |
-| Phone Number | Exists (`phone`) | No change |
-| Landline | Missing | Add `landline` column |
-| Email | Exists | No change |
-| Date of Birth | Exists (`birthday`) | No change |
-| Marketing Permissions (Email) | In `client_email_preferences` | Keep as-is |
-| Marketing Permissions (SMS) | In `client_email_preferences` | Keep as-is |
-| Reminder Consent (Email) | Missing | Add `reminder_email_opt_in` |
-| Reminder Consent (SMS) | Missing | Add `reminder_sms_opt_in` |
-| Client Category | Missing | Add `client_category` column |
-| Preferred Staff Member | Exists (`preferred_stylist_id`) | No change |
-| Where did they hear of us | Exists (`lead_source`) | No change |
-| Referred By | Missing | Add `referred_by` column |
-| Client ID (external/medical) | Missing | Add `external_client_id` column |
-| Prompt on client notes | Missing | Add `prompt_client_notes` |
-| Prompt on appointment notes | Missing | Add `prompt_appointment_notes` |
-| Address Line 1 | Missing | Add `address_line1` |
-| Address Line 2 | Missing | Add `address_line2` |
-| City | Missing | Add `city` |
-| State/Region | Missing | Add `state` |
-| Zip/Postcode | Missing | Add `zip` |
-| Country | Missing | Add `country` |
-
----
+1. The **New Client Dialog** (`NewClientDialog.tsx`) does not include a Gender dropdown, so clients created through the booking flow won't have gender mapped to Phorest.
+2. The **Phorest sync function** (`sync-phorest-data/index.ts`) does not pull any of the 16 new fields during import -- meaning data already in Phorest (gender, landline, address, etc.) never flows into local records.
 
 ## Changes
 
-### 1. Database Migration
+### 1. Add Gender Dropdown to NewClientDialog
 
-Add 16 new columns to `phorest_clients`:
+**File:** `src/components/dashboard/schedule/NewClientDialog.tsx`
 
-- `first_name` (text, nullable) -- split from `name`
-- `last_name` (text, nullable) -- split from `name`
-- `gender` (text, nullable) -- values: Male, Female, Non-Binary, Prefer not to say
-- `landline` (text, nullable)
-- `reminder_email_opt_in` (boolean, default true)
-- `reminder_sms_opt_in` (boolean, default true)
-- `client_category` (text, nullable)
-- `referred_by` (text, nullable)
-- `external_client_id` (text, nullable) -- medical/national ID
-- `prompt_client_notes` (boolean, default false)
-- `prompt_appointment_notes` (boolean, default false)
-- `address_line1` (text, nullable)
-- `address_line2` (text, nullable)
-- `city` (text, nullable)
-- `state` (text, nullable)
-- `zip` (text, nullable)
-- `country` (text, nullable)
+- Add `gender` state variable (default empty string)
+- Add a Gender `Select` dropdown between Last Name and Location fields, using the same four options as the edit form: Male, Female, Non-Binary, Prefer not to say
+- Pass `gender` to the `create-phorest-client` edge function body
+- Reset `gender` in `resetForm()`
 
-After adding columns, backfill `first_name` and `last_name` by splitting the existing `name` column.
+### 2. Update create-phorest-client Edge Function
 
-### 2. Client Detail Sheet Updates
+**File:** `supabase/functions/create-phorest-client/index.ts`
 
-Reorganize the edit form to match Phorest's structure with these sections:
+- The edge function already accepts and stores `gender` -- no changes needed here.
 
-**Contact Information card** -- First Name, Last Name, Gender, Phone, Landline, Email (edit mode shows all fields in a 2-column grid)
+### 3. Update Phorest Sync to Map New Fields
 
-**Important Dates card** -- Birthday, Client Since (no change)
+**File:** `supabase/functions/sync-phorest-data/index.ts`
 
-**Notifications card** (new, replaces current Marketing Status) -- Marketing Permissions (Email/SMS toggles) and Reminder Consent (Email/SMS toggles) in a 2-column layout
+Update the `syncClients` function's `clientRecord` object (around line 484-500) to include the new fields from the Phorest API response:
 
-**Client Settings card** (new) -- Client Category, Preferred Staff Member (display only), Where did they hear (lead_source), Referred By, External Client ID
+```text
+Current mapping (line 484-500):
+  phorest_client_id, name, email, phone, visit_count, last_visit,
+  first_visit, preferred_stylist_id, total_spend, is_vip, notes,
+  location_id, phorest_branch_id, branch_name
 
-**Prompts card** (new) -- Prompt on client notes checkbox, Prompt on appointment notes checkbox
+Add these mappings:
+  first_name    <- client.firstName
+  last_name     <- client.lastName
+  gender        <- client.gender
+  landline      <- client.landline
+  birthday      <- client.dateOfBirth or client.birthday
+  client_since  <- client.createdAt (already used for first_visit)
+  client_category <- client.clientCategory
+  referred_by   <- client.referredBy
+  address_line1 <- client.address?.streetAddress1 or client.streetAddress1
+  address_line2 <- client.address?.streetAddress2 or client.streetAddress2
+  city          <- client.address?.city or client.city
+  state         <- client.address?.state or client.state
+  zip           <- client.address?.zip or client.zip
+  country       <- client.address?.country or client.country
+```
 
-**Address card** (new) -- Address Line 1, Line 2, City, State/Region, Zip, Country (edit mode shows 2-column grid)
-
-### 3. Client Interface Update
-
-Expand the `Client` interface in `ClientDetailSheet.tsx` to include all new fields so they can be displayed and edited.
-
-### 4. Save Mutation Update
-
-Update the `saveMutation` to save `first_name` and `last_name` as separate columns (alongside keeping `name` as a computed concatenation). Add new mutations for the additional sections (settings, address, notifications, prompts).
-
-### 5. Create Client Edge Function
-
-Update `create-phorest-client` to accept and store the new fields when creating clients.
-
-### 6. Sync Edge Function
-
-Update the Phorest sync functions to map these new fields during import so data flows correctly from Phorest into the local database.
-
----
+The Phorest API returns these fields on client objects, but the sync currently discards them. Each field will use optional chaining with a null fallback so missing data from Phorest doesn't cause errors.
 
 ## Files Modified
 
-1. **New migration SQL** -- Add 16 columns, backfill first/last name
-2. **`src/components/dashboard/ClientDetailSheet.tsx`** -- Restructure edit form into Phorest-aligned sections, add new field states and mutations
-3. **`src/components/dashboard/clients/ClientMarketingStatus.tsx`** -- Extend to include Reminder Consent toggles alongside Marketing Permissions
-4. **`supabase/functions/create-phorest-client/index.ts`** -- Accept and store new fields
-5. **Client Directory query** -- Ensure new fields are selected when loading client data
+1. `src/components/dashboard/schedule/NewClientDialog.tsx` -- Add gender dropdown
+2. `supabase/functions/sync-phorest-data/index.ts` -- Map 14 additional Phorest fields in syncClients
 
 ## Notes
 
-- The `name` column will continue to be maintained as a concatenation of `first_name + last_name` for backward compatibility with all existing queries and UI that reference `name`.
-- Address and settings sections only appear in expanded edit mode to keep the default view clean.
-- All new fields are nullable so existing data and flows are unaffected.
+- Gender values from Phorest may not exactly match our dropdown options (Male/Female/Non-Binary/Prefer not to say). The sync will store whatever Phorest returns as-is since it's a text column.
+- The upsert on `phorest_client_id` means existing local records will be enriched with the new fields on the next sync run.
+- No database migration needed -- the columns were already added in the previous step.
 
