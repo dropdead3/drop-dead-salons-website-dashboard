@@ -62,7 +62,7 @@ export interface DashboardNavItem {
 
 export const mainNavItems: DashboardNavItem[] = [
   { href: '/dashboard', label: 'Command Center', labelKey: 'command_center', icon: LayoutDashboard, permission: 'view_command_center' },
-  { href: '/dashboard/schedule', label: 'Schedule', labelKey: 'schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['admin', 'manager', 'stylist', 'stylist_assistant', 'receptionist', 'assistant', 'admin_assistant', 'operations_assistant', 'booth_renter', 'bookkeeper'] },
+  { href: '/dashboard/schedule', label: 'Schedule', labelKey: 'schedule', icon: CalendarDays, permission: 'view_booking_calendar', roles: ['super_admin', 'admin', 'manager', 'stylist', 'stylist_assistant', 'receptionist', 'assistant', 'admin_assistant', 'operations_assistant', 'booth_renter', 'bookkeeper'] },
   { href: '/dashboard/team-chat', label: 'Team Chat', labelKey: 'team_chat', icon: MessageSquare },
 ];
 
