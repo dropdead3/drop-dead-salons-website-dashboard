@@ -1,86 +1,54 @@
 
 
-## Fix Design System Violations in Assistant Schedule
+## Design Token Compliance Fix -- Assistant Schedule (Round 3)
 
-### Violations and Fixes
+### Remaining Violations Found
 
-| # | Violation | Location | Fix |
-|---|-----------|----------|-----|
-| 1 | `font-semibold` (BANNED, weight 600) | Summary strip lines 630, 636, 642, 648 | Replace with `font-medium` |
-| 2 | Page title raw classes | Line 490 | Use `tokens.heading.page` |
-| 3 | Card headers missing canonical layout | Lines 657, 686, 713, 781, 818 | Add icon-box + title per `CARD_HEADER_DESIGN_RULES.md` |
-| 4 | `<strong>` tag renders bold (700) | Line 211 | Replace with `<span className={tokens.body.emphasis}>` |
-| 5 | StatCard label missing Termina | Line 70 | Use `tokens.kpi.label` for the title span |
-| 6 | Raw loading states | Lines 592, 786, 822 | Use `tokens.loading.spinner` with Loader2 |
-| 7 | Plain-text empty state | Line 788 | Replace with `<EmptyState>` component |
-| 8 | Hardcoded status badge colors | Lines 92-103, 160-165 | Import and use `APPOINTMENT_STATUS_BADGE` from design-tokens |
-| 9 | Raw `font-medium` on assistant name | Line 732 | Use `tokens.body.emphasis` |
+| # | Violation | Lines | Fix |
+|---|-----------|-------|-----|
+| 1 | **StatCard value uses raw classes** (`text-2xl font-medium text-foreground`) instead of `tokens.stat.large` or `tokens.kpi.value` | Line 76 | Replace with `tokens.kpi.value` |
+| 2 | **StatCard description uses raw classes** (`text-xs text-muted-foreground`) | Line 78 | Replace with `tokens.body.muted` |
+| 3 | **AdminRequestRow: `font-medium` raw class** on stylist name (line 137) | Line 137 | Replace with `tokens.body.emphasis` |
+| 4 | **RequestCard: `font-medium` raw class** on time display (line 199) | Line 199 | Replace with `tokens.body.emphasis` |
+| 5 | **RequestCard: hardcoded `bg-green-50 text-green-700 border-green-200`** on "Accepted" badge (line 206) | Line 206 | Use `APPOINTMENT_STATUS_BADGE.confirmed` tokens |
+| 6 | **RequestCard: hardcoded `bg-green-600 hover:bg-green-700`** on Accept button (line 271) | Line 271 | Use semantic `bg-primary hover:bg-primary/90` or success semantic class |
+| 7 | **RequestCard: hardcoded `text-red-600 border-red-200 hover:bg-red-50`** on Decline button (line 280) | Line 280 | Use `text-destructive border-destructive/30 hover:bg-destructive/10` |
+| 8 | **RequestCard: hardcoded `bg-amber-50 text-amber-700`** on "Awaiting assistant response" badge (line 322) | Line 322 | Use `APPOINTMENT_STATUS_BADGE.checked_in` tokens |
+| 9 | **RequestsList: raw empty state** (lines 364-370) instead of `EmptyState` component | Lines 364-370 | Replace with `<EmptyState>` |
+| 10 | **Stylist/Assistant CardHeaders** missing canonical icon-box layout (lines 854-856, 887-889, 871-872, 903-904) | Lines 854, 871, 887, 903 | Add icon-box + `tokens.card.title` pattern |
+| 11 | **Page subtitle uses raw `text-muted-foreground`** without token (line 499) | Line 499 | Use `tokens.body.muted` |
+| 12 | **Assistant roster: `font-medium` raw on location name** (line 771) | Line 771 | Use `tokens.body.emphasis` class |
+| 13 | **Summary strip label `text-muted-foreground` raw** without body token (lines 637, 643, 649, 654) | Multiple | Use `tokens.body.muted` inline |
+| 14 | **Date group heading in RequestsList** uses raw `font-medium text-sm text-muted-foreground` (line 377) | Line 377 | Use `tokens.heading.subsection` |
 
 ### Technical Details
 
 **File: `src/pages/dashboard/AssistantSchedule.tsx`**
 
-1. Add import for `tokens` from `@/lib/design-tokens` and `Loader2` from `lucide-react`
+All changes are in this single file. Summary:
 
-2. **Summary strip** -- Replace all four `font-semibold` with `font-medium`:
-```tsx
-<span className="font-medium text-foreground">{stats.total}</span>
-```
+1. **StatCard** -- value line becomes `<div className={tokens.kpi.value}>{value}</div>`, description becomes `<p className={cn(tokens.body.muted, "mt-1 text-xs")}>`
 
-3. **Page title** -- Replace raw classes with token:
-```tsx
-<h1 className={tokens.heading.page}>Assistant Schedule</h1>
-```
+2. **AdminRequestRow** -- stylist name `font-medium` becomes `tokens.body.emphasis`
 
-4. **StatCard label** -- Switch to `tokens.kpi.label` (ensures Termina font for KPI labels):
-```tsx
-<span className={tokens.kpi.label}>{title}</span>
-```
+3. **RequestCard** -- replace all five hardcoded color instances with semantic tokens:
+   - Accepted badge: `APPOINTMENT_STATUS_BADGE.confirmed` bg/text
+   - Accept button: `bg-primary hover:bg-primary/90`
+   - Decline button: `text-destructive border-destructive/30 hover:bg-destructive/10`
+   - Awaiting badge: `APPOINTMENT_STATUS_BADGE.checked_in` bg/text
+   - Time span: `tokens.body.emphasis`
 
-5. **Card headers** -- Apply canonical layout with icon-box to each card (Recent Requests, Needs Attention, Active Assistants, All Requests). Example:
-```tsx
-<CardHeader>
-  <div className="flex items-center gap-3">
-    <div className={tokens.card.iconBox}>
-      <Inbox className={tokens.card.icon} />
-    </div>
-    <div>
-      <CardTitle className={tokens.card.title}>RECENT REQUESTS</CardTitle>
-      <CardDescription>Latest assistant request activity</CardDescription>
-    </div>
-  </div>
-</CardHeader>
-```
+4. **RequestsList empty state** -- replace raw div with `<EmptyState icon={Calendar} title="No requests found" />`
 
-6. **`<strong>` tag** -- Replace with emphasis token:
-```tsx
-<span className={tokens.body.emphasis}>{request.client_name}</span>
-```
+5. **Stylist/Assistant CardHeaders** (4 cards) -- add icon-box layout with appropriate icons (Inbox for requests, CheckCircle2 for completed, UserCheck for assignments)
 
-7. **Loading states** -- Replace raw text with spinner:
-```tsx
-<div className="flex items-center justify-center h-64">
-  <Loader2 className={tokens.loading.spinner} />
-</div>
-```
+6. **Page subtitle** -- `<p className={tokens.body.muted}>`
 
-8. **Plain empty state (line 788)** -- Replace with component:
-```tsx
-<EmptyState icon={Inbox} title="No requests yet" description="..." />
-```
+7. **Summary strip labels** -- wrap in `tokens.body.muted` class
 
-9. **Status badge colors** -- Replace local `statusColors` maps with `APPOINTMENT_STATUS_BADGE` import from design-tokens. Map assistant request statuses (pending, assigned, completed, cancelled) to the closest canonical token equivalents.
+8. **Location name in roster** -- replace raw `font-medium` with `tokens.body.emphasis`
 
-10. **Assistant name** -- Use body emphasis token:
-```tsx
-<h4 className={tokens.body.emphasis}>{assistant.display_name || assistant.full_name}</h4>
-```
+9. **Date group heading** -- replace raw classes with `tokens.heading.subsection`
 
-### Scope
-
-| File | Changes |
-|------|---------|
-| `src/pages/dashboard/AssistantSchedule.tsx` | All 9 fixes above -- typography, tokens, card headers, loading/empty states, status colors |
-
-No database or routing changes needed. This is a pure design-token compliance pass.
+No database, routing, or new component changes needed. Pure token compliance pass on remaining raw classes and hardcoded colors.
 
