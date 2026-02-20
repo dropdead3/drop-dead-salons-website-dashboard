@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/dashboard/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,7 +26,8 @@ import {
   Lock,
   User,
   Ban,
-  Archive
+  Archive,
+  Type
 } from 'lucide-react';
 import { BannedClientBadge } from '@/components/dashboard/clients/BannedClientBadge';
 import { useQuery } from '@tanstack/react-query';
@@ -42,6 +43,18 @@ import { useLocations } from '@/hooks/useLocations';
 import { ClientDetailSheet } from '@/components/dashboard/ClientDetailSheet';
 import { ClientHealthSummaryCard } from '@/components/dashboard/client-health/ClientHealthSummaryCard';
 import { BentoGrid } from '@/components/ui/bento-grid';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+
+const PAGE_SIZE = 50;
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 type SortField = 'total_spend' | 'visit_count' | 'last_visit' | 'name';
 type SortDirection = 'asc' | 'desc';
@@ -60,6 +73,13 @@ export default function ClientDirectory() {
   const [detailSheetOpen, setDetailSheetOpen] = useState(false);
   const [selectedStylist, setSelectedStylist] = useState<string>('all');
   const [selectedSource, setSelectedSource] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedLetter, setSelectedLetter] = useState<string>('all');
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeTab, selectedLocation, selectedStylist, selectedSource, selectedLetter, sortField, sortDirection]);
 
   // Determine if user can see all clients (leadership + front desk)
   const canViewAllClients = roles.some(role => 
@@ -210,6 +230,13 @@ export default function ClientDirectory() {
       );
     }
 
+    // Alphabetical filter
+    if (selectedLetter !== 'all') {
+      filtered = filtered.filter(c =>
+        c.name.toUpperCase().startsWith(selectedLetter)
+      );
+    }
+
     // Sort
     filtered.sort((a, b) => {
       let comparison = 0;
@@ -233,7 +260,49 @@ export default function ClientDirectory() {
     });
 
     return filtered;
-  }, [processedClients, selectedLocation, selectedSource, activeTab, searchQuery, sortField, sortDirection]);
+  }, [processedClients, selectedLocation, selectedSource, activeTab, searchQuery, selectedLetter, sortField, sortDirection]);
+
+  // Paginated clients
+  const paginatedClients = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE;
+    return filteredClients.slice(start, start + PAGE_SIZE);
+  }, [filteredClients, currentPage]);
+
+  const totalPages = Math.ceil(filteredClients.length / PAGE_SIZE);
+
+  // Count clients per letter (for disabling empty letters)
+  const letterCounts = useMemo(() => {
+    // Use the filtered list BEFORE alphabetical filter to count available letters
+    let baseFiltered = processedClients;
+
+    if (selectedLocation !== 'all') {
+      baseFiltered = baseFiltered.filter(c => c.location_id === selectedLocation || c.branch_name === selectedLocation);
+    }
+    if (selectedSource !== 'all') {
+      baseFiltered = baseFiltered.filter(c => c.lead_source === selectedSource);
+    }
+    if (activeTab === 'archived') {
+      baseFiltered = baseFiltered.filter(c => c.is_archived);
+    } else {
+      baseFiltered = baseFiltered.filter(c => !c.is_archived);
+      if (activeTab === 'vip') baseFiltered = baseFiltered.filter(c => c.is_vip);
+      else if (activeTab === 'at-risk') baseFiltered = baseFiltered.filter(c => c.isAtRisk);
+      else if (activeTab === 'new') baseFiltered = baseFiltered.filter(c => c.isNew);
+      else if (activeTab === 'banned') baseFiltered = baseFiltered.filter(c => c.is_banned);
+    }
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      baseFiltered = baseFiltered.filter(c => c.name.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q) || c.phone?.includes(q));
+    }
+
+    const counts: Record<string, number> = {};
+    ALPHABET.forEach(l => { counts[l] = 0; });
+    baseFiltered.forEach(c => {
+      const first = c.name.charAt(0).toUpperCase();
+      if (counts[first] !== undefined) counts[first]++;
+    });
+    return counts;
+  }, [processedClients, selectedLocation, selectedSource, activeTab, searchQuery]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -242,6 +311,23 @@ export default function ClientDirectory() {
       setSortField(field);
       setSortDirection('desc');
     }
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages: (number | 'ellipsis')[] = [];
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (currentPage > 3) pages.push('ellipsis');
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) pages.push(i);
+      if (currentPage < totalPages - 2) pages.push('ellipsis');
+      pages.push(totalPages);
+    }
+    return pages;
   };
 
   // Stats (filtered by location and stylist if selected)
@@ -277,6 +363,9 @@ export default function ClientDirectory() {
       })(),
     };
   }, [processedClients, selectedLocation]);
+
+  const showingStart = filteredClients.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const showingEnd = Math.min(currentPage * PAGE_SIZE, filteredClients.length);
 
   return (
     <DashboardLayout>
@@ -357,7 +446,7 @@ export default function ClientDirectory() {
         </BentoGrid>
 
         {/* Filters */}
-        <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <div className="flex flex-col md:flex-row gap-4 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
@@ -444,6 +533,33 @@ export default function ClientDirectory() {
           </Tabs>
         </div>
 
+        {/* Alphabetical Filter */}
+        <div className="flex flex-wrap gap-1 mb-6">
+          <Button
+            variant={selectedLetter === 'all' ? 'default' : 'ghost'}
+            size="sm"
+            className="h-8 px-3 text-xs font-medium rounded-full"
+            onClick={() => setSelectedLetter('all')}
+          >
+            All
+          </Button>
+          {ALPHABET.map(letter => (
+            <Button
+              key={letter}
+              variant={selectedLetter === letter ? 'default' : 'ghost'}
+              size="sm"
+              className={cn(
+                "h-8 w-8 p-0 text-xs font-medium rounded-full",
+                letterCounts[letter] === 0 && "opacity-30 pointer-events-none"
+              )}
+              disabled={letterCounts[letter] === 0}
+              onClick={() => setSelectedLetter(letter)}
+            >
+              {letter}
+            </Button>
+          ))}
+        </div>
+
         {/* Client List */}
         <Card>
           <CardHeader className="pb-0">
@@ -464,6 +580,16 @@ export default function ClientDirectory() {
                 )}
               </CardTitle>
               <div className="flex gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => handleSort('name')}
+                  className={cn("text-xs", sortField === 'name' && "bg-muted")}
+                >
+                  <Type className="w-3 h-3 mr-1" />
+                  Name
+                  <ArrowUpDown className="w-3 h-3 ml-1" />
+                </Button>
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -506,129 +632,172 @@ export default function ClientDirectory() {
               <div className="text-center py-12">
                 <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">
-                  {searchQuery ? 'No clients match your search.' : 'No client data available yet. Sync with Phorest to populate.'}
+                  {searchQuery ? 'No clients match your search.' : selectedLetter !== 'all' ? `No clients starting with "${selectedLetter}".` : 'No client data available yet. Sync with Phorest to populate.'}
                 </p>
               </div>
             ) : (
-              <div className="divide-y">
-                {filteredClients.map((client) => {
-                  const locationName = locations?.find(l => l.id === client.location_id)?.name || client.branch_name;
-                  
-                  const handleClientClick = () => {
-                    setSelectedClient({ ...client });
-                    setDetailSheetOpen(true);
-                  };
+              <>
+                <div className="divide-y">
+                  {paginatedClients.map((client) => {
+                    const locationName = locations?.find(l => l.id === client.location_id)?.name || client.branch_name;
+                    
+                    const handleClientClick = () => {
+                      setSelectedClient({ ...client });
+                      setDetailSheetOpen(true);
+                    };
 
-                  return (
-                    <div 
-                      key={client.id} 
-                      className={cn(
-                        "py-4 flex items-center gap-4 cursor-pointer hover:bg-muted/50 -mx-6 px-6 transition-colors",
-                        client.is_archived && "opacity-60"
-                      )}
-                      onClick={handleClientClick}
-                    >
-                      <Avatar className={cn("w-12 h-12", client.is_archived && "opacity-50")}>
-                        <AvatarFallback className="font-display text-sm bg-primary/10">
-                          {client.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium truncate">{client.name}</p>
-                          {client.is_archived && (
-                            <Badge variant="secondary" className="text-xs">
-                              <Archive className="w-3 h-3 mr-1" /> Archived
-                            </Badge>
-                          )}
-                          {client.is_banned && <BannedClientBadge />}
-                          {client.is_vip && !client.is_banned && (
-                            <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 text-xs">
-                              <Star className="w-3 h-3 mr-1" /> VIP
-                            </Badge>
-                          )}
-                          {client.isAtRisk && !client.is_banned && (
-                            <Badge variant="destructive" className="text-xs">
-                              <AlertTriangle className="w-3 h-3 mr-1" /> At Risk
-                            </Badge>
-                          )}
-                          {client.isNew && !client.is_banned && (
-                            <Badge variant="outline" className="text-xs text-green-600 border-green-300">
-                              New
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span>{client.visit_count} visits</span>
-                          {client.last_visit && (
-                            <>
-                              <span>•</span>
-                              <span>Last: {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}</span>
-                            </>
-                          )}
-                          {client.daysSinceVisit !== null && client.daysSinceVisit > 30 && (
-                            <>
-                              <span>•</span>
-                              <span className={cn(
-                                client.daysSinceVisit > 60 ? "text-red-600" : "text-amber-600"
-                              )}>
-                                {client.daysSinceVisit} days ago
-                              </span>
-                            </>
-                          )}
-                          {locationName && (
-                            <>
-                              <span>•</span>
-                              <span className="flex items-center gap-1">
-                                <MapPin className="w-3 h-3" /> {locationName}
-                              </span>
-                            </>
-                          )}
-                          {client.lead_source && (
-                            <>
-                              <span>•</span>
-                              <Badge variant="outline" className={cn("text-[10px] py-0 px-1.5", getLeadSourceColor(client.lead_source))}>
-                                {getLeadSourceLabel(client.lead_source)}
-                              </Badge>
-                            </>
-                          )}
-                        </div>
-                        {/* Contact info & preferred services */}
-                        <div className="flex items-center gap-3 mt-1.5">
-                          {client.email && (
-                            <a href={`mailto:${client.email}`} className="text-xs text-primary hover:underline flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                              <Mail className="w-3 h-3" /> {client.email}
-                            </a>
-                          )}
-                          {client.phone && (
-                            <a href={`tel:${client.phone}`} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                              <Phone className="w-3 h-3" /> {client.phone}
-                            </a>
-                          )}
-                        </div>
-                        {client.preferred_services && client.preferred_services.length > 0 && (
-                          <div className="flex gap-1 mt-2">
-                            {client.preferred_services.slice(0, 3).map((service: string) => (
-                              <Badge key={service} variant="secondary" className="text-xs">
-                                {service}
-                              </Badge>
-                            ))}
-                          </div>
+                    return (
+                      <div 
+                        key={client.id} 
+                        className={cn(
+                          "py-4 flex items-center gap-4 cursor-pointer hover:bg-muted/50 -mx-6 px-6 transition-colors",
+                          client.is_archived && "opacity-60"
                         )}
-                      </div>
-                      
-                      <div className="text-right flex items-center gap-2">
-                        <div>
-                          <p className="font-display text-lg">{formatCurrencyWhole(Number(client.total_spend || 0))}</p>
-                          <p className="text-xs text-muted-foreground">lifetime</p>
+                        onClick={handleClientClick}
+                      >
+                        <Avatar className={cn("w-12 h-12", client.is_archived && "opacity-50")}>
+                          <AvatarFallback className="font-display text-sm bg-primary/10">
+                            {client.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="font-medium truncate">{client.name}</p>
+                            {client.is_archived && (
+                              <Badge variant="secondary" className="text-xs">
+                                <Archive className="w-3 h-3 mr-1" /> Archived
+                              </Badge>
+                            )}
+                            {client.is_banned && <BannedClientBadge />}
+                            {client.is_vip && !client.is_banned && (
+                              <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 text-xs">
+                                <Star className="w-3 h-3 mr-1" /> VIP
+                              </Badge>
+                            )}
+                            {client.isAtRisk && !client.is_banned && (
+                              <Badge variant="destructive" className="text-xs">
+                                <AlertTriangle className="w-3 h-3 mr-1" /> At Risk
+                              </Badge>
+                            )}
+                            {client.isNew && !client.is_banned && (
+                              <Badge variant="outline" className="text-xs text-green-600 border-green-300">
+                                New
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>{client.visit_count} visits</span>
+                            {client.last_visit && (
+                              <>
+                                <span>•</span>
+                                <span>Last: {formatDate(new Date(client.last_visit), 'MMM d, yyyy')}</span>
+                              </>
+                            )}
+                            {client.daysSinceVisit !== null && client.daysSinceVisit > 30 && (
+                              <>
+                                <span>•</span>
+                                <span className={cn(
+                                  client.daysSinceVisit > 60 ? "text-red-600" : "text-amber-600"
+                                )}>
+                                  {client.daysSinceVisit} days ago
+                                </span>
+                              </>
+                            )}
+                            {locationName && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <MapPin className="w-3 h-3" /> {locationName}
+                                </span>
+                              </>
+                            )}
+                            {client.lead_source && (
+                              <>
+                                <span>•</span>
+                                <Badge variant="outline" className={cn("text-[10px] py-0 px-1.5", getLeadSourceColor(client.lead_source))}>
+                                  {getLeadSourceLabel(client.lead_source)}
+                                </Badge>
+                              </>
+                            )}
+                          </div>
+                          {/* Contact info & preferred services */}
+                          <div className="flex items-center gap-3 mt-1.5">
+                            {client.email && (
+                              <a href={`mailto:${client.email}`} className="text-xs text-primary hover:underline flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                <Mail className="w-3 h-3" /> {client.email}
+                              </a>
+                            )}
+                            {client.phone && (
+                              <a href={`tel:${client.phone}`} className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                <Phone className="w-3 h-3" /> {client.phone}
+                              </a>
+                            )}
+                          </div>
+                          {client.preferred_services && client.preferred_services.length > 0 && (
+                            <div className="flex gap-1 mt-2">
+                              {client.preferred_services.slice(0, 3).map((service: string) => (
+                                <Badge key={service} variant="secondary" className="text-xs">
+                                  {service}
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                        
+                        <div className="text-right flex items-center gap-2">
+                          <div>
+                            <p className="font-display text-lg">{formatCurrencyWhole(Number(client.total_spend || 0))}</p>
+                            <p className="text-xs text-muted-foreground">lifetime</p>
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="mt-6 flex flex-col items-center gap-3">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {showingStart}–{showingEnd} of {filteredClients.length} clients
+                    </p>
+                    <Pagination>
+                      <PaginationContent>
+                        <PaginationItem>
+                          <PaginationPrevious
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            className={cn(currentPage === 1 && "pointer-events-none opacity-50")}
+                          />
+                        </PaginationItem>
+                        {getPageNumbers().map((page, i) =>
+                          page === 'ellipsis' ? (
+                            <PaginationItem key={`ellipsis-${i}`}>
+                              <PaginationEllipsis />
+                            </PaginationItem>
+                          ) : (
+                            <PaginationItem key={page}>
+                              <PaginationLink
+                                isActive={currentPage === page}
+                                onClick={() => setCurrentPage(page as number)}
+                              >
+                                {page}
+                              </PaginationLink>
+                            </PaginationItem>
+                          )
+                        )}
+                        <PaginationItem>
+                          <PaginationNext
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            className={cn(currentPage === totalPages && "pointer-events-none opacity-50")}
+                          />
+                        </PaginationItem>
+                      </PaginationContent>
+                    </Pagination>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
