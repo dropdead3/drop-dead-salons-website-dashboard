@@ -424,7 +424,7 @@ export function PinnedAnalyticsCard({ cardId, filters, compact = false }: Pinned
           metricLabel = 'Loading forecast data';
         } else {
           metricValue = formatCurrencyWhole(weekAheadData?.totalRevenue ?? 0);
-          metricLabel = 'Estimated booked service revenue for the next 7 days';
+          metricLabel = 'Estimated booked service revenue for the next 7 days (excludes today)';
         }
         break;
       }
