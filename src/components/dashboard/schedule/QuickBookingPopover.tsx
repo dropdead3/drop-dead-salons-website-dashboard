@@ -106,6 +106,13 @@ export function QuickBookingPopover({
 }: QuickBookingPopoverProps) {
   const queryClient = useQueryClient();
   const { user, roles } = useAuth();
+
+  // Notify FAB about booking popover state
+  useEffect(() => {
+    if (mode === 'panel') {
+      window.dispatchEvent(new CustomEvent('booking-popover-state', { detail: { open } }));
+    }
+  }, [open, mode]);
   const { formatCurrency, formatCurrencyWhole } = useFormatCurrency();
   const { formatDate: formatDateLocale } = useFormatDate();
   const { getLevelPrice } = useBookingLevelPricing();
