@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -159,7 +160,7 @@ export function SmsTemplateEditor({ template, onSave, onCancel, isLoading }: Sms
           <Label htmlFor="message">Message</Label>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" disabled={isLoading}>
+              <Button variant="outline" size={tokens.button.inline} disabled={isLoading}>
                 <Variable className="h-4 w-4 mr-1" />
                 Insert Variable
               </Button>

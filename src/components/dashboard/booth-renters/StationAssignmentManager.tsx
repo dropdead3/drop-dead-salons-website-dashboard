@@ -3,6 +3,7 @@ import { useRentalStations, useCreateStation, useUpdateStation, useDeleteStation
 import { useBoothRenters } from '@/hooks/useBoothRenters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -112,7 +113,7 @@ export function StationAssignmentManager({ organizationId, locationId }: Station
           }
         }}>
           <DialogTrigger asChild>
-            <Button size="sm">
+            <Button size={tokens.button.card}>
               <Plus className="h-4 w-4 mr-2" />
               Add Station
             </Button>
@@ -217,14 +218,14 @@ export function StationAssignmentManager({ organizationId, locationId }: Station
 
               <div className="flex gap-1">
                 {station.current_assignment ? (
-                  <Button size="sm" variant="outline" className="flex-1" onClick={() => handleUnassign(station.id)}>
+                  <Button size={tokens.button.inline} variant="outline" className="flex-1" onClick={() => handleUnassign(station.id)}>
                     <UserMinus className="h-3 w-3 mr-1" />
                     Unassign
                   </Button>
                 ) : (
                   <Dialog open={assigningStation?.id === station.id} onOpenChange={(open) => !open && setAssigningStation(null)}>
                     <DialogTrigger asChild>
-                      <Button size="sm" variant="outline" className="flex-1" onClick={() => setAssigningStation(station)}>
+                      <Button size={tokens.button.inline} variant="outline" className="flex-1" onClick={() => setAssigningStation(station)}>
                         <UserPlus className="h-3 w-3 mr-1" />
                         Assign
                       </Button>
@@ -255,10 +256,10 @@ export function StationAssignmentManager({ organizationId, locationId }: Station
                     </DialogContent>
                   </Dialog>
                 )}
-                <Button size="sm" variant="ghost" onClick={() => handleEdit(station)}>
+                <Button size={tokens.button.inline} variant="ghost" onClick={() => handleEdit(station)}>
                   <Edit2 className="h-3 w-3" />
                 </Button>
-                <Button size="sm" variant="ghost" onClick={() => handleDelete(station.id)}>
+                <Button size={tokens.button.inline} variant="ghost" onClick={() => handleDelete(station.id)}>
                   <Trash2 className="h-3 w-3" />
                 </Button>
               </div>
@@ -271,7 +272,7 @@ export function StationAssignmentManager({ organizationId, locationId }: Station
             <CardContent className="flex flex-col items-center justify-center py-8">
               <Armchair className="h-8 w-8 text-muted-foreground mb-2" />
               <p className="text-muted-foreground">No stations configured</p>
-              <Button size="sm" variant="link" onClick={() => setIsAddOpen(true)}>
+              <Button size={tokens.button.inline} variant="link" onClick={() => setIsAddOpen(true)}>
                 Add your first station
               </Button>
             </CardContent>

@@ -11,6 +11,7 @@ import {
 } from 'date-fns';
 import { ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { tokens } from '@/lib/design-tokens';
 import { Badge } from '@/components/ui/badge';
 import { 
   Tooltip,
@@ -167,13 +168,13 @@ export function ScheduleCalendar({ requests, isStylistView }: ScheduleCalendarPr
       {/* Calendar Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={goToPreviousWeek}>
+          <Button variant="outline" size={tokens.button.inline} onClick={goToPreviousWeek}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={goToToday}>
+          <Button variant="outline" size={tokens.button.inline} onClick={goToToday}>
             Today
           </Button>
-          <Button variant="outline" size="sm" onClick={goToNextWeek}>
+          <Button variant="outline" size={tokens.button.inline} onClick={goToNextWeek}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
