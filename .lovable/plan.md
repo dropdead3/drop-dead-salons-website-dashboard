@@ -1,70 +1,55 @@
 
 
-# Add Gender to Create-Client Flow and Update Phorest Sync Mapping
+# Transform Client Detail Drawer into Premium Floating Bento Panel
 
 ## Problem
 
-Two gaps remain after the Phorest field alignment:
+The client detail view currently uses a standard side-sliding `Sheet` component, which feels visually disconnected from the premium floating bento pattern used by the Quick Booking Wizard. The wizard uses a centered floating card with backdrop blur overlay, `rounded-xl`, and `shadow-xl` -- which is the platform's cohesive premium UI language.
 
-1. The **New Client Dialog** (`NewClientDialog.tsx`) does not include a Gender dropdown, so clients created through the booking flow won't have gender mapped to Phorest.
-2. The **Phorest sync function** (`sync-phorest-data/index.ts`) does not pull any of the 16 new fields during import -- meaning data already in Phorest (gender, landline, address, etc.) never flows into local records.
+## Design Reference
+
+The Quick Booking Wizard pattern (line 1560-1578 of `QuickBookingPopover.tsx`):
+- Backdrop: `fixed inset-0 z-40 bg-black/20 backdrop-blur-sm`
+- Panel: `fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[440px] shadow-xl border border-border rounded-xl overflow-hidden bg-popover`
 
 ## Changes
 
-### 1. Add Gender Dropdown to NewClientDialog
+### 1. Replace Sheet with Dialog-based Floating Panel
 
-**File:** `src/components/dashboard/schedule/NewClientDialog.tsx`
+**File:** `src/components/dashboard/ClientDetailSheet.tsx`
 
-- Add `gender` state variable (default empty string)
-- Add a Gender `Select` dropdown between Last Name and Location fields, using the same four options as the edit form: Male, Female, Non-Binary, Prefer not to say
-- Pass `gender` to the `create-phorest-client` edge function body
-- Reset `gender` in `resetForm()`
+Replace the `Sheet` / `SheetContent` wrapper with a custom floating panel that matches the Quick Booking Wizard's visual language:
 
-### 2. Update create-phorest-client Edge Function
+- Remove `Sheet`, `SheetContent`, `SheetHeader`, `SheetTitle`, `SheetDescription` imports
+- Use `Dialog` / `DialogContent` from Radix (or a custom floating div with AnimatePresence) to render a centered floating panel
+- Apply the same styling pattern as the booking wizard:
+  - Backdrop overlay: `bg-black/20 backdrop-blur-sm`
+  - Panel container: `fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[440px] max-h-[85vh] rounded-xl border border-border bg-popover shadow-xl overflow-hidden`
+  - Internal scroll area for content overflow
+- Add a close button (X) in the top-right corner matching the wizard's close pattern
+- Wrap content in `AnimatePresence` + `motion.div` for smooth open/close transitions consistent with the wizard
 
-**File:** `supabase/functions/create-phorest-client/index.ts`
+### 2. Internal Layout Adjustments
 
-- The edge function already accepts and stores `gender` -- no changes needed here.
+Within the floating panel:
+- Keep the same scrollable `p-6 space-y-4` internal layout
+- All bento cards inside remain unchanged (`bg-card/80 backdrop-blur-xl border-border/60`)
+- The header (avatar + name + badges) stays at top
+- Quick action buttons (Call, Email, Text) stay below header
+- Stats grid, all edit cards, tabs, and archive/ban actions remain in order
 
-### 3. Update Phorest Sync to Map New Fields
+### 3. Responsive Behavior
 
-**File:** `supabase/functions/sync-phorest-data/index.ts`
+- On mobile (`sm` and below), the panel should go full-width with slight margin: `w-[calc(100vw-2rem)] max-w-[440px]`
+- Max height remains `max-h-[85vh]` with internal `overflow-y-auto`
 
-Update the `syncClients` function's `clientRecord` object (around line 484-500) to include the new fields from the Phorest API response:
+## Technical Details
 
-```text
-Current mapping (line 484-500):
-  phorest_client_id, name, email, phone, visit_count, last_visit,
-  first_visit, preferred_stylist_id, total_spend, is_vip, notes,
-  location_id, phorest_branch_id, branch_name
-
-Add these mappings:
-  first_name    <- client.firstName
-  last_name     <- client.lastName
-  gender        <- client.gender
-  landline      <- client.landline
-  birthday      <- client.dateOfBirth or client.birthday
-  client_since  <- client.createdAt (already used for first_visit)
-  client_category <- client.clientCategory
-  referred_by   <- client.referredBy
-  address_line1 <- client.address?.streetAddress1 or client.streetAddress1
-  address_line2 <- client.address?.streetAddress2 or client.streetAddress2
-  city          <- client.address?.city or client.city
-  state         <- client.address?.state or client.state
-  zip           <- client.address?.zip or client.zip
-  country       <- client.address?.country or client.country
-```
-
-The Phorest API returns these fields on client objects, but the sync currently discards them. Each field will use optional chaining with a null fallback so missing data from Phorest doesn't cause errors.
+- The component will use a conditional render pattern: when `open` is true, render a portal with backdrop + floating panel (same as `QuickBookingPopover` lines 1556-1578)
+- Use `framer-motion` for entry/exit animations (fade + scale, matching the drilldown dialog pattern)
+- The close button and backdrop click both call `onOpenChange(false)`
+- All edit state resets on close remain unchanged
 
 ## Files Modified
 
-1. `src/components/dashboard/schedule/NewClientDialog.tsx` -- Add gender dropdown
-2. `supabase/functions/sync-phorest-data/index.ts` -- Map 14 additional Phorest fields in syncClients
-
-## Notes
-
-- Gender values from Phorest may not exactly match our dropdown options (Male/Female/Non-Binary/Prefer not to say). The sync will store whatever Phorest returns as-is since it's a text column.
-- The upsert on `phorest_client_id` means existing local records will be enriched with the new fields on the next sync run.
-- No database migration needed -- the columns were already added in the previous step.
-
+1. `src/components/dashboard/ClientDetailSheet.tsx` -- Replace Sheet wrapper with floating bento panel, add backdrop overlay, match wizard styling
