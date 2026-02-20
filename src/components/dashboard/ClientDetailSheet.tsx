@@ -385,11 +385,11 @@ export function ClientDetailSheet({ client, open, onOpenChange, locationName }: 
           {/* Floating Panel */}
           <motion.div
             key="client-detail-panel"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 40 }}
             transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100vw-2rem)] max-w-[440px] max-h-[85vh] rounded-xl border border-border bg-popover shadow-xl overflow-hidden flex flex-col"
+            className="fixed right-4 top-[50%] -translate-y-1/2 z-50 w-[calc(100vw-2rem)] max-w-[440px] max-h-[85vh] rounded-xl border border-border bg-popover shadow-xl overflow-hidden flex flex-col"
           >
             {/* Close button */}
             <button
