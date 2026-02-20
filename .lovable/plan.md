@@ -1,35 +1,31 @@
 
-## Hide "Add Break" When a Category Is Selected
+## Fix: Service Badge X Button Not Removing Services
 
-### Change
+### Root Cause
+
+`selectedServices` is an array of `phorest_service_id` strings (set via `handleServiceToggle` at line 612). However, all three badge `onClick` removal handlers filter using `s.id` (the database UUID), which is a completely different field — so the filter never finds a match and the state never changes.
+
+```
+selectedServices = ["phorest-abc-123", ...]   // stores phorest_service_id
+
+// BUG: s.id is the DB UUID, not phorest_service_id
+onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.id))}
+//                                                                   ^^^^
+//                                                    should be s.phorest_service_id
+```
+
+### Fix
+
+Change `s.id` to `s.phorest_service_id` in all 3 badge `onClick` handlers — at lines 1112, 1202, and 1345.
 
 **File:** `src/components/dashboard/schedule/QuickBookingPopover.tsx`
 
-The "Add Break" button currently renders unconditionally at line 1130. Adding a single guard — `!selectedCategory` — will hide it the moment the user drills into a service category, making it clear an appointment is being scheduled.
-
-### Before / After
-
-| State | "Add Break" visible? |
-|---|---|
-| Category list view (no category selected) | Yes |
-| After tapping a category (services list showing) | **No** |
-| After going back to categories | Yes again |
-
-### Technical Detail
-
-Wrap the button in a condition on `selectedCategory`:
-
 ```tsx
-{!selectedCategory && (
-  <Button
-    variant="outline"
-    className="w-full h-9 gap-2"
-    onClick={() => setShowBreakForm(true)}
-  >
-    <Coffee className="h-4 w-4" />
-    Add Break
-  </Button>
-)}
+// All 3 instances — change:
+onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.id))}
+
+// To:
+onClick={() => setSelectedServices(prev => prev.filter(id => id !== s.phorest_service_id))}
 ```
 
-This is a one-line guard change at line 1129. No logic, state, or data changes required.
+This is a pure one-field fix, three locations. No state, logic, or UI changes needed.
