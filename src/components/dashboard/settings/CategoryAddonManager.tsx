@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, X, Loader2 } from 'lucide-react';
+import { Plus, X, Loader2, Link2, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -58,8 +58,9 @@ export function CategoryAddonManager({
         organization_id: organizationId,
         source_category_id: categoryId,
         addon_label: addLabel.trim(),
-        addon_service_name: linkMode === 'service' ? selectedService || null : null,
-        addon_category_name: linkMode === 'category' ? selectedCategory || null : null,
+        // Empty string sentinel → null (label-only recommendation)
+        addon_service_name: linkMode === 'service' ? (selectedService || null) : null,
+        addon_category_name: linkMode === 'category' ? (selectedCategory || null) : null,
         display_order: addons.length,
       },
       { onSuccess: resetForm }
@@ -87,10 +88,16 @@ export function CategoryAddonManager({
             >
               {addon.addon_label}
               {addon.addon_service_name && (
-                <span className="text-muted-foreground">· {addon.addon_service_name}</span>
+                <span className="flex items-center gap-0.5 text-muted-foreground">
+                  <Link2 className="h-2.5 w-2.5" />
+                  {addon.addon_service_name}
+                </span>
               )}
               {addon.addon_category_name && (
-                <span className="text-muted-foreground">· {addon.addon_category_name}</span>
+                <span className="flex items-center gap-0.5 text-muted-foreground">
+                  <FolderOpen className="h-2.5 w-2.5" />
+                  {addon.addon_category_name}
+                </span>
               )}
               <button
                 onClick={() => deleteAddon.mutate({
@@ -150,21 +157,33 @@ export function CategoryAddonManager({
             </Button>
           </div>
 
-          {linkMode === 'service' && availableServiceNames.length > 0 && (
-            <Select value={selectedService} onValueChange={setSelectedService}>
-              <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Select a Phorest service (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableServiceNames.map(name => (
-                  <SelectItem key={name} value={name} className="text-xs">
-                    {name}
+          {/* Service picker */}
+          {linkMode === 'service' && (
+            availableServiceNames.length > 0 ? (
+              <Select value={selectedService} onValueChange={setSelectedService}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue placeholder="Select a service (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {/* Sentinel: deselect / label-only */}
+                  <SelectItem value="" className="text-xs text-muted-foreground">
+                    Label only — no specific service
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  {availableServiceNames.map(name => (
+                    <SelectItem key={name} value={name} className="text-xs">
+                      {name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                No Phorest services synced yet. You can still save a label-only recommendation.
+              </p>
+            )
           )}
 
+          {/* Category picker */}
           {linkMode === 'category' && availableCategories.length > 0 && (
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger className="h-8 text-xs">

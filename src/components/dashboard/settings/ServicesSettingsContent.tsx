@@ -97,11 +97,13 @@ function SortableCategoryRow({ category, children }: { category: ServiceCategory
 }
 
 export function ServicesSettingsContent() {
-  const { effectiveOrganization } = useOrganizationContext();
+  const { effectiveOrganization, userOrganizations } = useOrganizationContext();
+  // Resolved org: effective org first, fall back to first accessible org (unblocks platform/super admin users)
+  const resolvedOrgId = effectiveOrganization?.id || userOrganizations[0]?.id;
   const { data: categories, isLoading: catsLoading } = useServiceCategoryColors();
-  const { data: allServices, isLoading: servicesLoading } = useServicesData(undefined, effectiveOrganization?.id);
+  const { data: allServices, isLoading: servicesLoading } = useServicesData(undefined, resolvedOrgId);
   const { data: phorestServices = [] } = useAllServices();
-  const { data: addonMap = {} } = useAllCategoryAddons(effectiveOrganization?.id);
+  const { data: addonMap = {} } = useAllCategoryAddons(resolvedOrgId);
   const updateColor = useUpdateCategoryColor();
   const reorderCategories = useReorderCategories();
   const createCategory = useCreateCategory();
@@ -144,6 +146,7 @@ export function ServicesSettingsContent() {
     next.has(catId) ? next.delete(catId) : next.add(catId);
     return next;
   });
+
 
   // Dialog states
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
@@ -235,6 +238,13 @@ export function ServicesSettingsContent() {
   const totalAddonCount = useMemo(() => {
     return Object.values(addonMap).reduce((sum, arr) => sum + arr.length, 0);
   }, [addonMap]);
+
+  // Auto-expand the first category row when no add-ons are configured yet (onboarding nudge)
+  useEffect(() => {
+    if (totalAddonCount === 0 && localOrder.length > 0 && localOrder[0]?.id) {
+      setExpandedAddonRows(prev => prev.size === 0 ? new Set([localOrder[0].id]) : prev);
+    }
+  }, [totalAddonCount, localOrder]);
 
   if (catsLoading || servicesLoading) {
     return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
@@ -451,13 +461,15 @@ export function ServicesSettingsContent() {
                       </button>
 
                       {/* Expanded manager */}
-                      {isExpanded && effectiveOrganization?.id && (
+                      {isExpanded && resolvedOrgId && (
                         <div className="border-t border-border/50 bg-muted/20 px-4 py-3">
                           <CategoryAddonManager
                             categoryId={cat.id}
                             categoryName={cat.category_name}
-                            organizationId={effectiveOrganization.id}
-                            availableCategories={localOrder.filter(c => c.id !== cat.id).map(c => c.category_name)}
+                            organizationId={resolvedOrgId}
+                            availableCategories={localOrder
+                              .filter(c => c.id !== cat.id && !['Block', 'Break'].includes(c.category_name))
+                              .map(c => c.category_name)}
                             availableServiceNames={phorestServiceNames}
                           />
                         </div>
