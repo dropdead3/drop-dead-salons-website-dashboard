@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { KBArticle, useIncrementArticleViews } from '@/hooks/useKnowledgeBase';
 import { useFormatNumber } from '@/hooks/useFormatNumber';
 import { formatRelativeTime } from '@/lib/format';
+import { tokens } from '@/lib/design-tokens';
 
 interface HelpArticleViewProps {
   article: KBArticle;
@@ -63,7 +64,7 @@ export function HelpArticleView({ article }: HelpArticleViewProps) {
     <div className="container max-w-3xl mx-auto py-8 px-4">
       <Button
         variant="ghost"
-        size="sm"
+        size={tokens.button.inline}
         onClick={handleBack}
         className="mb-6 gap-2"
       >

@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { tokens } from '@/lib/design-tokens';
 import {
   Select,
   SelectContent,
@@ -283,7 +284,7 @@ export function VideoUploadDialog({
               <Button
                 type="button"
                 variant={uploadMethod === 'url' ? 'default' : 'outline'}
-                size="sm"
+                size={tokens.button.card}
                 onClick={() => setUploadMethod('url')}
                 className="gap-2"
               >
@@ -293,7 +294,7 @@ export function VideoUploadDialog({
               <Button
                 type="button"
                 variant={uploadMethod === 'upload' ? 'default' : 'outline'}
-                size="sm"
+                size={tokens.button.card}
                 onClick={() => setUploadMethod('upload')}
                 className="gap-2"
               >

@@ -13,6 +13,7 @@ import {
   useKBSearch,
 } from '@/hooks/useKnowledgeBase';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { HelpArticleView } from '@/components/dashboard/help/HelpArticleView';
 
 function getIcon(iconName: string) {
@@ -66,7 +67,7 @@ export default function HelpCenter() {
         <div className="flex items-center gap-3 mb-4">
           <Button
             variant="ghost"
-            size="sm"
+            size={tokens.button.inline}
             onClick={() => navigate(currentCategory ? '/dashboard/help' : '/dashboard')}
             className="gap-2"
           >

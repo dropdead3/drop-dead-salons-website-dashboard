@@ -14,6 +14,7 @@ import { useTeamDirectory } from '@/hooks/useEmployeeProfile';
 import { useLocations } from '@/hooks/useLocations';
 import { useFormatDate } from '@/hooks/useFormatDate';
 import { cn } from '@/lib/utils';
+import { tokens } from '@/lib/design-tokens';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -182,7 +183,7 @@ export default function ScheduleRequests() {
           {showActions && (
             <div className="mt-4 flex gap-2 justify-end">
               <Button
-                size="sm"
+                size={tokens.button.card}
                 variant="destructive"
                 onClick={() => {
                   setSelectedRequest(request.id);
@@ -193,7 +194,7 @@ export default function ScheduleRequests() {
                 Deny
               </Button>
               <Button
-                size="sm"
+                size={tokens.button.card}
                 variant="default"
                 onClick={() => {
                   setSelectedRequest(request.id);

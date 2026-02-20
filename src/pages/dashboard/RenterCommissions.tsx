@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { useFormatCurrency } from '@/hooks/useFormatCurrency';
 import { useBoothRenter } from '@/hooks/useBoothRenters';
 import { useAuth } from '@/contexts/AuthContext';
+import { tokens } from '@/lib/design-tokens';
 
 export default function RenterCommissions() {
   const { formatDate } = useFormatDate();
@@ -192,7 +193,7 @@ export default function RenterCommissions() {
                     </TableCell>
                     <TableCell>
                       {statement.statement_pdf_url && (
-                        <Button size="sm" variant="ghost" asChild>
+                        <Button size={tokens.button.inline} variant="ghost" asChild>
                           <a href={statement.statement_pdf_url} target="_blank" rel="noopener noreferrer">
                             <Download className="h-4 w-4" />
                           </a>
