@@ -190,7 +190,7 @@ export function ScheduleToolbar({
         onValueChange={(v) => v && setView(v as CalendarView)}
         className="hidden md:flex"
       >
-        {(['day', 'week', 'month', 'agenda'] as CalendarView[]).map((v) => {
+        {(['week', 'day', 'month', 'agenda'] as CalendarView[]).map((v) => {
           const Icon = VIEW_ICONS[v];
           return (
             <ToggleGroupItem key={v} value={v} aria-label={v} className="capitalize">
@@ -207,7 +207,7 @@ export function ScheduleToolbar({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {(['day', 'week', 'month', 'agenda'] as CalendarView[]).map((v) => (
+          {(['week', 'day', 'month', 'agenda'] as CalendarView[]).map((v) => (
             <SelectItem key={v} value={v} className="capitalize">{v} View</SelectItem>
           ))}
         </SelectContent>
