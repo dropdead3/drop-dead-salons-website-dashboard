@@ -1,25 +1,26 @@
 
 
-## Clarify "Next 7 Days" Excludes Today
+## Update New Bookings Simplified Card Copy
 
-### Problem
-The Week Ahead Forecast card shows "$6,441 — Estimated booked service revenue for the next 7 days," but the underlying data starts tomorrow (day +1 through day +7), not today. The label should make this explicit.
+### Changes
 
-### Change
-
-In `src/components/dashboard/PinnedAnalyticsCard.tsx` (line ~427), update the metric label:
+In `src/components/dashboard/PinnedAnalyticsCard.tsx` (lines 432-434), update the metric value suffix and label:
 
 **Before:**
 ```
-metricLabel = 'Estimated booked service revenue for the next 7 days';
+metricValue = `${formatNumber(count)} new`;
+metricLabel = 'New bookings placed this period';
 ```
 
 **After:**
 ```
-metricLabel = 'Estimated booked service revenue for the next 7 days (excludes today)';
+metricValue = `${formatNumber(count)} added`;
+metricLabel = 'Appointments added to the schedule so far today';
 ```
 
-### Technical detail
+### Details
 
-Single-line string change. No logic or data changes needed — the hook already correctly fetches tomorrow through day +7.
+- Single file change, two lines
+- The metric value suffix changes from "NEW" to "ADDED" (the card renders this uppercase via font styling)
+- The sublabel clarifies the filter context — these are today's additions to the schedule
 
